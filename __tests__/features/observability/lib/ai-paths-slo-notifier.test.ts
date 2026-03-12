@@ -9,7 +9,7 @@ vi.mock('@/shared/lib/db/app-db-provider', () => ({
   getAppDbProvider: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/db/prisma', () => ({
+vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
   default: {
     setting: {
       findUnique: vi.fn(),
@@ -99,7 +99,7 @@ describe('ai-paths-slo-notifier', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
-    vi.mocked(getAppDbProvider).mockResolvedValue('prisma');
+    vi.mocked(getAppDbProvider).mockResolvedValue('mongodb');
     vi.mocked(getRedisConnection).mockReturnValue(null);
 
     delete process.env['AI_PATHS_SLO_NOTIFICATIONS_ENABLED'];

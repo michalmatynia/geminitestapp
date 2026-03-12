@@ -57,7 +57,7 @@ describe('buildWorkOrderExecutionPlan', () => {
       },
       recommendedBundleOrder: ['product_data_pipeline'],
       recommendedValidationByBundle: {
-        product_data_pipeline: ['//:integration_prisma'],
+        product_data_pipeline: ['//:integration_mongo'],
       },
       requiredDocs: [],
       requiredGeneratedArtifacts: [],
@@ -66,7 +66,7 @@ describe('buildWorkOrderExecutionPlan', () => {
       requiredDocGenerators: [],
       requiredScannerTargets: [],
       requiredValidationTargets: [
-        '//:integration_prisma',
+        '//:integration_mongo',
         '//:products_trigger_queue_unit',
       ],
     };
@@ -81,7 +81,7 @@ describe('buildWorkOrderExecutionPlan', () => {
     expect(plan.requiredImpactBundles).toEqual(['product_data_pipeline']);
     expect(plan.recommendedBundleOrder).toEqual(['product_data_pipeline']);
     expect(plan.validationTargets).toEqual([
-      '//:integration_prisma',
+      '//:integration_mongo',
       '//:products_trigger_queue_unit',
     ]);
   });

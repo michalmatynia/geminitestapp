@@ -12,7 +12,7 @@ const loadChallengeModule = async () => {
   vi.doMock('@/shared/lib/db/mongo-client', () => ({
     getMongoDb: vi.fn(),
   }));
-  vi.doMock('@/shared/lib/db/prisma', () => ({
+  vi.doMock('@/shared/lib/db/legacy-sql-client', () => ({
     default: {
       authLoginChallenge: {
         findUnique: vi.fn(),

@@ -9,8 +9,8 @@ vi.mock('@/shared/lib/ai-brain/server-runtime-client', () => ({
   runBrainChatCompletion: vi.fn(),
 }));
 
-// Mock prisma used in logging
-vi.mock('@/shared/lib/db/prisma', () => ({
+// Mock the legacy SQL client used in logging
+vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
   default: {
     agentAuditLog: {
       create: vi.fn(),

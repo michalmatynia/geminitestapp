@@ -9,6 +9,7 @@ import {
   KangurInlineFallback,
   KangurMediaFrame,
   KangurProse,
+  KangurSectionEyebrow,
   KangurStatusChip,
   KangurSurfacePanel,
   KangurSummaryPanel,
@@ -446,9 +447,9 @@ function renderQuizBlock(
         className='soft-card rounded-xl border p-4'
         style={{ borderColor: 'var(--kangur-soft-card-border)' }}
       >
-        <div className='mb-2 text-xs font-semibold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+        <KangurSectionEyebrow className='mb-2 text-xs tracking-wide'>
           Quiz
-        </div>
+        </KangurSectionEyebrow>
         <div
           className='prose prose-sm mb-3 max-w-none font-semibold [color:var(--kangur-page-text)]'
           dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.question) }}

@@ -1,11 +1,11 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
 
-vi.unmock('@/shared/lib/db/prisma');
+vi.unmock('@/shared/lib/db/legacy-sql-client');
 
 import { PUT } from '@/app/api/v2/metadata/[type]/[id]/route';
 import { GET, POST } from '@/app/api/v2/metadata/[type]/route';
-import prisma from '@/shared/lib/db/prisma';
+import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 
 type CountryResponse = {
   id: string;
@@ -28,13 +28,13 @@ describe('Countries API', () => {
 
     // Clear the database before each test
     try {
-      await prisma.product.deleteMany({});
-      await prisma.priceGroup.deleteMany({});
-      await prisma.countryCurrency.deleteMany({});
-      await prisma.languageCountry.deleteMany({});
-      await prisma.country.deleteMany({});
-      await prisma.currency.deleteMany({});
-      await prisma.language.deleteMany({});
+      await legacySqlClient.product.deleteMany({});
+      await legacySqlClient.priceGroup.deleteMany({});
+      await legacySqlClient.countryCurrency.deleteMany({});
+      await legacySqlClient.languageCountry.deleteMany({});
+      await legacySqlClient.country.deleteMany({});
+      await legacySqlClient.currency.deleteMany({});
+      await legacySqlClient.language.deleteMany({});
     } catch (error) {
       const code = (error as { code?: string }).code;
       if (code === 'EPERM') {
@@ -46,7 +46,7 @@ describe('Countries API', () => {
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    await legacySqlClient.$disconnect();
   });
 
   describe('GET /api/v2/metadata/countries', () => {
@@ -62,13 +62,13 @@ describe('Countries API', () => {
       expect(countries.length).toBeGreaterThan(0);
 
       // Verify seeding
-      const dbCountries = await prisma.country.findMany();
+      const dbCountries = await legacySqlClient.country.findMany();
       expect(dbCountries.length).toBeGreaterThan(0);
 
-      const dbCurrencies = await prisma.currency.findMany();
+      const dbCurrencies = await legacySqlClient.currency.findMany();
       expect(dbCurrencies.length).toBeGreaterThan(0);
 
-      const dbLanguages = await prisma.language.findMany();
+      const dbLanguages = await legacySqlClient.language.findMany();
       expect(dbLanguages.length).toBeGreaterThan(0);
 
       // Check specific seeded data
@@ -85,7 +85,7 @@ describe('Countries API', () => {
       if (shouldSkipCountriesApiTests()) return;
       // First call to seed
       await GET(new NextRequest('http://localhost/api/v2/metadata/countries'), countriesRouteContext);
-      const initialCount = await prisma.country.count();
+      const initialCount = await legacySqlClient.country.count();
 
       // Second call
       const res = await GET(
@@ -93,7 +93,7 @@ describe('Countries API', () => {
         countriesRouteContext
       );
       const countries = (await res.json()) as CountryResponse[];
-      const secondCount = await prisma.country.count();
+      const secondCount = await legacySqlClient.country.count();
 
       expect(res.status).toEqual(200);
       expect(countries.length).toEqual(initialCount);
@@ -130,7 +130,7 @@ describe('Countries API', () => {
     it('should create a country with currencies', async () => {
       if (shouldSkipCountriesApiTests()) return;
       // Need to create currency first
-      const currency = await prisma.currency.create({
+      const currency = await legacySqlClient.currency.create({
         data: { code: 'EUR', name: 'Euro', symbol: '€' },
       });
 
@@ -173,10 +173,10 @@ describe('Countries API', () => {
   describe('PUT /api/v2/metadata/countries/[id]', () => {
     it('should update country currencies', async () => {
       if (shouldSkipCountriesApiTests()) return;
-      const country = await prisma.country.create({
+      const country = await legacySqlClient.country.create({
         data: { code: 'PL', name: 'Poland' },
       });
-      const currency = await prisma.currency.create({
+      const currency = await legacySqlClient.currency.create({
         data: { code: 'PLN', name: 'Polish Zloty', symbol: 'zł' },
       });
 

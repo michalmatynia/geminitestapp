@@ -1,13 +1,14 @@
-import { Product } from '@prisma/client';
 import { NextRequest } from 'next/server';
 import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
 
-vi.unmock('@/shared/lib/db/prisma');
+vi.unmock('@/shared/lib/db/legacy-sql-client');
 
 import { GET as GET_COUNT } from '@/app/api/v2/products/count/route';
 import { GET as GET_LIST } from '@/app/api/v2/products/route';
 import { createMockProduct } from '@/shared/lib/products/utils/productUtils';
-import prisma from '@/shared/lib/db/prisma';
+import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
+
+type Product = { id: string };
 
 let canMutateProductPaginationTables = true;
 
@@ -19,9 +20,9 @@ describe('Products API - Pagination and Count', () => {
     if (shouldSkipProductPaginationTests()) return;
 
     try {
-      await prisma.productImage.deleteMany({});
-      await prisma.imageFile.deleteMany({});
-      await prisma.product.deleteMany({});
+      await legacySqlClient.productImage.deleteMany({});
+      await legacySqlClient.imageFile.deleteMany({});
+      await legacySqlClient.product.deleteMany({});
     } catch (error) {
       const code = (error as { code?: string }).code;
       if (code === 'EPERM') {
@@ -33,7 +34,7 @@ describe('Products API - Pagination and Count', () => {
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    await legacySqlClient.$disconnect();
   });
 
   describe('GET /api/v2/products/count', () => {

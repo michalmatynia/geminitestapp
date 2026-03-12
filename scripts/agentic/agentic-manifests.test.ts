@@ -100,14 +100,14 @@ describe('agentic domain manifests', () => {
         '//:lint',
         '//:typecheck',
         '//:unit',
-        '//:integration_prisma',
+        '//:integration_mongo',
         '//:integration_mongo',
         '//:products_trigger_queue_unit',
       ]),
     );
     expect(classification.requiredValidationTargets).toEqual(
       expect.arrayContaining([
-        '//:integration_prisma',
+        '//:integration_mongo',
         '//:integration_mongo',
         '//:products_trigger_queue_unit',
       ]),
@@ -312,7 +312,7 @@ describe('agentic domain manifests', () => {
     );
   });
 
-  it('classifies Product Sync changes into the Prisma integration lane', async () => {
+  it('classifies Product Sync changes into the Mongo integration lane', async () => {
     const manifests = await loadDomainManifests();
     const classification = classifyChangedFiles(
       ['src/features/product-sync/services/product-sync-service.ts'],
@@ -325,7 +325,7 @@ describe('agentic domain manifests', () => {
     expect(classification.highestRiskLevel).toBe('high');
     expect(classification.requiredImpactBundles).toContain('product_sync');
     expect(classification.requiredValidationTargets).toContain(
-      '//:integration_prisma',
+      '//:integration_mongo',
     );
   });
 

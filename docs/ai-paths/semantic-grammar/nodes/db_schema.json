@@ -12,7 +12,7 @@
   "configFields": [
     {
       "path": "db_schema.provider",
-      "description": "Which provider to load: auto (primary), mongodb, prisma, or all.",
+      "description": "Which provider to load: auto (primary) or mongodb. Legacy `all` is normalized to `auto`.",
       "defaultValue": "all"
     },
     {

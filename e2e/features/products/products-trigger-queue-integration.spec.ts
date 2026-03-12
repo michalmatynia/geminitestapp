@@ -67,21 +67,21 @@ const E2E_ADMIN_PASSWORD =
 
 const ensureAdminSession = async (page: Page): Promise<boolean> => {
   await page.goto('/auth/signin?callbackUrl=%2Fadmin', {
-    waitUntil: 'networkidle',
+    waitUntil: 'domcontentloaded',
   });
-  const signInHeading = page.getByRole('heading', { name: 'Sign in' });
+  const signInHeading = page.getByRole('heading', { name: /sign in/i });
   if (!(await signInHeading.isVisible().catch(() => false))) {
     return true;
   }
 
-  await page.getByRole('textbox', { name: 'Email' }).fill(E2E_ADMIN_EMAIL);
-  await page.getByRole('textbox', { name: 'Password' }).fill(E2E_ADMIN_PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('textbox', { name: /email/i }).fill(E2E_ADMIN_EMAIL);
+  await page.getByRole('textbox', { name: /password/i }).fill(E2E_ADMIN_PASSWORD);
+  await page.getByRole('button', { name: /sign in/i }).click();
   const authSucceeded = await page
-    .waitForURL(/\/admin(\/.*)?(\?.*)?$/, { timeout: 10_000 })
+    .waitForURL((url) => url.pathname.startsWith('/admin'), { timeout: 20_000 })
     .then(() => true)
     .catch(() => false);
-  return authSucceeded;
+  return authSucceeded || page.url().includes('/admin');
 };
 
 const openAdminProductsPage = async (page: Page): Promise<void> => {

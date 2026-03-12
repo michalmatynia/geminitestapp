@@ -48,13 +48,6 @@ docs_sources = glob([
     "docs/**/*.js",
 ], allow_empty = True)
 
-prisma_sources = glob([
-    "prisma/**/*.prisma",
-    "prisma/**/*.ts",
-    "prisma/**/*.js",
-    "prisma/**/*.sql",
-], allow_empty = True)
-
 config_sources = glob([
     "*.config.ts",
     "*.config.js",
@@ -102,7 +95,7 @@ filegroup(
 
 filegroup(
     name = "typecheck_inputs",
-    srcs = app_sources + script_sources + e2e_sources + prisma_sources + config_sources,
+    srcs = app_sources + script_sources + e2e_sources + config_sources,
 )
 
 filegroup(
@@ -203,17 +196,17 @@ filegroup(
 
 filegroup(
     name = "weekly_quality_inputs",
-    srcs = app_sources + script_sources + e2e_sources + docs_sources + prisma_sources + config_sources,
+    srcs = app_sources + script_sources + e2e_sources + docs_sources + config_sources,
 )
 
 filegroup(
     name = "testing_gate_inputs",
-    srcs = app_sources + script_sources + e2e_sources + docs_sources + prisma_sources + config_sources,
+    srcs = app_sources + script_sources + e2e_sources + docs_sources + config_sources,
 )
 
 filegroup(
     name = "integration_gate_inputs",
-    srcs = app_sources + script_sources + prisma_sources + config_sources,
+    srcs = app_sources + script_sources + config_sources,
 )
 
 filegroup(
@@ -223,7 +216,7 @@ filegroup(
 
 filegroup(
     name = "next_build_inputs",
-    srcs = app_sources + script_sources + docs_sources + prisma_sources + config_sources + glob([
+    srcs = app_sources + script_sources + docs_sources + config_sources + glob([
         "public/**/*",
     ], allow_empty = True),
 )

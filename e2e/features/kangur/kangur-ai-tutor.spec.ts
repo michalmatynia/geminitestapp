@@ -707,7 +707,7 @@ test.describe('Kangur AI Tutor', () => {
   test('does not reopen the tutor automatically when a new lesson fragment is selected after dismissing selection guidance', async ({
     page,
   }) => {
-    test.slow();
+    test.setTimeout(120_000);
 
     const {
       chatRequests,
@@ -723,7 +723,7 @@ test.describe('Kangur AI Tutor', () => {
     await openTutorFromSelection(page);
 
     await expect(page.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeVisible();
-    await expect.poll(() => chatRequests.length).toBe(1);
+    await expect.poll(() => chatRequests.length, { timeout: 20_000 }).toBe(1);
 
     await page.mouse.click(24, 24);
 

@@ -24,8 +24,11 @@ import {
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import {
   KangurButton,
+  KangurCardDescription,
+  KangurCardTitle,
   KangurGlassPanel,
   KangurSelectField,
+  KangurSectionEyebrow,
   KangurStatusChip,
   KangurSurfacePanel,
 } from '@/features/kangur/ui/design/primitives';
@@ -349,15 +352,17 @@ function AiTutorConfigPanel(): React.JSX.Element {
       >
         <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
           <div className='min-w-0'>
-            <div className='text-xs font-semibold uppercase tracking-wide text-emerald-700'>
+            <KangurSectionEyebrow className='text-xs tracking-wide text-emerald-700'>
               {tutorContent.parentDashboard.moodTitle}
-            </div>
-            <p
-              className='mt-1 text-sm leading-relaxed [color:var(--kangur-page-muted-text)]'
+            </KangurSectionEyebrow>
+            <KangurCardDescription
+              as='p'
+              className='mt-1 leading-relaxed'
               data-testid='parent-dashboard-ai-tutor-mood-description'
+              size='sm'
             >
               {currentMoodPreset.description}
-            </p>
+            </KangurCardDescription>
           </div>
           <KangurStatusChip
             accent={currentMoodAccent}
@@ -371,37 +376,37 @@ function AiTutorConfigPanel(): React.JSX.Element {
 
         <div className='mt-3 grid gap-3 text-xs [color:var(--kangur-page-muted-text)] sm:grid-cols-3'>
           <div>
-            <div className='font-semibold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+            <KangurSectionEyebrow className='text-xs tracking-wide'>
               {tutorContent.parentDashboard.baselineLabel}
-            </div>
-            <div
-              className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'
+            </KangurSectionEyebrow>
+            <KangurCardTitle
+              className='mt-1'
               data-testid='parent-dashboard-ai-tutor-mood-baseline'
             >
               {baselineMoodPreset.label}
-            </div>
+            </KangurCardTitle>
           </div>
           <div>
-            <div className='font-semibold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+            <KangurSectionEyebrow className='text-xs tracking-wide'>
               {tutorContent.parentDashboard.confidenceLabel}
-            </div>
-            <div
-              className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'
+            </KangurSectionEyebrow>
+            <KangurCardTitle
+              className='mt-1'
               data-testid='parent-dashboard-ai-tutor-mood-confidence'
             >
               {moodConfidence}
-            </div>
+            </KangurCardTitle>
           </div>
           <div>
-            <div className='font-semibold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+            <KangurSectionEyebrow className='text-xs tracking-wide'>
               {tutorContent.parentDashboard.updatedLabel}
-            </div>
-            <div
-              className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'
+            </KangurSectionEyebrow>
+            <KangurCardTitle
+              className='mt-1'
               data-testid='parent-dashboard-ai-tutor-mood-updated'
             >
               {moodUpdatedAt}
-            </div>
+            </KangurCardTitle>
           </div>
         </div>
       </div>
@@ -410,10 +415,10 @@ function AiTutorConfigPanel(): React.JSX.Element {
         <div className='rounded-2xl border border-amber-100 bg-amber-50/75 px-4 py-3'>
           <div className='flex items-start justify-between gap-3'>
             <div className='min-w-0'>
-              <div className='text-xs font-semibold uppercase tracking-wide text-amber-700'>
+              <KangurSectionEyebrow className='text-xs tracking-wide text-amber-700'>
                 {tutorContent.parentDashboard.usageTitle}
-              </div>
-              <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+              </KangurSectionEyebrow>
+              <KangurCardTitle className='mt-1'>
                 {isUsageLoading
                   ? tutorContent.parentDashboard.usageLoading
                   : hasUsageError || !usageSummary
@@ -430,7 +435,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
                           dailyMessageLimit: usageSummary.dailyMessageLimit,
                         }
                       )}
-              </div>
+              </KangurCardTitle>
             </div>
             {!isUsageLoading && !hasUsageError && usageSummary ? (
               <div className='shrink-0 rounded-full [background:color-mix(in_srgb,var(--kangur-soft-card-background)_90%,#ffffff)] px-3 py-1 text-xs font-semibold text-amber-700'>
@@ -445,9 +450,9 @@ function AiTutorConfigPanel(): React.JSX.Element {
               </div>
             ) : null}
           </div>
-          <p className='mt-2 text-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
+          <KangurCardDescription as='p' className='mt-2 leading-relaxed' size='xs'>
             {tutorContent.parentDashboard.usageHelp}
-          </p>
+          </KangurCardDescription>
         </div>
       ) : null}
 
@@ -487,9 +492,9 @@ function AiTutorConfigPanel(): React.JSX.Element {
       </label>
 
       <div className='space-y-3'>
-        <div className='text-xs font-semibold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+        <KangurSectionEyebrow className='text-xs tracking-wide'>
           {tutorContent.parentDashboard.guardrailsTitle}
-        </div>
+        </KangurSectionEyebrow>
         <TutorToggleField
           checked={allowLessons}
           disabled={!enabled}

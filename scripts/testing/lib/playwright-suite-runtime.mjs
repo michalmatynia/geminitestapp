@@ -58,22 +58,7 @@ export const detectExistingPlaywrightServer = async ({
   }
 
   if (healthReachable) {
-    try {
-      const response = await fetchImpl(rootUrl, {
-        method: 'GET',
-        signal: AbortSignal.timeout(1500),
-        headers: {
-          accept: 'application/json,text/html,text/plain',
-        },
-      });
-      if (isSuccessfulProbeResponse(response)) {
-        return true;
-      }
-    } catch {
-      return false;
-    }
-
-    return false;
+    return true;
   }
 
   try {

@@ -15,10 +15,8 @@ const runtimeRoots = [
 ] as const;
 
 const bannedTokens = [
-  '@/shared/lib/db/prisma\'',
-  '@/shared/lib/db/prisma"',
-  '@/shared/lib/db/prisma-client\'',
-  '@/shared/lib/db/prisma-client"',
+  '@/shared/lib/db/legacy-sql-client\'',
+  '@/shared/lib/db/legacy-sql-client"',
   'getAppDbProvider',
 ] as const;
 
@@ -50,7 +48,7 @@ const collectRuntimeFiles = (baseDir: string): string[] => {
 };
 
 describe('integrations runtime mongo-only contract', () => {
-  it('avoids direct Prisma imports and provider switching in integrations runtime files', () => {
+  it('avoids removed runtime imports and provider switching in integrations runtime files', () => {
     const runtimeFiles = runtimeRoots.flatMap((root) => collectRuntimeFiles(root));
     const offenders = runtimeFiles
       .filter((absolute) => {

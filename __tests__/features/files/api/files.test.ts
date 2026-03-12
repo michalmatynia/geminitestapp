@@ -1,11 +1,10 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { Product, ImageFile } from '@prisma/client';
 import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 
-vi.unmock('@/shared/lib/db/prisma');
+vi.unmock('@/shared/lib/db/legacy-sql-client');
 
 vi.mock('@/shared/lib/observability/system-logger', async (importOriginal) => {
   const actual =
@@ -19,7 +18,10 @@ vi.mock('@/shared/lib/observability/system-logger', async (importOriginal) => {
 import { DELETE } from '@/app/api/files/[id]/route';
 import { GET } from '@/app/api/files/route';
 import { createMockProduct } from '@/shared/lib/products/utils/productUtils';
-import prisma from '@/shared/lib/db/prisma';
+import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
+
+type Product = { id: string };
+type ImageFile = { id: string; filename: string };
 
 let canRunFilesApiIntegration = true;
 
@@ -35,9 +37,9 @@ describe('Files API', () => {
     if (shouldSkipFilesApiIntegration()) return;
 
     try {
-      await prisma.productImage.deleteMany({});
-      await prisma.imageFile.deleteMany({});
-      await prisma.product.deleteMany({});
+      await legacySqlClient.productImage.deleteMany({});
+      await legacySqlClient.imageFile.deleteMany({});
+      await legacySqlClient.product.deleteMany({});
 
       product1 = (await createMockProduct({ name_en: 'Product A' })) as unknown as Product;
       await createMockProduct({ name_en: 'Product B' });
@@ -47,7 +49,7 @@ describe('Files API', () => {
       await fs.writeFile(imagePath1, 'test1');
       await fs.writeFile(imagePath2, 'test2');
 
-      imageFile1 = await prisma.imageFile.create({
+      imageFile1 = await legacySqlClient.imageFile.create({
         data: {
           filename: 'test-image1.jpg',
           filepath: '/test-image1.jpg',
@@ -56,7 +58,7 @@ describe('Files API', () => {
         },
       });
 
-      imageFile2 = await prisma.imageFile.create({
+      imageFile2 = await legacySqlClient.imageFile.create({
         data: {
           filename: 'another-image.png',
           filepath: '/another-image.png',
@@ -65,7 +67,7 @@ describe('Files API', () => {
         },
       });
 
-      await prisma.productImage.create({
+      await legacySqlClient.productImage.create({
         data: {
           productId: product1.id,
           imageFileId: imageFile1.id,
@@ -82,7 +84,7 @@ describe('Files API', () => {
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    await legacySqlClient.$disconnect();
     const imagePath1 = path.join(process.cwd(), 'public', 'test-image1.jpg');
     const imagePath2 = path.join(process.cwd(), 'public', 'test-image2.jpg');
     try {
@@ -148,7 +150,7 @@ describe('Files API', () => {
       } as unknown as { params: Promise<{ id: string }> });
       expect(res.status).toBe(204);
 
-      const deletedFile = await prisma.imageFile.findUnique({
+      const deletedFile = await legacySqlClient.imageFile.findUnique({
         where: { id: imageFile2.id },
       });
       expect(deletedFile).toBeNull();

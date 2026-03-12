@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 
-vi.unmock('@/shared/lib/db/prisma');
+vi.unmock('@/shared/lib/db/legacy-sql-client');
 
 import { GET, POST } from '@/app/api/v2/metadata/[type]/route';
-import prisma from '@/shared/lib/db/prisma';
+import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 
 type CurrencyResponse = {
   id: string;
@@ -24,10 +24,10 @@ describe('Currencies API', () => {
     if (shouldSkipCurrenciesApiTests()) return;
 
     try {
-      await prisma.product.deleteMany({});
-      await prisma.priceGroup.deleteMany({});
-      await prisma.countryCurrency.deleteMany({});
-      await prisma.currency.deleteMany({});
+      await legacySqlClient.product.deleteMany({});
+      await legacySqlClient.priceGroup.deleteMany({});
+      await legacySqlClient.countryCurrency.deleteMany({});
+      await legacySqlClient.currency.deleteMany({});
     } catch (error) {
       const code = (error as { code?: string }).code;
       if (code === 'EPERM') {
@@ -39,7 +39,7 @@ describe('Currencies API', () => {
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    await legacySqlClient.$disconnect();
   });
 
   describe('GET /api/v2/metadata/currencies', () => {
@@ -55,7 +55,7 @@ describe('Currencies API', () => {
       expect(res.status).toEqual(200);
       expect(currencies.length).toBeGreaterThan(0);
 
-      const dbCurrencies = await prisma.currency.findMany();
+      const dbCurrencies = await legacySqlClient.currency.findMany();
       expect(dbCurrencies.length).toBeGreaterThan(0);
 
       const usd = currencies.find((c: CurrencyResponse) => c.code === 'USD');

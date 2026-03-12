@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-03-12T06:06:16.193Z",
+  "generatedAt": "2026-03-12T07:23:28.210Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -16,535 +16,63 @@
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 5779,
-    "exportedDeclarationsScanned": 4538,
-    "candidateDeclarationsScanned": 4508,
-    "exactShapeClusters": 5,
-    "nearShapeClusters": 2,
-    "clustersAfterFilters": 7,
-    "declarationsInClusters": 106,
-    "highestRiskScore": 193
+    "filesScanned": 5781,
+    "exportedDeclarationsScanned": 4440,
+    "candidateDeclarationsScanned": 4414,
+    "exactShapeClusters": 3,
+    "nearShapeClusters": 1,
+    "clustersAfterFilters": 4,
+    "declarationsInClusters": 10,
+    "highestRiskScore": 19
   },
   "clusters": [
     {
       "clusterId": "exact-0001",
       "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
-      "riskScore": 193,
-      "declarationCount": 63,
+      "riskScore": 19,
+      "declarationCount": 4,
       "domains": [
         "shared",
         "shared:contracts"
       ],
       "signature": {
         "shapeKind": "type-expression",
-        "normalizedShapeHash": "b9d00c941d92",
+        "normalizedShapeHash": "9266d1a2c4b6",
         "memberCount": 1,
-        "preview": "Record<string, unknown>"
+        "preview": "AppProviderValue"
       },
       "declarations": [
         {
-          "name": "UnknownRecordDto",
+          "name": "DatabaseEngineBackupType",
           "kind": "type",
-          "path": "src/shared/contracts/base.ts",
-          "line": 23,
+          "path": "src/shared/lib/db/database-engine-constants.ts",
+          "line": 49,
+          "domain": "shared",
+          "usageCount": 2
+        },
+        {
+          "name": "DbActionProvider",
+          "kind": "type",
+          "path": "src/shared/lib/ai-paths/core/utils/provider-actions.ts",
+          "line": 5,
+          "domain": "shared",
+          "usageCount": 1
+        },
+        {
+          "name": "ProductDbProvider",
+          "kind": "type",
+          "path": "src/shared/contracts/products/migration.ts",
+          "line": 6,
           "domain": "shared:contracts",
           "usageCount": 0
         },
         {
-          "name": "CountryUpdateInput",
+          "name": "IntegrationDbProvider",
           "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 38,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "LanguageUpdateInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 39,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "PriceGroupUncheckedUpdateInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 40,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductDraftCreateInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 41,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductDraftUpdateInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 42,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductListingUpdateInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 43,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "FileUploadEventWhereInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 44,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "AuthLoginChallengeCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 48,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "AuthSecurityAttemptCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 49,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "AccountCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 50,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "AuthSecurityProfileCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 51,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "SessionCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 52,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "UserCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 53,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "VerificationTokenCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 54,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "CatalogCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 55,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "CatalogLanguageCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 56,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "PriceGroupCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 57,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProducerCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 58,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductCategoryCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 59,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductParameterCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 60,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductTagCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 61,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ChatbotJobCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 62,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ChatbotMessageCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 63,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ChatbotSessionCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 64,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "CmsDomainCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 65,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "CmsDomainSlugCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 66,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "CmsThemeCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 67,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "PageComponentCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 68,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "PageCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 69,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "PageSlugCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 70,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "SlugCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 71,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "CountryCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 72,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "CountryCurrencyCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 73,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "CurrencyCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 74,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "LanguageCountryCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 75,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "LanguageCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 76,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ImageFileCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 77,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ImageStudioSlotCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 78,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "IntegrationCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 79,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "CategoryCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 80,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "NoteCategoryCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 81,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "NoteCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 82,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "NoteFileCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 83,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "NoteRelationCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 84,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "NoteTagCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 85,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "NotebookCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 86,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "TagCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 87,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ThemeCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 88,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductCatalogCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 89,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductCategoryAssignmentCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 90,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 91,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductImageCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 92,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductProducerAssignmentCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 93,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductTagAssignmentCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 94,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "AiConfigurationCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 95,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "FileUploadEventCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 96,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "SystemLogCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 97,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "UserPreferencesCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 98,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "AiPathRunCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 99,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "AiPathRunEventCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 100,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "AiPathRunNodeCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 101,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductAiJobCreateManyInput",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 102,
-          "domain": "shared",
+          "path": "src/shared/contracts/products/migration.ts",
+          "line": 9,
+          "domain": "shared:contracts",
           "usageCount": 0
         }
       ],
@@ -556,185 +84,33 @@
       "clusterId": "exact-0002",
       "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
-      "riskScore": 65,
-      "declarationCount": 21,
+      "riskScore": 10,
+      "declarationCount": 2,
       "domains": [
-        "shared"
+        "feature:integrations"
       ],
       "signature": {
         "shapeKind": "type-expression",
-        "normalizedShapeHash": "3023b666f167",
+        "normalizedShapeHash": "f7e9eb5a7cd6",
         "memberCount": 1,
-        "preview": "LooseModel"
+        "preview": "MongoExternalCatalogEntityDoc"
       },
       "declarations": [
         {
-          "name": "Catalog",
+          "name": "MongoExternalProducerDoc",
           "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 129,
-          "domain": "shared",
-          "usageCount": 0
+          "path": "src/features/integrations/services/producer-mapping-repository-mongo-utils.ts",
+          "line": 21,
+          "domain": "feature:integrations",
+          "usageCount": 1
         },
         {
-          "name": "CmsDomain",
+          "name": "MongoExternalTagDoc",
           "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 130,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "CmsTheme",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 131,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "Currency",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 132,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "FileUploadEvent",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 133,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ImageFile",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 134,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "Notebook",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 135,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "Page",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 136,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "PageComponent",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 137,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "Producer",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 138,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "Product",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 139,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductAiJob",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 140,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductCatalog",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 141,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductCategory",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 142,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductImage",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 143,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductParameter",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 144,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductTag",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 145,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductValidationPattern",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 146,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "Slug",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 147,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "Tag",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 170,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "Theme",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 171,
-          "domain": "shared",
-          "usageCount": 0
+          "path": "src/features/integrations/services/tag-mapping-repository-mongo-utils.ts",
+          "line": 20,
+          "domain": "feature:integrations",
+          "usageCount": 1
         }
       ],
       "notes": [
@@ -745,166 +121,33 @@
       "clusterId": "exact-0003",
       "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
-      "riskScore": 44,
-      "declarationCount": 14,
-      "domains": [
-        "shared"
-      ],
-      "signature": {
-        "shapeKind": "type-expression",
-        "normalizedShapeHash": "c56f3bc28aed",
-        "memberCount": 1,
-        "preview": "T extends never ? never : any"
-      },
-      "declarations": [
-        {
-          "name": "AgentLongTermMemoryGetPayload",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 23,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "AgentMemoryItemGetPayload",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 24,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ChatbotMessageGetPayload",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 25,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ChatbotSessionGetPayload",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 26,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ChatbotSettingsGetPayload",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 27,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "DraftGetPayload",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 28,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ExternalCategoryGetPayload",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 29,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ExternalProducerGetPayload",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 30,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ExternalTagGetPayload",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 31,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProducerMappingGetPayload",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 32,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductDraftGetPayload",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 33,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductGetPayload",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 34,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "ProductListingGetPayload",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 35,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "TagMappingGetPayload",
-          "kind": "type",
-          "path": "src/shared/lib/db/prisma-client.ts",
-          "line": 36,
-          "domain": "shared",
-          "usageCount": 0
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "exact-0005",
-      "clusterKind": "exact-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 11,
+      "riskScore": 8,
       "declarationCount": 2,
       "domains": [
-        "shared"
+        "shared:contracts"
       ],
       "signature": {
         "shapeKind": "type-expression",
-        "normalizedShapeHash": "e3b5b69b7b2d",
+        "normalizedShapeHash": "4734056d3e47",
         "memberCount": 1,
-        "preview": "'mongodb'"
+        "preview": "string | number | boolean | null"
       },
       "declarations": [
         {
-          "name": "DatabaseEngineBackupType",
+          "name": "JsonPrimitive",
           "kind": "type",
-          "path": "src/shared/lib/db/database-engine-constants.ts",
-          "line": 48,
-          "domain": "shared",
-          "usageCount": 2
+          "path": "src/shared/contracts/json.ts",
+          "line": 1,
+          "domain": "shared:contracts",
+          "usageCount": 0
         },
         {
-          "name": "DbActionProvider",
+          "name": "KangurKnowledgeMetadataValue",
           "kind": "type",
-          "path": "src/shared/lib/ai-paths/core/utils/provider-actions.ts",
-          "line": 4,
-          "domain": "shared",
-          "usageCount": 1
+          "path": "src/shared/contracts/kangur-knowledge-graph.ts",
+          "line": 47,
+          "domain": "shared:contracts",
+          "usageCount": 0
         }
       ],
       "notes": [
@@ -913,81 +156,6 @@
     },
     {
       "clusterId": "near-0001",
-      "clusterKind": "near-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 11,
-      "declarationCount": 2,
-      "domains": [
-        "feature:ai",
-        "feature:kangur"
-      ],
-      "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "0c11d1dbbe96",
-        "memberCount": 2,
-        "preview": "prop:id:string; prop:label:string"
-      },
-      "declarations": [
-        {
-          "name": "HistoryNodeOption",
-          "kind": "type",
-          "path": "src/features/ai/ai-paths/components/run-history-utils.ts",
-          "line": 3,
-          "domain": "feature:ai",
-          "usageCount": 1
-        },
-        {
-          "name": "QuestionAuthoringRepairAction",
-          "kind": "type",
-          "path": "src/features/kangur/admin/question-authoring-repairs.ts",
-          "line": 11,
-          "domain": "feature:kangur",
-          "usageCount": 0
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "exact-0004",
-      "clusterKind": "exact-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 10,
-      "declarationCount": 2,
-      "domains": [
-        "feature:integrations"
-      ],
-      "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "c6003eb04395",
-        "memberCount": 8,
-        "preview": "prop:_id:string | ObjectId; prop:connectionId:string; prop:createdAt:Date; prop:externalId:string; prop:fetchedAt:Date; prop:metadata?:Record<string, unknown> | null; prop:name:string; prop:updatedAt:Date"
-      },
-      "declarations": [
-        {
-          "name": "MongoExternalProducerDoc",
-          "kind": "type",
-          "path": "src/features/integrations/services/producer-mapping-repository-mongo-utils.ts",
-          "line": 17,
-          "domain": "feature:integrations",
-          "usageCount": 1
-        },
-        {
-          "name": "MongoExternalTagDoc",
-          "kind": "type",
-          "path": "src/features/integrations/services/tag-mapping-repository-mongo-utils.ts",
-          "line": 16,
-          "domain": "feature:integrations",
-          "usageCount": 1
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "near-0002",
       "clusterKind": "near-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 8,

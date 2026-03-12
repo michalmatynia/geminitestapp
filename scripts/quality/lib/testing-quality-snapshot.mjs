@@ -47,13 +47,6 @@ const BASELINE_SPECS = Object.freeze([
     required: false,
   },
   {
-    id: 'integrationPrisma',
-    label: 'Prisma Integration Baseline',
-    relativePath: 'docs/metrics/integration-prisma-latest.json',
-    required: false,
-    note: 'No generated Prisma integration baseline artifact exists yet.',
-  },
-  {
     id: 'integrationMongo',
     label: 'Mongo Integration Baseline',
     relativePath: 'docs/metrics/integration-mongo-latest.json',

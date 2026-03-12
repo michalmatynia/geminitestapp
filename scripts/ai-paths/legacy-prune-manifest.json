@@ -273,12 +273,12 @@
             "queryResultData['fallback']",
             "providerFallback",
             "...(resolvedProvider ? { provider: resolvedProvider } : {}),",
-            "provider?: 'mongodb' | 'prisma';",
+            "provider?: 'auto' | 'mongodb';",
             "const responseProvider = queryResultData['provider'];",
-            "responseProvider === 'mongodb' || responseProvider === 'prisma'"
+            "responseProvider === 'mongodb'"
           ],
           "requiredSnippets": [
-            "queryResultData['resolvedProvider'] === 'mongodb' || queryResultData['resolvedProvider'] === 'prisma'",
+            "queryResultData['resolvedProvider'] === 'mongodb'",
             "...(querySource ? { querySource } : {}),"
           ]
         },
@@ -288,11 +288,11 @@
             "fallback?: Record<string, unknown>;",
             "responseData['fallback']",
             "providerFallback",
-            "provider?: 'mongodb' | 'prisma';",
-            "responseData['provider'] === 'mongodb' || responseData['provider'] === 'prisma'"
+            "provider?: 'auto' | 'mongodb';",
+            "responseData['provider'] === 'mongodb'"
           ],
           "requiredSnippets": [
-            "responseData['resolvedProvider'] === 'mongodb' || responseData['resolvedProvider'] === 'prisma'",
+            "responseData['resolvedProvider'] === 'mongodb'",
             "...(resolvedProvider ? { resolvedProvider } : {}),"
           ]
         },
@@ -457,25 +457,25 @@
         {
           "file": "src/features/ai/ai-paths/components/node-config/DbSchemaNodeConfigSection.tsx",
           "forbiddenSnippets": [
-            "provider: 'auto' | 'mongodb' | 'prisma' | 'all';",
+            "provider: 'auto' | 'mongodb' | 'all';",
             "provider: selectedNode.config?.db_schema?.provider ?? 'all',",
-            "updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'prisma' | 'all' })",
+            "updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'all' })",
             "{ value: 'all', label: 'All Providers' },"
           ],
           "requiredSnippets": [
-            "provider: 'auto' | 'mongodb' | 'prisma';",
+            "provider: 'auto' | 'mongodb';",
             "const normalizeSchemaProvider = (value: unknown): SchemaConfig['provider'] =>",
             "provider: normalizeSchemaProvider(selectedNode.config?.db_schema?.provider),",
-            "updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'prisma' })"
+            "updateSchemaConfig({ provider: value as 'auto' | 'mongodb' })"
           ],
           "replacements": [
             {
-              "from": "provider: 'auto' | 'mongodb' | 'prisma' | 'all';",
-              "to": "provider: 'auto' | 'mongodb' | 'prisma';"
+              "from": "provider: 'auto' | 'mongodb' | 'all';",
+              "to": "provider: 'auto' | 'mongodb';"
             },
             {
-              "from": "updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'prisma' | 'all' })",
-              "to": "updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'prisma' })"
+              "from": "updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'all' })",
+              "to": "updateSchemaConfig({ provider: value as 'auto' | 'mongodb' })"
             }
           ]
         }
@@ -1349,7 +1349,7 @@
             "LEGACY_MONGO_DEFAULT_QUERY_TEMPLATE",
             "const isLegacyMongoDefaultQuery = (query: DbQueryConfig): boolean =>",
             "const normalizeLegacyQueryProvider = (query: DbQueryConfig): DbQueryConfig =>",
-            "query.provider !== 'auto' && query.provider !== 'mongodb' && query.provider !== 'prisma'",
+            "query.provider !== 'auto' && query.provider !== 'mongodb'",
             "if (isLegacyMongoDefaultQuery(query)) {"
           ],
           "requiredSnippets": [

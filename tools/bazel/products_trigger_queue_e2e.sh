@@ -8,5 +8,8 @@ fi
 
 cd "${BUILD_WORKSPACE_DIRECTORY}"
 
+node scripts/testing/run-playwright-suite.mjs --runtime-cleanup
+
 exec node scripts/testing/run-playwright-suite.mjs \
+  --runtime-stop-after \
   e2e/features/products/products-trigger-queue-integration.spec.ts

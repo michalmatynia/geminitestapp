@@ -3,11 +3,16 @@ import { createContext, useContext } from 'react';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurButton,
+  KangurCardDescription,
+  KangurMetaText,
+  KangurCardTitle,
   KangurDivider,
   KangurEmptyState,
   KangurGlassPanel,
   KangurInfoCard,
+  KangurPanelIntro,
   KangurProgressBar,
+  KangurSectionEyebrow,
   KangurStatusChip,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
@@ -69,7 +74,7 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
       <div className='absolute right-5 top-5 flex flex-wrap items-center justify-end gap-2'>
         <KangurStatusChip
           accent={item.priorityAccent}
-          className='text-[11px] uppercase tracking-[0.14em]'
+          labelStyle='compact'
         >
           {item.priorityLabel}
         </KangurStatusChip>
@@ -80,19 +85,19 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
         >
           {item.progressPercent}%
         </KangurStatusChip>
-        <div className='text-2xl font-medium [color:var(--kangur-page-muted-text)]'>
+        <KangurMetaText size='lg'>
           {item.progressCountLabel}
-        </div>
+        </KangurMetaText>
       </div>
 
       <div className='pr-0 pt-12 sm:pr-52 sm:pt-0'>
-        <div className='flex items-center gap-2 text-[1.1rem] font-extrabold tracking-tight [color:var(--kangur-page-text)]'>
+        <KangurCardTitle as='div' className='flex items-center gap-2 text-[1.1rem]'>
           <span aria-hidden='true'>{item.icon}</span>
           <span>{item.title}</span>
-        </div>
-        <div className='mt-4 text-base leading-7 [color:var(--kangur-page-muted-text)]'>
+        </KangurCardTitle>
+        <KangurCardDescription as='div' className='mt-4 leading-7' size='md'>
           {item.description}
-        </div>
+        </KangurCardDescription>
       </div>
 
       <div className='mt-4 space-y-4'>
@@ -103,7 +108,9 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
           size='sm'
         />
         <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-          <div className='text-sm [color:var(--kangur-page-muted-text)]'>{item.progressSummary}</div>
+          <KangurCardDescription as='div' size='sm'>
+            {item.progressSummary}
+          </KangurCardDescription>
           <KangurButton asChild size='sm' variant={item.actionVariant}>
             <Link
               href={item.actionHref}
@@ -115,9 +122,9 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
           </KangurButton>
         </div>
         {item.lastActivityLabel ? (
-          <div className='text-[11px] [color:var(--kangur-page-muted-text)]'>
+          <KangurMetaText>
             Ostatnia aktywność: {item.lastActivityLabel}
-          </div>
+          </KangurMetaText>
         ) : null}
       </div>
     </KangurInfoCard>
@@ -136,23 +143,23 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
     >
       <div className='flex flex-wrap items-start justify-between gap-3'>
         <div className='min-w-0'>
-          <div className='text-lg font-extrabold tracking-tight [color:var(--kangur-page-text)]'>
+          <KangurCardTitle className='text-lg' size='lg'>
             {item.title}
-          </div>
-          <div className='mt-2 text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
+          </KangurCardTitle>
+          <KangurCardDescription as='div' className='mt-2' relaxed size='sm'>
             {item.description}
-          </div>
+          </KangurCardDescription>
         </div>
         <div className='flex flex-wrap items-center gap-2'>
           <KangurStatusChip
             accent={item.priorityAccent}
-            className='text-[11px] uppercase tracking-[0.14em]'
+            labelStyle='compact'
           >
             {item.priorityLabel}
           </KangurStatusChip>
           <KangurStatusChip
             accent={item.statusAccent}
-            className='text-[11px] uppercase tracking-[0.14em]'
+            labelStyle='compact'
           >
             {item.statusLabel}
           </KangurStatusChip>
@@ -177,9 +184,9 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
           value={item.progressPercent}
         />
         {item.lastActivityLabel ? (
-          <div className='mt-3 text-[11px] [color:var(--kangur-page-muted-text)]'>
+          <KangurMetaText className='mt-3'>
             Ostatnia aktywność: {item.lastActivityLabel}
-          </div>
+          </KangurMetaText>
         ) : null}
       </KangurSummaryPanel>
 
@@ -226,17 +233,15 @@ export function KangurAssignmentsList({
         variant='soft'
       >
         <div className='mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
-          <div>
-            <div className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
-              Szybki podgląd
-            </div>
-            <div className='mt-1 text-xl font-extrabold tracking-tight [color:var(--kangur-page-text)]'>
-              {title}
-            </div>
-          </div>
-          <div className='text-[11px] font-bold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
+          <KangurPanelIntro
+            eyebrow='Szybki podglad'
+            title={title}
+            titleAs='div'
+            titleClassName='text-xl font-extrabold tracking-tight'
+          />
+          <KangurSectionEyebrow className='tracking-[0.18em]'>
             {formatAssignmentCountLabel(items.length)}
-          </div>
+          </KangurSectionEyebrow>
         </div>
         {items.length === 0 ? (
           <KangurEmptyState
@@ -267,15 +272,13 @@ export function KangurAssignmentsList({
         variant='soft'
       >
         <div className='mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
-          <div>
-            <div className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
-              Przydzielone zadania
-            </div>
-            <div className='mt-1 text-xl font-extrabold tracking-tight [color:var(--kangur-page-text)]'>
-              {title}
-            </div>
-          </div>
-          <KangurStatusChip accent='slate' className='text-[11px] uppercase tracking-[0.16em]'>
+          <KangurPanelIntro
+            eyebrow='Przydzielone zadania'
+            title={title}
+            titleAs='div'
+            titleClassName='text-xl font-extrabold tracking-tight'
+          />
+          <KangurStatusChip accent='slate' labelStyle='caps'>
             {items.length} zadań
           </KangurStatusChip>
         </div>

@@ -1,5 +1,6 @@
 import 'server-only';
 
+import type { AppProviderValue as IntegrationDbProvider } from '@/shared/contracts/system';
 import { internalError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import {
@@ -7,8 +8,6 @@ import {
   getDatabaseEngineServiceProvider,
   isPrimaryProviderConfigured,
 } from '@/shared/lib/db/database-engine-policy';
-
-type IntegrationDbProvider = 'mongodb';
 
 export const getIntegrationDataProvider = async (): Promise<IntegrationDbProvider> => {
   const policy = await getDatabaseEnginePolicy();

@@ -27,7 +27,7 @@ code-backed, and shorter than `GEMINI.md`. Other overlay docs should defer to it
   large shared API surface
 - Framework: Next.js 16 App Router + React 19 + TypeScript strict mode
 - Runtime: custom Node server via `server.cjs`
-- Data: Prisma/Postgres, MongoDB, and optional Redis-backed queue/cache/routing
+- Data: MongoDB and optional Redis-backed queue/cache/routing
 - UI/data stack: Tailwind 4, local shared UI, TanStack Query, TanStack Table
 - AI stack: AI Paths, chatbot, agent runtime, AI Brain routing, image studio,
   AI insights, product AI flows
@@ -230,10 +230,9 @@ Shared platform/runtime code lives under `src/shared/`, especially:
 
 ## Data Layer Rules
 
-- Do not assume Prisma-only persistence.
-- Do not assume Mongo-only persistence.
-- App, auth, CMS, products, integrations, and other services can resolve
-  providers through Database Engine routing and settings.
+- Do not assume MongoDB is the only stateful service.
+- App, auth, CMS, products, integrations, and other services can still depend
+  on Database Engine routing and Redis-backed helpers.
 
 Key files:
 

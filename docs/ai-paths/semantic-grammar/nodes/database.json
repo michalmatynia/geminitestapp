@@ -44,7 +44,7 @@
     },
     {
       "path": "database.query.provider",
-      "description": "Database provider (mongodb|prisma).",
+      "description": "Database provider (mongodb only).",
       "defaultValue": "mongodb"
     },
     {

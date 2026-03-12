@@ -313,59 +313,6 @@ jobs:
             docs/metrics/accessibility-smoke-latest.json
             docs/metrics/accessibility-smoke-latest.md
 
-  integration-prisma:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: app_test
-          POSTGRES_USER: app
-          POSTGRES_PASSWORD: app
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U app -d app_test"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-    env:
-      DATABASE_URL: postgresql://app:app@localhost:5432/app_test?schema=public
-      APP_DB_PROVIDER: prisma
-      PRODUCT_DB_PROVIDER: prisma
-      NOTE_DB_PROVIDER: prisma
-      INTEGRATION_DB_PROVIDER: prisma
-      AUTH_DB_PROVIDER: prisma
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Apply Prisma migrations
-        run: npx prisma migrate deploy
-
-      - name: Run Prisma integration project
-        run: npm run bazel -- run //:integration_prisma
-
-      - name: Upload Prisma integration report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: integration-prisma-report
-          if-no-files-found: warn
-          path: |
-            docs/metrics/integration-prisma-latest.json
-            docs/metrics/integration-prisma-latest.md
-
   integration-mongo:
     runs-on: ubuntu-latest
     services:

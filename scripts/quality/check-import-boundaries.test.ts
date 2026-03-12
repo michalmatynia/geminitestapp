@@ -28,17 +28,15 @@ describe('analyzeImportBoundaries', () => {
     }
   });
 
-  it('flags deep relative imports, cross-feature internals, and prisma usage outside server code', () => {
+  it('flags deep relative imports and cross-feature internals', () => {
     const root = createTempRoot();
     writeSource(root, 'src/features/products/internal/state.ts', 'export const state = {};\n');
     writeSource(
       root,
       'src/features/orders/ui/OrderPanel.ts',
       [
-        'import { PrismaClient } from \'@prisma/client\';',
         'import { state } from \'@/features/products/internal/state\';',
         'import helper from \'../../../../shared/lib/helper\';',
-        'void PrismaClient;',
         'void state;',
         'void helper;',
         '',
@@ -49,10 +47,6 @@ describe('analyzeImportBoundaries', () => {
 
     expect(report.issues).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({
-          ruleId: 'prisma-outside-server',
-          file: 'src/features/orders/ui/OrderPanel.ts',
-        }),
         expect.objectContaining({
           ruleId: 'cross-feature-internal-import',
           file: 'src/features/orders/ui/OrderPanel.ts',

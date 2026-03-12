@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
-const removedPrismaHandler: ProxyHandler<Record<string, never>> = {
+const removedLegacyDatabaseHandler: ProxyHandler<Record<string, never>> = {
   get(_target, prop): unknown {
     if (
       process.env['NODE_ENV'] === 'test'
@@ -7,13 +7,13 @@ const removedPrismaHandler: ProxyHandler<Record<string, never>> = {
     ) {
       return async (): Promise<void> => undefined;
     }
-    throw new Error('Prisma has been removed. The application is MongoDB-only.');
+    throw new Error('The legacy SQL client has been removed. The application is MongoDB-only.');
   },
   has(): boolean {
     return false;
   },
 };
 
-const prisma = new Proxy({}, removedPrismaHandler) as any;
+const legacyDatabaseClient = new Proxy({}, removedLegacyDatabaseHandler) as any;
 
-export default prisma;
+export default legacyDatabaseClient;

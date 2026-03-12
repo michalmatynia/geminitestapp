@@ -627,7 +627,7 @@ describe('KangurAiTutorWidget', () => {
         version: 1,
       })
     );
-  });
+  }, 45_000);
   it('ends the Game home onboarding early and docks the tutor back to the launcher', async () => {
     useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',

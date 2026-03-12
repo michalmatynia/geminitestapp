@@ -6,6 +6,13 @@ import {
   type KangurAiTutorPageCoverageEntry,
 } from './ai-tutor-page-coverage-manifest';
 
+// Scoring weights for section knowledge resolution.
+// Higher = stronger signal. Anchor matches take priority over content ID matches.
+const SCORE_ANCHOR_STARTS_WITH_PREFIX = 600; // anchorId starts with section's anchorIdPrefix
+const SCORE_PREFIX_STARTS_WITH_ANCHOR = 450; // section's anchorIdPrefix starts with anchorId (partial)
+const SCORE_EXACT_CONTENT_ID = 400;          // contentId exactly matches a contentIdPrefix
+const SCORE_CONTENT_ID_PREFIX = 200;         // contentId starts with a contentIdPrefix
+
 const resolveContentPrefixScore = (
   entry: KangurAiTutorPageCoverageEntry,
   contentId: string | null | undefined
@@ -17,12 +24,12 @@ const resolveContentPrefixScore = (
   let bestScore = 0;
   for (const prefix of entry.contentIdPrefixes) {
     if (contentId === prefix) {
-      bestScore = Math.max(bestScore, 400 + prefix.length);
+      bestScore = Math.max(bestScore, SCORE_EXACT_CONTENT_ID + prefix.length);
       continue;
     }
 
     if (contentId.startsWith(prefix)) {
-      bestScore = Math.max(bestScore, 200 + prefix.length);
+      bestScore = Math.max(bestScore, SCORE_CONTENT_ID_PREFIX + prefix.length);
     }
   }
 
@@ -42,9 +49,9 @@ const scoreCoverageEntry = (input: {
 
   const anchorPrefixScore = section.anchorIdPrefix
     ? anchorId.startsWith(section.anchorIdPrefix)
-      ? 600 + section.anchorIdPrefix.length
+      ? SCORE_ANCHOR_STARTS_WITH_PREFIX + section.anchorIdPrefix.length
       : section.anchorIdPrefix.startsWith(anchorId)
-        ? 450 + anchorId.length
+        ? SCORE_PREFIX_STARTS_WITH_ANCHOR + anchorId.length
         : 0
     : 0;
   const contentPrefixScore = resolveContentPrefixScore(section, contentId);

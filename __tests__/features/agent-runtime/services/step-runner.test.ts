@@ -4,9 +4,9 @@ import * as auditGate from '@/features/ai/agent-runtime/audit/gate';
 import { runPlanStepLoop } from '@/features/ai/agent-runtime/execution/step-runner';
 import * as llmPlanning from '@/features/ai/agent-runtime/planning/llm';
 import * as toolsModule from '@/features/ai/agent-runtime/tools/index';
-import prisma from '@/shared/lib/db/prisma';
+import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 
-vi.mock('@/shared/lib/db/prisma', () => ({
+vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
   default: {
     chatbotAgentRun: { update: vi.fn() },
     agentBrowserLog: { create: vi.fn() },
@@ -122,7 +122,7 @@ describe('Agent Runtime - Step Runner', () => {
     const result = await runPlanStepLoop(inputWithApproval);
 
     expect(result.stepIndex).toBe(0);
-    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(
+    expect(legacySqlClient.chatbotAgentRun.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ status: 'waiting_human' }),
       })

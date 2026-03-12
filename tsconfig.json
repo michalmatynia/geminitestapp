@@ -49,12 +49,6 @@
       "@/__tests__/*": [
         "./__tests__/*"
       ],
-      "@prisma/client": [
-        "./src/shared/lib/db/prisma-client.ts"
-      ],
-      "@prisma/adapter-pg": [
-        "./src/shared/lib/db/prisma-adapter-pg-stub.ts"
-      ],
       "pg": [
         "./src/shared/lib/db/pg-stub.ts"
       ],
@@ -170,7 +164,27 @@
     ".next-dev-playwright-broker-web-dev-selection-handoff-fresh-20260312-timeout60/types/**/*.ts",
     ".next-dev-playwright-broker-web-dev-selection-handoff-fresh-20260312-timeout60/dev/types/**/*.ts",
     ".next-dev-playwright-broker-web-dev-selection-handoff-fresh-20260312-slowfix/types/**/*.ts",
-    ".next-dev-playwright-broker-web-dev-selection-handoff-fresh-20260312-slowfix/dev/types/**/*.ts"
+    ".next-dev-playwright-broker-web-dev-selection-handoff-fresh-20260312-slowfix/dev/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-selection-handoff-fresh-20260312-timeout120/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-selection-handoff-fresh-20260312-timeout120/dev/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-019ce00d-1c36-7ac3-8102-f9b9d1485419/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-019ce00d-1c36-7ac3-8102-f9b9d1485419/dev/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-019cdf6a-4672-76d3-9412-6eaeff345891/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-019cdf6a-4672-76d3-9412-6eaeff345891/dev/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-products-list-fresh-20260312/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-products-list-fresh-20260312/dev/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-products-list-fresh-20260312-timeout120/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-products-list-fresh-20260312-timeout120/dev/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-products-list-fresh-20260312-sessioncookie/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-products-list-fresh-20260312-sessioncookie/dev/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-019ce0d6-7ce3-7fd1-b250-a60520552b78/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-019ce0d6-7ce3-7fd1-b250-a60520552b78/dev/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-products-list-fresh-20260312-sessioncookie-2/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-products-list-fresh-20260312-sessioncookie-2/dev/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-products-list-fresh-20260312-adminfirst/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-products-list-fresh-20260312-adminfirst/dev/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-products-list-fresh-20260312-bootmocks/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-products-list-fresh-20260312-bootmocks/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

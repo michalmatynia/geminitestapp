@@ -8,9 +8,12 @@ import {
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurButton,
+  KangurCardDescription,
+  KangurCardTitle,
   KangurEmptyState,
   KangurGlassPanel,
   KangurInfoCard,
+  KangurSectionEyebrow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
@@ -64,10 +67,10 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
       variant='soft'
     >
       <header className='flex items-center justify-between gap-3'>
-        <div className='text-sm font-bold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
+        <KangurSectionEyebrow className='text-sm tracking-[0.18em]'>
           Zadania
-        </div>
-        <KangurStatusChip accent='slate' className='text-[11px] uppercase tracking-[0.14em]'>
+        </KangurSectionEyebrow>
+        <KangurStatusChip accent='slate' labelStyle='compact'>
           {completionLabel}
         </KangurStatusChip>
       </header>
@@ -119,9 +122,9 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
                   </KangurButton>
                   <div className='min-w-0'>
                     <div className='flex flex-wrap items-center gap-2'>
-                      <p className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+                      <KangurCardTitle as='p'>
                         {assignment.title}
-                      </p>
+                      </KangurCardTitle>
                       <KangurStatusChip
                         accent={
                           assignment.priority === 'high'
@@ -130,21 +133,22 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
                               ? 'amber'
                               : 'emerald'
                         }
-                        className='text-[11px] uppercase tracking-[0.14em]'
+                        labelStyle='compact'
                       >
                         {assignment.priority === 'high'
                           ? 'Priorytet wysoki'
                           : assignment.priority === 'medium'
                             ? 'Priorytet średni'
-                            : 'Priorytet niski'}
+                          : 'Priorytet niski'}
                       </KangurStatusChip>
                     </div>
-                    <p className='mt-1 text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
+                    <KangurCardDescription as='p' className='mt-1' relaxed size='sm'>
                       {assignment.description}
-                    </p>
+                    </KangurCardDescription>
                     <KangurStatusChip
                       accent='indigo'
-                      className='mt-2 text-[11px] uppercase tracking-[0.14em]'
+                      className='mt-2'
+                      labelStyle='compact'
                       size='sm'
                     >
                       Cel: {assignment.target}

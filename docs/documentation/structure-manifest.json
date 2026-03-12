@@ -259,7 +259,6 @@
     "docs/metrics/env-contract-latest.md",
     "docs/metrics/high-risk-coverage-latest.md",
     "docs/metrics/import-boundaries-latest.md",
-    "docs/metrics/integration-prisma-latest.md",
     "docs/metrics/kangur-performance-latest.md",
     "docs/metrics/lint-domain-checks-latest.md",
     "docs/metrics/lint-domain-checks-trend-latest.md",

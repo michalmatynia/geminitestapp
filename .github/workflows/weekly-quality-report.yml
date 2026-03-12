@@ -15,19 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 180
     services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: app_test
-          POSTGRES_USER: app
-          POSTGRES_PASSWORD: app
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U app -d app_test"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
       mongodb:
         image: mongo:7
         ports:
@@ -53,17 +40,6 @@ jobs:
 
       - name: Run weekly quality report
         run: npm run bazel -- run //:weekly_quality_report
-
-      - name: Run Prisma integration baseline
-        if: always()
-        env:
-          DATABASE_URL: postgresql://app:app@localhost:5432/app_test?schema=public
-          APP_DB_PROVIDER: prisma
-          PRODUCT_DB_PROVIDER: prisma
-          NOTE_DB_PROVIDER: prisma
-          INTEGRATION_DB_PROVIDER: prisma
-          AUTH_DB_PROVIDER: prisma
-        run: npm run test:integration:prisma:baseline
 
       - name: Run Mongo integration baseline
         if: always()
@@ -115,8 +91,6 @@ jobs:
             docs/metrics/test-distribution-latest.md
             docs/metrics/high-risk-coverage-latest.json
             docs/metrics/high-risk-coverage-latest.md
-            docs/metrics/integration-prisma-latest.json
-            docs/metrics/integration-prisma-latest.md
             docs/metrics/integration-mongo-latest.json
             docs/metrics/integration-mongo-latest.md
 
@@ -170,8 +144,6 @@ jobs:
             echo "- \`docs/metrics/test-distribution-latest.json\`"
             echo "- \`docs/metrics/high-risk-coverage-latest.md\`"
             echo "- \`docs/metrics/high-risk-coverage-latest.json\`"
-            echo "- \`docs/metrics/integration-prisma-latest.md\`"
-            echo "- \`docs/metrics/integration-prisma-latest.json\`"
             echo "- \`docs/metrics/integration-mongo-latest.md\`"
             echo "- \`docs/metrics/integration-mongo-latest.json\`"
             echo "- \`docs/metrics/weekly-duration-budget-recommendations-latest.md\`"

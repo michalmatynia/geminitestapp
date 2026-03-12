@@ -7,7 +7,7 @@ import * as planModule from '@/features/ai/agent-runtime/execution/plan';
 import * as stepRunnerModule from '@/features/ai/agent-runtime/execution/step-runner';
 import * as memoryCheckpointModule from '@/features/ai/agent-runtime/memory/checkpoint';
 import * as browserModule from '@/features/ai/agent-runtime/tools/playwright/browser';
-import prisma from '@/shared/lib/db/prisma';
+import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 
 // Mock FS
 vi.mock('fs', () => ({
@@ -21,8 +21,8 @@ vi.mock('fs', () => ({
   },
 }));
 
-// Mock Prisma
-vi.mock('@/shared/lib/db/prisma', () => ({
+// Mock the legacy SQL client
+vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
   default: {
     chatbotAgentRun: {
       findUnique: vi.fn(),
@@ -78,14 +78,14 @@ describe('Agent Runtime - Engine', () => {
   });
 
   it('should exit if run not found', async () => {
-    (prisma.chatbotAgentRun.findUnique as any).mockResolvedValue(null);
+    (legacySqlClient.chatbotAgentRun.findUnique as any).mockResolvedValue(null);
     await runAgentControlLoop(mockRunId);
     expect(browserModule.launchBrowser).not.toHaveBeenCalled();
   });
 
   it('should run the full loop successfully (Action: Tool)', async () => {
     // Setup Mocks
-    (prisma.chatbotAgentRun.findUnique as any).mockResolvedValue(mockRun);
+    (legacySqlClient.chatbotAgentRun.findUnique as any).mockResolvedValue(mockRun);
     (browserModule.launchBrowser as any).mockResolvedValue({
       close: vi.fn().mockResolvedValue(undefined),
     });
@@ -135,7 +135,7 @@ describe('Agent Runtime - Engine', () => {
   });
 
   it('should complete run if decision is respond', async () => {
-    (prisma.chatbotAgentRun.findUnique as any).mockResolvedValue(mockRun);
+    (legacySqlClient.chatbotAgentRun.findUnique as any).mockResolvedValue(mockRun);
     (browserModule.launchBrowser as any).mockResolvedValue({
       close: vi.fn().mockResolvedValue(undefined),
     });
@@ -159,7 +159,7 @@ describe('Agent Runtime - Engine', () => {
 
     await runAgentControlLoop(mockRunId);
 
-    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(
+    expect(legacySqlClient.chatbotAgentRun.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: mockRunId },
         data: expect.objectContaining({ status: 'completed' }),
@@ -169,12 +169,12 @@ describe('Agent Runtime - Engine', () => {
 
   it('should handle errors gracefully', async () => {
     // Fail inside the loop
-    (prisma.chatbotAgentRun.findUnique as any).mockResolvedValue(mockRun);
+    (legacySqlClient.chatbotAgentRun.findUnique as any).mockResolvedValue(mockRun);
     (browserModule.launchBrowser as any).mockRejectedValue(new Error('Browser Fail'));
 
     await runAgentControlLoop(mockRunId);
 
-    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(
+    expect(legacySqlClient.chatbotAgentRun.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: mockRunId },
         data: expect.objectContaining({ status: 'failed', errorMessage: 'Browser Fail' }),
@@ -183,7 +183,7 @@ describe('Agent Runtime - Engine', () => {
   });
 
   it('should set status to waiting_human if requested', async () => {
-    (prisma.chatbotAgentRun.findUnique as any).mockResolvedValue(mockRun);
+    (legacySqlClient.chatbotAgentRun.findUnique as any).mockResolvedValue(mockRun);
     (browserModule.launchBrowser as any).mockResolvedValue({
       close: vi.fn().mockResolvedValue(undefined),
     });
@@ -216,7 +216,7 @@ describe('Agent Runtime - Engine', () => {
 
     await runAgentControlLoop(mockRunId);
 
-    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(
+    expect(legacySqlClient.chatbotAgentRun.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: mockRunId },
         data: expect.objectContaining({ status: 'waiting_human' }),

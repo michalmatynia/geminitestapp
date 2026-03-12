@@ -308,7 +308,6 @@ Resolver behavior:
     - `enqueuePortablePathAuditSinkAutoRemediationDeadLetter(entry, { maxEntries? })`
   - Built-in server sink factories:
     - `createPortablePathEnvelopeVerificationLogForwardingSink(...)`
-    - `createPortablePathEnvelopeVerificationPrismaSink(...)`
     - `createPortablePathEnvelopeVerificationMongoSink(...)`
 
 ### Validate
@@ -464,12 +463,12 @@ Server sink registration example:
 
 ```ts
 import {
-  createPortablePathEnvelopeVerificationPrismaSink,
+  createPortablePathEnvelopeVerificationMongoSink,
   registerPortablePathEnvelopeVerificationAuditSink,
 } from '@/shared/lib/ai-paths/portable-engine/server';
 
 registerPortablePathEnvelopeVerificationAuditSink(
-  createPortablePathEnvelopeVerificationPrismaSink()
+  createPortablePathEnvelopeVerificationMongoSink()
 );
 ```
 

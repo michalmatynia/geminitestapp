@@ -33,7 +33,7 @@ Complete migration to canonical runtime and persistence contracts, remove remain
    - `products-migrate-runtime-endpoint` resolved (runtime endpoint removed).
 5. Validation gates are green on current baseline:
    - `npm run test:unit`, `npm run typecheck`
-   - `npm run test:integration:prisma`, `npm run test:integration:mongo`, `npm run test:integration:mongo:canonical-shape-guard`
+   - `npm run test:integration:mongo`, `npm run test:integration:mongo:canonical-shape-guard`
    - `npm run test:ai-paths:signal-flow-regression`
    - `npm run test:ci`
 6. Canonical artifact enforcement is manifest-driven:

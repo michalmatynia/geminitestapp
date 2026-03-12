@@ -4,6 +4,7 @@ import { useKangurLearnerProfileRuntime } from '@/features/kangur/ui/context/Kan
 import {
   KangurGlassPanel,
   KangurProgressBar,
+  KangurSectionEyebrow,
 } from '@/features/kangur/ui/design/primitives';
 
 export function KangurLearnerProfileLevelProgressWidget(): React.JSX.Element {
@@ -18,9 +19,9 @@ export function KangurLearnerProfileLevelProgressWidget(): React.JSX.Element {
     >
       <div className='flex flex-col gap-4 md:flex-row md:items-end md:justify-between'>
         <div>
-          <div className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
+          <KangurSectionEyebrow>
             Postep poziomu
-          </div>
+          </KangurSectionEyebrow>
           <div className={`mt-1 text-2xl font-extrabold ${snapshot.level.color}`}>
             {snapshot.level.title}
           </div>

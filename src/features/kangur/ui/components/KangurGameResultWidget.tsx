@@ -6,6 +6,8 @@ import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRe
 import ResultScreen from '@/features/kangur/ui/components/ResultScreen';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import {
+  KangurCardDescription,
+  KangurCardTitle,
   KangurInfoCard,
   KangurProgressBar,
   KangurStatusChip,
@@ -73,30 +75,27 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
             <div className='flex flex-wrap gap-2'>
               <KangurStatusChip
                 accent='indigo'
-                className='text-[11px] uppercase tracking-[0.16em]'
                 data-testid='kangur-result-reward-chip'
+                labelStyle='caps'
                 size='sm'
               >
                 Nagroda za runde
               </KangurStatusChip>
               <KangurStatusChip
                 accent='violet'
-                className='text-[11px] uppercase tracking-[0.16em]'
                 data-testid='kangur-result-reward-total'
+                labelStyle='caps'
                 size='sm'
               >
                 +{xpToast.xpGained} XP
               </KangurStatusChip>
             </div>
 
-            <div
-              className='text-sm font-semibold [color:var(--kangur-page-text)]'
-              data-testid='kangur-result-reward-title'
-            >
+            <KangurCardTitle data-testid='kangur-result-reward-title'>
               {xpToast.recommendation
                 ? 'Ta runda trafila w polecany kierunek i przesunela postep do przodu.'
                 : 'Ta runda przesunela postep do przodu.'}
-            </div>
+            </KangurCardTitle>
 
             <KangurRewardBreakdownChips
               accent='slate'
@@ -140,34 +139,32 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
             <div className='flex flex-wrap gap-2'>
               <KangurStatusChip
                 accent='violet'
-                className='text-[11px] uppercase tracking-[0.16em]'
                 data-testid='kangur-result-recommendation-chip'
+                labelStyle='caps'
                 size='sm'
               >
                 Zagrano zgodnie z rekomendacja
               </KangurStatusChip>
               <KangurStatusChip
                 accent='indigo'
-                className='text-[11px] uppercase tracking-[0.16em]'
                 data-testid='kangur-result-recommendation-label'
+                labelStyle='caps'
                 size='sm'
               >
                 {activeSessionRecommendation.label}
               </KangurStatusChip>
             </div>
-            <div
-              className='text-sm font-semibold [color:var(--kangur-page-text)]'
-              data-testid='kangur-result-recommendation-title'
-            >
+            <KangurCardTitle data-testid='kangur-result-recommendation-title'>
               {activeSessionRecommendation.title}
-            </div>
+            </KangurCardTitle>
             {activeSessionRecommendation.description ? (
-              <div
-                className='text-xs leading-6 [color:var(--kangur-page-muted-text)]'
+              <KangurCardDescription
                 data-testid='kangur-result-recommendation-description'
+                relaxed
+                size='xs'
               >
                 {activeSessionRecommendation.description}
-              </div>
+              </KangurCardDescription>
             ) : null}
           </div>
         </KangurInfoCard>
@@ -185,16 +182,16 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
             <div className='flex flex-wrap gap-2'>
               <KangurStatusChip
                 accent='amber'
-                className='text-[11px] uppercase tracking-[0.16em]'
                 data-testid='kangur-result-badges-chip'
+                labelStyle='caps'
                 size='sm'
               >
                 Nowe odznaki
               </KangurStatusChip>
               <KangurStatusChip
                 accent='violet'
-                className='text-[11px] uppercase tracking-[0.16em]'
                 data-testid='kangur-result-badges-count'
+                labelStyle='caps'
                 size='sm'
               >
                 {unlockedBadgeDetails.length}
@@ -212,12 +209,12 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
                       'color-mix(in srgb, var(--kangur-soft-card-background) 86%, rgba(254,243,199,0.9))',
                   }}
                 >
-                  <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+                  <KangurCardTitle>
                     {badge.emoji} {badge.name}
-                  </div>
-                  <div className='mt-1 text-xs leading-6 [color:var(--kangur-page-muted-text)]'>
+                  </KangurCardTitle>
+                  <KangurCardDescription className='mt-1' relaxed size='xs'>
                     {badge.desc}
-                  </div>
+                  </KangurCardDescription>
                 </div>
               ))}
             </div>
@@ -239,8 +236,8 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
                 <>
                   <KangurStatusChip
                     accent='emerald'
-                    className='text-[11px] uppercase tracking-[0.16em]'
                     data-testid='kangur-result-followup-quest-chip'
+                    labelStyle='caps'
                     size='sm'
                   >
                     Misja dnia ukonczona
@@ -248,8 +245,8 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
                   {xpToast.dailyQuest.xpAwarded > 0 ? (
                     <KangurStatusChip
                       accent='amber'
-                      className='text-[11px] uppercase tracking-[0.16em]'
                       data-testid='kangur-result-followup-quest-reward-chip'
+                      labelStyle='caps'
                       size='sm'
                     >
                       Bonus +{xpToast.dailyQuest.xpAwarded} XP
@@ -261,8 +258,8 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
               {nextBadge ? (
                 <KangurStatusChip
                   accent='amber'
-                  className='text-[11px] uppercase tracking-[0.16em]'
                   data-testid='kangur-result-followup-badge-chip'
+                  labelStyle='caps'
                   size='sm'
                 >
                   Nastepna odznaka
@@ -278,8 +275,8 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
                         ? 'amber'
                         : 'indigo'
                   }
-                  className='text-[11px] uppercase tracking-[0.16em]'
                   data-testid='kangur-result-followup-quest-status-chip'
+                  labelStyle='caps'
                   size='sm'
                 >
                   {currentQuest.reward.label}
@@ -289,33 +286,29 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
 
             {xpToast.dailyQuest ? (
               <>
-                <div
-                  className='text-sm font-semibold [color:var(--kangur-page-text)]'
-                  data-testid='kangur-result-followup-title'
-                >
+                <KangurCardTitle data-testid='kangur-result-followup-title'>
                   {xpToast.dailyQuest.title}
-                </div>
-                <div
-                  className='text-xs leading-6 [color:var(--kangur-page-muted-text)]'
+                </KangurCardTitle>
+                <KangurCardDescription
                   data-testid='kangur-result-followup-description'
+                  relaxed
+                  size='xs'
                 >
                   {xpToast.dailyQuest.summary}
-                </div>
+                </KangurCardDescription>
               </>
             ) : nextBadge ? (
               <>
-                <div
-                  className='text-sm font-semibold [color:var(--kangur-page-text)]'
-                  data-testid='kangur-result-followup-title'
-                >
+                <KangurCardTitle data-testid='kangur-result-followup-title'>
                   {nextBadge.emoji} {nextBadge.name}
-                </div>
-                <div
-                  className='text-xs leading-6 [color:var(--kangur-page-muted-text)]'
+                </KangurCardTitle>
+                <KangurCardDescription
                   data-testid='kangur-result-followup-description'
+                  relaxed
+                  size='xs'
                 >
                   Do odznaki brakuje: {nextBadge.summary}
-                </div>
+                </KangurCardDescription>
                 <KangurProgressBar
                   accent='amber'
                   className='max-w-md'

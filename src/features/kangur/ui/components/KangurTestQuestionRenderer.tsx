@@ -12,6 +12,7 @@ import { useOptionalKangurTestSuiteRuntime } from '@/features/kangur/ui/context/
 import {
   KangurInfoCard,
   KangurOptionCardButton,
+  KangurSectionEyebrow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
@@ -140,9 +141,9 @@ export function KangurTestQuestionRenderer({
       {/* Header */}
       {questionIndex !== undefined && resolvedTotalQuestions !== undefined ? (
         <div className='flex items-start justify-between gap-3'>
-          <span className='pt-2 text-xs font-semibold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+          <KangurSectionEyebrow as='span' className='pt-2 text-xs tracking-wide'>
             Question {questionIndex + 1} / {resolvedTotalQuestions}
-          </span>
+          </KangurSectionEyebrow>
           <div className='flex items-center gap-2'>
             {showReadControl ? (
               <KangurLessonNarrator

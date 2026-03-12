@@ -1,5 +1,8 @@
 import {
+  KangurCardDescription,
+  KangurCardTitle,
   KangurProgressBar,
+  KangurSectionEyebrow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
@@ -37,9 +40,9 @@ export default function KangurBadgeTrackGrid({
 
   if (tracks.length === 0) {
     return (
-      <p className='text-sm [color:var(--kangur-page-muted-text)]' data-testid={emptyTestId}>
+      <KangurCardDescription as='p' data-testid={emptyTestId} size='sm'>
         Kolejne odznaki pojawia sie wraz z postepem.
-      </p>
+      </KangurCardDescription>
     );
   }
 
@@ -55,17 +58,17 @@ export default function KangurBadgeTrackGrid({
           >
             <div className='flex items-start justify-between gap-3'>
               <div className='min-w-0'>
-                <p className='text-[11px] font-bold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
+                <KangurSectionEyebrow as='p' className='tracking-[0.18em]'>
                   {track.emoji} {track.label}
-                </p>
-                <p className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                </KangurSectionEyebrow>
+                <KangurCardTitle as='p' className='mt-1'>
                   {track.unlockedCount}/{track.totalCount} odznak
-                </p>
-                <p className='mt-1 text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
+                </KangurCardTitle>
+                <KangurCardDescription as='p' className='mt-1 leading-5' size='xs'>
                   {track.nextBadge
                     ? `${track.nextBadge.name} · ${track.nextBadge.summary}`
                     : 'Wszystkie odznaki odblokowane'}
-                </p>
+                </KangurCardDescription>
               </div>
               <KangurStatusChip accent={accent} className='shrink-0'>
                 {track.progressPercent}%

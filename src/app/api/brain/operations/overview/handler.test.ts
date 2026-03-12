@@ -30,7 +30,7 @@ vi.mock('@/features/ai/server', () => ({
   listImageStudioRuns: listImageStudioRunsMock,
 }));
 
-vi.mock('@/shared/lib/db/prisma', () => ({
+vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
   default: {
     chatbotAgentRun: {
       findMany: agentFindManyMock,

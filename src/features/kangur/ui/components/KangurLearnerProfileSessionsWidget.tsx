@@ -11,6 +11,7 @@ import {
   KangurGlassPanel,
   KangurIconBadge,
   KangurInfoCard,
+  KangurSectionEyebrow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
@@ -50,9 +51,9 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
         surface='mistStrong'
         variant='soft'
       >
-        <div className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
+        <KangurSectionEyebrow className='mb-3'>
           Ostatnie sesje
-        </div>
+        </KangurSectionEyebrow>
         {isLoadingScores ? (
           <KangurEmptyState
             accent='slate'
@@ -134,9 +135,9 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
       </KangurGlassPanel>
 
       <KangurGlassPanel className='xl:col-span-2' padding='lg' surface='solid' variant='subtle'>
-        <div className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
+        <KangurSectionEyebrow className='mb-3'>
           Sciezki odznak
-        </div>
+        </KangurSectionEyebrow>
         <KangurBadgeTrackGrid
           className='grid-cols-1'
           dataTestIdPrefix='learner-profile-badge-track'

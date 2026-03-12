@@ -4,6 +4,8 @@ import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports'
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurButton,
+  KangurCardDescription,
+  KangurCardTitle,
   KangurGlassPanel,
   KangurProgressBar,
   KangurStatusChip,
@@ -81,7 +83,7 @@ function KangurPracticeAssignmentBannerBody(): React.JSX.Element {
 
   return (
     <>
-      <KangurStatusChip accent='amber' className='text-[11px] uppercase tracking-[0.18em]'>
+      <KangurStatusChip accent='amber' labelStyle='eyebrow'>
         Priorytet rodzica
       </KangurStatusChip>
       <div className='mt-3 text-sm font-semibold leading-6 text-amber-900'>{banner.helperLabel}</div>
@@ -95,15 +97,15 @@ function KangurPracticeAssignmentBannerBody(): React.JSX.Element {
       >
         <div className='flex flex-wrap items-start justify-between gap-3'>
           <div className='min-w-0'>
-            <KangurStatusChip accent='amber' className='text-[11px] uppercase tracking-[0.16em]'>
+            <KangurStatusChip accent='amber' labelStyle='caps'>
               {banner.priorityLabel}
             </KangurStatusChip>
-            <div className='mt-3 text-base font-extrabold [color:var(--kangur-page-text)]'>
+            <KangurCardTitle className='mt-3' size='md'>
               {banner.title}
-            </div>
-            <div className='mt-1 text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
+            </KangurCardTitle>
+            <KangurCardDescription className='mt-1' relaxed size='sm'>
               {banner.description}
-            </div>
+            </KangurCardDescription>
           </div>
           <KangurStatusChip accent='amber' className='text-sm font-bold text-amber-800'>
             {banner.progressPercent}%

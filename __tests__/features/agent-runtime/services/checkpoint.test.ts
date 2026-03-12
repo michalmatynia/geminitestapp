@@ -6,9 +6,9 @@ import {
   buildCheckpointState,
   persistCheckpoint,
 } from '@/features/ai/agent-runtime/memory/checkpoint';
-import prisma from '@/shared/lib/db/prisma';
+import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 
-vi.mock('@/shared/lib/db/prisma', () => ({
+vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
   default: {
     chatbotAgentRun: { update: vi.fn() },
   },
@@ -56,7 +56,7 @@ describe('Agent Runtime - Checkpoint', () => {
   });
 
   describe('persistCheckpoint', () => {
-    it('should update prisma and log audit', async () => {
+    it('should update the legacy SQL store and log audit', async () => {
       const payload = {
         runId: 'run-1',
         steps: [],
@@ -65,7 +65,7 @@ describe('Agent Runtime - Checkpoint', () => {
 
       await persistCheckpoint(payload);
 
-      expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(
+      expect(legacySqlClient.chatbotAgentRun.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: 'run-1' },
           data: expect.objectContaining({

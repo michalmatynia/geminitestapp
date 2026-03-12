@@ -141,7 +141,7 @@ canonical: true
   "severity": "info",
   "appliesToNodeTypes": ["database"],
   "description": "Explicit provider selection improves predictability.",
-  "recommendation": "Set query.provider to mongodb/prisma/auto as intended.",
+  "recommendation": "Set query.provider to mongodb/auto as intended.",
   "version": "2.0.0",
   "tags": ["database", "provider"],
   "sequenceHint": 92,

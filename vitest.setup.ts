@@ -96,7 +96,7 @@ console.error = (...args: unknown[]): void => {
 };
 
 // Define mock models inside vi.mock factory to avoid hoisting issues
-vi.mock('@/shared/lib/db/prisma', () => {
+vi.mock('@/shared/lib/db/legacy-sql-client', () => {
   const store: Record<string, any[]> = {};
 
   const getModelStore = (model: string) => {
@@ -104,7 +104,7 @@ vi.mock('@/shared/lib/db/prisma', () => {
     return store[model];
   };
 
-  const mockPrismaModel = (modelName: string) => ({
+  const mockLegacySqlModel = (modelName: string) => ({
     findUnique: vi.fn().mockImplementation((args) => {
       const s = getModelStore(modelName);
       return Promise.resolve(
@@ -190,7 +190,7 @@ vi.mock('@/shared/lib/db/prisma', () => {
     count: vi.fn().mockImplementation(() => Promise.resolve(getModelStore(modelName).length)),
   });
 
-  const prismaMock: any = {
+  const legacySqlClientMock: any = {
     $transaction: vi.fn().mockImplementation((cb) => cb(proxy)),
     $disconnect: vi.fn().mockResolvedValue(undefined),
     $connect: vi.fn().mockResolvedValue(undefined),
@@ -207,14 +207,14 @@ vi.mock('@/shared/lib/db/prisma', () => {
 
   const modelMocks: Record<string, any> = {};
 
-  const proxy = new Proxy(prismaMock, {
+  const proxy = new Proxy(legacySqlClientMock, {
     get: (target, prop) => {
       if (prop in target) {
         return target[prop];
       }
       if (typeof prop === 'string' && !prop.startsWith('$')) {
         if (!modelMocks[prop]) {
-          modelMocks[prop] = mockPrismaModel(prop);
+          modelMocks[prop] = mockLegacySqlModel(prop);
         }
         return modelMocks[prop];
       }
@@ -702,12 +702,11 @@ vi.mock('@/shared/lib/api/api-handler', () => {
           });
         } catch (error: any) {
           const status =
-            (error.name === 'AppError' && error.code === 'NOT_FOUND') ||
-            (error.name === 'PrismaClientKnownRequestError' && error.code === 'P2025')
+            (error.name === 'AppError' && error.code === 'NOT_FOUND') || error.code === 'P2025'
               ? 404
               : (error.name === 'AppError' && error.code === 'VALIDATION_ERROR') ||
                   error.code === 'BAD_REQUEST' ||
-                  error.name === 'PrismaClientValidationError' ||
+                  error.name === 'ValidationError' ||
                   error.name === 'ZodError'
                 ? 400
                 : error.httpStatus || 500;
@@ -758,12 +757,11 @@ vi.mock('@/shared/lib/api/api-handler', () => {
           return await handler(req as any, context, resolvedParams);
         } catch (error: any) {
           const status =
-            (error.name === 'AppError' && error.code === 'NOT_FOUND') ||
-            (error.name === 'PrismaClientKnownRequestError' && error.code === 'P2025')
+            (error.name === 'AppError' && error.code === 'NOT_FOUND') || error.code === 'P2025'
               ? 404
               : (error.name === 'AppError' && error.code === 'VALIDATION_ERROR') ||
                   error.code === 'BAD_REQUEST' ||
-                  error.name === 'PrismaClientValidationError' ||
+                  error.name === 'ValidationError' ||
                   error.name === 'ZodError'
                 ? 400
                 : error.httpStatus || 500;
@@ -1010,14 +1008,14 @@ afterEach(async () => {
   // Reset handlers after each test to ensure test isolation
   server.resetHandlers();
 
-  // Reset Prisma mock store
+  // Reset legacy SQL mock store
   try {
-    const { default: prisma } = await import('@/shared/lib/db/prisma');
-    if ((prisma as any).$resetAll) {
-      await (prisma as any).$resetAll();
+    const { default: legacySqlClient } = await import('@/shared/lib/db/legacy-sql-client');
+    if ((legacySqlClient as any).$resetAll) {
+      await (legacySqlClient as any).$resetAll();
     }
   } catch {
-    // Tests that intentionally unmock the removed Prisma client should still clean up safely.
+    // Tests that intentionally unmock the removed legacy SQL client should still clean up safely.
   }
 
   try {

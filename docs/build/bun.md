@@ -88,7 +88,6 @@ Bun is not the canonical path for:
 - `dev`
 - `build`
 - `start`
-- Prisma generation or migrations
 - Next.js production builds
 
 Those remain on the Node/npm toolchain until the repo intentionally migrates them.

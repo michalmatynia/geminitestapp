@@ -12,7 +12,7 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/db/prisma', () => ({
+vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
   default: {},
 }));
 

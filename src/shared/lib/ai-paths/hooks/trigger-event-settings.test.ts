@@ -555,7 +555,7 @@ describe('loadPathConfigsFromSettings', () => {
                 database: {
                   operation: 'query',
                   query: {
-                    provider: 'prisma',
+                    provider: 'mongodb',
                     collection: 'products',
                     mode: 'custom',
                     preset: 'by_id',

@@ -6,6 +6,7 @@ import {
   KangurGlassPanel,
   KangurIconBadge,
   KangurOptionCardButton,
+  KangurPanelIntro,
   KangurSelectField,
   KangurStatusChip,
   KangurTextField,
@@ -35,17 +36,15 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
   return (
     <div className='flex flex-col gap-5'>
       <KangurGlassPanel className='flex flex-col gap-5' padding='lg' surface='mistStrong' variant='soft'>
-        <div className='flex flex-col gap-1.5'>
-          <div className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
-            Profile uczniow
-          </div>
-          <h2 className='text-lg font-bold tracking-[-0.02em] [color:var(--kangur-page-text)]'>
-            Zarzadzaj profilami bez opuszczania panelu
-          </h2>
-          <div className='max-w-2xl text-sm [color:var(--kangur-page-muted-text)]'>
-            Rodzic loguje sie emailem, a uczniowie dostaja osobne nazwy logowania i hasla.
-          </div>
-        </div>
+        <KangurPanelIntro
+          className='gap-1.5'
+          eyebrow='Profile uczniow'
+          title='Zarzadzaj profilami bez opuszczania panelu'
+          titleAs='h2'
+          titleClassName='text-lg font-bold tracking-[-0.02em]'
+          description='Rodzic loguje sie emailem, a uczniowie dostaja osobne nazwy logowania i hasla.'
+          descriptionClassName='max-w-2xl'
+        />
 
         <div className='grid gap-3 sm:grid-cols-2'>
           {learners.map((learner) => {
@@ -108,14 +107,10 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
         </div>
 
         <KangurGlassPanel className='flex flex-col gap-4' padding='md' surface='solid' variant='subtle'>
-          <div className='flex flex-col gap-1'>
-            <div className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
-              Nowy profil
-            </div>
-            <div className='text-sm [color:var(--kangur-page-muted-text)]'>
-              Dodaj dziecko i od razu ustaw jego login oraz haslo do gry.
-            </div>
-          </div>
+          <KangurPanelIntro
+            eyebrow='Nowy profil'
+            description='Dodaj dziecko i od razu ustaw jego login oraz haslo do gry.'
+          />
 
           <div className='grid gap-3 md:grid-cols-3'>
             <KangurTextField
@@ -156,18 +151,18 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
 
       {activeLearner ? (
         <KangurGlassPanel className='flex flex-col gap-4' padding='lg' surface='mistSoft' variant='soft'>
-          <div className='flex flex-col gap-1'>
-            <div className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
-              Wybrany profil
-            </div>
-            <div className='text-sm [color:var(--kangur-page-muted-text)]'>
-              Aktualizujesz dane ucznia{' '}
-              <span className='font-semibold [color:var(--kangur-page-text)]'>
-                {activeLearner.displayName}
-              </span>
-              .
-            </div>
-          </div>
+          <KangurPanelIntro
+            eyebrow='Wybrany profil'
+            description={
+              <>
+                Aktualizujesz dane ucznia{' '}
+                <span className='font-semibold [color:var(--kangur-page-text)]'>
+                  {activeLearner.displayName}
+                </span>
+                .
+              </>
+            }
+          />
           <div className='grid gap-3 md:grid-cols-2'>
             <KangurTextField
               accent='indigo'

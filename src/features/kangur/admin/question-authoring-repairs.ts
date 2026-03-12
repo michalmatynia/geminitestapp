@@ -1,3 +1,5 @@
+import type { IdLabelOption } from '@/shared/contracts';
+
 import type { QuestionFormData } from '../test-questions';
 import type { QuestionAuthoringIssue } from './question-authoring-insights';
 
@@ -8,10 +10,7 @@ export type QuestionAuthoringRepairId =
   | 'add-explanation-starter'
   | 'add-svg-choice-notes';
 
-export type QuestionAuthoringRepairAction = {
-  id: QuestionAuthoringRepairId;
-  label: string;
-};
+export type QuestionAuthoringRepairAction = IdLabelOption<QuestionAuthoringRepairId>;
 
 const CHOICE_LABELS = 'ABCDEFGHIJ'.split('');
 

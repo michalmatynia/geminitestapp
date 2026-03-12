@@ -10,14 +10,14 @@ describe('integration baseline report helpers', () => {
     const payload = buildIntegrationBaselinePayload({
       generatedAt: '2026-03-11T10:00:00.000Z',
       strictMode: true,
-      suiteId: 'integration-prisma',
-      suiteName: 'Prisma Integration Project',
-      project: 'integration-prisma',
+      suiteId: 'integration-mongo',
+      suiteName: 'Mongo Integration Project',
+      project: 'integration-mongo',
       steps: [
         {
-          id: 'preflight',
-          name: 'Prisma preflight',
-          command: './node_modules/.bin/prisma migrate status',
+          id: 'mongo-preflight',
+          name: 'Mongo preflight',
+          command: 'mongosh --quiet --eval db.runCommand({ ping: 1 }).ok',
           status: 'pass',
           exitCode: 0,
           durationMs: 250,
@@ -25,8 +25,8 @@ describe('integration baseline report helpers', () => {
         },
         {
           id: 'vitest',
-          name: 'Vitest integration-prisma project',
-          command: './node_modules/.bin/vitest run --project integration-prisma',
+          name: 'Vitest integration-mongo project',
+          command: './node_modules/.bin/vitest run --project integration-mongo',
           status: 'pass',
           exitCode: 0,
           durationMs: 1_250,
@@ -42,7 +42,7 @@ describe('integration baseline report helpers', () => {
       totalDurationMs: 1_500,
     });
     expect(payload.results[0]).toMatchObject({
-      id: 'integration-prisma',
+      id: 'integration-mongo',
       status: 'pass',
       exitCode: 0,
       durationMs: 1_500,

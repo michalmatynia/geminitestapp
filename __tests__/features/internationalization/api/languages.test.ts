@@ -1,11 +1,11 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
 
-vi.unmock('@/shared/lib/db/prisma');
+vi.unmock('@/shared/lib/db/legacy-sql-client');
 
 import { DELETE, PUT } from '@/app/api/v2/metadata/[type]/[id]/route';
 import { GET, POST } from '@/app/api/v2/metadata/[type]/route';
-import prisma from '@/shared/lib/db/prisma';
+import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 
 type LanguageResponse = {
   id: string;
@@ -28,9 +28,9 @@ describe('Languages API', () => {
     if (shouldSkipLanguagesApiTests()) return;
 
     try {
-      await prisma.languageCountry.deleteMany({});
-      await prisma.language.deleteMany({});
-      await prisma.country.deleteMany({});
+      await legacySqlClient.languageCountry.deleteMany({});
+      await legacySqlClient.language.deleteMany({});
+      await legacySqlClient.country.deleteMany({});
     } catch (error) {
       const code = (error as { code?: string }).code;
       if (code === 'EPERM') {
@@ -42,7 +42,7 @@ describe('Languages API', () => {
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    await legacySqlClient.$disconnect();
   });
 
   describe('GET /api/v2/metadata/languages', () => {
@@ -57,7 +57,7 @@ describe('Languages API', () => {
       expect(res.status).toEqual(200);
       expect(languages.length).toBeGreaterThan(0);
 
-      const dbLanguages = await prisma.language.findMany();
+      const dbLanguages = await legacySqlClient.language.findMany();
       expect(dbLanguages.length).toBeGreaterThan(0);
 
       const en = languages.find((l: LanguageResponse) => l.code === 'EN');
@@ -94,7 +94,7 @@ describe('Languages API', () => {
     it('should create a language with country assignments', async () => {
       if (shouldSkipLanguagesApiTests()) return;
       // Need a country first
-      const country = await prisma.country.create({
+      const country = await legacySqlClient.country.create({
         data: { code: 'PL', name: 'Poland' },
       });
 
@@ -136,10 +136,10 @@ describe('Languages API', () => {
   describe('PUT /api/v2/metadata/languages/[id]', () => {
     it('should update language fields and countries', async () => {
       if (shouldSkipLanguagesApiTests()) return;
-      const language = await prisma.language.create({
+      const language = await legacySqlClient.language.create({
         data: { code: 'PL', name: 'Polish', nativeName: 'Polski' },
       });
-      const country = await prisma.country.create({
+      const country = await legacySqlClient.country.create({
         data: { code: 'PL', name: 'Poland' },
       });
 
@@ -166,20 +166,20 @@ describe('Languages API', () => {
   describe('DELETE /api/v2/metadata/languages/[id]', () => {
     it('should delete language and remove assignments', async () => {
       if (shouldSkipLanguagesApiTests()) return;
-      const language = await prisma.language.create({
+      const language = await legacySqlClient.language.create({
         data: { code: 'SV', name: 'Swedish', nativeName: 'Svenska' },
       });
-      const country = await prisma.country.create({
+      const country = await legacySqlClient.country.create({
         data: { code: 'SE', name: 'Sweden' },
       });
-      const catalog = await prisma.catalog.create({
+      const catalog = await legacySqlClient.catalog.create({
         data: { name: 'Nordic', description: 'Nordic catalog' },
       });
 
-      await prisma.languageCountry.create({
+      await legacySqlClient.languageCountry.create({
         data: { languageId: language.id, countryId: country.id },
       });
-      await prisma.catalogLanguage.create({
+      await legacySqlClient.catalogLanguage.create({
         data: { catalogId: catalog.id, languageId: language.id },
       });
 
@@ -189,13 +189,13 @@ describe('Languages API', () => {
       );
 
       expect(res.status).toEqual(204);
-      const remainingLanguage = await prisma.language.findUnique({
+      const remainingLanguage = await legacySqlClient.language.findUnique({
         where: { id: language.id },
       });
-      const remainingCountryLinks = await prisma.languageCountry.findMany({
+      const remainingCountryLinks = await legacySqlClient.languageCountry.findMany({
         where: { languageId: language.id },
       });
-      const remainingCatalogLinks = await prisma.catalogLanguage.findMany({
+      const remainingCatalogLinks = await legacySqlClient.catalogLanguage.findMany({
         where: { languageId: language.id },
       });
 

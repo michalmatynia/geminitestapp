@@ -363,6 +363,7 @@ const mergeFollowUpActions = (
 
 const buildKnowledgeGraphResponseSummary = (input: {
   knowledgeGraphApplied: boolean;
+  knowledgeGraphQueryStatus: 'hit' | 'miss' | 'skipped' | 'disabled';
   knowledgeGraphQueryMode: 'website_help' | 'semantic' | null;
   knowledgeGraphRecallStrategy: 'metadata_only' | 'vector_only' | 'hybrid_vector' | null;
   knowledgeGraphLexicalHitCount: number;
@@ -372,6 +373,7 @@ const buildKnowledgeGraphResponseSummary = (input: {
   websiteHelpGraphTargetNodeId: string | null;
 }) => ({
   applied: input.knowledgeGraphApplied,
+  queryStatus: input.knowledgeGraphQueryStatus,
   queryMode: input.knowledgeGraphQueryMode,
   recallStrategy: input.knowledgeGraphRecallStrategy,
   lexicalHitCount: input.knowledgeGraphLexicalHitCount,
@@ -493,6 +495,11 @@ const buildLearnerMemoryInstructions = (
   }
   if (memory.lastCoachingMode) {
     lines.push(`Previous coaching mode: ${memory.lastCoachingMode}.`);
+  }
+  if (memory.lastGivenHints?.length) {
+    lines.push(
+      `Recent hints given (vary your approach, do not repeat these verbatim): ${memory.lastGivenHints.join(' | ')}`
+    );
   }
 
   return lines.length > 1 ? lines.join('\n') : '';
@@ -810,6 +817,7 @@ export async function postKangurAiTutorChatHandler(
   let adaptiveGuidanceApplied = false;
   let adaptiveCoachingMode: KangurAiTutorCoachingMode | null = null;
   let knowledgeGraphApplied = false;
+  let knowledgeGraphQueryStatus: 'hit' | 'miss' | 'skipped' | 'disabled' = 'skipped';
   let knowledgeGraphQueryMode: 'website_help' | 'semantic' | null = null;
   let knowledgeGraphRecallStrategy: 'metadata_only' | 'vector_only' | 'hybrid_vector' | null =
     null;
@@ -1000,6 +1008,7 @@ export async function postKangurAiTutorChatHandler(
       ].filter((document): document is ContextRuntimeDocument => Boolean(document)),
     });
     knowledgeGraphApplied = knowledgeGraphContext.status === 'hit';
+    knowledgeGraphQueryStatus = knowledgeGraphContext.status;
     knowledgeGraphQueryMode = knowledgeGraphContext.status === 'hit'
       ? knowledgeGraphContext.queryMode
       : null;
@@ -1032,6 +1041,44 @@ export async function postKangurAiTutorChatHandler(
       knowledgeGraphWebsiteHelpTarget?.anchorId ?? null;
     const knowledgeGraphFollowUpActions =
       knowledgeGraphContext.status === 'hit' ? knowledgeGraphContext.graphFollowUpActions : [];
+
+    // Telemetry helpers — capture the resolved KG/settings state once so each
+    // log callsite can spread them instead of repeating 15+ fields verbatim.
+    const buildKgTelemetry = () => ({
+      knowledgeGraphApplied,
+      knowledgeGraphQueryMode,
+      knowledgeGraphRecallStrategy,
+      knowledgeGraphLexicalHitCount,
+      knowledgeGraphVectorHitCount,
+      knowledgeGraphVectorRecallAttempted,
+      knowledgeGraphNodeIds,
+      knowledgeGraphSourceCollections,
+      knowledgeGraphHydrationSources,
+      websiteHelpGraphApplied,
+      websiteHelpGraphNodeIds: websiteHelpGraphApplied ? knowledgeGraphNodeIds : [],
+      websiteHelpGraphSourceCollections: websiteHelpGraphApplied ? knowledgeGraphSourceCollections : [],
+      websiteHelpGraphHydrationSources: websiteHelpGraphApplied ? knowledgeGraphHydrationSources : [],
+      websiteHelpGraphTargetNodeId: websiteHelpGraphApplied ? knowledgeGraphWebsiteHelpTargetNodeId : null,
+      websiteHelpGraphTargetRoute: websiteHelpGraphApplied ? knowledgeGraphWebsiteHelpTargetRoute : null,
+      websiteHelpGraphTargetAnchorId: websiteHelpGraphApplied ? knowledgeGraphWebsiteHelpTargetAnchorId : null,
+    });
+    const buildSettingsTelemetry = () => ({
+      showSources: tutorSettings.showSources,
+      allowSelectedTextSupport: tutorSettings.allowSelectedTextSupport,
+      allowLessons: tutorSettings.allowLessons,
+      allowGames: tutorSettings.allowGames,
+      testAccessMode: tutorSettings.testAccessMode,
+      hintDepth: tutorSettings.hintDepth,
+      proactiveNudges: tutorSettings.proactiveNudges,
+      rememberTutorContext: tutorSettings.rememberTutorContext,
+    });
+    const buildMoodTelemetry = () => ({
+      tutorMoodId: tutorMood.currentMoodId,
+      tutorBaselineMoodId: tutorMood.baselineMoodId,
+      tutorMoodReasonCode: tutorMood.lastReasonCode,
+      tutorMoodConfidence: tutorMood.confidence,
+    });
+
     if (nativeGuideResolution.status === 'hit') {
       const nativeGuideResponse = extractTutorDrawingArtifactsFromResponse(
         nativeGuideResolution.message
@@ -1080,32 +1127,7 @@ export async function postKangurAiTutorChatHandler(
             nativeGuideCoverageLevel: nativeGuideResolution.coverageLevel,
             nativeGuideEntryId: nativeGuideResolution.entryId,
             nativeGuideMatchSignals: nativeGuideResolution.matchedSignals,
-            knowledgeGraphApplied,
-            knowledgeGraphQueryMode,
-            knowledgeGraphRecallStrategy,
-            knowledgeGraphLexicalHitCount,
-            knowledgeGraphVectorHitCount,
-            knowledgeGraphVectorRecallAttempted,
-            knowledgeGraphNodeIds,
-            knowledgeGraphSourceCollections,
-            knowledgeGraphHydrationSources,
-            websiteHelpGraphApplied,
-            websiteHelpGraphNodeIds: websiteHelpGraphApplied ? knowledgeGraphNodeIds : [],
-            websiteHelpGraphSourceCollections: websiteHelpGraphApplied
-              ? knowledgeGraphSourceCollections
-              : [],
-            websiteHelpGraphHydrationSources: websiteHelpGraphApplied
-              ? knowledgeGraphHydrationSources
-              : [],
-            websiteHelpGraphTargetNodeId: websiteHelpGraphApplied
-              ? knowledgeGraphWebsiteHelpTargetNodeId
-              : null,
-            websiteHelpGraphTargetRoute: websiteHelpGraphApplied
-              ? knowledgeGraphWebsiteHelpTargetRoute
-              : null,
-            websiteHelpGraphTargetAnchorId: websiteHelpGraphApplied
-              ? knowledgeGraphWebsiteHelpTargetAnchorId
-              : null,
+            ...buildKgTelemetry(),
           },
         });
       }
@@ -1126,51 +1148,16 @@ export async function postKangurAiTutorChatHandler(
           interactionIntent: context?.interactionIntent ?? null,
           retrievedSourceCount: resolvedSources.length,
           returnedSourceCount: responseSources.length,
-          showSources: tutorSettings.showSources,
-          allowSelectedTextSupport: tutorSettings.allowSelectedTextSupport,
-          allowLessons: tutorSettings.allowLessons,
-          allowGames: tutorSettings.allowGames,
-          testAccessMode: tutorSettings.testAccessMode,
-          hintDepth: tutorSettings.hintDepth,
-          proactiveNudges: tutorSettings.proactiveNudges,
-          rememberTutorContext: tutorSettings.rememberTutorContext,
+          ...buildSettingsTelemetry(),
           nativeGuideApplied: true,
           nativeGuideCoverageLevel: nativeGuideResolution.coverageLevel,
           nativeGuideEntryId: nativeGuideResolution.entryId,
           nativeGuideMatchSignals: nativeGuideResolution.matchedSignals,
-          knowledgeGraphApplied,
-          knowledgeGraphQueryMode,
-          knowledgeGraphRecallStrategy,
-          knowledgeGraphLexicalHitCount,
-          knowledgeGraphVectorHitCount,
-          knowledgeGraphVectorRecallAttempted,
-          knowledgeGraphNodeIds,
-          knowledgeGraphSourceCollections,
-          knowledgeGraphHydrationSources,
-          websiteHelpGraphApplied,
-          websiteHelpGraphNodeIds: websiteHelpGraphApplied ? knowledgeGraphNodeIds : [],
-          websiteHelpGraphSourceCollections: websiteHelpGraphApplied
-            ? knowledgeGraphSourceCollections
-            : [],
-          websiteHelpGraphHydrationSources: websiteHelpGraphApplied
-            ? knowledgeGraphHydrationSources
-            : [],
-          websiteHelpGraphTargetNodeId: websiteHelpGraphApplied
-            ? knowledgeGraphWebsiteHelpTargetNodeId
-            : null,
-          websiteHelpGraphTargetRoute: websiteHelpGraphApplied
-            ? knowledgeGraphWebsiteHelpTargetRoute
-            : null,
-          websiteHelpGraphTargetAnchorId: websiteHelpGraphApplied
-            ? knowledgeGraphWebsiteHelpTargetAnchorId
-            : null,
+          ...buildKgTelemetry(),
           contextRegistryRefCount: contextRegistryBundle?.refs.length ?? 0,
           contextRegistryDocumentCount: contextRegistryBundle?.documents.length ?? 0,
           followUpActionCount: nativeGuideResolution.followUpActions.length,
-          tutorMoodId: tutorMood.currentMoodId,
-          tutorBaselineMoodId: tutorMood.baselineMoodId,
-          tutorMoodReasonCode: tutorMood.lastReasonCode,
-          tutorMoodConfidence: tutorMood.confidence,
+          ...buildMoodTelemetry(),
           dailyMessageLimit: usage.dailyMessageLimit,
           dailyUsageCount: usage.messageCount,
           dailyUsageRemaining: usage.remainingMessages,
@@ -1189,6 +1176,7 @@ export async function postKangurAiTutorChatHandler(
         artifacts: nativeGuideResponse.artifacts,
         knowledgeGraph: buildKnowledgeGraphResponseSummary({
           knowledgeGraphApplied,
+          knowledgeGraphQueryStatus,
           knowledgeGraphQueryMode,
           knowledgeGraphRecallStrategy,
           knowledgeGraphLexicalHitCount,
@@ -1225,32 +1213,7 @@ export async function postKangurAiTutorChatHandler(
           promptMode: resolvedPromptMode,
           interactionIntent: context?.interactionIntent ?? null,
           nativeGuideApplied: false,
-          knowledgeGraphApplied,
-          knowledgeGraphQueryMode,
-          knowledgeGraphRecallStrategy,
-          knowledgeGraphLexicalHitCount,
-          knowledgeGraphVectorHitCount,
-          knowledgeGraphVectorRecallAttempted,
-          knowledgeGraphNodeIds,
-          knowledgeGraphSourceCollections,
-          knowledgeGraphHydrationSources,
-          websiteHelpGraphApplied,
-          websiteHelpGraphNodeIds: websiteHelpGraphApplied ? knowledgeGraphNodeIds : [],
-          websiteHelpGraphSourceCollections: websiteHelpGraphApplied
-            ? knowledgeGraphSourceCollections
-            : [],
-          websiteHelpGraphHydrationSources: websiteHelpGraphApplied
-            ? knowledgeGraphHydrationSources
-            : [],
-          websiteHelpGraphTargetNodeId: websiteHelpGraphApplied
-            ? knowledgeGraphWebsiteHelpTargetNodeId
-            : null,
-          websiteHelpGraphTargetRoute: websiteHelpGraphApplied
-            ? knowledgeGraphWebsiteHelpTargetRoute
-            : null,
-          websiteHelpGraphTargetAnchorId: websiteHelpGraphApplied
-            ? knowledgeGraphWebsiteHelpTargetAnchorId
-            : null,
+          ...buildKgTelemetry(),
         },
       });
     }
@@ -1460,41 +1423,9 @@ export async function postKangurAiTutorChatHandler(
         brainCapability: KANGUR_AI_TUTOR_BRAIN_CAPABILITY,
         retrievedSourceCount: resolvedSources.length,
         returnedSourceCount: responseSources.length,
-        showSources: tutorSettings.showSources,
-        allowSelectedTextSupport: tutorSettings.allowSelectedTextSupport,
-        allowLessons: tutorSettings.allowLessons,
-        allowGames: tutorSettings.allowGames,
-        testAccessMode: tutorSettings.testAccessMode,
-        hintDepth: tutorSettings.hintDepth,
-        proactiveNudges: tutorSettings.proactiveNudges,
-        rememberTutorContext: tutorSettings.rememberTutorContext,
+        ...buildSettingsTelemetry(),
         adaptiveGuidanceApplied,
-        knowledgeGraphApplied,
-        knowledgeGraphQueryMode,
-        knowledgeGraphRecallStrategy,
-        knowledgeGraphLexicalHitCount,
-        knowledgeGraphVectorHitCount,
-        knowledgeGraphVectorRecallAttempted,
-        knowledgeGraphNodeIds,
-        knowledgeGraphSourceCollections,
-        knowledgeGraphHydrationSources,
-        websiteHelpGraphApplied,
-        websiteHelpGraphNodeIds: websiteHelpGraphApplied ? knowledgeGraphNodeIds : [],
-        websiteHelpGraphSourceCollections: websiteHelpGraphApplied
-          ? knowledgeGraphSourceCollections
-          : [],
-        websiteHelpGraphHydrationSources: websiteHelpGraphApplied
-          ? knowledgeGraphHydrationSources
-          : [],
-        websiteHelpGraphTargetNodeId: websiteHelpGraphApplied
-          ? knowledgeGraphWebsiteHelpTargetNodeId
-          : null,
-        websiteHelpGraphTargetRoute: websiteHelpGraphApplied
-          ? knowledgeGraphWebsiteHelpTargetRoute
-          : null,
-        websiteHelpGraphTargetAnchorId: websiteHelpGraphApplied
-          ? knowledgeGraphWebsiteHelpTargetAnchorId
-          : null,
+        ...buildKgTelemetry(),
         contextRegistryRefCount: contextRegistryBundle?.refs.length ?? 0,
         contextRegistryDocumentCount: contextRegistryBundle?.documents.length ?? 0,
         followUpActionCount: adaptiveGuidance.followUpActions.length,
@@ -1508,10 +1439,7 @@ export async function postKangurAiTutorChatHandler(
         personaId: tutorSettings.agentPersonaId,
         suggestedPersonaMoodId,
         personaMemorySessionId,
-        tutorMoodId: tutorMood.currentMoodId,
-        tutorBaselineMoodId: tutorMood.baselineMoodId,
-        tutorMoodReasonCode: tutorMood.lastReasonCode,
-        tutorMoodConfidence: tutorMood.confidence,
+        ...buildMoodTelemetry(),
         dailyMessageLimit: usage.dailyMessageLimit,
         dailyUsageCount: usage.messageCount,
         dailyUsageRemaining: usage.remainingMessages,
@@ -1530,6 +1458,7 @@ export async function postKangurAiTutorChatHandler(
       artifacts: parsedTutorResponse.artifacts,
       knowledgeGraph: buildKnowledgeGraphResponseSummary({
         knowledgeGraphApplied,
+        knowledgeGraphQueryStatus,
         knowledgeGraphQueryMode,
         knowledgeGraphRecallStrategy,
         knowledgeGraphLexicalHitCount,

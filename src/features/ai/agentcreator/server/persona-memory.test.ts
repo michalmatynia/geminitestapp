@@ -23,7 +23,7 @@ vi.mock('@/features/ai/agent-runtime/memory', () => ({
   addAgentLongTermMemory: addAgentLongTermMemoryMock,
 }));
 
-vi.mock('@/shared/lib/db/prisma', () => ({
+vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
   default: {
     agentLongTermMemory: {
       findMany: vi.fn(),
@@ -35,7 +35,7 @@ vi.mock('@/shared/lib/db/prisma', () => ({
   },
 }));
 
-import prisma from '@/shared/lib/db/prisma';
+import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 
 import {
   buildAgentPersonaMemoryKey,
@@ -65,7 +65,7 @@ describe('persona memory service', () => {
         updatedAt: '2026-03-07T10:00:00.000Z',
       },
     ]);
-    vi.mocked(prisma.agentLongTermMemory.findMany).mockResolvedValue([
+    vi.mocked(legacySqlClient.agentLongTermMemory.findMany).mockResolvedValue([
       {
         id: 'mem-1',
         memoryKey: 'persona-1-bank',
@@ -87,9 +87,9 @@ describe('persona memory service', () => {
         updatedAt: new Date('2026-03-06T09:45:00.000Z'),
       },
     ] as never);
-    vi.mocked(prisma.agentLongTermMemory.updateMany).mockResolvedValue({ count: 1 } as never);
+    vi.mocked(legacySqlClient.agentLongTermMemory.updateMany).mockResolvedValue({ count: 1 } as never);
     addAgentLongTermMemoryMock.mockResolvedValue(null);
-    vi.mocked(prisma.chatbotMessage.findMany).mockResolvedValue([
+    vi.mocked(legacySqlClient.chatbotMessage.findMany).mockResolvedValue([
       {
         id: 'msg-1',
         sessionId: 'session-1',
@@ -116,8 +116,8 @@ describe('persona memory service', () => {
       limit: 5,
     });
 
-    expect(prisma.agentLongTermMemory.findMany).toHaveBeenCalled();
-    expect(prisma.chatbotMessage.findMany).toHaveBeenCalled();
+    expect(legacySqlClient.agentLongTermMemory.findMany).toHaveBeenCalled();
+    expect(legacySqlClient.chatbotMessage.findMany).toHaveBeenCalled();
     expect(result.summary).toMatchObject({
       personaId: 'persona-1',
       totalRecords: 2,

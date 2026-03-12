@@ -1069,6 +1069,7 @@ export const cleanupBrokerRuntimeLeases = async ({
   rootDir,
   appId = null,
   agentId = null,
+  mode = DEFAULT_MODE,
   env = process.env,
 } = {}) => {
   const resolvedRootDir = path.resolve(rootDir);
@@ -1079,15 +1080,14 @@ export const cleanupBrokerRuntimeLeases = async ({
   try {
     files = await fsPromises.readdir(leaseDir);
   } catch (error) {
-    if (error?.code === 'ENOENT') {
-      return { inspected: 0, stopped: 0, removed: 0 };
+    if (error?.code !== 'ENOENT') {
+      throw error;
     }
-
-    throw error;
   }
 
   const safeAppId = appId ? sanitizeRuntimeToken(appId, DEFAULT_APP_ID) : null;
   const safeAgentId = agentId ? sanitizeRuntimeToken(agentId, 'local') : null;
+  const safeMode = sanitizeRuntimeToken(mode, DEFAULT_MODE);
   const summary = { inspected: 0, stopped: 0, removed: 0 };
 
   for (const file of files) {
@@ -1123,6 +1123,61 @@ export const cleanupBrokerRuntimeLeases = async ({
 
     await stopBrokerRuntimeLease({ lease, leaseFilePath });
     summary.removed += 1;
+  }
+
+  if (safeAppId && safeAgentId) {
+    const candidateBundlers = new Set([
+      null,
+      resolveBrokerDevBundler({
+        env,
+        mode: safeMode,
+        fallback: null,
+      }),
+    ]);
+
+    for (const candidateBundler of candidateBundlers) {
+      const distDir = resolveBrokerManagedDistDir({
+        appId: safeAppId,
+        mode: safeMode,
+        bundler: candidateBundler,
+        agentId: safeAgentId,
+      });
+      const distPath = path.join(resolvedRootDir, distDir);
+      const syntheticLeaseFilePath = path.join(leaseDir, '__synthetic__.json');
+
+      const distExists = await fsPromises
+        .stat(distPath)
+        .then(() => true)
+        .catch((error) => {
+          if (error?.code === 'ENOENT') {
+            return false;
+          }
+
+          throw error;
+        });
+      if (!distExists) {
+        continue;
+      }
+
+      const hasSiblingLease = await hasSiblingLeaseForManagedDistDir({
+        lease: {
+          rootDir: resolvedRootDir,
+          distDir,
+          appId: safeAppId,
+          mode: safeMode,
+          bundler: candidateBundler,
+          agentId: safeAgentId,
+          managedDistDir: true,
+        },
+        leaseFilePath: syntheticLeaseFilePath,
+      });
+      if (hasSiblingLease) {
+        continue;
+      }
+
+      await removeDirectoryIfPresent(distPath);
+      summary.removed += 1;
+    }
   }
 
   return summary;

@@ -148,7 +148,7 @@ const toMarkdown = (payload) => {
   lines.push('');
   lines.push('- This snapshot aggregates generated latest metrics instead of rerunning every lane itself.');
   lines.push('- Unit domains, critical flows, and security smoke become fresh when the weekly quality lane runs.');
-  lines.push('- Integration baselines stay advisory until dedicated `*-latest.json` artifacts exist for Prisma and Mongo integration lanes.');
+  lines.push('- Integration baselines stay advisory until a dedicated `integration-mongo-latest.json` artifact exists.');
   return `${lines.join('\n')}\n`;
 };
 

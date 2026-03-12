@@ -2758,7 +2758,7 @@ export const AI_PATHS_TOOLTIP_CATALOG: AiPathsTooltipDocEntry[] = [
   {
     "id": "node_config_field_database_database_query_provider",
     "title": "Database Query: database.query.provider",
-    "summary": "Database provider (mongodb|prisma).",
+    "summary": "Database provider (mongodb only).",
     "section": "Node Config - Database Query",
     "aliases": [
       "database",
@@ -3264,7 +3264,7 @@ export const AI_PATHS_TOOLTIP_CATALOG: AiPathsTooltipDocEntry[] = [
   {
     "id": "node_config_field_db_schema_db_schema_provider",
     "title": "Database Schema: db_schema.provider",
-    "summary": "Which provider to load: auto (primary), mongodb, prisma, or all.",
+    "summary": "Which provider to load: auto (primary) or mongodb. Legacy `all` is normalized to `auto`.",
     "section": "Node Config - Database Schema",
     "aliases": [
       "db_schema",
@@ -5495,7 +5495,7 @@ export const AI_PATHS_TOOLTIP_CATALOG: AiPathsTooltipDocEntry[] = [
   {
     "id": "node_config_field_poll_poll_dbquery_provider",
     "title": "Poll Job: poll.dbQuery.provider",
-    "summary": "Database provider (mongodb|prisma).",
+    "summary": "Database provider (mongodb only).",
     "section": "Node Config - Poll Job",
     "aliases": [
       "poll",

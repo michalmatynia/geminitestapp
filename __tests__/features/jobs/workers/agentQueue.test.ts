@@ -15,9 +15,9 @@ vi.mock('crypto', async (importOriginal) => {
 import { runAgentControlLoop, logAgentAudit } from '@/features/ai/agent-runtime/server';
 import { processNextQueuedAgentRun } from '@/features/ai/agent-runtime/workers/agent-processor';
 import { stopAgentQueue } from '@/features/ai/agent-runtime/workers/agentQueue';
-import prisma from '@/shared/lib/db/prisma';
+import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 
-vi.mock('@/shared/lib/db/prisma', () => {
+vi.mock('@/shared/lib/db/legacy-sql-client', () => {
   const mockChatbotAgentRun = {
     findFirst: vi.fn(),
     findMany: vi.fn(),
@@ -46,9 +46,9 @@ describe('Agent Queue Worker', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     stopAgentQueue();
-    vi.mocked(prisma.chatbotAgentRun.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.chatbotAgentRun.findFirst).mockResolvedValue(null);
-    vi.mocked(prisma.chatbotAgentRun.update).mockResolvedValue({} as any);
+    vi.mocked(legacySqlClient.chatbotAgentRun.findMany).mockResolvedValue([]);
+    vi.mocked(legacySqlClient.chatbotAgentRun.findFirst).mockResolvedValue(null);
+    vi.mocked(legacySqlClient.chatbotAgentRun.update).mockResolvedValue({} as any);
   });
 
   afterEach(() => {
@@ -57,13 +57,13 @@ describe('Agent Queue Worker', () => {
 
   it('processes a queued agent run', async () => {
     const mockRun = { id: 'run-1', status: 'queued', createdAt: new Date() };
-    vi.mocked(prisma.chatbotAgentRun.findFirst).mockResolvedValue(mockRun as any);
+    vi.mocked(legacySqlClient.chatbotAgentRun.findFirst).mockResolvedValue(mockRun as any);
     vi.mocked(runAgentControlLoop).mockResolvedValue(undefined);
 
     await processNextQueuedAgentRun();
 
-    expect(prisma.chatbotAgentRun.findFirst).toHaveBeenCalled();
-    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(
+    expect(legacySqlClient.chatbotAgentRun.findFirst).toHaveBeenCalled();
+    expect(legacySqlClient.chatbotAgentRun.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'run-1' },
         data: expect.objectContaining({ status: 'running' }),
@@ -78,11 +78,11 @@ describe('Agent Queue Worker', () => {
       status: 'running',
       updatedAt: new Date(Date.now() - 20 * 60 * 1000),
     };
-    vi.mocked(prisma.chatbotAgentRun.findMany).mockResolvedValue([stuckRun] as any);
+    vi.mocked(legacySqlClient.chatbotAgentRun.findMany).mockResolvedValue([stuckRun] as any);
 
     await processNextQueuedAgentRun();
 
-    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(
+    expect(legacySqlClient.chatbotAgentRun.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'run-stuck' },
         data: expect.objectContaining({ status: 'queued' }),
@@ -98,7 +98,7 @@ describe('Agent Queue Worker', () => {
 
   it('handles run failure', async () => {
     const mockRun = { id: 'run-fail', status: 'queued' };
-    vi.mocked(prisma.chatbotAgentRun.findFirst).mockResolvedValue(mockRun as any);
+    vi.mocked(legacySqlClient.chatbotAgentRun.findFirst).mockResolvedValue(mockRun as any);
     vi.mocked(runAgentControlLoop).mockRejectedValue(new Error('Agent Crash'));
 
     await processNextQueuedAgentRun();
@@ -109,7 +109,7 @@ describe('Agent Queue Worker', () => {
       expect.any(String),
       expect.any(Object)
     );
-    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(
+    expect(legacySqlClient.chatbotAgentRun.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'run-fail' },
         data: expect.objectContaining({ status: 'failed', errorMessage: 'Agent Crash' }),

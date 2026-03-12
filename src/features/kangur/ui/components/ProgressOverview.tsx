@@ -4,7 +4,9 @@ import {
   KangurDisplayEmoji,
   KangurGlassPanel,
   KangurMetricCard,
+  KangurPanelIntro,
   KangurProgressBar,
+  KangurSectionEyebrow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
@@ -80,13 +82,14 @@ export default function ProgressOverview({
       >
         <KangurDisplayEmoji size='md'>🎖️</KangurDisplayEmoji>
         <div className='flex-1'>
-          <div className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
-            Poziom i doswiadczenie
-          </div>
-          <p className={`mt-1 text-xl font-extrabold ${currentLevel.color}`}>{currentLevel.title}</p>
-          <p className='mb-2 text-sm [color:var(--kangur-page-muted-text)]'>
-            Poziom {currentLevel.level} · {totalXp} XP lacznie
-          </p>
+          <KangurPanelIntro
+            eyebrow='Poziom i doswiadczenie'
+            title={currentLevel.title}
+            titleAs='p'
+            titleClassName={`mt-1 text-xl font-extrabold ${currentLevel.color}`}
+            description={`Poziom ${currentLevel.level} · ${totalXp} XP lacznie`}
+            descriptionClassName='mb-2'
+          />
           <KangurProgressBar
             accent='indigo'
             animated
@@ -122,17 +125,14 @@ export default function ProgressOverview({
           variant='subtle'
         >
           <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
-            <div className='min-w-0'>
-              <p className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
-                Misja dnia
-              </p>
-              <p className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
-                {dailyQuest.assignment.title}
-              </p>
-              <p className='mt-1 text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
-                {dailyQuest.progress.summary} · {dailyQuest.reward.label}
-              </p>
-            </div>
+            <KangurPanelIntro
+              className='min-w-0'
+              eyebrow='Misja dnia'
+              title={dailyQuest.assignment.title}
+              titleAs='p'
+              description={`${dailyQuest.progress.summary} · ${dailyQuest.reward.label}`}
+              descriptionClassName='mt-1 text-xs leading-5'
+            />
             <KangurStatusChip accent={dailyQuestAccent} className='shrink-0'>
               {dailyQuest.progress.percent}%
             </KangurStatusChip>
@@ -155,19 +155,18 @@ export default function ProgressOverview({
           variant='subtle'
         >
           <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
-            <div className='min-w-0'>
-              <p className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
-                Polecony kierunek
-              </p>
-              <p className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
-                {guidedMomentum.completedSessions} polecone rundy
-              </p>
-              <p className='mt-1 text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
-                {guidedMomentum.nextBadgeName
+            <KangurPanelIntro
+              className='min-w-0'
+              eyebrow='Polecony kierunek'
+              title={`${guidedMomentum.completedSessions} polecone rundy`}
+              titleAs='p'
+              description={
+                guidedMomentum.nextBadgeName
                   ? `Do odznaki ${guidedMomentum.nextBadgeName}: ${guidedMomentum.summary}`
-                  : 'Wszystkie odznaki polecanego kierunku odblokowane.'}
-              </p>
-            </div>
+                  : 'Wszystkie odznaki polecanego kierunku odblokowane.'
+              }
+              descriptionClassName='mt-1 text-xs leading-5'
+            />
             <KangurStatusChip accent='sky' className='shrink-0'>
               {guidedMomentum.summary}
             </KangurStatusChip>
@@ -186,9 +185,9 @@ export default function ProgressOverview({
 
       {operationsPlayed.length > 0 && (
         <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
-          <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
+          <KangurSectionEyebrow as='p' className='mb-3'>
             Cwiczone operacje
-          </p>
+          </KangurSectionEyebrow>
           <div className='flex flex-wrap gap-2'>
             {operationsPlayed.map((operation) => (
               <KangurStatusChip
@@ -206,9 +205,9 @@ export default function ProgressOverview({
 
       {topActivities.length > 0 && (
         <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
-          <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
+          <KangurSectionEyebrow as='p' className='mb-3'>
             Najczesciej cwiczone aktywnosci
-          </p>
+          </KangurSectionEyebrow>
           <div className='flex flex-col gap-3'>
             {topActivities.map((activity) => (
               <div
@@ -234,9 +233,9 @@ export default function ProgressOverview({
       )}
 
       <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
-        <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
+        <KangurSectionEyebrow as='p' className='mb-3'>
           Sciezki odznak
-        </p>
+        </KangurSectionEyebrow>
         <KangurBadgeTrackGrid
           dataTestIdPrefix='progress-overview-badge-track'
           emptyTestId='progress-overview-badges-empty'

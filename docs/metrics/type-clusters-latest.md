@@ -8,31 +8,28 @@ canonical: true
 ---
 # Type Cluster Scanner Report
 
-Generated at: 2026-03-12T06:06:16.193Z
+Generated at: 2026-03-12T07:23:28.210Z
 Status: ok
 
 ## Summary
 
-- Files scanned: 5779
-- Exported declarations scanned: 4538
-- Candidate declarations scanned: 4508
-- Exact-shape clusters: 5
-- Near-shape clusters: 2
-- Clusters after filters: 7
-- Declarations in clusters: 106
-- Highest risk score: 193
+- Files scanned: 5781
+- Exported declarations scanned: 4440
+- Candidate declarations scanned: 4414
+- Exact-shape clusters: 3
+- Near-shape clusters: 1
+- Clusters after filters: 4
+- Declarations in clusters: 10
+- Highest risk score: 19
 
 ## Top Cluster Candidates
 
 | Cluster | Kind | Risk | Decls | Domains | Candidate DTO |
 | --- | --- | ---: | ---: | --- | --- |
-| `exact-0001` | exact-shape | 193 | 63 | shared, shared:contracts | `TBD` |
-| `exact-0002` | exact-shape | 65 | 21 | shared | `TBD` |
-| `exact-0003` | exact-shape | 44 | 14 | shared | `TBD` |
-| `exact-0005` | exact-shape | 11 | 2 | shared | `TBD` |
-| `near-0001` | near-shape | 11 | 2 | feature:ai, feature:kangur | `TBD` |
-| `exact-0004` | exact-shape | 10 | 2 | feature:integrations | `TBD` |
-| `near-0002` | near-shape | 8 | 2 | feature:kangur | `TBD` |
+| `exact-0001` | exact-shape | 19 | 4 | shared, shared:contracts | `TBD` |
+| `exact-0002` | exact-shape | 10 | 2 | feature:integrations | `TBD` |
+| `exact-0003` | exact-shape | 8 | 2 | shared:contracts | `TBD` |
+| `near-0001` | near-shape | 8 | 2 | feature:kangur | `TBD` |
 
 ## Initial DTO Consolidation Workflow
 

@@ -1,15 +1,7 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
-import {
-  runBrainChatCompletion,
-} from '@/shared/lib/ai-brain/server-runtime-client';
-
-import {
-  addAgentMemory,
-  listAgentMemory,
-  validateAgentLongTermMemory,
-} from '@/features/ai/agent-runtime/memory/index';
-import prisma from '@/shared/lib/db/prisma';
+import { validateAgentLongTermMemory } from '@/features/ai/agent-runtime/memory/index';
+import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 
 // Mock Brain server utilities
 vi.mock('@/shared/lib/ai-brain/server', () => ({
@@ -26,68 +18,9 @@ vi.mock('@/shared/lib/ai-brain/server-runtime-client', () => ({
   supportsBrainJsonMode: vi.fn(() => true),
 }));
 
-// Mock Prisma
-vi.mock('@/shared/lib/db/prisma', () => ({
-  default: {
-    agentMemoryItem: {
-      create: vi.fn(),
-      findMany: vi.fn(),
-    },
-    agentLongTermMemory: {
-      create: vi.fn(),
-      findMany: vi.fn(),
-      updateMany: vi.fn(),
-    },
-    $disconnect: vi.fn(),
-  },
-}));
-
 describe('Agent Runtime - Memory', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  describe('addAgentMemory', () => {
-    it('should create a memory item in prisma', async () => {
-      const mockParams = {
-        scope: 'session' as const,
-        content: 'test content',
-        runId: 'run-123',
-      };
-      (prisma.agentMemoryItem.create as any).mockResolvedValue({
-        id: 'mem-1',
-        ...mockParams,
-      });
-
-      const result = await addAgentMemory(mockParams);
-
-      expect(prisma.agentMemoryItem.create).toHaveBeenCalledWith({
-        data: {
-          runId: 'run-123',
-          personaId: null,
-          scope: 'session',
-          content: 'test content',
-        },
-      });
-      expect(result).toEqual({ id: 'mem-1', ...mockParams });
-    });
-  });
-
-  describe('listAgentMemory', () => {
-    it('should list memory items from prisma', async () => {
-      (prisma.agentMemoryItem.findMany as any).mockResolvedValue([
-        { id: 'mem-1', content: 'A' },
-        { id: 'mem-2', content: 'B' },
-      ]);
-
-      const result = await listAgentMemory({ runId: 'run-123' });
-
-      expect(prisma.agentMemoryItem.findMany).toHaveBeenCalledWith({
-        where: { runId: 'run-123' },
-        orderBy: { createdAt: 'asc' },
-      });
-      expect(result).toHaveLength(2);
-    });
   });
 
   describe('validateAgentLongTermMemory', () => {

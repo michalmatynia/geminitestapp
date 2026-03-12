@@ -9,6 +9,8 @@ import {
   KangurAccentDot,
   KangurActivityColumn,
   KangurButton,
+  KangurCardDescription,
+  KangurCardTitle,
   KangurDivider,
   KangurDisplayEmoji,
   KangurEmptyState,
@@ -20,6 +22,7 @@ import {
   KangurHeadline,
   KangurIconBadge,
   KangurInlineFallback,
+  KangurMetaText,
   KangurMediaFrame,
   KangurMetricCard,
   KangurMenuItem,
@@ -44,6 +47,13 @@ describe('Kangur shared primitives', () => {
     render(
       <>
         <KangurStatusChip accent='amber'>Warm badge</KangurStatusChip>
+        <KangurStatusChip
+          accent='indigo'
+          data-testid='kangur-status-chip-caps'
+          labelStyle='caps'
+        >
+          Capsule badge
+        </KangurStatusChip>
         <KangurAccentDot accent='rose' data-testid='kangur-dot' size='lg' />
         <KangurIconBadge accent='emerald' data-testid='kangur-icon-badge' size='sm'>
           4
@@ -77,6 +87,26 @@ describe('Kangur shared primitives', () => {
         <KangurHeadline accent='indigo' data-testid='kangur-headline-xs' size='xs'>
           Small shared headline
         </KangurHeadline>
+        <KangurCardTitle data-testid='kangur-card-title'>Shared card title</KangurCardTitle>
+        <KangurCardTitle data-testid='kangur-card-title-lg' size='lg'>
+          Large shared card title
+        </KangurCardTitle>
+        <KangurCardDescription
+          data-testid='kangur-card-description'
+          relaxed
+          size='xs'
+        >
+          Shared card description
+        </KangurCardDescription>
+        <KangurCardDescription data-testid='kangur-card-description-md' size='md'>
+          Larger shared card description
+        </KangurCardDescription>
+        <KangurMetaText data-testid='kangur-meta-text' relaxed size='xs' tone='slate'>
+          Shared meta text
+        </KangurMetaText>
+        <KangurMetaText data-testid='kangur-meta-text-caps' caps tone='amber'>
+          Shared meta caps
+        </KangurMetaText>
         <KangurFeatureHeader
           accent='amber'
           data-testid='kangur-feature-header'
@@ -216,6 +246,11 @@ describe('Kangur shared primitives', () => {
       '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(254_243_199))]',
       '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(254_243_199))]'
     );
+    expect(screen.getByTestId('kangur-status-chip-caps')).toHaveClass(
+      'text-[11px]',
+      'uppercase',
+      'tracking-[0.16em]'
+    );
     expect(screen.getByTestId('kangur-dot')).toHaveClass('h-4', 'w-4', 'bg-rose-500');
     expect(screen.getByTestId('kangur-icon-badge')).toHaveClass(
       'h-9',
@@ -249,6 +284,35 @@ describe('Kangur shared primitives', () => {
     );
     expect(screen.getByTestId('kangur-headline')).toHaveClass('text-2xl', 'text-green-700');
     expect(screen.getByTestId('kangur-headline-xs')).toHaveClass('text-lg', 'text-indigo-700');
+    expect(screen.getByTestId('kangur-card-title')).toHaveClass(
+      'text-sm',
+      'font-semibold',
+      '[color:var(--kangur-page-text)]'
+    );
+    expect(screen.getByTestId('kangur-card-title-lg')).toHaveClass(
+      'text-lg',
+      'font-extrabold',
+      'tracking-tight'
+    );
+    expect(screen.getByTestId('kangur-card-description')).toHaveClass(
+      'text-xs',
+      'leading-6',
+      '[color:var(--kangur-page-muted-text)]'
+    );
+    expect(screen.getByTestId('kangur-card-description-md')).toHaveClass(
+      'text-base',
+      '[color:var(--kangur-page-muted-text)]'
+    );
+    expect(screen.getByTestId('kangur-meta-text')).toHaveClass(
+      'text-[11px]',
+      'leading-6',
+      'text-slate-500'
+    );
+    expect(screen.getByTestId('kangur-meta-text-caps')).toHaveClass(
+      'uppercase',
+      'tracking-[0.14em]',
+      'text-amber-900'
+    );
     expect(screen.getByTestId('kangur-feature-header')).toHaveClass(
       'flex',
       'flex-col',

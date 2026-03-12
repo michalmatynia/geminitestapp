@@ -8,7 +8,7 @@ vi.mock('@/shared/lib/db/app-db-provider', () => ({
   getAppDbProvider: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/db/prisma', () => ({
+vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
   default: {
     setting: {
       findUnique: vi.fn(),
@@ -40,7 +40,7 @@ describe('critical-error-notifier', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
-    vi.mocked(getAppDbProvider).mockResolvedValue('prisma');
+    vi.mocked(getAppDbProvider).mockResolvedValue('mongodb');
 
     // Clear global throttle cache
     const globalAny = globalThis as unknown as { __criticalErrorNotificationCache?: Map<string, number> };

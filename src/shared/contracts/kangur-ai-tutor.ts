@@ -167,6 +167,8 @@ export const kangurAiTutorLearnerMemorySchema = z.object({
   lastRecommendedAction: z.string().trim().max(160).optional(),
   lastSuccessfulIntervention: z.string().trim().max(200).optional(),
   lastCoachingMode: kangurAiTutorCoachingModeSchema.optional(),
+  // Last 3 assistant hints/responses (compact). Used to prevent verbatim repetition.
+  lastGivenHints: z.array(z.string().trim().max(160)).max(3).optional(),
 });
 export type KangurAiTutorLearnerMemory = z.infer<typeof kangurAiTutorLearnerMemorySchema>;
 
@@ -266,8 +268,19 @@ export type KangurAiTutorKnowledgeGraphRecallStrategy = z.infer<
   typeof kangurAiTutorKnowledgeGraphRecallStrategySchema
 >;
 
+export const kangurAiTutorKnowledgeGraphQueryStatusSchema = z.enum([
+  'hit',      // KG was queried and returned relevant results
+  'miss',     // KG was queried but found no matching content
+  'skipped',  // KG was not queried (no eligible context or query)
+  'disabled', // KG is not configured / Neo4j unavailable
+]);
+export type KangurAiTutorKnowledgeGraphQueryStatus = z.infer<
+  typeof kangurAiTutorKnowledgeGraphQueryStatusSchema
+>;
+
 export const kangurAiTutorKnowledgeGraphSummarySchema = z.object({
   applied: z.boolean(),
+  queryStatus: kangurAiTutorKnowledgeGraphQueryStatusSchema.optional(),
   queryMode: kangurAiTutorKnowledgeGraphQueryModeSchema.nullable(),
   recallStrategy: kangurAiTutorKnowledgeGraphRecallStrategySchema.nullable(),
   lexicalHitCount: z.number().int().nonnegative(),

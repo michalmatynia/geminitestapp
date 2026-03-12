@@ -13,7 +13,7 @@ describe('agentic bundle selection', () => {
           {
             bundle: 'product_data_pipeline',
             priority: 'high',
-            targets: ['//:integration_prisma'],
+            targets: ['//:integration_mongo'],
           },
           {
             bundle: 'admin_experience',
@@ -43,7 +43,7 @@ describe('agentic bundle selection', () => {
           {
             bundle: 'product_data_pipeline',
             priority: 'high',
-            targets: ['//:integration_prisma'],
+            targets: ['//:integration_mongo'],
           },
           {
             bundle: 'observability_contracts',
@@ -68,7 +68,7 @@ describe('agentic bundle selection', () => {
           requiredImpactBundles: ['product_data_pipeline', 'observability_contracts'],
           recommendedBundleOrder: ['product_data_pipeline', 'observability_contracts'],
           recommendedValidationByBundle: {
-            product_data_pipeline: ['//:integration_prisma'],
+            product_data_pipeline: ['//:integration_mongo'],
             observability_contracts: ['//:api_error_sources'],
           },
         },
@@ -82,7 +82,7 @@ describe('agentic bundle selection', () => {
           {
             bundle: 'product_data_pipeline',
             priority: 'high',
-            targets: ['//:integration_prisma'],
+            targets: ['//:integration_mongo'],
           },
           {
             bundle: 'observability_contracts',

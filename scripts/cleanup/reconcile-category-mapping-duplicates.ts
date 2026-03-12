@@ -8,7 +8,7 @@ const EXTERNAL_CATEGORY_COLLECTION = 'external_categories';
 const PRODUCT_CATEGORY_COLLECTION = 'product_categories';
 
 type ReconcileSummary = {
-  provider: 'prisma' | 'mongodb';
+  provider: 'mongodb';
   scanned: number;
   groups: number;
   changedGroups: number;
@@ -57,19 +57,6 @@ type MongoExternalCategoryDoc = {
 type MongoProductCategoryDoc = {
   _id: string | ObjectId;
   name: string;
-};
-
-type PrismaCategoryMappingRow = {
-  id: string;
-  connectionId: string;
-  catalogId: string;
-  internalCategoryId: string | null;
-  externalCategoryId: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  internalCategory: { name: string } | null;
-  externalCategory: { name: string; path: string | null } | null;
 };
 
 const toMillis = (value: unknown): number => {
@@ -208,153 +195,6 @@ const groupByInternalCategoryScope = <TId>(
     }
   }
   return groups;
-};
-
-const reconcilePrismaMappings = async (dryRun: boolean): Promise<ReconcileSummary> => {
-  if (!process.env['DATABASE_URL']) {
-    console.log(`${LOG_PREFIX} Prisma skipped (DATABASE_URL not set)`);
-    return {
-      provider: 'prisma',
-      scanned: 0,
-      groups: 0,
-      changedGroups: 0,
-      activated: 0,
-      deactivated: 0,
-      dryRun,
-      skipped: true,
-      reason: 'DATABASE_URL not set',
-    };
-  }
-
-  let prisma: any = null;
-  try {
-    const prismaModule = await import('@/shared/lib/db/prisma');
-    prisma = prismaModule.default;
-
-    const rows: PrismaCategoryMappingRow[] = await prisma.categoryMapping.findMany({
-      select: {
-        id: true,
-        connectionId: true,
-        catalogId: true,
-        internalCategoryId: true,
-        externalCategoryId: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-        internalCategory: { select: { name: true } },
-        externalCategory: { select: { name: true, path: true } },
-      },
-    });
-
-    const candidates: MappingCandidate<string>[] = rows
-      .map((row) => {
-        const internalCategoryId = normalizeInternalCategoryId(row.internalCategoryId);
-        if (!internalCategoryId) return null;
-        return {
-          id: row.id,
-          idString: row.id,
-          connectionId: row.connectionId,
-          catalogId: row.catalogId,
-          internalCategoryId,
-          internalCategoryName: toTrimmedString(row.internalCategory?.name) || internalCategoryId,
-          externalCategoryId: row.externalCategoryId,
-          externalCategoryName: toTrimmedString(row.externalCategory?.name),
-          externalCategoryPath: toTrimmedString(row.externalCategory?.path),
-          externalCategoryExists: Boolean(row.externalCategory),
-          isActive: Boolean(row.isActive),
-          createdAt: row.createdAt,
-          updatedAt: row.updatedAt,
-        } satisfies MappingCandidate<string>;
-      })
-      .filter((entry): entry is MappingCandidate<string> => Boolean(entry));
-
-    const groups = groupByInternalCategoryScope(candidates);
-    const idsToActivate: string[] = [];
-    const idsToDeactivate: string[] = [];
-    let changedGroups = 0;
-
-    for (const [scopeKey, scopedCandidates] of groups.entries()) {
-      const keeper = chooseKeeper(scopedCandidates);
-      let groupChanged = false;
-      for (const candidate of scopedCandidates) {
-        const shouldBeActive = keeper ? candidate.idString === keeper.idString : false;
-        if (candidate.isActive && !shouldBeActive) {
-          idsToDeactivate.push(candidate.id);
-          groupChanged = true;
-        }
-        if (!candidate.isActive && shouldBeActive) {
-          idsToActivate.push(candidate.id);
-          groupChanged = true;
-        }
-      }
-      if (groupChanged) {
-        changedGroups += 1;
-        console.log(
-          `${LOG_PREFIX} Prisma ${scopeKey} -> keep=${keeper?.externalCategoryId ?? 'NONE'} activate=${scopedCandidates.filter((c) => !c.isActive && keeper && c.idString === keeper.idString).length} deactivate=${scopedCandidates.filter((c) => c.isActive && (!keeper || c.idString !== keeper.idString)).length}`
-        );
-      }
-    }
-
-    let activated = idsToActivate.length;
-    let deactivated = idsToDeactivate.length;
-    if (!dryRun) {
-      if (idsToDeactivate.length > 0) {
-        const result = await prisma.categoryMapping.updateMany({
-          where: { id: { in: idsToDeactivate }, isActive: true },
-          data: { isActive: false },
-        });
-        deactivated = result.count;
-      } else {
-        deactivated = 0;
-      }
-      if (idsToActivate.length > 0) {
-        const result = await prisma.categoryMapping.updateMany({
-          where: { id: { in: idsToActivate }, isActive: false },
-          data: { isActive: true },
-        });
-        activated = result.count;
-      } else {
-        activated = 0;
-      }
-    }
-
-    console.log(
-      `${LOG_PREFIX} Prisma ${dryRun ? 'dry-run' : 'applied'}: scanned=${candidates.length} groups=${groups.size} changedGroups=${changedGroups} ${dryRun ? 'wouldActivate' : 'activated'}=${activated} ${dryRun ? 'wouldDeactivate' : 'deactivated'}=${deactivated}`
-    );
-
-    return {
-      provider: 'prisma',
-      scanned: candidates.length,
-      groups: groups.size,
-      changedGroups,
-      activated,
-      deactivated,
-      dryRun,
-      skipped: false,
-    };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown Prisma reconciliation error';
-    console.warn(`${LOG_PREFIX} Prisma skipped: ${message}`);
-    return {
-      provider: 'prisma',
-      scanned: 0,
-      groups: 0,
-      changedGroups: 0,
-      activated: 0,
-      deactivated: 0,
-      dryRun,
-      skipped: true,
-      reason: 'failed',
-    };
-  } finally {
-    if (prisma?.$disconnect) {
-      try {
-        await prisma.$disconnect();
-      } catch {
-        // ignore disconnect failures in one-off script
-      }
-    }
-  }
 };
 
 const reconcileMongoMappings = async (dryRun: boolean): Promise<ReconcileSummary> => {
@@ -556,15 +396,10 @@ async function main() {
     `${LOG_PREFIX} Starting ${dryRun ? 'dry-run' : 'live'} reconciliation for category mappings`
   );
 
-  const prismaSummary = await reconcilePrismaMappings(dryRun);
   const mongoSummary = await reconcileMongoMappings(dryRun);
 
-  const totalActivated = prismaSummary.activated + mongoSummary.activated;
-  const totalDeactivated = prismaSummary.deactivated + mongoSummary.deactivated;
-  const totalChangedGroups = prismaSummary.changedGroups + mongoSummary.changedGroups;
-
   console.log(
-    `${LOG_PREFIX} Finished: changedGroups=${totalChangedGroups} ${dryRun ? 'wouldActivate' : 'activated'}=${totalActivated} ${dryRun ? 'wouldDeactivate' : 'deactivated'}=${totalDeactivated}`
+    `${LOG_PREFIX} Finished: changedGroups=${mongoSummary.changedGroups} ${dryRun ? 'wouldActivate' : 'activated'}=${mongoSummary.activated} ${dryRun ? 'wouldDeactivate' : 'deactivated'}=${mongoSummary.deactivated}`
   );
 }
 

@@ -2,11 +2,11 @@ import fs from 'fs/promises';
 
 import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
 
-vi.unmock('@/shared/lib/db/prisma');
+vi.unmock('@/shared/lib/db/legacy-sql-client');
 
 import { productService } from '@/shared/lib/products/services/productService';
 import { createMockProduct } from '@/shared/lib/products/utils/productUtils';
-import prisma from '@/shared/lib/db/prisma';
+import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 
 vi.mock('fs/promises', () => ({
   default: {
@@ -30,16 +30,16 @@ describe('productService', () => {
     if (shouldSkipProductServiceIntegration()) return;
 
     // Clear the database before each test.
-    // In environments with restricted Prisma privileges, disable this suite gracefully.
+    // In environments with restricted legacy SQL privileges, disable this suite gracefully.
     try {
-      await prisma.productCategoryAssignment.deleteMany({});
-      await prisma.productTagAssignment.deleteMany({});
-      await prisma.productProducerAssignment.deleteMany({});
-      await prisma.productCatalog.deleteMany({});
-      await prisma.productImage.deleteMany({});
-      await prisma.imageFile.deleteMany({});
-      await prisma.product.deleteMany({});
-      await prisma.catalog.deleteMany({});
+      await legacySqlClient.productCategoryAssignment.deleteMany({});
+      await legacySqlClient.productTagAssignment.deleteMany({});
+      await legacySqlClient.productProducerAssignment.deleteMany({});
+      await legacySqlClient.productCatalog.deleteMany({});
+      await legacySqlClient.productImage.deleteMany({});
+      await legacySqlClient.imageFile.deleteMany({});
+      await legacySqlClient.product.deleteMany({});
+      await legacySqlClient.catalog.deleteMany({});
     } catch (error) {
       const code = (error as { code?: string }).code;
       if (code === 'EPERM') {
@@ -53,7 +53,7 @@ describe('productService', () => {
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    await legacySqlClient.$disconnect();
   });
 
   describe('getProductById', () => {
@@ -114,7 +114,7 @@ describe('productService', () => {
       expect(product?.sku).toBe('NEW-SKU-123');
       expect(product?.price).toBe(500);
 
-      const dbProduct = await prisma.product.findUnique({ where: { id: product.id } });
+      const dbProduct = await legacySqlClient.product.findUnique({ where: { id: product.id } });
       expect(dbProduct).toBeDefined();
       expect(dbProduct?.name_en).toBe('New Product');
     });
@@ -122,7 +122,7 @@ describe('productService', () => {
     it('should link catalogs if provided', async () => {
       if (shouldSkipProductServiceIntegration()) return;
 
-      const catalog = await prisma.catalog.create({
+      const catalog = await legacySqlClient.catalog.create({
         data: { name: 'Test Catalog' },
       });
 
@@ -133,7 +133,7 @@ describe('productService', () => {
 
       const product = await productService.createProduct(formData);
 
-      const productInCatalog = await prisma.productCatalog.findFirst({
+      const productInCatalog = await legacySqlClient.productCatalog.findFirst({
         where: { productId: product.id, catalogId: catalog.id },
       });
       expect(productInCatalog).toBeDefined();
@@ -142,8 +142,8 @@ describe('productService', () => {
     it('should persist uploaded image and multiple catalogs on create', async () => {
       if (shouldSkipProductServiceIntegration()) return;
 
-      const catalogA = await prisma.catalog.create({ data: { name: 'Create Catalog A' } });
-      const catalogB = await prisma.catalog.create({ data: { name: 'Create Catalog B' } });
+      const catalogA = await legacySqlClient.catalog.create({ data: { name: 'Create Catalog A' } });
+      const catalogB = await legacySqlClient.catalog.create({ data: { name: 'Create Catalog B' } });
 
       const formData = new FormData();
       formData.append('name_en', 'Create Guard Product');
@@ -167,7 +167,7 @@ describe('productService', () => {
       );
       expect(created.images.length).toBe(1);
 
-      const dbCatalogs = await prisma.productCatalog.findMany({
+      const dbCatalogs = await legacySqlClient.productCatalog.findMany({
         where: { productId: created.id },
         select: { catalogId: true },
       });
@@ -175,7 +175,7 @@ describe('productService', () => {
         [catalogA.id, catalogB.id].sort()
       );
 
-      const dbImages = await prisma.productImage.findMany({
+      const dbImages = await legacySqlClient.productImage.findMany({
         where: { productId: created.id },
       });
       expect(dbImages.length).toBe(1);
@@ -214,8 +214,8 @@ describe('productService', () => {
       if (shouldSkipProductServiceIntegration()) return;
 
       const original = await createMockProduct({ name_en: 'Catalog Update', sku: 'CAT-UPD-1' });
-      const catalogA = await prisma.catalog.create({ data: { name: 'Catalog A' } });
-      const catalogB = await prisma.catalog.create({ data: { name: 'Catalog B' } });
+      const catalogA = await legacySqlClient.catalog.create({ data: { name: 'Catalog A' } });
+      const catalogB = await legacySqlClient.catalog.create({ data: { name: 'Catalog B' } });
 
       const formData = new FormData();
       formData.append('catalogIds', catalogA.id);
@@ -223,7 +223,7 @@ describe('productService', () => {
 
       await productService.updateProduct(original.id, formData);
 
-      const links = await prisma.productCatalog.findMany({
+      const links = await legacySqlClient.productCatalog.findMany({
         where: { productId: original.id },
         select: { catalogId: true },
       });
@@ -253,7 +253,7 @@ describe('productService', () => {
       expect(updated.images.length).toBe(1);
       expect(updated.images[0]?.imageFileId).toBeTruthy();
 
-      const links = await prisma.productImage.findMany({
+      const links = await legacySqlClient.productImage.findMany({
         where: { productId: original.id },
       });
       expect(links.length).toBe(1);
@@ -263,7 +263,7 @@ describe('productService', () => {
       if (shouldSkipProductServiceIntegration()) return;
 
       const original = await createMockProduct({ name_en: 'With Images', sku: 'IMG-ORDER' });
-      const imageA = await prisma.imageFile.create({
+      const imageA = await legacySqlClient.imageFile.create({
         data: {
           filename: 'a.jpg',
           filepath: '/uploads/products/a.jpg',
@@ -271,7 +271,7 @@ describe('productService', () => {
           size: 100,
         },
       });
-      const imageB = await prisma.imageFile.create({
+      const imageB = await legacySqlClient.imageFile.create({
         data: {
           filename: 'b.jpg',
           filepath: '/uploads/products/b.jpg',
@@ -304,7 +304,7 @@ describe('productService', () => {
     it('should unlink an image and NOT delete file if other products use it', async () => {
       if (shouldSkipProductServiceIntegration()) return;
 
-      const imageFile = await prisma.imageFile.create({
+      const imageFile = await legacySqlClient.imageFile.create({
         data: {
           filename: 'shared.jpg',
           filepath: '/uploads/products/shared.jpg',
@@ -316,7 +316,7 @@ describe('productService', () => {
       const p1 = await createMockProduct({ sku: 'P1' });
       const p2 = await createMockProduct({ sku: 'P2' });
 
-      await prisma.productImage.createMany({
+      await legacySqlClient.productImage.createMany({
         data: [
           { productId: p1.id, imageFileId: imageFile.id },
           { productId: p2.id, imageFileId: imageFile.id },
@@ -325,13 +325,13 @@ describe('productService', () => {
 
       await productService.unlinkImageFromProduct(p1.id, imageFile.id);
 
-      const p1Images = await prisma.productImage.findMany({ where: { productId: p1.id } });
+      const p1Images = await legacySqlClient.productImage.findMany({ where: { productId: p1.id } });
       expect(p1Images.length).toBe(0);
 
-      const p2Images = await prisma.productImage.findMany({ where: { productId: p2.id } });
+      const p2Images = await legacySqlClient.productImage.findMany({ where: { productId: p2.id } });
       expect(p2Images.length).toBe(1);
 
-      const dbImageFile = await prisma.imageFile.findUnique({ where: { id: imageFile.id } });
+      const dbImageFile = await legacySqlClient.imageFile.findUnique({ where: { id: imageFile.id } });
       expect(dbImageFile).toBeDefined();
       expect(fs.unlink).not.toHaveBeenCalled();
     });
@@ -339,7 +339,7 @@ describe('productService', () => {
     it('should unlink an image and delete file if it was the last link', async () => {
       if (shouldSkipProductServiceIntegration()) return;
 
-      const imageFile = await prisma.imageFile.create({
+      const imageFile = await legacySqlClient.imageFile.create({
         data: {
           filename: 'last.jpg',
           filepath: '/uploads/products/last.jpg',
@@ -349,16 +349,16 @@ describe('productService', () => {
       });
 
       const p1 = await createMockProduct({ sku: 'P1' });
-      await prisma.productImage.create({
+      await legacySqlClient.productImage.create({
         data: { productId: p1.id, imageFileId: imageFile.id },
       });
 
       await productService.unlinkImageFromProduct(p1.id, imageFile.id);
 
-      const p1Images = await prisma.productImage.findMany({ where: { productId: p1.id } });
+      const p1Images = await legacySqlClient.productImage.findMany({ where: { productId: p1.id } });
       expect(p1Images.length).toBe(0);
 
-      const dbImageFile = await prisma.imageFile.findUnique({ where: { id: imageFile.id } });
+      const dbImageFile = await legacySqlClient.imageFile.findUnique({ where: { id: imageFile.id } });
       expect(dbImageFile).toBeNull();
       expect(fs.unlink).toHaveBeenCalled();
     });

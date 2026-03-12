@@ -40,7 +40,7 @@ describe('agentic history snapshot', () => {
         bundlePriorityByBundle: { product_data_pipeline: 'high' },
         recommendedBundleOrder: ['product_data_pipeline'],
         recommendedValidationByBundle: {
-          product_data_pipeline: ['//:integration_prisma', '//:products_trigger_queue_unit'],
+          product_data_pipeline: ['//:integration_mongo', '//:products_trigger_queue_unit'],
         },
         requiredDocs: [],
         requiredGeneratedArtifacts: [],
@@ -48,7 +48,7 @@ describe('agentic history snapshot', () => {
         manualOnlyPaths: [],
         requiredDocGenerators: [],
         requiredScannerTargets: [],
-        requiredValidationTargets: ['//:integration_prisma'],
+        requiredValidationTargets: ['//:integration_mongo'],
       }),
       'utf8',
     );
@@ -76,7 +76,7 @@ describe('agentic history snapshot', () => {
           {
             bundle: 'product_data_pipeline',
             priority: 'high',
-            targets: ['//:integration_prisma', '//:products_trigger_queue_unit'],
+            targets: ['//:integration_mongo', '//:products_trigger_queue_unit'],
           },
         ],
       }),
@@ -109,7 +109,7 @@ describe('agentic history snapshot', () => {
         priority: 'high',
         targets: [
           {
-            target: '//:integration_prisma',
+            target: '//:integration_mongo',
             status: 'passed',
             durationMs: 1200,
           },
@@ -153,10 +153,10 @@ describe('agentic history snapshot', () => {
     expect(snapshot.bundleReports).toEqual([
       expect.objectContaining({
         bundle: 'product_data_pipeline',
-        recommendedTargets: ['//:integration_prisma', '//:products_trigger_queue_unit'],
+        recommendedTargets: ['//:integration_mongo', '//:products_trigger_queue_unit'],
         executedTargets: [
           expect.objectContaining({
-            target: '//:integration_prisma',
+            target: '//:integration_mongo',
             status: 'passed',
           }),
         ],
@@ -186,7 +186,7 @@ describe('agentic history snapshot', () => {
         },
         recommendedBundleOrder: ['product_data_pipeline', 'admin_experience'],
         recommendedValidationByBundle: {
-          product_data_pipeline: ['//:integration_prisma'],
+          product_data_pipeline: ['//:integration_mongo'],
           admin_experience: ['//:accessibility_smoke'],
         },
         requiredDocs: [],
@@ -195,7 +195,7 @@ describe('agentic history snapshot', () => {
         manualOnlyPaths: [],
         requiredDocGenerators: [],
         requiredScannerTargets: [],
-        requiredValidationTargets: ['//:integration_prisma'],
+        requiredValidationTargets: ['//:integration_mongo'],
       }),
       'utf8',
     );
@@ -210,7 +210,7 @@ describe('agentic history snapshot', () => {
           {
             bundle: 'product_data_pipeline',
             priority: 'high',
-            targets: ['//:integration_prisma'],
+            targets: ['//:integration_mongo'],
           },
           {
             bundle: 'admin_experience',

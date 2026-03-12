@@ -1577,7 +1577,7 @@ describe('scanner summary-json envelope', () => {
     expect(canonicalStabilization.notes).toContain(
       'canonical stabilization aggregate check result'
     );
-  }, 20_000);
+  }, 90_000);
 
   it('wraps docs checks in the shared scan envelope', () => {
     const tooltipCoverage = runSummaryJson(

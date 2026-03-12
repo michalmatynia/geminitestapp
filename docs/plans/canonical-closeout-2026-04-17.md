@@ -35,7 +35,7 @@ All tracked compatibility-debt items for this wave are resolved, and the remaini
    - Result: `3` files passed, `26` tests passed.
 5. Full CI-equivalent verification passed:
    - `npm run test:ci`
-   - Included: canonical guardrails, observability checks, unit tests, signal-flow regression, Prisma integration, Mongo integration.
+   - Included: canonical guardrails, observability checks, unit tests, signal-flow regression, Mongo integration.
 6. Additional explicit gate confirmations:
    - `npm run typecheck` passed.
    - `npm run test:integration:mongo:canonical-shape-guard` passed (`1/1`).

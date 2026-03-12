@@ -69,7 +69,7 @@ describe('public product metadata handlers', () => {
     getCategoryRepositoryMock.mockResolvedValue({
       listCategories: listCategoriesMock,
     });
-    getProductDataProviderMock.mockResolvedValue('prisma');
+    getProductDataProviderMock.mockResolvedValue('mongodb');
   });
 
   it('returns normalized public parameters for a catalog', async () => {
@@ -122,7 +122,7 @@ describe('public product metadata handlers', () => {
       expect.objectContaining({ id: 'cat-2', name: 'Pants', parentId: null }),
     ]);
     expect(getProductDataProviderMock).toHaveBeenCalledTimes(1);
-    expect(getCategoryRepositoryMock).toHaveBeenCalledWith('prisma');
+    expect(getCategoryRepositoryMock).toHaveBeenCalledWith('mongodb');
     expect(listCategoriesMock).toHaveBeenCalledWith({ catalogId: 'catalog-1' });
   });
 });

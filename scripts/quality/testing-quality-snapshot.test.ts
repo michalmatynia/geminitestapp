@@ -183,10 +183,6 @@ describe('collectTestingQualitySnapshot', () => {
           status: 'warn',
         }),
         expect.objectContaining({
-          id: 'integrationPrisma',
-          status: 'missing',
-        }),
-        expect.objectContaining({
           id: 'accessibilityRouteCrawl',
           status: 'fail',
           freshness: 'stale',

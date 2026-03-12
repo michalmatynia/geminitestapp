@@ -1,6 +1,11 @@
 'use client';
 
-import { KangurInfoCard, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurCardDescription,
+  KangurCardTitle,
+  KangurInfoCard,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import {
@@ -126,8 +131,8 @@ export default function KangurGameSetupMomentumCard({
         <div className='flex flex-wrap items-center gap-2'>
           <KangurStatusChip
             accent={focus.accent}
-            className='text-[11px] uppercase tracking-[0.16em]'
             data-testid={`kangur-game-setup-momentum-label-${modeKey}`}
+            labelStyle='caps'
             size='sm'
           >
             {focus.label}
@@ -144,18 +149,21 @@ export default function KangurGameSetupMomentumCard({
           ) : null}
         </div>
         <div>
-          <p
-            className='text-base font-extrabold [color:var(--kangur-page-text)]'
+          <KangurCardTitle
+            as='p'
             data-testid={`kangur-game-setup-momentum-title-${modeKey}`}
+            size='md'
           >
             {focus.title}
-          </p>
-          <p
-            className='mt-1 text-sm [color:var(--kangur-page-muted-text)]'
+          </KangurCardTitle>
+          <KangurCardDescription
+            as='p'
+            className='mt-1'
             data-testid={`kangur-game-setup-momentum-description-${mode}`}
+            size='sm'
           >
             {focus.description}
-          </p>
+          </KangurCardDescription>
         </div>
       </div>
     </KangurInfoCard>

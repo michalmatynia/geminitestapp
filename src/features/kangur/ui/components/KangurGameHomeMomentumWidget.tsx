@@ -6,6 +6,8 @@ import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurButton,
+  KangurCardDescription,
+  KangurCardTitle,
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -284,24 +286,24 @@ export default function KangurGameHomeMomentumWidget({
         <div className='min-w-0'>
           <KangurStatusChip
             accent={recommendation.accent}
-            className='text-[11px] uppercase tracking-[0.16em]'
             data-testid='kangur-home-momentum-label'
+            labelStyle='caps'
             size='sm'
           >
             {recommendation.priorityLabel}
           </KangurStatusChip>
-          <p
-            className='mt-3 text-sm font-semibold'
-            data-testid='kangur-home-momentum-title'
-          >
+          <KangurCardTitle as='p' className='mt-3' data-testid='kangur-home-momentum-title'>
             {recommendation.title}
-          </p>
-          <p
-            className='mt-1 text-xs opacity-85'
+          </KangurCardTitle>
+          <KangurCardDescription
+            as='p'
+            className='mt-1 opacity-85'
             data-testid='kangur-home-momentum-description'
+            relaxed
+            size='xs'
           >
             {recommendation.description}
-          </p>
+          </KangurCardDescription>
         </div>
         <KangurButton asChild className='shrink-0' size='sm' variant='primary'>
           <Link

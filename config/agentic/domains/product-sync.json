@@ -15,7 +15,7 @@
     "//:lint",
     "//:typecheck",
     "//:unit",
-    "//:integration_prisma"
+    "//:integration_mongo"
   ],
   "impactBundles": [
     "product_sync"

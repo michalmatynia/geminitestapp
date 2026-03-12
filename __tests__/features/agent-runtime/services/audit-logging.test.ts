@@ -7,7 +7,7 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
 }));
 
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit/index';
-import prisma from '@/shared/lib/db/prisma';
+import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 
 describe('Agent Runtime - Audit Logging', () => {
   beforeEach(() => {
@@ -23,7 +23,7 @@ describe('Agent Runtime - Audit Logging', () => {
 
     await logAgentAudit('run-123', 'info', 'Test message', metadata);
 
-    expect(prisma.agentAuditLog.create).toHaveBeenCalledWith({
+    expect(legacySqlClient.agentAuditLog.create).toHaveBeenCalledWith({
       data: {
         runId: 'run-123',
         level: 'info',
@@ -40,7 +40,7 @@ describe('Agent Runtime - Audit Logging', () => {
   it('should handle missing metadata', async () => {
     await logAgentAudit('run-123', 'warning', 'Warning message');
 
-    expect(prisma.agentAuditLog.create).toHaveBeenCalledWith({
+    expect(legacySqlClient.agentAuditLog.create).toHaveBeenCalledWith({
       data: {
         runId: 'run-123',
         level: 'warning',
@@ -50,7 +50,7 @@ describe('Agent Runtime - Audit Logging', () => {
   });
 
   it('should gracefully handle database errors', async () => {
-    (prisma.agentAuditLog.create as any).mockRejectedValue(new Error('DB Down'));
+    (legacySqlClient.agentAuditLog.create as any).mockRejectedValue(new Error('DB Down'));
 
     // Should not throw
     await expect(logAgentAudit('run-1', 'error', 'Fail')).resolves.not.toThrow();

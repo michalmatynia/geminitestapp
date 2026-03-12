@@ -70,13 +70,10 @@ describe('detectExistingPlaywrightServer', () => {
         fetchImpl,
       })
     ).resolves.toBe(true);
-    expect(calls).toEqual([
-      'http://127.0.0.1:3000/api/health',
-      'http://127.0.0.1:3000/auth/signin',
-    ]);
+    expect(calls).toEqual(['http://127.0.0.1:3000/api/health']);
   });
 
-  it('keeps waiting when health responds but the auth route is still unavailable', async () => {
+  it('treats a healthy health endpoint as sufficient even if the auth route is still unavailable', async () => {
     const calls = [];
     const fetchImpl = async (url) => {
       calls.push(url);
@@ -91,11 +88,8 @@ describe('detectExistingPlaywrightServer', () => {
         baseUrl: 'http://127.0.0.1:3000',
         fetchImpl,
       })
-    ).resolves.toBe(false);
-    expect(calls).toEqual([
-      'http://127.0.0.1:3000/api/health',
-      'http://127.0.0.1:3000/auth/signin',
-    ]);
+    ).resolves.toBe(true);
+    expect(calls).toEqual(['http://127.0.0.1:3000/api/health']);
   });
 
   it('falls back to probing the auth route when health is unavailable', async () => {

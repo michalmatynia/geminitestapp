@@ -1,7 +1,8 @@
 import type { DatabaseAction, DatabaseActionCategory } from '@/shared/contracts/ai-paths';
+import type { AppProviderValue } from '@/shared/contracts/system';
 import type { LabeledOptionDto } from '@/shared/contracts/ui';
 
-export type DbActionProvider = 'mongodb';
+export type DbActionProvider = AppProviderValue;
 export type DbActionProviderSelection = 'auto' | 'mongodb' | undefined;
 
 export type ProviderActionOption = LabeledOptionDto<DatabaseAction>;

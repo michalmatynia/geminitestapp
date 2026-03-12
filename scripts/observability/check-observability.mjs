@@ -368,8 +368,6 @@ const collectCoreContractViolations = (root, allowPartial) => {
     'observability',
     'system-log-repository.ts'
   );
-  const prismaFile = path.join(root, 'prisma', 'schema.prisma');
-  const prismaClientFile = path.join(root, 'src', 'shared', 'lib', 'db', 'prisma-client.ts');
   const diagnosticsManifestFile = path.join(
     root,
     'src',
@@ -382,7 +380,6 @@ const collectCoreContractViolations = (root, allowPartial) => {
 
   const contractText = readFileIfExists(contractFile);
   const repositoryText = readFileIfExists(repositoryFile);
-  const prismaText = readFileIfExists(prismaFile) ?? readFileIfExists(prismaClientFile);
   const manifestText = readFileIfExists(diagnosticsManifestFile);
   const apiHandlerText = readFileIfExists(apiHandlerFile);
 
@@ -408,7 +405,6 @@ const collectCoreContractViolations = (root, allowPartial) => {
       new RegExp(`\\b${field}\\b`),
       `system-log repository field "${field}"`
     );
-    requireText(prismaText, new RegExp(`\\b${field}\\b`), `Prisma SystemLog field "${field}"`);
   }
 
   requireText(contractText, /\btopServices\b/, 'observability metrics field "topServices"');
@@ -626,7 +622,6 @@ const collectLegacyCompatibilityViolations = (root, srcDir) => {
     'src/features/observability/services/activityService.ts',
     'src/features/observability/services/activity-repository/index.ts',
     'src/features/observability/services/activity-repository/mongo-activity-repository.ts',
-    'src/features/observability/services/activity-repository/prisma-activity-repository.ts',
     'src/features/observability/lib/ai-paths-slo-notifier.ts',
     'src/features/observability/lib/critical-error-notifier.ts',
     'src/features/observability/lib/log-redaction.ts',

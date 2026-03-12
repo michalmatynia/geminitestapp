@@ -347,7 +347,7 @@ Progress (2026-03-04):
 112. Pruned trigger-buttons editor key casts in `AdminAiPathsTriggerButtonsPage` by replacing `'locations' as unknown as keyof TriggerButtonDraft` and `'id' as unknown as keyof TriggerButtonDraft` with direct typed keys.
 113. Pruned initial-segments node cast in `core/constants/segments/initial-state.ts` by declaring `initialNodes` as `AiNode[]` directly and removing `as unknown as AiNode[]`.
 114. Pruned starter-workflows registry casts by widening canonical helpers (`buildCanonicalNodeShape`, `buildCanonicalEdgeShape`, `edgeSignature`) to accept `unknown` and normalize via `toRecord`, removing all `as unknown as Record<string, unknown>` callsite adapters.
-115. Pruned repository-layer cast adapters by replacing Prisma run-node status `as unknown as` coercion with explicit `toPrismaRunNodeStatus` mapping in `prisma-path-run-repository` and replacing Mongo run-graph `as unknown as` coercion with schema-validated `toRunGraph` normalization in `mongo-path-run-repository`.
+115. Pruned repository-layer cast adapters by replacing removed legacy SQL run-node status `as unknown as` coercion in the SQL path-run repository and replacing Mongo run-graph `as unknown as` coercion with schema-validated `toRunGraph` normalization in `mongo-path-run-repository`.
 116. Pruned audio runtime handler cast adapters in `runtime/handlers/audio.ts` by replacing `globalThis as unknown as ...`/`AudioPlaybackState` shims with guarded constructor/state resolvers (`resolveGlobalAudioConstructors`, `isAudioPlaybackState`) and direct oscillator config normalization via `buildOscillatorSignal`.
 117. Pruned dead bridge-era graph mutation reason from `GraphContext` by removing `bridge_sync` from `GraphMutationReason` and dropping it from node-count invariant enforcement; graph mutation guards now track only canonical reasons (`drag`, `select`, `load_path`).
 118. Pruned settings page context fallback seam by removing the empty-context compatibility return from `useAiPathsSettingsPageContext`; the hook now enforces canonical provider ownership and throws when `AiPathsSettingsPageProvider` is missing.
@@ -361,10 +361,10 @@ Progress (2026-03-04):
 126. Pruned dead server-execution-mode maintenance compatibility runtime by deleting `settings-store-execution-mode-server.ts` (+ test), removing upgrade counting/apply branches from `settings-store.maintenance.ts`, and rewiring maintenance API/server tests to the canonical action set only.
 127. Pruned enqueue metadata source compatibility rewrite in `src/app/api/ai-paths/runs/enqueue/handler.ts`; object-shaped `meta.source` payloads are now rejected (`meta.source must be a string`) instead of being rewritten to compatibility metadata.
 128. Extended canonical guardrails in `scripts/ai-paths/check-canonical.mjs` to block reintroduction of enqueue source-object compatibility rewrite snippets and require the canonical rejection guard.
-129. Pruned run-source metadata compatibility in queue/repository listing flows by removing object/tab/sourceInfo source fallbacks (`meta.source.tab`, `meta.sourceInfo.tab`, `sourceInfo.executionMode`) from `job-queue-panel-utils`, `prisma-path-run-repository`, and `mongo-path-run-repository`; filtering/origin now use canonical string `meta.source` only.
+129. Pruned run-source metadata compatibility in queue/repository listing flows by removing object/tab/sourceInfo source fallbacks (`meta.source.tab`, `meta.sourceInfo.tab`, `sourceInfo.executionMode`) from `job-queue-panel-utils`, the removed SQL path-run repository, and `mongo-path-run-repository`; filtering/origin now use canonical string `meta.source` only.
 130. Extended canonical guardrails and regression coverage for canonical run-source filtering:
     1. `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of repository source-tab/sourceInfo compatibility snippets.
-    2. Added `run-source-filters.canonical.test.ts` to lock canonical-only source filter behavior in Prisma/Mongo repository builders.
+    2. Added `run-source-filters.canonical.test.ts` to lock canonical-only source filter behavior in repository builders.
 131. Pruned queue-cache run-source compatibility in `src/shared/lib/query-invalidation.ts` by removing object/tab/sourceInfo fallback parsing (`meta.source.tab`, `meta.sourceInfo.tab`, `tab:*`) and matching node-origin source only via canonical string `meta.source`.
 132. Extended canonical guardrails and queue-cache regression coverage for canonical run-source metadata:
     1. `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of queue-cache source fallback snippets in `query-invalidation.ts`.
@@ -524,7 +524,7 @@ Progress (2026-03-04):
    3. Added regression coverage in `src/features/ai/ai-paths/components/__tests__/job-queue-panel-utils.test.ts` for canonical source resolution and removed object-source compatibility.
    4. Extended canonical guardrails (`scripts/ai-paths/check-canonical.mjs`) to block reintroduction of queue-panel source metadata compatibility snippets.
 16. Pruned repository run-source filter compatibility in seams 129-130 and re-validated canonical guards:
-   1. `src/features/ai/ai-paths/services/path-run-repository/prisma-path-run-repository.ts`
+   1. removed SQL path-run repository module
       1. removed `meta.source.tab` / `meta.sourceInfo.tab` compatibility filter paths.
       2. canonical source filtering now matches `meta.source` only.
    2. `src/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository.ts`
@@ -851,7 +851,7 @@ Progress (2026-03-04):
       1. `src/shared/lib/ai-paths/api/client/database.ts`
       2. `databaseQuery` now routes through canonical `/api/ai-paths/db-action` payload mapping (`find`/`findOne`).
       3. `databaseUpdate` now routes through canonical `/api/ai-paths/db-action` payload mapping (`updateOne`/`updateMany`).
-      4. provider forwarding remains canonical enum-only (`auto`/`mongodb`/`prisma`) with invalid values dropped.
+      4. provider forwarding remains canonical enum-only (`auto`/`mongodb`) with invalid values dropped.
    2. Added regression coverage:
       1. `src/shared/lib/ai-paths/api/__tests__/database-client.canonical.test.ts`
       2. verifies canonical query/update payload mapping and invalid provider drop behavior.
@@ -908,7 +908,7 @@ Progress (2026-03-04):
       3. runtime now reads canonical keys only:
          1. `filter` for predicate payloads.
          2. `update` for write payloads.
-      4. removed alias fallback snippets (`filter || query`, `update || updates`) across Prisma and Mongo branches.
+      4. removed alias fallback snippets (`filter || query`, `update || updates`) across removed SQL and Mongo branches.
    2. Updated canonical DB-action client request mapping:
       1. `src/shared/lib/ai-paths/api/client/database.ts`
       2. `databaseQuery` now maps `DbQueryPayload.query` into canonical DB-action key `filter`.
@@ -976,7 +976,7 @@ Progress (2026-03-04):
 42. Pruned DB-schema provider `all` alias surface in seam 172 and re-validated canonical guards:
    1. Removed deprecated provider alias from DB-schema node-config contract:
       1. `src/features/ai/ai-paths/components/node-config/DbSchemaNodeConfigSection.tsx`
-      2. provider contract now allows only `auto | mongodb | prisma`.
+      2. provider contract now allows only `auto | mongodb`.
       3. removed UI selector option `All Providers`.
       4. added canonical provider normalizer that coerces stale non-canonical persisted values to `auto`.
    2. Extended AI Paths canonical guardrails:

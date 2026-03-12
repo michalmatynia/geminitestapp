@@ -64,8 +64,8 @@ to the canonical repo references.
 ## High-Signal Constraints
 
 - Prefer feature `public.ts` / `server.ts` entrypoints from app-layer code.
-- Do not assume Prisma-only persistence. App, auth, CMS, integrations, and AI
-  flows can route differently across Prisma, MongoDB, and Redis-backed helpers.
+- Do not assume a single persistence backend. App, auth, CMS, integrations, and AI
+  flows can route differently across MongoDB and Redis-backed helpers.
 - Do not assume Redis is always available. Several queues support inline
   fallback behavior when Redis is absent.
 - Treat generated docs and guardrail scripts as active maintenance surfaces when

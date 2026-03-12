@@ -12,15 +12,6 @@ import {
 const SOURCE_ROOT = 'src';
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs']);
 
-// Directories where direct Prisma client usage is acceptable
-const PRISMA_ALLOWED_PATTERNS = [
-  /^src\/app\/api\//,
-  /^src\/features\/[^/]+\/server\//,
-  /^src\/shared\/lib\/db\//,
-  /^prisma\//,
-  /^scripts\//,
-];
-
 // Feature barrel exports — importing from these paths is acceptable
 const BARREL_SUFFIXES = ['/index', '/public', '/server', '/types'];
 
@@ -184,22 +175,6 @@ export const analyzeImportBoundaries = ({ root = process.cwd() } = {}) => {
           }
         }
       }
-
-      // Rule: prisma-outside-server
-      if (imp.path === '@prisma/client' || imp.path.startsWith('@prisma/client/')) {
-        const isAllowed = PRISMA_ALLOWED_PATTERNS.some((pattern) => pattern.test(relativePath));
-        if (!isAllowed) {
-          issues.push(
-            createIssue({
-              severity: 'error',
-              ruleId: 'prisma-outside-server',
-              file: relativePath,
-              line,
-              message: 'Direct @prisma/client import outside of allowed server directories. Use the db provider abstraction.',
-            })
-          );
-        }
-      }
     }
   }
 
@@ -229,7 +204,6 @@ export const analyzeImportBoundaries = ({ root = process.cwd() } = {}) => {
     },
     scope: {
       root: SOURCE_ROOT,
-      prismaAllowedPatterns: PRISMA_ALLOWED_PATTERNS.map((r) => r.source),
       internalImportAllowlist: [...INTERNAL_IMPORT_ALLOWLIST],
     },
     featureGraph: Object.fromEntries(

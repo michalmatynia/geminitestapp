@@ -1,7 +1,7 @@
 # GEMINI.md - Project Reference (Scanned 2026-03-02)
 
 This file is a code-backed reference for this repository. It is based on the
-current `package.json`, `src/`, `prisma/`, `docs/`, and runtime/bootstrap files.
+current `package.json`, `src/`, `docs/`, and runtime/bootstrap files.
 Prefer this over older overlay docs when paths or architecture descriptions
 conflict.
 
@@ -14,7 +14,7 @@ This is a large Next.js App Router application with:
 - a large REST-style API surface under `src/app/api`
 - feature modules under `src/features`
 - shared platform code under `src/shared`
-- mixed data backends: Prisma/Postgres, MongoDB, and optional Redis
+- MongoDB as the primary application database, with optional Redis
 - AI-heavy workflows: AI Paths, chatbot, agent runtime, image studio, AI insights
 
 ## Current Scale Snapshot
@@ -35,7 +35,6 @@ From `package.json` and config files:
 - Next.js `^16.1.1`
 - React `^19.2.3`
 - TypeScript `^5.9.3` with strict mode
-- Prisma `^7.3.0`
 - NextAuth/Auth.js v5 beta (`next-auth`, `@auth/core`)
 - MongoDB driver and Mongo auth adapter
 - BullMQ + ioredis
@@ -211,7 +210,7 @@ Key areas:
 - `src/shared/lib/ai-paths`
   - shared AI Paths runtime, API helpers, semantic grammar, validation engine
 - `src/shared/lib/db`
-  - Prisma, Mongo, Redis-aware database engine routing and status
+  - Mongo and Redis-aware database engine routing and status
 - `src/shared/lib/files`
   - upload, storage selection, file events
 - `src/shared/lib/observability`
@@ -252,21 +251,18 @@ artifact locations in `paths`, run flags in `filters`, and annotations in
 
 ### Primary persistence options
 
-The app supports all of the following:
+The app currently uses:
 
-- Prisma with a PostgreSQL datasource (`prisma/schema.prisma`)
-- MongoDB
+- MongoDB for primary persistence
 - optional Redis-backed routing/caching for selected workflows
 
 `src/shared/lib/env.ts` validates:
 
-- `DATABASE_URL`
 - `MONGODB_URI`
 - `REDIS_URL`
 - `APP_DB_PROVIDER`
 
-and `validateDatabaseConfig()` requires at least one primary database
-configuration (`DATABASE_URL` or `MONGODB_URI`).
+and `validateDatabaseConfig()` requires `MONGODB_URI`.
 
 ### App DB provider routing
 
@@ -274,8 +270,7 @@ configuration (`DATABASE_URL` or `MONGODB_URI`).
 
 - it reads explicit provider overrides from env/settings
 - it consults Database Engine service routing
-- if both SQL and Mongo are present and no explicit app route is set, it
-  currently defaults app data to MongoDB
+- application data is normalized to MongoDB
 - it throws when a required configured provider is missing
 
 ### Database Engine policy
@@ -298,7 +293,6 @@ Verified service routes include:
 
 Verified providers include:
 
-- `prisma`
 - `mongodb`
 - `redis`
 
@@ -311,23 +305,6 @@ Auth has its own provider resolution in
 - auth can be overridden by settings
 - auth can be routed separately via Database Engine
 - provider drift is logged when it is implicit
-
-### Prisma schema
-
-The checked-in Prisma schema is not minimal. Verified models include platform
-data for:
-
-- products and product metadata
-- settings
-- system logs
-- file upload events
-- chatbot settings
-- image files
-- currencies, countries, languages
-- integrations, connections, listings
-
-Assume Prisma only covers part of the total persisted surface; Mongo-backed
-collections are also used heavily across the app.
 
 ## Queues and Async Work
 

@@ -7,10 +7,10 @@ import {
   buildExtractionPlan,
   decideSearchFirstWithLLM,
 } from '@/features/ai/agent-runtime/tools/llm/index';
-import prisma from '@/shared/lib/db/prisma';
+import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 
-vi.mock('@/shared/lib/db/prisma', () => ({
+vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
   default: {
     agentAuditLog: { create: vi.fn() },
   },
@@ -133,7 +133,7 @@ describe('Agent Runtime - LLM Tools', () => {
       );
 
       expect(result).toEqual(['.prod']);
-      expect(prisma.agentAuditLog.create).toHaveBeenCalled();
+      expect(legacySqlClient.agentAuditLog.create).toHaveBeenCalled();
     });
   });
 

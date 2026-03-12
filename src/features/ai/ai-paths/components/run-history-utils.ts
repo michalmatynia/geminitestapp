@@ -1,9 +1,7 @@
+import type { IdLabelOption } from '@/shared/contracts';
 import type { AiNode, AiPathRunNodeRecord, RuntimeHistoryEntry } from '@/shared/lib/ai-paths';
 
-export type HistoryNodeOption = {
-  id: string;
-  label: string;
-};
+export type HistoryNodeOption = IdLabelOption;
 
 export const buildHistoryNodeOptions = (
   history?: Record<string, RuntimeHistoryEntry[]>,

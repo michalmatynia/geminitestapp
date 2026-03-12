@@ -28,7 +28,7 @@ export default function UserNotRegisteredError(): React.JSX.Element {
             </KangurIconBadge>
 
             <div className='mt-6'>
-              <KangurStatusChip accent='amber' className='text-[11px] uppercase tracking-[0.18em]'>
+              <KangurStatusChip accent='amber' labelStyle='eyebrow'>
                 Dostęp ograniczony
               </KangurStatusChip>
             </div>

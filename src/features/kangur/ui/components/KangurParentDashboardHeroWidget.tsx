@@ -22,6 +22,9 @@ import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/Ka
 import { useKangurParentDashboardRuntime } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import {
   KangurButton,
+  KangurCardDescription,
+  KangurCardTitle,
+  KangurSectionEyebrow,
   KangurStatusChip,
   KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
@@ -185,30 +188,30 @@ export function KangurParentDashboardHeroWidget({
               <div className='flex flex-wrap items-center gap-2'>
                 <KangurStatusChip
                   accent='violet'
-                  className='text-[11px] uppercase tracking-[0.16em]'
+                  labelStyle='caps'
                 >
                   {dailyQuest.assignment.questLabel ?? 'Misja dnia'}
                 </KangurStatusChip>
                 <KangurStatusChip
                   accent={dailyQuestAccent}
-                  className='text-[11px] uppercase tracking-[0.16em]'
+                  labelStyle='caps'
                 >
                   {dailyQuest.progress.percent}%
                 </KangurStatusChip>
                 <KangurStatusChip
                   accent={dailyQuest.reward.status === 'claimed' ? 'emerald' : dailyQuestAccent}
-                  className='text-[11px] uppercase tracking-[0.16em]'
+                  labelStyle='caps'
                 >
                   {dailyQuest.reward.label}
                 </KangurStatusChip>
               </div>
-              <p className='mt-3 text-sm font-semibold [color:var(--kangur-page-text)]'>
+              <KangurCardTitle as='p' className='mt-3'>
                 {activeLearner?.displayName ? `${activeLearner.displayName}: ` : ''}
                 {dailyQuest.assignment.title}
-              </p>
-              <p className='mt-1 text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
+              </KangurCardTitle>
+              <KangurCardDescription as='p' className='mt-1 leading-5' size='xs'>
                 {dailyQuest.progress.summary}
-              </p>
+              </KangurCardDescription>
             </div>
             <KangurButton asChild className='shrink-0' size='sm' variant='surface'>
               <Link
@@ -225,9 +228,9 @@ export function KangurParentDashboardHeroWidget({
       ) : null}
 
       <div className='mb-3 text-left' data-testid='kangur-parent-dashboard-track-summary'>
-        <p className='mb-2 text-[11px] font-bold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
+        <KangurSectionEyebrow as='p' className='mb-2 tracking-[0.18em]'>
           Sciezki postepu ucznia
-        </p>
+        </KangurSectionEyebrow>
         <KangurHeroMilestoneSummary
           className='mb-3'
           dataTestIdPrefix='kangur-parent-dashboard-hero-milestone'

@@ -96,9 +96,9 @@ export const resolveError = (error: unknown, options?: ResolveOptions): Resolved
     };
   }
 
-  // Handle Prisma errors
-  if (isPrismaError(error)) {
-    return resolvePrismaError(error, errorId, options);
+  // Handle database client errors
+  if (isDatabaseClientError(error)) {
+    return resolveDatabaseClientError(error, errorId, options);
   }
 
   // Handle fetch/network errors
@@ -135,23 +135,31 @@ export const resolveError = (error: unknown, options?: ResolveOptions): Resolved
 };
 
 /**
- * Check if error is a Prisma error.
+ * Check if error comes from a database client or transport layer.
  */
-function isPrismaError(error: unknown): error is Error & { code?: string } {
+function isDatabaseClientError(error: unknown): error is Error & { code?: string } {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const constructorName = error.constructor.name;
   return (
-    error instanceof Error &&
-    (error.constructor.name.startsWith('Prisma') ||
-      ('code' in error &&
-        typeof (error as { code?: unknown }).code === 'string' &&
-        ((error as { code: string }).code.startsWith('P') ||
-          (error as { code: string }).code.includes('ECONN'))))
+    constructorName === 'MongoServerError' ||
+    constructorName === 'MongoNetworkError' ||
+    constructorName === 'MongoBulkWriteError' ||
+    constructorName === 'ValidationError' ||
+    ('code' in error &&
+      typeof (error as { code?: unknown }).code === 'string' &&
+      (((error as { code: string }).code.startsWith('P') &&
+        (error as { code: string }).code.length >= 4) ||
+        (error as { code: string }).code.includes('ECONN')))
   );
 }
 
 /**
- * Resolves Prisma-specific errors.
+ * Resolves database client errors into the canonical app error surface.
  */
-function resolvePrismaError(
+function resolveDatabaseClientError(
   error: Error & { code?: string },
   errorId: string,
   options?: ResolveOptions
@@ -177,7 +185,7 @@ function resolvePrismaError(
           actionType: 'CONTACT_SUPPORT',
         },
       ],
-      meta: { prismaCode: code },
+      meta: { databaseCode: code },
       cause: error,
     };
   }
@@ -200,7 +208,7 @@ function resolvePrismaError(
           actionType: 'VERIFY_INPUT_DATA',
         },
       ],
-      meta: { prismaCode: code },
+      meta: { databaseCode: code },
       cause: error,
     };
   }
@@ -223,7 +231,7 @@ function resolvePrismaError(
           actionType: 'VERIFY_INPUT_DATA',
         },
       ],
-      meta: { prismaCode: code },
+      meta: { databaseCode: code },
       cause: error,
     };
   }
@@ -252,7 +260,7 @@ function resolvePrismaError(
           actionType: 'CHECK_CONFIG',
         },
       ],
-      meta: { prismaCode: code },
+      meta: { databaseCode: code },
       cause: error,
     };
   }
@@ -280,13 +288,13 @@ function resolvePrismaError(
           actionType: 'CHECK_SERVER_LOAD',
         },
       ],
-      meta: { prismaCode: code },
+      meta: { databaseCode: code },
       cause: error,
     };
   }
 
-  // Prisma validation (for example invalid enum/input values)
-  if (error.constructor.name === 'PrismaClientValidationError') {
+  // Validation errors from the active database client.
+  if (error.constructor.name === 'ValidationError') {
     return {
       errorId,
       message: 'Invalid request payload',
@@ -303,7 +311,7 @@ function resolvePrismaError(
           actionType: 'VERIFY_INPUT_DATA',
         },
       ],
-      ...(code ? { meta: { prismaCode: code } } : {}),
+      ...(code ? { meta: { databaseCode: code } } : {}),
       cause: error,
     };
   }
@@ -330,7 +338,7 @@ function resolvePrismaError(
         actionType: 'CHECK_SERVER_LOGS',
       },
     ],
-    ...(code ? { meta: { prismaCode: code } } : {}),
+    ...(code ? { meta: { databaseCode: code } } : {}),
     cause: error,
   };
 }

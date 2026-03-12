@@ -66,7 +66,6 @@ const toMarkdown = (payload) => {
   lines.push('- `cross-feature-internal-import` (error): Features should only import from other features via barrel exports (index/public/server/types).');
   lines.push('- `deep-relative-import` (warn): 3+ levels of `../` suggest a path alias should be used instead.');
   lines.push('- `circular-feature-dep` (error): Circular dependencies between feature domains hinder independent development and testing.');
-  lines.push('- `prisma-outside-server` (error): Direct Prisma client usage should be restricted to server directories and API routes.');
   return `${lines.join('\n')}\n`;
 };
 

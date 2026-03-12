@@ -10,6 +10,8 @@ import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/Ka
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import {
   KangurButton,
+  KangurCardDescription,
+  KangurCardTitle,
   KangurGlassPanel,
   KangurProgressBar,
   KangurStatusChip,
@@ -102,22 +104,22 @@ export function KangurGameHomeQuestWidget({
           <div className='flex flex-wrap items-center gap-2'>
             <KangurStatusChip
               accent='violet'
-              className='text-[11px] uppercase tracking-[0.16em]'
               data-testid='kangur-home-quest-label'
+              labelStyle='caps'
             >
               {assignment.questLabel ?? 'Misja dnia'}
             </KangurStatusChip>
             <KangurStatusChip
               accent={PRIORITY_ACCENTS[assignment.priority]}
-              className='text-[11px] uppercase tracking-[0.16em]'
               data-testid='kangur-home-quest-priority'
+              labelStyle='caps'
             >
               {PRIORITY_LABELS[assignment.priority]}
             </KangurStatusChip>
             <KangurStatusChip
               accent={QUEST_STATUS_ACCENTS[quest.progress.status]}
-              className='text-[11px] uppercase tracking-[0.16em]'
               data-testid='kangur-home-quest-status'
+              labelStyle='caps'
             >
               {QUEST_STATUS_LABELS[quest.progress.status]}
             </KangurStatusChip>
@@ -130,41 +132,46 @@ export function KangurGameHomeQuestWidget({
                       ? 'amber'
                       : 'indigo'
                 }
-                className='text-[11px] uppercase tracking-[0.16em]'
                 data-testid='kangur-home-quest-reward'
+                labelStyle='caps'
               >
                 {quest.reward.label}
               </KangurStatusChip>
             ) : null}
             <KangurStatusChip
               accent='slate'
-              className='text-[11px] uppercase tracking-[0.16em]'
               data-testid='kangur-home-quest-expiry'
+              labelStyle='caps'
             >
               {quest.expiresLabel}
             </KangurStatusChip>
           </div>
 
-          <div className='mt-4 text-2xl font-extrabold tracking-tight [color:var(--kangur-page-text)]'>
+          <KangurCardTitle className='mt-4' data-testid='kangur-home-quest-title' size='xl'>
             {assignment.title}
-          </div>
-          <p className='mt-3 max-w-2xl text-sm leading-7 [color:var(--kangur-page-muted-text)]'>
+          </KangurCardTitle>
+          <KangurCardDescription
+            as='p'
+            className='mt-3 max-w-2xl leading-7'
+            data-testid='kangur-home-quest-description'
+            size='sm'
+          >
             {assignment.description}
-          </p>
+          </KangurCardDescription>
 
           <div className='mt-4 flex flex-wrap gap-2'>
             <KangurStatusChip
               accent='amber'
-              className='text-[11px] uppercase tracking-[0.14em]'
               data-testid='kangur-home-quest-target'
+              labelStyle='compact'
               size='sm'
             >
               Cel: {assignment.target}
             </KangurStatusChip>
             <KangurStatusChip
               accent='slate'
-              className='text-[11px] uppercase tracking-[0.14em]'
               data-testid='kangur-home-quest-progress'
+              labelStyle='compact'
               size='sm'
             >
               {quest.progress.summary}
@@ -182,8 +189,8 @@ export function KangurGameHomeQuestWidget({
                 {currentWinStreak > 0 ? (
                   <KangurStatusChip
                     accent='rose'
-                    className='text-[11px] uppercase tracking-[0.14em]'
                     data-testid='kangur-home-quest-streak'
+                    labelStyle='compact'
                     size='sm'
                   >
                   Seria: {currentWinStreak}
@@ -192,8 +199,8 @@ export function KangurGameHomeQuestWidget({
                 {averageXpPerSession > 0 ? (
                   <KangurStatusChip
                     accent='violet'
-                    className='text-[11px] uppercase tracking-[0.14em]'
                     data-testid='kangur-home-quest-xp-rate'
+                    labelStyle='compact'
                     size='sm'
                   >
                   Tempo: {averageXpPerSession} XP / gre
@@ -202,8 +209,8 @@ export function KangurGameHomeQuestWidget({
                 {visibleLeadingTrack ? (
                   <KangurStatusChip
                     accent='indigo'
-                    className='text-[11px] uppercase tracking-[0.14em]'
                     data-testid='kangur-home-quest-track'
+                    labelStyle='compact'
                     size='sm'
                   >
                   Na fali: {visibleLeadingTrack.label}
@@ -212,8 +219,8 @@ export function KangurGameHomeQuestWidget({
                 {guidedMomentum.completedSessions > 0 ? (
                   <KangurStatusChip
                     accent='sky'
-                    className='text-[11px] uppercase tracking-[0.14em]'
                     data-testid='kangur-home-quest-guided'
+                    labelStyle='compact'
                     size='sm'
                   >
                   Kierunek: {guidedMomentum.summary}

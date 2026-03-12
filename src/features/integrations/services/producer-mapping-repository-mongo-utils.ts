@@ -1,6 +1,10 @@
 import { ObjectId, type Filter } from 'mongodb';
 
-import type { ProducerMapping, ProducerMappingWithDetails } from '@/shared/contracts/integrations';
+import type {
+  MongoExternalCatalogEntityDoc,
+  ProducerMapping,
+  ProducerMappingWithDetails,
+} from '@/shared/contracts/integrations';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { MongoProducerDoc as SharedMongoProducerDoc } from '@/shared/lib/db/services/database-sync-types';
 
@@ -14,16 +18,7 @@ export type MongoProducerMappingDoc = {
   updatedAt: Date;
 };
 
-export type MongoExternalProducerDoc = {
-  _id: string | ObjectId;
-  connectionId: string;
-  externalId: string;
-  name: string;
-  metadata?: Record<string, unknown> | null;
-  fetchedAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
-};
+export type MongoExternalProducerDoc = MongoExternalCatalogEntityDoc;
 
 type MongoInternalProducerDoc = Omit<
   SharedMongoProducerDoc,

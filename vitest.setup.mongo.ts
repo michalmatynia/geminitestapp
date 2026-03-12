@@ -38,7 +38,6 @@ const QUIET_TEST_LOG_PATTERNS = [
 const QUIET_TEST_LOG_SERVICES = new Set([
   'export-template-repository',
   'products.advanced-filter.mongo',
-  'products.advanced-filter.prisma',
 ]);
 const originalConsoleLog = console.log.bind(console);
 const originalConsoleInfo = console.info.bind(console);

@@ -73,6 +73,12 @@ export type LabeledOptionDto<TValue = string> = {
 };
 export type LabeledOption<TValue = string> = LabeledOptionDto<TValue>;
 
+export type IdLabelOptionDto<TId extends string = string> = {
+  id: TId;
+  label: string;
+};
+export type IdLabelOption<TId extends string = string> = IdLabelOptionDto<TId>;
+
 export type LabelValueOptionDto = LabeledOptionDto<string>;
 export type { LabelValueOptionDto as LabelValueOption };
 

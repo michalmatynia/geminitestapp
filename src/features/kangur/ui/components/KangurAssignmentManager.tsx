@@ -15,9 +15,12 @@ import KangurBadgeTrackHighlights from '@/features/kangur/ui/components/KangurBa
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurButton,
+  KangurCardDescription,
+  KangurCardTitle,
   KangurEmptyState,
   KangurGlassPanel,
   KangurInfoCard,
+  KangurMetaText,
   KangurMetricCard,
   KangurStatusChip,
   KangurSummaryPanel,
@@ -341,12 +344,12 @@ export function KangurAssignmentManager({
       >
         <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
           <div className='max-w-2xl'>
-            <KangurStatusChip accent='indigo' className='text-[11px] uppercase tracking-[0.18em]'>
+            <KangurStatusChip accent='indigo' labelStyle='eyebrow'>
               Przydziel nowe zadanie
             </KangurStatusChip>
-            <div className='mt-3 text-sm leading-6 text-slate-600'>
+            <KangurCardDescription className='mt-3 text-slate-600' relaxed size='sm'>
               Wyszukaj lekcje i zadania treningowe, a potem przypisz je uczniowi jako priorytet.
-            </div>
+            </KangurCardDescription>
           </div>
 
           <KangurButton type='button' onClick={() => void refresh()} size='sm' variant='surface'>
@@ -371,20 +374,20 @@ export function KangurAssignmentManager({
                 >
                   <div className='flex items-start justify-between gap-3'>
                     <div>
-                      <div className='text-sm font-bold text-slate-900'>{item.title}</div>
-                      <div className='mt-1 text-sm leading-6 text-slate-600'>
+                      <KangurCardTitle className='text-slate-900'>{item.title}</KangurCardTitle>
+                      <KangurCardDescription className='mt-1 text-slate-600' relaxed size='sm'>
                         {item.description}
-                      </div>
+                      </KangurCardDescription>
                     </div>
                     <KangurStatusChip
                       accent={getPriorityAccentFromLabel(item.priorityLabel)}
-                      className='text-[11px] uppercase tracking-[0.14em]'
+                      labelStyle='compact'
                     >
                       {item.priorityLabel}
                     </KangurStatusChip>
                   </div>
                   <div className='mt-3 flex items-center justify-between gap-3'>
-                    <KangurStatusChip accent='slate' className='text-[11px] uppercase tracking-[0.14em]'>
+                    <KangurStatusChip accent='slate' labelStyle='compact'>
                       {item.badge}
                     </KangurStatusChip>
                     <KangurButton
@@ -418,32 +421,32 @@ export function KangurAssignmentManager({
                   <div className='flex flex-wrap items-center gap-2'>
                     <KangurStatusChip
                       accent='violet'
-                      className='text-[11px] uppercase tracking-[0.14em]'
+                      labelStyle='compact'
                     >
                       {featuredDailyQuest.assignment.questLabel ?? 'Misja dnia'}
                     </KangurStatusChip>
                     <KangurStatusChip
                       accent={featuredQuestAccent}
-                      className='text-[11px] uppercase tracking-[0.14em]'
+                      labelStyle='compact'
                     >
                       {featuredDailyQuest.progress.percent}%
                     </KangurStatusChip>
                     <KangurStatusChip
                       accent={featuredQuestRewardAccent}
-                      className='text-[11px] uppercase tracking-[0.14em]'
+                      labelStyle='compact'
                     >
                       {featuredDailyQuest.reward.label}
                     </KangurStatusChip>
                   </div>
-                  <div className='mt-3 text-sm font-bold text-slate-900'>
+                  <KangurCardTitle className='mt-3 text-slate-900'>
                     {featuredDailyQuest.assignment.title}
-                  </div>
-                  <div className='mt-1 text-sm leading-6 text-slate-600'>
+                  </KangurCardTitle>
+                  <KangurCardDescription className='mt-1 text-slate-600' relaxed size='sm'>
                     {featuredDailyQuest.assignment.description}
-                  </div>
-                  <div className='mt-2 text-[11px] uppercase tracking-[0.14em] text-slate-500'>
+                  </KangurCardDescription>
+                  <KangurMetaText caps className='mt-2' tone='slate'>
                     {featuredDailyQuest.progress.summary}
-                  </div>
+                  </KangurMetaText>
                 </div>
 
                 {featuredQuestHref ? (
@@ -539,12 +542,14 @@ export function KangurAssignmentManager({
             >
               <div className='flex items-start justify-between gap-3'>
                 <div>
-                  <div className='text-sm font-bold text-slate-900'>{item.title}</div>
-                  <div className='mt-1 text-sm leading-6 text-slate-600'>{item.description}</div>
+                  <KangurCardTitle className='text-slate-900'>{item.title}</KangurCardTitle>
+                  <KangurCardDescription className='mt-1 text-slate-600' relaxed size='sm'>
+                    {item.description}
+                  </KangurCardDescription>
                 </div>
                 <KangurStatusChip
                   accent='slate'
-                  className='text-[11px] uppercase tracking-[0.14em]'
+                  labelStyle='compact'
                 >
                   {item.badge}
                 </KangurStatusChip>
@@ -553,7 +558,7 @@ export function KangurAssignmentManager({
               <div className='mt-3 flex items-center justify-between gap-3'>
                 <KangurStatusChip
                   accent={getPriorityAccentFromLabel(item.priorityLabel)}
-                  className='text-[11px] uppercase tracking-[0.14em]'
+                  labelStyle='compact'
                 >
                   {item.priorityLabel}
                 </KangurStatusChip>
@@ -590,13 +595,14 @@ export function KangurAssignmentManager({
         <div className='flex flex-col gap-1'>
           <KangurStatusChip
             accent='slate'
-            className='w-fit text-[11px] uppercase tracking-[0.18em]'
+            className='w-fit'
+            labelStyle='eyebrow'
           >
             Monitorowanie zadań
           </KangurStatusChip>
-          <div className='mt-2 text-sm leading-6 text-slate-600'>
+          <KangurCardDescription className='mt-2 text-slate-600' relaxed size='sm'>
             Szybki podgląd tego, co uczeń rozpoczął, zakończył albo nadal odkłada.
-          </div>
+          </KangurCardDescription>
         </div>
 
         <div className='mt-5 grid grid-cols-2 gap-3 xl:grid-cols-4'>
@@ -662,20 +668,22 @@ export function KangurAssignmentManager({
                 >
                   <div className='flex items-start justify-between gap-3'>
                     <div>
-                      <div className='text-sm font-bold text-slate-900'>{item.title}</div>
-                      <div className='mt-1 text-sm leading-6 text-amber-900'>{item.reason}</div>
+                      <KangurCardTitle className='text-slate-900'>{item.title}</KangurCardTitle>
+                      <KangurCardDescription className='mt-1 text-amber-900' relaxed size='sm'>
+                        {item.reason}
+                      </KangurCardDescription>
                     </div>
                     <KangurStatusChip
                       accent='amber'
-                      className='text-[11px] uppercase tracking-[0.14em]'
+                      labelStyle='compact'
                     >
                       {item.progressPercent}%
                     </KangurStatusChip>
                   </div>
                   <div className='mt-3 flex items-center justify-between gap-3'>
-                    <div className='text-[11px] uppercase tracking-[0.14em] text-slate-500'>
+                    <KangurMetaText caps tone='slate'>
                       {item.progressSummary}
-                    </div>
+                    </KangurMetaText>
                     <KangurButton asChild size='sm' variant='warning'>
                       <Link
                         href={item.actionHref}

@@ -1,4 +1,3 @@
-import { ChatbotAgentRun, AgentBrowserLog, AgentAuditLog } from '@prisma/client';
 import { NextRequest } from 'next/server';
 
 vi.mock('@/features/ai/server', () => ({
@@ -81,21 +80,25 @@ vi.mock('@/shared/lib/api/api-handler', async () => {
 
 import { GET as getAgentAction } from '@/app/api/chatbot/agent/[runId]/[action]/route';
 import { GET as listRuns, POST as createRun } from '@/app/api/chatbot/agent/route';
-import prisma from '@/shared/lib/db/prisma';
+import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
+
+type ChatbotAgentRun = { id: string };
+type AgentBrowserLog = { message: string };
+type AgentAuditLog = { metadata?: unknown };
 
 describe('Agent API', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    await prisma.agentBrowserLog.deleteMany({});
-    await prisma.agentBrowserSnapshot.deleteMany({});
-    await prisma.agentAuditLog.deleteMany({});
-    await prisma.agentMemoryItem.deleteMany({});
-    await prisma.chatbotAgentRun.deleteMany({});
+    await legacySqlClient.agentBrowserLog.deleteMany({});
+    await legacySqlClient.agentBrowserSnapshot.deleteMany({});
+    await legacySqlClient.agentAuditLog.deleteMany({});
+    await legacySqlClient.agentMemoryItem.deleteMany({});
+    await legacySqlClient.chatbotAgentRun.deleteMany({});
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    await legacySqlClient.$disconnect();
   });
 
   it('should reject missing prompt when creating a run', async () => {
@@ -117,20 +120,20 @@ describe('Agent API', () => {
   });
 
   it('should list agent runs with counts', async () => {
-    const run = await prisma.chatbotAgentRun.create({
+    const run = await legacySqlClient.chatbotAgentRun.create({
       data: {
         prompt: 'Browse example.com',
         tools: ['agent-mode'],
       },
     });
-    await prisma.agentBrowserLog.create({
+    await legacySqlClient.agentBrowserLog.create({
       data: {
         runId: run.id,
         level: 'info',
         message: 'Stub log',
       },
     });
-    await prisma.agentBrowserSnapshot.create({
+    await legacySqlClient.agentBrowserSnapshot.create({
       data: {
         runId: run.id,
         url: 'about:blank',
@@ -140,7 +143,7 @@ describe('Agent API', () => {
       },
     });
 
-    vi.mocked(prisma.chatbotAgentRun.findMany).mockResolvedValueOnce([
+    vi.mocked(legacySqlClient.chatbotAgentRun.findMany).mockResolvedValueOnce([
       {
         ...run,
         _count: {
@@ -164,7 +167,7 @@ describe('Agent API', () => {
   });
 
   it('should return agent logs for a run', async () => {
-    const run = await prisma.chatbotAgentRun.create({
+    const run = await legacySqlClient.chatbotAgentRun.create({
       data: { prompt: 'Logs test', tools: ['agent-mode'] },
     });
     const logData = {
@@ -172,11 +175,11 @@ describe('Agent API', () => {
       level: 'info',
       message: 'Log entry',
     };
-    const log = await prisma.agentBrowserLog.create({
+    const log = await legacySqlClient.agentBrowserLog.create({
       data: logData,
     });
 
-    vi.mocked(prisma.agentBrowserLog.findMany).mockResolvedValueOnce([log]);
+    vi.mocked(legacySqlClient.agentBrowserLog.findMany).mockResolvedValueOnce([log]);
 
     const res = await getAgentAction(new NextRequest('http://localhost'), {
       params: Promise.resolve({ runId: run.id, action: 'logs' }),
@@ -189,7 +192,7 @@ describe('Agent API', () => {
   });
 
   it('should return agent audit logs for a run', async () => {
-    const run = await prisma.chatbotAgentRun.create({
+    const run = await legacySqlClient.chatbotAgentRun.create({
       data: { prompt: 'Audit test', tools: ['agent-mode'] },
     });
     const auditData = {
@@ -198,11 +201,11 @@ describe('Agent API', () => {
       message: 'Audit entry',
       metadata: { step: 'tool' },
     };
-    const audit = await prisma.agentAuditLog.create({
+    const audit = await legacySqlClient.agentAuditLog.create({
       data: auditData,
     });
 
-    vi.mocked(prisma.agentAuditLog.findMany).mockResolvedValueOnce([audit]);
+    vi.mocked(legacySqlClient.agentAuditLog.findMany).mockResolvedValueOnce([audit]);
 
     const res = await getAgentAction(new NextRequest('http://localhost'), {
       params: Promise.resolve({ runId: run.id, action: 'audits' }),

@@ -1,10 +1,12 @@
 import { z } from 'zod';
 
-export const productDbProviderSchema = z.literal('mongodb');
-export type ProductDbProvider = z.infer<typeof productDbProviderSchema>;
+import { appProviderValueSchema, type AppProviderValue } from '../system';
 
-export const integrationDbProviderSchema = z.literal('mongodb');
-export type IntegrationDbProvider = z.infer<typeof integrationDbProviderSchema>;
+export const productDbProviderSchema = appProviderValueSchema;
+export type ProductDbProvider = AppProviderValue;
+
+export const integrationDbProviderSchema = appProviderValueSchema;
+export type IntegrationDbProvider = AppProviderValue;
 
 export const productMigrationDirectionSchema = z.literal('mongo-only');
 export type ProductMigrationDirection = z.infer<typeof productMigrationDirectionSchema>;

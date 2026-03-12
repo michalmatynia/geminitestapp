@@ -1,6 +1,9 @@
 import KangurBadgeTrackHighlights from '@/features/kangur/ui/components/KangurBadgeTrackHighlights';
 import {
+  KangurCardDescription,
+  KangurCardTitle,
   KangurProgressBar,
+  KangurSectionEyebrow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { getNextLockedBadge } from '@/features/kangur/ui/services/progress';
@@ -50,15 +53,18 @@ export default function KangurHeroMilestoneSummary({
         >
           <div className='flex items-start justify-between gap-3'>
             <div className='min-w-0'>
-              <p className='text-[11px] font-bold uppercase tracking-[0.18em] text-amber-700/80'>
+              <KangurSectionEyebrow
+                as='p'
+                className='tracking-[0.18em] text-amber-700/80'
+              >
                 Nastepny kamien milowy
-              </p>
-              <p className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+              </KangurSectionEyebrow>
+              <KangurCardTitle as='p' className='mt-1'>
                 {nextBadge.emoji} {nextBadge.name}
-              </p>
-              <p className='mt-1 text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
+              </KangurCardTitle>
+              <KangurCardDescription as='p' className='mt-1 leading-5' size='xs'>
                 {nextBadge.desc}
-              </p>
+              </KangurCardDescription>
             </div>
             <KangurStatusChip accent='amber' className='shrink-0 text-[11px]'>
               {nextBadge.summary}

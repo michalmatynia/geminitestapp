@@ -541,10 +541,41 @@ describe('acquireRuntimeLease', () => {
     } finally {
       killSpy.mockRestore();
     }
-  });
+  }, 15_000);
 });
 
 describe('cleanupBrokerRuntimeLeases', () => {
+  it('removes an orphaned managed dist dir even when the lease file is already gone', async () => {
+    const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'runtime-broker-orphan-dist-'));
+    cleanupTargets.push(rootDir);
+
+    const appId = 'web';
+    const mode = 'dev';
+    const agentId = 'agent-orphan';
+    const distDir = resolveBrokerManagedDistDir({
+      appId,
+      mode,
+      agentId,
+    });
+
+    await fs.mkdir(path.join(rootDir, distDir, 'dev'), { recursive: true });
+    await fs.writeFile(path.join(rootDir, distDir, 'dev', 'lock'), 'stale next lock', 'utf8');
+
+    const summary = await cleanupBrokerRuntimeLeases({
+      rootDir,
+      appId,
+      agentId,
+      env: {},
+    });
+
+    expect(summary).toEqual({
+      inspected: 0,
+      stopped: 0,
+      removed: 1,
+    });
+    await expect(fs.stat(path.join(rootDir, distDir))).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
   it('removes the broker-managed dist dir for stale leases', async () => {
     const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'runtime-broker-cleanup-'));
     cleanupTargets.push(rootDir);

@@ -16,7 +16,7 @@ describe('agentic history diff', () => {
           requiredImpactBundles: ['product_data_pipeline', 'admin_experience'],
           recommendedBundleOrder: ['product_data_pipeline', 'admin_experience'],
           recommendedValidationByBundle: {
-            product_data_pipeline: ['//:integration_prisma', '//:products_trigger_queue_unit'],
+            product_data_pipeline: ['//:integration_mongo', '//:products_trigger_queue_unit'],
             admin_experience: ['//:accessibility_smoke'],
           },
         },
@@ -41,7 +41,7 @@ describe('agentic history diff', () => {
           {
             bundle: 'product_data_pipeline',
             priority: 'high',
-            targets: ['//:integration_prisma', '//:products_trigger_queue_unit'],
+            targets: ['//:integration_mongo', '//:products_trigger_queue_unit'],
           },
           {
             bundle: 'admin_experience',
@@ -53,10 +53,10 @@ describe('agentic history diff', () => {
           {
             bundle: 'product_data_pipeline',
             priority: 'high',
-            recommendedTargets: ['//:integration_prisma', '//:products_trigger_queue_unit'],
+            recommendedTargets: ['//:integration_mongo', '//:products_trigger_queue_unit'],
             executedTargets: [
               {
-                target: '//:integration_prisma',
+                target: '//:integration_mongo',
                 status: 'passed',
                 durationMs: 1000,
               },
@@ -80,7 +80,7 @@ describe('agentic history diff', () => {
           requiredImpactBundles: ['product_data_pipeline'],
           recommendedBundleOrder: ['product_data_pipeline'],
           recommendedValidationByBundle: {
-            product_data_pipeline: ['//:integration_prisma'],
+            product_data_pipeline: ['//:integration_mongo'],
           },
         },
         executionReport: {
@@ -88,7 +88,7 @@ describe('agentic history diff', () => {
           validationDecision: 'skipped-by-default',
           validationRiskThreshold: null,
           guardrailViolations: [],
-          skippedValidationTargets: ['//:integration_prisma'],
+          skippedValidationTargets: ['//:integration_mongo'],
         },
         bundleSelection: {
           selectedBundles: ['product_data_pipeline'],
@@ -99,17 +99,17 @@ describe('agentic history diff', () => {
           {
             bundle: 'product_data_pipeline',
             priority: 'high',
-            targets: ['//:integration_prisma'],
+            targets: ['//:integration_mongo'],
           },
         ],
         bundleReports: [
           {
             bundle: 'product_data_pipeline',
             priority: 'high',
-            recommendedTargets: ['//:integration_prisma'],
+            recommendedTargets: ['//:integration_mongo'],
             executedTargets: [
               {
-                target: '//:integration_prisma',
+                target: '//:integration_mongo',
                 status: 'failed',
                 durationMs: 1100,
               },
@@ -154,7 +154,7 @@ describe('agentic history diff', () => {
         removedTargets: [],
         statusChanges: [
           {
-            target: '//:integration_prisma',
+            target: '//:integration_mongo',
             previousStatus: 'failed',
             currentStatus: 'passed',
           },

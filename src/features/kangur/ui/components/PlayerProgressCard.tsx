@@ -2,10 +2,13 @@ import { motion } from 'framer-motion';
 
 import KangurBadgeTrackGrid from '@/features/kangur/ui/components/KangurBadgeTrackGrid';
 import {
+  KangurCardDescription,
+  KangurCardTitle,
   KangurDisplayEmoji,
   KangurGlassPanel,
   KangurMetricCard,
   KangurProgressBar,
+  KangurSectionEyebrow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
@@ -119,15 +122,15 @@ export default function PlayerProgressCard({
             data-testid='player-progress-top-activity'
           >
             <div>
-              <p className='text-[11px] font-bold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
+              <KangurSectionEyebrow as='p' className='tracking-[0.18em]'>
                 Najczesciej cwiczysz
-              </p>
-              <p className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+              </KangurSectionEyebrow>
+              <KangurCardTitle as='p'>
                 {topActivity.label}
-              </p>
-              <p className='text-xs [color:var(--kangur-page-muted-text)]'>
+              </KangurCardTitle>
+              <KangurCardDescription as='p' size='xs'>
                 {topActivity.sessionsPlayed} sesji · {topActivity.averageXpPerSession} XP / gre
-              </p>
+              </KangurCardDescription>
             </div>
             <KangurStatusChip accent='indigo'>{topActivity.totalXpEarned} XP</KangurStatusChip>
           </div>
@@ -144,15 +147,18 @@ export default function PlayerProgressCard({
           >
             <div className='flex items-start justify-between gap-3'>
               <div>
-                <p className='text-[11px] font-bold uppercase tracking-[0.18em] text-amber-700/80'>
+                <KangurSectionEyebrow
+                  as='p'
+                  className='tracking-[0.18em] text-amber-700/80'
+                >
                   Nastepna odznaka
-                </p>
-                <p className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                </KangurSectionEyebrow>
+                <KangurCardTitle as='p' className='mt-1'>
                   {nextBadge.emoji} {nextBadge.name}
-                </p>
-                <p className='mt-1 text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
+                </KangurCardTitle>
+                <KangurCardDescription as='p' className='mt-1 leading-5' size='xs'>
                   {nextBadge.desc}
-                </p>
+                </KangurCardDescription>
               </div>
               <KangurStatusChip accent='amber' className='shrink-0'>
                 {nextBadge.summary}
@@ -179,17 +185,20 @@ export default function PlayerProgressCard({
           >
             <div className='flex items-start justify-between gap-3'>
               <div>
-                <p className='text-[11px] font-bold uppercase tracking-[0.18em] text-sky-700/80'>
+                <KangurSectionEyebrow
+                  as='p'
+                  className='tracking-[0.18em] text-sky-700/80'
+                >
                   Polecony kierunek
-                </p>
-                <p className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                </KangurSectionEyebrow>
+                <KangurCardTitle as='p' className='mt-1'>
                   {guidedMomentum.completedSessions} polecone rundy
-                </p>
-                <p className='mt-1 text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
+                </KangurCardTitle>
+                <KangurCardDescription as='p' className='mt-1 leading-5' size='xs'>
                   {guidedMomentum.nextBadgeName
                     ? `Do odznaki ${guidedMomentum.nextBadgeName}: ${guidedMomentum.summary}`
                     : 'Wszystkie odznaki polecanego kierunku odblokowane.'}
-                </p>
+                </KangurCardDescription>
               </div>
               <KangurStatusChip accent='sky' className='shrink-0'>
                 {guidedMomentum.summary}
@@ -206,9 +215,9 @@ export default function PlayerProgressCard({
         ) : null}
 
         <div>
-          <p className='mb-2 text-xs font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+          <KangurSectionEyebrow as='p' className='mb-2 text-xs tracking-wide'>
             Sciezki odznak
-          </p>
+          </KangurSectionEyebrow>
           <KangurBadgeTrackGrid
             dataTestIdPrefix='player-progress-badge-track'
             emptyTestId='player-progress-badges-empty'

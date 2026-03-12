@@ -3,7 +3,12 @@
 import KangurGame from '@/features/kangur/ui/components/KangurGame';
 import { KangurGameProvider } from '@/features/kangur/ui/context/KangurGameContext';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
-import { KangurInfoCard, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurCardDescription,
+  KangurCardTitle,
+  KangurInfoCard,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
 
 export function KangurGameKangurSessionWidget(): React.JSX.Element | null {
   const { activeSessionRecommendation, kangurMode, screen, setScreen } = useKangurGameRuntime();
@@ -26,34 +31,32 @@ export function KangurGameKangurSessionWidget(): React.JSX.Element | null {
             <div className='flex flex-wrap gap-2'>
               <KangurStatusChip
                 accent='violet'
-                className='text-[11px] uppercase tracking-[0.16em]'
                 data-testid='kangur-kangur-session-recommendation-chip'
+                labelStyle='caps'
                 size='sm'
               >
                 Polecony kierunek
               </KangurStatusChip>
               <KangurStatusChip
                 accent='amber'
-                className='text-[11px] uppercase tracking-[0.16em]'
                 data-testid='kangur-kangur-session-recommendation-label'
+                labelStyle='caps'
                 size='sm'
               >
                 {activeSessionRecommendation.label}
               </KangurStatusChip>
             </div>
-            <div
-              className='text-sm font-semibold [color:var(--kangur-page-text)]'
-              data-testid='kangur-kangur-session-recommendation-title'
-            >
+            <KangurCardTitle data-testid='kangur-kangur-session-recommendation-title'>
               {activeSessionRecommendation.title}
-            </div>
+            </KangurCardTitle>
             {activeSessionRecommendation.description ? (
-              <div
-                className='text-xs leading-6 [color:var(--kangur-page-muted-text)]'
+              <KangurCardDescription
                 data-testid='kangur-kangur-session-recommendation-description'
+                relaxed
+                size='xs'
               >
                 {activeSessionRecommendation.description}
-              </div>
+              </KangurCardDescription>
             ) : null}
           </div>
         </KangurInfoCard>

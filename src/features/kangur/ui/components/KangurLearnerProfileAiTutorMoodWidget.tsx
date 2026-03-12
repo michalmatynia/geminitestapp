@@ -8,7 +8,9 @@ import {
   useKangurLearnerProfileRuntime,
 } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import {
+  KangurCardDescription,
   KangurGlassPanel,
+  KangurSectionEyebrow,
   KangurSectionHeading,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -60,13 +62,15 @@ function LearnerMoodStat({
 }): React.JSX.Element {
   return (
     <div className='soft-card rounded-[24px] border [border-color:var(--kangur-soft-card-border)] px-4 py-4 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.22)]'>
-      <div className='text-[11px] font-bold uppercase tracking-[0.2em] [color:var(--kangur-page-muted-text)]'>
+      <KangurSectionEyebrow className='tracking-[0.2em]'>
         {label}
-      </div>
+      </KangurSectionEyebrow>
       <div className='mt-2 text-base font-bold [color:var(--kangur-page-text)]' data-testid={testId}>
         {value}
       </div>
-      <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>{description}</p>
+      <KangurCardDescription as='p' className='mt-1' size='xs'>
+        {description}
+      </KangurCardDescription>
     </div>
   );
 }
@@ -120,12 +124,14 @@ export function KangurLearnerProfileAiTutorMoodWidget(): React.JSX.Element {
             >
               {currentPreset.label}
             </KangurStatusChip>
-            <p
-              className='max-w-xl text-sm [color:var(--kangur-page-muted-text)]'
+            <KangurCardDescription
+              as='p'
+              className='max-w-xl'
               data-testid='learner-profile-ai-tutor-mood-description'
+              size='sm'
             >
               {currentPreset.description}
-            </p>
+            </KangurCardDescription>
           </div>
         </div>
 

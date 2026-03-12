@@ -2,24 +2,6 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 const LEGACY_KEYS = ['product_db_provider', 'integration_db_provider', 'auth_db_provider'];
 
-async function cleanupPrisma() {
-  if (!process.env['DATABASE_URL']) {
-    console.log('[cleanup] Prisma skipped (DATABASE_URL not set)');
-    return { count: 0 };
-  }
-  try {
-    const { default: prisma } = await import('@/shared/lib/db/prisma');
-    const result = await prisma.setting.deleteMany({
-      where: { key: { in: LEGACY_KEYS } },
-    });
-    console.log(`[cleanup] Prisma deleted ${result.count} legacy settings`);
-    return { count: result.count };
-  } catch (error) {
-    console.error('[cleanup] Prisma cleanup failed:', error);
-    return { count: 0 };
-  }
-}
-
 async function cleanupMongo() {
   if (!process.env['MONGODB_URI']) {
     console.log('[cleanup] Mongo skipped (MONGODB_URI not set)');
@@ -39,7 +21,6 @@ async function cleanupMongo() {
 }
 
 async function main() {
-  await cleanupPrisma();
   await cleanupMongo();
   process.exit(0);
 }

@@ -235,15 +235,24 @@ const buildTutorSessionScope = (
     return null;
   }
 
+  const contentIdPart = normalizeTutorScopePart(sessionContext.contentId, 120);
+  const assignmentPart = normalizeTutorScopePart(sessionContext.assignmentId, 60);
+
+  // When both contentId and assignmentId are present, include both so that
+  // different assignments using the same lesson content get isolated sessions.
   const bucket =
-    normalizeTutorScopePart(sessionContext.contentId, 120) ??
-    normalizeTutorScopePart(sessionContext.assignmentId, 120)?.replace(/^/, 'assignment:') ??
-    normalizeTutorScopePart(sessionContext.focusId, 120)?.replace(
-      /^/,
-      `focus:${sessionContext.focusKind ?? 'unknown'}:`
-    ) ??
-    normalizeTutorScopePart(sessionContext.title, 120)?.replace(/^/, 'title:') ??
-    'none';
+    contentIdPart !== null
+      ? assignmentPart !== null
+        ? `${contentIdPart}:assignment:${assignmentPart}`
+        : contentIdPart
+      : assignmentPart !== null
+        ? `assignment:${assignmentPart}`
+        : normalizeTutorScopePart(sessionContext.focusId, 120)?.replace(
+            /^/,
+            `focus:${sessionContext.focusKind ?? 'unknown'}:`
+          ) ??
+          normalizeTutorScopePart(sessionContext.title, 120)?.replace(/^/, 'title:') ??
+          'none';
 
   return `${sessionContext.surface}:${bucket}`;
 };
@@ -635,8 +644,16 @@ const buildNextLearnerMemory = (input: {
   assistantMessage: string;
   followUpActions: KangurAiTutorFollowUpAction[];
   coachingFrame: KangurAiTutorCoachingFrame | null;
-}): KangurAiTutorLearnerMemory =>
-  omitUndefinedFields({
+}): KangurAiTutorLearnerMemory => {
+  const latestHint = normalizeTutorMemoryText(input.assistantMessage, 160);
+  const previousHints = input.current?.lastGivenHints ?? [];
+  const nextHints = latestHint
+    ? [latestHint, ...previousHints].slice(0, 3)
+    : previousHints.length > 0
+      ? previousHints
+      : undefined;
+
+  return omitUndefinedFields({
     lastSurface: input.context.surface,
     lastFocusLabel: buildTutorMemoryFocusLabel(input.context) ?? input.current?.lastFocusLabel,
     lastUnresolvedBlocker:
@@ -650,7 +667,9 @@ const buildNextLearnerMemory = (input: {
       normalizeTutorMemoryText(input.assistantMessage, 200) ??
       input.current?.lastSuccessfulIntervention,
     lastCoachingMode: input.coachingFrame?.mode ?? input.current?.lastCoachingMode,
+    lastGivenHints: nextHints,
   });
+};
 
 const buildLearnerMemoryFromCompletedFollowUp = (input: {
   current: KangurAiTutorLearnerMemory | null;

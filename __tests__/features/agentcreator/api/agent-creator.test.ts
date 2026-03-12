@@ -1,18 +1,19 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+const { chatbotAgentRunMock } = vi.hoisted(() => ({
+  chatbotAgentRunMock: {
+    findMany: vi.fn(),
+    create: vi.fn(),
+    deleteMany: vi.fn(),
+  },
+}));
+
 import { GET, POST, DELETE } from '@/app/api/agentcreator/agent/route';
 import { startAgentQueue } from '@/features/ai/server';
-import prisma from '@/shared/lib/db/prisma';
 
-vi.mock('@/shared/lib/db/prisma', () => ({
-  default: {
-    chatbotAgentRun: {
-      findMany: vi.fn(),
-      create: vi.fn(),
-      deleteMany: vi.fn(),
-    },
-  },
+vi.mock('@/features/ai/agent-runtime/store-delegates', () => ({
+  getChatbotAgentRunDelegate: vi.fn(() => chatbotAgentRunMock),
 }));
 
 vi.mock('@/features/ai/server', () => ({
@@ -92,7 +93,7 @@ describe('Agent Creator API', () => {
           },
         },
       ];
-      vi.mocked(prisma.chatbotAgentRun.findMany).mockResolvedValue(mockRuns as any);
+      vi.mocked(chatbotAgentRunMock.findMany).mockResolvedValue(mockRuns as any);
 
       const req = new NextRequest('http://localhost/api/agentcreator/agent');
       const res = await GET(req);
@@ -110,21 +111,21 @@ describe('Agent Creator API', () => {
       expect(startAgentQueue).toHaveBeenCalled();
     });
 
-    it('returns 500 if prisma table is missing', async () => {
-      const originalPrisma = (prisma as any).chatbotAgentRun;
-      delete (prisma as any).chatbotAgentRun;
+    it('returns 500 if the agent run delegate throws', async () => {
+      vi.mocked(chatbotAgentRunMock.findMany).mockImplementationOnce(() => {
+        throw new Error('Agent run storage is unavailable.');
+      });
 
       const req = new NextRequest('http://localhost/api/agentcreator/agent');
       const res = await GET(req);
       expect(res.status).toBe(500);
-
-      (prisma as any).chatbotAgentRun = originalPrisma;
+      expect(chatbotAgentRunMock.findMany).toHaveBeenCalled();
     });
   });
 
   describe('POST', () => {
     it('creates a new agent run', async () => {
-      vi.mocked(prisma.chatbotAgentRun.create).mockResolvedValue({
+      vi.mocked(chatbotAgentRunMock.create).mockResolvedValue({
         id: 'new-run',
         status: 'queued',
       } as any);
@@ -144,7 +145,7 @@ describe('Agent Creator API', () => {
 
       expect(res.status).toBe(200);
       expect(data.runId).toBe('new-run');
-      expect(prisma.chatbotAgentRun.create).toHaveBeenCalledWith(
+      expect(chatbotAgentRunMock.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             prompt: 'Verify the price of item X',
@@ -171,8 +172,8 @@ describe('Agent Creator API', () => {
 
   describe('DELETE', () => {
     it('deletes terminal runs', async () => {
-      vi.mocked(prisma.chatbotAgentRun.findMany).mockResolvedValue([{ id: 'run-1' }] as any);
-      vi.mocked(prisma.chatbotAgentRun.deleteMany).mockResolvedValue({ count: 1 } as any);
+      vi.mocked(chatbotAgentRunMock.findMany).mockResolvedValue([{ id: 'run-1' }] as any);
+      vi.mocked(chatbotAgentRunMock.deleteMany).mockResolvedValue({ count: 1 } as any);
 
       const req = new NextRequest('http://localhost/api/agentcreator/agent?scope=terminal', {
         method: 'DELETE',

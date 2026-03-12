@@ -4,7 +4,7 @@ This repository now ships a first-wave Bazel bootstrap using Bazelisk.
 
 ## Scope
 
-The current Bazel layer wraps the existing npm-based build, quality, and test entrypoints so CI can start converging on stable Bazel targets without rewriting the Next.js, Prisma, Vitest, and Playwright toolchains in one cut.
+The current Bazel layer wraps the existing npm-based build, quality, and test entrypoints so CI can start converging on stable Bazel targets without rewriting the Next.js, Mongo-backed runtime checks, Vitest, and Playwright toolchains in one cut.
 
 Phase 2 adds source-aware dependency groups for selected JavaScript and TypeScript checks. These targets still invoke the existing underlying Node toolchain, but Bazel now has explicit input graphs for the highest-value CI checks instead of treating them as opaque shell commands.
 
@@ -54,12 +54,11 @@ The first direct Bazel-executed checks are now:
 - `//:critical_flows` -> direct `node scripts/testing/run-critical-flow-tests.mjs --strict --ci`
 - `//:security_smoke` -> direct `node scripts/testing/run-security-smoke-tests.mjs --strict --ci`
 - `//:accessibility_smoke` -> direct `node scripts/testing/run-accessibility-smoke-tests.mjs --strict --ci`
-- `//:integration_prisma` -> direct Prisma integration baseline runner with metrics artifact output
 - `//:integration_mongo` -> direct Mongo integration baseline runner with metrics artifact output
 - `//:case_resolver_capture_mapping_e2e` -> direct Playwright suite runner for the Case Resolver capture-mapping flow
 - `//:products_list_category_e2e` -> direct Playwright suite runner for the Products List category-label flow
 - `//:products_trigger_queue_e2e` -> direct Playwright suite runner for the product trigger-queue flow
-- `//:next_build` -> direct Prisma generate + Next.js production build execution
+- `//:next_build` -> direct Next.js production build execution
 - `//:toolchain_contract` -> direct Bun-backed toolchain contract execution
 - `//:bun_runtime_contract` -> direct Bun-backed runtime contract execution
 - `//:bun_compat` -> direct Bun-backed compatibility lane execution
@@ -219,7 +218,6 @@ Validated direct Bazel gates:
 - `//:lint`
 - `//:typecheck`
 - `//:unit`
-- `//:integration_prisma`
 - `//:integration_mongo`
 - `//:next_build`
 - `//:api_error_sources`
@@ -310,7 +308,6 @@ npm run bazel -- run //tools/js:next -- --version
 - `//:weekly_quality_report`
 - `//:weekly_trend_index`
 - `//:weekly_duration_budgets`
-- `//:integration_prisma`
 - `//:integration_mongo`
 - `//:next_build`
 - `//:toolchain_contract`
@@ -350,9 +347,9 @@ npm run bazel -- run //tools/js:next -- --version
 - the Bun runtime/compatibility and core canonical/observability lanes now use narrower Bazel input groups instead of inheriting broad repo-wide filegroups.
 - `unit`, `critical_flows`, `security_smoke`, and `accessibility_smoke` now also bypass the top-level npm wrapper layer.
 - `case_resolver_regression` and `products_trigger_queue_unit` now also bypass the wrapper layer.
-- `integration_prisma` and `integration_mongo` now also execute directly while preserving the existing CI service/env assumptions.
+- `integration_mongo` now also executes directly while preserving the existing CI service/env assumptions.
 - Playwright e2e gate targets now call the shared suite runner directly instead of routing through top-level npm scripts.
-- `next_build` now executes directly as a Bazel target while still preserving the existing Next.js + Prisma build contract.
+- `next_build` now executes directly as a Bazel target while preserving the existing Next.js build contract.
 - Remote cache support is injected by the repo-owned Bazel wrapper rather than hard-coding provider-specific settings into `.bazelrc`.
 - The next migration step is to decide whether deeper Bazel-native JS dependency modeling is worth the complexity, now that the core CI/build entry surface is already Bazel-executed.
 

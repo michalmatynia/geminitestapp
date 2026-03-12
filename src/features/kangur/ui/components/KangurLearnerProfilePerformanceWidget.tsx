@@ -11,6 +11,7 @@ import {
   KangurEmptyState,
   KangurGlassPanel,
   KangurProgressBar,
+  KangurSectionEyebrow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 
@@ -27,9 +28,9 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
         surface='mistStrong'
         variant='soft'
       >
-        <div className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
+        <KangurSectionEyebrow className='mb-3'>
           Aktywnosc 7 dni
-        </div>
+        </KangurSectionEyebrow>
         <div className='mb-4 flex flex-wrap gap-2'>
           <KangurStatusChip accent='violet' data-testid='learner-profile-xp-summary-today'>
             Dzis: +{snapshot.todayXpEarned} XP
@@ -72,9 +73,9 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
       </KangurGlassPanel>
 
       <KangurGlassPanel className='xl:col-span-2' padding='lg' surface='solid' variant='subtle'>
-        <div className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
+        <KangurSectionEyebrow className='mb-3'>
           Wyniki wg operacji
-        </div>
+        </KangurSectionEyebrow>
         <div className='flex flex-col gap-3'>
           {snapshot.operationPerformance.length === 0 ? (
             <KangurEmptyState

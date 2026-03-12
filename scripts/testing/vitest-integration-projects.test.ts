@@ -6,9 +6,7 @@ import { describe, expect, it } from 'vitest';
 import {
   dbSpecificUnitTestFiles,
   isDbSpecificMongoTestFile,
-  isDbSpecificPrismaTestFile,
   mongoIntegrationTestFiles,
-  prismaIntegrationTestFiles,
 } from './lib/vitest-integration-projects.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..', '..');
@@ -35,7 +33,6 @@ const repoTestFiles = [...listTestFiles('__tests__'), ...listTestFiles('src')].s
 describe('vitest integration project manifest', () => {
   it('keeps each declared integration or unit-db test path unique and present on disk', () => {
     const declaredFiles = [
-      ...prismaIntegrationTestFiles,
       ...mongoIntegrationTestFiles,
       ...dbSpecificUnitTestFiles,
     ];
@@ -48,27 +45,22 @@ describe('vitest integration project manifest', () => {
     }
   });
 
-  it('classifies every mongo/prisma-named test file as integration or intentional unit coverage', () => {
+  it('classifies every mongo-named test file as integration or intentional unit coverage', () => {
     const classifiedFiles = new Set([
-      ...prismaIntegrationTestFiles,
       ...mongoIntegrationTestFiles,
       ...dbSpecificUnitTestFiles,
     ]);
 
     const unclassifiedFiles = repoTestFiles.filter(
-      (filePath) =>
-        (isDbSpecificPrismaTestFile(filePath) || isDbSpecificMongoTestFile(filePath)) &&
-        !classifiedFiles.has(filePath)
+      (filePath) => isDbSpecificMongoTestFile(filePath) && !classifiedFiles.has(filePath)
     );
 
     expect(unclassifiedFiles).toEqual([]);
   });
 
-  it('keeps the unit-db exception list scoped to mongo/prisma-named tests only', () => {
+  it('keeps the unit-db exception list scoped to mongo-named tests only', () => {
     for (const filePath of dbSpecificUnitTestFiles) {
-      expect(
-        isDbSpecificPrismaTestFile(filePath) || isDbSpecificMongoTestFile(filePath)
-      ).toBe(true);
+      expect(isDbSpecificMongoTestFile(filePath)).toBe(true);
     }
   });
 });

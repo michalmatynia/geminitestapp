@@ -6,9 +6,9 @@ import {
   captureSessionContext,
   captureSnapshot,
 } from '@/features/ai/agent-runtime/tools/playwright/browser';
-import prisma from '@/shared/lib/db/prisma';
+import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 
-vi.mock('@/shared/lib/db/prisma', () => ({
+vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
   default: {
     agentAuditLog: { create: vi.fn().mockResolvedValue({ id: 'mock-log-id' }) },
     agentBrowserSnapshot: { create: vi.fn().mockResolvedValue({ id: 'mock-snapshot-id' }) },
@@ -50,13 +50,13 @@ describe('Agent Runtime - Browser Tools', () => {
   });
 
   describe('captureSessionContext', () => {
-    it('should extract cookies and storage and log to prisma', async () => {
+    it('should extract cookies and storage and log to the legacy audit store', async () => {
       mockPage.evaluate.mockResolvedValue({ localCount: 1, sessionCount: 0 });
 
       await captureSessionContext(mockPage as any, mockContext as any, 'run-1', 'init');
 
       expect(mockContext.cookies).toHaveBeenCalled();
-      expect(prisma.agentAuditLog.create).toHaveBeenCalledWith(
+      expect(legacySqlClient.agentAuditLog.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             message: 'Captured session context.',
@@ -72,14 +72,14 @@ describe('Agent Runtime - Browser Tools', () => {
   });
 
   describe('captureSnapshot', () => {
-    it('should take screenshot, get DOM and save to prisma', async () => {
+    it('should take a screenshot, get DOM, and save to the legacy snapshot store', async () => {
       mockPage.evaluate.mockResolvedValue('DOM Text');
 
       const result = await captureSnapshot(mockPage as any, 'run-1', '/tmp', 'test-label');
 
       expect(mockPage.screenshot).toHaveBeenCalled();
       expect(fs.writeFile).toHaveBeenCalled();
-      expect(prisma.agentBrowserSnapshot.create).toHaveBeenCalledWith(
+      expect(legacySqlClient.agentBrowserSnapshot.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             domText: 'DOM Text',

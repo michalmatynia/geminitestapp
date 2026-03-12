@@ -57,7 +57,7 @@ the canonical repo references.
 
 ## High-Signal Constraints
 
-- Do not assume Prisma-only persistence.
+- Do not assume a single persistence backend.
 - Do not assume Redis is always available; several queues support inline
   fallback behavior.
 - Treat `docs/platform/architecture-guardrails.md` and query-factory metadata checks as

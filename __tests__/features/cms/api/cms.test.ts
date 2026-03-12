@@ -1,13 +1,13 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
 
-vi.unmock('@/shared/lib/db/prisma');
+vi.unmock('@/shared/lib/db/legacy-sql-client');
 
 import { DELETE } from '@/app/api/cms/slugs/[id]/route';
 import { GET, POST } from '@/app/api/cms/slugs/route';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import type { Slug, CmsRepository } from '@/shared/contracts/cms';
-import prisma from '@/shared/lib/db/prisma';
+import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 
 let canRunCmsSlugApiTests = true;
 
@@ -36,7 +36,7 @@ describe('CMS API', () => {
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    await legacySqlClient.$disconnect();
   });
 
   it('should create a new slug', async () => {

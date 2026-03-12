@@ -6,20 +6,20 @@ import {
 } from '@/shared/lib/products/services/product-migration';
 
 describe('productMigration', () => {
-  it('rejects legacy total requests now that Prisma migration is removed', async () => {
-    await expect(getProductMigrationTotal('prisma-to-mongo')).rejects.toMatchObject({
-      message: 'Legacy Prisma product migration has been removed. Products are stored in MongoDB only.',
+  it('rejects legacy total requests now that the SQL migration is removed', async () => {
+    await expect(getProductMigrationTotal('mongo-only')).rejects.toMatchObject({
+      message: 'Legacy product migration has been removed. Products are stored in MongoDB only.',
     });
   });
 
-  it('rejects legacy batch migration requests now that Prisma migration is removed', async () => {
+  it('rejects legacy batch migration requests now that the SQL migration is removed', async () => {
     await expect(
       migrateProductBatch({
-        direction: 'prisma-to-mongo',
+        direction: 'mongo-only',
         batchSize: 10,
       })
     ).rejects.toMatchObject({
-      message: 'Legacy Prisma product migration has been removed. Products are stored in MongoDB only.',
+      message: 'Legacy product migration has been removed. Products are stored in MongoDB only.',
     });
   });
 });

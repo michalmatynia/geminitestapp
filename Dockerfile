@@ -9,15 +9,12 @@ FROM node:20-bookworm-slim AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# (Prisma often needs openssl available)
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma Client on Linux (important when building on Mac)
-RUN npx prisma generate
 RUN npm run build
 
 FROM node:20-bookworm-slim AS runner
@@ -36,9 +33,6 @@ RUN useradd -m -u 1001 nextjs
 COPY --from=builder --chown=nextjs:nextjs /app/public ./public
 COPY --from=builder --chown=nextjs:nextjs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nextjs /app/.next/static ./.next/static
-
-# Prisma engines (defensive)
-COPY --from=builder --chown=nextjs:nextjs /app/node_modules/.prisma ./node_modules/.prisma
 
 USER nextjs
 EXPOSE 3000

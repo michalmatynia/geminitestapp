@@ -5,7 +5,7 @@ import * as llmTools from '@/features/ai/agent-runtime/tools/llm';
 import * as playwrightBrowser from '@/features/ai/agent-runtime/tools/playwright/browser';
 import * as playwrightExtraction from '@/features/ai/agent-runtime/tools/playwright/extraction';
 import * as searchTools from '@/features/ai/agent-runtime/tools/search';
-import prisma from '@/shared/lib/db/prisma';
+import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 
 // Mock internal modules
 vi.mock('fs', () => ({
@@ -31,7 +31,7 @@ vi.mock('@/shared/lib/ai-brain/server', () => ({
   })),
 }));
 
-vi.mock('@/shared/lib/db/prisma', () => ({
+vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
   default: {
     chatbotAgentRun: { findUnique: vi.fn(), update: vi.fn() },
     agentBrowserLog: { create: vi.fn(), count: vi.fn() },
@@ -131,7 +131,7 @@ describe('Agent Runtime - Tools', () => {
       url: 'http://example.com',
     });
     (playwrightBrowser.captureSessionContext as any).mockResolvedValue({});
-    (prisma.chatbotAgentRun.findUnique as any).mockResolvedValue({
+    (legacySqlClient.chatbotAgentRun.findUnique as any).mockResolvedValue({
       model: 'llama3',
       searchProvider: 'google',
     });

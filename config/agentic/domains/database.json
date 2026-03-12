@@ -21,7 +21,7 @@
     "//:lint",
     "//:typecheck",
     "//:unit",
-    "//:integration_prisma"
+    "//:integration_mongo"
   ],
   "impactBundles": [
     "database_integrity"

@@ -20,7 +20,7 @@ const ERROR_PATTERNS = [
   [/auth|login|permission|access|unauthorized|forbidden|jwt|session/i, ERROR_CATEGORY.AUTH],
   [/not found/i, ERROR_CATEGORY.VALIDATION],
   [/validation|invalid|missing|required|wrong format|bad request/i, ERROR_CATEGORY.VALIDATION],
-  [/database|prisma|mongo|sql|query failed|migration|foreign key/i, ERROR_CATEGORY.DATABASE],
+  [/database|mongo|sql|query failed|migration|foreign key/i, ERROR_CATEGORY.DATABASE],
   [/ai|openai|ollama|llm|token limit|embedding|vision|prompt/i, ERROR_CATEGORY.AI],
 ] satisfies ReadonlyArray<readonly [RegExp, ErrorCategory]>;
 
@@ -68,7 +68,7 @@ export function classifyError(error: unknown): ErrorCategory {
   }
 
   // Check common library error indicators
-  if (message.includes('PrismaClient') || message.includes('MongoDB')) {
+  if (message.includes('MongoDB') || message.includes('MongoServerError')) {
     return ERROR_CATEGORY.DATABASE;
   }
 

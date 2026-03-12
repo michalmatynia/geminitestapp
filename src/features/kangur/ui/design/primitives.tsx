@@ -104,9 +104,16 @@ const kangurStatusChipVariants = cva(
         md: 'px-3 py-1 text-xs',
         lg: 'px-3.5 py-1.5 text-sm',
       },
+      labelStyle: {
+        default: '',
+        compact: 'text-[11px] uppercase tracking-[0.14em]',
+        caps: 'text-[11px] uppercase tracking-[0.16em]',
+        eyebrow: 'text-[11px] uppercase tracking-[0.18em]',
+      },
     },
     defaultVariants: {
       size: 'md',
+      labelStyle: 'default',
     },
   }
 );
@@ -228,6 +235,67 @@ const kangurHeadlineVariants = cva('font-extrabold tracking-tight leading-tight'
   },
   defaultVariants: {
     size: 'md',
+  },
+});
+
+const kangurCardTitleVariants = cva('[color:var(--kangur-page-text)]', {
+  variants: {
+    size: {
+      sm: 'text-sm font-semibold',
+      md: 'text-base font-extrabold',
+      lg: 'text-lg font-extrabold tracking-tight',
+      xl: 'text-2xl font-extrabold tracking-tight',
+    },
+  },
+  defaultVariants: {
+    size: 'sm',
+  },
+});
+
+const kangurCardDescriptionVariants = cva('[color:var(--kangur-page-muted-text)]', {
+  variants: {
+    size: {
+      xs: 'text-xs',
+      sm: 'text-sm',
+      md: 'text-base',
+    },
+    relaxed: {
+      true: 'leading-6',
+      false: '',
+    },
+  },
+  defaultVariants: {
+    size: 'sm',
+    relaxed: false,
+  },
+});
+
+const kangurMetaTextVariants = cva('[color:var(--kangur-page-muted-text)]', {
+  variants: {
+    size: {
+      xs: 'text-[11px]',
+      sm: 'text-sm',
+      lg: 'text-2xl font-medium',
+    },
+    tone: {
+      muted: '[color:var(--kangur-page-muted-text)]',
+      slate: 'text-slate-500',
+      amber: 'text-amber-900',
+    },
+    caps: {
+      true: 'uppercase tracking-[0.14em]',
+      false: '',
+    },
+    relaxed: {
+      true: 'leading-6',
+      false: '',
+    },
+  },
+  defaultVariants: {
+    size: 'xs',
+    tone: 'muted',
+    caps: false,
+    relaxed: false,
   },
 });
 
@@ -586,13 +654,14 @@ const KANGUR_ACTIVITY_COLUMN_CLASSNAMES: Record<KangurAccent, string> = {
 export function KangurStatusChip({
   accent = 'slate',
   className,
+  labelStyle,
   size,
   ...props
 }: KangurStatusChipProps): React.JSX.Element {
   return (
     <span
       className={cn(
-        kangurStatusChipVariants({ size }),
+        kangurStatusChipVariants({ labelStyle, size }),
         KANGUR_ACCENT_STYLES[accent].badge,
         className
       )}
@@ -885,6 +954,62 @@ export function KangurHeadline({
         KANGUR_HEADLINE_CLASSNAMES[accent],
         className
       )}
+      {...props}
+    />
+  );
+}
+
+type KangurCardTitleProps = React.HTMLAttributes<HTMLElement> &
+  VariantProps<typeof kangurCardTitleVariants> & {
+    as?: 'div' | 'h3' | 'h4' | 'p' | 'span';
+  };
+
+export function KangurCardTitle({
+  as: Comp = 'div',
+  className,
+  size,
+  ...props
+}: KangurCardTitleProps): React.JSX.Element {
+  return <Comp className={cn(kangurCardTitleVariants({ size }), className)} {...props} />;
+}
+
+type KangurCardDescriptionProps = React.HTMLAttributes<HTMLElement> &
+  VariantProps<typeof kangurCardDescriptionVariants> & {
+    as?: 'div' | 'p' | 'span';
+  };
+
+export function KangurCardDescription({
+  as: Comp = 'div',
+  className,
+  relaxed,
+  size,
+  ...props
+}: KangurCardDescriptionProps): React.JSX.Element {
+  return (
+    <Comp
+      className={cn(kangurCardDescriptionVariants({ relaxed, size }), className)}
+      {...props}
+    />
+  );
+}
+
+type KangurMetaTextProps = React.HTMLAttributes<HTMLElement> &
+  VariantProps<typeof kangurMetaTextVariants> & {
+    as?: 'div' | 'p' | 'span';
+  };
+
+export function KangurMetaText({
+  as: Comp = 'div',
+  caps,
+  className,
+  relaxed,
+  size,
+  tone,
+  ...props
+}: KangurMetaTextProps): React.JSX.Element {
+  return (
+    <Comp
+      className={cn(kangurMetaTextVariants({ caps, relaxed, size, tone }), className)}
       {...props}
     />
   );

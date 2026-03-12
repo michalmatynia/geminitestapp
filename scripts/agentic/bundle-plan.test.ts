@@ -17,7 +17,7 @@ describe('buildAgenticBundlePlan', () => {
       },
       recommendedBundleOrder: ['product_sync', 'admin_experience'],
       recommendedValidationByBundle: {
-        product_sync: ['//:integration_prisma'],
+        product_sync: ['//:integration_mongo'],
         admin_experience: ['//:accessibility_smoke'],
       },
       requiredDocs: [],
@@ -26,14 +26,14 @@ describe('buildAgenticBundlePlan', () => {
       manualOnlyPaths: [],
       requiredDocGenerators: [],
       requiredScannerTargets: [],
-      requiredValidationTargets: ['//:integration_prisma', '//:accessibility_smoke'],
+      requiredValidationTargets: ['//:integration_mongo', '//:accessibility_smoke'],
     });
 
     expect(plan.bundles).toEqual([
       {
         bundle: 'product_sync',
         priority: 'high',
-        targets: ['//:integration_prisma'],
+        targets: ['//:integration_mongo'],
       },
       {
         bundle: 'admin_experience',

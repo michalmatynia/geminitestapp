@@ -10,8 +10,8 @@ import { runChatbotModel } from '@/shared/lib/ai/chatbot/server-model-runtime';
 const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
 
 vi.mock('@/shared/lib/db/app-db-provider', () => ({
-  getAppDbProvider: vi.fn().mockResolvedValue('prisma'),
-  getAppDbProviderSetting: vi.fn().mockResolvedValue('prisma'),
+  getAppDbProvider: vi.fn().mockResolvedValue('mongodb'),
+  getAppDbProviderSetting: vi.fn().mockResolvedValue('mongodb'),
   invalidateAppDbProviderCache: vi.fn(),
   APP_DB_PROVIDER_SETTING_KEY: 'app_db_provider',
 }));
@@ -66,11 +66,11 @@ describe('Chatbot API', () => {
       };
       const status =
         (err.name === 'AppError' && err.code === 'NOT_FOUND') ||
-        (err.name === 'PrismaClientKnownRequestError' && err.code === 'P2025')
+        err.code === 'P2025'
           ? 404
           : (err.name === 'AppError' && err.code === 'VALIDATION_ERROR') ||
               err.code === 'BAD_REQUEST' ||
-              err.name === 'PrismaClientValidationError' ||
+              err.name === 'ValidationError' ||
               err.name === 'ZodError'
             ? 400
             : err.httpStatus || 500;

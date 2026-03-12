@@ -5,13 +5,13 @@ const {
   getCurrencyRepositoryMock,
   getInternationalizationProviderMock,
   getMongoDbMock,
-  prismaMock,
+  legacySqlClientMock,
   currencyRepoMock,
 } = vi.hoisted(() => ({
   getCurrencyRepositoryMock: vi.fn() as Mock,
   getInternationalizationProviderMock: vi.fn() as Mock,
   getMongoDbMock: vi.fn() as Mock,
-  prismaMock: {} as Record<string, unknown>,
+  legacySqlClientMock: {} as Record<string, unknown>,
   currencyRepoMock: {
     listCurrencies: vi.fn() as Mock,
     createCurrency: vi.fn() as Mock,
@@ -26,8 +26,8 @@ vi.mock('@/features/internationalization/server', () => ({
   getInternationalizationProvider: getInternationalizationProviderMock,
 }));
 
-vi.mock('@/shared/lib/db/prisma', () => ({
-  default: prismaMock,
+vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
+  default: legacySqlClientMock,
 }));
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
@@ -42,10 +42,10 @@ describe('v2 metadata handler canonical contract', () => {
     getInternationalizationProviderMock.mockReset();
     getMongoDbMock.mockReset();
     getCurrencyRepositoryMock.mockResolvedValue(currencyRepoMock);
-    getInternationalizationProviderMock.mockResolvedValue('prisma');
+    getInternationalizationProviderMock.mockResolvedValue('mongodb');
 
-    Object.keys(prismaMock).forEach((key) => {
-      delete prismaMock[key];
+    Object.keys(legacySqlClientMock).forEach((key) => {
+      delete legacySqlClientMock[key];
     });
     Object.values(currencyRepoMock).forEach((mock) => {
       mock.mockReset();

@@ -158,7 +158,6 @@ export default defineConfig([
     '__tests__/mocks/**/*',
     '*.cjs',
     'auto-keep-trying.js',
-    'prisma/**',
     'extract_errors.cjs',
     'summarize_errors.cjs',
     'summarize_eslint.cjs',

@@ -17,7 +17,6 @@
     "//:lint",
     "//:typecheck",
     "//:unit",
-    "//:integration_prisma",
     "//:integration_mongo",
     "//:products_trigger_queue_unit"
   ],

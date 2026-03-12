@@ -1,6 +1,10 @@
 import { ObjectId, type Filter } from 'mongodb';
 
-import type { TagMapping, TagMappingWithDetails } from '@/shared/contracts/integrations';
+import type {
+  MongoExternalCatalogEntityDoc,
+  TagMapping,
+  TagMappingWithDetails,
+} from '@/shared/contracts/integrations';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 export type MongoTagMappingDoc = {
@@ -13,16 +17,7 @@ export type MongoTagMappingDoc = {
   updatedAt: Date;
 };
 
-export type MongoExternalTagDoc = {
-  _id: string | ObjectId;
-  connectionId: string;
-  externalId: string;
-  name: string;
-  metadata?: Record<string, unknown> | null;
-  fetchedAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
-};
+export type MongoExternalTagDoc = MongoExternalCatalogEntityDoc;
 
 export type MongoInternalTagDoc = {
   _id: string | ObjectId;

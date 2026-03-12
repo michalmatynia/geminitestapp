@@ -1,5 +1,3 @@
-export const prismaIntegrationTestFiles = [];
-
 export const mongoIntegrationTestFiles = [
   '__tests__/features/cms/services/mongo-cms-repository.test.ts',
   '__tests__/features/notesapp/services/mongo-note-repository.test.ts',
@@ -24,9 +22,6 @@ export const dbSpecificUnitTestFiles = [
   'src/shared/lib/db/mongo-write-retry.test.ts',
   'src/shared/lib/products/services/product-repository/mongo-product-repository.helpers.test.ts',
 ];
-
-export const isDbSpecificPrismaTestFile = (filePath) =>
-  /(?:^|\/)[^/]*prisma[^/]*\.test\.(?:ts|tsx)$/.test(filePath);
 
 export const isDbSpecificMongoTestFile = (filePath) =>
   /(?:^|\/)[^/]*mongo[^/]*\.test\.(?:ts|tsx)$/.test(filePath);

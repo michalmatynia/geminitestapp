@@ -68,7 +68,7 @@ describe('KangurPageContentSettingsPanel', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /game-home-leaderboard/i }));
     fireEvent.change(screen.getByLabelText('Page content title'), {
-      target: { value: 'Ranking glownej planszy' },
+      target: { value: 'Ranking głównej planszy' },
     });
     fireEvent.change(screen.getByLabelText('Page content native guide ids'), {
       target: { value: 'shared-leaderboard\nshared-progress' },
@@ -82,7 +82,7 @@ describe('KangurPageContentSettingsPanel', () => {
     const parsedStore = JSON.parse(jsonEditor.value) as KangurPageContentStore;
     const updatedEntry = parsedStore.entries.find((entry) => entry.id === 'game-home-leaderboard');
 
-    expect(updatedEntry?.title).toBe('Ranking glownej planszy');
+    expect(updatedEntry?.title).toBe('Ranking głównej planszy');
     expect(updatedEntry?.nativeGuideIds).toEqual(['shared-leaderboard', 'shared-progress']);
   });
 });

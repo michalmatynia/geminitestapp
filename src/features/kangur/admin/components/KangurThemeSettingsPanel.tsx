@@ -1,8 +1,10 @@
 'use client';
 
-import { ThemeSettingsProvider } from '@/features/cms/components/page-builder/ThemeSettingsContext';
-import { FONT_OPTIONS } from '@/features/cms/components/page-builder/theme/theme-constants';
-import { ThemeSettingsFieldsSection } from '@/features/cms/components/page-builder/theme/ThemeSettingsFieldsSection';
+import {
+  FONT_OPTIONS,
+  ThemeSettingsFieldsSection,
+  ThemeSettingsProvider,
+} from '@/features/cms/public';
 import {
   KANGUR_DEFAULT_THEME,
   KANGUR_THEME_SETTINGS_KEY,

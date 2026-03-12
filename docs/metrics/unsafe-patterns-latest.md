@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-11'
+last_reviewed: '2026-03-12'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,22 +8,22 @@ canonical: true
 ---
 # Unsafe Patterns Check
 
-Generated at: 2026-03-11T04:30:37.106Z
+Generated at: 2026-03-12T15:09:11.486Z
 
 ## Summary
 
 - Status: PASSED
-- Files scanned: 4612
+- Files scanned: 4675
 - Errors: 0
 - Warnings: 0
-- Info: 4
+- Info: 5
 
 ## Trend Counters
 
 | Metric | Count |
 | --- | ---: |
 | doubleAssertionCount | 0 |
-| anyCount | 0 |
+| anyCount | 1 |
 | eslintDisableCount | 1 |
 | nonNullAssertionCount | 3 |
 | tsIgnoreCount | 0 |
@@ -33,23 +33,26 @@ Generated at: 2026-03-11T04:30:37.106Z
 
 | Rule | Count |
 | --- | ---: |
-| import/order | 1 |
+| @typescript-eslint/no-explicit-any | 1 |
+| @typescript-eslint/no-unsafe-assignment | 1 |
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
 | eslint-disable | 0 | 0 | 1 |
+| explicit-any | 0 | 0 | 1 |
 | non-null-assertion | 0 | 0 | 3 |
 
 ## Issues
 
 | Severity | Rule | Location | Message |
 | --- | --- | --- | --- |
-| INFO | non-null-assertion | src/app/api/ai-paths/runs/enqueue/handler.ts:186 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | non-null-assertion | src/app/api/ai-paths/runs/enqueue/handler.ts:168 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
 | INFO | non-null-assertion | src/features/cms/context-registry/page-builder.ts:231 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
-| INFO | eslint-disable | src/shared/contracts/integrations/index.ts:1 | eslint-disable comment disabling: import/order |
-| INFO | non-null-assertion | src/shared/lib/ai-paths/hooks/trigger-event-settings.ts:268 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | non-null-assertion | src/shared/lib/ai-paths/core/normalization/stored-trigger-path-config.ts:356 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | eslint-disable | src/shared/lib/db/legacy-sql-client.ts:1 | eslint-disable comment disabling: @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment |
+| INFO | explicit-any | src/shared/lib/db/legacy-sql-client.ts:17 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
 
 ## Notes
 

@@ -79,9 +79,9 @@ describe('resolveKangurAiTutorSectionKnowledgeBundle', () => {
           relatedGames: [],
           relatedTests: [],
           followUpActions: [
-            { id: 'open-game', label: 'Przejdz do gry', page: 'Game', reason: 'Aby utrwalic temat.' },
+            { id: 'open-game', label: 'Przejdź do gry', page: 'Game', reason: 'Aby utrwalić temat.' },
           ],
-          triggerPhrases: ['biblioteka', 'ktora lekcje wybrac'],
+          triggerPhrases: ['biblioteka', 'którą lekcję wybrać'],
           enabled: true,
           sortOrder: 10,
         },
@@ -89,7 +89,7 @@ describe('resolveKangurAiTutorSectionKnowledgeBundle', () => {
     });
 
     const bundle = await resolveKangurAiTutorSectionKnowledgeBundle({
-      latestUserMessage: 'Gdzie mam przejsc dalej po tej sekcji?',
+      latestUserMessage: 'Gdzie mam przejść dalej po tej sekcji?',
       context: {
         surface: 'lesson',
         contentId: 'lesson:list',
@@ -108,7 +108,7 @@ describe('resolveKangurAiTutorSectionKnowledgeBundle', () => {
     expect(bundle?.section.id).toBe('lessons-library');
     expect(bundle?.linkedNativeGuides.map((entry) => entry.id)).toEqual(['lesson-library']);
     expect(bundle?.followUpActions).toEqual([
-      { id: 'open-game', label: 'Przejdz do gry', page: 'Game', reason: 'Aby utrwalic temat.' },
+      { id: 'open-game', label: 'Przejdź do gry', page: 'Game', reason: 'Aby utrwalić temat.' },
     ]);
     expect(bundle?.sources).toHaveLength(2);
     expect(bundle?.sources[0]).toMatchObject({
@@ -127,7 +127,7 @@ describe('resolveKangurAiTutorSectionKnowledgeBundle', () => {
     });
     expect(bundle?.instructions).toContain('Current visible Kangur website section');
     expect(bundle?.instructions).toContain('Linked Kangur knowledge-base guidance for this section');
-    expect(bundle?.instructions).toContain('Przejdz do gry -> Game');
+    expect(bundle?.instructions).toContain('Przejdź do gry -> Game');
   });
 
   it('falls back to anchor/content matching when the context does not already carry a page-content knowledge reference', async () => {
@@ -145,7 +145,7 @@ describe('resolveKangurAiTutorSectionKnowledgeBundle', () => {
           widget: 'KangurGameHomeActionsWidget',
           sourcePath: 'src/features/kangur/ui/pages/Game.tsx',
           title: 'Szybkie akcje',
-          summary: 'Tutaj uczen wybiera dalszy tryb aktywnosci.',
+          summary: 'Tutaj uczeń wybiera dalszy tryb aktywności.',
           body: 'Sekcja prowadzi do lekcji, gry, treningu mieszanego i Kangura Matematycznego.',
           anchorIdPrefix: 'kangur-game-home-actions',
           focusKind: 'home_actions',

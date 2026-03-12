@@ -62,7 +62,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Cofaj sie na osi liczbowej lub licz, ile brakuje do wyniku.
+            Cofaj się na osi liczbowej lub licz, ile brakuje do wyniku.
           </KangurLessonLead>
           <KangurLessonCallout accent='rose' className='text-center'>
             <KangurEquationDisplay
@@ -72,7 +72,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               9 − 4 = ?
             </KangurEquationDisplay>
             <KangurLessonCaption className='mt-2'>
-              Zacznij od <b>9</b>, cofnij sie 4: 8, 7, 6, <b>5</b> ✓
+              Zacznij od <b>9</b>, cofnij się 4: 8, 7, 6, <b>5</b> ✓
             </KangurLessonCaption>
           </KangurLessonCallout>
           <div className='flex gap-1 flex-wrap justify-center'>
@@ -143,7 +143,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
   ],
   zapamietaj: [
     {
-      title: 'Zapamietaj!',
+      title: 'Zapamiętaj!',
       content: (
         <KangurLessonStack>
           <KangurLessonCallout accent='amber' className='max-w-xs'>
@@ -154,9 +154,9 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               <li>
                 ✅ Odejmowanie 0 nic nie zmienia: <b>8−0 = 8</b>
               </li>
-              <li>✅ Cofaj sie na osi lub rozkładaj na składniki</li>
+              <li>✅ Cofaj się na osi lub rozkładaj na składniki</li>
               <li>
-                ✅ Sprawdz wynik dodawaniem: <b>5+3=8 → 8−3=5</b>
+                ✅ Sprawdź wynik dodawaniem: <b>5+3=8 → 8−3=5</b>
               </li>
             </ul>
           </KangurLessonCallout>
@@ -185,7 +185,7 @@ export const HUB_SECTIONS = [
     title: 'Odejmowanie dwucyfrowe',
     description: 'Dziesiatki i jednosci osobno',
   },
-  { id: 'zapamietaj', emoji: '🧠', title: 'Zapamietaj!', description: 'Zasady odejmowania' },
+  { id: 'zapamietaj', emoji: '🧠', title: 'Zapamiętaj!', description: 'Zasady odejmowania' },
   {
     id: 'game',
     emoji: '🎮',

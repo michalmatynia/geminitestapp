@@ -251,13 +251,13 @@ export async function mockKangurTutorEnvironment(
               sectionKey: 'dodawanie',
               sectionTitle: 'Dodawanie',
               sectionDescription: '',
-              title: 'Dodawanie w pamieci',
-              description: 'Rozkladamy liczbe na wygodne czesci.',
+              title: 'Dodawanie w pamięci',
+              description: 'Rozkładamy liczbę na wygodne części.',
               blocks: [
                 {
                   id: 'lesson-text-1',
                   type: 'text',
-                  html: `<p>Najpierw policz dziesiatki, potem jednosci. Przyklad: <strong>${lessonSelectedText}</strong>.</p><p>Gdy zatrzymasz sie na chwile, latwiej zobaczysz kolejny krok.</p>`,
+                  html: `<p>Najpierw policz dziesiątki, potem jedności. Przykład: <strong>${lessonSelectedText}</strong>.</p><p>Gdy zatrzymasz się na chwilę, łatwiej zobaczysz kolejny krok.</p>`,
                   align: 'left',
                 },
               ],
@@ -267,7 +267,7 @@ export async function mockKangurTutorEnvironment(
             {
               id: 'lesson-text-1',
               type: 'text',
-              html: `<p>Najpierw policz dziesiatki, potem jednosci. Przyklad: <strong>${lessonSelectedText}</strong>.</p><p>Gdy zatrzymasz sie na chwile, latwiej zobaczysz kolejny krok.</p>`,
+              html: `<p>Najpierw policz dziesiątki, potem jedności. Przykład: <strong>${lessonSelectedText}</strong>.</p><p>Gdy zatrzymasz się na chwilę, łatwiej zobaczysz kolejny krok.</p>`,
               align: 'left',
             },
           ],

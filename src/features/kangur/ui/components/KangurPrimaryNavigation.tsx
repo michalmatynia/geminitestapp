@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   CmsStorefrontAppearanceButtons,
   useOptionalCmsStorefrontAppearance,
-} from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+} from '@/features/cms/public';
 import {
   getKangurHomeHref,
   getKangurPageHref as createPageUrl,

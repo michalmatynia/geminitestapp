@@ -4,6 +4,12 @@ export { CmsPageRenderer as CmsRuntimePageRenderer } from './components/frontend
 export { ThemeProvider } from './components/frontend/ThemeProvider';
 export * from './components/frontend/CmsPageContext';
 export * from './components/frontend/CmsRuntimeContext';
+export {
+  CmsStorefrontAppearanceButtons,
+  CmsStorefrontAppearanceProvider,
+  resolveKangurStorefrontAppearance,
+  useOptionalCmsStorefrontAppearance,
+} from './components/frontend/CmsStorefrontAppearance';
 export { MediaStylesProvider } from './components/frontend/media-styles-context';
 export * from './components/frontend/theme-styles';
 export { CmsBuilderLeftPanel } from './components/page-builder/CmsBuilderLeftPanel';
@@ -15,6 +21,8 @@ export {
   type MediaReplaceTarget,
 } from './components/page-builder/PreviewBlock';
 export { ThemeSettingsProvider, useThemeSettingsValue } from './components/page-builder/ThemeSettingsContext';
+export { DEFAULT_SCHEME_COLORS, FONT_OPTIONS } from './components/page-builder/theme/theme-constants';
+export { ThemeSettingsFieldsSection } from './components/page-builder/theme/ThemeSettingsFieldsSection';
 export { VectorOverlay } from './components/page-builder/VectorOverlay';
 export { PreviewEditorProvider } from './components/page-builder/preview/context/PreviewEditorContext';
 export { DragStateProvider } from './hooks/useDragStateContext';

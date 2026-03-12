@@ -52,6 +52,7 @@ import { serializeSetting } from '@/shared/utils/settings-json';
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
 import { KangurAiTutorContentSettingsPanel } from './components/KangurAiTutorContentSettingsPanel';
 import { KangurAiTutorNativeGuideSettingsPanel } from './components/KangurAiTutorNativeGuideSettingsPanel';
+import { KangurClassOverridesSettingsPanel } from './components/KangurClassOverridesSettingsPanel';
 import { KangurPageContentSettingsPanel } from './components/KangurPageContentSettingsPanel';
 import { KangurThemeSettingsPanel } from './components/KangurThemeSettingsPanel';
 
@@ -484,7 +485,7 @@ export function AdminKangurSettingsPage(): ReactElement {
   return (
     <KangurAdminContentShell
       title='Kangur Settings'
-      description='Manage storefront theme, AI Tutor, narration, and parent verification behavior across Kangur.'
+      description='Manage storefront theme, class overrides, AI Tutor, narration, and parent verification behavior across Kangur.'
       breadcrumbs={[
         { label: 'Admin', href: '/admin' },
         { label: 'Kangur', href: '/admin/kangur' },
@@ -512,6 +513,14 @@ export function AdminKangurSettingsPage(): ReactElement {
           className={SETTINGS_SECTION_CLASS_NAME}
         >
           <KangurThemeSettingsPanel />
+        </FormSection>
+
+        <FormSection
+          title='Class Overrides'
+          description='Attach extra Tailwind classes to Kangur shells and root surfaces through Mongo.'
+          className={SETTINGS_SECTION_CLASS_NAME}
+        >
+          <KangurClassOverridesSettingsPanel />
         </FormSection>
 
         <FormSection

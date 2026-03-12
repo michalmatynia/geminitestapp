@@ -123,7 +123,7 @@ describe('source helpers', () => {
         [
           {
             id: 'existing-lessons',
-            label: 'Wroc do lekcji',
+            label: 'Wróć do lekcji',
             page: 'Lessons',
           },
         ],
@@ -136,7 +136,7 @@ describe('source helpers', () => {
           },
           {
             id: 'profile-action',
-            label: 'Sprawdz profil',
+            label: 'Sprawdź profil',
             page: 'LearnerProfile',
             reason: 'Show the current streak.',
           },
@@ -145,12 +145,12 @@ describe('source helpers', () => {
     ).toEqual([
       {
         id: 'existing-lessons',
-        label: 'Wroc do lekcji',
+        label: 'Wróć do lekcji',
         page: 'Lessons',
       },
       {
         id: 'profile-action',
-        label: 'Sprawdz profil',
+        label: 'Sprawdź profil',
         page: 'LearnerProfile',
         reason: 'Show the current streak.',
       },

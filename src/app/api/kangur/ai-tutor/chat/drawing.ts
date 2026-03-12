@@ -88,9 +88,9 @@ export const buildTutorDrawingInstructions = (): string =>
     'Do not pretend to inspect learner-uploaded pixels. If the learner attached a drawing, use it only as a signal that a visual explanation may help.',
     'Use this exact format when you draw:',
     '<kangur_tutor_drawing>',
-    '<title>Krotki tytul po polsku</title>',
-    '<caption>Jedno krotkie objasnienie rysunku.</caption>',
-    '<alt>Krotki opis dostepnosci.</alt>',
+    '<title>Krótki tytuł po polsku</title>',
+    '<caption>Jedno krótkie objaśnienie rysunku.</caption>',
+    '<alt>Krótki opis dostępności.</alt>',
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200">...</svg>',
     '</kangur_tutor_drawing>',
     'Use only simple SVG elements and inline attributes.',
@@ -240,7 +240,7 @@ export const extractTutorDrawingArtifactsFromResponse = (
     : [];
 
   return {
-    message: cleanedMessage || 'Sprawdz szkic ponizej.',
+    message: cleanedMessage || 'Sprawdź szkic poniżej.',
     artifacts,
   };
 };

@@ -325,7 +325,7 @@ export default function KangurSetup({
                     </KangurStatusChip>
                     {!setItem.available ? (
                       <KangurStatusChip accent='slate' size='sm'>
-                        <Lock className='h-3 w-3' /> Wkrotce dostepna
+                        <Lock className='h-3 w-3' /> Wkrótce dostępna
                       </KangurStatusChip>
                     ) : null}
                     {isRecommendedSet ? (

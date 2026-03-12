@@ -142,7 +142,7 @@ function LearnerProfileContent(): React.JSX.Element {
     priority: 74,
     metadata: {
       contentId: profileContentId,
-      label: 'Opanowanie materialu',
+      label: 'Opanowanie materiału',
     },
   });
   useKangurTutorAnchor({
@@ -154,7 +154,7 @@ function LearnerProfileContent(): React.JSX.Element {
     priority: 72,
     metadata: {
       contentId: profileContentId,
-      label: 'Skutecznosc ucznia',
+      label: 'Skuteczność ucznia',
     },
   });
   useKangurTutorAnchor({

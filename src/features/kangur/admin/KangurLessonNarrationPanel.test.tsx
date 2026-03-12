@@ -259,7 +259,7 @@ describe('KangurLessonNarrationPanel', () => {
             {
               id: 'text-1',
               type: 'text',
-              html: '<p>Zegar ma wskazowki.</p>',
+              html: '<p>Zegar ma wskazówki.</p>',
               align: 'left',
             },
           ],
@@ -323,7 +323,7 @@ describe('KangurLessonNarrationPanel', () => {
             {
               id: 'text-1',
               type: 'text',
-              html: '<p>Zegar ma wskazowki.</p>',
+              html: '<p>Zegar ma wskazówki.</p>',
               align: 'left',
             },
           ],
@@ -456,7 +456,7 @@ describe('KangurLessonNarrationPanel', () => {
         {
           id: 'text-1',
           type: 'text',
-          html: '<p>Zegar ma wskazowki.</p>',
+          html: '<p>Zegar ma wskazówki.</p>',
           align: 'left',
         },
       ],

@@ -30,7 +30,7 @@ describe('kangur auth contract runtime', () => {
       hasPassword: true,
       retryAfterMs: 60_000,
       message:
-        'Sprawdz email rodzica. Konto zostanie utworzone po potwierdzeniu adresu, a AI Tutor odblokuje sie po weryfikacji.',
+        'Sprawdź e-mail rodzica. Konto zostanie utworzone po potwierdzeniu adresu, a AI Tutor odblokuje się po weryfikacji.',
       debug: {
         verificationUrl:
           'https://example.com/kangur/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-1',

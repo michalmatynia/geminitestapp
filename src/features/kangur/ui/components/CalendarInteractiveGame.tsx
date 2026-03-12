@@ -499,7 +499,7 @@ export default function CalendarInteractiveGame({
         >
           <div className='flex items-center justify-between mb-2'>
             <KangurButton
-              aria-label='Poprzedni miesiac'
+              aria-label='Poprzedni miesiąc'
               onClick={() => handleFlipMonth(-1)}
               className='h-9 w-9 min-w-0 px-0'
               size='sm'
@@ -512,7 +512,7 @@ export default function CalendarInteractiveGame({
               {monthData.name} {YEAR}
             </p>
             <KangurButton
-              aria-label='Nastepny miesiac'
+              aria-label='Następny miesiąc'
               onClick={() => handleFlipMonth(1)}
               className='h-9 w-9 min-w-0 px-0'
               size='sm'

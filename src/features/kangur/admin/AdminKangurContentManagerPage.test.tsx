@@ -74,7 +74,7 @@ describe('AdminKangurContentManagerPage', () => {
             componentId: 'calendar',
             contentMode: 'component',
             title: 'Kalendarz',
-            description: 'Dni i miesiace',
+            description: 'Dni i miesiące',
             emoji: '📅',
             color: '#fff',
             activeBg: 'bg-violet-500',

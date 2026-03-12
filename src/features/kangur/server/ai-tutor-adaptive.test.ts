@@ -237,8 +237,8 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
     expect(guidance.coachingFrame).toEqual({
       mode: 'next_best_action',
       label: 'Następny krok',
-      description: 'Wskaz jedna konkretna aktywność Kangur jako najlepszy dalszy ruch.',
-      rationale: 'Najwięcej wartosci da teraz jedna jasna aktywność, a nie kilka opcji naraz.',
+      description: 'Wskaż jedną konkretną aktywność Kangur jako najlepszy dalszy ruch.',
+      rationale: 'Najwięcej wartości da teraz jedna jasna aktywność, a nie kilka opcji naraz.',
     });
     expect(guidance.followUpActions).toEqual([
       {

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-11'
+last_reviewed: '2026-03-12'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,13 +8,13 @@ canonical: true
 ---
 # Import Boundaries Check
 
-Generated at: 2026-03-11T04:30:37.809Z
+Generated at: 2026-03-12T15:47:19.934Z
 
 ## Summary
 
 - Status: PASSED
-- Files scanned: 4612
-- Features tracked: 9
+- Files scanned: 4677
+- Features tracked: 10
 - Circular dependencies: 0
 - Errors: 0
 - Warnings: 0
@@ -32,6 +32,7 @@ Generated at: 2026-03-11T04:30:37.809Z
 | products | foldertree, internationalization | 2 |
 | admin | foldertree | 1 |
 | drafter | products | 1 |
+| integrations | products | 1 |
 | prompt-exploder | foldertree | 1 |
 
 ## Rule Breakdown
@@ -48,4 +49,3 @@ No import boundary issues detected.
 - `cross-feature-internal-import` (error): Features should only import from other features via barrel exports (index/public/server/types).
 - `deep-relative-import` (warn): 3+ levels of `../` suggest a path alias should be used instead.
 - `circular-feature-dep` (error): Circular dependencies between feature domains hinder independent development and testing.
-- `prisma-outside-server` (error): Direct Prisma client usage should be restricted to server directories and API routes.

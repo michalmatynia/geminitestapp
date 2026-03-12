@@ -103,12 +103,12 @@ describe('KangurQuestionsManagerPanel', () => {
             sortOrder: 2000,
             prompt: 'Pytanie do review',
             choices: [
-              { label: 'A', text: 'A', description: 'Wizualna wskazowka' },
+              { label: 'A', text: 'A', description: 'Wizualna wskazówka' },
               { label: 'B', text: 'B' },
             ],
             correctChoiceLabel: 'A',
             pointValue: 4,
-            explanation: 'Sprawdz wizual',
+            explanation: 'Sprawdź wizual',
             illustration: { type: 'none' },
             editorial: {
               source: 'legacy-import',

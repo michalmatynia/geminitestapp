@@ -646,7 +646,10 @@ export default function Lessons() {
     priority: 20,
     metadata: {
       contentId: activeLesson?.id ?? null,
-      label: activeLesson?.title ?? 'Nawigacja lekcji',
+      label:
+        activeLessonNavigationContent?.title ??
+        activeLesson?.title ??
+        'Nawigacja lekcji',
     },
   });
   const lessonTutorContext = useMemo(
@@ -917,13 +920,6 @@ export default function Lessons() {
                         nextLesson={next}
                         onSelectLesson={handleSelectLesson}
                         prevLesson={prev}
-                        sectionSummary={
-                          activeLessonNavigationContent?.summary ??
-                          'Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy.'
-                        }
-                        sectionTitle={
-                          activeLessonNavigationContent?.title ?? 'Nawigacja lekcji'
-                        }
                       />
                     </div>
                   </div>

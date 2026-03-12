@@ -130,7 +130,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
   ],
   zapamietaj: [
     {
-      title: 'Zapamietaj!',
+      title: 'Zapamiętaj!',
       content: (
         <KangurLessonStack>
           <KangurLessonCallout accent='amber' className='max-w-xs'>
@@ -170,7 +170,7 @@ export const HUB_SECTIONS = [
     title: 'Dodawanie dwucyfrowe',
     description: 'Dziesiatki i jednosci osobno',
   },
-  { id: 'zapamietaj', emoji: '🧠', title: 'Zapamietaj!', description: 'Zasady dodawania' },
+  { id: 'zapamietaj', emoji: '🧠', title: 'Zapamiętaj!', description: 'Zasady dodawania' },
   {
     id: 'synthesis',
     emoji: '🎼',
@@ -198,8 +198,10 @@ export default function AddingLesson(): React.JSX.Element {
         accent='amber'
         headerTestId='adding-lesson-synthesis-header'
         icon='🎼'
+        maxWidthClassName='max-w-[1120px]'
         onBack={() => setActiveSection(null)}
         sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        shellClassName='!p-4 sm:!p-6 lg:!p-8'
         shellTestId='adding-lesson-synthesis-shell'
         title='Synteza dodawania'
       >

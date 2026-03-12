@@ -35,7 +35,7 @@ describe('KangurSetup', () => {
 
     render(<KangurSetup onStart={onStart} />);
 
-    expect(screen.getByRole('list', { name: 'Wybierz edycje konkursu' })).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Wybierz edycję konkursu' })).toBeInTheDocument();
     expect(screen.getByTestId('kangur-setup-editions-shell')).toHaveClass(
       'glass-panel',
       'border-white/88',

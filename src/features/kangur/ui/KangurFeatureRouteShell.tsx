@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 
 import {
   useOptionalCmsStorefrontAppearance,
-} from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+} from '@/features/cms/public';
 import {
   KANGUR_BASE_PATH,
   normalizeKangurBasePath,
@@ -14,7 +14,9 @@ import {
 } from '@/features/kangur/config/routing';
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeaturePageShell } from '@/features/kangur/ui/KangurFeaturePage';
+import { useKangurClassOverrides } from '@/features/kangur/ui/useKangurClassOverrides';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
+import { cn } from '@/shared/utils';
 
 import type { CSSProperties, JSX } from 'react';
 
@@ -64,6 +66,8 @@ export function KangurFeatureRouteShell({
   const normalizedBasePath = normalizeKangurBasePath(basePath);
   const appearanceMode = appearance?.mode ?? 'default';
   const kangurAppearance = useKangurStorefrontAppearance();
+  const classOverrides = useKangurClassOverrides();
+  const routeShellClassOverride = classOverrides.components['kangur-feature-route-shell']?.['root'];
   const slug = useMemo(
     () => getSlugFromPathname(pathname, normalizedBasePath),
     [normalizedBasePath, pathname]
@@ -94,7 +98,10 @@ export function KangurFeatureRouteShell({
 
   return (
     <div
-      className='relative min-h-screen w-full kangur-premium-bg text-slate-800'
+      className={cn(
+        'relative min-h-screen w-full kangur-premium-bg text-slate-800',
+        routeShellClassOverride
+      )}
       data-appearance-mode={appearanceMode}
       data-kangur-appearance={appearanceMode}
       data-testid='kangur-route-shell'

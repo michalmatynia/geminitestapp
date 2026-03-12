@@ -132,7 +132,7 @@ describe('KangurParentDashboardProgressWidget', () => {
       entry: {
         id: 'parent-dashboard-progress',
         title: 'Postęp ucznia',
-        summary: 'Sprawdz rytm nauki i glowny kierunek dalszej pracy.',
+        summary: 'Sprawdź rytm nauki i główny kierunek dalszej pracy.',
       },
       error: null,
       isError: false,
@@ -149,7 +149,7 @@ describe('KangurParentDashboardProgressWidget', () => {
 
     expect(screen.getByText('Postęp ucznia')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(
-      screen.getByText('Sprawdz rytm nauki i glowny kierunek dalszej pracy.')
+      screen.getByText('Sprawdź rytm nauki i główny kierunek dalszej pracy.')
     ).toHaveClass('[color:var(--kangur-page-muted-text)]');
   });
 });

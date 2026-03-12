@@ -82,14 +82,14 @@ describe('CalendarLesson section hub layout', () => {
     fireEvent.click(screen.getByTestId('lesson-hub-section-miesiace'));
 
     await waitFor(() => {
-      expect(screen.getByText('12 miesiecy roku')).toBeInTheDocument();
+      expect(screen.getByText('12 miesięcy roku')).toBeInTheDocument();
     });
     expect(screen.getByTestId('lesson-slide-shell')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('lesson-slide-indicator-1'));
 
     await waitFor(() => {
-      expect(screen.getByText('Ile dni ma miesiac?')).toBeInTheDocument();
+      expect(screen.getByText('Ile dni ma miesiąc?')).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do tematów' }));
@@ -105,13 +105,13 @@ describe('CalendarLesson section hub layout', () => {
     fireEvent.click(screen.getByTestId('lesson-hub-section-miesiace'));
 
     await waitFor(() => {
-      expect(screen.getByText('12 miesiecy roku')).toBeInTheDocument();
+      expect(screen.getByText('12 miesięcy roku')).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByTestId('lesson-slide-indicator-1'));
 
     await waitFor(() => {
-      expect(screen.getByText('Ile dni ma miesiac?')).toBeInTheDocument();
+      expect(screen.getByText('Ile dni ma miesiąc?')).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do tematów' }));

@@ -91,7 +91,7 @@ const settingsLite = [
         componentId: 'adding',
         contentMode: 'document',
         title: lessonTitle,
-        description: 'Cwicz rozklad liczby na dziesiatki i jednosci.',
+        description: 'Ćwicz rozkład liczby na dziesiątki i jedności.',
         emoji: '+',
         color: 'from-orange-400 to-yellow-400',
         activeBg: 'bg-orange-400',
@@ -112,13 +112,13 @@ const settingsLite = [
             sectionKey: 'dodawanie',
             sectionTitle: 'Dodawanie',
             sectionDescription: '',
-            title: 'Dodawanie w pamieci',
-            description: 'Rozkladamy liczbe na wygodne czesci.',
+            title: 'Dodawanie w pamięci',
+            description: 'Rozkładamy liczbę na wygodne części.',
             blocks: [
               {
                 id: 'lesson-text-1',
                 type: 'text',
-                html: `<p>Najpierw policz dziesiatki, potem jednosci. Przyklad: <strong>${lessonSelectedText}</strong>.</p><p>Gdy zatrzymasz sie na chwile, latwiej zobaczysz kolejny krok.</p>`,
+                html: `<p>Najpierw policz dziesiątki, potem jedności. Przykład: <strong>${lessonSelectedText}</strong>.</p><p>Gdy zatrzymasz się na chwilę, łatwiej zobaczysz kolejny krok.</p>`,
                 align: 'left',
               },
             ],
@@ -128,7 +128,7 @@ const settingsLite = [
           {
             id: 'lesson-text-1',
             type: 'text',
-            html: `<p>Najpierw policz dziesiatki, potem jednosci. Przyklad: <strong>${lessonSelectedText}</strong>.</p><p>Gdy zatrzymasz sie na chwile, latwiej zobaczysz kolejny krok.</p>`,
+            html: `<p>Najpierw policz dziesiątki, potem jedności. Przykład: <strong>${lessonSelectedText}</strong>.</p><p>Gdy zatrzymasz się na chwilę, łatwiej zobaczysz kolejny krok.</p>`,
             align: 'left',
           },
         ],
@@ -325,7 +325,7 @@ const installLiveLessonMocks = async (
     const context = payload?.context;
     const message =
       context?.surface === 'lesson' && context.selectedText
-        ? `Wyjasniam fragment: ${context.selectedText}. Najpierw zatrzymaj sie na dziesiatce, a potem dodaj pozostale jednosci.`
+        ? `Wyjaśniam fragment: ${context.selectedText}. Najpierw zatrzymaj się na dziesiątce, a potem dodaj pozostałe jedności.`
         : 'Pomagam dalej.';
 
     await fulfillJson(route, {

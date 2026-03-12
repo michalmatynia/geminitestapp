@@ -35,7 +35,7 @@ export function KangurLessonNavigationWidget({
   }
 
   return (
-    <div className='mt-2 flex w-full flex-col gap-3'>
+    <div className='mx-auto mt-2 flex w-full max-w-[44rem] flex-col gap-3'>
       {sectionTitle || sectionSummary ? (
         <KangurPanelIntro
           description={sectionSummary}
@@ -44,11 +44,11 @@ export function KangurLessonNavigationWidget({
           titleClassName='text-base font-bold tracking-[-0.02em]'
         />
       ) : null}
-      <div className='flex w-full flex-col gap-3 sm:flex-row'>
+      <div className='flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center'>
         {prevLesson ? (
           <KangurButton
             onClick={() => handleSelectLesson(prevLesson.id)}
-            className='w-full justify-between sm:flex-1 sm:justify-start'
+            className='w-full justify-between [background:color-mix(in_srgb,var(--kangur-soft-card-background)_72%,var(--kangur-page-background))] [color:var(--kangur-page-text)] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-page-text)] sm:max-w-[21rem] sm:flex-1 sm:basis-[19rem] sm:justify-start'
             size='lg'
             variant='surface'
             data-doc-id='lessons_prev_next'
@@ -56,14 +56,12 @@ export function KangurLessonNavigationWidget({
             <ChevronLeft className='h-4 w-4 flex-shrink-0' />
             <span className='min-w-0 truncate'>{prevLesson.title}</span>
           </KangurButton>
-        ) : (
-          <div className='hidden sm:block sm:flex-1' />
-        )}
+        ) : null}
 
         {nextLesson ? (
           <KangurButton
             onClick={() => handleSelectLesson(nextLesson.id)}
-            className='w-full justify-between sm:flex-1 sm:justify-end'
+            className='w-full justify-between [background:color-mix(in_srgb,var(--kangur-soft-card-background)_72%,var(--kangur-page-background))] [color:var(--kangur-page-text)] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-page-text)] sm:max-w-[21rem] sm:flex-1 sm:basis-[19rem] sm:justify-end'
             size='lg'
             variant='surface'
             data-doc-id='lessons_prev_next'
@@ -71,9 +69,7 @@ export function KangurLessonNavigationWidget({
             <span className='min-w-0 truncate'>{nextLesson.title}</span>
             <ChevronRight className='h-4 w-4 flex-shrink-0' />
           </KangurButton>
-        ) : (
-          <div className='hidden sm:block sm:flex-1' />
-        )}
+        ) : null}
       </div>
     </div>
   );

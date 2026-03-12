@@ -491,13 +491,13 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           shortDescription:
             'Tutaj uczeń ćwiczy daty, dni tygodnia, miesiące i zależności w kalendarzu.',
           fullDescription:
-            'Ćwiczenia z kalendarzem utrwalaja orientacje w datach i czasie. Zadania zwykle wymagaja zauważenia kolejnosci dni, miesiecy albo przesunięć na osi czasu. To dobra aktywność, gdy trzeba połączyć matematyke z codziennym rozumieniem kalendarza.',
+            'Ćwiczenia z kalendarzem utrwalają orientację w datach i czasie. Zadania zwykle wymagają zauważenia kolejności dni, miesięcy albo przesunięć na osi czasu. To dobra aktywność, gdy trzeba połączyć matematykę z codziennym rozumieniem kalendarza.',
           hints: [
             'Najpierw ustal punkt startowy, a potem przesuwaj się dzień po dniu lub tydzień po tygodniu.',
             'Zwracaj uwagę, czy pytanie dotyczy dnia tygodnia, daty czy odstępu czasu.',
           ],
           relatedGames: ['Kalendarz'],
-          followUpActions: [{ id: 'game-calendar-open', label: 'Cwicz kalendarz', page: 'Game' }],
+          followUpActions: [{ id: 'game-calendar-open', label: 'Ćwicz kalendarz', page: 'Game' }],
           triggerPhrases: [
             'ćwiczenia z kalendarzem',
             'kalendarz',

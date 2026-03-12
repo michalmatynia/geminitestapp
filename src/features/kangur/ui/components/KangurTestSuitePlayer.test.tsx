@@ -259,11 +259,11 @@ describe('KangurTestSuitePlayer', () => {
       'border'
     );
     expect(screen.getByTestId('kangur-test-suite-empty')).toHaveTextContent(
-      repairKangurPolishCopy('Brak opublikowanych pytan')
+      repairKangurPolishCopy('Brak opublikowanych pytań')
     );
     expect(screen.getByTestId('kangur-test-suite-empty')).toHaveTextContent(
       repairKangurPolishCopy(
-        'Ten zestaw nie ma jeszcze aktywnych pytan testowych. Wroc pozniej albo wybierz inny zestaw.'
+        'Ten zestaw nie ma jeszcze aktywnych pytań testowych. Wróć później albo wybierz inny zestaw.'
       )
     );
   });
@@ -325,7 +325,7 @@ describe('KangurTestSuitePlayer', () => {
     await userEvent.click(screen.getByRole('button', { name: /previous/i }));
 
     expect(
-      await screen.findByText(repairKangurPolishCopy('Omowienie odpowiedzi'))
+      await screen.findByText(repairKangurPolishCopy('Omówienie odpowiedzi'))
     ).toBeInTheDocument();
     expect(await screen.findByText(/Correct! \+3 pts/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();

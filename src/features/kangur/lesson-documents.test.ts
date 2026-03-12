@@ -41,8 +41,8 @@ describe('kangur lesson documents', () => {
         {
           id: 'page-1',
           sectionKey: 'intro',
-          sectionTitle: '  Wstep  ',
-          sectionDescription: '  Poznaj material.  ',
+          sectionTitle: '  Wstęp  ',
+          sectionDescription: '  Poznaj materiał.  ',
           title: 'Start',
           description: 'Intro page',
           blocks: [
@@ -82,8 +82,8 @@ describe('kangur lesson documents', () => {
               type: 'activity',
               activityId: 'calendar-interactive',
               title: '  Gra z kalendarzem  ',
-              description: '  Cwicz miesiace i daty.  ',
-              ttsDescription: '  Mowiony opis aktywnosci.  ',
+              description: '  Ćwicz miesiące i daty.  ',
+              ttsDescription: '  Mówiony opis aktywności.  ',
             },
           ],
         },
@@ -98,8 +98,8 @@ describe('kangur lesson documents', () => {
     expect(textBlock?.type).toBe('text');
     expect(document.narration?.voice).toBe('sage');
     expect(document.narration?.locale).toBe('en-US');
-    expect(document.pages?.[0]?.sectionTitle).toBe('Wstep');
-    expect(document.pages?.[0]?.sectionDescription).toBe('Poznaj material.');
+    expect(document.pages?.[0]?.sectionTitle).toBe('Wstęp');
+    expect(document.pages?.[0]?.sectionDescription).toBe('Poznaj materiał.');
     expect(textBlock?.type === 'text' ? textBlock.html : '').not.toContain('<script');
     expect(textBlock?.type === 'text' ? textBlock.ttsText : '').toBe('Hello there.');
     expect(svgBlock?.type).toBe('svg');
@@ -115,7 +115,7 @@ describe('kangur lesson documents', () => {
     expect(activityBlock?.type).toBe('activity');
     expect(activityBlock?.type === 'activity' ? activityBlock.title : '').toBe('Gra z kalendarzem');
     expect(activityBlock?.type === 'activity' ? activityBlock.description : '').toBe(
-      'Cwicz miesiace i daty.'
+      'Ćwicz miesiące i daty.'
     );
   });
 

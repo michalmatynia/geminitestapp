@@ -774,7 +774,7 @@ describe('AdminKangurObservabilityPage', () => {
     expect(screen.getByLabelText('Focus label')).toHaveValue('Ranking na stronie głównej');
     expect(screen.getByLabelText('Title')).toHaveValue('Ranking na stronie głównej');
     expect(screen.getByText('Ranking na stronie głównej')).toBeInTheDocument();
-    expect(screen.getByText('Leaderboard')).toBeInTheDocument();
+    expect(screen.getByText('Coverage preset')).toBeInTheDocument();
     expect(screen.getByText('kangur-game-home-leaderboard')).toBeInTheDocument();
     expect(screen.getByText('game:home')).toBeInTheDocument();
     expect(

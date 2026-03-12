@@ -104,14 +104,14 @@ describe('build-system-prompt helpers', () => {
       lastRecommendedAction: 'Count the counters in pairs.',
       lastSuccessfulIntervention: 'Breaking the question into two steps helped.',
       lastCoachingMode: 'hint',
-      lastGivenHints: ['Policz kropki po kolei.', 'Sprawdz pierwsza liczbe jeszcze raz.'],
+      lastGivenHints: ['Policz kropki po kolei.', 'Sprawdź pierwszą liczbę jeszcze raz.'],
     });
 
     expect(instructions).toContain('Compact learner memory from recent Kangur tutor sessions:');
     expect(instructions).toContain('Recent surface: lesson.');
     expect(instructions).toContain('Recent focus: Dodawanie do 10');
     expect(instructions).toContain(
-      'Recent hints given (vary your approach, do not repeat these verbatim): Policz kropki po kolei. | Sprawdz pierwsza liczbe jeszcze raz.'
+      'Recent hints given (vary your approach, do not repeat these verbatim): Policz kropki po kolei. | Sprawdź pierwszą liczbę jeszcze raz.'
     );
   });
 

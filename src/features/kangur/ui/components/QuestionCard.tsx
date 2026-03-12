@@ -205,7 +205,7 @@ export default function QuestionCard({
         {isClockQuestion ? (
           <div className='flex flex-col items-center gap-2'>
             <h3 id={questionHeadingId} className='text-xl font-bold [color:var(--kangur-page-text)]'>
-              Ktora godzine pokazuje zegar?
+              Którą godzinę pokazuje zegar?
             </h3>
             <AnalogClockSmall
               ariaLabel={clockAriaLabel}
@@ -213,7 +213,7 @@ export default function QuestionCard({
               minutes={normalizedClockMinutes}
             />
             <div id={questionDescriptionId} className='text-sm [color:var(--kangur-page-muted-text)]'>
-              Wybierz odpowiedz, ktora pasuje do polozenia wskazowek.
+              Wybierz odpowiedź, która pasuje do położenia wskazówek.
             </div>
           </div>
         ) : (
@@ -225,7 +225,7 @@ export default function QuestionCard({
               {question.question}
             </h3>
             <div id={questionDescriptionId} className='text-sm [color:var(--kangur-page-muted-text)]'>
-              Jaka jest odpowiedz?
+              Jaka jest odpowiedź?
             </div>
           </>
         )}

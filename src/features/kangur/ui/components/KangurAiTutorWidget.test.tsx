@@ -357,7 +357,7 @@ const buildTutorAnchorsTree = (
     {options.homeAnchorKinds?.includes('home_actions') ? (
       <TutorGameAnchor
         kind='home_actions'
-        label='Start i wybor aktywnosci'
+        label='Start i wybór aktywności'
         testId='kangur-game-home-actions-anchor'
       />
     ) : null}

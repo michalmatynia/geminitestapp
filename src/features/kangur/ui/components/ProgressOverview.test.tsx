@@ -15,7 +15,7 @@ const dailyQuest: KangurDailyQuestState = {
     id: 'mixed-practice',
     title: 'Trening mieszany',
     description: 'Podtrzymaj rytm nauki krotszym treningiem mieszanym.',
-    target: '12 pytan',
+    target: '12 pytań',
     priority: 'medium',
     action: {
       label: 'Uruchom trening',

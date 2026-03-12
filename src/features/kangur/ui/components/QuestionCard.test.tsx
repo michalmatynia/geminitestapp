@@ -85,6 +85,6 @@ describe('QuestionCard', () => {
     expect(
       screen.getByRole('img', { name: 'Zegar analogowy pokazuje godzine 3:15.' })
     ).toBeInTheDocument();
-    expect(screen.getByRole('group', { name: 'Ktora godzine pokazuje zegar?' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Którą godzinę pokazuje zegar?' })).toBeInTheDocument();
   });
 });

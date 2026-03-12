@@ -43,7 +43,7 @@ export function KangurTestSuitePlayer({
   );
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [showAnswer, setShowAnswer] = useState(false);
+  const [revealedAnswers, setRevealedAnswers] = useState<Record<string, boolean>>({});
   const [finished, setFinished] = useState(false);
   const { entry: emptyStateContent } = useKangurPageContentEntry('tests-empty-state');
   const { entry: summaryContent } = useKangurPageContentEntry('tests-summary');
@@ -53,7 +53,29 @@ export function KangurTestSuitePlayer({
 
   const currentQuestion = publishedQuestions[currentIndex] ?? null;
   const selectedLabel = currentQuestion ? (answers[currentQuestion.id] ?? null) : null;
+  const showAnswer = currentQuestion ? Boolean(revealedAnswers[currentQuestion.id]) : false;
   const isAnswered = selectedLabel !== null;
+  const selectedChoiceText =
+    currentQuestion && selectedLabel
+      ? currentQuestion.choices.find((choice) => choice.label === selectedLabel)?.text ?? null
+      : null;
+  const correctChoiceText = currentQuestion
+    ? currentQuestion.choices.find((choice) => choice.label === currentQuestion.correctChoiceLabel)?.text ??
+      null
+    : null;
+  const reviewSummary =
+    showAnswer && currentQuestion && selectedLabel
+      ? [
+        selectedChoiceText
+          ? `Wybrana odpowiedz: ${selectedLabel} - ${selectedChoiceText}.`
+          : `Wybrana odpowiedz: ${selectedLabel}.`,
+        correctChoiceText
+          ? `Poprawna odpowiedz: ${currentQuestion.correctChoiceLabel} - ${correctChoiceText}.`
+          : `Poprawna odpowiedz: ${currentQuestion.correctChoiceLabel}.`,
+      ]
+        .filter(Boolean)
+        .join(' ')
+      : undefined;
 
   const score = publishedQuestions.reduce((total, q) => {
     if (answers[q.id] === q.correctChoiceLabel) return total + q.pointValue;
@@ -68,7 +90,10 @@ export function KangurTestSuitePlayer({
       contentId: suite.id,
       title: suite.title,
       questionId: currentQuestion?.id,
+      selectedChoiceLabel: selectedLabel ?? undefined,
+      selectedChoiceText: selectedChoiceText ?? undefined,
       currentQuestion: currentQuestion?.prompt,
+      description: reviewSummary,
       questionProgressLabel:
         totalQuestions > 0 ? `Pytanie ${currentIndex + 1}/${totalQuestions}` : undefined,
       answerRevealed: showAnswer,
@@ -77,6 +102,11 @@ export function KangurTestSuitePlayer({
       currentIndex,
       currentQuestion?.id,
       currentQuestion?.prompt,
+      currentQuestion?.correctChoiceLabel,
+      currentQuestion?.choices,
+      reviewSummary,
+      selectedChoiceText,
+      selectedLabel,
       showAnswer,
       suite.id,
       suite.title,
@@ -88,11 +118,12 @@ export function KangurTestSuitePlayer({
       surface: 'test' as const,
       contentId: suite.id,
       title: suite.title,
+      description: `Wynik koncowy: ${score}/${maxScore} pkt (${scorePercent}%).`,
       questionProgressLabel:
         totalQuestions > 0 ? `Ukonczono ${totalQuestions}/${totalQuestions}` : undefined,
       answerRevealed: true,
     }),
-    [suite.id, suite.title, totalQuestions]
+    [maxScore, score, scorePercent, suite.id, suite.title, totalQuestions]
   );
   useKangurAiTutorSessionSync({
     learnerId: learnerId ?? null,
@@ -141,11 +172,17 @@ export function KangurTestSuitePlayer({
   const handleSelect = (label: string): void => {
     if (!currentQuestion || showAnswer) return;
     setAnswers((prev) => ({ ...prev, [currentQuestion.id]: label }));
-    setShowAnswer(true);
+  };
+
+  const handleRevealAnswer = (): void => {
+    if (!currentQuestion || !isAnswered || showAnswer) {
+      return;
+    }
+
+    setRevealedAnswers((prev) => ({ ...prev, [currentQuestion.id]: true }));
   };
 
   const handleNext = (): void => {
-    setShowAnswer(false);
     if (currentIndex < publishedQuestions.length - 1) {
       setCurrentIndex((i) => i + 1);
     } else {
@@ -157,14 +194,13 @@ export function KangurTestSuitePlayer({
   const handlePrev = (): void => {
     if (currentIndex > 0) {
       setCurrentIndex((i) => i - 1);
-      setShowAnswer(Boolean(answers[publishedQuestions[currentIndex - 1]?.id ?? '']));
     }
   };
 
   const handleRestart = (): void => {
     setCurrentIndex(0);
     setAnswers({});
-    setShowAnswer(false);
+    setRevealedAnswers({});
     setFinished(false);
   };
 
@@ -312,12 +348,16 @@ export function KangurTestSuitePlayer({
             {isAnswered ? (
               <KangurButton
                 type='button'
-                onClick={handleNext}
+                onClick={showAnswer ? handleNext : handleRevealAnswer}
                 size='sm'
                 variant='primary'
                 data-doc-id='tests_suite_player'
               >
-                {currentIndex < totalQuestions - 1 ? 'Next' : 'Finish'}
+                {showAnswer
+                  ? currentIndex < totalQuestions - 1
+                    ? 'Next'
+                    : 'Finish'
+                  : 'Check answer'}
                 <ChevronRight className='size-4' />
               </KangurButton>
             ) : (

@@ -605,11 +605,11 @@ const buildRecommendations = (input: {
   if (weakestOperation && weakestOperation.averageAccuracy < 75) {
     recommendations.push({
       id: 'focus_weakest_operation',
-      title: `Skup sie na: ${weakestOperation.label}`,
-      description: `Wykonaj 2 krotkie sesje ${weakestOperation.label.toLowerCase()} i celuj w min. 80% poprawnosci.`,
+      title: `Skup się na: ${weakestOperation.label}`,
+      description: `Wykonaj 2 krótkie sesje ${weakestOperation.label.toLowerCase()} i celuj w min. 80% poprawności.`,
       priority: 'high',
       action: {
-        label: 'Otworz lekcje',
+        label: 'Otwórz lekcję',
         page: 'Lessons',
         query: {
           focus: weakestOperation.operation,
@@ -621,8 +621,8 @@ const buildRecommendations = (input: {
   if (input.averageAccuracy < 70) {
     recommendations.push({
       id: 'improve_accuracy',
-      title: 'Stabilizuj skutecznosc',
-      description: 'Przez 3 gry wybieraj tryb sredni i skup sie na dokladnosci zamiast czasie.',
+      title: 'Stabilizuj skuteczność',
+      description: 'Przez 3 gry wybieraj tryb średni i skup się na dokładności zamiast na czasie.',
       priority: 'high',
       action: {
         label: 'Uruchom trening',
@@ -637,11 +637,11 @@ const buildRecommendations = (input: {
   if (weakestLessonEntry && weakestLessonEntry.masteryPercent < 80) {
     recommendations.push({
       id: 'strengthen_lesson_mastery',
-      title: `Powtorz lekcje: ${weakestLessonEntry.title}`,
-      description: `Aktualne opanowanie to ${weakestLessonEntry.masteryPercent}%. Jedna powtorka tej lekcji podniesie stabilnosc.`,
+      title: `Powtórz lekcję: ${weakestLessonEntry.title}`,
+      description: `Aktualne opanowanie to ${weakestLessonEntry.masteryPercent}%. Jedna powtórka tej lekcji podniesie stabilność.`,
       priority: weakestLessonEntry.masteryPercent < 60 ? 'high' : 'medium',
       action: {
-        label: 'Otworz lekcje',
+        label: 'Otwórz lekcję',
         page: 'Lessons',
         query: {
           focus: weakestLessonEntry.componentId,
@@ -656,8 +656,8 @@ const buildRecommendations = (input: {
       title: 'Domknij dzienny cel',
       description:
         remainingDailyGames === 1
-          ? `Brakuje tylko 1 gry do dziennego celu. Dzis masz juz +${input.todayXpEarned} XP.`
-          : `Brakuje ${remainingDailyGames} gier do dziennego celu. Dzis masz juz +${input.todayXpEarned} XP.`,
+          ? `Brakuje tylko 1 gry do dziennego celu. Dziś masz już +${input.todayXpEarned} XP.`
+          : `Brakuje ${remainingDailyGames} gier do dziennego celu. Dziś masz już +${input.todayXpEarned} XP.`,
       priority: 'medium',
       action: {
         label: 'Zagraj teraz',
@@ -676,10 +676,10 @@ const buildRecommendations = (input: {
   ) {
     recommendations.push({
       id: 'boost_xp_momentum',
-      title: 'Podkrec dzisiejsze XP',
+      title: 'Podkręć dzisiejsze XP',
       description: highestYieldOperation
-        ? `Cel gier jest juz zamkniety, ale dzis wpadlo tylko +${input.todayXpEarned} XP. Jedna mocniejsza sesja ${highestYieldOperation.label.toLowerCase()} zwykle daje okolo ${highestYieldOperation.averageXpPerSession} XP na probe.`
-        : `Cel gier jest juz zamkniety, ale dzis wpadlo tylko +${input.todayXpEarned} XP. Jedna mocniejsza sesja treningowa powinna dowiezc ponad ${xpMomentumTarget} XP.`,
+        ? `Cel gier jest już zamknięty, ale dziś wpadło tylko +${input.todayXpEarned} XP. Jedna mocniejsza sesja ${highestYieldOperation.label.toLowerCase()} zwykle daje około ${highestYieldOperation.averageXpPerSession} XP na próbę.`
+        : `Cel gier jest już zamknięty, ale dziś wpadło tylko +${input.todayXpEarned} XP. Jedna mocniejsza sesja treningowa powinna dowieźć ponad ${xpMomentumTarget} XP.`,
       priority: 'medium',
       action: buildPracticeRecommendationAction(
         highestYieldOperation?.operation ?? null,
@@ -691,11 +691,11 @@ const buildRecommendations = (input: {
   if (input.currentStreakDays < 2) {
     recommendations.push({
       id: 'streak_bootstrap',
-      title: 'Zbuduj serie',
-      description: 'Zagraj takze jutro, aby uruchomic serie kolejnych dni.',
+      title: 'Zbuduj serię',
+      description: 'Zagraj także jutro, aby uruchomić serię kolejnych dni.',
       priority: 'medium',
       action: {
-        label: 'Zagraj dzis',
+        label: 'Zagraj dziś',
         page: 'Game',
         query: {
           quickStart: 'training',
@@ -709,8 +709,8 @@ const buildRecommendations = (input: {
       id: 'maintain_momentum',
       title: 'Utrzymaj tempo',
       description: momentumOperation
-        ? `Swietna forma. W 7 dni zebrano +${input.weeklyXpEarned} XP. Dorzuc 1 sesje ${momentumOperation.label.toLowerCase()} dla utrwalenia.`
-        : `Swietna forma. W 7 dni zebrano +${input.weeklyXpEarned} XP. Kontynuuj dzisiejszy rytm nauki.`,
+        ? `Świetna forma. W 7 dni zebrano +${input.weeklyXpEarned} XP. Dorzuć 1 sesję ${momentumOperation.label.toLowerCase()} dla utrwalenia.`
+        : `Świetna forma. W 7 dni zebrano +${input.weeklyXpEarned} XP. Kontynuuj dzisiejszy rytm nauki.`,
       priority: 'low',
       action: buildPracticeRecommendationAction(
         momentumOperation?.operation ?? null,

@@ -34,6 +34,7 @@ export type PersonaAvatarUploadResult = ImageFileRecord & {
   folder: string;
   thumbnail: {
     ref: string;
+    dataUrl: string;
     mimeType: string;
     bytes: number;
     width: number;

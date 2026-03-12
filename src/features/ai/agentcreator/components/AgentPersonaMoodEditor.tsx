@@ -188,12 +188,12 @@ export function AgentPersonaMoodEditor({
       avatarImageFileId: uploaded.id,
       avatarImageUrl: uploaded.filepath,
       avatarThumbnailRef: uploaded.thumbnail?.ref ?? null,
-      avatarThumbnailDataUrl: null,
+      avatarThumbnailDataUrl: uploaded.thumbnail?.dataUrl ?? null,
       avatarThumbnailMimeType: uploaded.thumbnail?.mimeType ?? null,
       avatarThumbnailBytes: uploaded.thumbnail?.bytes ?? null,
       avatarThumbnailWidth: uploaded.thumbnail?.width ?? null,
       avatarThumbnailHeight: uploaded.thumbnail?.height ?? null,
-      useEmbeddedThumbnail: Boolean(uploaded.thumbnail?.ref),
+      useEmbeddedThumbnail: Boolean(uploaded.thumbnail?.dataUrl),
     }));
     await deleteDraftAvatarFile(currentMood.avatarImageFileId);
     await deleteDraftAvatarThumbnail(currentMood.avatarThumbnailRef);
@@ -326,6 +326,9 @@ export function AgentPersonaMoodEditor({
 
           {effectiveMoods.map((mood) => {
             const importMime = importMimeByMood[mood.id] ?? DEFAULT_IMPORT_MIME;
+            const hasEmbeddedThumbnailOption = Boolean(
+              mood.avatarThumbnailDataUrl?.trim() || mood.avatarThumbnailRef?.trim()
+            );
 
             return (
               <div
@@ -384,7 +387,7 @@ export function AgentPersonaMoodEditor({
                         Clear image
                       </Button>
                     ) : null}
-                    {mood.avatarThumbnailRef ? (
+                    {hasEmbeddedThumbnailOption ? (
                       <Button
                         type='button'
                         variant='ghost'

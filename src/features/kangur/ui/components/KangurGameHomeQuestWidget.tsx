@@ -38,7 +38,7 @@ const buildAssignmentHref = (
 };
 
 const QUEST_STATUS_LABELS = {
-  completed: 'Misja ukonczona',
+  completed: 'Misja ukończona',
   in_progress: 'Misja w toku',
   not_started: 'Misja czeka',
 } as const;
@@ -190,7 +190,7 @@ export function KangurGameHomeQuestWidget({
                     labelStyle='compact'
                     size='sm'
                   >
-                  Tempo: {averageXpPerSession} XP / gre
+                  Tempo: {averageXpPerSession} XP / grę
                   </KangurStatusChip>
                 ) : null}
                 {visibleLeadingTrack ? (

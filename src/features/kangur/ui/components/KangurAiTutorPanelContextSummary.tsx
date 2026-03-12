@@ -9,7 +9,7 @@ import type { HTMLAttributes, JSX, ReactNode } from 'react';
 
 const contextSummaryCardActionClassName = 'h-8 w-full px-3 text-[11px] sm:w-auto sm:shrink-0';
 const contextSummaryChipClassName =
-  'rounded-full border px-3 py-1 [background:var(--kangur-soft-card-background)] [border-color:var(--kangur-soft-card-border)] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]';
+  'rounded-full border px-3 py-1 kangur-chat-surface-soft [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]';
 
 type ContextSummaryAction = {
   label: string;
@@ -152,17 +152,17 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
       {isAskModalMode ? (
         <div
           data-testid='kangur-ai-tutor-ask-modal-helper'
-          className='border-b kangur-chat-padding-sm text-xs leading-relaxed [background:color-mix(in_srgb,var(--kangur-soft-card-background)_78%,#fff7cf)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_58%,#f59e0b)] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
+          className='border-b kangur-chat-padding-sm kangur-chat-surface-warm text-xs leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
         >
           {askModalHelperText}
         </div>
       ) : null}
 
-      <div className='border-b kangur-chat-padding-md [background:color-mix(in_srgb,var(--kangur-soft-card-background)_74%,#fff7cf)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_58%,#f59e0b)]'>
+      <div className='border-b kangur-chat-padding-md kangur-chat-surface-warm'>
         {contextSwitchNotice ? (
           <div
             data-testid='kangur-ai-tutor-context-switch'
-            className='mb-3 kangur-chat-inset border-2 kangur-chat-padding-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.1)] [background:var(--kangur-soft-card-background)] [border-color:var(--kangur-soft-card-border)]'
+            className='mb-3 kangur-chat-inset border-2 kangur-chat-padding-sm kangur-chat-surface-soft kangur-chat-surface-soft-shadow'
           >
             <div className='text-[10px] font-black uppercase tracking-[0.16em] [color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'>
               {contextSwitchNotice.title}
@@ -195,7 +195,7 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
             <KangurAiTutorPanelContextChip
               testId='kangur-ai-tutor-bridge-chip'
               data-bridge-action-id={bridgeQuickActionId ?? 'none'}
-              className='text-[10px] font-bold uppercase tracking-[0.14em] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#d1fae5)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_72%,#10b981)]'
+              className='text-[10px] font-bold uppercase tracking-[0.14em] kangur-chat-surface-success'
             >
               {bridgeSummaryChipLabel}
             </KangurAiTutorPanelContextChip>

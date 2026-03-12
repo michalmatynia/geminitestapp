@@ -222,7 +222,7 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
     expect(guidance.instructions).toContain(
       'Most recent practice: Dodawanie at 50% accuracy for +12 XP.'
     );
-    expect(guidance.instructions).toContain('Top adaptive recommendation: Skup sie na: Dodawanie');
+    expect(guidance.instructions).toContain('Top adaptive recommendation: Skup się na: Dodawanie');
     expect(guidance.instructions).toContain('Relevant active assignment: Powtórka dodawania');
     expect(guidance.instructions).toContain('Progress: Powtorki po przydziale: 1/2.');
     expect(guidance.instructions).toContain(
@@ -236,14 +236,14 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
     );
     expect(guidance.coachingFrame).toEqual({
       mode: 'next_best_action',
-      label: 'Nastepny krok',
-      description: 'Wskaz jedna konkretna aktywnosc Kangur jako najlepszy dalszy ruch.',
-      rationale: 'Najwiecej wartosci da teraz jedna jasna aktywnosc, a nie kilka opcji naraz.',
+      label: 'Następny krok',
+      description: 'Wskaz jedna konkretna aktywność Kangur jako najlepszy dalszy ruch.',
+      rationale: 'Najwięcej wartosci da teraz jedna jasna aktywność, a nie kilka opcji naraz.',
     });
     expect(guidance.followUpActions).toEqual([
       {
         id: 'assignment:assignment-1',
-        label: 'Otworz lekcje',
+        label: 'Otwórz lekcje',
         page: 'Lessons',
         query: {
           focus: 'adding',
@@ -337,9 +337,9 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
         interactionIntent: 'next_step',
       },
       memory: {
-        lastRecommendedAction: 'Completed follow-up: Otworz lekcje: Powtórka dodawania',
+        lastRecommendedAction: 'Completed follow-up: Otwórz lekcje: Powtórka dodawania',
         lastSuccessfulIntervention:
-          'The learner completed the tutor follow-up Otworz lekcje for Powtórka dodawania on Lessons.',
+          'The learner completed the tutor follow-up Otwórz lekcje for Powtórka dodawania on Lessons.',
         lastCoachingMode: 'next_best_action',
       },
     });
@@ -427,12 +427,12 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
     });
 
     expect(guidance.instructions).toContain(
-      'Successful follow-up signal: build on that completion with one adjacent next move: Otworz lekcje (Po treningu: Dodawanie).'
+      'Successful follow-up signal: build on that completion with one adjacent next move: Otwórz lekcje (Po treningu: Dodawanie).'
     );
     expect(guidance.followUpActions).toEqual([
       {
         id: 'bridge:game-to-lesson:adding',
-        label: 'Otworz lekcje',
+        label: 'Otwórz lekcje',
         page: 'Lessons',
         query: {
           focus: 'adding',
@@ -468,9 +468,9 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
       mode: 'misconception_check',
       label: 'Zmien podejscie',
       description:
-        'Sprawdz, gdzie uczen blokuje sie w rozumowaniu, zamiast dawac kolejny taki sam trop.',
+        'Sprawdź, gdzie uczeń blokuje się w rozumowaniu, zamiast dawac kolejny taki sam trop.',
       rationale:
-        'Uczen powtorzyl to samo pytanie po wskazowce, wiec trzeba przejsc z kolejnego tropu do diagnozy rozumienia.',
+        'Uczeń powtorzyl to samo pytanie po wskazówce, wiec trzeba przejść z kolejnego tropu do diagnozy rozumienia.',
     });
     expect(guidance.followUpActions).toEqual([]);
   });
@@ -510,10 +510,10 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
     );
     expect(guidance.coachingFrame).toEqual({
       mode: 'review_reflection',
-      label: 'Omow po probie',
+      label: 'Omów po próbie',
       description:
-        'Podsumuj probe, nazwij jedna poprawke i zakoncz sugestia ponownej proby.',
-      rationale: 'To dobry moment na refleksje po probie i jedna konkretna poprawke.',
+        'Podsumuj próbę, nazwij jedna poprawke i zakończ sugestia ponownej próby.',
+      rationale: 'To dobry moment na refleksje po próbie i jedna konkretna poprawke.',
     });
     expect(guidance.followUpActions).toEqual([]);
     expect(getKangurProgressRepositoryMock).not.toHaveBeenCalled();

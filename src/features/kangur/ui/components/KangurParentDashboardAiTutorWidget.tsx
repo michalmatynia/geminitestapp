@@ -28,6 +28,7 @@ import {
   KangurCardDescription,
   KangurCardTitle,
   KangurGlassPanel,
+  KangurPanelIntro,
   KangurSelectField,
   KangurSectionEyebrow,
   KangurStatusChip,
@@ -331,10 +332,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
       <KangurGlassPanel padding='lg' surface='solid' variant='soft' className='w-full text-center'>
         <div className='flex flex-col gap-2'>
           {aiTutorSectionContent ? (
-            <>
-              <p className='text-sm font-semibold [color:var(--kangur-page-text)]'>{sectionTitle}</p>
-              <p className='text-sm [color:var(--kangur-page-muted-text)]'>{sectionSummary}</p>
-            </>
+            <KangurPanelIntro description={sectionSummary} title={sectionTitle} titleAs='p' />
           ) : null}
           <p className='text-sm [color:var(--kangur-page-muted-text)]'>
             {tutorContent.parentDashboard.noActiveLearner}
@@ -352,17 +350,15 @@ function AiTutorConfigPanel(): React.JSX.Element {
     >
       <div className='flex items-center gap-3'>
         <BrainCircuit className='h-5 w-5 text-orange-500' />
-        <div>
-          <KangurSectionEyebrow className='tracking-[0.18em]'>
-            {sectionTitle}
-          </KangurSectionEyebrow>
-          <div className='mt-1 text-sm font-bold [color:var(--kangur-page-text)]'>
-            {learnerHeaderTitle}
-          </div>
-          <div className='text-xs [color:var(--kangur-page-muted-text)]'>
-            {sectionSummary}
-          </div>
-        </div>
+        <KangurPanelIntro
+          className='min-w-0'
+          description={sectionSummary}
+          descriptionClassName='text-xs'
+          eyebrow={sectionTitle}
+          eyebrowClassName='tracking-[0.18em]'
+          title={learnerHeaderTitle}
+          titleClassName='mt-1 text-sm font-bold'
+        />
       </div>
 
       <div

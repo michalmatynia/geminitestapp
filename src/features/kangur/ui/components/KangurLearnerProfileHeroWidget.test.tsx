@@ -79,17 +79,17 @@ describe('KangurLearnerProfileHeroWidget', () => {
     expect(screen.getByRole('heading', { name: 'Profil ucznia' })).toHaveClass('text-3xl');
     expect(
       screen.getByText(
-        'Zaloguj sie, aby synchronizowac postep ucznia miedzy urzadzeniami. Jesli nie masz jeszcze konta rodzica, zaloz je tutaj.'
+        'Zaloguj się, aby synchronizować postęp ucznia między urządzeniami. Jeśli nie masz jeszcze konta rodzica, załóż je tutaj.'
       )
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Zaloguj sie, aby synchronizowac postep' })
+      screen.getByRole('button', { name: 'Zaloguj się, aby synchronizować postęp' })
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Utworz konto rodzica' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Utwórz konto rodzica' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Zaloguj sie, aby synchronizowac postep' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Utworz konto rodzica' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zaloguj się, aby synchronizować postęp' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Utwórz konto rodzica' }));
 
     expect(routeNavigatorPushMock).toHaveBeenCalledWith('/kangur', {
       acknowledgeMs: 110,
@@ -146,7 +146,7 @@ describe('KangurLearnerProfileHeroWidget', () => {
     expect(screen.getByText('Ala')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(screen.getByTestId('kangur-learner-profile-hero-milestone-shell')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-learner-profile-hero-milestone-next-badge')).toHaveTextContent(
-      '⭐ Pol tysiaca XP'
+      '⭐ Pół tysiąca XP'
     );
     expect(screen.getByTestId('kangur-learner-profile-hero-milestone-track-quest')).toHaveClass(
       'soft-card',
@@ -160,7 +160,7 @@ describe('KangurLearnerProfileHeroWidget', () => {
       screen.getByTestId('kangur-learner-profile-hero-milestone-track-mastery')
     ).toHaveTextContent('Mistrzostwo');
     expect(
-      screen.queryByRole('button', { name: 'Zaloguj sie, aby synchronizowac postep' })
+      screen.queryByRole('button', { name: 'Zaloguj się, aby synchronizować postęp' })
     ).not.toBeInTheDocument();
   });
 

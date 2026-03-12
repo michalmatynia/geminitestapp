@@ -36,19 +36,19 @@ const DEFAULT_TUTOR_MOOD_CONTENT: Record<KangurTutorMoodId, { label: string; des
   },
   careful: {
     label: 'Ostrożny',
-    description: 'Tutor zwalnia tempo i dba o precyzje kolejnych kroków.',
+    description: 'Tutor zwalnia tempo i dba o precyzję kolejnych kroków.',
   },
   curious: {
     label: 'Ciekawy',
     description: 'Tutor zachęca do odkrywania i zadawania pytań.',
   },
   encouraging: {
-    label: 'Dodajacy otuchy',
-    description: 'Tutor wzmacnia wysiłek ucznia i pomaga ruszyc dalej.',
+    label: 'Dodający otuchy',
+    description: 'Tutor wzmacnia wysiłek ucznia i pomaga ruszyć dalej.',
   },
   motivating: {
-    label: 'Motywujacy',
-    description: 'Tutor podtrzymuje energie i chec do dalszej pracy.',
+    label: 'Motywujący',
+    description: 'Tutor podtrzymuje energię i chęć do dalszej pracy.',
   },
   playful: {
     label: 'Zabawowy',
@@ -56,7 +56,7 @@ const DEFAULT_TUTOR_MOOD_CONTENT: Record<KangurTutorMoodId, { label: string; des
   },
   calm: {
     label: 'Spokojny',
-    description: 'Tutor obniza napięcie i porządkuje sytuacje krok po kroku.',
+    description: 'Tutor obniża napięcie i porządkuje sytuację krok po kroku.',
   },
   patient: {
     label: 'Cierpliwy',
@@ -64,19 +64,19 @@ const DEFAULT_TUTOR_MOOD_CONTENT: Record<KangurTutorMoodId, { label: string; des
   },
   gentle: {
     label: 'Łagodny',
-    description: 'Tutor prowadzi delikatnie i ogranicza nadmiar bodzcow.',
+    description: 'Tutor prowadzi delikatnie i ogranicza nadmiar bodźców.',
   },
   reassuring: {
-    label: 'Uspokajajacy',
-    description: 'Tutor wzmacnia poczucie bezpieczenstwa i zmniejsza stres.',
+    label: 'Uspokajający',
+    description: 'Tutor wzmacnia poczucie bezpieczeństwa i zmniejsza stres.',
   },
   empathetic: {
     label: 'Empatyczny',
     description: 'Tutor rozpoznaje trudność ucznia i dopasowuje ton wsparcia.',
   },
   supportive: {
-    label: 'Wspierajacy',
-    description: 'Tutor aktywnie podtrzymuje ucznia w bieżącej probie.',
+    label: 'Wspierający',
+    description: 'Tutor aktywnie podtrzymuje ucznia w bieżącej próbie.',
   },
   reflective: {
     label: 'Refleksyjny',
@@ -96,11 +96,11 @@ const DEFAULT_TUTOR_MOOD_CONTENT: Record<KangurTutorMoodId, { label: string; des
   },
   happy: {
     label: 'Radosny',
-    description: 'Tutor utrzymuje cieply, pozytywny ton po udanej pracy.',
+    description: 'Tutor utrzymuje ciepły, pozytywny ton po udanej pracy.',
   },
   celebrating: {
     label: 'Świętujący',
-    description: 'Tutor mocno zaznacza sukces lub ważny przelom ucznia.',
+    description: 'Tutor mocno zaznacza sukces lub ważny przełom ucznia.',
   },
 };
 

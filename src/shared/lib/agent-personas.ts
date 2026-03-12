@@ -127,7 +127,9 @@ export const buildAgentPersonaMood = (
     overrides.avatarThumbnailHeight > 0
       ? Math.floor(overrides.avatarThumbnailHeight)
       : null;
-  const useEmbeddedThumbnail = overrides?.useEmbeddedThumbnail === true;
+  const hasEmbeddedThumbnailSource = Boolean(avatarThumbnailDataUrl || avatarThumbnailRef);
+  const useEmbeddedThumbnail =
+    overrides?.useEmbeddedThumbnail === true && hasEmbeddedThumbnailSource;
 
   return {
     id: moodId,

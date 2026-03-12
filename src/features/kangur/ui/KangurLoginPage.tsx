@@ -345,10 +345,10 @@ function KangurLoginPageContent(): JSX.Element {
     parentAuthMode === 'create-account'
       ? 'Nowe konto rodzica'
       : loginKind === 'student'
-        ? 'Uczen'
+        ? 'Uczeń'
         : loginKind === 'parent'
           ? 'Rodzic'
-          : 'Rodzic lub uczen';
+          : 'Rodzic lub uczeń';
   const audienceBadgeClassName =
     'inline-flex items-center justify-center rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] shadow-[0_14px_30px_-26px_rgba(15,23,42,0.22)]';
   const audienceBadgeStyle: CSSProperties =
@@ -404,11 +404,11 @@ function KangurLoginPageContent(): JSX.Element {
       : 0;
   const isResendCoolingDown = resendRetryAfterMs > 0;
   const resendAvailabilityMessage = isResendCoolingDown
-    ? `Nowy email bedzie mozna wyslac za ${formatRetryAfterLabel(resendRetryAfterMs)}.`
+    ? `Nowy e-mail będzie można wysłać za ${formatRetryAfterLabel(resendRetryAfterMs)}.`
     : null;
   const resendButtonLabel = isResendCoolingDown
-    ? `Wyslij email ponownie za ${formatRetryAfterLabel(resendRetryAfterMs)}`
-    : 'Wyslij email ponownie';
+    ? `Wyślij e-mail ponownie za ${formatRetryAfterLabel(resendRetryAfterMs)}`
+    : 'Wyślij e-mail ponownie';
   const inputClassName =
     'kangur-text-field rounded-[24px] px-4 py-3 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.76)] outline-none transition focus:border-amber-200 focus:ring-2 focus:ring-amber-200/70 disabled:cursor-not-allowed disabled:opacity-60';
   const formDescribedBy = [visibleNotice ? noticeId : null, error ? errorId : null]
@@ -789,7 +789,7 @@ function KangurLoginPageContent(): JSX.Element {
           callbackUrl,
           statusCode: response.status,
         });
-        setError(message ?? 'Ten link weryfikacyjny jest niewazny albo wygasl.');
+        setError(message ?? 'Ten link weryfikacyjny jest nieważny albo wygasł.');
         setNotice(null);
         return;
       }
@@ -826,7 +826,7 @@ function KangurLoginPageContent(): JSX.Element {
 
   const handleStudentSignIn = async (loginName: string): Promise<void> => {
     if (!KANGUR_LEARNER_LOGIN_PATTERN.test(loginName)) {
-      setError('Nick ucznia moze zawierac tylko litery i cyfry.');
+      setError('Nick ucznia może zawierać tylko litery i cyfry.');
       return;
     }
 
@@ -1187,7 +1187,7 @@ function KangurLoginPageContent(): JSX.Element {
                 ? 'Utwórz konto rodzica'
                 : loginKind === 'parent'
                   ? 'Zaloguj rodzica'
-                  : 'Zaloguj sie'}
+                  : 'Zaloguj się'}
           </KangurButton>
         ) : (
           <KangurButton

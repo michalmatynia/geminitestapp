@@ -5,12 +5,17 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { useKangurAssignmentsMock } = vi.hoisted(() => ({
+const { useKangurAssignmentsMock, useKangurPageContentEntryMock } = vi.hoisted(() => ({
   useKangurAssignmentsMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: useKangurAssignmentsMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
 import KangurPriorityAssignments from '@/features/kangur/ui/components/KangurPriorityAssignments';
@@ -18,6 +23,13 @@ import KangurPriorityAssignments from '@/features/kangur/ui/components/KangurPri
 describe('KangurPriorityAssignments', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useKangurPageContentEntryMock.mockReturnValue({
+      entry: null,
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
   });
 
   it('uses the shared neutral glass panel while loading', () => {
@@ -109,7 +121,7 @@ describe('KangurPriorityAssignments', () => {
     expect(screen.getByText('Priorytetowe zadania')).toBeInTheDocument();
     expect(screen.getByText('Powtorka dzielenia')).toBeInTheDocument();
     expect(screen.queryByText('Ukonczone zadanie')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Otworz lekcje' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Otwórz lekcję' })).toHaveAttribute(
       'href',
       '/kangur/lessons?focus=division'
     );

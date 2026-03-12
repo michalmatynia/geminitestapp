@@ -75,13 +75,13 @@ const PRACTICE_ASSIGNMENT_ITEMS: KangurAssignmentCatalogItem[] = [
   {
     id: 'practice-mixed',
     title: 'Trening mieszany',
-    description: 'Przypisz przekrojowy trening z roznymi typami pytan.',
+    description: 'Przypisz przekrojowy trening z różnymi typami pytań.',
     badge: 'Trening',
     group: 'practice',
-    priorityLabel: 'Priorytet sredni',
+    priorityLabel: 'Priorytet średni',
     createInput: {
       title: 'Trening mieszany',
-      description: 'Wykonaj mieszany trening i utrzymaj regularnosc pracy.',
+      description: 'Wykonaj mieszany trening i utrzymaj regularność pracy.',
       priority: 'medium',
       target: {
         type: 'practice',
@@ -90,7 +90,7 @@ const PRACTICE_ASSIGNMENT_ITEMS: KangurAssignmentCatalogItem[] = [
         minAccuracyPercent: 70,
       },
     },
-    keywords: ['trening', 'mieszany', 'powtorka', 'priorytet'],
+    keywords: ['trening', 'mieszany', 'powtórka', 'priorytet'],
   },
   {
     id: 'practice-addition',
@@ -101,7 +101,7 @@ const PRACTICE_ASSIGNMENT_ITEMS: KangurAssignmentCatalogItem[] = [
     priorityLabel: 'Priorytet wysoki',
     createInput: {
       title: 'Praktyka: Dodawanie',
-      description: 'Rozwiaz sesje dodawania i osiagnij co najmniej 80% skutecznosci.',
+      description: 'Rozwiąż sesję dodawania i osiągnij co najmniej 80% skuteczności.',
       priority: 'high',
       target: {
         type: 'practice',
@@ -121,7 +121,7 @@ const PRACTICE_ASSIGNMENT_ITEMS: KangurAssignmentCatalogItem[] = [
     priorityLabel: 'Priorytet wysoki',
     createInput: {
       title: 'Praktyka: Odejmowanie',
-      description: 'Rozwiaz sesje odejmowania i osiagnij co najmniej 80% skutecznosci.',
+      description: 'Rozwiąż sesję odejmowania i osiągnij co najmniej 80% skuteczności.',
       priority: 'high',
       target: {
         type: 'practice',
@@ -134,14 +134,14 @@ const PRACTICE_ASSIGNMENT_ITEMS: KangurAssignmentCatalogItem[] = [
   },
   {
     id: 'practice-multiplication',
-    title: 'Trening: Mnozenie',
-    description: 'Jedna sesja mnozenia z celem 80% poprawnych odpowiedzi.',
+    title: 'Trening: Mnożenie',
+    description: 'Jedna sesja mnożenia z celem 80% poprawnych odpowiedzi.',
     badge: 'Praktyka',
     group: 'practice',
     priorityLabel: 'Priorytet wysoki',
     createInput: {
-      title: 'Praktyka: Mnozenie',
-      description: 'Rozwiaz sesje mnozenia i osiagnij co najmniej 80% skutecznosci.',
+      title: 'Praktyka: Mnożenie',
+      description: 'Rozwiąż sesję mnożenia i osiągnij co najmniej 80% skuteczności.',
       priority: 'high',
       target: {
         type: 'practice',
@@ -150,7 +150,7 @@ const PRACTICE_ASSIGNMENT_ITEMS: KangurAssignmentCatalogItem[] = [
         minAccuracyPercent: 80,
       },
     },
-    keywords: ['mnozenie', 'tabliczka', 'arytmetyka', 'trening'],
+    keywords: ['mnożenie', 'tabliczka', 'arytmetyka', 'trening'],
   },
   {
     id: 'practice-division',
@@ -161,7 +161,7 @@ const PRACTICE_ASSIGNMENT_ITEMS: KangurAssignmentCatalogItem[] = [
     priorityLabel: 'Priorytet wysoki',
     createInput: {
       title: 'Praktyka: Dzielenie',
-      description: 'Rozwiaz sesje dzielenia i osiagnij co najmniej 80% skutecznosci.',
+      description: 'Rozwiąż sesję dzielenia i osiągnij co najmniej 80% skuteczności.',
       priority: 'high',
       target: {
         type: 'practice',
@@ -174,14 +174,14 @@ const PRACTICE_ASSIGNMENT_ITEMS: KangurAssignmentCatalogItem[] = [
   },
   {
     id: 'practice-decimals',
-    title: 'Trening: Ulamki',
-    description: 'Jedna sesja ulamkow z celem 75% poprawnych odpowiedzi.',
+    title: 'Trening: Ułamki',
+    description: 'Jedna sesja ułamków z celem 75% poprawnych odpowiedzi.',
     badge: 'Praktyka',
     group: 'practice',
-    priorityLabel: 'Priorytet sredni',
+    priorityLabel: 'Priorytet średni',
     createInput: {
-      title: 'Praktyka: Ulamki',
-      description: 'Rozwiaz sesje ulamkow i osiagnij co najmniej 75% skutecznosci.',
+      title: 'Praktyka: Ułamki',
+      description: 'Rozwiąż sesję ułamków i osiągnij co najmniej 75% skuteczności.',
       priority: 'medium',
       target: {
         type: 'practice',
@@ -190,18 +190,18 @@ const PRACTICE_ASSIGNMENT_ITEMS: KangurAssignmentCatalogItem[] = [
         minAccuracyPercent: 75,
       },
     },
-    keywords: ['ulamki', 'dziesietne', 'arytmetyka', 'trening'],
+    keywords: ['ułamki', 'dziesiętne', 'arytmetyka', 'trening'],
   },
   {
     id: 'practice-powers',
-    title: 'Trening: Potegi',
-    description: 'Jedna sesja poteg z celem 75% poprawnych odpowiedzi.',
+    title: 'Trening: Potęgi',
+    description: 'Jedna sesja potęg z celem 75% poprawnych odpowiedzi.',
     badge: 'Praktyka',
     group: 'practice',
-    priorityLabel: 'Priorytet sredni',
+    priorityLabel: 'Priorytet średni',
     createInput: {
-      title: 'Praktyka: Potegi',
-      description: 'Rozwiaz sesje poteg i osiagnij co najmniej 75% skutecznosci.',
+      title: 'Praktyka: Potęgi',
+      description: 'Rozwiąż sesję potęg i osiągnij co najmniej 75% skuteczności.',
       priority: 'medium',
       target: {
         type: 'practice',
@@ -210,18 +210,18 @@ const PRACTICE_ASSIGNMENT_ITEMS: KangurAssignmentCatalogItem[] = [
         minAccuracyPercent: 75,
       },
     },
-    keywords: ['potegi', 'wykladniki', 'arytmetyka', 'trening'],
+    keywords: ['potęgi', 'wykładniki', 'arytmetyka', 'trening'],
   },
   {
     id: 'practice-roots',
     title: 'Trening: Pierwiastki',
-    description: 'Jedna sesja pierwiastkow z celem 75% poprawnych odpowiedzi.',
+    description: 'Jedna sesja pierwiastków z celem 75% poprawnych odpowiedzi.',
     badge: 'Praktyka',
     group: 'practice',
-    priorityLabel: 'Priorytet sredni',
+    priorityLabel: 'Priorytet średni',
     createInput: {
       title: 'Praktyka: Pierwiastki',
-      description: 'Rozwiaz sesje pierwiastkow i osiagnij co najmniej 75% skutecznosci.',
+      description: 'Rozwiąż sesję pierwiastków i osiągnij co najmniej 75% skuteczności.',
       priority: 'medium',
       target: {
         type: 'practice',
@@ -235,13 +235,13 @@ const PRACTICE_ASSIGNMENT_ITEMS: KangurAssignmentCatalogItem[] = [
   {
     id: 'practice-clock',
     title: 'Trening: Zegar',
-    description: 'Sesja cwiczen z godzinami, minutami i pelnym czasem na zegarze.',
+    description: 'Sesja ćwiczeń z godzinami, minutami i pełnym czasem na zegarze.',
     badge: 'Praktyka',
     group: 'practice',
-    priorityLabel: 'Priorytet sredni',
+    priorityLabel: 'Priorytet średni',
     createInput: {
       title: 'Praktyka: Zegar',
-      description: 'Wykonaj zegarowy trening i sprawdz odczytywanie godzin, minut oraz pelnego czasu.',
+      description: 'Wykonaj zegarowy trening i sprawdź odczytywanie godzin, minut oraz pełnego czasu.',
       priority: 'medium',
       target: {
         type: 'practice',
@@ -250,7 +250,7 @@ const PRACTICE_ASSIGNMENT_ITEMS: KangurAssignmentCatalogItem[] = [
         minAccuracyPercent: 75,
       },
     },
-    keywords: ['zegar', 'czas', 'godziny', 'minuty', 'pelny czas', 'trening'],
+    keywords: ['zegar', 'czas', 'godziny', 'minuty', 'pełny czas', 'trening'],
   },
 ];
 
@@ -278,14 +278,14 @@ export const formatKangurAssignmentPriorityLabel = (
   priority: KangurAssignmentCreateInput['priority']
 ): string => {
   if (priority === 'high') return 'Priorytet wysoki';
-  if (priority === 'medium') return 'Priorytet sredni';
+  if (priority === 'medium') return 'Priorytet średni';
   return 'Priorytet niski';
 };
 
 export const formatKangurAssignmentStatusLabel = (
   value: KangurAssignmentSnapshot['progress']['status']
 ): string => {
-  if (value === 'completed') return 'Ukonczone';
+  if (value === 'completed') return 'Ukończone';
   if (value === 'in_progress') return 'W trakcie';
   return 'Nowe';
 };
@@ -358,13 +358,13 @@ export const buildKangurAssignmentCatalog = (
     return {
       id: `lesson-${lesson.id}`,
       title: lesson.title,
-      description: `${lesson.description}. Przypisz uczniowi jedna swieza powtorke tej lekcji.`,
+      description: `${lesson.description}. Przypisz uczniowi jedną świeżą powtórkę tej lekcji.`,
       badge: resolveLessonBadge(group),
       group,
-      priorityLabel: 'Priorytet sredni',
+      priorityLabel: 'Priorytet średni',
       createInput: {
         title: `${lesson.emoji} ${lesson.title}`,
-        description: `Powtorz lekcje "${lesson.title}" i zakoncz jedna dodatkowa sesje.`,
+        description: `Powtórz lekcję "${lesson.title}" i zakończ jedną dodatkową sesję.`,
         priority: 'medium',
         target: {
           type: 'lesson',
@@ -681,7 +681,7 @@ export const getKangurAssignmentActionLabel = (
   assignment: Pick<KangurAssignmentSnapshot, 'target'>
 ): string => {
   if (assignment.target.type === 'lesson') {
-    return 'Otworz lekcje';
+    return 'Otwórz lekcję';
   }
   if (assignment.target.operation === 'mixed') {
     return 'Uruchom trening';
@@ -698,13 +698,13 @@ export const formatKangurAssignmentOperationLabel = (
     case 'subtraction':
       return 'Odejmowanie';
     case 'multiplication':
-      return 'Mnozenie';
+      return 'Mnożenie';
     case 'division':
       return 'Dzielenie';
     case 'decimals':
-      return 'Ulamki';
+      return 'Ułamki';
     case 'powers':
-      return 'Potegi';
+      return 'Potęgi';
     case 'roots':
       return 'Pierwiastki';
     case 'clock':

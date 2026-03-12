@@ -80,7 +80,7 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
                     {item.emoji} {item.title}
                   </KangurCardTitle>
                   <KangurMetaText as='div' className='mt-1' size='xs'>
-                    Proby: {item.attempts} · ostatni wynik {item.lastScorePercent}%
+                    Próby: {item.attempts} · ostatni wynik {item.lastScorePercent}%
                   </KangurMetaText>
                 </div>
                 <KangurStatusChip
@@ -92,7 +92,7 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
                 </KangurStatusChip>
               </div>
               <KangurMetaText as='div' className='mt-2' size='xs'>
-                Najlepszy wynik: {item.bestScorePercent}% · Ostatnia proba:{' '}
+                Najlepszy wynik: {item.bestScorePercent}% · Ostatnia próba:{' '}
                 {formatCompletedAt(item.lastCompletedAt)}
               </KangurMetaText>
             </KangurInfoCard>
@@ -112,7 +112,7 @@ export default function LessonMasteryInsights({
   const resolvedSectionTitle = sectionTitle ?? 'Opanowanie lekcji';
   const resolvedSectionSummary =
     sectionSummary ??
-    `Sledzone: ${insights.trackedLessons} · opanowane: ${insights.masteredLessons} · do powtorki: ${insights.lessonsNeedingPractice}`;
+    `Śledzone: ${insights.trackedLessons} · opanowane: ${insights.masteredLessons} · do powtórki: ${insights.lessonsNeedingPractice}`;
 
   return (
     <KangurGlassPanel padding='lg' surface='mistSoft' variant='soft'>
@@ -129,20 +129,20 @@ export default function LessonMasteryInsights({
         <KangurEmptyState
           accent='slate'
           className='mt-4'
-          description='Brak zapisanych prob lekcji. Ukoncz dowolna lekcje, aby zobaczyc mocne strony i obszary do powtorki.'
+          description='Brak zapisanych prób lekcji. Ukończ dowolną lekcję, aby zobaczyć mocne strony i obszary do powtórki.'
           padding='lg'
         />
       ) : (
         <div className='mt-4 grid grid-cols-1 xl:grid-cols-2 gap-4'>
           <InsightList
-            title='Do powtorki'
+            title='Do powtórki'
             items={insights.weakest}
-            emptyState='Wszystkie sledzone lekcje sa na bezpiecznym poziomie.'
+            emptyState='Wszystkie śledzone lekcje są na bezpiecznym poziomie.'
           />
           <InsightList
             title='Najmocniejsze lekcje'
             items={insights.strongest}
-            emptyState='Najpierw ukoncz kilka lekcji, aby zobaczyc najmocniejsze obszary.'
+            emptyState='Najpierw ukończ kilka lekcji, aby zobaczyć najmocniejsze obszary.'
           />
         </div>
       )}

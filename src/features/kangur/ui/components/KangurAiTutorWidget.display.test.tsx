@@ -175,6 +175,33 @@ describe('useKangurAiTutorGuidedDisplayState', () => {
     );
   });
 
+  it('uses one aggregate spotlight rect for multi-line selections without a matching tutor section', () => {
+    render(
+      <GuidedDisplayHarness
+        guidedTutorTarget={{
+          mode: 'selection',
+          kind: 'selection_excerpt',
+          selectedText: 'Pierwsza linia druga linia',
+        }}
+        activeSelectionPageRect={new DOMRect(120, 180, 96, 24)}
+        activeSelectionPageRects={[
+          new DOMRect(120, 180, 96, 24),
+          new DOMRect(120, 212, 182, 24),
+        ]}
+        activeSelectionRect={new DOMRect(120, 180, 96, 24)}
+      />
+    );
+
+    expect(screen.getByTestId('guided-selection-spotlight-rect')).toHaveTextContent(
+      JSON.stringify({
+        left: 120,
+        top: 180,
+        width: 182,
+        height: 56,
+      })
+    );
+  });
+
   it('uses the owning section rect as the guided spotlight when the excerpt resolves to a tutor anchor', () => {
     const sectionRect = new DOMRect(80, 140, 520, 240);
 

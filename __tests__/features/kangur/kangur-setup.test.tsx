@@ -52,7 +52,7 @@ describe('KangurSetup', () => {
 
     const editionButton = screen.getByTestId('kangur-setup-edition-2024');
     expect(editionButton).toHaveClass('soft-card', 'border', 'rounded-[28px]');
-    expect(editionButton).toHaveAttribute('aria-label', 'Edycja 2024. Dostepna.');
+    expect(editionButton).toHaveAttribute('aria-label', 'Edycja 2024. Dostępna.');
     expect(screen.getByTestId('kangur-setup-edition-icon-2024')).toHaveClass(
       'rounded-full',
       'h-16',
@@ -70,7 +70,7 @@ describe('KangurSetup', () => {
     );
     expect(selectedEditionHeading).toHaveClass('flex', 'flex-col', 'items-center', 'text-center');
     expect(within(selectedEditionHeading).getByText('🦘')).toHaveClass('rounded-full');
-    expect(screen.getByRole('button', { name: /wroc do listy edycji/i })).toHaveClass(
+    expect(screen.getByRole('button', { name: /wróć do listy edycji/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );
@@ -84,10 +84,10 @@ describe('KangurSetup', () => {
     expect(setButton).toHaveClass('soft-card', 'border', 'rounded-[28px]');
     expect(setButton).toHaveAttribute(
       'aria-label',
-      '🏆 Pelny test konkursowy. Tryb konkursowy. Dostepny.'
+      '🏆 Pełny test konkursowy. Tryb konkursowy. Dostępny.'
     );
 
-    fireEvent.click(screen.getByText('🏆 Pelny test konkursowy'));
+    fireEvent.click(screen.getByText('🏆 Pełny test konkursowy'));
 
     expect(onStart).toHaveBeenCalledWith('full_test_2024');
   });

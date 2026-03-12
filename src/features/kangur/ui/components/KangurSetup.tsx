@@ -122,33 +122,33 @@ const EDITIONS: KangurEdition[] = [
     sets: [
       {
         id: 'full_test_2024',
-        label: '🏆 Pelny test konkursowy',
-        desc: 'Wszystkie 24 pytania z Kangura 2024 - odpowiedzi i wyjasnienia po zakonczeniu',
+        label: '🏆 Pełny test konkursowy',
+        desc: 'Wszystkie 24 pytania z Kangura 2024 - odpowiedzi i wyjaśnienia po zakonczeniu',
         available: true,
         isExam: true,
       },
       {
         id: 'original_2024',
         label: '📋 Oryginalne - 3 pkt',
-        desc: '8 autentycznych pytan z konkursu Kangur 2024 za 3 punkty (latwe)',
+        desc: '8 autentycznych pytań z konkursu Kangur 2024 za 3 punkty (latwe)',
         available: true,
       },
       {
         id: 'original_4pt_2024',
         label: '📋 Oryginalne - 4 pkt',
-        desc: '8 autentycznych pytan z konkursu Kangur 2024 za 4 punkty (srednie)',
+        desc: '8 autentycznych pytań z konkursu Kangur 2024 za 4 punkty (srednie)',
         available: true,
       },
       {
         id: 'original_5pt_2024',
         label: '📋 Oryginalne - 5 pkt',
-        desc: '8 autentycznych pytan z konkursu Kangur 2024 za 5 punktow (trudne)',
+        desc: '8 autentycznych pytań z konkursu Kangur 2024 za 5 punktów (trudne)',
         available: true,
       },
       {
         id: 'training_3pt',
         label: '⭐ Trening - 3 punkty',
-        desc: '10 pytan treningowych w stylu zadan za 3 pkt (latwe)',
+        desc: '10 pytań treningowych w stylu zadań za 3 pkt (latwe)',
         available: true,
       },
     ],
@@ -180,7 +180,7 @@ export default function KangurSetup({
           <KangurSectionHeading
             accent='amber'
             data-testid='kangur-setup-editions-heading'
-            description='Zdecyduj, z ktorej edycji chcesz rozwiazywac zadania.'
+            description='Zdecyduj, z której edycji chcesz rozwiazywac zadania.'
             headingAs='h3'
             headingSize='md'
             icon='🦘'
@@ -193,7 +193,7 @@ export default function KangurSetup({
             {EDITIONS.map((edition) => (
               <KangurSetupChoiceCard
                 ariaDescribedBy={`kangur-setup-edition-status-${edition.year}`}
-                ariaLabel={`${edition.label}. ${edition.available ? 'Dostepna.' : 'Niedostepna, wkrotce dostepna.'}`}
+                ariaLabel={`${edition.label}. ${edition.available ? 'Dostępna.' : 'Niedostepna, wkrotce dostępna.'}`}
                 className='flex w-full flex-col items-start gap-3 rounded-[28px] px-5 py-4 text-left sm:flex-row sm:items-center sm:gap-4'
                 dataTestId={`kangur-setup-edition-${edition.year}`}
                 disabled={!edition.available}
@@ -247,7 +247,7 @@ export default function KangurSetup({
             accent='amber'
             align='left'
             className='w-full text-left'
-            description='Kangur Matematyczny to ogolnopolski konkurs dla uczniow szkol podstawowych. Zadania sprawdzaja logiczne myslenie i umiejetnosci matematyczne.'
+            description='Kangur Matematyczny to ogolnopolski konkurs dla uczniow szkol podstawowych. Zadania sprawdzaja logiczne myślenie i umiejetnosci matematyczne.'
             label='O konkursie Kangur'
             padding='md'
           />
@@ -259,7 +259,7 @@ export default function KangurSetup({
   return (
     <KangurSetupSection headingId={setsHeadingId}>
       <KangurButton
-        aria-label='Wroc do listy edycji'
+        aria-label='Wróć do listy edycji'
         onClick={() => setSelectedEdition(null)}
         className='w-full self-stretch sm:w-auto sm:self-start'
         size='sm'
@@ -273,7 +273,7 @@ export default function KangurSetup({
         <KangurSectionHeading
           accent='amber'
           data-testid='kangur-setup-selected-edition-heading'
-          description='Wybierz zestaw pytan:'
+          description='Wybierz zestaw pytań:'
           headingAs='h3'
           headingSize='md'
           icon={selectedEdition.emoji}
@@ -311,7 +311,7 @@ export default function KangurSetup({
             return (
               <KangurSetupChoiceCard
                 ariaDescribedBy={`kangur-setup-set-description-${setItem.id}`}
-                ariaLabel={`${setItem.label}. ${setItem.isExam ? 'Tryb konkursowy.' : 'Tryb treningowy.'} ${setItem.available ? 'Dostepny.' : 'Niedostepny, wkrotce dostepny.'}`}
+                ariaLabel={`${setItem.label}. ${setItem.isExam ? 'Tryb konkursowy.' : 'Tryb treningowy.'} ${setItem.available ? 'Dostępny.' : 'Niedostepny, wkrotce dostępny.'}`}
                 className='flex w-full flex-col items-start gap-2 rounded-[28px] px-5 py-4'
                 dataTestId={`kangur-setup-set-${setItem.id}`}
                 disabled={!setItem.available}

@@ -21,7 +21,7 @@ describe('ResultScreen', () => {
       />
     );
 
-    expect(screen.getByRole('heading', { name: 'Swietna robota, Maja!' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Świetna robota, Maja!' })).toBeInTheDocument();
     expect(screen.getByTestId('result-screen-title')).toHaveClass(
       'text-3xl',
       '[color:var(--kangur-page-text)]'
@@ -42,7 +42,7 @@ describe('ResultScreen', () => {
       'rounded-full',
       '[background:var(--kangur-progress-track)]'
     );
-    expect(screen.getByRole('button', { name: /Strona glowna/i })).toHaveClass(
+    expect(screen.getByRole('button', { name: /Strona główna/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );

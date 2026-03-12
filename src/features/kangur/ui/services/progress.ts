@@ -151,9 +151,9 @@ export const XP_REWARDS: KangurXpRewards = {
 };
 
 export const LEVELS: KangurProgressLevel[] = [
-  { level: 1, minXp: 0, title: 'Raczkujacy 🐣', color: 'text-gray-500' },
-  { level: 2, minXp: 100, title: 'Uczen ✏️', color: 'text-green-600' },
-  { level: 3, minXp: 250, title: 'Mysliciel 🤔', color: 'text-blue-600' },
+  { level: 1, minXp: 0, title: 'Raczkujący 🐣', color: 'text-gray-500' },
+  { level: 2, minXp: 100, title: 'Uczeń ✏️', color: 'text-green-600' },
+  { level: 3, minXp: 250, title: 'Myśliciel 🤔', color: 'text-blue-600' },
   { level: 4, minXp: 500, title: 'Liczmistrz 🔢', color: 'text-indigo-600' },
   { level: 5, minXp: 900, title: 'Matematyk 📐', color: 'text-purple-600' },
   { level: 6, minXp: 1400, title: 'Geniusz 🧠', color: 'text-yellow-600' },
@@ -218,10 +218,10 @@ const GUIDED_FOCUS_BONUS = 3;
 const ACTIVITY_LABELS: Record<string, string> = {
   addition: 'Dodawanie',
   subtraction: 'Odejmowanie',
-  multiplication: 'Mnozenie',
+  multiplication: 'Mnożenie',
   division: 'Dzielenie',
-  decimals: 'Ulamki',
-  powers: 'Potegi',
+  decimals: 'Ułamki',
+  powers: 'Potęgi',
   roots: 'Pierwiastki',
   mixed: 'Mieszane',
   clock: 'Nauka zegara',
@@ -232,7 +232,7 @@ const ACTIVITY_LABELS: Record<string, string> = {
   geometry_shapes: 'Figury geometryczne',
   geometry_symmetry: 'Symetria',
   geometry_perimeter: 'Obwod',
-  logical_thinking: 'Logiczne myslenie',
+  logical_thinking: 'Logiczne myślenie',
 };
 
 const LESSON_KEY_TO_OPERATION: Record<string, string> = {
@@ -251,7 +251,7 @@ const LESSON_KEY_TO_OPERATION: Record<string, string> = {
 const CLOCK_TRAINING_SECTION_LABELS: Record<string, string> = {
   hours: 'Godziny',
   minutes: 'Minuty',
-  combined: 'Pelny czas',
+  combined: 'Pełny czas',
   mixed: 'Mieszany trening',
 };
 
@@ -259,7 +259,7 @@ const BADGE_TRACK_META: Record<KangurBadgeTrackKey, { label: string; emoji: stri
   onboarding: { label: 'Start', emoji: '🚀', order: 1 },
   consistency: { label: 'Seria', emoji: '🔥', order: 2 },
   mastery: { label: 'Mistrzostwo', emoji: '🏗️', order: 3 },
-  variety: { label: 'Roznorodnosc', emoji: '🎲', order: 4 },
+  variety: { label: 'Różnorodność', emoji: '🎲', order: 4 },
   challenge: { label: 'Wyzwania', emoji: '🎯', order: 5 },
   xp: { label: 'XP', emoji: '⭐', order: 6 },
   quest: { label: 'Misje', emoji: '🧭', order: 7 },
@@ -272,7 +272,7 @@ export const BADGES: KangurBadge[] = [
     id: 'first_game',
     emoji: '🎮',
     name: 'Pierwsza gra',
-    desc: 'Ukoncz pierwsza gre',
+    desc: 'Ukończ pierwszą grę',
     track: 'onboarding',
     progress: (progress) => ({
       current: progress.gamesPlayed,
@@ -284,7 +284,7 @@ export const BADGES: KangurBadge[] = [
     id: 'perfect_10',
     emoji: '💯',
     name: 'Idealny wynik',
-    desc: 'Zdobadz pelny wynik w grze',
+    desc: 'Zdobądź pełny wynik w grze',
     track: 'challenge',
     progress: (progress) => ({
       current: progress.perfectGames,
@@ -296,7 +296,7 @@ export const BADGES: KangurBadge[] = [
     id: 'lesson_hero',
     emoji: '📚',
     name: 'Bohater lekcji',
-    desc: 'Ukoncz pierwsza lekcje',
+    desc: 'Ukończ pierwszą lekcję',
     track: 'onboarding',
     progress: (progress) => ({
       current: progress.lessonsCompleted,
@@ -308,7 +308,7 @@ export const BADGES: KangurBadge[] = [
     id: 'clock_master',
     emoji: '🕐',
     name: 'Mistrz zegara',
-    desc: 'Ukoncz trening zegara z 5/5',
+    desc: 'Ukończ trening zegara z wynikiem 5/5',
     track: 'mastery',
     progress: (progress) => ({
       current: progress.clockPerfect,
@@ -320,7 +320,7 @@ export const BADGES: KangurBadge[] = [
     id: 'calendar_keeper',
     emoji: '📅',
     name: 'Mistrz kalendarza',
-    desc: 'Ukoncz trening kalendarza z pelnym wynikiem',
+    desc: 'Ukończ trening kalendarza z pełnym wynikiem',
     track: 'mastery',
     progress: (progress) => ({
       current: progress.calendarPerfect,
@@ -332,7 +332,7 @@ export const BADGES: KangurBadge[] = [
     id: 'geometry_artist',
     emoji: '🔷',
     name: 'Artysta figur',
-    desc: 'Ukoncz trening figur geometrycznych na pelny wynik',
+    desc: 'Ukończ trening figur geometrycznych z pełnym wynikiem',
     track: 'mastery',
     progress: (progress) => ({
       current: progress.geometryPerfect,
@@ -344,7 +344,7 @@ export const BADGES: KangurBadge[] = [
     id: 'streak_3',
     emoji: '🔥',
     name: 'Seria mocy',
-    desc: 'Utrzymaj 3 mocne rundy z rzedu',
+    desc: 'Utrzymaj 3 mocne rundy z rzędu',
     track: 'consistency',
     progress: (progress) => ({
       current: progress.bestWinStreak ?? 0,
@@ -355,8 +355,8 @@ export const BADGES: KangurBadge[] = [
   {
     id: 'accuracy_ace',
     emoji: '🎯',
-    name: 'Celny umysl',
-    desc: 'Utrzymaj srednio co najmniej 85% poprawnych odpowiedzi po 25 pytaniach',
+    name: 'Celny umysł',
+    desc: 'Utrzymaj średnio co najmniej 85% poprawnych odpowiedzi po 25 pytaniach',
     track: 'challenge',
     progress: (progress) => {
       const totalQuestionsAnswered = progress.totalQuestionsAnswered ?? 0;
@@ -365,7 +365,7 @@ export const BADGES: KangurBadge[] = [
         return {
           current: totalQuestionsAnswered,
           target: 25,
-          summary: `${totalQuestionsAnswered}/25 pytan`,
+          summary: `${totalQuestionsAnswered}/25 pytań`,
         };
       }
 
@@ -379,7 +379,7 @@ export const BADGES: KangurBadge[] = [
   {
     id: 'ten_games',
     emoji: '🔟',
-    name: 'Dziesiatka',
+    name: 'Dziesiątka',
     desc: 'Zagraj 10 gier',
     track: 'consistency',
     progress: (progress) => ({
@@ -391,8 +391,8 @@ export const BADGES: KangurBadge[] = [
   {
     id: 'xp_500',
     emoji: '⭐',
-    name: 'Pol tysiaca XP',
-    desc: 'Zdobadz 500 XP lacznie',
+    name: 'Pół tysiąca XP',
+    desc: 'Zdobądź 500 XP łącznie',
     track: 'xp',
     progress: (progress) => ({
       current: progress.totalXp,
@@ -403,8 +403,8 @@ export const BADGES: KangurBadge[] = [
   {
     id: 'xp_1000',
     emoji: '🌟',
-    name: 'Tysiacznik',
-    desc: 'Zdobadz 1000 XP lacznie',
+    name: 'Tysiącznik',
+    desc: 'Zdobądź 1000 XP łącznie',
     track: 'xp',
     progress: (progress) => ({
       current: progress.totalXp,
@@ -416,7 +416,7 @@ export const BADGES: KangurBadge[] = [
     id: 'quest_starter',
     emoji: '🧭',
     name: 'Odkrywca misji',
-    desc: 'Ukoncz pierwsza misje dnia',
+    desc: 'Ukończ pierwszą misję dnia',
     track: 'quest',
     progress: (progress) => ({
       current: progress.dailyQuestsCompleted ?? 0,
@@ -427,8 +427,8 @@ export const BADGES: KangurBadge[] = [
   {
     id: 'quest_keeper',
     emoji: '🎯',
-    name: 'Lowca misji',
-    desc: 'Ukoncz 3 misje dnia',
+    name: 'Łowca misji',
+    desc: 'Ukończ 3 misje dnia',
     track: 'quest',
     progress: (progress) => ({
       current: progress.dailyQuestsCompleted ?? 0,
@@ -440,7 +440,7 @@ export const BADGES: KangurBadge[] = [
     id: 'guided_step',
     emoji: '🪄',
     name: 'Pewny krok',
-    desc: 'Ukoncz pierwsza runde zgodnie z rekomendacja',
+    desc: 'Ukończ pierwszą rundę zgodnie z rekomendacją',
     track: 'quest',
     progress: (progress) => ({
       current: progress.recommendedSessionsCompleted ?? 0,
@@ -452,7 +452,7 @@ export const BADGES: KangurBadge[] = [
     id: 'guided_keeper',
     emoji: '🧭',
     name: 'Trzymam kierunek',
-    desc: 'Ukoncz 3 rundy zgodnie z rekomendacja',
+    desc: 'Ukończ 3 rundy zgodnie z rekomendacją',
     track: 'quest',
     progress: (progress) => ({
       current: progress.recommendedSessionsCompleted ?? 0,
@@ -464,7 +464,7 @@ export const BADGES: KangurBadge[] = [
     id: 'mastery_builder',
     emoji: '🏗️',
     name: 'Budowniczy mistrzostwa',
-    desc: 'Doprowadz 3 lekcje do co najmniej 75% opanowania',
+    desc: 'Doprowadź 3 lekcje do co najmniej 75% opanowania',
     track: 'mastery',
     progress: (progress) => {
       const masteredLessons = getMasteredLessonCount(progress, 75);
@@ -479,12 +479,12 @@ export const BADGES: KangurBadge[] = [
     id: 'variety',
     emoji: '🎲',
     name: 'Wszechstronny',
-    desc: 'Zagraj 5 roznych operacji',
+    desc: 'Zagraj 5 różnych operacji',
     track: 'variety',
     progress: (progress) => ({
       current: progress.operationsPlayed.length,
       target: 5,
-      summary: `${Math.min(progress.operationsPlayed.length, 5)}/5 typow`,
+      summary: `${Math.min(progress.operationsPlayed.length, 5)}/5 typów`,
     }),
   },
 ];
@@ -492,7 +492,7 @@ export const BADGES: KangurBadge[] = [
 const FALLBACK_LEVEL: KangurProgressLevel = {
   level: 1,
   minXp: 0,
-  title: 'Raczkujacy 🐣',
+  title: 'Raczkujący 🐣',
   color: 'text-gray-500',
 };
 
@@ -513,6 +513,21 @@ function cloneProgress(progress: KangurProgressState): KangurProgressState {
 const mergeUniqueStrings = (values: string[]): string[] => Array.from(new Set(values));
 const clampPercent = (value: number): number => Math.max(0, Math.min(100, Math.round(value)));
 const clampCounter = (value: number): number => Math.max(0, Math.round(value));
+const formatSessionCountLabel = (count: number): string => {
+  const normalizedCount = Math.abs(Math.trunc(count));
+  const lastTwoDigits = normalizedCount % 100;
+  const lastDigit = normalizedCount % 10;
+  const noun =
+    normalizedCount === 1
+      ? 'sesja'
+      : lastTwoDigits >= 12 && lastTwoDigits <= 14
+        ? 'sesji'
+        : lastDigit >= 2 && lastDigit <= 4
+          ? 'sesje'
+          : 'sesji';
+
+  return `${count} ${noun}`;
+};
 
 const createEmptyActivityStatsEntry = (): KangurActivityStatsEntry => ({
   sessionsPlayed: 0,
@@ -586,7 +601,7 @@ export const formatKangurProgressActivityLabel = (activityKey: string): string =
   }
 
   if (kind === 'lesson_practice') {
-    return `Cwiczenie: ${primary}`;
+    return `Ćwiczenie: ${primary}`;
   }
 
   if (kind === 'training') {
@@ -850,7 +865,7 @@ export const getRecommendedSessionMomentum = (
     summary:
       maxTarget > 0
         ? `${Math.min(completedSessions, maxTarget)}/${maxTarget} rundy`
-        : `${completedSessions} sesje`,
+        : formatSessionCountLabel(completedSessions),
     nextBadgeName: null,
   };
 };
@@ -1022,14 +1037,14 @@ const buildRewardBreakdown = (
   }
 ): KangurRewardBreakdownEntry[] => {
   const entries: KangurRewardBreakdownEntry[] = [
-    { kind: 'base', label: 'Ukonczenie rundy', xp: config.baseXp },
+    { kind: 'base', label: 'Ukończenie rundy', xp: config.baseXp },
   ];
 
   if (accuracyBonus > 0) {
-    entries.push({ kind: 'accuracy', label: 'Skutecznosc', xp: accuracyBonus });
+    entries.push({ kind: 'accuracy', label: 'Skuteczność', xp: accuracyBonus });
   }
   if (difficultyBonus > 0) {
-    entries.push({ kind: 'difficulty', label: 'Poziom trudnosci', xp: difficultyBonus });
+    entries.push({ kind: 'difficulty', label: 'Poziom trudności', xp: difficultyBonus });
   }
   if (speedBonus > 0) {
     entries.push({ kind: 'speed', label: 'Tempo', xp: speedBonus });
@@ -1038,25 +1053,25 @@ const buildRewardBreakdown = (
     entries.push({ kind: 'streak', label: 'Seria', xp: streakBonus });
   }
   if (firstActivityBonus > 0) {
-    entries.push({ kind: 'first_activity', label: 'Pierwsza mocna proba', xp: firstActivityBonus });
+    entries.push({ kind: 'first_activity', label: 'Pierwsza mocna próba', xp: firstActivityBonus });
   }
   if (improvementBonus > 0) {
     entries.push({ kind: 'improvement', label: 'Poprawa wyniku', xp: improvementBonus });
   }
   if (masteryBonus > 0) {
-    entries.push({ kind: 'mastery', label: 'Postep opanowania', xp: masteryBonus });
+    entries.push({ kind: 'mastery', label: 'Postęp opanowania', xp: masteryBonus });
   }
   if (varietyBonus > 0) {
-    entries.push({ kind: 'variety', label: 'Nowa sciezka', xp: varietyBonus });
+    entries.push({ kind: 'variety', label: 'Nowa ścieżka', xp: varietyBonus });
   }
   if (guidedFocusBonus > 0) {
     entries.push({ kind: 'guided_focus', label: 'Polecony kierunek', xp: guidedFocusBonus });
   }
   if (perfectBonus > 0) {
-    entries.push({ kind: 'perfect', label: 'Pelny wynik', xp: perfectBonus });
+    entries.push({ kind: 'perfect', label: 'Pełny wynik', xp: perfectBonus });
   }
   if (antiRepeatPenalty > 0) {
-    entries.push({ kind: 'anti_repeat', label: 'Powtarzana aktywnosc', xp: -antiRepeatPenalty });
+    entries.push({ kind: 'anti_repeat', label: 'Powtarzana aktywność', xp: -antiRepeatPenalty });
   }
 
   const breakdownTotal = entries.reduce((sum, entry) => sum + entry.xp, 0);

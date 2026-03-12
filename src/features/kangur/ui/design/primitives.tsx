@@ -1357,7 +1357,7 @@ export function KangurProgressBar({
 
   return (
     <div
-      aria-label={ariaLabel ?? (ariaLabelledBy ? undefined : 'Postep')}
+      aria-label={ariaLabel ?? (ariaLabelledBy ? undefined : 'Postęp')}
       aria-labelledby={ariaLabelledBy}
       aria-valuemax={100}
       aria-valuemin={0}
@@ -1663,7 +1663,7 @@ export const KangurPageShell = ({
   className,
   children,
   skipLinkTargetId,
-  skipLinkLabel = 'Przejdz do glownej tresci',
+  skipLinkLabel = 'Przejdź do głównej treści',
   ...props
 }: KangurPageShellProps): React.JSX.Element => {
   const routing = useOptionalKangurRouting();
@@ -1763,7 +1763,7 @@ type KangurTopNavGroupProps = React.HTMLAttributes<HTMLElement> & {
 };
 
 export const KangurTopNavGroup = ({
-  label = 'Glowna nawigacja Kangur',
+  label = 'Główna nawigacja Kangur',
   className,
   children,
   ...props

@@ -628,8 +628,9 @@ describe('AdminKangurObservabilityPage', () => {
         { timeout: 120000 }
       )
     );
+    expect(await screen.findByText('Graph sync completed')).toBeInTheDocument();
     expect(
-      await screen.findByText('Synced 87 nodes and 108 edges with embeddings preserved.')
+      await screen.findByText(/^Synced 87 nodes and 108 edges with embeddings preserved\.$/)
     ).toBeInTheDocument();
   });
 

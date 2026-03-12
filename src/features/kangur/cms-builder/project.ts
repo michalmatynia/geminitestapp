@@ -547,7 +547,7 @@ const makeGamePracticeAssignmentPanel = (input: { id: string }): BlockInstance =
       }),
     },
     blocks: [
-      makeTextBlock(`${input.id}-helper`, 'Najblizszy priorytet w praktyce.', {
+      makeTextBlock(`${input.id}-helper`, 'Najbliższy priorytet w praktyce.', {
         fontSize: 14,
         fontWeight: '700',
         textColor: '#9a3412',
@@ -555,7 +555,7 @@ const makeGamePracticeAssignmentPanel = (input: { id: string }): BlockInstance =
           enabled: true,
           source: 'kangur',
           path: 'game.activePracticeAssignmentBanner.helperLabel',
-          fallback: 'Najblizszy priorytet w praktyce.',
+          fallback: 'Najbliższy priorytet w praktyce.',
         },
       }),
       makeTextBlock(`${input.id}-priority`, 'Priorytet wysoki', {
@@ -579,14 +579,14 @@ const makeGamePracticeAssignmentPanel = (input: { id: string }): BlockInstance =
           fallback: 'Zadanie od rodzica',
         },
       }),
-      makeTextBlock(`${input.id}-description`, 'Wroc do zadania i kontynuuj wyzwanie.', {
+      makeTextBlock(`${input.id}-description`, 'Wróć do zadania i kontynuuj wyzwanie.', {
         fontSize: 15,
         textColor: '#9a3412',
         connection: {
           enabled: true,
           source: 'kangur',
           path: 'game.activePracticeAssignmentBanner.description',
-          fallback: 'Wroc do zadania i kontynuuj wyzwanie.',
+          fallback: 'Wróć do zadania i kontynuuj wyzwanie.',
         },
       }),
       makeProgressBlock(`${input.id}-progress`, {
@@ -673,13 +673,13 @@ const makeGameTrainingSetupPanel = (input: { id: string }): BlockInstance =>
           }),
           makeTextBlock(
             `${input.id}-description`,
-            'Ten ekran jest juz skladany w CMS builderze. Zmieniaj etykiety, kolejnosc i akcje bez wracania do komponentu treningowego.',
+            'Ten ekran jest już skladany w CMS builderze. Zmieniaj etykiety, kolejnosc i akcje bez wracania do komponentu treningowego.',
             {
               fontSize: 15,
               textColor: '#7a86b0',
             }
           ),
-          makeTextBlock(`${input.id}-summary`, 'Wybrano 7 kategorii, 10 pytan, poziom sredni.', {
+          makeTextBlock(`${input.id}-summary`, 'Wybrano 7 kategorii, 10 pytań, poziom sredni.', {
             fontSize: 14,
             fontWeight: '700',
             textColor: '#4f46e5',
@@ -687,10 +687,10 @@ const makeGameTrainingSetupPanel = (input: { id: string }): BlockInstance =>
               enabled: true,
               source: 'kangur',
               path: 'game.trainingSetup.summaryLabel',
-              fallback: 'Wybrano 7 kategorii, 10 pytan, poziom sredni.',
+              fallback: 'Wybrano 7 kategorii, 10 pytań, poziom sredni.',
             },
           }),
-          makeTextBlock(`${input.id}-difficulty-label`, 'Poziom trudnosci', {
+          makeTextBlock(`${input.id}-difficulty-label`, 'Poziom trudności', {
             fontSize: 13,
             fontWeight: '700',
             letterSpacing: 1.2,
@@ -711,7 +711,7 @@ const makeGameTrainingSetupPanel = (input: { id: string }): BlockInstance =>
               blockGap: 12,
             },
             blocks: [
-              makeTextBlock(`${input.id}-category-label`, 'Kategorie pytan', {
+              makeTextBlock(`${input.id}-category-label`, 'Kategorie pytań', {
                 fontSize: 13,
                 fontWeight: '700',
                 letterSpacing: 1.2,
@@ -743,7 +743,7 @@ const makeGameTrainingSetupPanel = (input: { id: string }): BlockInstance =>
             fallbackLabel: 'Kategoria',
             itemsGap: 10,
           }),
-          makeTextBlock(`${input.id}-count-label`, 'Liczba pytan', {
+          makeTextBlock(`${input.id}-count-label`, 'Liczba pytań', {
             fontSize: 13,
             fontWeight: '700',
             letterSpacing: 1.2,
@@ -764,7 +764,7 @@ const makeGameTrainingSetupPanel = (input: { id: string }): BlockInstance =>
               blockGap: 12,
             },
             blocks: [
-              makeButtonBlock(`${input.id}-back`, '← Wroc', {
+              makeButtonBlock(`${input.id}-back`, '← Wróć', {
                 runtimeActionSource: 'kangur',
                 runtimeActionPath: 'game.handleHome',
                 buttonStyle: 'outline',
@@ -829,7 +829,7 @@ const makeGameOperationSelectorPanel = (input: { id: string }): BlockInstance =>
           },
         },
         blocks: [
-          makeTextBlock(`${input.id}-greeting`, 'Czesc, Graczu! 👋', {
+          makeTextBlock(`${input.id}-greeting`, 'Część, Graczu! 👋', {
             fontSize: 18,
             fontWeight: '700',
             textColor: '#4f46e5',
@@ -837,7 +837,7 @@ const makeGameOperationSelectorPanel = (input: { id: string }): BlockInstance =>
               enabled: true,
               source: 'kangur',
               path: 'game.operationSelector.greetingLabel',
-              fallback: 'Czesc, Graczu! 👋',
+              fallback: 'Część, Graczu! 👋',
             },
           }),
           makeHeadingBlock(`${input.id}-title`, 'Wybierz swoje wyzwanie', 28, {
@@ -845,13 +845,13 @@ const makeGameOperationSelectorPanel = (input: { id: string }): BlockInstance =>
           }),
           makeTextBlock(
             `${input.id}-description`,
-            'Ten ekran jest juz skladany w CMS builderze. Zmieniaj karty kategorii, kolejki zadan i szybkie akcje bez wracania do komponentu wyboru.',
+            'Ten ekran jest już skladany w CMS builderze. Zmieniaj karty kategorii, kolejki zadań i szybkie akcje bez wracania do komponentu wyboru.',
             {
               fontSize: 15,
               textColor: '#7a86b0',
             }
           ),
-          makeTextBlock(`${input.id}-difficulty-label`, 'Poziom trudnosci', {
+          makeTextBlock(`${input.id}-difficulty-label`, 'Poziom trudności', {
             fontSize: 13,
             fontWeight: '700',
             letterSpacing: 1.2,
@@ -925,7 +925,7 @@ const makeGameOperationSelectorPanel = (input: { id: string }): BlockInstance =>
                   }),
                   makeTextBlock(
                     `${input.id}-operation-description`,
-                    'Wejdz do serii pytan i cwicz we wlasnym tempie.',
+                    'Wejdz do serii pytań i cwicz we wlasnym tempie.',
                     {
                       fontSize: 14,
                       textColor: '#64748b',
@@ -933,7 +933,7 @@ const makeGameOperationSelectorPanel = (input: { id: string }): BlockInstance =>
                         enabled: true,
                         source: 'item',
                         path: 'description',
-                        fallback: 'Wejdz do serii pytan i cwicz we wlasnym tempie.',
+                        fallback: 'Wejdz do serii pytań i cwicz we wlasnym tempie.',
                       },
                     }
                   ),
@@ -985,7 +985,7 @@ const makeGameOperationSelectorPanel = (input: { id: string }): BlockInstance =>
               blockGap: 12,
             },
             blocks: [
-              makeButtonBlock(`${input.id}-calendar`, '📅 Cwiczenia z Kalendarzem', {
+              makeButtonBlock(`${input.id}-calendar`, '📅 Ćwiczenia z Kalendarzem', {
                 runtimeActionSource: 'kangur',
                 runtimeActionPath: 'game.setScreen',
                 runtimeActionArgs: 'calendar_quiz',
@@ -998,7 +998,7 @@ const makeGameOperationSelectorPanel = (input: { id: string }): BlockInstance =>
                 borderRadius: 18,
                 borderWidth: 1,
               }),
-              makeButtonBlock(`${input.id}-geometry`, '🔷 Cwiczenia z Figurami', {
+              makeButtonBlock(`${input.id}-geometry`, '🔷 Ćwiczenia z Figurami', {
                 runtimeActionSource: 'kangur',
                 runtimeActionPath: 'game.setScreen',
                 runtimeActionArgs: 'geometry_quiz',
@@ -1090,14 +1090,14 @@ const makeGameLeaderboardPanel = (input: {
           path: 'game.leaderboard.isLoading',
         }),
       }),
-      makeTextBlock(`${input.id}-empty`, 'Brak wynikow dla tych filtrow.', {
+      makeTextBlock(`${input.id}-empty`, 'Brak wyników dla tych filtrow.', {
         fontSize: 14,
         textColor: '#94a3b8',
         connection: {
           enabled: true,
           source: 'kangur',
           path: 'game.leaderboard.emptyStateLabel',
-          fallback: 'Brak wynikow dla tych filtrow.',
+          fallback: 'Brak wyników dla tych filtrow.',
         },
         ...makeRuntimeVisibilitySettings({
           mode: 'truthy',
@@ -1376,13 +1376,13 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
                       blocks: [
                         makeTextBlock(
                           'kangur-game-home-guest-login-copy',
-                          'Zaloguj sie, aby Twoj wynik pojawil sie na tablicy.',
+                          'Zaloguj się, aby Twój wynik pojawił się na tablicy.',
                           {
                             fontSize: 15,
                             textColor: '#8c97bb',
                           }
                         ),
-                        makeButtonBlock('kangur-game-home-guest-login-button', 'Zaloguj sie', {
+                        makeButtonBlock('kangur-game-home-guest-login-button', 'Zaloguj się', {
                           buttonStyle: 'solid',
                           runtimeActionSource: 'kangur',
                           runtimeActionPath: 'game.navigateToLogin',
@@ -1458,7 +1458,7 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
                     ),
                     makeTextBlock(
                       'kangur-game-home-assignment-spotlight-description',
-                      'Wroc do zadania i kontynuuj wyzwanie.',
+                      'Wróć do zadania i kontynuuj wyzwanie.',
                       {
                         fontSize: 15,
                         textColor: '#64748b',
@@ -1466,7 +1466,7 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
                           enabled: true,
                           source: 'kangur',
                           path: 'game.homeSpotlight.description',
-                          fallback: 'Wroc do zadania i kontynuuj wyzwanie.',
+                          fallback: 'Wróć do zadania i kontynuuj wyzwanie.',
                         },
                       }
                     ),
@@ -1565,7 +1565,7 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
                             textColor: '#1e293b',
                           }
                         ),
-                        makeTextBlock('kangur-game-home-priority-count', '0 zadan', {
+                        makeTextBlock('kangur-game-home-priority-count', '0 zadań', {
                           fontSize: 14,
                           fontWeight: '700',
                           textColor: '#94a3b8',
@@ -1573,7 +1573,7 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
                             enabled: true,
                             source: 'kangur',
                             path: 'game.priorityAssignments.countLabel',
-                            fallback: '0 zadan',
+                            fallback: '0 zadań',
                           },
                         }),
                       ],
@@ -1699,7 +1699,7 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
                       {
                         collectionSource: 'kangur',
                         collectionPath: 'game.priorityAssignments.items',
-                        emptyMessage: 'Brak aktywnych zadan od rodzica.',
+                        emptyMessage: 'Brak aktywnych zadań od rodzica.',
                         itemLimit: 3,
                         itemsGap: 14,
                         itemGap: 0,
@@ -1740,12 +1740,12 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
                     },
                   },
                   blocks: [
-                    makeHeadingBlock('kangur-game-home-actions-heading', 'Co chcesz zrobic?', 26, {
+                    makeHeadingBlock('kangur-game-home-actions-heading', 'Co chcesz zrobić?', 26, {
                       textColor: '#1e293b',
                     }),
                     makeTextBlock(
                       'kangur-game-home-actions-copy',
-                      'Ten panel jest juz zlozony z blokow CMS. Zmieniaj etykiety, kolejnosc i akcje bez wracania do kodu.',
+                      'Ten panel jest już zlozony z bloków CMS. Zmieniaj etykiety, kolejnosc i akcje bez wracania do kodu.',
                       {
                         fontSize: 15,
                         textColor: '#7a86b0',
@@ -1956,7 +1956,7 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
           id: 'kangur-game-home-leaderboard',
           title: 'Najlepsze wyniki',
           description:
-            'Ta tablica wynikow jest teraz skladana z blokow CMS. Zmieniaj filtry, teksty i wyglad bez wracania do widgetu.',
+            'Ta tablica wyników jest teraz skladana z bloków CMS. Zmieniaj filtry, teksty i wyglad bez wracania do widgetu.',
         }),
       ],
       paddingTop: 0,
@@ -2100,7 +2100,7 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
                 ),
                 makeTextBlock(
                   'kangur-game-result-assignment-description',
-                  'Wroc do zadania i kontynuuj wyzwanie.',
+                  'Wróć do zadania i kontynuuj wyzwanie.',
                   {
                     fontSize: 15,
                     textColor: '#64748b',
@@ -2108,7 +2108,7 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
                       enabled: true,
                       source: 'kangur',
                       path: 'game.result.assignmentDescription',
-                      fallback: 'Wroc do zadania i kontynuuj wyzwanie.',
+                      fallback: 'Wróć do zadania i kontynuuj wyzwanie.',
                     },
                   }
                 ),
@@ -2210,7 +2210,7 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
                 }),
                 makeTextBlock(
                   'kangur-game-result-message',
-                  'Dobra robota! Cwiczenie czyni mistrza.',
+                  'Dobra robota! Ćwiczenie czyni mistrza.',
                   {
                     fontSize: 17,
                     textAlign: 'center',
@@ -2219,7 +2219,7 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
                       enabled: true,
                       source: 'kangur',
                       path: 'game.result.message',
-                      fallback: 'Dobra robota! Cwiczenie czyni mistrza.',
+                      fallback: 'Dobra robota! Ćwiczenie czyni mistrza.',
                     },
                   }
                 ),
@@ -2241,7 +2241,7 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
                     }),
                     makeGameMetricCard({
                       id: 'kangur-game-result-accuracy',
-                      label: 'Dokladnosc',
+                      label: 'Dokładność',
                       connectionPath: 'game.result.accuracyLabel',
                       fillColor: '#ecfeff',
                       textColor: '#0f766e',
@@ -2300,7 +2300,7 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
                       borderRadius: 22,
                       borderWidth: 1,
                     }),
-                    makeButtonBlock('kangur-game-result-home', 'Strona glowna', {
+                    makeButtonBlock('kangur-game-result-home', 'Strona główna', {
                       runtimeActionSource: 'kangur',
                       runtimeActionPath: 'game.handleHome',
                       buttonStyle: 'outline',
@@ -2330,9 +2330,9 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
       blocks: [
         makeGameLeaderboardPanel({
           id: 'kangur-game-result-leaderboard',
-          title: 'Tablica wynikow',
+          title: 'Tablica wyników',
           description:
-            'Po zakonczeniu gry nadal mozesz przebudowac ten ranking z poziomu CMS buildera.',
+            'Po zakonczeniu gry nadal możesz przebudowac ten ranking z poziomu CMS buildera.',
         }),
       ],
       paddingTop: 0,
@@ -2349,7 +2349,7 @@ const createDefaultLessonsScreenComponents = (): PageComponentInput[] =>
       id: 'kangur-lessons-intro',
       title: 'Lekcje',
       description:
-        'Ten ekran jest juz skladany w CMS builderze. Zmieniaj uklad, teksty i rozmieszczenie widgetow bez wracania do kodu strony.',
+        'Ten ekran jest już skladany w CMS builderze. Zmieniaj uklad, teksty i rozmieszczenie widgetow bez wracania do kodu strony.',
       blocks: [
         makeWidgetBlock('kangur-widget-lessons-progress', 'player-progress'),
         makeWidgetBlock('kangur-widget-lessons-assignments', 'priority-assignments', {

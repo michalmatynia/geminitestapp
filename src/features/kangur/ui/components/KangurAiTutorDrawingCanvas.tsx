@@ -176,9 +176,9 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
   return (
     <div
       data-testid='kangur-ai-tutor-drawing-canvas'
-      className='flex flex-col kangur-chat-card border border-amber-200/60 [background:var(--kangur-soft-card-background)] shadow-[0_16px_40px_-20px_rgba(15,23,42,0.18)]'
+      className='flex flex-col kangur-chat-card border kangur-chat-surface-warm kangur-chat-surface-warm-shadow'
     >
-      <div className='flex items-center justify-between border-b border-amber-100/60 kangur-chat-padding-sm'>
+      <div className='flex items-center justify-between border-b kangur-chat-divider kangur-chat-padding-sm'>
         <span className='text-xs font-semibold [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
           {drawingContent?.title ?? 'Rysowanie'}
         </span>
@@ -206,7 +206,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         />
       </div>
 
-      <div className='flex flex-wrap items-center gap-2 border-t border-amber-100/60 kangur-chat-padding-sm'>
+      <div className='flex flex-wrap items-center gap-2 border-t kangur-chat-divider kangur-chat-padding-sm'>
         <div className='flex items-center gap-1'>
           {COLORS.map((color) => (
             <button
@@ -302,7 +302,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         </button>
       </div>
 
-      <div className='flex justify-end gap-2 border-t border-amber-100/60 kangur-chat-padding-sm'>
+      <div className='flex justify-end gap-2 border-t kangur-chat-divider kangur-chat-padding-sm'>
         <KangurButton
           type='button'
           size='sm'

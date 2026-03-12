@@ -152,8 +152,8 @@ describe('Lessons page focus query support', () => {
 
     renderLessonsPage();
 
-    expect(await screen.findByTestId('active-lesson-header')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Dzielenie' })).toBeInTheDocument();
+    expect(await screen.findByTestId('active-lesson-header')).toHaveTextContent('Aktywna lekcja');
+    expect(await screen.findByText('Co to dzielenie?')).toBeInTheDocument();
     expect(screen.getByTestId('active-lesson-parent-completed-chip')).toHaveTextContent(
       'Ukonczone dla rodzica'
     );

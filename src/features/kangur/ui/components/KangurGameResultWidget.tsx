@@ -117,8 +117,8 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
 
           <KangurCardTitle data-testid='kangur-result-reward-title'>
             {xpToast.recommendation
-              ? 'Ta runda trafila w polecany kierunek i przesunela postep do przodu.'
-              : 'Ta runda przesunela postep do przodu.'}
+              ? 'Ta runda trafiła w polecany kierunek i przesunęła postęp do przodu.'
+              : 'Ta runda przesunęła postęp do przodu.'}
           </KangurCardTitle>
 
           <KangurRewardBreakdownChips
@@ -134,7 +134,7 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
               className='text-xs leading-6 [color:var(--kangur-page-text)]'
               data-testid='kangur-result-reward-next-badge'
             >
-              Nastepna odznaka: {xpToast.nextBadge.emoji} {xpToast.nextBadge.name} ·{' '}
+              Następna odznaka: {xpToast.nextBadge.emoji} {xpToast.nextBadge.name} ·{' '}
               {xpToast.nextBadge.summary}
             </div>
           ) : null}
@@ -237,7 +237,7 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
                   labelStyle='caps'
                   size='sm'
                 >
-                  Misja dnia ukonczona
+                  Misja dnia ukończona
                 </KangurStatusChip>
                 {xpToast.dailyQuest.xpAwarded > 0 ? (
                   <KangurStatusChip
@@ -259,7 +259,7 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
                 labelStyle='caps'
                 size='sm'
               >
-                Nastepna odznaka
+                Następna odznaka
               </KangurStatusChip>
             ) : null}
 

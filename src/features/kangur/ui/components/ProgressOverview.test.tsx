@@ -125,10 +125,10 @@ describe('ProgressOverview lesson mastery insights', () => {
 
     expect(screen.getByText('Opanowanie lekcji')).toBeInTheDocument();
     expect(screen.getByTestId('progress-overview-level-bar')).toHaveAttribute('aria-valuenow', '92');
-    expect(screen.getByText('Laczne XP').parentElement).toHaveClass('soft-card');
-    expect(screen.getByText('XP / gre').parentElement).toHaveClass('soft-card');
-    expect(screen.getByText('XP / gre').parentElement).toHaveTextContent('27');
-    expect(screen.getByText('Srednia skutecznosc').parentElement).toHaveClass(
+    expect(screen.getByText('Łączne XP').parentElement).toHaveClass('soft-card');
+    expect(screen.getByText('XP / grę').parentElement).toHaveClass('soft-card');
+    expect(screen.getByText('XP / grę').parentElement).toHaveTextContent('27');
+    expect(screen.getByText('Średnia skuteczność').parentElement).toHaveClass(
       'soft-card'
     );
     expect(screen.getByText('Najlepsza seria').parentElement).toHaveClass(
@@ -141,13 +141,14 @@ describe('ProgressOverview lesson mastery insights', () => {
       'Trening zegara: Godziny'
     );
     expect(screen.getByTestId('progress-overview-activity-training:clock:hours')).toHaveClass(
-      '[border-color:var(--kangur-soft-card-border)]'
+      'soft-card',
+      'border'
     );
     expect(screen.getByTestId('progress-overview-activity-training:clock:hours')).toHaveTextContent(
       '4 sesji'
     );
     expect(screen.getByTestId('progress-overview-activity-training:clock:hours')).toHaveTextContent(
-      '29 XP / gre'
+      '29 XP / grę'
     );
     expect(screen.getByTestId('progress-overview-activity-training:clock:hours')).toHaveTextContent(
       '116 XP'
@@ -192,7 +193,8 @@ describe('ProgressOverview lesson mastery insights', () => {
       'Wyzwania'
     );
     expect(screen.getByTestId('progress-overview-badge-track-challenge')).toHaveClass(
-      '[border-color:var(--kangur-soft-card-border)]'
+      'soft-card',
+      'border'
     );
     expect(screen.getByTestId('progress-overview-badge-track-challenge')).toHaveTextContent(
       '2/2 odznak'
@@ -208,7 +210,7 @@ describe('ProgressOverview lesson mastery insights', () => {
 
     expect(screen.queryByTestId('progress-overview-daily-quest')).toBeNull();
     expect(screen.getByTestId('progress-overview-badges-empty')).toHaveTextContent(
-      'Kolejne odznaki pojawia sie wraz z postepem.'
+      'Kolejne odznaki pojawiają się wraz z postępem.'
     );
     expect(screen.queryByTestId('progress-overview-badge-first_game')).toBeNull();
     expect(screen.queryByTestId('progress-overview-badge-ten_games')).toBeNull();

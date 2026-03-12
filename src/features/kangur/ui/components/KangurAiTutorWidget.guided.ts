@@ -104,11 +104,7 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
       return;
     }
 
-    setGuidedTutorTarget((current) =>
-      current?.mode === 'selection' && current.selectedText === selectionGuidanceHandoffText
-        ? null
-        : current
-    );
+    setGuidedTutorTarget(releaseSelectionGuidedTarget(selectionGuidanceHandoffText));
   }, [
     activeSelectedText,
     hasSelectionPanelReady,
@@ -120,6 +116,13 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
     setGuidedTutorTarget,
   ]);
 }
+
+const releaseSelectionGuidedTarget = (
+  selectionText: string
+): ((current: GuidedTutorTarget | null) => GuidedTutorTarget | null) => {
+  return (current) =>
+    current?.mode === 'selection' && current.selectedText === selectionText ? null : current;
+};
 
 export function useKangurAiTutorGuidedFlow(input: {
   activeSelectionPageRect: DOMRect | null;
@@ -453,6 +456,16 @@ export function useKangurAiTutorGuidedFlow(input: {
       });
       suppressAvatarClickRef.current = true;
 
+      void sendMessage('Wyjaśnij zaznaczony fragment krok po kroku.', {
+        promptMode: 'selected_text',
+        selectedText: selectionText,
+        focusKind: selectionConversationFocus.kind ?? 'selection',
+        focusId: selectionConversationFocus.id ?? 'selection',
+        focusLabel: selectionConversationFocus.label ?? selectionText,
+        assignmentId: selectionConversationFocus.assignmentId,
+        interactionIntent: 'explain',
+      });
+
       const guidanceDelayMs = prefersReducedMotion
         ? 0
         : Math.max(180, Math.round(motionProfile.guidedAvatarTransition.duration * 1000));
@@ -465,15 +478,6 @@ export function useKangurAiTutorGuidedFlow(input: {
         setSelectionGuidanceHandoffText(selectionText);
         handleOpenChat('selection_explain', {
           panelShellMode: 'minimal',
-        });
-        void sendMessage('Wyjaśnij zaznaczony fragment krok po kroku.', {
-          promptMode: 'selected_text',
-          selectedText: selectionText,
-          focusKind: selectionConversationFocus.kind ?? 'selection',
-          focusId: selectionConversationFocus.id ?? 'selection',
-          focusLabel: selectionConversationFocus.label ?? selectionText,
-          assignmentId: selectionConversationFocus.assignmentId,
-          interactionIntent: 'explain',
         });
       }, guidanceDelayMs);
     },

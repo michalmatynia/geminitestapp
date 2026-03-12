@@ -3,11 +3,19 @@
  */
 
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
+
+const { useKangurAiTutorSessionSyncMock } = vi.hoisted(() => ({
+  useKangurAiTutorSessionSyncMock: vi.fn(),
+}));
 
 vi.mock('@/features/kangur/ui/components/KangurLessonNarrator', () => ({
   KangurLessonNarrator: ({ readLabel }: { readLabel: string }) => <button>{readLabel}</button>,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
+  useKangurAiTutorSessionSync: useKangurAiTutorSessionSyncMock,
 }));
 
 import { render, screen } from '@/__tests__/test-utils';
@@ -51,6 +59,10 @@ const questions: KangurTestQuestion[] = [
 ];
 
 describe('KangurTestSuitePlayer', () => {
+  beforeEach(() => {
+    useKangurAiTutorSessionSyncMock.mockClear();
+  });
+
   it('uses the shared pill CTA styles for suite navigation and restart actions', async () => {
     const onFinish = vi.fn();
     render(<KangurTestSuitePlayer suite={suite} questions={questions} onFinish={onFinish} />);
@@ -78,6 +90,11 @@ describe('KangurTestSuitePlayer', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /A.*4/i }));
 
+    const checkAnswerButton = screen.getByRole('button', { name: /check answer/i });
+    expect(checkAnswerButton).toHaveClass('kangur-cta-pill', 'primary-cta');
+
+    await userEvent.click(checkAnswerButton);
+
     const finishButton = screen.getByRole('button', { name: /finish/i });
     expect(finishButton).toHaveClass('kangur-cta-pill', 'primary-cta');
 
@@ -95,6 +112,69 @@ describe('KangurTestSuitePlayer', () => {
     );
     expect(restartButton).toHaveClass('kangur-cta-pill', 'surface-cta');
     expect(onFinish).toHaveBeenCalledWith(3, 3, { 'question-1': 'A' });
+  });
+
+  it('syncs finished summary result text into the tutor session context', async () => {
+    render(<KangurTestSuitePlayer suite={suite} questions={questions} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /A.*4/i }));
+    await userEvent.click(screen.getByRole('button', { name: /check answer/i }));
+    await userEvent.click(screen.getByRole('button', { name: /finish/i }));
+
+    expect(useKangurAiTutorSessionSyncMock).toHaveBeenLastCalledWith({
+      learnerId: null,
+      sessionContext: expect.objectContaining({
+        surface: 'test',
+        contentId: 'suite-2024',
+        title: 'Kangur 2024',
+        description: 'Wynik koncowy: 3/3 pkt (100%).',
+        questionProgressLabel: 'Ukonczono 1/1',
+        answerRevealed: true,
+      }),
+    });
+  });
+
+  it('syncs selected-choice details into the tutor session context before answer reveal', async () => {
+    render(<KangurTestSuitePlayer suite={suite} questions={questions} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /A.*4/i }));
+
+    expect(useKangurAiTutorSessionSyncMock).toHaveBeenLastCalledWith({
+      learnerId: null,
+      sessionContext: expect.objectContaining({
+        surface: 'test',
+        contentId: 'suite-2024',
+        questionId: 'question-1',
+        selectedChoiceLabel: 'A',
+        selectedChoiceText: '4',
+        currentQuestion: 'Ile to jest 2 + 2?',
+        description: undefined,
+        questionProgressLabel: 'Pytanie 1/1',
+        answerRevealed: false,
+      }),
+    });
+  });
+
+  it('syncs revealed review details into the tutor session context after checking the answer', async () => {
+    render(<KangurTestSuitePlayer suite={suite} questions={questions} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /A.*4/i }));
+    await userEvent.click(screen.getByRole('button', { name: /check answer/i }));
+
+    expect(useKangurAiTutorSessionSyncMock).toHaveBeenLastCalledWith({
+      learnerId: null,
+      sessionContext: expect.objectContaining({
+        surface: 'test',
+        contentId: 'suite-2024',
+        questionId: 'question-1',
+        selectedChoiceLabel: 'A',
+        selectedChoiceText: '4',
+        currentQuestion: 'Ile to jest 2 + 2?',
+        description: 'Wybrana odpowiedz: A - 4. Poprawna odpowiedz: A - 4.',
+        questionProgressLabel: 'Pytanie 1/1',
+        answerRevealed: true,
+      }),
+    });
   });
 
   it('uses the shared empty-state surface when a suite has no questions', () => {
@@ -142,8 +222,39 @@ describe('KangurTestSuitePlayer', () => {
     expect(screen.getByText('Question 1 / 1')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: /A.*4/i }));
+    await userEvent.click(screen.getByRole('button', { name: /check answer/i }));
     await userEvent.click(screen.getByRole('button', { name: /finish/i }));
 
     expect(onFinish).toHaveBeenCalledWith(3, 3, { 'question-1': 'A' });
+  });
+
+  it('preserves revealed review state when returning to a previous question', async () => {
+    render(
+      <KangurTestSuitePlayer
+        suite={suite}
+        questions={[
+          questions[0]!,
+          {
+            ...questions[0]!,
+            id: 'question-2',
+            prompt: 'Ile to jest 3 + 3?',
+          },
+        ]}
+      />
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /A.*4/i }));
+    await userEvent.click(screen.getByRole('button', { name: /check answer/i }));
+    await userEvent.click(screen.getByRole('button', { name: /next/i }));
+
+    expect(await screen.findByText('Ile to jest 3 + 3?')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /previous/i }));
+
+    expect(
+      await screen.findByText(repairKangurPolishCopy('Omowienie odpowiedzi'))
+    ).toBeInTheDocument();
+    expect(await screen.findByText(/Correct! \+3 pts/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
   });
 });

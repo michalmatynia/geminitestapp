@@ -109,7 +109,7 @@ describe('KangurLearnerProfileSessionsWidget', () => {
     expect(screen.getByText('Ostatnie sesje')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
-    expect(screen.getByText('Sciezki odznak')).toHaveClass(
+    expect(screen.getByText('Ścieżki odznak')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
     expect(screen.getByText('Zegar')).toHaveClass('[color:var(--kangur-page-text)]');
@@ -127,7 +127,7 @@ describe('KangurLearnerProfileSessionsWidget', () => {
       '2/2 odznak'
     );
     expect(screen.getByTestId('learner-profile-badge-track-xp')).toHaveTextContent(
-      'Pol tysiaca XP · 480/500 XP'
+      'Pół tysiąca XP · 480/500 XP'
     );
     expect(screen.queryByTestId('learner-profile-badge-track-variety')).toBeNull();
   });
@@ -158,7 +158,7 @@ describe('KangurLearnerProfileSessionsWidget', () => {
     render(<KangurLearnerProfileSessionsWidget />);
 
     expect(screen.getByTestId('learner-profile-badges-empty')).toHaveTextContent(
-      'Kolejne odznaki pojawia sie wraz z postepem.'
+      'Kolejne odznaki pojawiają się wraz z postępem.'
     );
     expect(screen.queryByTestId('learner-profile-badge-first_game')).toBeNull();
   });
@@ -168,7 +168,7 @@ describe('KangurLearnerProfileSessionsWidget', () => {
       entry: {
         id: 'learner-profile-sessions',
         title: 'Historia sesji',
-        summary: 'Mongo opis ostatnich podejsc i sciezek odznak.',
+        summary: 'Mongo opis ostatnich podejść i ścieżek odznak.',
       },
       data: undefined,
       isLoading: false,
@@ -183,7 +183,7 @@ describe('KangurLearnerProfileSessionsWidget', () => {
       'Historia sesji'
     );
     expect(screen.getByTestId('learner-profile-sessions-intro')).toHaveTextContent(
-      'Mongo opis ostatnich podejsc i sciezek odznak.'
+      'Mongo opis ostatnich podejść i ścieżek odznak.'
     );
   });
 });

@@ -1131,6 +1131,1162 @@ describe('kangur ai tutor chat handler', () => {
     );
   });
 
+  it('adds live recommendation overlays to direct page-content answers for learner overview sections', async () => {
+    contextRegistryResolveRefsMock.mockResolvedValue(
+      createContextRegistryBundle({
+        learnerSummary: 'Average accuracy 88%. 0 active assignments.',
+        learnerFacts: {
+          topRecommendationTitle: 'Powtorz lekcje: Dodawanie',
+          topRecommendationDescription:
+            'Jedna krotka powtorka domknie kolejny prog mistrzostwa.',
+          topRecommendationActionLabel: 'Otworz lekcje',
+          topRecommendationActionPage: 'Lessons',
+        },
+      })
+    );
+    resolveKangurAiTutorSectionKnowledgeBundleMock.mockResolvedValue({
+      section: {
+        id: 'profile-hero',
+        pageKey: 'LearnerProfile',
+        screenKey: 'profile',
+        surface: 'profile',
+        route: '/profile',
+        componentId: 'hero',
+        widget: 'KangurLearnerProfileHeroWidget',
+        sourcePath: 'src/features/kangur/ui/pages/LearnerProfile.tsx',
+        title: 'Hero profilu ucznia',
+        summary: 'To glowna sekcja profilu z szybkim obrazem postepu.',
+        body: 'Pomaga szybko ocenic rytm nauki ucznia i najwazniejsze dalsze kroki.',
+        anchorIdPrefix: 'kangur-profile-hero',
+        focusKind: 'hero',
+        contentIdPrefixes: ['profile:learner'],
+        nativeGuideIds: ['profile-hero'],
+        triggerPhrases: ['profil ucznia'],
+        tags: ['page-content', 'profile'],
+        notes: 'Glowny hero profilu ucznia.',
+        enabled: true,
+        sortOrder: 10,
+      },
+      linkedNativeGuides: [],
+      instructions: 'unused in direct-answer path',
+      sources: [
+        {
+          documentId: 'profile-hero',
+          collectionId: 'kangur_page_content',
+          text: 'Hero profilu ucznia\nTo glowna sekcja profilu z szybkim obrazem postepu.',
+          score: 0.99,
+          metadata: {
+            source: 'manual-text',
+            sourceId: 'profile-hero',
+            title: 'Hero profilu ucznia',
+            description: 'To glowna sekcja profilu z szybkim obrazem postepu.',
+            tags: ['kangur', 'page-content', 'profile'],
+          },
+        },
+      ],
+      followUpActions: [],
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Wyjasnij mi ten hero.' }],
+          context: {
+            surface: 'profile',
+            contentId: 'profile:learner',
+            promptMode: 'explain',
+            focusKind: 'hero',
+            focusId: 'kangur-profile-hero',
+            focusLabel: 'Hero profilu ucznia',
+            interactionIntent: 'explain',
+            knowledgeReference: {
+              sourceCollection: 'kangur_page_content',
+              sourceRecordId: 'profile-hero',
+              sourcePath: 'entry:profile-hero',
+            },
+          },
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+
+    expect(body.message).toContain('Hero profilu ucznia');
+    expect(body.message).toContain(
+      'Najlepszy nastepny krok: Powtorz lekcje: Dodawanie.'
+    );
+    expect(body.message).toContain(
+      'Najprostsza akcja teraz: Otworz lekcje w widoku Lessons.'
+    );
+    expect(body.sources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          collectionId: 'kangur_page_content',
+          documentId: 'profile-hero',
+        }),
+        expect.objectContaining({
+          collectionId: 'kangur-runtime-context',
+          documentId: 'runtime:kangur:learner:learner-1',
+        }),
+      ])
+    );
+    const learnerSnapshotSource = body.sources.find(
+      (source: { documentId: string; collectionId: string; text: string }) =>
+        source.collectionId === 'kangur-runtime-context' &&
+        source.documentId === 'runtime:kangur:learner:learner-1'
+    );
+    expect(learnerSnapshotSource?.text).toContain('Powtorz lekcje: Dodawanie');
+  });
+
+  it('adds live completion overlays to direct page-content answers for finished review sections', async () => {
+    contextRegistryResolveRefsMock.mockResolvedValue(createContextRegistryBundle());
+    resolveKangurAiTutorSectionKnowledgeBundleMock.mockResolvedValue({
+      section: {
+        id: 'game-review',
+        pageKey: 'Game',
+        screenKey: 'result',
+        surface: 'game',
+        route: '/game',
+        componentId: 'result-summary',
+        widget: 'KangurGameResultWidget',
+        sourcePath: 'src/features/kangur/ui/pages/Game.tsx',
+        title: 'Podsumowanie wyniku gry',
+        summary: 'Ta sekcja zbiera wynik rundy i najwazniejsze nagrody.',
+        body: 'Pomaga zrozumiec rezultat i zdecydowac, czy wracac do treningu, czy przejsc dalej.',
+        anchorIdPrefix: 'kangur-game-result-summary',
+        focusKind: 'review',
+        contentIdPrefixes: ['game:result'],
+        nativeGuideIds: ['game-review'],
+        triggerPhrases: ['wynik rundy'],
+        tags: ['page-content', 'game'],
+        notes: 'Podsumowanie po zakonczeniu gry.',
+        enabled: true,
+        sortOrder: 10,
+      },
+      linkedNativeGuides: [],
+      instructions: 'unused in direct-answer path',
+      sources: [
+        {
+          documentId: 'game-review',
+          collectionId: 'kangur_page_content',
+          text: 'Podsumowanie wyniku gry\nTa sekcja zbiera wynik rundy i najwazniejsze nagrody.',
+          score: 0.99,
+          metadata: {
+            source: 'manual-text',
+            sourceId: 'game-review',
+            title: 'Podsumowanie wyniku gry',
+            description: 'Ta sekcja zbiera wynik rundy i najwazniejsze nagrody.',
+            tags: ['kangur', 'page-content', 'game'],
+          },
+        },
+      ],
+      followUpActions: [],
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Wyjasnij mi ten wynik.' }],
+          context: {
+            surface: 'game',
+            contentId: 'game:result',
+            title: 'Podsumowanie wyniku',
+            description: 'Final tej rundy z wynikiem i nagrodami.',
+            assignmentSummary: 'Misja dnia - 2/3 wykonane.',
+            questionProgressLabel: 'Wynik 7/10',
+            answerRevealed: true,
+            promptMode: 'explain',
+            focusKind: 'review',
+            focusId: 'kangur-game-result-summary',
+            focusLabel: 'Podsumowanie wyniku gry',
+            interactionIntent: 'explain',
+            knowledgeReference: {
+              sourceCollection: 'kangur_page_content',
+              sourceRecordId: 'game-review',
+              sourcePath: 'entry:game-review',
+            },
+          },
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+
+    expect(body.message).toContain('Podsumowanie wyniku gry');
+    expect(body.message).toContain('Aktualny stan tej sekcji: Wynik 7/10.');
+    expect(body.answerResolutionMode).toBe('page_content');
+    expect(body.sources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          collectionId: 'kangur_page_content',
+          documentId: 'game-review',
+        }),
+        expect.objectContaining({
+          collectionId: 'kangur-runtime-context',
+          documentId: 'runtime:kangur:game:game:result:summary:revealed',
+        }),
+      ])
+    );
+    const gameSummarySource = body.sources.find(
+      (source: { documentId: string; collectionId: string; text: string }) =>
+        source.collectionId === 'kangur-runtime-context' &&
+        source.documentId === 'runtime:kangur:game:game:result:summary:revealed'
+    );
+    expect(gameSummarySource?.text).toContain('Wynik 7/10');
+  });
+
+  it('adds recent-session and operation overlays to profile performance section answers', async () => {
+    contextRegistryResolveRefsMock.mockResolvedValue(
+      createContextRegistryBundle({
+        learnerSummary: 'Average accuracy 84%. 2 active days this week.',
+        learnerSections: [
+          {
+            id: 'recent_sessions',
+            kind: 'items',
+            title: 'Recent practice',
+            items: [
+              {
+                id: 'session-1',
+                operationLabel: 'Zegar',
+                accuracyPercent: 83,
+                score: 5,
+                totalQuestions: 6,
+                xpEarned: 28,
+              },
+            ],
+          },
+          {
+            id: 'operation_performance',
+            kind: 'items',
+            title: 'Performance by operation',
+            items: [
+              {
+                operation: 'addition',
+                label: 'Dodawanie',
+                averageAccuracy: 91,
+                attempts: 3,
+              },
+              {
+                operation: 'clock',
+                label: 'Zegar',
+                averageAccuracy: 68,
+                attempts: 2,
+              },
+            ],
+          },
+        ],
+      })
+    );
+    resolveKangurAiTutorSectionKnowledgeBundleMock.mockResolvedValue({
+      section: {
+        id: 'profile-performance',
+        pageKey: 'LearnerProfile',
+        screenKey: 'profile',
+        surface: 'profile',
+        route: '/profile',
+        componentId: 'performance',
+        widget: 'KangurLearnerProfilePerformanceWidget',
+        sourcePath: 'src/features/kangur/ui/pages/LearnerProfile.tsx',
+        title: 'Skutecznosc ucznia',
+        summary: 'Ta sekcja pokazuje aktywnosc siedmiu dni i wyniki dla operacji.',
+        body: 'Pomaga sprawdzic rytm gry oraz to, ktore operacje ida najlepiej, a ktore wymagaja powtorki.',
+        anchorIdPrefix: 'kangur-profile-performance',
+        focusKind: 'summary',
+        contentIdPrefixes: ['profile:learner'],
+        nativeGuideIds: ['profile-performance'],
+        triggerPhrases: ['skutecznosc ucznia'],
+        tags: ['page-content', 'profile'],
+        notes: 'Sekcja skutecznosci ucznia.',
+        enabled: true,
+        sortOrder: 10,
+      },
+      linkedNativeGuides: [],
+      instructions: 'unused in direct-answer path',
+      sources: [
+        {
+          documentId: 'profile-performance',
+          collectionId: 'kangur_page_content',
+          text: 'Skutecznosc ucznia\nTa sekcja pokazuje aktywnosc siedmiu dni i wyniki dla operacji.',
+          score: 0.99,
+          metadata: {
+            source: 'manual-text',
+            sourceId: 'profile-performance',
+            title: 'Skutecznosc ucznia',
+            description: 'Ta sekcja pokazuje aktywnosc siedmiu dni i wyniki dla operacji.',
+            tags: ['kangur', 'page-content', 'profile'],
+          },
+        },
+      ],
+      followUpActions: [],
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Wyjasnij mi te statystyki.' }],
+          context: {
+            surface: 'profile',
+            contentId: 'profile:learner',
+            promptMode: 'explain',
+            focusKind: 'summary',
+            focusId: 'kangur-profile-performance',
+            focusLabel: 'Skutecznosc ucznia',
+            interactionIntent: 'explain',
+            knowledgeReference: {
+              sourceCollection: 'kangur_page_content',
+              sourceRecordId: 'profile-performance',
+              sourcePath: 'entry:profile-performance',
+            },
+          },
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+
+    expect(body.message).toContain('Ostatnia sesja: Zegar (83% skutecznosci, 5/6, +28 XP).');
+    expect(body.message).toContain(
+      'Najmocniejsza operacja teraz: Dodawanie ze srednia skutecznoscia 91%.'
+    );
+    expect(body.message).toContain(
+      'Najwiecej pracy wymaga: Zegar ze srednia skutecznoscia 68% po 2 probach.'
+    );
+    expect(body.sources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          collectionId: 'kangur_page_content',
+          documentId: 'profile-performance',
+        }),
+        expect.objectContaining({
+          collectionId: 'kangur-runtime-context',
+          documentId: 'runtime:kangur:learner:learner-1',
+        }),
+      ])
+    );
+    const learnerSnapshotSource = body.sources.find(
+      (source: { documentId: string; collectionId: string; text: string }) =>
+        source.collectionId === 'kangur-runtime-context' &&
+        source.documentId === 'runtime:kangur:learner:learner-1'
+    );
+    expect(learnerSnapshotSource?.text).toContain('Latest session: Zegar.');
+    expect(learnerSnapshotSource?.text).toContain('Strongest operation: Dodawanie at 91%.');
+  });
+
+  it('adds recent-session overlays to parent dashboard score answers', async () => {
+    contextRegistryResolveRefsMock.mockResolvedValue(
+      createContextRegistryBundle({
+        learnerSummary: 'Average accuracy 82%. 6 sessions in the last week.',
+        learnerSections: [
+          {
+            id: 'recent_sessions',
+            kind: 'items',
+            title: 'Recent practice',
+            items: [
+              {
+                id: 'session-2',
+                operationLabel: 'Dodawanie',
+                accuracyPercent: 90,
+                score: 9,
+                totalQuestions: 10,
+                xpEarned: 18,
+              },
+            ],
+          },
+        ],
+      })
+    );
+    resolveKangurAiTutorSectionKnowledgeBundleMock.mockResolvedValue({
+      section: {
+        id: 'parent-dashboard-scores',
+        pageKey: 'ParentDashboard',
+        screenKey: 'dashboard',
+        surface: 'parent_dashboard',
+        route: '/parent',
+        componentId: 'scores-tab',
+        widget: 'KangurParentDashboardScoresWidget',
+        sourcePath: 'src/features/kangur/ui/pages/ParentDashboard.tsx',
+        title: 'Wyniki ucznia w dashboardzie rodzica',
+        summary: 'Ta sekcja pokazuje najnowsze wyniki i historie gier ucznia.',
+        body: 'Pomaga rodzicowi zobaczyc ostatnie podejscia i stabilnosc gry dziecka.',
+        anchorIdPrefix: 'kangur-parent-dashboard-scores',
+        focusKind: 'summary',
+        contentIdPrefixes: ['parent-dashboard:learner-1:scores'],
+        nativeGuideIds: ['parent-dashboard-scores'],
+        triggerPhrases: ['wyniki ucznia'],
+        tags: ['page-content', 'parent-dashboard'],
+        notes: 'Zakladka wynikow w panelu rodzica.',
+        enabled: true,
+        sortOrder: 10,
+      },
+      linkedNativeGuides: [],
+      instructions: 'unused in direct-answer path',
+      sources: [
+        {
+          documentId: 'parent-dashboard-scores',
+          collectionId: 'kangur_page_content',
+          text: 'Wyniki ucznia w dashboardzie rodzica\nTa sekcja pokazuje najnowsze wyniki i historie gier ucznia.',
+          score: 0.99,
+          metadata: {
+            source: 'manual-text',
+            sourceId: 'parent-dashboard-scores',
+            title: 'Wyniki ucznia w dashboardzie rodzica',
+            description: 'Ta sekcja pokazuje najnowsze wyniki i historie gier ucznia.',
+            tags: ['kangur', 'page-content', 'parent-dashboard'],
+          },
+        },
+      ],
+      followUpActions: [],
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Co pokazuje ta zakladka wynikow?' }],
+          context: {
+            surface: 'parent_dashboard',
+            contentId: 'parent-dashboard:learner-1:scores',
+            promptMode: 'explain',
+            focusKind: 'summary',
+            focusId: 'kangur-parent-dashboard-scores',
+            focusLabel: 'Wyniki ucznia',
+            interactionIntent: 'explain',
+            knowledgeReference: {
+              sourceCollection: 'kangur_page_content',
+              sourceRecordId: 'parent-dashboard-scores',
+              sourcePath: 'entry:parent-dashboard-scores',
+            },
+          },
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+
+    expect(body.message).toContain(
+      'Ostatnia sesja: Dodawanie (90% skutecznosci, 9/10, +18 XP).'
+    );
+    expect(body.answerResolutionMode).toBe('page_content');
+    expect(body.sources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          collectionId: 'kangur_page_content',
+          documentId: 'parent-dashboard-scores',
+        }),
+        expect.objectContaining({
+          collectionId: 'kangur-runtime-context',
+          documentId: 'runtime:kangur:learner:learner-1',
+        }),
+      ])
+    );
+  });
+
+  it('adds lesson document overlays to direct page-content lesson document answers', async () => {
+    contextRegistryResolveRefsMock.mockResolvedValue(
+      createContextRegistryBundle({
+        lessonFacts: {
+          title: 'Dodawanie',
+          description: 'Licz dwa zbiory razem.',
+          masterySummary: 'Dodawanie mastery 68% after 3 attempts.',
+          documentSummary:
+            'Dodawanie to laczenie dwoch liczb. Policz elementy po kolei i porownaj wynik z ilustracja.',
+        },
+      })
+    );
+    resolveKangurAiTutorSectionKnowledgeBundleMock.mockResolvedValue({
+      section: {
+        id: 'lesson-document',
+        pageKey: 'Lessons',
+        screenKey: 'active',
+        surface: 'lesson',
+        route: '/lessons',
+        componentId: 'active-document',
+        widget: 'KangurLessonDocumentRenderer',
+        sourcePath: 'src/features/kangur/ui/pages/Lessons.tsx',
+        title: 'Material lekcji',
+        summary: 'Czytaj zapisany dokument krok po kroku i wracaj do niego podczas praktyki.',
+        body: 'Ta sekcja trzyma glowna tresc aktywnej lekcji i jej przyklady.',
+        anchorIdPrefix: 'kangur-lesson-document',
+        focusKind: 'document',
+        contentIdPrefixes: ['adding'],
+        nativeGuideIds: ['lesson-document'],
+        triggerPhrases: ['material lekcji'],
+        tags: ['page-content', 'lesson'],
+        notes: 'Glowny dokument lekcji.',
+        enabled: true,
+        sortOrder: 10,
+      },
+      linkedNativeGuides: [],
+      instructions: 'unused in direct-answer path',
+      sources: [
+        {
+          documentId: 'lesson-document',
+          collectionId: 'kangur_page_content',
+          text: 'Material lekcji\nCzytaj zapisany dokument krok po kroku i wracaj do niego podczas praktyki.',
+          score: 0.99,
+          metadata: {
+            source: 'manual-text',
+            sourceId: 'lesson-document',
+            title: 'Material lekcji',
+            description:
+              'Czytaj zapisany dokument krok po kroku i wracaj do niego podczas praktyki.',
+            tags: ['kangur', 'page-content', 'lesson'],
+          },
+        },
+      ],
+      followUpActions: [],
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Wyjasnij mi ten material.' }],
+          context: {
+            surface: 'lesson',
+            contentId: 'adding',
+            promptMode: 'explain',
+            focusKind: 'document',
+            focusId: 'kangur-lesson-document:adding',
+            focusLabel: 'Dodawanie',
+            interactionIntent: 'explain',
+            knowledgeReference: {
+              sourceCollection: 'kangur_page_content',
+              sourceRecordId: 'lesson-document',
+              sourcePath: 'entry:lesson-document',
+            },
+          },
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+
+    expect(body.message).toContain('Material lekcji: Dodawanie.');
+    expect(body.message).toContain(
+      'Z tresci tej lekcji teraz: Dodawanie to laczenie dwoch liczb. Policz elementy po kolei i porownaj wynik z ilustracja.'
+    );
+    expect(body.message).toContain(
+      'Aktualny obraz opanowania: Dodawanie mastery 68% after 3 attempts.'
+    );
+    const lessonSource = body.sources.find(
+      (source: { documentId: string; collectionId: string; text: string }) =>
+        source.collectionId === 'kangur-runtime-context' &&
+        source.documentId === 'runtime:kangur:lesson:learner-1:lesson-1'
+    );
+    expect(lessonSource?.text).toContain('Dodawanie to laczenie dwoch liczb.');
+  });
+
+  it('adds active assignment overlays to lesson header answers', async () => {
+    contextRegistryResolveRefsMock.mockResolvedValue(
+      createContextRegistryBundle({
+        lessonFacts: {
+          title: 'Dodawanie',
+          description: 'Licz dwa zbiory razem.',
+          masterySummary: 'Dodawanie mastery 68% after 3 attempts.',
+          assignmentSummary:
+            'Powtorz lekcje Dodawanie. Progress: 1 z 2 krokow. Suggested action: Otworz lekcje on Lessons.',
+          documentSummary:
+            'Dodawanie to laczenie dwoch liczb. Zacznij od malych grup i sprawdz wynik glosno.',
+        },
+      })
+    );
+    resolveKangurAiTutorSectionKnowledgeBundleMock.mockResolvedValue({
+      section: {
+        id: 'lesson-header',
+        pageKey: 'Lessons',
+        screenKey: 'active',
+        surface: 'lesson',
+        route: '/lessons',
+        componentId: 'active-header',
+        widget: 'KangurActiveLessonHeader',
+        sourcePath: 'src/features/kangur/ui/pages/Lessons.tsx',
+        title: 'Aktywna lekcja',
+        summary:
+          'Przejdz przez temat krok po kroku, odsluchaj material i sprawdz, czy czeka tu zadanie od rodzica.',
+        body: 'To naglowek aktywnej lekcji z najwazniejszym stanem i szybkim wejsciem do tresci.',
+        anchorIdPrefix: 'kangur-lesson-header',
+        focusKind: 'lesson_header',
+        contentIdPrefixes: ['adding'],
+        nativeGuideIds: ['lesson-header'],
+        triggerPhrases: ['aktywna lekcja'],
+        tags: ['page-content', 'lesson'],
+        notes: 'Naglowek aktywnej lekcji.',
+        enabled: true,
+        sortOrder: 10,
+      },
+      linkedNativeGuides: [],
+      instructions: 'unused in direct-answer path',
+      sources: [
+        {
+          documentId: 'lesson-header',
+          collectionId: 'kangur_page_content',
+          text: 'Aktywna lekcja\nPrzejdz przez temat krok po kroku, odsluchaj material i sprawdz, czy czeka tu zadanie od rodzica.',
+          score: 0.99,
+          metadata: {
+            source: 'manual-text',
+            sourceId: 'lesson-header',
+            title: 'Aktywna lekcja',
+            description:
+              'Przejdz przez temat krok po kroku, odsluchaj material i sprawdz, czy czeka tu zadanie od rodzica.',
+            tags: ['kangur', 'page-content', 'lesson'],
+          },
+        },
+      ],
+      followUpActions: [],
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Co pokazuje ten naglowek lekcji?' }],
+          context: {
+            surface: 'lesson',
+            contentId: 'adding',
+            promptMode: 'explain',
+            focusKind: 'lesson_header',
+            focusId: 'kangur-lesson-header:adding',
+            focusLabel: 'Dodawanie',
+            interactionIntent: 'explain',
+            knowledgeReference: {
+              sourceCollection: 'kangur_page_content',
+              sourceRecordId: 'lesson-header',
+              sourcePath: 'entry:lesson-header',
+            },
+          },
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+
+    expect(body.message).toContain('Aktywna lekcja: Dodawanie.');
+    expect(body.message).toContain(
+      'Aktywny priorytet: Powtorz lekcje Dodawanie. Progress: 1 z 2 krokow. Suggested action: Otworz lekcje on Lessons.'
+    );
+    expect(body.message).toContain(
+      'Z tresci tej lekcji teraz: Dodawanie to laczenie dwoch liczb. Zacznij od malych grup i sprawdz wynik glosno.'
+    );
+  });
+
+  it('adds lesson navigation overlays to direct page-content navigation answers', async () => {
+    contextRegistryResolveRefsMock.mockResolvedValue(
+      createContextRegistryBundle({
+        lessonFacts: {
+          title: 'Dodawanie',
+          description: 'Licz dwa zbiory razem.',
+          masterySummary: 'Dodawanie mastery 68% after 3 attempts.',
+          navigationSummary:
+            'Bez wracania do listy mozesz cofnac sie do Kalendarz albo przejsc dalej do Odejmowanie.',
+        },
+      })
+    );
+    resolveKangurAiTutorSectionKnowledgeBundleMock.mockResolvedValue({
+      section: {
+        id: 'lesson-navigation',
+        pageKey: 'Lessons',
+        screenKey: 'active',
+        surface: 'lesson',
+        route: '/lessons',
+        componentId: 'lesson-navigation',
+        widget: 'KangurLessonNavigationWidget',
+        sourcePath: 'src/features/kangur/ui/pages/Lessons.tsx',
+        title: 'Nawigacja lekcji',
+        summary:
+          'Przechodz do poprzedniej lub kolejnej lekcji bez wracania do calej listy tematow.',
+        body: 'Ta sekcja daje szybkie przejscie miedzy sasiednimi lekcjami.',
+        anchorIdPrefix: 'kangur-lesson-navigation',
+        focusKind: 'navigation',
+        contentIdPrefixes: ['adding'],
+        nativeGuideIds: ['lesson-navigation'],
+        triggerPhrases: ['nawigacja lekcji'],
+        tags: ['page-content', 'lesson'],
+        notes: 'Nawigacja aktywnej lekcji.',
+        enabled: true,
+        sortOrder: 10,
+      },
+      linkedNativeGuides: [],
+      instructions: 'unused in direct-answer path',
+      sources: [
+        {
+          documentId: 'lesson-navigation',
+          collectionId: 'kangur_page_content',
+          text: 'Nawigacja lekcji\nPrzechodz do poprzedniej lub kolejnej lekcji bez wracania do calej listy tematow.',
+          score: 0.99,
+          metadata: {
+            source: 'manual-text',
+            sourceId: 'lesson-navigation',
+            title: 'Nawigacja lekcji',
+            description:
+              'Przechodz do poprzedniej lub kolejnej lekcji bez wracania do calej listy tematow.',
+            tags: ['kangur', 'page-content', 'lesson'],
+          },
+        },
+      ],
+      followUpActions: [],
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Do czego sluzy ta nawigacja lekcji?' }],
+          context: {
+            surface: 'lesson',
+            contentId: 'adding',
+            promptMode: 'explain',
+            focusKind: 'navigation',
+            focusId: 'kangur-lesson-navigation:adding',
+            focusLabel: 'Dodawanie',
+            interactionIntent: 'explain',
+            knowledgeReference: {
+              sourceCollection: 'kangur_page_content',
+              sourceRecordId: 'lesson-navigation',
+              sourcePath: 'entry:lesson-navigation',
+            },
+          },
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+
+    expect(body.message).toContain('Nawigacja lekcji: Dodawanie.');
+    expect(body.message).toContain(
+      'Nawigacja tej lekcji: Bez wracania do listy mozesz cofnac sie do Kalendarz albo przejsc dalej do Odejmowanie.'
+    );
+    expect(body.message).toContain(
+      'Aktualny obraz opanowania: Dodawanie mastery 68% after 3 attempts.'
+    );
+    const lessonSource = body.sources.find(
+      (source: { documentId: string; collectionId: string; text: string }) =>
+        source.collectionId === 'kangur-runtime-context' &&
+        source.documentId === 'runtime:kangur:lesson:learner-1:lesson-1'
+    );
+    expect(lessonSource?.text).toContain(
+      'Bez wracania do listy mozesz cofnac sie do Kalendarz albo przejsc dalej do Odejmowanie.'
+    );
+  });
+
+  it('adds active test question overlays to direct page-content question answers', async () => {
+    contextRegistryResolveRefsMock.mockResolvedValue(
+      createContextRegistryBundle({
+        testFacts: {
+          title: 'Kangur Mini',
+          description: 'Zestaw probny.',
+          currentQuestion: 'Ile to jest 2 + 2?',
+          questionProgressLabel: 'Pytanie 1/10',
+          questionPointValue: 3,
+          questionChoicesSummary: 'Opcje odpowiedzi: A - 3; B - 4.',
+          selectedChoiceLabel: 'B',
+          selectedChoiceText: '4',
+          answerRevealed: false,
+        },
+      })
+    );
+    resolveKangurAiTutorSectionKnowledgeBundleMock.mockResolvedValue({
+      section: {
+        id: 'test-question',
+        pageKey: 'Tests',
+        screenKey: 'suite',
+        surface: 'test',
+        route: '/tests',
+        componentId: 'question',
+        widget: 'KangurTestQuestionRenderer',
+        sourcePath: 'src/features/kangur/ui/components/KangurTestSuitePlayer.tsx',
+        title: 'Pytanie testowe',
+        summary: 'Przeczytaj tresc zadania i wybierz jedna odpowiedz przed sprawdzeniem wyniku.',
+        body: 'Ta sekcja pokazuje aktywne pytanie wraz z mozliwymi odpowiedziami.',
+        anchorIdPrefix: 'kangur-test-question',
+        focusKind: 'question',
+        contentIdPrefixes: ['suite-1'],
+        nativeGuideIds: ['test-question'],
+        triggerPhrases: ['pytanie testowe'],
+        tags: ['page-content', 'test'],
+        notes: 'Aktywne pytanie testowe.',
+        enabled: true,
+        sortOrder: 10,
+      },
+      linkedNativeGuides: [],
+      instructions: 'unused in direct-answer path',
+      sources: [
+        {
+          documentId: 'test-question',
+          collectionId: 'kangur_page_content',
+          text: 'Pytanie testowe\nPrzeczytaj tresc zadania i wybierz jedna odpowiedz przed sprawdzeniem wyniku.',
+          score: 0.99,
+          metadata: {
+            source: 'manual-text',
+            sourceId: 'test-question',
+            title: 'Pytanie testowe',
+            description:
+              'Przeczytaj tresc zadania i wybierz jedna odpowiedz przed sprawdzeniem wyniku.',
+            tags: ['kangur', 'page-content', 'test'],
+          },
+        },
+      ],
+      followUpActions: [],
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Co pokazuje to pytanie testowe?' }],
+          context: {
+            surface: 'test',
+            contentId: 'suite-1',
+            title: 'Kangur Mini',
+            description: 'Ile to jest 2 + 2?',
+            promptMode: 'explain',
+            focusKind: 'question',
+            focusId: 'kangur-test-question:suite-1:question-1',
+            focusLabel: 'Pytanie 1',
+            questionId: 'question-1',
+            currentQuestion: 'Ile to jest 2 + 2?',
+            questionProgressLabel: 'Pytanie 1/10',
+            answerRevealed: false,
+            interactionIntent: 'explain',
+            knowledgeReference: {
+              sourceCollection: 'kangur_page_content',
+              sourceRecordId: 'test-question',
+              sourcePath: 'entry:test-question',
+            },
+          },
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+
+    expect(body.message).toContain('Pytanie testowe: Pytanie 1.');
+    expect(body.message).toContain('Pytanie 1/10: Ile to jest 2 + 2?');
+    expect(body.message).toContain('To pytanie jest warte 3 pkt.');
+    expect(body.message).toContain('Opcje odpowiedzi: A - 3; B - 4.');
+    expect(body.message).toContain('Aktualnie zaznaczona odpowiedz: B - 4.');
+    const testSource = body.sources.find(
+      (source: { documentId: string; collectionId: string; text: string }) =>
+        source.collectionId === 'kangur-runtime-context' &&
+        source.documentId.startsWith('runtime:kangur:test:learner-1:suite-1:')
+    );
+    expect(testSource?.text).toContain('Question value: 3 pts.');
+    expect(testSource?.text).toContain('Opcje odpowiedzi: A - 3; B - 4.');
+    expect(testSource?.text).toContain('Selected choice: B - 4.');
+  });
+
+  it('adds finished test result overlays to direct page-content summary answers', async () => {
+    contextRegistryResolveRefsMock.mockResolvedValue(
+      createContextRegistryBundle({
+        testFacts: {
+          title: 'Kangur Mini',
+          description: 'Zestaw probny.',
+          questionProgressLabel: 'Ukonczono 10/10',
+          resultSummary: 'Wynik koncowy: 24/30 pkt (80%).',
+          answerRevealed: true,
+        },
+      })
+    );
+    resolveKangurAiTutorSectionKnowledgeBundleMock.mockResolvedValue({
+      section: {
+        id: 'test-summary',
+        pageKey: 'Tests',
+        screenKey: 'summary',
+        surface: 'test',
+        route: '/tests',
+        componentId: 'summary',
+        widget: 'KangurSummaryPanel',
+        sourcePath: 'src/features/kangur/ui/components/KangurTestSuitePlayer.tsx',
+        title: 'Podsumowanie testu',
+        summary: 'Sprawdz wynik koncowy i przejrzyj wszystkie odpowiedzi jeszcze raz.',
+        body: 'Ta sekcja zamyka caly test i pokazuje wynik po ukonczeniu zestawu.',
+        anchorIdPrefix: 'kangur-test-summary',
+        focusKind: 'summary',
+        contentIdPrefixes: ['suite-1'],
+        nativeGuideIds: ['test-summary'],
+        triggerPhrases: ['podsumowanie testu'],
+        tags: ['page-content', 'test'],
+        notes: 'Podsumowanie testu.',
+        enabled: true,
+        sortOrder: 10,
+      },
+      linkedNativeGuides: [],
+      instructions: 'unused in direct-answer path',
+      sources: [
+        {
+          documentId: 'test-summary',
+          collectionId: 'kangur_page_content',
+          text: 'Podsumowanie testu\nSprawdz wynik koncowy i przejrzyj wszystkie odpowiedzi jeszcze raz.',
+          score: 0.99,
+          metadata: {
+            source: 'manual-text',
+            sourceId: 'test-summary',
+            title: 'Podsumowanie testu',
+            description: 'Sprawdz wynik koncowy i przejrzyj wszystkie odpowiedzi jeszcze raz.',
+            tags: ['kangur', 'page-content', 'test'],
+          },
+        },
+      ],
+      followUpActions: [],
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Co oznacza to podsumowanie testu?' }],
+          context: {
+            surface: 'test',
+            contentId: 'suite-1',
+            title: 'Kangur Mini',
+            description: 'Wynik koncowy: 24/30 pkt (80%).',
+            promptMode: 'explain',
+            focusKind: 'summary',
+            focusId: 'kangur-test-summary:suite-1',
+            focusLabel: 'Kangur Mini',
+            questionProgressLabel: 'Ukonczono 10/10',
+            answerRevealed: true,
+            interactionIntent: 'explain',
+            knowledgeReference: {
+              sourceCollection: 'kangur_page_content',
+              sourceRecordId: 'test-summary',
+              sourcePath: 'entry:test-summary',
+            },
+          },
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+
+    expect(body.message).toContain('Podsumowanie testu: Kangur Mini.');
+    expect(body.message).toContain('Wynik koncowy: 24/30 pkt (80%).');
+    expect(body.message).toContain('Aktualny stan tej sekcji: Ukonczono 10/10.');
+    const testSource = body.sources.find(
+      (source: { documentId: string; collectionId: string; text: string }) =>
+        source.collectionId === 'kangur-runtime-context' &&
+        source.documentId.startsWith('runtime:kangur:test:learner-1:suite-1:')
+    );
+    expect(testSource?.text).toContain('Wynik koncowy: 24/30 pkt (80%).');
+  });
+
+  it('adds revealed answer overlays to direct page-content review answers', async () => {
+    contextRegistryResolveRefsMock.mockResolvedValue(
+      createContextRegistryBundle({
+        testFacts: {
+          title: 'Kangur Mini',
+          description: 'Zestaw probny.',
+          currentQuestion: 'Ile to jest 2 + 2?',
+          questionProgressLabel: 'Pytanie 1/10',
+          reviewSummary: 'Wybrana odpowiedz: B - 5. Poprawna odpowiedz: A - 4.',
+          revealedExplanation: '2 + 2 daje 4, bo laczymy dwie pary.',
+          answerRevealed: true,
+          correctChoiceLabel: 'A',
+        },
+      })
+    );
+    resolveKangurAiTutorSectionKnowledgeBundleMock.mockResolvedValue({
+      section: {
+        id: 'test-review',
+        pageKey: 'Tests',
+        screenKey: 'suite',
+        surface: 'test',
+        route: '/tests',
+        componentId: 'review',
+        widget: 'KangurTestQuestionRenderer',
+        sourcePath: 'src/features/kangur/ui/components/KangurTestSuitePlayer.tsx',
+        title: 'Omowienie odpowiedzi',
+        summary: 'Porownaj swoj wybor z poprawna odpowiedzia i przeczytaj wyjasnienie.',
+        body: 'Ta sekcja pokazuje wynik Twojej odpowiedzi po odslonieciu rozwiazania.',
+        anchorIdPrefix: 'kangur-test-question',
+        focusKind: 'review',
+        contentIdPrefixes: ['suite-1'],
+        nativeGuideIds: ['test-review'],
+        triggerPhrases: ['omowienie odpowiedzi'],
+        tags: ['page-content', 'test'],
+        notes: 'Review pytania testowego.',
+        enabled: true,
+        sortOrder: 10,
+      },
+      linkedNativeGuides: [],
+      instructions: 'unused in direct-answer path',
+      sources: [
+        {
+          documentId: 'test-review',
+          collectionId: 'kangur_page_content',
+          text: 'Omowienie odpowiedzi\nPorownaj swoj wybor z poprawna odpowiedzia i przeczytaj wyjasnienie.',
+          score: 0.99,
+          metadata: {
+            source: 'manual-text',
+            sourceId: 'test-review',
+            title: 'Omowienie odpowiedzi',
+            description: 'Porownaj swoj wybor z poprawna odpowiedzia i przeczytaj wyjasnienie.',
+            tags: ['kangur', 'page-content', 'test'],
+          },
+        },
+      ],
+      followUpActions: [],
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Wyjasnij mi to omowienie odpowiedzi.' }],
+          context: {
+            surface: 'test',
+            contentId: 'suite-1',
+            title: 'Kangur Mini',
+            description: 'Wybrana odpowiedz: B - 5. Poprawna odpowiedz: A - 4.',
+            promptMode: 'explain',
+            focusKind: 'review',
+            focusId: 'kangur-test-question:suite-1:question-1',
+            focusLabel: 'Pytanie 1',
+            questionId: 'question-1',
+            currentQuestion: 'Ile to jest 2 + 2?',
+            questionProgressLabel: 'Pytanie 1/10',
+            answerRevealed: true,
+            interactionIntent: 'explain',
+            knowledgeReference: {
+              sourceCollection: 'kangur_page_content',
+              sourceRecordId: 'test-review',
+              sourcePath: 'entry:test-review',
+            },
+          },
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+
+    expect(body.message).toContain('Omowienie odpowiedzi: Pytanie 1.');
+    expect(body.message).toContain('Wybrana odpowiedz: B - 5. Poprawna odpowiedz: A - 4.');
+    expect(body.message).toContain('Pytanie 1/10: Ile to jest 2 + 2?');
+    expect(body.message).toContain('Po pokazaniu odpowiedzi: 2 + 2 daje 4, bo laczymy dwie pary.');
+    const testSource = body.sources.find(
+      (source: { documentId: string; collectionId: string; text: string }) =>
+        source.collectionId === 'kangur-runtime-context' &&
+        source.documentId.startsWith('runtime:kangur:test:learner-1:suite-1:')
+    );
+    expect(testSource?.text).toContain('Wybrana odpowiedz: B - 5. Poprawna odpowiedz: A - 4.');
+  });
+
+  it('falls back to canonical correct-answer facts for review answers when no review summary is present', async () => {
+    contextRegistryResolveRefsMock.mockResolvedValue(
+      createContextRegistryBundle({
+        testFacts: {
+          title: 'Kangur Mini',
+          description: 'Zestaw probny.',
+          currentQuestion: 'Ile to jest 2 + 2?',
+          questionProgressLabel: 'Pytanie 1/10',
+          revealedExplanation: '2 + 2 daje 4, bo laczymy dwie pary.',
+          answerRevealed: true,
+          selectedChoiceLabel: 'B',
+          selectedChoiceText: '5',
+          correctChoiceLabel: 'A',
+          correctChoiceText: '4',
+        },
+      })
+    );
+    resolveKangurAiTutorSectionKnowledgeBundleMock.mockResolvedValue({
+      section: {
+        id: 'test-review',
+        pageKey: 'Tests',
+        screenKey: 'suite',
+        surface: 'test',
+        route: '/tests',
+        componentId: 'review',
+        widget: 'KangurTestQuestionRenderer',
+        sourcePath: 'src/features/kangur/ui/components/KangurTestSuitePlayer.tsx',
+        title: 'Omowienie odpowiedzi',
+        summary: 'Porownaj swoj wybor z poprawna odpowiedzia i przeczytaj wyjasnienie.',
+        body: 'Ta sekcja pokazuje wynik Twojej odpowiedzi po odslonieciu rozwiazania.',
+        anchorIdPrefix: 'kangur-test-question',
+        focusKind: 'review',
+        contentIdPrefixes: ['suite-1'],
+        nativeGuideIds: ['test-review'],
+        triggerPhrases: ['omowienie odpowiedzi'],
+        tags: ['page-content', 'test'],
+        notes: 'Review pytania testowego.',
+        enabled: true,
+        sortOrder: 10,
+      },
+      linkedNativeGuides: [],
+      instructions: 'unused in direct-answer path',
+      sources: [
+        {
+          documentId: 'test-review',
+          collectionId: 'kangur_page_content',
+          text: 'Omowienie odpowiedzi\nPorownaj swoj wybor z poprawna odpowiedzia i przeczytaj wyjasnienie.',
+          score: 0.99,
+          metadata: {
+            source: 'manual-text',
+            sourceId: 'test-review',
+            title: 'Omowienie odpowiedzi',
+            description: 'Porownaj swoj wybor z poprawna odpowiedzia i przeczytaj wyjasnienie.',
+            tags: ['kangur', 'page-content', 'test'],
+          },
+        },
+      ],
+      followUpActions: [],
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Co oznacza to omowienie odpowiedzi?' }],
+          context: {
+            surface: 'test',
+            contentId: 'suite-1',
+            title: 'Kangur Mini',
+            promptMode: 'explain',
+            focusKind: 'review',
+            focusId: 'kangur-test-question:suite-1:question-1',
+            focusLabel: 'Pytanie 1',
+            questionId: 'question-1',
+            currentQuestion: 'Ile to jest 2 + 2?',
+            questionProgressLabel: 'Pytanie 1/10',
+            answerRevealed: true,
+            interactionIntent: 'explain',
+            knowledgeReference: {
+              sourceCollection: 'kangur_page_content',
+              sourceRecordId: 'test-review',
+              sourcePath: 'entry:test-review',
+            },
+          },
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+
+    expect(body.message).toContain('Poprawna odpowiedz: A - 4.');
+    expect(body.message).toContain('Wybrana odpowiedz: B - 5.');
+    expect(body.message).toContain('Po pokazaniu odpowiedzi: 2 + 2 daje 4, bo laczymy dwie pary.');
+    const testSource = body.sources.find(
+      (source: { documentId: string; collectionId: string; text: string }) =>
+        source.collectionId === 'kangur-runtime-context' &&
+        source.documentId.startsWith('runtime:kangur:test:learner-1:suite-1:')
+    );
+    expect(testSource?.text).toContain('Selected choice: B - 5.');
+    expect(testSource?.text).toContain('Correct choice: A - 4.');
+  });
+
   it('passes explicit knowledge references through to the native-guide resolver', async () => {
     resolveKangurAiTutorNativeGuideResolutionMock.mockResolvedValue({
       status: 'hit',

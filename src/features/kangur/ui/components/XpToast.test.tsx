@@ -31,24 +31,24 @@ describe('XpToast', () => {
     render(
       <XpToast
         dailyQuest={{
-          title: '➗ Powtorka: Dzielenie',
+          title: '➗ Powtórka: Dzielenie',
           summary: '82% / 75% opanowania',
           xpAwarded: 55,
         }}
         breakdown={[
-          { kind: 'base', label: 'Ukonczenie rundy', xp: 10 },
-          { kind: 'accuracy', label: 'Skutecznosc', xp: 15 },
+          { kind: 'base', label: 'Ukończenie rundy', xp: 10 },
+          { kind: 'accuracy', label: 'Skuteczność', xp: 15 },
         ]}
         newBadges={['first_game']}
         nextBadge={{
           emoji: '🌟',
-          name: 'Tysiacznik',
+          name: 'Tysiącznik',
           summary: '480/1000 XP',
         }}
         recommendation={{
           label: 'Misja dnia',
-          summary: 'Ten ruch domknal polecany kierunek i misje dnia.',
-          title: '➗ Powtorka: Dzielenie',
+          summary: 'Ten ruch domknął polecany kierunek i misję dnia.',
+          title: '➗ Powtórka: Dzielenie',
         }}
         visible
         xpGained={25}
@@ -69,13 +69,13 @@ describe('XpToast', () => {
       '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(224_231_255))]',
       '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(224_231_255))]'
     );
-    expect(screen.getByText('Swietnie, trzymasz polecany kierunek')).toBeInTheDocument();
+    expect(screen.getByText('Świetnie, trzymasz polecany kierunek')).toBeInTheDocument();
     expect(screen.getByTestId('xp-toast-breakdown')).toBeInTheDocument();
     expect(screen.getByTestId('xp-toast-breakdown-base')).toHaveTextContent(
-      'Ukonczenie rundy +10'
+      'Ukończenie rundy +10'
     );
     expect(screen.getByTestId('xp-toast-breakdown-accuracy')).toHaveTextContent(
-      'Skutecznosc +15'
+      'Skuteczność +15'
     );
     expect(screen.getByText(/Nowa odznaka/)).toHaveClass(
       '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(254_243_199))]',
@@ -83,16 +83,16 @@ describe('XpToast', () => {
     );
     expect(screen.getByText('Pierwsza gra')).toBeInTheDocument();
     expect(screen.getByTestId('xp-toast-badge-desc-first_game')).toHaveTextContent(
-      'Ukoncz pierwsza gre'
+      'Ukończ pierwszą grę'
     );
     expect(screen.getByTestId('xp-toast-next-badge')).toHaveTextContent(
-      'Nastepna odznaka: 🌟 Tysiacznik · 480/1000 XP'
+      'Następna odznaka: 🌟 Tysiącznik · 480/1000 XP'
     );
     expect(screen.getByTestId('xp-toast-daily-quest')).toHaveTextContent(
-      'Misja dnia ukonczona: ➗ Powtorka: Dzielenie · 82% / 75% opanowania · +55 XP'
+      'Misja dnia ukończona: ➗ Powtórka: Dzielenie · 82% / 75% opanowania · +55 XP'
     );
     expect(screen.getByTestId('xp-toast-recommendation')).toHaveTextContent(
-      'Polecony kierunek: ➗ Powtorka: Dzielenie · Ten ruch domknal polecany kierunek i misje dnia.'
+      'Polecony kierunek: ➗ Powtórka: Dzielenie · Ten ruch domknął polecany kierunek i misję dnia.'
     );
   });
 

@@ -126,7 +126,7 @@ describe('KangurGameQuestionWidget', () => {
     );
     expect(screen.getByTestId('kangur-game-question-momentum')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-game-question-accuracy')).toHaveTextContent(
-      'Skutecznosc rundy: 100%'
+      'Skuteczność rundy: 100%'
     );
     expect(screen.getByTestId('kangur-game-question-perfect-run')).toHaveTextContent(
       'Perfekt w toku'
@@ -141,7 +141,7 @@ describe('KangurGameQuestionWidget', () => {
       'Misja dnia: 1/2 runda dzisiaj'
     );
     expect(screen.getByTestId('kangur-game-question-next-badge')).toHaveTextContent(
-      'Nastepna odznaka: 420/500 XP'
+      'Następna odznaka: 420/500 XP'
     );
     expect(screen.getByTestId('mock-question-card')).toBeInTheDocument();
   });
@@ -185,7 +185,7 @@ describe('KangurGameQuestionWidget', () => {
     render(<KangurGameQuestionWidget />);
 
     expect(screen.getByTestId('kangur-game-question-accuracy')).toHaveTextContent(
-      'Skutecznosc rundy: 100%'
+      'Skuteczność rundy: 100%'
     );
     expect(screen.getByTestId('kangur-game-question-perfect-run')).toHaveTextContent(
       'Perfekt w toku'

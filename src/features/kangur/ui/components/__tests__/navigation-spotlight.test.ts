@@ -93,6 +93,14 @@ describe('scrollToAndSpotlightAnchor', () => {
       const overlay = getOverlay();
       expect(overlay).not.toBeNull();
       expect(overlay?.getAttribute('data-testid')).toBe('kangur-ai-tutor-navigation-spotlight');
+      expect(overlay).toHaveClass('kangur-chat-spotlight-frame');
+      expect(overlay?.style.borderRadius).toBe('var(--kangur-chat-spotlight-radius-md, 22px)');
+      expect(overlay?.style.border).toBe(
+        '2px solid var(--kangur-chat-spotlight-border, rgba(251, 191, 36, 0.75))'
+      );
+      expect(overlay?.style.boxShadow).toBe(
+        '0 0 0 6px var(--kangur-chat-spotlight-shadow, rgba(251, 191, 36, 0.12))'
+      );
     });
 
     it('does not append overlay when element has zero dimensions', () => {

@@ -417,7 +417,7 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
         focusKind: 'home_actions',
         focusId: 'kangur-game-home-actions',
         contentId: 'game:home',
-        title: 'Strona glowna gry',
+        title: 'Strona główna gry',
       } as never,
       locale: 'pl',
     });

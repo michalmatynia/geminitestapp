@@ -62,15 +62,15 @@ export default function ProgressOverview({
     dailyQuest?.reward.status === 'claimed' ? 'emerald' : dailyQuestAccent;
 
   const stats: ProgressStat[] = [
-    { accent: 'indigo', label: 'Laczne XP', value: totalXp },
-    { accent: 'violet', label: 'XP / gre', value: averageXpPerSession },
+    { accent: 'indigo', label: 'Łączne XP', value: totalXp },
+    { accent: 'violet', label: 'XP / grę', value: averageXpPerSession },
     { accent: 'sky', label: 'Rozegrane gry', value: gamesPlayed },
     {
       accent: 'emerald',
-      label: 'Ukonczone lekcje',
+      label: 'Ukończone lekcje',
       value: lessonsCompleted,
     },
-    { accent: 'amber', label: 'Srednia skutecznosc', value: `${averageAccuracy}%` },
+    { accent: 'amber', label: 'Średnia skuteczność', value: `${averageAccuracy}%` },
     { accent: 'rose', label: 'Najlepsza seria', value: progress.bestWinStreak ?? 0 },
   ];
 
@@ -85,11 +85,11 @@ export default function ProgressOverview({
         <KangurDisplayEmoji size='md'>🎖️</KangurDisplayEmoji>
         <div className='flex-1'>
           <KangurPanelIntro
-            eyebrow='Poziom i doswiadczenie'
+            eyebrow='Poziom i doświadczenie'
             title={currentLevel.title}
             titleAs='p'
             titleClassName={`mt-1 text-lg font-extrabold sm:text-xl ${currentLevel.color}`}
-            description={`Poziom ${currentLevel.level} · ${totalXp} XP lacznie`}
+            description={`Poziom ${currentLevel.level} · ${totalXp} XP łącznie`}
             descriptionClassName='mb-2'
           />
           <KangurProgressBar
@@ -102,7 +102,7 @@ export default function ProgressOverview({
           <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
             {nextLevel
               ? `Do poziomu ${nextLevel.level}: ${xpNeeded - xpIntoLevel} XP`
-              : 'Osiagnieto maksymalny poziom!'}
+              : 'Osiągnięto maksymalny poziom!'}
           </p>
         </div>
       </KangurGlassPanel>
@@ -174,7 +174,7 @@ export default function ProgressOverview({
       {operationsPlayed.length > 0 && (
         <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
           <KangurSectionEyebrow as='p' className='mb-3'>
-            Cwiczone operacje
+            Ćwiczone operacje
           </KangurSectionEyebrow>
           <div className='flex flex-wrap gap-2'>
             {operationsPlayed.map((operation) => (
@@ -194,7 +194,7 @@ export default function ProgressOverview({
       {topActivities.length > 0 && (
         <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
           <KangurSectionEyebrow as='p' className='mb-3'>
-            Najczesciej cwiczone aktywnosci
+            Najczęściej ćwiczone aktywności
           </KangurSectionEyebrow>
           <div className='flex flex-col gap-3'>
             {topActivities.map((activity) => (
@@ -203,7 +203,7 @@ export default function ProgressOverview({
                 dataTestId={`progress-overview-activity-${activity.key}`}
                 description={`${
                   activity.sessionsPlayed
-                } sesji · ${activity.averageXpPerSession} XP / gre · srednio ${
+                } sesji · ${activity.averageXpPerSession} XP / grę · średnio ${
                   activity.averageAccuracy
                 }% · najlepszy wynik ${activity.bestScorePercent}%`}
                 descriptionClassName='text-xs [color:var(--kangur-page-muted-text)]'
@@ -216,7 +216,7 @@ export default function ProgressOverview({
 
       <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
         <KangurSectionEyebrow as='p' className='mb-3'>
-          Sciezki odznak
+          Ścieżki odznak
         </KangurSectionEyebrow>
         <KangurBadgeTrackGrid
           dataTestIdPrefix='progress-overview-badge-track'

@@ -178,7 +178,7 @@ const buildTrackerSummary = (
       if (assignment.progress.status === 'not_started' && assignment.priority === 'high') {
         return {
           assignment,
-          reason: 'Wysoki priorytet, ale uczen jeszcze nie rozpoczal tego zadania.',
+          reason: 'Wysoki priorytet, ale uczeń jeszcze nie rozpoczal tego zadania.',
         };
       }
       if (assignment.progress.status === 'not_started') {
@@ -190,13 +190,13 @@ const buildTrackerSummary = (
       if (assignment.progress.status === 'in_progress' && assignment.progress.percent < 50) {
         return {
           assignment,
-          reason: 'Postep jest ponizej polowy celu, warto przypomniec o kontynuacji.',
+          reason: 'Postęp jest poniżej polowy celu, warto przypomniec o kontynuacji.',
         };
       }
       if (assignment.progress.status === 'in_progress' && !assignment.progress.lastActivityAt) {
         return {
           assignment,
-          reason: 'Zadanie jest oznaczone jako rozpoczete, ale brak zapisanej aktywnosci.',
+          reason: 'Zadanie jest oznaczone jako rozpoczete, ale brak zapisanej aktywności.',
         };
       }
 
@@ -354,7 +354,7 @@ export function KangurAssignmentManager({
         ? (error as { status?: unknown }).status
         : null;
     if (status === 409) {
-      return 'To zadanie jest juz aktywne.';
+      return 'To zadanie jest już aktywne.';
     }
     return fallback;
   };
@@ -367,7 +367,7 @@ export function KangurAssignmentManager({
       await createAssignment(item.createInput);
       setFeedback(`Przypisano: ${item.title}.`);
     } catch (error: unknown) {
-      setFeedback(resolveActionErrorMessage(error, 'Nie udalo sie przypisac zadania.'));
+      setFeedback(resolveActionErrorMessage(error, 'Nie udalo się przypisac zadania.'));
     } finally {
       setPendingActionId(null);
     }
@@ -390,7 +390,7 @@ export function KangurAssignmentManager({
       await updateAssignment(assignmentId, { archived: true });
       setFeedback('Zadanie przeniesiono do archiwum.');
     } catch {
-      setFeedback('Nie udalo sie zarchiwizowac zadania.');
+      setFeedback('Nie udalo się zarchiwizowac zadania.');
     } finally {
       setPendingActionId(null);
     }
@@ -515,8 +515,8 @@ export function KangurAssignmentManager({
           accent='indigo'
           className='mt-5'
           dataTestId='assignment-manager-track-summary'
-          description='Najwazniejsze sciezki odznak, ktore aktualnie buduje uczen.'
-          label='Sciezki postepu ucznia'
+          description='Najważniejsze ścieżki odznak, które aktualnie buduje uczeń.'
+          label='Ścieżki postępu ucznia'
         >
           <div className='mt-3'>
             <KangurBadgeTrackHighlights
@@ -556,7 +556,7 @@ export function KangurAssignmentManager({
         {feedback ? (
           <KangurAssignmentManagerPanel
             accent={
-              feedback.toLowerCase().includes('nie uda') || feedback.toLowerCase().includes('juz')
+              feedback.toLowerCase().includes('nie uda') || feedback.toLowerCase().includes('już')
                 ? 'rose'
                 : 'indigo'
             }
@@ -684,7 +684,7 @@ export function KangurAssignmentManager({
           accent='slate'
           className='mt-4'
           description='odsetek wszystkich niearchiwalnych zadań, które uczeń ma już zakończone'
-          label='Skutecznosc wykonania'
+          label='Skuteczność wykonania'
           value={`${trackerSummary.completionRate}%`}
         />
 

@@ -12,6 +12,7 @@ const {
   useKangurRoutingMock,
   useKangurAuthMock,
   useKangurProgressStateMock,
+  useKangurPageContentEntryMock,
   navigateToLoginMock,
   logoutMock,
   selectLearnerMock,
@@ -20,6 +21,7 @@ const {
   useKangurRoutingMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
   useKangurProgressStateMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(),
   navigateToLoginMock: vi.fn(),
   logoutMock: vi.fn(),
   selectLearnerMock: vi.fn(),
@@ -59,6 +61,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
   useKangurProgressState: useKangurProgressStateMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
+}));
+
 vi.mock('@/features/kangur/ui/components/KangurAssignmentManager', () => ({
   __esModule: true,
   default: () => <div data-testid='kangur-assignment-manager'>Assignment manager</div>,
@@ -94,6 +100,13 @@ describe('ParentDashboard page', () => {
       basePath: '/kangur',
     });
     useKangurProgressStateMock.mockReturnValue(baseProgress);
+    useKangurPageContentEntryMock.mockReturnValue({
+      entry: null,
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
     useKangurAuthMock.mockReturnValue({
       isAuthenticated: false,
       user: null,
@@ -114,12 +127,12 @@ describe('ParentDashboard page', () => {
     expect(screen.getByRole('heading', { name: 'Panel Rodzica / Nauczyciela' })).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Ten widok pokazuje prywatne postepy ucznia, wiec wymaga konta rodzica. Jesli go jeszcze nie masz, zaloz je bez opuszczania StudiQ.'
+        'Ten widok pokazuje prywatne postępy ucznia, więc wymaga konta rodzica. Jeśli go jeszcze nie masz, załóż je bez opuszczania StudiQ.'
       )
     ).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Zaloguj sie' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Utworz konto rodzica' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Zaloguj się' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Utwórz konto rodzica' }));
 
     expect(navigateToLoginMock).toHaveBeenCalledTimes(2);
     expect(navigateToLoginMock).toHaveBeenLastCalledWith({
@@ -183,7 +196,7 @@ describe('ParentDashboard page', () => {
     const activeLearnerCard = screen.getByTestId('parent-dashboard-learner-card-learner-1');
     const inactiveLearnerCard = screen.getByTestId('parent-dashboard-learner-card-learner-2');
     const progressTab = screen.getByRole('button', { name: /Postep/i });
-    const scoresTab = screen.getByRole('button', { name: /Wyniki gier/i });
+    const scoresTab = screen.getByRole('button', { name: /Wyniki/i });
     const assignmentsTab = screen.getByRole('button', { name: /Zadania/i });
 
     expect(activeLearnerCard).toHaveAttribute('aria-pressed', 'true');
@@ -201,7 +214,7 @@ describe('ParentDashboard page', () => {
       'rounded-full',
       'border'
     );
-    expect(within(inactiveLearnerCard).getByText('Wylaczony')).toHaveClass(
+    expect(within(inactiveLearnerCard).getByText('Wyłączony')).toHaveClass(
       'rounded-full',
       'border'
     );

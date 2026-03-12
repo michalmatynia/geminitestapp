@@ -24,7 +24,7 @@ describe('KangurAiTutorSelectionAction', () => {
 
     expect(root).toHaveAttribute('data-selection-placement', 'bottom');
     expect(badge).toHaveClass(
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_18%,rgba(255,255,255,0.16))]'
+      'kangur-chat-selection-badge'
     );
 
     fireEvent.mouseDown(button);

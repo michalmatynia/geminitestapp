@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 
 const KANGUR_PAGE_ACCESSIBILITY_LABELS: Record<string, string> = {
-  Game: 'Strona glowna',
+  Game: 'Strona główna',
   Lessons: 'Lekcje',
   Tests: 'Testy',
   LearnerProfile: 'Profil ucznia',

@@ -128,8 +128,8 @@ describe('KangurAssignmentManager', () => {
     );
     expect(screen.getByText('Nauka zegara')).toBeInTheDocument();
     expect(screen.getAllByText('Trening mieszany').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Trening: Ulamki')).toBeInTheDocument();
-    expect(screen.getByText('Trening: Potegi')).toBeInTheDocument();
+    expect(screen.getByText('Trening: Ułamki')).toBeInTheDocument();
+    expect(screen.getByText('Trening: Potęgi')).toBeInTheDocument();
     expect(screen.getByText('Trening: Pierwiastki')).toBeInTheDocument();
     expect(screen.getByTestId('assignment-manager-catalog-card-practice-clock')).toHaveClass(
       'soft-card'
@@ -268,22 +268,22 @@ describe('KangurAssignmentManager', () => {
 
     expect(screen.getByText('Monitorowanie zadań')).toBeInTheDocument();
     expect(screen.getByText('Do uwagi')).toBeInTheDocument();
-    expect(screen.getByText('Skutecznosc wykonania')).toBeInTheDocument();
-    expect(screen.getByText('Skutecznosc wykonania').parentElement).toHaveClass(
+    expect(screen.getByText('Skuteczność wykonania')).toBeInTheDocument();
+    expect(screen.getByText('Skuteczność wykonania').parentElement).toHaveClass(
       'soft-card'
     );
     expect(screen.getByText('33%')).toBeInTheDocument();
     expect(
-      screen.getByText('Wysoki priorytet, ale uczen jeszcze nie rozpoczal tego zadania.')
+      screen.getByText('Wysoki priorytet, ale uczeń jeszcze nie rozpoczal tego zadania.')
     ).toBeInTheDocument();
     expect(
-      screen.getByText('Postep jest ponizej polowy celu, warto przypomniec o kontynuacji.')
+      screen.getByText('Postęp jest poniżej polowy celu, warto przypomniec o kontynuacji.')
     ).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Przypisz sugestię' }));
 
     expect(createAssignmentMock).toHaveBeenCalledTimes(1);
-    expect(screen.getByText('To zadanie jest juz aktywne.')).toBeInTheDocument();
+    expect(screen.getByText('To zadanie jest już aktywne.')).toBeInTheDocument();
   });
 
   it('uses the shared empty-state surface when no attention items are present', () => {

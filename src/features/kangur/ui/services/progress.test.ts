@@ -453,7 +453,7 @@ describe('kangur progress mastery helpers', () => {
       isUnlocked: true,
     });
     expect(badges.find((badge) => badge.id === 'variety')).toMatchObject({
-      summary: '1/5 typow',
+      summary: '1/5 typów',
     });
   });
 

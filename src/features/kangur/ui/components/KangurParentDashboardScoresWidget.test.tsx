@@ -90,7 +90,7 @@ describe('KangurParentDashboardScoresWidget', () => {
       entry: {
         id: 'parent-dashboard-scores',
         title: 'Wyniki ucznia',
-        summary: 'Sprawdz ostatnie gry i obszary, ktore warto teraz powtorzyc.',
+        summary: 'Sprawdź ostatnie gry i obszary, które warto teraz powtórzyć.',
       },
       error: null,
       isError: false,
@@ -107,7 +107,7 @@ describe('KangurParentDashboardScoresWidget', () => {
 
     expect(screen.getByText('Wyniki ucznia')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(
-      screen.getByText('Sprawdz ostatnie gry i obszary, ktore warto teraz powtorzyc.')
+      screen.getByText('Sprawdź ostatnie gry i obszary, które warto teraz powtórzyć.')
     ).toHaveClass('[color:var(--kangur-page-muted-text)]');
   });
 

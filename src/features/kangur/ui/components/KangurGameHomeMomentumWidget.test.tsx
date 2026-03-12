@@ -66,9 +66,9 @@ describe('KangurGameHomeMomentumWidget', () => {
     expect(screen.getByTestId('kangur-home-momentum-widget')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-home-momentum-label')).toHaveTextContent('Priorytet wysoki');
     expect(screen.getByTestId('kangur-home-momentum-title')).toHaveTextContent(
-      'Dzis warto: Dzielenie'
+      'Dziś warto: Dzielenie'
     );
-    expect(screen.getByRole('link', { name: 'Otworz lekcje' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Otwórz lekcję' })).toHaveAttribute(
       'href',
       '/kangur/lessons?focus=division'
     );
@@ -122,7 +122,7 @@ describe('KangurGameHomeMomentumWidget', () => {
     );
 
     expect(screen.getByTestId('kangur-home-momentum-title')).toHaveTextContent(
-      'Zbuduj serie na nowo'
+      'Zbuduj serię na nowo'
     );
     expect(screen.getByRole('link', { name: 'Zagraj teraz' })).toHaveAttribute(
       'href',
@@ -158,7 +158,7 @@ describe('KangurGameHomeMomentumWidget', () => {
       'Dopnij: Trzymam kierunek'
     );
     expect(screen.getByTestId('kangur-home-momentum-description')).toHaveTextContent(
-      'Masz juz 2/3 rundy w poleconym rytmie.'
+      'Masz już 2/3 rundy w poleconym rytmie.'
     );
     expect(screen.getByRole('link', { name: 'Uruchom trening' })).toBeInTheDocument();
   });

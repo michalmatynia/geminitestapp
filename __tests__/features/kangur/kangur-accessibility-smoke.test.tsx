@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@/__tests__/test-utils';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -224,22 +224,22 @@ describe('Kangur accessibility smoke', () => {
     expect(scoreFilterMock).toHaveBeenCalledWith({ learner_id: 'learner-jan' }, '-created_date', 120);
     expect(scoreFilterMock).toHaveBeenCalledWith({ created_by: 'jan@example.com' }, '-created_date', 120);
     expect(scoreFilterMock).toHaveBeenCalledWith({ player_name: 'Jan' }, '-created_date', 120);
-    expect(screen.getByRole('link', { name: 'Przejdz do glownej tresci' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Przejdź do głównej treści' })).toHaveAttribute(
       'href',
       '#kangur-learner-profile-main'
     );
-    expect(screen.getByRole('navigation', { name: 'Glowna nawigacja Kangur' })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Główna nawigacja Kangur' })).toBeInTheDocument();
     expect(screen.getByRole('main')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Profil ucznia' })).toBeInTheDocument();
 
-    expect(screen.getByRole('link', { name: 'Strona glowna' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Strona główna' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Lekcje' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Profil' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Rodzic' })).toBeVisible();
-    expect(screen.getByText('Plan na dzis')).toBeVisible();
+    expect(screen.getByText('Plan na dziś')).toBeVisible();
 
     expect(screen.getByRole('link', { name: 'Zagraj teraz' })).toBeVisible();
-    expect(screen.getByRole('link', { name: 'Otworz lekcje' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Otwórz lekcję' })).toBeVisible();
   });
 
   it('has no obvious accessibility violations in the learner profile shell', async () => {
@@ -271,7 +271,7 @@ describe('Kangur accessibility smoke', () => {
     renderLearnerProfilePage();
 
     const loginButton = screen.getByRole('button', {
-      name: 'Zaloguj sie, aby synchronizowac postep',
+      name: 'Zaloguj się, aby synchronizować postęp',
     });
     loginButton.focus();
 
@@ -290,19 +290,19 @@ describe('Kangur accessibility smoke', () => {
 
     renderGamePage();
 
-    expect(screen.getByRole('link', { name: 'Przejdz do glownej tresci' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Przejdź do głównej treści' })).toHaveAttribute(
       'href',
       '#kangur-game-main'
     );
-    expect(screen.getByRole('navigation', { name: 'Glowna nawigacja Kangur' })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Główna nawigacja Kangur' })).toBeInTheDocument();
     expect(screen.getByRole('main', { name: /Sprycio/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Strona glowna' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Strona główna' })).toHaveAttribute(
       'aria-current',
       'page'
     );
     expect(screen.getByRole('heading', { name: 'Ekran startowy' })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Imię gracza' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Wybierz aktywnosc' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Wybierz aktywność' })).toBeInTheDocument();
   });
 
   it('keeps entry-screen back navigation discoverable by accessible name on the game page', async () => {
@@ -317,18 +317,18 @@ describe('Kangur accessibility smoke', () => {
     renderGamePage();
 
     await user.click(getFeaturedHomeAction('Grajmy!'));
-    expect(await screen.findByRole('heading', { name: 'Wybor rodzaju gry' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Wybór rodzaju gry' })).toBeInTheDocument();
     expect(getEntryScreenBackButton('kangur-game-operation-top-section')).toBeInTheDocument();
 
     await user.click(getEntryScreenBackButton('kangur-game-operation-top-section'));
-    expect(await screen.findByRole('heading', { name: 'Wybierz aktywnosc' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Wybierz aktywność' })).toBeInTheDocument();
 
     await user.click(getFeaturedHomeAction('Trening mieszany'));
     expect(await screen.findByRole('heading', { name: 'Konfiguracja treningu' })).toBeInTheDocument();
     expect(getEntryScreenBackButton('kangur-game-training-top-section')).toBeInTheDocument();
 
     await user.click(getEntryScreenBackButton('kangur-game-training-top-section'));
-    expect(await screen.findByRole('heading', { name: 'Wybierz aktywnosc' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Wybierz aktywność' })).toBeInTheDocument();
 
     await user.click(getFeaturedHomeAction('Kangur Matematyczny'));
     expect(

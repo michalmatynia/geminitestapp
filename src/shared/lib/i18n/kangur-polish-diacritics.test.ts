@@ -14,6 +14,7 @@ describe('repairKangurPolishText', () => {
       'Wróć do zakładki i włącz AI Tutora.'
     );
     expect(repairKangurPolishText('Czesc {displayName},')).toBe('Cześć {displayName},');
+    expect(repairKangurPolishText('Czesc, Olu!')).toBe('Cześć, Olu!');
     expect(
       repairKangurPolishText('Jesli to nie Ty tworzysz konto, zignoruj ta wiadomość.')
     ).toBe('Jeśli to nie Ty tworzysz konto, zignoruj tę wiadomość.');

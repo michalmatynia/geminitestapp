@@ -46,7 +46,7 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
   const sectionTitle = sessionsContent?.title ?? 'Historia sesji';
   const sectionSummary =
     sessionsContent?.summary ??
-    'Sprawdz ostatnie podejscia oraz sciezki odznak budowane przez regularna gre.';
+    'Sprawdź ostatnie podejścia oraz ścieżki odznak budowane przez regularną grę.';
 
   return (
     <section className='flex flex-col gap-4'>
@@ -70,15 +70,15 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
             accent='slate'
             align='center'
             data-testid='learner-profile-sessions-loading'
-            description='Sprawdzamy ostatnie podejscia ucznia.'
-            title='Ladowanie historii...'
+            description='Sprawdzamy ostatnie podejścia ucznia.'
+            title='Ładowanie historii...'
           />
         ) : scoresError ? (
           <KangurEmptyState
             accent='rose'
             align='center'
             data-testid='learner-profile-sessions-error'
-            description='Sprobuj odswiezyc profil za chwile.'
+            description='Spróbuj odświeżyć profil za chwilę.'
             title={scoresError}
           />
         ) : snapshot.recentSessions.length === 0 ? (
@@ -86,7 +86,7 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
             accent='slate'
             align='center'
             data-testid='learner-profile-sessions-empty'
-            description='Pierwsze sesje pojawia sie tutaj automatycznie.'
+            description='Pierwsze sesje pojawią się tutaj automatycznie.'
             title='Brak rozegranych sesji.'
           />
         ) : (
@@ -118,7 +118,7 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
 
       <KangurGlassPanel className='xl:col-span-2' padding='lg' surface='solid' variant='subtle'>
         <KangurSectionEyebrow className='mb-3'>
-          Sciezki odznak
+          Ścieżki odznak
         </KangurSectionEyebrow>
         <KangurBadgeTrackGrid
           className='grid-cols-1'

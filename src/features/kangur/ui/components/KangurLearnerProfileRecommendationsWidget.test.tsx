@@ -63,8 +63,8 @@ describe('KangurLearnerProfileRecommendationsWidget', () => {
     useKangurPageContentEntryMock.mockReturnValue({
       entry: {
         id: 'learner-profile-recommendations',
-        title: 'Plan na dzis',
-        summary: 'Mongo opis kolejnych krokow dla ucznia.',
+        title: 'Plan na dziś',
+        summary: 'Mongo opis kolejnych kroków dla ucznia.',
       },
       data: undefined,
       isLoading: false,
@@ -78,8 +78,8 @@ describe('KangurLearnerProfileRecommendationsWidget', () => {
           {
             id: 'rec-1',
             priority: 'high',
-            title: 'Wroc do zegara',
-            description: 'Jedna krotka runda pomoze domknac aktualny poziom.',
+            title: 'Wróć do zegara',
+            description: 'Jedna krótka runda pomoże domknąć aktualny poziom.',
             action: {
               label: 'Uruchom trening',
               page: 'Game',
@@ -95,13 +95,13 @@ describe('KangurLearnerProfileRecommendationsWidget', () => {
     render(<KangurLearnerProfileRecommendationsWidget />);
 
     expect(screen.getByTestId('learner-profile-recommendations-intro')).toHaveTextContent(
-      'Plan na dzis'
+      'Plan na dziś'
     );
     expect(screen.getByTestId('learner-profile-recommendations-intro')).toHaveTextContent(
-      'Mongo opis kolejnych krokow dla ucznia.'
+      'Mongo opis kolejnych kroków dla ucznia.'
     );
     expect(screen.getByText('Priorytet wysoki')).toBeInTheDocument();
-    expect(screen.getByText('Wroc do zegara')).toBeInTheDocument();
+    expect(screen.getByText('Wróć do zegara')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Uruchom trening' })).toHaveAttribute(
       'href',
       '/kangur/game?quickStart=operation'

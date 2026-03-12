@@ -128,6 +128,7 @@ describe('agent persona avatar handler', () => {
         folder: 'personas/persona_1/neutral',
         thumbnail: {
           ref: 'persona_1:neutral:thumb:abc123',
+          dataUrl: 'data:image/webp;base64,ZmFrZQ==',
           mimeType: 'image/webp',
           bytes: 2048,
           width: 96,

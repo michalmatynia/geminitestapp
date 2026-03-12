@@ -6,14 +6,17 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const {
   readStoredSettingValueMock,
+  upsertStoredSettingValueMock,
   readAgentPersonaAvatarThumbnailByRefMock,
 } = vi.hoisted(() => ({
   readStoredSettingValueMock: vi.fn(),
+  upsertStoredSettingValueMock: vi.fn(),
   readAgentPersonaAvatarThumbnailByRefMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/ai-brain/server', () => ({
   readStoredSettingValue: readStoredSettingValueMock,
+  upsertStoredSettingValue: upsertStoredSettingValueMock,
 }));
 
 vi.mock('@/features/ai/agentcreator/server/persona-avatar-thumbnails', () => ({
@@ -34,6 +37,7 @@ const createRequestContext = (): ApiHandlerContext =>
 describe('agent persona visuals handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    upsertStoredSettingValueMock.mockResolvedValue(true);
   });
 
   it('returns one persona with embedded thumbnail data resolved for Kangur', async () => {
@@ -85,6 +89,10 @@ describe('agent persona visuals handler', () => {
     expect(response.headers.get('Cache-Control')).toBe('no-store');
     expect(readStoredSettingValueMock).toHaveBeenCalledWith(AGENT_PERSONA_SETTINGS_KEY);
     expect(readAgentPersonaAvatarThumbnailByRefMock).toHaveBeenCalledWith('thumb-neutral-1');
+    expect(upsertStoredSettingValueMock).toHaveBeenCalledWith(
+      AGENT_PERSONA_SETTINGS_KEY,
+      expect.stringContaining('"avatarThumbnailDataUrl":"data:image/webp;base64,ZmFrZQ=="')
+    );
     await expect(response.json()).resolves.toEqual(
       expect.objectContaining({
         id: 'persona-1',
@@ -102,6 +110,58 @@ describe('agent persona visuals handler', () => {
           }),
         ]),
       }),
+    );
+  });
+
+  it('returns embedded thumbnail data already stored in the persona document', async () => {
+    readStoredSettingValueMock.mockResolvedValue(
+      JSON.stringify([
+        {
+          id: 'persona-1',
+          name: 'Mila',
+          defaultMoodId: 'neutral',
+          moods: [
+            {
+              id: 'neutral',
+              label: 'Neutral',
+              svgContent: '',
+              avatarImageUrl: '/uploads/personas/persona-1/neutral/avatar.png',
+              avatarThumbnailDataUrl: 'data:image/webp;base64,inline-thumb',
+              avatarThumbnailMimeType: 'image/webp',
+              avatarThumbnailBytes: 1024,
+              avatarThumbnailWidth: 96,
+              avatarThumbnailHeight: 96,
+              useEmbeddedThumbnail: true,
+            },
+          ],
+        },
+      ])
+    );
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/agentcreator/personas/persona-1/visuals'),
+      createRequestContext(),
+      { personaId: 'persona-1' }
+    );
+
+    expect(response.status).toBe(200);
+    expect(readAgentPersonaAvatarThumbnailByRefMock).not.toHaveBeenCalled();
+    expect(upsertStoredSettingValueMock).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        id: 'persona-1',
+        moods: expect.arrayContaining([
+          expect.objectContaining({
+            id: 'neutral',
+            avatarThumbnailDataUrl: 'data:image/webp;base64,inline-thumb',
+            avatarThumbnailMimeType: 'image/webp',
+            avatarThumbnailBytes: 1024,
+            avatarThumbnailWidth: 96,
+            avatarThumbnailHeight: 96,
+            useEmbeddedThumbnail: true,
+          }),
+        ]),
+      })
     );
   });
 
@@ -134,6 +194,7 @@ describe('agent persona visuals handler', () => {
 
     expect(response.status).toBe(200);
     expect(readAgentPersonaAvatarThumbnailByRefMock).not.toHaveBeenCalled();
+    expect(upsertStoredSettingValueMock).not.toHaveBeenCalled();
     await expect(response.json()).resolves.toEqual(
       expect.objectContaining({
         id: 'persona-1',

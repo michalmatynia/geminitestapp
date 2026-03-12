@@ -23,10 +23,122 @@ const buildRuntimeDocumentSourceText = (
       ?.map((section) => (typeof section.text === 'string' ? section.text.trim() : ''))
       .find(Boolean) ?? null;
   const summary = document.summary.trim();
+  const rawQuestionPointValue = document.facts?.['questionPointValue'];
+  const learnerSummary = readStringFact(document, 'learnerSummary');
   const currentQuestion = readStringFact(document, 'currentQuestion');
+  const questionProgressLabel = readStringFact(document, 'questionProgressLabel');
+  const questionPointValue =
+    typeof rawQuestionPointValue === 'number' && Number.isFinite(rawQuestionPointValue)
+      ? rawQuestionPointValue
+      : null;
+  const questionPointValueSummary =
+    questionPointValue !== null ? `Question value: ${questionPointValue} pts.` : null;
+  const questionChoicesSummary = readStringFact(document, 'questionChoicesSummary');
+  const selectedChoiceLabel = readStringFact(document, 'selectedChoiceLabel');
+  const selectedChoiceText = readStringFact(document, 'selectedChoiceText');
+  const selectedChoiceSummary = selectedChoiceLabel
+    ? selectedChoiceText
+      ? `Selected choice: ${selectedChoiceLabel} - ${selectedChoiceText}.`
+      : `Selected choice: ${selectedChoiceLabel}.`
+    : null;
+  const revealedExplanation = readStringFact(document, 'revealedExplanation');
   const assignmentSummary = readStringFact(document, 'assignmentSummary');
   const masterySummary = readStringFact(document, 'masterySummary');
-  const text = [summary, sectionText, currentQuestion, assignmentSummary, masterySummary]
+  const documentSummary = readStringFact(document, 'documentSummary');
+  const navigationSummary = readStringFact(document, 'navigationSummary');
+  const resultSummary = readStringFact(document, 'resultSummary');
+  const reviewSummary = readStringFact(document, 'reviewSummary');
+  const correctChoiceLabel = readStringFact(document, 'correctChoiceLabel');
+  const correctChoiceText = readStringFact(document, 'correctChoiceText');
+  const correctChoiceSummary = correctChoiceLabel
+    ? correctChoiceText
+      ? `Correct choice: ${correctChoiceLabel} - ${correctChoiceText}.`
+      : `Correct choice: ${correctChoiceLabel}.`
+    : null;
+  const topRecommendationTitle = readStringFact(document, 'topRecommendationTitle');
+  const topRecommendationDescription = readStringFact(document, 'topRecommendationDescription');
+  const topRecommendationActionLabel = readStringFact(document, 'topRecommendationActionLabel');
+  const topRecommendationActionPage = readStringFact(document, 'topRecommendationActionPage');
+  const topRecommendationSummary = topRecommendationTitle
+    ? [
+      topRecommendationTitle,
+      topRecommendationDescription,
+      topRecommendationActionLabel && topRecommendationActionPage
+        ? `${topRecommendationActionLabel} on ${topRecommendationActionPage}.`
+        : null,
+    ]
+      .filter(Boolean)
+      .join(' ')
+    : null;
+  const readSectionItems = (sectionId: string): Record<string, unknown>[] => {
+    const section = document.sections?.find(
+      (candidate) => candidate.id === sectionId && Array.isArray(candidate.items)
+    );
+    if (!section?.items) {
+      return [];
+    }
+
+    return section.items.filter(
+      (item): item is Record<string, unknown> =>
+        Boolean(item) && typeof item === 'object' && !Array.isArray(item)
+    );
+  };
+  const recentSession = readSectionItems('recent_sessions')[0] ?? null;
+  const recentSessionSummary = recentSession
+    ? [
+      typeof recentSession['operationLabel'] === 'string'
+        ? `Latest session: ${recentSession['operationLabel']}.`
+        : null,
+      typeof recentSession['accuracyPercent'] === 'number'
+        ? `Accuracy ${Math.round(recentSession['accuracyPercent'])}%.`
+        : null,
+      typeof recentSession['xpEarned'] === 'number'
+        ? `XP +${Math.round(recentSession['xpEarned'])}.`
+        : null,
+    ]
+      .filter(Boolean)
+      .join(' ')
+    : null;
+  const operationPerformance = readSectionItems('operation_performance');
+  const strongestOperation = operationPerformance[0] ?? null;
+  const weakestOperation = operationPerformance.at(-1) ?? null;
+  const operationPerformanceSummary = [
+    strongestOperation &&
+    typeof strongestOperation['label'] === 'string' &&
+    typeof strongestOperation['averageAccuracy'] === 'number'
+      ? `Strongest operation: ${strongestOperation['label']} at ${Math.round(strongestOperation['averageAccuracy'])}%.`
+      : null,
+    weakestOperation &&
+    typeof weakestOperation['label'] === 'string' &&
+    typeof weakestOperation['averageAccuracy'] === 'number' &&
+    weakestOperation !== strongestOperation
+      ? `Weakest operation: ${weakestOperation['label']} at ${Math.round(weakestOperation['averageAccuracy'])}%.`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+  const text = [
+    summary,
+    sectionText,
+    learnerSummary,
+    currentQuestion,
+    questionProgressLabel,
+    questionPointValueSummary,
+    questionChoicesSummary,
+    selectedChoiceSummary,
+    assignmentSummary,
+    masterySummary,
+    documentSummary,
+    navigationSummary,
+    resultSummary,
+    reviewSummary,
+    correctChoiceSummary,
+    revealedExplanation,
+    topRecommendationSummary,
+    recentSessionSummary,
+    operationPerformanceSummary || null,
+  ]
     .filter(
       (value, index, all): value is string => Boolean(value) && all.indexOf(value) === index
     )

@@ -212,6 +212,65 @@ describe('AgentPersonasPage', () => {
     expect(deletePersonaAvatarThumbnailMock).not.toHaveBeenCalled();
   });
 
+  it('preserves embedded avatar thumbnail data in the saved persona payload', async () => {
+    const savePersonasMock = vi.fn().mockResolvedValue(undefined);
+    useSaveAgentPersonasMutationMock.mockReturnValue({
+      mutateAsync: savePersonasMock,
+      isPending: false,
+    });
+    const existingPersona = buildPersona({
+      moods: [
+        buildAgentPersonaMood('neutral', {
+          svgContent: '',
+          avatarImageFileId: 'file-old',
+          avatarImageUrl: '/uploads/agentcreator/personas/persona-1/neutral/old.png',
+          avatarThumbnailRef: 'thumbnail-old',
+          avatarThumbnailDataUrl: 'data:image/webp;base64,embedded-old',
+          avatarThumbnailMimeType: 'image/webp',
+          avatarThumbnailBytes: 2048,
+          avatarThumbnailWidth: 96,
+          avatarThumbnailHeight: 96,
+          useEmbeddedThumbnail: true,
+        }),
+      ],
+    });
+    useAgentPersonasMock.mockReturnValue({
+      data: [existingPersona],
+      isLoading: false,
+    });
+
+    render(<AgentPersonasPage />);
+    const props = getItemLibraryProps();
+
+    await props.onSave({
+      ...existingPersona,
+      description: 'Updated description',
+    });
+
+    expect(savePersonasMock).toHaveBeenCalledWith({
+      personas: [
+        expect.objectContaining({
+          id: 'persona-1',
+          description: 'Updated description',
+          moods: [
+            expect.objectContaining({
+              avatarImageFileId: 'file-old',
+              avatarImageUrl: '/uploads/agentcreator/personas/persona-1/neutral/old.png',
+              avatarThumbnailRef: 'thumbnail-old',
+              avatarThumbnailDataUrl: 'data:image/webp;base64,embedded-old',
+              avatarThumbnailMimeType: 'image/webp',
+              avatarThumbnailBytes: 2048,
+              avatarThumbnailWidth: 96,
+              avatarThumbnailHeight: 96,
+              useEmbeddedThumbnail: true,
+            }),
+          ],
+        }),
+      ],
+    });
+    expect(deletePersonaAvatarThumbnailMock).not.toHaveBeenCalled();
+  });
+
   it('preserves existing persona settings when the draft omits the settings payload', async () => {
     const savePersonasMock = vi.fn().mockResolvedValue(undefined);
     useSaveAgentPersonasMutationMock.mockReturnValue({
@@ -292,6 +351,60 @@ describe('AgentPersonasPage', () => {
     expect(deletePersonaAvatarMock).not.toHaveBeenCalled();
     expect(logClientErrorMock).toHaveBeenCalled();
     expect(toastMock).toHaveBeenCalledWith('Save failed.', { variant: 'error' });
+  });
+
+  it('deletes replaced avatar thumbnail refs only after a successful save', async () => {
+    const savePersonasMock = vi.fn().mockResolvedValue(undefined);
+    useSaveAgentPersonasMutationMock.mockReturnValue({
+      mutateAsync: savePersonasMock,
+      isPending: false,
+    });
+    const existingPersona = buildPersona({
+      moods: [
+        buildAgentPersonaMood('neutral', {
+          svgContent: '',
+          avatarImageFileId: 'file-old',
+          avatarImageUrl: '/uploads/agentcreator/personas/persona-1/neutral/old.png',
+          avatarThumbnailRef: 'thumbnail-old',
+          avatarThumbnailDataUrl: 'data:image/webp;base64,embedded-old',
+          avatarThumbnailMimeType: 'image/webp',
+          avatarThumbnailBytes: 2048,
+          avatarThumbnailWidth: 96,
+          avatarThumbnailHeight: 96,
+          useEmbeddedThumbnail: true,
+        }),
+      ],
+    });
+    useAgentPersonasMock.mockReturnValue({
+      data: [existingPersona],
+      isLoading: false,
+    });
+
+    render(<AgentPersonasPage />);
+    const props = getItemLibraryProps();
+
+    await props.onSave({
+      ...existingPersona,
+      moods: [
+        buildAgentPersonaMood('neutral', {
+          svgContent: '',
+          avatarImageFileId: 'file-new',
+          avatarImageUrl: '/uploads/agentcreator/personas/persona-1/neutral/new.png',
+          avatarThumbnailRef: 'thumbnail-new',
+          avatarThumbnailDataUrl: 'data:image/webp;base64,embedded-new',
+          avatarThumbnailMimeType: 'image/webp',
+          avatarThumbnailBytes: 2048,
+          avatarThumbnailWidth: 96,
+          avatarThumbnailHeight: 96,
+          useEmbeddedThumbnail: true,
+        }),
+      ],
+    });
+
+    expect(savePersonasMock).toHaveBeenCalledTimes(1);
+    expect(deletePersonaAvatarMock).toHaveBeenCalledWith('file-old');
+    expect(deletePersonaAvatarThumbnailMock).toHaveBeenCalledTimes(1);
+    expect(deletePersonaAvatarThumbnailMock).toHaveBeenCalledWith('thumbnail-old');
   });
 
   it('cleans up draft-only uploaded avatar files when the editor closes without saving', async () => {

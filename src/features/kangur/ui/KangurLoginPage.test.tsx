@@ -245,7 +245,7 @@ describe('KangurLoginPage', () => {
     expect(
       screen.getByText('Rodzic loguje się emailem i hasłem. Uczeń loguje się nickiem i hasłem.')
     ).toBeVisible();
-    expect(screen.getByText('Rodzic lub uczen')).toBeVisible();
+    expect(screen.getByText('Rodzic lub uczeń')).toBeVisible();
     expect(screen.getByLabelText('Email rodzica albo nick ucznia')).toHaveAttribute(
       'data-tutor-anchor',
       'login_identifier_field'
@@ -253,9 +253,9 @@ describe('KangurLoginPage', () => {
     expect(screen.getByLabelText('Hasło')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Mam konto' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Tworzę konto rodzica' })).toBeInTheDocument();
-    expect(screen.queryByText('Jesli loguje sie rodzic')).not.toBeInTheDocument();
+    expect(screen.queryByText('Jeśli loguje się rodzic')).not.toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Rodzic' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('tab', { name: 'Uczen' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Uczeń' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /magiczny link/i })).not.toBeInTheDocument();
     expect(useKangurAiTutorSessionSyncMock).toHaveBeenCalledWith({
       learnerId: null,
@@ -331,7 +331,7 @@ describe('KangurLoginPage', () => {
     expect(screen.getByLabelText('Email rodzica')).toBeInTheDocument();
     expect(screen.getByLabelText('Ustaw hasło rodzica')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Utwórz konto rodzica' })).toBeInTheDocument();
-    expect(screen.queryByText('Jak zalozyc konto rodzica')).not.toBeInTheDocument();
+    expect(screen.queryByText('Jak założyć konto rodzica')).not.toBeInTheDocument();
   });
 
   it('starts in create-account mode when the route requests it explicitly', () => {
@@ -523,9 +523,9 @@ describe('KangurLoginPage', () => {
       'cursor-pointer'
     );
     expect(
-      screen.getByRole('button', { name: 'Wyslij email ponownie za 1 min' })
+      screen.getByRole('button', { name: 'Wyślij e-mail ponownie za 1 min' })
     ).toBeDisabled();
-    expect(screen.getByText('Nowy email bedzie mozna wyslac za 1 min.')).toBeVisible();
+    expect(screen.getByText('Nowy e-mail będzie można wysłać za 1 min.')).toBeVisible();
   });
 
   it('uses a custom retryAfterMs value from the create response', async () => {
@@ -566,7 +566,7 @@ describe('KangurLoginPage', () => {
     await user.click(screen.getByRole('button', { name: 'Utwórz konto rodzica' }));
 
     expect(await screen.findByText('Sprawdź skrzynkę: parent@example.com')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Wyslij email ponownie za 20 s' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Wyślij e-mail ponownie za 20 s' })).toBeDisabled();
   });
 
   it('re-enables resend after the default cooldown expires', async () => {
@@ -588,15 +588,15 @@ describe('KangurLoginPage', () => {
         await Promise.resolve();
       });
 
-      expect(screen.getByRole('button', { name: 'Wyslij email ponownie za 1 min' })).toBeDisabled();
-      expect(screen.getByText('Nowy email bedzie mozna wyslac za 1 min.')).toBeVisible();
+      expect(screen.getByRole('button', { name: 'Wyślij e-mail ponownie za 1 min' })).toBeDisabled();
+      expect(screen.getByText('Nowy e-mail będzie można wysłać za 1 min.')).toBeVisible();
 
       await act(async () => {
         await vi.advanceTimersByTimeAsync(KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS);
       });
 
-      expect(screen.getByRole('button', { name: 'Wyslij email ponownie' })).toBeEnabled();
-      expect(screen.queryByText('Nowy email bedzie mozna wyslac za 1 min.')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Wyślij e-mail ponownie' })).toBeEnabled();
+      expect(screen.queryByText('Nowy e-mail będzie można wysłać za 1 min.')).not.toBeInTheDocument();
     } finally {
       vi.useRealTimers();
     }
@@ -669,18 +669,18 @@ describe('KangurLoginPage', () => {
       });
 
       expect(screen.getByText('Sprawdź skrzynkę: parent@example.com')).toBeVisible();
-      expect(screen.getByRole('button', { name: 'Wyslij email ponownie za 12 s' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Wyślij e-mail ponownie za 12 s' })).toBeDisabled();
 
       await act(async () => {
         await vi.advanceTimersByTimeAsync(12_000);
       });
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: 'Wyslij email ponownie' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Wyślij e-mail ponownie' }));
         await Promise.resolve();
         await Promise.resolve();
       });
 
-      expect(screen.getByRole('button', { name: 'Wyslij email ponownie za 7 s' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Wyślij e-mail ponownie za 7 s' })).toBeDisabled();
       expect(screen.getByRole('link', { name: 'Potwierdź e-mail teraz' })).toHaveAttribute(
         'href',
         'https://example.com/kangur/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-resend-custom'
@@ -759,18 +759,18 @@ describe('KangurLoginPage', () => {
         await vi.advanceTimersByTimeAsync(KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS);
       });
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: 'Wyslij email ponownie' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Wyślij e-mail ponownie' }));
         await Promise.resolve();
         await Promise.resolve();
       });
 
-      expect(screen.getByRole('button', { name: 'Wyslij email ponownie za 30 s' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Wyślij e-mail ponownie za 30 s' })).toBeDisabled();
 
       await act(async () => {
         await vi.advanceTimersByTimeAsync(30_000);
       });
 
-      expect(screen.getByRole('button', { name: 'Wyslij email ponownie' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Wyślij e-mail ponownie' })).toBeEnabled();
     } finally {
       vi.useRealTimers();
     }
@@ -802,7 +802,7 @@ describe('KangurLoginPage', () => {
         await vi.advanceTimersByTimeAsync(KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS);
       });
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: 'Wyslij email ponownie' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Wyślij e-mail ponownie' }));
         await Promise.resolve();
         await Promise.resolve();
       });
@@ -828,7 +828,7 @@ describe('KangurLoginPage', () => {
         'https://example.com/kangur/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-2'
       );
       expect(
-        screen.getByRole('button', { name: 'Wyslij email ponownie za 1 min' })
+        screen.getByRole('button', { name: 'Wyślij e-mail ponownie za 1 min' })
       ).toBeDisabled();
     } finally {
       vi.useRealTimers();
@@ -895,7 +895,7 @@ describe('KangurLoginPage', () => {
         await vi.advanceTimersByTimeAsync(KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS);
       });
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: 'Wyslij email ponownie' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Wyślij e-mail ponownie' }));
         await Promise.resolve();
         await Promise.resolve();
       });
@@ -906,7 +906,7 @@ describe('KangurLoginPage', () => {
         )
       ).toBeVisible();
       expect(
-        screen.getByRole('button', { name: 'Wyslij email ponownie za 30 s' })
+        screen.getByRole('button', { name: 'Wyślij e-mail ponownie za 30 s' })
       ).toBeDisabled();
     } finally {
       vi.useRealTimers();
@@ -949,7 +949,7 @@ describe('KangurLoginPage', () => {
     ).toBeVisible();
     expect(await screen.findByText('Sprawdź skrzynkę: parent@example.com')).toBeVisible();
     expect(
-      screen.getByRole('button', { name: 'Wyslij email ponownie za 30 s' })
+      screen.getByRole('button', { name: 'Wyślij e-mail ponownie za 30 s' })
     ).toBeDisabled();
   });
 
@@ -1035,7 +1035,7 @@ describe('KangurLoginPage', () => {
       )
     ).toBeVisible();
     expect(await screen.findByText('Sprawdź skrzynkę: parent@example.com')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Wyslij email ponownie' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Wyślij e-mail ponownie' })).toBeVisible();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalledWith(
       '/api/auth/callback/credentials',
@@ -1043,7 +1043,7 @@ describe('KangurLoginPage', () => {
     );
     expect(routerPushMock).not.toHaveBeenCalled();
 
-    await user.click(screen.getByRole('button', { name: 'Wyslij email ponownie' }));
+    await user.click(screen.getByRole('button', { name: 'Wyślij e-mail ponownie' }));
 
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/kangur/auth/parent-account/resend',
@@ -1210,7 +1210,7 @@ describe('KangurLoginPage', () => {
     await user.type(screen.getByLabelText('Hasło'), 'tajnehaslo');
     await user.click(screen.getByRole('button', { name: 'Zaloguj ucznia' }));
 
-    expect(await screen.findByText('Nick ucznia moze zawierac tylko litery i cyfry.')).toBeVisible();
+    expect(await screen.findByText('Nick ucznia może zawierać tylko litery i cyfry.')).toBeVisible();
     expect(signOutMock).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalledWith(
       '/api/kangur/auth/learner-signin',

@@ -97,23 +97,23 @@ describe('KangurLearnerAssignmentsPanel', () => {
 
     render(<KangurLearnerAssignmentsPanel basePath='/kangur' enabled />);
 
-    expect(screen.getByText('Przebieg przydzielonych zadan')).toHaveClass(
+    expect(screen.getByText('Przebieg przydzielonych zadań')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
     expect(
       screen.getByText(
-        'Sprawdz, co jest nadal aktywne, ile zadan masz juz za soba i co bylo ostatnim sukcesem.'
+        'Sprawdź, co jest nadal aktywne, ile zadań masz już za soba i co było ostatnim sukcesem.'
       )
     ).toHaveClass('[color:var(--kangur-page-muted-text)]');
     expect(screen.getByText('Aktywne zadania od rodzica')).toBeInTheDocument();
-    expect(screen.getByText('Historia ukonczonych zadan')).toBeInTheDocument();
+    expect(screen.getByText('Historia ukonczonych zadań')).toBeInTheDocument();
     expect(
       within(screen.getByTestId('assignments-list-Aktywne zadania od rodzica')).getByText(
         'Dodawanie'
       )
     ).toBeInTheDocument();
     expect(
-      within(screen.getByTestId('assignments-list-Historia ukonczonych zadan')).getByText('Zegar')
+      within(screen.getByTestId('assignments-list-Historia ukonczonych zadań')).getByText('Zegar')
     ).toBeInTheDocument();
   });
 
@@ -132,8 +132,8 @@ describe('KangurLearnerAssignmentsPanel', () => {
     useKangurPageContentEntryMock.mockReturnValue({
       entry: {
         id: 'learner-profile-assignments',
-        title: 'Przebieg przydzielonych zadan',
-        summary: 'Mongo opis aktywnych i zakonczonych przydzialow ucznia.',
+        title: 'Przebieg przydzielonych zadań',
+        summary: 'Mongo opis aktywnych i zakonczonych przydziałów ucznia.',
       },
       data: undefined,
       isLoading: false,
@@ -155,9 +155,9 @@ describe('KangurLearnerAssignmentsPanel', () => {
 
     render(<KangurLearnerAssignmentsPanel basePath='/kangur' enabled />);
 
-    expect(screen.getByText('Przebieg przydzielonych zadan')).toBeInTheDocument();
+    expect(screen.getByText('Przebieg przydzielonych zadań')).toBeInTheDocument();
     expect(
-      screen.getByText('Mongo opis aktywnych i zakonczonych przydzialow ucznia.')
+      screen.getByText('Mongo opis aktywnych i zakonczonych przydziałów ucznia.')
     ).toBeInTheDocument();
   });
 });

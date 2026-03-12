@@ -68,7 +68,7 @@ describe('PlayerProgressCard', () => {
   it('uses shared metric styling and grouped badge tracks for player progress', () => {
     render(<PlayerProgressCard progress={progress} />);
 
-    expect(screen.getByTestId('player-progress-copy')).toHaveTextContent('Postepy ucznia');
+    expect(screen.getByTestId('player-progress-copy')).toHaveTextContent('Postępy ucznia');
     expect(screen.getByTestId('player-progress-shell')).toHaveClass(
       'glass-panel',
       'border-white/88',
@@ -77,21 +77,19 @@ describe('PlayerProgressCard', () => {
     expect(screen.getByTestId('player-progress-level-bar')).toHaveAttribute('aria-valuenow', '92');
     expect(screen.getByText('Gier').parentElement).toHaveClass('soft-card', 'border');
     expect(screen.getByText('Lekcji').parentElement).toHaveClass('soft-card', 'border');
-    expect(screen.getByText('Skutecznosc').parentElement).toHaveClass('soft-card', 'border');
+    expect(screen.getByText('Skuteczność').parentElement).toHaveClass('soft-card', 'border');
     expect(screen.getByText('Seria').parentElement).toHaveClass('soft-card', 'border');
-    expect(screen.getByText('XP / gre').parentElement).toHaveClass('soft-card', 'border');
-    expect(screen.getByText('XP / gre').parentElement).toHaveTextContent('27');
+    expect(screen.getByText('XP / grę').parentElement).toHaveClass('soft-card', 'border');
+    expect(screen.getByText('XP / grę').parentElement).toHaveTextContent('27');
     expect(screen.getByTestId('player-progress-top-activity')).toHaveTextContent(
       'Trening zegara: Godziny'
     );
-    expect(screen.getByTestId('player-progress-top-activity')).toHaveClass(
-      '[border-color:var(--kangur-soft-card-border)]'
-    );
+    expect(screen.getByTestId('player-progress-top-activity')).toHaveClass('soft-card', 'border');
     expect(screen.getByTestId('player-progress-top-activity')).toHaveTextContent('4 sesji');
-    expect(screen.getByTestId('player-progress-top-activity')).toHaveTextContent('28 XP / gre');
+    expect(screen.getByTestId('player-progress-top-activity')).toHaveTextContent('28 XP / grę');
     expect(screen.getByTestId('player-progress-top-activity')).toHaveTextContent('112 XP');
     expect(screen.getByTestId('player-progress-next-badge')).toHaveTextContent(
-      '⭐ Pol tysiaca XP'
+      '⭐ Pół tysiąca XP'
     );
     expect(screen.getByTestId('player-progress-next-badge')).toHaveTextContent(
       '480/500 XP'
@@ -120,7 +118,8 @@ describe('PlayerProgressCard', () => {
       'Wyzwania'
     );
     expect(screen.getByTestId('player-progress-badge-track-challenge')).toHaveClass(
-      '[border-color:var(--kangur-soft-card-border)]'
+      'soft-card',
+      'border'
     );
     expect(screen.getByTestId('player-progress-badge-track-challenge')).toHaveTextContent(
       '2/2 odznak'
@@ -135,7 +134,7 @@ describe('PlayerProgressCard', () => {
     render(<PlayerProgressCard progress={createDefaultProgress()} />);
 
     expect(screen.getByTestId('player-progress-badges-empty')).toHaveTextContent(
-      'Kolejne odznaki pojawia sie wraz z postepem.'
+      'Kolejne odznaki pojawiają się wraz z postępem.'
     );
     expect(screen.queryByTestId('player-progress-badge-first_game')).toBeNull();
     expect(screen.queryByTestId('player-progress-badge-ten_games')).toBeNull();

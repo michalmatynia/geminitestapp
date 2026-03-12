@@ -49,23 +49,23 @@ const GAME_SCREEN_LABELS: Record<KangurGameScreen, string> = {
   training: 'Konfiguracja treningu',
   kangur_setup: 'Konfiguracja sesji Kangura Matematycznego',
   kangur: 'Sesja Kangura Matematycznego',
-  calendar_quiz: 'Cwiczenia z kalendarzem',
-  geometry_quiz: 'Cwiczenia z figurami',
-  operation: 'Wybor rodzaju gry',
-  playing: 'Pytanie do rozwiazania',
+  calendar_quiz: 'Ćwiczenia z kalendarzem',
+  geometry_quiz: 'Ćwiczenia z figurami',
+  operation: 'Wybór rodzaju gry',
+  playing: 'Pytanie do rozwiązania',
   result: 'Wynik gry',
 };
 
 const GAME_SCREEN_DESCRIPTIONS: Record<KangurGameScreen, string> = {
-  home: 'Wybierz sposob cwiczenia i rozpocznij kolejna sesje.',
-  training: 'Skonfiguruj trening mieszany i dobierz zakres pytan.',
+  home: 'Wybierz sposob ćwiczenia i rozpocznij kolejna sesje.',
+  training: 'Skonfiguruj trening mieszany i dobierz zakres pytań.',
   kangur_setup: 'Przygotuj sesje Kangura Matematycznego.',
   kangur: 'Rozwiazuj zadania Kangura Matematycznego krok po kroku.',
-  calendar_quiz: 'Cwicz odczytywanie dat i zaleznosci w kalendarzu.',
-  geometry_quiz: 'Cwicz figury, ksztalty i zaleznosci przestrzenne.',
-  operation: 'Wybierz rodzaj matematycznej gry i poziom trudnosci.',
+  calendar_quiz: 'Cwicz odczytywanie dat i zależności w kalendarzu.',
+  geometry_quiz: 'Cwicz figury, ksztalty i zależności przestrzenne.',
+  operation: 'Wybierz rodzaj matematycznej gry i poziom trudności.',
   playing: 'Rozwiaz aktualne pytanie bez podpowiedzi z gotowa odpowiedzia.',
-  result: 'Sprawdz wynik gry i zdecyduj, co cwiczyc dalej.',
+  result: 'Sprawdź wynik gry i zdecyduj, co ćwiczyć dalej.',
 };
 
 const focusGameScreenHeading = (heading: HTMLHeadingElement | null): void => {
@@ -233,7 +233,7 @@ function GameContent(): React.JSX.Element {
     priority: 120,
     metadata: {
       contentId: 'game:home',
-      label: 'Start i wybor aktywnosci',
+      label: 'Start i wybór aktywności',
     },
   });
   useKangurTutorAnchor({
@@ -281,7 +281,7 @@ function GameContent(): React.JSX.Element {
     priority: 80,
     metadata: {
       contentId: 'game:home',
-      label: 'Postep gracza',
+      label: 'Postęp gracza',
     },
   });
   useKangurTutorAnchor({
@@ -329,7 +329,7 @@ function GameContent(): React.JSX.Element {
     priority: 120,
     metadata: {
       contentId: screen === 'calendar_quiz' ? tutorActivityContentId : null,
-      label: 'Cwiczenia z kalendarzem',
+      label: 'Ćwiczenia z kalendarzem',
     },
   });
   useKangurTutorAnchor({
@@ -341,7 +341,7 @@ function GameContent(): React.JSX.Element {
     priority: 120,
     metadata: {
       contentId: screen === 'geometry_quiz' ? tutorActivityContentId : null,
-      label: 'Cwiczenia z figurami',
+      label: 'Ćwiczenia z figurami',
     },
   });
   useKangurTutorAnchor({
@@ -353,7 +353,7 @@ function GameContent(): React.JSX.Element {
     priority: 120,
     metadata: {
       contentId: screen === 'operation' ? tutorActivityContentId : null,
-      label: 'Wybor rodzaju gry',
+      label: 'Wybór rodzaju gry',
     },
   });
   useKangurTutorAnchor({
@@ -495,7 +495,7 @@ function GameContent(): React.JSX.Element {
                         basePath={basePath}
                         enabled={canAccessParentAssignments}
                         title='Priorytetowe zadania'
-                        emptyLabel='Brak aktywnych zadan od rodzica.'
+                        emptyLabel='Brak aktywnych zadań od rodzica.'
                       />
                     </section>
                   ) : null}

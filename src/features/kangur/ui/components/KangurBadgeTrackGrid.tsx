@@ -23,7 +23,7 @@ export default function KangurBadgeTrackGrid({
   if (tracks.length === 0) {
     return (
       <KangurCardDescription as='p' data-testid={emptyTestId} size='sm'>
-        Kolejne odznaki pojawia sie wraz z postepem.
+        Kolejne odznaki pojawiają się wraz z postępem.
       </KangurCardDescription>
     );
   }

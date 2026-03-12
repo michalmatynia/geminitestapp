@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@/__tests__/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { KangurProgressState } from '@/features/kangur/ui/types';
@@ -218,7 +218,7 @@ describe('Game branding', () => {
     renderGamePage();
 
     fireEvent.click(getFeaturedHomeAction('Grajmy!'));
-    expect(await screen.findByRole('heading', { name: 'Wybor rodzaju gry' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Wybór rodzaju gry' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
@@ -242,7 +242,7 @@ describe('Game branding', () => {
     renderGamePage();
 
     fireEvent.click(getFeaturedHomeAction('Grajmy!'));
-    expect(await screen.findByRole('heading', { name: 'Wybor rodzaju gry' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Wybór rodzaju gry' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /ćwiczenia z kalendarzem/i }));
     expect(
@@ -251,7 +251,7 @@ describe('Game branding', () => {
     expect(screen.getByTestId('mock-calendar-training-game')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
-    expect(await screen.findByRole('heading', { name: 'Wybor rodzaju gry' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Wybór rodzaju gry' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /ćwiczenia z figurami/i }));
     expect(
@@ -260,6 +260,6 @@ describe('Game branding', () => {
     expect(screen.getByTestId('mock-geometry-training-game')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
-    expect(await screen.findByRole('heading', { name: 'Wybor rodzaju gry' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Wybór rodzaju gry' })).toBeInTheDocument();
   });
 });

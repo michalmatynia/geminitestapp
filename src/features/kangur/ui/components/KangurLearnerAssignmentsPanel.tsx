@@ -77,11 +77,11 @@ export function KangurLearnerAssignmentsPanel({
   const highPriorityActiveCount = activeAssignments.filter(
     (assignment) => assignment.priority === 'high'
   ).length;
-  const latestCompletedTitle = completedAssignments[0]?.title ?? 'Brak ukonczonych zadan';
-  const sectionTitle = assignmentsContent?.title ?? 'Przebieg przydzielonych zadan';
+  const latestCompletedTitle = completedAssignments[0]?.title ?? 'Brak ukonczonych zadań';
+  const sectionTitle = assignmentsContent?.title ?? 'Przebieg przydzielonych zadań';
   const sectionSummary =
     assignmentsContent?.summary ??
-    'Sprawdz, co jest nadal aktywne, ile zadan masz juz za soba i co bylo ostatnim sukcesem.';
+    'Sprawdź, co jest nadal aktywne, ile zadań masz już za soba i co było ostatnim sukcesem.';
 
   if (!enabled) {
     return (
@@ -91,7 +91,7 @@ export function KangurLearnerAssignmentsPanel({
         description='Po zalogowaniu zobaczysz zadania przypisane przez rodzica oraz historie ich wykonania.'
         label='Tryb lokalny'
         padding='lg'
-        title='Przebieg przydzielonych zadan'
+        title='Przebieg przydzielonych zadań'
       />
     );
   }
@@ -104,7 +104,7 @@ export function KangurLearnerAssignmentsPanel({
         data-testid='learner-assignments-loading'
         description='Sprawdzamy aktywne i zakonczone przydzialy dla tego profilu.'
         padding='lg'
-        title='Ladowanie przydzielonych zadan...'
+        title='Ladowanie przydzielonych zadań...'
       />
     );
   }
@@ -114,7 +114,7 @@ export function KangurLearnerAssignmentsPanel({
       <KangurSummaryPanel
         accent='rose'
         data-testid='learner-assignments-error'
-        description='Sprobuj ponownie za chwile albo odswiez profil ucznia.'
+        description='Spróbuj ponownie za chwilę albo odswiez profil ucznia.'
         label='Blad przydzialow'
         padding='lg'
         title={error}
@@ -140,7 +140,7 @@ export function KangurLearnerAssignmentsPanel({
           <KangurMetricCard
             accent='emerald'
             data-testid='learner-assignments-completed'
-            description='przydzialy juz zakonczone'
+            description='przydzialy już zakonczone'
             label='Ukonczone'
             value={completedAssignments.length}
           />
@@ -156,8 +156,8 @@ export function KangurLearnerAssignmentsPanel({
           <KangurMetricCard
             accent='indigo'
             data-testid='learner-assignments-completion-rate'
-            description='wykonanych z wszystkich widocznych zadan'
-            label='Skutecznosc'
+            description='wykonanych z wszystkich widocznych zadań'
+            label='Skuteczność'
             value={`${completionRate}%`}
           />
         </div>
@@ -176,14 +176,14 @@ export function KangurLearnerAssignmentsPanel({
       <KangurAssignmentsList
         items={activeAssignmentItems}
         title='Aktywne zadania od rodzica'
-        emptyLabel='Brak aktywnych zadan przypisanych do tego profilu.'
+        emptyLabel='Brak aktywnych zadań przypisanych do tego profilu.'
         compact
       />
 
       <KangurAssignmentsList
         items={completedAssignmentItems}
-        title='Historia ukonczonych zadan'
-        emptyLabel='Nie masz jeszcze zakonczonych przydzielonych zadan.'
+        title='Historia ukonczonych zadań'
+        emptyLabel='Nie masz jeszcze zakonczonych przydzielonych zadań.'
         compact
       />
     </div>

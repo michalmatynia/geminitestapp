@@ -79,8 +79,8 @@ export function KangurParentDashboardHeroWidget({
 
   if (!isAuthenticated) {
     const guestDescription = guestHeroContent?.summary
-      ? `${guestHeroContent.summary} Jesli nie masz jeszcze konta rodzica, zaloz je bez opuszczania StudiQ.`
-      : 'Ten widok pokazuje prywatne postepy ucznia, wiec wymaga konta rodzica. Jesli go jeszcze nie masz, zaloz je bez opuszczania StudiQ.';
+      ? `${guestHeroContent.summary} Jeśli nie masz jeszcze konta rodzica, załóż je bez opuszczania StudiQ.`
+      : 'Ten widok pokazuje prywatne postępy ucznia, więc wymaga konta rodzica. Jeśli go jeszcze nie masz, załóż je bez opuszczania StudiQ.';
 
     return (
       <KangurPageIntroCard
@@ -103,7 +103,7 @@ export function KangurParentDashboardHeroWidget({
             data-doc-id='profile_login'
           >
             <LogIn className='h-5 w-5' />
-            Zaloguj sie
+            Zaloguj się
           </KangurButton>
           <KangurButton
             asChild
@@ -117,7 +117,7 @@ export function KangurParentDashboardHeroWidget({
               }}
               type='button'
             >
-              Utworz konto rodzica
+              Utwórz konto rodzica
             </button>
           </KangurButton>
         </div>
@@ -127,8 +127,8 @@ export function KangurParentDashboardHeroWidget({
 
   if (!canManageLearners) {
     const restrictedDescription = guestHeroContent?.summary
-      ? `${guestHeroContent.summary} Ten widok jest dostepny tylko dla konta rodzica, ktore zarzadza profilami uczniow.`
-      : 'Ten widok jest dostepny tylko dla konta rodzica, ktore zarzadza profilami uczniow.';
+      ? `${guestHeroContent.summary} Ten widok jest dostępny tylko dla konta rodzica, które zarządza profilami uczniów.`
+      : 'Ten widok jest dostępny tylko dla konta rodzica, które zarządza profilami uczniów.';
 
     return (
       <KangurPageIntroCard
@@ -147,7 +147,7 @@ export function KangurParentDashboardHeroWidget({
           variant='primary'
           data-doc-id='top_nav_profile'
         >
-          Wroc do profilu ucznia
+          Wróć do profilu ucznia
         </KangurButton>
       </KangurPageIntroCard>
     );
@@ -171,8 +171,8 @@ export function KangurParentDashboardHeroWidget({
         <>
           {dashboardHeroContent?.summary ? `${dashboardHeroContent.summary} ` : null}
           Rola: <span className='font-semibold [color:var(--kangur-page-text)]'>{viewerRoleLabel}</span>. Konto
-          wlasciciela: <span className='font-semibold [color:var(--kangur-page-text)]'>{viewerName}</span>. Wybrany
-          uczen:{' '}
+          właściciela: <span className='font-semibold [color:var(--kangur-page-text)]'>{viewerName}</span>. Wybrany
+          uczeń:{' '}
           <span className='font-semibold [color:var(--kangur-page-text)]'>
             {activeLearner?.displayName ?? 'Brak profilu'}
           </span>
@@ -229,7 +229,7 @@ export function KangurParentDashboardHeroWidget({
 
       <div className='mb-3 text-left' data-testid='kangur-parent-dashboard-track-summary'>
         <KangurSectionEyebrow as='p' className='mb-2 tracking-[0.18em]'>
-          Sciezki postepu ucznia
+          Ścieżki postępu ucznia
         </KangurSectionEyebrow>
         <KangurHeroMilestoneSummary
           className='mb-3'

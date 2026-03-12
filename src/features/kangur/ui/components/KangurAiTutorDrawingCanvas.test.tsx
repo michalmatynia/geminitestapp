@@ -38,7 +38,8 @@ describe('KangurAiTutorDrawingCanvas', () => {
 
     expect(screen.getByTestId('kangur-ai-tutor-drawing-canvas')).toHaveClass(
       'kangur-chat-card',
-      '[background:var(--kangur-soft-card-background)]'
+      'kangur-chat-surface-warm',
+      'kangur-chat-surface-warm-shadow'
     );
     expect(screen.getByText('Rysowanie')).toHaveClass(
       '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'

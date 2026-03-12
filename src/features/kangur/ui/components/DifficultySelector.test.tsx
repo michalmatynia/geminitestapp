@@ -35,14 +35,14 @@ describe('DifficultySelector', () => {
 
     render(<DifficultySelector onSelect={onSelect} selected='medium' />);
 
-    expect(screen.getByRole('group', { name: 'Wybierz poziom trudnosci' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Wybierz poziom trudności' })).toBeInTheDocument();
     expect(screen.getByTestId('difficulty-selector-heading')).toHaveClass(
       'flex',
       'flex-col',
       'items-center',
       'text-center'
     );
-    expect(screen.getByRole('heading', { name: 'Wybierz poziom trudnosci' })).toHaveClass(
+    expect(screen.getByRole('heading', { name: 'Wybierz poziom trudności' })).toHaveClass(
       'text-xl',
       '[color:var(--kangur-page-text)]'
     );
@@ -86,7 +86,7 @@ describe('DifficultySelector', () => {
     render(<DifficultySelector onSelect={onSelect} selected='easy' showHeading={false} />);
 
     expect(screen.queryByTestId('difficulty-selector-heading')).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Wybierz poziom trudnosci' })).not.toBeInTheDocument();
-    expect(screen.getByRole('group', { name: 'Poziom trudnosci' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Wybierz poziom trudności' })).not.toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Poziom trudności' })).toBeInTheDocument();
   });
 });

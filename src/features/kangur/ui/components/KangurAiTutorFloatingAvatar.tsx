@@ -175,8 +175,8 @@ export function KangurAiTutorFloatingAvatar({
         label={
           tutor ? `${tutor.tutorName} avatar (${tutor.tutorMoodId})` : 'Kangur AI tutor avatar'
         }
-        className='relative z-[1] h-12 w-12 border border-white/30 bg-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.24),0_1px_2px_rgba(15,23,42,0.06)]'
-        svgClassName='[&_svg]:drop-shadow-[0_1px_2px_rgba(15,23,42,0.14)]'
+        className='relative z-[1] h-12 w-12 border kangur-chat-avatar-shell'
+        svgClassName='kangur-chat-avatar-svg'
         data-testid='kangur-ai-tutor-avatar-image'
       />
       <span

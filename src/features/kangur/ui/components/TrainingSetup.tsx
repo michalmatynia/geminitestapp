@@ -65,7 +65,7 @@ export default function TrainingSetup({
           align='left'
           className='w-full'
           data-testid='training-setup-heading'
-          description='Dobierz poziom, kategorie i liczbe pytan do jednej sesji.'
+          description='Dobierz poziom, kategorie i liczbę pytań do jednej sesji.'
           headingAs='h3'
           headingSize='md'
           icon={<Dumbbell className='h-6 w-6' />}
@@ -97,7 +97,7 @@ export default function TrainingSetup({
         <section aria-labelledby={categoryHeadingId}>
           <div className='mb-2 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between'>
             <h3 id={categoryHeadingId} className='text-sm font-bold [color:var(--kangur-page-text)]'>
-              Kategorie pytan
+              Kategorie pytań
             </h3>
             <KangurButton
               className='w-full sm:w-auto'
@@ -143,7 +143,7 @@ export default function TrainingSetup({
             id={countHeadingId}
             className='mb-2 block text-sm font-bold [color:var(--kangur-page-text)]'
           >
-            Liczba pytan
+            Liczba pytań
           </h3>
           <div
             aria-labelledby={countHeadingId}
@@ -154,7 +154,7 @@ export default function TrainingSetup({
             {countOptions.map((option) => (
               <KangurButton
                 key={option.id}
-                aria-label={`${option.value} pytan`}
+                aria-label={`${option.value} pytań`}
                 aria-pressed={option.selected}
                 onClick={option.select}
                 className='h-11 px-4 text-sm sm:flex-none'

@@ -173,10 +173,58 @@ describe('KangurSurfaceClassSync', () => {
     expect(document.body.style.getPropertyValue('--kangur-chat-bubble-radius')).toBe('20px');
     expect(document.body.style.getPropertyValue('--kangur-chat-card-radius')).toBe('20px');
     expect(document.body.style.getPropertyValue('--kangur-chat-inset-radius')).toBe('18px');
+    expect(document.body.style.getPropertyValue('--kangur-chat-panel-radius-minimal')).toBe(
+      '26px'
+    );
+    expect(document.body.style.getPropertyValue('--kangur-chat-panel-radius-compact')).toBe(
+      '22px'
+    );
+    expect(document.body.style.getPropertyValue('--kangur-chat-spotlight-radius-sm')).toBe(
+      '16px'
+    );
+    expect(document.body.style.getPropertyValue('--kangur-chat-spotlight-radius-md')).toBe(
+      '20px'
+    );
     expect(document.body.style.getPropertyValue('--kangur-chat-padding-x-sm')).toBe('16px');
     expect(document.body.style.getPropertyValue('--kangur-chat-padding-y-sm')).toBe('12px');
     expect(document.body.style.getPropertyValue('--kangur-chat-padding-x-lg')).toBe('20px');
     expect(document.body.style.getPropertyValue('--kangur-chat-padding-y-lg')).toBe('16px');
+    expect(document.body.style.getPropertyValue('--kangur-chat-header-padding-x-sm')).toBe(
+      '16px'
+    );
+    expect(document.body.style.getPropertyValue('--kangur-chat-header-padding-y-sm')).toBe(
+      '14px'
+    );
+    expect(document.body.style.getPropertyValue('--kangur-chat-header-padding-x-md')).toBe(
+      '16px'
+    );
+    expect(document.body.style.getPropertyValue('--kangur-chat-header-padding-y-md')).toBe(
+      '14px'
+    );
+    expect(document.body.style.getPropertyValue('--kangur-chat-header-padding-x-lg')).toBe(
+      '20px'
+    );
+    expect(document.body.style.getPropertyValue('--kangur-chat-header-padding-y-lg')).toBe(
+      '16px'
+    );
+    expect(document.body.style.getPropertyValue('--kangur-chat-spotlight-border')).toContain(
+      '#f97316'
+    );
+    expect(document.body.style.getPropertyValue('--kangur-chat-avatar-shell-background')).toContain(
+      '#ffffff'
+    );
+    expect(document.body.style.getPropertyValue('--kangur-chat-avatar-shell-border')).toContain(
+      '#fed7aa'
+    );
+    expect(document.body.style.getPropertyValue('--kangur-chat-pointer-marker')).toContain(
+      '#f97316'
+    );
+    expect(document.body.style.getPropertyValue('--kangur-chat-tail-background')).toContain(
+      '#ffffff'
+    );
+    expect(document.body.style.getPropertyValue('--kangur-chat-sheet-handle-background')).toContain(
+      '#f97316'
+    );
     expect(document.body.style.getPropertyValue('--kangur-panel-padding-md')).toBe('24px');
     expect(document.body.style.getPropertyValue('--kangur-card-padding-md')).toBe('20px');
     expect(document.body.style.getPropertyValue('--kangur-stack-gap-md')).toBe('20px');

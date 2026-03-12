@@ -142,10 +142,35 @@ describe('CmsStorefrontAppearance', () => {
     expect(appearance.vars['--kangur-chat-bubble-radius']).toBe('22px');
     expect(appearance.vars['--kangur-chat-card-radius']).toBe('22px');
     expect(appearance.vars['--kangur-chat-inset-radius']).toBe('20px');
+    expect(appearance.vars['--kangur-chat-panel-radius-minimal']).toBe('28px');
+    expect(appearance.vars['--kangur-chat-panel-radius-compact']).toBe('24px');
+    expect(appearance.vars['--kangur-chat-spotlight-radius-sm']).toBe('18px');
+    expect(appearance.vars['--kangur-chat-spotlight-radius-md']).toBe('22px');
     expect(appearance.vars['--kangur-chat-padding-x-sm']).toBe('12px');
     expect(appearance.vars['--kangur-chat-padding-y-sm']).toBe('8px');
     expect(appearance.vars['--kangur-chat-padding-x-lg']).toBe('16px');
     expect(appearance.vars['--kangur-chat-padding-y-lg']).toBe('12px');
+    expect(appearance.vars['--kangur-chat-header-padding-x-sm']).toBe('12px');
+    expect(appearance.vars['--kangur-chat-header-padding-y-sm']).toBe('10px');
+    expect(appearance.vars['--kangur-chat-header-padding-x-md']).toBe('16px');
+    expect(appearance.vars['--kangur-chat-header-padding-y-md']).toBe('12px');
+    expect(appearance.vars['--kangur-chat-header-padding-x-lg']).toBe('20px');
+    expect(appearance.vars['--kangur-chat-header-padding-y-lg']).toBe('16px');
+    expect(appearance.vars['--kangur-chat-spotlight-border']).toBe('rgba(252, 211, 77, 0.42)');
+    expect(appearance.vars['--kangur-chat-avatar-shell-background']).toBe('rgba(255,255,255,0.12)');
+    expect(appearance.vars['--kangur-chat-avatar-shell-border']).toBe('rgba(255,255,255,0.25)');
+    expect(appearance.vars['--kangur-chat-pointer-marker']).toBe('#f59e0b');
+    expect(appearance.vars['--kangur-chat-header-snap-background']).toContain(
+      'rgba(251,191,36,0.32)'
+    );
+    expect(appearance.vars['--kangur-chat-warm-overlay-border']).toBe('rgba(251,191,36,0.32)');
+    expect(appearance.vars['--kangur-chat-warm-overlay-shadow-callout']).toContain(
+      'rgba(2,6,23,0.68)'
+    );
+    expect(appearance.vars['--kangur-chat-tail-border']).toBe('rgba(251,191,36,0.24)');
+    expect(appearance.vars['--kangur-chat-sheet-handle-background']).toBe(
+      'rgba(251,191,36,0.22)'
+    );
     expect(appearance.vars['--kangur-panel-padding-md']).toBe('20px');
     expect(appearance.vars['--kangur-card-padding-md']).toBe('16px');
     expect(appearance.vars['--kangur-stack-gap-md']).toBe('16px');
@@ -237,10 +262,28 @@ describe('CmsStorefrontAppearance', () => {
     expect(appearance.vars['--kangur-chat-bubble-radius']).toBe('18px');
     expect(appearance.vars['--kangur-chat-card-radius']).toBe('18px');
     expect(appearance.vars['--kangur-chat-inset-radius']).toBe('16px');
+    expect(appearance.vars['--kangur-chat-panel-radius-minimal']).toBe('24px');
+    expect(appearance.vars['--kangur-chat-panel-radius-compact']).toBe('20px');
+    expect(appearance.vars['--kangur-chat-spotlight-radius-sm']).toBe('16px');
+    expect(appearance.vars['--kangur-chat-spotlight-radius-md']).toBe('18px');
     expect(appearance.vars['--kangur-chat-padding-x-sm']).toBe('16px');
     expect(appearance.vars['--kangur-chat-padding-y-sm']).toBe('12px');
     expect(appearance.vars['--kangur-chat-padding-x-lg']).toBe('20px');
     expect(appearance.vars['--kangur-chat-padding-y-lg']).toBe('16px');
+    expect(appearance.vars['--kangur-chat-header-padding-x-sm']).toBe('16px');
+    expect(appearance.vars['--kangur-chat-header-padding-y-sm']).toBe('14px');
+    expect(appearance.vars['--kangur-chat-header-padding-x-md']).toBe('16px');
+    expect(appearance.vars['--kangur-chat-header-padding-y-md']).toBe('14px');
+    expect(appearance.vars['--kangur-chat-header-padding-x-lg']).toBe('20px');
+    expect(appearance.vars['--kangur-chat-header-padding-y-lg']).toBe('16px');
+    expect(appearance.vars['--kangur-chat-spotlight-border']).toContain('#8b5cf6');
+    expect(appearance.vars['--kangur-chat-avatar-shell-background']).toContain('#ffffff');
+    expect(appearance.vars['--kangur-chat-avatar-shell-border']).toContain('#ddd6fe');
+    expect(appearance.vars['--kangur-chat-pointer-marker']).toContain('#8b5cf6');
+    expect(appearance.vars['--kangur-chat-header-snap-background']).toContain('#8b5cf6');
+    expect(appearance.vars['--kangur-chat-warm-overlay-background']).toContain('#8b5cf6');
+    expect(appearance.vars['--kangur-chat-tail-background']).toContain('#ffffff');
+    expect(appearance.vars['--kangur-chat-sheet-handle-background']).toContain('#8b5cf6');
     expect(appearance.vars['--kangur-panel-padding-md']).toBe('24px');
     expect(appearance.vars['--kangur-panel-padding-lg']).toBe('28px');
     expect(appearance.vars['--kangur-card-padding-sm']).toBe('16px');

@@ -177,7 +177,7 @@ export function KangurPrimaryNavigation({
   guestPlayerNamePlaceholder = 'Wpisz imię gracza...',
   homeActive = currentPage === 'Game',
   isAuthenticated,
-  navLabel = 'Glowna nawigacja Kangur',
+  navLabel = 'Główna nawigacja Kangur',
   onCreateAccount,
   onGuestPlayerNameChange,
   onHomeClick,
@@ -410,7 +410,7 @@ export function KangurPrimaryNavigation({
         >
           <KangurHomeLogo idPrefix='kangur-primary-nav-logo' />
         </span>
-        <span className='sr-only'>Strona glowna</span>
+          <span className='sr-only'>Strona główna</span>
       </>
     ),
     docId: 'top_nav_home',

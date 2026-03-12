@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildKangurLessonContextRuntimeDocument,
   buildKangurLearnerSnapshotRuntimeDocument,
   buildKangurTestContextRuntimeDocument,
+  resolveKangurAiTutorRuntimeDocuments,
 } from '@/features/kangur/server/context-registry';
+import type { KangurLesson } from '@/shared/contracts/kangur';
 import type { KangurTestQuestion, KangurTestSuite } from '@/shared/contracts/kangur-tests';
 
 const makeSuite = (overrides: Partial<KangurTestSuite> = {}): KangurTestSuite => ({
@@ -40,6 +43,20 @@ const makeQuestion = (overrides: Partial<KangurTestQuestion> = {}): KangurTestQu
     auditFlags: [],
     publishedAt: '2026-03-09T12:00:00.000Z',
   },
+  ...overrides,
+});
+
+const makeLesson = (overrides: Partial<KangurLesson> = {}): KangurLesson => ({
+  id: 'lesson-1',
+  componentId: 'adding',
+  contentMode: 'document',
+  title: 'Dodawanie',
+  description: 'Licz dwa zbiory razem.',
+  emoji: '➕',
+  color: 'from-amber-300 to-orange-400',
+  activeBg: 'bg-amber-100',
+  sortOrder: 10,
+  enabled: true,
   ...overrides,
 });
 
@@ -83,6 +100,60 @@ describe('buildKangurTestContextRuntimeDocument', () => {
     );
   });
 
+  it('includes active-question value and choice facts for direct tutor answers', async () => {
+    const suite = makeSuite({ publicationStatus: 'live' });
+    const result = await buildKangurTestContextRuntimeDocument({
+      learnerId: 'learner-1',
+      suiteId: suite.id,
+      questionId: 'question-1',
+      data: {
+        testSuitesById: new Map([[suite.id, suite]]),
+        questionStore: {
+          [makeQuestion().id]: makeQuestion({
+            choices: [
+              { label: 'A', text: '3', description: 'Za malo', svgContent: '' },
+              { label: 'B', text: '4', description: 'Poprawny wynik', svgContent: '' },
+            ],
+          }),
+        },
+      } as any,
+    });
+
+    expect(result?.facts).toEqual(
+      expect.objectContaining({
+        currentQuestion: 'What is 2 + 2?',
+        questionProgressLabel: 'Pytanie 1/1',
+        questionPointValue: 3,
+        questionChoicesSummary:
+          'Opcje odpowiedzi: A - 3: Za malo; B - 4: Poprawny wynik.',
+      })
+    );
+  });
+
+  it('includes revealed correct-answer facts for review states', async () => {
+    const suite = makeSuite({ publicationStatus: 'live' });
+    const result = await buildKangurTestContextRuntimeDocument({
+      learnerId: 'learner-1',
+      suiteId: suite.id,
+      questionId: 'question-1',
+      answerRevealed: true,
+      data: {
+        testSuitesById: new Map([[suite.id, suite]]),
+        questionStore: {
+          [makeQuestion().id]: makeQuestion(),
+        },
+      } as any,
+    });
+
+    expect(result?.facts).toEqual(
+      expect.objectContaining({
+        correctChoiceLabel: 'B',
+        correctChoiceText: '4',
+        revealedExplanation: 'Because 2 + 2 = 4.',
+      })
+    );
+  });
+
   it('returns null when a live suite no longer has a fully published question set', async () => {
     const suite = makeSuite({ publicationStatus: 'live' });
     const result = await buildKangurTestContextRuntimeDocument({
@@ -106,6 +177,64 @@ describe('buildKangurTestContextRuntimeDocument', () => {
     });
 
     expect(result).toBeNull();
+  });
+});
+
+describe('resolveKangurAiTutorRuntimeDocuments', () => {
+  it('augments test runtime documents with selected-choice facts from the tutor session context', () => {
+    const result = resolveKangurAiTutorRuntimeDocuments(
+      {
+        refs: [],
+        nodes: [],
+        documents: [
+          {
+            id: 'runtime:kangur:test:learner-1:suite-1:question-1:revealed',
+            kind: 'runtime_document',
+            entityType: 'kangur_test_context',
+            title: 'Kangur Mini',
+            summary: 'Active test question 1/1.',
+            status: 'summary',
+            tags: ['kangur', 'test', 'ai-tutor'],
+            relatedNodeIds: [],
+            facts: {
+              title: 'Kangur Mini',
+              questionId: 'question-1',
+              currentQuestion: 'What is 2 + 2?',
+              questionProgressLabel: 'Pytanie 1/1',
+              answerRevealed: true,
+              correctChoiceLabel: 'B',
+              correctChoiceText: '4',
+            },
+            sections: [],
+            provenance: {
+              providerId: 'kangur',
+              source: 'kangur-runtime-context',
+            },
+          },
+        ],
+        truncated: false,
+        engineVersion: 'test-engine',
+      },
+      {
+        surface: 'test',
+        contentId: 'suite-1',
+        title: 'Kangur Mini',
+        questionId: 'question-1',
+        currentQuestion: 'What is 2 + 2?',
+        questionProgressLabel: 'Pytanie 1/1',
+        selectedChoiceLabel: 'A',
+        selectedChoiceText: '3',
+        answerRevealed: true,
+      }
+    );
+
+    expect(result.surfaceContext?.facts).toEqual(
+      expect.objectContaining({
+        selectedChoiceLabel: 'A',
+        selectedChoiceText: '3',
+        selectedChoiceSummary: 'Wybrana odpowiedz: A - 3.',
+      })
+    );
   });
 });
 
@@ -146,7 +275,30 @@ describe('buildKangurLearnerSnapshotRuntimeDocument', () => {
           todayXpEarned: 28,
           weeklyXpEarned: 132,
           averageXpPerSession: 52,
-          operationPerformance: [],
+          operationPerformance: [
+            {
+              operation: 'addition',
+              label: 'Dodawanie',
+              emoji: '➕',
+              attempts: 3,
+              averageAccuracy: 91,
+              averageScore: 8.7,
+              bestScore: 100,
+              totalXpEarned: 44,
+              averageXpPerSession: 15,
+            },
+            {
+              operation: 'clock',
+              label: 'Zegar',
+              emoji: '🕐',
+              attempts: 2,
+              averageAccuracy: 68,
+              averageScore: 6.5,
+              bestScore: 83,
+              totalXpEarned: 28,
+              averageXpPerSession: 14,
+            },
+          ],
           recentSessions: [
             {
               id: 'session-1',
@@ -181,6 +333,93 @@ describe('buildKangurLearnerSnapshotRuntimeDocument', () => {
         expect.objectContaining({
           operationLabel: 'Zegar',
           xpEarned: 28,
+        }),
+      ],
+    });
+    expect(result.sections.find((section) => section.id === 'operation_performance')).toMatchObject({
+      items: [
+        expect.objectContaining({
+          label: 'Dodawanie',
+          averageAccuracy: 91,
+        }),
+        expect.objectContaining({
+          label: 'Zegar',
+          averageAccuracy: 68,
+        }),
+      ],
+    });
+  });
+});
+
+describe('buildKangurLessonContextRuntimeDocument', () => {
+  it('includes previous and next lesson navigation facts in the lesson runtime document', async () => {
+    const previousLesson = makeLesson({
+      id: 'lesson-1',
+      componentId: 'adding',
+      title: 'Dodawanie',
+      sortOrder: 10,
+    });
+    const activeLesson = makeLesson({
+      id: 'lesson-2',
+      componentId: 'calendar',
+      title: 'Kalendarz',
+      sortOrder: 20,
+    });
+    const nextLesson = makeLesson({
+      id: 'lesson-3',
+      componentId: 'subtracting',
+      title: 'Odejmowanie',
+      sortOrder: 30,
+    });
+
+    const result = await buildKangurLessonContextRuntimeDocument({
+      learnerId: 'learner-1',
+      lessonId: activeLesson.id,
+      data: {
+        lessons: [previousLesson, activeLesson, nextLesson],
+        lessonsById: new Map([
+          [previousLesson.id, previousLesson],
+          [activeLesson.id, activeLesson],
+          [nextLesson.id, nextLesson],
+        ]),
+        progress: {
+          lessonMastery: {
+            [activeLesson.componentId]: {
+              masteryPercent: 72,
+              attempts: 3,
+              completions: 1,
+              lastCompletedAt: '2026-03-10T08:00:00.000Z',
+            },
+          },
+        },
+        evaluatedAssignments: [],
+        lessonDocuments: {},
+        snapshot: {
+          averageAccuracy: 78,
+        },
+      } as any,
+    });
+
+    expect(result?.facts).toEqual(
+      expect.objectContaining({
+        previousLessonId: 'lesson-1',
+        previousLessonTitle: 'Dodawanie',
+        nextLessonId: 'lesson-3',
+        nextLessonTitle: 'Odejmowanie',
+      })
+    );
+    expect(result?.facts['navigationSummary']).toBe(
+      'Bez wracania do listy mozesz cofnac sie do Dodawanie albo przejsc dalej do Odejmowanie.'
+    );
+    expect(result?.sections.find((section) => section.id === 'lesson_navigation')).toMatchObject({
+      items: [
+        expect.objectContaining({
+          direction: 'previous',
+          title: 'Dodawanie',
+        }),
+        expect.objectContaining({
+          direction: 'next',
+          title: 'Odejmowanie',
         }),
       ],
     });

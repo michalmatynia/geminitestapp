@@ -22,23 +22,20 @@ const textButtonClassName =
   'cursor-pointer rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-page-text))] hover:[background:var(--kangur-chat-control-hover-background,var(--kangur-soft-card-background))]';
 const iconButtonClassName =
   'shrink-0 cursor-pointer rounded-full border p-1 transition-[background-color,box-shadow,transform,color] [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))] hover:-translate-y-[1px] hover:scale-[1.03] hover:[background:var(--kangur-chat-control-hover-background,var(--kangur-soft-card-background))] hover:shadow-[0_10px_20px_-14px_rgba(180,83,9,0.42)]';
-const warmOverlayPanelBaseClassName =
-  'border-amber-200/60 [background:radial-gradient(circle_at_top,color-mix(in_srgb,var(--kangur-soft-card-background)_74%,#fef3c7),var(--kangur-soft-card-background)_44%,color-mix(in_srgb,var(--kangur-page-background)_80%,#eef2ff))]';
+const warmOverlayPanelBaseClassName = 'kangur-chat-warm-overlay';
 const warmOverlayShadowClassNameByTone = {
-  callout:
-    'shadow-[0_20px_48px_-30px_rgba(180,83,9,0.34),inset_0_1px_0_rgba(255,255,255,0.5)]',
-  modal:
-    'shadow-[0_26px_60px_-34px_rgba(180,83,9,0.34),inset_0_1px_0_rgba(255,255,255,0.5)]',
+  callout: 'kangur-chat-warm-overlay-shadow-callout',
+  modal: 'kangur-chat-warm-overlay-shadow-modal',
 } as const;
 const warmInsetCardClassNameByTone = {
   complete:
-    'kangur-chat-inset border [background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#d1fae5)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_72%,#10b981)] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
+    'kangur-chat-inset border kangur-chat-surface-success [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
   guide:
-    'kangur-chat-inset border border-amber-200/80 [background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,#fff7cf)] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
+    'kangur-chat-inset border kangur-chat-surface-warm [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
   panel:
-    'kangur-chat-inset border shadow-[0_10px_24px_-18px_rgba(180,83,9,0.24)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_88%,#fff7cf)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_72%,#f59e0b)] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
+    'kangur-chat-inset border kangur-chat-surface-warm kangur-chat-surface-warm-shadow [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
   pending:
-    'kangur-chat-inset border [background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fef3c7)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_70%,#f59e0b)] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
+    'kangur-chat-inset border kangur-chat-surface-warm [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
 } as const;
 
 type ChromeKickerProps = HTMLAttributes<HTMLSpanElement> & {

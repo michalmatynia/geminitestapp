@@ -161,6 +161,42 @@ describe('normalizeAgentPersonas', () => {
     });
   });
 
+  it('preserves embedded avatar thumbnail data stored in the persona mood', () => {
+    const normalized = normalizeAgentPersonas([
+      {
+        id: 'persona-embedded-avatar',
+        name: 'Embedded Avatar Persona',
+        moods: [
+          {
+            id: 'neutral',
+            label: 'Neutral',
+            svgContent: '',
+            avatarImageUrl: '/uploads/agentcreator/personas/file-avatar.png',
+            avatarThumbnailRef: 'thumb-neutral-1',
+            avatarThumbnailDataUrl: 'data:image/webp;base64,embedded-thumb',
+            avatarThumbnailMimeType: 'image/webp',
+            avatarThumbnailBytes: 2048,
+            avatarThumbnailWidth: 96,
+            avatarThumbnailHeight: 96,
+            useEmbeddedThumbnail: true,
+          },
+        ],
+      },
+    ]);
+
+    expect(normalized[0]?.moods[0]).toMatchObject({
+      id: 'neutral',
+      avatarImageUrl: '/uploads/agentcreator/personas/file-avatar.png',
+      avatarThumbnailRef: 'thumb-neutral-1',
+      avatarThumbnailDataUrl: 'data:image/webp;base64,embedded-thumb',
+      avatarThumbnailMimeType: 'image/webp',
+      avatarThumbnailBytes: 2048,
+      avatarThumbnailWidth: 96,
+      avatarThumbnailHeight: 96,
+      useEmbeddedThumbnail: true,
+    });
+  });
+
   it('rejects duplicate persona mood ids', () => {
     expect(() =>
       normalizeAgentPersonas([

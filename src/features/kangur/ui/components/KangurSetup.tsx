@@ -123,20 +123,20 @@ const EDITIONS: KangurEdition[] = [
       {
         id: 'full_test_2024',
         label: '🏆 Pełny test konkursowy',
-        desc: 'Wszystkie 24 pytania z Kangura 2024 - odpowiedzi i wyjaśnienia po zakonczeniu',
+        desc: 'Wszystkie 24 pytania z Kangura 2024 - odpowiedzi i wyjaśnienia po zakończeniu',
         available: true,
         isExam: true,
       },
       {
         id: 'original_2024',
         label: '📋 Oryginalne - 3 pkt',
-        desc: '8 autentycznych pytań z konkursu Kangur 2024 za 3 punkty (latwe)',
+        desc: '8 autentycznych pytań z konkursu Kangur 2024 za 3 punkty (łatwe)',
         available: true,
       },
       {
         id: 'original_4pt_2024',
         label: '📋 Oryginalne - 4 pkt',
-        desc: '8 autentycznych pytań z konkursu Kangur 2024 za 4 punkty (srednie)',
+        desc: '8 autentycznych pytań z konkursu Kangur 2024 za 4 punkty (średnie)',
         available: true,
       },
       {
@@ -148,7 +148,7 @@ const EDITIONS: KangurEdition[] = [
       {
         id: 'training_3pt',
         label: '⭐ Trening - 3 punkty',
-        desc: '10 pytań treningowych w stylu zadań za 3 pkt (latwe)',
+        desc: '10 pytań treningowych w stylu zadań za 3 pkt (łatwe)',
         available: true,
       },
     ],
@@ -180,12 +180,12 @@ export default function KangurSetup({
           <KangurSectionHeading
             accent='amber'
             data-testid='kangur-setup-editions-heading'
-            description='Zdecyduj, z której edycji chcesz rozwiazywac zadania.'
+            description='Zdecyduj, z której edycji chcesz rozwiązywać zadania.'
             headingAs='h3'
             headingSize='md'
             icon='🦘'
             iconSize='3xl'
-            title='Wybierz edycje konkursu'
+            title='Wybierz edycję konkursu'
             titleId={editionsHeadingId}
           />
 
@@ -193,7 +193,7 @@ export default function KangurSetup({
             {EDITIONS.map((edition) => (
               <KangurSetupChoiceCard
                 ariaDescribedBy={`kangur-setup-edition-status-${edition.year}`}
-                ariaLabel={`${edition.label}. ${edition.available ? 'Dostępna.' : 'Niedostepna, wkrotce dostępna.'}`}
+                ariaLabel={`${edition.label}. ${edition.available ? 'Dostępna.' : 'Niedostępna, wkrótce dostępna.'}`}
                 className='flex w-full flex-col items-start gap-3 rounded-[28px] px-5 py-4 text-left sm:flex-row sm:items-center sm:gap-4'
                 dataTestId={`kangur-setup-edition-${edition.year}`}
                 disabled={!edition.available}
@@ -311,7 +311,7 @@ export default function KangurSetup({
             return (
               <KangurSetupChoiceCard
                 ariaDescribedBy={`kangur-setup-set-description-${setItem.id}`}
-                ariaLabel={`${setItem.label}. ${setItem.isExam ? 'Tryb konkursowy.' : 'Tryb treningowy.'} ${setItem.available ? 'Dostępny.' : 'Niedostepny, wkrotce dostępny.'}`}
+                ariaLabel={`${setItem.label}. ${setItem.isExam ? 'Tryb konkursowy.' : 'Tryb treningowy.'} ${setItem.available ? 'Dostępny.' : 'Niedostępny, wkrótce dostępny.'}`}
                 className='flex w-full flex-col items-start gap-2 rounded-[28px] px-5 py-4'
                 dataTestId={`kangur-setup-set-${setItem.id}`}
                 disabled={!setItem.available}

@@ -97,15 +97,15 @@ export default function Leaderboard(): React.JSX.Element {
           accent='slate'
           align='center'
           data-testid='leaderboard-loading'
-          description='Pobieramy najnowsze wyniki uczniow.'
-          title='Ladowanie...'
+          description='Pobieramy najnowsze wyniki uczniów.'
+          title='Ładowanie...'
         />
       ) : items.length === 0 ? (
         <KangurEmptyState
           accent='slate'
           align='center'
           data-testid='leaderboard-empty'
-          description='Zmien filtr albo wroc pozniej, gdy pojawia sie nowe podejscia.'
+          description='Zmień filtr albo wróć później, gdy pojawia się nowe podejścia.'
           title={emptyStateLabel}
         />
       ) : (

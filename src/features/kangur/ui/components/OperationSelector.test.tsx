@@ -48,8 +48,8 @@ describe('OperationSelector', () => {
       operations: [
         {
           accent: 'amber',
-          actionLabel: 'Zacznij lekcje',
-          description: 'Wejdz do serii pytan i cwicz we wlasnym tempie.',
+          actionLabel: 'Zacznij lekcję',
+          description: 'Wejdź do serii pytań i ćwicz we własnym tempie.',
           displayLabel: '➗ Dzielenie',
           emoji: '➗',
           hasPriorityAssignment: false,
@@ -72,7 +72,7 @@ describe('OperationSelector', () => {
     ).toContain('operation-card-recommendation-division');
     expect(screen.getByText('Dzielenie')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(
-      screen.getByText('Wejdz do serii pytan i cwicz we wlasnym tempie.')
+      screen.getByText('Wejdź do serii pytań i ćwicz we własnym tempie.')
     ).toHaveClass('[color:var(--kangur-page-muted-text)]');
     expect(screen.getByTestId('operation-card-recommendation-division')).toHaveTextContent(
       'Misja dnia'

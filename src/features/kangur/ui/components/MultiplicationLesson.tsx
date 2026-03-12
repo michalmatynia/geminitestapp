@@ -49,7 +49,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, Less
   ],
   tabela23: [
     {
-      title: 'Tabliczka mnozenia × 2 i × 3',
+      title: 'Tabliczka mnożenia × 2 i × 3',
       content: (
         <div className='flex flex-col gap-2 w-full'>
           <div className='grid grid-cols-1 gap-2 min-[360px]:grid-cols-2'>
@@ -76,7 +76,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, Less
   ],
   tabela45: [
     {
-      title: 'Tabliczka mnozenia × 4 i × 5',
+      title: 'Tabliczka mnożenia × 4 i × 5',
       content: (
         <div className='flex flex-col gap-2 w-full'>
           <div className='grid grid-cols-1 gap-2 min-[360px]:grid-cols-2'>
@@ -103,7 +103,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, Less
   ],
   triki: [
     {
-      title: 'Triki do zapamietania',
+      title: 'Triki do zapamiętania',
       content: (
         <KangurLessonStack className='gap-3'>
           <KangurLessonCallout accent='amber' className='max-w-xs'>
@@ -135,39 +135,39 @@ export const HUB_SECTIONS = [
   {
     id: 'intro',
     emoji: '🍬',
-    title: 'Co to mnozenie?',
+    title: 'Co to mnożenie?',
     description: 'Mnozenie jako powtarzane dodawanie',
   },
   {
     id: 'tabela23',
     emoji: '📋',
     title: 'Tabliczka × 2 i × 3',
-    description: 'Tabliczka mnozenia dla 2 i 3',
+    description: 'Tabliczka mnożenia dla 2 i 3',
   },
   {
     id: 'tabela45',
     emoji: '📋',
     title: 'Tabliczka × 4 i × 5',
-    description: 'Tabliczka mnozenia dla 4 i 5',
+    description: 'Tabliczka mnożenia dla 4 i 5',
   },
   {
     id: 'triki',
     emoji: '🧠',
-    title: 'Triki mnozenia',
-    description: 'Szybkie zasady do zapamietania',
+    title: 'Triki mnożenia',
+    description: 'Szybkie zasady do zapamiętania',
   },
   {
     id: 'game_array',
     emoji: '✨',
     title: 'Gra z grupami',
-    description: 'Zbieraj grupy kropcek — odkryj mnozenie!',
+    description: 'Zbieraj grupy kropek — odkryj mnożenie!',
     isGame: true,
   },
   {
     id: 'game_quiz',
     emoji: '📝',
     title: 'Quiz tabliczki',
-    description: 'Sprawdz tabliczkę — 8 pytan',
+    description: 'Sprawdź tabliczkę — 8 pytań',
     isGame: true,
   },
 ];
@@ -207,7 +207,7 @@ export default function MultiplicationLesson(): React.JSX.Element {
         onBack={() => setActiveSection(null)}
         sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
         shellTestId='multiplication-lesson-game-quiz-shell'
-        title='Quiz mnozenia!'
+        title='Quiz mnożenia!'
       >
         <MultiplicationGame
           finishLabel='Wróć do tematów'

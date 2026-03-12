@@ -22,8 +22,8 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Analogia to ta sama relacja miedzy roznymi parami. Zamiast myslec o konkretnych
-            rzeczach, szukasz <b>wzorca połaczenia</b>.
+            Analogia to ta sama relacja między różnymi parami. Zamiast myśleć o konkretnych
+            rzeczach, szukasz <b>wzorca połączenia</b>.
           </KangurLessonLead>
           <KangurLessonCallout accent='rose' className='w-full text-sm'>
             <p className='font-semibold text-pink-700 mb-2'>Zapis analogii:</p>
@@ -32,11 +32,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               „A do B tak jak C do D"
             </KangurLessonCaption>
             <KangurLessonInset accent='rose' className='mt-2 text-center' padding='sm'>
-              <p className='font-bold text-pink-700'>Ptak : latac = ryba : ❓</p>
+              <p className='font-bold text-pink-700'>Ptak : latać = ryba : ❓</p>
               <KangurLessonCaption className='mt-1'>
                 Relacja: stworzenie → sposób poruszania
               </KangurLessonCaption>
-              <p className='text-pink-600 font-bold mt-1'>Odpowiedz: pływac 🐟</p>
+              <p className='text-pink-600 font-bold mt-1'>Odpowiedź: pływać 🐟</p>
             </KangurLessonInset>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -47,25 +47,25 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Analogie słowne korzystaja z relacji miedzy słowami: kategoria, przeciwienstwo, czesc
-            całosci, czynnosc i inne.
+            Analogie słowne korzystają z relacji między słowami: kategoria, przeciwieństwo, część
+            całości, czynność i inne.
           </KangurLessonLead>
           <div className='flex flex-col gap-2 w-full'>
             {[
               {
-                pair: 'Pies : szczekac = kot : ❓',
-                hint: 'Zwierze → wydawany dzwiek',
-                answer: 'miauczec 🐈',
+                pair: 'Pies : szczekać = kot : ❓',
+                hint: 'Zwierzę → wydawany dźwięk',
+                answer: 'miauczeć 🐈',
               },
               {
-                pair: 'Goracy : zimny = dzien : ❓',
-                hint: 'Antonim (przeciwienstwo)',
+                pair: 'Gorący : zimny = dzień : ❓',
+                hint: 'Antonim (przeciwieństwo)',
                 answer: 'noc 🌙',
               },
-              { pair: 'Palec : reka = lisc : ❓', hint: 'Czesc → całosc', answer: 'drzewo 🌳' },
+              { pair: 'Palec : ręka = liść : ❓', hint: 'Część → całość', answer: 'drzewo 🌳' },
               {
-                pair: 'Nozyczki : ciecie = ołówek : ❓',
-                hint: 'Narzedzie → jego funkcja',
+                pair: 'Nożyczki : cięcie = ołówek : ❓',
+                hint: 'Narzędzie → jego funkcja',
                 answer: 'pisanie ✏️',
               },
             ].map(({ pair, hint, answer }) => (
@@ -135,7 +135,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Analogie kształtów zmieniaja rozmiar, orientacje, kolor lub liczbe elementów według tej
+            Analogie kształtów zmieniają rozmiar, orientację, kolor lub liczbę elementów według tej
             samej reguły.
           </KangurLessonLead>
           <div className='flex flex-col gap-3 w-full'>
@@ -155,18 +155,18 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
   ],
   relacje: [
     {
-      title: 'Analogie czesc–całosc',
+      title: 'Analogie część–całość',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Relacja czesc–całosc to jedna z najczestszych w analogiach.
+            Relacja część–całość to jedna z najczęstszych w analogiach.
           </KangurLessonLead>
           <div className='flex flex-col gap-2 w-full'>
             {[
-              { pair: 'Strona : ksiazka = cegła : ❓', answer: 'mur / budynek 🧱' },
+              { pair: 'Strona : książka = cegła : ❓', answer: 'mur / budynek 🧱' },
               { pair: 'Nuta : melodia = litera : ❓', answer: 'słowo / zdanie 🔤' },
-              { pair: 'Płatek : kwiat = piksel : ❓', answer: 'obraz / zdjecie 🖼️' },
-              { pair: 'Kropla : ocean = ziarnko : ❓', answer: 'plaza / piasek 🏖️' },
+              { pair: 'Płatek : kwiat = piksel : ❓', answer: 'obraz / zdjęcie 🖼️' },
+              { pair: 'Kropla : ocean = ziarnko : ❓', answer: 'plaża / piasek 🏖️' },
             ].map(({ pair, answer }) => (
               <KangurLessonCallout key={pair} accent='rose' className='text-sm' padding='sm'>
                 <p className='font-bold [color:var(--kangur-page-text)]'>{pair}</p>
@@ -182,19 +182,19 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Przyczyna powoduje skutek. Analogia przenosi te sama zaleznosc na inna pare.
+            Przyczyna powoduje skutek. Analogia przenosi tę samą zależność na inną parę.
           </KangurLessonLead>
           <div className='flex flex-col gap-2 w-full'>
             {[
               {
-                pair: 'Deszcz : mokra ziemia = słonce : ❓',
+                pair: 'Deszcz : mokra ziemia = słońce : ❓',
                 answer: 'sucha ziemia / opalenizna ☀️',
               },
               {
-                pair: 'Cwiczenie : silniejsze miesnie = czytanie : ❓',
-                answer: 'wiecej wiedzy / madrosc 📚',
+                pair: 'Ćwiczenie : silniejsze mięśnie = czytanie : ❓',
+                answer: 'więcej wiedzy / mądrość 📚',
               },
-              { pair: 'Zima : snieg = wiosna : ❓', answer: 'kwiaty / deszcz 🌸' },
+              { pair: 'Zima : śnieg = wiosna : ❓', answer: 'kwiaty / deszcz 🌸' },
             ].map(({ pair, answer }) => (
               <KangurLessonCallout key={pair} accent='rose' className='text-sm' padding='sm'>
                 <p className='font-bold [color:var(--kangur-page-text)]'>{pair}</p>
@@ -217,16 +217,16 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
                 🔗 <b>Analogia</b> — A:B = C:D, ta sama relacja w nowej parze
               </li>
               <li>
-                🗣️ <b>Słowne</b> — kategoria, antonim, czynnosc, cecha
+                🗣️ <b>Słowne</b> — kategoria, antonim, czynność, cecha
               </li>
               <li>
-                🔢 <b>Liczbowe</b> — +, −, ×, ÷, potega — szukaj operacji
+                🔢 <b>Liczbowe</b> — +, −, ×, ÷, potęga — szukaj operacji
               </li>
               <li>
                 🔷 <b>Kształtów</b> — obrót, kolor, liczba, rozmiar
               </li>
               <li>
-                🧩 <b>Czesc–całosc</b> — element → zbiór, do którego nalezy
+                🧩 <b>Część–całość</b> — element → zbiór, do którego należy
               </li>
               <li>
                 ⚡ <b>Przyczyna–skutek</b> — co wywołuje co?
@@ -234,7 +234,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             </ul>
         </KangurLessonCallout>
         <p className='text-pink-600 font-bold text-center'>
-          Analogie pozwalaja przenosic wiedze do zupełnie nowych sytuacji!
+          Analogie pozwalają przenosić wiedzę do zupełnie nowych sytuacji!
         </p>
         </KangurLessonStack>
       ),
@@ -246,8 +246,8 @@ export const HUB_SECTIONS = [
   {
     id: 'intro',
     emoji: '🔗',
-    title: 'Analogia — wstep i słowne',
-    description: 'Co to analogia? Relacje miedzy słowami',
+    title: 'Analogia — wstęp i słowne',
+    description: 'Co to analogia? Relacje między słowami',
   },
   {
     id: 'liczby_ksztalty',
@@ -258,8 +258,8 @@ export const HUB_SECTIONS = [
   {
     id: 'relacje',
     emoji: '🧩',
-    title: 'Czesc–całosc i przyczyna–skutek',
-    description: 'Dwa wazne typy analogii relacyjnych',
+    title: 'Część–całość i przyczyna–skutek',
+    description: 'Dwa ważne typy analogii relacyjnych',
   },
   {
     id: 'podsumowanie',

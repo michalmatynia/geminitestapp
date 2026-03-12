@@ -2723,6 +2723,14 @@ describe('KangurAiTutorWidget', () => {
       openChatMock.mock.invocationCallOrder[0] ?? Number.POSITIVE_INFINITY
     );
     await act(async () => {
+      await vi.advanceTimersByTimeAsync(360);
+    });
+    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-surface-diagnostics')).toHaveAttribute(
+      'data-suppress-panel-surface',
+      'true'
+    );
+    await act(async () => {
       await vi.runOnlyPendingTimersAsync();
     });
     expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
@@ -5967,7 +5975,7 @@ describe('KangurAiTutorWidget', () => {
         })
       );
       act(() => {
-        vi.advanceTimersByTime(400);
+        vi.runOnlyPendingTimers();
       });
       expect(trackKangurClientEventMock).toHaveBeenCalledWith(
         'kangur_ai_tutor_motion_completed',

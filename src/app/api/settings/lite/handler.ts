@@ -4,7 +4,6 @@ import { z } from 'zod';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
-import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { LITE_SETTINGS_KEYS } from '@/shared/lib/settings-lite-keys';
 import {
@@ -90,7 +89,6 @@ export const GET_handler = async (
   _req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> => {
-  await assertSettingsManageAccess();
   const requestStart = performance.now();
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const forceFresh = query.fresh === true;

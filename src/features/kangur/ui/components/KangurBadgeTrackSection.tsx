@@ -25,8 +25,8 @@ export function KangurBadgeTrackSection({
   progress,
 }: KangurBadgeTrackSectionProps): React.JSX.Element {
   return (
-    <div className={className}>
-      <KangurSectionEyebrow as={headingAs} className={cn('mb-3', headingClassName)}>
+    <div className={cn('flex flex-col gap-4', className)}>
+      <KangurSectionEyebrow as={headingAs} className={headingClassName}>
         {heading}
       </KangurSectionEyebrow>
       <KangurBadgeTrackGrid

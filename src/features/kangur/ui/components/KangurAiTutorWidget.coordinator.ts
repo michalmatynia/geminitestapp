@@ -472,6 +472,7 @@ export function useKangurAiTutorWidgetCoordinator({
       panelPosition,
       panelSnapPreference,
       setPanelAnchorMode,
+      setPanelMotionState,
       setPanelPosition,
       setPanelPositionMode,
       setPanelSnapPreference,
@@ -503,6 +504,7 @@ export function useKangurAiTutorWidgetCoordinator({
     handleOpenChat,
     hasSelectionPanelReady,
     isLoading,
+    isOpen: tutorRuntime.isOpen,
     selectionConversationSelectedText: selectionConversationContext?.selectedText ?? null,
     selectionGuidanceHandoffText,
   });

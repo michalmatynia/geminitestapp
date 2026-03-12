@@ -55,7 +55,7 @@ const kangurButtonVariants = cva(
           'focus-visible:ring-indigo-300/70'
         ),
         ghost:
-          'kangur-button-shell border-transparent bg-transparent text-[#6e7ee7] hover:bg-white/70 hover:text-[#4f63d8] focus-visible:ring-indigo-300/70',
+          'kangur-button-shell border-transparent bg-transparent text-[var(--kangur-button-surface-text,#6e7ee7)] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:text-[var(--kangur-button-surface-hover-text,#4f63d8)] focus-visible:ring-indigo-300/70',
       },
       size: {
         sm: 'kangur-button-size-sm',
@@ -497,13 +497,14 @@ const kangurOptionCardButtonVariants = cva(
   {
     variants: {
       emphasis: {
-        neutral: 'border-slate-200/80 bg-white/92',
+        neutral:
+          '[border-color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_92%,var(--kangur-page-background))] [color:var(--kangur-page-text)]',
         accent: '',
       },
       state: {
         default: '',
         muted:
-          'cursor-default border-slate-200/80 bg-white/92 text-slate-400 opacity-70 hover:translate-y-0 hover:border-slate-200/80 hover:bg-white/92',
+          'cursor-default [border-color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_88%,var(--kangur-page-background))] [color:var(--kangur-page-muted-text)] opacity-70 hover:translate-y-0 hover:[border-color:var(--kangur-soft-card-border)] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_88%,var(--kangur-page-background))]',
       },
     },
     defaultVariants: {

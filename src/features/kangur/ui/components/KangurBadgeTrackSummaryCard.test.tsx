@@ -54,6 +54,24 @@ describe('KangurBadgeTrackSummaryCard', () => {
       'kangur-card-padding-md'
     );
     expect(screen.getByTestId('badge-track-card-bar')).toHaveAttribute('aria-valuenow', '50');
+    expect(screen.getByText('2/4 odznak').parentElement).toHaveClass('min-w-0', 'md:flex-1');
+    expect(screen.getByText('50%')).toHaveClass(
+      'self-start',
+      'whitespace-nowrap',
+      'md:shrink-0',
+      'px-2.5',
+      'py-1',
+      'text-[11px]'
+    );
+    expect(screen.getByText('50%').parentElement).toHaveClass(
+      'flex',
+      'flex-col',
+      'items-start',
+      'gap-4',
+      'md:flex-row',
+      'md:items-start',
+      'md:justify-between',
+    );
   });
 
   it('accepts variant classes for highlight-style layouts', () => {
@@ -72,5 +90,6 @@ describe('KangurBadgeTrackSummaryCard', () => {
     expect(screen.getByTestId('badge-track-card')).toHaveClass('rounded-[24px]', 'text-left');
     expect(screen.getByText('50%')).toHaveClass('text-[11px]');
     expect(screen.getByText('⚡ Wyzwania')).toHaveClass('tracking-[0.16em]');
+    expect(screen.getByText('50%').parentElement).toHaveClass('gap-2');
   });
 });

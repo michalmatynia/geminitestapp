@@ -29,7 +29,7 @@ export default function KangurBadgeTrackGrid({
   }
 
   return (
-    <div className={cn('grid gap-3 min-[360px]:grid-cols-2', className)}>
+    <div className={cn('grid gap-4 md:grid-cols-2', className)}>
       {tracks.map((track) => {
         return (
           <KangurBadgeTrackSummaryCard

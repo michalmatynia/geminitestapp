@@ -22,6 +22,7 @@ describe('useKangurAiTutorSelectionGuidanceDockOpenEffect', () => {
         handleOpenChat: handleOpenChatMock,
         hasSelectionPanelReady: false,
         isLoading: false,
+        isOpen: false,
         selectionConversationSelectedText: 'Ranking wynikow',
         selectionGuidanceHandoffText: 'Ranking wynikow',
       })
@@ -32,6 +33,26 @@ describe('useKangurAiTutorSelectionGuidanceDockOpenEffect', () => {
         panelShellMode: 'minimal',
       })
     );
+  });
+
+  it('does not reopen the tutor while the guided selection handoff is already open', async () => {
+    const handleOpenChatMock = vi.fn();
+
+    renderHook(() =>
+      useKangurAiTutorSelectionGuidanceDockOpenEffect({
+        activeSelectedText: 'Ranking wynikow',
+        handleOpenChat: handleOpenChatMock,
+        hasSelectionPanelReady: false,
+        isLoading: false,
+        isOpen: true,
+        selectionConversationSelectedText: 'Ranking wynikow',
+        selectionGuidanceHandoffText: 'Ranking wynikow',
+      })
+    );
+
+    await waitFor(() => {
+      expect(handleOpenChatMock).not.toHaveBeenCalled();
+    });
   });
 });
 

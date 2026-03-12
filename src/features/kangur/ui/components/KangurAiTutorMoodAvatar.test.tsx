@@ -21,7 +21,13 @@ vi.mock('next/image', () => ({
     unoptimized: _unoptimized,
     ...props
   }: ImgHTMLAttributes<HTMLImageElement> & { fill?: boolean; unoptimized?: boolean }) => (
-    <img alt={alt} className={className} src={typeof src === 'string' ? src : ''} {...props} />
+    <img
+      alt={alt}
+      className={className}
+      data-next-image='true'
+      src={typeof src === 'string' ? src : ''}
+      {...props}
+    />
   ),
 }));
 
@@ -38,9 +44,10 @@ describe('KangurAiTutorMoodAvatar', () => {
       'src',
       '/uploads/agentcreator/personas/persona-1/neutral/avatar.png'
     );
+    expect(screen.getByAltText('Pomocnik avatar (neutral)')).toHaveAttribute('data-next-image', 'true');
   });
 
-  it('renders embedded thumbnail data URLs through a native image element', () => {
+  it('renders embedded thumbnail data URLs through next/image', () => {
     render(
       <KangurAiTutorMoodAvatar
         avatarImageUrl=' data:image/png;base64,AAA '
@@ -52,6 +59,7 @@ describe('KangurAiTutorMoodAvatar', () => {
       'src',
       'data:image/png;base64,AAA'
     );
+    expect(screen.getByAltText('Pomocnik avatar (neutral)')).toHaveAttribute('data-next-image', 'true');
   });
 
   it('renders sanitized persona svg markup when no image is available', () => {

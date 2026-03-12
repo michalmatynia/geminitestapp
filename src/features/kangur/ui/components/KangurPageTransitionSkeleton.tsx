@@ -157,8 +157,11 @@ const GameSessionSkeleton = (): React.JSX.Element => (
 );
 
 const LessonsLibrarySkeleton = (): React.JSX.Element => (
-  <div className='flex w-full flex-col gap-6'>
-    <SkeletonPanel className='min-h-[180px]'>
+  <div
+    className='flex w-full max-w-lg flex-col gap-4'
+    data-testid='kangur-page-transition-skeleton-lessons-library-layout'
+  >
+    <SkeletonPanel className='min-h-[180px] w-full'>
       <div className='space-y-4'>
         <SkeletonChip className='h-8 w-40' />
         <SkeletonLine className='h-10 w-2/3 max-w-[420px]' />
@@ -166,25 +169,46 @@ const LessonsLibrarySkeleton = (): React.JSX.Element => (
         <SkeletonLine className='w-3/5 max-w-[320px]' />
       </div>
     </SkeletonPanel>
-    <div className='grid gap-4 lg:grid-cols-2'>
-      <SkeletonPanel className='min-h-[220px]'>
+    <div className='flex w-full flex-col gap-4'>
+      <SkeletonPanel className='min-h-[180px] w-full'>
         <div className='space-y-3'>
           <SkeletonChip className='h-7 w-28' />
           <SkeletonLine className='h-7 w-1/2' />
           <SkeletonLine className='w-full' />
           <SkeletonLine className='w-5/6' />
-          <div className='flex gap-3 pt-3'>
+          <div className='flex flex-wrap gap-3 pt-3'>
             <SkeletonChip className='h-11 w-28' />
             <SkeletonChip className='h-11 w-32' />
           </div>
         </div>
       </SkeletonPanel>
-      <SkeletonPanel className='min-h-[220px]'>
-        <div className='grid grid-cols-1 gap-3 min-[360px]:grid-cols-2'>
-          <SkeletonBlock className='h-24 rounded-[24px] bg-slate-200/76' />
-          <SkeletonBlock className='h-24 rounded-[24px] bg-slate-200/76' />
-          <SkeletonBlock className='h-24 rounded-[24px] bg-slate-200/76' />
-          <SkeletonBlock className='h-24 rounded-[24px] bg-slate-200/76' />
+      <SkeletonPanel className='min-h-[180px] w-full'>
+        <div className='space-y-3'>
+          <div className='flex items-start justify-between gap-3'>
+            <SkeletonLine className='h-7 w-1/2' />
+            <SkeletonChip className='h-7 w-24 shrink-0' />
+          </div>
+          <SkeletonLine className='w-full' />
+          <SkeletonLine className='w-5/6' />
+          <div className='flex flex-wrap gap-2 pt-2'>
+            <SkeletonChip className='h-8 w-24' />
+            <SkeletonChip className='h-8 w-28' />
+            <SkeletonChip className='h-8 w-20' />
+          </div>
+        </div>
+      </SkeletonPanel>
+      <SkeletonPanel className='min-h-[180px] w-full'>
+        <div className='space-y-3'>
+          <div className='flex items-start justify-between gap-3'>
+            <SkeletonLine className='h-7 w-1/2' />
+            <SkeletonChip className='h-7 w-24 shrink-0' />
+          </div>
+          <SkeletonLine className='w-full' />
+          <SkeletonLine className='w-4/5' />
+          <div className='flex flex-wrap gap-2 pt-2'>
+            <SkeletonChip className='h-8 w-24' />
+            <SkeletonChip className='h-8 w-32' />
+          </div>
         </div>
       </SkeletonPanel>
     </div>
@@ -192,8 +216,11 @@ const LessonsLibrarySkeleton = (): React.JSX.Element => (
 );
 
 const LessonsFocusSkeleton = (): React.JSX.Element => (
-  <div className='flex w-full flex-col gap-6'>
-    <SkeletonPanel className='min-h-[160px]'>
+  <div
+    className='flex w-full flex-col items-center gap-4'
+    data-testid='kangur-page-transition-skeleton-lessons-focus-layout'
+  >
+    <SkeletonPanel className='min-h-[160px] w-full max-w-5xl'>
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div className='space-y-3'>
           <SkeletonChip className='h-8 w-36' />
@@ -203,7 +230,7 @@ const LessonsFocusSkeleton = (): React.JSX.Element => (
         <SkeletonChip className='hidden h-12 w-28 sm:block' />
       </div>
     </SkeletonPanel>
-    <SkeletonPanel className='min-h-[360px]'>
+    <SkeletonPanel className='min-h-[360px] w-full max-w-3xl'>
       <div className='space-y-4'>
         <SkeletonBlock className='h-12 rounded-[22px] bg-slate-200/76' />
         <SkeletonBlock className='h-44 rounded-[28px] bg-slate-200/78' />
@@ -212,9 +239,9 @@ const LessonsFocusSkeleton = (): React.JSX.Element => (
         <SkeletonLine className='w-4/6' />
       </div>
     </SkeletonPanel>
-    <div className='grid grid-cols-1 gap-4 min-[360px]:grid-cols-2'>
-      <SkeletonPanel className='min-h-[120px]' />
-      <SkeletonPanel className='min-h-[120px]' />
+    <div className='grid w-full max-w-[44rem] grid-cols-1 gap-4 min-[360px]:grid-cols-2'>
+      <SkeletonPanel className='min-h-[120px] w-full' />
+      <SkeletonPanel className='min-h-[120px] w-full' />
     </div>
   </div>
 );
@@ -372,7 +399,7 @@ export function KangurPageTransitionSkeleton({
         tone={SKELETON_TONE_BY_PAGE[resolvedPageKey]}
       >
         <div className='w-full'>
-          <KangurPageContainer className='flex flex-col gap-6 pt-24 sm:pt-28'>
+          <KangurPageContainer className='flex flex-col items-center gap-6 pt-24 sm:pt-28'>
             {renderSkeletonVariant(resolvedVariant)}
           </KangurPageContainer>
         </div>

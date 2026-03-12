@@ -138,8 +138,12 @@ export function useKangurAiTutorAvatarShellActions(input: {
       return;
     }
 
+    if (isOpen) {
+      closeChat();
+    }
+
     startGuidedSelectionExplanation(persistedSelectedText);
-  }, [persistSelectionContext, startGuidedSelectionExplanation]);
+  }, [closeChat, isOpen, persistSelectionContext, startGuidedSelectionExplanation]);
 
   const openCanonicalOnboarding = useCallback((): void => {
     resetAvatarShellState();

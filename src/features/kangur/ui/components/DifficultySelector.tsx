@@ -38,7 +38,7 @@ export default function DifficultySelector({
   const headingId = useId();
   const descriptionId = useId();
   const groupLabelId = showHeading ? headingId : undefined;
-  const groupAriaLabel = showHeading ? undefined : 'Poziom trudnosci';
+  const groupAriaLabel = showHeading ? undefined : 'Poziom trudności';
   const handleDifficultySelect = (difficulty: KangurDifficulty): void => {
     onSelect(difficulty);
   };
@@ -56,7 +56,7 @@ export default function DifficultySelector({
           descriptionId={descriptionId}
           headingAs='h3'
           headingSize='sm'
-          title='Wybierz poziom trudnosci'
+          title='Wybierz poziom trudności'
           titleId={headingId}
         />
       ) : null}

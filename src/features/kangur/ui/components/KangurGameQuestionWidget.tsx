@@ -109,7 +109,7 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
             data-testid='kangur-game-question-accuracy'
             size='sm'
           >
-            Skutecznosc rundy: {roundAccuracy}%
+            Skuteczność rundy: {roundAccuracy}%
           </KangurStatusChip>
         ) : null}
         {perfectRunInProgress ? (
@@ -165,7 +165,7 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
             data-testid='kangur-game-question-next-badge'
             size='sm'
           >
-            Nastepna odznaka: {nextBadge.summary}
+            Następna odznaka: {nextBadge.summary}
           </KangurStatusChip>
         ) : null}
       </div>

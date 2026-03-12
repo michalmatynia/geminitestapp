@@ -46,10 +46,10 @@ export default function PlayerProgressCard({
   const topActivity = getProgressTopActivities(progress, 1)[0] ?? null;
   const nextBadge = getNextLockedBadge(progress);
   const guidedMomentum = getRecommendedSessionMomentum(progress);
-  const progressTitle = progressContent?.title ?? 'Postepy ucznia';
+  const progressTitle = progressContent?.title ?? 'Postępy ucznia';
   const progressSummary =
     progressContent?.summary ??
-    'Zobacz poziom, serie, skutecznosc i najblizsze odznaki w jednym miejscu.';
+    'Zobacz poziom, serię, skuteczność i najbliższe odznaki w jednym miejscu.';
 
   return (
     <motion.div
@@ -80,7 +80,7 @@ export default function PlayerProgressCard({
               {currentLevel.title}
             </KangurCardTitle>
             <KangurMetaText as='p' size='xs'>
-              Poziom {currentLevel.level} · {totalXp} XP lacznie
+              Poziom {currentLevel.level} · {totalXp} XP łącznie
             </KangurMetaText>
           </div>
         </div>
@@ -120,7 +120,7 @@ export default function PlayerProgressCard({
           <KangurMetricCard
             accent='emerald'
             align='center'
-            label='Skutecznosc'
+            label='Skuteczność'
             value={`${averageAccuracy}%`}
           />
           <KangurMetricCard
@@ -132,7 +132,7 @@ export default function PlayerProgressCard({
           <KangurMetricCard
             accent='sky'
             align='center'
-            label='XP / gre'
+            label='XP / grę'
             value={averageXpPerSession}
           />
         </div>
@@ -141,8 +141,8 @@ export default function PlayerProgressCard({
           <KangurActivitySummaryCard
             activity={topActivity}
             dataTestId='player-progress-top-activity'
-            description={`${topActivity.sessionsPlayed} sesji · ${topActivity.averageXpPerSession} XP / gre`}
-            eyebrow='Najczesciej cwiczysz'
+            description={`${topActivity.sessionsPlayed} sesji · ${topActivity.averageXpPerSession} XP / grę`}
+            eyebrow='Najczęściej ćwiczysz'
           />
         )}
 
@@ -159,7 +159,7 @@ export default function PlayerProgressCard({
               chipAccent='amber'
               chipLabel={nextBadge.summary}
               description={nextBadge.desc}
-              eyebrow='Nastepna odznaka'
+              eyebrow='Następna odznaka'
               eyebrowClassName='text-amber-700/80'
               progressAccent='amber'
               progressBarTestId='player-progress-next-badge-bar'
@@ -202,7 +202,7 @@ export default function PlayerProgressCard({
 
         <div>
           <KangurSectionEyebrow as='p' className='mb-2 text-xs tracking-wide'>
-            Sciezki odznak
+            Ścieżki odznak
           </KangurSectionEyebrow>
           <KangurBadgeTrackGrid
             dataTestIdPrefix='player-progress-badge-track'

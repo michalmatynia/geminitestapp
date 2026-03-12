@@ -132,7 +132,7 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
   intro: [
     {
       title: 'Czym jest kalendarz?',
-      tts: 'Kalendarz to sposob organizowania czasu. Rok ma 12 miesiecy i 365 dni. Tydzien ma 7 dni.',
+      tts: 'Kalendarz to sposob organizowania czasu. Rok ma 12 miesiecy i 365 dni. Tydzień ma 7 dni.',
       content: (
         <KangurLessonStack className='text-center'>
           <KangurDisplayEmoji data-testid='calendar-lesson-intro-emoji' size='lg'>
@@ -153,7 +153,7 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
   dni: [
     {
       title: 'Dni tygodnia',
-      tts: 'Tydzien ma 7 dni: Poniedzialek, Wtorek, Sroda, Czwartek, Piatek, Sobota, Niedziela.',
+      tts: 'Tydzień ma 7 dni: Poniedzialek, Wtorek, Sroda, Czwartek, Piatek, Sobota, Niedziela.',
       content: (
         <div className='flex w-full max-w-xs flex-col gap-2 text-center'>
           {['Poniedzialek', 'Wtorek', 'Sroda', 'Czwartek', 'Piatek'].map((dayLabel, index) => (
@@ -253,8 +253,8 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
   ],
   data: [
     {
-      title: 'Jak czytac date?',
-      tts: 'Date zapisujemy jako dzien, miesiac, rok. Na przykład 15 marca 2025.',
+      title: 'Jak czytać date?',
+      tts: 'Date zapisujemy jako dzień, miesiac, rok. Na przykład 15 marca 2025.',
       content: (
         <KangurLessonStack className='text-center'>
           <MiniCalendar month={3} year={2025} highlightDay={15} />
@@ -275,15 +275,15 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
 };
 
 export const HUB_SECTIONS: LegacyCalendarHubSection[] = [
-  { id: 'intro', emoji: '📅', title: 'Czym jest kalendarz?', description: 'Rok, miesiace i dni' },
+  { id: 'intro', emoji: '📅', title: 'Czym jest kalendarz?', description: 'Rok, miesiące i dni' },
   { id: 'dni', emoji: '🗓️', title: 'Dni tygodnia', description: 'Od poniedzialku do niedzieli' },
   {
     id: 'miesiace',
     emoji: '🌸',
-    title: 'Miesiace i pory roku',
+    title: 'Miesiące i pory roku',
     description: '12 miesiecy i ich pory roku',
   },
-  { id: 'data', emoji: '📝', title: 'Jak czytac date?', description: 'Dzien / miesiac / rok' },
+  { id: 'data', emoji: '📝', title: 'Jak czytać date?', description: 'Dzień / miesiac / rok' },
   {
     id: 'game',
     emoji: '🎮',
@@ -294,15 +294,15 @@ export const HUB_SECTIONS: LegacyCalendarHubSection[] = [
 ];
 
 const LIVE_HUB_SECTIONS: CalendarLiveHubSection[] = [
-  { id: 'intro', emoji: '📅', title: 'Czym jest kalendarz?', description: 'Rok, miesiace i dni' },
+  { id: 'intro', emoji: '📅', title: 'Czym jest kalendarz?', description: 'Rok, miesiące i dni' },
   { id: 'dni', emoji: '🗓️', title: 'Dni tygodnia', description: 'Od poniedzialku do niedzieli' },
   {
     id: 'miesiace',
     emoji: '🌸',
-    title: 'Miesiace i pory roku',
+    title: 'Miesiące i pory roku',
     description: '12 miesiecy i ich pory roku',
   },
-  { id: 'data', emoji: '📝', title: 'Jak czytac date?', description: 'Dzien / miesiac / rok' },
+  { id: 'data', emoji: '📝', title: 'Jak czytać date?', description: 'Dzień / miesiac / rok' },
   {
     id: 'game_days',
     emoji: '🗓️',

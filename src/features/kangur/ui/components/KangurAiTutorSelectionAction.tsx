@@ -61,7 +61,7 @@ export function KangurAiTutorSelectionAction({
       >
         <span
           aria-hidden='true'
-          className='inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_18%,rgba(255,255,255,0.16))]'
+          className='inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] kangur-chat-selection-badge'
         >
           ?
         </span>

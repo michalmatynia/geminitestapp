@@ -101,7 +101,7 @@ describe('KangurGameHomeQuestWidget', () => {
     render(<KangurGameHomeQuestWidget />);
 
     expect(screen.getByTestId('kangur-home-quest-widget')).toHaveTextContent(
-      '➗ Powtorka: Dzielenie'
+      '➗ Powtórka: Dzielenie'
     );
     expect(screen.getByTestId('kangur-home-quest-label')).toHaveTextContent('Misja ratunkowa');
     expect(screen.getByTestId('kangur-home-quest-priority')).toHaveTextContent(
@@ -113,7 +113,7 @@ describe('KangurGameHomeQuestWidget', () => {
     );
     expect(screen.getByTestId('kangur-home-quest-expiry')).toHaveTextContent('Wygasa dzisiaj');
     expect(screen.getByTestId('kangur-home-quest-target')).toHaveTextContent(
-      'Cel: 1 powtorka + wynik min. 75%'
+      'Cel: 1 powtórka + wynik min. 75%'
     );
     expect(screen.getByTestId('kangur-home-quest-progress')).toHaveTextContent(
       '45% / 75% opanowania'
@@ -121,7 +121,7 @@ describe('KangurGameHomeQuestWidget', () => {
     expect(screen.getByTestId('kangur-home-quest-momentum')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-home-quest-streak')).toHaveTextContent('Seria: 3');
     expect(screen.getByTestId('kangur-home-quest-xp-rate')).toHaveTextContent(
-      'Tempo: 45 XP / gre'
+      'Tempo: 45 XP / grę'
     );
     expect(screen.getByTestId('kangur-home-quest-track')).toHaveTextContent(
       'Na fali: Start'
@@ -133,7 +133,7 @@ describe('KangurGameHomeQuestWidget', () => {
       'aria-valuenow',
       '60'
     );
-    expect(screen.getByRole('link', { name: 'Otworz lekcje' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Otwórz lekcję' })).toHaveAttribute(
       'href',
       '/kangur/lessons?focus=division'
     );
@@ -165,9 +165,9 @@ describe('KangurGameHomeQuestWidget', () => {
         baselineLessonsCompleted: 7,
         assignment: {
           id: 'lesson-retry-division',
-          title: '➗ Powtorka: Dzielenie',
-          description: 'Powtorz dzielenie.',
-          target: '1 powtorka + wynik min. 75%',
+          title: '➗ Powtórka: Dzielenie',
+          description: 'Powtórz dzielenie.',
+          target: '1 powtórka + wynik min. 75%',
           priority: 'high',
           questLabel: 'Misja ratunkowa',
           rewardXp: 55,
@@ -177,7 +177,7 @@ describe('KangurGameHomeQuestWidget', () => {
           targetPercent: 40,
         },
           action: {
-            label: 'Otworz lekcje',
+            label: 'Otwórz lekcję',
             page: 'Lessons',
             query: { focus: 'division' },
           },
@@ -203,7 +203,7 @@ describe('KangurGameHomeQuestWidget', () => {
     render(<KangurGameHomeQuestWidget />);
 
     expect(screen.getByTestId('kangur-home-quest-status')).toHaveTextContent(
-      'Misja ukonczona'
+      'Misja ukończona'
     );
     expect(screen.getByTestId('kangur-home-quest-reward')).toHaveTextContent(
       'Nagroda odebrana +55 XP'

@@ -1,5 +1,5 @@
-import { render } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import { render, screen } from '@testing-library/react';
+import type { CSSProperties, ReactNode } from 'react';
 
 import { KangurAiTutorSpotlightOverlays } from './KangurAiTutorSpotlightOverlays';
 import {
@@ -29,23 +29,62 @@ function SpotlightOverlaysHarness(): ReactNode {
   );
 }
 
+type SpotlightHarnessProps = {
+  guidedMode?: 'auth' | 'home_onboarding' | 'section' | 'selection' | null;
+  sectionContextSpotlightStyle?: CSSProperties | null;
+  sectionDropHighlightStyle?: CSSProperties | null;
+  selectionGlowStyles?: CSSProperties[];
+  selectionContextSpotlightStyle?: CSSProperties | null;
+  selectionSpotlightStyle?: CSSProperties | null;
+};
+
+function SpotlightOverlaysStylesHarness({
+  guidedMode = null,
+  sectionContextSpotlightStyle = null,
+  sectionDropHighlightStyle = null,
+  selectionGlowStyles = [],
+  selectionContextSpotlightStyle = null,
+  selectionSpotlightStyle = null,
+}: SpotlightHarnessProps): ReactNode {
+  const widgetState = useKangurAiTutorWidgetState();
+
+  return (
+    <KangurAiTutorWidgetStateProvider value={widgetState}>
+      <KangurAiTutorSpotlightOverlays
+        guidedMode={guidedMode}
+        prefersReducedMotion={false}
+        reducedMotionTransitions={{
+          instant: { duration: 0 },
+          stableState: { opacity: 1, scale: 1, y: 0 },
+        }}
+        sectionContextSpotlightStyle={sectionContextSpotlightStyle}
+        sectionDropHighlightStyle={sectionDropHighlightStyle}
+        selectionGlowStyles={selectionGlowStyles}
+        selectionContextSpotlightStyle={selectionContextSpotlightStyle}
+        selectionSpotlightStyle={selectionSpotlightStyle}
+      />
+    </KangurAiTutorWidgetStateProvider>
+  );
+}
+
 describe('KangurAiTutorSpotlightOverlays', () => {
-  it('uses a subtle light-mode text gradient palette for selection emphasis', () => {
+  it('uses a visible inline light-mode selection emphasis instead of transparent text fill', () => {
     const { container } = render(<SpotlightOverlaysHarness />);
     const style = container.querySelector('style');
 
     expect(style?.textContent).toContain(
-      '--kangur-ai-tutor-selection-gradient-fallback: color-mix(in srgb, var(--kangur-page-text) 78%, rgb(146 64 14));'
+      '--kangur-ai-tutor-selection-inline-text: rgb(120 53 15);'
     );
     expect(style?.textContent).toContain(
-      '--kangur-ai-tutor-selection-gradient-start: color-mix(in srgb, var(--kangur-page-text) 90%, rgb(120 53 15));'
+      '--kangur-ai-tutor-selection-inline-fill: rgba(245, 158, 11, 0.18);'
     );
     expect(style?.textContent).toContain(
-      '--kangur-ai-tutor-selection-gradient-mid: color-mix(in srgb, var(--kangur-page-text) 82%, rgb(146 64 14));'
+      '--kangur-ai-tutor-selection-inline-shadow: rgba(217, 119, 6, 0.14);'
     );
     expect(style?.textContent).toContain(
-      '--kangur-ai-tutor-selection-gradient-end: color-mix(in srgb, var(--kangur-page-text) 72%, rgb(180 83 9));'
+      "color: var(--kangur-ai-tutor-selection-inline-text);"
     );
+    expect(style?.textContent).toContain('-webkit-box-decoration-break: clone;');
   });
 
   it('scopes the dark override to Kangur appearance attributes instead of the global dark class', () => {
@@ -55,5 +94,55 @@ describe('KangurAiTutorSpotlightOverlays', () => {
     expect(style?.textContent).toContain('[data-kangur-appearance=\'dark\'],');
     expect(style?.textContent).toContain('[data-kangur-appearance-mode=\'dark\'] {');
     expect(style?.textContent).not.toContain('.dark {');
+  });
+
+  it('only uses transparent clipped text for the dark appearance override', () => {
+    const { container } = render(<SpotlightOverlaysHarness />);
+    const style = container.querySelector('style');
+
+    expect(style?.textContent).toMatch(
+      /\[data-kangur-appearance='dark'\]\s+\[data-kangur-ai-tutor-selection-emphasis='gradient'\],[\s\S]*-webkit-text-fill-color:\s*transparent;/
+    );
+    expect(style?.textContent).not.toMatch(
+      /@supports[\s\S]*?\n\s*\[data-kangur-ai-tutor-selection-emphasis='gradient'\]\s*\{[\s\S]*?-webkit-text-fill-color:\s*transparent;/
+    );
+  });
+
+  it('renders themed spotlight utility classes for selection glow and contextual frames', () => {
+    render(
+      <SpotlightOverlaysStylesHarness
+        guidedMode='selection'
+        selectionGlowStyles={[{ left: 12, top: 18, width: 84, height: 28 }]}
+        selectionContextSpotlightStyle={{ left: 20, top: 32, width: 160, height: 48 }}
+        sectionContextSpotlightStyle={{ left: 28, top: 92, width: 180, height: 56 }}
+        sectionDropHighlightStyle={{ left: 36, top: 160, width: 200, height: 72 }}
+      />
+    );
+
+    expect(screen.getByTestId('kangur-ai-tutor-selection-glow')).toHaveClass(
+      'kangur-chat-spotlight-glow'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-selection-context-spotlight')).toHaveClass(
+      'kangur-chat-spotlight-frame'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-section-context-spotlight')).toHaveClass(
+      'kangur-chat-spotlight-frame'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-section-drop-highlight')).toHaveClass(
+      'kangur-chat-spotlight-frame'
+    );
+  });
+
+  it('renders the aggregated selection spotlight with the dedicated themed selection chrome', () => {
+    render(
+      <SpotlightOverlaysStylesHarness
+        guidedMode='selection'
+        selectionSpotlightStyle={{ left: 12, top: 18, width: 96, height: 32 }}
+      />
+    );
+
+    expect(screen.getByTestId('kangur-ai-tutor-selection-spotlight')).toHaveClass(
+      'kangur-chat-selection-spotlight'
+    );
   });
 });

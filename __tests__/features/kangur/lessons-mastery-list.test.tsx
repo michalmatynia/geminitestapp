@@ -144,7 +144,7 @@ describe('Lessons page mastery list', () => {
           progress: {
             status: 'not_started',
             percent: 0,
-            summary: 'Powtorki po przydziale: 0/1.',
+            summary: 'Powtórki po przydziale: 0/1.',
             attemptsCompleted: 0,
             attemptsRequired: 1,
             lastActivityAt: null,
@@ -155,7 +155,7 @@ describe('Lessons page mastery list', () => {
           id: 'assignment-calendar-completed',
           learnerKey: 'ada@example.com',
           title: '📅 Nauka kalendarza',
-          description: 'To zadanie od rodzica zostalo zakonczone.',
+          description: 'To zadanie od rodzica zostało zakończone.',
           priority: 'medium',
           archived: false,
           target: {
@@ -171,7 +171,7 @@ describe('Lessons page mastery list', () => {
           progress: {
             status: 'completed',
             percent: 100,
-            summary: 'Powtorki po przydziale: 1/1.',
+            summary: 'Powtórki po przydziale: 1/1.',
             attemptsCompleted: 1,
             attemptsRequired: 1,
             lastActivityAt: '2026-03-06T10:30:00.000Z',
@@ -218,7 +218,7 @@ describe('Lessons page mastery list', () => {
     expect(screen.getByTestId('kangur-lessons-heading-art')).toHaveAttribute('viewBox', '0 0 560 164');
     expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Wszystkie' })).not.toBeInTheDocument();
-    const link = screen.getByRole('link', { name: 'Strona glowna' });
+    const link = screen.getByRole('link', { name: 'Strona główna' });
     const topBar = link.closest('div.sticky');
     expect(topBar).toBeInTheDocument();
     expect(topBar?.className).toContain('sticky');
@@ -232,7 +232,7 @@ describe('Lessons page mastery list', () => {
     expect(screen.getByText('Ukonczone dla rodzica')).toBeInTheDocument();
     expect(screen.getByText('Zadanie zamkniete')).toBeInTheDocument();
     expect(
-      screen.getByText('Zadanie od rodzica zostalo juz wykonane. Powtorki po przydziale: 1/1.')
+      screen.getByText('Zadanie od rodzica zostało już wykonane. Powtórki po przydziale: 1/1.')
     ).toBeInTheDocument();
     expect(screen.getByText('Ukończono 2× · najlepszy wynik 100%')).toBeInTheDocument();
     expect(screen.getByText('Ukończono 1× · ostatni wynik 45%')).toBeInTheDocument();
@@ -253,7 +253,7 @@ describe('Lessons page mastery list', () => {
     renderLessonsPage();
 
     await screen.findByRole('heading', { name: 'Lekcje' });
-    const link = screen.getByRole('link', { name: 'Strona glowna' });
+    const link = screen.getByRole('link', { name: 'Strona główna' });
     expect(link).toHaveAttribute('href', '/admin/kangur');
     const topBar = link.closest('div.sticky');
     expect(topBar).toBeInTheDocument();
@@ -298,7 +298,9 @@ describe('Lessons page mastery list', () => {
     const section = screen.getByTestId('lessons-shell-transition');
     expect(section).toBeInTheDocument();
     expect(screen.getByText('Lekcje zaraz beda gotowe.')).toBeInTheDocument();
-    expect(screen.queryByText('Wybierz temat i przejdz od razu do praktyki lub powtorki.')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Wybierz temat i przejdź od razu do praktyki lub powtórki.')
+    ).not.toBeInTheDocument();
     expect(screen.queryByTestId('lessons-list-transition')).not.toBeInTheDocument();
 
     act(() => {
@@ -308,7 +310,9 @@ describe('Lessons page mastery list', () => {
     const contentTransitionSection = await screen.findByTestId('lessons-list-transition');
     expect(contentTransitionSection).toBeInTheDocument();
     expect(screen.queryByText('Lekcje zaraz beda gotowe.')).not.toBeInTheDocument();
-    expect(screen.getByText('Wybierz temat i przejdz od razu do praktyki lub powtorki.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Wybierz temat i przejdź od razu do praktyki lub powtórki.')
+    ).toBeInTheDocument();
   });
 
   it('keeps a stable top section copy between initial and fully rendered states', async () => {
@@ -321,7 +325,7 @@ describe('Lessons page mastery list', () => {
     renderLessonsPage();
 
     expect(screen.getByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: /strona glowna/i })).toHaveLength(1);
+    expect(screen.getAllByRole('link', { name: /strona główna/i })).toHaveLength(1);
 
     act(() => {
       frameCallbacks[0](0);

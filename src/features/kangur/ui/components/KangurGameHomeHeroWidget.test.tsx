@@ -138,12 +138,12 @@ describe('KangurGameHomeHeroWidget', () => {
     render(<KangurGameHomeHeroWidget />);
 
     expect(screen.getByTestId('kangur-home-hero-shell')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-home-hero-copy')).toHaveTextContent('Twoj postep');
+    expect(screen.getByTestId('kangur-home-hero-copy')).toHaveTextContent('Twój postęp');
     expect(screen.getByTestId('kangur-home-hero-milestone-shell')).toHaveTextContent(
       'milestone-summary'
     );
     expect(screen.getByTestId('kangur-home-hero-copy')).toHaveTextContent(
-      'Sprawdz najblizszy kamien milowy i zadania, ktore warto domknac dzisiaj.'
+      'Sprawdź najbliższy kamień milowy i zadania, które warto domknąć dziś.'
     );
     expect(screen.queryByText('spotlight:/kangur')).toBeNull();
   });

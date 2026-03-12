@@ -116,10 +116,10 @@ describe('KangurGameResultWidget', () => {
     useKangurGameRuntimeMock.mockReturnValue(
       buildRuntime({
         activeSessionRecommendation: {
-          description: 'Dzielenie daje teraz najmocniejszy postep do kolejnej odznaki.',
+          description: 'Dzielenie daje teraz najmocniejszy postęp do kolejnej odznaki.',
           label: 'Tor odznak',
           source: 'operation_selector',
-          title: 'Rozpedz tor: Dzielenie',
+          title: 'Rozpędź tor: Dzielenie',
         },
         resultPracticeAssignment: {
           progress: {
@@ -133,7 +133,7 @@ describe('KangurGameResultWidget', () => {
           breakdown: [
             {
               kind: 'base',
-              label: 'Ukonczenie rundy',
+              label: 'Ukończenie rundy',
               xp: 18,
             },
             {
@@ -144,18 +144,18 @@ describe('KangurGameResultWidget', () => {
           ],
           nextBadge: {
             emoji: '⭐',
-            name: 'Pol tysiaca XP',
+            name: 'Pół tysiąca XP',
             summary: '420/500 XP',
           },
           dailyQuest: {
-            title: '➗ Powtorka: Dzielenie',
+            title: '➗ Powtórka: Dzielenie',
             summary: '82% / 75% opanowania',
             xpAwarded: 55,
           },
           recommendation: {
             label: 'Tor odznak',
-            summary: 'Ten ruch domknal polecany kierunek i misje dnia.',
-            title: 'Rozpedz tor: Dzielenie',
+            summary: 'Ten ruch domknął polecany kierunek i misję dnia.',
+            title: 'Rozpędź tor: Dzielenie',
           },
         },
       })
@@ -170,19 +170,19 @@ describe('KangurGameResultWidget', () => {
     expect(screen.getByTestId('kangur-result-reward-card')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-result-reward-total')).toHaveTextContent('+93 XP');
     expect(screen.getByTestId('kangur-result-reward-title')).toHaveTextContent(
-      'Ta runda trafila w polecany kierunek i przesunela postep do przodu.'
+      'Ta runda trafiła w polecany kierunek i przesunęła postęp do przodu.'
     );
     expect(screen.getByTestId('kangur-result-reward-breakdown')).toHaveTextContent(
-      'Ukonczenie rundy +18'
+      'Ukończenie rundy +18'
     );
     expect(screen.getByTestId('kangur-result-reward-breakdown')).toHaveTextContent(
       'Misja dnia +55'
     );
     expect(screen.getByTestId('kangur-result-reward-next-badge')).toHaveTextContent(
-      'Nastepna odznaka: ⭐ Pol tysiaca XP · 420/500 XP'
+      'Następna odznaka: ⭐ Pół tysiąca XP · 420/500 XP'
     );
     expect(screen.getByTestId('kangur-result-reward-recommendation')).toHaveTextContent(
-      'Polecony kierunek: Rozpedz tor: Dzielenie · Ten ruch domknal polecany kierunek i misje dnia.'
+      'Polecony kierunek: Rozpędź tor: Dzielenie · Ten ruch domknął polecany kierunek i misję dnia.'
     );
     expect(screen.getByTestId('kangur-result-recommendation-card')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-result-recommendation-chip')).toHaveTextContent(
@@ -192,10 +192,10 @@ describe('KangurGameResultWidget', () => {
       'Tor odznak'
     );
     expect(screen.getByTestId('kangur-result-recommendation-title')).toHaveTextContent(
-      'Rozpedz tor: Dzielenie'
+      'Rozpędź tor: Dzielenie'
     );
     expect(screen.getByTestId('kangur-result-recommendation-description')).toHaveTextContent(
-      'Dzielenie daje teraz najmocniejszy postep do kolejnej odznaki.'
+      'Dzielenie daje teraz najmocniejszy postęp do kolejnej odznaki.'
     );
     expect(screen.getByTestId('kangur-result-badges-card')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-result-badges-chip')).toHaveTextContent('Nowe odznaki');
@@ -205,7 +205,7 @@ describe('KangurGameResultWidget', () => {
     );
     expect(screen.getByTestId('kangur-result-followup-card')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-result-followup-quest-chip')).toHaveTextContent(
-      'Misja dnia ukonczona'
+      'Misja dnia ukończona'
     );
     expect(screen.getByTestId('kangur-result-followup-quest-reward-chip')).toHaveTextContent(
       'Bonus +55 XP'
@@ -214,7 +214,7 @@ describe('KangurGameResultWidget', () => {
       'Nagroda odebrana +55 XP'
     );
     expect(screen.getByTestId('kangur-result-followup-title')).toHaveTextContent(
-      '➗ Powtorka: Dzielenie'
+      '➗ Powtórka: Dzielenie'
     );
     expect(screen.getByTestId('kangur-result-followup-description')).toHaveTextContent(
       '82% / 75% opanowania'
@@ -227,7 +227,7 @@ describe('KangurGameResultWidget', () => {
   it('shows the next badge follow-up when there is no fresh quest completion', () => {
     getNextLockedBadgeMock.mockReturnValue({
       emoji: '⭐',
-      name: 'Pol tysiaca XP',
+      name: 'Pół tysiąca XP',
       progressPercent: 84,
       summary: '420/500 XP',
     });
@@ -240,10 +240,10 @@ describe('KangurGameResultWidget', () => {
     expect(screen.getByTestId('kangur-result-reward-total')).toHaveTextContent('+48 XP');
     expect(screen.queryByTestId('kangur-result-badges-card')).toBeNull();
     expect(screen.getByTestId('kangur-result-followup-badge-chip')).toHaveTextContent(
-      'Nastepna odznaka'
+      'Następna odznaka'
     );
     expect(screen.getByTestId('kangur-result-followup-title')).toHaveTextContent(
-      '⭐ Pol tysiaca XP'
+      '⭐ Pół tysiąca XP'
     );
     expect(screen.getByTestId('kangur-result-followup-description')).toHaveTextContent(
       'Do odznaki brakuje: 420/500 XP'

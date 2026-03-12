@@ -55,8 +55,8 @@ export default function XpToast({
                 </KangurStatusChip>
                 <span className='text-sm font-bold [color:var(--kangur-page-text)]'>
                   {recommendation
-                    ? 'Swietnie, trzymasz polecany kierunek'
-                    : 'Swietnie, zdobywasz kolejne punkty'}
+                    ? 'Świetnie, trzymasz polecany kierunek'
+                    : 'Świetnie, zdobywasz kolejne punkty'}
                 </span>
               </div>
               <KangurRewardBreakdownChips
@@ -72,7 +72,7 @@ export default function XpToast({
                   className='mt-2 text-xs font-medium [color:var(--kangur-page-muted-text)]'
                   data-testid='xp-toast-next-badge'
                 >
-                  Nastepna odznaka: {nextBadge.emoji} {nextBadge.name} · {nextBadge.summary}
+                  Następna odznaka: {nextBadge.emoji} {nextBadge.name} · {nextBadge.summary}
                 </p>
               ) : null}
               {dailyQuest ? (
@@ -80,7 +80,7 @@ export default function XpToast({
                   className='mt-1 text-xs font-semibold text-emerald-700'
                   data-testid='xp-toast-daily-quest'
                 >
-                  Misja dnia ukonczona: {dailyQuest.title} · {dailyQuest.summary} · +{dailyQuest.xpAwarded} XP
+                  Misja dnia ukończona: {dailyQuest.title} · {dailyQuest.summary} · +{dailyQuest.xpAwarded} XP
                 </p>
               ) : null}
               {recommendation ? (

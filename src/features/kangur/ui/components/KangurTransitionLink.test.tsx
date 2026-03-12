@@ -118,11 +118,11 @@ describe('KangurTransitionLink', () => {
   it('starts the shared Kangur route transition when an internal link is clicked', () => {
     render(
       <KangurTransitionLink href='/kangur' targetPageKey='Game'>
-        Strona glowna
+        Strona główna
       </KangurTransitionLink>
     );
 
-    fireEvent.click(screen.getByRole('link', { name: 'Strona glowna' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Strona główna' }));
 
     expect(startRouteTransitionMock).toHaveBeenCalledWith({
       href: '/kangur',

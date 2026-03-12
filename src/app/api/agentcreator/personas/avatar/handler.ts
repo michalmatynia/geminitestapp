@@ -120,6 +120,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       thumbnail: thumbnail
         ? {
           ref: thumbnail.ref,
+          dataUrl: thumbnail.dataUrl,
           mimeType: thumbnail.mimeType,
           bytes: thumbnail.bytes,
           width: thumbnail.width,

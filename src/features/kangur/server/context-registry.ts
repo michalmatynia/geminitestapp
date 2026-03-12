@@ -36,6 +36,7 @@ import type {
 import type {
   KangurAssignmentSnapshot,
   KangurLesson,
+  KangurLessonComponentId,
   KangurLessonDocument,
   KangurLessonMasteryEntry,
 } from '@/shared/contracts/kangur';
@@ -112,6 +113,61 @@ const readTrimmedString = (value: unknown): string | null => {
   }
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+};
+const buildKangurTestResultSummaryFromContext = (
+  context: KangurAiTutorConversationContext | null | undefined
+): string | null => {
+  if (context?.surface !== 'test') {
+    return null;
+  }
+
+  const currentQuestion = readTrimmedString(context.currentQuestion);
+  const questionId = readTrimmedString(context.questionId);
+  if (currentQuestion || questionId || context.answerRevealed !== true) {
+    return null;
+  }
+
+  return readTrimmedString(context.description);
+};
+const buildKangurTestReviewSummaryFromContext = (
+  context: KangurAiTutorConversationContext | null | undefined
+): string | null => {
+  if (context?.surface !== 'test' || context.answerRevealed !== true) {
+    return null;
+  }
+
+  const currentQuestion = readTrimmedString(context.currentQuestion);
+  const questionId = readTrimmedString(context.questionId);
+  if (!currentQuestion || !questionId) {
+    return null;
+  }
+
+  return readTrimmedString(context.description);
+};
+const buildKangurTestSelectedChoiceFactsFromContext = (
+  context: KangurAiTutorConversationContext | null | undefined
+): {
+  selectedChoiceLabel: string;
+  selectedChoiceText?: string;
+  selectedChoiceSummary: string;
+} | null => {
+  if (context?.surface !== 'test') {
+    return null;
+  }
+
+  const selectedChoiceLabel = readTrimmedString(context.selectedChoiceLabel);
+  if (!selectedChoiceLabel) {
+    return null;
+  }
+
+  const selectedChoiceText = readTrimmedString(context.selectedChoiceText);
+  return {
+    selectedChoiceLabel,
+    ...(selectedChoiceText ? { selectedChoiceText } : {}),
+    selectedChoiceSummary: selectedChoiceText
+      ? `Wybrana odpowiedz: ${selectedChoiceLabel} - ${selectedChoiceText}.`
+      : `Wybrana odpowiedz: ${selectedChoiceLabel}.`,
+  };
 };
 const truncate = (value: string, maxLength: number): string =>
   value.length > maxLength ? `${value.slice(0, maxLength - 3)}...` : value;
@@ -236,6 +292,67 @@ const buildWeakLessonItem = (lesson: KangurLessonMasteryInsight): Record<string,
   lastScorePercent: lesson.lastScorePercent,
   lastCompletedAt: lesson.lastCompletedAt,
 });
+const buildOrderedLessonsForNavigation = (
+  lessons: KangurLesson[],
+  assignments: KangurAssignmentSnapshot[]
+): KangurLesson[] => {
+  const activeLessonAssignments = new Map<KangurLessonComponentId, KangurAssignmentSnapshot>();
+
+  assignments
+    .filter((assignment) => assignment.progress.status !== 'completed')
+    .filter(
+      (assignment): assignment is KangurAssignmentSnapshot & { target: { type: 'lesson' } } =>
+        assignment.target.type === 'lesson'
+    )
+    .forEach((assignment) => {
+      const componentId = assignment.target.lessonComponentId;
+      const existing = activeLessonAssignments.get(componentId);
+      if (
+        !existing ||
+        ASSIGNMENT_PRIORITY_ORDER[assignment.priority] <
+          ASSIGNMENT_PRIORITY_ORDER[existing.priority]
+      ) {
+        activeLessonAssignments.set(componentId, assignment);
+      }
+    });
+
+  return [...lessons].sort((left, right) => {
+    const leftAssignment = activeLessonAssignments.get(left.componentId);
+    const rightAssignment = activeLessonAssignments.get(right.componentId);
+
+    if (leftAssignment && !rightAssignment) {
+      return -1;
+    }
+    if (!leftAssignment && rightAssignment) {
+      return 1;
+    }
+    if (leftAssignment && rightAssignment) {
+      const priorityDiff =
+        ASSIGNMENT_PRIORITY_ORDER[leftAssignment.priority] -
+        ASSIGNMENT_PRIORITY_ORDER[rightAssignment.priority];
+      if (priorityDiff !== 0) {
+        return priorityDiff;
+      }
+    }
+
+    return left.sortOrder - right.sortOrder;
+  });
+};
+const buildLessonNavigationSummary = (
+  previousLesson: KangurLesson | null,
+  nextLesson: KangurLesson | null
+): string | null => {
+  if (previousLesson && nextLesson) {
+    return `Bez wracania do listy mozesz cofnac sie do ${previousLesson.title} albo przejsc dalej do ${nextLesson.title}.`;
+  }
+  if (previousLesson) {
+    return `Bez wracania do listy mozesz cofnac sie do ${previousLesson.title}.`;
+  }
+  if (nextLesson) {
+    return `Bez wracania do listy mozesz przejsc dalej do ${nextLesson.title}.`;
+  }
+  return null;
+};
 const buildLoginActivitySummary = (input: {
   learnerDisplayName: string | null;
   parentLoginCount7d: number;
@@ -363,8 +480,20 @@ const buildQuestionChoiceItems = (
   question.choices.map((choice) => ({
     label: choice.label,
     text: choice.text,
+    ...(choice.description?.trim() ? { description: choice.description.trim() } : {}),
     ...(answerRevealed ? { isCorrect: choice.label === question.correctChoiceLabel } : {}),
   }));
+const buildQuestionChoiceSummary = (question: KangurTestQuestion): string =>
+  `Opcje odpowiedzi: ${question.choices
+    .map((choice) =>
+      [
+        `${choice.label} - ${truncate(choice.text.trim(), 80)}`,
+        choice.description?.trim() ? truncate(choice.description.trim(), 80) : null,
+      ]
+        .filter(Boolean)
+        .join(': ')
+    )
+    .join('; ')}.`;
 export const loadKangurRegistryBaseData = async (learnerId: string): Promise<KangurRegistryBaseData> => {
   const [
     learner,
@@ -506,6 +635,22 @@ export const buildKangurLearnerSnapshotRuntimeDocument = async (input: {
         items: data.snapshot.recentSessions.slice(0, 4).map(buildRecentSessionItem),
       },
       {
+        id: 'operation_performance',
+        kind: 'items',
+        title: 'Performance by operation',
+        items: data.snapshot.operationPerformance.slice(0, 6).map((operation) => ({
+          operation: operation.operation,
+          label: operation.label,
+          emoji: operation.emoji,
+          attempts: operation.attempts,
+          averageAccuracy: operation.averageAccuracy,
+          averageScore: operation.averageScore,
+          bestScore: operation.bestScore,
+          totalXpEarned: operation.totalXpEarned,
+          averageXpPerSession: operation.averageXpPerSession,
+        })),
+      },
+      {
         id: 'active_assignments',
         kind: 'items',
         title: 'Active assignments',
@@ -602,6 +747,14 @@ export const buildKangurLessonContextRuntimeDocument = async (input: {
   const relevantAssignment = findRelevantLessonAssignment(lesson, data.evaluatedAssignments, input.context);
   const document = data.lessonDocuments[lesson.id] ?? null;
   const documentSnippets = buildLessonDocumentSnippets(document);
+  const orderedLessons = buildOrderedLessonsForNavigation(data.lessons, data.evaluatedAssignments);
+  const lessonIndex = orderedLessons.findIndex((candidate) => candidate.id === lesson.id);
+  const previousLesson = lessonIndex > 0 ? orderedLessons[lessonIndex - 1] ?? null : null;
+  const nextLesson =
+    lessonIndex >= 0 && lessonIndex < orderedLessons.length - 1
+      ? orderedLessons[lessonIndex + 1] ?? null
+      : null;
+  const navigationSummary = buildLessonNavigationSummary(previousLesson, nextLesson);
   const masterySummary = mastery
     ? `${lesson.title} mastery ${mastery.masteryPercent}% after ${mastery.attempts} attempts.`
     : `No mastery data yet for ${lesson.title}.`;
@@ -649,6 +802,19 @@ export const buildKangurLessonContextRuntimeDocument = async (input: {
       ...(documentSnippets.length > 0
         ? { documentSummary: documentSnippets.join(' ') }
         : {}),
+      ...(previousLesson
+        ? {
+          previousLessonId: previousLesson.id,
+          previousLessonTitle: previousLesson.title,
+        }
+        : {}),
+      ...(nextLesson
+        ? {
+          nextLessonId: nextLesson.id,
+          nextLessonTitle: nextLesson.title,
+        }
+        : {}),
+      ...(navigationSummary ? { navigationSummary } : {}),
     },
     sections: [
       {
@@ -683,6 +849,33 @@ export const buildKangurLessonContextRuntimeDocument = async (input: {
         kind: 'text',
         title: 'Lesson content summary',
         text: documentSnippets.join('\n'),
+      },
+      {
+        id: 'lesson_navigation',
+        kind: 'items',
+        title: 'Lesson navigation',
+        items: [
+          ...(previousLesson
+            ? [
+              {
+                direction: 'previous',
+                lessonId: previousLesson.id,
+                lessonComponentId: previousLesson.componentId,
+                title: previousLesson.title,
+              },
+            ]
+            : []),
+          ...(nextLesson
+            ? [
+              {
+                direction: 'next',
+                lessonId: nextLesson.id,
+                lessonComponentId: nextLesson.componentId,
+                title: nextLesson.title,
+              },
+            ]
+            : []),
+        ],
       },
     ],
     provenance: {
@@ -743,6 +936,21 @@ export const buildKangurTestContextRuntimeDocument = async (input: {
       currentQuestion: currentQuestion?.prompt ?? null,
       questionProgressLabel,
       answerRevealed,
+      ...(currentQuestion
+        ? {
+          questionPointValue: currentQuestion.pointValue,
+          questionChoicesSummary: buildQuestionChoiceSummary(currentQuestion),
+        }
+        : {}),
+      ...(answerRevealed && currentQuestion
+        ? {
+          correctChoiceLabel: currentQuestion.correctChoiceLabel,
+          correctChoiceText:
+            currentQuestion.choices.find(
+              (choice) => choice.label === currentQuestion.correctChoiceLabel
+            )?.text ?? null,
+        }
+        : {}),
       ...(answerRevealed && currentQuestion?.explanation
         ? { revealedExplanation: currentQuestion.explanation }
         : {}),
@@ -927,6 +1135,144 @@ const buildKangurGameSurfaceRuntimeDocument = (
     },
   };
 };
+const buildKangurTestSurfaceRuntimeDocument = (
+  context: KangurAiTutorConversationContext | null | undefined
+): ContextRuntimeDocument | null => {
+  if (context?.surface !== 'test') {
+    return null;
+  }
+
+  const contentId = readTrimmedString(context.contentId) ?? 'test';
+  const questionId = readTrimmedString(context.questionId);
+  const title = readTrimmedString(context.title) ?? 'Kangur test';
+  const currentQuestion = readTrimmedString(context.currentQuestion);
+  const questionProgressLabel = readTrimmedString(context.questionProgressLabel);
+  const answerRevealed = context.answerRevealed ?? false;
+  const resultSummary = buildKangurTestResultSummaryFromContext(context);
+  const reviewSummary = buildKangurTestReviewSummaryFromContext(context);
+  const selectedChoiceFacts = buildKangurTestSelectedChoiceFactsFromContext(context);
+  const summary =
+    currentQuestion && questionProgressLabel
+      ? `Active test question ${questionProgressLabel}.`
+      : currentQuestion
+        ? 'Active test question.'
+        : resultSummary ?? title;
+
+  return {
+    id: `runtime:kangur:test:${contentId}:${questionId ?? 'summary'}:${answerRevealed ? 'revealed' : currentQuestion ? 'active' : 'summary'}`,
+    kind: 'runtime_document',
+    entityType: KANGUR_RUNTIME_ENTITY_TYPES.testContext,
+    title,
+    summary,
+    status: currentQuestion ? (answerRevealed ? 'summary' : 'in_progress') : 'summary',
+    tags: ['kangur', 'test', 'ai-tutor'],
+    relatedNodeIds: [...KANGUR_CONTEXT_ROOT_IDS.testContext],
+    timestamps: undefined,
+    facts: {
+      contentId,
+      title,
+      answerRevealed,
+      ...(questionId ? { questionId } : {}),
+      ...(selectedChoiceFacts ?? {}),
+      ...(currentQuestion ? { currentQuestion } : {}),
+      ...(questionProgressLabel ? { questionProgressLabel } : {}),
+      ...(reviewSummary ? { reviewSummary } : {}),
+      ...(resultSummary ? { resultSummary } : {}),
+    },
+    sections: [
+      {
+        id: 'test_overview',
+        kind: 'text',
+        title: 'Test overview',
+        text: [title, reviewSummary, resultSummary].filter(Boolean).join('\n'),
+      },
+    ],
+    provenance: {
+      providerId: 'kangur',
+      source: 'kangur-conversation-context',
+    },
+  };
+};
+const augmentKangurTestSurfaceRuntimeDocument = (
+  document: ContextRuntimeDocument | null,
+  context: KangurAiTutorConversationContext | null | undefined
+): ContextRuntimeDocument | null => {
+  if (document?.entityType !== KANGUR_RUNTIME_ENTITY_TYPES.testContext) {
+    return document ?? null;
+  }
+
+  const resultSummary = buildKangurTestResultSummaryFromContext(context);
+  const reviewSummary = buildKangurTestReviewSummaryFromContext(context);
+  const selectedChoiceFacts = buildKangurTestSelectedChoiceFactsFromContext(context);
+  if (!resultSummary && !reviewSummary && !selectedChoiceFacts) {
+    return document;
+  }
+
+  const sections = document.sections ?? [];
+  const nextResultSection =
+    resultSummary === null
+      ? null
+      : {
+        id: 'test_result',
+        kind: 'text' as const,
+        title: 'Test result summary',
+        text: resultSummary,
+      };
+  const sectionsWithResult =
+    nextResultSection === null
+      ? sections
+      : (() => {
+        const existingResultSectionIndex = sections.findIndex(
+          (section) => section.id === 'test_result'
+        );
+        return existingResultSectionIndex >= 0
+          ? sections.map((section, index) =>
+            index === existingResultSectionIndex ? nextResultSection : section
+          )
+          : [...sections, nextResultSection];
+      })();
+  const existingReviewSectionIndex = sectionsWithResult.findIndex(
+    (section) => section.id === 'question_review'
+  );
+  const nextReviewSection =
+    reviewSummary === null
+      ? null
+      : {
+        id: 'question_review',
+        kind: 'text' as const,
+        title: 'Question review',
+        text:
+          [
+            reviewSummary,
+            selectedChoiceFacts?.selectedChoiceSummary,
+            readTrimmedString(document.facts?.['revealedExplanation']),
+            readTrimmedString(document.facts?.['correctChoiceLabel'])
+              ? `Correct choice: ${readTrimmedString(document.facts?.['correctChoiceLabel'])}.`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(' ') || reviewSummary,
+      };
+  const mergedSections =
+    nextReviewSection === null
+      ? sectionsWithResult
+      : existingReviewSectionIndex >= 0
+        ? sectionsWithResult.map((section, index) =>
+          index === existingReviewSectionIndex ? nextReviewSection : section
+        )
+        : [...sectionsWithResult, nextReviewSection];
+
+  return {
+    ...document,
+    facts: {
+      ...(document.facts ?? {}),
+      ...(selectedChoiceFacts ?? {}),
+      ...(reviewSummary ? { reviewSummary } : {}),
+      ...(resultSummary ? { resultSummary } : {}),
+    },
+    sections: mergedSections,
+  };
+};
 export const resolveKangurAiTutorRuntimeDocuments = (
   bundle: ContextRegistryResolutionBundle | null | undefined,
   context?: KangurAiTutorConversationContext | null
@@ -937,7 +1283,14 @@ export const resolveKangurAiTutorRuntimeDocuments = (
   assignmentContext: ContextRuntimeDocument | null;
 } => {
   const documents = bundle?.documents ?? [];
-  const fallbackSurfaceContext = buildKangurGameSurfaceRuntimeDocument(context);
+  const bundleSurfaceContext =
+    documents.find(
+      (document) =>
+        document.entityType === KANGUR_RUNTIME_ENTITY_TYPES.lessonContext ||
+        document.entityType === KANGUR_RUNTIME_ENTITY_TYPES.testContext
+    ) ?? null;
+  const fallbackSurfaceContext =
+    buildKangurTestSurfaceRuntimeDocument(context) ?? buildKangurGameSurfaceRuntimeDocument(context);
   return {
     learnerSnapshot:
       documents.find((document) => document.entityType === KANGUR_RUNTIME_ENTITY_TYPES.learnerSnapshot) ??
@@ -945,13 +1298,10 @@ export const resolveKangurAiTutorRuntimeDocuments = (
     loginActivity:
       documents.find((document) => document.entityType === KANGUR_RUNTIME_ENTITY_TYPES.loginActivity) ??
       null,
-    surfaceContext:
-      documents.find(
-        (document) =>
-          document.entityType === KANGUR_RUNTIME_ENTITY_TYPES.lessonContext ||
-          document.entityType === KANGUR_RUNTIME_ENTITY_TYPES.testContext
-      ) ??
-      fallbackSurfaceContext,
+    surfaceContext: augmentKangurTestSurfaceRuntimeDocument(
+      bundleSurfaceContext ?? fallbackSurfaceContext,
+      context
+    ),
     assignmentContext:
       documents.find(
         (document) => document.entityType === KANGUR_RUNTIME_ENTITY_TYPES.assignmentContext

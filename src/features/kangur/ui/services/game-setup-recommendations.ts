@@ -71,7 +71,7 @@ export const getRecommendedTrainingSetup = (
 
   if (gamesPlayed <= 0) {
     return {
-      description: 'Lagodny start z dwiema kategoriami pomoze zlapac rytm bez przeciazenia na pierwszej sesji.',
+      description: 'Łagodny start z dwiema kategoriami pomoże złapać rytm bez przeciążenia na pierwszej sesji.',
       label: 'Start',
       selection: {
         categories: ['addition', 'subtraction'],
@@ -93,8 +93,8 @@ export const getRecommendedTrainingSetup = (
     if (category) {
       const lesson = KANGUR_LESSON_LIBRARY[componentId as KangurLessonComponentId];
       return {
-        description: `Najslabszy temat to ${lesson.title.toLowerCase()} (${entry.masteryPercent}%). Jedna skupiona sesja szybciej odbuduje ten obszar.`,
-        label: 'Nadrabiamy lekcje',
+        description: `Najsłabszy temat to ${lesson.title.toLowerCase()} (${entry.masteryPercent}%). Jedna skupiona sesja szybciej odbuduje ten obszar.`,
+        label: 'Nadrabiamy lekcję',
         selection: {
           categories: [category],
           count: entry.masteryPercent < 60 ? 10 : 5,
@@ -109,7 +109,7 @@ export const getRecommendedTrainingSetup = (
   const topActivityCategory = resolveTrainingCategoryFromActivity(topActivity?.key);
   if (topActivity && topActivityCategory) {
     return {
-      description: `${topActivity.label} daje teraz srednio ${topActivity.averageXpPerSession} XP na gre. To najmocniejszy kandydat na kolejna sesje.`,
+      description: `${topActivity.label} daje teraz średnio ${topActivity.averageXpPerSession} XP na grę. To najmocniejszy kandydat na kolejną sesję.`,
       label: 'Mocna passa',
       selection: {
         categories: [topActivityCategory],
@@ -123,8 +123,8 @@ export const getRecommendedTrainingSetup = (
   const topTrack = getProgressBadgeTrackSummaries(progress, { maxTracks: 1 })[0] ?? null;
   return {
     description: topTrack?.nextBadge
-      ? `Tor ${topTrack.label} jest najblizej kolejnej odznaki. Mieszany trening najlepiej podtrzyma postep w kilku kategoriach naraz.`
-      : 'Mieszany trening utrzyma rytm i pomoze zlapac kolejne punkty XP w kilku kategoriach naraz.',
+      ? `Tor ${topTrack.label} jest najbliżej kolejnej odznaki. Mieszany trening najlepiej podtrzyma postęp w kilku kategoriach naraz.`
+      : 'Mieszany trening utrzyma rytm i pomoże złapać kolejne punkty XP w kilku kategoriach naraz.',
     label: topTrack ? 'Tor odznak' : 'Tempo',
     selection: {
       categories: ['addition', 'subtraction', 'multiplication', 'division'],
@@ -145,25 +145,25 @@ export const getRecommendedKangurMode = (
 
   if (gamesPlayed <= 2 || averageAccuracy < 60) {
     return {
-      description: 'Latwiejszy zestaw treningowy pozwoli wejsc w formule Kangura bez zbyt ostrego progu trudnosci.',
-      label: 'Lagodny start',
+      description: 'Łatwiejszy zestaw treningowy pozwoli wejść w formule Kangura bez zbyt ostrego progu trudności.',
+      label: 'Łagodny start',
       mode: 'training_3pt',
-      title: 'Polecamy zaczac od treningu 3-punktowego',
+      title: 'Polecamy zacząć od treningu 3-punktowego',
     };
   }
 
   if (gamesPlayed >= 12 && averageAccuracy >= 90 && currentWinStreak >= 3 && perfectGames >= 2) {
     return {
-      description: 'Masz mocne tempo i wysoka skutecznosc. Pelny test konkursowy powinien dac najlepszy progres.',
-      label: 'Gotowosc konkursowa',
+      description: 'Masz mocne tempo i wysoką skuteczność. Pełny test konkursowy powinien dać najlepszy progres.',
+      label: 'Gotowość konkursowa',
       mode: 'full_test_2024',
-      title: 'Polecamy pelny test konkursowy',
+      title: 'Polecamy pełny test konkursowy',
     };
   }
 
   if (averageAccuracy >= 86) {
     return {
-      description: 'Twoja skutecznosc jest juz wysoka. Zestaw za 5 punktow da lepsze wyzwanie i mocniejsza nagrode.',
+      description: 'Twoja skuteczność jest już wysoka. Zestaw za 5 punktów da lepsze wyzwanie i mocniejszą nagrodę.',
       label: 'Wyzwanie',
       mode: 'original_5pt_2024',
       title: 'Polecamy zestaw 5-punktowy',
@@ -172,7 +172,7 @@ export const getRecommendedKangurMode = (
 
   if (averageAccuracy >= 72) {
     return {
-      description: 'Sredni poziom trudnosci najlepiej podbije wynik bez zbyt ostrego skoku.',
+      description: 'Średni poziom trudności najlepiej podbije wynik bez zbyt ostrego skoku.',
       label: 'Mocny krok',
       mode: 'original_4pt_2024',
       title: 'Polecamy zestaw 4-punktowy',
@@ -180,7 +180,7 @@ export const getRecommendedKangurMode = (
   }
 
   return {
-    description: 'Zestaw 3-punktowy da jeszcze konkursowy rytm, ale pozostanie bezpieczniejszy niz trudniejsze warianty.',
+    description: 'Zestaw 3-punktowy da jeszcze konkursowy rytm, ale pozostanie bezpieczniejszy niż trudniejsze warianty.',
     label: 'Pewny krok',
     mode: 'original_2024',
     title: 'Polecamy zestaw 3-punktowy',

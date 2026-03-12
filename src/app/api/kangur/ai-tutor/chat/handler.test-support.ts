@@ -8,6 +8,14 @@ const createRuntimeDocument = (input: {
   title: string;
   summary?: string;
   facts?: Record<string, unknown>;
+  sections?: Array<{
+    id?: string;
+    kind: 'facts' | 'items' | 'events' | 'text';
+    title: string;
+    summary?: string;
+    text?: string;
+    items?: Record<string, unknown>[];
+  }>;
 }) => ({
   id: input.id,
   kind: 'runtime_document' as const,
@@ -18,7 +26,7 @@ const createRuntimeDocument = (input: {
   tags: ['kangur', 'test'],
   relatedNodeIds: [],
   facts: input.facts ?? {},
-  sections: [],
+  sections: input.sections ?? [],
   provenance: {
     providerId: 'kangur',
     source: 'test',
@@ -27,6 +35,15 @@ const createRuntimeDocument = (input: {
 
 export const createContextRegistryBundle = (input?: {
   learnerSummary?: string;
+  learnerFacts?: Record<string, unknown>;
+  learnerSections?: Array<{
+    id?: string;
+    kind: 'facts' | 'items' | 'events' | 'text';
+    title: string;
+    summary?: string;
+    text?: string;
+    items?: Record<string, unknown>[];
+  }>;
   loginActivityFacts?: Record<string, unknown>;
   lessonFacts?: Record<string, unknown>;
   testFacts?: Record<string, unknown>;
@@ -40,7 +57,9 @@ export const createContextRegistryBundle = (input?: {
       summary: input?.learnerSummary ?? 'Average accuracy 74%.',
       facts: {
         learnerSummary: input?.learnerSummary ?? 'Average accuracy 74%.',
+        ...(input?.learnerFacts ?? {}),
       },
+      sections: input?.learnerSections,
     }),
   ];
 

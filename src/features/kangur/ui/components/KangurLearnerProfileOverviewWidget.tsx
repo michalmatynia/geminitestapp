@@ -41,9 +41,9 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         data-testid='learner-profile-overview-intro'
         description={
           overviewContent?.summary ??
-          'Najwazniejsze wskazniki dnia: skutecznosc, misja, cel i odznaki w jednym widoku.'
+          'Najważniejsze wskaźniki dnia: skuteczność, misja, cel i odznaki w jednym widoku.'
         }
-        eyebrow={overviewContent?.title ?? 'Przeglad wynikow'}
+        eyebrow={overviewContent?.title ?? 'Przegląd wyników'}
       />
       <div className='grid grid-cols-1 gap-4 min-[360px]:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6'>
       <KangurMetricCard
@@ -52,7 +52,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         description={`Najlepsza sesja: ${snapshot.bestAccuracy}%`}
         label={
           <span className='inline-flex items-center gap-2'>
-            <BarChart2 className='h-4 w-4' /> Srednia skutecznosc
+            <BarChart2 className='h-4 w-4' /> Średnia skuteczność
           </span>
         }
         value={`${snapshot.averageAccuracy}%`}
@@ -61,7 +61,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
       <KangurMetricCard
         accent='amber'
         data-testid='learner-profile-overview-streak'
-        description={`Najdluzsza: ${snapshot.longestStreakDays} dni`}
+        description={`Najdłuższa: ${snapshot.longestStreakDays} dni`}
         label={
           <span className='inline-flex items-center gap-2'>
             <Flame className='h-4 w-4' /> Seria dni
@@ -73,7 +73,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
       <KangurMetricCard
         accent='violet'
         data-testid='learner-profile-overview-xp-today'
-        description={`7 dni: +${snapshot.weeklyXpEarned} XP · srednio ${snapshot.averageXpPerSession} XP na sesje`}
+        description={`7 dni: +${snapshot.weeklyXpEarned} XP · średnio ${snapshot.averageXpPerSession} XP na sesję`}
         label={
           <span className='inline-flex items-center gap-2'>
             <Sparkles className='h-4 w-4' /> XP dzisiaj
@@ -120,8 +120,8 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
           dailyQuest
             ? `${dailyQuest.progress.summary} · ${dailyQuest.reward.label}`
             : dailyQuest === null
-              ? 'Nowa misja pojawi sie wraz z postepem.'
-              : 'Trwa ladowanie misji dnia...'
+              ? 'Nowa misja pojawi się wraz z postępem.'
+              : 'Trwa ładowanie misji dnia...'
         }
         label={
           <span className='inline-flex items-center gap-2'>
@@ -149,7 +149,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
       <KangurMetricCard
         accent='teal'
         data-testid='learner-profile-overview-daily-goal'
-        description={`Wypelnienie: ${snapshot.dailyGoalPercent}%`}
+        description={`Wypełnienie: ${snapshot.dailyGoalPercent}%`}
         label={
           <span className='inline-flex items-center gap-2'>
             <Target className='h-4 w-4' /> Cel dzienny
@@ -163,7 +163,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         data-testid='learner-profile-overview-badges'
         description={
           nextBadge
-            ? `Nastepna: ${nextBadge.name} · ${nextBadge.summary}`
+            ? `Następna: ${nextBadge.name} · ${nextBadge.summary}`
             : 'Wszystkie odznaki odblokowane'
         }
         label={

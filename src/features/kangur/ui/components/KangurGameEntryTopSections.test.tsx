@@ -129,7 +129,7 @@ describe('Kangur game entry top sections', () => {
     expect(screen.getByRole('heading', { name: 'Grajmy!' })).toHaveClass('text-3xl');
     expect(screen.getByTestId('kangur-grajmy-heading-art')).toBeInTheDocument();
     expect(
-      screen.getByText('Wybierz rodzaj gry i przejdz od razu do matematycznej zabawy.')
+      screen.getByText('Wybierz rodzaj gry i przejdź od razu do matematycznej zabawy.')
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
     expect(screen.getByTestId('mock-operation-selector')).toBeInTheDocument();
@@ -164,7 +164,7 @@ describe('Kangur game entry top sections', () => {
     expect(screen.getByRole('heading', { name: 'Trening' })).toHaveClass('text-3xl');
     expect(screen.getByTestId('kangur-training-heading-art')).toBeInTheDocument();
     expect(
-      screen.getByText('Dobierz poziom, kategorie i liczbe pytan do jednej sesji.')
+      screen.getByText('Dobierz poziom, kategorie i liczbę pytań do jednej sesji.')
     ).toBeInTheDocument();
     expect(screen.getByTestId('mock-game-setup-momentum-training')).toBeInTheDocument();
     expect(screen.getByTestId('mock-training-setup')).toBeInTheDocument();
@@ -191,7 +191,7 @@ describe('Kangur game entry top sections', () => {
       {
         recommendation: {
           description:
-            'Lagodny start z dwiema kategoriami pomoze zlapac rytm bez przeciazenia na pierwszej sesji.',
+            'Łagodny start z dwiema kategoriami pomoże złapać rytm bez przeciążenia na pierwszej sesji.',
           label: 'Start',
           source: 'training_setup',
           title: 'Polecany trening na start',
@@ -231,9 +231,9 @@ describe('Kangur game entry top sections', () => {
     expect(screen.getByTestId('mock-kangur-setup')).toBeInTheDocument();
     expect(kangurSetupPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        recommendedLabel: 'Lagodny start',
+        recommendedLabel: 'Łagodny start',
         recommendedMode: 'training_3pt',
-        recommendedTitle: 'Polecamy zaczac od treningu 3-punktowego',
+        recommendedTitle: 'Polecamy zacząć od treningu 3-punktowego',
       })
     );
 
@@ -244,10 +244,10 @@ describe('Kangur game entry top sections', () => {
       {
         recommendation: {
           description:
-            'Latwiejszy zestaw treningowy pozwoli wejsc w formule Kangura bez zbyt ostrego progu trudnosci.',
-          label: 'Lagodny start',
+            'Łatwiejszy zestaw treningowy pozwoli wejść w formule Kangura bez zbyt ostrego progu trudności.',
+          label: 'Łagodny start',
           source: 'kangur_setup',
-          title: 'Polecamy zaczac od treningu 3-punktowego',
+          title: 'Polecamy zacząć od treningu 3-punktowego',
         },
       }
     );

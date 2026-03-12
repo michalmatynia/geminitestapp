@@ -293,7 +293,7 @@ export function KangurGameHomeActionsWidget({
     >
       <section aria-labelledby='kangur-home-actions-heading'>
         <h3 id='kangur-home-actions-heading' className='sr-only'>
-          Wybierz aktywnosc
+          Wybierz aktywność
         </h3>
         <div className='grid grid-cols-1 gap-3 sm:gap-4' data-testid='kangur-home-actions-list'>
           {actions.map((action, index) => (

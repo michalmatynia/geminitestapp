@@ -22,10 +22,10 @@ const LEARNER_PROFILE_PERFORMANCE_ROUTE_ACKNOWLEDGE_MS = 110;
 export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
   const { basePath, maxWeeklyGames, snapshot } = useKangurLearnerProfileRuntime();
   const { entry: performanceContent } = useKangurPageContentEntry('learner-profile-performance');
-  const sectionTitle = performanceContent?.title ?? 'Skutecznosc ucznia';
+  const sectionTitle = performanceContent?.title ?? 'Skuteczność ucznia';
   const sectionSummary =
     performanceContent?.summary ??
-    'Zobacz rytm ostatnich siedmiu dni i skutecznosc dla poszczegolnych operacji.';
+    'Zobacz rytm ostatnich siedmiu dni i skuteczność dla poszczególnych operacji.';
 
   return (
     <section className='flex flex-col gap-4'>
@@ -42,17 +42,17 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
         variant='soft'
       >
         <KangurSectionEyebrow className='mb-3'>
-          Aktywnosc 7 dni
+          Aktywność 7 dni
         </KangurSectionEyebrow>
         <div className='mb-4 flex flex-wrap gap-2'>
           <KangurStatusChip accent='violet' data-testid='learner-profile-xp-summary-today'>
-            Dzis: +{snapshot.todayXpEarned} XP
+            Dziś: +{snapshot.todayXpEarned} XP
           </KangurStatusChip>
           <KangurStatusChip accent='indigo' data-testid='learner-profile-xp-summary-weekly'>
             7 dni: +{snapshot.weeklyXpEarned} XP
           </KangurStatusChip>
           <KangurStatusChip accent='teal' data-testid='learner-profile-xp-summary-average'>
-            Srednio: {snapshot.averageXpPerSession} XP / sesje
+            Średnio: {snapshot.averageXpPerSession} XP na sesję
           </KangurStatusChip>
           {snapshot.recommendedSessionsCompleted > 0 ? (
             <KangurStatusChip accent='sky' data-testid='learner-profile-xp-summary-guided'>
@@ -75,7 +75,7 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
                   accent='indigo'
                   active={point.games > 0}
                   data-testid={`learner-profile-weekly-activity-${point.dateKey}`}
-                  title={`${point.games} gier, srednia ${point.averageAccuracy}%`}
+                  title={`${point.games} gier, średnia ${point.averageAccuracy}%`}
                   value={heightPercent}
                 />
                 <div className='text-[11px] [color:var(--kangur-page-muted-text)]'>{point.label}</div>
@@ -95,7 +95,7 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
               accent='slate'
               align='center'
               data-testid='learner-profile-operation-empty'
-              description='Rozegraj kilka zadan, aby zobaczyc skutecznosc dla poszczegolnych operacji.'
+              description='Rozegraj kilka zadań, aby zobaczyć skuteczność dla poszczególnych operacji.'
               padding='md'
               title='Brak danych o operacjach.'
             />
@@ -133,8 +133,8 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
                   value={item.averageAccuracy}
                 />
                 <div className='mt-1 text-[11px] [color:var(--kangur-page-muted-text)]'>
-                  Proby: {item.attempts} · XP / sesje: {item.averageXpPerSession} · Lacznie:{' '}
-                  {item.totalXpEarned} XP · Najlepsza skutecznosc: {item.bestScore}%
+                  Próby: {item.attempts} · XP na sesję: {item.averageXpPerSession} · Łącznie:{' '}
+                  {item.totalXpEarned} XP · Najlepsza skuteczność: {item.bestScore}%
                 </div>
               </div>
             ))

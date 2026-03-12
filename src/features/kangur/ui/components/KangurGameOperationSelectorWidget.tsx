@@ -36,14 +36,14 @@ import type { KangurLessonComponentId, KangurRouteAction } from '@/shared/contra
 const QUICK_PRACTICE_OPTIONS = [
   {
     accent: 'emerald',
-    description: 'Sprawdz daty, dni tygodnia i miesiace w krotkich zadaniach.',
+    description: 'Sprawdź daty, dni tygodnia i miesiące w krótkich zadaniach.',
     emoji: '📅',
     label: 'Ćwiczenia z Kalendarzem',
     onSelectScreen: 'calendar_quiz',
   },
   {
     accent: 'violet',
-    description: 'Rozpoznawaj figury i cwicz ich rysowanie w szybkich wyzwaniach.',
+    description: 'Rozpoznawaj figury i ćwicz ich rysowanie w szybkich wyzwaniach.',
     emoji: '🔷',
     label: 'Ćwiczenia z Figurami',
     onSelectScreen: 'geometry_quiz',
@@ -199,21 +199,21 @@ const getRecommendationActionLabel = (
   const operationLabels: Partial<Record<KangurOperation, string>> = {
     addition: 'Zagraj w dodawanie',
     subtraction: 'Zagraj w odejmowanie',
-    multiplication: 'Zagraj w mnozenie',
+    multiplication: 'Zagraj w mnożenie',
     division: 'Zagraj w dzielenie',
     clock: 'Zagraj na zegarze',
     mixed: 'Uruchom trening mieszany',
-    decimals: 'Zagraj we ulamki',
-    powers: 'Zagraj w potegi',
+    decimals: 'Zagraj we ułamki',
+    powers: 'Zagraj w potęgi',
     roots: 'Zagraj w pierwiastki',
   };
 
   if (target.kind === 'screen') {
     if (target.screen === 'calendar_quiz') {
-      return 'Cwicz kalendarz';
+      return 'Ćwicz kalendarz';
     }
     if (target.screen === 'geometry_quiz') {
-      return 'Cwicz figury';
+      return 'Ćwicz figury';
     }
     return 'Uruchom trening';
   }
@@ -279,7 +279,7 @@ const getWeakestLessonRecommendation = (
 
   return finalizeRecommendation({
     accent: entry.masteryPercent < 60 ? 'rose' : 'amber',
-    description: `Opanowanie ${entry.masteryPercent}%. Jedna dobra runda pomoze szybciej domknac ten temat przed kolejna lekcja.`,
+    description: `Opanowanie ${entry.masteryPercent}%. Jedna dobra runda pomoże szybciej domknąć ten temat przed kolejną lekcją.`,
     label: 'Nadrabiamy lekcje',
     target,
     title: `Najpierw popraw: ${lesson.title}`,
@@ -309,11 +309,11 @@ const getTrackRecommendation = (
   return finalizeRecommendation({
     accent: 'violet',
     description: topActivity
-      ? `Tor ${track.label} jest najblizej nagrody. Najmocniej pcha go teraz ${topActivity.label.toLowerCase()}.`
-      : `Tor ${track.label} jest najblizej kolejnej odznaki.`,
+      ? `Tor ${track.label} jest najbliżej nagrody. Najmocniej pcha go teraz ${topActivity.label.toLowerCase()}.`
+      : `Tor ${track.label} jest najbliżej kolejnej odznaki.`,
     label: 'Tor odznak',
     target,
-    title: `Rozpedz tor: ${track.label}`,
+    title: `Rozpędź tor: ${track.label}`,
   });
 };
 
@@ -335,8 +335,8 @@ const getGuidedRecommendation = (
   return finalizeRecommendation({
     accent: 'sky',
     description: topActivity
-      ? `Masz juz ${guidedMomentum.summary} w polecanym rytmie. Jeszcze jedna mocna runda ${topActivity.label.toLowerCase()} pomoze domknac odznake ${guidedMomentum.nextBadgeName}.`
-      : `Masz juz ${guidedMomentum.summary} w polecanym rytmie. Jeszcze jedna mocna runda pomoze domknac odznake ${guidedMomentum.nextBadgeName}.`,
+      ? `Masz już ${guidedMomentum.summary} w polecanym rytmie. Jeszcze jedna mocna runda ${topActivity.label.toLowerCase()} pomoże domknąć odznakę ${guidedMomentum.nextBadgeName}.`
+      : `Masz już ${guidedMomentum.summary} w polecanym rytmie. Jeszcze jedna mocna runda pomoże domknąć odznakę ${guidedMomentum.nextBadgeName}.`,
     label: 'Polecony kierunek',
     target,
     title: `Dopnij: ${guidedMomentum.nextBadgeName}`,
@@ -357,7 +357,7 @@ const getFallbackRecommendation = (
 
   return finalizeRecommendation({
     accent: 'indigo',
-    description: `${topActivity.label} daje teraz srednio ${topActivity.averageXpPerSession} XP na gre. To najlepszy ruch na kolejna runde.`,
+    description: `${topActivity.label} daje teraz średnio ${topActivity.averageXpPerSession} XP na grę. To najlepszy ruch na kolejną rundę.`,
     label: 'Mocna passa',
     target,
     title: `Zagraj dalej w: ${topActivity.label}`,
@@ -419,7 +419,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
     <div className='w-full flex flex-col items-center gap-4'>
       <KangurPageIntroCard
         className='max-w-md'
-        description='Wybierz rodzaj gry i przejdz od razu do matematycznej zabawy.'
+        description='Wybierz rodzaj gry i przejdź od razu do matematycznej zabawy.'
         headingSize='lg'
         onBack={handleHome}
         testId='kangur-game-operation-top-section'
@@ -498,7 +498,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
         <KangurSectionHeading
           accent='violet'
           align='left'
-          description='Dwa szybkie tryby cwiczen w tej samej karcie i rytmie co mini-gry z Lekcji.'
+          description='Dwa szybkie tryby ćwiczeń w tej samej karcie i rytmie co mini-gry z Lekcji.'
           headingAs='h3'
           headingSize='sm'
           title='Szybkie ćwiczenia'

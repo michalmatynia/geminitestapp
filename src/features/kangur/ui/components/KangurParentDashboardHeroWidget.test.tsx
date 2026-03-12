@@ -93,8 +93,8 @@ describe('KangurParentDashboardHeroWidget', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Zaloguj sie' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Utworz konto rodzica' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zaloguj się' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Utwórz konto rodzica' }));
 
     expect(routeNavigatorPushMock).toHaveBeenCalledWith('/kangur', {
       acknowledgeMs: 110,
@@ -187,11 +187,11 @@ describe('KangurParentDashboardHeroWidget', () => {
       'Nagroda gotowa +36 XP'
     );
     expect(screen.getByTestId('kangur-parent-dashboard-track-summary')).toHaveTextContent(
-      'Sciezki postepu ucznia'
+      'Ścieżki postępu ucznia'
     );
     expect(screen.getByTestId('kangur-parent-dashboard-hero-milestone-shell')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-parent-dashboard-hero-milestone-next-badge')).toHaveTextContent(
-      '⭐ Pol tysiaca XP'
+      '⭐ Pół tysiąca XP'
     );
     expect(screen.getByTestId('kangur-parent-dashboard-track-quest')).toHaveTextContent(
       'Misje'
@@ -233,7 +233,7 @@ describe('KangurParentDashboardHeroWidget', () => {
           : {
             id: 'parent-dashboard-guest-hero',
             title: 'Panel Rodzica / Nauczyciela',
-            summary: 'Sprawdz, jak odblokowac widok opiekuna.',
+            summary: 'Sprawdź, jak odblokować widok opiekuna.',
           },
       error: null,
       isError: false,

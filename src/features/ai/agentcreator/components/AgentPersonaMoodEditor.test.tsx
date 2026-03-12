@@ -12,9 +12,14 @@ import { ToastProvider } from '@/shared/ui';
 import { buildAgentPersonaMood, buildDefaultAgentPersonaMoods } from '../utils/personas';
 import { AgentPersonaMoodEditor } from './AgentPersonaMoodEditor';
 
-const { uploadPersonaAvatarMock, deletePersonaAvatarMock } = vi.hoisted(() => ({
+const {
+  uploadPersonaAvatarMock,
+  deletePersonaAvatarMock,
+  deletePersonaAvatarThumbnailMock,
+} = vi.hoisted(() => ({
   uploadPersonaAvatarMock: vi.fn(),
   deletePersonaAvatarMock: vi.fn(),
+  deletePersonaAvatarThumbnailMock: vi.fn(),
 }));
 
 vi.mock('next/image', () => ({
@@ -43,6 +48,7 @@ vi.mock('@/features/ai/agentcreator/utils/avatar-input', async () => {
     ...actual,
     uploadPersonaAvatar: uploadPersonaAvatarMock,
     deletePersonaAvatar: deletePersonaAvatarMock,
+    deletePersonaAvatarThumbnail: deletePersonaAvatarThumbnailMock,
   };
 });
 
@@ -103,8 +109,10 @@ describe('AgentPersonaMoodEditor', () => {
       filepath: '/uploads/agentcreator/personas/persona-test/neutral/avatar.png',
       mimetype: 'image/png',
       size: 68,
+      thumbnail: null,
     });
     deletePersonaAvatarMock.mockResolvedValue(undefined);
+    deletePersonaAvatarThumbnailMock.mockResolvedValue(undefined);
   });
 
   it('imports raw base64 input as an uploaded avatar', async () => {
@@ -193,6 +201,55 @@ describe('AgentPersonaMoodEditor', () => {
       avatarImageFileId: 'uploaded-file-1',
       avatarImageUrl: '/uploads/agentcreator/personas/persona-test/neutral/avatar.png',
     });
+  });
+
+  it('stores the embedded thumbnail data inside the mood when upload returns one', async () => {
+    uploadPersonaAvatarMock.mockResolvedValue({
+      id: 'uploaded-file-1',
+      filename: 'avatar.png',
+      filepath: '/uploads/agentcreator/personas/persona-test/neutral/avatar.png',
+      mimetype: 'image/png',
+      size: 68,
+      thumbnail: {
+        ref: 'persona-test:neutral:thumb-1',
+        dataUrl: 'data:image/webp;base64,embedded-thumb',
+        mimeType: 'image/webp',
+        bytes: 2048,
+        width: 96,
+        height: 96,
+      },
+    });
+
+    const runtime = renderEditor({
+      originalMoods: buildDefaultAgentPersonaMoods(),
+    });
+
+    const file = new File(['selected-image'], 'selected.png', { type: 'image/png' });
+    const fileInput = document.querySelector('input[type="file"]');
+    if (!(fileInput instanceof HTMLInputElement)) {
+      throw new Error('Expected hidden file input to be rendered.');
+    }
+
+    fireEvent.change(fileInput, {
+      target: { files: [file] },
+    });
+
+    await waitFor(() => expect(uploadPersonaAvatarMock).toHaveBeenCalledTimes(1));
+    expect(runtime.getLatestMood()).toMatchObject({
+      id: 'neutral',
+      avatarImageFileId: 'uploaded-file-1',
+      avatarImageUrl: '/uploads/agentcreator/personas/persona-test/neutral/avatar.png',
+      avatarThumbnailRef: 'persona-test:neutral:thumb-1',
+      avatarThumbnailDataUrl: 'data:image/webp;base64,embedded-thumb',
+      avatarThumbnailMimeType: 'image/webp',
+      avatarThumbnailBytes: 2048,
+      avatarThumbnailWidth: 96,
+      avatarThumbnailHeight: 96,
+      useEmbeddedThumbnail: true,
+    });
+    expect(
+      screen.getByRole('button', { name: /use file url in kangur/i })
+    ).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('switches uploaded draft avatars back to inline SVG and deletes the draft file', async () => {

@@ -35,7 +35,7 @@ describe('KangurHeroMilestoneSummary', () => {
     const nextBadgeCard = screen.getByTestId('kangur-hero-milestone-next-badge');
     const nextBadgeCardStyle = nextBadgeCard.getAttribute('style');
 
-    expect(nextBadgeCard).toHaveTextContent('Celny umysl');
+    expect(nextBadgeCard).toHaveTextContent('Celny umysł');
     expect(nextBadgeCard).toHaveTextContent('76% / 85%');
     expect(nextBadgeCardStyle).toContain(
       'background: color-mix(in srgb, var(--kangur-soft-card-background) 92%, #fef3c7 8%)'
@@ -48,7 +48,7 @@ describe('KangurHeroMilestoneSummary', () => {
     );
     expect(
       screen
-        .getByText('Utrzymaj srednio co najmniej 85% poprawnych odpowiedzi po 25 pytaniach')
+        .getByText('Utrzymaj średnio co najmniej 85% poprawnych odpowiedzi po 25 pytaniach')
         .getAttribute('style')
     ).toContain(
       'color: color-mix(in srgb, var(--kangur-page-text) 74%, var(--kangur-page-muted-text) 26%)'

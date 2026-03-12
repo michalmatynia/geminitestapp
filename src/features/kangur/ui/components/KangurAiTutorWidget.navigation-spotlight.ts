@@ -24,6 +24,7 @@ const createSpotlightOverlay = (rect: DOMRect): HTMLDivElement => {
   const overlay = document.createElement('div');
   overlay.setAttribute('data-testid', 'kangur-ai-tutor-navigation-spotlight');
   overlay.setAttribute('data-navigation-spotlight', 'true');
+  overlay.className = 'kangur-chat-spotlight-frame';
 
   Object.assign(overlay.style, {
     position: 'fixed',
@@ -31,10 +32,10 @@ const createSpotlightOverlay = (rect: DOMRect): HTMLDivElement => {
     top: `${rect.top - SPOTLIGHT_PADDING}px`,
     width: `${rect.width + SPOTLIGHT_PADDING * 2}px`,
     height: `${rect.height + SPOTLIGHT_PADDING * 2}px`,
-    borderRadius: '12px',
-    border: '2px solid rgba(251, 191, 36, 0.75)',
-    backgroundColor: 'rgba(245, 158, 11, 0.08)',
-    boxShadow: '0 0 0 6px rgba(251, 191, 36, 0.12)',
+    borderRadius: 'var(--kangur-chat-spotlight-radius-md, 22px)',
+    border: '2px solid var(--kangur-chat-spotlight-border, rgba(251, 191, 36, 0.75))',
+    background: 'var(--kangur-chat-spotlight-background, rgba(245, 158, 11, 0.08))',
+    boxShadow: '0 0 0 6px var(--kangur-chat-spotlight-shadow, rgba(251, 191, 36, 0.12))',
     pointerEvents: 'none',
     zIndex: '68',
     transition: 'opacity 300ms ease',

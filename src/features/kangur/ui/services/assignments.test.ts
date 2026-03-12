@@ -50,7 +50,7 @@ describe('buildKangurAssignments', () => {
     expect(assignments[0]).toMatchObject({
       id: 'lesson-retry-division',
       priority: 'high',
-      progressLabel: 'Postep: 45% / 75%',
+      progressLabel: 'Postęp: 45% / 75%',
       questLabel: 'Misja ratunkowa',
       rewardXp: 55,
       action: {
@@ -94,7 +94,7 @@ describe('buildKangurAssignments', () => {
       'mixed-practice',
     ]);
     expect(assignments[0]).toMatchObject({
-      progressLabel: 'Postep: 0/1 lekcja',
+      progressLabel: 'Postęp: 0/1 lekcja',
       questLabel: 'Misja startowa',
       rewardXp: 40,
       action: {

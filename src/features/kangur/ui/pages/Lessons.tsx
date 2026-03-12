@@ -86,9 +86,9 @@ const LessonLoadingFallbackCard = (): React.JSX.Element => {
         <KangurStatusChip accent='indigo' className='uppercase tracking-[0.18em]' size='sm'>
           Lekcja
         </KangurStatusChip>
-        <div className='text-base font-semibold text-slate-700'>Ladowanie lekcji...</div>
+        <div className='text-base font-semibold text-slate-700'>Ładowanie lekcji...</div>
         <p className='max-w-lg text-sm text-slate-500'>
-          Przygotowujemy material, aby przejscie do aktywnej sekcji bylo plynniejsze.
+          Przygotowujemy materiał, aby przejście do aktywnej sekcji było płynniejsze.
         </p>
       </KangurGlassPanel>
     </motion.div>
@@ -756,7 +756,7 @@ export default function Lessons() {
   );
   const lessonListIntroDescription = isDeferredContentReady
     ? (lessonListIntroContent?.summary ??
-      'Wybierz temat i przejdz od razu do praktyki lub powtorki.')
+      'Wybierz temat i przejdź od razu do praktyki lub powtórki.')
     : 'Lekcje zaraz beda gotowe.';
 
   return (
@@ -873,7 +873,7 @@ export default function Lessons() {
                       completedActiveLessonAssignment={completedActiveLessonAssignment}
                       assignmentSectionSummary={
                         activeLessonAssignmentContent?.summary ??
-                        'To miejsce pokazuje, czy ta lekcja ma aktywny priorytet od rodzica albo zostala juz zaliczona.'
+                        'To miejsce pokazuje, czy ta lekcja ma aktywny priorytet od rodzica albo została już zaliczona.'
                       }
                       assignmentSectionTitle={
                         activeLessonAssignmentContent?.title ?? 'Zadanie od rodzica'
@@ -881,7 +881,7 @@ export default function Lessons() {
                       assignmentRef={activeLessonAssignmentRef}
                       descriptionOverride={
                         activeLessonHeaderContent?.summary ??
-                        'Przejdz przez temat krok po kroku, odsluchaj material i sprawdz, czy czeka tu zadanie od rodzica.'
+                        'Przejdź przez temat krok po kroku, odsłuchaj materiał i sprawdź, czy czeka tu zadanie od rodzica.'
                       }
                       headerTestId='active-lesson-header'
                       headerActionsTestId='active-lesson-header-icon-actions'
@@ -927,7 +927,7 @@ export default function Lessons() {
                             </p>
                             <p className='max-w-xl text-sm leading-relaxed text-slate-600'>
                               {activeLessonSecretPanelContent?.summary ??
-                                'Zlota pigulka odblokowala final na samym koncu ostatniej lekcji w kolejce. Trafiles od razu do ukrytego zakonczenia.'}
+                                'Złota pigulka odblokowala final na samym koncu ostatniej lekcji w kolejce. Trafiles od razu do ukrytego zakonczenia.'}
                             </p>
                           </div>
                         </KangurGlassPanel>
@@ -945,7 +945,7 @@ export default function Lessons() {
                           label='Lesson document'
                           labelAccent='sky'
                           padding='lg'
-                          title={activeLessonDocumentContent?.title ?? 'Material lekcji'}
+                          title={activeLessonDocumentContent?.title ?? 'Materiał lekcji'}
                           tone='accent'
                         />
                         <KangurLessonDocumentRenderer document={activeLessonDocument} />
@@ -960,14 +960,14 @@ export default function Lessons() {
                             data-testid='lessons-empty-document-summary'
                             description={
                               activeLessonEmptyDocumentContent?.summary ??
-                              'Ta lekcja ma wlaczony tryb dokumentu, ale nie zapisano jeszcze blokow tresci.'
+                              'Ta lekcja ma włączony tryb dokumentu, ale nie zapisano jeszcze bloków treści.'
                             }
                             label='Lesson document'
                             labelAccent='amber'
                             padding='xl'
                             title={
                               activeLessonEmptyDocumentContent?.title ??
-                              'Brak zapisanej tresci lekcji'
+                              'Brak zapisanej treści lekcji'
                             }
                             tone='accent'
                           />
@@ -987,7 +987,7 @@ export default function Lessons() {
                         prevLesson={prev}
                         sectionSummary={
                           activeLessonNavigationContent?.summary ??
-                          'Przechodz do poprzedniej lub kolejnej lekcji bez wracania do calej listy.'
+                          'Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy.'
                         }
                         sectionTitle={
                           activeLessonNavigationContent?.title ?? 'Nawigacja lekcji'

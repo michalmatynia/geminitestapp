@@ -161,10 +161,10 @@ describe('KangurAiTutorMessageList', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Policz najpierw pierwszą parę.')).toBeInTheDocument();
     expect(screen.getByText('Kolejny krok')).toBeInTheDocument();
-    expect(screen.getByText('Powtorz lekcje: Dodawanie').parentElement).toHaveStyle({
-      background:
-        'linear-gradient(135deg, color-mix(in srgb, var(--kangur-soft-card-background) 84%, rgba(254,243,199,0.92)) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 86%, rgba(255,237,213,0.82)) 100%)',
-    });
+    expect(screen.getByText('Powtorz lekcje: Dodawanie').parentElement).toHaveClass(
+      'kangur-chat-surface-warm',
+      'kangur-chat-surface-warm-shadow'
+    );
     expect(screen.getByRole('link', { name: 'Otworz lekcje' })).toHaveAttribute(
       'href',
       '/kangur/lessons?focus=adding'
@@ -172,7 +172,8 @@ describe('KangurAiTutorMessageList', () => {
     expect(screen.getByText('Źródła')).toBeInTheDocument();
     expect(screen.getByText('Dodawanie podstawy')).toBeInTheDocument();
     expect(screen.getByText('Dodawanie podstawy').parentElement).toHaveClass(
-      '[border-color:var(--kangur-soft-card-border)]'
+      'kangur-chat-surface-soft',
+      'kangur-chat-surface-soft-shadow'
     );
     expect(screen.getByText(/lesson-library · score 0\.913/i)).toBeInTheDocument();
     expect(screen.getByText(/Dodawanie łączy liczby i tworzy sumę\./)).toBeInTheDocument();
@@ -337,7 +338,8 @@ describe('KangurAiTutorMessageList', () => {
       screen.getByTestId('kangur-ai-tutor-assistant-drawing-message-1-0')
     ).toHaveClass(
       'kangur-chat-card',
-      '[border-color:var(--kangur-soft-card-border)]'
+      'kangur-chat-surface-soft',
+      'kangur-chat-surface-soft-shadow'
     );
     expect(screen.getByText('Dwie pary')).toBeInTheDocument();
     expect(screen.getByText('Kazda para ma po dwa elementy.')).toBeInTheDocument();
@@ -376,7 +378,7 @@ describe('KangurAiTutorMessageList', () => {
     expect(screen.getByTestId('kangur-ai-tutor-feedback-0')).toHaveClass(
       'kangur-chat-card',
       'kangur-chat-padding-sm',
-      '[border-color:var(--kangur-soft-card-border)]'
+      'kangur-chat-surface-soft'
     );
     expect(screen.getByTestId('kangur-ai-tutor-feedback-helpful-0')).toBeDisabled();
     expect(screen.getByTestId('kangur-ai-tutor-feedback-not-helpful-0')).toBeDisabled();

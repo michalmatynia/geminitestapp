@@ -75,12 +75,12 @@ const kangurPlatform = getKangurPlatform();
 const SCORE_FETCH_LIMIT = 30;
 const formatRelativeLastPlayed = (value: string | null): string => {
   if (!value) {
-    return 'Brak aktywnosci';
+    return 'Brak aktywności';
   }
 
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
-    return 'Brak aktywnosci';
+    return 'Brak aktywności';
   }
 
   const today = new Date();
@@ -112,7 +112,7 @@ const formatTrendContext = (
   trend: ReturnType<typeof buildKangurScoreInsights>['trend']
 ): string => {
   if (trend.previousAverageAccuracy === null) {
-    return 'Potrzeba starszych wynikow do porownania.';
+    return 'Potrzeba starszych wyników do porównania.';
   }
   if (trend.direction === 'up') {
     return `Wzrost z ${trend.previousAverageAccuracy}% na ${trend.recentAverageAccuracy}%.`;
@@ -120,7 +120,7 @@ const formatTrendContext = (
   if (trend.direction === 'down') {
     return `Spadek z ${trend.previousAverageAccuracy}% na ${trend.recentAverageAccuracy}%.`;
   }
-  return `Stabilnie: ${trend.recentAverageAccuracy}% tydzien do tygodnia.`;
+  return `Stabilnie: ${trend.recentAverageAccuracy}% tydzień do tygodnia.`;
 };
 
 const buildLessonFocusHref = (basePath: string, operation: string): string =>
@@ -208,15 +208,15 @@ export default function ScoreHistory({
         accent='slate'
         align='center'
         data-testid='score-history-loading'
-        description='Pobieramy ostatnie wyniki i przygotowujemy podsumowanie postepu.'
+        description='Pobieramy ostatnie wyniki i przygotowujemy podsumowanie postępu.'
         padding='lg'
-        title='Ladowanie wynikow...'
+        title='Ładowanie wyników...'
       />
     );
   }
 
   if (scores.length === 0) {
-    return <KangurEmptyState description='Brak zapisanych wynikow.' padding='lg' />;
+    return <KangurEmptyState description='Brak zapisanych wyników.' padding='lg' />;
   }
 
   const avgAccuracy = Math.round(
@@ -243,14 +243,14 @@ export default function ScoreHistory({
           accent='sky'
           align='center'
           data-testid='score-history-total-games'
-          label='Gier lacznie'
+          label='Gier łącznie'
           value={scores.length}
         />
         <KangurMetricCard
           accent='emerald'
           align='center'
           data-testid='score-history-average-accuracy'
-          label='Sr. skutecznosc'
+          label='Śr. skuteczność'
           value={`${avgAccuracy}%`}
         />
         <KangurMetricCard
@@ -269,13 +269,13 @@ export default function ScoreHistory({
         <div className='grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-4'>
           <KangurMetricCard accent='sky' label='Sesje tygodnia' value={insights.recentGames}>
             <p className='text-xs text-sky-800/80'>
-              Srednia {insights.recentAverageAccuracy}% · idealne {insights.recentPerfectGames}
+              Średnia {insights.recentAverageAccuracy}% · idealne {insights.recentPerfectGames}
             </p>
             <p className='mt-1 text-xs text-sky-800/80'>
-              XP: +{insights.recentXpEarned} · srednio {insights.averageXpPerRecentGame} na sesje
+              XP: +{insights.recentXpEarned} · średnio {insights.averageXpPerRecentGame} na sesję
             </p>
             <p className='mt-2 text-[11px] text-sky-800/70'>
-              Ostatnia aktywnosc: {formatRelativeLastPlayed(insights.lastPlayedAt)}
+              Ostatnia aktywność: {formatRelativeLastPlayed(insights.lastPlayedAt)}
             </p>
           </KangurMetricCard>
 
@@ -299,11 +299,11 @@ export default function ScoreHistory({
           >
             {insights.strongestOperation ? (
               <p className='text-xs text-emerald-800/80'>
-                Srednio {insights.strongestOperation.averageAccuracy}% · proby{' '}
-                {insights.strongestOperation.attempts} · +{insights.strongestOperation.averageXpEarned} XP / sesje
+                Średnio {insights.strongestOperation.averageAccuracy}% · próby{' '}
+                {insights.strongestOperation.attempts} · +{insights.strongestOperation.averageXpEarned} XP / sesję
               </p>
             ) : (
-              <p className='text-sm text-emerald-800/80'>Za malo danych na wskazanie przewagi.</p>
+              <p className='text-sm text-emerald-800/80'>Za mało danych na wskazanie przewagi.</p>
             )}
           </KangurMetricCard>
 
@@ -320,8 +320,8 @@ export default function ScoreHistory({
             {insights.weakestOperation ? (
               <>
                 <p className='text-xs text-rose-800/80'>
-                  Srednio {insights.weakestOperation.averageAccuracy}% · proby{' '}
-                  {insights.weakestOperation.attempts} · +{insights.weakestOperation.averageXpEarned} XP / sesje
+                  Średnio {insights.weakestOperation.averageAccuracy}% · próby{' '}
+                  {insights.weakestOperation.attempts} · +{insights.weakestOperation.averageXpEarned} XP / sesję
                 </p>
                 {weakestLessonHref && (
                   <KangurButton asChild className='mt-3 w-full sm:w-auto' size='sm' variant='surface'>
@@ -331,14 +331,14 @@ export default function ScoreHistory({
                       transitionAcknowledgeMs={110}
                       transitionSourceId='score-history:weakest-lesson'
                     >
-                      Powtorz lekcje
+                      Powtórz lekcję
                     </Link>
                   </KangurButton>
                 )}
               </>
             ) : (
               <p className='text-sm text-rose-800/80'>
-                Potrzeba wiecej niz jednego typu zadania, aby wskazac obszar do wsparcia.
+                Potrzeba więcej niż jednego typu zadania, aby wskazać obszar do wsparcia.
               </p>
             )}
           </KangurMetricCard>

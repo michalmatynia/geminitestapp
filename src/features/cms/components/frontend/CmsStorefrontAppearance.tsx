@@ -303,6 +303,13 @@ const resolveChatRadius = (theme: ThemeSettings) => ({
   inset: Math.max(theme.cardRadius - 6, 16),
 });
 
+const resolveChatPanelRadius = (theme: ThemeSettings) => ({
+  minimal: Math.max(theme.cardRadius + 2, 24),
+  compact: Math.max(theme.cardRadius - 2, 20),
+  spotlightSm: Math.max(theme.cardRadius - 8, 16),
+  spotlightMd: Math.max(theme.cardRadius - 4, 18),
+});
+
 const resolveChatPadding = (theme: ThemeSettings) => {
   const cardPadding = resolveCardPadding(theme);
 
@@ -313,6 +320,19 @@ const resolveChatPadding = (theme: ThemeSettings) => {
     yMd: Math.max(cardPadding.sm, 12),
     xLg: cardPadding.md,
     yLg: Math.max(cardPadding.sm, 12),
+  };
+};
+
+const resolveChatHeaderPadding = (theme: ThemeSettings) => {
+  const chatPadding = resolveChatPadding(theme);
+
+  return {
+    xSm: chatPadding.xSm,
+    ySm: Math.max(chatPadding.ySm + 2, 10),
+    xMd: Math.max(chatPadding.xMd, 16),
+    yMd: Math.max(chatPadding.yMd - 2, 12),
+    xLg: Math.max(chatPadding.xLg, 20),
+    yLg: Math.max(chatPadding.yLg, 16),
   };
 };
 
@@ -338,12 +358,69 @@ const DEFAULT_KANGUR_RUNTIME_VARS = {
   '--kangur-chat-bubble-radius': '22px',
   '--kangur-chat-card-radius': '22px',
   '--kangur-chat-inset-radius': '20px',
+  '--kangur-chat-panel-radius-minimal': '28px',
+  '--kangur-chat-panel-radius-compact': '24px',
+  '--kangur-chat-spotlight-radius-sm': '18px',
+  '--kangur-chat-spotlight-radius-md': '22px',
+  '--kangur-chat-spotlight-border': 'rgba(251, 191, 36, 0.75)',
+  '--kangur-chat-spotlight-background': 'rgba(254, 243, 199, 0.1)',
+  '--kangur-chat-spotlight-shadow': 'rgba(251, 191, 36, 0.12)',
+  '--kangur-chat-avatar-shell-background': 'rgba(255,255,255,0.15)',
+  '--kangur-chat-avatar-shell-border': 'rgba(255,255,255,0.3)',
+  '--kangur-chat-avatar-shell-shadow':
+    'inset 0 1px 0 rgba(255,255,255,0.24), 0 1px 2px rgba(15,23,42,0.06)',
+  '--kangur-chat-avatar-svg-shadow': '0 1px 2px rgba(15,23,42,0.14)',
+  '--kangur-chat-warm-overlay-background':
+    'radial-gradient(circle at top, color-mix(in srgb, var(--kangur-soft-card-background) 74%, #fef3c7), var(--kangur-soft-card-background) 44%, color-mix(in srgb, var(--kangur-page-background) 80%, #eef2ff))',
+  '--kangur-chat-warm-overlay-border': 'rgba(253,230,138,0.6)',
+  '--kangur-chat-warm-overlay-shadow-callout':
+    '0 20px 48px -30px rgba(180,83,9,0.34), inset 0 1px 0 rgba(255,255,255,0.5)',
+  '--kangur-chat-warm-overlay-shadow-modal':
+    '0 26px 60px -34px rgba(180,83,9,0.34), inset 0 1px 0 rgba(255,255,255,0.5)',
+  '--kangur-chat-header-snap-background':
+    'linear-gradient(180deg, color-mix(in srgb, var(--kangur-soft-card-background) 64%, #fff2c6) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 78%, #ffe8b4) 100%)',
+  '--kangur-chat-pointer-glow': '#fef3c7',
+  '--kangur-chat-pointer-marker': '#b45309',
+  '--kangur-chat-tail-background': 'var(--kangur-soft-card-background)',
+  '--kangur-chat-tail-border': 'rgba(251,191,36,0.32)',
+  '--kangur-chat-sheet-handle-background': 'rgba(251,191,36,0.22)',
+  '--kangur-chat-composer-background':
+    'linear-gradient(180deg, color-mix(in srgb, var(--kangur-soft-card-background) 88%, transparent) 0%, transparent 100%)',
+  '--kangur-chat-selection-badge-background':
+    'color-mix(in srgb, var(--kangur-soft-card-background) 18%, rgba(255,255,255,0.16))',
+  '--kangur-chat-divider':
+    'color-mix(in srgb, var(--kangur-soft-card-border) 80%, rgba(245,158,11,0.15))',
+  '--kangur-chat-surface-soft-background':
+    'linear-gradient(135deg, color-mix(in srgb, var(--kangur-soft-card-background) 92%, transparent) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 84%, var(--kangur-page-background)) 100%)',
+  '--kangur-chat-surface-soft-border': 'var(--kangur-soft-card-border)',
+  '--kangur-chat-surface-soft-shadow': '0 12px 28px -18px rgba(15,23,42,0.18)',
+  '--kangur-chat-surface-warm-background':
+    'linear-gradient(135deg, color-mix(in srgb, var(--kangur-soft-card-background) 90%, rgba(255,248,220,0.98)) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 84%, rgba(254,243,199,0.9)) 100%)',
+  '--kangur-chat-surface-warm-border':
+    'color-mix(in srgb, var(--kangur-soft-card-border) 76%, rgb(251 191 36))',
+  '--kangur-chat-surface-warm-shadow': '0 8px 18px -12px rgba(245,158,11,0.18)',
+  '--kangur-chat-surface-info-background':
+    'linear-gradient(135deg, color-mix(in srgb, var(--kangur-soft-card-background) 88%, rgba(224,242,254,0.9)) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 86%, rgba(239,246,255,0.82)) 100%)',
+  '--kangur-chat-surface-info-border':
+    'color-mix(in srgb, var(--kangur-soft-card-border) 74%, rgb(125 211 252))',
+  '--kangur-chat-surface-info-shadow': '0 8px 18px -12px rgba(14,165,233,0.22)',
+  '--kangur-chat-surface-success-background':
+    'color-mix(in srgb, var(--kangur-soft-card-background) 82%, rgba(209,250,229,0.92))',
+  '--kangur-chat-surface-success-border':
+    'color-mix(in srgb, var(--kangur-soft-card-border) 74%, rgb(110 231 183))',
+  '--kangur-chat-surface-success-shadow': '0 6px 16px -10px rgba(5,150,105,0.18)',
   '--kangur-chat-padding-x-sm': '12px',
   '--kangur-chat-padding-y-sm': '8px',
   '--kangur-chat-padding-x-md': '12px',
   '--kangur-chat-padding-y-md': '12px',
   '--kangur-chat-padding-x-lg': '16px',
   '--kangur-chat-padding-y-lg': '12px',
+  '--kangur-chat-header-padding-x-sm': '12px',
+  '--kangur-chat-header-padding-y-sm': '10px',
+  '--kangur-chat-header-padding-x-md': '16px',
+  '--kangur-chat-header-padding-y-md': '12px',
+  '--kangur-chat-header-padding-x-lg': '20px',
+  '--kangur-chat-header-padding-y-lg': '16px',
   '--kangur-panel-padding-md': '20px',
   '--kangur-panel-padding-lg': '24px',
   '--kangur-panel-padding-xl': '32px',
@@ -380,7 +457,9 @@ const resolveKangurRuntimeThemeVars = (theme: ThemeSettings): Record<string, str
   const cardPadding = resolveCardPadding(theme);
   const gradientIconTileRadius = resolveGradientIconTileRadius(theme);
   const chatRadius = resolveChatRadius(theme);
+  const chatPanelRadius = resolveChatPanelRadius(theme);
   const chatPadding = resolveChatPadding(theme);
+  const chatHeaderPadding = resolveChatHeaderPadding(theme);
   const stackGap = resolveStackGap(theme);
 
   return {
@@ -405,12 +484,22 @@ const resolveKangurRuntimeThemeVars = (theme: ThemeSettings): Record<string, str
     '--kangur-chat-bubble-radius': toCssPx(chatRadius.bubble),
     '--kangur-chat-card-radius': toCssPx(chatRadius.card),
     '--kangur-chat-inset-radius': toCssPx(chatRadius.inset),
+    '--kangur-chat-panel-radius-minimal': toCssPx(chatPanelRadius.minimal),
+    '--kangur-chat-panel-radius-compact': toCssPx(chatPanelRadius.compact),
+    '--kangur-chat-spotlight-radius-sm': toCssPx(chatPanelRadius.spotlightSm),
+    '--kangur-chat-spotlight-radius-md': toCssPx(chatPanelRadius.spotlightMd),
     '--kangur-chat-padding-x-sm': toCssPx(chatPadding.xSm),
     '--kangur-chat-padding-y-sm': toCssPx(chatPadding.ySm),
     '--kangur-chat-padding-x-md': toCssPx(chatPadding.xMd),
     '--kangur-chat-padding-y-md': toCssPx(chatPadding.yMd),
     '--kangur-chat-padding-x-lg': toCssPx(chatPadding.xLg),
     '--kangur-chat-padding-y-lg': toCssPx(chatPadding.yLg),
+    '--kangur-chat-header-padding-x-sm': toCssPx(chatHeaderPadding.xSm),
+    '--kangur-chat-header-padding-y-sm': toCssPx(chatHeaderPadding.ySm),
+    '--kangur-chat-header-padding-x-md': toCssPx(chatHeaderPadding.xMd),
+    '--kangur-chat-header-padding-y-md': toCssPx(chatHeaderPadding.yMd),
+    '--kangur-chat-header-padding-x-lg': toCssPx(chatHeaderPadding.xLg),
+    '--kangur-chat-header-padding-y-lg': toCssPx(chatHeaderPadding.yLg),
     '--kangur-panel-padding-md': toCssPx(panelPadding.md),
     '--kangur-panel-padding-lg': toCssPx(panelPadding.lg),
     '--kangur-panel-padding-xl': toCssPx(panelPadding.xl),
@@ -536,7 +625,56 @@ const resolveDefaultKangurStorefrontAppearance = (
           '0 20px 48px -30px rgba(2, 6, 23, 0.56), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
         '--kangur-chat-header-background':
           'linear-gradient(180deg, rgba(69,26,3,0.54) 0%, rgba(30,41,59,0.94) 100%)',
+        '--kangur-chat-header-snap-background':
+          'linear-gradient(180deg, color-mix(in srgb, var(--kangur-soft-card-background) 68%, rgba(251,191,36,0.32)) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 78%, rgba(251,191,36,0.22)) 100%)',
         '--kangur-chat-header-border': 'rgba(251, 191, 36, 0.18)',
+        '--kangur-chat-spotlight-border': 'rgba(252, 211, 77, 0.42)',
+        '--kangur-chat-spotlight-background':
+          'color-mix(in srgb, rgba(250, 204, 21, 0.2) 72%, transparent)',
+        '--kangur-chat-spotlight-shadow':
+          'color-mix(in srgb, rgba(250, 204, 21, 0.18) 72%, transparent)',
+        '--kangur-chat-avatar-shell-background': 'rgba(255,255,255,0.12)',
+        '--kangur-chat-avatar-shell-border': 'rgba(255,255,255,0.25)',
+        '--kangur-chat-avatar-shell-shadow':
+          'inset 0 1px 0 rgba(255,255,255,0.18), 0 1px 2px rgba(15,23,42,0.12)',
+        '--kangur-chat-avatar-svg-shadow': '0 1px 2px rgba(15,23,42,0.18)',
+        '--kangur-chat-warm-overlay-background':
+          'radial-gradient(circle at top, color-mix(in srgb, var(--kangur-soft-card-background) 86%, rgba(251,191,36,0.32)) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 72%, var(--kangur-page-background)) 44%, color-mix(in srgb, var(--kangur-page-background) 86%, rgba(251,191,36,0.16)) 100%)',
+        '--kangur-chat-warm-overlay-border': 'rgba(251,191,36,0.32)',
+        '--kangur-chat-warm-overlay-shadow-callout':
+          '0 20px 48px -30px rgba(2,6,23,0.68), inset 0 1px 0 rgba(255,255,255,0.18)',
+        '--kangur-chat-warm-overlay-shadow-modal':
+          '0 26px 60px -34px rgba(2,6,23,0.72), inset 0 1px 0 rgba(255,255,255,0.18)',
+        '--kangur-chat-pointer-glow': '#fef3c7',
+        '--kangur-chat-pointer-marker': '#f59e0b',
+        '--kangur-chat-tail-background': 'var(--kangur-soft-card-background)',
+        '--kangur-chat-tail-border': 'rgba(251,191,36,0.24)',
+        '--kangur-chat-sheet-handle-background': 'rgba(251,191,36,0.22)',
+        '--kangur-chat-composer-background':
+          'linear-gradient(180deg, color-mix(in srgb, var(--kangur-soft-card-background) 92%, transparent) 0%, transparent 100%)',
+        '--kangur-chat-selection-badge-background':
+          'color-mix(in srgb, var(--kangur-soft-card-background) 28%, rgba(255,255,255,0.14))',
+        '--kangur-chat-divider':
+          'color-mix(in srgb, var(--kangur-soft-card-border) 82%, rgba(251,191,36,0.18))',
+        '--kangur-chat-surface-soft-background':
+          'linear-gradient(135deg, color-mix(in srgb, var(--kangur-soft-card-background) 92%, transparent) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 86%, var(--kangur-page-background)) 100%)',
+        '--kangur-chat-surface-soft-border': 'var(--kangur-soft-card-border)',
+        '--kangur-chat-surface-soft-shadow': '0 12px 28px -18px rgba(2,6,23,0.55)',
+        '--kangur-chat-surface-warm-background':
+          'linear-gradient(135deg, color-mix(in srgb, var(--kangur-soft-card-background) 92%, rgba(251,191,36,0.28)) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 86%, rgba(245,158,11,0.22)) 100%)',
+        '--kangur-chat-surface-warm-border':
+          'color-mix(in srgb, var(--kangur-soft-card-border) 72%, rgba(251,191,36,0.6))',
+        '--kangur-chat-surface-warm-shadow': '0 8px 18px -12px rgba(2,6,23,0.65)',
+        '--kangur-chat-surface-info-background':
+          'linear-gradient(135deg, color-mix(in srgb, var(--kangur-soft-card-background) 90%, rgba(56,189,248,0.22)) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 86%, rgba(37,99,235,0.18)) 100%)',
+        '--kangur-chat-surface-info-border':
+          'color-mix(in srgb, var(--kangur-soft-card-border) 72%, rgba(56,189,248,0.6))',
+        '--kangur-chat-surface-info-shadow': '0 8px 18px -12px rgba(2,6,23,0.6)',
+        '--kangur-chat-surface-success-background':
+          'color-mix(in srgb, var(--kangur-soft-card-background) 88%, rgba(52,211,153,0.22))',
+        '--kangur-chat-surface-success-border':
+          'color-mix(in srgb, var(--kangur-soft-card-border) 72%, rgba(52,211,153,0.6))',
+        '--kangur-chat-surface-success-shadow': '0 6px 16px -10px rgba(2,6,23,0.55)',
         '--kangur-chat-panel-text': '#f8fafc',
         '--kangur-chat-muted-text': '#d7e1ee',
         '--kangur-chat-kicker-text': '#fde68a',
@@ -610,6 +748,7 @@ const resolveThemedKangurStorefrontAppearance = (
   const accent = theme.accentColor || theme.primaryColor || theme.secondaryColor || theme.textColor;
   const primary = theme.primaryColor || accent;
   const secondary = theme.secondaryColor || primary;
+  const infoBackground = secondary;
   const surfaceBackground = theme.cardBg || theme.containerBg || theme.surfaceColor;
   const borderColor =
     theme.containerBorderColor || theme.borderColor || theme.inputBorderColor || theme.btnOutlineBorder;
@@ -686,6 +825,91 @@ const resolveThemedKangurStorefrontAppearance = (
     mode === 'dark'
       ? `radial-gradient(circle at top, ${mixCssColor(primary, theme.backgroundColor, 18)} 0%, ${mixCssColor(theme.surfaceColor, theme.backgroundColor, 64)} 44%, ${darkenCssColor(theme.backgroundColor, 22)} 100%)`
       : `radial-gradient(circle at top, ${mixCssColor(accent, theme.backgroundColor, 12)} 0%, ${mixCssColor(theme.surfaceColor, theme.backgroundColor, 52)} 48%, ${mixCssColor(secondary, theme.backgroundColor, 10)} 100%)`;
+  const softSurfaceStart = mixCssColor(
+    surfaceTone.background,
+    pageTone.background,
+    mode === 'dark' ? 92 : 92
+  );
+  const softSurfaceEnd = mixCssColor(
+    surfaceTone.background,
+    pageTone.background,
+    mode === 'dark' ? 86 : 84
+  );
+  const warmSurfaceStart = mixCssColor(
+    surfaceTone.background,
+    warningBackground,
+    mode === 'dark' ? 90 : 92
+  );
+  const warmSurfaceEnd = mixCssColor(
+    surfaceTone.background,
+    warningBackground,
+    mode === 'dark' ? 84 : 86
+  );
+  const infoSurfaceStart = mixCssColor(
+    surfaceTone.background,
+    infoBackground,
+    mode === 'dark' ? 88 : 90
+  );
+  const infoSurfaceEnd = mixCssColor(
+    surfaceTone.background,
+    infoBackground,
+    mode === 'dark' ? 82 : 86
+  );
+  const successSurface = mixCssColor(
+    surfaceTone.background,
+    successBackground,
+    mode === 'dark' ? 86 : 82
+  );
+  const dividerColor = mixCssColor(borderColor, warningBackground, mode === 'dark' ? 68 : 74);
+  const softSurfaceShadow =
+    mode === 'dark'
+      ? `0 12px 28px -18px ${mixCssColor(theme.backgroundColor, '#000000', 60)}`
+      : `0 12px 28px -18px ${mixCssColor(theme.backgroundColor, '#000000', 18)}`;
+  const warmSurfaceShadow = `0 8px 18px -12px ${mixCssColor(
+    warningBackground,
+    '#000000',
+    mode === 'dark' ? 54 : 24
+  )}`;
+  const infoSurfaceShadow = `0 8px 18px -12px ${mixCssColor(
+    infoBackground,
+    '#000000',
+    mode === 'dark' ? 54 : 24
+  )}`;
+  const successSurfaceShadow = `0 6px 16px -10px ${mixCssColor(
+    successBackground,
+    '#000000',
+    mode === 'dark' ? 52 : 22
+  )}`;
+  const composerBackground = `linear-gradient(180deg, ${mixCssColor(
+    surfaceTone.background,
+    'transparent',
+    mode === 'dark' ? 92 : 88
+  )} 0%, transparent 100%)`;
+  const selectionBadgeBackground = `color-mix(in srgb, ${surfaceTone.background} ${
+    mode === 'dark' ? 28 : 18
+  }%, rgba(255,255,255,${mode === 'dark' ? '0.14' : '0.16'}))`;
+  const warmOverlayBackground = `radial-gradient(circle at top, ${mixCssColor(
+    surfaceTone.background,
+    warningBackground,
+    mode === 'dark' ? 26 : 22
+  )} 0%, ${mixCssColor(surfaceTone.background, pageTone.background, mode === 'dark' ? 76 : 64)} 44%, ${mixCssColor(
+    pageTone.background,
+    warningBackground,
+    mode === 'dark' ? 8 : 12
+  )} 100%)`;
+  const warmOverlayBorder = mixCssColor(borderColor, warningBackground, mode === 'dark' ? 54 : 60);
+  const warmOverlayInset =
+    mode === 'dark' ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.5)';
+  const warmOverlayShadowCallout = `0 20px 48px -30px ${mixCssColor(
+    warningBackground,
+    '#000000',
+    mode === 'dark' ? 60 : 34
+  )}, inset 0 1px 0 ${warmOverlayInset}`;
+  const warmOverlayShadowModal = `0 26px 60px -34px ${mixCssColor(
+    warningBackground,
+    '#000000',
+    mode === 'dark' ? 60 : 34
+  )}, inset 0 1px 0 ${warmOverlayInset}`;
 
   return {
     background,
@@ -847,10 +1071,78 @@ const resolveThemedKangurStorefrontAppearance = (
         `0 20px 48px -30px ${mixCssColor(chatBackground, '#000000', mode === 'dark' ? 52 : 20)}, inset 0 1px 0 ${mixCssColor('#ffffff', '#ffffff', mode === 'dark' ? 6 : 22)}`,
       '--kangur-chat-header-background':
         `linear-gradient(180deg, ${mixCssColor(accent, chatBackground, mode === 'dark' ? 32 : 22)} 0%, ${mixCssColor(chatBackground, pageTone.background, mode === 'dark' ? 92 : 86)} 100%)`,
+      '--kangur-chat-header-snap-background':
+        `linear-gradient(180deg, ${mixCssColor(surfaceTone.background, warningBackground, mode === 'dark' ? 28 : 22)} 0%, ${mixCssColor(surfaceTone.background, warningBackground, mode === 'dark' ? 36 : 28)} 100%)`,
       '--kangur-chat-header-border':
         mode === 'dark'
           ? mixCssColor(accent, '#ffffff', 20)
           : mixCssColor(accent, '#ffffff', 28),
+      '--kangur-chat-spotlight-border':
+        mode === 'dark'
+          ? mixCssColor(accent, '#ffffff', 36)
+          : mixCssColor(accent, '#ffffff', 46),
+      '--kangur-chat-spotlight-background':
+        `color-mix(in srgb, ${accent} ${mode === 'dark' ? 18 : 12}%, transparent)`,
+      '--kangur-chat-spotlight-shadow':
+        `color-mix(in srgb, ${accent} ${mode === 'dark' ? 22 : 12}%, transparent)`,
+      '--kangur-chat-avatar-shell-background':
+        mode === 'dark'
+          ? mixCssColor(chatBackground, '#ffffff', 24)
+          : mixCssColor(surfaceTone.background, '#ffffff', 78),
+      '--kangur-chat-avatar-shell-border':
+        mode === 'dark'
+          ? mixCssColor(borderColor, '#ffffff', 34)
+          : mixCssColor(borderColor, '#ffffff', 72),
+      '--kangur-chat-avatar-shell-shadow':
+        mode === 'dark'
+          ? 'inset 0 1px 0 rgba(255,255,255,0.18), 0 1px 2px rgba(15,23,42,0.12)'
+          : 'inset 0 1px 0 rgba(255,255,255,0.24), 0 1px 2px rgba(15,23,42,0.06)',
+      '--kangur-chat-avatar-svg-shadow':
+        mode === 'dark'
+          ? '0 1px 2px rgba(15,23,42,0.18)'
+          : '0 1px 2px rgba(15,23,42,0.12)',
+      '--kangur-chat-warm-overlay-background': warmOverlayBackground,
+      '--kangur-chat-warm-overlay-border': warmOverlayBorder,
+      '--kangur-chat-warm-overlay-shadow-callout': warmOverlayShadowCallout,
+      '--kangur-chat-warm-overlay-shadow-modal': warmOverlayShadowModal,
+      '--kangur-chat-pointer-glow':
+        mode === 'dark'
+          ? mixCssColor(warningBackground, '#ffffff', 18)
+          : mixCssColor(warningBackground, '#ffffff', 16),
+      '--kangur-chat-pointer-marker':
+        mode === 'dark'
+          ? mixCssColor(warningBackground, '#ffffff', 72)
+          : mixCssColor(warningBackground, '#000000', 82),
+      '--kangur-chat-tail-background':
+        mode === 'dark'
+          ? mixCssColor(surfaceTone.background, pageTone.background, 90)
+          : mixCssColor(surfaceTone.background, '#ffffff', 94),
+      '--kangur-chat-tail-border':
+        mode === 'dark'
+          ? mixCssColor(accent, '#ffffff', 20)
+          : mixCssColor(accent, '#ffffff', 28),
+      '--kangur-chat-sheet-handle-background':
+        mode === 'dark'
+          ? mixCssColor(accent, '#ffffff', 20)
+          : mixCssColor(accent, '#ffffff', 28),
+      '--kangur-chat-composer-background': composerBackground,
+      '--kangur-chat-selection-badge-background': selectionBadgeBackground,
+      '--kangur-chat-divider': dividerColor,
+      '--kangur-chat-surface-soft-background':
+        `linear-gradient(135deg, ${softSurfaceStart} 0%, ${softSurfaceEnd} 100%)`,
+      '--kangur-chat-surface-soft-border': 'var(--kangur-soft-card-border)',
+      '--kangur-chat-surface-soft-shadow': softSurfaceShadow,
+      '--kangur-chat-surface-warm-background':
+        `linear-gradient(135deg, ${warmSurfaceStart} 0%, ${warmSurfaceEnd} 100%)`,
+      '--kangur-chat-surface-warm-border': mixCssColor(borderColor, warningBackground, 74),
+      '--kangur-chat-surface-warm-shadow': warmSurfaceShadow,
+      '--kangur-chat-surface-info-background':
+        `linear-gradient(135deg, ${infoSurfaceStart} 0%, ${infoSurfaceEnd} 100%)`,
+      '--kangur-chat-surface-info-border': mixCssColor(borderColor, infoBackground, 72),
+      '--kangur-chat-surface-info-shadow': infoSurfaceShadow,
+      '--kangur-chat-surface-success-background': successSurface,
+      '--kangur-chat-surface-success-border': mixCssColor(borderColor, successBackground, 70),
+      '--kangur-chat-surface-success-shadow': successSurfaceShadow,
       '--kangur-chat-panel-text': toneText,
       '--kangur-chat-muted-text':
         mode === 'dark'

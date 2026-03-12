@@ -467,7 +467,10 @@ export const areConversationContextsEqual = (
   return (
     left.surface === right.surface &&
     left.contentId === right.contentId &&
+    left.description === right.description &&
     left.questionId === right.questionId &&
+    left.selectedChoiceLabel === right.selectedChoiceLabel &&
+    left.selectedChoiceText === right.selectedChoiceText &&
     left.selectedText === right.selectedText &&
     left.answerRevealed === right.answerRevealed &&
     left.promptMode === right.promptMode &&

@@ -13,10 +13,10 @@ import type { KangurOperation } from '@/features/kangur/ui/types';
 const OPERATION_LABELS: Partial<Record<KangurOperation, string>> = {
   addition: 'Dodawanie',
   subtraction: 'Odejmowanie',
-  multiplication: 'Mnozenie',
+  multiplication: 'Mnożenie',
   division: 'Dzielenie',
-  decimals: 'Ulamki',
-  powers: 'Potegi',
+  decimals: 'Ułamki',
+  powers: 'Potęgi',
   roots: 'Pierwiastki',
   clock: 'Zegar',
   mixed: 'Mieszane',
@@ -53,12 +53,12 @@ export default function ResultScreen({
 
   const message =
     percent === 100
-      ? 'Idealny wynik! Jestes gwiazda matematyki! 🌟'
+      ? 'Idealny wynik! Jesteś gwiazdą matematyki! 🌟'
       : percent >= 80
         ? 'Niesamowita robota! Tak trzymaj! 🎉'
         : percent >= 60
-          ? 'Dobra robota! Cwiczenie czyni mistrza! 💪'
-          : 'Probuj dalej. Dasz rade! 🚀';
+          ? 'Dobra robota! Ćwiczenie czyni mistrza! 💪'
+          : 'Próbuj dalej. Dasz radę! 🚀';
 
   return (
     <motion.div
@@ -78,7 +78,7 @@ export default function ResultScreen({
         id='kangur-result-heading'
         size='lg'
       >
-        Swietna robota, {playerName}!
+        Świetna robota, {playerName}!
       </KangurHeadline>
       <p
         role='status'
@@ -103,7 +103,7 @@ export default function ResultScreen({
             </dd>
           </div>
           <div className='flex flex-col gap-1 text-left sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
-            <dt className='[color:var(--kangur-page-muted-text)]'>Dokladnosc</dt>
+            <dt className='[color:var(--kangur-page-muted-text)]'>Dokładność</dt>
             <dd className='font-bold text-green-500'>{percent}%</dd>
           </div>
           <div className='flex flex-col gap-1 text-left sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
@@ -118,7 +118,7 @@ export default function ResultScreen({
         <KangurProgressBar
           accent='indigo'
           animated
-          aria-label='Dokladnosc odpowiedzi'
+          aria-label='Dokładność odpowiedzi'
           aria-valuetext={`${percent}% poprawnych odpowiedzi`}
           className='mt-2'
           data-testid='result-screen-progress-bar'
@@ -132,7 +132,7 @@ export default function ResultScreen({
           <RotateCcw className='w-5 h-5' /> Zagraj ponownie
         </KangurButton>
         <KangurButton className='w-full sm:w-auto' onClick={handleGoHome} size='lg' variant='surface'>
-          <Home className='w-5 h-5' /> Strona glowna
+          <Home className='w-5 h-5' /> Strona główna
         </KangurButton>
       </div>
     </motion.div>

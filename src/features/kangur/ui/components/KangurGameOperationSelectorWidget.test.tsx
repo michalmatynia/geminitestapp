@@ -110,12 +110,12 @@ describe('KangurGameOperationSelectorWidget', () => {
     useKangurGameRuntimeMock.mockReturnValue(runtime);
     getCurrentKangurDailyQuestMock.mockReturnValue({
       assignment: {
-        title: '➗ Powtorka: Dzielenie',
+        title: '➗ Powtórka: Dzielenie',
         description: 'Jedna dobra gra ustabilizuje ten temat.',
         progressLabel: '48% / 75% opanowania',
         questLabel: 'Misja dnia',
         action: {
-          label: 'Otworz lekcje',
+          label: 'Otwórz lekcję',
           page: 'Lessons',
           query: {
             focus: 'division',
@@ -134,7 +134,7 @@ describe('KangurGameOperationSelectorWidget', () => {
     render(<KangurGameOperationSelectorWidget />);
 
     expect(screen.getByTestId('kangur-operation-recommendation-title')).toHaveTextContent(
-      '➗ Powtorka: Dzielenie'
+      '➗ Powtórka: Dzielenie'
     );
     expect(screen.getByTestId('kangur-operation-recommendation-title')).toHaveClass(
       '[color:var(--kangur-page-text)]'
@@ -156,7 +156,7 @@ describe('KangurGameOperationSelectorWidget', () => {
         description: '48% / 75% opanowania',
         label: 'Misja dnia',
         source: 'operation_selector',
-        title: '➗ Powtorka: Dzielenie',
+        title: '➗ Powtórka: Dzielenie',
       },
     });
     expect(runtime.setScreen).not.toHaveBeenCalled();
@@ -168,12 +168,12 @@ describe('KangurGameOperationSelectorWidget', () => {
     useKangurGameRuntimeMock.mockReturnValue(runtime);
     getCurrentKangurDailyQuestMock.mockReturnValue({
       assignment: {
-        title: '📅 Powtorka: Kalendarz',
-        description: 'Dni i daty potrzebuja jeszcze jednej serii.',
+        title: '📅 Powtórka: Kalendarz',
+        description: 'Dni i daty potrzebują jeszcze jednej serii.',
         progressLabel: '62% / 75% opanowania',
         questLabel: 'Misja dnia',
         action: {
-          label: 'Otworz lekcje',
+          label: 'Otwórz lekcję',
           page: 'Lessons',
           query: {
             focus: 'calendar',
@@ -288,7 +288,7 @@ describe('KangurGameOperationSelectorWidget', () => {
         recommendation: expect.objectContaining({
           label: 'Tor odznak',
           source: 'operation_selector',
-          title: expect.stringMatching(/^Rozpedz tor:/),
+          title: expect.stringMatching(/^Rozpędź tor:/),
         }),
       })
     );

@@ -40,13 +40,7 @@ export function KangurAiTutorComposer(): JSX.Element {
   if (drawingMode) {
     return (
       <div
-        className='border-t kangur-chat-padding-md'
-        style={{
-          background:
-            'linear-gradient(180deg, color-mix(in srgb, var(--kangur-soft-card-background) 88%, transparent) 0%, transparent 100%)',
-          borderColor:
-            'color-mix(in srgb, var(--kangur-soft-card-border) 72%, rgb(251 191 36))',
-        }}
+        className='border-t kangur-chat-divider kangur-chat-padding-md kangur-chat-composer-shell'
         data-testid='kangur-ai-tutor-composer-shell'
       >
         <KangurAiTutorDrawingCanvas
@@ -59,13 +53,7 @@ export function KangurAiTutorComposer(): JSX.Element {
 
   return (
     <div
-      className='border-t kangur-chat-padding-md'
-      style={{
-        background:
-          'linear-gradient(180deg, color-mix(in srgb, var(--kangur-soft-card-background) 88%, transparent) 0%, transparent 100%)',
-        borderColor:
-          'color-mix(in srgb, var(--kangur-soft-card-border) 72%, rgb(251 191 36))',
-      }}
+      className='border-t kangur-chat-divider kangur-chat-padding-md kangur-chat-composer-shell'
       data-testid='kangur-ai-tutor-composer-shell'
     >
       {drawingImageData ? (
@@ -77,21 +65,12 @@ export function KangurAiTutorComposer(): JSX.Element {
             <img
               src={drawingImageData}
               alt={drawingContent?.previewAlt ?? 'Rysunek'}
-              className='h-16 w-auto kangur-chat-inset border shadow-[0_4px_10px_-6px_rgba(15,23,42,0.1)]'
-              style={{
-                borderColor:
-                  'color-mix(in srgb, var(--kangur-soft-card-border) 76%, rgb(251 191 36))',
-              }}
+              className='h-16 w-auto kangur-chat-inset border kangur-chat-surface-warm shadow-[0_4px_10px_-6px_rgba(15,23,42,0.1)]'
             />
             <button
               type='button'
               onClick={handleClearDrawing}
-              className='absolute -right-1.5 -top-1.5 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border shadow-sm transition-colors hover:bg-red-50 hover:text-red-500'
-              style={{
-                background: 'var(--kangur-soft-card-background)',
-                borderColor: 'var(--kangur-soft-card-border)',
-                color: 'var(--kangur-chat-muted-text, var(--kangur-page-muted-text))',
-              }}
+              className='absolute -right-1.5 -top-1.5 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border kangur-chat-surface-soft shadow-sm transition-colors hover:bg-red-50 hover:text-red-500 [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
               aria-label={drawingContent?.clearLabel ?? 'Usuń rysunek'}
             >
               <X className='h-2.5 w-2.5' />

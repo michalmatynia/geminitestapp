@@ -243,6 +243,7 @@ export function useKangurAiTutorPanelShellState(input: {
     | null;
   bubblePlacement: BubblePlacement;
   compactDockedTutorPanelWidth: number;
+  contextualTutorMode: 'selection_explain' | 'section_explain' | null;
   displayFocusRect: DOMRect | null;
   draggedAvatarPoint: PanelShellPoint | null;
   guidedAvatarStyle: TutorMotionPosition | null;
@@ -265,6 +266,7 @@ export function useKangurAiTutorPanelShellState(input: {
   motionProfile: TutorMotionProfile;
   panelMeasuredHeight: number | null;
   panelPosition: PanelShellPoint | null;
+  panelShellMode: 'default' | 'minimal';
   panelSnapPreference: TutorPanelSnapState;
   prefersReducedMotion: boolean;
   reducedMotionTransitions: ReducedMotionTransitions;
@@ -277,6 +279,7 @@ export function useKangurAiTutorPanelShellState(input: {
     askModalDockStyle,
     bubblePlacement,
     compactDockedTutorPanelWidth,
+    contextualTutorMode,
     displayFocusRect,
     draggedAvatarPoint,
     guidedAvatarStyle,
@@ -299,6 +302,7 @@ export function useKangurAiTutorPanelShellState(input: {
     motionProfile,
     panelMeasuredHeight,
     panelPosition,
+    panelShellMode,
     panelSnapPreference,
     prefersReducedMotion,
     reducedMotionTransitions,
@@ -491,10 +495,12 @@ export function useKangurAiTutorPanelShellState(input: {
     : (isGuidedTutorMode || shouldPreserveInlineGuidanceAvatar) && guidedFocusRect
       ? 'guided'
       : 'floating';
+  const shouldFadeDeferredSelectionPanel =
+    panelShellMode === 'minimal' && contextualTutorMode === 'selection_explain';
   const panelOpenAnimation: 'dock-launch' | 'fade' | 'sheet' =
     bubblePlacement.mode === 'sheet'
       ? 'sheet'
-      : isStaticUiMode || isFreeformUiMode
+      : isStaticUiMode || isFreeformUiMode || shouldFadeDeferredSelectionPanel
         ? 'fade'
         : 'dock-launch';
   const panelTransition: Transition = prefersReducedMotion

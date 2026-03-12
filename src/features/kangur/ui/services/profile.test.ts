@@ -157,7 +157,7 @@ describe('buildKangurLearnerProfileSnapshot', () => {
     expect(snapshot.recommendations.length).toBeGreaterThan(0);
     expect(snapshot.recommendations.map((entry) => entry.id)).toContain('daily_goal');
     expect(snapshot.recommendations.find((entry) => entry.id === 'daily_goal')).toMatchObject({
-      description: expect.stringContaining('Dzis masz juz +24 XP.'),
+      description: expect.stringContaining('Dziś masz już +24 XP.'),
       action: {
         label: 'Zagraj teraz',
         page: 'Game',
@@ -375,6 +375,6 @@ describe('buildKangurLearnerProfileSnapshot', () => {
     );
     expect(
       snapshot.recommendations.find((entry) => entry.id === 'boost_xp_momentum')?.description
-    ).toContain('okolo 5 XP na probe');
+    ).toContain('około 5 XP na próbę');
   });
 });

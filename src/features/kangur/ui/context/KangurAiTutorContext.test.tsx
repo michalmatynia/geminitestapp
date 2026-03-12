@@ -439,7 +439,7 @@ describe('KangurAiTutorContext', () => {
     await waitFor(() =>
       expect(screen.getByTestId('tutor-behavior-mood')).toHaveTextContent('supportive')
     );
-    expect(screen.getByTestId('tutor-behavior-mood-label')).toHaveTextContent('Wspierajacy');
+    expect(screen.getByTestId('tutor-behavior-mood-label')).toHaveTextContent('Wspierający');
 
     expect(apiPostMock).toHaveBeenCalledWith('/api/kangur/ai-tutor/chat', {
       messages: [{ role: 'user', content: 'Pomóż mi z tym zadaniem.' }],
@@ -507,6 +507,59 @@ describe('KangurAiTutorContext', () => {
       'Zaloguj się:/:kangur-primary-nav-login'
     );
     expect(screen.getByTestId('usage-summary')).toHaveTextContent('2/3/1');
+  });
+
+  it('includes selected choice metadata from the active test session in outgoing tutor requests', async () => {
+    apiPostMock.mockResolvedValue({
+      message: 'Sprawdz jeszcze raz, czy wybrana odpowiedz pasuje do tresci zadania.',
+      sources: [],
+      followUpActions: [],
+      usage: {
+        dateKey: '2026-03-07',
+        messageCount: 1,
+        dailyMessageLimit: null,
+        remainingMessages: null,
+      },
+    });
+
+    render(
+      <KangurAiTutorProvider
+        learnerId='learner-1'
+        sessionContext={{
+          surface: 'test',
+          contentId: 'suite-1',
+          title: 'Kangur Mini',
+          questionId: 'question-1',
+          currentQuestion: 'Ile to 2 + 2?',
+          questionProgressLabel: 'Pytanie 1/10',
+          selectedChoiceLabel: 'B',
+          selectedChoiceText: '5',
+          answerRevealed: false,
+        }}
+      >
+        <Harness />
+      </KangurAiTutorProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+    await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(1));
+    expect(apiPostMock).toHaveBeenCalledWith(
+      '/api/kangur/ai-tutor/chat',
+      expect.objectContaining({
+        context: expect.objectContaining({
+          surface: 'test',
+          contentId: 'suite-1',
+          questionId: 'question-1',
+          currentQuestion: 'Ile to 2 + 2?',
+          questionProgressLabel: 'Pytanie 1/10',
+          selectedChoiceLabel: 'B',
+          selectedChoiceText: '5',
+          promptMode: 'hint',
+          selectedText: '2 + 2',
+        }),
+      })
+    );
   });
 
   it('allows section explains to override the active page surface when the anchor belongs to auth', async () => {
@@ -1033,7 +1086,7 @@ describe('KangurAiTutorContext', () => {
     );
     expect(screen.getByTestId('tutor-behavior-mood-label')).toHaveTextContent('Spokojny');
     expect(screen.getByTestId('tutor-behavior-mood-description')).toHaveTextContent(
-      'Tutor obniza napięcie i porządkuje sytuacje krok po kroku.'
+      'Tutor obniża napięcie i porządkuje sytuację krok po kroku.'
     );
   });
 

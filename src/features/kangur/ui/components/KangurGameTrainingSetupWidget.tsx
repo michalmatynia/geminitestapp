@@ -42,7 +42,7 @@ export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
     <div className='w-full flex flex-col items-center gap-4'>
       <KangurPageIntroCard
         className='max-w-md'
-        description='Dobierz poziom, kategorie i liczbe pytan do jednej sesji.'
+        description='Dobierz poziom, kategorie i liczbę pytań do jednej sesji.'
         headingSize='lg'
         onBack={handleHome}
         testId='kangur-game-training-top-section'

@@ -51,13 +51,13 @@ describe('delegated assignments helpers', () => {
 
     expect(practiceClock).toMatchObject({
       title: 'Trening: Zegar',
-      description: 'Sesja cwiczen z godzinami, minutami i pelnym czasem na zegarze.',
+      description: 'Sesja ćwiczeń z godzinami, minutami i pełnym czasem na zegarze.',
     });
     expect(practiceClock?.createInput.description).toBe(
-      'Wykonaj zegarowy trening i sprawdz odczytywanie godzin, minut oraz pelnego czasu.'
+      'Wykonaj zegarowy trening i sprawdź odczytywanie godzin, minut oraz pełnego czasu.'
     );
     expect(practiceClock?.keywords).toEqual(
-      expect.arrayContaining(['godziny', 'minuty', 'pelny czas'])
+      expect.arrayContaining(['godziny', 'minuty', 'pełny czas'])
     );
   });
 

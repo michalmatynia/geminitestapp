@@ -37,7 +37,7 @@ export function KangurParentDashboardScoresWidget({
       <KangurPanelIntro
         description={
           scoresContent?.summary ??
-          'Przejrzyj ostatnie gry, skutecznosc i obszary, ktore warto teraz powtorzyc.'
+          'Przejrzyj ostatnie gry, skuteczność i obszary, które warto teraz powtórzyć.'
         }
         title={scoresContent?.title ?? 'Wyniki ucznia'}
         titleAs='h2'

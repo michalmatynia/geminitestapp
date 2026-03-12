@@ -103,6 +103,227 @@ const readRuntimeStringFact = (
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 };
 
+const readRuntimeNumberFact = (
+  document: ContextRuntimeDocument | null | undefined,
+  key: string
+): number | null => {
+  const value = document?.facts?.[key];
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+};
+
+const buildTopRecommendationOverlay = (
+  learnerSnapshot: ContextRuntimeDocument | null | undefined
+): string | null => {
+  const title = readRuntimeStringFact(learnerSnapshot, 'topRecommendationTitle');
+  if (!title) {
+    return null;
+  }
+
+  const description = readRuntimeStringFact(learnerSnapshot, 'topRecommendationDescription');
+  const actionLabel = readRuntimeStringFact(learnerSnapshot, 'topRecommendationActionLabel');
+  const actionPage = readRuntimeStringFact(learnerSnapshot, 'topRecommendationActionPage');
+
+  return [
+    `Najlepszy nastepny krok: ${title}.`,
+    description,
+    actionLabel && actionPage
+      ? `Najprostsza akcja teraz: ${actionLabel} w widoku ${actionPage}.`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+};
+
+const truncateOverlayText = (value: string, maxLength = 320): string =>
+  value.length > maxLength ? `${value.slice(0, maxLength - 3).trimEnd()}...` : value;
+
+const asRuntimeRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const readRuntimeSectionItems = (
+  document: ContextRuntimeDocument | null | undefined,
+  sectionId: string
+): Record<string, unknown>[] => {
+  const section = document?.sections?.find(
+    (candidate) => candidate.id === sectionId && Array.isArray(candidate.items)
+  );
+  if (!section?.items) {
+    return [];
+  }
+
+  return section.items
+    .map((item) => asRuntimeRecord(item))
+    .filter((item): item is Record<string, unknown> => Boolean(item));
+};
+
+const readRecordString = (record: Record<string, unknown>, key: string): string | null => {
+  const value = record[key];
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+};
+
+const readRecordNumber = (record: Record<string, unknown>, key: string): number | null => {
+  const value = record[key];
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+};
+
+const buildRecentSessionOverlay = (
+  learnerSnapshot: ContextRuntimeDocument | null | undefined
+): string | null => {
+  const latestSession = readRuntimeSectionItems(learnerSnapshot, 'recent_sessions')[0] ?? null;
+  if (!latestSession) {
+    return null;
+  }
+
+  const operationLabel = readRecordString(latestSession, 'operationLabel');
+  if (!operationLabel) {
+    return null;
+  }
+
+  const accuracyPercent = readRecordNumber(latestSession, 'accuracyPercent');
+  const score = readRecordNumber(latestSession, 'score');
+  const totalQuestions = readRecordNumber(latestSession, 'totalQuestions');
+  const xpEarned = readRecordNumber(latestSession, 'xpEarned');
+  const details = [
+    accuracyPercent !== null ? `${Math.round(accuracyPercent)}% skutecznosci` : null,
+    score !== null && totalQuestions !== null ? `${Math.round(score)}/${Math.round(totalQuestions)}` : null,
+    xpEarned !== null ? `+${Math.round(xpEarned)} XP` : null,
+  ].filter(Boolean);
+
+  return details.length > 0
+    ? `Ostatnia sesja: ${operationLabel} (${details.join(', ')}).`
+    : `Ostatnia sesja: ${operationLabel}.`;
+};
+
+const buildOperationPerformanceOverlay = (
+  learnerSnapshot: ContextRuntimeDocument | null | undefined
+): string | null => {
+  const operationItems = readRuntimeSectionItems(learnerSnapshot, 'operation_performance');
+  if (operationItems.length === 0) {
+    return null;
+  }
+
+  const strongestOperation = operationItems[0] ?? null;
+  const weakestOperation = operationItems.at(-1) ?? null;
+  const lines: string[] = [];
+
+  if (strongestOperation) {
+    const label = readRecordString(strongestOperation, 'label');
+    const averageAccuracy = readRecordNumber(strongestOperation, 'averageAccuracy');
+    if (label && averageAccuracy !== null) {
+      lines.push(
+        `Najmocniejsza operacja teraz: ${label} ze srednia skutecznoscia ${Math.round(averageAccuracy)}%.`
+      );
+    }
+  }
+
+  if (weakestOperation) {
+    const label = readRecordString(weakestOperation, 'label');
+    const averageAccuracy = readRecordNumber(weakestOperation, 'averageAccuracy');
+    const attempts = readRecordNumber(weakestOperation, 'attempts');
+    const strongestLabel = strongestOperation
+      ? readRecordString(strongestOperation, 'label')
+      : null;
+    if (
+      label &&
+      averageAccuracy !== null &&
+      (!strongestLabel || strongestLabel !== label)
+    ) {
+      lines.push(
+        attempts !== null
+          ? `Najwiecej pracy wymaga: ${label} ze srednia skutecznoscia ${Math.round(averageAccuracy)}% po ${Math.round(attempts)} probach.`
+          : `Najwiecej pracy wymaga: ${label} ze srednia skutecznoscia ${Math.round(averageAccuracy)}%.`
+      );
+    }
+  }
+
+  return lines.length > 0 ? lines.join('\n\n') : null;
+};
+
+const buildLessonDocumentOverlay = (
+  lessonContext: ContextRuntimeDocument | null | undefined
+): string | null => {
+  const documentSummary = readRuntimeStringFact(lessonContext, 'documentSummary');
+  if (!documentSummary) {
+    return null;
+  }
+
+  return `Z tresci tej lekcji teraz: ${truncateOverlayText(documentSummary, 280)}`;
+};
+
+const buildLessonNavigationOverlay = (
+  lessonContext: ContextRuntimeDocument | null | undefined
+): string | null => {
+  const navigationSummary = readRuntimeStringFact(lessonContext, 'navigationSummary');
+  if (!navigationSummary) {
+    return null;
+  }
+
+  return `Nawigacja tej lekcji: ${navigationSummary}`;
+};
+
+const buildTestResultOverlay = (
+  testContext: ContextRuntimeDocument | null | undefined
+): string | null => {
+  const resultSummary = readRuntimeStringFact(testContext, 'resultSummary');
+  if (!resultSummary) {
+    return null;
+  }
+
+  return resultSummary;
+};
+
+const buildTestReviewOverlay = (
+  testContext: ContextRuntimeDocument | null | undefined
+): string | null => {
+  const reviewSummary = readRuntimeStringFact(testContext, 'reviewSummary');
+  if (reviewSummary) {
+    return reviewSummary;
+  }
+
+  const selectedChoiceLabel = readRuntimeStringFact(testContext, 'selectedChoiceLabel');
+  const selectedChoiceText = readRuntimeStringFact(testContext, 'selectedChoiceText');
+  const selectedChoiceLine = selectedChoiceLabel
+    ? selectedChoiceText
+      ? `Wybrana odpowiedz: ${selectedChoiceLabel} - ${selectedChoiceText}.`
+      : `Wybrana odpowiedz: ${selectedChoiceLabel}.`
+    : null;
+  const correctChoiceLabel = readRuntimeStringFact(testContext, 'correctChoiceLabel');
+  if (!correctChoiceLabel && !selectedChoiceLine) {
+    return null;
+  }
+  const correctChoiceText = readRuntimeStringFact(testContext, 'correctChoiceText');
+  const correctChoiceLine = !correctChoiceLabel
+    ? null
+    : correctChoiceText
+      ? `Poprawna odpowiedz: ${correctChoiceLabel} - ${correctChoiceText}.`
+      : `Poprawna odpowiedz: ${correctChoiceLabel}.`;
+
+  return [selectedChoiceLine, correctChoiceLine].filter(Boolean).join(' ') || null;
+};
+
+const buildTestQuestionOverlay = (
+  testContext: ContextRuntimeDocument | null | undefined
+): string | null => {
+  const questionPointValue = readRuntimeNumberFact(testContext, 'questionPointValue');
+  const questionChoicesSummary = readRuntimeStringFact(testContext, 'questionChoicesSummary');
+  const selectedChoiceLabel = readRuntimeStringFact(testContext, 'selectedChoiceLabel');
+  const selectedChoiceText = readRuntimeStringFact(testContext, 'selectedChoiceText');
+  const lines = [
+    questionPointValue !== null ? `To pytanie jest warte ${questionPointValue} pkt.` : null,
+    questionChoicesSummary,
+    selectedChoiceLabel
+      ? selectedChoiceText
+        ? `Aktualnie zaznaczona odpowiedz: ${selectedChoiceLabel} - ${selectedChoiceText}.`
+        : `Aktualnie zaznaczona odpowiedz: ${selectedChoiceLabel}.`
+      : null,
+  ].filter(Boolean);
+
+  return lines.length > 0 ? lines.join('\n\n') : null;
+};
+
 const normalizeSectionExplainLabel = (value: string | null | undefined): string =>
   typeof value === 'string'
     ? value
@@ -145,6 +366,20 @@ const buildSectionRuntimeOverlay = (input: {
     input.runtimeDocuments.surfaceContext,
     'revealedExplanation'
   );
+  const topRecommendationOverlay = buildTopRecommendationOverlay(
+    input.runtimeDocuments.learnerSnapshot
+  );
+  const recentSessionOverlay = buildRecentSessionOverlay(input.runtimeDocuments.learnerSnapshot);
+  const operationPerformanceOverlay = buildOperationPerformanceOverlay(
+    input.runtimeDocuments.learnerSnapshot
+  );
+  const lessonDocumentOverlay = buildLessonDocumentOverlay(input.runtimeDocuments.surfaceContext);
+  const lessonNavigationOverlay = buildLessonNavigationOverlay(
+    input.runtimeDocuments.surfaceContext
+  );
+  const testResultOverlay = buildTestResultOverlay(input.runtimeDocuments.surfaceContext);
+  const testReviewOverlay = buildTestReviewOverlay(input.runtimeDocuments.surfaceContext);
+  const testQuestionOverlay = buildTestQuestionOverlay(input.runtimeDocuments.surfaceContext);
 
   const lines: string[] = [];
   const shouldIncludeLearnerSummary =
@@ -155,7 +390,8 @@ const buildSectionRuntimeOverlay = (input: {
   const shouldIncludeAssignmentSummary =
     focusKind === 'assignment' ||
     focusKind === 'priority_assignments' ||
-    section.id.includes('assignment');
+    section.id.includes('assignment') ||
+    (section.pageKey === 'Lessons' && focusKind === 'lesson_header');
   const shouldIncludeMasterySummary =
     focusKind === 'progress' ||
     section.id.includes('progress') ||
@@ -168,9 +404,58 @@ const buildSectionRuntimeOverlay = (input: {
     section.pageKey === 'Login' ||
     focusKind === 'login_form' ||
     focusKind === 'login_identifier_field';
+  const shouldIncludeTopRecommendation =
+    (section.pageKey === 'LearnerProfile' || section.pageKey === 'ParentDashboard') &&
+    (focusKind === 'hero' ||
+      focusKind === 'progress' ||
+      focusKind === 'assignment' ||
+      focusKind === 'summary' ||
+      section.id.includes('recommendation'));
+  const shouldIncludeRecentSession =
+    (section.pageKey === 'LearnerProfile' || section.pageKey === 'ParentDashboard') &&
+    (focusKind === 'summary' ||
+      section.id.includes('performance') ||
+      section.id.includes('scores') ||
+      section.id.includes('sessions'));
+  const shouldIncludeOperationPerformance =
+    section.pageKey === 'LearnerProfile' &&
+    (focusKind === 'summary' || section.id.includes('performance'));
+  const shouldIncludeLessonDocument =
+    section.pageKey === 'Lessons' &&
+    (focusKind === 'document' ||
+      focusKind === 'lesson_header' ||
+      section.id.includes('document'));
+  const shouldIncludeLessonNavigation =
+    section.pageKey === 'Lessons' &&
+    (focusKind === 'navigation' || section.id.includes('navigation'));
+  const shouldIncludeTestResult =
+    section.pageKey === 'Tests' && (focusKind === 'summary' || section.id.includes('summary'));
+  const shouldIncludeTestReview = section.pageKey === 'Tests' && focusKind === 'review';
+  const shouldIncludeTestQuestion = section.pageKey === 'Tests' && focusKind === 'question';
 
   if (shouldIncludeLearnerSummary && learnerSummary) {
     lines.push(`Na zywo dla tego ucznia: ${learnerSummary}`);
+  }
+  if (shouldIncludeTopRecommendation && topRecommendationOverlay) {
+    lines.push(topRecommendationOverlay);
+  }
+  if (shouldIncludeRecentSession && recentSessionOverlay) {
+    lines.push(recentSessionOverlay);
+  }
+  if (shouldIncludeOperationPerformance && operationPerformanceOverlay) {
+    lines.push(operationPerformanceOverlay);
+  }
+  if (shouldIncludeLessonDocument && lessonDocumentOverlay) {
+    lines.push(lessonDocumentOverlay);
+  }
+  if (shouldIncludeLessonNavigation && lessonNavigationOverlay) {
+    lines.push(lessonNavigationOverlay);
+  }
+  if (shouldIncludeTestResult && testResultOverlay) {
+    lines.push(testResultOverlay);
+  }
+  if (shouldIncludeTestReview && testReviewOverlay) {
+    lines.push(testReviewOverlay);
   }
   if (shouldIncludeMasterySummary && masterySummary) {
     lines.push(`Aktualny obraz opanowania: ${masterySummary}`);
@@ -184,6 +469,11 @@ const buildSectionRuntimeOverlay = (input: {
         ? `${questionProgressLabel}: ${currentQuestion}`
         : `Biezace pytanie: ${currentQuestion}`
     );
+  } else if (shouldIncludeQuestionContext && questionProgressLabel) {
+    lines.push(`Aktualny stan tej sekcji: ${questionProgressLabel}.`);
+  }
+  if (shouldIncludeTestQuestion && testQuestionOverlay) {
+    lines.push(testQuestionOverlay);
   }
   if (focusKind === 'review' && revealedExplanation) {
     lines.push(`Po pokazaniu odpowiedzi: ${revealedExplanation}`);

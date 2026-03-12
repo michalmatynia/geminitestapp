@@ -89,7 +89,7 @@ describe('ScoreHistory', () => {
       'border-dashed',
       'border'
     );
-    expect(screen.getByText('Ladowanie wynikow...')).toBeInTheDocument();
+    expect(screen.getByText('Ładowanie wyników...')).toBeInTheDocument();
   });
 
   it('loads learner-scoped results by account and display name without falling back to global history', async () => {
@@ -164,7 +164,7 @@ describe('ScoreHistory', () => {
     expect(
       screen.getByText(
         (_, element) =>
-          element?.tagName === 'P' && /XP:\s+\+\d+\s+·\s+srednio\s+\d+\s+na sesje/.test(element.textContent ?? '')
+          element?.tagName === 'P' && /XP:\s+\+\d+\s+·\s+średnio\s+\d+\s+na sesję/.test(element.textContent ?? '')
       )
     ).toBeInTheDocument();
     expect(
@@ -173,7 +173,7 @@ describe('ScoreHistory', () => {
           return false;
         }
         const { averageAccuracy, attempts, averageXpEarned } = resolvedInsights.strongestOperation;
-        const summary = `Srednio ${averageAccuracy}% · proby ${attempts} · +${averageXpEarned} XP / sesje`;
+        const summary = `Średnio ${averageAccuracy}% · próby ${attempts} · +${averageXpEarned} XP / sesję`;
         return element.textContent.includes(summary);
       })
     ).toBeInTheDocument();
@@ -263,7 +263,7 @@ describe('ScoreHistory', () => {
 
     render(<ScoreHistory playerName='Jan' createdBy='jan@example.com' basePath='/kangur' />);
 
-    const followUpLink = await screen.findByRole('link', { name: 'Powtorz lekcje' });
+    const followUpLink = await screen.findByRole('link', { name: 'Powtórz lekcję' });
     expect(followUpLink).toHaveAttribute('href', '/kangur/lessons?focus=division');
   });
 
@@ -320,7 +320,7 @@ describe('ScoreHistory', () => {
       />
     );
 
-    const followUpLink = await screen.findByRole('link', { name: 'Powtorz lekcje' });
+    const followUpLink = await screen.findByRole('link', { name: 'Powtórz lekcję' });
     expect(followUpLink).toHaveAttribute(
       'href',
       '/home?preview=1&kangur-cms-home-kangur=lessons&kangur-cms-home-kangur-focus=division'

@@ -31,14 +31,14 @@ describe('buildKangurKnowledgeGraph', () => {
           kind: 'page',
           title: 'Lekcje',
           route: '/lessons',
-          triggerPhrases: expect.arrayContaining(['gdzie sa lekcje']),
+          triggerPhrases: expect.arrayContaining(['gdzie są lekcje']),
         }),
         expect.objectContaining({
           id: 'page:kangur-tests',
           kind: 'page',
           title: 'Testy',
           route: '/tests',
-          triggerPhrases: expect.arrayContaining(['gdzie sa testy', 'wroc do testow']),
+          triggerPhrases: expect.arrayContaining(['gdzie są testy', 'wróć do testow']),
         }),
         expect.objectContaining({
           id: 'guide:native:lesson-overview',

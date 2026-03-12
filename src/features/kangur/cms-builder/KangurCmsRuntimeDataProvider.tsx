@@ -46,7 +46,7 @@ const resolveResultMessage = (percent: number): string => {
   }
 
   if (percent >= 60) {
-    return 'Dobra robota! Cwiczenie czyni mistrza.';
+    return 'Dobra robota! Ćwiczenie czyni mistrza.';
   }
 
   return 'Probuj dalej. Dasz rade.';
@@ -54,7 +54,7 @@ const resolveResultMessage = (percent: number): string => {
 
 const resolveResultTitle = (playerName: string): string => {
   const normalizedName = playerName.trim();
-  return `Swietna robota, ${normalizedName || 'Graczu'}!`;
+  return `Świetna robota, ${normalizedName || 'Graczu'}!`;
 };
 
 const resolveAssignmentPriorityLabel = (priority: 'high' | 'medium' | 'low'): string => {
@@ -63,7 +63,7 @@ const resolveAssignmentPriorityLabel = (priority: 'high' | 'medium' | 'low'): st
   }
 
   if (priority === 'medium') {
-    return 'Priorytet sredni';
+    return 'Priorytet średni';
   }
 
   return 'Priorytet niski';
@@ -77,7 +77,7 @@ const resolvePracticeAssignmentHelperLabel = (
     return 'W tej sesji realizujesz przydzielone zadanie.';
   }
 
-  return `Najblizszy priorytet w praktyce: ${formatKangurAssignmentOperationLabel(operation)}.`;
+  return `Najbliższy priorytet w praktyce: ${formatKangurAssignmentOperationLabel(operation)}.`;
 };
 
 export function KangurCmsRuntimeDataProvider({
@@ -216,9 +216,9 @@ export function KangurCmsRuntimeDataProvider({
       homeSpotlight: {
         actionLabel: homeSpotlightAssignment
           ? getKangurAssignmentActionLabel(homeSpotlightAssignment)
-          : 'Wroc do praktyki',
+          : 'Wróć do praktyki',
         description:
-          homeSpotlightAssignment?.description?.trim() || 'Wroc do praktyki i kontynuuj wyzwanie.',
+          homeSpotlightAssignment?.description?.trim() || 'Wróć do praktyki i kontynuuj wyzwanie.',
         hasAssignment: Boolean(homeSpotlightAssignment),
         openAssignment: openHomeSpotlightAssignment,
         priorityLabel: homeSpotlightAssignment
@@ -226,35 +226,35 @@ export function KangurCmsRuntimeDataProvider({
           : 'Sesja praktyki',
         progressLabel: homeSpotlightAssignment?.progress.summary ?? '0% ukonczono',
         progressPercent: homeSpotlightAssignment?.progress.percent ?? 0,
-        title: homeSpotlightAssignment?.title ?? 'Kontynuuj praktyke',
+        title: homeSpotlightAssignment?.title ?? 'Kontynuuj praktykę',
       },
       priorityAssignments: {
         count: priorityAssignmentItems.length,
-        countLabel: `${priorityAssignmentItems.length} zadan`,
+        countLabel: `${priorityAssignmentItems.length} zadań`,
         hasItems: priorityAssignmentItems.length > 0,
         items: priorityAssignmentItems,
       },
       activePracticeAssignmentBanner: {
         actionLabel: game.activePracticeAssignment
           ? getKangurAssignmentActionLabel(game.activePracticeAssignment)
-          : 'Wroc do praktyki',
+          : 'Wróć do praktyki',
         description:
           game.activePracticeAssignment?.description?.trim() ||
-          'Wroc do praktyki i kontynuuj wyzwanie.',
+          'Wróć do praktyki i kontynuuj wyzwanie.',
         hasAssignment: Boolean(game.activePracticeAssignment),
         helperLabel: game.activePracticeAssignment
           ? resolvePracticeAssignmentHelperLabel(
             game.screen,
             game.activePracticeAssignment.target.operation
           )
-          : 'Nastepny krok w praktyce.',
+          : 'Następny krok w praktyce.',
         openAssignment: openActivePracticeAssignment,
         priorityLabel: game.activePracticeAssignment
           ? resolveAssignmentPriorityLabel(game.activePracticeAssignment.priority)
           : 'Sesja praktyki',
         progressLabel: game.activePracticeAssignment?.progress.summary ?? '0% ukonczono',
         progressPercent: game.activePracticeAssignment?.progress.percent ?? 0,
-        title: game.activePracticeAssignment?.title ?? 'Kontynuuj praktyke',
+        title: game.activePracticeAssignment?.title ?? 'Kontynuuj praktykę',
       },
       leaderboard: {
         emptyStateLabel: leaderboard.emptyStateLabel,
@@ -328,7 +328,7 @@ export function KangurCmsRuntimeDataProvider({
             selected: option.selected,
           })),
         },
-        greetingLabel: `Czesc, ${game.playerName || 'Graczu'}! 👋`,
+        greetingLabel: `Cześć, ${game.playerName || 'Graczu'}! 👋`,
         operations: {
           items: operationSelector.operations.map((item) => ({
             actionLabel: item.actionLabel,
@@ -340,7 +340,7 @@ export function KangurCmsRuntimeDataProvider({
             label: item.label,
             priorityLabel: item.priority
               ? resolveAssignmentPriorityLabel(item.priority)
-              : 'Priorytet wlasny',
+              : 'Priorytet własny',
             select: item.select,
             statusLabel: item.statusLabel,
           })),
@@ -350,17 +350,17 @@ export function KangurCmsRuntimeDataProvider({
         accuracyLabel: `${resultPercent}%`,
         assignmentActionLabel: resultAssignment
           ? getKangurAssignmentActionLabel(resultAssignment)
-          : 'Wroc do praktyki',
+          : 'Wróć do praktyki',
         assignmentDescription:
-          resultAssignment?.description?.trim() || 'Wroc do praktyki i kontynuuj wyzwanie.',
+          resultAssignment?.description?.trim() || 'Wróć do praktyki i kontynuuj wyzwanie.',
         assignmentEyebrow: resultAssignment
           ? resultAssignment.progress.status === 'completed'
-            ? 'Ukonczone zadanie od rodzica'
+            ? 'Ukończone zadanie od rodzica'
             : 'Zadanie od rodzica'
           : 'Dalsza praktyka',
         assignmentProgressLabel: resultAssignment?.progress.summary ?? 'Brak aktywnego zadania.',
         assignmentProgressPercent: resultAssignment?.progress.percent ?? 0,
-        assignmentTitle: resultAssignment?.title ?? 'Kontynuuj praktyke',
+        assignmentTitle: resultAssignment?.title ?? 'Kontynuuj praktykę',
         hasAssignment: Boolean(resultAssignment),
         message: resolveResultMessage(resultPercent),
         operationLabel: formatKangurAssignmentOperationLabel(game.operation ?? 'mixed'),

@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/__tests__/test-utils';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -229,20 +229,20 @@ describe('LearnerProfile page', () => {
     expect(screen.getByTestId('learner-profile-badge-track-onboarding')).toHaveTextContent(
       'Start'
     );
-    expect(screen.getByText('Plan na dzis')).toBeInTheDocument();
+    expect(screen.getByText('Plan na dziś')).toBeInTheDocument();
     expect(screen.getByText('Opanowanie lekcji')).toBeInTheDocument();
     expect(screen.getAllByText('➗ Dzielenie').length).toBeGreaterThan(0);
     expect(screen.getByText('🕐 Nauka zegara')).toBeInTheDocument();
-    expect(screen.getByText('Priorytet sredni')).toBeInTheDocument();
+    expect(screen.getByText('Priorytet średni')).toBeInTheDocument();
     expect(screen.getByTestId('learner-profile-recommendation-focus_weakest_operation')).toHaveClass(
       'soft-card'
     );
     expect(
       screen
-        .getAllByRole('link', { name: 'Otworz lekcje' })
+        .getAllByRole('link', { name: 'Otwórz lekcję' })
         .map((link) => link.getAttribute('href'))
     ).toContain('/kangur/lessons?focus=division');
-    expect(screen.getAllByRole('link', { name: 'Otworz lekcje' })[0]).toHaveClass(
+    expect(screen.getAllByRole('link', { name: 'Otwórz lekcję' })[0]).toHaveClass(
       'kangur-cta-pill',
       'primary-cta'
     );
@@ -255,7 +255,7 @@ describe('LearnerProfile page', () => {
       'primary-cta'
     );
     expect(screen.getByText('➕ Dodawanie')).toBeInTheDocument();
-    expect(screen.getByText('✖️ Mnozenie')).toBeInTheDocument();
+    expect(screen.getByText('✖️ Mnożenie')).toBeInTheDocument();
     expect(screen.getAllByText('➗ Dzielenie').length).toBeGreaterThan(0);
     const operationTrainingHrefs = screen
       .getAllByRole('link', { name: 'Trenuj' })
@@ -267,7 +267,7 @@ describe('LearnerProfile page', () => {
         '/kangur/game?quickStart=operation&operation=division&difficulty=easy',
       ])
     );
-    expect(screen.queryByRole('button', { name: /Zaloguj sie/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Zaloguj się/i })).not.toBeInTheDocument();
   });
 
   it('keeps profile in local mode when user is not authenticated', async () => {
@@ -282,7 +282,7 @@ describe('LearnerProfile page', () => {
     expect(scoreFilterMock).not.toHaveBeenCalled();
     expect(
       screen.getByText(
-        'Zaloguj sie, aby synchronizowac postep ucznia miedzy urzadzeniami. Jesli nie masz jeszcze konta rodzica, zaloz je tutaj.'
+        'Zaloguj się, aby synchronizować postęp ucznia między urządzeniami. Jeśli nie masz jeszcze konta rodzica, załóż je tutaj.'
       )
     ).toBeInTheDocument();
     expect(screen.getByTestId('learner-profile-operation-empty')).toHaveClass(
@@ -291,8 +291,8 @@ describe('LearnerProfile page', () => {
     );
     expect(screen.getByText('Brak danych o operacjach.')).toBeInTheDocument();
 
-    const loginButton = screen.getByRole('button', { name: 'Zaloguj sie, aby synchronizowac postep' });
-    const createAccountButton = screen.getByRole('button', { name: 'Utworz konto rodzica' });
+    const loginButton = screen.getByRole('button', { name: 'Zaloguj się, aby synchronizować postęp' });
+    const createAccountButton = screen.getByRole('button', { name: 'Utwórz konto rodzica' });
     await userEvent.click(loginButton);
     await userEvent.click(createAccountButton);
     expect(navigateToLoginMock).toHaveBeenCalledTimes(2);
@@ -306,7 +306,7 @@ describe('LearnerProfile page', () => {
 
     renderLearnerProfilePage();
 
-    expect(await screen.findByText('Nie udalo sie pobrac historii wynikow.')).toBeInTheDocument();
+    expect(await screen.findByText('Nie udało się pobrać historii wyników.')).toBeInTheDocument();
     expect(logKangurClientErrorMock).toHaveBeenCalledTimes(1);
   });
 
@@ -316,7 +316,7 @@ describe('LearnerProfile page', () => {
     renderLearnerProfilePage();
 
     expect(await screen.findByText('Brak rozegranych sesji.')).toBeInTheDocument();
-    expect(screen.queryByText('Nie udalo sie pobrac historii wynikow.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Nie udało się pobrać historii wyników.')).not.toBeInTheDocument();
     expect(logKangurClientErrorMock).not.toHaveBeenCalled();
   });
 });

@@ -55,7 +55,7 @@ describe('game setup recommendations', () => {
       })
     );
 
-    expect(recommendation.label).toBe('Nadrabiamy lekcje');
+    expect(recommendation.label).toBe('Nadrabiamy lekcję');
     expect(recommendation.selection).toEqual({
       categories: ['division'],
       count: 10,
@@ -92,6 +92,6 @@ describe('game setup recommendations', () => {
     );
 
     expect(recommendation.mode).toBe('full_test_2024');
-    expect(recommendation.label).toBe('Gotowosc konkursowa');
+    expect(recommendation.label).toBe('Gotowość konkursowa');
   });
 });

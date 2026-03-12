@@ -134,7 +134,7 @@ describe('KangurPrimaryNavigation', () => {
 
     expect(logo.querySelector('svg')).not.toBeNull();
     expect(logo.className).not.toContain('translate-x-');
-    expect(screen.getByRole('link', { name: /strona glowna/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /strona główna/i })).toHaveAttribute(
       'href',
       '/kangur'
     );
@@ -186,7 +186,7 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('link', { name: /strona glowna/i }));
+    fireEvent.click(screen.getByRole('link', { name: /strona główna/i }));
 
     expect(startRouteTransitionMock).toHaveBeenCalledWith({
       acknowledgeMs: 110,
@@ -227,7 +227,7 @@ describe('KangurPrimaryNavigation', () => {
     );
 
     expect(screen.getByTestId('kangur-page-top-bar')).toHaveClass('sticky', 'top-0', 'w-full');
-    expect(screen.getByRole('navigation', { name: /glowna nawigacja kangur/i })).toHaveClass(
+    expect(screen.getByRole('navigation', { name: /główna nawigacja kangur/i })).toHaveClass(
       'kangur-nav-group',
       'w-full',
       'p-2'
@@ -291,7 +291,7 @@ describe('KangurPrimaryNavigation', () => {
     );
 
     const utilityActions = screen.getByTestId('kangur-primary-nav-utility-actions');
-    const nav = screen.getByRole('navigation', { name: /glowna nawigacja kangur/i });
+    const nav = screen.getByRole('navigation', { name: /główna nawigacja kangur/i });
 
     expect(utilityActions).toHaveClass('ml-auto', 'justify-end');
     expect(nav).toContainElement(utilityActions);
@@ -314,7 +314,7 @@ describe('KangurPrimaryNavigation', () => {
     );
 
     expect(screen.queryByTestId('kangur-page-top-bar-right')).toBeNull();
-    expect(screen.getByRole('navigation', { name: /glowna nawigacja kangur/i })).toContainElement(
+    expect(screen.getByRole('navigation', { name: /główna nawigacja kangur/i })).toContainElement(
       screen.getByTestId('kangur-primary-nav-utility-actions')
     );
   });
@@ -507,7 +507,7 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
-    expect(screen.getByRole('navigation', { name: /glowna nawigacja kangur/i })).toContainElement(
+    expect(screen.getByRole('navigation', { name: /główna nawigacja kangur/i })).toContainElement(
       screen.getByTestId('kangur-ai-tutor-restore')
     );
   });

@@ -30,6 +30,11 @@ import type {
 } from '@/shared/contracts/kangur-ai-tutor';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+import {
+  appendCoachingFrameInstructions,
+  buildKangurAiTutorCoachingFrame,
+} from './ai-tutor-coaching-frame';
+
 const KANGUR_AI_TUTOR_DAILY_GOAL_GAMES = 3;
 const KANGUR_AI_TUTOR_RECENT_SCORE_LIMIT = 24;
 const QUICK_START_OPERATIONS = new Set<KangurPracticeAssignmentOperation>([
@@ -79,150 +84,6 @@ export type KangurAiTutorAdaptiveGuidance = {
   instructions: string;
   followUpActions: KangurAiTutorFollowUpAction[];
   coachingFrame: KangurAiTutorCoachingFrame | null;
-};
-
-const COACHING_MODE_INSTRUCTIONS: Record<KangurAiTutorCoachingMode, string> = {
-  hint_ladder:
-    'Use a hint ladder: give one small next step or one checkpoint question, then stop.',
-  misconception_check:
-    'Diagnose the misunderstanding first: explain the concept simply before asking for the next attempt.',
-  review_reflection:
-    'Use review reflection: explain what happened, name one improvement, and finish with one retry idea.',
-  next_best_action:
-    'Recommend exactly one concrete Kangur action that best matches the learner context.',
-};
-
-const buildKangurAiTutorCoachingFrame = (input: {
-  context: KangurAiTutorConversationContext | undefined;
-  averageAccuracy: number;
-  weakMasteryPercent: number;
-  previousCoachingMode: KangurAiTutorCoachingMode | null;
-}): KangurAiTutorCoachingFrame => {
-  const { context, averageAccuracy, previousCoachingMode, weakMasteryPercent } = input;
-  const hasSelectedExcerpt =
-    Boolean(context?.selectedText) ||
-    context?.focusKind === 'selection' ||
-    context?.promptMode === 'selected_text';
-  const repeatedQuestionCount = context?.repeatedQuestionCount ?? 0;
-  const recentHintRecoverySignal = context?.recentHintRecoverySignal ?? null;
-
-  if (recentHintRecoverySignal === 'answer_revealed') {
-    return {
-      mode: 'review_reflection',
-      label: 'Omow po wskazowce',
-      description:
-        'Podsumuj to, co zadzialalo po wskazowce, nazwij jedna poprawke i zakoncz jednym kolejnym krokiem.',
-      rationale:
-        'Uczen przeszedl od wskazowki do omowienia po zobaczeniu odpowiedzi, wiec najlepsze bedzie spokojne podsumowanie i jedna poprawka.',
-    };
-  }
-
-  if (context?.interactionIntent === 'review' || context?.answerRevealed) {
-    return {
-      mode: 'review_reflection',
-      label: 'Omow po probie',
-      description:
-        'Podsumuj probe, nazwij jedna poprawke i zakoncz sugestia ponownej proby.',
-      rationale: context?.answerRevealed
-        ? 'Odpowiedz jest juz odslonieta, wiec tutor powinien skupic sie na spokojnym omowieniu.'
-        : 'To dobry moment na refleksje po probie i jedna konkretna poprawke.',
-    };
-  }
-
-  if (context?.interactionIntent === 'next_step') {
-    return {
-      mode: 'next_best_action',
-      label: 'Nastepny krok',
-      description: 'Wskaz jedna konkretna aktywnosc Kangur jako najlepszy dalszy ruch.',
-      rationale: 'Najwiecej wartosci da teraz jedna jasna aktywnosc, a nie kilka opcji naraz.',
-    };
-  }
-
-  if (recentHintRecoverySignal === 'focus_advanced' && !hasSelectedExcerpt) {
-    return {
-      mode: 'next_best_action',
-      label: 'Utrwal postep',
-      description:
-        'Potwierdz postep po poprzedniej wskazowce i daj jeden konkretny dalszy krok.',
-      rationale:
-        'Uczen ruszyl dalej po poprzedniej wskazowce, wiec zamiast kolejnej podobnej podpowiedzi lepiej utrwalic postep jednym ruchem.',
-    };
-  }
-
-  if (
-    repeatedQuestionCount > 0 &&
-    (context?.promptMode === 'hint' ||
-      context?.interactionIntent === 'hint' ||
-      context?.surface === 'test' ||
-      context?.surface === 'game' ||
-      context?.focusKind === 'question')
-  ) {
-    return {
-      mode: 'misconception_check',
-      label: 'Zmien podejscie',
-      description:
-        'Sprawdz, gdzie uczen blokuje sie w rozumowaniu, zamiast dawac kolejny taki sam trop.',
-      rationale:
-        previousCoachingMode === 'hint_ladder'
-          ? 'Uczen powtorzyl to samo pytanie po wskazowce, wiec trzeba przejsc z kolejnego tropu do diagnozy rozumienia.'
-          : 'Powtorzone pytanie sugeruje, ze trzeba zmienic strategie i uchwycic zrodlo blokady.',
-    };
-  }
-
-  if (
-    hasSelectedExcerpt ||
-    context?.promptMode === 'explain' ||
-    context?.interactionIntent === 'explain'
-  ) {
-    return {
-      mode: 'misconception_check',
-      label: 'Sprawdz rozumienie',
-      description: 'Najpierw wyjasnij pojecie i sprawdz, co uczen rozumie blednie.',
-      rationale: hasSelectedExcerpt
-        ? 'Uczen wskazal konkretny fragment, wiec trzeba najpierw sprawdzic rozumienie.'
-        : 'Najpierw trzeba uchwycic blad w rozumieniu pojecia, zanim padnie kolejna wskazowka.',
-    };
-  }
-
-  if (
-    context?.promptMode === 'hint' ||
-    context?.interactionIntent === 'hint' ||
-    context?.surface === 'test' ||
-    context?.surface === 'game' ||
-    context?.focusKind === 'question' ||
-    averageAccuracy < 70 ||
-    weakMasteryPercent < 60
-  ) {
-    return {
-      mode: 'hint_ladder',
-      label: 'Jeden trop',
-      description: 'Daj tylko jeden maly krok albo pytanie kontrolne, bez pelnego rozwiazania.',
-      rationale:
-        context?.surface === 'test' || context?.surface === 'game'
-          ? 'Uczen jest w trakcie proby, wiec tutor powinien prowadzic bardzo malymi krokami.'
-          : 'Nizsza skutecznosc sugeruje prace malymi krokami zamiast pelnego wyjasnienia naraz.',
-    };
-  }
-
-  return {
-    mode: 'misconception_check',
-    label: 'Sprawdz rozumienie',
-    description: 'Najpierw wyjasnij pojecie i sprawdz, co uczen rozumie blednie.',
-    rationale: 'Krotka diagnoza rozumienia daje lepszy kolejny krok niz szybka odpowiedz.',
-  };
-};
-
-const appendCoachingFrameInstructions = (
-  lines: string[],
-  coachingFrame: KangurAiTutorCoachingFrame
-): void => {
-  lines.push(
-    `Structured coaching mode: ${coachingFrame.mode}. ${COACHING_MODE_INSTRUCTIONS[coachingFrame.mode]}`
-  );
-
-  if (coachingFrame.rationale) {
-    lines.push(`Mode rationale: ${coachingFrame.rationale}`);
-  }
 };
 
 type KangurCompletedFollowUp = {
@@ -326,11 +187,11 @@ const parseCompletedFollowUp = (
       : null;
   const inferredPage =
     pageFromIntervention ??
-    (normalizedLabel === 'otworz lekcje'
+    (normalizedLabel === 'otwórz lekcje'
       ? 'Lessons'
       : normalizedLabel === 'uruchom trening' ||
           normalizedLabel === 'zagraj teraz' ||
-          normalizedLabel === 'zagraj dzis' ||
+          normalizedLabel === 'zagraj dziś' ||
           normalizedLabel === 'kontynuuj gre'
         ? 'Game'
         : null);
@@ -536,7 +397,7 @@ const toAssignmentFollowUpAction = (
   if (assignment.target.type === 'lesson') {
     return {
       id: `assignment:${assignment.id}`,
-      label: 'Otworz lekcje',
+      label: 'Otwórz lekcje',
       page: 'Lessons',
       query: {
         focus: assignment.target.lessonComponentId,
@@ -618,7 +479,7 @@ const buildCompletedFollowUpBridgeAction = (input: {
   if (input.completedFollowUp.page === 'Game') {
     return {
       id: `bridge:game-to-lesson:${input.lessonFocus.componentId}`,
-      label: 'Otworz lekcje',
+      label: 'Otwórz lekcje',
       page: 'Lessons',
       query: {
         focus: input.lessonFocus.componentId,

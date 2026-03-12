@@ -22,10 +22,10 @@ export function KangurLearnerProfileRecommendationsWidget(): React.JSX.Element {
   const { basePath, snapshot } = useKangurLearnerProfileRuntime();
   const { entry: recommendationsContent } =
     useKangurPageContentEntry('learner-profile-recommendations');
-  const sectionTitle = recommendationsContent?.title ?? 'Plan na dzis';
+  const sectionTitle = recommendationsContent?.title ?? 'Plan na dziś';
   const sectionSummary =
     recommendationsContent?.summary ??
-    'Krotka lista kolejnych krokow na podstawie ostatnich wynikow i aktywnosci.';
+    'Krótka lista kolejnych kroków na podstawie ostatnich wyników i aktywności.';
 
   return (
     <KangurGlassPanel padding='lg' surface='mistSoft' variant='soft'>
@@ -37,7 +37,7 @@ export function KangurLearnerProfileRecommendationsWidget(): React.JSX.Element {
       />
 
       {snapshot.recommendations.length === 0 ? (
-        <KangurEmptyState description='Brak rekomendacji do wyswietlenia.' padding='md' />
+        <KangurEmptyState description='Brak rekomendacji do wyświetlenia.' padding='md' />
       ) : (
         <div className='grid grid-cols-1 gap-3 lg:grid-cols-3'>
           {snapshot.recommendations.map((recommendation) => {

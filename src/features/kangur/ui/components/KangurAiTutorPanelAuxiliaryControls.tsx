@@ -1,6 +1,7 @@
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { formatKangurAiTutorTemplate } from '@/shared/contracts/kangur-ai-tutor-content';
+import { cn } from '@/shared/utils';
 import { useKangurAiTutorPanelBodyContext } from './KangurAiTutorPanelBody.context';
 import { KangurNarratorControl } from './KangurNarratorControl';
 
@@ -46,19 +47,13 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
 
   return (
     <div
-      className='flex flex-wrap gap-2 border-b kangur-chat-padding-md [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_80%,rgba(245,158,11,0.15))]'
+      className='flex flex-wrap gap-2 border-b kangur-chat-divider kangur-chat-padding-md'
       data-kangur-tts-ignore='true'
     >
       {shouldRenderToolbox ? (
         <div
           data-testid='kangur-ai-tutor-toolbox'
-          className='w-full kangur-chat-card border kangur-chat-padding-md shadow-[0_10px_24px_-18px_rgba(15,23,42,0.18)]'
-          style={{
-            background:
-              'linear-gradient(135deg, color-mix(in srgb, var(--kangur-soft-card-background) 90%, rgba(255,248,220,0.98)) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 84%, rgba(254,243,199,0.9)) 100%)',
-            borderColor:
-              'color-mix(in srgb, var(--kangur-soft-card-border) 76%, rgb(251 191 36))',
-          }}
+          className='w-full kangur-chat-card border kangur-chat-padding-md kangur-chat-surface-warm kangur-chat-surface-warm-shadow'
         >
           <div className='text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'>
             {auxiliaryContent?.toolboxTitle ?? 'Narzędzia tutora'}
@@ -150,13 +145,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
       ) : null}
       {usageSummary && usageSummary.dailyMessageLimit !== null ? (
         <div
-          className='w-full kangur-chat-inset border kangur-chat-padding-sm text-[11px] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
-          style={{
-            background:
-              'color-mix(in srgb, var(--kangur-soft-card-background) 82%, rgba(254,243,199,0.92))',
-            borderColor:
-              'color-mix(in srgb, var(--kangur-soft-card-border) 72%, rgb(251 191 36))',
-          }}
+          className='w-full kangur-chat-inset border kangur-chat-padding-sm kangur-chat-surface-warm text-[11px] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
         >
           <div className='flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3'>
             <span className='font-semibold'>
@@ -182,17 +171,12 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
         <div
           data-testid='kangur-ai-tutor-proactive-nudge'
           data-nudge-mode={visibleProactiveNudge.mode}
-          className='w-full kangur-chat-inset border kangur-chat-padding-md shadow-[0_6px_16px_-10px_rgba(15,23,42,0.1)]'
-          style={{
-            background:
-              visibleProactiveNudge.mode === 'coach'
-                ? 'color-mix(in srgb, var(--kangur-soft-card-background) 82%, rgba(224,242,254,0.94))'
-                : 'color-mix(in srgb, var(--kangur-soft-card-background) 82%, rgba(209,250,229,0.92))',
-            borderColor:
-              visibleProactiveNudge.mode === 'coach'
-                ? 'color-mix(in srgb, var(--kangur-soft-card-border) 74%, rgb(125 211 252))'
-                : 'color-mix(in srgb, var(--kangur-soft-card-border) 74%, rgb(110 231 183))',
-          }}
+          className={cn(
+            'w-full kangur-chat-inset border kangur-chat-padding-md',
+            visibleProactiveNudge.mode === 'coach'
+              ? 'kangur-chat-surface-info kangur-chat-surface-info-shadow'
+              : 'kangur-chat-surface-success kangur-chat-surface-success-shadow'
+          )}
         >
           <div className='flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
             <span className='inline-flex h-1.5 w-1.5 rounded-full bg-current opacity-50' />

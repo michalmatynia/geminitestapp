@@ -45,10 +45,10 @@ export const buildKangurAssignments = (
     assignments.push({
       id: 'lesson-start',
       title: 'Pierwsza lekcja startowa',
-      description: 'Uruchom pierwsza lekcje, aby zaczac zbierac dane o mocnych stronach ucznia.',
+      description: 'Uruchom pierwszą lekcję, aby zacząć zbierać dane o mocnych stronach ucznia.',
       target: '1 lekcja',
       priority: 'medium',
-      progressLabel: 'Postep: 0/1 lekcja',
+      progressLabel: 'Postęp: 0/1 lekcja',
       questLabel: 'Misja startowa',
       rewardXp: 40,
       questMetric: {
@@ -56,7 +56,7 @@ export const buildKangurAssignments = (
         targetDelta: 1,
       },
       action: {
-        label: 'Otworz lekcje',
+        label: 'Otwórz lekcję',
         page: 'Lessons',
       },
     });
@@ -67,15 +67,15 @@ export const buildKangurAssignments = (
     const critical = lesson.masteryPercent < 60;
     assignments.push({
       id: `lesson-retry-${lesson.componentId}`,
-      title: `${lesson.emoji} Powtorka: ${lesson.title}`,
+      title: `${lesson.emoji} Powtórka: ${lesson.title}`,
       description:
         critical
-          ? `To jeden z najslabszych obszarow (${lesson.masteryPercent}%). Potrzebna jest szybka powtorka i kolejna proba.`
-          : `Lekcja ma jeszcze rezerwe (${lesson.masteryPercent}%). Jedna powtorka powinna ustabilizowac wynik.`,
-      target: index === 0 ? '1 powtorka + wynik min. 75%' : '1 powtorka + wynik min. 80%',
+          ? `To jeden z najsłabszych obszarów (${lesson.masteryPercent}%). Potrzebna jest szybka powtórka i kolejna próba.`
+          : `Lekcja ma jeszcze rezerwę (${lesson.masteryPercent}%). Jedna powtórka powinna ustabilizować wynik.`,
+      target: index === 0 ? '1 powtórka + wynik min. 75%' : '1 powtórka + wynik min. 80%',
       priority: critical ? 'high' : 'medium',
-      progressLabel: `Postep: ${lesson.masteryPercent}% / ${targetMastery}%`,
-      questLabel: critical ? 'Misja ratunkowa' : 'Misja powtorkowa',
+      progressLabel: `Postęp: ${lesson.masteryPercent}% / ${targetMastery}%`,
+      questLabel: critical ? 'Misja ratunkowa' : 'Misja powtórkowa',
       rewardXp: critical ? 55 : 45,
       questMetric: {
         kind: 'lesson_mastery',
@@ -83,7 +83,7 @@ export const buildKangurAssignments = (
         targetPercent: targetMastery,
       },
       action: {
-        label: 'Otworz lekcje',
+        label: 'Otwórz lekcję',
         page: 'Lessons',
         query: {
           focus: lesson.componentId,
@@ -97,9 +97,9 @@ export const buildKangurAssignments = (
     title: 'Trening mieszany',
     description:
       insights.lessonsNeedingPractice > 0
-        ? 'Po powtorkach uruchom trening mieszany, aby sprawdzic czy umiejetnosci przenosza sie do praktyki.'
-        : 'Podtrzymaj rytm nauki krotszym treningiem mieszanym obejmujacym kilka typow zadan.',
-    target: progress.gamesPlayed < 5 ? '8 pytan' : '12 pytan',
+        ? 'Po powtórkach uruchom trening mieszany, aby sprawdzić, czy umiejętności przenoszą się do praktyki.'
+        : 'Podtrzymaj rytm nauki krótszym treningiem mieszanym obejmującym kilka typów zadań.',
+    target: progress.gamesPlayed < 5 ? '8 pytań' : '12 pytań',
     priority: insights.lessonsNeedingPractice > 0 ? 'medium' : 'low',
     progressLabel:
       progress.gamesPlayed > 0
@@ -124,9 +124,9 @@ export const buildKangurAssignments = (
   if (strongestLesson && strongestLesson.masteryPercent >= 85) {
     assignments.push({
       id: `lesson-retain-${strongestLesson.componentId}`,
-      title: `${strongestLesson.emoji} Utrwal mocna strone`,
-      description: `${strongestLesson.title} jest stabilna (${strongestLesson.masteryPercent}%). Krotkie utrwalenie pomoze utrzymac poziom.`,
-      target: '1 szybka powtorka',
+      title: `${strongestLesson.emoji} Utrwal mocną stronę`,
+      description: `${strongestLesson.title} jest stabilna (${strongestLesson.masteryPercent}%). Krótkie utrwalenie pomoże utrzymać poziom.`,
+      target: '1 szybka powtórka',
       priority: 'low',
       progressLabel: `Opanowanie: ${strongestLesson.masteryPercent}%`,
       questLabel: 'Quest utrwalenia',
@@ -136,7 +136,7 @@ export const buildKangurAssignments = (
         targetDelta: 1,
       },
       action: {
-        label: 'Powtorz lekcje',
+        label: 'Powtórz lekcję',
         page: 'Lessons',
         query: {
           focus: strongestLesson.componentId,

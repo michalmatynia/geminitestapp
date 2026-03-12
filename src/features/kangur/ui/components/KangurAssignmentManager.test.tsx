@@ -164,7 +164,7 @@ describe('KangurAssignmentManager', () => {
       '/kangur/game?quickStart=training'
     );
     expect(screen.getByTestId('assignment-manager-track-summary')).toHaveTextContent(
-      'Sciezki postepu ucznia'
+      'Ścieżki postępu ucznia'
     );
     expect(screen.getByTestId('assignment-manager-track-quest')).toHaveTextContent('Misje');
     expect(screen.getByTestId('assignment-manager-track-quest')).toHaveTextContent('1/4 odznak');

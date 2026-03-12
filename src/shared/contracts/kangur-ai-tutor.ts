@@ -140,6 +140,8 @@ export const kangurAiTutorConversationContextSchema = z.object({
   masterySummary: z.string().trim().max(240).optional(),
   assignmentSummary: z.string().trim().max(500).optional(),
   questionId: z.string().trim().max(120).optional(),
+  selectedChoiceLabel: z.string().trim().max(16).optional(),
+  selectedChoiceText: z.string().trim().max(240).optional(),
   selectedText: z.string().trim().max(1_000).optional(),
   drawingImageData: kangurAiTutorDrawingImageDataSchema.optional(),
   currentQuestion: z.string().trim().max(2_000).optional(),

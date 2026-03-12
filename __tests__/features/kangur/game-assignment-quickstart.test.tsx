@@ -2,9 +2,9 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { fireEvent, render, screen, waitFor, within } from '@/__tests__/test-utils';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 
@@ -13,6 +13,7 @@ const {
   useKangurProgressStateMock,
   useKangurAssignmentsMock,
   useKangurAuthMock,
+  useKangurPageContentEntryMock,
   authMeMock,
   redirectToLoginMock,
   logoutMock,
@@ -21,6 +22,7 @@ const {
   useKangurProgressStateMock: vi.fn(),
   useKangurAssignmentsMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(),
   authMeMock: vi.fn(),
   redirectToLoginMock: vi.fn(),
   logoutMock: vi.fn(),
@@ -42,6 +44,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
   useOptionalKangurAuth: useKangurAuthMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
@@ -148,6 +154,13 @@ describe('Game delegated quick starts', () => {
       navigateToLogin: redirectToLoginMock,
       user: null,
     });
+    useKangurPageContentEntryMock.mockReturnValue({
+      entry: null,
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
     authMeMock.mockResolvedValue(null);
     logoutMock.mockResolvedValue(undefined);
   });
@@ -161,7 +174,7 @@ describe('Game delegated quick starts', () => {
 
     renderGamePage();
 
-    expect(await screen.findByTestId('question-card')).toBeInTheDocument();
+    expect(await screen.findByTestId('kangur-game-question-anchor')).toBeInTheDocument();
     expect(screen.queryByTestId('training-setup')).not.toBeInTheDocument();
 
     await waitFor(() => {
@@ -198,7 +211,7 @@ describe('Game delegated quick starts', () => {
     renderGamePage();
 
     expect(await screen.findByTestId('kangur-game-operation-top-section')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Wybor rodzaju gry' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Wybór rodzaju gry' })).toBeInTheDocument();
 
     await waitFor(() => {
       expect(window.location.pathname).toBe('/kangur/game');

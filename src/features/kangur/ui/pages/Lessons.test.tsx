@@ -437,12 +437,12 @@ describe('Lessons', () => {
     renderLessonsPage();
 
     await waitFor(() =>
-      expect(screen.getByRole('link', { name: 'Strona glowna' })).toHaveAttribute(
+      expect(screen.getByRole('link', { name: 'Strona główna' })).toHaveAttribute(
         'href',
         '/kangur'
       )
     );
-    expect(screen.getByRole('link', { name: 'Strona glowna' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Strona główna' })).toHaveAttribute(
       'title',
       'Home Navigation: Returns to the main Kangur practice hub and quick-start home screen.'
     );
@@ -660,7 +660,7 @@ describe('Lessons', () => {
     fireEvent.click(screen.getByRole('button', { name: /patterns draft/i }));
 
     expect(
-      screen.getByText('Ta lekcja ma wlaczony tryb dokumentu, ale nie zapisano jeszcze blokow tresci.')
+      screen.getByText('Ta lekcja ma włączony tryb dokumentu, ale nie zapisano jeszcze bloków treści.')
     ).toBeInTheDocument();
     expect(screen.getByTestId('lessons-empty-document-summary')).toHaveClass(
       'soft-card'
@@ -690,8 +690,8 @@ describe('Lessons', () => {
       {
         id: 'assignment-priority',
         learnerKey: 'jan@example.com',
-        title: 'Powtorz nauke zegara',
-        description: 'Skup sie na odczytywaniu godzin.',
+        title: 'Powtórz naukę zegara',
+        description: 'Skup się na odczytywaniu godzin.',
         priority: 'high',
         archived: false,
         target: {
@@ -707,7 +707,7 @@ describe('Lessons', () => {
         progress: {
           status: 'in_progress',
           percent: 40,
-          summary: 'Powtorki: 0/1',
+          summary: 'Powtórki: 0/1',
           attemptsCompleted: 0,
           attemptsRequired: 1,
           lastActivityAt: null,
@@ -774,8 +774,8 @@ describe('Lessons', () => {
     expect(screen.getByTestId('active-lesson-parent-priority-chip')).toHaveTextContent(
       'Priorytet Rodzica'
     );
-    expect(screen.queryByText('Powtorz nauke zegara')).toBeNull();
-    expect(screen.queryByText('Skup sie na odczytywaniu godzin.')).toBeNull();
+    expect(screen.queryByText('Powtórz naukę zegara')).toBeNull();
+    expect(screen.queryByText('Skup się na odczytywaniu godzin.')).toBeNull();
   });
 
   it('shows a compact completed parent-assignment pill in the active lesson header', () => {
@@ -794,7 +794,7 @@ describe('Lessons', () => {
       {
         id: 'assignment-completed',
         learnerKey: 'jan@example.com',
-        title: 'Powtorz dodawanie',
+        title: 'Powtórz dodawanie',
         description: 'Wykonane wczoraj.',
         priority: 'medium',
         archived: false,
@@ -811,7 +811,7 @@ describe('Lessons', () => {
         progress: {
           status: 'completed',
           percent: 100,
-          summary: 'Powtorki: 1/1',
+          summary: 'Powtórki: 1/1',
           attemptsCompleted: 1,
           attemptsRequired: 1,
           lastActivityAt: '2026-03-07T10:00:00.000Z',
@@ -841,7 +841,7 @@ describe('Lessons', () => {
     expect(screen.getByTestId('active-lesson-parent-completed-chip')).toHaveTextContent(
       'Ukonczone dla rodzica'
     );
-    expect(screen.queryByText('Powtorz dodawanie')).toBeNull();
+    expect(screen.queryByText('Powtórz dodawanie')).toBeNull();
     expect(screen.queryByText('Wykonane wczoraj.')).toBeNull();
   });
 
@@ -850,8 +850,8 @@ describe('Lessons', () => {
       {
         id: 'assignment-priority',
         learnerKey: 'jan@example.com',
-        title: 'Powtorz nauke zegara',
-        description: 'Skup sie na odczytywaniu godzin.',
+        title: 'Powtórz naukę zegara',
+        description: 'Skup się na odczytywaniu godzin.',
         priority: 'high',
         archived: false,
         target: {
@@ -867,7 +867,7 @@ describe('Lessons', () => {
         progress: {
           status: 'in_progress',
           percent: 40,
-          summary: 'Powtorki: 0/1',
+          summary: 'Powtórki: 0/1',
           attemptsCompleted: 0,
           attemptsRequired: 1,
           lastActivityAt: null,
@@ -884,7 +884,7 @@ describe('Lessons', () => {
 
     expect(screen.queryByText('Priorytet rodzica')).toBeNull();
     expect(screen.queryByText('Ukonczone dla rodzica')).toBeNull();
-    expect(screen.queryByText('Powtorz nauke zegara')).toBeNull();
+    expect(screen.queryByText('Powtórz naukę zegara')).toBeNull();
   });
 
   it('uses the shared empty-state surface when no lessons are enabled', () => {
@@ -968,8 +968,8 @@ describe('Lessons', () => {
       {
         id: 'assignment-priority',
         learnerKey: 'jan@example.com',
-        title: 'Powtorz nauke zegara',
-        description: 'Skup sie na odczytywaniu godzin.',
+        title: 'Powtórz naukę zegara',
+        description: 'Skup się na odczytywaniu godzin.',
         priority: 'high',
         archived: false,
         target: {
@@ -985,7 +985,7 @@ describe('Lessons', () => {
         progress: {
           status: 'in_progress',
           percent: 40,
-          summary: 'Powtorki: 0/1',
+          summary: 'Powtórki: 0/1',
           attemptsCompleted: 0,
           attemptsRequired: 1,
           lastActivityAt: null,
@@ -1032,7 +1032,7 @@ describe('Lessons', () => {
           entry: {
             id: 'lessons-active-header',
             title: 'Mongo aktywna lekcja',
-            summary: 'Mongo naglowek aktywnej lekcji.',
+            summary: 'Mongo nagłówek aktywnej lekcji.',
           },
           data: undefined,
           isLoading: false,
@@ -1059,7 +1059,7 @@ describe('Lessons', () => {
         return {
           entry: {
             id: 'lessons-active-document',
-            title: 'Mongo material lekcji',
+            title: 'Mongo materiał lekcji',
             summary: 'Mongo opis dokumentu aktywnej lekcji.',
           },
           data: undefined,
@@ -1074,7 +1074,7 @@ describe('Lessons', () => {
           entry: {
             id: 'lessons-active-navigation',
             title: 'Mongo nawigacja lekcji',
-            summary: 'Mongo opis przechodzenia miedzy lekcjami.',
+            summary: 'Mongo opis przechodzenia między lekcjami.',
           },
           data: undefined,
           isLoading: false,
@@ -1097,13 +1097,13 @@ describe('Lessons', () => {
     fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
 
     expect(screen.getByText('Mongo aktywna lekcja')).toBeInTheDocument();
-    expect(screen.getByText('Mongo naglowek aktywnej lekcji.')).toBeInTheDocument();
+    expect(screen.getByText('Mongo nagłówek aktywnej lekcji.')).toBeInTheDocument();
     expect(screen.getByText('Mongo zadanie rodzica')).toBeInTheDocument();
     expect(screen.getByText('Mongo opis sekcji zadania dla aktywnej lekcji.')).toBeInTheDocument();
-    expect(screen.getByText('Mongo material lekcji')).toBeInTheDocument();
+    expect(screen.getByText('Mongo materiał lekcji')).toBeInTheDocument();
     expect(screen.getByText('Mongo opis dokumentu aktywnej lekcji.')).toBeInTheDocument();
     expect(screen.getByText('Mongo nawigacja lekcji')).toBeInTheDocument();
-    expect(screen.getByText('Mongo opis przechodzenia miedzy lekcjami.')).toBeInTheDocument();
+    expect(screen.getByText('Mongo opis przechodzenia między lekcjami.')).toBeInTheDocument();
   });
 
   it('uses Mongo-backed page-content copy for the empty active-lesson document state when available', () => {
@@ -1135,7 +1135,7 @@ describe('Lessons', () => {
         return {
           entry: {
             id: 'lessons-active-empty-document',
-            title: 'Mongo brak tresci lekcji',
+            title: 'Mongo brak treści lekcji',
             summary: 'Mongo pusty stan aktywnej lekcji.',
           },
           data: undefined,
@@ -1158,7 +1158,7 @@ describe('Lessons', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /patterns draft/i }));
 
-    expect(screen.getByText('Mongo brak tresci lekcji')).toBeInTheDocument();
+    expect(screen.getByText('Mongo brak treści lekcji')).toBeInTheDocument();
     expect(screen.getByText('Mongo pusty stan aktywnej lekcji.')).toBeInTheDocument();
   });
 

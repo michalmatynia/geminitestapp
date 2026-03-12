@@ -121,10 +121,9 @@ describe('KangurAiTutorPanelAuxiliaryControls', () => {
     expect(screen.getByText('Limit wyczerpany')).toHaveClass(
       '[color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'
     );
-    expect(screen.getByText('Limit dzisiaj: 5/5').parentElement?.parentElement).toHaveStyle({
-      background:
-        'color-mix(in srgb, var(--kangur-soft-card-background) 82%, rgba(254,243,199,0.92))',
-    });
+    expect(screen.getByText('Limit dzisiaj: 5/5').parentElement?.parentElement).toHaveClass(
+      'kangur-chat-surface-warm'
+    );
     expect(screen.getByText('Limit dzisiaj: 5/5').parentElement?.parentElement).toHaveClass(
       'kangur-chat-inset',
       'kangur-chat-padding-sm',
@@ -136,7 +135,8 @@ describe('KangurAiTutorPanelAuxiliaryControls', () => {
     );
     expect(screen.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveClass(
       'kangur-chat-inset',
-      'kangur-chat-padding-md'
+      'kangur-chat-padding-md',
+      'kangur-chat-surface-success'
     );
     expect(screen.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveTextContent(
       'Sugerowany pierwszy krok'

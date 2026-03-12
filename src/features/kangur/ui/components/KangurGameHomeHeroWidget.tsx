@@ -31,10 +31,10 @@ export function KangurGameHomeHeroWidget({
     return null;
   }
 
-  const heroTitle = heroContent?.title ?? 'Twoj postep';
+  const heroTitle = heroContent?.title ?? 'Twój postęp';
   const heroSummary =
     heroContent?.summary ??
-    'Sprawdz najblizszy kamien milowy i zadania, ktore warto domknac dzisiaj.';
+    'Sprawdź najbliższy kamień milowy i zadania, które warto domknąć dziś.';
 
   if (shouldShowMilestones) {
     return (

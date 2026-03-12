@@ -4,14 +4,9 @@ import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state'
 
 import type { CSSProperties, JSX } from 'react';
 
-const LIGHT_MODE_SELECTION_GRADIENT_FALLBACK =
-  'color-mix(in srgb, var(--kangur-page-text) 78%, rgb(146 64 14))';
-const LIGHT_MODE_SELECTION_GRADIENT_START =
-  'color-mix(in srgb, var(--kangur-page-text) 90%, rgb(120 53 15))';
-const LIGHT_MODE_SELECTION_GRADIENT_MID =
-  'color-mix(in srgb, var(--kangur-page-text) 82%, rgb(146 64 14))';
-const LIGHT_MODE_SELECTION_GRADIENT_END =
-  'color-mix(in srgb, var(--kangur-page-text) 72%, rgb(180 83 9))';
+const LIGHT_MODE_SELECTION_TEXT = 'rgb(120 53 15)';
+const LIGHT_MODE_SELECTION_FILL = 'rgba(245, 158, 11, 0.18)';
+const LIGHT_MODE_SELECTION_SHADOW = 'rgba(217, 119, 6, 0.14)';
 
 type ReducedMotionTransitions = {
   instant: {
@@ -69,7 +64,7 @@ export function KangurAiTutorSpotlightOverlays({
               }
               transition={prefersReducedMotion ? reducedMotionTransitions.instant : undefined}
               style={style}
-              className='pointer-events-none fixed z-[72] rounded-[18px]'
+              className='pointer-events-none fixed z-[72] kangur-chat-spotlight-glow'
             />
           ))
           : selectionSpotlightStyle
@@ -90,14 +85,8 @@ export function KangurAiTutorSpotlightOverlays({
                     : { opacity: 0 }
                 }
                 transition={prefersReducedMotion ? reducedMotionTransitions.instant : undefined}
-                style={{
-                  ...selectionSpotlightStyle,
-                  background: 'var(--kangur-ai-tutor-selection-spotlight-fill)',
-                  border: '1px solid var(--kangur-ai-tutor-selection-glow-border)',
-                  boxShadow:
-                    '0 0 14px 3px var(--kangur-ai-tutor-selection-glow-shadow-inner), 0 0 24px 8px var(--kangur-ai-tutor-selection-glow-shadow-outer), 0 0 36px 14px var(--kangur-ai-tutor-selection-glow-shadow-far)',
-                }}
-                className='pointer-events-none fixed z-[72] rounded-[22px]'
+                style={selectionSpotlightStyle}
+                className='pointer-events-none fixed z-[72] kangur-chat-selection-spotlight'
               />
             )
             : null}
@@ -108,10 +97,13 @@ export function KangurAiTutorSpotlightOverlays({
     <>
       <style>{`
         :root {
-          --kangur-ai-tutor-selection-gradient-fallback: ${LIGHT_MODE_SELECTION_GRADIENT_FALLBACK};
-          --kangur-ai-tutor-selection-gradient-start: ${LIGHT_MODE_SELECTION_GRADIENT_START};
-          --kangur-ai-tutor-selection-gradient-mid: ${LIGHT_MODE_SELECTION_GRADIENT_MID};
-          --kangur-ai-tutor-selection-gradient-end: ${LIGHT_MODE_SELECTION_GRADIENT_END};
+          --kangur-ai-tutor-selection-inline-text: ${LIGHT_MODE_SELECTION_TEXT};
+          --kangur-ai-tutor-selection-inline-fill: ${LIGHT_MODE_SELECTION_FILL};
+          --kangur-ai-tutor-selection-inline-shadow: ${LIGHT_MODE_SELECTION_SHADOW};
+          --kangur-ai-tutor-selection-gradient-fallback: #fde68a;
+          --kangur-ai-tutor-selection-gradient-start: #fef3c7;
+          --kangur-ai-tutor-selection-gradient-mid: #fcd34d;
+          --kangur-ai-tutor-selection-gradient-end: #f59e0b;
           --kangur-ai-tutor-selection-glow-fill-start: rgba(245, 158, 11, 0.18);
           --kangur-ai-tutor-selection-glow-fill-end: rgba(180, 83, 9, 0.08);
           --kangur-ai-tutor-selection-glow-border: rgba(217, 119, 6, 0.28);
@@ -143,12 +135,31 @@ export function KangurAiTutorSpotlightOverlays({
         }
 
         [data-kangur-ai-tutor-selection-emphasis='gradient'] {
+          color: var(--kangur-ai-tutor-selection-inline-text);
+          background-image: linear-gradient(
+            180deg,
+            transparent 0%,
+            transparent 62%,
+            var(--kangur-ai-tutor-selection-inline-fill) 62%,
+            var(--kangur-ai-tutor-selection-inline-fill) 100%
+          );
+          border-radius: 0.2em;
+          box-decoration-break: clone;
+          -webkit-box-decoration-break: clone;
+          box-shadow: inset 0 -0.08em 0 var(--kangur-ai-tutor-selection-inline-shadow);
+          transition: color 220ms ease, box-shadow 220ms ease;
+        }
+
+        [data-kangur-appearance='dark'] [data-kangur-ai-tutor-selection-emphasis='gradient'],
+        [data-kangur-appearance-mode='dark'] [data-kangur-ai-tutor-selection-emphasis='gradient'] {
           color: var(--kangur-ai-tutor-selection-gradient-fallback);
-          transition: color 220ms ease;
+          background-image: none;
+          box-shadow: none;
         }
 
         @supports ((-webkit-background-clip: text) or (background-clip: text)) {
-          [data-kangur-ai-tutor-selection-emphasis='gradient'] {
+          [data-kangur-appearance='dark'] [data-kangur-ai-tutor-selection-emphasis='gradient'],
+          [data-kangur-appearance-mode='dark'] [data-kangur-ai-tutor-selection-emphasis='gradient'] {
             background-image: linear-gradient(
               110deg,
               var(--kangur-ai-tutor-selection-gradient-start) 0%,
@@ -167,7 +178,8 @@ export function KangurAiTutorSpotlightOverlays({
         }
 
         @media (prefers-reduced-motion: reduce) {
-          [data-kangur-ai-tutor-selection-emphasis='gradient'] {
+          [data-kangur-appearance='dark'] [data-kangur-ai-tutor-selection-emphasis='gradient'],
+          [data-kangur-appearance-mode='dark'] [data-kangur-ai-tutor-selection-emphasis='gradient'] {
             animation: none;
             background-position: 50% 50%;
           }
@@ -194,7 +206,7 @@ export function KangurAiTutorSpotlightOverlays({
             }
             transition={prefersReducedMotion ? reducedMotionTransitions.instant : undefined}
             style={selectionContextSpotlightStyle}
-            className='pointer-events-none fixed z-[68] rounded-[22px] border-2 border-amber-300/75 bg-amber-100/10 shadow-[0_0_0_6px_rgba(251,191,36,0.12)]'
+            className='pointer-events-none fixed z-[68] kangur-chat-spotlight-frame'
           />
         ) : null}
       </AnimatePresence>
@@ -217,7 +229,7 @@ export function KangurAiTutorSpotlightOverlays({
             }
             transition={prefersReducedMotion ? reducedMotionTransitions.instant : undefined}
             style={sectionContextSpotlightStyle}
-            className='pointer-events-none fixed z-[68] rounded-[22px] border-2 border-amber-300/75 bg-amber-100/10 shadow-[0_0_0_6px_rgba(251,191,36,0.12)]'
+            className='pointer-events-none fixed z-[68] kangur-chat-spotlight-frame'
           />
         ) : null}
       </AnimatePresence>
@@ -240,7 +252,7 @@ export function KangurAiTutorSpotlightOverlays({
             }
             transition={prefersReducedMotion ? reducedMotionTransitions.instant : undefined}
             style={sectionDropHighlightStyle}
-            className='pointer-events-none fixed z-[70] rounded-[22px] border-2 border-amber-300/75 bg-amber-100/10 shadow-[0_0_0_6px_rgba(251,191,36,0.12)]'
+            className='pointer-events-none fixed z-[70] kangur-chat-spotlight-frame'
           />
         ) : null}
       </AnimatePresence>

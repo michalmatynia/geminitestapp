@@ -25,7 +25,7 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
     heroContent?.summary ?? 'Statystyki ucznia:';
   const heroGuestSummary =
     heroContent?.summary ??
-    'Zaloguj sie, aby synchronizowac postep ucznia miedzy urzadzeniami. Jesli nie masz jeszcze konta rodzica, zaloz je tutaj.';
+    'Zaloguj się, aby synchronizować postęp ucznia między urządzeniami. Jeśli nie masz jeszcze konta rodzica, załóż je tutaj.';
 
   return (
     <KangurPageIntroCard
@@ -70,7 +70,7 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
             variant='surface'
             data-doc-id='profile_login'
           >
-            <LogIn className='h-4 w-4' /> Zaloguj sie, aby synchronizowac postep
+            <LogIn className='h-4 w-4' /> Zaloguj się, aby synchronizować postęp
           </KangurButton>
           <KangurButton
             className='w-full sm:w-auto'
@@ -81,7 +81,7 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
             type='button'
             variant='primary'
           >
-            Utworz konto rodzica
+            Utwórz konto rodzica
           </KangurButton>
         </div>
       ) : null}

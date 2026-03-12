@@ -5,12 +5,17 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { useKangurAssignmentsMock } = vi.hoisted(() => ({
+const { useKangurAssignmentsMock, useKangurPageContentEntryMock } = vi.hoisted(() => ({
   useKangurAssignmentsMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: useKangurAssignmentsMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
 import KangurLearnerAssignmentsPanel from '@/features/kangur/ui/components/KangurLearnerAssignmentsPanel';
@@ -18,6 +23,13 @@ import KangurLearnerAssignmentsPanel from '@/features/kangur/ui/components/Kangu
 describe('KangurLearnerAssignmentsPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useKangurPageContentEntryMock.mockReturnValue({
+      entry: null,
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
   });
 
   it('shows assignment progress summary plus active and completed history', () => {
@@ -87,8 +99,8 @@ describe('KangurLearnerAssignmentsPanel', () => {
 
     render(<KangurLearnerAssignmentsPanel basePath='/kangur' enabled />);
 
-    expect(screen.getByText('Przebieg przydzielonych zadan')).toBeInTheDocument();
-    expect(screen.getByText('Skutecznosc')).toBeInTheDocument();
+    expect(screen.getByText('Przebieg przydzielonych zadań')).toBeInTheDocument();
+    expect(screen.getByText('Skuteczność')).toBeInTheDocument();
     expect(screen.getByText('50%')).toBeInTheDocument();
     expect(screen.getByTestId('learner-assignments-completion-rate')).toHaveClass(
       'soft-card',
@@ -101,7 +113,7 @@ describe('KangurLearnerAssignmentsPanel', () => {
     expect(screen.getByText('Ostatni sukces')).toBeInTheDocument();
     expect(screen.getAllByText('Powtorka: Zegar').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Aktywne zadania od rodzica')).toBeInTheDocument();
-    expect(screen.getByText('Historia ukonczonych zadan')).toBeInTheDocument();
+    expect(screen.getByText('Historia ukonczonych zadań')).toBeInTheDocument();
     expect(screen.getByText('Praktyka: Dzielenie')).toBeInTheDocument();
   });
 
@@ -117,7 +129,7 @@ describe('KangurLearnerAssignmentsPanel', () => {
 
     render(<KangurLearnerAssignmentsPanel basePath='/kangur' enabled={false} />);
 
-    expect(screen.getByText('Przebieg przydzielonych zadan')).toBeInTheDocument();
+    expect(screen.getByText('Przebieg przydzielonych zadań')).toBeInTheDocument();
     expect(screen.getByTestId('learner-assignments-disabled')).toHaveClass(
       'soft-card',
       'border'
@@ -146,7 +158,7 @@ describe('KangurLearnerAssignmentsPanel', () => {
       'border-dashed',
       'border'
     );
-    expect(screen.getByText('Ladowanie przydzielonych zadan...')).toBeInTheDocument();
+    expect(screen.getByText('Ladowanie przydzielonych zadań...')).toBeInTheDocument();
   });
 
   it('uses the shared summary panel for assignment errors', () => {

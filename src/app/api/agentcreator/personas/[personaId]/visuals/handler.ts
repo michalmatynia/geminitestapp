@@ -6,7 +6,59 @@ import { AGENT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/agents';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { normalizeAgentPersonas } from '@/shared/lib/agent-personas';
-import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
+import { readStoredSettingValue, upsertStoredSettingValue } from '@/shared/lib/ai-brain/server';
+
+type AgentPersonaMood = NonNullable<AgentPersona['moods']>[number];
+
+const resolveMoodVisuals = async (
+  mood: AgentPersonaMood
+): Promise<{ mood: AgentPersonaMood; didBackfill: boolean }> => {
+  const inlineThumbnailDataUrl =
+    typeof mood.avatarThumbnailDataUrl === 'string' ? mood.avatarThumbnailDataUrl.trim() : '';
+
+  if (inlineThumbnailDataUrl) {
+    return {
+      mood: {
+        ...mood,
+        avatarThumbnailDataUrl: inlineThumbnailDataUrl,
+      },
+      didBackfill: false,
+    };
+  }
+
+  if (!(mood.useEmbeddedThumbnail && mood.avatarThumbnailRef)) {
+    return {
+      mood: {
+        ...mood,
+        avatarThumbnailDataUrl: null,
+      },
+      didBackfill: false,
+    };
+  }
+
+  const thumbnail = await readAgentPersonaAvatarThumbnailByRef(mood.avatarThumbnailRef);
+  if (!thumbnail) {
+    return {
+      mood: {
+        ...mood,
+        avatarThumbnailDataUrl: null,
+      },
+      didBackfill: false,
+    };
+  }
+
+  return {
+    mood: {
+      ...mood,
+      avatarThumbnailDataUrl: thumbnail.dataUrl,
+      avatarThumbnailMimeType: thumbnail.mimeType,
+      avatarThumbnailBytes: thumbnail.bytes,
+      avatarThumbnailWidth: thumbnail.width,
+      avatarThumbnailHeight: thumbnail.height,
+    },
+    didBackfill: true,
+  };
+};
 
 export async function GET_handler(
   _req: NextRequest,
@@ -25,23 +77,21 @@ export async function GET_handler(
     throw notFoundError('Agent persona not found.');
   }
 
-  const moods = await Promise.all(
-    (persona.moods ?? []).map(async (mood) => {
-      const thumbnail =
-        mood.useEmbeddedThumbnail && mood.avatarThumbnailRef
-          ? await readAgentPersonaAvatarThumbnailByRef(mood.avatarThumbnailRef)
-          : null;
+  const moodResults = await Promise.all((persona.moods ?? []).map(resolveMoodVisuals));
+  const moods = moodResults.map(({ mood }) => mood);
+  const didBackfill = moodResults.some(({ didBackfill }) => didBackfill);
 
-      return {
-        ...mood,
-        avatarThumbnailDataUrl: thumbnail?.dataUrl ?? null,
-        avatarThumbnailMimeType: thumbnail?.mimeType ?? mood.avatarThumbnailMimeType ?? null,
-        avatarThumbnailBytes: thumbnail?.bytes ?? mood.avatarThumbnailBytes ?? null,
-        avatarThumbnailWidth: thumbnail?.width ?? mood.avatarThumbnailWidth ?? null,
-        avatarThumbnailHeight: thumbnail?.height ?? mood.avatarThumbnailHeight ?? null,
-      };
-    })
-  );
+  if (didBackfill) {
+    const nextPersonas = personas.map((candidate) =>
+      candidate.id === persona.id ? { ...candidate, moods } : candidate
+    );
+
+    try {
+      await upsertStoredSettingValue(AGENT_PERSONA_SETTINGS_KEY, JSON.stringify(nextPersonas));
+    } catch {
+      // Keep the visuals response available even if the lazy backfill write fails.
+    }
+  }
 
   const payload: AgentPersona = {
     ...persona,

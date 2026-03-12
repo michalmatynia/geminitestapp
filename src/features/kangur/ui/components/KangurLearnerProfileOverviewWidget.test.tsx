@@ -193,10 +193,10 @@ describe('KangurLearnerProfileOverviewWidget', () => {
       '7 dni: +112 XP'
     );
     expect(screen.getByTestId('learner-profile-overview-xp-today')).toHaveTextContent(
-      'srednio 120 XP na sesje'
+      'średnio 120 XP na sesję'
     );
     expect(screen.getByTestId('learner-profile-overview-badges')).toHaveTextContent('2/11');
-    expect(screen.getByText('Nastepna: Pol tysiaca XP · 480/500 XP')).toBeInTheDocument();
+    expect(screen.getByText('Następna: Pół tysiąca XP · 480/500 XP')).toBeInTheDocument();
     expect(screen.queryByTestId('learner-profile-overview-guided-rounds')).toBeNull();
   });
 
@@ -213,7 +213,7 @@ describe('KangurLearnerProfileOverviewWidget', () => {
 
     expect(screen.getByTestId('learner-profile-overview-daily-quest')).toHaveTextContent('100%');
     expect(screen.getByTestId('learner-profile-overview-daily-quest')).toHaveTextContent(
-      'Powtorka: Dzielenie'
+      'Powtórka: Dzielenie'
     );
     expect(screen.getByTestId('learner-profile-overview-daily-quest')).toHaveTextContent(
       '82% / 75% opanowania'

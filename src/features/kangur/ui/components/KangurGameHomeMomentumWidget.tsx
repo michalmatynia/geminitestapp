@@ -120,15 +120,15 @@ const getWeakestLessonRecommendation = (
   return {
     accent: entry.masteryPercent < 60 ? 'rose' : 'amber',
     action: {
-      label: 'Otworz lekcje',
+      label: 'Otwórz lekcję',
       page: 'Lessons',
       query: {
         focus: componentId,
       },
     },
-    description: `Opanowanie ${entry.masteryPercent}%. Jedna krotka powtorka tej lekcji szybciej domknie kolejny prog mistrzostwa.`,
-    priorityLabel: entry.masteryPercent < 60 ? 'Priorytet wysoki' : 'Priorytet sredni',
-    title: `Dzis warto: ${lesson.title}`,
+    description: `Opanowanie ${entry.masteryPercent}%. Jedna krótka powtórka tej lekcji szybciej domknie kolejny próg mistrzostwa.`,
+    priorityLabel: entry.masteryPercent < 60 ? 'Priorytet wysoki' : 'Priorytet średni',
+    title: `Dziś warto: ${lesson.title}`,
   };
 };
 
@@ -153,10 +153,10 @@ const getStreakRecommendation = (
     },
     description:
       currentWinStreak <= 0
-        ? 'Jedna krotka gra dzisiaj uruchomi nowa serie i pomoze podtrzymac rytm nauki.'
-        : `Masz serie ${currentWinStreak}. Jeszcze jedna mocna runda dzisiaj ja rozpedzi.`,
-    priorityLabel: 'Priorytet sredni',
-    title: currentWinStreak <= 0 ? 'Zbuduj serie na nowo' : 'Rozpedz aktualna serie',
+        ? 'Jedna krótka gra dzisiaj uruchomi nową serię i pomoże podtrzymać rytm nauki.'
+        : `Masz serię ${currentWinStreak}. Jeszcze jedna mocna runda dzisiaj ją rozpędzi.`,
+    priorityLabel: 'Priorytet średni',
+    title: currentWinStreak <= 0 ? 'Zbuduj serię na nowo' : 'Rozpędź aktualną serię',
   };
 };
 
@@ -178,8 +178,8 @@ const getGuidedRecommendation = (
     accent: 'indigo',
     action,
     description: topActivity
-      ? `Masz juz ${guidedMomentum.summary} w poleconym rytmie. Jeszcze jedna mocna runda ${topActivity.label.toLowerCase()} przybliza odznake ${guidedMomentum.nextBadgeName}.`
-      : `Masz juz ${guidedMomentum.summary} w poleconym rytmie. Jeszcze jedna mocna runda przybliza odznake ${guidedMomentum.nextBadgeName}.`,
+      ? `Masz już ${guidedMomentum.summary} w poleconym rytmie. Jeszcze jedna mocna runda ${topActivity.label.toLowerCase()} przybliża odznakę ${guidedMomentum.nextBadgeName}.`
+      : `Masz już ${guidedMomentum.summary} w poleconym rytmie. Jeszcze jedna mocna runda przybliża odznakę ${guidedMomentum.nextBadgeName}.`,
     priorityLabel: 'Polecony kierunek',
     title: `Dopnij: ${guidedMomentum.nextBadgeName}`,
   };
@@ -208,9 +208,9 @@ const getTrackRecommendation = (
     accent: 'indigo',
     action,
     description: topActivity
-      ? `Najblizej jest teraz tor ${track.label}. Do odznaki ${track.nextBadge.name} brakuje: ${track.nextBadge.summary}. Najszybciej podbije to ${topActivity.label.toLowerCase()}.`
-      : `Najblizej jest teraz tor ${track.label}. Do odznaki ${track.nextBadge.name} brakuje: ${track.nextBadge.summary}.`,
-    priorityLabel: 'Tempo postepu',
+      ? `Najbliżej jest teraz tor ${track.label}. Do odznaki ${track.nextBadge.name} brakuje: ${track.nextBadge.summary}. Najszybciej podbije to ${topActivity.label.toLowerCase()}.`
+      : `Najbliżej jest teraz tor ${track.label}. Do odznaki ${track.nextBadge.name} brakuje: ${track.nextBadge.summary}.`,
+    priorityLabel: 'Tempo postępu',
     title: `Domknij tor: ${track.label}`,
   };
 };
@@ -229,7 +229,7 @@ const getFallbackRecommendation = (
       resolveActivityOperation(topActivity.key),
       topActivity.averageAccuracy
     ),
-    description: `${topActivity.label} daje teraz srednio ${topActivity.averageXpPerSession} XP na gre. To najlepszy kandydat na kolejny mocny ruch.`,
+    description: `${topActivity.label} daje teraz średnio ${topActivity.averageXpPerSession} XP na grę. To najlepszy kandydat na kolejny mocny ruch.`,
     priorityLabel: 'Dobra passa',
     title: `Utrzymaj tempo w: ${topActivity.label}`,
   };

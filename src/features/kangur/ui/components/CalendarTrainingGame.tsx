@@ -1,11 +1,8 @@
 import { motion } from 'framer-motion';
-import { RefreshCw } from 'lucide-react';
 import { useRef, useState } from 'react';
 
-import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
+import { KangurPracticeGameSummary } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import {
-  KangurButton,
-  KangurDisplayEmoji,
   KangurGlassPanel,
   KangurHeadline,
   KangurInfoCard,
@@ -203,71 +200,44 @@ export default function CalendarTrainingGame({
       onFinish();
     };
 
+    const percent = Math.round((score / TOTAL) * 100);
+
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className='flex w-full flex-col items-center gap-5 py-4'
-      >
-        <KangurGlassPanel
-          className='flex w-full max-w-sm flex-col items-center gap-5 text-center'
-          data-testid='calendar-training-summary-shell'
-          padding='xl'
-          surface='solid'
-          variant='soft'
-        >
-          <KangurDisplayEmoji
-            aria-hidden='true'
-            data-testid='calendar-training-summary-emoji'
-            size='lg'
-          >
-            {score >= 5 ? '🏆' : score >= 3 ? '😊' : '💪'}
-          </KangurDisplayEmoji>
+      <KangurPracticeGameSummary
+        accent='emerald'
+        breakdown={xpBreakdown}
+        breakdownDataTestId='calendar-training-summary-breakdown'
+        breakdownItemDataTestIdPrefix='calendar-training-summary-breakdown'
+        dataTestId='calendar-training-summary-shell'
+        emoji={score >= 5 ? '🏆' : score >= 3 ? '😊' : '💪'}
+        emojiAriaHidden
+        emojiDataTestId='calendar-training-summary-emoji'
+        finishLabel='Zakończ lekcję ✅'
+        message={
+          score === TOTAL
+            ? 'Idealnie! Świetnie znasz kalendarz!'
+            : 'Ćwicz dalej, a zostaniesz mistrzem kalendarza!'
+        }
+        messageClassName='max-w-xs text-center'
+        onFinish={handleFinishLesson}
+        onRestart={handleRestart}
+        panelClassName='gap-5'
+        percent={percent}
+        progressAccent='emerald'
+        progressAriaLabel='Postep w ćwiczeniach z kalendarzem'
+        progressAriaValueText={`${percent}% poprawnych odpowiedzi`}
+        progressClassName='w-full'
+        progressDataTestId='calendar-training-summary-progress-bar'
+        title={
           <KangurHeadline accent='emerald' as='h3' data-testid='calendar-training-summary-title'>
             Wynik: {score}/{TOTAL}
           </KangurHeadline>
-          {xpEarned > 0 && (
-            <KangurStatusChip accent='indigo' className='px-4 py-2 text-sm font-bold'>
-              +{xpEarned} XP ✨
-            </KangurStatusChip>
-          )}
-          <KangurRewardBreakdownChips
-            accent='slate'
-            breakdown={xpBreakdown}
-            className='justify-center'
-            dataTestId='calendar-training-summary-breakdown'
-            itemDataTestIdPrefix='calendar-training-summary-breakdown'
-          />
-          <KangurProgressBar
-            accent='emerald'
-            animated
-            aria-label='Postep w ćwiczeniach z kalendarzem'
-            aria-valuetext={`${Math.round((score / TOTAL) * 100)}% poprawnych odpowiedzi`}
-            className='w-full'
-            data-testid='calendar-training-summary-progress-bar'
-            size='md'
-            value={Math.round((score / TOTAL) * 100)}
-          />
-          <p className='max-w-xs text-center [color:var(--kangur-page-muted-text)]'>
-            {score === TOTAL
-              ? 'Idealnie! Świetnie znasz kalendarz!'
-              : 'Ćwicz dalej, a zostaniesz mistrzem kalendarza!'}
-          </p>
-          <div className='flex w-full gap-3'>
-            <KangurButton className='flex-1' onClick={handleRestart} size='lg' variant='surface'>
-              <RefreshCw className='w-4 h-4' /> Jeszcze raz
-            </KangurButton>
-            <KangurButton
-              className='flex-1'
-              onClick={handleFinishLesson}
-              size='lg'
-              variant='primary'
-            >
-              Zakończ lekcję ✅
-            </KangurButton>
-          </div>
-        </KangurGlassPanel>
-      </motion.div>
+        }
+        titleUnwrapped
+        wrapperClassName='py-4'
+        xpAccent='indigo'
+        xpEarned={xpEarned}
+      />
     );
   }
 
@@ -332,7 +302,7 @@ export default function CalendarTrainingGame({
 
       <div
         aria-labelledby='calendar-training-question-title'
-        className='grid grid-cols-2 gap-3 w-full'
+        className='grid w-full grid-cols-1 gap-3 sm:grid-cols-2'
         role='group'
       >
         {question.choices.map((choice, index) => {
@@ -366,7 +336,7 @@ export default function CalendarTrainingGame({
                 aria-disabled={selected !== null}
                 aria-label={`Odpowiedz ${choice}`}
                 className={cn(
-                  'w-full rounded-[24px] px-4 py-3 font-bold text-base transition-all',
+                  'w-full rounded-[24px] px-4 py-3 text-sm font-bold transition-all min-[420px]:text-base',
                   choiceClassName,
                   selected === null ? 'cursor-pointer' : 'cursor-default'
                 )}

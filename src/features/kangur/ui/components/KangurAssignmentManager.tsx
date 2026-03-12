@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ComponentProps, type ReactNode } from 'react';
 
 import {
   appendKangurUrlParams,
@@ -42,6 +42,76 @@ type KangurAssignmentManagerProps = {
   basePath: string;
   featuredDailyQuest?: KangurDailyQuestState | null;
 };
+
+type KangurAssignmentManagerPanelProps = {
+  accent: ComponentProps<typeof KangurSummaryPanel>['accent'];
+  children: ReactNode;
+  className?: string;
+  dataTestId?: string;
+  description?: string;
+  label?: string;
+  padding?: ComponentProps<typeof KangurSummaryPanel>['padding'];
+  tone?: ComponentProps<typeof KangurSummaryPanel>['tone'];
+};
+
+function KangurAssignmentManagerPanel({
+  accent,
+  children,
+  className,
+  dataTestId,
+  description,
+  label,
+  padding = 'lg',
+  tone,
+}: KangurAssignmentManagerPanelProps): React.JSX.Element {
+  return (
+    <KangurSummaryPanel
+      accent={accent}
+      className={className}
+      data-testid={dataTestId}
+      description={description}
+      label={label}
+      padding={padding}
+      tone={tone}
+    >
+      {children}
+    </KangurSummaryPanel>
+  );
+}
+
+type KangurAssignmentManagerItemCardProps = {
+  accent?: ComponentProps<typeof KangurInfoCard>['accent'];
+  children: ReactNode;
+  testId: string;
+};
+
+function KangurAssignmentManagerItemCard({
+  accent,
+  children,
+  testId,
+}: KangurAssignmentManagerItemCardProps): React.JSX.Element {
+  return (
+    <KangurInfoCard accent={accent} data-testid={testId} padding='lg'>
+      {children}
+    </KangurInfoCard>
+  );
+}
+
+function KangurAssignmentManagerCardHeader({
+  children,
+}: {
+  children: ReactNode;
+}): React.JSX.Element {
+  return <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>{children}</div>;
+}
+
+function KangurAssignmentManagerCardFooter({
+  children,
+}: {
+  children: ReactNode;
+}): React.JSX.Element {
+  return <div className='mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>{children}</div>;
+}
 
 const FILTER_OPTIONS = [
   { value: 'all', label: 'Wszystkie' },
@@ -358,22 +428,20 @@ export function KangurAssignmentManager({
         </div>
 
         {recommendedCatalog.length > 0 ? (
-          <KangurSummaryPanel
+          <KangurAssignmentManagerPanel
             accent='indigo'
             className='mt-5'
             description='Te zadania wynikają z aktualnych słabszych obszarów i rytmu pracy ucznia.'
             label='Podpowiedzi z postępu ucznia'
-            padding='lg'
           >
             <div className='mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2'>
               {recommendedCatalog.map((item) => (
-                <KangurInfoCard
-                  data-testid={`assignment-manager-recommended-card-${item.id}`}
+                <KangurAssignmentManagerItemCard
                   key={item.id}
-                  padding='lg'
+                  testId={`assignment-manager-recommended-card-${item.id}`}
                 >
-                  <div className='flex items-start justify-between gap-3'>
-                    <div>
+                  <KangurAssignmentManagerCardHeader>
+                    <div className='min-w-0'>
                       <KangurCardTitle className='text-slate-900'>{item.title}</KangurCardTitle>
                       <KangurCardDescription className='mt-1 text-slate-600' relaxed size='sm'>
                         {item.description}
@@ -385,12 +453,13 @@ export function KangurAssignmentManager({
                     >
                       {item.priorityLabel}
                     </KangurStatusChip>
-                  </div>
-                  <div className='mt-3 flex items-center justify-between gap-3'>
-                    <KangurStatusChip accent='slate' labelStyle='compact'>
+                  </KangurAssignmentManagerCardHeader>
+                  <KangurAssignmentManagerCardFooter>
+                    <KangurStatusChip accent='slate' className='w-fit' labelStyle='compact'>
                       {item.badge}
                     </KangurStatusChip>
                     <KangurButton
+                      className='w-full sm:w-auto'
                       type='button'
                       onClick={() => void handleAssign(item.id)}
                       disabled={pendingActionId === item.id}
@@ -399,21 +468,20 @@ export function KangurAssignmentManager({
                     >
                       {pendingActionId === item.id ? 'Przypisywanie...' : 'Przypisz sugestię'}
                     </KangurButton>
-                  </div>
-                </KangurInfoCard>
+                  </KangurAssignmentManagerCardFooter>
+                </KangurAssignmentManagerItemCard>
               ))}
             </div>
-          </KangurSummaryPanel>
+          </KangurAssignmentManagerPanel>
         ) : null}
 
         {featuredDailyQuest ? (
-          <KangurSummaryPanel
+          <KangurAssignmentManagerPanel
             accent='violet'
             className='mt-5'
-            data-testid='assignment-manager-daily-quest'
+            dataTestId='assignment-manager-daily-quest'
             description='To aktualna misja dnia ucznia, zsynchronizowana z widokiem gry i profilu.'
             label='Misja dnia ucznia'
-            padding='lg'
           >
             <div className='mt-3 flex flex-col gap-3 rounded-[28px] border border-violet-200/80 bg-white/82 px-4 py-4'>
               <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
@@ -463,16 +531,15 @@ export function KangurAssignmentManager({
                 ) : null}
               </div>
             </div>
-          </KangurSummaryPanel>
+          </KangurAssignmentManagerPanel>
         ) : null}
 
-        <KangurSummaryPanel
+        <KangurAssignmentManagerPanel
           accent='indigo'
           className='mt-5'
-          data-testid='assignment-manager-track-summary'
+          dataTestId='assignment-manager-track-summary'
           description='Najwazniejsze sciezki odznak, ktore aktualnie buduje uczen.'
           label='Sciezki postepu ucznia'
-          padding='lg'
         >
           <div className='mt-3'>
             <KangurBadgeTrackHighlights
@@ -481,7 +548,7 @@ export function KangurAssignmentManager({
               progress={progress}
             />
           </div>
-        </KangurSummaryPanel>
+        </KangurAssignmentManagerPanel>
 
         <KangurTextField
           accent='indigo'
@@ -510,7 +577,7 @@ export function KangurAssignmentManager({
         </div>
 
         {feedback ? (
-          <KangurSummaryPanel
+          <KangurAssignmentManagerPanel
             accent={
               feedback.toLowerCase().includes('nie uda') || feedback.toLowerCase().includes('juz')
                 ? 'rose'
@@ -520,27 +587,30 @@ export function KangurAssignmentManager({
             description={feedback}
             padding='sm'
             tone='accent'
-          />
+          >
+            {null}
+          </KangurAssignmentManagerPanel>
         ) : null}
 
         {error ? (
-          <KangurSummaryPanel
+          <KangurAssignmentManagerPanel
             accent='rose'
             className='mt-4'
             description={error}
             padding='sm'
             tone='accent'
-          />
+          >
+            {null}
+          </KangurAssignmentManagerPanel>
         ) : null}
 
         <div className='mt-5 grid grid-cols-1 gap-3 xl:grid-cols-2'>
           {filteredCatalog.map((item) => (
-            <KangurInfoCard
-              data-testid={`assignment-manager-catalog-card-${item.id}`}
+            <KangurAssignmentManagerItemCard
               key={item.id}
-              padding='lg'
+              testId={`assignment-manager-catalog-card-${item.id}`}
             >
-              <div className='flex items-start justify-between gap-3'>
+              <KangurAssignmentManagerCardHeader>
                 <div>
                   <KangurCardTitle className='text-slate-900'>{item.title}</KangurCardTitle>
                   <KangurCardDescription className='mt-1 text-slate-600' relaxed size='sm'>
@@ -549,15 +619,17 @@ export function KangurAssignmentManager({
                 </div>
                 <KangurStatusChip
                   accent='slate'
+                  className='self-start sm:self-auto'
                   labelStyle='compact'
                 >
                   {item.badge}
                 </KangurStatusChip>
-              </div>
+              </KangurAssignmentManagerCardHeader>
 
-              <div className='mt-3 flex items-center justify-between gap-3'>
+              <KangurAssignmentManagerCardFooter>
                 <KangurStatusChip
                   accent={getPriorityAccentFromLabel(item.priorityLabel)}
+                  className='self-start'
                   labelStyle='compact'
                 >
                   {item.priorityLabel}
@@ -568,11 +640,12 @@ export function KangurAssignmentManager({
                   disabled={pendingActionId === item.id}
                   size='sm'
                   variant='surface'
+                  className='w-full sm:w-auto'
                 >
                   {pendingActionId === item.id ? 'Przypisywanie...' : 'Przypisz'}
                 </KangurButton>
-              </div>
-            </KangurInfoCard>
+              </KangurAssignmentManagerCardFooter>
+            </KangurAssignmentManagerItemCard>
           ))}
         </div>
 
@@ -605,7 +678,7 @@ export function KangurAssignmentManager({
           </KangurCardDescription>
         </div>
 
-        <div className='mt-5 grid grid-cols-2 gap-3 xl:grid-cols-4'>
+        <div className='mt-5 grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 xl:grid-cols-4'>
           <KangurMetricCard
             accent='slate'
             description='zadania wymagające dalszej pracy'
@@ -640,12 +713,11 @@ export function KangurAssignmentManager({
           value={`${trackerSummary.completionRate}%`}
         />
 
-        <KangurSummaryPanel
+        <KangurAssignmentManagerPanel
           accent='amber'
           className='mt-4'
           description='Te zadania warto przypomnieć uczniowi albo omówić podczas kolejnej nauki.'
           label='Do uwagi'
-          padding='lg'
           tone='accent'
         >
           {trackerAttentionItems.length === 0 ? (
@@ -660,14 +732,13 @@ export function KangurAssignmentManager({
           ) : (
             <div className='mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2'>
               {trackerAttentionItems.slice(0, 4).map((item) => (
-                <KangurInfoCard
+                <KangurAssignmentManagerItemCard
                   accent='amber'
-                  data-testid={`assignment-manager-attention-card-${item.id}`}
                   key={item.id}
-                  padding='lg'
+                  testId={`assignment-manager-attention-card-${item.id}`}
                 >
-                  <div className='flex items-start justify-between gap-3'>
-                    <div>
+                  <KangurAssignmentManagerCardHeader>
+                    <div className='min-w-0'>
                       <KangurCardTitle className='text-slate-900'>{item.title}</KangurCardTitle>
                       <KangurCardDescription className='mt-1 text-amber-900' relaxed size='sm'>
                         {item.reason}
@@ -679,12 +750,12 @@ export function KangurAssignmentManager({
                     >
                       {item.progressPercent}%
                     </KangurStatusChip>
-                  </div>
-                  <div className='mt-3 flex items-center justify-between gap-3'>
+                  </KangurAssignmentManagerCardHeader>
+                  <KangurAssignmentManagerCardFooter>
                     <KangurMetaText caps tone='slate'>
                       {item.progressSummary}
                     </KangurMetaText>
-                    <KangurButton asChild size='sm' variant='warning'>
+                    <KangurButton asChild className='w-full sm:w-auto' size='sm' variant='warning'>
                       <Link
                         href={item.actionHref}
                         transitionAcknowledgeMs={110}
@@ -693,12 +764,12 @@ export function KangurAssignmentManager({
                         {item.actionLabel}
                       </Link>
                     </KangurButton>
-                  </div>
-                </KangurInfoCard>
+                  </KangurAssignmentManagerCardFooter>
+                </KangurAssignmentManagerItemCard>
               ))}
             </div>
           )}
-        </KangurSummaryPanel>
+        </KangurAssignmentManagerPanel>
       </KangurGlassPanel>
 
       <KangurAssignmentsList

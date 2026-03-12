@@ -2,12 +2,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE } from '@/shared/contracts/kangur-ai-tutor-native-guide';
 
-const { getKangurAiTutorNativeGuideStoreMock } = vi.hoisted(() => ({
+const { getKangurAiTutorNativeGuideStoreMock, getKangurPageContentEntryMock } = vi.hoisted(() => ({
   getKangurAiTutorNativeGuideStoreMock: vi.fn(),
+  getKangurPageContentEntryMock: vi.fn(),
 }));
 
 vi.mock('./ai-tutor-native-guide-repository', () => ({
   getKangurAiTutorNativeGuideStore: getKangurAiTutorNativeGuideStoreMock,
+}));
+
+vi.mock('./page-content-repository', () => ({
+  getKangurPageContentEntry: getKangurPageContentEntryMock,
 }));
 
 import {
@@ -18,9 +23,11 @@ import {
 describe('resolveKangurAiTutorNativeGuideResponse', () => {
   beforeEach(() => {
     getKangurAiTutorNativeGuideStoreMock.mockReset();
+    getKangurPageContentEntryMock.mockReset();
     getKangurAiTutorNativeGuideStoreMock.mockResolvedValue(
       DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE
     );
+    getKangurPageContentEntryMock.mockResolvedValue(null);
   });
 
   it('routes guided game-question explains through the native guide even for generic prompts', async () => {
@@ -251,6 +258,56 @@ describe('resolveKangurAiTutorNativeGuideResponse', () => {
     expect(resolution.status === 'hit' ? resolution.message : '').toContain(
       'Ranking pokazuje wyniki i pozycje na tle innych prob.'
     );
+  });
+
+  it('resolves page-content knowledge references through linked native guides', async () => {
+    getKangurPageContentEntryMock.mockResolvedValueOnce({
+      id: 'game-home-leaderboard',
+      pageKey: 'Game',
+      screenKey: 'home',
+      surface: 'game',
+      route: '/game',
+      componentId: 'leaderboard',
+      widget: 'Leaderboard',
+      sourcePath: 'src/features/kangur/ui/pages/Game.tsx',
+      title: 'Ranking na stronie glownej',
+      summary: 'Sekcja rankingu na stronie glownej gry.',
+      body: 'Pelna tresc rankingu na stronie glownej gry.',
+      anchorIdPrefix: 'kangur-game-home-leaderboard',
+      focusKind: 'leaderboard',
+      contentIdPrefixes: ['game:home'],
+      nativeGuideIds: ['shared-leaderboard'],
+      triggerPhrases: ['ranking'],
+      tags: ['page-content'],
+      enabled: true,
+      sortOrder: 10,
+    });
+
+    const resolution = await resolveKangurAiTutorNativeGuideResolution({
+      latestUserMessage: 'Opowiedz mi o tym miejscu.',
+      context: {
+        surface: 'game',
+        promptMode: 'chat',
+        focusKind: 'leaderboard',
+        focusId: 'kangur-game-home-leaderboard',
+        focusLabel: 'Ranking',
+        interactionIntent: 'explain',
+        knowledgeReference: {
+          sourceCollection: 'kangur_page_content',
+          sourceRecordId: 'game-home-leaderboard',
+          sourcePath: 'entry:game-home-leaderboard',
+        },
+      },
+      locale: 'pl',
+    });
+
+    expect(getKangurPageContentEntryMock).toHaveBeenCalledWith('game-home-leaderboard', 'pl');
+    expect(resolution).toMatchObject({
+      status: 'hit',
+      entryId: 'shared-leaderboard',
+      coverageLevel: 'specific',
+      matchedSignals: ['knowledge_reference'],
+    });
   });
 
   it('marks section-specific requests that fall back to an overview entry as a coverage gap', async () => {

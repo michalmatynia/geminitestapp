@@ -52,6 +52,7 @@ import { serializeSetting } from '@/shared/utils/settings-json';
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
 import { KangurAiTutorContentSettingsPanel } from './components/KangurAiTutorContentSettingsPanel';
 import { KangurAiTutorNativeGuideSettingsPanel } from './components/KangurAiTutorNativeGuideSettingsPanel';
+import { KangurPageContentSettingsPanel } from './components/KangurPageContentSettingsPanel';
 
 const TEST_NARRATOR_TEMPLATE_TEXT =
   'A bright classroom welcomes curious minds. Here is a short narration sample to verify the chosen voice.';
@@ -845,6 +846,8 @@ export function AdminKangurSettingsPage(): ReactElement {
         </FormSection>
 
         <KangurAiTutorContentSettingsPanel />
+
+        <KangurPageContentSettingsPanel />
 
         <KangurAiTutorNativeGuideSettingsPanel />
 

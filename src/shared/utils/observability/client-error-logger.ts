@@ -25,10 +25,17 @@ export type ClientErrorPayload = {
 
 const MAX_CONTEXT_SIZE = 6000;
 const MAX_VALUE_LENGTH = 2000;
+const CLIENT_TIMEOUT_DEDUPE_WINDOW_MS = 20_000;
 let baseContext: ClientErrorContext = {};
+const recentClientErrorSignatures = new Map<string, number>();
 
 export const setClientErrorBaseContext = (context: ClientErrorContext): void => {
   baseContext = { ...baseContext, ...context };
+};
+
+export const resetClientErrorLoggerStateForTests = (): void => {
+  baseContext = {};
+  recentClientErrorSignatures.clear();
 };
 
 const safeSerialize = (value: unknown): SerializedContext => {
@@ -104,6 +111,48 @@ const buildPayload = (
   return payload;
 };
 
+const isTimeoutLikeMessage = (message: string): boolean =>
+  /^request timeout after \d+ms$/i.test(message.trim());
+
+const readContextString = (context: ClientErrorContext | null | undefined, key: string): string =>
+  typeof context?.[key] === 'string' ? context[key].trim() : '';
+
+const pruneRecentClientErrorSignatures = (nowMs: number): void => {
+  for (const [signature, lastSeenAt] of recentClientErrorSignatures.entries()) {
+    if (nowMs - lastSeenAt > CLIENT_TIMEOUT_DEDUPE_WINDOW_MS * 2) {
+      recentClientErrorSignatures.delete(signature);
+    }
+  }
+};
+
+const shouldSkipDuplicateClientTimeout = (payload: ClientErrorPayload): boolean => {
+  if (!isTimeoutLikeMessage(payload.message)) {
+    return false;
+  }
+
+  const context = payload.context;
+  const endpoint = readContextString(context, 'endpoint');
+  const method = readContextString(context, 'method');
+  const source = readContextString(context, 'source');
+  const pageUrl = typeof payload.url === 'string' ? payload.url.trim() : '';
+  const signature = [payload.message.trim().toLowerCase(), endpoint, method, source, pageUrl].join(
+    '::'
+  );
+  if (!signature.replace(/:/g, '').trim()) {
+    return false;
+  }
+
+  const nowMs = Date.now();
+  pruneRecentClientErrorSignatures(nowMs);
+  const lastSeenAt = recentClientErrorSignatures.get(signature);
+  if (typeof lastSeenAt === 'number' && nowMs - lastSeenAt < CLIENT_TIMEOUT_DEDUPE_WINDOW_MS) {
+    return true;
+  }
+
+  recentClientErrorSignatures.set(signature, nowMs);
+  return false;
+};
+
 export interface LoggableObject extends Record<string, unknown> {
   __logged?: boolean;
 }
@@ -128,6 +177,9 @@ export const logClientError = (
   }
 
   const payload = buildPayload(error, extra);
+  if (shouldSkipDuplicateClientTimeout(payload)) {
+    return;
+  }
   const body = JSON.stringify(payload);
 
   // Mark error as logged

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const runNeo4jStatementsMock = vi.fn();
 const getKangurAiTutorContentMock = vi.fn();
 const getKangurAiTutorNativeGuideStoreMock = vi.fn();
+const getKangurPageContentStoreMock = vi.fn();
 const generateKangurKnowledgeGraphQueryEmbeddingMock = vi.fn();
 
 vi.mock('@/shared/lib/neo4j/client', () => ({
@@ -15,6 +16,10 @@ vi.mock('@/features/kangur/server/ai-tutor-content-repository', () => ({
 
 vi.mock('@/features/kangur/server/ai-tutor-native-guide-repository', () => ({
   getKangurAiTutorNativeGuideStore: getKangurAiTutorNativeGuideStoreMock,
+}));
+
+vi.mock('@/features/kangur/server/page-content-repository', () => ({
+  getKangurPageContentStore: getKangurPageContentStoreMock,
 }));
 
 vi.mock('@/features/kangur/server/knowledge-graph/semantic', () => ({
@@ -92,6 +97,33 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
           relatedGames: [],
           relatedTests: [],
           triggerPhrases: [],
+          enabled: true,
+          sortOrder: 10,
+        },
+      ],
+    });
+    getKangurPageContentStoreMock.mockResolvedValue({
+      locale: 'pl',
+      version: 1,
+      entries: [
+        {
+          id: 'game-home-actions',
+          pageKey: 'Game',
+          screenKey: 'home',
+          surface: 'game',
+          route: '/game',
+          componentId: 'home-actions',
+          widget: 'KangurGameHomeActionsWidget',
+          sourcePath: 'src/features/kangur/ui/pages/Game.tsx',
+          title: 'Szybkie akcje',
+          summary: 'Sekcja z szybkimi akcjami na stronie glownej gry.',
+          body: 'Szybkie akcje kieruja do najwazniejszych aktywnosci w Kangurze.',
+          anchorIdPrefix: 'kangur-game-home-actions',
+          focusKind: 'home_actions',
+          contentIdPrefixes: ['game:home'],
+          nativeGuideIds: ['shared-home-actions'],
+          triggerPhrases: ['szybkie akcje'],
+          tags: ['page-content', 'game'],
           enabled: true,
           sortOrder: 10,
         },
@@ -337,6 +369,71 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
         expect.objectContaining({
           collectionId: 'kangur_ai_tutor_content',
           text: expect.stringContaining('Kliknij Zaloguj sie w gornej nawigacji.'),
+        }),
+      ])
+    );
+  });
+
+  it('hydrates page-content graph hits from Mongo-backed Kangur section records', async () => {
+    process.env['NEO4J_ENABLED'] = 'true';
+    process.env['NEO4J_HTTP_URL'] = 'http://localhost:7474';
+    process.env['NEO4J_USERNAME'] = 'neo4j';
+    process.env['NEO4J_PASSWORD'] = 'secret';
+
+    runNeo4jStatementsMock.mockResolvedValue([
+      {
+        records: [
+          {
+            id: 'guide:page-content:game-home-actions',
+            kind: 'guide',
+            title: 'Fallback page-content title',
+            summary: 'Fallback page-content summary',
+            surface: 'game',
+            focusKind: 'home_actions',
+            route: '/game',
+            anchorId: 'kangur-game-home-actions',
+            contentIdPrefixes: ['game:home'],
+            triggerPhrases: ['akcje'],
+            sourceCollection: 'kangur_page_content',
+            sourceRecordId: 'game-home-actions',
+            sourcePath: 'entry:game-home-actions',
+            tags: ['page-content', 'game'],
+            tokenHits: 3,
+            relations: [],
+          },
+        ],
+      },
+    ]);
+
+    const { resolveKangurAiTutorSemanticGraphContext } = await import(
+      '@/features/kangur/server/knowledge-graph/retrieval'
+    );
+
+    const result = await resolveKangurAiTutorSemanticGraphContext({
+      latestUserMessage: 'Wyjasnij szybkie akcje na tej stronie',
+      context: {
+        surface: 'game',
+        promptMode: 'explain',
+        focusKind: 'home_actions',
+        focusId: 'kangur-game-home-actions',
+        contentId: 'game:home',
+        title: 'Strona glowna gry',
+      } as never,
+      locale: 'pl',
+    });
+
+    expect(getKangurPageContentStoreMock).toHaveBeenCalledWith('pl');
+    expect(result.status).toBe('hit');
+    if (result.status !== 'hit') {
+      throw new Error('Expected semantic graph context hit.');
+    }
+    expect(result.sourceCollections).toEqual(['kangur_page_content']);
+    expect(result.hydrationSources).toEqual(['kangur_page_content']);
+    expect(result.sources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          collectionId: 'kangur_page_content',
+          text: expect.stringContaining('Szybkie akcje kieruja do najwazniejszych aktywnosci'),
         }),
       ])
     );

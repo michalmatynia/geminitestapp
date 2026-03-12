@@ -241,7 +241,7 @@ export function KangurAiTutorPanelChrome({
   const isHeaderSectionDragEnabled = !isAskModalMode && !isPanelDraggable;
   const isPanelBodySectionDragEnabled = isHeaderSectionDragEnabled;
   const panelHeaderClassName = cn(
-    'relative flex items-start justify-between gap-3 border-b [border-color:var(--kangur-chat-header-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52)))] [background:var(--kangur-chat-header-background,linear-gradient(180deg,color-mix(in_srgb,var(--kangur-soft-card-background)_72%,#fff8d6)_0%,color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fff7cf)_100%))]',
+    'relative flex flex-col items-start gap-3 border-b [border-color:var(--kangur-chat-header-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52)))] [background:var(--kangur-chat-header-background,linear-gradient(180deg,color-mix(in_srgb,var(--kangur-soft-card-background)_72%,#fff8d6)_0%,color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fff7cf)_100%))] sm:flex-row sm:justify-between',
     shouldUseMinimalPanelShell ? 'px-5 py-4' : 'px-4 py-3',
     isAskModalMode ? 'pt-5' : null,
     isCompactDockedTutorPanel ? 'px-3 py-2.5' : null,
@@ -567,7 +567,7 @@ export function KangurAiTutorPanelChrome({
                       </KangurAiTutorChromeBadge>
                     ) : null}
                   </div>
-                  <div className='ml-3 flex items-center gap-2 pt-0.5'>
+                  <div className='flex w-full flex-wrap items-center gap-2 pt-0.5 sm:ml-3 sm:w-auto sm:justify-end'>
                     {!shouldUseMinimalPanelShell ? (
                       canDetachPanelFromContext && uiMode === 'freeform' ? (
                         <KangurAiTutorChromeTextButton

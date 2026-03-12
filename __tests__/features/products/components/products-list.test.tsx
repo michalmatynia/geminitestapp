@@ -359,8 +359,9 @@ describe('Admin Products List UI', () => {
     });
   });
 
-  it('shows notification and blocks OneClick export when inventory is not configured', async () => {
+  it('repairs a missing OneClick inventory when the connection exposes a default inventory', async () => {
     let exportCalls = 0;
+    let exportPayload: Record<string, unknown> | null = null;
     server.use(
       http.get('/api/v2/integrations/exports/base/default-connection', () =>
         HttpResponse.json({ connectionId: 'base-conn-1' })
@@ -368,24 +369,42 @@ describe('Admin Products List UI', () => {
       http.get('/api/v2/integrations/exports/base/default-inventory', () =>
         HttpResponse.json({ inventoryId: null })
       ),
-      http.post('/api/v2/integrations/products/:id/export-to-base', () => {
+      http.post('/api/v2/integrations/imports/base', async () =>
+        HttpResponse.json({
+          inventories: [{ id: 'inv-1', name: 'Inventory 1', is_default: true }],
+        })
+      ),
+      http.get('/api/v2/integrations/exports/base/active-template', () =>
+        HttpResponse.json({ templateId: null })
+      ),
+      http.post('/api/v2/integrations/exports/base/default-inventory', async () =>
+        HttpResponse.json({ inventoryId: 'inv-1' })
+      ),
+      http.post('http://localhost/api/v2/integrations/products/:id/base/sku-check', () =>
+        HttpResponse.json({ exists: false })
+      ),
+      http.post('/api/v2/integrations/products/:id/export-to-base', async ({ request }) => {
         exportCalls += 1;
+        exportPayload = (await request.json()) as Record<string, unknown>;
         return HttpResponse.json({ success: true });
-      })
+      }),
+      http.get('/api/v2/integrations/products/:id/listings', () => HttpResponse.json([]))
     );
 
     renderProductTable();
     await clickFirstOneClickExport();
 
-    expect(
-      await screen.findByText(
-        'Specific Base.com inventory is not configured. Open Export Settings and set inventory.'
-      )
-    ).toBeInTheDocument();
-    expect(exportCalls).toBe(0);
+    await waitFor(() => {
+      expect(exportCalls).toBe(1);
+    });
+    expect(exportPayload).toMatchObject({
+      connectionId: 'base-conn-1',
+      inventoryId: 'inv-1',
+    });
   });
 
   it('shows notification and blocks OneClick export when configured inventory is not available for connection', async () => {
+    let inventoryImportCalls = 0;
     let exportCalls = 0;
     server.use(
       http.get('/api/v2/integrations/exports/base/default-connection', () =>
@@ -394,11 +413,15 @@ describe('Admin Products List UI', () => {
       http.get('/api/v2/integrations/exports/base/default-inventory', () =>
         HttpResponse.json({ inventoryId: 'inv-missing' })
       ),
-      http.post('/api/v2/integrations/imports/base', async () =>
-        HttpResponse.json({
-          inventories: [{ id: 'inv-1', name: 'Inventory 1', is_default: true }],
-        })
-      ),
+      http.post('/api/v2/integrations/imports/base', async () => {
+        inventoryImportCalls += 1;
+        return HttpResponse.json({
+          inventories: [
+            { id: 'inv-1', name: 'Inventory 1', is_default: false },
+            { id: 'inv-2', name: 'Inventory 2', is_default: false },
+          ],
+        });
+      }),
       http.post('/api/v2/integrations/products/:id/export-to-base', () => {
         exportCalls += 1;
         return HttpResponse.json({ success: true });
@@ -408,11 +431,9 @@ describe('Admin Products List UI', () => {
     renderProductTable();
     await clickFirstOneClickExport();
 
-    expect(
-      await screen.findByText(
-        'Configured Base.com inventory is not available for this connection. Open Export Settings and select a valid inventory.'
-      )
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(inventoryImportCalls).toBe(1);
+    });
     expect(exportCalls).toBe(0);
   });
 

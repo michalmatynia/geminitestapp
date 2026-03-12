@@ -65,7 +65,7 @@ export default function ResultScreen({
       aria-labelledby='kangur-result-heading'
       initial={{ opacity: 0, scale: 0.85 }}
       animate={{ opacity: 1, scale: 1 }}
-      className='flex flex-col items-center gap-6 text-center'
+      className='flex w-full flex-col items-center gap-6 text-center'
     >
       <KangurDisplayEmoji aria-hidden='true' data-testid='result-screen-emoji' size='lg'>
         {'⭐'.repeat(stars)}
@@ -96,21 +96,21 @@ export default function ResultScreen({
         variant='soft'
       >
         <dl className='space-y-3 text-lg'>
-          <div className='flex justify-between gap-4'>
+          <div className='flex flex-col gap-1 text-left sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
             <dt className='[color:var(--kangur-page-muted-text)]'>Wynik</dt>
             <dd className='font-bold text-indigo-600'>
               {score} / {total}
             </dd>
           </div>
-          <div className='flex justify-between gap-4'>
+          <div className='flex flex-col gap-1 text-left sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
             <dt className='[color:var(--kangur-page-muted-text)]'>Dokladnosc</dt>
             <dd className='font-bold text-green-500'>{percent}%</dd>
           </div>
-          <div className='flex justify-between gap-4'>
+          <div className='flex flex-col gap-1 text-left sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
             <dt className='[color:var(--kangur-page-muted-text)]'>Czas</dt>
             <dd className='font-bold text-amber-500'>{timeTaken}s</dd>
           </div>
-          <div className='flex justify-between gap-4'>
+          <div className='flex flex-col gap-1 text-left sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
             <dt className='[color:var(--kangur-page-muted-text)]'>Temat</dt>
             <dd className='font-bold text-purple-500'>{operationLabel}</dd>
           </div>
@@ -127,11 +127,11 @@ export default function ResultScreen({
         />
       </KangurGlassPanel>
 
-      <div className='flex gap-4'>
-        <KangurButton onClick={handleRestartGame} size='lg' variant='primary'>
+      <div className='flex w-full flex-col gap-3 sm:flex-row sm:justify-center sm:gap-4'>
+        <KangurButton className='w-full sm:w-auto' onClick={handleRestartGame} size='lg' variant='primary'>
           <RotateCcw className='w-5 h-5' /> Zagraj ponownie
         </KangurButton>
-        <KangurButton onClick={handleGoHome} size='lg' variant='surface'>
+        <KangurButton className='w-full sm:w-auto' onClick={handleGoHome} size='lg' variant='surface'>
           <Home className='w-5 h-5' /> Strona glowna
         </KangurButton>
       </div>

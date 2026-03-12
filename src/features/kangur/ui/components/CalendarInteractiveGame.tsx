@@ -1,14 +1,16 @@
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
 import {
+  KangurPracticeGameProgress,
+  KangurPracticeGameStage,
+  KangurPracticeGameSummary,
+} from '@/features/kangur/ui/components/KangurPracticeGameChrome';
+import {
   KangurButton,
-  KangurDisplayEmoji,
-  KangurGlassPanel,
   KangurInfoCard,
   KangurOptionCardButton,
-  KangurProgressBar,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
@@ -412,65 +414,32 @@ export default function CalendarInteractiveGame({
   if (done) {
     const percent = Math.round((score / TOTAL) * 100);
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className='w-full max-w-sm'
-      >
-        <KangurGlassPanel
-          className='flex flex-col items-center gap-4 text-center'
-          data-testid='calendar-interactive-summary-shell'
-          padding='xl'
-          surface='solid'
-          variant='soft'
-        >
-          <KangurDisplayEmoji
-            aria-hidden='true'
-            data-testid='calendar-interactive-summary-emoji'
-            size='lg'
-          >
-            {percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
-          </KangurDisplayEmoji>
-          <h2 className='text-2xl font-extrabold [color:var(--kangur-page-text)]'>
-            Wynik: {score}/{TOTAL}
-          </h2>
-          <KangurProgressBar
-            accent='emerald'
-            animated
-            data-testid='calendar-interactive-summary-progress-bar'
-            size='md'
-            value={percent}
-          />
-          <p className='[color:var(--kangur-page-muted-text)]'>
-            {getCalendarInteractiveSummaryMessage(section, percent)}
-          </p>
-          <div className='flex gap-3 w-full'>
-            <KangurButton
-              onClick={restart}
-              className='flex-1'
-              size='lg'
-              type='button'
-              variant='surface'
-            >
-              <RefreshCw className='w-4 h-4' /> Jeszcze raz
-            </KangurButton>
-            <KangurButton
-              onClick={handleFinishSession}
-              className='flex-1'
-              size='lg'
-              type='button'
-              variant='primary'
-            >
-              Wróć
-            </KangurButton>
-          </div>
-        </KangurGlassPanel>
-      </motion.div>
+      <KangurPracticeGameSummary
+        accent='emerald'
+        actionsClassName='flex-col sm:flex-row'
+        breakdown={[]}
+        breakdownDataTestId='calendar-interactive-summary-breakdown'
+        breakdownItemDataTestIdPrefix='calendar-interactive-summary-breakdown'
+        dataTestId='calendar-interactive-summary-shell'
+        emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
+        emojiAriaHidden
+        emojiDataTestId='calendar-interactive-summary-emoji'
+        finishButtonClassName='w-full sm:flex-1'
+        finishLabel='Wróć'
+        message={getCalendarInteractiveSummaryMessage(section, percent)}
+        onFinish={handleFinishSession}
+        onRestart={restart}
+        percent={percent}
+        progressAccent='emerald'
+        progressDataTestId='calendar-interactive-summary-progress-bar'
+        restartButtonClassName='w-full sm:flex-1'
+        title={`Wynik: ${score}/${TOTAL}`}
+      />
     );
   }
 
   return (
-    <div className='flex flex-col items-center gap-3 w-full max-w-sm'>
+    <KangurPracticeGameStage className='gap-3'>
       {section !== 'mixed' ? (
         <KangurInfoCard
           accent={trainingSectionContent.accent}
@@ -490,18 +459,12 @@ export default function CalendarInteractiveGame({
           </p>
         </KangurInfoCard>
       ) : null}
-      <div className='flex items-center gap-2 w-full'>
-        <KangurProgressBar
-          accent='emerald'
-          className='flex-1'
-          data-testid='calendar-interactive-progress-bar'
-          size='sm'
-          value={(round / TOTAL) * 100}
-        />
-        <span className='text-xs font-bold [color:var(--kangur-page-muted-text)]'>
-          {round + 1}/{TOTAL}
-        </span>
-      </div>
+      <KangurPracticeGameProgress
+        accent='emerald'
+        currentRound={round}
+        dataTestId='calendar-interactive-progress-bar'
+        totalRounds={TOTAL}
+      />
 
       <motion.div
         key={round}
@@ -666,7 +629,7 @@ export default function CalendarInteractiveGame({
       )}
 
       {task.type === 'click_weekday_name' && (
-        <div className='grid w-full grid-cols-2 gap-2 sm:grid-cols-4'>
+        <div className='grid w-full grid-cols-1 gap-2 min-[360px]:grid-cols-2 sm:grid-cols-4'>
           {DAY_LABELS.map((dayLabel, idx) => {
             const isCorrectTarget = feedback !== null && idx === task.targetIdx;
             const isWrongSelection =
@@ -785,6 +748,6 @@ export default function CalendarInteractiveGame({
           </div>
         </div>
       )}
-    </div>
+    </KangurPracticeGameStage>
   );
 }

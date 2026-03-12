@@ -76,7 +76,7 @@ const CLASSIFICATION_SLIDES: LessonSlide[] = [
         <KangurLessonLead>
           Klasyfikacja to układanie rzeczy w grupy według wspólnej cechy.
         </KangurLessonLead>
-        <div className='grid w-full grid-cols-2 gap-3'>
+        <div className='grid w-full grid-cols-1 gap-3 min-[360px]:grid-cols-2'>
           <KangurLessonCallout accent='emerald' className='text-center' padding='sm'>
             <p className='mb-1 text-sm font-bold text-green-700'>Owoce</p>
             <p className='text-2xl'>🍎 🍌 🍇 🍓</p>

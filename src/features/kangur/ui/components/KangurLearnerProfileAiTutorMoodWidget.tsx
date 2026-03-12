@@ -135,7 +135,7 @@ export function KangurLearnerProfileAiTutorMoodWidget(): React.JSX.Element {
           </div>
         </div>
 
-        <div className='grid w-full gap-3 sm:grid-cols-3 xl:max-w-3xl'>
+        <div className='grid w-full gap-3 min-[360px]:grid-cols-2 xl:max-w-3xl xl:grid-cols-3'>
           <LearnerMoodStat
             description={tutorContent.profileMoodWidget.baselineDescription}
             label={tutorContent.profileMoodWidget.baselineLabel}

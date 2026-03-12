@@ -7,6 +7,8 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 vi.mock('@/shared/utils/observability/error-system', () => ({
   ErrorSystem: {
     captureException: vi.fn().mockResolvedValue(undefined),
+    logWarning: vi.fn().mockResolvedValue(undefined),
+    logInfo: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -47,22 +49,31 @@ describe('Client Errors API', () => {
         userId: '123',
       })
     );
+    expect(ErrorSystem.logWarning).not.toHaveBeenCalled();
+    expect(ErrorSystem.logInfo).not.toHaveBeenCalled();
   });
 
-  it('should handle invalid payload by falling back to unknown error', async () => {
+  it('drops invalid payloads that do not contain meaningful client error data', async () => {
     const req = new NextRequest('http://localhost/api/client-errors', {
       method: 'POST',
       body: JSON.stringify({ name: 'Only name' }), // message missing
     });
 
     const res = await POST(req);
-    expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.ok).toBe(true);
-    expect(ErrorSystem.captureException).toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    expect(data).toEqual({
+      ok: true,
+      success: true,
+      dropped: true,
+      reason: 'invalid_payload',
+    });
+    expect(ErrorSystem.captureException).not.toHaveBeenCalled();
+    expect(ErrorSystem.logWarning).not.toHaveBeenCalled();
+    expect(ErrorSystem.logInfo).not.toHaveBeenCalled();
   });
 
-  it('should ignore legacy nested error payload shape', async () => {
+  it('drops legacy nested error payloads without lifting nested fields', async () => {
     const req = new NextRequest('http://localhost/api/client-errors', {
       method: 'POST',
       body: JSON.stringify({
@@ -76,19 +87,76 @@ describe('Client Errors API', () => {
     });
 
     const res = await POST(req);
-    expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.ok).toBe(true);
+    expect(res.status).toBe(200);
+    expect(data).toEqual({
+      ok: true,
+      success: true,
+      dropped: true,
+      reason: 'invalid_payload',
+    });
+    expect(ErrorSystem.captureException).not.toHaveBeenCalled();
+    expect(ErrorSystem.logWarning).not.toHaveBeenCalled();
+    expect(ErrorSystem.logInfo).not.toHaveBeenCalled();
+  });
 
-    expect(ErrorSystem.captureException).toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: 'Unknown client error',
-        name: 'ClientError',
+  it('routes warn-level client reports through warning logging', async () => {
+    const req = new NextRequest('http://localhost/api/client-errors', {
+      method: 'POST',
+      body: JSON.stringify({
+        message: 'Slow query: products.paged',
+        name: 'Error',
+        context: {
+          level: 'warn',
+          source: 'PerformanceMiddleware',
+        },
       }),
+    });
+
+    const res = await POST(req);
+    const data = await res.json();
+    expect(res.status).toBe(200);
+    expect(data.ok).toBe(true);
+    expect(ErrorSystem.logWarning).toHaveBeenCalledWith(
+      'Slow query: products.paged',
       expect.objectContaining({
         service: 'client-error-reporter',
+        source: 'client.error.reporter',
+        level: 'warn',
       })
     );
+    expect(ErrorSystem.captureException).not.toHaveBeenCalled();
+    expect(ErrorSystem.logInfo).not.toHaveBeenCalled();
+  });
+
+  it('routes info-level client reports through info logging', async () => {
+    const req = new NextRequest('http://localhost/api/client-errors', {
+      method: 'POST',
+      body: JSON.stringify({
+        message: 'AI Path started: Catalog Sync (run_123)',
+        name: 'Error',
+        context: {
+          level: 'info',
+          source: 'useAiPathTriggerEvent',
+          action: 'fireSuccess',
+        },
+      }),
+    });
+
+    const res = await POST(req);
+    const data = await res.json();
+    expect(res.status).toBe(200);
+    expect(data.ok).toBe(true);
+    expect(ErrorSystem.logInfo).toHaveBeenCalledWith(
+      'AI Path started: Catalog Sync (run_123)',
+      expect.objectContaining({
+        service: 'client-error-reporter',
+        source: 'client.error.reporter',
+        level: 'info',
+      })
+    );
+    expect(ErrorSystem.captureException).not.toHaveBeenCalled();
+    expect(ErrorSystem.logWarning).not.toHaveBeenCalled();
   });
 
   it('drops noisy local API network fetch failures in non-production environments', async () => {
@@ -114,5 +182,7 @@ describe('Client Errors API', () => {
       reason: 'network_fetch_failed',
     });
     expect(ErrorSystem.captureException).not.toHaveBeenCalled();
+    expect(ErrorSystem.logWarning).not.toHaveBeenCalled();
+    expect(ErrorSystem.logInfo).not.toHaveBeenCalled();
   });
 });

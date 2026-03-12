@@ -213,7 +213,7 @@ export function KangurParentDashboardHeroWidget({
                 {dailyQuest.progress.summary}
               </KangurCardDescription>
             </div>
-            <KangurButton asChild className='shrink-0' size='sm' variant='surface'>
+            <KangurButton asChild className='w-full sm:w-auto sm:shrink-0' size='sm' variant='surface'>
               <Link
                 href={buildAssignmentHref(basePath, dailyQuest.assignment.action)}
                 targetPageKey={dailyQuest.assignment.action.page}
@@ -290,6 +290,7 @@ export function KangurParentDashboardHeroWidget({
             </KangurTopNavGroup>
           </div>
           <KangurButton
+            className='w-full sm:w-auto'
             onClick={() => logout(false)}
             size='sm'
             type='button'

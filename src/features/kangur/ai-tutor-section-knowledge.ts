@@ -84,13 +84,13 @@ export const resolveKangurTutorSectionKnowledgeReference = (input: {
     .filter((candidate) => candidate.score >= 0)
     .sort((left, right) => right.score - left.score)[0]?.section;
 
-  const sourceRecordId = rankedSection?.currentKnowledgeEntryIds[0]?.trim() ?? null;
+  const sourceRecordId = rankedSection?.id.trim() ?? null;
   if (!sourceRecordId) {
     return null;
   }
 
   return {
-    sourceCollection: 'kangur_ai_tutor_native_guides',
+    sourceCollection: 'kangur_page_content',
     sourceRecordId,
     sourcePath: `entry:${sourceRecordId}`,
   };

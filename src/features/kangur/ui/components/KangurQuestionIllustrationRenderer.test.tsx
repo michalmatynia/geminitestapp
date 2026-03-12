@@ -89,4 +89,43 @@ describe('KangurQuestionIllustrationRenderer', () => {
       '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(226_232_240))]'
     );
   });
+
+  it('uses mobile-first panel grids for dense illustration layouts', () => {
+    const { container } = render(
+      <KangurQuestionIllustrationRenderer
+        illustration={{
+          type: 'panels',
+          layout: 'grid-3x2',
+          panels: [
+            {
+              id: 'panel-a',
+              label: 'A',
+              svgContent: '<svg viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" /></svg>',
+              description: 'Panel A',
+            },
+            {
+              id: 'panel-b',
+              label: 'B',
+              svgContent: '<svg viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8" /></svg>',
+              description: 'Panel B',
+            },
+            {
+              id: 'panel-c',
+              label: 'C',
+              svgContent:
+                '<svg viewBox="0 0 10 10"><path d="M1 9 L5 1 L9 9 Z" /></svg>',
+              description: 'Panel C',
+            },
+          ],
+        }}
+      />
+    );
+
+    expect(container.firstElementChild).toHaveClass(
+      'grid',
+      'grid-cols-1',
+      'min-[360px]:grid-cols-2',
+      'sm:grid-cols-3'
+    );
+  });
 });

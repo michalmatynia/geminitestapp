@@ -238,7 +238,7 @@ export function KangurGameHomeQuestWidget({
           />
         </div>
 
-        <div className='shrink-0'>
+        <div className='w-full lg:w-auto lg:shrink-0'>
           <KangurButton asChild className='w-full lg:w-auto' variant='primary'>
             <Link
               href={buildAssignmentHref(basePath, assignment.action)}

@@ -498,7 +498,7 @@ const signalLeaseProcessGroup = async (pid, signal) => {
     process.kill(-pid, signal);
     signaled = true;
   } catch (error) {
-    if (error?.code !== 'ESRCH') {
+    if (error?.code !== 'ESRCH' && error?.code !== 'EPERM') {
       throw error;
     }
   }

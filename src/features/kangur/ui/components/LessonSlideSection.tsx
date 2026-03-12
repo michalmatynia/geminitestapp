@@ -173,14 +173,14 @@ export default function LessonSlideSection({
       </AnimatePresence>
 
       {slides.length > 1 ? (
-        <div className='flex w-full items-center justify-between gap-3'>
+        <div className='flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
           {isFirst ? (
-            <div className='min-w-[72px]' />
+            <div className='hidden min-w-[72px] sm:block' />
           ) : (
             <KangurButton
               onClick={handlePreviousSlide}
               aria-label='Poprzedni panel'
-              className='min-w-[72px] justify-center px-5 shadow-sm'
+              className='w-full justify-center px-5 shadow-sm sm:min-w-[72px] sm:w-auto'
               style={{
                 background: 'var(--kangur-soft-card-background)',
                 borderColor: 'var(--kangur-soft-card-border)',
@@ -196,12 +196,12 @@ export default function LessonSlideSection({
           )}
 
           {isLast ? (
-            <div className='min-w-[72px]' />
+            <div className='hidden min-w-[72px] sm:block' />
           ) : (
             <KangurButton
               onClick={handleNextSlide}
               aria-label='Nastepny panel'
-              className='min-w-[72px] justify-center px-5 shadow-sm'
+              className='w-full justify-center px-5 shadow-sm sm:min-w-[72px] sm:w-auto'
               style={{
                 background: 'var(--kangur-soft-card-background)',
                 borderColor: 'var(--kangur-soft-card-border)',

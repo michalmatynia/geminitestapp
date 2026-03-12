@@ -10,7 +10,7 @@ import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine'
 
 import { normalizeLoadedPathName, sanitizeTriggerPathConfig } from './trigger-normalization';
 
-const LEGACY_TRIGGER_PROVIDER_ALIASES = new Set(['all']);
+const LEGACY_TRIGGER_PROVIDER_ALIASES = new Set(['all', 'mongodb']);
 
 export const repairLegacyTriggerProviderAliases = (
   config: PathConfig

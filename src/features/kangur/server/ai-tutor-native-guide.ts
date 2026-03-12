@@ -7,6 +7,7 @@ import type {
 import type { KangurAiTutorNativeGuideEntry } from '@/shared/contracts/kangur-ai-tutor-native-guide';
 
 import { getKangurAiTutorNativeGuideStore } from './ai-tutor-native-guide-repository';
+import { getKangurPageContentEntry } from './page-content-repository';
 
 const ALWAYS_NATIVE_EXPLAIN_FOCUS_KINDS = new Set([
   'hero',
@@ -184,7 +185,8 @@ const shouldUseNativeGuide = (input: {
   const focusKind = input.context?.focusKind ?? null;
 
   if (
-    input.context?.knowledgeReference?.sourceCollection === 'kangur_ai_tutor_native_guides' &&
+    (input.context?.knowledgeReference?.sourceCollection === 'kangur_ai_tutor_native_guides' ||
+      input.context?.knowledgeReference?.sourceCollection === 'kangur_page_content') &&
     input.context?.interactionIntent === 'explain'
   ) {
     return true;
@@ -282,12 +284,13 @@ const analyzeEntryMatch = (
   };
 };
 
-const selectGuideEntryFromKnowledgeReference = (
+const selectGuideEntryFromKnowledgeReference = async (
   entries: KangurAiTutorNativeGuideEntry[],
-  context: KangurAiTutorConversationContext | undefined
-): RankedNativeGuideEntry | null => {
+  context: KangurAiTutorConversationContext | undefined,
+  locale: string
+): Promise<RankedNativeGuideEntry | null> => {
   const knowledgeReference = context?.knowledgeReference;
-  if (knowledgeReference?.sourceCollection !== 'kangur_ai_tutor_native_guides') {
+  if (!knowledgeReference) {
     return null;
   }
 
@@ -296,26 +299,60 @@ const selectGuideEntryFromKnowledgeReference = (
     return null;
   }
 
-  const entry = entries.find((candidate) => candidate.enabled && candidate.id === sourceRecordId);
-  if (!entry) {
+  if (knowledgeReference.sourceCollection === 'kangur_ai_tutor_native_guides') {
+    const entry = entries.find((candidate) => candidate.enabled && candidate.id === sourceRecordId);
+    if (!entry) {
+      return null;
+    }
+
+    return {
+      entry,
+      score: Number.MAX_SAFE_INTEGER,
+      matchedSignals: ['knowledge_reference'],
+    };
+  }
+
+  if (knowledgeReference.sourceCollection !== 'kangur_page_content') {
+    return null;
+  }
+
+  const pageContentEntry = await getKangurPageContentEntry(sourceRecordId, locale);
+  if (!pageContentEntry?.enabled) {
+    return null;
+  }
+
+  const linkedGuideId = pageContentEntry.nativeGuideIds.find((guideId) =>
+    entries.some((candidate) => candidate.enabled && candidate.id === guideId)
+  );
+  if (!linkedGuideId) {
+    return null;
+  }
+
+  const linkedEntry = entries.find((candidate) => candidate.enabled && candidate.id === linkedGuideId);
+  if (!linkedEntry) {
     return null;
   }
 
   return {
-    entry,
+    entry: linkedEntry,
     score: Number.MAX_SAFE_INTEGER,
     matchedSignals: ['knowledge_reference'],
   };
 };
 
-const selectGuideEntry = (
+const selectGuideEntry = async (
   entries: KangurAiTutorNativeGuideEntry[],
   input: {
     latestUserMessage: string | null;
     context: KangurAiTutorConversationContext | undefined;
+    locale: string;
   }
-): RankedNativeGuideEntry | null => {
-  const directEntry = selectGuideEntryFromKnowledgeReference(entries, input.context);
+): Promise<RankedNativeGuideEntry | null> => {
+  const directEntry = await selectGuideEntryFromKnowledgeReference(
+    entries,
+    input.context,
+    input.locale
+  );
   if (directEntry) {
     return directEntry;
   }
@@ -426,7 +463,10 @@ export async function resolveKangurAiTutorNativeGuideResolution(input: {
   }
 
   const store = await getKangurAiTutorNativeGuideStore(input.locale?.trim() || 'pl');
-  const rankedEntry = selectGuideEntry(store.entries, input);
+  const rankedEntry = await selectGuideEntry(store.entries, {
+    ...input,
+    locale: input.locale?.trim() || 'pl',
+  });
   if (!rankedEntry) {
     return {
       status: 'miss',

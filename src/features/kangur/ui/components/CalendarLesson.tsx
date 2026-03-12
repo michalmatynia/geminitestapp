@@ -190,7 +190,7 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
       tts: 'Rok ma 12 miesiecy podzielonych na cztery pory roku.',
       content: (
         <KangurLessonStack className='w-full max-w-sm text-center' gap='sm'>
-          <div className='grid w-full grid-cols-2 gap-3'>
+          <div className='grid w-full grid-cols-1 gap-3 min-[360px]:grid-cols-2'>
             {[
               {
                 season: '🌸 Wiosna',
@@ -234,7 +234,7 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
       tts: 'Wiekszosc miesiecy ma 30 lub 31 dni. Luty ma tylko 28 dni.',
       content: (
         <KangurLessonStack className='text-center'>
-          <div className='grid w-full max-w-sm grid-cols-3 gap-2'>
+          <div className='grid w-full max-w-sm grid-cols-2 gap-2 min-[420px]:grid-cols-3'>
             {MONTHS.map((month) => (
               <KangurLessonCallout
                 key={month.name}

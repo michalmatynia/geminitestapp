@@ -9,6 +9,14 @@ import type { KangurProgressState } from '@/features/kangur/ui/types';
 
 let PlayerProgressCard: typeof import('@/features/kangur/ui/components/PlayerProgressCard').default;
 
+const { useKangurPageContentEntryMock } = vi.hoisted(() => ({
+  useKangurPageContentEntryMock: vi.fn(),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
+}));
+
 const progress: KangurProgressState = {
   totalXp: 480,
   gamesPlayed: 18,
@@ -43,6 +51,13 @@ const progress: KangurProgressState = {
 describe('PlayerProgressCard', () => {
   beforeEach(async () => {
     vi.resetModules();
+    useKangurPageContentEntryMock.mockImplementation(() => ({
+      entry: null,
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    }));
     PlayerProgressCard = (
       await vi.importActual<typeof import('@/features/kangur/ui/components/PlayerProgressCard')>(
         '@/features/kangur/ui/components/PlayerProgressCard'
@@ -53,6 +68,7 @@ describe('PlayerProgressCard', () => {
   it('uses shared metric styling and grouped badge tracks for player progress', () => {
     render(<PlayerProgressCard progress={progress} />);
 
+    expect(screen.getByTestId('player-progress-copy')).toHaveTextContent('Postepy ucznia');
     expect(screen.getByTestId('player-progress-shell')).toHaveClass(
       'glass-panel',
       'border-white/88',
@@ -123,6 +139,27 @@ describe('PlayerProgressCard', () => {
     );
     expect(screen.queryByTestId('player-progress-badge-first_game')).toBeNull();
     expect(screen.queryByTestId('player-progress-badge-ten_games')).toBeNull();
+  });
+
+  it('renders Mongo-backed progress copy when page-content is available', () => {
+    useKangurPageContentEntryMock.mockImplementation(() => ({
+      entry: {
+        id: 'game-home-progress',
+        title: 'Mongo postep',
+        summary: 'Mongo opis sekcji postepu.',
+      },
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    }));
+
+    render(<PlayerProgressCard progress={progress} />);
+
+    expect(screen.getByTestId('player-progress-copy')).toHaveTextContent('Mongo postep');
+    expect(screen.getByTestId('player-progress-copy')).toHaveTextContent(
+      'Mongo opis sekcji postepu.'
+    );
   });
 });
 

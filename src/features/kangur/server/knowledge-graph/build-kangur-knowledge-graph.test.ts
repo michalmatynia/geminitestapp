@@ -71,6 +71,15 @@ describe('buildKangurKnowledgeGraph', () => {
           route: '/tests',
           anchorId: undefined,
         }),
+        expect.objectContaining({
+          id: 'guide:page-content:game-home-leaderboard',
+          kind: 'guide',
+          route: '/game',
+          sourceCollection: 'kangur_page_content',
+          sourceRecordId: 'game-home-leaderboard',
+          sourcePath: 'entry:game-home-leaderboard',
+          anchorId: 'kangur-game-home-leaderboard',
+        }),
       ])
     );
     expect(snapshot.edges).toEqual(
@@ -99,6 +108,11 @@ describe('buildKangurKnowledgeGraph', () => {
           kind: 'LEADS_TO',
           from: 'guide:native:auth-login-action',
           to: 'anchor:kangur:login',
+        }),
+        expect.objectContaining({
+          kind: 'EXPLAINS',
+          from: 'guide:page-content:game-home-leaderboard',
+          to: 'guide:native:shared-leaderboard',
         }),
       ])
     );

@@ -280,7 +280,7 @@ export type KangurAiTutorKnowledgeGraphQueryStatus = z.infer<
 
 export const kangurAiTutorKnowledgeGraphSummarySchema = z.object({
   applied: z.boolean(),
-  queryStatus: kangurAiTutorKnowledgeGraphQueryStatusSchema.optional(),
+  queryStatus: kangurAiTutorKnowledgeGraphQueryStatusSchema,
   queryMode: kangurAiTutorKnowledgeGraphQueryModeSchema.nullable(),
   recallStrategy: kangurAiTutorKnowledgeGraphRecallStrategySchema.nullable(),
   lexicalHitCount: z.number().int().nonnegative(),

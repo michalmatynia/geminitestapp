@@ -5,12 +5,17 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { useKangurGameRuntimeMock } = vi.hoisted(() => ({
+const { useKangurGameRuntimeMock, useKangurPageContentEntryMock } = vi.hoisted(() => ({
   useKangurGameRuntimeMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
   useKangurGameRuntime: useKangurGameRuntimeMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurHeroMilestoneSummary', () => ({
@@ -68,6 +73,13 @@ const buildProgress = (
 describe('KangurGameHomeHeroWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useKangurPageContentEntryMock.mockImplementation(() => ({
+      entry: null,
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    }));
   });
 
   it('no longer renders anonymous guest controls on the home page', () => {
@@ -105,6 +117,7 @@ describe('KangurGameHomeHeroWidget', () => {
 
     render(<KangurGameHomeHeroWidget />);
 
+    expect(screen.getByTestId('kangur-home-hero-shell')).toBeInTheDocument();
     expect(screen.getByText('spotlight:/kangur')).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Wpisz swoje imie...')).toBeNull();
   });
@@ -129,6 +142,7 @@ describe('KangurGameHomeHeroWidget', () => {
     render(<KangurGameHomeHeroWidget />);
 
     expect(screen.getByTestId('kangur-home-hero-shell')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-home-hero-copy')).toHaveTextContent('Twoj postep');
     expect(screen.getByTestId('kangur-home-hero-milestone-shell')).toHaveTextContent(
       'milestone-summary'
     );
@@ -199,5 +213,40 @@ describe('KangurGameHomeHeroWidget', () => {
     render(<KangurGameHomeHeroWidget hideWhenScreenMismatch={false} />);
 
     expect(screen.getByText('spotlight:/kangur')).toBeInTheDocument();
+  });
+
+  it('renders Mongo-backed hero copy when page-content is available', () => {
+    useKangurPageContentEntryMock.mockImplementation(() => ({
+      entry: {
+        id: 'game-home-hero',
+        title: 'Mongo hero',
+        summary: 'Mongo opis sekcji hero.',
+      },
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    }));
+    useKangurGameRuntimeMock.mockReturnValue({
+      basePath: '/kangur',
+      canAccessParentAssignments: true,
+      handleStartGame: vi.fn(),
+      navigateToLogin: vi.fn(),
+      playerName: '',
+      progress: buildProgress({
+        gamesPlayed: 3,
+        totalXp: 360,
+      }),
+      screen: 'home',
+      setPlayerName: vi.fn(),
+      user: { id: 'user-1' },
+    });
+
+    render(<KangurGameHomeHeroWidget />);
+
+    expect(screen.getByTestId('kangur-home-hero-copy')).toHaveTextContent('Mongo hero');
+    expect(screen.getByTestId('kangur-home-hero-copy')).toHaveTextContent(
+      'Mongo opis sekcji hero.'
+    );
   });
 });

@@ -1,16 +1,15 @@
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { RefreshCw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
 import {
-  KangurButton,
-  KangurDisplayEmoji,
+  KangurPracticeGameProgress,
+  KangurPracticeGameStage,
+  KangurPracticeGameSummary,
+} from '@/features/kangur/ui/components/KangurPracticeGameChrome';
+import {
   KangurGlassPanel,
   KangurMetricCard,
   KangurOptionCardButton,
-  KangurProgressBar,
-  KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
@@ -141,94 +140,56 @@ export default function MultiplicationArrayGame({
   if (done) {
     const percent = Math.round((score / TOTAL_ROUNDS) * 100);
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className='w-full max-w-sm'
-      >
-        <KangurGlassPanel
-          className='flex flex-col items-center gap-4 text-center'
-          data-testid='multiplication-array-summary-shell'
-          padding='xl'
-          surface='solid'
-          variant='soft'
-        >
-          <KangurDisplayEmoji data-testid='multiplication-array-summary-emoji' size='lg'>
-            {percent === 100 ? '🏆' : percent >= 67 ? '🌟' : '💪'}
-          </KangurDisplayEmoji>
-          <h2 className='text-2xl font-extrabold [color:var(--kangur-page-text)]'>
-            Zebrałeś {score}/{TOTAL_ROUNDS} grup!
-          </h2>
-          {xpEarned > 0 && (
-            <KangurStatusChip accent='violet' className='px-4 py-2 text-sm font-bold'>
-              +{xpEarned} XP ✨
-            </KangurStatusChip>
-          )}
-          <KangurRewardBreakdownChips
-            accent='slate'
-            breakdown={xpBreakdown}
-            className='justify-center'
-            dataTestId='multiplication-array-summary-breakdown'
-            itemDataTestIdPrefix='multiplication-array-summary-breakdown'
-          />
-          <KangurProgressBar accent='indigo' animated size='md' value={percent} />
-          <p className='[color:var(--kangur-page-muted-text)]'>
-            {percent === 100
-              ? 'Mistrz grupowania! Tabliczka zdobyta!'
-              : percent >= 67
-                ? 'Świetna robota! Prawie perfekcja!'
-                : 'Dobra próba! Graj dalej, aby ćwiczyć!'}
-          </p>
-          <div className='flex gap-3 w-full'>
-            <KangurButton
-              className='flex-1'
-              onClick={() => {
-                setRoundIndex(0);
-                setScore(0);
-                setDone(false);
-                setXpEarned(0);
-                setXpBreakdown([]);
-                setCelebrating(false);
-                const next = pickProblem();
-                setProblem(next);
-                setCollected(new Set());
-                sessionStartedAtRef.current = Date.now();
-              }}
-              size='lg'
-              variant='surface'
-            >
-              <RefreshCw className='w-4 h-4' /> Jeszcze raz
-            </KangurButton>
-            <KangurButton
-              className='flex-1'
-              onClick={handleFinishGame}
-              size='lg'
-              variant='primary'
-            >
-              {finishLabel}
-            </KangurButton>
-          </div>
-        </KangurGlassPanel>
-      </motion.div>
+      <KangurPracticeGameSummary
+        accent='violet'
+        actionsClassName='flex-col sm:flex-row'
+        breakdown={xpBreakdown}
+        breakdownDataTestId='multiplication-array-summary-breakdown'
+        breakdownItemDataTestIdPrefix='multiplication-array-summary-breakdown'
+        dataTestId='multiplication-array-summary-shell'
+        emoji={percent === 100 ? '🏆' : percent >= 67 ? '🌟' : '💪'}
+        emojiDataTestId='multiplication-array-summary-emoji'
+        finishButtonClassName='w-full sm:flex-1'
+        finishLabel={finishLabel}
+        message={
+          percent === 100
+            ? 'Mistrz grupowania! Tabliczka zdobyta!'
+            : percent >= 67
+              ? 'Świetna robota! Prawie perfekcja!'
+              : 'Dobra próba! Graj dalej, aby ćwiczyć!'
+        }
+        onFinish={handleFinishGame}
+        onRestart={() => {
+          setRoundIndex(0);
+          setScore(0);
+          setDone(false);
+          setXpEarned(0);
+          setXpBreakdown([]);
+          setCelebrating(false);
+          const next = pickProblem();
+          setProblem(next);
+          setCollected(new Set());
+          sessionStartedAtRef.current = Date.now();
+        }}
+        percent={percent}
+        progressAccent='indigo'
+        restartButtonClassName='w-full sm:flex-1'
+        title={`Zebrałeś ${score}/${TOTAL_ROUNDS} grup!`}
+        titleDataTestId='multiplication-array-summary-title'
+        xpAccent='violet'
+        xpEarned={xpEarned}
+      />
     );
   }
 
   return (
-    <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
-      {/* Progress bar */}
-      <div className='flex items-center gap-2 w-full'>
-        <KangurProgressBar
-          accent='indigo'
-          className='flex-1'
-          data-testid='multiplication-array-progress-bar'
-          size='sm'
-          value={(roundIndex / TOTAL_ROUNDS) * 100}
-        />
-        <span className='text-xs font-bold [color:var(--kangur-page-muted-text)]'>
-          {roundIndex + 1}/{TOTAL_ROUNDS}
-        </span>
-      </div>
-
+    <KangurPracticeGameStage>
+      <KangurPracticeGameProgress
+        accent='indigo'
+        currentRound={roundIndex}
+        dataTestId='multiplication-array-progress-bar'
+        totalRounds={TOTAL_ROUNDS}
+      />
       <AnimatePresence mode='wait'>
         <motion.div
           key={`${roundIndex}-${a}-${b}`}
@@ -385,6 +346,6 @@ export default function MultiplicationArrayGame({
           </KangurGlassPanel>
         </motion.div>
       </AnimatePresence>
-    </div>
+    </KangurPracticeGameStage>
   );
 }

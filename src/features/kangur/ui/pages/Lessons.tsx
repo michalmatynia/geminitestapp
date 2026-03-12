@@ -41,6 +41,7 @@ import {
 import { type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
@@ -206,6 +207,9 @@ export default function Lessons() {
     auth.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('lessons');
   const prefersReducedMotion = useReducedMotion();
+  const { entry: lessonListIntroContent } = useKangurPageContentEntry('lessons-list-intro');
+  const { entry: lessonListEmptyStateContent } =
+    useKangurPageContentEntry('lessons-list-empty-state');
   const settingsStore = useSettingsStore();
   const [isDeferredContentReady, setIsDeferredContentReady] = useState(false);
   const [isActiveLessonComponentReady, setIsActiveLessonComponentReady] = useState(false);
@@ -572,6 +576,10 @@ export default function Lessons() {
     }),
     [prefersReducedMotion]
   );
+  const lessonListIntroDescription = isDeferredContentReady
+    ? (lessonListIntroContent?.summary ??
+      'Wybierz temat i przejdz od razu do praktyki lub powtorki.')
+    : 'Lekcje zaraz beda gotowe.';
 
   return (
     <>
@@ -591,16 +599,12 @@ export default function Lessons() {
               >
                 <div ref={lessonListIntroRef} className='w-full'>
                   <KangurPageIntroCard
-                    description={
-                      isDeferredContentReady
-                        ? 'Wybierz temat i przejdz od razu do praktyki lub powtorki.'
-                        : 'Lekcje zaraz beda gotowe.'
-                    }
+                    description={lessonListIntroDescription}
                     headingAs='h1'
                     headingTestId='kangur-lessons-list-heading'
                     onBack={handleGoBack}
                     testId='lessons-list-intro-card'
-                    title='Lekcje'
+                    title={lessonListIntroContent?.title ?? 'Lekcje'}
                     visualTitle={
                       <KangurLessonsWordmark
                         className='mx-auto'
@@ -622,9 +626,12 @@ export default function Lessons() {
                         <KangurEmptyState
                           accent='indigo'
                           className='w-full'
-                          description='Włącz lekcje w panelu admina, aby pojawiły się tutaj.'
+                          description={
+                            lessonListEmptyStateContent?.summary ??
+                            'Włącz lekcje w panelu admina, aby pojawiły się tutaj.'
+                          }
                           padding='xl'
-                          title='Brak aktywnych lekcji'
+                          title={lessonListEmptyStateContent?.title ?? 'Brak aktywnych lekcji'}
                         />
                       </div>
                     ) : (

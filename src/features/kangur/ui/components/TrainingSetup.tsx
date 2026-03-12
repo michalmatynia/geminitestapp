@@ -3,12 +3,11 @@ import { Dumbbell } from 'lucide-react';
 import { useId } from 'react';
 
 import DifficultySelector from '@/features/kangur/ui/components/DifficultySelector';
+import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
 import {
   KangurButton,
   KangurGlassPanel,
-  KangurInfoCard,
   KangurSectionHeading,
-  KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurTrainingSetupState } from '@/features/kangur/ui/hooks/useKangurTrainingSetupState';
@@ -81,48 +80,32 @@ export default function TrainingSetup({
         </div>
 
         {suggestionTitle ? (
-          <KangurInfoCard
+          <KangurRecommendationCard
             accent='indigo'
-            className='w-full rounded-[24px]'
             data-testid='training-setup-suggestion-card'
-            padding='md'
-            tone='accent'
-          >
-            <div className='flex flex-col gap-2 text-left'>
-              <KangurStatusChip
-                accent='indigo'
-                className='w-fit text-[11px] uppercase tracking-[0.16em]'
-                data-testid='training-setup-suggestion-label'
-                size='sm'
-              >
-                {suggestionLabel ?? 'Polecamy teraz'}
-              </KangurStatusChip>
-              <p
-                className='text-sm font-extrabold [color:var(--kangur-page-text)]'
-                data-testid='training-setup-suggestion-title'
-              >
-                {suggestionTitle}
-              </p>
-              {suggestionDescription ? (
-                <p
-                  className='text-xs [color:var(--kangur-page-muted-text)]'
-                  data-testid='training-setup-suggestion-description'
-                >
-                  {suggestionDescription}
-                </p>
-              ) : null}
-            </div>
-          </KangurInfoCard>
+            description={suggestionDescription}
+            descriptionTestId='training-setup-suggestion-description'
+            label={suggestionLabel ?? 'Polecamy teraz'}
+            labelTestId='training-setup-suggestion-label'
+            title={suggestionTitle}
+            titleTestId='training-setup-suggestion-title'
+          />
         ) : null}
 
         <DifficultySelector selected={difficulty} onSelect={setDifficulty} showHeading={false} />
 
         <section aria-labelledby={categoryHeadingId}>
-          <div className='mb-2 flex items-center justify-between'>
+          <div className='mb-2 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between'>
             <h3 id={categoryHeadingId} className='text-sm font-bold [color:var(--kangur-page-text)]'>
               Kategorie pytan
             </h3>
-            <KangurButton onClick={toggleAllCategories} size='sm' variant='ghost' type='button'>
+            <KangurButton
+              className='w-full sm:w-auto'
+              onClick={toggleAllCategories}
+              size='sm'
+              variant='ghost'
+              type='button'
+            >
               {toggleAllLabel}
             </KangurButton>
           </div>

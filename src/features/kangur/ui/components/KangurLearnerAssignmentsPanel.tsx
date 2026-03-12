@@ -127,7 +127,7 @@ export function KangurLearnerAssignmentsPanel({
           Sprawdz, co jest nadal aktywne, ile zadan masz juz za soba i co bylo ostatnim sukcesem.
         </div>
 
-        <div className='mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3'>
+        <div className='mt-4 grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 xl:grid-cols-4'>
           <KangurMetricCard
             accent='slate'
             data-testid='learner-assignments-active'

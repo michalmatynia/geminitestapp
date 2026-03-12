@@ -60,6 +60,7 @@ export type AlertEvidenceQuery = {
   pathPrefix?: string;
   statusCodeMin?: number;
   statusCodeMax?: number;
+  excludeAlertEvents?: boolean;
   from?: Date | null;
   to?: Date | null;
   limit?: number;

@@ -4521,9 +4521,9 @@ describe('KangurAiTutorWidget', () => {
         focusId: 'kangur-game-leaderboard',
         focusLabel: 'Ranking',
         knowledgeReference: {
-          sourceCollection: 'kangur_ai_tutor_native_guides',
-          sourceRecordId: 'shared-leaderboard',
-          sourcePath: 'entry:shared-leaderboard',
+          sourceCollection: 'kangur_page_content',
+          sourceRecordId: 'game-home-leaderboard',
+          sourcePath: 'entry:game-home-leaderboard',
         },
         interactionIntent: 'explain',
       })

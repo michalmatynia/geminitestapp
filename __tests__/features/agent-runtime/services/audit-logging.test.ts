@@ -1,17 +1,29 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
+const { agentAuditLogCreateMock, getAgentAuditLogDelegateMock } = vi.hoisted(() => ({
+  agentAuditLogCreateMock: vi.fn(),
+  getAgentAuditLogDelegateMock: vi.fn(),
+}));
+
 vi.mock('@/shared/utils/observability/error-system', () => ({
   ErrorSystem: {
     captureException: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
+vi.mock('@/features/ai/agent-runtime/store-delegates', () => ({
+  getAgentAuditLogDelegate: getAgentAuditLogDelegateMock,
+}));
+
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit/index';
-import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 
 describe('Agent Runtime - Audit Logging', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    agentAuditLogCreateMock.mockReset().mockResolvedValue(undefined);
+    getAgentAuditLogDelegateMock.mockReturnValue({
+      create: agentAuditLogCreateMock,
+    });
   });
 
   it('should create an audit log entry with metadata', async () => {
@@ -23,7 +35,7 @@ describe('Agent Runtime - Audit Logging', () => {
 
     await logAgentAudit('run-123', 'info', 'Test message', metadata);
 
-    expect(legacySqlClient.agentAuditLog.create).toHaveBeenCalledWith({
+    expect(agentAuditLogCreateMock).toHaveBeenCalledWith({
       data: {
         runId: 'run-123',
         level: 'info',
@@ -40,7 +52,7 @@ describe('Agent Runtime - Audit Logging', () => {
   it('should handle missing metadata', async () => {
     await logAgentAudit('run-123', 'warning', 'Warning message');
 
-    expect(legacySqlClient.agentAuditLog.create).toHaveBeenCalledWith({
+    expect(agentAuditLogCreateMock).toHaveBeenCalledWith({
       data: {
         runId: 'run-123',
         level: 'warning',
@@ -50,7 +62,7 @@ describe('Agent Runtime - Audit Logging', () => {
   });
 
   it('should gracefully handle database errors', async () => {
-    (legacySqlClient.agentAuditLog.create as any).mockRejectedValue(new Error('DB Down'));
+    agentAuditLogCreateMock.mockRejectedValue(new Error('DB Down'));
 
     // Should not throw
     await expect(logAgentAudit('run-1', 'error', 'Fail')).resolves.not.toThrow();

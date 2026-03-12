@@ -16,6 +16,7 @@ import {
 } from '@/shared/contracts/kangur-knowledge-graph';
 import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
 import { getKangurAiTutorNativeGuideStore } from '@/features/kangur/server/ai-tutor-native-guide-repository';
+import { getKangurPageContentStore } from '@/features/kangur/server/page-content-repository';
 import { KANGUR_KNOWLEDGE_GRAPH_VECTOR_INDEX } from '@/features/kangur/server/knowledge-graph/neo4j-repository';
 import { isNeo4jEnabled } from '@/shared/lib/neo4j/config';
 import { runNeo4jStatements } from '@/shared/lib/neo4j/client';
@@ -89,6 +90,7 @@ type HydratedKnowledgeGraphHit = KangurKnowledgeGraphHit & {
   canonicalTags: string[];
   canonicalSourceCollection: string;
   hydrationSource:
+    | 'kangur_page_content'
     | 'kangur_ai_tutor_content'
     | 'kangur_ai_tutor_native_guides'
     | 'kangur-runtime-context'
@@ -993,19 +995,54 @@ const hydrateKnowledgeGraphHits = async (
   const needsNativeGuideStore = hits.some(
     (hit) => hit.sourceCollection === 'kangur_ai_tutor_native_guides'
   );
+  const needsPageContentStore = hits.some(
+    (hit) => hit.sourceCollection === 'kangur_page_content'
+  );
 
-  const [tutorContent, nativeGuideStore] = await Promise.all([
+  const [tutorContent, nativeGuideStore, pageContentStore] = await Promise.all([
     needsTutorContent ? getKangurAiTutorContent(locale).catch(() => null) : Promise.resolve(null),
     needsNativeGuideStore
       ? getKangurAiTutorNativeGuideStore(locale).catch(() => null)
       : Promise.resolve(null),
+    needsPageContentStore ? getKangurPageContentStore(locale).catch(() => null) : Promise.resolve(null),
   ]);
 
   const nativeGuideEntriesById = new Map(
     (nativeGuideStore?.entries ?? []).map((entry) => [entry.id, entry] as const)
   );
+  const pageContentEntriesById = new Map(
+    (pageContentStore?.entries ?? []).map((entry) => [entry.id, entry] as const)
+  );
 
   return hits.map((hit) => {
+    if (hit.sourceCollection === 'kangur_page_content' && hit.sourceRecordId) {
+      const entry = pageContentEntriesById.get(hit.sourceRecordId);
+      if (entry) {
+        return {
+          ...hit,
+          canonicalTitle: entry.title,
+          canonicalSummary: entry.summary,
+          canonicalText: [
+            entry.title,
+            entry.summary,
+            entry.body,
+            entry.anchorIdPrefix ? `Anchor prefix: ${entry.anchorIdPrefix}` : null,
+            entry.contentIdPrefixes.length > 0
+              ? `Content ids: ${entry.contentIdPrefixes.join(', ')}`
+              : null,
+            entry.nativeGuideIds.length > 0
+              ? `Linked native guides: ${entry.nativeGuideIds.join(', ')}`
+              : null,
+          ]
+            .filter((value): value is string => Boolean(value))
+            .join('\n'),
+          canonicalTags: [...new Set([...hit.tags, ...entry.tags, 'mongo-canonical'])],
+          canonicalSourceCollection: 'kangur_page_content',
+          hydrationSource: 'kangur_page_content',
+        };
+      }
+    }
+
     if (hit.sourceCollection === 'kangur_ai_tutor_native_guides' && hit.sourceRecordId) {
       const entry = nativeGuideEntriesById.get(hit.sourceRecordId);
       if (entry) {

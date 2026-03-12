@@ -32,6 +32,7 @@ export const KANGUR_KNOWLEDGE_NODE_SOURCES = [
   'kangur_context_registry',
   'kangur_ai_tutor_content',
   'kangur_ai_tutor_native_guides',
+  'kangur_page_content',
   'kangur_manual_manifest',
 ] as const;
 
@@ -40,6 +41,7 @@ export type KangurKnowledgeNodeSource = (typeof KANGUR_KNOWLEDGE_NODE_SOURCES)[n
 export const KANGUR_KNOWLEDGE_CANONICAL_SOURCE_COLLECTIONS = [
   'kangur_ai_tutor_content',
   'kangur_ai_tutor_native_guides',
+  'kangur_page_content',
   'kangur_context_registry',
 ] as const;
 

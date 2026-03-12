@@ -57,20 +57,6 @@ type TimedStatusRecord = {
   timestampMs: number;
 };
 
-type AgentRuntimeRunStatus =
-  | 'queued'
-  | 'running'
-  | 'completed'
-  | 'failed'
-  | 'stopped'
-  | 'waiting_human';
-
-type AgentRuntimeRunRecord = {
-  id: string;
-  status: AgentRuntimeRunStatus | string;
-  updatedAt: Date | string | null;
-};
-
 const DOMAIN_CONFIG: Record<BrainOperationsDomainKey, DomainConfig> = {
   ai_paths: {
     label: 'AI Paths',
@@ -584,7 +570,7 @@ const collectAgentRuntimeDomain = async (
 
   runs.forEach((run) => {
     if (run.status in counts) {
-      counts[run.status as keyof typeof counts] += 1;
+      counts[run.status] += 1;
     }
   });
 

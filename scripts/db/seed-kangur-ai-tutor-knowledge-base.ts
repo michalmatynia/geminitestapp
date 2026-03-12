@@ -1,6 +1,7 @@
 import 'dotenv/config';
 
 import { REQUIRED_KANGUR_AI_TUTOR_NATIVE_GUIDE_COVERAGE } from '@/features/kangur/ai-tutor-native-guide-coverage';
+import { getKangurPageContentStore } from '@/features/kangur/server/page-content-repository';
 import {
   DEFAULT_KANGUR_AI_TUTOR_CONTENT,
   parseKangurAiTutorContent,
@@ -74,6 +75,7 @@ async function main(): Promise<void> {
     const existingGuides = await guideCollection.findOne({ locale: defaultGuides.locale });
     const mergedContent = resolveMergedContent(existingContent?.content, defaultContent);
     const mergedGuides = resolveMergedGuides(existingGuides?.store, defaultGuides);
+    const pageContentStore = await getKangurPageContentStore(defaultGuides.locale);
     const now = new Date();
 
     await contentCollection.updateOne(
@@ -113,6 +115,8 @@ async function main(): Promise<void> {
         contentVersion: mergedContent.version,
         nativeGuideVersion: mergedGuides.version,
         nativeGuideEntryCount: mergedGuides.entries.length,
+        pageContentVersion: pageContentStore.version,
+        pageContentEntryCount: pageContentStore.entries.length,
         requiredGuideCoverageCount: REQUIRED_KANGUR_AI_TUTOR_NATIVE_GUIDE_COVERAGE.length,
       })}\n`
     );

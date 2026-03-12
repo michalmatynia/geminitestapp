@@ -35,7 +35,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
     {
       title: 'Poznaj figury',
       content: (
-        <div className='grid grid-cols-2 gap-2'>
+        <div className='grid grid-cols-1 gap-2 min-[360px]:grid-cols-2'>
           {SHAPE_CARDS.slice(0, 4).map((shape) => (
             <KangurLessonCallout
               key={shape.name}

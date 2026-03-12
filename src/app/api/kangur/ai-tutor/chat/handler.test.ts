@@ -849,6 +849,7 @@ describe('kangur ai tutor chat handler', () => {
     expect(body.knowledgeGraph).toEqual({
       applied: true,
       queryMode: 'website_help',
+      queryStatus: 'hit',
       recallStrategy: 'metadata_only',
       lexicalHitCount: 1,
       vectorHitCount: 0,
@@ -1469,6 +1470,7 @@ describe('kangur ai tutor chat handler', () => {
     expect(body.knowledgeGraph).toEqual({
       applied: true,
       queryMode: 'website_help',
+      queryStatus: 'hit',
       recallStrategy: 'metadata_only',
       lexicalHitCount: 1,
       vectorHitCount: 0,
@@ -1575,6 +1577,7 @@ describe('kangur ai tutor chat handler', () => {
     expect(body.knowledgeGraph).toEqual({
       applied: true,
       queryMode: 'semantic',
+      queryStatus: 'hit',
       recallStrategy: 'hybrid_vector',
       lexicalHitCount: 2,
       vectorHitCount: 3,

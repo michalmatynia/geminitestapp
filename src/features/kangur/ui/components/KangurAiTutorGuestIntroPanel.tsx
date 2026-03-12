@@ -63,7 +63,7 @@ function KangurAiTutorGuestIntroHeader(): JSX.Element {
   } = useKangurAiTutorGuestIntroPanelContext();
 
   return (
-    <div className='flex items-start justify-between gap-3'>
+    <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
       <div className='min-w-0'>
         <KangurAiTutorChromeKicker>
           {guestTutorLabel}
@@ -79,6 +79,7 @@ function KangurAiTutorGuestIntroHeader(): JSX.Element {
         data-testid='kangur-ai-tutor-guest-intro-close'
         onClick={onClose}
         aria-label={closeAria}
+        className='self-start sm:self-auto'
       />
     </div>
   );
@@ -88,8 +89,14 @@ function KangurAiTutorGuestIntroActions(): JSX.Element {
   const { acceptLabel, onAccept } = useKangurAiTutorGuestIntroPanelContext();
 
   return (
-    <div className='mt-4 flex justify-end'>
-      <KangurButton type='button' size='sm' variant='primary' onClick={onAccept}>
+    <div className='mt-4 flex justify-stretch sm:justify-end'>
+      <KangurButton
+        type='button'
+        size='sm'
+        variant='primary'
+        className='w-full sm:w-auto'
+        onClick={onAccept}
+      >
         {acceptLabel}
       </KangurButton>
     </div>

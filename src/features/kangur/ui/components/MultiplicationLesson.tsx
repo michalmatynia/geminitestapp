@@ -52,7 +52,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, Less
       title: 'Tabliczka mnozenia × 2 i × 3',
       content: (
         <div className='flex flex-col gap-2 w-full'>
-          <div className='grid grid-cols-2 gap-2'>
+          <div className='grid grid-cols-1 gap-2 min-[360px]:grid-cols-2'>
             {[2, 3].map((base) => (
               <KangurLessonCallout key={base} accent='violet' className='rounded-xl' padding='sm'>
                 <KangurStatusChip
@@ -79,7 +79,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, Less
       title: 'Tabliczka mnozenia × 4 i × 5',
       content: (
         <div className='flex flex-col gap-2 w-full'>
-          <div className='grid grid-cols-2 gap-2'>
+          <div className='grid grid-cols-1 gap-2 min-[360px]:grid-cols-2'>
             {[4, 5].map((base) => (
               <KangurLessonCallout key={base} accent='indigo' className='rounded-xl' padding='sm'>
                 <KangurStatusChip

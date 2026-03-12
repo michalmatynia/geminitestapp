@@ -86,7 +86,7 @@ export default function ProgressOverview({
             eyebrow='Poziom i doswiadczenie'
             title={currentLevel.title}
             titleAs='p'
-            titleClassName={`mt-1 text-xl font-extrabold ${currentLevel.color}`}
+            titleClassName={`mt-1 text-lg font-extrabold sm:text-xl ${currentLevel.color}`}
             description={`Poziom ${currentLevel.level} · ${totalXp} XP lacznie`}
             descriptionClassName='mb-2'
           />
@@ -105,7 +105,7 @@ export default function ProgressOverview({
         </div>
       </KangurGlassPanel>
 
-      <div className='grid grid-cols-2 sm:grid-cols-3 gap-3'>
+      <div className='grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 sm:grid-cols-3'>
         {stats.map((stat) => (
           <KangurMetricCard
             key={stat.label}
@@ -212,7 +212,7 @@ export default function ProgressOverview({
             {topActivities.map((activity) => (
               <div
                 key={activity.key}
-                className='soft-card flex items-center justify-between gap-3 rounded-3xl border [border-color:var(--kangur-soft-card-border)] px-4 py-3'
+                className='soft-card flex flex-col items-start gap-3 rounded-3xl border [border-color:var(--kangur-soft-card-border)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between'
                 data-testid={`progress-overview-activity-${activity.key}`}
               >
                 <div className='min-w-0'>
@@ -225,7 +225,9 @@ export default function ProgressOverview({
                     {activity.bestScorePercent}%
                   </p>
                 </div>
-                <KangurStatusChip accent='indigo'>{activity.totalXpEarned} XP</KangurStatusChip>
+                <KangurStatusChip accent='indigo' className='self-start sm:self-auto'>
+                  {activity.totalXpEarned} XP
+                </KangurStatusChip>
               </div>
             ))}
           </div>

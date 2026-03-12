@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { isSensitiveKey } from '@/shared/lib/observability/log-redaction';
 import {
   logClientError,
+  resetClientErrorLoggerStateForTests,
   setClientErrorBaseContext,
 } from '@/shared/utils/observability/client-error-logger';
 
@@ -16,6 +17,7 @@ vi.mock('@/shared/lib/observability/log-redaction', () => ({
 describe('client-error-logger', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetClientErrorLoggerStateForTests();
 
     // Mock navigator and window
     vi.stubGlobal('navigator', {
@@ -30,6 +32,7 @@ describe('client-error-logger', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
   });
 
@@ -84,5 +87,75 @@ describe('client-error-logger', () => {
     const body = JSON.parse(vi.mocked(global.fetch).mock.calls[0]![1]!.body as string);
     expect(body.context.password).toBe('[REDACTED]');
     expect(body.context.user).toBe('admin');
+  });
+
+  it('dedupes identical request timeout reports within the suppression window', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-12T08:30:00.000Z'));
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      sendBeacon: undefined,
+    });
+
+    const context = {
+      endpoint: '/api/v2/products/paged',
+      method: 'GET',
+      source: 'products.admin',
+    };
+
+    logClientError('Request timeout after 15000ms', { context });
+    logClientError('Request timeout after 15000ms', { context });
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    const body = JSON.parse(vi.mocked(global.fetch).mock.calls[0]![1]!.body as string);
+    expect(body.message).toBe('Request timeout after 15000ms');
+    expect(body.context).toMatchObject(context);
+  });
+
+  it('allows the same timeout report again after the suppression window expires', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-12T08:30:00.000Z'));
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      sendBeacon: undefined,
+    });
+
+    const context = {
+      endpoint: '/api/v2/products/paged',
+      method: 'GET',
+      source: 'products.admin',
+    };
+
+    logClientError('Request timeout after 15000ms', { context });
+    vi.advanceTimersByTime(20_001);
+    logClientError('Request timeout after 15000ms', { context });
+
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not dedupe timeout reports for different endpoints', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-12T08:30:00.000Z'));
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      sendBeacon: undefined,
+    });
+
+    logClientError('Request timeout after 15000ms', {
+      context: {
+        endpoint: '/api/v2/products/paged',
+        method: 'GET',
+        source: 'products.admin',
+      },
+    });
+    logClientError('Request timeout after 15000ms', {
+      context: {
+        endpoint: '/api/v2/products/entities/catalogs',
+        method: 'GET',
+        source: 'products.admin',
+      },
+    });
+
+    expect(global.fetch).toHaveBeenCalledTimes(2);
   });
 });

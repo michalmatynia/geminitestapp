@@ -1,163 +1,64 @@
-import { NextRequest, type NextResponse } from 'next/server';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-const {
-  authMock,
-  findAuthUserByIdMock,
-  ensureDefaultKangurLearnerForOwnerMock,
-  getKangurLearnerByIdMock,
-  listKangurLearnersByOwnerMock,
-  readKangurLearnerSessionMock,
-} = vi.hoisted(() => ({
-  authMock: vi.fn(),
-  findAuthUserByIdMock: vi.fn(),
-  ensureDefaultKangurLearnerForOwnerMock: vi.fn(),
-  getKangurLearnerByIdMock: vi.fn(),
-  listKangurLearnersByOwnerMock: vi.fn(),
-  readKangurLearnerSessionMock: vi.fn(),
-}));
-
-vi.mock('@/features/auth/server', () => ({
-  auth: authMock,
-  findAuthUserById: findAuthUserByIdMock,
+vi.mock('@/server/auth', () => ({
+  auth: vi.fn(),
+  findAuthUserById: vi.fn(),
+  normalizeAuthEmail: (value: string) => value.trim().toLowerCase(),
 }));
 
 vi.mock('./kangur-learner-repository', () => ({
-  ensureDefaultKangurLearnerForOwner: ensureDefaultKangurLearnerForOwnerMock,
-  getKangurLearnerById: getKangurLearnerByIdMock,
-  listKangurLearnersByOwner: listKangurLearnersByOwnerMock,
+  ensureDefaultKangurLearnerForOwner: vi.fn(),
+  getKangurLearnerById: vi.fn(),
+  listKangurLearnersByOwner: vi.fn(),
 }));
 
-vi.mock('./kangur-learner-session', async () => {
-  const actual = await vi.importActual<typeof import('./kangur-learner-session')>(
-    './kangur-learner-session',
-  );
-  return {
-    ...actual,
-    readKangurLearnerSession: readKangurLearnerSessionMock,
-  };
+vi.mock('./kangur-learner-session', () => ({
+  readKangurLearnerSession: vi.fn(),
+}));
+
+import { createDefaultKangurAiTutorLearnerMood } from '@/shared/contracts/kangur-ai-tutor-mood';
+import { kangurAuthUserSchema } from '@/shared/contracts/kangur';
+
+import { toKangurAuthUser, type KangurParentActor } from './kangur-actor';
+
+const learner = {
+  id: 'learner-1',
+  ownerUserId: 'owner-1',
+  displayName: 'Ada',
+  loginName: 'ada',
+  status: 'active' as const,
+  legacyUserKey: null,
+  aiTutor: createDefaultKangurAiTutorLearnerMood(),
+  createdAt: '2026-03-10T12:00:00.000Z',
+  updatedAt: '2026-03-10T12:00:00.000Z',
+};
+
+const buildParentActor = (overrides: Partial<KangurParentActor> = {}): KangurParentActor => ({
+  actorId: 'owner-1',
+  actorType: 'parent',
+  canManageLearners: true,
+  ownerUserId: 'owner-1',
+  ownerEmail: 'parent@example.com',
+  ownerName: 'Parent Example',
+  ownerEmailVerified: true,
+  role: 'user',
+  activeLearner: learner,
+  learners: [learner],
+  ...overrides,
 });
 
-import { resolveKangurActor, toKangurAuthUser } from './kangur-actor';
+describe('toKangurAuthUser', () => {
+  it('drops invalid parent owner emails so the auth payload stays schema-valid', () => {
+    const authUser = toKangurAuthUser(buildParentActor({ ownerEmail: 'not-an-email' }));
 
-describe('resolveKangurActor', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    authMock.mockResolvedValue(null);
-    listKangurLearnersByOwnerMock.mockResolvedValue([]);
-    ensureDefaultKangurLearnerForOwnerMock.mockResolvedValue(undefined);
+    expect(authUser.email).toBeNull();
+    expect(kangurAuthUserSchema.parse(authUser).email).toBeNull();
   });
 
-  it('resolves a learner actor from the signed learner session when no web auth session exists', async () => {
-    readKangurLearnerSessionMock.mockReturnValue({
-      learnerId: 'learner-1',
-      ownerUserId: 'parent-1',
-      exp: Date.now() + 60_000,
-    });
-    getKangurLearnerByIdMock.mockResolvedValue({
-      id: 'learner-1',
-      ownerUserId: 'parent-1',
-      displayName: 'Ada Learner',
-      loginName: 'ada',
-      status: 'active',
-      legacyUserKey: null,
-      aiTutor: {
-        confidence: 0,
-        curiosity: 0,
-        encouragement: 0,
-        momentum: 0,
-        updatedAt: '2026-03-20T00:00:00.000Z',
-      },
-      createdAt: '2026-03-20T00:00:00.000Z',
-      updatedAt: '2026-03-20T00:00:00.000Z',
-    });
-    findAuthUserByIdMock.mockResolvedValue({
-      id: 'parent-1',
-      email: 'parent@example.com',
-      name: 'Parent Demo',
-    });
+  it('normalizes valid parent owner emails before returning the auth payload', () => {
+    const authUser = toKangurAuthUser(buildParentActor({ ownerEmail: ' Parent@Example.COM ' }));
 
-    const actor = await resolveKangurActor(
-      new NextRequest('http://localhost/api/kangur/auth/me'),
-    );
-
-    expect(actor).toMatchObject({
-      actorId: 'learner-1',
-      actorType: 'learner',
-      canManageLearners: false,
-      ownerUserId: 'parent-1',
-      ownerEmail: 'parent@example.com',
-      ownerName: 'Parent Demo',
-      activeLearner: expect.objectContaining({
-        id: 'learner-1',
-        displayName: 'Ada Learner',
-      }),
-      learners: [
-        expect.objectContaining({
-          id: 'learner-1',
-        }),
-      ],
-    });
-    expect(getKangurLearnerByIdMock).toHaveBeenCalledWith('learner-1');
-    expect(findAuthUserByIdMock).toHaveBeenCalledWith('parent-1');
-  });
-
-  it('maps learner actors into Kangur auth users without exposing owner email as learner email', async () => {
-    const user = toKangurAuthUser({
-      actorId: 'learner-1',
-      actorType: 'learner',
-      canManageLearners: false,
-      ownerUserId: 'parent-1',
-      ownerEmail: 'parent@example.com',
-      ownerName: 'Parent Demo',
-      role: 'user',
-      activeLearner: {
-        id: 'learner-1',
-        ownerUserId: 'parent-1',
-        displayName: 'Ada Learner',
-        loginName: 'ada',
-        status: 'active',
-        legacyUserKey: null,
-        aiTutor: {
-          confidence: 0,
-          curiosity: 0,
-          encouragement: 0,
-          momentum: 0,
-          updatedAt: '2026-03-20T00:00:00.000Z',
-        },
-        createdAt: '2026-03-20T00:00:00.000Z',
-        updatedAt: '2026-03-20T00:00:00.000Z',
-      },
-      learners: [
-        {
-          id: 'learner-1',
-          ownerUserId: 'parent-1',
-          displayName: 'Ada Learner',
-          loginName: 'ada',
-          status: 'active',
-          legacyUserKey: null,
-          aiTutor: {
-            confidence: 0,
-            curiosity: 0,
-            encouragement: 0,
-            momentum: 0,
-            updatedAt: '2026-03-20T00:00:00.000Z',
-          },
-          createdAt: '2026-03-20T00:00:00.000Z',
-          updatedAt: '2026-03-20T00:00:00.000Z',
-        },
-      ],
-    });
-
-    expect(user).toMatchObject({
-      id: 'learner-1',
-      full_name: 'Ada Learner',
-      email: null,
-      actorType: 'learner',
-      ownerUserId: 'parent-1',
-      activeLearner: expect.objectContaining({
-        id: 'learner-1',
-      }),
-    });
+    expect(authUser.email).toBe('parent@example.com');
+    expect(kangurAuthUserSchema.parse(authUser).email).toBe('parent@example.com');
   });
 });

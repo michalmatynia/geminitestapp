@@ -8,7 +8,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { render } from '@/__tests__/test-utils';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
-const { settingsStoreMock, authState, assignmentsState, progressState, routerPushMock } = vi.hoisted(() => ({
+const {
+  settingsStoreMock,
+  authState,
+  assignmentsState,
+  progressState,
+  routerPushMock,
+  useKangurPageContentEntryMock,
+} = vi.hoisted(() => ({
   settingsStoreMock: {
     get: vi.fn<(key: string) => string | undefined>(),
   },
@@ -28,6 +35,7 @@ const { settingsStoreMock, authState, assignmentsState, progressState, routerPus
     },
   },
   routerPushMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -161,6 +169,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
   useKangurTutorAnchor: () => undefined,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
+}));
+
 vi.mock('@/features/kangur/ui/components/KangurProfileMenu', () => ({
   KangurProfileMenu: () => <div data-testid='kangur-profile-menu' />,
 }));
@@ -257,6 +269,13 @@ describe('Lessons', () => {
       navigateToLogin: vi.fn(),
       logout: vi.fn(),
     };
+    useKangurPageContentEntryMock.mockImplementation(() => ({
+      entry: null,
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    }));
   });
 
   it('renders stored document content when the lesson is explicitly in document mode', () => {
@@ -884,6 +903,55 @@ describe('Lessons', () => {
       'border-dashed',
       'border'
     );
+  });
+
+  it('uses Mongo-backed page-content copy for the lessons list intro and empty state when available', () => {
+    setSettingsStore({
+      lessons: [createLesson({ enabled: false })],
+    });
+    useKangurPageContentEntryMock.mockImplementation((entryId: string) => {
+      if (entryId === 'lessons-list-intro') {
+        return {
+          entry: {
+            id: 'lessons-list-intro',
+            title: 'Lekcje',
+            summary: 'Mongo intro do lekcji.',
+          },
+          data: undefined,
+          isLoading: false,
+          isError: false,
+          error: null,
+        };
+      }
+
+      if (entryId === 'lessons-list-empty-state') {
+        return {
+          entry: {
+            id: 'lessons-list-empty-state',
+            title: 'Brak gotowych lekcji',
+            summary: 'Mongo pusty stan listy lekcji.',
+          },
+          data: undefined,
+          isLoading: false,
+          isError: false,
+          error: null,
+        };
+      }
+
+      return {
+        entry: null,
+        data: undefined,
+        isLoading: false,
+        isError: false,
+        error: null,
+      };
+    });
+
+    renderLessonsPage();
+
+    expect(screen.getByText('Mongo intro do lekcji.')).toBeInTheDocument();
+    expect(screen.getByText('Brak gotowych lekcji')).toBeInTheDocument();
+    expect(screen.getByText('Mongo pusty stan listy lekcji.')).toBeInTheDocument();
   });
 });
 it('renders the lessons wordmark without a duplicate visible text heading', () => {

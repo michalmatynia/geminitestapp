@@ -58,7 +58,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonLead>
             Patrz na wszystkie cechy i wybierz te, która jest wspólna dla całej grupy.
           </KangurLessonLead>
-          <div className='grid grid-cols-2 gap-3 w-full'>
+          <div className='grid w-full grid-cols-1 gap-3 min-[360px]:grid-cols-2'>
             <KangurLessonCallout accent='emerald' className='text-center' padding='sm'>
               <p className='font-bold text-green-700 text-xs mb-1'>Zwierzeta latajace</p>
               <p className='text-2xl'>🦅 🦆 🐝 🦋</p>
@@ -105,7 +105,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             <p className='text-sm font-semibold text-teal-700 mb-3 text-center'>
               Figury: duze/małe × czerwone/niebieskie
             </p>
-            <div className='grid grid-cols-2 gap-2 text-center text-sm'>
+            <div className='grid grid-cols-1 gap-2 text-center text-sm min-[360px]:grid-cols-2'>
               {[
                 ['Duze czerwone', '🔴🔴'],
                 ['Duze niebieskie', '🔵🔵'],

@@ -10,7 +10,7 @@ Layering
 
 UI (components) → Application (actions/use-cases) → Domain (rules/types) → Data (repositories).
 
-UI must not call Prisma directly.
+UI must not call database repositories or drivers directly.
 
 Repository pattern (lightweight)
 

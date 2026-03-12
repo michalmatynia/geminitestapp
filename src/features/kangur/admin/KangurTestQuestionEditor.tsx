@@ -598,6 +598,7 @@ function KangurTestQuestionEditorContent({
               selectedLabel={previewSelectedLabel}
               onSelect={(): void => {}}
               showAnswer={previewShowAnswer}
+              showSectionIntro={false}
             />
           </div>
         </div>

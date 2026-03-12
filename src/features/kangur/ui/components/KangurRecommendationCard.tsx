@@ -1,61 +1,112 @@
 'use client';
 
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 
-import { KangurInfoCard, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurCardDescription,
+  KangurCardTitle,
+  KangurInfoCard,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
 import { cn } from '@/shared/utils';
 
 type KangurRecommendationCardProps = {
+  action?: ReactNode;
   accent: ComponentProps<typeof KangurInfoCard>['accent'];
+  bodyClassName?: string;
   className?: string;
+  contentClassName?: string;
   dataTestId: string;
-  description?: string;
+  description?: ReactNode;
+  descriptionClassName?: string;
+  descriptionRelaxed?: boolean;
+  descriptionSize?: ComponentProps<typeof KangurCardDescription>['size'];
   descriptionTestId?: string;
-  label: string;
-  labelTestId: string;
-  title: string;
+  headerClassName?: string;
+  headerExtras?: ReactNode;
+  label?: ReactNode;
+  labelClassName?: string;
+  labelContent?: ReactNode;
+  labelSize?: ComponentProps<typeof KangurStatusChip>['size'];
+  labelStyle?: ComponentProps<typeof KangurStatusChip>['labelStyle'];
+  labelTestId?: string;
+  title: ReactNode;
+  titleClassName?: string;
+  titleSize?: ComponentProps<typeof KangurCardTitle>['size'];
   titleTestId: string;
 };
 
 export default function KangurRecommendationCard({
+  action,
   accent,
+  bodyClassName,
   className,
+  contentClassName,
   dataTestId,
   description,
+  descriptionClassName,
+  descriptionRelaxed,
+  descriptionSize,
   descriptionTestId,
+  headerClassName,
+  headerExtras,
   label,
+  labelClassName,
+  labelContent,
+  labelSize,
+  labelStyle,
   labelTestId,
   title,
+  titleClassName,
+  titleSize,
   titleTestId,
 }: KangurRecommendationCardProps): React.JSX.Element {
   return (
     <KangurInfoCard
       accent={accent}
-      className={cn('w-full rounded-[24px]', className)}
+      className={cn('w-full', className)}
       data-testid={dataTestId}
       padding='md'
       tone='accent'
     >
-      <div className='flex flex-col gap-2 text-left'>
-        <KangurStatusChip
-          accent={accent}
-          className='w-fit text-[11px] uppercase tracking-[0.16em]'
-          data-testid={labelTestId}
-          size='sm'
-        >
-          {label}
-        </KangurStatusChip>
-        <p className='text-sm font-extrabold [color:var(--kangur-page-text)]' data-testid={titleTestId}>
-          {title}
-        </p>
-        {description ? (
-          <p
-            className='text-xs [color:var(--kangur-page-muted-text)]'
-            data-testid={descriptionTestId}
+      <div className={cn('flex flex-col gap-2 text-left', contentClassName)}>
+        <div className={cn('flex flex-wrap items-center gap-2', headerClassName)}>
+          {labelContent ??
+            (label ? (
+              <KangurStatusChip
+                accent={accent}
+                className={cn('w-fit text-[11px] uppercase tracking-[0.16em]', labelClassName)}
+                data-testid={labelTestId}
+                labelStyle={labelStyle}
+                size={labelSize}
+              >
+                {label}
+              </KangurStatusChip>
+            ) : null)}
+          {headerExtras}
+        </div>
+        <div className={cn('flex flex-col', bodyClassName)}>
+          <KangurCardTitle
+            as='p'
+            className={titleClassName}
+            data-testid={titleTestId}
+            size={titleSize}
           >
-            {description}
-          </p>
-        ) : null}
+            {title}
+          </KangurCardTitle>
+          {description ? (
+            <KangurCardDescription
+              as='p'
+              className={descriptionClassName}
+              data-testid={descriptionTestId}
+              relaxed={descriptionRelaxed}
+              size={descriptionSize}
+            >
+              {description}
+            </KangurCardDescription>
+          ) : null}
+        </div>
+        {action}
       </div>
     </KangurInfoCard>
   );

@@ -5,9 +5,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { routeNavigatorPushMock, useKangurParentDashboardRuntimeMock } = vi.hoisted(() => ({
+const { routeNavigatorPushMock, useKangurParentDashboardRuntimeMock, useKangurPageContentEntryMock } = vi.hoisted(() => ({
   routeNavigatorPushMock: vi.fn(),
   useKangurParentDashboardRuntimeMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(),
 }));
 const getCurrentKangurDailyQuestMock = vi.hoisted(() => vi.fn());
 
@@ -36,6 +37,10 @@ vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () =
   useKangurParentDashboardRuntime: useKangurParentDashboardRuntimeMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
+}));
+
 vi.mock('@/features/kangur/ui/services/daily-quests', () => ({
   getCurrentKangurDailyQuest: getCurrentKangurDailyQuestMock,
 }));
@@ -46,6 +51,19 @@ describe('KangurParentDashboardHeroWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getCurrentKangurDailyQuestMock.mockReturnValue(null);
+    useKangurPageContentEntryMock.mockReturnValue({
+      data: undefined,
+      entry: null,
+      error: null,
+      isError: false,
+      isFetched: true,
+      isFetching: false,
+      isLoading: false,
+      isPending: false,
+      isSuccess: true,
+      refetch: vi.fn(),
+      status: 'success',
+    });
   });
 
   it('uses the shared intro-card shell for unauthenticated access', () => {
@@ -200,5 +218,63 @@ describe('KangurParentDashboardHeroWidget', () => {
       pageKey: 'LearnerProfile',
       sourceId: 'parent-dashboard-hero:back-profile',
     });
+  });
+
+  it('renders Mongo-backed hero copy when available', () => {
+    useKangurPageContentEntryMock.mockImplementation((entryId: string) => ({
+      data: undefined,
+      entry:
+        entryId === 'parent-dashboard-hero'
+          ? {
+            id: 'parent-dashboard-hero',
+            title: 'Panel Rodzica',
+            summary: 'To centrum decyzji opiekuna.',
+          }
+          : {
+            id: 'parent-dashboard-guest-hero',
+            title: 'Panel Rodzica / Nauczyciela',
+            summary: 'Sprawdz, jak odblokowac widok opiekuna.',
+          },
+      error: null,
+      isError: false,
+      isFetched: true,
+      isFetching: false,
+      isLoading: false,
+      isPending: false,
+      isSuccess: true,
+      refetch: vi.fn(),
+      status: 'success',
+    }));
+    useKangurParentDashboardRuntimeMock.mockReturnValue({
+      activeLearner: { displayName: 'Maja' },
+      basePath: '/kangur',
+      canManageLearners: true,
+      isAuthenticated: true,
+      logout: vi.fn(),
+      navigateToLogin: vi.fn(),
+      progress: {
+        totalXp: 480,
+        gamesPlayed: 4,
+        perfectGames: 1,
+        lessonsCompleted: 2,
+        clockPerfect: 0,
+        calendarPerfect: 0,
+        geometryPerfect: 0,
+        badges: [],
+        operationsPlayed: [],
+        totalCorrectAnswers: 20,
+        totalQuestionsAnswered: 25,
+        dailyQuestsCompleted: 1,
+        bestWinStreak: 2,
+        activityStats: {},
+        lessonMastery: {},
+      },
+      viewerName: 'parent@example.com',
+      viewerRoleLabel: 'Rodzic',
+    });
+
+    render(<KangurParentDashboardHeroWidget showActions={false} />);
+
+    expect(screen.getByText(/To centrum decyzji opiekuna\./)).toBeInTheDocument();
   });
 });

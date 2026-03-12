@@ -30,12 +30,10 @@ vi.mock('@/features/ai/server', () => ({
   listImageStudioRuns: listImageStudioRunsMock,
 }));
 
-vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
-  default: {
-    chatbotAgentRun: {
-      findMany: agentFindManyMock,
-    },
-  },
+vi.mock('@/features/ai/agent-runtime/store-delegates', () => ({
+  getChatbotAgentRunDelegate: vi.fn(() => ({
+    findMany: agentFindManyMock,
+  })),
 }));
 
 vi.mock('@/features/ai/insights/server', () => ({

@@ -6,16 +6,37 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { settingsStoreMock, mutateAsyncMock, toastMock, useAgentPersonasMock, apiGetMock, apiPostMock } =
+const {
+  settingsStoreMock,
+  mutateMock,
+  mutateAsyncMock,
+  toastMock,
+  useAgentPersonasMock,
+  apiGetMock,
+  apiPostMock,
+  useUserPreferencesMock,
+  updateUserPreferencesMutateMock,
+  useCmsThemesMock,
+  queryClientMock,
+} =
   vi.hoisted(() => ({
     settingsStoreMock: {
       get: vi.fn<(key: string) => string | undefined>(),
     },
+    mutateMock: vi.fn(),
     mutateAsyncMock: vi.fn(),
     toastMock: vi.fn(),
     useAgentPersonasMock: vi.fn(),
     apiGetMock: vi.fn(),
     apiPostMock: vi.fn(),
+    useUserPreferencesMock: vi.fn(),
+    updateUserPreferencesMutateMock: vi.fn(),
+    useCmsThemesMock: vi.fn(),
+    queryClientMock: {
+      invalidateQueries: vi.fn(),
+      setQueryData: vi.fn(),
+      getQueryData: vi.fn(),
+    },
   }));
 
 vi.mock('@tanstack/react-query', () => ({
@@ -23,6 +44,15 @@ vi.mock('@tanstack/react-query', () => ({
     data: [],
     isLoading: false,
     isError: false,
+  }),
+  useQueryClient: () => queryClientMock,
+  useMutation: () => ({
+    mutate: vi.fn(),
+    mutateAsync: vi.fn(),
+    isPending: false,
+    isError: false,
+    isSuccess: false,
+    reset: vi.fn(),
   }),
 }));
 
@@ -44,8 +74,16 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
 
 vi.mock('@/shared/hooks/use-settings', () => ({
   useUpdateSetting: () => ({
+    mutate: mutateMock,
     mutateAsync: mutateAsyncMock,
     isPending: false,
+  }),
+}));
+
+vi.mock('@/shared/hooks/useUserPreferences', () => ({
+  useUserPreferences: () => useUserPreferencesMock(),
+  useUpdateUserPreferences: () => ({
+    mutate: updateUserPreferencesMutateMock,
   }),
 }));
 
@@ -58,6 +96,10 @@ vi.mock('@/shared/lib/api-client', () => ({
 
 vi.mock('@/shared/hooks/useAgentPersonas', () => ({
   useAgentPersonas: useAgentPersonasMock,
+}));
+
+vi.mock('@/features/cms/hooks/useCmsQueries', () => ({
+  useCmsThemes: () => useCmsThemesMock(),
 }));
 
 vi.mock('@/shared/ui', async (importOriginal) => {
@@ -84,6 +126,7 @@ import {
   KANGUR_AI_TUTOR_SETTINGS_KEY,
 } from '@/features/kangur/settings-ai-tutor';
 import { DEFAULT_KANGUR_PAGE_CONTENT_STORE } from '@/features/kangur/page-content-catalog';
+import { KANGUR_THEME_SETTINGS_KEY } from '@/features/kangur/theme-settings';
 
 const expectInitialNarratorProbe = async (): Promise<void> => {
   await waitFor(() =>
@@ -102,7 +145,17 @@ const expectInitialNarratorProbe = async (): Promise<void> => {
 describe('AdminKangurSettingsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mutateMock.mockImplementation(() => undefined);
     mutateAsyncMock.mockResolvedValue({});
+    useUserPreferencesMock.mockReturnValue({
+      data: { cmsThemeOpenSections: [] },
+      isFetched: true,
+    });
+    useCmsThemesMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: false,
+    });
     apiGetMock.mockImplementation(async (path: string) => {
       if (path === '/api/kangur/ai-tutor/content') {
         return DEFAULT_KANGUR_AI_TUTOR_CONTENT;
@@ -171,6 +224,9 @@ describe('AdminKangurSettingsPage', () => {
       if (key === KANGUR_PARENT_VERIFICATION_SETTINGS_KEY) {
         return JSON.stringify({ resendCooldownSeconds: 90 });
       }
+      if (key === KANGUR_THEME_SETTINGS_KEY) {
+        return undefined;
+      }
       return undefined;
     });
     useAgentPersonasMock.mockReturnValue({
@@ -226,47 +282,93 @@ describe('AdminKangurSettingsPage', () => {
     });
   });
 
-  it('loads and saves global AI tutor settings from the admin page', async () => {
+  it('renders the storefront theme editor and autosaves Kangur theme changes to Mongo', async () => {
     render(<AdminKangurSettingsPage />);
     await expectInitialNarratorProbe();
 
-    expect(screen.queryByLabelText(/agent nauczający/i)).not.toBeInTheDocument();
-    expect(screen.getByLabelText(/persona \(charakter tutora\)/i)).toHaveTextContent('Mila');
-    expect(screen.getByLabelText(/preset ruchu tutora/i)).toHaveTextContent('Tablet');
-    expect(screen.getByLabelText(/dzienny limit wiadomości/i)).toHaveValue(12);
-    expect(screen.getByLabelText(/anonimowy onboarding ai tutora/i)).toHaveTextContent(
-      'Pierwsza wizyta'
-    );
-    expect(screen.getByLabelText(/onboarding pierwszej strony/i)).toHaveTextContent(
-      'Pierwsza wizyta'
-    );
+    expect(screen.getByText('Storefront Theme')).toBeInTheDocument();
+    expect(screen.getByText(/changes in this editor save to mongo automatically/i)).toBeInTheDocument();
+    expect(screen.getByText('Core Palette')).toBeInTheDocument();
+    expect(screen.getByText('Backgrounds and Surfaces')).toBeInTheDocument();
+    expect(screen.getByText('Buttons')).toBeInTheDocument();
+    expect(screen.getByText('Navigation Pills')).toBeInTheDocument();
+    expect(screen.getByText('Inputs')).toBeInTheDocument();
+    expect(screen.getByText('Typography and Layout')).toBeInTheDocument();
+    expect(screen.getByText('Shape and Spacing')).toBeInTheDocument();
+    expect(screen.getByLabelText(/button padding x/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/page padding top/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/shared gap scale/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/pill padding x/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/input height/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/card radius/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/panel inner padding/i)).toBeInTheDocument();
+    expect(screen.queryByText('Product Cards')).not.toBeInTheDocument();
+    expect(screen.queryByText('Collection Cards')).not.toBeInTheDocument();
+    expect(screen.queryByText('Blog Cards')).not.toBeInTheDocument();
+    expect(screen.queryByText('Custom CSS')).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Typography$/)).not.toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText(/dzienny limit wiadomości/i), {
-      target: { value: '20' },
+    fireEvent.change(screen.getByLabelText(/page background value/i), {
+      target: { value: '#faf5ff' },
     });
-    fireEvent.click(screen.getByLabelText(/anonimowy onboarding ai tutora/i));
-    fireEvent.click(screen.getByRole('option', { name: /Każde wejście/i }));
-    fireEvent.click(screen.getByLabelText(/onboarding pierwszej strony/i));
-    fireEvent.click(screen.getAllByRole('option', { name: /Tylko ręcznie/i })[0]!);
-    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
 
-    await waitFor(() =>
-      expect(mutateAsyncMock).toHaveBeenCalledWith({
-        key: KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
-        value: JSON.stringify({
-          agentPersonaId: 'persona-1',
-          motionPresetId: 'tablet',
-          dailyMessageLimit: 20,
-          guestIntroMode: 'every_visit',
-          homeOnboardingMode: 'off',
-        }),
-      })
-    );
+    await waitFor(() => {
+      const themeSaveCall = mutateMock.mock.calls.find(
+        ([input]) => input?.key === KANGUR_THEME_SETTINGS_KEY
+      );
 
-    expect(toastMock).toHaveBeenCalledWith('Kangur AI tutor settings saved.', {
-      variant: 'success',
+      expect(themeSaveCall).toBeTruthy();
+      expect(JSON.parse(String(themeSaveCall?.[0]?.value))).toMatchObject({
+        backgroundColor: '#faf5ff',
+      });
     });
   });
+
+  it(
+    'loads and saves global AI tutor settings from the admin page',
+    async () => {
+      render(<AdminKangurSettingsPage />);
+      await expectInitialNarratorProbe();
+
+      expect(screen.queryByLabelText(/agent nauczający/i)).not.toBeInTheDocument();
+      expect(screen.getByLabelText(/persona \(charakter tutora\)/i)).toHaveTextContent('Mila');
+      expect(screen.getByLabelText(/preset ruchu tutora/i)).toHaveTextContent('Tablet');
+      expect(screen.getByLabelText(/dzienny limit wiadomości/i)).toHaveValue(12);
+      expect(screen.getByLabelText(/anonimowy onboarding ai tutora/i)).toHaveTextContent(
+        'Pierwsza wizyta'
+      );
+      expect(screen.getByLabelText(/onboarding pierwszej strony/i)).toHaveTextContent(
+        'Pierwsza wizyta'
+      );
+
+      fireEvent.change(screen.getByLabelText(/dzienny limit wiadomości/i), {
+        target: { value: '20' },
+      });
+      fireEvent.click(screen.getByLabelText(/anonimowy onboarding ai tutora/i));
+      fireEvent.click(screen.getByRole('option', { name: /Każde wejście/i }));
+      fireEvent.click(screen.getByLabelText(/onboarding pierwszej strony/i));
+      fireEvent.click(screen.getAllByRole('option', { name: /Tylko ręcznie/i })[0]!);
+      fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
+
+      await waitFor(() =>
+        expect(mutateAsyncMock).toHaveBeenCalledWith({
+          key: KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
+          value: JSON.stringify({
+            agentPersonaId: 'persona-1',
+            motionPresetId: 'tablet',
+            dailyMessageLimit: 20,
+            guestIntroMode: 'every_visit',
+            homeOnboardingMode: 'off',
+          }),
+        })
+      );
+
+      expect(toastMock).toHaveBeenCalledWith('Kangur AI tutor settings saved.', {
+        variant: 'success',
+      });
+    },
+    60_000
+  );
 
   it('loads Mongo-backed AI tutor content and saves edited content JSON', async () => {
     render(<AdminKangurSettingsPage />);

@@ -72,4 +72,17 @@ describe('LessonMasteryInsights', () => {
       ).parentElement
     ).toHaveClass('soft-card', 'border-dashed', 'border');
   });
+
+  it('allows callers to override the section title and summary copy', () => {
+    render(
+      <LessonMasteryInsights
+        progress={progress}
+        sectionSummary='Mongo opis opanowania lekcji na profilu ucznia.'
+        sectionTitle='Opanowanie lekcji'
+      />
+    );
+
+    expect(screen.getByText('Opanowanie lekcji')).toBeInTheDocument();
+    expect(screen.getByText('Mongo opis opanowania lekcji na profilu ucznia.')).toBeInTheDocument();
+  });
 });

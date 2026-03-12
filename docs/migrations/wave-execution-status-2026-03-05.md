@@ -60,9 +60,7 @@ Execution note:
 Migration result summary (local report):
 
 - Aggregate changes/writes were `0` for executed write-mode migrations.
-- Report artifacts:
-  - `docs/migrations/reports/wave1-dry-run-local.json`
-  - `docs/migrations/reports/wave1-write-local.json`
+- Historical wave1 provider report artifacts were removed during the Mongo-only cleanup.
 
 Script lifecycle output:
 
@@ -129,7 +127,6 @@ Completed:
 5. Additional verification gates executed on current baseline:
    - `npm run test:unit` passed (`738` files, `3703` tests).
    - `npm run typecheck` passed.
-   - `npm run test:integration:prisma` passed (`20` files, `162` tests).
    - `npm run test:integration:mongo` passed (`9` files + `1` skipped guard file).
    - `npm run test:integration:mongo:canonical-shape-guard` passed (`1/1`).
    - `npm run test:ai-paths:signal-flow-regression` passed (`4` files, `22` tests).

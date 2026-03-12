@@ -46,13 +46,13 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
 
   return (
     <div
-      className='flex flex-wrap gap-2 border-b px-3 py-3 [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_80%,rgba(245,158,11,0.15))]'
+      className='flex flex-wrap gap-2 border-b kangur-chat-padding-md [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_80%,rgba(245,158,11,0.15))]'
       data-kangur-tts-ignore='true'
     >
       {shouldRenderToolbox ? (
         <div
           data-testid='kangur-ai-tutor-toolbox'
-          className='w-full rounded-[24px] border px-3 py-3 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.18)]'
+          className='w-full kangur-chat-card border kangur-chat-padding-md shadow-[0_10px_24px_-18px_rgba(15,23,42,0.18)]'
           style={{
             background:
               'linear-gradient(135deg, color-mix(in srgb, var(--kangur-soft-card-background) 90%, rgba(255,248,220,0.98)) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 84%, rgba(254,243,199,0.9)) 100%)',
@@ -150,7 +150,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
       ) : null}
       {usageSummary && usageSummary.dailyMessageLimit !== null ? (
         <div
-          className='w-full rounded-2xl border px-3 py-2 text-[11px] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
+          className='w-full kangur-chat-inset border kangur-chat-padding-sm text-[11px] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
           style={{
             background:
               'color-mix(in srgb, var(--kangur-soft-card-background) 82%, rgba(254,243,199,0.92))',
@@ -182,7 +182,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
         <div
           data-testid='kangur-ai-tutor-proactive-nudge'
           data-nudge-mode={visibleProactiveNudge.mode}
-          className='w-full rounded-2xl border px-3 py-3 shadow-[0_6px_16px_-10px_rgba(15,23,42,0.1)]'
+          className='w-full kangur-chat-inset border kangur-chat-padding-md shadow-[0_6px_16px_-10px_rgba(15,23,42,0.1)]'
           style={{
             background:
               visibleProactiveNudge.mode === 'coach'

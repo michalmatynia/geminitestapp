@@ -6,6 +6,7 @@ import {
   type KangurAiTutorContent,
 } from '@/shared/contracts/kangur-ai-tutor-content';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 
 type KangurAiTutorContentDoc = {
   locale: string;
@@ -77,8 +78,31 @@ export async function getKangurAiTutorContent(locale = 'pl'): Promise<KangurAiTu
   }
 
   try {
-    return parseKangurAiTutorContent(existing.content);
+    const repaired = parseKangurAiTutorContent(repairKangurPolishCopy(existing.content));
+
+    if (JSON.stringify(repaired) !== JSON.stringify(existing.content)) {
+      await collection.updateOne(
+        { locale },
+        {
+          $set: {
+            content: repaired,
+            updatedAt: new Date(),
+          },
+        }
+      );
+    }
+
+    return repaired;
   } catch {
+    await collection.updateOne(
+      { locale },
+      {
+        $set: {
+          content: fallback,
+          updatedAt: new Date(),
+        },
+      }
+    );
     return fallback;
   }
 }
@@ -86,7 +110,7 @@ export async function getKangurAiTutorContent(locale = 'pl'): Promise<KangurAiTu
 export async function upsertKangurAiTutorContent(
   content: KangurAiTutorContent
 ): Promise<KangurAiTutorContent> {
-  const parsed = parseKangurAiTutorContent(content);
+  const parsed = parseKangurAiTutorContent(repairKangurPolishCopy(content));
 
   if (!process.env['MONGODB_URI']) {
     return parsed;

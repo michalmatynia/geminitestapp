@@ -5,14 +5,19 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { useKangurLearnerProfileRuntimeMock } = vi.hoisted(() => ({
+const { useKangurLearnerProfileRuntimeMock, useKangurPageContentEntryMock } = vi.hoisted(() => ({
   useKangurLearnerProfileRuntimeMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', () => ({
   formatKangurProfileDateTime: (value: string) => `formatted:${value}`,
   formatKangurProfileDuration: (seconds: number) => `${seconds}s`,
   useKangurLearnerProfileRuntime: useKangurLearnerProfileRuntimeMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
 import { KangurLearnerProfileSessionsWidget } from './KangurLearnerProfileSessionsWidget';
@@ -86,6 +91,13 @@ const buildRuntimeValue = (overrides?: Record<string, unknown>) => ({
 describe('KangurLearnerProfileSessionsWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useKangurPageContentEntryMock.mockReturnValue({
+      entry: null,
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
   });
 
   it('shows grouped badge-track progress for learner profile badges', () => {
@@ -149,5 +161,29 @@ describe('KangurLearnerProfileSessionsWidget', () => {
       'Kolejne odznaki pojawia sie wraz z postepem.'
     );
     expect(screen.queryByTestId('learner-profile-badge-first_game')).toBeNull();
+  });
+
+  it('uses Mongo-backed sessions intro copy when available', () => {
+    useKangurPageContentEntryMock.mockReturnValue({
+      entry: {
+        id: 'learner-profile-sessions',
+        title: 'Historia sesji',
+        summary: 'Mongo opis ostatnich podejsc i sciezek odznak.',
+      },
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+    useKangurLearnerProfileRuntimeMock.mockReturnValue(buildRuntimeValue());
+
+    render(<KangurLearnerProfileSessionsWidget />);
+
+    expect(screen.getByTestId('learner-profile-sessions-intro')).toHaveTextContent(
+      'Historia sesji'
+    );
+    expect(screen.getByTestId('learner-profile-sessions-intro')).toHaveTextContent(
+      'Mongo opis ostatnich podejsc i sciezek odznak.'
+    );
   });
 });

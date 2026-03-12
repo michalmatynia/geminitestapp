@@ -6,8 +6,10 @@ import { useEffect, useState } from 'react';
 import { useKangurLearnerProfileRuntime } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import {
   KangurMetricCard,
+  KangurPanelIntro,
   KangurProgressBar,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import {
   getCurrentKangurDailyQuest,
   type KangurDailyQuestState,
@@ -16,6 +18,7 @@ import { getNextLockedBadge } from '@/features/kangur/ui/services/progress';
 
 export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
   const { progress, snapshot } = useKangurLearnerProfileRuntime();
+  const { entry: overviewContent } = useKangurPageContentEntry('learner-profile-overview');
   const nextBadge = getNextLockedBadge(progress);
   const [dailyQuest, setDailyQuest] = useState<KangurDailyQuestState | null | undefined>(undefined);
 
@@ -33,7 +36,16 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
           : 'slate';
 
   return (
-    <section className='grid grid-cols-1 gap-4 min-[360px]:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6'>
+    <section className='flex flex-col gap-4'>
+      <KangurPanelIntro
+        data-testid='learner-profile-overview-intro'
+        description={
+          overviewContent?.summary ??
+          'Najwazniejsze wskazniki dnia: skutecznosc, misja, cel i odznaki w jednym widoku.'
+        }
+        eyebrow={overviewContent?.title ?? 'Przeglad wynikow'}
+      />
+      <div className='grid grid-cols-1 gap-4 min-[360px]:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6'>
       <KangurMetricCard
         accent='indigo'
         data-testid='learner-profile-overview-average-accuracy'
@@ -161,6 +173,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         }
         value={`${snapshot.unlockedBadges}/${snapshot.totalBadges}`}
       />
+      </div>
     </section>
   );
 }

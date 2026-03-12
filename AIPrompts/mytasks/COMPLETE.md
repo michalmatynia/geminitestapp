@@ -1,4 +1,4 @@
-5. Database robustness with Prisma + MongoDB
+5. Database robustness with MongoDB
 
 Indexes are non-optional
 
@@ -142,7 +142,7 @@ Introduce lib/validators/products.ts with Zod schemas:
 
 ProductCreateSchema, ProductUpdateSchema, ProductQuerySchema (pagination/sort/filter), ProductIdSchema (ObjectId-like string).
 
-Parse context.params.id and reject early with 400 instead of “falls through and Prisma throws”.
+Parse context.params.id and reject early with 400 instead of “falls through and the database layer throws”.
 
 B. One response format (success + error)
 
@@ -164,7 +164,7 @@ generates requestId
 
 catches errors
 
-maps AppError / Prisma errors → HTTP status + safe payload
+maps AppError / database errors → HTTP status + safe payload
 
 logs once, consistently
 
@@ -184,7 +184,7 @@ Right now productService.ts does a lot (DB + file handling + validation). Split 
 
 lib/services/productService.ts (orchestrates use-cases)
 
-lib/repositories/productRepository.ts (Prisma calls only)
+lib/repositories/productRepository.ts (database calls only)
 
 lib/services/storageService.ts (file upload/delete)
 
@@ -224,13 +224,13 @@ RateLimitError (429)
 
 InternalError (500)
 
-D. Prisma/Mongo specifics to harden
+D. MongoDB specifics to harden
 
 Ensure you have the right indexes for list pages and search filters.
 
 Ensure unique constraints where required (SKU, slug, etc.)
 
-Handle Prisma error codes centrally (e.g., unique constraint conflicts → 409).
+Handle database driver errors centrally (e.g., unique/index conflicts → 409).
 
 Normalize ID handling: always treat IDs as strings at the API boundary; map internally.
 
@@ -320,7 +320,7 @@ Naming conventions:
 
 getProductById, listProducts, createProduct, etc.
 
-No Prisma in route handlers
+No direct database client calls in route handlers
 
 No file handling inside repository
 
@@ -364,7 +364,7 @@ return NextResponse.json(
 );
 }
 
-      // TODO: map Prisma errors to Conflict, etc.
+      // TODO: map database errors to Conflict, etc.
 
       // Unknown = 500
       console.error({ requestId, err });
@@ -390,11 +390,11 @@ return { ok: true, data }
 
 Add Zod schemas for params/query/body + env validation
 
-Add AppError + handleRoute() wrapper + Prisma error mapping
+Add AppError + handleRoute() wrapper + database error mapping
 
 Split service into service/repository/storage/mapper
 
-Introduce DTOs and stop returning raw Prisma objects
+Introduce DTOs and stop returning raw database objects
 
 Upgrade lib/api.ts to typed + runtime-validated responses
 
@@ -504,7 +504,7 @@ lib/features/products/
 service.ts // orchestration (create/update/delete/duplicate)
 validators.ts // zod schemas for inputs (incl. duplicate)
 dto.ts // ProductDTO / list DTO (client-safe shape)
-mapper.ts // prisma -> DTO
+mapper.ts // database record -> DTO
 repository.ts // productRepository wrapper / interface
 imageLinking.ts // linkImagesToProduct, unlinkImageFromProduct, moveTemp...
 filePaths.ts // temp prefix, safeSku, safe path helpers
@@ -909,7 +909,7 @@ Use Zod schemas as single source of truth for DTOs
 Keep only cross-domain types in shared/types
 Feature-specific types stay in feature folders 7. Performance
 Avoid double-fetching between RSC and React Query
-Confirm single Prisma client instance (connection pooling)
+Confirm a single MongoDB client instance (connection pooling)
 Add staleTime for read-heavy data
 Want me to implement any of these fixes? The AppErrorCodes fix is highest priority—it will cause runtime errors currently.
 
@@ -959,13 +959,13 @@ Best pattern: Next.js UI + API triggers → background worker (Docker container 
 
 Typical setup:
 
-Next.js (admin UI) + Prisma/Postgres
+Next.js (admin UI) + MongoDB
 
 Redis + BullMQ (job queue)
 
 scanner-worker Node service (runs Playwright, calls ZAP container, stores results)
 
-Minimal data model (Prisma idea)
+Minimal data model
 
 SecurityScan explain: target, environment, status, startedAt, finishedAt, summary JSON
 
@@ -1217,4 +1217,4 @@ explained: Do you need authenticated scanning (behind login) or public pages onl
 
 Do you already have Redis/queues, or should this run as a separate “scanner” container?
 
-If you answer those, I can give you a concrete repo layout + Prisma schema + BullMQ worker + exact scan job code wired to your admin panel.
+If you answer those, I can give you a concrete repo layout + shared schemas/contracts + BullMQ worker + exact scan job code wired to your admin panel.

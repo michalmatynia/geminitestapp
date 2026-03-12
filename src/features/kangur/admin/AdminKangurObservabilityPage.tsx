@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { createContext, type JSX, type ReactNode, useCallback, useContext } from 'react';
+import { createContext, type JSX, type ReactNode, useCallback, useContext, useState } from 'react';
 
 import { KangurAdminContentShell } from '@/features/kangur/admin/components/KangurAdminContentShell';
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
@@ -26,12 +26,17 @@ import type {
   KangurObservabilityAlert,
   KangurKnowledgeGraphStatusSnapshot,
   KangurObservabilityRange,
+  KangurObservabilityStatus,
   KangurObservabilitySummary,
   KangurRouteHealth,
   KangurRouteMetrics,
 } from '@/shared/contracts';
-import { kangurObservabilityRangeSchema } from '@/shared/contracts';
+import {
+  kangurKnowledgeGraphSyncResponseSchema,
+  kangurObservabilityRangeSchema,
+} from '@/shared/contracts';
 import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/shared/contracts/kangur-knowledge-graph';
+import { api } from '@/shared/lib/api-client';
 import {
   Alert,
   Button,
@@ -200,6 +205,40 @@ const buildSystemLogsHref = (input: {
   if (input.to) params.set('to', input.to);
   const query = params.toString();
   return query ? `/admin/system/logs?${query}` : '/admin/system/logs';
+};
+
+const resolveObservabilityAlertVariant = (
+  status: KangurObservabilityStatus
+): 'success' | 'warning' | 'error' | 'info' => {
+  switch (status) {
+    case 'ok':
+      return 'success';
+    case 'warning':
+      return 'warning';
+    case 'critical':
+      return 'error';
+    case 'insufficient_data':
+    default:
+      return 'info';
+  }
+};
+
+const formatKnowledgeGraphFreshnessValue = (
+  alert: KangurObservabilityAlert | undefined
+): string => {
+  if (!alert) {
+    return '—';
+  }
+
+  if (alert.status === 'ok') {
+    return 'Current';
+  }
+
+  if (typeof alert.value === 'number' && Number.isFinite(alert.value)) {
+    return `${alert.value.toFixed(1)} h lag`;
+  }
+
+  return alert.status === 'insufficient_data' ? 'Awaiting data' : 'Unknown';
 };
 
 const ObservabilitySummaryContext = createContext<{
@@ -591,6 +630,9 @@ function RecentServerLogs(): JSX.Element {
 function AiTutorBridgeMetrics(): JSX.Element {
   const { summary } = useObservabilitySummaryContext();
   const aiTutor = summary.analytics.aiTutor;
+  const directAnswerCount = aiTutor.pageContentAnswerCount + aiTutor.nativeGuideAnswerCount;
+  const directAnswerRate = formatPercent(aiTutor.directAnswerRatePercent);
+  const brainFallbackRate = formatPercent(aiTutor.brainFallbackRatePercent);
   const bridgeCompletionRate = formatPercent(aiTutor.bridgeCompletionRatePercent);
   const graphCoverageRate = formatPercent(aiTutor.knowledgeGraphCoverageRatePercent);
   const vectorAssistRate = formatPercent(aiTutor.knowledgeGraphVectorAssistRatePercent);
@@ -609,6 +651,36 @@ function AiTutorBridgeMetrics(): JSX.Element {
             value={formatNumber(aiTutor.messageSucceededCount)}
             hint='Successful learner-facing AI Tutor replies in the selected window.'
             icon={<BotIcon className='size-3.5' />}
+          />
+          <MetricCard
+            title='Page-Content Answers'
+            value={formatNumber(aiTutor.pageContentAnswerCount)}
+            hint='Replies resolved directly from Mongo-backed section page content.'
+            icon={<BotIcon className='size-3.5' />}
+          />
+          <MetricCard
+            title='Native Guide Answers'
+            value={formatNumber(aiTutor.nativeGuideAnswerCount)}
+            hint='Replies resolved from linked native guides without Brain fallback.'
+            icon={<BotIcon className='size-3.5' />}
+          />
+          <MetricCard
+            title='Brain Fallback Replies'
+            value={formatNumber(aiTutor.brainAnswerCount)}
+            hint='Replies that still required Brain generation after deterministic sources were checked.'
+            icon={<ShieldAlertIcon className='size-3.5' />}
+          />
+          <MetricCard
+            title='Direct Answer Rate'
+            value={directAnswerRate}
+            hint={`Page-content and native-guide replies as a share of ${formatNumber(aiTutor.messageSucceededCount)} Tutor replies.`}
+            icon={<GaugeIcon className='size-3.5' />}
+          />
+          <MetricCard
+            title='Brain Fallback Rate'
+            value={brainFallbackRate}
+            hint={`Brain fallbacks as a share of ${formatNumber(aiTutor.messageSucceededCount)} Tutor replies. Direct answers: ${formatNumber(directAnswerCount)}.`}
+            icon={<ShieldAlertIcon className='size-3.5' />}
           />
           <MetricCard
             title='Bridge Suggestions'
@@ -684,16 +756,28 @@ function AiTutorBridgeMetrics(): JSX.Element {
 
 function KnowledgeGraphStatusSection({
   knowledgeGraphStatus,
+  freshnessAlert,
   isRefreshing,
+  isSyncing,
+  syncFeedback,
   error,
   onRefresh,
+  onSync,
 }: {
   knowledgeGraphStatus: KangurKnowledgeGraphStatusSnapshot;
+  freshnessAlert?: KangurObservabilityAlert | undefined;
   isRefreshing: boolean;
+  isSyncing: boolean;
+  syncFeedback:
+    | {
+        tone: 'success' | 'error';
+        message: string;
+      }
+    | null;
   error: Error | null;
   onRefresh: () => void;
+  onSync: () => void;
 }): JSX.Element {
-
   return (
     <div id='knowledge-graph-status'>
       <FormSection title='Knowledge Graph Status' variant='subtle'>
@@ -738,15 +822,26 @@ function KnowledgeGraphStatusSection({
                 </p>
               </div>
               <div className='flex flex-col gap-3'>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  className='self-start'
-                  onClick={onRefresh}
-                  disabled={isRefreshing}
-                >
-                  {isRefreshing ? 'Refreshing...' : 'Refresh graph status'}
-                </Button>
+                <div className='flex flex-wrap gap-2'>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    className='self-start'
+                    onClick={onSync}
+                    disabled={isSyncing || isRefreshing}
+                  >
+                    {isSyncing ? 'Syncing graph...' : 'Sync graph now'}
+                  </Button>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    className='self-start'
+                    onClick={onRefresh}
+                    disabled={isRefreshing || isSyncing}
+                  >
+                    {isRefreshing ? 'Refreshing...' : 'Refresh graph status'}
+                  </Button>
+                </div>
                 <div className='grid gap-3 sm:grid-cols-2'>
                 <MetadataItem label='Graph Key' value={knowledgeGraphStatus.graphKey} variant='card' mono />
                 <MetadataItem label='Synced' value={formatDateTime(knowledgeGraphStatus.syncedAt)} variant='card' />
@@ -756,7 +851,50 @@ function KnowledgeGraphStatusSection({
               </div>
             </div>
 
+            {freshnessAlert ? (
+              <Alert
+                variant={resolveObservabilityAlertVariant(freshnessAlert.status)}
+                title='Freshness against canonical tutor content'
+                className='mt-4'
+              >
+                <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
+                  <div className='space-y-2'>
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <StatusBadge status={freshnessAlert.status} />
+                      <span className='text-xs font-semibold uppercase tracking-wider text-gray-200'>
+                        {formatKnowledgeGraphFreshnessValue(freshnessAlert)}
+                      </span>
+                    </div>
+                    <p className='text-xs leading-relaxed'>{freshnessAlert.summary}</p>
+                  </div>
+                  {freshnessAlert.investigation ? (
+                    <Button asChild variant='ghost' size='sm' className='self-start'>
+                      <Link href={freshnessAlert.investigation.href}>
+                        {freshnessAlert.investigation.label}
+                        <ArrowUpRightIcon className='size-3.5' />
+                      </Link>
+                    </Button>
+                  ) : null}
+                </div>
+              </Alert>
+            ) : null}
+
+            {syncFeedback ? (
+              <Alert
+                variant={syncFeedback.tone}
+                title={syncFeedback.tone === 'success' ? 'Graph sync completed' : 'Graph sync failed'}
+                className='mt-4'
+              >
+                {syncFeedback.message}
+              </Alert>
+            ) : null}
+
             <div className='mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
+              <MetadataItem
+                label='Freshness'
+                value={formatKnowledgeGraphFreshnessValue(freshnessAlert)}
+                variant='card'
+              />
               <MetadataItem
                 label='Semantic Coverage'
                 value={formatPercent(knowledgeGraphStatus.semanticCoverageRatePercent)}
@@ -879,13 +1017,24 @@ function PerformanceBaselineCard(): JSX.Element {
 function SummaryContent({
   knowledgeGraphStatus,
   knowledgeGraphStatusIsRefreshing,
+  knowledgeGraphIsSyncing,
+  knowledgeGraphSyncFeedback,
   knowledgeGraphStatusError,
   refreshKnowledgeGraphStatus,
+  syncKnowledgeGraph,
 }: {
   knowledgeGraphStatus: KangurKnowledgeGraphStatusSnapshot;
   knowledgeGraphStatusIsRefreshing: boolean;
+  knowledgeGraphIsSyncing: boolean;
+  knowledgeGraphSyncFeedback:
+    | {
+        tone: 'success' | 'error';
+        message: string;
+      }
+    | null;
   knowledgeGraphStatusError: Error | null;
   refreshKnowledgeGraphStatus: () => void;
+  syncKnowledgeGraph: () => void;
 }): JSX.Element {
   const { range, summary } = useObservabilitySummaryContext();
   const alertById = new Map(summary.alerts.map((alert) => [alert.id, alert]));
@@ -985,9 +1134,13 @@ function SummaryContent({
       <AiTutorBridgeMetrics />
       <KnowledgeGraphStatusSection
         knowledgeGraphStatus={knowledgeGraphStatus}
+        freshnessAlert={alertById.get('kangur-knowledge-graph-freshness')}
         isRefreshing={knowledgeGraphStatusIsRefreshing}
+        isSyncing={knowledgeGraphIsSyncing}
+        syncFeedback={knowledgeGraphSyncFeedback}
         error={knowledgeGraphStatusError}
         onRefresh={refreshKnowledgeGraphStatus}
+        onSync={syncKnowledgeGraph}
       />
 
       <FormSection title='Alerts' variant='subtle'>
@@ -1115,14 +1268,65 @@ export function AdminKangurObservabilityPage(): JSX.Element {
     summary?.knowledgeGraphStatus.graphKey ?? KANGUR_KNOWLEDGE_GRAPH_KEY
   );
   const knowledgeGraphStatus = knowledgeGraphStatusQuery.data ?? summary?.knowledgeGraphStatus;
+  const [isKnowledgeGraphSyncing, setIsKnowledgeGraphSyncing] = useState(false);
+  const [knowledgeGraphSyncFeedback, setKnowledgeGraphSyncFeedback] = useState<{
+    tone: 'success' | 'error';
+    message: string;
+  } | null>(null);
   const headerLogsHref = buildSystemLogsHref({
     query: 'kangur.',
     from: summary?.window.from,
     to: summary?.window.to,
   });
+  const summaryKnowledgeGraphStatus = summary?.knowledgeGraphStatus;
+  const summaryKnowledgeGraphLocale =
+    summaryKnowledgeGraphStatus?.mode === 'status' ? summaryKnowledgeGraphStatus.locale : null;
   const refreshKnowledgeGraphStatus = useCallback((): void => {
     void knowledgeGraphStatusQuery.refetch();
   }, [knowledgeGraphStatusQuery]);
+  const syncKnowledgeGraph = useCallback(async (): Promise<void> => {
+    if (knowledgeGraphStatus?.mode !== 'status') {
+      return;
+    }
+
+    setIsKnowledgeGraphSyncing(true);
+    setKnowledgeGraphSyncFeedback(null);
+
+    try {
+      const withEmbeddings =
+        knowledgeGraphStatus.embeddingNodeCount > 0 || knowledgeGraphStatus.vectorIndexPresent;
+      const response = await api.post(
+        '/api/kangur/knowledge-graph/sync',
+        {
+          locale: knowledgeGraphStatus.locale ?? summaryKnowledgeGraphLocale ?? 'pl',
+          withEmbeddings,
+        },
+        { timeout: 120000 }
+      );
+      const parsed = kangurKnowledgeGraphSyncResponseSchema.safeParse(response);
+
+      if (!parsed.success) {
+        throw new Error('Invalid Kangur knowledge graph sync response');
+      }
+
+      setKnowledgeGraphSyncFeedback({
+        tone: 'success',
+        message: `Synced ${formatNumber(parsed.data.sync.nodeCount)} nodes and ${formatNumber(parsed.data.sync.edgeCount)} edges${parsed.data.sync.withEmbeddings ? ' with embeddings preserved.' : '.'}`,
+      });
+      void summaryQuery.refetch();
+      void knowledgeGraphStatusQuery.refetch();
+    } catch (error) {
+      setKnowledgeGraphSyncFeedback({
+        tone: 'error',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Failed to sync the Kangur knowledge graph.',
+      });
+    } finally {
+      setIsKnowledgeGraphSyncing(false);
+    }
+  }, [knowledgeGraphStatus, knowledgeGraphStatusQuery, summaryKnowledgeGraphLocale, summaryQuery]);
   const handleRangeChange = useCallback(
     (nextRange: KangurObservabilityRange): void => {
       const nextParams = new URLSearchParams(searchParams.toString());
@@ -1197,8 +1401,13 @@ export function AdminKangurObservabilityPage(): JSX.Element {
             <SummaryContent
               knowledgeGraphStatus={knowledgeGraphStatus}
               knowledgeGraphStatusIsRefreshing={knowledgeGraphStatusQuery.isFetching}
+              knowledgeGraphIsSyncing={isKnowledgeGraphSyncing}
+              knowledgeGraphSyncFeedback={knowledgeGraphSyncFeedback}
               knowledgeGraphStatusError={knowledgeGraphStatusQuery.error}
               refreshKnowledgeGraphStatus={refreshKnowledgeGraphStatus}
+              syncKnowledgeGraph={(): void => {
+                void syncKnowledgeGraph();
+              }}
             />
           </ObservabilitySummaryContext.Provider>
         )}

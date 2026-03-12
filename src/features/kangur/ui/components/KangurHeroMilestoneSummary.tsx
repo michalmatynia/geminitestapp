@@ -1,11 +1,5 @@
 import KangurBadgeTrackHighlights from '@/features/kangur/ui/components/KangurBadgeTrackHighlights';
-import {
-  KangurCardDescription,
-  KangurCardTitle,
-  KangurProgressBar,
-  KangurSectionEyebrow,
-  KangurStatusChip,
-} from '@/features/kangur/ui/design/primitives';
+import { KangurProgressHighlightCardContent } from '@/features/kangur/ui/components/KangurProgressHighlightCardContent';
 import { getNextLockedBadge } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
@@ -45,37 +39,35 @@ export default function KangurHeroMilestoneSummary({
     >
       {nextBadge ? (
         <div
-          className='rounded-[28px] border border-amber-200/80 bg-amber-50/80 px-4 py-4'
+          className='rounded-[28px] border px-4 py-4'
           data-testid={`${summaryTestIdPrefix}-next-badge`}
           style={{
-            background: 'color-mix(in srgb, var(--kangur-soft-card-background) 82%, #fde68a)',
+            background: 'color-mix(in srgb, var(--kangur-soft-card-background) 92%, #fef3c7 8%)',
+            borderColor:
+              'color-mix(in srgb, var(--kangur-soft-card-border) 88%, #d97706 12%)',
           }}
         >
-          <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
-            <div className='min-w-0'>
-              <KangurSectionEyebrow
-                as='p'
-                className='tracking-[0.18em] text-amber-700/80'
-              >
-                Nastepny kamien milowy
-              </KangurSectionEyebrow>
-              <KangurCardTitle as='p' className='mt-1'>
+          <KangurProgressHighlightCardContent
+            chipAccent='amber'
+            chipClassName='text-[11px]'
+            chipLabel={nextBadge.summary}
+            description={nextBadge.desc}
+            descriptionStyle={{
+              color:
+                'color-mix(in srgb, var(--kangur-page-text) 74%, var(--kangur-page-muted-text) 26%)',
+            }}
+            eyebrow='Nastepny kamien milowy'
+            eyebrowStyle={{
+              color: 'color-mix(in srgb, var(--kangur-page-text) 70%, #92400e 30%)',
+            }}
+            progressAccent='amber'
+            progressBarTestId={`${summaryTestIdPrefix}-next-badge-bar`}
+            progressValue={nextBadge.progressPercent}
+            title={
+              <>
                 {nextBadge.emoji} {nextBadge.name}
-              </KangurCardTitle>
-              <KangurCardDescription as='p' className='mt-1 leading-5' size='xs'>
-                {nextBadge.desc}
-              </KangurCardDescription>
-            </div>
-            <KangurStatusChip accent='amber' className='self-start text-[11px] sm:shrink-0'>
-              {nextBadge.summary}
-            </KangurStatusChip>
-          </div>
-          <KangurProgressBar
-            accent='amber'
-            className='mt-3'
-            data-testid={`${summaryTestIdPrefix}-next-badge-bar`}
-            size='sm'
-            value={nextBadge.progressPercent}
+              </>
+            }
           />
         </div>
       ) : null}

@@ -53,6 +53,7 @@ import { KangurAdminContentShell } from './components/KangurAdminContentShell';
 import { KangurAiTutorContentSettingsPanel } from './components/KangurAiTutorContentSettingsPanel';
 import { KangurAiTutorNativeGuideSettingsPanel } from './components/KangurAiTutorNativeGuideSettingsPanel';
 import { KangurPageContentSettingsPanel } from './components/KangurPageContentSettingsPanel';
+import { KangurThemeSettingsPanel } from './components/KangurThemeSettingsPanel';
 
 const TEST_NARRATOR_TEMPLATE_TEXT =
   'A bright classroom welcomes curious minds. Here is a short narration sample to verify the chosen voice.';
@@ -483,7 +484,7 @@ export function AdminKangurSettingsPage(): ReactElement {
   return (
     <KangurAdminContentShell
       title='Kangur Settings'
-      description='Manage global AI Tutor, narration, and parent verification behavior across Kangur.'
+      description='Manage storefront theme, AI Tutor, narration, and parent verification behavior across Kangur.'
       breadcrumbs={[
         { label: 'Admin', href: '/admin' },
         { label: 'Kangur', href: '/admin/kangur' },
@@ -505,6 +506,14 @@ export function AdminKangurSettingsPage(): ReactElement {
       }
     >
       <div id='kangur-admin-settings-page' className='space-y-6'>
+        <FormSection
+          title='Storefront Theme'
+          description='Edit the shared Mongo-backed Kangur theme document that powers the public app appearance.'
+          className={SETTINGS_SECTION_CLASS_NAME}
+        >
+          <KangurThemeSettingsPanel />
+        </FormSection>
+
         <FormSection
           title='Narrator Engine'
           description='This applies globally to every learner-facing Kangur lesson and exercise.'

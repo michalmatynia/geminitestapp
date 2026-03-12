@@ -17,6 +17,8 @@ import {
   Q15Illustration,
   Q16Illustration,
 } from '@/features/kangur/ui/components/KangurIllustrations';
+import { KangurAnswerChoiceBadge } from '@/features/kangur/ui/components/KangurAnswerChoiceBadge';
+import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import { KangurLessonNarrator } from '@/features/kangur/ui/components/KangurLessonNarrator';
 import { KangurPracticeGameSummary } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import { useKangurGameContext } from '@/features/kangur/ui/context/KangurGameContext';
@@ -24,7 +26,6 @@ import {
   KangurButton,
   KangurInfoCard,
   KangurInlineFallback,
-  KangurOptionCardButton,
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -211,37 +212,31 @@ function ExamQuestion({
           const emphasis = isSelected ? 'accent' : 'neutral';
 
           return (
-            <motion.div
+            <KangurAnswerChoiceCard
+              accent={accent}
+              aria-label={`Odpowiedz ${String.fromCharCode(65 + index)}. ${String(choice)}`}
+              aria-pressed={isSelected}
+              buttonClassName={cn(
+                'flex items-center gap-3 px-4 py-3 font-semibold',
+                isSelected
+                  ? KANGUR_ACCENT_STYLES.amber.activeText
+                  : '[color:var(--kangur-page-text)]'
+              )}
+              data-testid={`kangur-exam-choice-${index}`}
+              emphasis={emphasis}
+              hoverScale={1.02}
               key={`${String(choice)}-${index}`}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              onClick={() => handleChoiceSelect(choice)}
+              tapScale={0.98}
+              type='button'
             >
-              <KangurOptionCardButton
-                accent={accent}
-                aria-label={`Odpowiedz ${String.fromCharCode(65 + index)}. ${String(choice)}`}
-                aria-pressed={isSelected}
-                className={cn(
-                  'w-full rounded-[24px] px-4 py-3 font-semibold transition-all flex items-center gap-3',
-                  isSelected
-                    ? KANGUR_ACCENT_STYLES.amber.activeText
-                    : '[color:var(--kangur-page-text)]'
-                )}
-                data-testid={`kangur-exam-choice-${index}`}
-                emphasis={emphasis}
-                onClick={() => handleChoiceSelect(choice)}
-                type='button'
+              <KangurAnswerChoiceBadge
+                className={isSelected ? KANGUR_ACCENT_STYLES.amber.badge : KANGUR_ACCENT_STYLES.slate.badge}
               >
-                <span
-                  className={cn(
-                    'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-sm font-extrabold',
-                    isSelected ? KANGUR_ACCENT_STYLES.amber.badge : KANGUR_ACCENT_STYLES.slate.badge
-                  )}
-                >
-                  {String.fromCharCode(65 + index)}
-                </span>
-                <span>{choice}</span>
-              </KangurOptionCardButton>
-            </motion.div>
+                {String.fromCharCode(65 + index)}
+              </KangurAnswerChoiceBadge>
+              <span>{choice}</span>
+            </KangurAnswerChoiceCard>
           );
         })}
       </div>
@@ -380,28 +375,24 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
               badgeClassName = KANGUR_ACCENT_STYLES.rose.badge;
             }
             return (
-              <KangurOptionCardButton
+              <KangurAnswerChoiceCard
                 accent={accent}
                 aria-disabled='true'
-                key={`${String(choice)}-${index}`}
-                className={cn(
-                  'w-full rounded-[24px] px-4 py-3 font-semibold flex items-center gap-3 cursor-default',
+                buttonClassName={cn(
+                  'flex items-center gap-3 px-4 py-3 font-semibold',
                   style
                 )}
                 data-testid={`kangur-exam-review-choice-${index}`}
                 emphasis={emphasis}
+                interactive={false}
+                key={`${String(choice)}-${index}`}
                 onClick={() => undefined}
                 state={state}
                 type='button'
               >
-                <span
-                  className={cn(
-                    'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-sm font-extrabold',
-                    badgeClassName
-                  )}
-                >
+                <KangurAnswerChoiceBadge className={badgeClassName}>
                   {String.fromCharCode(65 + index)}
-                </span>
+                </KangurAnswerChoiceBadge>
                 <span>{choice}</span>
                 {choice === question.answer && (
                   <CheckCircle className='w-4 h-4 text-green-600 ml-auto flex-shrink-0' />
@@ -409,7 +400,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
                 {choice === userAnswer && choice !== question.answer && (
                   <XCircle className='w-4 h-4 text-red-500 ml-auto flex-shrink-0' />
                 )}
-              </KangurOptionCardButton>
+              </KangurAnswerChoiceCard>
             );
           })}
         </div>
@@ -497,51 +488,48 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
           const skipped = !userAnswer;
           const accent: KangurAccent = skipped ? 'slate' : correct ? 'emerald' : 'rose';
           return (
-            <motion.div
+            <KangurAnswerChoiceCard
+              accent={accent}
+              aria-label={`Pytanie ${index + 1}. ${skipped ? 'Pominiete.' : correct ? 'Poprawna odpowiedz.' : `Niepoprawna odpowiedz ${String(userAnswer)}.`} Kliknij, aby zobaczyc rozwiazanie.`}
+              buttonClassName={cn(
+                'flex min-h-[84px] flex-col items-center gap-1 p-2 text-center sm:min-h-[92px]',
+                skipped
+                  ? KANGUR_ACCENT_STYLES.slate.activeText
+                  : correct
+                    ? KANGUR_ACCENT_STYLES.emerald.activeText
+                    : KANGUR_ACCENT_STYLES.rose.activeText
+              )}
+              data-testid={`kangur-exam-summary-question-${index}`}
+              emphasis='accent'
+              hoverScale={1.08}
               key={question.id}
-              whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.95 }}
-              role='listitem'
+              onClick={() => setReviewing(index)}
+              tapScale={0.95}
+              type='button'
+              wrapperRole='listitem'
             >
-              <KangurOptionCardButton
-                accent={accent}
-                aria-label={`Pytanie ${index + 1}. ${skipped ? 'Pominiete.' : correct ? 'Poprawna odpowiedz.' : `Niepoprawna odpowiedz ${String(userAnswer)}.`} Kliknij, aby zobaczyc rozwiazanie.`}
-                className={cn(
-                  'flex min-h-[84px] w-full flex-col items-center gap-1 rounded-[22px] p-2 text-center transition sm:min-h-[92px]',
+              <span className='text-xs font-bold [color:var(--kangur-page-muted-text)]'>
+                #{index + 1}
+              </span>
+              {skipped ? (
+                <span className='text-sm'>➖</span>
+              ) : correct ? (
+                <CheckCircle className='w-4 h-4 text-green-600' />
+              ) : (
+                <XCircle className='w-4 h-4 text-red-500' />
+              )}
+              <span
+                className={`text-[10px] font-bold ${
                   skipped
-                    ? KANGUR_ACCENT_STYLES.slate.activeText
+                    ? '[color:var(--kangur-page-muted-text)]'
                     : correct
-                      ? KANGUR_ACCENT_STYLES.emerald.activeText
-                      : KANGUR_ACCENT_STYLES.rose.activeText
-                )}
-                data-testid={`kangur-exam-summary-question-${index}`}
-                emphasis='accent'
-                onClick={() => setReviewing(index)}
-                type='button'
+                      ? 'text-green-700'
+                      : 'text-red-600'
+                }`}
               >
-                <span className='text-xs font-bold [color:var(--kangur-page-muted-text)]'>
-                  #{index + 1}
-                </span>
-                {skipped ? (
-                  <span className='text-sm'>➖</span>
-                ) : correct ? (
-                  <CheckCircle className='w-4 h-4 text-green-600' />
-                ) : (
-                  <XCircle className='w-4 h-4 text-red-500' />
-                )}
-                <span
-                  className={`text-[10px] font-bold ${
-                    skipped
-                      ? '[color:var(--kangur-page-muted-text)]'
-                      : correct
-                        ? 'text-green-700'
-                        : 'text-red-600'
-                  }`}
-                >
-                  {skipped ? 'pom.' : correct ? '✓' : userAnswer}
-                </span>
-              </KangurOptionCardButton>
-            </motion.div>
+                {skipped ? 'pom.' : correct ? '✓' : userAnswer}
+              </span>
+            </KangurAnswerChoiceCard>
           );
         })}
       </div>

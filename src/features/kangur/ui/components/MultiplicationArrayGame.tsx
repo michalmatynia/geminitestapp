@@ -1,6 +1,7 @@
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 
+import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import {
   KangurPracticeGameProgress,
   KangurPracticeGameStage,
@@ -9,7 +10,6 @@ import {
 import {
   KangurGlassPanel,
   KangurMetricCard,
-  KangurOptionCardButton,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
@@ -258,62 +258,60 @@ export default function MultiplicationArrayGame({
                 const glow = ROW_GLOW[groupIndex % ROW_GLOW.length];
                 const accent: KangurAccent = 'violet';
                 return (
-                  <motion.div
+                  <KangurAnswerChoiceCard
+                    accent={accent}
+                    aria-pressed={isCollected}
+                    buttonClassName={cn(
+                      'flex items-center gap-3 px-4 py-3 duration-300',
+                      isCollected
+                        ? KANGUR_ACCENT_STYLES.violet.activeText
+                        : '[color:var(--kangur-page-text)]',
+                      !isCollected && !celebrating ? 'cursor-pointer' : 'cursor-default'
+                    )}
+                    data-testid={`multiplication-array-group-${groupIndex}`}
+                    emphasis={isCollected ? 'accent' : 'neutral'}
+                    hoverScale={1.03}
+                    interactive={!isCollected && !celebrating}
                     key={groupIndex}
-                    whileHover={!isCollected && !celebrating ? { scale: 1.03 } : {}}
-                    whileTap={!isCollected && !celebrating ? { scale: 0.97 } : {}}
+                    onClick={() => handleTapGroup(groupIndex)}
+                    tapScale={0.97}
+                    type='button'
                   >
-                    <KangurOptionCardButton
-                      accent={accent}
-                      aria-pressed={isCollected}
+                    <span
                       className={cn(
-                        'w-full flex items-center gap-3 rounded-[24px] px-4 py-3 transition-all duration-300',
+                        'w-5 text-center text-xs font-bold',
                         isCollected
-                          ? KANGUR_ACCENT_STYLES.violet.activeText
-                          : '[color:var(--kangur-page-text)]',
-                        !isCollected && !celebrating ? 'cursor-pointer' : 'cursor-default'
+                          ? KANGUR_ACCENT_STYLES.violet.mutedText
+                          : '[color:var(--kangur-page-muted-text)]'
                       )}
-                      data-testid={`multiplication-array-group-${groupIndex}`}
-                      emphasis={isCollected ? 'accent' : 'neutral'}
-                      onClick={() => handleTapGroup(groupIndex)}
-                      type='button'
                     >
-                      <span
-                        className={cn(
-                          'w-5 text-center text-xs font-bold',
-                          isCollected
-                            ? KANGUR_ACCENT_STYLES.violet.mutedText
-                            : '[color:var(--kangur-page-muted-text)]'
-                        )}
+                      {groupIndex + 1}
+                    </span>
+                    <div className='flex gap-1 flex-wrap'>
+                      {Array.from({ length: b }).map((_, dotIndex) => (
+                        <motion.div
+                          key={dotIndex}
+                          initial={false}
+                          animate={
+                            isCollected ? { scale: 1, opacity: 1 } : { scale: 0.85, opacity: 0.4 }
+                          }
+                          transition={{ delay: isCollected ? dotIndex * 0.04 : 0, duration: 0.2 }}
+                          className={`w-6 h-6 rounded-full shadow-sm ${
+                            isCollected ? `${glow} shadow-md` : color
+                          } opacity-80`}
+                        />
+                      ))}
+                    </div>
+                    {isCollected && (
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className='ml-auto text-sm font-extrabold text-violet-600'
                       >
-                        {groupIndex + 1}
-                      </span>
-                      <div className='flex gap-1 flex-wrap'>
-                        {Array.from({ length: b }).map((_, dotIndex) => (
-                          <motion.div
-                            key={dotIndex}
-                            initial={false}
-                            animate={
-                              isCollected ? { scale: 1, opacity: 1 } : { scale: 0.85, opacity: 0.4 }
-                            }
-                            transition={{ delay: isCollected ? dotIndex * 0.04 : 0, duration: 0.2 }}
-                            className={`w-6 h-6 rounded-full shadow-sm ${
-                              isCollected ? `${glow} shadow-md` : color
-                            } opacity-80`}
-                          />
-                        ))}
-                      </div>
-                      {isCollected && (
-                        <motion.span
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          className='ml-auto text-sm font-extrabold text-violet-600'
-                        >
-                          +{b} ✓
-                        </motion.span>
-                      )}
-                    </KangurOptionCardButton>
-                  </motion.div>
+                        +{b} ✓
+                      </motion.span>
+                    )}
+                  </KangurAnswerChoiceCard>
                 );
               })}
             </div>

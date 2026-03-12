@@ -44,4 +44,38 @@ describe('Kangur CTA hover styles', () => {
     expect(source).toContain('rgba(51, 65, 85, 0.9)');
     expect(source).toContain('rgba(122, 74, 46, 0.44)');
   });
+
+  it('keeps shared gradient color shift on ctas and progress fills without attaching it to the excluded home action buttons', () => {
+    const source = readFileSync(globalStylesheetPath, 'utf8');
+    const primaryCtaBlock = source.match(/\.primary-cta\s*\{[\s\S]*?will-change:\s*transform;/)?.[0];
+    const warningCtaBlock = source.match(/\.warning-cta\s*\{[\s\S]*?will-change:\s*transform;/)?.[0];
+    const sharedButtonGradientMotionBlock = source.match(
+      /\.primary-cta,[\s\S]*?background-image:\s*linear-gradient\([\s\S]*?animation-name:\s*kangur-button-gradient-color-shift;[\s\S]*?animation-duration:\s*18s !important;[\s\S]*?animation-timing-function:\s*cubic-bezier\(0\.37, 0, 0\.23, 1\) !important;[\s\S]*?animation-iteration-count:\s*infinite !important;/
+    )?.[0];
+    const progressGradientMotionBlock = source.match(
+      /\.kangur-progress-fill\s*\{[\s\S]*?--kangur-progress-primary:\s*var\(--tw-gradient-from,\s*transparent\);[\s\S]*?background-image:\s*linear-gradient\([\s\S]*?animation-name:\s*kangur-progress-gradient-color-shift;[\s\S]*?animation-duration:\s*10s !important;[\s\S]*?animation-timing-function:\s*ease-in-out !important;[\s\S]*?animation-iteration-count:\s*infinite !important;/
+    )?.[0];
+
+    expect(source).toContain('@property --kangur-gradient-live-start');
+    expect(source).toContain('@property --kangur-gradient-live-mid');
+    expect(source).toContain('@property --kangur-gradient-live-end');
+    expect(source).toContain('@keyframes kangur-button-gradient-color-shift');
+    expect(source).toContain('@keyframes kangur-progress-gradient-color-shift');
+    expect(source).toContain('.kangur-progress-fill');
+    expect(source).toContain("button[class*='bg-gradient-to-']");
+    expect(source).toContain("button[class*='bg-[linear-gradient']");
+    expect(source).toContain(".kangur-cta-pill[class*='bg-gradient-to-']");
+    expect(source).toContain(".kangur-cta-pill[class*='bg-[linear-gradient']");
+    expect(source).toContain('color-mix(in srgb, var(--tw-gradient-from, transparent) 88%, var(--tw-gradient-to, transparent) 12%)');
+    expect(source).toContain(".kangur-progress-fill[data-kangur-accent='rose']");
+    expect(source).toContain('--kangur-progress-primary: #f87171;');
+    expect(source).toContain('--kangur-progress-secondary: #f472b6;');
+    expect(primaryCtaBlock).not.toContain('background-position 420ms ease');
+    expect(primaryCtaBlock).not.toContain('background 220ms ease');
+    expect(warningCtaBlock).not.toContain('background-position 420ms ease');
+    expect(warningCtaBlock).not.toContain('background 220ms ease');
+    expect(sharedButtonGradientMotionBlock).toBeTruthy();
+    expect(sharedButtonGradientMotionBlock).not.toContain('.home-action-featured');
+    expect(progressGradientMotionBlock).toBeTruthy();
+  });
 });

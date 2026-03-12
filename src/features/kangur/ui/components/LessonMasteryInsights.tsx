@@ -1,10 +1,10 @@
 import {
-  KangurCardDescription,
   KangurCardTitle,
   KangurEmptyState,
   KangurGlassPanel,
   KangurInfoCard,
   KangurMetaText,
+  KangurPanelIntro,
   KangurSectionEyebrow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -14,6 +14,8 @@ import type { KangurProgressState } from '@/features/kangur/ui/types';
 
 type LessonMasteryInsightsProps = {
   progress: KangurProgressState;
+  sectionSummary?: React.ReactNode;
+  sectionTitle?: React.ReactNode;
 };
 
 const formatCompletedAt = (value: string | null): string => {
@@ -103,21 +105,19 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
 
 export default function LessonMasteryInsights({
   progress,
+  sectionSummary,
+  sectionTitle,
 }: LessonMasteryInsightsProps): React.JSX.Element {
   const insights = buildLessonMasteryInsights(progress);
+  const resolvedSectionTitle = sectionTitle ?? 'Opanowanie lekcji';
+  const resolvedSectionSummary =
+    sectionSummary ??
+    `Sledzone: ${insights.trackedLessons} · opanowane: ${insights.masteredLessons} · do powtorki: ${insights.lessonsNeedingPractice}`;
 
   return (
     <KangurGlassPanel padding='lg' surface='mistSoft' variant='soft'>
       <div className='flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between'>
-        <div>
-          <KangurSectionEyebrow>
-            Opanowanie lekcji
-          </KangurSectionEyebrow>
-          <KangurCardDescription as='p'>
-            Sledzone: {insights.trackedLessons} · opanowane: {insights.masteredLessons} · do
-            powtorki: {insights.lessonsNeedingPractice}
-          </KangurCardDescription>
-        </div>
+        <KangurPanelIntro description={resolvedSectionSummary} eyebrow={resolvedSectionTitle} />
         {insights.trackedLessons > 0 && (
           <KangurStatusChip accent='indigo' size='md'>
             {insights.trackedLessons} lekcji z zapisem

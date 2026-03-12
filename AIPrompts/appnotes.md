@@ -86,7 +86,7 @@ FASTCOMET
 npm run storage:configure:fastcomet -- --write --source=fastcomet --upload-endpoint=https://YOUR_FASTCOMET_ENDPOINT --base-url=https://YOUR_FILE_BASE_URL --delete-endpoint=https://YOUR_DELETE_ENDPOINT --auth-token=YOUR_TOKEN --keep-local-copy=true --timeout-ms=20000
 npm run storage:migrate:fastcomet -- --write --set-source=fastcomet
 
-retrieve app notes from old Prisma backups, I need prisma viewer to find notes somewhere
+retrieve app notes from old database backups, I need a viewer to find notes somewhere
 
 Versioning graph, detach node, flatten
 
@@ -241,7 +241,7 @@ Clear Log stilll not working
 
 - In Products, When I reorder CAtegories, I get an error
 
-- In AI paths, the Database Query Node does not work with mongoDB Provider, works perfectly with Prisma
+- In AI paths, the Database Query Node does not work with the MongoDB provider
   Asses the functionality of AI-Paths to run seamlessly with a MongoDB provider, as the provider has just been changed.
 
 When I try to save Mappings Base.com PRoducers, I get notification Referenced record not found
@@ -301,11 +301,11 @@ Daily Backups
 
 I want to include Redis in My Database management
 
-Prisma to mongdo i w drugę musi byc flawless, rowniez obsluga path przez Mongo i Auto w zaleznosci jaka baza jest wybrana jako glowna
+MongoDB provider handling and path routing must be flawless, including Auto mode when MongoDB is the primary database
 
-I want database query to work on both Prisma AND MongoDB, currently it doesn't work on MongoDB
+I want database query to work consistently on MongoDB, currently it doesn't
 
-I want databases to be drilled on import export, I want to choose exactly which collections should be moved to prisma which to mongo db
+I want databases to be drilled on import/export, and I want to choose exactly which MongoDB collections are moved
 
 AI Paths, when the button is in two paths, only the first path runs, is trigged (I think they should be running concurrently)
 
@@ -319,7 +319,7 @@ I need another node, check if service (Ollama Server) is running if running pass
 
 Nodes should retain what is ready for the output even if next node is not connected yet
 
-I can't fetch the whole product. The database provider is Prisma Postgresql
+I can't fetch the whole product. The current database-provider path is stale or incorrect
 
 - Regex Grouper manual-only AI suggestions path + output retention
 - JSON Mapper node input/output changes

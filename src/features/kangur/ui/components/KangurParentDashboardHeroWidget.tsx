@@ -16,18 +16,17 @@ import {
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
 import KangurBadgeTrackHighlights from '@/features/kangur/ui/components/KangurBadgeTrackHighlights';
+import KangurDailyQuestHighlightCardContent from '@/features/kangur/ui/components/KangurDailyQuestHighlightCardContent';
 import KangurHeroMilestoneSummary from '@/features/kangur/ui/components/KangurHeroMilestoneSummary';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { useKangurParentDashboardRuntime } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import {
   KangurButton,
-  KangurCardDescription,
-  KangurCardTitle,
   KangurSectionEyebrow,
-  KangurStatusChip,
   KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 
@@ -61,6 +60,8 @@ export function KangurParentDashboardHeroWidget({
     viewerName,
     viewerRoleLabel,
   } = useKangurParentDashboardRuntime();
+  const { entry: guestHeroContent } = useKangurPageContentEntry('parent-dashboard-guest-hero');
+  const { entry: dashboardHeroContent } = useKangurPageContentEntry('parent-dashboard-hero');
   const handleGoHome = (): void => {
     routeNavigator.push(getKangurHomeHref(basePath), {
       acknowledgeMs: PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS,
@@ -77,15 +78,19 @@ export function KangurParentDashboardHeroWidget({
   };
 
   if (!isAuthenticated) {
+    const guestDescription = guestHeroContent?.summary
+      ? `${guestHeroContent.summary} Jesli nie masz jeszcze konta rodzica, zaloz je bez opuszczania StudiQ.`
+      : 'Ten widok pokazuje prywatne postepy ucznia, wiec wymaga konta rodzica. Jesli go jeszcze nie masz, zaloz je bez opuszczania StudiQ.';
+
     return (
       <KangurPageIntroCard
         accent='indigo'
         className='mx-auto w-full max-w-2xl'
-        description='Ten widok pokazuje prywatne postepy ucznia, wiec wymaga konta rodzica. Jesli go jeszcze nie masz, zaloz je bez opuszczania StudiQ.'
+        description={guestDescription}
         headingAs='h1'
         onBack={handleGoHome}
         testId='kangur-parent-dashboard-hero'
-        title='Panel Rodzica / Nauczyciela'
+        title={guestHeroContent?.title ?? 'Panel Rodzica / Nauczyciela'}
       >
         <div className='grid w-full gap-3 sm:flex sm:w-auto sm:flex-row'>
           <KangurButton
@@ -121,11 +126,15 @@ export function KangurParentDashboardHeroWidget({
   }
 
   if (!canManageLearners) {
+    const restrictedDescription = guestHeroContent?.summary
+      ? `${guestHeroContent.summary} Ten widok jest dostepny tylko dla konta rodzica, ktore zarzadza profilami uczniow.`
+      : 'Ten widok jest dostepny tylko dla konta rodzica, ktore zarzadza profilami uczniow.';
+
     return (
       <KangurPageIntroCard
         accent='slate'
         className='mx-auto w-full max-w-2xl'
-        description='Ten widok jest dostepny tylko dla konta rodzica, ktore zarzadza profilami uczniow.'
+        description={restrictedDescription}
         headingAs='h1'
         onBack={handleGoToProfile}
         testId='kangur-parent-dashboard-hero'
@@ -160,6 +169,7 @@ export function KangurParentDashboardHeroWidget({
       className='mx-auto w-full max-w-2xl'
       description={
         <>
+          {dashboardHeroContent?.summary ? `${dashboardHeroContent.summary} ` : null}
           Rola: <span className='font-semibold [color:var(--kangur-page-text)]'>{viewerRoleLabel}</span>. Konto
           wlasciciela: <span className='font-semibold [color:var(--kangur-page-text)]'>{viewerName}</span>. Wybrany
           uczen:{' '}
@@ -172,7 +182,7 @@ export function KangurParentDashboardHeroWidget({
       headingAs='h1'
       onBack={handleGoToProfile}
       testId='kangur-parent-dashboard-hero'
-      title='Panel Rodzica'
+      title={dashboardHeroContent?.title ?? 'Panel Rodzica'}
     >
       {dailyQuest ? (
         <div
@@ -183,47 +193,37 @@ export function KangurParentDashboardHeroWidget({
               'color-mix(in srgb, var(--kangur-soft-card-background) 88%, rgba(224,231,255,0.92))',
           }}
         >
-          <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
-            <div className='min-w-0'>
-              <div className='flex flex-wrap items-center gap-2'>
-                <KangurStatusChip
-                  accent='violet'
-                  labelStyle='caps'
+          <KangurDailyQuestHighlightCardContent
+            action={
+              <KangurButton
+                asChild
+                className='w-full sm:w-auto sm:shrink-0'
+                size='sm'
+                variant='surface'
+              >
+                <Link
+                  href={buildAssignmentHref(basePath, dailyQuest.assignment.action)}
+                  targetPageKey={dailyQuest.assignment.action.page}
+                  transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
+                  transitionSourceId='parent-dashboard-daily-quest'
                 >
-                  {dailyQuest.assignment.questLabel ?? 'Misja dnia'}
-                </KangurStatusChip>
-                <KangurStatusChip
-                  accent={dailyQuestAccent}
-                  labelStyle='caps'
-                >
-                  {dailyQuest.progress.percent}%
-                </KangurStatusChip>
-                <KangurStatusChip
-                  accent={dailyQuest.reward.status === 'claimed' ? 'emerald' : dailyQuestAccent}
-                  labelStyle='caps'
-                >
-                  {dailyQuest.reward.label}
-                </KangurStatusChip>
-              </div>
-              <KangurCardTitle as='p' className='mt-3'>
+                  {dailyQuest.assignment.action.label}
+                </Link>
+              </KangurButton>
+            }
+            description={dailyQuest.progress.summary}
+            progressAccent={dailyQuestAccent}
+            progressLabel={`${dailyQuest.progress.percent}%`}
+            questLabel={dailyQuest.assignment.questLabel ?? 'Misja dnia'}
+            rewardAccent={dailyQuest.reward.status === 'claimed' ? 'emerald' : dailyQuestAccent}
+            rewardLabel={dailyQuest.reward.label}
+            title={
+              <>
                 {activeLearner?.displayName ? `${activeLearner.displayName}: ` : ''}
                 {dailyQuest.assignment.title}
-              </KangurCardTitle>
-              <KangurCardDescription as='p' className='mt-1 leading-5' size='xs'>
-                {dailyQuest.progress.summary}
-              </KangurCardDescription>
-            </div>
-            <KangurButton asChild className='w-full sm:w-auto sm:shrink-0' size='sm' variant='surface'>
-              <Link
-                href={buildAssignmentHref(basePath, dailyQuest.assignment.action)}
-                targetPageKey={dailyQuest.assignment.action.page}
-                transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
-                transitionSourceId='parent-dashboard-daily-quest'
-              >
-                {dailyQuest.assignment.action.label}
-              </Link>
-            </KangurButton>
-          </div>
+              </>
+            }
+          />
         </div>
       ) : null}
 

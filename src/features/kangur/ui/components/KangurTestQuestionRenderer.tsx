@@ -8,14 +8,17 @@ import {
   hasIllustration,
   hasRichChoiceContent,
 } from '@/features/kangur/test-questions';
+import { KangurAnswerChoiceBadge } from '@/features/kangur/ui/components/KangurAnswerChoiceBadge';
+import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import { useOptionalKangurTestSuiteRuntime } from '@/features/kangur/ui/context/KangurTestSuiteRuntimeContext';
 import {
   KangurInfoCard,
-  KangurOptionCardButton,
+  KangurPanelIntro,
   KangurSectionEyebrow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import type { KangurLesson } from '@/shared/contracts/kangur';
 import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
 import { cn, sanitizeSvg } from '@/shared/utils';
@@ -32,6 +35,7 @@ type Props = {
   questionIndex?: number;
   totalQuestions?: number;
   showReadControl?: boolean;
+  showSectionIntro?: boolean;
 };
 
 export function KangurTestQuestionRenderer({
@@ -42,8 +46,11 @@ export function KangurTestQuestionRenderer({
   questionIndex,
   totalQuestions,
   showReadControl = true,
+  showSectionIntro = true,
 }: Props): React.JSX.Element {
   const runtime = useOptionalKangurTestSuiteRuntime();
+  const sectionEntryId = showSectionIntro ? (showAnswer ? 'tests-review' : 'tests-question') : null;
+  const { entry: sectionContent } = useKangurPageContentEntry(sectionEntryId);
   const presentation = question.presentation ?? { layout: 'classic', choiceStyle: 'list' };
   const stemDocument = question.stemDocument;
   const explanationDocument = question.explanationDocument;
@@ -138,6 +145,20 @@ export function KangurTestQuestionRenderer({
       <div aria-hidden='true' className='sr-only' ref={narrationSourceRef}>
         {narrationText}
       </div>
+      {showSectionIntro ? (
+        <KangurPanelIntro
+          data-testid='kangur-test-question-copy'
+          description={
+            sectionContent?.summary ??
+            (showAnswer
+              ? 'Porownaj swoj wybor z poprawna odpowiedzia i przeczytaj krotkie wyjasnienie.'
+              : 'Wybierz jedna odpowiedz, a potem sprawdz omowienie i poprawny tok myslenia.')
+          }
+          title={sectionContent?.title ?? (showAnswer ? 'Omowienie odpowiedzi' : 'Pytanie testowe')}
+          titleAs='h2'
+          titleClassName='text-lg font-bold tracking-[-0.02em]'
+        />
+      ) : null}
       {/* Header */}
       {questionIndex !== undefined && resolvedTotalQuestions !== undefined ? (
         <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
@@ -192,28 +213,23 @@ export function KangurTestQuestionRenderer({
           }
 
           return (
-            <KangurOptionCardButton
+            <KangurAnswerChoiceCard
               accent={accent}
-              key={choice.label}
-              type='button'
-              onClick={(): void => handleChoiceSelect(choice.label)}
-              data-testid={`kangur-test-question-choice-${index}`}
-              className={cn(
-                'flex items-start gap-3 rounded-[24px] px-4 py-3 text-left text-sm font-semibold transition-all',
+              buttonClassName={cn(
+                'flex items-start gap-3 px-4 py-3 text-left text-sm font-semibold',
                 cardClassName,
-                choiceGrid && 'h-full min-h-[112px]',
-                choiceInteractionState === 'locked' ? 'cursor-default' : 'cursor-pointer'
+                choiceGrid && 'h-full min-h-[112px]'
               )}
+              data-testid={`kangur-test-question-choice-${index}`}
               emphasis={emphasis}
+              interactive={choiceInteractionState !== 'locked'}
+              key={choice.label}
+              onClick={(): void => handleChoiceSelect(choice.label)}
+              type='button'
             >
-              <span
-                className={cn(
-                  'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-extrabold',
-                  badgeClassName
-                )}
-              >
+              <KangurAnswerChoiceBadge className={badgeClassName} size='xs'>
                 {choice.label}
-              </span>
+              </KangurAnswerChoiceBadge>
               <span className='flex flex-1 flex-col gap-2 [color:var(--kangur-page-text)]'>
                 {choice.svgContent?.trim() ? (
                   <span className='flex items-center justify-center rounded-[18px] border p-2 [border-color:var(--kangur-soft-card-border)] [background:var(--kangur-soft-card-background)]'>
@@ -236,7 +252,7 @@ export function KangurTestQuestionRenderer({
               {showAnswer && isSelected && !isChoiceCorrect ? (
                 <XCircle className='size-4 shrink-0 text-rose-500' />
               ) : null}
-            </KangurOptionCardButton>
+            </KangurAnswerChoiceCard>
           );
         })}
       </div>

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { DIFFICULTY_CONFIG } from '@/features/kangur/ui/services/math-questions';
+import { formatKangurAssignmentPriorityLabel } from '@/features/kangur/ui/services/delegated-assignments';
 import type {
   KangurDifficulty,
   KangurDifficultyOption,
@@ -23,6 +24,7 @@ export type KangurOperationSelectorItem = {
   id: KangurOperation;
   isRecommended: boolean;
   label: string;
+  priority: KangurAssignmentSnapshot['priority'] | null;
   priorityLabel: string;
   recommendedLabel: string;
   select: () => void;
@@ -53,12 +55,6 @@ const OPERATIONS: Array<{
   { accent: 'sky', id: 'clock', label: 'Zegar', emoji: '🕐' },
   { accent: 'rose', id: 'mixed', label: 'Mieszane', emoji: '🎲' },
 ];
-
-const PRIORITY_LABELS = {
-  high: 'Priorytet wysoki',
-  medium: 'Priorytet sredni',
-  low: 'Priorytet niski',
-} as const;
 
 const PRIORITY_ORDER = {
   high: 0,
@@ -142,7 +138,10 @@ export const useKangurOperationSelectorState = (
             id: operation.id,
             isRecommended,
             label: operation.label,
-            priorityLabel: priorityAssignment ? PRIORITY_LABELS[priorityAssignment.priority] : '',
+            priority: priorityAssignment?.priority ?? null,
+            priorityLabel: priorityAssignment
+              ? formatKangurAssignmentPriorityLabel(priorityAssignment.priority)
+              : '',
             recommendedLabel: isRecommended ? recommendedLabel : '',
             select: (): void => {
               onSelect?.(operation.id, difficulty);

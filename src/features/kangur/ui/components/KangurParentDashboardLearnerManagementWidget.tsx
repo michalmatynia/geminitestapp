@@ -1,16 +1,17 @@
 'use client';
 
+import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
 import { useKangurParentDashboardRuntime } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import {
   KangurButton,
   KangurGlassPanel,
   KangurIconBadge,
-  KangurOptionCardButton,
   KangurPanelIntro,
   KangurSelectField,
   KangurStatusChip,
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { cn } from '@/shared/utils';
 
 export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Element | null {
@@ -28,6 +29,9 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
     updateCreateField,
     updateEditField,
   } = useKangurParentDashboardRuntime();
+  const { entry: learnerManagementContent } = useKangurPageContentEntry(
+    'parent-dashboard-learner-management'
+  );
 
   if (!canAccessDashboard) {
     return null;
@@ -39,10 +43,15 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
         <KangurPanelIntro
           className='gap-1.5'
           eyebrow='Profile uczniow'
-          title='Zarzadzaj profilami bez opuszczania panelu'
+          title={
+            learnerManagementContent?.title ?? 'Zarzadzaj profilami bez opuszczania panelu'
+          }
           titleAs='h2'
           titleClassName='text-lg font-bold tracking-[-0.02em]'
-          description='Rodzic loguje sie emailem, a uczniowie dostaja osobne nazwy logowania i hasla.'
+          description={
+            learnerManagementContent?.summary ??
+            'Rodzic loguje sie emailem, a uczniowie dostaja osobne nazwy logowania i hasla.'
+          }
           descriptionClassName='max-w-2xl'
         />
 
@@ -51,46 +60,29 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
             const isActiveLearner = learner.id === activeLearner?.id;
             const initial = learner.displayName.trim().charAt(0).toUpperCase() || '?';
             return (
-              <KangurOptionCardButton
+              <KangurIconSummaryOptionCard
                 accent='indigo'
                 aria-pressed={isActiveLearner}
-                className='flex items-start gap-4 rounded-[30px] px-5 py-4 text-left'
+                aside={
+                  <KangurStatusChip
+                    accent={learner.status === 'active' ? 'emerald' : 'slate'}
+                    className='uppercase tracking-wide'
+                    size='sm'
+                  >
+                    {learner.status === 'active' ? 'Aktywny' : 'Wylaczony'}
+                  </KangurStatusChip>
+                }
+                buttonClassName='rounded-[30px] px-5 py-4 text-left'
+                contentClassName='min-w-0 flex-1'
                 data-doc-id='parent_learner_profile_card'
                 data-testid={`parent-dashboard-learner-card-${learner.id}`}
+                description={`Login: ${learner.loginName}`}
+                descriptionClassName='text-xs'
                 emphasis={isActiveLearner ? 'accent' : 'neutral'}
-                key={learner.id}
-                onClick={() => void selectLearner(learner.id)}
-                type='button'
-              >
-                <KangurIconBadge
-                  accent={isActiveLearner ? 'indigo' : 'slate'}
-                  className='shrink-0 text-lg font-extrabold'
-                  data-testid={`parent-dashboard-learner-icon-${learner.id}`}
-                  size='md'
-                >
-                  {initial}
-                </KangurIconBadge>
-                <div className='min-w-0 flex-1'>
-                    <div className='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
-                      <div className='min-w-0'>
-                        <div className='font-bold [color:var(--kangur-page-text)]'>
-                          {learner.displayName}
-                      </div>
-                      <div className='text-xs [color:var(--kangur-page-muted-text)]'>
-                        Login: {learner.loginName}
-                      </div>
-                    </div>
-                    <KangurStatusChip
-                      accent={learner.status === 'active' ? 'emerald' : 'slate'}
-                      className='uppercase tracking-wide'
-                      size='sm'
-                    >
-                      {learner.status === 'active' ? 'Aktywny' : 'Wylaczony'}
-                    </KangurStatusChip>
-                  </div>
+                footer={
                   <div
                     className={cn(
-                      'mt-2 text-xs font-semibold',
+                      'text-xs font-semibold',
                       isActiveLearner
                         ? 'text-indigo-600'
                         : '[color:var(--kangur-page-muted-text)]'
@@ -100,8 +92,25 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                       ? 'Aktualnie wybrany profil'
                       : 'Kliknij, aby przelaczyc profil'}
                   </div>
-                </div>
-              </KangurOptionCardButton>
+                }
+                footerClassName='mt-2'
+                headerClassName='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'
+                icon={
+                  <KangurIconBadge
+                    accent={isActiveLearner ? 'indigo' : 'slate'}
+                    className='shrink-0 text-lg font-extrabold'
+                    data-testid={`parent-dashboard-learner-icon-${learner.id}`}
+                    size='md'
+                  >
+                    {initial}
+                  </KangurIconBadge>
+                }
+                key={learner.id}
+                layoutClassName='w-full'
+                onClick={() => void selectLearner(learner.id)}
+                title={learner.displayName}
+                titleClassName='font-bold leading-normal'
+              />
             );
           })}
         </div>

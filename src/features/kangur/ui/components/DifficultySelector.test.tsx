@@ -50,8 +50,8 @@ describe('DifficultySelector', () => {
     const easyOption = screen.getByTestId('difficulty-option-easy');
     const mediumOption = screen.getByTestId('difficulty-option-medium');
 
-    expect(easyOption).toHaveClass('soft-card', 'border', 'rounded-[28px]');
-    expect(mediumOption).toHaveClass('soft-card', 'border', 'rounded-[28px]');
+    expect(easyOption).toHaveClass('soft-card', 'border', 'kangur-card-surface', 'kangur-card-padding-lg');
+    expect(mediumOption).toHaveClass('soft-card', 'border', 'kangur-card-surface', 'kangur-card-padding-lg');
     expect(easyOption).toHaveAttribute('aria-pressed', 'false');
     expect(mediumOption).toHaveAttribute('aria-pressed', 'true');
     expect(within(easyOption).getByText('Latwy')).toHaveClass('[color:var(--kangur-page-text)]');

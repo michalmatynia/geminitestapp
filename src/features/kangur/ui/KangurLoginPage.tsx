@@ -30,6 +30,7 @@ import {
   KangurGlassPanel,
   KangurGradientHeading,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import type { VerifyCredentialsResponse } from '@/shared/contracts/auth';
@@ -294,10 +295,15 @@ function KangurLoginPageContent(): JSX.Element {
   const routeNavigator = useKangurRouteNavigator();
   const searchParams = useSearchParams();
   const auth = useOptionalKangurAuth();
+  const { entry: loginFormContent } = useKangurPageContentEntry('login-page-form');
+  const { entry: identifierFieldContent } = useKangurPageContentEntry(
+    'login-page-identifier-field'
+  );
   const loginFormRef = useRef<HTMLFormElement | null>(null);
   const identifierInputRef = useRef<HTMLInputElement | null>(null);
   const titleId = useId();
   const identifierInputId = useId();
+  const identifierHelpId = useId();
   const passwordInputId = useId();
   const noticeId = useId();
   const errorId = useId();
@@ -378,7 +384,17 @@ function KangurLoginPageContent(): JSX.Element {
       ? 'Zakładasz konto rodzica emailem i hasłem. Po potwierdzeniu adresu zalogujesz się tak samo za każdym razem.'
       : loginKind === 'student'
         ? 'Uczeń loguje się nickiem i hasłem. Rodzic może wejść emailem i hasłem.'
-        : 'Rodzic loguje się emailem i hasłem. Uczeń loguje się nickiem i hasłem.';
+        : loginFormContent?.summary ??
+          'Rodzic loguje się emailem i hasłem. Uczeń loguje się nickiem i hasłem.';
+  const identifierFieldLabel =
+    isParentFlowVisible && parentAuthMode === 'create-account'
+      ? 'Email rodzica'
+      : identifierFieldContent?.title ?? 'Email rodzica albo nick ucznia';
+  const identifierFieldHelpText =
+    parentAuthMode === 'create-account'
+      ? 'Użyj adresu e-mail rodzica, na który wyślemy link potwierdzający konto.'
+      : identifierFieldContent?.summary ??
+        'Wpisz email rodzica lub login ucznia, aby przejść do właściwego trybu logowania.';
   const visibleNotice = createdParentEmail ? null : notice;
   const createAccountConfirmationDetail =
     notice?.trim() || 'Kliknij link potwierdzający w e-mailu. Potem zalogujesz się tym samym e-mailem i hasłem.';
@@ -398,6 +414,9 @@ function KangurLoginPageContent(): JSX.Element {
   const formDescribedBy = [visibleNotice ? noticeId : null, error ? errorId : null]
     .filter(Boolean)
     .join(' ');
+  const identifierInputDescribedBy = [identifierHelpId, formDescribedBy || null]
+    .filter(Boolean)
+    .join(' ');
   const identifierAnchorLabel =
     isParentFlowVisible && parentAuthMode === 'create-account'
       ? 'Pole e-maila rodzica'
@@ -409,7 +428,7 @@ function KangurLoginPageContent(): JSX.Element {
         ? 'Logowanie ucznia'
         : loginKind === 'parent'
           ? 'Logowanie rodzica'
-          : 'Logowanie do Kangur';
+          : loginFormContent?.title ?? 'Logowanie do Kangur';
   const authSessionContentId =
     parentAuthMode === 'create-account'
       ? 'auth:login:create-account'
@@ -964,7 +983,7 @@ function KangurLoginPageContent(): JSX.Element {
               id={titleId}
               size='lg'
             >
-              Zaloguj się
+              {loginFormContent?.title ?? 'Zaloguj się'}
             </KangurGradientHeading>
             <p className='mt-3 max-w-xl text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
               {introDescription}
@@ -1028,13 +1047,11 @@ function KangurLoginPageContent(): JSX.Element {
           </div>
         ) : null}
 
-        <label className='flex flex-col gap-2 text-sm font-semibold [color:var(--kangur-page-text)]'>
-          {isParentFlowVisible && parentAuthMode === 'create-account'
-            ? 'Email rodzica'
-            : 'Email rodzica albo nick ucznia'}
+        <div className='flex flex-col gap-2 text-sm font-semibold [color:var(--kangur-page-text)]'>
+          <label htmlFor={identifierInputId}>{identifierFieldLabel}</label>
           <input
             autoComplete='username'
-            aria-describedby={formDescribedBy || undefined}
+            aria-describedby={identifierInputDescribedBy || undefined}
             className={inputClassName}
             data-testid='kangur-login-identifier-input'
             data-tutor-anchor='login_identifier_field'
@@ -1052,7 +1069,10 @@ function KangurLoginPageContent(): JSX.Element {
             type='text'
             value={identifier}
           />
-        </label>
+          <span className='text-xs font-normal leading-5 [color:var(--kangur-page-muted-text)]' id={identifierHelpId}>
+            {identifierFieldHelpText}
+          </span>
+        </div>
 
         <label className='flex flex-col gap-2 text-sm font-semibold [color:var(--kangur-page-text)]'>
           {isParentFlowVisible && parentAuthMode === 'create-account'

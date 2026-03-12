@@ -10,23 +10,23 @@ export const KANGUR_PAGE_TONE_CLASSNAMES: Record<KangurPageTone, string> = {
 };
 
 export const KANGUR_TOP_BAR_CLASSNAME =
-  'sticky inset-x-0 top-0 z-40 w-full px-3 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6 sm:pb-3 sm:pt-5';
+  'kangur-top-bar sticky inset-x-0 top-0 z-40 w-full';
 export const KANGUR_TOP_BAR_INNER_CLASSNAME =
   'flex w-full flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 lg:flex-nowrap';
 export const KANGUR_PAGE_CONTAINER_CLASSNAME =
-  'w-full max-w-[1440px] px-3 pb-16 pt-6 sm:px-8 sm:pb-20 sm:pt-10 xl:px-10';
+  'kangur-page-container w-full';
 
 export const KANGUR_PANEL_CLASSNAMES = {
-  elevated: 'glass-panel rounded-[36px]',
-  soft: 'glass-panel rounded-[34px]',
-  subtle: 'soft-card rounded-[26px]',
+  elevated: 'glass-panel kangur-panel-elevated',
+  soft: 'glass-panel kangur-panel-soft',
+  subtle: 'soft-card kangur-panel-subtle',
 } as const;
 
 export const KANGUR_TOP_NAV_GROUP_CLASSNAME =
-  'kangur-nav-group flex w-full min-w-0 max-w-full flex-col items-stretch gap-2 rounded-[30px] border p-2 max-sm:rounded-[26px] sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap';
+  'kangur-nav-group flex w-full min-w-0 max-w-full flex-col items-stretch gap-2 rounded-[30px] border p-2 sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap';
 
 export const KANGUR_TOP_NAV_ITEM_CLASSNAME =
-  'kangur-nav-item group relative inline-flex min-w-0 items-center justify-center gap-2 rounded-[20px] border font-semibold tracking-[-0.02em] transition-all duration-200';
+  'kangur-nav-item group relative inline-flex min-w-0 items-center justify-center gap-2 border font-semibold tracking-[-0.02em] transition-all duration-200';
 
 export const KANGUR_TOP_NAV_ITEM_ACTIVE_CLASSNAME = 'kangur-nav-item-active';
 
@@ -133,9 +133,9 @@ export const KANGUR_ACCENT_STYLES: Record<KangurAccent, KangurAccentStyles> = {
 };
 
 export const KANGUR_SURFACE_CARD_CLASSNAME =
-  'soft-card w-full rounded-[26px] border text-left transition duration-200';
+  'soft-card kangur-card-surface w-full border text-left transition duration-200';
 
-export const KANGUR_OPTION_CARD_CLASSNAME = `${KANGUR_SURFACE_CARD_CLASSNAME} group p-4 hover:-translate-y-[1px]`;
+export const KANGUR_OPTION_CARD_CLASSNAME = `${KANGUR_SURFACE_CARD_CLASSNAME} group kangur-card-padding-md hover:-translate-y-[1px]`;
 
 export const KANGUR_STEP_PILL_CLASSNAME =
   'kangur-cta-pill inline-flex items-center justify-center rounded-full border border-transparent transition-all duration-200';

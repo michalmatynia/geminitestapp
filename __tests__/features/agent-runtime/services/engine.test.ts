@@ -7,7 +7,17 @@ import * as planModule from '@/features/ai/agent-runtime/execution/plan';
 import * as stepRunnerModule from '@/features/ai/agent-runtime/execution/step-runner';
 import * as memoryCheckpointModule from '@/features/ai/agent-runtime/memory/checkpoint';
 import * as browserModule from '@/features/ai/agent-runtime/tools/playwright/browser';
-import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
+
+const { chatbotAgentRunDelegate, agentAuditLogDelegate } = vi.hoisted(() => ({
+  chatbotAgentRunDelegate: {
+    findUnique: vi.fn(),
+    update: vi.fn(),
+  },
+  agentAuditLogDelegate: {
+    create: vi.fn(),
+    findFirst: vi.fn(),
+  },
+}));
 
 // Mock FS
 vi.mock('fs', () => ({
@@ -21,18 +31,9 @@ vi.mock('fs', () => ({
   },
 }));
 
-// Mock the legacy SQL client
-vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
-  default: {
-    chatbotAgentRun: {
-      findUnique: vi.fn(),
-      update: vi.fn(),
-    },
-    agentAuditLog: {
-      create: vi.fn(),
-      findFirst: vi.fn(),
-    },
-  },
+vi.mock('@/features/ai/agent-runtime/store-delegates', () => ({
+  getChatbotAgentRunDelegate: vi.fn(() => chatbotAgentRunDelegate),
+  getAgentAuditLogDelegate: vi.fn(() => agentAuditLogDelegate),
 }));
 
 // Mock Browser
@@ -75,17 +76,18 @@ describe('Agent Runtime - Engine', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    agentAuditLogDelegate.findFirst.mockResolvedValue(null);
   });
 
   it('should exit if run not found', async () => {
-    (legacySqlClient.chatbotAgentRun.findUnique as any).mockResolvedValue(null);
+    chatbotAgentRunDelegate.findUnique.mockResolvedValue(null);
     await runAgentControlLoop(mockRunId);
     expect(browserModule.launchBrowser).not.toHaveBeenCalled();
   });
 
   it('should run the full loop successfully (Action: Tool)', async () => {
     // Setup Mocks
-    (legacySqlClient.chatbotAgentRun.findUnique as any).mockResolvedValue(mockRun);
+    chatbotAgentRunDelegate.findUnique.mockResolvedValue(mockRun);
     (browserModule.launchBrowser as any).mockResolvedValue({
       close: vi.fn().mockResolvedValue(undefined),
     });
@@ -135,7 +137,7 @@ describe('Agent Runtime - Engine', () => {
   });
 
   it('should complete run if decision is respond', async () => {
-    (legacySqlClient.chatbotAgentRun.findUnique as any).mockResolvedValue(mockRun);
+    chatbotAgentRunDelegate.findUnique.mockResolvedValue(mockRun);
     (browserModule.launchBrowser as any).mockResolvedValue({
       close: vi.fn().mockResolvedValue(undefined),
     });
@@ -159,7 +161,7 @@ describe('Agent Runtime - Engine', () => {
 
     await runAgentControlLoop(mockRunId);
 
-    expect(legacySqlClient.chatbotAgentRun.update).toHaveBeenCalledWith(
+    expect(chatbotAgentRunDelegate.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: mockRunId },
         data: expect.objectContaining({ status: 'completed' }),
@@ -169,12 +171,12 @@ describe('Agent Runtime - Engine', () => {
 
   it('should handle errors gracefully', async () => {
     // Fail inside the loop
-    (legacySqlClient.chatbotAgentRun.findUnique as any).mockResolvedValue(mockRun);
+    chatbotAgentRunDelegate.findUnique.mockResolvedValue(mockRun);
     (browserModule.launchBrowser as any).mockRejectedValue(new Error('Browser Fail'));
 
     await runAgentControlLoop(mockRunId);
 
-    expect(legacySqlClient.chatbotAgentRun.update).toHaveBeenCalledWith(
+    expect(chatbotAgentRunDelegate.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: mockRunId },
         data: expect.objectContaining({ status: 'failed', errorMessage: 'Browser Fail' }),
@@ -183,7 +185,7 @@ describe('Agent Runtime - Engine', () => {
   });
 
   it('should set status to waiting_human if requested', async () => {
-    (legacySqlClient.chatbotAgentRun.findUnique as any).mockResolvedValue(mockRun);
+    chatbotAgentRunDelegate.findUnique.mockResolvedValue(mockRun);
     (browserModule.launchBrowser as any).mockResolvedValue({
       close: vi.fn().mockResolvedValue(undefined),
     });
@@ -216,7 +218,7 @@ describe('Agent Runtime - Engine', () => {
 
     await runAgentControlLoop(mockRunId);
 
-    expect(legacySqlClient.chatbotAgentRun.update).toHaveBeenCalledWith(
+    expect(chatbotAgentRunDelegate.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: mockRunId },
         data: expect.objectContaining({ status: 'waiting_human' }),

@@ -26,6 +26,43 @@ export const KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY = 'kangur-ai-tutor-widget-v1';
 export const KANGUR_AI_TUTOR_GUEST_INTRO_STORAGE_KEY = 'kangur-ai-tutor-guest-intro-v1';
 export const KANGUR_AI_TUTOR_HOME_ONBOARDING_STORAGE_KEY = 'kangur-ai-tutor-home-onboarding-v1';
 
+export const getFloatingTutorAvatarEdgeGap = (viewportWidth: number): number => {
+  if (viewportWidth <= 360) {
+    return 4;
+  }
+
+  if (viewportWidth < 768) {
+    return 8;
+  }
+
+  return EDGE_GAP;
+};
+
+export const getFloatingTutorAvatarSize = (viewportWidth: number): number => {
+  if (viewportWidth <= 360) {
+    return 44;
+  }
+
+  if (viewportWidth < 768) {
+    return 48;
+  }
+
+  return AVATAR_SIZE;
+};
+
+export const getFloatingTutorAvatarBounds = (viewport: Size2d) => {
+  const edgeGap = getFloatingTutorAvatarEdgeGap(viewport.width);
+  const size = getFloatingTutorAvatarSize(viewport.width);
+
+  return {
+    minLeft: edgeGap,
+    minTop: edgeGap,
+    maxLeft: Math.max(edgeGap, viewport.width - edgeGap - size),
+    maxTop: Math.max(edgeGap, viewport.height - edgeGap - size),
+    size,
+  };
+};
+
 export type TutorMotionPosition = {
   left?: number | string;
   top?: number | string;

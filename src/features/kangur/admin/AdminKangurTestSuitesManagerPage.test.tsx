@@ -70,6 +70,22 @@ vi.mock('@/shared/ui', async (importOriginal) => {
   };
 });
 
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: () => ({
+    data: undefined,
+    entry: null,
+    error: null,
+    isError: false,
+    isFetched: true,
+    isFetching: false,
+    isLoading: false,
+    isPending: false,
+    isSuccess: true,
+    refetch: vi.fn(),
+    status: 'success',
+  }),
+}));
+
 import { AdminKangurTestSuitesManagerPage } from './AdminKangurTestSuitesManagerPage';
 import { toKangurTestSuiteNodeId } from './kangur-test-suites-master-tree';
 import { KANGUR_TEST_QUESTIONS_SETTING_KEY } from '../test-questions';

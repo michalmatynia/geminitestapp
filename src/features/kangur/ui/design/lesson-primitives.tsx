@@ -6,7 +6,7 @@ import { cn } from '@/shared/utils';
 import type { KangurAccent } from './tokens';
 
 const kangurLessonCalloutVariants = cva(
-  'soft-card w-full rounded-[24px] border shadow-[0_18px_44px_-36px_rgba(15,23,42,0.24)] [color:var(--kangur-page-text)]',
+  'soft-card kangur-lesson-callout w-full border shadow-[0_18px_44px_-36px_rgba(15,23,42,0.24)] [color:var(--kangur-page-text)]',
   {
     variants: {
       accent: {
@@ -20,9 +20,9 @@ const kangurLessonCalloutVariants = cva(
         slate: 'border-slate-200/85',
       },
       padding: {
-        sm: 'p-3',
-        md: 'p-4',
-        lg: 'p-5',
+        sm: 'kangur-card-padding-sm',
+        md: 'kangur-card-padding-md',
+        lg: 'kangur-card-padding-lg',
       },
     },
     defaultVariants: {
@@ -42,9 +42,9 @@ const kangurLessonStackVariants = cva('flex flex-col', {
       start: 'items-start',
     },
     gap: {
-      sm: 'gap-2',
-      md: 'gap-4',
-      lg: 'gap-5',
+      sm: 'kangur-stack-gap-sm',
+      md: 'kangur-stack-gap-md',
+      lg: 'kangur-stack-gap-lg',
     },
   },
   defaultVariants: {
@@ -111,7 +111,7 @@ type KangurLessonCaptionProps = React.HTMLAttributes<HTMLParagraphElement> &
   VariantProps<typeof kangurLessonCaptionVariants>;
 
 const kangurLessonInsetVariants = cva(
-  'soft-card w-full rounded-[18px] border shadow-[0_16px_32px_-28px_rgba(15,23,42,0.28)] [color:var(--kangur-page-text)]',
+  'soft-card kangur-lesson-inset w-full border shadow-[0_16px_32px_-28px_rgba(15,23,42,0.28)] [color:var(--kangur-page-text)]',
   {
     variants: {
       accent: {
@@ -125,8 +125,8 @@ const kangurLessonInsetVariants = cva(
         slate: 'border-slate-200/85',
       } satisfies Record<KangurAccent, string>,
       padding: {
-        sm: 'p-3',
-        md: 'p-4',
+        sm: 'kangur-card-padding-sm',
+        md: 'kangur-card-padding-md',
       },
     },
     defaultVariants: {

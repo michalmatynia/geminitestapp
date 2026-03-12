@@ -12,30 +12,23 @@ describe('analyzeEnvContract', () => {
     });
   });
 
-  it('warns when both database providers are configured without APP_DB_PROVIDER', () => {
+  it('does not warn when MongoDB is configured without legacy SQL env vars', () => {
     const report = analyzeEnvContract({
       env: {
         NODE_ENV: 'development',
-        DATABASE_URL: 'postgres://localhost:5432/app',
         MONGODB_URI: 'mongodb://localhost:27017/app',
       },
     });
 
     expect(report.summary.errorCount).toBe(0);
-    expect(report.issues).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          ruleId: 'dual-database-provider-implicit-fallback',
-        }),
-      ])
-    );
+    expect(report.issues).toEqual([]);
   });
 
   it('fails when production auth secret is missing', () => {
     const report = analyzeEnvContract({
       env: {
         NODE_ENV: 'production',
-        DATABASE_URL: 'postgres://localhost:5432/app',
+        MONGODB_URI: 'mongodb://localhost:27017/app',
       },
     });
 

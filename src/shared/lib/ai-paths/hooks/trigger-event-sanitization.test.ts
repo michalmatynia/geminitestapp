@@ -19,14 +19,14 @@ describe('shouldEmbedTriggerEntitySnapshot', () => {
     ).toBe(true);
   });
 
-  it('does not embed entity snapshots for non-modal product triggers when entityId exists', () => {
+  it('embeds entity snapshots for product-row triggers even when entityId exists', () => {
     expect(
       shouldEmbedTriggerEntitySnapshot({
         entityType: 'product',
         entityId: 'product-1',
         sourceLocation: 'product_row',
       })
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it('embeds for note_modal source location', () => {

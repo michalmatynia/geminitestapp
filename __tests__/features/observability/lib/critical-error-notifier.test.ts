@@ -1,20 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { notifyCriticalError } from '@/shared/lib/observability/critical-error-notifier';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import type { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
-
-vi.mock('@/shared/lib/db/app-db-provider', () => ({
-  getAppDbProvider: vi.fn(),
-}));
-
-vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
-  default: {
-    setting: {
-      findUnique: vi.fn(),
-    },
-  },
-}));
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: vi.fn().mockResolvedValue({
@@ -40,7 +27,6 @@ describe('critical-error-notifier', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
-    vi.mocked(getAppDbProvider).mockResolvedValue('mongodb');
 
     // Clear global throttle cache
     const globalAny = globalThis as unknown as { __criticalErrorNotificationCache?: Map<string, number> };

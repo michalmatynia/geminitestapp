@@ -18,6 +18,7 @@ const {
   trackKangurClientEventMock,
   useKangurAiTutorSessionSyncMock,
   useOptionalKangurAuthMock,
+  useKangurPageContentEntryMock,
   usePathnameMock,
   useRouterMock,
   useSearchParamsMock,
@@ -30,6 +31,7 @@ const {
   trackKangurClientEventMock: vi.fn(),
   useKangurAiTutorSessionSyncMock: vi.fn(),
   useOptionalKangurAuthMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(),
   usePathnameMock: vi.fn(),
   useRouterMock: vi.fn(),
   useSearchParamsMock: vi.fn(),
@@ -55,6 +57,10 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useKangurAiTutorSessionSync: useKangurAiTutorSessionSyncMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
 import { KangurLoginPage } from '@/features/kangur/ui/KangurLoginPage';
@@ -90,6 +96,19 @@ describe('KangurLoginPage', () => {
     useOptionalKangurAuthMock.mockReturnValue({
       checkAppState: checkAppStateMock,
       isAuthenticated: false,
+    });
+    useKangurPageContentEntryMock.mockReturnValue({
+      data: undefined,
+      entry: null,
+      error: null,
+      isError: false,
+      isFetched: true,
+      isFetching: false,
+      isLoading: false,
+      isPending: false,
+      isSuccess: true,
+      refetch: vi.fn(),
+      status: 'success',
     });
     vi.stubGlobal(
       'fetch',
@@ -255,6 +274,43 @@ describe('KangurLoginPage', () => {
 
     await screen.findByRole('heading', { name: 'Zaloguj się' });
     await expectNoAxeViolations(container);
+  });
+
+  it('uses Mongo-backed login form and identifier copy when available', () => {
+    useKangurPageContentEntryMock.mockImplementation((entryId: string) => ({
+      data: undefined,
+      entry:
+        entryId === 'login-page-form'
+          ? {
+              id: 'login-page-form',
+              title: 'Zaloguj się',
+              summary: 'Wejdź do Kangur jako rodzic albo uczeń z jednego formularza.',
+            }
+          : {
+              id: 'login-page-identifier-field',
+              title: 'Email rodzica albo nick ucznia',
+              summary:
+                'Wpisz email rodzica lub login ucznia, aby uruchomić właściwy tryb logowania.',
+            },
+      error: null,
+      isError: false,
+      isFetched: true,
+      isFetching: false,
+      isLoading: false,
+      isPending: false,
+      isSuccess: true,
+      refetch: vi.fn(),
+      status: 'success',
+    }));
+
+    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+
+    expect(
+      screen.getByText('Wejdź do Kangur jako rodzic albo uczeń z jednego formularza.')
+    ).toBeVisible();
+    expect(
+      screen.getByText('Wpisz email rodzica lub login ucznia, aby uruchomić właściwy tryb logowania.')
+    ).toBeVisible();
   });
 
   it('switches the parent form into explicit create-account mode with a minimal create-account layout', async () => {

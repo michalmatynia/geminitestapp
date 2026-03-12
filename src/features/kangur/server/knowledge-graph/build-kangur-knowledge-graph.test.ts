@@ -126,6 +126,51 @@ describe('buildKangurKnowledgeGraph', () => {
     expect(loginAnchor?.locale).toBe('en');
   });
 
+  it('uses the provided page-content store instead of only the repo defaults', () => {
+    const snapshot = buildKangurKnowledgeGraph({
+      pageContentStore: {
+        locale: 'pl',
+        version: 1,
+        entries: [
+          {
+            id: 'game-home-actions',
+            pageKey: 'Game',
+            screenKey: 'home',
+            surface: 'game',
+            route: '/game',
+            componentId: 'home-actions',
+            widget: 'KangurGameHomeActionsWidget',
+            sourcePath: 'src/features/kangur/ui/pages/Game.tsx',
+            title: 'Akcje z Mongo',
+            summary: 'To jest zyc na zywo summary z page-content store.',
+            body: 'To jest zyc na zywo body z page-content store.',
+            anchorIdPrefix: 'kangur-game-home-actions',
+            focusKind: 'home_actions',
+            contentIdPrefixes: ['game:home'],
+            nativeGuideIds: ['shared-home-actions'],
+            triggerPhrases: ['akcje z mongo'],
+            tags: ['page-content', 'mongo-live'],
+            notes: 'Live Mongo-backed entry.',
+            enabled: true,
+            sortOrder: 10,
+          },
+        ],
+      },
+    });
+    const pageContentNode = snapshot.nodes.find(
+      (node) => node.id === 'guide:page-content:game-home-actions'
+    );
+
+    expect(pageContentNode).toMatchObject({
+      title: 'Akcje z Mongo',
+      summary: 'To jest zyc na zywo summary z page-content store.',
+      sourceCollection: 'kangur_page_content',
+      sourceRecordId: 'game-home-actions',
+      semanticText: expect.stringContaining('To jest zyc na zywo body z page-content store.'),
+      tags: expect.arrayContaining(['mongo-live']),
+    });
+  });
+
   it('attaches canonical source references to Mongo-backed content nodes', () => {
     const snapshot = buildKangurKnowledgeGraph();
 

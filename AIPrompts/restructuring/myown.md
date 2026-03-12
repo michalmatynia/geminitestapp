@@ -127,11 +127,11 @@ Define a domain contract and implement providers behind it:
 
 ProductStore interface: CRUD, search, settings
 
-MongoProductStore (primary)
+MongoProductStore (primary/canonical)
 
-PrismaProductStore (optional fallback/secondary)
+If another provider is ever reintroduced, keep it behind the same interface rather than branching throughout the app.
 
-Select provider in one place (e.g. server/stores/index.ts based on env/config). No if mongo else prisma scattered around.
+Select the provider in one place (e.g. server/stores/index.ts based on env/config). No scattered provider branching.
 
 8. Comments (but only the high-signal kind)
 

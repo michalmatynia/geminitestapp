@@ -3,6 +3,7 @@
 import { Moon, Sun } from 'lucide-react';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
+import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { darkenCssColor } from '@/shared/utils/color-utils';
 
 export type CmsStorefrontAppearanceMode = 'default' | 'dark';
@@ -253,7 +254,195 @@ export const resolveCmsStorefrontAppearance = (
   };
 };
 
-export const resolveKangurStorefrontAppearance = (
+const mixCssColor = (base: string, mixin: string, weight: number): string =>
+  `color-mix(in srgb, ${base} ${Math.max(0, Math.min(100, weight))}%, ${mixin})`;
+
+const toCssPx = (value: number): string => `${Math.max(0, Math.round(value * 100) / 100)}px`;
+
+const resolvePagePadding = (theme: ThemeSettings) => {
+  const basePadding = theme.pagePadding;
+
+  return {
+    top: theme.pagePaddingTop ?? basePadding,
+    right: theme.pagePaddingRight ?? basePadding,
+    bottom: theme.pagePaddingBottom ?? basePadding,
+    left: theme.pagePaddingLeft ?? basePadding,
+  };
+};
+
+const resolveButtonHeight = (theme: ThemeSettings): number =>
+  Math.max(theme.btnFontSize + theme.btnPaddingY * 2 + 16, 32);
+
+const resolvePanelPadding = (theme: ThemeSettings) => ({
+  md: Math.max(theme.containerPaddingInner - 4, 12),
+  lg: Math.max(theme.containerPaddingInner, 16),
+  xl: Math.max(theme.containerPaddingInner + 8, 20),
+});
+
+const resolveCardPadding = (theme: ThemeSettings) => ({
+  sm: Math.max(theme.containerPaddingInner - 12, 8),
+  md: Math.max(theme.containerPaddingInner - 8, 12),
+  lg: Math.max(theme.containerPaddingInner - 4, 16),
+  xl: Math.max(theme.containerPaddingInner, 20),
+});
+
+const resolveStackGap = (theme: ThemeSettings) => ({
+  sm: Math.max(Math.round(theme.gridGutter / 3), 8),
+  md: Math.max(Math.round(theme.gridGutter * (2 / 3)), 12),
+  lg: Math.max(Math.round(theme.gridGutter * (5 / 6)), 16),
+});
+
+const resolveGradientIconTileRadius = (theme: ThemeSettings) => ({
+  md: Math.max(theme.cardRadius - 10, 12),
+  lg: Math.max(theme.cardRadius - 2, 20),
+});
+
+const resolveChatRadius = (theme: ThemeSettings) => ({
+  bubble: Math.max(theme.cardRadius - 4, 18),
+  card: Math.max(theme.cardRadius - 4, 18),
+  inset: Math.max(theme.cardRadius - 6, 16),
+});
+
+const resolveChatPadding = (theme: ThemeSettings) => {
+  const cardPadding = resolveCardPadding(theme);
+
+  return {
+    xSm: cardPadding.sm,
+    ySm: Math.max(cardPadding.sm - 4, 8),
+    xMd: cardPadding.sm,
+    yMd: Math.max(cardPadding.sm, 12),
+    xLg: cardPadding.md,
+    yLg: Math.max(cardPadding.sm, 12),
+  };
+};
+
+const DEFAULT_KANGUR_RUNTIME_VARS = {
+  '--kangur-font-heading': 'system-ui, sans-serif',
+  '--kangur-font-body': 'system-ui, sans-serif',
+  '--kangur-font-base-size': '16px',
+  '--kangur-font-line-height': '1.6',
+  '--kangur-page-max-width': '1440px',
+  '--kangur-page-padding-top': '40px',
+  '--kangur-page-padding-right': '32px',
+  '--kangur-page-padding-bottom': '80px',
+  '--kangur-page-padding-left': '32px',
+  '--kangur-grid-gutter': '24px',
+  '--kangur-panel-radius-elevated': '36px',
+  '--kangur-panel-radius-soft': '34px',
+  '--kangur-panel-radius-subtle': '26px',
+  '--kangur-card-radius': '26px',
+  '--kangur-lesson-callout-radius': '24px',
+  '--kangur-lesson-inset-radius': '18px',
+  '--kangur-gradient-icon-tile-radius-md': '16px',
+  '--kangur-gradient-icon-tile-radius-lg': '24px',
+  '--kangur-chat-bubble-radius': '22px',
+  '--kangur-chat-card-radius': '22px',
+  '--kangur-chat-inset-radius': '20px',
+  '--kangur-chat-padding-x-sm': '12px',
+  '--kangur-chat-padding-y-sm': '8px',
+  '--kangur-chat-padding-x-md': '12px',
+  '--kangur-chat-padding-y-md': '12px',
+  '--kangur-chat-padding-x-lg': '16px',
+  '--kangur-chat-padding-y-lg': '12px',
+  '--kangur-panel-padding-md': '20px',
+  '--kangur-panel-padding-lg': '24px',
+  '--kangur-panel-padding-xl': '32px',
+  '--kangur-card-padding-sm': '12px',
+  '--kangur-card-padding-md': '16px',
+  '--kangur-card-padding-lg': '20px',
+  '--kangur-card-padding-xl': '24px',
+  '--kangur-media-padding-sm': '12px',
+  '--kangur-media-padding-md': '16px',
+  '--kangur-stack-gap-sm': '8px',
+  '--kangur-stack-gap-md': '16px',
+  '--kangur-stack-gap-lg': '20px',
+  '--kangur-nav-group-radius': '30px',
+  '--kangur-nav-item-radius': '20px',
+  '--kangur-segmented-control-radius': '28px',
+  '--kangur-segmented-item-radius': '18px',
+  '--kangur-menu-item-radius': '16px',
+  '--kangur-pill-padding-x': '16px',
+  '--kangur-pill-padding-y': '10px',
+  '--kangur-pill-font-size': '14px',
+  '--kangur-button-padding-x': '20px',
+  '--kangur-button-padding-y': '10px',
+  '--kangur-button-font-size': '14px',
+  '--kangur-button-height': '50px',
+  '--kangur-button-radius': '999px',
+  '--kangur-input-height': '50px',
+  '--kangur-input-radius': '22px',
+  '--kangur-input-font-size': '14px',
+} satisfies Record<string, string>;
+
+const resolveKangurRuntimeThemeVars = (theme: ThemeSettings): Record<string, string> => {
+  const pagePadding = resolvePagePadding(theme);
+  const panelPadding = resolvePanelPadding(theme);
+  const cardPadding = resolveCardPadding(theme);
+  const gradientIconTileRadius = resolveGradientIconTileRadius(theme);
+  const chatRadius = resolveChatRadius(theme);
+  const chatPadding = resolveChatPadding(theme);
+  const stackGap = resolveStackGap(theme);
+
+  return {
+    '--kangur-font-heading': theme.headingFont,
+    '--kangur-font-body': theme.bodyFont,
+    '--kangur-font-base-size': toCssPx(theme.baseSize),
+    '--kangur-font-line-height': String(theme.lineHeight),
+    '--kangur-page-max-width': toCssPx(theme.maxContentWidth),
+    '--kangur-page-padding-top': toCssPx(pagePadding.top),
+    '--kangur-page-padding-right': toCssPx(pagePadding.right),
+    '--kangur-page-padding-bottom': toCssPx(pagePadding.bottom),
+    '--kangur-page-padding-left': toCssPx(pagePadding.left),
+    '--kangur-grid-gutter': toCssPx(theme.gridGutter),
+    '--kangur-panel-radius-elevated': toCssPx(theme.containerRadius + 10),
+    '--kangur-panel-radius-soft': toCssPx(theme.containerRadius + 8),
+    '--kangur-panel-radius-subtle': toCssPx(theme.containerRadius),
+    '--kangur-card-radius': toCssPx(theme.cardRadius),
+    '--kangur-lesson-callout-radius': toCssPx(Math.max(theme.cardRadius - 2, 0)),
+    '--kangur-lesson-inset-radius': toCssPx(Math.max(theme.cardRadius - 8, 0)),
+    '--kangur-gradient-icon-tile-radius-md': toCssPx(gradientIconTileRadius.md),
+    '--kangur-gradient-icon-tile-radius-lg': toCssPx(gradientIconTileRadius.lg),
+    '--kangur-chat-bubble-radius': toCssPx(chatRadius.bubble),
+    '--kangur-chat-card-radius': toCssPx(chatRadius.card),
+    '--kangur-chat-inset-radius': toCssPx(chatRadius.inset),
+    '--kangur-chat-padding-x-sm': toCssPx(chatPadding.xSm),
+    '--kangur-chat-padding-y-sm': toCssPx(chatPadding.ySm),
+    '--kangur-chat-padding-x-md': toCssPx(chatPadding.xMd),
+    '--kangur-chat-padding-y-md': toCssPx(chatPadding.yMd),
+    '--kangur-chat-padding-x-lg': toCssPx(chatPadding.xLg),
+    '--kangur-chat-padding-y-lg': toCssPx(chatPadding.yLg),
+    '--kangur-panel-padding-md': toCssPx(panelPadding.md),
+    '--kangur-panel-padding-lg': toCssPx(panelPadding.lg),
+    '--kangur-panel-padding-xl': toCssPx(panelPadding.xl),
+    '--kangur-card-padding-sm': toCssPx(cardPadding.sm),
+    '--kangur-card-padding-md': toCssPx(cardPadding.md),
+    '--kangur-card-padding-lg': toCssPx(cardPadding.lg),
+    '--kangur-card-padding-xl': toCssPx(cardPadding.xl),
+    '--kangur-media-padding-sm': toCssPx(cardPadding.sm),
+    '--kangur-media-padding-md': toCssPx(cardPadding.md),
+    '--kangur-stack-gap-sm': toCssPx(stackGap.sm),
+    '--kangur-stack-gap-md': toCssPx(stackGap.md),
+    '--kangur-stack-gap-lg': toCssPx(stackGap.lg),
+    '--kangur-nav-group-radius': toCssPx(theme.pillRadius + 10),
+    '--kangur-nav-item-radius': toCssPx(theme.pillRadius),
+    '--kangur-segmented-control-radius': toCssPx(theme.pillRadius + 8),
+    '--kangur-segmented-item-radius': toCssPx(Math.max(theme.pillRadius - 2, 0)),
+    '--kangur-menu-item-radius': toCssPx(Math.max(theme.pillRadius - 4, 0)),
+    '--kangur-pill-padding-x': toCssPx(theme.pillPaddingX),
+    '--kangur-pill-padding-y': toCssPx(theme.pillPaddingY),
+    '--kangur-pill-font-size': toCssPx(theme.pillFontSize),
+    '--kangur-button-padding-x': toCssPx(theme.btnPaddingX),
+    '--kangur-button-padding-y': toCssPx(theme.btnPaddingY),
+    '--kangur-button-font-size': toCssPx(theme.btnFontSize),
+    '--kangur-button-height': toCssPx(resolveButtonHeight(theme)),
+    '--kangur-button-radius': toCssPx(theme.btnRadius),
+    '--kangur-input-height': toCssPx(theme.inputHeight),
+    '--kangur-input-radius': toCssPx(theme.inputRadius),
+    '--kangur-input-font-size': toCssPx(theme.inputFontSize),
+  };
+};
+
+const resolveDefaultKangurStorefrontAppearance = (
   mode: CmsStorefrontAppearanceMode
 ): {
   background: string;
@@ -271,6 +460,7 @@ export const resolveKangurStorefrontAppearance = (
         accent: '#c7d2fe',
       },
       vars: {
+        ...DEFAULT_KANGUR_RUNTIME_VARS,
         '--kangur-page-background':
           'radial-gradient(circle at top, #283044 0%, #1b2333 44%, #111827 100%)',
         '--kangur-glass-panel-background':
@@ -374,6 +564,7 @@ export const resolveKangurStorefrontAppearance = (
       accent: '#4f46e5',
     },
     vars: {
+      ...DEFAULT_KANGUR_RUNTIME_VARS,
       '--kangur-page-background':
         'radial-gradient(circle at top, #ece3e9 0%, #ddd6e3 48%, #cec9dd 100%)',
       '--kangur-glass-panel-background':
@@ -407,6 +598,300 @@ export const resolveKangurStorefrontAppearance = (
     },
   };
 };
+
+const resolveThemedKangurStorefrontAppearance = (
+  theme: ThemeSettings,
+  mode: CmsStorefrontAppearanceMode
+): {
+  background: string;
+  tone: Required<CmsAppearanceTone>;
+  vars: Record<string, string>;
+} => {
+  const accent = theme.accentColor || theme.primaryColor || theme.secondaryColor || theme.textColor;
+  const primary = theme.primaryColor || accent;
+  const secondary = theme.secondaryColor || primary;
+  const surfaceBackground = theme.cardBg || theme.containerBg || theme.surfaceColor;
+  const borderColor =
+    theme.containerBorderColor || theme.borderColor || theme.inputBorderColor || theme.btnOutlineBorder;
+  const inputBackground = theme.inputBg || surfaceBackground;
+  const inputText = theme.inputText || theme.textColor;
+  const inputBorderColor = theme.inputBorderColor || borderColor;
+  const navBackground = theme.pillBg || surfaceBackground;
+  const navText = theme.pillText || theme.mutedTextColor;
+  const navActiveBackground = theme.pillActiveBg || primary;
+  const navActiveText = theme.pillActiveText || theme.btnPrimaryText || '#ffffff';
+  const primaryButtonBackground = theme.btnPrimaryBg || primary;
+  const secondaryButtonBackground = theme.btnSecondaryBg || surfaceBackground;
+  const warningBackground = theme.accentColor || accent;
+  const successBackground = theme.successColor || '#22c55e';
+  const chatBackground = theme.containerBg || surfaceBackground;
+  const runtimeThemeVars = resolveKangurRuntimeThemeVars(theme);
+  const toneText = mode === 'dark' ? '#f8fafc' : theme.textColor;
+  const pageMutedText =
+    mode === 'dark'
+      ? mixCssColor(theme.mutedTextColor, '#ffffff', 72)
+      : theme.mutedTextColor;
+  const pageTone =
+    mode === 'dark'
+      ? resolveStorefrontAppearanceTone(
+          {
+            background: theme.backgroundColor,
+            text: theme.textColor,
+            border: borderColor,
+            accent,
+          },
+          mode
+        )
+      : {
+          background: theme.backgroundColor,
+          text: toneText,
+          border: borderColor,
+          accent,
+        };
+  const surfaceTone =
+    mode === 'dark'
+      ? resolveStorefrontAppearanceTone(
+          {
+            background: surfaceBackground,
+            text: theme.textColor,
+            border: borderColor,
+            accent,
+          },
+          mode
+        )
+      : {
+          background: surfaceBackground,
+          text: toneText,
+          border: borderColor,
+          accent,
+        };
+  const inputTone =
+    mode === 'dark'
+      ? resolveStorefrontAppearanceTone(
+          {
+            background: inputBackground,
+            text: inputText,
+            border: inputBorderColor,
+            accent,
+          },
+          mode
+        )
+      : {
+          background: inputBackground,
+          text: inputText,
+          border: inputBorderColor,
+          accent,
+        };
+  const background =
+    mode === 'dark'
+      ? `radial-gradient(circle at top, ${mixCssColor(primary, theme.backgroundColor, 18)} 0%, ${mixCssColor(theme.surfaceColor, theme.backgroundColor, 64)} 44%, ${darkenCssColor(theme.backgroundColor, 22)} 100%)`
+      : `radial-gradient(circle at top, ${mixCssColor(accent, theme.backgroundColor, 12)} 0%, ${mixCssColor(theme.surfaceColor, theme.backgroundColor, 52)} 48%, ${mixCssColor(secondary, theme.backgroundColor, 10)} 100%)`;
+
+  return {
+    background,
+    tone: {
+      background: pageTone.background,
+      text: toneText,
+      border: pageTone.border,
+      accent,
+    },
+    vars: {
+      ...runtimeThemeVars,
+      '--kangur-page-background': background,
+      '--kangur-glass-panel-background':
+        mode === 'dark'
+          ? `linear-gradient(180deg, ${mixCssColor(surfaceTone.background, '#000000', 80)} 0%, ${mixCssColor(surfaceTone.background, pageTone.background, 86)} 100%)`
+          : `linear-gradient(180deg, ${mixCssColor(surfaceTone.background, '#ffffff', 86)} 0%, ${mixCssColor(surfaceTone.background, pageTone.background, 92)} 100%)`,
+      '--kangur-glass-panel-border':
+        mode === 'dark'
+          ? mixCssColor(borderColor, '#ffffff', 34)
+          : mixCssColor(borderColor, '#ffffff', 74),
+      '--kangur-glass-panel-shadow':
+        mode === 'dark'
+          ? `0 24px 60px ${mixCssColor(theme.backgroundColor, '#000000', 42)}`
+          : `0 20px 60px ${mixCssColor(primary, '#000000', 18)}`,
+      '--kangur-soft-card-background':
+        mode === 'dark'
+          ? mixCssColor(surfaceTone.background, pageTone.background, 90)
+          : mixCssColor(surfaceTone.background, '#ffffff', 94),
+      '--kangur-soft-card-border':
+        mode === 'dark'
+          ? mixCssColor(borderColor, '#ffffff', 28)
+          : darkenCssColor(borderColor, 4),
+      '--kangur-soft-card-shadow':
+        mode === 'dark'
+          ? `0 18px 42px ${mixCssColor(theme.backgroundColor, '#000000', 38)}`
+          : `0 16px 38px ${mixCssColor(primary, '#000000', 12)}`,
+      '--kangur-soft-card-text': toneText,
+      '--kangur-nav-group-background':
+        mode === 'dark'
+          ? `linear-gradient(180deg, ${mixCssColor(navBackground, '#000000', 84)} 0%, ${mixCssColor(navBackground, pageTone.background, 88)} 100%)`
+          : `linear-gradient(180deg, ${mixCssColor(navBackground, '#ffffff', 90)} 0%, ${mixCssColor(navBackground, pageTone.background, 86)} 100%)`,
+      '--kangur-nav-group-border':
+        mode === 'dark'
+          ? mixCssColor(borderColor, '#ffffff', 34)
+          : mixCssColor(borderColor, '#ffffff', 72),
+      '--kangur-nav-item-text':
+        mode === 'dark'
+          ? mixCssColor(navText, '#ffffff', 84)
+          : navText,
+      '--kangur-nav-item-hover-background':
+        mode === 'dark'
+          ? mixCssColor(navBackground, pageTone.background, 76)
+          : mixCssColor(navBackground, '#ffffff', 94),
+      '--kangur-nav-item-hover-border':
+        mode === 'dark'
+          ? mixCssColor(borderColor, '#ffffff', 40)
+          : mixCssColor(borderColor, '#ffffff', 76),
+      '--kangur-nav-item-hover-text': toneText,
+      '--kangur-nav-item-active-background':
+        `linear-gradient(180deg, ${mixCssColor(navActiveBackground, mode === 'dark' ? '#000000' : '#ffffff', mode === 'dark' ? 88 : 72)} 0%, ${darkenCssColor(navActiveBackground, mode === 'dark' ? 22 : 8)} 100%)`,
+      '--kangur-nav-item-active-border':
+        mode === 'dark'
+          ? mixCssColor(navActiveBackground, '#ffffff', 38)
+          : mixCssColor(navActiveBackground, '#ffffff', 56),
+      '--kangur-nav-item-active-text':
+        mode === 'dark'
+          ? mixCssColor(navActiveText, '#ffffff', 92)
+          : darkenCssColor(navActiveBackground, 24),
+      '--kangur-text-field-background': inputTone.background,
+      '--kangur-text-field-border':
+        mode === 'dark'
+          ? mixCssColor(inputTone.border, '#ffffff', 28)
+          : inputTone.border,
+      '--kangur-text-field-text': inputTone.text,
+      '--kangur-text-field-placeholder':
+        mode === 'dark'
+          ? mixCssColor(theme.inputPlaceholder, '#ffffff', 78)
+          : theme.inputPlaceholder,
+      '--kangur-text-field-disabled-background':
+        mode === 'dark'
+          ? mixCssColor(inputTone.background, pageTone.background, 72)
+          : mixCssColor(inputTone.background, pageTone.background, 84),
+      '--kangur-text-field-disabled-border':
+        mode === 'dark'
+          ? mixCssColor(inputTone.border, '#ffffff', 18)
+          : mixCssColor(inputTone.border, pageTone.background, 72),
+      '--kangur-progress-track':
+        mode === 'dark'
+          ? mixCssColor(borderColor, pageTone.background, 48)
+          : mixCssColor(borderColor, pageTone.background, 64),
+      '--kangur-page-text': toneText,
+      '--kangur-page-muted-text': pageMutedText,
+      '--kangur-button-primary-background':
+        `linear-gradient(90deg, ${mixCssColor(primaryButtonBackground, '#ffffff', mode === 'dark' ? 82 : 68)} 0%, ${darkenCssColor(primaryButtonBackground, mode === 'dark' ? 18 : 8)} 100%)`,
+      '--kangur-button-primary-hover-background':
+        `linear-gradient(90deg, ${mixCssColor(primaryButtonBackground, '#ffffff', mode === 'dark' ? 74 : 58)} 0%, ${darkenCssColor(primaryButtonBackground, mode === 'dark' ? 10 : 2)} 56%, ${darkenCssColor(primaryButtonBackground, mode === 'dark' ? 20 : 10)} 100%)`,
+      '--kangur-button-primary-shadow':
+        `0 12px 24px ${mixCssColor(primaryButtonBackground, '#000000', mode === 'dark' ? 34 : 24)}, inset 0 1px 0 ${mixCssColor(theme.btnPrimaryText || '#ffffff', '#ffffff', mode === 'dark' ? 18 : 38)}`,
+      '--kangur-button-primary-hover-shadow':
+        `0 22px 34px -18px ${mixCssColor(primaryButtonBackground, '#000000', mode === 'dark' ? 40 : 30)}, 0 14px 24px -18px ${mixCssColor(accent, '#000000', mode === 'dark' ? 22 : 16)}, inset 0 1px 0 ${mixCssColor(theme.btnPrimaryText || '#ffffff', '#ffffff', mode === 'dark' ? 24 : 42)}`,
+      '--kangur-button-secondary-background':
+        `linear-gradient(180deg, ${mixCssColor(secondaryButtonBackground, mode === 'dark' ? '#000000' : '#ffffff', mode === 'dark' ? 88 : 92)} 0%, ${mixCssColor(secondaryButtonBackground, pageTone.background, mode === 'dark' ? 92 : 84)} 100%)`,
+      '--kangur-button-secondary-hover-background':
+        `linear-gradient(180deg, ${mixCssColor(secondaryButtonBackground, mode === 'dark' ? '#ffffff' : '#ffffff', mode === 'dark' ? 78 : 86)} 0%, ${mixCssColor(secondaryButtonBackground, pageTone.background, mode === 'dark' ? 88 : 80)} 100%)`,
+      '--kangur-button-secondary-shadow':
+        `0 16px 28px -24px ${mixCssColor(secondaryButtonBackground, '#000000', mode === 'dark' ? 52 : 28)}, inset 0 1px 0 ${mixCssColor(theme.btnSecondaryText || toneText, '#ffffff', mode === 'dark' ? 10 : 28)}`,
+      '--kangur-button-secondary-text':
+        mode === 'dark'
+          ? mixCssColor(theme.btnSecondaryText || toneText, '#ffffff', 92)
+          : theme.btnSecondaryText || toneText,
+      '--kangur-button-secondary-hover-text': toneText,
+      '--kangur-button-surface-background':
+        `linear-gradient(180deg, ${mixCssColor(surfaceBackground, mode === 'dark' ? '#000000' : '#ffffff', mode === 'dark' ? 92 : 90)} 0%, ${mixCssColor(primary, surfaceBackground, mode === 'dark' ? 12 : 16)} 100%)`,
+      '--kangur-button-surface-shadow':
+        `0 16px 28px -24px ${mixCssColor(primary, '#000000', mode === 'dark' ? 26 : 18)}, inset 0 1px 0 ${mixCssColor(primary, '#ffffff', mode === 'dark' ? 10 : 18)}`,
+      '--kangur-button-surface-text':
+        mode === 'dark'
+          ? mixCssColor(primary, '#ffffff', 72)
+          : darkenCssColor(primary, 8),
+      '--kangur-button-surface-hover-text':
+        mode === 'dark'
+          ? mixCssColor(primary, '#ffffff', 88)
+          : darkenCssColor(primary, 16),
+      '--kangur-button-warning-background':
+        `linear-gradient(180deg, ${mixCssColor(warningBackground, mode === 'dark' ? '#000000' : '#ffffff', mode === 'dark' ? 84 : 76)} 0%, ${mixCssColor(warningBackground, pageTone.background, mode === 'dark' ? 88 : 68)} 100%)`,
+      '--kangur-button-warning-hover-background':
+        `linear-gradient(180deg, ${mixCssColor(warningBackground, mode === 'dark' ? '#ffffff' : '#ffffff', mode === 'dark' ? 74 : 68)} 0%, ${mixCssColor(warningBackground, pageTone.background, mode === 'dark' ? 82 : 62)} 100%)`,
+      '--kangur-button-warning-shadow':
+        `0 16px 28px -24px ${mixCssColor(warningBackground, '#000000', mode === 'dark' ? 44 : 26)}, inset 0 1px 0 ${mixCssColor('#ffffff', '#ffffff', mode === 'dark' ? 10 : 50)}`,
+      '--kangur-button-warning-hover-shadow':
+        `0 20px 32px -24px ${mixCssColor(warningBackground, '#000000', mode === 'dark' ? 52 : 34)}, 0 14px 24px -24px ${mixCssColor(accent, '#000000', mode === 'dark' ? 18 : 10)}, inset 0 1px 0 ${mixCssColor('#ffffff', '#ffffff', mode === 'dark' ? 14 : 56)}`,
+      '--kangur-button-warning-text':
+        mode === 'dark'
+          ? mixCssColor('#fde68a', '#ffffff', 92)
+          : darkenCssColor(warningBackground, 42),
+      '--kangur-button-warning-hover-text':
+        mode === 'dark'
+          ? mixCssColor('#fef3c7', '#ffffff', 96)
+          : darkenCssColor(warningBackground, 50),
+      '--kangur-button-success-background':
+        `linear-gradient(180deg, ${mixCssColor(successBackground, mode === 'dark' ? '#000000' : '#ffffff', mode === 'dark' ? 86 : 78)} 0%, ${mixCssColor(successBackground, pageTone.background, mode === 'dark' ? 90 : 70)} 100%)`,
+      '--kangur-button-success-shadow':
+        `0 16px 28px -24px ${mixCssColor(successBackground, '#000000', mode === 'dark' ? 42 : 24)}, inset 0 1px 0 ${mixCssColor('#ffffff', '#ffffff', mode === 'dark' ? 10 : 42)}`,
+      '--kangur-button-success-text':
+        mode === 'dark'
+          ? mixCssColor('#d1fae5', '#ffffff', 92)
+          : darkenCssColor(successBackground, 36),
+      '--kangur-button-success-hover-text':
+        mode === 'dark'
+          ? mixCssColor('#ecfdf5', '#ffffff', 96)
+          : darkenCssColor(successBackground, 44),
+      '--kangur-chat-panel-background':
+        `linear-gradient(180deg, ${mixCssColor(chatBackground, mode === 'dark' ? '#000000' : '#ffffff', mode === 'dark' ? 92 : 94)} 0%, ${mixCssColor(chatBackground, pageTone.background, mode === 'dark' ? 94 : 88)} 100%)`,
+      '--kangur-chat-panel-border':
+        mode === 'dark'
+          ? mixCssColor(accent, '#ffffff', 24)
+          : mixCssColor(accent, '#ffffff', 34),
+      '--kangur-chat-panel-shadow':
+        `0 20px 48px -30px ${mixCssColor(chatBackground, '#000000', mode === 'dark' ? 52 : 20)}, inset 0 1px 0 ${mixCssColor('#ffffff', '#ffffff', mode === 'dark' ? 6 : 22)}`,
+      '--kangur-chat-header-background':
+        `linear-gradient(180deg, ${mixCssColor(accent, chatBackground, mode === 'dark' ? 32 : 22)} 0%, ${mixCssColor(chatBackground, pageTone.background, mode === 'dark' ? 92 : 86)} 100%)`,
+      '--kangur-chat-header-border':
+        mode === 'dark'
+          ? mixCssColor(accent, '#ffffff', 20)
+          : mixCssColor(accent, '#ffffff', 28),
+      '--kangur-chat-panel-text': toneText,
+      '--kangur-chat-muted-text':
+        mode === 'dark'
+          ? mixCssColor(pageMutedText, '#ffffff', 84)
+          : mixCssColor(pageMutedText, toneText, 76),
+      '--kangur-chat-kicker-text':
+        mode === 'dark'
+          ? mixCssColor(warningBackground, '#ffffff', 62)
+          : darkenCssColor(warningBackground, 18),
+      '--kangur-chat-kicker-dot': warningBackground,
+      '--kangur-chat-chip-background':
+        `linear-gradient(135deg, ${mixCssColor(accent, chatBackground, mode === 'dark' ? 44 : 34)}, ${mixCssColor(chatBackground, pageTone.background, mode === 'dark' ? 88 : 82)})`,
+      '--kangur-chat-chip-border':
+        mode === 'dark'
+          ? mixCssColor(accent, '#ffffff', 22)
+          : mixCssColor(accent, '#ffffff', 30),
+      '--kangur-chat-chip-text':
+        mode === 'dark'
+          ? mixCssColor(theme.btnPrimaryText || '#fff7ed', '#ffffff', 92)
+          : toneText,
+      '--kangur-chat-control-background':
+        `linear-gradient(180deg, ${mixCssColor(accent, chatBackground, mode === 'dark' ? 34 : 26)} 0%, ${mixCssColor(chatBackground, pageTone.background, mode === 'dark' ? 86 : 80)} 100%)`,
+      '--kangur-chat-control-hover-background':
+        `linear-gradient(180deg, ${mixCssColor(accent, mode === 'dark' ? '#ffffff' : '#ffffff', mode === 'dark' ? 28 : 22)} 0%, ${mixCssColor(chatBackground, pageTone.background, mode === 'dark' ? 82 : 76)} 100%)`,
+      '--kangur-chat-control-border':
+        mode === 'dark'
+          ? mixCssColor(accent, '#ffffff', 22)
+          : mixCssColor(accent, '#ffffff', 28),
+      '--kangur-chat-control-text': toneText,
+    },
+  };
+};
+
+export const resolveKangurStorefrontAppearance = (
+  mode: CmsStorefrontAppearanceMode,
+  theme?: ThemeSettings | null
+): {
+  background: string;
+  tone: Required<CmsAppearanceTone>;
+  vars: Record<string, string>;
+} => (theme ? resolveThemedKangurStorefrontAppearance(theme, mode) : resolveDefaultKangurStorefrontAppearance(mode));
 
 export function CmsStorefrontAppearanceProvider({
   children,

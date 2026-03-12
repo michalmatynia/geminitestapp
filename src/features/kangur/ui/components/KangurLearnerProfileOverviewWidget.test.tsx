@@ -11,12 +11,17 @@ import {
   getCurrentKangurDailyQuest,
 } from '@/features/kangur/ui/services/daily-quests';
 
-const { useKangurLearnerProfileRuntimeMock } = vi.hoisted(() => ({
+const { useKangurLearnerProfileRuntimeMock, useKangurPageContentEntryMock } = vi.hoisted(() => ({
   useKangurLearnerProfileRuntimeMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', () => ({
   useKangurLearnerProfileRuntime: useKangurLearnerProfileRuntimeMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
 import { KangurLearnerProfileOverviewWidget } from './KangurLearnerProfileOverviewWidget';
@@ -145,6 +150,13 @@ describe('KangurLearnerProfileOverviewWidget', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-03-10T09:00:00.000Z'));
     window.localStorage.clear();
+    useKangurPageContentEntryMock.mockReturnValue({
+      entry: null,
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
   });
 
   afterEach(() => {
@@ -254,6 +266,30 @@ describe('KangurLearnerProfileOverviewWidget', () => {
     expect(screen.getByTestId('learner-profile-overview-guided-rounds-bar')).toHaveAttribute(
       'aria-valuenow',
       '67'
+    );
+  });
+
+  it('uses Mongo-backed overview intro copy when available', () => {
+    useKangurPageContentEntryMock.mockReturnValue({
+      entry: {
+        id: 'learner-profile-overview',
+        title: 'Przeglad wynikow',
+        summary: 'Mongo opis najwazniejszych wskaznikow profilu ucznia.',
+      },
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+    useKangurLearnerProfileRuntimeMock.mockReturnValue(buildRuntimeValue());
+
+    render(<KangurLearnerProfileOverviewWidget />);
+
+    expect(screen.getByTestId('learner-profile-overview-intro')).toHaveTextContent(
+      'Przeglad wynikow'
+    );
+    expect(screen.getByTestId('learner-profile-overview-intro')).toHaveTextContent(
+      'Mongo opis najwazniejszych wskaznikow profilu ucznia.'
     );
   });
 });

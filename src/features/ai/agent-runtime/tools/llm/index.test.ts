@@ -9,12 +9,10 @@ vi.mock('@/shared/lib/ai-brain/server-runtime-client', () => ({
   runBrainChatCompletion: runBrainChatCompletionMock,
 }));
 
-vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
-  default: {
-    agentAuditLog: {
-      create: agentAuditLogCreateMock,
-    },
-  },
+vi.mock('@/features/ai/agent-runtime/store-delegates', () => ({
+  getAgentAuditLogDelegate: vi.fn(() => ({
+    create: agentAuditLogCreateMock,
+  })),
 }));
 
 import { buildSearchQueryWithLLM } from '@/features/ai/agent-runtime/tools/llm';

@@ -4,14 +4,20 @@
 
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 
-const { useKangurLearnerProfileRuntimeMock } = vi.hoisted(() => ({
+const { useKangurLearnerProfileRuntimeMock, useKangurPageContentEntryMock } = vi.hoisted(() => ({
   useKangurLearnerProfileRuntimeMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', () => ({
   formatKangurProfileDateTime: (value: string) => `formatted:${value}`,
   useKangurLearnerProfileRuntime: useKangurLearnerProfileRuntimeMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
 import { KangurLearnerProfileAiTutorMoodWidget } from './KangurLearnerProfileAiTutorMoodWidget';
@@ -67,6 +73,13 @@ const buildRuntimeValue = (overrides?: Record<string, unknown>) => ({
 describe('KangurLearnerProfileAiTutorMoodWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useKangurPageContentEntryMock.mockReturnValue({
+      entry: null,
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
   });
 
   it('shows the persisted tutor mood for the active learner profile', () => {
@@ -101,7 +114,7 @@ describe('KangurLearnerProfileAiTutorMoodWidget', () => {
       'proud'
     );
     expect(screen.getByTestId('learner-profile-ai-tutor-mood-description')).toHaveTextContent(
-      'Tutor podkresla postep'
+      /Tutor podkreśla postęp/i
     );
     expect(screen.getByTestId('learner-profile-ai-tutor-mood-baseline')).toHaveTextContent(
       'Wspierajacy'
@@ -125,9 +138,35 @@ describe('KangurLearnerProfileAiTutorMoodWidget', () => {
     expect(screen.getByTestId('learner-profile-ai-tutor-mood-baseline')).toHaveTextContent(
       'Neutralny'
     );
-    expect(screen.getByText(/trybie lokalnym tutor dziala/i)).toBeInTheDocument();
+    expect(screen.getByTestId('learner-profile-ai-tutor-mood')).toHaveTextContent(
+      repairKangurPolishCopy(
+        'W trybie lokalnym tutor dziala, ale nastroj nie zapisuje sie per uczen.'
+      )
+    );
     expect(screen.getByTestId('learner-profile-ai-tutor-mood-updated')).toHaveTextContent(
       'Jeszcze nie obliczono'
     );
+  });
+
+  it('uses Mongo-backed section intro copy when available', () => {
+    useKangurPageContentEntryMock.mockReturnValue({
+      entry: {
+        id: 'learner-profile-ai-tutor-mood',
+        title: 'Nastroj Tutor-AI',
+        summary: 'Mongo opis tonu wsparcia i ostatniej analizy nastroju.',
+      },
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+    useKangurLearnerProfileRuntimeMock.mockReturnValue(buildRuntimeValue());
+
+    render(<KangurLearnerProfileAiTutorMoodWidget />);
+
+    expect(screen.getByText('Nastroj Tutor-AI')).toBeInTheDocument();
+    expect(
+      screen.getByText('Mongo opis tonu wsparcia i ostatniej analizy nastroju.')
+    ).toBeInTheDocument();
   });
 });

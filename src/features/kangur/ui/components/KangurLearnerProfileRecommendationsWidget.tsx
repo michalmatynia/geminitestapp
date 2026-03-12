@@ -1,5 +1,7 @@
 'use client';
 
+import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
+import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KANGUR_PROFILE_RECOMMENDATION_ACCENTS,
@@ -10,26 +12,29 @@ import {
   KangurButton,
   KangurEmptyState,
   KangurGlassPanel,
-  KangurInfoCard,
-  KangurSectionEyebrow,
-  KangurStatusChip,
+  KangurPanelIntro,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 
 const LEARNER_PROFILE_RECOMMENDATION_ROUTE_ACKNOWLEDGE_MS = 110;
 
 export function KangurLearnerProfileRecommendationsWidget(): React.JSX.Element {
   const { basePath, snapshot } = useKangurLearnerProfileRuntime();
+  const { entry: recommendationsContent } =
+    useKangurPageContentEntry('learner-profile-recommendations');
+  const sectionTitle = recommendationsContent?.title ?? 'Plan na dzis';
+  const sectionSummary =
+    recommendationsContent?.summary ??
+    'Krotka lista kolejnych krokow na podstawie ostatnich wynikow i aktywnosci.';
 
   return (
     <KangurGlassPanel padding='lg' surface='mistSoft' variant='soft'>
-      <div className='mb-3 flex flex-col gap-1'>
-        <KangurSectionEyebrow>
-          Plan na dzis
-        </KangurSectionEyebrow>
-        <div className='text-sm [color:var(--kangur-page-muted-text)]'>
-          Krotka lista kolejnych krokow na podstawie ostatnich wynikow i aktywnosci.
-        </div>
-      </div>
+      <KangurPanelIntro
+        className='mb-3'
+        data-testid='learner-profile-recommendations-intro'
+        description={sectionSummary}
+        eyebrow={sectionTitle}
+      />
 
       {snapshot.recommendations.length === 0 ? (
         <KangurEmptyState description='Brak rekomendacji do wyswietlenia.' padding='md' />
@@ -39,46 +44,47 @@ export function KangurLearnerProfileRecommendationsWidget(): React.JSX.Element {
             const accent = KANGUR_PROFILE_RECOMMENDATION_ACCENTS[recommendation.priority];
 
             return (
-              <KangurInfoCard
-                accent={accent}
-                key={recommendation.id}
-                className='rounded-[26px]'
-                data-testid={`learner-profile-recommendation-${recommendation.id}`}
-                padding='md'
-                tone='accent'
-              >
-                <KangurStatusChip
-                  accent={accent}
-                  className='uppercase tracking-[0.14em]'
-                  size='sm'
-                >
-                  {recommendation.priority === 'high'
-                    ? 'Priorytet wysoki'
-                    : recommendation.priority === 'medium'
-                      ? 'Priorytet sredni'
-                      : 'Priorytet niski'}
-                </KangurStatusChip>
-                <div className='mt-3 text-sm font-semibold'>{recommendation.title}</div>
-                <div className='mt-1 text-xs opacity-80'>{recommendation.description}</div>
-                <KangurButton
-                  asChild
-                  className='mt-3'
-                  size='sm'
-                  variant='primary'
-                  data-doc-id='learner_recommendation_action'
-                >
-                  <Link
-                    href={buildKangurRecommendationHref(basePath, recommendation.action)}
-                    targetPageKey={recommendation.action.page}
-                    transitionAcknowledgeMs={
-                      LEARNER_PROFILE_RECOMMENDATION_ROUTE_ACKNOWLEDGE_MS
-                    }
-                    transitionSourceId={`learner-profile-recommendation:${recommendation.id}`}
+              <KangurRecommendationCard
+                action={
+                  <KangurButton
+                    asChild
+                    className='mt-0'
+                    size='sm'
+                    variant='primary'
+                    data-doc-id='learner_recommendation_action'
                   >
-                    {recommendation.action.label}
-                  </Link>
-                </KangurButton>
-              </KangurInfoCard>
+                    <Link
+                      href={buildKangurRecommendationHref(basePath, recommendation.action)}
+                      targetPageKey={recommendation.action.page}
+                      transitionAcknowledgeMs={
+                        LEARNER_PROFILE_RECOMMENDATION_ROUTE_ACKNOWLEDGE_MS
+                      }
+                      transitionSourceId={`learner-profile-recommendation:${recommendation.id}`}
+                    >
+                      {recommendation.action.label}
+                    </Link>
+                  </KangurButton>
+                }
+                accent={accent}
+                className='rounded-[26px]'
+                contentClassName='gap-3'
+                dataTestId={`learner-profile-recommendation-${recommendation.id}`}
+                description={recommendation.description}
+                descriptionClassName='opacity-80'
+                descriptionSize='xs'
+                descriptionTestId={`learner-profile-recommendation-description-${recommendation.id}`}
+                key={recommendation.id}
+                labelContent={
+                  <KangurAssignmentPriorityChip
+                    accent={accent}
+                    className='uppercase tracking-[0.14em]'
+                    priority={recommendation.priority}
+                    size='sm'
+                  />
+                }
+                title={recommendation.title}
+                titleTestId={`learner-profile-recommendation-title-${recommendation.id}`}
+              />
             );
           })}
         </div>

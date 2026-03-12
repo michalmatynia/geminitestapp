@@ -18,6 +18,10 @@ const { optionalTutorMock } = vi.hoisted(() => ({
   optionalTutorMock: vi.fn(),
 }));
 
+const { useKangurPageContentEntryMock } = vi.hoisted(() => ({
+  useKangurPageContentEntryMock: vi.fn(),
+}));
+
 vi.mock('next/link', () => ({
   default: ({
     children,
@@ -82,6 +86,10 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useOptionalKangurAiTutor: () => optionalTutorMock(),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
+}));
+
 import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import { KangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
 import {
@@ -95,6 +103,19 @@ describe('KangurPrimaryNavigation', () => {
     vi.clearAllMocks();
     optionalAuthMock.mockReturnValue(null);
     optionalTutorMock.mockReturnValue(null);
+    useKangurPageContentEntryMock.mockReturnValue({
+      data: undefined,
+      entry: null,
+      error: null,
+      isError: false,
+      isFetched: true,
+      isFetching: false,
+      isLoading: false,
+      isPending: false,
+      isSuccess: true,
+      refetch: vi.fn(),
+      status: 'success',
+    });
     window.sessionStorage.clear();
   });
 
@@ -207,8 +228,8 @@ describe('KangurPrimaryNavigation', () => {
 
     expect(screen.getByTestId('kangur-page-top-bar')).toHaveClass('sticky', 'top-0', 'w-full');
     expect(screen.getByRole('navigation', { name: /glowna nawigacja kangur/i })).toHaveClass(
+      'kangur-nav-group',
       'w-full',
-      'rounded-[30px]',
       'p-2'
     );
   });
@@ -365,6 +386,55 @@ describe('KangurPrimaryNavigation', () => {
     );
   });
 
+  it('uses Mongo-backed labels on the anonymous auth actions when available', () => {
+    useKangurPageContentEntryMock.mockImplementation((entryId: string) => ({
+      data: undefined,
+      entry:
+        entryId === 'shared-nav-create-account-action'
+          ? {
+              id: 'shared-nav-create-account-action',
+              title: 'Utwórz konto',
+              summary: 'Załóż konto rodzica bez opuszczania tej strony.',
+            }
+          : {
+              id: 'shared-nav-login-action',
+              title: 'Zaloguj się',
+              summary: 'Otwórz logowanie rodzica lub ucznia z bieżącej strony.',
+            },
+      error: null,
+      isError: false,
+      isFetched: true,
+      isFetching: false,
+      isLoading: false,
+      isPending: false,
+      isSuccess: true,
+      refetch: vi.fn(),
+      status: 'success',
+    }));
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Game'
+        guestPlayerName='Ala'
+        isAuthenticated={false}
+        onCreateAccount={vi.fn()}
+        onGuestPlayerNameChange={vi.fn()}
+        onLogin={vi.fn()}
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Utwórz konto' })).toHaveAttribute(
+      'title',
+      'Załóż konto rodzica bez opuszczania tej strony.'
+    );
+    expect(screen.getByRole('button', { name: 'Zaloguj się' })).toHaveAttribute(
+      'title',
+      'Otwórz logowanie rodzica lub ucznia z bieżącej strony.'
+    );
+  });
+
   it('shows a visible restore action when the tutor was hidden locally and reopens it on click', () => {
     const openChatMock = vi.fn();
     optionalTutorMock.mockReturnValue({
@@ -386,6 +456,7 @@ describe('KangurPrimaryNavigation', () => {
 
     expect(restoreButton).toBeVisible();
     expect(restoreButton).toHaveTextContent('Włącz AI Tutora');
+    expect(restoreButton.className).toContain('bg-[linear-gradient');
 
     fireEvent.click(restoreButton);
 

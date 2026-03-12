@@ -10,18 +10,31 @@ import {
   KangurButton,
   KangurEmptyState,
   KangurGlassPanel,
+  KangurPanelIntro,
   KangurProgressBar,
   KangurSectionEyebrow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 
 const LEARNER_PROFILE_PERFORMANCE_ROUTE_ACKNOWLEDGE_MS = 110;
 
 export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
   const { basePath, maxWeeklyGames, snapshot } = useKangurLearnerProfileRuntime();
+  const { entry: performanceContent } = useKangurPageContentEntry('learner-profile-performance');
+  const sectionTitle = performanceContent?.title ?? 'Skutecznosc ucznia';
+  const sectionSummary =
+    performanceContent?.summary ??
+    'Zobacz rytm ostatnich siedmiu dni i skutecznosc dla poszczegolnych operacji.';
 
   return (
-    <section className='grid grid-cols-1 gap-4 xl:grid-cols-5'>
+    <section className='flex flex-col gap-4'>
+      <KangurPanelIntro
+        data-testid='learner-profile-performance-intro'
+        description={sectionSummary}
+        eyebrow={sectionTitle}
+      />
+      <div className='grid grid-cols-1 gap-4 xl:grid-cols-5'>
       <KangurGlassPanel
         className='xl:col-span-3'
         padding='lg'
@@ -128,6 +141,7 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
           )}
         </div>
       </KangurGlassPanel>
+      </div>
     </section>
   );
 }

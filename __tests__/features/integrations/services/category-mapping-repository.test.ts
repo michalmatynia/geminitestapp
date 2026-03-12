@@ -1,147 +1,136 @@
-import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.unmock('@/shared/lib/db/legacy-sql-client');
+const mocks = vi.hoisted(() => ({
+  create: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+  getById: vi.fn(),
+  listByConnection: vi.fn(),
+  getByExternalCategory: vi.fn(),
+  bulkUpsert: vi.fn(),
+  deleteByConnection: vi.fn(),
+}));
 
-import { getCategoryMappingRepository } from '@/features/integrations/services/category-mapping-repository';
-import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
+vi.mock('@/features/integrations/services/category-mapping/mongo-impl', () => ({
+  mongoCategoryMappingImpl: {
+    create: mocks.create,
+    update: mocks.update,
+    delete: mocks.delete,
+    getById: mocks.getById,
+    listByConnection: mocks.listByConnection,
+    getByExternalCategory: mocks.getByExternalCategory,
+    bulkUpsert: mocks.bulkUpsert,
+    deleteByConnection: mocks.deleteByConnection,
+  },
+}));
 
-let canMutateCategoryMappingTables = true;
+import {
+  categoryMappingRepository,
+  getCategoryMappingRepository,
+} from '@/features/integrations/services/category-mapping-repository';
 
-describe('CategoryMappingRepository', () => {
-  const shouldSkipCategoryMappingTests = (): boolean =>
-    !process.env['DATABASE_URL'] || !canMutateCategoryMappingTables;
-  const repo = getCategoryMappingRepository();
-
-  beforeEach(async () => {
-    if (shouldSkipCategoryMappingTests()) return;
-
-    // Clean up DB
-    try {
-      await legacySqlClient.categoryMapping.deleteMany({});
-      await legacySqlClient.externalCategory.deleteMany({});
-      await legacySqlClient.category.deleteMany({});
-      await legacySqlClient.integrationConnection.deleteMany({});
-      await legacySqlClient.integration.deleteMany({});
-      await legacySqlClient.catalog.deleteMany({});
-    } catch (error) {
-      const code = (error as { code?: string }).code;
-      if (code === 'EPERM') {
-        canMutateCategoryMappingTables = false;
-        return;
-      }
-      throw error;
-    }
+describe('categoryMappingRepository', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  afterAll(async () => {
-    await legacySqlClient.$disconnect();
-  });
-
-  const setupData = async () => {
-    const integration = await legacySqlClient.integration.create({
-      data: { name: 'Test', slug: 'test-' + Math.random() },
-    });
-    const connection = await legacySqlClient.integrationConnection.create({
-      data: { name: 'Conn 1', integrationId: integration.id, username: 'test', password: 'test' },
-    });
-    const catalog = await legacySqlClient.catalog.create({
-      data: { name: 'Cat 1' },
-    });
-    const internalCat = await legacySqlClient.productCategory.create({
-      data: { name: 'Int 1', catalogId: catalog.id },
-    });
-    const externalCat = await legacySqlClient.externalCategory.create({
-      data: { name: 'Ext 1', externalId: 'e1', connectionId: connection.id },
-    });
-
-    return { connection, catalog, internalCat, externalCat };
-  };
-
-  it('creates a mapping', async () => {
-    if (shouldSkipCategoryMappingTests()) return;
-    const { connection, catalog, internalCat, externalCat } = await setupData();
-
-    const input = {
-      connectionId: connection.id,
-      externalCategoryId: externalCat.id,
-      internalCategoryId: internalCat.id,
-      catalogId: catalog.id,
+  it('forwards create to the Mongo implementation', async () => {
+    const record = {
+      id: 'mapping-1',
+      connectionId: 'conn-1',
+      externalCategoryId: 'ext-1',
+      internalCategoryId: 'int-1',
+      catalogId: 'catalog-1',
+      isActive: true,
+      createdAt: '2026-03-01T00:00:00.000Z',
+      updatedAt: '2026-03-01T00:00:00.000Z',
     };
+    mocks.create.mockResolvedValue(record);
 
-    const result = await repo.create(input);
-    expect(result.id).toBeDefined();
-    expect(result.connectionId).toBe(connection.id);
-  });
-
-  it('updates a mapping', async () => {
-    if (shouldSkipCategoryMappingTests()) return;
-    const { connection, catalog, internalCat, externalCat } = await setupData();
-    const mapping = await repo.create({
-      connectionId: connection.id,
-      externalCategoryId: externalCat.id,
-      internalCategoryId: internalCat.id,
-      catalogId: catalog.id,
+    await expect(
+      categoryMappingRepository.create({
+        connectionId: 'conn-1',
+        externalCategoryId: 'ext-1',
+        internalCategoryId: 'int-1',
+        catalogId: 'catalog-1',
+      })
+    ).resolves.toEqual(record);
+    expect(mocks.create).toHaveBeenCalledWith({
+      connectionId: 'conn-1',
+      externalCategoryId: 'ext-1',
+      internalCategoryId: 'int-1',
+      catalogId: 'catalog-1',
     });
-
-    const result = await repo.update(mapping.id, { isActive: false });
-    expect(result.isActive).toBe(false);
   });
 
-  it('deletes a mapping', async () => {
-    if (shouldSkipCategoryMappingTests()) return;
-    const { connection, catalog, internalCat, externalCat } = await setupData();
-    const mapping = await repo.create({
-      connectionId: connection.id,
-      externalCategoryId: externalCat.id,
-      internalCategoryId: internalCat.id,
-      catalogId: catalog.id,
-    });
+  it('forwards update to the Mongo implementation', async () => {
+    const record = { id: 'mapping-1', isActive: false };
+    mocks.update.mockResolvedValue(record);
 
-    await repo.delete(mapping.id);
-    const found = await legacySqlClient.categoryMapping.findUnique({ where: { id: mapping.id } });
-    expect(found).toBeNull();
+    await expect(categoryMappingRepository.update('mapping-1', { isActive: false })).resolves.toEqual(
+      record
+    );
+    expect(mocks.update).toHaveBeenCalledWith('mapping-1', { isActive: false });
   });
 
-  it('gets by id', async () => {
-    if (shouldSkipCategoryMappingTests()) return;
-    const { connection, catalog, internalCat, externalCat } = await setupData();
-    const mapping = await repo.create({
-      connectionId: connection.id,
-      externalCategoryId: externalCat.id,
-      internalCategoryId: internalCat.id,
-      catalogId: catalog.id,
-    });
+  it('forwards delete to the Mongo implementation', async () => {
+    mocks.delete.mockResolvedValue(undefined);
 
-    const result = await repo.getById(mapping.id);
-    expect(result?.id).toBe(mapping.id);
+    await expect(categoryMappingRepository.delete('mapping-1')).resolves.toBeUndefined();
+    expect(mocks.delete).toHaveBeenCalledWith('mapping-1');
   });
 
-  it('lists by connection', async () => {
-    if (shouldSkipCategoryMappingTests()) return;
-    const { connection, catalog, internalCat, externalCat } = await setupData();
-    await repo.create({
-      connectionId: connection.id,
-      externalCategoryId: externalCat.id,
-      internalCategoryId: internalCat.id,
-      catalogId: catalog.id,
-    });
+  it('forwards getById to the Mongo implementation', async () => {
+    const record = { id: 'mapping-1' };
+    mocks.getById.mockResolvedValue(record);
 
-    const result = await repo.listByConnection(connection.id);
-    expect(result.length).toBe(1);
-    expect(result[0]!.externalCategory.name).toBe('Ext 1');
-    expect(result[0]!.internalCategory!.name).toBe('Int 1');
+    await expect(categoryMappingRepository.getById('mapping-1')).resolves.toEqual(record);
+    expect(mocks.getById).toHaveBeenCalledWith('mapping-1');
   });
 
-  it('bulk upserts mappings', async () => {
-    if (shouldSkipCategoryMappingTests()) return;
-    const { connection, catalog, internalCat, externalCat } = await setupData();
+  it('forwards listByConnection to the Mongo implementation', async () => {
+    const list = [{ id: 'mapping-1' }];
+    mocks.listByConnection.mockResolvedValue(list);
 
-    const mappings = [{ externalCategoryId: externalCat.id, internalCategoryId: internalCat.id }];
+    await expect(categoryMappingRepository.listByConnection('conn-1', 'catalog-1')).resolves.toEqual(
+      list
+    );
+    expect(mocks.listByConnection).toHaveBeenCalledWith('conn-1', 'catalog-1');
+  });
 
-    const count = await repo.bulkUpsert(connection.id, catalog.id, mappings);
-    expect(count).toBe(1);
+  it('forwards getByExternalCategory to the Mongo implementation', async () => {
+    const record = { id: 'mapping-1' };
+    mocks.getByExternalCategory.mockResolvedValue(record);
 
-    const all = await legacySqlClient.categoryMapping.findMany({ where: { connectionId: connection.id } });
-    expect(all.length).toBe(1);
+    await expect(
+      categoryMappingRepository.getByExternalCategory('conn-1', 'ext-1', 'catalog-1')
+    ).resolves.toEqual(record);
+    expect(mocks.getByExternalCategory).toHaveBeenCalledWith('conn-1', 'ext-1', 'catalog-1');
+  });
+
+  it('forwards bulkUpsert to the Mongo implementation', async () => {
+    mocks.bulkUpsert.mockResolvedValue(2);
+
+    await expect(
+      categoryMappingRepository.bulkUpsert('conn-1', 'catalog-1', [
+        { externalCategoryId: 'ext-1', internalCategoryId: 'int-1' },
+        { externalCategoryId: 'ext-2', internalCategoryId: 'int-2' },
+      ])
+    ).resolves.toBe(2);
+    expect(mocks.bulkUpsert).toHaveBeenCalledWith('conn-1', 'catalog-1', [
+      { externalCategoryId: 'ext-1', internalCategoryId: 'int-1' },
+      { externalCategoryId: 'ext-2', internalCategoryId: 'int-2' },
+    ]);
+  });
+
+  it('forwards deleteByConnection to the Mongo implementation', async () => {
+    mocks.deleteByConnection.mockResolvedValue(3);
+
+    await expect(categoryMappingRepository.deleteByConnection('conn-1')).resolves.toBe(3);
+    expect(mocks.deleteByConnection).toHaveBeenCalledWith('conn-1');
+  });
+
+  it('returns the canonical repository singleton', () => {
+    expect(getCategoryMappingRepository()).toBe(categoryMappingRepository);
   });
 });

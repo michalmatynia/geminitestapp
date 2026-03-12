@@ -4,15 +4,15 @@ import * as auditGate from '@/features/ai/agent-runtime/audit/gate';
 import { runPlanStepLoop } from '@/features/ai/agent-runtime/execution/step-runner';
 import * as llmPlanning from '@/features/ai/agent-runtime/planning/llm';
 import * as toolsModule from '@/features/ai/agent-runtime/tools/index';
-import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 
-vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
-  default: {
-    chatbotAgentRun: { update: vi.fn() },
-    agentBrowserLog: { create: vi.fn() },
-    agentBrowserSnapshot: { findFirst: vi.fn() },
-    agentAuditLog: { create: vi.fn(), findFirst: vi.fn() },
+const { chatbotAgentRunDelegate } = vi.hoisted(() => ({
+  chatbotAgentRunDelegate: {
+    update: vi.fn(),
   },
+}));
+
+vi.mock('@/features/ai/agent-runtime/store-delegates', () => ({
+  getChatbotAgentRunDelegate: vi.fn(() => chatbotAgentRunDelegate),
 }));
 
 vi.mock('@/features/ai/agent-runtime/audit', () => ({
@@ -122,7 +122,7 @@ describe('Agent Runtime - Step Runner', () => {
     const result = await runPlanStepLoop(inputWithApproval);
 
     expect(result.stepIndex).toBe(0);
-    expect(legacySqlClient.chatbotAgentRun.update).toHaveBeenCalledWith(
+    expect(chatbotAgentRunDelegate.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ status: 'waiting_human' }),
       })

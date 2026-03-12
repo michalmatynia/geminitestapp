@@ -5,6 +5,7 @@ import {
   appendKangurUrlParams,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
+import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurButton,
@@ -125,22 +126,10 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
                       <KangurCardTitle as='p'>
                         {assignment.title}
                       </KangurCardTitle>
-                      <KangurStatusChip
-                        accent={
-                          assignment.priority === 'high'
-                            ? 'rose'
-                            : assignment.priority === 'medium'
-                              ? 'amber'
-                              : 'emerald'
-                        }
+                      <KangurAssignmentPriorityChip
                         labelStyle='compact'
-                      >
-                        {assignment.priority === 'high'
-                          ? 'Priorytet wysoki'
-                          : assignment.priority === 'medium'
-                            ? 'Priorytet średni'
-                          : 'Priorytet niski'}
-                      </KangurStatusChip>
+                        priority={assignment.priority}
+                      />
                     </div>
                     <KangurCardDescription as='p' className='mt-1' relaxed size='sm'>
                       {assignment.description}

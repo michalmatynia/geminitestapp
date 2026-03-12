@@ -268,7 +268,7 @@ describe('Kangur shared primitives', () => {
     expect(screen.getByTestId('kangur-gradient-icon-tile')).toHaveClass(
       'h-16',
       'w-16',
-      'rounded-[24px]',
+      'kangur-gradient-icon-tile-lg',
       'from-indigo-400',
       'to-fuchsia-500'
     );
@@ -353,6 +353,8 @@ describe('Kangur shared primitives', () => {
     expect(screen.getByTestId('kangur-activity-column')).toHaveStyle({ height: '72%' });
     expect(screen.getByTestId('kangur-summary')).toHaveClass(
       'soft-card',
+      'kangur-card-surface',
+      'kangur-card-padding-lg',
       '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_46%,rgb(224_231_255))]',
       '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,rgb(224_231_255))]'
     );
@@ -376,6 +378,7 @@ describe('Kangur shared primitives', () => {
     );
     expect(screen.getByTestId('kangur-metric')).toHaveClass(
       'soft-card',
+      'kangur-card-surface',
       '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_46%,rgb(209_250_229))]',
       '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,rgb(209_250_229))]'
     );
@@ -384,18 +387,22 @@ describe('Kangur shared primitives', () => {
     );
     expect(screen.getByTestId('kangur-empty')).toHaveClass(
       'soft-card',
+      'kangur-card-surface',
       'border-dashed',
       'border',
       'text-center'
     );
     expect(screen.getByTestId('kangur-inline-fallback')).toHaveClass(
       'soft-card',
+      'kangur-card-surface',
       'border-dashed',
       'border',
       'w-full'
     );
     expect(screen.getByTestId('kangur-option')).toHaveClass(
       'soft-card',
+      'kangur-card-surface',
+      'kangur-card-padding-md',
       '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_46%,rgb(254_243_199))]',
       '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,rgb(254_243_199))]',
       'cursor-pointer'
@@ -408,17 +415,31 @@ describe('Kangur shared primitives', () => {
     );
     expect(screen.getByTestId('kangur-option-muted')).not.toHaveClass('cursor-pointer');
     expect(screen.getByTestId('kangur-button-primary')).toHaveClass(
+      'kangur-button-shell',
+      'kangur-button-size-md',
       'kangur-cta-pill',
       'primary-cta',
       'focus-visible:ring-amber-300/70'
     );
     expect(screen.getByTestId('kangur-button-surface')).toHaveClass(
+      'kangur-button-shell',
+      'kangur-button-size-md',
       'kangur-cta-pill',
       'surface-cta',
       'focus-visible:ring-indigo-300/70'
     );
+    expect(screen.getByTestId('kangur-progress').firstElementChild).toHaveClass(
+      'kangur-progress-fill',
+      'bg-gradient-to-r'
+    );
+    expect(screen.getByTestId('kangur-progress').firstElementChild).toHaveAttribute(
+      'data-kangur-accent',
+      'rose'
+    );
     expect(screen.getByTestId('kangur-surface-panel')).toHaveClass(
       'glass-panel',
+      'kangur-panel-soft',
+      'kangur-panel-padding-lg',
       'border-sky-200/80',
       'rounded-[34px]',
       'flex'
@@ -460,12 +481,14 @@ describe('Kangur shared primitives', () => {
       'bg-white/86'
     );
     expect(screen.getByTestId('kangur-menu-item')).toHaveClass(
-      'rounded-[16px]',
-      'text-[15px]',
+      'kangur-menu-item',
+      'font-medium',
       'data-[highlighted]:[background:var(--kangur-nav-item-hover-background)]'
     );
     expect(screen.getByTestId('kangur-media-frame')).toHaveClass(
       'soft-card',
+      'kangur-card-surface',
+      'kangur-media-padding-md',
       'border-amber-100',
       'from-amber-50'
     );
@@ -498,6 +521,10 @@ describe('Kangur shared primitives', () => {
       'from-red-400',
       'to-pink-400'
     );
+    expect(screen.getByTestId('kangur-progress').firstElementChild).toHaveAttribute(
+      'data-kangur-accent',
+      'rose'
+    );
   });
 
   it('renders the page container as a focusable div for embedded Kangur surfaces', () => {
@@ -514,6 +541,7 @@ describe('Kangur shared primitives', () => {
 
     const container = screen.getByText('Embedded Kangur');
     expect(container.tagName).toBe('DIV');
+    expect(container).toHaveClass('kangur-page-container', 'w-full');
     expect(container).toHaveAttribute('id', 'embedded-kangur-main');
     expect(container).toHaveAttribute('tabindex', '-1');
   });

@@ -3,7 +3,9 @@ import { readFile } from 'fs/promises';
 import path from 'path';
 
 import { getKangurAiTutorBridgeFollowUpDirection } from '@/features/kangur/ai-tutor/follow-up-reporting';
+import { getLatestKangurAiTutorNativeGuideUpdateAt } from '@/features/kangur/server/ai-tutor-native-guide-repository';
 import { getKangurKnowledgeGraphStatusSnapshot } from '@/features/kangur/server/knowledge-graph/status-loader';
+import { getLatestKangurPageContentUpdateAt } from '@/features/kangur/server/page-content-repository';
 import type {
   KangurAiTutorAnalyticsSnapshot,
   KangurAnalyticsCount,
@@ -94,6 +96,15 @@ type SystemLogLatencyMongoDoc = {
   context?: Record<string, unknown> | null;
   createdAt?: Date;
 };
+type KangurKnowledgeGraphFreshnessSource = 'page_content' | 'native_guides';
+type KangurKnowledgeGraphFreshnessSnapshot = {
+  latestCanonicalUpdateAt: Date | null;
+  latestPageContentUpdateAt: Date | null;
+  latestNativeGuideUpdateAt: Date | null;
+  graphSyncedAt: Date | null;
+  lagMs: number | null;
+  staleSources: KangurKnowledgeGraphFreshnessSource[];
+};
 const emptyAnalyticsSnapshot = (): KangurAnalyticsSnapshot => ({
   totals: {
     events: 0,
@@ -109,6 +120,9 @@ const emptyAnalyticsSnapshot = (): KangurAnalyticsSnapshot => ({
   })),
   aiTutor: {
     messageSucceededCount: 0,
+    pageContentAnswerCount: 0,
+    nativeGuideAnswerCount: 0,
+    brainAnswerCount: 0,
     knowledgeGraphAppliedCount: 0,
     knowledgeGraphSemanticCount: 0,
     knowledgeGraphWebsiteHelpCount: 0,
@@ -122,6 +136,8 @@ const emptyAnalyticsSnapshot = (): KangurAnalyticsSnapshot => ({
     bridgeQuickActionClickCount: 0,
     bridgeFollowUpClickCount: 0,
     bridgeFollowUpCompletionCount: 0,
+    directAnswerRatePercent: null,
+    brainFallbackRatePercent: null,
     bridgeCompletionRatePercent: null,
     knowledgeGraphCoverageRatePercent: null,
     knowledgeGraphVectorAssistRatePercent: null,
@@ -169,6 +185,48 @@ const toIso = (value: Date | string | undefined | null): string => {
   }
   return date.toISOString();
 };
+const toValidDate = (value: Date | string | undefined | null): Date | null => {
+  if (!value) {
+    return null;
+  }
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+  return date;
+};
+const toLatestDate = (values: Array<Date | null>): Date | null =>
+  values.reduce<Date | null>((latest, value) => {
+    if (!value) {
+      return latest;
+    }
+    if (!latest) {
+      return value;
+    }
+    return value.getTime() > latest.getTime() ? value : latest;
+  }, null);
+const formatFreshnessLag = (lagMs: number): string => {
+  const hours = lagMs / (60 * 60 * 1000);
+  if (hours >= 48) {
+    return `${Math.round(hours / 24)} days`;
+  }
+  if (hours >= 1) {
+    return `${Math.round(hours)} hours`;
+  }
+  const minutes = Math.max(1, Math.round(lagMs / (60 * 1000)));
+  return `${minutes} minutes`;
+};
+const describeFreshnessSources = (sources: KangurKnowledgeGraphFreshnessSource[]): string => {
+  if (sources.length === 0) {
+    return 'Canonical Tutor content';
+  }
+  if (sources.length === 1) {
+    return sources[0] === 'page_content' ? 'Page content' : 'Native guides';
+  }
+  return 'Page content and native guides';
+};
+const describeFreshnessVerb = (sources: KangurKnowledgeGraphFreshnessSource[]): string =>
+  sources.length === 1 && sources[0] === 'page_content' ? 'was' : 'were';
 const toRecentAnalyticsEvent = (doc: AnalyticsEventMongoDoc): KangurRecentAnalyticsEvent => ({
   id:
     typeof doc._id === 'string'
@@ -363,6 +421,58 @@ const loadKangurPerformanceBaseline = async (): Promise<KangurPerformanceBaselin
     return null;
   }
 };
+const loadKangurKnowledgeGraphFreshness = async (
+  knowledgeGraphStatus: KangurKnowledgeGraphStatusSnapshot
+): Promise<KangurKnowledgeGraphFreshnessSnapshot> => {
+  const graphSyncedAt =
+    knowledgeGraphStatus.mode === 'status' ? toValidDate(knowledgeGraphStatus.syncedAt) : null;
+
+  if (!graphSyncedAt) {
+    return {
+      latestCanonicalUpdateAt: null,
+      latestPageContentUpdateAt: null,
+      latestNativeGuideUpdateAt: null,
+      graphSyncedAt: null,
+      lagMs: null,
+      staleSources: [],
+    };
+  }
+
+  const [latestPageContentUpdateAt, latestNativeGuideUpdateAt] = await Promise.all([
+    getLatestKangurPageContentUpdateAt(),
+    getLatestKangurAiTutorNativeGuideUpdateAt(),
+  ]);
+  const latestCanonicalUpdateAt = toLatestDate([
+    latestPageContentUpdateAt,
+    latestNativeGuideUpdateAt,
+  ]);
+  const staleSources: KangurKnowledgeGraphFreshnessSource[] = [];
+
+  if (
+    latestPageContentUpdateAt &&
+    latestPageContentUpdateAt.getTime() > graphSyncedAt.getTime()
+  ) {
+    staleSources.push('page_content');
+  }
+  if (
+    latestNativeGuideUpdateAt &&
+    latestNativeGuideUpdateAt.getTime() > graphSyncedAt.getTime()
+  ) {
+    staleSources.push('native_guides');
+  }
+
+  return {
+    latestCanonicalUpdateAt,
+    latestPageContentUpdateAt,
+    latestNativeGuideUpdateAt,
+    graphSyncedAt,
+    lagMs:
+      latestCanonicalUpdateAt && latestCanonicalUpdateAt.getTime() > graphSyncedAt.getTime()
+        ? latestCanonicalUpdateAt.getTime() - graphSyncedAt.getTime()
+        : null,
+    staleSources,
+  };
+};
 const buildKangurAnalyticsMatch = (from: Date, to: Date): Record<string, unknown> => ({
   ts: { $gte: from, $lt: to },
   scope: 'public',
@@ -375,6 +485,12 @@ const summarizeKangurAiTutorAnalytics = (
     (summary, doc) => {
       const name = doc.name;
       const meta = doc.meta;
+      const answerResolutionMode =
+        meta?.['answerResolutionMode'] === 'page_content' ||
+        meta?.['answerResolutionMode'] === 'native_guide' ||
+        meta?.['answerResolutionMode'] === 'brain'
+          ? meta['answerResolutionMode']
+          : null;
       const actionId =
         meta && typeof meta['actionId'] === 'string' && meta['actionId'].trim().length > 0
           ? meta['actionId']
@@ -382,6 +498,15 @@ const summarizeKangurAiTutorAnalytics = (
       const bridgeDirectionFromAction = getKangurAiTutorBridgeFollowUpDirection(actionId);
       if (name === 'kangur_ai_tutor_message_succeeded') {
         summary.messageSucceededCount += 1;
+        if (answerResolutionMode === 'page_content') {
+          summary.pageContentAnswerCount += 1;
+        }
+        if (answerResolutionMode === 'native_guide') {
+          summary.nativeGuideAnswerCount += 1;
+        }
+        if (answerResolutionMode === 'brain') {
+          summary.brainAnswerCount += 1;
+        }
         if (meta?.['knowledgeGraphApplied'] === true) {
           summary.knowledgeGraphAppliedCount += 1;
         }
@@ -426,6 +551,9 @@ const summarizeKangurAiTutorAnalytics = (
     },
     {
       messageSucceededCount: 0,
+      pageContentAnswerCount: 0,
+      nativeGuideAnswerCount: 0,
+      brainAnswerCount: 0,
       knowledgeGraphAppliedCount: 0,
       knowledgeGraphSemanticCount: 0,
       knowledgeGraphWebsiteHelpCount: 0,
@@ -439,6 +567,8 @@ const summarizeKangurAiTutorAnalytics = (
       bridgeQuickActionClickCount: 0,
       bridgeFollowUpClickCount: 0,
       bridgeFollowUpCompletionCount: 0,
+      directAnswerRatePercent: null,
+      brainFallbackRatePercent: null,
       bridgeCompletionRatePercent: null,
       knowledgeGraphCoverageRatePercent: null,
       knowledgeGraphVectorAssistRatePercent: null,
@@ -447,9 +577,12 @@ const summarizeKangurAiTutorAnalytics = (
 
   const vectorAssistCount =
     summary.knowledgeGraphHybridRecallCount + summary.knowledgeGraphVectorOnlyRecallCount;
+  const directAnswerCount = summary.pageContentAnswerCount + summary.nativeGuideAnswerCount;
 
   return {
     ...summary,
+    directAnswerRatePercent: toPercent(directAnswerCount, summary.messageSucceededCount),
+    brainFallbackRatePercent: toPercent(summary.brainAnswerCount, summary.messageSucceededCount),
     bridgeCompletionRatePercent: toPercent(
       summary.bridgeFollowUpCompletionCount,
       summary.bridgeSuggestionCount
@@ -742,6 +875,7 @@ const buildKangurObservabilityAlerts = (input: {
   routeMetrics: KangurRouteMetrics;
   analytics: KangurAnalyticsSnapshot;
   knowledgeGraphStatus?: KangurKnowledgeGraphStatusSnapshot;
+  knowledgeGraphFreshness?: KangurKnowledgeGraphFreshnessSnapshot | null;
   ttsRequestCount: number;
   ttsGenerationFailureCount: number;
   ttsFallbackCount: number;
@@ -757,6 +891,8 @@ const buildKangurObservabilityAlerts = (input: {
   const aiTutorBridgeSuggestionCount = input.analytics.aiTutor.bridgeSuggestionCount;
   const aiTutorBridgeCompletionCount = input.analytics.aiTutor.bridgeFollowUpCompletionCount;
   const aiTutorReplyCount = input.analytics.aiTutor.messageSucceededCount;
+  const aiTutorDirectAnswerCount =
+    input.analytics.aiTutor.pageContentAnswerCount + input.analytics.aiTutor.nativeGuideAnswerCount;
   const aiTutorGraphCoverageCount = input.analytics.aiTutor.knowledgeGraphAppliedCount;
   const aiTutorSemanticGraphCount = input.analytics.aiTutor.knowledgeGraphSemanticCount;
   const aiTutorVectorAssistCount =
@@ -765,6 +901,9 @@ const buildKangurObservabilityAlerts = (input: {
   const serverErrorRatePercent = toPercent(serverErrorCount, serverTotalCount);
   const signInFailureRatePercent = toPercent(signInFailureCount, signInAttemptCount);
   const ttsFallbackRatePercent = toPercent(input.ttsFallbackCount, input.ttsRequestCount);
+  const aiTutorDirectAnswerRatePercent =
+    input.analytics.aiTutor.directAnswerRatePercent ??
+    toPercent(aiTutorDirectAnswerCount, aiTutorReplyCount);
   const aiTutorGraphCoverageRatePercent =
     input.analytics.aiTutor.knowledgeGraphCoverageRatePercent ??
     toPercent(aiTutorGraphCoverageCount, aiTutorReplyCount);
@@ -791,6 +930,26 @@ const buildKangurObservabilityAlerts = (input: {
     input.range,
     'performance-baseline'
   );
+  const knowledgeGraphFreshnessHref = buildKangurObservabilitySectionHref(
+    input.range,
+    'knowledge-graph-status'
+  );
+  const knowledgeGraphFreshness = input.knowledgeGraphFreshness ?? null;
+  const knowledgeGraphFreshnessStatus: KangurObservabilityStatus =
+    !knowledgeGraphFreshness?.graphSyncedAt || !knowledgeGraphFreshness.latestCanonicalUpdateAt
+      ? 'insufficient_data'
+      : knowledgeGraphFreshness.staleSources.length === 0
+        ? 'ok'
+        : (knowledgeGraphFreshness.lagMs ?? 0) >= 24 * 60 * 60 * 1000
+          ? 'critical'
+          : 'warning';
+  const knowledgeGraphFreshnessSummary = !knowledgeGraphFreshness?.graphSyncedAt
+    ? 'Neo4j sync timestamp is unavailable, so freshness cannot be compared against canonical Tutor content.'
+    : !knowledgeGraphFreshness.latestCanonicalUpdateAt
+      ? 'No Mongo-backed page content or native guide updates are available for Neo4j freshness comparison yet.'
+      : knowledgeGraphFreshness.staleSources.length === 0
+        ? 'Neo4j sync is current with the latest Mongo-backed page content and native guide updates.'
+        : `${describeFreshnessSources(knowledgeGraphFreshness.staleSources)} ${describeFreshnessVerb(knowledgeGraphFreshness.staleSources)} updated after the latest Neo4j sync by about ${formatFreshnessLag(knowledgeGraphFreshness.lagMs ?? 0)}. Last graph sync: ${toIso(knowledgeGraphFreshness.graphSyncedAt)}. Latest canonical update: ${toIso(knowledgeGraphFreshness.latestCanonicalUpdateAt)}.`;
   const performanceStatus: KangurObservabilityStatus = !input.performanceBaseline
     ? 'insufficient_data'
     : input.performanceBaseline.unitStatus !== 'pass'
@@ -821,6 +980,23 @@ const buildKangurObservabilityAlerts = (input: {
       investigation: {
         label: 'Open graph status',
         href: knowledgeGraphStatusHref,
+      },
+    },
+    {
+      id: 'kangur-knowledge-graph-freshness',
+      title: 'Knowledge Graph Freshness',
+      status: knowledgeGraphFreshnessStatus,
+      value:
+        knowledgeGraphFreshness?.lagMs !== null && knowledgeGraphFreshness?.lagMs !== undefined
+          ? Number((knowledgeGraphFreshness.lagMs / (60 * 60 * 1000)).toFixed(1))
+          : null,
+      unit: 'hours',
+      warningThreshold: 0,
+      criticalThreshold: 24,
+      summary: knowledgeGraphFreshnessSummary,
+      investigation: {
+        label: 'Open graph status',
+        href: knowledgeGraphFreshnessHref,
       },
     },
     {
@@ -964,6 +1140,28 @@ const buildKangurObservabilityAlerts = (input: {
           from: input.from,
           to: input.to,
         }),
+      },
+    },
+    {
+      id: 'kangur-ai-tutor-direct-answer-rate',
+      title: 'AI Tutor Direct Answer Rate',
+      status: minimumRateStatus(aiTutorDirectAnswerRatePercent, {
+        warningThreshold: 60,
+        criticalThreshold: 30,
+        minSample: 10,
+        sampleSize: aiTutorReplyCount,
+      }),
+      value: aiTutorDirectAnswerRatePercent,
+      unit: '%',
+      warningThreshold: 60,
+      criticalThreshold: 30,
+      summary:
+        aiTutorReplyCount < 10
+          ? 'Insufficient AI Tutor reply volume to evaluate deterministic section-answer coverage reliably.'
+          : `${aiTutorDirectAnswerCount} Tutor replies were resolved directly from page content or native guides out of ${aiTutorReplyCount} successful Tutor replies in the selected window.`,
+      investigation: {
+        label: 'Open AI Tutor graph metrics',
+        href: aiTutorBridgeHref,
       },
     },
     {
@@ -1137,6 +1335,13 @@ export const getKangurObservabilitySummary = async (input: {
         return null;
       }
     ))?.total ?? 0;
+  const knowledgeGraphFreshness = await loadKangurKnowledgeGraphFreshness(knowledgeGraphStatus).catch(
+    (error: unknown) => {
+      errors['knowledgeGraphFreshness'] =
+        error instanceof Error ? error.message : 'Failed to compare Neo4j freshness against canonical Tutor content.';
+      return null;
+    }
+  );
   const alerts = buildKangurObservabilityAlerts({
     range,
     from,
@@ -1145,6 +1350,7 @@ export const getKangurObservabilitySummary = async (input: {
     routeMetrics,
     analytics,
     knowledgeGraphStatus,
+    knowledgeGraphFreshness,
     ttsRequestCount,
     ttsGenerationFailureCount,
     ttsFallbackCount,

@@ -51,8 +51,8 @@ describe('QuestionCard', () => {
       'bg-white/94'
     );
     expect(screen.getByRole('group', { name: '6 + 1' })).toBeInTheDocument();
-    expect(correctChoice).toHaveClass('soft-card', 'border', 'rounded-[24px]');
-    expect(wrongChoice).toHaveClass('soft-card', 'border', 'rounded-[24px]');
+    expect(correctChoice).toHaveClass('soft-card', 'border', 'kangur-card-surface', 'kangur-card-padding-md');
+    expect(wrongChoice).toHaveClass('soft-card', 'border', 'kangur-card-surface', 'kangur-card-padding-md');
 
     fireEvent.click(wrongChoice);
 

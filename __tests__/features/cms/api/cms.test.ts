@@ -1,13 +1,10 @@
 import { NextRequest } from 'next/server';
-import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
-
-vi.unmock('@/shared/lib/db/legacy-sql-client');
+import { describe, it, expect, beforeEach } from 'vitest';
 
 import { DELETE } from '@/app/api/cms/slugs/[id]/route';
 import { GET, POST } from '@/app/api/cms/slugs/route';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import type { Slug, CmsRepository } from '@/shared/contracts/cms';
-import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 
 let canRunCmsSlugApiTests = true;
 
@@ -33,10 +30,6 @@ describe('CMS API', () => {
       }
       throw error;
     }
-  });
-
-  afterAll(async () => {
-    await legacySqlClient.$disconnect();
   });
 
   it('should create a new slug', async () => {

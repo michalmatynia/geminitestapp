@@ -4,16 +4,8 @@ vi.mock('@/features/auth/server', () => ({
   getUserPreferences: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/db/app-db-provider', () => ({
-  getAppDbProvider: vi.fn(),
-}));
-
 vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: vi.fn(),
-}));
-
-vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
-  default: {},
 }));
 
 describe('shouldApplyFrontPageAppSelection', () => {

@@ -1,11 +1,7 @@
 'use client';
 
-import {
-  KangurCardDescription,
-  KangurCardTitle,
-  KangurInfoCard,
-  KangurStatusChip,
-} from '@/features/kangur/ui/design/primitives';
+import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
+import { KangurStatusChip } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import {
@@ -120,23 +116,17 @@ export default function KangurGameSetupMomentumCard({
   }
 
   return (
-    <KangurInfoCard
+    <KangurRecommendationCard
       accent={focus.accent}
       className='w-full max-w-3xl rounded-[28px]'
-      data-testid={`kangur-game-setup-momentum-${modeKey}`}
-      padding='md'
-      tone='accent'
-    >
-      <div className='flex flex-col gap-3'>
-        <div className='flex flex-wrap items-center gap-2'>
-          <KangurStatusChip
-            accent={focus.accent}
-            data-testid={`kangur-game-setup-momentum-label-${modeKey}`}
-            labelStyle='caps'
-            size='sm'
-          >
-            {focus.label}
-          </KangurStatusChip>
+      contentClassName='gap-3'
+      dataTestId={`kangur-game-setup-momentum-${modeKey}`}
+      description={focus.description}
+      descriptionClassName='mt-1'
+      descriptionSize='sm'
+      descriptionTestId={`kangur-game-setup-momentum-description-${mode}`}
+      headerExtras={
+        <>
           {streak > 0 ? (
             <KangurStatusChip accent='violet' size='sm'>
               Seria: {streak}
@@ -147,25 +137,15 @@ export default function KangurGameSetupMomentumCard({
               Tempo: {averageXpPerSession} XP / gre
             </KangurStatusChip>
           ) : null}
-        </div>
-        <div>
-          <KangurCardTitle
-            as='p'
-            data-testid={`kangur-game-setup-momentum-title-${modeKey}`}
-            size='md'
-          >
-            {focus.title}
-          </KangurCardTitle>
-          <KangurCardDescription
-            as='p'
-            className='mt-1'
-            data-testid={`kangur-game-setup-momentum-description-${mode}`}
-            size='sm'
-          >
-            {focus.description}
-          </KangurCardDescription>
-        </div>
-      </div>
-    </KangurInfoCard>
+        </>
+      }
+      label={focus.label}
+      labelSize='sm'
+      labelStyle='caps'
+      labelTestId={`kangur-game-setup-momentum-label-${modeKey}`}
+      title={focus.title}
+      titleSize='md'
+      titleTestId={`kangur-game-setup-momentum-title-${modeKey}`}
+    />
   );
 }

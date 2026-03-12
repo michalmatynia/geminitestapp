@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductWithImages } from '@/shared/contracts/products';
@@ -537,6 +537,66 @@ describe('ProductColumns queued badge', () => {
     expect(baseQuickExportButtonMock).toHaveBeenCalledWith(
       expect.objectContaining({
         product,
+      })
+    );
+  });
+
+  it('passes the current row publication state into the product-row trigger snapshot', async () => {
+    const product = createProduct({
+      published: false,
+    });
+    const onIntegrationsClick = vi.fn();
+    const onExportSettingsClick = vi.fn();
+
+    useProductListActionsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+    });
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+      onIntegrationsClick,
+      onExportSettingsClick,
+    });
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+      integrationBadgeIds: new Set<string>(),
+      integrationBadgeStatuses: new Map<string, string>(),
+      traderaBadgeIds: new Set<string>(),
+      traderaBadgeStatuses: new Map<string, string>(),
+      showTriggerRunFeedback: true,
+    });
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
+      throw new Error('Integrations column cell was not found.');
+    }
+
+    const cell = integrationsColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    await waitFor(() => {
+      expect(triggerButtonBarMock).toHaveBeenCalled();
+    });
+
+    const triggerBarProps = triggerButtonBarMock.mock.calls.at(-1)?.[0] as
+      | {
+          entityId?: string;
+          getEntityJson?: (() => Record<string, unknown> | null) | undefined;
+        }
+      | undefined;
+
+    const entityJson = triggerBarProps?.getEntityJson?.();
+
+    expect(triggerBarProps?.entityId).toBe('product-1');
+    expect(entityJson).toEqual(
+      expect.objectContaining({
+        id: 'product-1',
+        published: false,
+        status: 'draft',
+        publicationStatus: 'draft',
       })
     );
   });

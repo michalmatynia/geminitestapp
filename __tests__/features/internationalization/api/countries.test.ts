@@ -1,200 +1,183 @@
 import { NextRequest } from 'next/server';
-import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.unmock('@/shared/lib/db/legacy-sql-client');
+const mocks = vi.hoisted(() => ({
+  getCurrencyRepository: vi.fn(),
+  getInternationalizationProvider: vi.fn(),
+  getMongoDb: vi.fn(),
+}));
 
-import { PUT } from '@/app/api/v2/metadata/[type]/[id]/route';
-import { GET, POST } from '@/app/api/v2/metadata/[type]/route';
-import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
+vi.mock('@/features/internationalization/server', () => ({
+  getCurrencyRepository: mocks.getCurrencyRepository,
+  getInternationalizationProvider: mocks.getInternationalizationProvider,
+}));
 
-type CountryResponse = {
-  id: string;
-  code: string;
-  name: string;
-  currencies: Array<{ currencyId: string; currency: { code: string } }>;
-};
+vi.mock('@/shared/lib/db/mongo-client', () => ({
+  getMongoDb: mocks.getMongoDb,
+}));
 
-let canMutateCountriesApiTables = true;
+import { GET_intl_handler, POST_intl_handler } from '@/app/api/v2/metadata/handler';
+import { PUT_metadata_id_handler } from '@/app/api/v2/metadata/[type]/[id]/handler';
 
 describe('Countries API', () => {
-  const countriesRouteContext = { params: Promise.resolve({ type: 'countries' }) };
-  const countriesIdRouteContext = (id: string) =>
-    ({ params: Promise.resolve({ type: 'countries', id }) }) as const;
-  const shouldSkipCountriesApiTests = (): boolean =>
-    !process.env['DATABASE_URL'] || !canMutateCountriesApiTables;
-
-  beforeEach(async () => {
-    if (shouldSkipCountriesApiTests()) return;
-
-    // Clear the database before each test
-    try {
-      await legacySqlClient.product.deleteMany({});
-      await legacySqlClient.priceGroup.deleteMany({});
-      await legacySqlClient.countryCurrency.deleteMany({});
-      await legacySqlClient.languageCountry.deleteMany({});
-      await legacySqlClient.country.deleteMany({});
-      await legacySqlClient.currency.deleteMany({});
-      await legacySqlClient.language.deleteMany({});
-    } catch (error) {
-      const code = (error as { code?: string }).code;
-      if (code === 'EPERM') {
-        canMutateCountriesApiTables = false;
-        return;
-      }
-      throw error;
-    }
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getInternationalizationProvider.mockResolvedValue('mongodb');
   });
 
-  afterAll(async () => {
-    await legacySqlClient.$disconnect();
+  it('lists countries from Mongo and maps currencyIds to canonical relations', async () => {
+    const countriesToArray = vi.fn().mockResolvedValue([
+      {
+        id: 'PL',
+        code: 'PL',
+        name: 'Poland',
+        currencyIds: ['PLN'],
+      },
+    ]);
+
+    mocks.getMongoDb.mockResolvedValue({
+      collection: vi.fn((name: string) => {
+        if (name === 'countries') {
+          return {
+            find: vi.fn(() => ({
+              sort: vi.fn(() => ({
+                toArray: countriesToArray,
+              })),
+            })),
+          };
+        }
+        throw new Error(`Unexpected collection: ${name}`);
+      }),
+    });
+
+    const res = await GET_intl_handler(
+      new NextRequest('http://localhost/api/v2/metadata/countries'),
+      {} as any,
+      { type: 'countries' }
+    );
+    const countries = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(countries).toEqual([
+      {
+        id: 'PL',
+        code: 'PL',
+        name: 'Poland',
+        isActive: true,
+        createdAt: undefined,
+        updatedAt: undefined,
+        currencies: [{ countryId: 'PL', currencyId: 'PLN' }],
+      },
+    ]);
   });
 
-  describe('GET /api/v2/metadata/countries', () => {
-    it('should seed default countries, currencies, and languages on first call', async () => {
-      if (shouldSkipCountriesApiTests()) return;
-      const res = await GET(
-        new NextRequest('http://localhost/api/v2/metadata/countries'),
-        countriesRouteContext
-      );
-      const countries = (await res.json()) as CountryResponse[];
+  it('creates a country with currencyIds', async () => {
+    const insertOne = vi.fn().mockResolvedValue({ acknowledged: true });
 
-      expect(res.status).toEqual(200);
-      expect(countries.length).toBeGreaterThan(0);
-
-      // Verify seeding
-      const dbCountries = await legacySqlClient.country.findMany();
-      expect(dbCountries.length).toBeGreaterThan(0);
-
-      const dbCurrencies = await legacySqlClient.currency.findMany();
-      expect(dbCurrencies.length).toBeGreaterThan(0);
-
-      const dbLanguages = await legacySqlClient.language.findMany();
-      expect(dbLanguages.length).toBeGreaterThan(0);
-
-      // Check specific seeded data
-      const pl = countries.find((c: CountryResponse) => c.code === 'PL');
-      if (!pl) {
-        throw new Error('Expected seeded country PL.');
-      }
-      expect(pl.name).toBe('Poland');
-      expect(pl.currencies.length).toBeGreaterThan(0);
-      expect(pl.currencies[0]!.currency.code).toBe('PLN');
+    mocks.getMongoDb.mockResolvedValue({
+      collection: vi.fn((name: string) => {
+        if (name === 'countries') {
+          return { insertOne };
+        }
+        throw new Error(`Unexpected collection: ${name}`);
+      }),
     });
 
-    it('should return existing countries without duplicating on subsequent calls', async () => {
-      if (shouldSkipCountriesApiTests()) return;
-      // First call to seed
-      await GET(new NextRequest('http://localhost/api/v2/metadata/countries'), countriesRouteContext);
-      const initialCount = await legacySqlClient.country.count();
-
-      // Second call
-      const res = await GET(
-        new NextRequest('http://localhost/api/v2/metadata/countries'),
-        countriesRouteContext
-      );
-      const countries = (await res.json()) as CountryResponse[];
-      const secondCount = await legacySqlClient.country.count();
-
-      expect(res.status).toEqual(200);
-      expect(countries.length).toEqual(initialCount);
-      expect(secondCount).toEqual(initialCount);
-    });
-  });
-
-  describe('POST /api/v2/metadata/countries', () => {
-    it('should create a new country', async () => {
-      if (shouldSkipCountriesApiTests()) return;
-      const newCountry = {
-        code: 'DE', // Re-using a valid code from enum but for a "new" entry test context (though ENUM constraint applies)
-        // Wait, schema has specific ENUM for CountryCode.
-        // The enum is: PL, DE, GB, US, SE.
-        // So I can only create countries with these codes.
-        // If GET seeds them, I might conflict if I don't clean up or if I try to create one that already exists.
-        // In beforeEach I clean up.
-        name: 'Germany Custom',
-      };
-
-      const req = new NextRequest('http://localhost/api/v2/metadata/countries', {
-        method: 'POST',
-        body: JSON.stringify(newCountry),
-      });
-
-      const res = await POST(req, countriesRouteContext);
-      const country = (await res.json()) as CountryResponse;
-
-      expect(res.status).toEqual(200);
-      expect(country.code).toBe('DE');
-      expect(country.name).toBe('Germany Custom');
-    });
-
-    it('should create a country with currencies', async () => {
-      if (shouldSkipCountriesApiTests()) return;
-      // Need to create currency first
-      const currency = await legacySqlClient.currency.create({
-        data: { code: 'EUR', name: 'Euro', symbol: '€' },
-      });
-
-      const newCountry = {
+    const req = new NextRequest('http://localhost/api/v2/metadata/countries', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
         code: 'DE',
-        name: 'Germany with Euro',
-        currencyIds: [currency.id],
-      };
-
-      const req = new NextRequest('http://localhost/api/v2/metadata/countries', {
-        method: 'POST',
-        body: JSON.stringify(newCountry),
-      });
-
-      const res = await POST(req, countriesRouteContext);
-      const country = (await res.json()) as CountryResponse;
-
-      expect(res.status).toEqual(200);
-      expect(country.currencies).toHaveLength(1);
-      expect(country.currencies[0]!.currencyId).toBe(currency.id);
+        name: 'Germany',
+        currencyIds: ['EUR'],
+      }),
     });
 
-    it('should reject invalid payload', async () => {
-      if (shouldSkipCountriesApiTests()) return;
-      const invalidCountry = {
-        code: 'INVALID_CODE', // Not in ENUM
-        name: 'Invalid',
-      };
+    const res = await POST_intl_handler(req, {} as any, { type: 'countries' });
+    const country = await res.json();
 
-      const req = new NextRequest('http://localhost/api/v2/metadata/countries', {
-        method: 'POST',
-        body: JSON.stringify(invalidCountry),
-      });
-
-      const res = await POST(req, countriesRouteContext);
-      expect(res.status).toEqual(400);
-    });
+    expect(res.status).toBe(200);
+    expect(insertOne).toHaveBeenCalledTimes(1);
+    expect(country).toEqual(
+      expect.objectContaining({
+        id: 'DE',
+        code: 'DE',
+        name: 'Germany',
+        currencies: [{ countryId: 'DE', currencyId: 'EUR' }],
+      })
+    );
   });
 
-  describe('PUT /api/v2/metadata/countries/[id]', () => {
-    it('should update country currencies', async () => {
-      if (shouldSkipCountriesApiTests()) return;
-      const country = await legacySqlClient.country.create({
-        data: { code: 'PL', name: 'Poland' },
+  it('updates a country currencyIds via Mongo', async () => {
+    const findOne = vi
+      .fn()
+      .mockResolvedValueOnce({
+        id: 'PL',
+        code: 'PL',
+        name: 'Poland',
+        currencyIds: ['PLN'],
+      })
+      .mockResolvedValueOnce({
+        id: 'PL',
+        code: 'PL',
+        name: 'Poland Updated',
+        currencyIds: ['EUR'],
       });
-      const currency = await legacySqlClient.currency.create({
-        data: { code: 'PLN', name: 'Polish Zloty', symbol: 'zł' },
-      });
+    const updateOne = vi.fn().mockResolvedValue({ acknowledged: true });
 
-      const req = new NextRequest('http://localhost/api/v2/metadata/countries/' + country.id, {
-        method: 'PUT',
-        body: JSON.stringify({
-          code: 'PL',
-          name: 'Poland',
-          currencyIds: [currency.id],
-        }),
-      });
-
-      const res = await PUT(req, countriesIdRouteContext(country.id));
-      const updated = (await res.json()) as CountryResponse;
-
-      expect(res.status).toEqual(200);
-      expect(updated.currencies).toHaveLength(1);
-      expect(updated.currencies[0]!.currencyId).toBe(currency.id);
+    mocks.getMongoDb.mockResolvedValue({
+      collection: vi.fn((name: string) => {
+        if (name === 'countries') {
+          return {
+            findOne,
+            updateOne,
+          };
+        }
+        if (name === 'languages') {
+          return {
+            updateMany: vi.fn().mockResolvedValue({ acknowledged: true }),
+          };
+        }
+        throw new Error(`Unexpected collection: ${name}`);
+      }),
     });
+
+    const req = new NextRequest('http://localhost/api/v2/metadata/countries/PL', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        code: 'PL',
+        name: 'Poland Updated',
+        currencyIds: ['EUR'],
+      }),
+    });
+
+    const res = await PUT_metadata_id_handler(req, {} as any, {
+      type: 'countries',
+      id: 'PL',
+    });
+    const country = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(updateOne).toHaveBeenCalledTimes(1);
+    expect(country).toEqual(
+      expect.objectContaining({
+        code: 'PL',
+        name: 'Poland Updated',
+        currencies: [{ countryId: 'PL', currencyId: 'EUR' }],
+      })
+    );
+  });
+
+  it('rejects missing code/name payloads', async () => {
+    const req = new NextRequest('http://localhost/api/v2/metadata/countries', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ code: 'PL' }),
+    });
+
+    await expect(POST_intl_handler(req, {} as any, { type: 'countries' })).rejects.toThrow(
+      'Code and name are required'
+    );
   });
 });

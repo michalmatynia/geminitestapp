@@ -1,11 +1,4 @@
-import {
-  KangurCardDescription,
-  KangurCardTitle,
-  KangurProgressBar,
-  KangurSectionEyebrow,
-  KangurStatusChip,
-} from '@/features/kangur/ui/design/primitives';
-import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { KangurBadgeTrackSummaryCard } from '@/features/kangur/ui/components/KangurBadgeTrackSummaryCard';
 import { getProgressBadgeTrackSummaries } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
@@ -15,16 +8,6 @@ type KangurBadgeTrackHighlightsProps = {
   dataTestIdPrefix?: string;
   limit?: number;
   progress: KangurProgressState;
-};
-
-const TRACK_ACCENTS: Record<string, KangurAccent> = {
-  onboarding: 'indigo',
-  consistency: 'rose',
-  mastery: 'violet',
-  variety: 'teal',
-  challenge: 'amber',
-  xp: 'sky',
-  quest: 'emerald',
 };
 
 const TRACK_PRIORITY: Record<string, number> = {
@@ -62,39 +45,17 @@ export default function KangurBadgeTrackHighlights({
   return (
     <div className={cn('grid gap-3 min-[360px]:grid-cols-2 lg:grid-cols-3', className)}>
       {tracks.map((track) => {
-        const accent = TRACK_ACCENTS[track.key] ?? 'indigo';
         return (
-          <div
-            className='soft-card rounded-[24px] border [border-color:var(--kangur-soft-card-border)] px-4 py-3 text-left'
-            data-testid={`${trackTestIdPrefix}-${track.key}`}
+          <KangurBadgeTrackSummaryCard
+            cardClassName='rounded-[24px] text-left'
+            dataTestId={`${trackTestIdPrefix}-${track.key}`}
+            headerClassName='gap-2'
             key={track.key}
-          >
-            <div className='flex flex-col items-start gap-2 sm:flex-row sm:justify-between'>
-              <div className='min-w-0'>
-                <KangurSectionEyebrow as='p' className='tracking-[0.16em]'>
-                  {track.emoji} {track.label}
-                </KangurSectionEyebrow>
-                <KangurCardTitle as='p' className='mt-1'>
-                  {track.unlockedCount}/{track.totalCount} odznak
-                </KangurCardTitle>
-                <KangurCardDescription as='p' className='mt-1 leading-5' size='xs'>
-                  {track.nextBadge
-                    ? `${track.nextBadge.name} · ${track.nextBadge.summary}`
-                    : 'Wszystkie odznaki odblokowane'}
-                </KangurCardDescription>
-              </div>
-              <KangurStatusChip accent={accent} className='self-start text-[11px] sm:shrink-0'>
-                {track.progressPercent}%
-              </KangurStatusChip>
-            </div>
-            <KangurProgressBar
-              accent={accent}
-              className='mt-3'
-              data-testid={`${trackTestIdPrefix}-${track.key}-bar`}
-              size='sm'
-              value={track.progressPercent}
-            />
-          </div>
+            progressBarTestId={`${trackTestIdPrefix}-${track.key}-bar`}
+            statusChipClassName='text-[11px]'
+            track={track}
+            trackLabelClassName='tracking-[0.16em]'
+          />
         );
       })}
     </div>

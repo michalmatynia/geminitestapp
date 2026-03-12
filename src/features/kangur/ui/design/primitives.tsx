@@ -25,26 +25,26 @@ import {
 } from './tokens';
 
 const kangurButtonVariants = cva(
-  'inline-flex cursor-pointer items-center justify-center gap-2 border text-sm font-bold tracking-tight transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-white disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none',
+  'inline-flex cursor-pointer items-center justify-center gap-2 border font-bold tracking-tight transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-white disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none',
   {
     variants: {
       variant: {
         primary:
-          'kangur-cta-pill border-transparent primary-cta text-white hover:brightness-[1.02] focus-visible:ring-amber-300/70',
+          'kangur-button-shell kangur-cta-pill border-transparent primary-cta text-white hover:brightness-[1.02] focus-visible:ring-amber-300/70',
         secondary:
-          'kangur-cta-pill border-transparent soft-cta text-[var(--kangur-button-secondary-text,#2f467e)] hover:text-[var(--kangur-button-secondary-hover-text,#24386e)] focus-visible:ring-indigo-300/70',
+          'kangur-button-shell kangur-cta-pill border-transparent soft-cta text-[var(--kangur-button-secondary-text,#2f467e)] hover:text-[var(--kangur-button-secondary-hover-text,#24386e)] focus-visible:ring-indigo-300/70',
         surface:
-          'kangur-cta-pill border-transparent surface-cta text-[var(--kangur-button-surface-text,#2f4db5)] hover:text-[var(--kangur-button-surface-hover-text,#233e99)] focus-visible:ring-indigo-300/70',
+          'kangur-button-shell kangur-cta-pill border-transparent surface-cta text-[var(--kangur-button-surface-text,#2f4db5)] hover:text-[var(--kangur-button-surface-hover-text,#233e99)] focus-visible:ring-indigo-300/70',
         success:
-          'kangur-cta-pill border-transparent success-cta text-[var(--kangur-button-success-text,#065f46)] hover:text-[var(--kangur-button-success-hover-text,#064e3b)] focus-visible:ring-emerald-300/70',
+          'kangur-button-shell kangur-cta-pill border-transparent success-cta text-[var(--kangur-button-success-text,#065f46)] hover:text-[var(--kangur-button-success-hover-text,#064e3b)] focus-visible:ring-emerald-300/70',
         warning:
-          'kangur-cta-pill border-transparent warning-cta text-[var(--kangur-button-warning-text,#9a5418)] hover:text-[var(--kangur-button-warning-hover-text,#7f4310)] focus-visible:ring-amber-300/70',
+          'kangur-button-shell kangur-cta-pill border-transparent warning-cta text-[var(--kangur-button-warning-text,#9a5418)] hover:text-[var(--kangur-button-warning-hover-text,#7f4310)] focus-visible:ring-amber-300/70',
         segment: cn(
-          'border-transparent text-sm shadow-none focus-visible:ring-indigo-300/70',
+          'border-transparent shadow-none focus-visible:ring-indigo-300/70',
           KANGUR_SEGMENTED_CONTROL_ITEM_CLASSNAME
         ),
         segmentActive: cn(
-          'border-transparent text-sm shadow-none focus-visible:ring-indigo-300/70',
+          'border-transparent shadow-none focus-visible:ring-indigo-300/70',
           KANGUR_SEGMENTED_CONTROL_ITEM_CLASSNAME,
           KANGUR_SEGMENTED_CONTROL_ITEM_ACTIVE_CLASSNAME
         ),
@@ -55,13 +55,13 @@ const kangurButtonVariants = cva(
           'focus-visible:ring-indigo-300/70'
         ),
         ghost:
-          'border-transparent bg-transparent text-[#6e7ee7] hover:bg-white/70 hover:text-[#4f63d8] focus-visible:ring-indigo-300/70',
+          'kangur-button-shell border-transparent bg-transparent text-[#6e7ee7] hover:bg-white/70 hover:text-[#4f63d8] focus-visible:ring-indigo-300/70',
       },
       size: {
-        sm: 'h-[44px] px-4 text-sm',
-        md: 'h-[50px] px-5 text-sm',
-        lg: 'h-[56px] px-6 text-base',
-        xl: 'h-[62px] px-7 text-lg',
+        sm: 'kangur-button-size-sm',
+        md: 'kangur-button-size-md',
+        lg: 'kangur-button-size-lg',
+        xl: 'kangur-button-size-xl',
       },
       fullWidth: {
         true: 'w-full',
@@ -84,9 +84,9 @@ const kangurPanelVariants = cva('', {
       subtle: KANGUR_PANEL_CLASSNAMES.subtle,
     },
     padding: {
-      md: 'p-5',
-      lg: 'p-6',
-      xl: 'p-8',
+      md: 'kangur-panel-padding-md',
+      lg: 'kangur-panel-padding-lg',
+      xl: 'kangur-panel-padding-xl',
     },
   },
   defaultVariants: {
@@ -180,8 +180,8 @@ const kangurGradientIconTileVariants = cva(
   {
     variants: {
       size: {
-        md: 'h-12 w-12 rounded-2xl text-3xl',
-        lg: 'h-16 w-16 rounded-[24px] text-5xl',
+        md: 'h-12 w-12 kangur-gradient-icon-tile-md text-3xl',
+        lg: 'h-16 w-16 kangur-gradient-icon-tile-lg text-5xl',
       },
     },
     defaultVariants: {
@@ -224,7 +224,9 @@ const kangurGradientHeadingVariants = cva(
   }
 );
 
-const kangurHeadlineVariants = cva('font-extrabold tracking-tight leading-tight', {
+const kangurHeadlineVariants = cva(
+  'font-extrabold tracking-tight leading-tight [font-family:var(--kangur-font-heading,var(--app-font-heading))]',
+  {
   variants: {
     size: {
       xs: 'text-lg',
@@ -236,9 +238,12 @@ const kangurHeadlineVariants = cva('font-extrabold tracking-tight leading-tight'
   defaultVariants: {
     size: 'md',
   },
-});
+  }
+);
 
-const kangurCardTitleVariants = cva('[color:var(--kangur-page-text)]', {
+const kangurCardTitleVariants = cva(
+  '[color:var(--kangur-page-text)] [font-family:var(--kangur-font-heading,var(--app-font-heading))]',
+  {
   variants: {
     size: {
       sm: 'text-sm font-semibold',
@@ -250,7 +255,8 @@ const kangurCardTitleVariants = cva('[color:var(--kangur-page-text)]', {
   defaultVariants: {
     size: 'sm',
   },
-});
+  }
+);
 
 const kangurCardDescriptionVariants = cva('[color:var(--kangur-page-muted-text)]', {
   variants: {
@@ -334,10 +340,10 @@ const kangurInfoCardVariants = cva(`${KANGUR_SURFACE_CARD_CLASSNAME}`, {
         '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_68%,var(--kangur-page-background))] [border-color:var(--kangur-soft-card-border)] [color:var(--kangur-page-muted-text)]',
     },
     padding: {
-      sm: 'p-3',
-      md: 'p-4',
-      lg: 'p-5',
-      xl: 'p-6',
+      sm: 'kangur-card-padding-sm',
+      md: 'kangur-card-padding-md',
+      lg: 'kangur-card-padding-lg',
+      xl: 'kangur-card-padding-xl',
     },
     dashed: {
       true: 'border-dashed',
@@ -351,7 +357,7 @@ const kangurInfoCardVariants = cva(`${KANGUR_SURFACE_CARD_CLASSNAME}`, {
   },
 });
 
-const kangurSurfacePanelVariants = cva('glass-panel rounded-[34px]', {
+const kangurSurfacePanelVariants = cva('glass-panel kangur-panel-soft rounded-[34px]', {
   variants: {
     accent: {
       indigo: 'border-indigo-200/70 [color:var(--kangur-page-text)]',
@@ -364,9 +370,9 @@ const kangurSurfacePanelVariants = cva('glass-panel rounded-[34px]', {
       slate: '[border-color:var(--kangur-soft-card-border)] [color:var(--kangur-page-text)]',
     },
     padding: {
-      md: 'p-5',
-      lg: 'p-6',
-      xl: 'p-8',
+      md: 'kangur-panel-padding-md',
+      lg: 'kangur-panel-padding-lg',
+      xl: 'kangur-panel-padding-xl',
     },
     fillHeight: {
       true: 'flex h-full flex-col',
@@ -381,7 +387,7 @@ const kangurSurfacePanelVariants = cva('glass-panel rounded-[34px]', {
 });
 
 const kangurMenuItemVariants = cva(
-  'relative flex cursor-default select-none items-center rounded-[16px] px-3.5 py-2.5 text-[15px] font-medium [color:var(--kangur-page-muted-text)] outline-none transition-colors focus:[background:var(--kangur-nav-item-hover-background)] focus:[color:var(--kangur-page-text)] data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:[background:var(--kangur-nav-item-hover-background)] data-[highlighted]:[color:var(--kangur-page-text)]'
+  'kangur-menu-item relative flex cursor-default select-none items-center font-medium [color:var(--kangur-page-muted-text)] outline-none transition-colors focus:[background:var(--kangur-nav-item-hover-background)] focus:[color:var(--kangur-page-text)] data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:[background:var(--kangur-nav-item-hover-background)] data-[highlighted]:[color:var(--kangur-page-text)]'
 );
 
 const kangurMediaFrameVariants = cva(`${KANGUR_SURFACE_CARD_CLASSNAME}`, {
@@ -397,8 +403,8 @@ const kangurMediaFrameVariants = cva(`${KANGUR_SURFACE_CARD_CLASSNAME}`, {
       slate: 'border-slate-200/85 bg-gradient-to-br from-slate-50 via-white to-slate-100',
     },
     padding: {
-      sm: 'p-3',
-      md: 'p-4',
+      sm: 'kangur-media-padding-sm',
+      md: 'kangur-media-padding-md',
     },
     fillHeight: {
       true: 'flex h-full items-center',
@@ -444,7 +450,7 @@ const kangurProseVariants = cva(
 );
 
 const kangurTextFieldVariants = cva(
-  'kangur-text-field soft-card w-full rounded-[22px] border text-sm outline-none transition disabled:cursor-not-allowed disabled:opacity-70',
+  'kangur-text-field soft-card w-full border outline-none transition disabled:cursor-not-allowed disabled:opacity-70',
   {
     variants: {
       accent: {
@@ -1343,7 +1349,7 @@ export function KangurProgressBar({
 }: KangurProgressBarProps): React.JSX.Element {
   const clampedValue = Math.max(0, Math.min(100, value));
   const fillClasses = cn(
-    'h-full rounded-full bg-gradient-to-r',
+    'kangur-progress-fill h-full rounded-full bg-gradient-to-r',
     KANGUR_PROGRESS_BAR_GRADIENTS[accent],
     !animated && 'transition-[width] duration-500 ease-out',
     fillClassName
@@ -1364,11 +1370,12 @@ export function KangurProgressBar({
         <motion.div
           animate={{ width: `${clampedValue}%` }}
           className={fillClasses}
+          data-kangur-accent={accent}
           initial={{ width: 0 }}
           transition={{ duration: 0.8 }}
         />
       ) : (
-        <div className={fillClasses} style={{ width: `${clampedValue}%` }} />
+        <div className={fillClasses} data-kangur-accent={accent} style={{ width: `${clampedValue}%` }} />
       )}
     </div>
   );

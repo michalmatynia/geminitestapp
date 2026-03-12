@@ -336,6 +336,23 @@ describe('ProductModals edit hydration guard', () => {
     ]);
   });
 
+  it('derives trigger entity publication status from the current product state', () => {
+    const entityJson = buildTriggeredProductEntityJson({
+      product: createProduct({ published: false }),
+      draft: null,
+      values: {},
+    });
+
+    expect(entityJson).toEqual(
+      expect.objectContaining({
+        id: 'product-1',
+        published: false,
+        status: 'draft',
+        publicationStatus: 'draft',
+      })
+    );
+  });
+
   it('keeps the same edit provider instance after save refreshes updatedAt', () => {
     let editingProduct = markEditingProductHydrated(
       createProduct({ updatedAt: '2026-01-01T00:00:00.000Z' })

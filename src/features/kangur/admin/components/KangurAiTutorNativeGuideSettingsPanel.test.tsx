@@ -4,6 +4,7 @@
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 
 const { apiGetMock, apiPostMock, toastMock } = vi.hoisted(() => ({
   apiGetMock: vi.fn(),
@@ -54,7 +55,11 @@ describe('KangurAiTutorNativeGuideSettingsPanel', () => {
       );
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /Naglowek lekcji/i }));
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: new RegExp(repairKangurPolishCopy('Naglowek lekcji'), 'i'),
+      })
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Move down' }));
 
     const jsonEditor = screen.getByLabelText('Native guide JSON');
@@ -66,11 +71,13 @@ describe('KangurAiTutorNativeGuideSettingsPanel', () => {
 
     expect(reorderedTitles).toEqual([
       'Ekran lekcji',
-      'Glowna tresc lekcji',
-      'Naglowek lekcji',
+      repairKangurPolishCopy('Glowna tresc lekcji'),
+      repairKangurPolishCopy('Naglowek lekcji'),
     ]);
     expect(parsedStore.entries[2]?.sortOrder).toBe(30);
-    expect(screen.getByLabelText('Native guide entry title')).toHaveValue('Naglowek lekcji');
+    expect(screen.getByLabelText('Native guide entry title')).toHaveValue(
+      repairKangurPolishCopy('Naglowek lekcji')
+    );
     expect(screen.getByLabelText('Native guide sort order')).toHaveValue(30);
   });
 

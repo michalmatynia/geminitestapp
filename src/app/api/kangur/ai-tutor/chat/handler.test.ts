@@ -28,6 +28,7 @@ const {
   logKangurServerEventMock,
   buildKangurAiTutorAdaptiveGuidanceMock,
   resolveKangurAiTutorNativeGuideResolutionMock,
+  resolveKangurAiTutorSectionKnowledgeBundleMock,
   resolveKangurWebsiteHelpGraphContextMock,
 } = vi.hoisted(() => ({
   resolveKangurActorMock: vi.fn(),
@@ -46,6 +47,7 @@ const {
   logKangurServerEventMock: vi.fn(),
   buildKangurAiTutorAdaptiveGuidanceMock: vi.fn(),
   resolveKangurAiTutorNativeGuideResolutionMock: vi.fn(),
+  resolveKangurAiTutorSectionKnowledgeBundleMock: vi.fn(),
   resolveKangurWebsiteHelpGraphContextMock: vi.fn(),
 }));
 vi.mock('@/features/kangur/server', () => ({
@@ -85,6 +87,9 @@ vi.mock('@/features/kangur/server/ai-tutor-adaptive', () => ({
 }));
 vi.mock('@/features/kangur/server/ai-tutor-native-guide', () => ({
   resolveKangurAiTutorNativeGuideResolution: resolveKangurAiTutorNativeGuideResolutionMock,
+}));
+vi.mock('./section-knowledge', () => ({
+  resolveKangurAiTutorSectionKnowledgeBundle: resolveKangurAiTutorSectionKnowledgeBundleMock,
 }));
 vi.mock('@/features/kangur/server/knowledge-graph/retrieval', () => ({
   resolveKangurAiTutorSemanticGraphContext: resolveKangurWebsiteHelpGraphContextMock,
@@ -195,6 +200,7 @@ describe('kangur ai tutor chat handler', () => {
       matchedSignals: [],
       coverageLevel: null,
     });
+    resolveKangurAiTutorSectionKnowledgeBundleMock.mockResolvedValue(null);
     resolveKangurWebsiteHelpGraphContextMock.mockResolvedValue({
       status: 'skipped',
       queryMode: null,
@@ -502,6 +508,7 @@ describe('kangur ai tutor chat handler', () => {
     const body = await response.json();
     expect(body).toMatchObject({
       message: 'Spójrz najpierw na to, co oznacza znak plus.',
+      answerResolutionMode: 'brain',
       followUpActions: [],
       coachingFrame: {
         mode: 'hint_ladder',
@@ -846,6 +853,7 @@ describe('kangur ai tutor chat handler', () => {
       route: '/',
       anchorId: 'kangur-primary-nav-login',
     });
+    expect(body.answerResolutionMode).toBe('native_guide');
     expect(body.knowledgeGraph).toEqual({
       applied: true,
       queryMode: 'website_help',
@@ -871,6 +879,255 @@ describe('kangur ai tutor chat handler', () => {
           websiteHelpGraphTargetAnchorId: 'kangur-primary-nav-login',
         }),
       })
+    );
+  });
+
+  it('answers section explain requests directly from page-content knowledge when Zapytaj o to resolves a page-content reference', async () => {
+    resolveKangurAiTutorSectionKnowledgeBundleMock.mockResolvedValue({
+      section: {
+        id: 'game-home-actions',
+        pageKey: 'Game',
+        screenKey: 'home',
+        surface: 'game',
+        route: '/game',
+        componentId: 'home-actions',
+        widget: 'KangurGameHomeActionsWidget',
+        sourcePath: 'src/features/kangur/ui/pages/Game.tsx',
+        title: 'Szybkie akcje',
+        summary: 'Tutaj wybierasz, do ktorej aktywnosci chcesz przejsc dalej.',
+        body: 'Sekcja prowadzi bezposrednio do lekcji, szybkiej gry, treningu mieszanego i Kangura Matematycznego.',
+        anchorIdPrefix: 'kangur-game-home-actions',
+        focusKind: 'home_actions',
+        contentIdPrefixes: ['game:home'],
+        nativeGuideIds: ['shared-home-actions'],
+        triggerPhrases: ['szybkie akcje'],
+        tags: ['page-content', 'game'],
+        notes: 'Sekcja startowa gry.',
+        enabled: true,
+        sortOrder: 10,
+      },
+      linkedNativeGuides: [
+        {
+          id: 'shared-home-actions',
+          surface: 'game',
+          focusKind: 'home_actions',
+          focusIdPrefixes: ['kangur-game-home-actions'],
+          contentIdPrefixes: ['game:home'],
+          title: 'Szybkie akcje',
+          shortDescription: 'Pomagaja wejsc od razu do wlasciwego trybu pracy.',
+          fullDescription: 'Ta karta zbiera najkrotsze przejscia do glownych aktywnosci Kangura.',
+          hints: [],
+          relatedGames: [],
+          relatedTests: [],
+          followUpActions: [
+            { id: 'open-lessons', label: 'Otworz lekcje', page: 'Lessons', reason: 'Aby zaczac od teorii.' },
+          ],
+          triggerPhrases: ['szybkie akcje'],
+          enabled: true,
+          sortOrder: 10,
+        },
+      ],
+      instructions: 'unused in direct-answer path',
+      sources: [
+        {
+          documentId: 'game-home-actions',
+          collectionId: 'kangur_page_content',
+          text: 'Szybkie akcje\nTutaj wybierasz, do ktorej aktywnosci chcesz przejsc dalej.',
+          score: 0.99,
+          metadata: {
+            source: 'manual-text',
+            sourceId: 'game-home-actions',
+            title: 'Szybkie akcje',
+            description: 'Tutaj wybierasz, do ktorej aktywnosci chcesz przejsc dalej.',
+            tags: ['kangur', 'page-content', 'game'],
+          },
+        },
+      ],
+      followUpActions: [
+        { id: 'open-lessons', label: 'Otworz lekcje', page: 'Lessons', reason: 'Aby zaczac od teorii.' },
+      ],
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Powiedz mi o tej sekcji.' }],
+          context: {
+            surface: 'game',
+            contentId: 'game:home',
+            promptMode: 'explain',
+            focusKind: 'home_actions',
+            focusId: 'kangur-game-home-actions',
+            focusLabel: 'Szybkie akcje',
+            interactionIntent: 'explain',
+            knowledgeReference: {
+              sourceCollection: 'kangur_page_content',
+              sourceRecordId: 'game-home-actions',
+              sourcePath: 'entry:game-home-actions',
+            },
+          },
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(200);
+    expect(resolveKangurAiTutorSectionKnowledgeBundleMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        latestUserMessage: 'Powiedz mi o tej sekcji.',
+        context: expect.objectContaining({
+          knowledgeReference: {
+            sourceCollection: 'kangur_page_content',
+            sourceRecordId: 'game-home-actions',
+            sourcePath: 'entry:game-home-actions',
+          },
+        }),
+      })
+    );
+    expect(resolveKangurAiTutorNativeGuideResolutionMock).not.toHaveBeenCalled();
+    expect(resolveKangurWebsiteHelpGraphContextMock).not.toHaveBeenCalled();
+    expect(runBrainChatCompletionMock).not.toHaveBeenCalled();
+
+    const body = await response.json();
+    expect(body.message).toContain('Szybkie akcje.');
+    expect(body.message).toContain('Tutaj wybierasz, do ktorej aktywnosci chcesz przejsc dalej.');
+    expect(body.message).toContain(
+      'Sekcja prowadzi bezposrednio do lekcji, szybkiej gry, treningu mieszanego i Kangura Matematycznego.'
+    );
+    expect(body.sources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          collectionId: 'kangur_page_content',
+          documentId: 'game-home-actions',
+        }),
+      ])
+    );
+    expect(body.followUpActions).toEqual([
+      { id: 'open-lessons', label: 'Otworz lekcje', page: 'Lessons', reason: 'Aby zaczac od teorii.' },
+    ]);
+    expect(body.answerResolutionMode).toBe('page_content');
+    expect(body.knowledgeGraph).toEqual({
+      applied: false,
+      queryMode: null,
+      queryStatus: 'skipped',
+      recallStrategy: null,
+      lexicalHitCount: 0,
+      vectorHitCount: 0,
+      vectorRecallAttempted: false,
+      websiteHelpApplied: false,
+      websiteHelpTargetNodeId: null,
+    });
+    expect(logKangurServerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'kangur.ai-tutor.chat.page-content.completed',
+        context: expect.objectContaining({
+          pageContentEntryId: 'game-home-actions',
+          linkedNativeGuideIds: ['shared-home-actions'],
+          knowledgeGraphApplied: false,
+        }),
+      })
+    );
+  });
+
+  it('adds live runtime overlays to direct page-content section answers for dynamic widgets', async () => {
+    contextRegistryResolveRefsMock.mockResolvedValue(
+      createContextRegistryBundle({
+        learnerSummary: 'Average accuracy 81%. 1 active assignment.',
+        assignmentFacts: {
+          title: 'Priorytet tygodnia',
+          assignmentSummary: 'Powtorz lekcje: Dodawanie przed piatkiem.',
+        },
+      })
+    );
+    resolveKangurAiTutorSectionKnowledgeBundleMock.mockResolvedValue({
+      section: {
+        id: 'learner-profile-assignments',
+        pageKey: 'LearnerProfile',
+        screenKey: 'overview',
+        surface: 'profile',
+        route: '/profile',
+        componentId: 'assignments',
+        widget: 'LearnerAssignmentsWidget',
+        sourcePath: 'src/features/kangur/ui/pages/LearnerProfile.tsx',
+        title: 'Przebieg przydzielonych zadan',
+        summary: 'Sprawdz, co jest nadal aktywne i co bylo ostatnim sukcesem.',
+        body: 'Ta sekcja pokazuje aktualne zadania ucznia i pomaga wybrac najblizszy krok.',
+        anchorIdPrefix: 'kangur-learner-profile-assignments',
+        focusKind: 'assignment',
+        contentIdPrefixes: ['profile:learner'],
+        nativeGuideIds: ['learner-profile-assignments'],
+        triggerPhrases: ['zadania ucznia'],
+        tags: ['page-content', 'profile'],
+        notes: 'Dynamiczna sekcja zadan ucznia.',
+        enabled: true,
+        sortOrder: 10,
+      },
+      linkedNativeGuides: [],
+      instructions: 'unused in direct-answer path',
+      sources: [
+        {
+          documentId: 'learner-profile-assignments',
+          collectionId: 'kangur_page_content',
+          text: 'Przebieg przydzielonych zadan\nSprawdz, co jest nadal aktywne i co bylo ostatnim sukcesem.',
+          score: 0.99,
+          metadata: {
+            source: 'manual-text',
+            sourceId: 'learner-profile-assignments',
+            title: 'Przebieg przydzielonych zadan',
+            description: 'Sprawdz, co jest nadal aktywne i co bylo ostatnim sukcesem.',
+            tags: ['kangur', 'page-content', 'profile'],
+          },
+        },
+      ],
+      followUpActions: [],
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Wyjasnij mi te zadania.' }],
+          context: {
+            surface: 'profile',
+            contentId: 'profile:learner',
+            promptMode: 'explain',
+            focusKind: 'assignment',
+            focusId: 'kangur-learner-profile-assignments',
+            focusLabel: 'Zadania ucznia',
+            interactionIntent: 'explain',
+            knowledgeReference: {
+              sourceCollection: 'kangur_page_content',
+              sourceRecordId: 'learner-profile-assignments',
+              sourcePath: 'entry:learner-profile-assignments',
+            },
+          },
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(200);
+    expect(runBrainChatCompletionMock).not.toHaveBeenCalled();
+
+    const body = await response.json();
+    expect(body.message).toContain('Przebieg przydzielonych zadan');
+    expect(body.message).toContain(
+      'Na zywo dla tego ucznia: Average accuracy 81%. 1 active assignment.'
+    );
+    expect(body.message).toContain(
+      'Aktywny priorytet: Powtorz lekcje: Dodawanie przed piatkiem.'
+    );
+    expect(body.answerResolutionMode).toBe('page_content');
+    expect(body.sources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          collectionId: 'kangur_page_content',
+          documentId: 'learner-profile-assignments',
+        }),
+        expect.objectContaining({
+          collectionId: 'kangur-runtime-context',
+          documentId: 'runtime:kangur:assignment:learner-1:assignment-1',
+        }),
+      ])
     );
   });
 

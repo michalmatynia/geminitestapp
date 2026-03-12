@@ -77,7 +77,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
   const visibleMessages = shouldSuppressConversationHistory ? [] : messages;
 
   return (
-    <div className='flex-1 min-h-0 space-y-3 overflow-y-auto px-4 py-3'>
+    <div className='flex-1 min-h-0 space-y-3 overflow-y-auto kangur-chat-padding-lg'>
       {visibleMessages.length === 0 ? (
         <div className='flex flex-col items-center justify-center py-6'>
           <div
@@ -122,12 +122,12 @@ export function KangurAiTutorMessageList(): JSX.Element {
                           src={artifact.imageDataUrl}
                           alt={artifact.alt ?? drawingContent?.previewAlt ?? 'Rysunek'}
                           data-testid={`kangur-ai-tutor-drawing-message-${index}`}
-                          className='max-h-32 w-auto rounded-2xl border border-orange-300/50 shadow-[0_8px_20px_-12px_rgba(249,115,22,0.3)]'
+                          className='max-h-32 w-auto kangur-chat-card border border-orange-300/50 shadow-[0_8px_20px_-12px_rgba(249,115,22,0.3)]'
                         />
                       </div>
                     </div>
                   ))}
-                  <div className='rounded-[22px] border border-orange-400/60 tutor-user-bubble px-3 py-2 text-sm leading-relaxed text-white'>
+                  <div className='kangur-chat-bubble kangur-chat-padding-sm border border-orange-400/60 tutor-user-bubble text-sm leading-relaxed text-white'>
                     {msg.content}
                   </div>
                 </div>
@@ -146,7 +146,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
               <div className='w-full max-w-full space-y-2 sm:max-w-[90%]'>
                 {msg.coachingFrame ? (
                   <div
-                    className='tutor-coaching-frame rounded-2xl px-3 py-2.5 text-left'
+                    className='tutor-coaching-frame kangur-chat-inset kangur-chat-padding-sm text-left'
                     data-testid='kangur-ai-tutor-coaching-frame'
                     data-coaching-mode={msg.coachingFrame.mode}
                   >
@@ -171,14 +171,14 @@ export function KangurAiTutorMessageList(): JSX.Element {
                 {assistantDrawingArtifacts.map((artifact, artifactIndex) => (
                   <div
                     key={`${index}-${artifactIndex}`}
-                    className='soft-card overflow-hidden rounded-[22px] border [border-color:var(--kangur-soft-card-border)] shadow-[0_12px_28px_-18px_rgba(15,23,42,0.22)]'
+                    className='soft-card overflow-hidden kangur-chat-card border [border-color:var(--kangur-soft-card-border)] shadow-[0_12px_28px_-18px_rgba(15,23,42,0.22)]'
                     style={{
                       background:
                         'linear-gradient(180deg, color-mix(in srgb, var(--kangur-soft-card-background) 94%, transparent) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 88%, rgba(255,247,237,0.92)) 100%)',
                     }}
                     data-testid={`kangur-ai-tutor-assistant-drawing-message-${index}-${artifactIndex}`}
                   >
-                    <div className='flex items-center justify-between border-b px-3 py-2 [border-color:var(--kangur-soft-card-border)]'>
+                    <div className='flex items-center justify-between border-b kangur-chat-padding-sm [border-color:var(--kangur-soft-card-border)]'>
                       <span className='text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
                         {artifact.title ?? 'Szkic tutora'}
                       </span>
@@ -186,11 +186,11 @@ export function KangurAiTutorMessageList(): JSX.Element {
                         {drawingContent?.messageLabel ?? 'Narysowano'}
                       </span>
                     </div>
-                    <div className='px-3 py-3'>
+                    <div className='kangur-chat-padding-md'>
                       <div
                         role='img'
                         aria-label={artifact.alt ?? drawingContent?.previewAlt ?? 'Rysunek'}
-                        className='overflow-hidden rounded-2xl border border-amber-200/50 [background:var(--kangur-soft-card-background)] [&_svg]:block [&_svg]:h-auto [&_svg]:w-full'
+                        className='overflow-hidden kangur-chat-inset border border-amber-200/50 [background:var(--kangur-soft-card-background)] [&_svg]:block [&_svg]:h-auto [&_svg]:w-full'
                         dangerouslySetInnerHTML={{
                           __html: sanitizeSvg(artifact.svgContent, { viewBox: '0 0 320 200' }),
                         }}
@@ -203,7 +203,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
                     </div>
                   </div>
                 ))}
-                <div className='tutor-assistant-bubble rounded-[22px] border [border-color:var(--kangur-soft-card-border)] px-3 py-2 text-sm leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
+                <div className='tutor-assistant-bubble kangur-chat-bubble kangur-chat-padding-sm border [border-color:var(--kangur-soft-card-border)] text-sm leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
                   {msg.content}
                 </div>
                 {msg.followUpActions?.length ? (
@@ -218,7 +218,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
                         return (
                           <div
                             key={action.id}
-                            className='soft-card rounded-2xl border px-3 py-3 shadow-[0_6px_16px_-10px_rgba(245,158,11,0.18)]'
+                            className='soft-card kangur-chat-card kangur-chat-padding-md border shadow-[0_6px_16px_-10px_rgba(245,158,11,0.18)]'
                             style={{
                               background:
                                 'linear-gradient(135deg, color-mix(in srgb, var(--kangur-soft-card-background) 84%, rgba(254,243,199,0.92)) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 86%, rgba(255,237,213,0.82)) 100%)',
@@ -266,7 +266,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
                     {msg.sources.slice(0, 3).map((source) => (
                       <div
                         key={`${source.collectionId}-${source.documentId}`}
-                        className='soft-card rounded-2xl border [border-color:var(--kangur-soft-card-border)] px-3 py-2 text-left shadow-[0_4px_12px_-8px_rgba(15,23,42,0.08)]'
+                        className='soft-card kangur-chat-card kangur-chat-padding-sm border [border-color:var(--kangur-soft-card-border)] text-left shadow-[0_4px_12px_-8px_rgba(15,23,42,0.08)]'
                         style={{
                           background:
                             'linear-gradient(135deg, color-mix(in srgb, var(--kangur-soft-card-background) 92%, transparent) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 84%, var(--kangur-page-background)) 100%)',
@@ -298,7 +298,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
                     return (
                   <div
                     data-kangur-tts-ignore='true'
-                    className='soft-card rounded-2xl border border-sky-200/80 px-3 py-3 shadow-[0_8px_18px_-12px_rgba(14,165,233,0.22)]'
+                    className='soft-card kangur-chat-card kangur-chat-padding-md border border-sky-200/80 shadow-[0_8px_18px_-12px_rgba(14,165,233,0.22)]'
                     style={{
                       background:
                         'linear-gradient(135deg, color-mix(in srgb, var(--kangur-soft-card-background) 88%, rgba(224,242,254,0.9)) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 86%, rgba(239,246,255,0.82)) 100%)',
@@ -336,7 +336,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
                 <div
                   data-testid={`kangur-ai-tutor-feedback-${index}`}
                   data-kangur-tts-ignore='true'
-                  className='soft-card rounded-2xl border [border-color:var(--kangur-soft-card-border)] px-3 py-2'
+                  className='soft-card kangur-chat-card kangur-chat-padding-sm border [border-color:var(--kangur-soft-card-border)]'
                   style={{
                     background:
                       'linear-gradient(135deg, color-mix(in srgb, var(--kangur-soft-card-background) 90%, transparent) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 82%, var(--kangur-page-background)) 100%)',
@@ -399,7 +399,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
       )}
       {isLoading ? (
         <div className='flex justify-start'>
-          <div className='tutor-assistant-bubble rounded-[22px] border [border-color:var(--kangur-soft-card-border)] px-4 py-3'>
+          <div className='tutor-assistant-bubble kangur-chat-bubble kangur-chat-padding-md border [border-color:var(--kangur-soft-card-border)]'>
             <div className='flex items-center gap-1.5' aria-label={tutorContent.messageList.loadingLabel}>
               <span className='tutor-typing-dot' />
               <span className='tutor-typing-dot' />

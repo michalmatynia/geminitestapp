@@ -32,10 +32,12 @@ export const handleTrigger: NodeHandler = async ({
   const entityType =
     pickString(triggerContextRecord?.['entityType']) ??
     (pickString(triggerContextRecord?.['productId']) ? 'product' : null);
+  const embeddedEntity =
+    asRecord(triggerContextRecord?.['entityJson']) ?? asRecord(triggerContextRecord?.['entity']);
 
-  let resolvedEntity: Record<string, unknown> | null = null;
+  let resolvedEntity: Record<string, unknown> | null = embeddedEntity;
   let entityFetchError: string | null = null;
-  if (entityId && entityType) {
+  if (!resolvedEntity && entityId && entityType) {
     try {
       resolvedEntity = await fetchEntityCached(entityType, entityId);
     } catch (error) {

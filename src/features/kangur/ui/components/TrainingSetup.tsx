@@ -82,7 +82,7 @@ export default function TrainingSetup({
         {suggestionTitle ? (
           <KangurRecommendationCard
             accent='indigo'
-            data-testid='training-setup-suggestion-card'
+            dataTestId='training-setup-suggestion-card'
             description={suggestionDescription}
             descriptionTestId='training-setup-suggestion-description'
             label={suggestionLabel ?? 'Polecamy teraz'}

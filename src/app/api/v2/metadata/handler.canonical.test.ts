@@ -5,13 +5,11 @@ const {
   getCurrencyRepositoryMock,
   getInternationalizationProviderMock,
   getMongoDbMock,
-  legacySqlClientMock,
   currencyRepoMock,
 } = vi.hoisted(() => ({
   getCurrencyRepositoryMock: vi.fn() as Mock,
   getInternationalizationProviderMock: vi.fn() as Mock,
   getMongoDbMock: vi.fn() as Mock,
-  legacySqlClientMock: {} as Record<string, unknown>,
   currencyRepoMock: {
     listCurrencies: vi.fn() as Mock,
     createCurrency: vi.fn() as Mock,
@@ -24,10 +22,6 @@ const {
 vi.mock('@/features/internationalization/server', () => ({
   getCurrencyRepository: getCurrencyRepositoryMock,
   getInternationalizationProvider: getInternationalizationProviderMock,
-}));
-
-vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
-  default: legacySqlClientMock,
 }));
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
@@ -43,10 +37,6 @@ describe('v2 metadata handler canonical contract', () => {
     getMongoDbMock.mockReset();
     getCurrencyRepositoryMock.mockResolvedValue(currencyRepoMock);
     getInternationalizationProviderMock.mockResolvedValue('mongodb');
-
-    Object.keys(legacySqlClientMock).forEach((key) => {
-      delete legacySqlClientMock[key];
-    });
     Object.values(currencyRepoMock).forEach((mock) => {
       mock.mockReset();
     });

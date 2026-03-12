@@ -80,25 +80,36 @@ vi.mock('@/shared/lib/api/api-handler', async () => {
 
 import { GET as getAgentAction } from '@/app/api/chatbot/agent/[runId]/[action]/route';
 import { GET as listRuns, POST as createRun } from '@/app/api/chatbot/agent/route';
-import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
+
+const {
+  chatbotAgentRunFindManyMock,
+  agentBrowserLogFindManyMock,
+  agentAuditLogFindManyMock,
+} = vi.hoisted(() => ({
+  chatbotAgentRunFindManyMock: vi.fn(),
+  agentBrowserLogFindManyMock: vi.fn(),
+  agentAuditLogFindManyMock: vi.fn(),
+}));
+
+vi.mock('@/features/ai/agent-runtime/store-delegates', () => ({
+  getChatbotAgentRunDelegate: vi.fn(() => ({
+    findMany: chatbotAgentRunFindManyMock,
+  })),
+  getAgentBrowserLogDelegate: vi.fn(() => ({
+    findMany: agentBrowserLogFindManyMock,
+  })),
+  getAgentAuditLogDelegate: vi.fn(() => ({
+    findMany: agentAuditLogFindManyMock,
+  })),
+}));
 
 type ChatbotAgentRun = { id: string };
 type AgentBrowserLog = { message: string };
 type AgentAuditLog = { metadata?: unknown };
 
 describe('Agent API', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
-
-    await legacySqlClient.agentBrowserLog.deleteMany({});
-    await legacySqlClient.agentBrowserSnapshot.deleteMany({});
-    await legacySqlClient.agentAuditLog.deleteMany({});
-    await legacySqlClient.agentMemoryItem.deleteMany({});
-    await legacySqlClient.chatbotAgentRun.deleteMany({});
-  });
-
-  afterAll(async () => {
-    await legacySqlClient.$disconnect();
   });
 
   it('should reject missing prompt when creating a run', async () => {
@@ -120,30 +131,26 @@ describe('Agent API', () => {
   });
 
   it('should list agent runs with counts', async () => {
-    const run = await legacySqlClient.chatbotAgentRun.create({
-      data: {
-        prompt: 'Browse example.com',
-        tools: ['agent-mode'],
-      },
-    });
-    await legacySqlClient.agentBrowserLog.create({
-      data: {
-        runId: run.id,
-        level: 'info',
-        message: 'Stub log',
-      },
-    });
-    await legacySqlClient.agentBrowserSnapshot.create({
-      data: {
-        runId: run.id,
-        url: 'about:blank',
-        title: 'Stub',
-        domHtml: '<html></html>',
-        domText: 'stub',
-      },
-    });
+    const run = {
+      id: 'run-1',
+      prompt: 'Browse example.com',
+      model: null,
+      tools: ['agent-mode'],
+      searchProvider: null,
+      agentBrowser: null,
+      runHeadless: true,
+      status: 'queued',
+      requiresHumanIntervention: false,
+      errorMessage: null,
+      logLines: [],
+      recordingPath: null,
+      activeStepId: null,
+      checkpointedAt: null,
+      createdAt: '2026-03-01T00:00:00.000Z',
+      updatedAt: '2026-03-01T00:00:00.000Z',
+    };
 
-    vi.mocked(legacySqlClient.chatbotAgentRun.findMany).mockResolvedValueOnce([
+    chatbotAgentRunFindManyMock.mockResolvedValueOnce([
       {
         ...run,
         _count: {
@@ -167,22 +174,19 @@ describe('Agent API', () => {
   });
 
   it('should return agent logs for a run', async () => {
-    const run = await legacySqlClient.chatbotAgentRun.create({
-      data: { prompt: 'Logs test', tools: ['agent-mode'] },
-    });
     const logData = {
-      runId: run.id,
+      id: 'log-1',
+      runId: 'run-logs',
+      stepId: null,
       level: 'info',
       message: 'Log entry',
+      createdAt: '2026-03-01T00:00:00.000Z',
     };
-    const log = await legacySqlClient.agentBrowserLog.create({
-      data: logData,
-    });
 
-    vi.mocked(legacySqlClient.agentBrowserLog.findMany).mockResolvedValueOnce([log]);
+    agentBrowserLogFindManyMock.mockResolvedValueOnce([logData]);
 
     const res = await getAgentAction(new NextRequest('http://localhost'), {
-      params: Promise.resolve({ runId: run.id, action: 'logs' }),
+      params: Promise.resolve({ runId: 'run-logs', action: 'logs' }),
     });
     const data = (await res.json()) as { logs: AgentBrowserLog[] };
 
@@ -192,23 +196,19 @@ describe('Agent API', () => {
   });
 
   it('should return agent audit logs for a run', async () => {
-    const run = await legacySqlClient.chatbotAgentRun.create({
-      data: { prompt: 'Audit test', tools: ['agent-mode'] },
-    });
     const auditData = {
-      runId: run.id,
+      id: 'audit-1',
+      runId: 'run-audits',
       level: 'info' as const,
       message: 'Audit entry',
       metadata: { step: 'tool' },
+      createdAt: '2026-03-01T00:00:00.000Z',
     };
-    const audit = await legacySqlClient.agentAuditLog.create({
-      data: auditData,
-    });
 
-    vi.mocked(legacySqlClient.agentAuditLog.findMany).mockResolvedValueOnce([audit]);
+    agentAuditLogFindManyMock.mockResolvedValueOnce([auditData]);
 
     const res = await getAgentAction(new NextRequest('http://localhost'), {
-      params: Promise.resolve({ runId: run.id, action: 'audits' }),
+      params: Promise.resolve({ runId: 'run-audits', action: 'audits' }),
     });
     const data = (await res.json()) as { audits: AgentAuditLog[] };
 

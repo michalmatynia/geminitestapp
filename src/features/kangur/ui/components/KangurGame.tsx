@@ -2,6 +2,8 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { CheckCircle, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
+import { KangurAnswerChoiceBadge } from '@/features/kangur/ui/components/KangurAnswerChoiceBadge';
+import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import KangurExam from '@/features/kangur/ui/components/KangurExam';
 import {
   Q1Illustration,
@@ -25,7 +27,6 @@ import {
   KangurButton,
   KangurGlassPanel,
   KangurInfoCard,
-  KangurOptionCardButton,
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -189,41 +190,34 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
           }
 
           return (
-            <motion.div
+            <KangurAnswerChoiceCard
+              accent={accent}
+              buttonClassName={cn(
+                'flex items-center gap-3 px-4 py-3 font-semibold',
+                style,
+                confirmed ? 'cursor-default' : 'cursor-pointer'
+              )}
+              data-testid={`kangur-game-choice-${index}`}
+              emphasis={emphasis}
+              hoverScale={1.02}
+              interactive={!confirmed}
               key={`${String(choice)}-${index}`}
-              whileHover={!confirmed ? { scale: 1.02 } : {}}
-              whileTap={!confirmed ? { scale: 0.98 } : {}}
+              onClick={() => handleChoiceConfirm(choice)}
+              state={state}
+              tapScale={0.98}
+              type='button'
             >
-              <KangurOptionCardButton
-                accent={accent}
-                className={cn(
-                  'w-full rounded-[24px] px-4 py-3 font-semibold transition-all flex items-center gap-3',
-                  style,
-                  confirmed ? 'cursor-default' : 'cursor-pointer'
-                )}
-                data-testid={`kangur-game-choice-${index}`}
-                emphasis={emphasis}
-                onClick={() => handleChoiceConfirm(choice)}
-                state={state}
-                type='button'
-              >
-                <span
-                  className={cn(
-                    'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-sm font-extrabold',
-                    badgeClassName
-                  )}
-                >
-                  {String.fromCharCode(65 + index)}
-                </span>
-                <span>{choice}</span>
-                {confirmed && choice === q.answer && (
-                  <CheckCircle className='w-4 h-4 text-green-600 ml-auto flex-shrink-0' />
-                )}
-                {confirmed && choice === selected && choice !== q.answer && (
-                  <XCircle className='w-4 h-4 text-red-500 ml-auto flex-shrink-0' />
-                )}
-              </KangurOptionCardButton>
-            </motion.div>
+              <KangurAnswerChoiceBadge className={badgeClassName}>
+                {String.fromCharCode(65 + index)}
+              </KangurAnswerChoiceBadge>
+              <span>{choice}</span>
+              {confirmed && choice === q.answer && (
+                <CheckCircle className='w-4 h-4 text-green-600 ml-auto flex-shrink-0' />
+              )}
+              {confirmed && choice === selected && choice !== q.answer && (
+                <XCircle className='w-4 h-4 text-red-500 ml-auto flex-shrink-0' />
+              )}
+            </KangurAnswerChoiceCard>
           );
         })}
       </div>

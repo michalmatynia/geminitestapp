@@ -4,6 +4,7 @@
 
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 
 vi.mock('@/features/kangur/ui/components/KangurLessonNarrator', () => ({
   KangurLessonNarrator: ({ readLabel }: { readLabel: string }) => <button>{readLabel}</button>,
@@ -54,6 +55,15 @@ describe('KangurTestSuitePlayer', () => {
     const onFinish = vi.fn();
     render(<KangurTestSuitePlayer suite={suite} questions={questions} onFinish={onFinish} />);
 
+    expect(screen.getByText('Pytanie testowe')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Wybierz jedną odpowiedź, a potem sprawdź omówienie i poprawny tok myślenia.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-test-question-copy')).toHaveTextContent(
+      /Pytanie testowe\s*Wybierz jedną odpowiedź, a potem sprawdź omówienie i poprawny tok myślenia\./
+    );
     expect(screen.getByText('Question 1 / 1')).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: /read question/i })).toBeInTheDocument();
     expect(screen.getByTestId('kangur-test-suite-progress-bar')).toHaveAttribute(
@@ -74,6 +84,12 @@ describe('KangurTestSuitePlayer', () => {
     await userEvent.click(finishButton);
 
     const restartButton = screen.getByRole('button', { name: /try again/i });
+    expect(screen.getByText('Podsumowanie testu')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Sprawdź wynik końcowy i wróć do pytań, aby przeanalizować odpowiedzi.'
+      )
+    ).toBeInTheDocument();
     expect(screen.getByTestId('kangur-test-suite-summary')).toHaveClass(
       'soft-card'
     );
@@ -89,7 +105,14 @@ describe('KangurTestSuitePlayer', () => {
       'border-dashed',
       'border'
     );
-    expect(screen.getByText('This test suite has no published questions yet.')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-test-suite-empty')).toHaveTextContent(
+      repairKangurPolishCopy('Brak opublikowanych pytan')
+    );
+    expect(screen.getByTestId('kangur-test-suite-empty')).toHaveTextContent(
+      repairKangurPolishCopy(
+        'Ten zestaw nie ma jeszcze aktywnych pytan testowych. Wroc pozniej albo wybierz inny zestaw.'
+      )
+    );
   });
 
   it('filters out draft questions and plays only published ones', async () => {

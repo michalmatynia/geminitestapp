@@ -22,7 +22,6 @@ export const analyzeEnvContract = ({
 } = {}) => {
   const issues = [];
   const nodeEnv = normalizeString(env['NODE_ENV']) || 'development';
-  const databaseUrl = normalizeString(env['DATABASE_URL']);
   const mongoUri = normalizeString(env['MONGODB_URI']);
   const appDbProvider = normalizeString(env['APP_DB_PROVIDER']).toLowerCase();
   const authSecret = normalizeString(env['AUTH_SECRET']);
@@ -48,17 +47,6 @@ export const analyzeEnvContract = ({
         severity: 'error',
         ruleId: 'app-db-provider-invalid',
         message: `APP_DB_PROVIDER="${appDbProvider}" is invalid. Expected "mongodb".`,
-      })
-    );
-  }
-
-  if (hasValue(databaseUrl) && hasValue(mongoUri) && !hasValue(appDbProvider)) {
-    issues.push(
-      createIssue({
-        severity: 'warn',
-        ruleId: 'dual-database-provider-implicit-fallback',
-        message:
-          'DATABASE_URL and MONGODB_URI are both configured without APP_DB_PROVIDER. MongoDB will be used as the implicit primary provider.',
       })
     );
   }
@@ -214,7 +202,6 @@ export const analyzeEnvContract = ({
     summary,
     environment: {
       nodeEnv,
-      hasDatabaseUrl: hasValue(databaseUrl),
       hasMongoUri: hasValue(mongoUri),
       appDbProvider: appDbProvider || null,
       hasAuthSecret: hasValue(authSecret),

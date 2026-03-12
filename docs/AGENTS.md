@@ -243,8 +243,7 @@ Key files:
 Important current behavior:
 
 - app provider can resolve from env, settings, or Database Engine routes
-- if both `DATABASE_URL` and `MONGODB_URI` exist and no explicit app route is
-  set, app data currently defaults to MongoDB
+- MongoDB is the required primary database configuration for app data
 - auth can be routed independently from app data
 - Redis is a supported Database Engine target for selected routing/caching cases,
   but not for every service

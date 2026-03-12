@@ -11,6 +11,7 @@ import {
   type KangurAiTutorPageCoverageEntry,
 } from './ai-tutor-page-coverage-manifest';
 import { getKangurHomeHref, getKangurPageSlug } from './config/routing';
+import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 
 const KANGUR_HOME_ROUTE = getKangurHomeHref('/');
 const KANGUR_PAGE_CONTENT_VERSION = 1;
@@ -25,35 +26,159 @@ const PAGE_CONTENT_COPY_OVERRIDES: Partial<
   >
 > = {
   'game-home-actions': {
-    title: 'Wybierz aktywnosc',
+    title: 'Wybierz aktywność',
     summary:
-      'Przejdz do lekcji, szybkiej gry, treningu mieszanego lub Kangura Matematycznego.',
+      'Przejdź do lekcji, szybkiej gry, treningu mieszanego lub Kangura Matematycznego.',
   },
   'game-home-hero': {
-    title: 'Twoj postep',
+    title: 'Twój postęp',
     summary:
-      'Sprawdz najblizszy kamien milowy, polecony kierunek i zadania, ktore warto domknac dzisiaj.',
+      'Sprawdź najbliższy kamień milowy, polecony kierunek i zadania, które warto domknąć dzisiaj.',
   },
   'game-home-leaderboard': {
     title: 'Najlepsze wyniki',
     summary:
-      'Sprawdz, kto zdobywa najwiecej punktow i ile brakuje do kolejnego miejsca w rankingu.',
+      'Sprawdź, kto zdobywa najwięcej punktów i ile brakuje do kolejnego miejsca w rankingu.',
   },
   'game-home-progress': {
-    title: 'Postepy ucznia',
-    summary: 'Zobacz poziom, serie, skutecznosc i najblizsze odznaki w jednym miejscu.',
+    title: 'Postępy ucznia',
+    summary: 'Zobacz poziom, serie, skuteczność i najbliższe odznaki w jednym miejscu.',
+  },
+  'parent-dashboard-guest-hero': {
+    title: 'Panel Rodzica / Nauczyciela',
+    summary: 'Sprawdź, jak odblokować widok opiekuna i przejdź do konta z uprawnieniami rodzica.',
+  },
+  'parent-dashboard-hero': {
+    title: 'Panel Rodzica',
+    summary: 'To centrum decyzji opiekuna: wybierz ucznia i przejdź do zakładki z potrzebnym kontekstem.',
+  },
+  'parent-dashboard-learner-management': {
+    title: 'Zarządzaj profilami bez opuszczania panelu',
+    summary: 'Rodzic loguje się emailem, a uczniowie dostają osobne nazwy logowania i hasła.',
+  },
+  'parent-dashboard-tabs': {
+    title: 'Zakładki panelu',
+    summary: 'Przełączaj między postępem, wynikami, zadaniami i ustawieniami Tutor-AI.',
+  },
+  'parent-dashboard-progress': {
+    title: 'Postęp ucznia',
+    summary: 'Sprawdź rytm nauki, poziom, misję dnia i główny kierunek dalszej pracy.',
+  },
+  'parent-dashboard-scores': {
+    title: 'Wyniki ucznia',
+    summary: 'Przejrzyj ostatnie gry, skuteczność i obszary, które warto teraz powtórzyć.',
+  },
+  'parent-dashboard-assignments': {
+    title: 'Zadania ucznia',
+    summary: 'Nadaj priorytet pracy i sprawdź, co jest aktywne albo wymaga przypomnienia.',
+  },
+  'parent-dashboard-ai-tutor': {
+    title: 'Tutor-AI dla rodzica',
+    summary: 'Interpretuj dane ucznia i ustaw dostępność wsparcia AI z jednego miejsca.',
+  },
+  'login-page-form': {
+    title: 'Zaloguj się',
+    summary: 'Rodzic loguje się emailem i hasłem. Uczeń loguje się nickiem i hasłem.',
+  },
+  'login-page-identifier-field': {
+    title: 'Email rodzica albo nick ucznia',
+    summary: 'Wpisz email rodzica lub login ucznia, aby przejść do właściwego trybu logowania.',
+  },
+  'shared-nav-create-account-action': {
+    title: 'Utwórz konto',
+    summary: 'Załóż konto rodzica bez opuszczania bieżącej strony.',
+  },
+  'shared-nav-login-action': {
+    title: 'Zaloguj się',
+    summary: 'Otwórz logowanie rodzica lub ucznia z dowolnej strony Kangur.',
   },
   'lessons-list-intro': {
     title: 'Lekcje',
-    summary: 'Wybierz temat i przejdz od razu do praktyki lub powtorki.',
+    summary: 'Wybierz temat i przejdź od razu do praktyki lub powtórki.',
   },
   'lessons-library': {
     title: 'Biblioteka lekcji',
-    summary: 'Wybierz temat i rozpocznij nauke lub powtorke w swoim tempie.',
+    summary: 'Wybierz temat i rozpocznij naukę lub powtórkę w swoim tempie.',
   },
   'lessons-list-empty-state': {
     title: 'Brak aktywnych lekcji',
-    summary: 'Wlacz lekcje w panelu admina, aby pojawily sie tutaj.',
+    summary: 'Włącz lekcje w panelu admina, aby pojawiły się tutaj.',
+  },
+  'lessons-active-header': {
+    title: 'Aktywna lekcja',
+    summary: 'Przejdź przez temat krok po kroku, odsłuchaj materiał i sprawdź, czy czeka tu zadanie od rodzica.',
+  },
+  'lessons-active-assignment': {
+    title: 'Zadanie od rodzica',
+    summary: 'To miejsce pokazuje, czy ta lekcja ma aktywny priorytet od rodzica albo została już zaliczona.',
+  },
+  'lessons-active-document': {
+    title: 'Materiał lekcji',
+    summary: 'Czytaj zapisany dokument krok po kroku i wracaj do niego podczas praktyki.',
+  },
+  'lessons-active-secret-panel': {
+    title: 'Ukryty finisz',
+    summary: 'Złota pigułka odblokowała finał na końcu kolejki. Trafiłeś od razu do ukrytego zakończenia.',
+  },
+  'lessons-active-empty-document': {
+    title: 'Brak zapisanej treści lekcji',
+    summary: 'Ta lekcja ma włączony tryb dokumentu, ale nie zapisano jeszcze bloków treści.',
+  },
+  'lessons-active-navigation': {
+    title: 'Nawigacja lekcji',
+    summary: 'Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy.',
+  },
+  'tests-empty-state': {
+    title: 'Brak opublikowanych pytań',
+    summary: 'Ten zestaw nie ma jeszcze aktywnych pytań testowych. Wróć później albo wybierz inny zestaw.',
+  },
+  'tests-question': {
+    title: 'Pytanie testowe',
+    summary: 'Wybierz jedną odpowiedź, a potem sprawdź omówienie i poprawny tok myślenia.',
+  },
+  'tests-review': {
+    title: 'Omówienie odpowiedzi',
+    summary: 'Porównaj swój wybór z poprawną odpowiedzią i przeczytaj krótkie wyjaśnienie.',
+  },
+  'tests-summary': {
+    title: 'Podsumowanie testu',
+    summary: 'Sprawdź wynik końcowy i wróć do pytań, aby przeanalizować odpowiedzi.',
+  },
+  'learner-profile-hero': {
+    title: 'Profil ucznia',
+    summary: 'Sprawdź kamienie milowe, aktywność i kolejne kroki dla aktualnego ucznia.',
+  },
+  'learner-profile-level-progress': {
+    title: 'Postęp poziomu',
+    summary: 'Zobacz aktualny poziom, łączne XP i brakujący dystans do następnego progu.',
+  },
+  'learner-profile-overview': {
+    title: 'Przegląd wyników',
+    summary: 'Najważniejsze wskaźniki dnia: skuteczność, misja, cel i odznaki w jednym widoku.',
+  },
+  'learner-profile-recommendations': {
+    title: 'Plan na dziś',
+    summary: 'Krótka lista kolejnych kroków na podstawie ostatnich wyników i aktywności.',
+  },
+  'learner-profile-assignments': {
+    title: 'Przebieg przydzielonych zadań',
+    summary: 'Sprawdź, co jest nadal aktywne, ile zadań masz już za sobą i co było ostatnim sukcesem.',
+  },
+  'learner-profile-performance': {
+    title: 'Skuteczność ucznia',
+    summary: 'Zobacz rytm ostatnich siedmiu dni i skuteczność dla poszczególnych operacji.',
+  },
+  'learner-profile-sessions': {
+    title: 'Historia sesji',
+    summary: 'Sprawdź ostatnie podejścia oraz ścieżki odznak budowane przez regularną grę.',
+  },
+  'learner-profile-ai-tutor-mood': {
+    title: 'Nastrój Tutor-AI',
+    summary: 'Zobacz aktualny ton wspierania ucznia, poziom pewności i chwilę ostatniej aktualizacji.',
+  },
+  'learner-profile-mastery': {
+    title: 'Opanowanie lekcji',
+    summary: 'Sprawdź tematy do powtórki i najmocniejsze obszary na podstawie zapisanych lekcji.',
   },
 };
 
@@ -184,11 +309,13 @@ const buildSectionEntry = (
 };
 
 export const buildDefaultKangurPageContentStore = (locale = 'pl'): KangurPageContentStore =>
-  kangurPageContentStoreSchema.parse({
-    locale,
-    version: KANGUR_PAGE_CONTENT_VERSION,
-    entries: KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO.map(buildSectionEntry),
-  });
+  kangurPageContentStoreSchema.parse(
+    repairKangurPolishCopy({
+      locale,
+      version: KANGUR_PAGE_CONTENT_VERSION,
+      entries: KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO.map(buildSectionEntry),
+    })
+  );
 
 export const DEFAULT_KANGUR_PAGE_CONTENT_STORE: Readonly<KangurPageContentStore> = Object.freeze(
   buildDefaultKangurPageContentStore('pl')

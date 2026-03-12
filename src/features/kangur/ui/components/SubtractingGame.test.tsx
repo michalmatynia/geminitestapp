@@ -26,11 +26,11 @@ describe('SubtractingGame', () => {
 
     const firstChoice = screen.getByTestId('subtracting-game-choice-0');
 
-    expect(firstChoice).toHaveClass('soft-card', 'border', 'rounded-[24px]');
+    expect(firstChoice).toHaveClass('soft-card', 'border', 'kangur-card-surface', 'kangur-card-padding-md');
 
     fireEvent.click(firstChoice);
 
-    expect(firstChoice).toHaveClass('soft-card', 'rounded-[24px]');
+    expect(firstChoice).toHaveClass('soft-card', 'kangur-card-surface', 'kangur-card-padding-md');
     fireEvent.click(screen.getByRole('button', { name: 'Sprawdź ✓' }));
 
     const checkButton = screen.getByRole('button', { name: 'Sprawdź ✓' });

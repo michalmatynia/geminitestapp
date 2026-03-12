@@ -1,4 +1,6 @@
+import { KangurActivitySummaryCard } from '@/features/kangur/ui/components/KangurActivitySummaryCard';
 import KangurBadgeTrackGrid from '@/features/kangur/ui/components/KangurBadgeTrackGrid';
+import { KangurProgressHighlightCardContent } from '@/features/kangur/ui/components/KangurProgressHighlightCardContent';
 import LessonMasteryInsights from '@/features/kangur/ui/components/LessonMasteryInsights';
 import {
   KangurDisplayEmoji,
@@ -124,25 +126,18 @@ export default function ProgressOverview({
           surface='solid'
           variant='subtle'
         >
-          <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
-            <KangurPanelIntro
-              className='min-w-0'
-              eyebrow='Misja dnia'
-              title={dailyQuest.assignment.title}
-              titleAs='p'
-              description={`${dailyQuest.progress.summary} · ${dailyQuest.reward.label}`}
-              descriptionClassName='mt-1 text-xs leading-5'
-            />
-            <KangurStatusChip accent={dailyQuestAccent} className='shrink-0'>
-              {dailyQuest.progress.percent}%
-            </KangurStatusChip>
-          </div>
-          <KangurProgressBar
-            accent={dailyQuestProgressAccent}
-            className='mt-3'
-            data-testid='progress-overview-daily-quest-bar'
-            size='sm'
-            value={dailyQuestProgressPercent}
+          <KangurProgressHighlightCardContent
+            chipAccent={dailyQuestAccent}
+            chipClassName='shrink-0'
+            chipLabel={`${dailyQuest.progress.percent}%`}
+            description={`${dailyQuest.progress.summary} · ${dailyQuest.reward.label}`}
+            descriptionClassName='text-xs leading-5'
+            eyebrow='Misja dnia'
+            headerClassName='sm:items-start'
+            progressAccent={dailyQuestProgressAccent}
+            progressBarTestId='progress-overview-daily-quest-bar'
+            progressValue={dailyQuestProgressPercent}
+            title={dailyQuest.assignment.title}
           />
         </KangurGlassPanel>
       ) : null}
@@ -154,29 +149,22 @@ export default function ProgressOverview({
           surface='solid'
           variant='subtle'
         >
-          <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
-            <KangurPanelIntro
-              className='min-w-0'
-              eyebrow='Polecony kierunek'
-              title={`${guidedMomentum.completedSessions} polecone rundy`}
-              titleAs='p'
-              description={
-                guidedMomentum.nextBadgeName
-                  ? `Do odznaki ${guidedMomentum.nextBadgeName}: ${guidedMomentum.summary}`
-                  : 'Wszystkie odznaki polecanego kierunku odblokowane.'
-              }
-              descriptionClassName='mt-1 text-xs leading-5'
-            />
-            <KangurStatusChip accent='sky' className='shrink-0'>
-              {guidedMomentum.summary}
-            </KangurStatusChip>
-          </div>
-          <KangurProgressBar
-            accent='sky'
-            className='mt-3'
-            data-testid='progress-overview-guided-momentum-bar'
-            size='sm'
-            value={guidedMomentum.progressPercent}
+          <KangurProgressHighlightCardContent
+            chipAccent='sky'
+            chipClassName='shrink-0'
+            chipLabel={guidedMomentum.summary}
+            description={
+              guidedMomentum.nextBadgeName
+                ? `Do odznaki ${guidedMomentum.nextBadgeName}: ${guidedMomentum.summary}`
+                : 'Wszystkie odznaki polecanego kierunku odblokowane.'
+            }
+            descriptionClassName='text-xs leading-5'
+            eyebrow='Polecony kierunek'
+            headerClassName='sm:items-start'
+            progressAccent='sky'
+            progressBarTestId='progress-overview-guided-momentum-bar'
+            progressValue={guidedMomentum.progressPercent}
+            title={`${guidedMomentum.completedSessions} polecone rundy`}
           />
         </KangurGlassPanel>
       ) : null}
@@ -210,25 +198,17 @@ export default function ProgressOverview({
           </KangurSectionEyebrow>
           <div className='flex flex-col gap-3'>
             {topActivities.map((activity) => (
-              <div
+              <KangurActivitySummaryCard
+                activity={activity}
+                dataTestId={`progress-overview-activity-${activity.key}`}
+                description={`${
+                  activity.sessionsPlayed
+                } sesji · ${activity.averageXpPerSession} XP / gre · srednio ${
+                  activity.averageAccuracy
+                }% · najlepszy wynik ${activity.bestScorePercent}%`}
+                descriptionClassName='text-xs [color:var(--kangur-page-muted-text)]'
                 key={activity.key}
-                className='soft-card flex flex-col items-start gap-3 rounded-3xl border [border-color:var(--kangur-soft-card-border)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between'
-                data-testid={`progress-overview-activity-${activity.key}`}
-              >
-                <div className='min-w-0'>
-                  <p className='truncate text-sm font-semibold [color:var(--kangur-page-text)]'>
-                    {activity.label}
-                  </p>
-                  <p className='text-xs [color:var(--kangur-page-muted-text)]'>
-                    {activity.sessionsPlayed} sesji · {activity.averageXpPerSession} XP / gre ·
-                    srednio {activity.averageAccuracy}% · najlepszy wynik{' '}
-                    {activity.bestScorePercent}%
-                  </p>
-                </div>
-                <KangurStatusChip accent='indigo' className='self-start sm:self-auto'>
-                  {activity.totalXpEarned} XP
-                </KangurStatusChip>
-              </div>
+              />
             ))}
           </div>
         </KangurGlassPanel>

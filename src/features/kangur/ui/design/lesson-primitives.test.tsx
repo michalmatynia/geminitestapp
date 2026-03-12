@@ -20,7 +20,11 @@ describe('Kangur lesson primitives', () => {
       </KangurLessonInset>
     );
 
-    expect(screen.getByTestId('lesson-inset')).toHaveClass('rounded-[18px]', 'border-teal-100/90');
+    expect(screen.getByTestId('lesson-inset')).toHaveClass(
+      'kangur-lesson-inset',
+      'kangur-card-padding-sm',
+      'border-teal-100/90'
+    );
   });
 
   it('renders shared lesson stack, lead, and caption typography', () => {
@@ -33,7 +37,13 @@ describe('Kangur lesson primitives', () => {
       </KangurLessonStack>
     );
 
-    expect(screen.getByTestId('lesson-stack')).toHaveClass('flex', 'flex-col', 'items-center', 'gap-2', 'w-full');
+    expect(screen.getByTestId('lesson-stack')).toHaveClass(
+      'flex',
+      'flex-col',
+      'items-center',
+      'kangur-stack-gap-sm',
+      'w-full'
+    );
     expect(screen.getByTestId('lesson-lead')).toHaveClass('text-center', '[color:var(--kangur-page-text)]');
     expect(screen.getByTestId('lesson-caption')).toHaveClass(
       'text-sm',

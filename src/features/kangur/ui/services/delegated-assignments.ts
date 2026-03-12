@@ -38,6 +38,7 @@ export type KangurAssignmentListItem = {
   title: string;
   description: string;
   icon: string;
+  priority: KangurAssignmentSnapshot['priority'];
   priorityLabel: string;
   priorityAccent: 'rose' | 'amber' | 'emerald';
   statusLabel: string;
@@ -305,7 +306,7 @@ const formatKangurAssignmentTimestamp = (value: string | null): string | null =>
   });
 };
 
-const resolveKangurAssignmentPriorityAccent = (
+export const resolveKangurAssignmentPriorityAccent = (
   priority: KangurAssignmentSnapshot['priority']
 ): 'rose' | 'amber' | 'emerald' => {
   if (priority === 'high') return 'rose';
@@ -329,6 +330,7 @@ export const buildKangurAssignmentListItem = (
   title: assignment.title,
   description: assignment.description,
   icon: assignment.target.type === 'lesson' ? '📚' : '🎯',
+  priority: assignment.priority,
   priorityLabel: formatKangurAssignmentPriorityLabel(assignment.priority),
   priorityAccent: resolveKangurAssignmentPriorityAccent(assignment.priority),
   statusLabel: formatKangurAssignmentStatusLabel(assignment.progress.status),

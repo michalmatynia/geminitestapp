@@ -347,9 +347,11 @@ describe('KangurAiTutorContext', () => {
     });
     apiPostMock.mockResolvedValue({
       message: 'Spróbuj policzyć krok po kroku.',
+      answerResolutionMode: 'brain',
       suggestedMoodId: 'encouraging',
       knowledgeGraph: {
         applied: true,
+        queryStatus: 'hit',
         queryMode: 'website_help',
         recallStrategy: 'metadata_only',
         lexicalHitCount: 1,
@@ -484,6 +486,7 @@ describe('KangurAiTutorContext', () => {
         knowledgeGraphLexicalHitCount: 1,
         knowledgeGraphVectorHitCount: 0,
         knowledgeGraphVectorRecallAttempted: false,
+        answerResolutionMode: 'brain',
         websiteHelpGraphApplied: true,
         websiteHelpGraphTargetNodeId: 'flow:kangur:sign-in',
       })
@@ -1030,7 +1033,7 @@ describe('KangurAiTutorContext', () => {
     );
     expect(screen.getByTestId('tutor-behavior-mood-label')).toHaveTextContent('Spokojny');
     expect(screen.getByTestId('tutor-behavior-mood-description')).toHaveTextContent(
-      'Tutor obniza napiecie i porzadkuje sytuacje krok po kroku.'
+      'Tutor obniza napięcie i porządkuje sytuacje krok po kroku.'
     );
   });
 

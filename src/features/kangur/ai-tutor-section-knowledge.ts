@@ -1,5 +1,7 @@
-import type { KangurTutorAnchorKind } from '@/features/kangur/ui/context/kangur-tutor-types';
-import type { KangurAiTutorKnowledgeReference } from '@/shared/contracts/kangur-ai-tutor';
+import type {
+  KangurAiTutorFocusKind,
+  KangurAiTutorKnowledgeReference,
+} from '@/shared/contracts/kangur-ai-tutor';
 
 import {
   KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO,
@@ -39,7 +41,7 @@ const resolveContentPrefixScore = (
 const scoreCoverageEntry = (input: {
   anchorId: string;
   contentId: string | null | undefined;
-  focusKind: KangurTutorAnchorKind;
+  focusKind: KangurAiTutorFocusKind;
   section: KangurAiTutorPageCoverageEntry;
 }): number | null => {
   const { anchorId, contentId, focusKind, section } = input;
@@ -69,7 +71,7 @@ const scoreCoverageEntry = (input: {
 export const resolveKangurTutorSectionKnowledgeReference = (input: {
   anchorId: string;
   contentId?: string | null;
-  focusKind: KangurTutorAnchorKind;
+  focusKind: KangurAiTutorFocusKind;
 }): KangurAiTutorKnowledgeReference | null => {
   const rankedSection = KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO.map((section) => ({
     score:

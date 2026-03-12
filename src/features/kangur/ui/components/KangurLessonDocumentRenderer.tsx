@@ -242,11 +242,11 @@ function renderImageBlock(
         >
           {hasSource ? (
             // Dynamic lesson document images can point at arbitrary uploads, so this stays on img.
-            <img src={block.src} alt={altText} className='rounded-[18px]' loading='lazy' />
+            <img src={block.src} alt={altText} className='kangur-lesson-inset' loading='lazy' />
           ) : (
             <KangurInlineFallback
               accent='amber'
-              className='min-h-[180px] rounded-[18px] shadow-none'
+              className='kangur-lesson-inset min-h-[180px] shadow-none'
               style={{
                 borderColor:
                   'color-mix(in srgb, var(--kangur-soft-card-border) 72%, rgb(251 191 36))',
@@ -336,7 +336,7 @@ function renderCalloutBlock(block: KangurLessonCalloutBlock, key: string): React
     <div
       key={key}
       data-testid={`lesson-callout-block-${block.id}`}
-      className='soft-card rounded-xl border p-4'
+      className='soft-card kangur-lesson-callout kangur-card-padding-md border'
       style={{
         background: `color-mix(in srgb, var(--kangur-soft-card-background) 84%, ${style.accentSurface})`,
         borderColor: `color-mix(in srgb, var(--kangur-soft-card-border) 72%, ${style.accentSurface})`,
@@ -367,7 +367,7 @@ function KangurLessonQuizBlockView({ block }: { block: KangurLessonQuizBlock }):
   return (
     <div
       data-testid={`lesson-quiz-block-${block.id}`}
-      className='soft-card rounded-xl border p-4 shadow-sm'
+      className='soft-card kangur-lesson-callout kangur-card-padding-md border shadow-sm'
       style={{ borderColor: 'var(--kangur-soft-card-border)' }}
     >
       <div
@@ -426,7 +426,7 @@ function KangurLessonQuizBlockView({ block }: { block: KangurLessonQuizBlock }):
       </div>
       {state.revealed && block.explanation?.trim() ? (
         <div
-          className='prose prose-sm mt-3 max-w-none rounded-lg p-3 [background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,#cbd5e1)] [color:var(--kangur-page-text)]'
+          className='prose prose-sm kangur-lesson-inset kangur-card-padding-sm mt-3 max-w-none [background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,#cbd5e1)] [color:var(--kangur-page-text)]'
           dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.explanation) }}
         />
       ) : null}
@@ -444,7 +444,7 @@ function renderQuizBlock(
       <div
         key={key}
         data-testid={`lesson-quiz-block-${block.id}`}
-        className='soft-card rounded-xl border p-4'
+        className='soft-card kangur-lesson-callout kangur-card-padding-md border'
         style={{ borderColor: 'var(--kangur-soft-card-border)' }}
       >
         <KangurSectionEyebrow className='mb-2 text-xs tracking-wide'>
@@ -459,7 +459,7 @@ function renderQuizBlock(
             <li
               key={choice.id}
               className={cn(
-                'rounded px-3 py-1.5 text-sm',
+                'kangur-lesson-inset px-3 py-1.5 text-sm',
                 choice.id === block.correctChoiceId
                   ? 'font-semibold'
                   : '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,#cbd5e1)] [color:var(--kangur-page-muted-text)]'

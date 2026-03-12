@@ -28,7 +28,15 @@ vi.mock('@/features/kangur/ui/services/delegated-assignments', () => ({
   buildRecommendedKangurAssignmentCatalog: () => [],
   filterKangurAssignmentCatalog: () => [],
   buildKangurAssignmentHref: () => '/kangur/game',
+  formatKangurAssignmentPriorityLabel: (priority: 'high' | 'medium' | 'low') =>
+    priority === 'high'
+      ? 'Priorytet wysoki'
+      : priority === 'medium'
+        ? 'Priorytet sredni'
+        : 'Priorytet niski',
   getKangurAssignmentActionLabel: () => 'Otworz zadanie',
+  resolveKangurAssignmentPriorityAccent: (priority: 'high' | 'medium' | 'low') =>
+    priority === 'high' ? 'rose' : priority === 'medium' ? 'amber' : 'emerald',
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurAssignmentsList', () => ({

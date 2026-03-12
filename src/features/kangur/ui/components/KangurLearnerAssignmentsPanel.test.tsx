@@ -3,16 +3,18 @@
  */
 
 import { render, screen, within } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   buildKangurAssignmentListItemsMock,
   selectKangurPriorityAssignmentsMock,
   useKangurAssignmentsMock,
+  useKangurPageContentEntryMock,
 } = vi.hoisted(() => ({
   buildKangurAssignmentListItemsMock: vi.fn(),
   selectKangurPriorityAssignmentsMock: vi.fn(),
   useKangurAssignmentsMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurAssignmentsList', () => ({
@@ -37,6 +39,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: useKangurAssignmentsMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
+}));
+
 vi.mock('@/features/kangur/ui/services/delegated-assignments', () => ({
   buildKangurAssignmentListItems: buildKangurAssignmentListItemsMock,
   selectKangurPriorityAssignments: selectKangurPriorityAssignmentsMock,
@@ -45,6 +51,17 @@ vi.mock('@/features/kangur/ui/services/delegated-assignments', () => ({
 import { KangurLearnerAssignmentsPanel } from '@/features/kangur/ui/components/KangurLearnerAssignmentsPanel';
 
 describe('KangurLearnerAssignmentsPanel', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useKangurPageContentEntryMock.mockReturnValue({
+      entry: null,
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+  });
+
   it('renders the themed learner assignments summary copy for loaded data', () => {
     const assignments = [
       {
@@ -97,6 +114,50 @@ describe('KangurLearnerAssignmentsPanel', () => {
     ).toBeInTheDocument();
     expect(
       within(screen.getByTestId('assignments-list-Historia ukonczonych zadan')).getByText('Zegar')
+    ).toBeInTheDocument();
+  });
+
+  it('uses Mongo-backed assignments intro copy when available', () => {
+    const assignments = [
+      {
+        id: 'assignment-1',
+        title: 'Dodawanie',
+        archived: false,
+        priority: 'high',
+        updatedAt: '2026-03-10T10:00:00.000Z',
+        progress: { status: 'assigned', completedAt: null },
+      },
+    ];
+
+    useKangurPageContentEntryMock.mockReturnValue({
+      entry: {
+        id: 'learner-profile-assignments',
+        title: 'Przebieg przydzielonych zadan',
+        summary: 'Mongo opis aktywnych i zakonczonych przydzialow ucznia.',
+      },
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+    useKangurAssignmentsMock.mockReturnValue({
+      assignments,
+      isLoading: false,
+      error: null,
+    });
+    selectKangurPriorityAssignmentsMock.mockReturnValue(assignments);
+    buildKangurAssignmentListItemsMock.mockImplementation((_basePath, sourceAssignments) =>
+      sourceAssignments.map((assignment: { id: string; title: string }) => ({
+        id: assignment.id,
+        title: assignment.title,
+      }))
+    );
+
+    render(<KangurLearnerAssignmentsPanel basePath='/kangur' enabled />);
+
+    expect(screen.getByText('Przebieg przydzielonych zadan')).toBeInTheDocument();
+    expect(
+      screen.getByText('Mongo opis aktywnych i zakonczonych przydzialow ucznia.')
     ).toBeInTheDocument();
   });
 });

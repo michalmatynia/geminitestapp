@@ -215,6 +215,15 @@ export type KangurAiTutorWebsiteHelpTarget = z.infer<
   typeof kangurAiTutorWebsiteHelpTargetSchema
 >;
 
+export const kangurAiTutorAnswerResolutionModeSchema = z.enum([
+  'page_content',
+  'native_guide',
+  'brain',
+]);
+export type KangurAiTutorAnswerResolutionMode = z.infer<
+  typeof kangurAiTutorAnswerResolutionModeSchema
+>;
+
 export const kangurAiTutorRuntimeMessageSchema = z.object({
   role: z.enum(['user', 'assistant']),
   content: z.string().max(8_000),
@@ -224,6 +233,7 @@ export const kangurAiTutorRuntimeMessageSchema = z.object({
   followUpActions: z.array(kangurAiTutorFollowUpActionSchema).optional(),
   sources: z.array(agentTeachingChatSourceSchema).optional(),
   websiteHelpTarget: kangurAiTutorWebsiteHelpTargetSchema.optional(),
+  answerResolutionMode: kangurAiTutorAnswerResolutionModeSchema.optional(),
 });
 export type KangurAiTutorRuntimeMessage = z.infer<typeof kangurAiTutorRuntimeMessageSchema>;
 
@@ -299,6 +309,7 @@ export const kangurAiTutorChatResponseSchema = z.object({
   followUpActions: z.array(kangurAiTutorFollowUpActionSchema).default([]),
   artifacts: z.array(kangurAiTutorMessageArtifactSchema).max(4).default([]),
   websiteHelpTarget: kangurAiTutorWebsiteHelpTargetSchema.optional(),
+  answerResolutionMode: kangurAiTutorAnswerResolutionModeSchema.optional(),
   knowledgeGraph: kangurAiTutorKnowledgeGraphSummarySchema.optional(),
   coachingFrame: kangurAiTutorCoachingFrameSchema.optional(),
   suggestedMoodId: agentPersonaMoodIdSchema.nullable().optional(),

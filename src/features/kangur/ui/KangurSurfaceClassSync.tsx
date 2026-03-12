@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 
 import {
-  resolveKangurStorefrontAppearance,
   useOptionalCmsStorefrontAppearance,
 } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 
 const KANGUR_ACTIVE_SURFACE_CLASSNAME = 'kangur-surface-active';
 const KANGUR_ACTIVE_SURFACE_MODE_ATTRIBUTE = 'data-kangur-appearance-mode';
@@ -108,10 +108,7 @@ export function KangurSurfaceClassSync({
   children: ReactNode;
 }): React.JSX.Element {
   const appearance = useOptionalCmsStorefrontAppearance();
-  const kangurAppearance = useMemo(
-    () => resolveKangurStorefrontAppearance(appearance?.mode ?? 'default'),
-    [appearance?.mode]
-  );
+  const kangurAppearance = useKangurStorefrontAppearance();
   const appearanceMode = appearance?.mode ?? 'default';
 
   useEffect(() => {

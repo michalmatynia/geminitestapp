@@ -11,6 +11,7 @@ import {
   type KangurPageContentStore,
 } from '@/shared/contracts/kangur-page-content';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 
 type KangurPageContentDoc = KangurPageContentEntry & {
   locale: string;
@@ -120,7 +121,7 @@ export async function getKangurPageContentStore(locale = 'pl'): Promise<KangurPa
   }
 
   const existing = toStoreFromDocs(docs, locale, defaults.version);
-  const merged = mergeKangurPageContentStore(defaults, existing);
+  const merged = mergeKangurPageContentStore(defaults, repairKangurPolishCopy(existing));
 
   if (storesDiffer(existing, merged)) {
     await persistStore(merged);
@@ -132,7 +133,7 @@ export async function getKangurPageContentStore(locale = 'pl'): Promise<KangurPa
 export async function upsertKangurPageContentStore(
   store: KangurPageContentStore
 ): Promise<KangurPageContentStore> {
-  const parsed = parseKangurPageContentStore(store);
+  const parsed = parseKangurPageContentStore(repairKangurPolishCopy(store));
 
   if (!process.env['MONGODB_URI']) {
     return parsed;
@@ -149,4 +150,15 @@ export async function getKangurPageContentEntry(
 ): Promise<KangurPageContentEntry | null> {
   const store = await getKangurPageContentStore(locale);
   return store.entries.find((entry) => entry.id === id) ?? null;
+}
+
+export async function getLatestKangurPageContentUpdateAt(locale = 'pl'): Promise<Date | null> {
+  if (!process.env['MONGODB_URI']) {
+    return null;
+  }
+
+  await ensureIndexes();
+  const collection = await readCollection();
+  const latest = await collection.find({ locale }).sort({ updatedAt: -1 }).limit(1).next();
+  return latest?.updatedAt instanceof Date ? latest.updatedAt : null;
 }

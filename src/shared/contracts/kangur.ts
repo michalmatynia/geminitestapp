@@ -9,6 +9,7 @@ const nonEmptyTrimmedString = z.string().trim().min(1);
 
 export const KANGUR_LESSONS_SETTING_KEY = 'kangur_lessons_v1';
 export const KANGUR_LESSON_DOCUMENTS_SETTING_KEY = 'kangur_lesson_documents_v1';
+export const KANGUR_THEME_SETTINGS_KEY = 'kangur_cms_theme_v1';
 
 export const kangurLessonComponentIdSchema = z.enum([
   'clock',

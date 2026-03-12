@@ -6,9 +6,15 @@ import {
   KangurProgressBar,
   KangurSectionEyebrow,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 
 export function KangurLearnerProfileLevelProgressWidget(): React.JSX.Element {
   const { snapshot, xpToNextLevel } = useKangurLearnerProfileRuntime();
+  const { entry: levelProgressContent } = useKangurPageContentEntry('learner-profile-level-progress');
+  const sectionTitle = levelProgressContent?.title ?? 'Postep poziomu';
+  const sectionSummary =
+    levelProgressContent?.summary ??
+    'Zobacz aktualny poziom, laczne XP i brakujacy dystans do nastepnego progu.';
 
   return (
     <KangurGlassPanel
@@ -20,12 +26,15 @@ export function KangurLearnerProfileLevelProgressWidget(): React.JSX.Element {
       <div className='flex flex-col gap-4 md:flex-row md:items-end md:justify-between'>
         <div>
           <KangurSectionEyebrow>
-            Postep poziomu
+            {sectionTitle}
           </KangurSectionEyebrow>
           <div className={`mt-1 text-2xl font-extrabold ${snapshot.level.color}`}>
             {snapshot.level.title}
           </div>
-          <p className='text-sm [color:var(--kangur-page-muted-text)]'>
+          <p className='mt-1 text-sm [color:var(--kangur-page-muted-text)]'>
+            {sectionSummary}
+          </p>
+          <p className='mt-1 text-sm [color:var(--kangur-page-muted-text)]'>
             Poziom {snapshot.level.level} · {snapshot.totalXp} XP lacznie
           </p>
         </div>

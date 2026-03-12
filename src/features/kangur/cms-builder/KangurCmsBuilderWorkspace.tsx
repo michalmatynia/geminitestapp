@@ -4,7 +4,6 @@ import { PanelLeftClose, PanelRightClose } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
-  CmsBuilderLeftPanel,
   DragStateProvider,
   PageBuilderPageSkeleton,
   PageBuilderProvider,
@@ -18,6 +17,8 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
+import { KANGUR_DEFAULT_THEME } from '@/features/kangur/theme-settings';
+import { KangurCmsBuilderLeftPanel } from './KangurCmsBuilderLeftPanel';
 import { KangurCmsBuilderRightPanel } from './KangurCmsBuilderRightPanel';
 import { KangurCmsBuilderRuntimeProvider } from './KangurCmsBuilderRuntimeContext';
 import { KangurCmsPreviewPanel } from './KangurCmsPreviewPanel';
@@ -107,7 +108,7 @@ function KangurCmsBuilderInner(): React.JSX.Element {
           </Button>
         ) : null}
 
-        <CmsBuilderLeftPanel variant='kangur' />
+        <KangurCmsBuilderLeftPanel />
 
         <KangurCmsPreviewPanel />
 
@@ -203,7 +204,10 @@ export function KangurCmsBuilderWorkspace(): React.JSX.Element {
   return (
     <PageBuilderProvider key={activeScreenKey} initialState={initialState}>
       <DragStateProvider>
-        <ThemeSettingsProvider storageKey={KANGUR_CMS_THEME_SETTINGS_KEY}>
+        <ThemeSettingsProvider
+          storageKey={KANGUR_CMS_THEME_SETTINGS_KEY}
+          defaultTheme={KANGUR_DEFAULT_THEME}
+        >
           <KangurCmsBuilderRuntimeProvider
             draftProject={draftProject}
             savedProject={savedProject}

@@ -122,4 +122,30 @@ describe('handleTrigger', () => {
     expect(result['entityType']).toBe('product');
     expect(result['entityJson']).toEqual(fakeEntity);
   });
+
+  it('prefers embedded triggerContext entityJson over refetching a stale entity', async () => {
+    const embeddedEntity = { id: 'prod-3', name: 'Row Snapshot', published: false, status: 'draft' };
+    const fetchEntityCached = vi.fn().mockResolvedValue({
+      id: 'prod-3',
+      name: 'Stale Entity',
+      published: true,
+      status: 'published',
+    });
+    const ctx = buildContext({
+      triggerNodeId: 'node-trigger',
+      triggerEvent: 'manual',
+      triggerContext: {
+        entityId: 'prod-3',
+        entityType: 'product',
+        entityJson: embeddedEntity,
+      },
+      fetchEntityCached,
+    });
+
+    const result = await handleTrigger(ctx);
+
+    expect(fetchEntityCached).not.toHaveBeenCalled();
+    expect(result['entityJson']).toEqual(embeddedEntity);
+    expect((result['context'] as Record<string, unknown>)['entityJson']).toEqual(embeddedEntity);
+  });
 });

@@ -48,9 +48,14 @@ const runtimeState = vi.hoisted(() => ({
     updateEditField: vi.fn(),
   },
 }));
+const useKangurPageContentEntryMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () => ({
   useKangurParentDashboardRuntime: () => runtimeState.value,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
 import { KangurParentDashboardLearnerManagementWidget } from './KangurParentDashboardLearnerManagementWidget';
@@ -58,6 +63,19 @@ import { KangurParentDashboardLearnerManagementWidget } from './KangurParentDash
 describe('KangurParentDashboardLearnerManagementWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useKangurPageContentEntryMock.mockReturnValue({
+      data: undefined,
+      entry: null,
+      error: null,
+      isError: false,
+      isFetched: true,
+      isFetching: false,
+      isLoading: false,
+      isPending: false,
+      isSuccess: true,
+      refetch: vi.fn(),
+      status: 'success',
+    });
     runtimeState.value = {
       activeLearner: {
         id: 'learner-1',
@@ -137,5 +155,31 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
     const { container } = render(<KangurParentDashboardLearnerManagementWidget />);
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('renders Mongo-backed section intro copy when available', () => {
+    useKangurPageContentEntryMock.mockReturnValue({
+      data: undefined,
+      entry: {
+        id: 'parent-dashboard-learner-management',
+        title: 'Zarzadzaj profilami bez opuszczania panelu',
+        summary: 'Wybierz ucznia i popraw jego dane bez wychodzenia z panelu.',
+      },
+      error: null,
+      isError: false,
+      isFetched: true,
+      isFetching: false,
+      isLoading: false,
+      isPending: false,
+      isSuccess: true,
+      refetch: vi.fn(),
+      status: 'success',
+    });
+
+    render(<KangurParentDashboardLearnerManagementWidget />);
+
+    expect(screen.getByText('Wybierz ucznia i popraw jego dane bez wychodzenia z panelu.')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
   });
 });

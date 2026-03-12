@@ -1,13 +1,30 @@
 import { render, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+import { KANGUR_THEME_SETTINGS_KEY } from '@/features/kangur/theme-settings';
 import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
+import { DEFAULT_THEME } from '@/shared/contracts/cms-theme';
+import { serializeSetting } from '@/shared/utils/settings-json';
+
+const settingsStoreMock = vi.hoisted(() => ({
+  get: vi.fn<(key: string) => string | undefined>(),
+}));
+
+vi.mock('@/shared/providers/SettingsStoreProvider', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/providers/SettingsStoreProvider')>();
+  return {
+    ...actual,
+    useSettingsStore: () => settingsStoreMock,
+  };
+});
 
 describe('KangurSurfaceClassSync', () => {
   beforeEach(() => {
     document.body.className = '';
     document.body.innerHTML = '';
+    settingsStoreMock.get.mockReset();
+    settingsStoreMock.get.mockReturnValue(undefined);
     const appContent = document.createElement('main');
     appContent.id = 'app-content';
     document.body.appendChild(appContent);
@@ -62,5 +79,122 @@ describe('KangurSurfaceClassSync', () => {
     expect(document.body.style.getPropertyValue('--kangur-soft-card-background')).toContain(
       '30,41,59'
     );
+  });
+
+  it('applies a stored Kangur theme document to the page chrome', async () => {
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key !== KANGUR_THEME_SETTINGS_KEY) {
+        return undefined;
+      }
+
+      return serializeSetting({
+        ...DEFAULT_THEME,
+        backgroundColor: '#fff7ed',
+        surfaceColor: '#ffffff',
+        textColor: '#4c1d95',
+        mutedTextColor: '#9a3412',
+        borderColor: '#fdba74',
+        accentColor: '#f97316',
+        primaryColor: '#7c3aed',
+        secondaryColor: '#ec4899',
+        btnPrimaryBg: '#f97316',
+        btnSecondaryBg: '#ffedd5',
+        btnSecondaryText: '#9a3412',
+        inputBg: '#ffffff',
+        inputText: '#4c1d95',
+        inputBorderColor: '#fdba74',
+        inputPlaceholder: '#c2410c',
+        headingFont: 'Outfit, sans-serif',
+        bodyFont: 'Manrope, sans-serif',
+        maxContentWidth: 1500,
+        gridGutter: 30,
+        pagePaddingTop: 44,
+        pagePaddingRight: 34,
+        pagePaddingBottom: 86,
+        pagePaddingLeft: 28,
+        containerRadius: 30,
+        containerPaddingInner: 28,
+        cardRadius: 24,
+        btnPaddingX: 22,
+        btnPaddingY: 11,
+        btnFontSize: 15,
+        btnRadius: 28,
+        pillRadius: 18,
+        pillPaddingX: 18,
+        pillPaddingY: 11,
+        pillFontSize: 15,
+        inputHeight: 54,
+        inputRadius: 16,
+        inputFontSize: 15,
+        containerBg: '#ffffff',
+        containerBorderColor: '#fed7aa',
+        cardBg: '#ffffff',
+        pillBg: '#fff7ed',
+        pillText: '#c2410c',
+        pillActiveBg: '#f97316',
+        pillActiveText: '#ffffff',
+      });
+    });
+
+    render(
+      <CmsStorefrontAppearanceProvider initialMode='default'>
+        <KangurSurfaceClassSync>
+          <div>Surface</div>
+        </KangurSurfaceClassSync>
+      </CmsStorefrontAppearanceProvider>
+    );
+
+    await waitFor(() => {
+      expect(document.body.style.getPropertyValue('--kangur-page-text')).toBe('#4c1d95');
+    });
+    expect(document.body.style.getPropertyValue('--kangur-button-primary-background')).toContain(
+      '#f97316'
+    );
+    expect(document.body.style.getPropertyValue('--kangur-font-heading')).toBe(
+      'Outfit, sans-serif'
+    );
+    expect(document.body.style.getPropertyValue('--kangur-font-body')).toBe('Manrope, sans-serif');
+    expect(document.body.style.getPropertyValue('--kangur-page-max-width')).toBe('1500px');
+    expect(document.body.style.getPropertyValue('--kangur-page-padding-top')).toBe('44px');
+    expect(document.body.style.getPropertyValue('--kangur-page-padding-right')).toBe('34px');
+    expect(document.body.style.getPropertyValue('--kangur-page-padding-bottom')).toBe('86px');
+    expect(document.body.style.getPropertyValue('--kangur-page-padding-left')).toBe('28px');
+    expect(document.body.style.getPropertyValue('--kangur-grid-gutter')).toBe('30px');
+    expect(document.body.style.getPropertyValue('--kangur-panel-radius-subtle')).toBe('30px');
+    expect(document.body.style.getPropertyValue('--kangur-card-radius')).toBe('24px');
+    expect(document.body.style.getPropertyValue('--kangur-lesson-callout-radius')).toBe('22px');
+    expect(document.body.style.getPropertyValue('--kangur-lesson-inset-radius')).toBe('16px');
+    expect(document.body.style.getPropertyValue('--kangur-gradient-icon-tile-radius-md')).toBe(
+      '14px'
+    );
+    expect(document.body.style.getPropertyValue('--kangur-gradient-icon-tile-radius-lg')).toBe(
+      '22px'
+    );
+    expect(document.body.style.getPropertyValue('--kangur-chat-bubble-radius')).toBe('20px');
+    expect(document.body.style.getPropertyValue('--kangur-chat-card-radius')).toBe('20px');
+    expect(document.body.style.getPropertyValue('--kangur-chat-inset-radius')).toBe('18px');
+    expect(document.body.style.getPropertyValue('--kangur-chat-padding-x-sm')).toBe('16px');
+    expect(document.body.style.getPropertyValue('--kangur-chat-padding-y-sm')).toBe('12px');
+    expect(document.body.style.getPropertyValue('--kangur-chat-padding-x-lg')).toBe('20px');
+    expect(document.body.style.getPropertyValue('--kangur-chat-padding-y-lg')).toBe('16px');
+    expect(document.body.style.getPropertyValue('--kangur-panel-padding-md')).toBe('24px');
+    expect(document.body.style.getPropertyValue('--kangur-card-padding-md')).toBe('20px');
+    expect(document.body.style.getPropertyValue('--kangur-stack-gap-md')).toBe('20px');
+    expect(document.body.style.getPropertyValue('--kangur-button-padding-x')).toBe('22px');
+    expect(document.body.style.getPropertyValue('--kangur-button-padding-y')).toBe('11px');
+    expect(document.body.style.getPropertyValue('--kangur-button-font-size')).toBe('15px');
+    expect(document.body.style.getPropertyValue('--kangur-button-height')).toBe('53px');
+    expect(document.body.style.getPropertyValue('--kangur-button-radius')).toBe('28px');
+    expect(document.body.style.getPropertyValue('--kangur-nav-item-radius')).toBe('18px');
+    expect(document.body.style.getPropertyValue('--kangur-menu-item-radius')).toBe('14px');
+    expect(document.body.style.getPropertyValue('--kangur-pill-padding-x')).toBe('18px');
+    expect(document.body.style.getPropertyValue('--kangur-pill-padding-y')).toBe('11px');
+    expect(document.body.style.getPropertyValue('--kangur-pill-font-size')).toBe('15px');
+    expect(document.body.style.getPropertyValue('--kangur-text-field-border')).toContain(
+      '#fdba74'
+    );
+    expect(document.body.style.getPropertyValue('--kangur-input-height')).toBe('54px');
+    expect(document.body.style.getPropertyValue('--kangur-input-radius')).toBe('16px');
+    expect(document.body.style.getPropertyValue('--kangur-input-font-size')).toBe('15px');
   });
 });

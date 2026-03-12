@@ -23,7 +23,6 @@ npm run bazel:smoke
           - //:lint
           - //:typecheck
           - //:unit
-          - //:integration_prisma
           - //:integration_mongo
           - //:next_build
           - //:api_error_sources
@@ -77,11 +76,10 @@ npm run health:queue-runtime (and :strict)
 PERFORMANCE
 npm run perf:ops:weekly
 
-PRISMA
-npx prisma generate
-npx prisma migrate dev
-npx prisma migrate reset
-npx prisma db push
+DATABASE
+npm run test:integration:mongo
+npm run test:integration:mongo:baseline
+npm run test:integration:mongo:canonical-shape-guard
 
 --
 INVESTIGATION AN PLANNING
@@ -180,7 +178,7 @@ LOGGING
 -Integrate an error-tracking service to capture exceptions in both client and server code
 -Audit code for bare console.error/console.log and replace with our centralized logger” and “Wrap top-level React components in Error Boundaries that send exceptions to the log service
 -Add OpenTelemetry instrumentation via instrumentation.ts and export traces/logs/metrics. Ensure server spans include route, requestId, userId (if available), and DB timing.
--Instrument Prisma query timings, Redis timings, and external API timings into traces + structured logs. Produce a ‘top 10 slow operations’ report from local runs.
+-Instrument MongoDB query timings, Redis timings, and external API timings into traces + structured logs. Produce a ‘top 10 slow operations’ report from local runs.
 -Implement a ‘diagnostic mode’ for production troubleshooting: enable additional logging/tracing via feature flag and auto-disable after TTL.
 
 MIGRATION
@@ -230,11 +228,11 @@ DATABASE - REDIS
 -Implement cache stampede prevention for hot keys: mutex locking (SET NX PX) + safe unlock token. Ensure only one worker rebuilds cache on miss.
 -Add a cache policy registry: every cached key must define TTL, stale strategy, invalidation triggers, and max payload size.
 
-DATABASE - PRISMA
--Scan Prisma/MongoDB queries for over-fetching and missing indexes; add indexes in schema for where/orderBy hot paths. Provide before/after timings.
--Ensure PrismaClient/MongoDBClient is instantiated once per runtime and reused to avoid connection exhaustion; refactor any per-request instantiation.
+DATABASE - MONGODB
+-Scan MongoDB queries for over-fetching and missing indexes; add indexes for hot where/orderBy paths. Provide before/after timings.
+-Ensure the MongoDB client is instantiated once per runtime and reused to avoid connection exhaustion; refactor any per-request instantiation.
 -Introduce bulk operations (createMany, updateMany, etc.) for heavy write paths; verify correctness with tests.
--Add query monitoring/optimization workflow (Prisma Optimize or equivalent): record slow queries, group by pattern, and fix the highest-impact items first.
+-Add query monitoring/optimization workflow for MongoDB operations: record slow queries, group by pattern, and fix the highest-impact items first.
 
 DATABASE - MONGODB
 

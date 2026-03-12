@@ -1,10 +1,9 @@
 'use client';
 
 import KangurAssignmentSpotlight from '@/features/kangur/ui/components/KangurAssignmentSpotlight';
-import KangurGameHomeMomentumWidget from '@/features/kangur/ui/components/KangurGameHomeMomentumWidget';
 import KangurHeroMilestoneSummary from '@/features/kangur/ui/components/KangurHeroMilestoneSummary';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
-import { KangurCardDescription, KangurSectionEyebrow } from '@/features/kangur/ui/design/primitives';
+import { KangurPanelIntro } from '@/features/kangur/ui/design/primitives';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
@@ -35,23 +34,22 @@ export function KangurGameHomeHeroWidget({
   const heroTitle = heroContent?.title ?? 'Twoj postep';
   const heroSummary =
     heroContent?.summary ??
-    'Sprawdz najblizszy kamien milowy, polecony kierunek i zadania, ktore warto domknac dzisiaj.';
+    'Sprawdz najblizszy kamien milowy i zadania, ktore warto domknac dzisiaj.';
 
   if (shouldShowMilestones) {
     return (
       <div className='w-full space-y-4' data-testid='kangur-home-hero-shell'>
-        <div className='space-y-2' data-testid='kangur-home-hero-copy'>
-          <KangurSectionEyebrow as='p'>{heroTitle}</KangurSectionEyebrow>
-          <KangurCardDescription as='p' size='sm'>
-            {heroSummary}
-          </KangurCardDescription>
-        </div>
+        <KangurPanelIntro
+          className='space-y-2'
+          data-testid='kangur-home-hero-copy'
+          description={heroSummary}
+          eyebrow={heroTitle}
+        />
         <KangurHeroMilestoneSummary
           className='w-full'
           dataTestIdPrefix='kangur-home-hero-milestone'
           progress={progress}
         />
-        <KangurGameHomeMomentumWidget basePath={basePath} progress={progress} />
         {canAccessParentAssignments ? (
           <KangurAssignmentSpotlight basePath={basePath} enabled={canAccessParentAssignments} />
         ) : null}
@@ -62,12 +60,12 @@ export function KangurGameHomeHeroWidget({
   if (canAccessParentAssignments) {
     return (
       <div className='w-full space-y-4' data-testid='kangur-home-hero-shell'>
-        <div className='space-y-2' data-testid='kangur-home-hero-copy'>
-          <KangurSectionEyebrow as='p'>{heroTitle}</KangurSectionEyebrow>
-          <KangurCardDescription as='p' size='sm'>
-            {heroSummary}
-          </KangurCardDescription>
-        </div>
+        <KangurPanelIntro
+          className='space-y-2'
+          data-testid='kangur-home-hero-copy'
+          description={heroSummary}
+          eyebrow={heroTitle}
+        />
         <KangurAssignmentSpotlight basePath={basePath} enabled={canAccessParentAssignments} />
       </div>
     );

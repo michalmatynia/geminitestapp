@@ -9,8 +9,10 @@ import {
 import { enrichKangurKnowledgeGraphWithEmbeddings } from '@/features/kangur/server/knowledge-graph/semantic';
 import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
 import { getKangurAiTutorNativeGuideStore } from '@/features/kangur/server/ai-tutor-native-guide-repository';
+import { getKangurPageContentStore } from '@/features/kangur/server/page-content-repository';
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
 import { DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE } from '@/shared/contracts/kangur-ai-tutor-native-guide';
+import { DEFAULT_KANGUR_PAGE_CONTENT_STORE } from '@/features/kangur/page-content-catalog';
 import { isNeo4jEnabled } from '@/shared/lib/neo4j/config';
 
 type CliOptions = {
@@ -76,10 +78,14 @@ const main = async (): Promise<void> => {
   const nativeGuideStore = await getKangurAiTutorNativeGuideStore(options.locale).catch(
     () => DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE
   );
+  const pageContentStore = await getKangurPageContentStore(options.locale).catch(
+    () => DEFAULT_KANGUR_PAGE_CONTENT_STORE
+  );
   const baseSnapshot = buildKangurKnowledgeGraph({
     locale: options.locale,
     tutorContent,
     nativeGuideStore,
+    pageContentStore,
   });
   const snapshot = options.withEmbeddings
     ? await enrichKangurKnowledgeGraphWithEmbeddings(baseSnapshot)

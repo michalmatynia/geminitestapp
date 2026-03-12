@@ -41,6 +41,9 @@ export type KangurAnalyticsCount = z.infer<typeof kangurAnalyticsCountSchema>;
 
 export const kangurAiTutorAnalyticsSnapshotSchema = z.object({
   messageSucceededCount: z.number(),
+  pageContentAnswerCount: z.number(),
+  nativeGuideAnswerCount: z.number(),
+  brainAnswerCount: z.number(),
   knowledgeGraphAppliedCount: z.number(),
   knowledgeGraphSemanticCount: z.number(),
   knowledgeGraphWebsiteHelpCount: z.number(),
@@ -54,6 +57,8 @@ export const kangurAiTutorAnalyticsSnapshotSchema = z.object({
   bridgeQuickActionClickCount: z.number(),
   bridgeFollowUpClickCount: z.number(),
   bridgeFollowUpCompletionCount: z.number(),
+  directAnswerRatePercent: z.number().nullable().optional(),
+  brainFallbackRatePercent: z.number().nullable().optional(),
   bridgeCompletionRatePercent: z.number().nullable().optional(),
   knowledgeGraphCoverageRatePercent: z.number().nullable().optional(),
   knowledgeGraphVectorAssistRatePercent: z.number().nullable().optional(),
@@ -126,6 +131,26 @@ export const kangurKnowledgeGraphStatusResponseSchema = z.object({
 });
 export type KangurKnowledgeGraphStatusResponse = z.infer<
   typeof kangurKnowledgeGraphStatusResponseSchema
+>;
+
+export const kangurKnowledgeGraphSyncRequestSchema = z.object({
+  locale: z.string().trim().max(16).optional().default('pl'),
+  withEmbeddings: z.boolean().optional().default(false),
+});
+export type KangurKnowledgeGraphSyncRequest = z.infer<typeof kangurKnowledgeGraphSyncRequestSchema>;
+
+export const kangurKnowledgeGraphSyncResponseSchema = z.object({
+  sync: z.object({
+    graphKey: z.string(),
+    locale: z.string(),
+    nodeCount: z.number(),
+    edgeCount: z.number(),
+    withEmbeddings: z.boolean(),
+  }),
+  status: kangurKnowledgeGraphStatusSnapshotSchema,
+});
+export type KangurKnowledgeGraphSyncResponse = z.infer<
+  typeof kangurKnowledgeGraphSyncResponseSchema
 >;
 
 export const kangurPerformanceBaselineSchema = z.object({

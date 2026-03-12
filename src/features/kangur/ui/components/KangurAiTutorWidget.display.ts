@@ -21,6 +21,7 @@ import {
   isSectionExplainableTutorAnchor,
   isSectionGuidedTutorTarget,
   isSelectionGuidedTutorTarget,
+  selectBestSelectionAnchor,
 } from './KangurAiTutorWidget.helpers';
 
 import type {
@@ -316,35 +317,40 @@ export function useKangurAiTutorGuidedDisplayState(input: {
     selectionResponsePending,
   ]);
 
+  const guidedSelectionAnchor = useMemo(() => {
+    if (
+      (!isSelectionGuidedTutorTarget(guidedTutorTarget) && !selectionResponsePending) ||
+      !activeSelectionRect ||
+      !tutorAnchorContext
+    ) {
+      return null;
+    }
+
+    const anchor = selectBestSelectionAnchor({
+      anchors: tutorAnchorContext.anchors,
+      selectionRect: activeSelectionRect,
+      sessionContentId,
+      sessionSurface,
+    });
+
+    return anchor && isSectionExplainableTutorAnchor(anchor) ? anchor : null;
+  }, [
+    activeSelectionRect,
+    guidedTutorTarget,
+    selectionResponsePending,
+    sessionContentId,
+    sessionSurface,
+    tutorAnchorContext,
+    viewportTick,
+  ]);
+
+  const guidedSelectionSectionRect = cloneRect(guidedSelectionAnchor?.getRect());
+
   const guidedSelectionSpotlightRect =
     isSelectionGuidedTutorTarget(guidedTutorTarget) || selectionResponsePending
-      ? cloneRect(guidedSelectionRect)
+      ? cloneRect(guidedSelectionSectionRect ?? guidedSelectionRect)
       : null;
-  const guidedSelectionGlowRects = useMemo(() => {
-    if (!isSelectionGuidedTutorTarget(guidedTutorTarget) && !selectionResponsePending) {
-      return [];
-    }
-
-    const selectionPageRects =
-      activeSelectionPageRects.length > 0 ? activeSelectionPageRects : persistedSelectionPageRects;
-    const viewportRects = selectionPageRects
-      .map((rect) => getViewportRectFromPageRect(rect))
-      .filter((rect): rect is DOMRect => rect !== null)
-      .map((rect) => cloneRect(rect))
-      .filter((rect): rect is DOMRect => rect !== null);
-
-    if (viewportRects.length > 0) {
-      return viewportRects;
-    }
-
-    return guidedSelectionRect ? [cloneRect(guidedSelectionRect)].filter((rect): rect is DOMRect => rect !== null) : [];
-  }, [
-    activeSelectionPageRects,
-    guidedSelectionRect,
-    guidedTutorTarget,
-    persistedSelectionPageRects,
-    selectionResponsePending,
-  ]);
+  const guidedSelectionGlowRects: DOMRect[] = [];
 
   const isSelectionGuidedTutorMode = isSelectionGuidedTutorTarget(guidedTutorTarget);
   const isSectionGuidedTutorMode = isSectionGuidedTutorTarget(guidedTutorTarget);

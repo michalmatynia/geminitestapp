@@ -192,7 +192,7 @@
       },
       {
         "path": "database.action",
-        "description": "Provider action command (MongoDB or Prisma-mapped command labels)."
+        "description": "Provider action command aligned to MongoDB action labels."
       },
       {
         "path": "database.distinctField",

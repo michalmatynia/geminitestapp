@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 
+import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurButton,
@@ -23,6 +24,7 @@ const ASSIGNMENTS_LIST_ROUTE_ACKNOWLEDGE_MS = 110;
 type KangurAssignmentsListProps = {
   items: KangurAssignmentListItem[];
   title: string;
+  summary?: string;
   emptyLabel?: string;
   compact?: boolean;
   onArchive?: (assignmentId: string) => void;
@@ -72,12 +74,7 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
       padding='lg'
     >
       <div className='mb-4 flex flex-wrap items-center gap-2 sm:absolute sm:right-5 sm:top-5 sm:mb-0 sm:justify-end'>
-        <KangurStatusChip
-          accent={item.priorityAccent}
-          labelStyle='compact'
-        >
-          {item.priorityLabel}
-        </KangurStatusChip>
+        <KangurAssignmentPriorityChip labelStyle='compact' priority={item.priority} />
         <KangurStatusChip
           accent={item.statusAccent}
           className='px-4 py-2 text-base font-extrabold'
@@ -151,12 +148,7 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
           </KangurCardDescription>
         </div>
         <div className='flex flex-wrap items-center gap-2'>
-          <KangurStatusChip
-            accent={item.priorityAccent}
-            labelStyle='compact'
-          >
-            {item.priorityLabel}
-          </KangurStatusChip>
+          <KangurAssignmentPriorityChip labelStyle='compact' priority={item.priority} />
           <KangurStatusChip
             accent={item.statusAccent}
             labelStyle='compact'
@@ -219,6 +211,7 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
 export function KangurAssignmentsList({
   items,
   title,
+  summary,
   emptyLabel = 'Brak zadań do pokazania.',
   compact = false,
   onArchive,
@@ -235,6 +228,7 @@ export function KangurAssignmentsList({
       >
         <div className='mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
           <KangurPanelIntro
+            description={summary}
             eyebrow='Szybki podglad'
             title={title}
             titleAs='div'
@@ -274,6 +268,7 @@ export function KangurAssignmentsList({
       >
         <div className='mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
           <KangurPanelIntro
+            description={summary}
             eyebrow='Przydzielone zadania'
             title={title}
             titleAs='div'

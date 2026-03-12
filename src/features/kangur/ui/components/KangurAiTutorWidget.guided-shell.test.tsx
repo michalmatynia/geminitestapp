@@ -30,7 +30,7 @@ const buildInput = (
   activeSelectionProtectedRect: new DOMRect(80, 580, 520, 240),
   guidedFocusRect: new DOMRect(120, 620, 140, 26),
   guidedMode: 'selection',
-  guidedSelectionGlowRects: [new DOMRect(120, 620, 140, 26)],
+  guidedSelectionGlowRects: [],
   guidedSelectionSpotlightRect: new DOMRect(120, 620, 140, 26),
   hoveredSectionProtectedRect: null,
   isAnonymousVisitor: false,
@@ -94,13 +94,16 @@ describe('KangurAiTutorWidget.guided-shell', () => {
     expect(result.current.guidedAvatarLayout?.placement).toBe(initialAvatarPlacement);
   });
 
-  it('keeps the guided selection glow overlay active even when text emphasis is DOM-owned', () => {
+  it('keeps the guided selection spotlight overlay active even when text emphasis is DOM-owned', () => {
     const { result } = renderHook(() =>
       useKangurAiTutorGuidedShellState(buildInput({ selectionGlowSupported: true }))
     );
 
-    expect(result.current.selectionGlowStyles).toHaveLength(1);
-    expect(result.current.selectionSpotlightStyle).toBeNull();
+    expect(result.current.selectionGlowStyles).toHaveLength(0);
+    expect(result.current.selectionSpotlightStyle).toMatchObject({
+      width: 160,
+      height: 46,
+    });
   });
 
   it('keeps the guided selection avatar cluster visually close to a mid-page highlight', () => {
@@ -110,10 +113,6 @@ describe('KangurAiTutorWidget.guided-shell', () => {
         buildInput({
           activeSelectionProtectedRect: new DOMRect(360, 320, 300, 120),
           guidedFocusRect,
-          guidedSelectionGlowRects: [
-            new DOMRect(420, 360, 110, 28),
-            new DOMRect(420, 392, 180, 28),
-          ],
           guidedSelectionSpotlightRect: guidedFocusRect,
           showSelectionGuidanceCallout: true,
           viewport: { width: 1440, height: 900 },

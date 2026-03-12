@@ -15,6 +15,7 @@ import {
   type KangurAiTutorNativeGuideStore,
 } from '@/shared/contracts/kangur-ai-tutor-native-guide';
 import { buildDefaultKangurPageContentStore } from '@/features/kangur/page-content-catalog';
+import type { KangurPageContentStore } from '@/shared/contracts/kangur-page-content';
 import {
   KANGUR_KNOWLEDGE_GRAPH_KEY,
   type KangurKnowledgeEdgeKind,
@@ -31,6 +32,7 @@ type BuildKangurKnowledgeGraphOptions = {
   locale?: string;
   tutorContent?: KangurAiTutorContent;
   nativeGuideStore?: KangurAiTutorNativeGuideStore;
+  pageContentStore?: KangurPageContentStore;
 };
 
 type LocalizedValue<T> = T | Partial<Record<string, T>>;
@@ -433,7 +435,7 @@ export const buildKangurKnowledgeGraph = (
   const tutorContent = options.tutorContent ?? DEFAULT_KANGUR_AI_TUTOR_CONTENT;
   const nativeGuideStore =
     options.nativeGuideStore ?? DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE;
-  const pageContentStore = buildDefaultKangurPageContentStore(locale);
+  const pageContentStore = options.pageContentStore ?? buildDefaultKangurPageContentStore(locale);
   const nodes = new Map<string, KangurKnowledgeGraphNode>();
   const edges = new Map<string, KangurKnowledgeGraphEdge>();
 

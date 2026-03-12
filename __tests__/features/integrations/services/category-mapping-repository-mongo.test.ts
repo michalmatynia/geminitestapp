@@ -5,25 +5,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getCategoryMappingRepository } from '@/features/integrations/services/category-mapping-repository';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-
-vi.mock('@/shared/lib/db/app-db-provider', () => ({
-  getAppDbProvider: vi.fn(),
-}));
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
-  default: {},
-}));
-
 describe('category-mapping-repository (mongodb)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getAppDbProvider).mockResolvedValue('mongodb');
   });
 
   it('bulkUpsert does not duplicate externalCategoryId across $set and $setOnInsert', async () => {

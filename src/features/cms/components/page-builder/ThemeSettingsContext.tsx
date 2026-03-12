@@ -39,9 +39,11 @@ const ThemeSettingsActionsContext = createContext<ThemeSettingsActionsContextVal
 
 export function ThemeSettingsProvider({
   storageKey = CMS_THEME_SETTINGS_KEY,
+  defaultTheme = DEFAULT_THEME,
   children,
 }: {
   storageKey?: string;
+  defaultTheme?: ThemeSettings;
   children: React.ReactNode;
 }): React.ReactNode {
   const settingsStore = useSettingsStore();
@@ -52,10 +54,10 @@ export function ThemeSettingsProvider({
   const themeSettingsRaw = settingsStore.get(storageKey);
 
   const initialTheme = useMemo((): ThemeSettings => {
-    if (!settingsReady) return DEFAULT_THEME;
+    if (!settingsReady) return defaultTheme;
     const stored = parseJsonSetting<Partial<ThemeSettings> | null>(themeSettingsRaw, null);
-    return normalizeThemeSettings(stored);
-  }, [settingsReady, themeSettingsRaw]);
+    return normalizeThemeSettings(stored, defaultTheme);
+  }, [defaultTheme, settingsReady, themeSettingsRaw]);
 
   const [userTheme, setUserTheme] = useState<ThemeSettings | null>(null);
   const theme = userTheme ?? initialTheme;

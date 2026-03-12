@@ -2,8 +2,9 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@/__tests__/test-utils';
 import { describe, expect, it, vi } from 'vitest';
+import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 
 vi.mock('@/features/kangur/ui/components/KangurLessonNarrator', () => ({
   KangurLessonNarrator: ({ readLabel }: { readLabel: string }) => <button>{readLabel}</button>,
@@ -44,11 +45,25 @@ describe('KangurTestQuestionRenderer', () => {
     );
 
     expect(await screen.findByRole('button', { name: /read question/i })).toBeInTheDocument();
+    expect(screen.getByText('Pytanie testowe')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-test-question-copy')).toHaveTextContent(
+      /Wybierz jedną odpowiedź, a potem sprawdź omówienie i poprawny tok myślenia\./i
+    );
     const correctChoiceButton = screen.getByRole('button', { name: /A.*4/i });
     const wrongChoiceButton = screen.getByRole('button', { name: /B.*5/i });
 
-    expect(correctChoiceButton).toHaveClass('soft-card', 'rounded-[24px]', 'cursor-pointer');
-    expect(wrongChoiceButton).toHaveClass('soft-card', 'rounded-[24px]', 'cursor-pointer');
+    expect(correctChoiceButton).toHaveClass(
+      'soft-card',
+      'kangur-card-surface',
+      'kangur-card-padding-md',
+      'cursor-pointer'
+    );
+    expect(wrongChoiceButton).toHaveClass(
+      'soft-card',
+      'kangur-card-surface',
+      'kangur-card-padding-md',
+      'cursor-pointer'
+    );
 
     fireEvent.click(correctChoiceButton);
     expect(onSelect).toHaveBeenCalledWith('A');
@@ -64,7 +79,11 @@ describe('KangurTestQuestionRenderer', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: /A.*4/i })).toHaveClass('soft-card', 'rounded-[24px]');
+    expect(screen.getByRole('button', { name: /A.*4/i })).toHaveClass(
+      'soft-card',
+      'kangur-card-surface',
+      'kangur-card-padding-md'
+    );
 
     rerender(
       <KangurTestQuestionRenderer
@@ -77,6 +96,12 @@ describe('KangurTestQuestionRenderer', () => {
       />
     );
 
+    expect(screen.getByTestId('kangur-test-question-copy')).toHaveTextContent(
+      /Omówienie odpowiedzi/i
+    );
+    expect(screen.getByTestId('kangur-test-question-copy')).toHaveTextContent(
+      /Porównaj swój wybór z poprawną odpowiedzią i przeczytaj krótkie wyjaśnienie\./i
+    );
     expect(screen.getByText('3 pts')).toHaveClass('inline-flex', 'rounded-full', 'border');
     expect(screen.getByText('Question 1 / 1')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
@@ -89,7 +114,11 @@ describe('KangurTestQuestionRenderer', () => {
       'text-sm',
       'font-semibold'
     );
-    expect(screen.getByRole('button', { name: /A.*4/i })).toHaveClass('soft-card', 'rounded-[24px]');
+    expect(screen.getByRole('button', { name: /A.*4/i })).toHaveClass(
+      'soft-card',
+      'kangur-card-surface',
+      'kangur-card-padding-md'
+    );
   });
 
   it('renders rich choice notes and SVG content when configured', () => {
@@ -122,5 +151,21 @@ describe('KangurTestQuestionRenderer', () => {
 
     expect(screen.getByText('Kwadrat z czterema kropkami')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-illustration-single-frame')).toBeInTheDocument();
+  });
+
+  it('can hide the learner-facing section intro for embedded previews', () => {
+    render(
+      <KangurTestQuestionRenderer
+        question={question}
+        selectedLabel={null}
+        onSelect={vi.fn()}
+        showAnswer={true}
+        showSectionIntro={false}
+      />
+    );
+
+    expect(
+      screen.queryByText(repairKangurPolishCopy('Omowienie odpowiedzi'))
+    ).not.toBeInTheDocument();
   });
 });

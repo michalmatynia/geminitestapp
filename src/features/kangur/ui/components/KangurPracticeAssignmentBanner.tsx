@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo } from 'react';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
+import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurButton,
@@ -26,7 +27,7 @@ type KangurPracticeAssignmentBannerProps = {
 type KangurPracticeAssignmentBannerModel = {
   actionTransitionSourceId: string;
   helperLabel: string;
-  priorityLabel: string;
+  priority: KangurAssignmentSnapshot['priority'];
   title: string;
   description: string;
   progressPercent: number;
@@ -68,7 +69,7 @@ const buildKangurPracticeAssignmentBannerModel = (
   return {
     actionTransitionSourceId: `practice-assignment-banner:${assignment.id}`,
     helperLabel,
-    priorityLabel: item.priorityLabel,
+    priority: item.priority,
     title: item.title,
     description: item.description,
     progressPercent: item.progressPercent,
@@ -97,9 +98,11 @@ function KangurPracticeAssignmentBannerBody(): React.JSX.Element {
       >
         <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
           <div className='min-w-0'>
-            <KangurStatusChip accent='amber' labelStyle='caps'>
-              {banner.priorityLabel}
-            </KangurStatusChip>
+            <KangurAssignmentPriorityChip
+              accent='amber'
+              labelStyle='caps'
+              priority={banner.priority}
+            />
             <KangurCardTitle className='mt-3' size='md'>
               {banner.title}
             </KangurCardTitle>

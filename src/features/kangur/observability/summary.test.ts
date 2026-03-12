@@ -8,6 +8,9 @@ const createAnalyticsSnapshot = (overrides?: {
   progressSyncFailure?: number;
   aiTutor?: {
     messageSucceededCount?: number;
+    pageContentAnswerCount?: number;
+    nativeGuideAnswerCount?: number;
+    brainAnswerCount?: number;
     knowledgeGraphAppliedCount?: number;
     knowledgeGraphSemanticCount?: number;
     knowledgeGraphWebsiteHelpCount?: number;
@@ -21,6 +24,8 @@ const createAnalyticsSnapshot = (overrides?: {
     bridgeQuickActionClickCount?: number;
     bridgeFollowUpClickCount?: number;
     bridgeFollowUpCompletionCount?: number;
+    directAnswerRatePercent?: number | null;
+    brainFallbackRatePercent?: number | null;
     bridgeCompletionRatePercent?: number | null;
     knowledgeGraphCoverageRatePercent?: number | null;
     knowledgeGraphVectorAssistRatePercent?: number | null;
@@ -34,6 +39,9 @@ const createAnalyticsSnapshot = (overrides?: {
   importantEvents: Array<{ name: string; count: number }>;
   aiTutor: {
     messageSucceededCount: number;
+    pageContentAnswerCount: number;
+    nativeGuideAnswerCount: number;
+    brainAnswerCount: number;
     knowledgeGraphAppliedCount: number;
     knowledgeGraphSemanticCount: number;
     knowledgeGraphWebsiteHelpCount: number;
@@ -47,6 +55,8 @@ const createAnalyticsSnapshot = (overrides?: {
     bridgeQuickActionClickCount: number;
     bridgeFollowUpClickCount: number;
     bridgeFollowUpCompletionCount: number;
+    directAnswerRatePercent: number | null;
+    brainFallbackRatePercent: number | null;
     bridgeCompletionRatePercent: number | null;
     knowledgeGraphCoverageRatePercent: number | null;
     knowledgeGraphVectorAssistRatePercent: number | null;
@@ -54,6 +64,9 @@ const createAnalyticsSnapshot = (overrides?: {
   recent: never[];
 } => {
   const messageSucceededCount = overrides?.aiTutor?.messageSucceededCount ?? 0;
+  const pageContentAnswerCount = overrides?.aiTutor?.pageContentAnswerCount ?? 0;
+  const nativeGuideAnswerCount = overrides?.aiTutor?.nativeGuideAnswerCount ?? 0;
+  const brainAnswerCount = overrides?.aiTutor?.brainAnswerCount ?? 0;
   const knowledgeGraphAppliedCount = overrides?.aiTutor?.knowledgeGraphAppliedCount ?? 0;
   const knowledgeGraphSemanticCount = overrides?.aiTutor?.knowledgeGraphSemanticCount ?? 0;
   const knowledgeGraphHybridRecallCount = overrides?.aiTutor?.knowledgeGraphHybridRecallCount ?? 0;
@@ -63,65 +76,85 @@ const createAnalyticsSnapshot = (overrides?: {
   const bridgeFollowUpCompletionCount = overrides?.aiTutor?.bridgeFollowUpCompletionCount ?? 0;
 
   return {
-  totals: { events: 0, pageviews: 0 },
-  visitors: 0,
-  sessions: 0,
-  topPaths: [],
-  topEventNames: [],
-  importantEvents: [
-    {
-      name: 'kangur_learner_signin_succeeded',
-      count: overrides?.signInSuccess ?? 0,
+    totals: { events: 0, pageviews: 0 },
+    visitors: 0,
+    sessions: 0,
+    topPaths: [],
+    topEventNames: [],
+    importantEvents: [
+      {
+        name: 'kangur_learner_signin_succeeded',
+        count: overrides?.signInSuccess ?? 0,
+      },
+      {
+        name: 'kangur_learner_signin_failed',
+        count: overrides?.signInFailure ?? 0,
+      },
+      {
+        name: 'kangur_progress_sync_failed',
+        count: overrides?.progressSyncFailure ?? 0,
+      },
+    ],
+    aiTutor: {
+      messageSucceededCount,
+      pageContentAnswerCount,
+      nativeGuideAnswerCount,
+      brainAnswerCount,
+      knowledgeGraphAppliedCount,
+      knowledgeGraphSemanticCount,
+      knowledgeGraphWebsiteHelpCount: overrides?.aiTutor?.knowledgeGraphWebsiteHelpCount ?? 0,
+      knowledgeGraphMetadataOnlyRecallCount:
+        overrides?.aiTutor?.knowledgeGraphMetadataOnlyRecallCount ?? 0,
+      knowledgeGraphHybridRecallCount,
+      knowledgeGraphVectorOnlyRecallCount,
+      knowledgeGraphVectorRecallAttemptedCount:
+        overrides?.aiTutor?.knowledgeGraphVectorRecallAttemptedCount ?? 0,
+      bridgeSuggestionCount,
+      lessonToGameBridgeSuggestionCount:
+        overrides?.aiTutor?.lessonToGameBridgeSuggestionCount ?? 0,
+      gameToLessonBridgeSuggestionCount:
+        overrides?.aiTutor?.gameToLessonBridgeSuggestionCount ?? 0,
+      bridgeQuickActionClickCount: overrides?.aiTutor?.bridgeQuickActionClickCount ?? 0,
+      bridgeFollowUpClickCount: overrides?.aiTutor?.bridgeFollowUpClickCount ?? 0,
+      bridgeFollowUpCompletionCount,
+      directAnswerRatePercent:
+        overrides?.aiTutor?.directAnswerRatePercent ??
+        (messageSucceededCount > 0
+          ? Number(
+              (
+                (((pageContentAnswerCount + nativeGuideAnswerCount) / messageSucceededCount) *
+                  100)
+              ).toFixed(1)
+            )
+          : null),
+      brainFallbackRatePercent:
+        overrides?.aiTutor?.brainFallbackRatePercent ??
+        (messageSucceededCount > 0
+          ? Number(((brainAnswerCount / messageSucceededCount) * 100).toFixed(1))
+          : null),
+      bridgeCompletionRatePercent:
+        overrides?.aiTutor?.bridgeCompletionRatePercent ??
+        (bridgeSuggestionCount > 0
+          ? Number(((bridgeFollowUpCompletionCount / bridgeSuggestionCount) * 100).toFixed(1))
+          : null),
+      knowledgeGraphCoverageRatePercent:
+        overrides?.aiTutor?.knowledgeGraphCoverageRatePercent ??
+        (messageSucceededCount > 0
+          ? Number(((knowledgeGraphAppliedCount / messageSucceededCount) * 100).toFixed(1))
+          : null),
+      knowledgeGraphVectorAssistRatePercent:
+        overrides?.aiTutor?.knowledgeGraphVectorAssistRatePercent ??
+        (knowledgeGraphSemanticCount > 0
+          ? Number(
+              (
+                ((knowledgeGraphHybridRecallCount + knowledgeGraphVectorOnlyRecallCount) /
+                  knowledgeGraphSemanticCount) *
+                100
+              ).toFixed(1)
+            )
+          : null),
     },
-    {
-      name: 'kangur_learner_signin_failed',
-      count: overrides?.signInFailure ?? 0,
-    },
-    {
-      name: 'kangur_progress_sync_failed',
-      count: overrides?.progressSyncFailure ?? 0,
-    },
-  ],
-  aiTutor: {
-    messageSucceededCount,
-    knowledgeGraphAppliedCount,
-    knowledgeGraphSemanticCount,
-    knowledgeGraphWebsiteHelpCount: overrides?.aiTutor?.knowledgeGraphWebsiteHelpCount ?? 0,
-    knowledgeGraphMetadataOnlyRecallCount:
-      overrides?.aiTutor?.knowledgeGraphMetadataOnlyRecallCount ?? 0,
-    knowledgeGraphHybridRecallCount,
-    knowledgeGraphVectorOnlyRecallCount,
-    knowledgeGraphVectorRecallAttemptedCount:
-      overrides?.aiTutor?.knowledgeGraphVectorRecallAttemptedCount ?? 0,
-    bridgeSuggestionCount,
-    lessonToGameBridgeSuggestionCount: overrides?.aiTutor?.lessonToGameBridgeSuggestionCount ?? 0,
-    gameToLessonBridgeSuggestionCount: overrides?.aiTutor?.gameToLessonBridgeSuggestionCount ?? 0,
-    bridgeQuickActionClickCount: overrides?.aiTutor?.bridgeQuickActionClickCount ?? 0,
-    bridgeFollowUpClickCount: overrides?.aiTutor?.bridgeFollowUpClickCount ?? 0,
-    bridgeFollowUpCompletionCount,
-    bridgeCompletionRatePercent:
-      overrides?.aiTutor?.bridgeCompletionRatePercent ??
-      (bridgeSuggestionCount > 0
-        ? Number(((bridgeFollowUpCompletionCount / bridgeSuggestionCount) * 100).toFixed(1))
-        : null),
-    knowledgeGraphCoverageRatePercent:
-      overrides?.aiTutor?.knowledgeGraphCoverageRatePercent ??
-      (messageSucceededCount > 0
-        ? Number(((knowledgeGraphAppliedCount / messageSucceededCount) * 100).toFixed(1))
-        : null),
-    knowledgeGraphVectorAssistRatePercent:
-      overrides?.aiTutor?.knowledgeGraphVectorAssistRatePercent ??
-      (knowledgeGraphSemanticCount > 0
-        ? Number(
-            (
-              ((knowledgeGraphHybridRecallCount + knowledgeGraphVectorOnlyRecallCount) /
-                knowledgeGraphSemanticCount) *
-              100
-            ).toFixed(1)
-          )
-        : null),
-  },
-  recent: [],
+    recent: [],
   };
 };
 
@@ -455,6 +488,76 @@ describe('kangur observability alerts', () => {
     });
   });
 
+  it('flags low deterministic tutor answer coverage when too many replies fall back to Brain', () => {
+    const alerts = __testables.buildKangurObservabilityAlerts({
+      range: '24h',
+      from: new Date('2026-03-06T12:00:00.000Z'),
+      to: new Date('2026-03-07T12:00:00.000Z'),
+      serverLogMetrics: createServerLogMetrics({ total: 50, errors: 0 }),
+      routeMetrics: createRouteMetrics(),
+      analytics: createAnalyticsSnapshot({
+        aiTutor: {
+          messageSucceededCount: 12,
+          pageContentAnswerCount: 2,
+          nativeGuideAnswerCount: 1,
+          brainAnswerCount: 9,
+        },
+      }),
+      ttsRequestCount: 20,
+      ttsGenerationFailureCount: 0,
+      ttsFallbackCount: 0,
+      performanceBaseline: null,
+    });
+
+    const directAnswerAlert = alerts.find(
+      (alert) => alert.id === 'kangur-ai-tutor-direct-answer-rate'
+    );
+    expect(directAnswerAlert?.status).toBe('critical');
+    expect(directAnswerAlert?.value).toBe(25);
+    expect(directAnswerAlert?.summary).toBe(
+      '3 Tutor replies were resolved directly from page content or native guides out of 12 successful Tutor replies in the selected window.'
+    );
+    expect(directAnswerAlert?.investigation).toEqual({
+      label: 'Open AI Tutor graph metrics',
+      href: '/admin/kangur/observability?range=24h#ai-tutor-bridge',
+    });
+  });
+
+  it('warns when canonical tutor content is newer than the latest Neo4j sync', () => {
+    const alerts = __testables.buildKangurObservabilityAlerts({
+      range: '24h',
+      from: new Date('2026-03-06T12:00:00.000Z'),
+      to: new Date('2026-03-07T12:00:00.000Z'),
+      serverLogMetrics: createServerLogMetrics({ total: 50, errors: 0 }),
+      routeMetrics: createRouteMetrics(),
+      analytics: createAnalyticsSnapshot(),
+      knowledgeGraphStatus: createKnowledgeGraphStatus(),
+      knowledgeGraphFreshness: {
+        latestCanonicalUpdateAt: new Date('2026-03-07T13:30:00.000Z'),
+        latestPageContentUpdateAt: new Date('2026-03-07T13:30:00.000Z'),
+        latestNativeGuideUpdateAt: new Date('2026-03-07T11:15:00.000Z'),
+        graphSyncedAt: new Date('2026-03-07T12:00:00.000Z'),
+        lagMs: 90 * 60 * 1000,
+        staleSources: ['page_content'],
+      },
+      ttsRequestCount: 20,
+      ttsGenerationFailureCount: 0,
+      ttsFallbackCount: 0,
+      performanceBaseline: null,
+    });
+
+    const freshnessAlert = alerts.find((alert) => alert.id === 'kangur-knowledge-graph-freshness');
+    expect(freshnessAlert?.status).toBe('warning');
+    expect(freshnessAlert?.value).toBe(1.5);
+    expect(freshnessAlert?.summary).toBe(
+      'Page content was updated after the latest Neo4j sync by about 2 hours. Last graph sync: 2026-03-07T12:00:00.000Z. Latest canonical update: 2026-03-07T13:30:00.000Z.'
+    );
+    expect(freshnessAlert?.investigation).toEqual({
+      label: 'Open graph status',
+      href: '/admin/kangur/observability?range=24h#knowledge-graph-status',
+    });
+  });
+
   it('flags knowledge graph readiness when the vector index is missing', () => {
     const alerts = __testables.buildKangurObservabilityAlerts({
       range: '24h',
@@ -589,6 +692,13 @@ describe('kangur ai tutor bridge analytics summary', () => {
         {
           name: 'kangur_ai_tutor_message_succeeded',
           meta: {
+            answerResolutionMode: 'page_content',
+          },
+        },
+        {
+          name: 'kangur_ai_tutor_message_succeeded',
+          meta: {
+            answerResolutionMode: 'native_guide',
             knowledgeGraphApplied: true,
             knowledgeGraphQueryMode: 'website_help',
             knowledgeGraphRecallStrategy: 'metadata_only',
@@ -600,6 +710,7 @@ describe('kangur ai tutor bridge analytics summary', () => {
         {
           name: 'kangur_ai_tutor_message_succeeded',
           meta: {
+            answerResolutionMode: 'brain',
             knowledgeGraphApplied: true,
             knowledgeGraphQueryMode: 'semantic',
             knowledgeGraphRecallStrategy: 'hybrid_vector',
@@ -628,7 +739,10 @@ describe('kangur ai tutor bridge analytics summary', () => {
         },
       ])
     ).toEqual({
-      messageSucceededCount: 2,
+      messageSucceededCount: 3,
+      pageContentAnswerCount: 1,
+      nativeGuideAnswerCount: 1,
+      brainAnswerCount: 1,
       knowledgeGraphAppliedCount: 2,
       knowledgeGraphSemanticCount: 1,
       knowledgeGraphWebsiteHelpCount: 1,
@@ -642,8 +756,10 @@ describe('kangur ai tutor bridge analytics summary', () => {
       bridgeQuickActionClickCount: 1,
       bridgeFollowUpClickCount: 1,
       bridgeFollowUpCompletionCount: 1,
+      directAnswerRatePercent: 66.7,
+      brainFallbackRatePercent: 33.3,
       bridgeCompletionRatePercent: 50,
-      knowledgeGraphCoverageRatePercent: 100,
+      knowledgeGraphCoverageRatePercent: 66.7,
       knowledgeGraphVectorAssistRatePercent: 100,
     });
   });

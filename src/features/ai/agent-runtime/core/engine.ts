@@ -21,30 +21,40 @@ import {
   appendTaskTypeToPrompt,
   decideNextAction,
 } from '@/features/ai/agent-runtime/planning/utils';
+import {
+  type AgentRuntimeRunRecord,
+  getAgentAuditLogDelegate,
+  getChatbotAgentRunDelegate,
+} from '@/features/ai/agent-runtime/store-delegates';
 import { runAgentTool } from '@/features/ai/agent-runtime/tools';
 import {
   launchBrowser,
   createBrowserContext,
 } from '@/features/ai/agent-runtime/tools/playwright/browser';
 import type { AgentDecision, PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
-import prisma from '@/shared/lib/db/prisma';
-import { Prisma } from '@/shared/lib/db/prisma-client';
+import type { InputJsonValue } from '@/shared/contracts/json';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { Browser, BrowserContext } from 'playwright';
 
+type ExtractionAuditRecord = {
+  metadata?: unknown;
+};
+
 export async function runAgentControlLoop(runId: string): Promise<void> {
   let sharedBrowser: Browser | null = null;
   let sharedContext: BrowserContext | null = null;
+  const chatbotAgentRun = getChatbotAgentRunDelegate();
+  const agentAuditLog = getAgentAuditLogDelegate();
   try {
-    if (!('chatbotAgentRun' in prisma)) {
+    if (!chatbotAgentRun) {
       if (DEBUG_CHATBOT) {
         void ErrorSystem.logWarning('Agent tables not initialized.', { service: 'agent-engine' });
       }
       return;
     }
 
-    const run = await prisma.chatbotAgentRun.findUnique({
+    const run = await chatbotAgentRun.findUnique<AgentRuntimeRunRecord>({
       where: { id: runId },
     });
 
@@ -133,7 +143,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
       requiresHuman = stepRunResult.requiresHuman;
 
       if (requiresHuman) {
-        await prisma.chatbotAgentRun.update({
+        await chatbotAgentRun.update({
           where: { id: run.id },
           data: {
             status: 'waiting_human',
@@ -150,7 +160,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
               settings,
               preferences,
               contextRegistry: context.contextRegistry,
-            }) as Prisma.InputJsonValue,
+            }) as InputJsonValue,
             checkpointedAt: new Date(),
             logLines: {
               push: `[${new Date().toISOString()}] Waiting for human input.`,
@@ -175,7 +185,9 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
               prompt: appendTaskTypeToPrompt(run.prompt, taskType),
               browser: run.agentBrowser || 'chromium',
               runId: run.id,
-              runHeadless: run.runHeadless,
+              ...(typeof run.runHeadless === 'boolean' && {
+                runHeadless: run.runHeadless,
+              }),
             },
           },
           sharedBrowser,
@@ -251,8 +263,8 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
           extractedCount?: number;
           items?: string[];
         } | null = null;
-        if ('agentAuditLog' in prisma) {
-          const latestExtraction = await prisma.agentAuditLog.findFirst({
+        if (agentAuditLog) {
+          const latestExtraction = await agentAuditLog.findFirst<ExtractionAuditRecord>({
             where: {
               runId: run.id,
               message: {
@@ -365,9 +377,9 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
           prompt: run.prompt,
         });
         if (memoryResult?.skipped) {
-          await logAgentAudit(run.id, 'warning', 'Long-term memory rejected.', {
-            type: 'memory-validation',
-            model: memoryResult.validation.model,
+        await logAgentAudit(run.id, 'warning', 'Long-term memory rejected.', {
+          type: 'memory-validation',
+          model: memoryResult.validation.model,
             issues: memoryResult.validation.issues,
             reason: memoryResult.validation.reason,
             scope: 'run-summary',
@@ -393,7 +405,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
           result: 'completed',
         });
       }
-      await prisma.chatbotAgentRun.update({
+      await chatbotAgentRun.update({
         where: { id: run.id },
         data: {
           status: 'completed',
@@ -408,7 +420,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
             settings,
             preferences,
             contextRegistry: context.contextRegistry,
-          }) as Prisma.InputJsonValue,
+          }) as InputJsonValue,
           checkpointedAt: new Date(),
           logLines: {
             push: `[${new Date().toISOString()}] Agent responded (scaffold).`,
@@ -418,7 +430,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
       return;
     }
 
-    await prisma.chatbotAgentRun.update({
+    await chatbotAgentRun.update({
       where: { id: run.id },
       data: {
         status: 'waiting_human',
@@ -435,7 +447,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
           settings,
           preferences,
           contextRegistry: context.contextRegistry,
-        }) as Prisma.InputJsonValue,
+        }) as InputJsonValue,
         checkpointedAt: new Date(),
         logLines: {
           push: `[${new Date().toISOString()}] Waiting for human input.`,
@@ -454,15 +466,15 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
     });
 
     try {
-      if ('chatbotAgentRun' in prisma) {
-        await prisma.chatbotAgentRun.update({
+      if (chatbotAgentRun) {
+        await chatbotAgentRun.update({
           where: { id: runId },
           data: {
             status: 'failed',
             errorMessage: message,
             finishedAt: new Date(),
             activeStepId: null,
-            planState: Prisma.JsonNull,
+            planState: null,
             checkpointedAt: new Date(),
             logLines: {
               push: `[${new Date().toISOString()}] Agent failed (${errorId}).`,

@@ -9,10 +9,10 @@ import {
   BUBBLE_MIN_HEIGHT,
   EDGE_GAP,
   GUIDED_AVATAR_SURFACE_GAP,
-  type TutorEntryDirection,
+  type TutorGuidedArrowhead,
+  type TutorHorizontalSide,
   type TutorMotionPosition,
   type TutorMotionProfile,
-  type TutorPointerSide,
   getTutorEntryDirection,
 } from './KangurAiTutorWidget.shared';
 
@@ -36,19 +36,7 @@ const GUIDED_SELECTION_PREVIEW_TOP_OFFSET = 122;
 const GUIDED_SELECTION_PREVIEW_SAFE_DISTANCE = 32;
 const GUIDED_SELECTION_AVATAR_SURFACE_GAP = 4;
 
-type FloatingTutorArrowheadGeometry = {
-  angle: number;
-  anchorAvatarLeft: number;
-  anchorAvatarTop: number;
-  anchorOffsetX: number;
-  anchorOffsetY: number;
-  left: number;
-  side: TutorPointerSide;
-  targetX: number;
-  targetY: number;
-  top: number;
-  quadrant: 'top' | 'right' | 'bottom' | 'left';
-};
+type FloatingTutorArrowheadGeometry = TutorGuidedArrowhead;
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(Math.max(value, min), max);
@@ -350,7 +338,7 @@ export const getFloatingTutorArrowheadGeometry = (input: {
   const angle = normalizeRotationDegrees(
     (Math.atan2(deltaY, deltaX) * 180) / Math.PI + FLOATING_TUTOR_ARROWHEAD_ROTATION_OFFSET_DEG
   );
-  const side: TutorPointerSide = unitX >= 0 ? 'right' : 'left';
+  const side: TutorHorizontalSide = unitX >= 0 ? 'right' : 'left';
   const absUnitX = Math.abs(unitX);
   const absUnitY = Math.abs(unitY);
   const quadrant =
@@ -403,7 +391,7 @@ export const getGuidedCalloutLayout = (
     anchorRect?: DOMRect | null;
   }
 ): {
-  entryDirection: TutorEntryDirection;
+  entryDirection: TutorHorizontalSide;
   style: CSSProperties;
   placement: 'top' | 'bottom' | 'left' | 'right';
 } => {
@@ -540,7 +528,7 @@ export const getGuidedCalloutClusterLayout = (
   avatarRect: DOMRect;
   avatarStyle: TutorMotionPosition;
   calloutRect: DOMRect;
-  entryDirection: TutorEntryDirection;
+  entryDirection: TutorHorizontalSide;
   placement: 'top' | 'bottom' | 'left' | 'right';
   style: CSSProperties;
 } => {

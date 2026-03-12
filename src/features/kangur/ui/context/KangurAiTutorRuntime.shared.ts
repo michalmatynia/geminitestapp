@@ -49,14 +49,15 @@ import {
   type KangurAiTutorFocusKind,
   type KangurAiTutorFollowUpAction,
   type KangurAiTutorInteractionIntent,
+  type KangurAiTutorKnowledgeReference,
   type KangurAiTutorLearnerMemory,
   type KangurAiTutorMessageArtifact,
   type KangurAiTutorPromptMode,
   type KangurAiTutorRecoverySignal,
+  type KangurAiTutorRuntimeMessage as ChatMessage,
   type KangurAiTutorSurface,
   type KangurAiTutorUsageSummary,
   type KangurAiTutorUsageResponse,
-  type KangurAiTutorWebsiteHelpTarget,
 } from '@/shared/contracts/kangur-ai-tutor';
 import { getKangurAiTutorMoodCopy } from '@/shared/contracts/kangur-ai-tutor-content';
 import {
@@ -74,17 +75,6 @@ import { ApiError, api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 import { useKangurAiTutorContent } from './KangurAiTutorContentContext';
-
-export type ChatMessage = {
-  role: 'user' | 'assistant';
-  content: string;
-  artifacts?: KangurAiTutorMessageArtifact[];
-  drawingImageData?: string | null;
-  sources?: AgentTeachingChatSource[];
-  followUpActions?: KangurAiTutorFollowUpAction[];
-  coachingFrame?: KangurAiTutorCoachingFrame;
-  websiteHelpTarget?: KangurAiTutorWebsiteHelpTarget;
-};
 
 export type KangurAiTutorSessionState = {
   messages: ChatMessage[];
@@ -142,6 +132,7 @@ export type KangurAiTutorContextValue = {
       focusId?: string | null;
       focusLabel?: string | null;
       assignmentId?: string | null;
+      knowledgeReference?: KangurAiTutorKnowledgeReference | null;
       interactionIntent?: KangurAiTutorInteractionIntent;
       surface?: KangurAiTutorSurface;
     }
@@ -724,6 +715,9 @@ const areConversationContextsEqual = (
     left.focusId === right.focusId &&
     left.focusLabel === right.focusLabel &&
     left.assignmentId === right.assignmentId &&
+    left.knowledgeReference?.sourceCollection === right.knowledgeReference?.sourceCollection &&
+    left.knowledgeReference?.sourceRecordId === right.knowledgeReference?.sourceRecordId &&
+    left.knowledgeReference?.sourcePath === right.knowledgeReference?.sourcePath &&
     left.interactionIntent === right.interactionIntent
   );
 };
@@ -778,6 +772,7 @@ export const useKangurAiTutorSessionSync = ({
       focusId: sessionContext.focusId,
       focusLabel: sessionContext.focusLabel,
       assignmentId: sessionContext.assignmentId,
+      knowledgeReference: sessionContext.knowledgeReference,
       interactionIntent: sessionContext.interactionIntent,
     });
   }, [
@@ -791,6 +786,9 @@ export const useKangurAiTutorSessionSync = ({
     sessionContext?.focusKind,
     sessionContext?.focusLabel,
     sessionContext?.interactionIntent,
+    sessionContext?.knowledgeReference?.sourceCollection,
+    sessionContext?.knowledgeReference?.sourcePath,
+    sessionContext?.knowledgeReference?.sourceRecordId,
     sessionContext?.masterySummary,
     sessionContext?.promptMode,
     sessionContext?.questionProgressLabel,
@@ -1391,6 +1389,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         focusId?: string | null;
         focusLabel?: string | null;
         assignmentId?: string | null;
+        knowledgeReference?: KangurAiTutorKnowledgeReference | null;
         interactionIntent?: KangurAiTutorInteractionIntent;
         surface?: KangurAiTutorSurface;
       }
@@ -1456,6 +1455,9 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
           ...(options?.focusId ? { focusId: options.focusId } : {}),
           ...(options?.focusLabel ? { focusLabel: options.focusLabel } : {}),
           ...(options?.assignmentId ? { assignmentId: options.assignmentId } : {}),
+          ...(options?.knowledgeReference
+            ? { knowledgeReference: options.knowledgeReference }
+            : {}),
           ...(options?.interactionIntent ? { interactionIntent: options.interactionIntent } : {}),
           ...(options?.drawingImageData
             ? { drawingImageData: options.drawingImageData.trim() }

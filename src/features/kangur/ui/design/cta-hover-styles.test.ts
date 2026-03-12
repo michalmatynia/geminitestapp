@@ -38,9 +38,9 @@ describe('Kangur CTA hover styles', () => {
   it('keeps the Kangur home action pills darker when the storefront is in dark mode', () => {
     const source = readFileSync(globalStylesheetPath, 'utf8');
 
-    expect(source).toContain("[data-kangur-appearance-mode='dark'] .home-action-featured-shell");
-    expect(source).toContain("[data-kangur-appearance-mode='dark'] .home-action-theme-neutral");
-    expect(source).toContain("[data-kangur-appearance-mode='dark'] .home-action-theme-sand");
+    expect(source).toContain('[data-kangur-appearance-mode=\'dark\'] .home-action-featured-shell');
+    expect(source).toContain('[data-kangur-appearance-mode=\'dark\'] .home-action-theme-neutral');
+    expect(source).toContain('[data-kangur-appearance-mode=\'dark\'] .home-action-theme-sand');
     expect(source).toContain('rgba(51, 65, 85, 0.9)');
     expect(source).toContain('rgba(122, 74, 46, 0.44)');
   });

@@ -8,7 +8,10 @@ import {
   normalizeKangurBasePath,
   resolveKangurPageKeyFromSlug,
 } from '@/features/kangur/config/routing';
-import { useOptionalKangurRouteTransitionActions } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
+import {
+  useOptionalKangurRouteTransitionActions,
+  useOptionalKangurRouteTransitionState,
+} from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 
 type KangurRouteNavigationOptions = {
@@ -117,6 +120,7 @@ export function useKangurRouteNavigator(): {
   const pathname = usePathname();
   const router = useRouter();
   const routeTransitionActions = useOptionalKangurRouteTransitionActions();
+  const routeTransitionState = useOptionalKangurRouteTransitionState();
   const routing = useOptionalKangurRouting();
   const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
   const requestedHref = routing?.requestedHref ?? routing?.requestedPath;
@@ -141,6 +145,20 @@ export function useKangurRouteNavigator(): {
       const targetPathname = href ? getManagedPathnameFromHref(href) : null;
       const currentPathname = normalizeManagedPathname(pathname);
       const normalizedRequestedHref = normalizeManagedPathname(requestedHref);
+
+      if (
+        href &&
+        routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
+        targetPathname &&
+        currentPathname &&
+        targetPathname !== currentPathname &&
+        normalizedRequestedHref === currentPathname
+      ) {
+        return {
+          acknowledgeMs: 0,
+          started: true,
+        };
+      }
 
       if (
         href &&
@@ -179,7 +197,7 @@ export function useKangurRouteNavigator(): {
         started: true,
       };
     },
-    [basePath, pathname, requestedHref, routeTransitionActions]
+    [basePath, pathname, requestedHref, routeTransitionActions, routeTransitionState]
   );
 
   const clearQueuedNavigation = useCallback((): void => {

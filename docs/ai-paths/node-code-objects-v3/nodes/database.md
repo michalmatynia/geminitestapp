@@ -20,7 +20,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - Readiness blockers: `none`
 - Parity evidence suite IDs: `runtime-kernel-parity-core`
 - Rollout approved: `yes` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
-- Config field count: 41
+- Config field count: 42
 
 ## Node Contract Files
 

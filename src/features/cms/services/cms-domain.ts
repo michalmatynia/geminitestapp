@@ -6,7 +6,6 @@ import type { CmsDomain, Slug } from '@/shared/contracts/cms';
 import type { CmsRepository } from '@/shared/contracts/cms';
 import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 
 import { getCmsDomainSettings } from './cms-domain-settings';
 
@@ -94,8 +93,6 @@ const getHostFromHeaders = (
   return null;
 };
 
-const canUsePrismaSlugs = (): boolean => Boolean(process.env['DATABASE_URL']) && 'slug' in prisma;
-
 export async function isDomainZoningEnabled(): Promise<boolean> {
   if (!process.env['MONGODB_URI']) return false;
   const settings = await getCmsDomainSettings();
@@ -103,28 +100,17 @@ export async function isDomainZoningEnabled(): Promise<boolean> {
 }
 
 export async function setGlobalDefaultSlug(slugId: string | null): Promise<void> {
-  const provider = await getCmsDataProvider();
-  if (provider === 'mongodb') {
-    if (!process.env['MONGODB_URI']) return;
-    const db = await getMongoDb();
-    const now = new Date();
-    await db
-      .collection<SlugDocument>(SLUGS_COLLECTION)
-      .updateMany({}, { $set: { isDefault: false, updatedAt: now } });
-    if (!slugId) return;
-    await db
-      .collection<SlugDocument>(SLUGS_COLLECTION)
-      .updateOne({ id: slugId }, { $set: { isDefault: true, updatedAt: now } });
-    return;
-  }
-  if (!canUsePrismaSlugs()) return;
-  await prisma.slug.updateMany({ data: { isDefault: false } });
+  await getCmsDataProvider();
+  if (!process.env['MONGODB_URI']) return;
+  const db = await getMongoDb();
+  const now = new Date();
+  await db
+    .collection<SlugDocument>(SLUGS_COLLECTION)
+    .updateMany({}, { $set: { isDefault: false, updatedAt: now } });
   if (!slugId) return;
-  try {
-    await prisma.slug.update({ where: { id: slugId }, data: { isDefault: true } });
-  } catch {
-    // Ignore missing slug
-  }
+  await db
+    .collection<SlugDocument>(SLUGS_COLLECTION)
+    .updateOne({ id: slugId }, { $set: { isDefault: true, updatedAt: now } });
 }
 
 export async function resolveCmsDomainFromRequest(req: NextRequest): Promise<CmsDomain> {

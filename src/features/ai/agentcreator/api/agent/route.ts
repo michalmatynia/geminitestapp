@@ -5,6 +5,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import { resolveAgentRuntimeContextRegistryEnvelope } from '@/features/ai/agent-runtime/context-registry/server';
+import {
+  type AgentRuntimeRunRecord,
+  getChatbotAgentRunDelegate,
+} from '@/features/ai/agent-runtime/store-delegates';
 import { startAgentQueue } from '@/features/ai/server';
 import type {
   AgentRunEnqueueResponse,
@@ -14,25 +18,66 @@ import type {
   AgentRunsResponse,
 } from '@/shared/contracts/agent-runtime';
 import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
+import type { InputJsonValue } from '@/shared/contracts/json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, configurationError, internalError } from '@/shared/errors/app-error';
 import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import prisma from '@/shared/lib/db/prisma';
-import { Prisma } from '@/shared/lib/db/prisma-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export const dynamic = 'force-dynamic';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
+type AgentRunListRecord = Pick<
+  AgentRuntimeRunRecord,
+  | 'id'
+  | 'prompt'
+  | 'model'
+  | 'searchProvider'
+  | 'agentBrowser'
+  | 'status'
+  | 'errorMessage'
+  | 'recordingPath'
+  | 'activeStepId'
+> & {
+  tools: string[];
+  runHeadless: boolean;
+  requiresHumanIntervention: boolean;
+  logLines: string[];
+  checkpointedAt: Date | string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  _count: {
+    browserSnapshots: number;
+    browserLogs: number;
+  };
+};
+
+type AgentRunCreateRecord = Pick<
+  AgentRuntimeRunRecord,
+  'id' | 'model' | 'searchProvider' | 'agentBrowser' | 'status'
+> & {
+  tools: string[];
+};
+
+type AgentRunIdRecord = {
+  id: string;
+};
+
+const toIsoString = (value: Date | string | null): string | null => {
+  if (!value) return null;
+  return value instanceof Date ? value.toISOString() : value;
+};
+
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   startAgentQueue();
-  if (!('chatbotAgentRun' in prisma)) {
-    throw internalError('Agent runs not initialized. Run prisma generate/db push.');
+  const chatbotAgentRun = getChatbotAgentRunDelegate();
+  if (!chatbotAgentRun) {
+    throw internalError('Agent run storage is unavailable.');
   }
-  const runs = await prisma.chatbotAgentRun.findMany({
+  const runs = await chatbotAgentRun.findMany<AgentRunListRecord>({
     orderBy: { createdAt: 'desc' },
     take: 20,
     select: {
@@ -66,11 +111,11 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
   const response: AgentRunsResponse = {
     runs: runs.map(
-      (run: any): AgentRunRecord => ({
+      (run: AgentRunListRecord): AgentRunRecord => ({
         ...run,
-        checkpointedAt: run.checkpointedAt ? run.checkpointedAt.toISOString() : null,
-        createdAt: run.createdAt.toISOString(),
-        updatedAt: run.updatedAt.toISOString(),
+        checkpointedAt: toIsoString(run.checkpointedAt),
+        createdAt: toIsoString(run.createdAt) ?? new Date().toISOString(),
+        updatedAt: toIsoString(run.updatedAt) ?? new Date().toISOString(),
       })
     ),
   };
@@ -86,8 +131,9 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
-  if (!('chatbotAgentRun' in prisma)) {
-    throw internalError('Agent runs not initialized. Run prisma generate/db push.');
+  const chatbotAgentRun = getChatbotAgentRunDelegate();
+  if (!chatbotAgentRun) {
+    throw internalError('Agent run storage is unavailable.');
   }
   const agentRuntimeBrain = await getBrainAssignmentForFeature('agent_runtime');
   if (!agentRuntimeBrain.enabled) {
@@ -190,7 +236,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     body.ignoreRobotsTxt !== undefined || body.requireHumanApproval !== undefined;
   const shouldAttachPlanState = Boolean(planSettings || hasPreferenceOverrides || contextRegistry);
 
-  const run = await prisma.chatbotAgentRun.create({
+  const run = await chatbotAgentRun.create<AgentRunCreateRecord>({
     data: {
       prompt: body.prompt.trim(),
       model: body.model?.trim() || null,
@@ -209,7 +255,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
               requireHumanApproval: Boolean(body.requireHumanApproval),
             },
             ...(contextRegistry ? { contextRegistry } : {}),
-          } as Prisma.InputJsonValue,
+          } as InputJsonValue,
         }
         : {}),
     },
@@ -238,8 +284,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
-  if (!('chatbotAgentRun' in prisma)) {
-    throw internalError('Agent runs not initialized. Run prisma generate/db push.');
+  const chatbotAgentRun = getChatbotAgentRunDelegate();
+  if (!chatbotAgentRun) {
+    throw internalError('Agent run storage is unavailable.');
   }
   const url = new URL(req.url);
   const scope = url.searchParams.get('scope') ?? 'terminal';
@@ -252,16 +299,16 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
   if (scope !== 'terminal') {
     throw badRequestError('Unsupported delete scope.');
   }
-  const runs = await prisma.chatbotAgentRun.findMany({
+  const runs = await chatbotAgentRun.findMany<AgentRunIdRecord>({
     where: { status: { in: terminalStatuses } },
     select: { id: true },
   });
-  const ids = runs.map((run: any) => run.id);
+  const ids = runs.map((run: AgentRunIdRecord) => run.id);
   if (ids.length === 0) {
     const response: AgentRunsDeleteResponse = { deleted: 0 };
     return NextResponse.json(response);
   }
-  await prisma.chatbotAgentRun.deleteMany({
+  await chatbotAgentRun.deleteMany({
     where: { id: { in: ids } },
   });
   await Promise.all(

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
 const removedPrismaHandler: ProxyHandler<Record<string, never>> = {
   get(_target, prop): unknown {
     if (

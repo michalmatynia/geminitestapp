@@ -535,12 +535,7 @@ alias(
 
 sh_binary(
     name = "case_resolver_capture_mapping_e2e",
-    srcs = ["//tools/bazel:playwright_suite.sh"],
-    args = [
-        "e2e/features/case-resolver/case-resolver.spec.ts",
-        "--grep",
-        "capture mapping",
-    ],
+    srcs = ["//tools/bazel:case_resolver_capture_mapping_e2e.sh"],
     data = [
         ":playwright_gate_inputs",
         ":node_modules",
@@ -555,10 +550,7 @@ alias(
 
 sh_binary(
     name = "products_list_category_e2e",
-    srcs = ["//tools/bazel:playwright_suite.sh"],
-    args = [
-        "e2e/features/products/products-category-label.spec.ts",
-    ],
+    srcs = ["//tools/bazel:products_list_category_e2e.sh"],
     data = [
         ":playwright_gate_inputs",
         ":node_modules",
@@ -568,12 +560,7 @@ sh_binary(
 
 sh_binary(
     name = "kangur_ai_tutor_selection_handoff_e2e",
-    srcs = ["//tools/bazel:playwright_suite.sh"],
-    args = [
-        "e2e/features/kangur/kangur-ai-tutor.spec.ts",
-        "--grep",
-        "keeps the logged-in selection handoff on the regular tutor panel and never reopens onboarding",
-    ],
+    srcs = ["//tools/bazel:kangur_ai_tutor_selection_handoff_e2e.sh"],
     data = [
         ":playwright_gate_inputs",
         ":node_modules",
@@ -583,10 +570,7 @@ sh_binary(
 
 sh_binary(
     name = "products_trigger_queue_e2e",
-    srcs = ["//tools/bazel:playwright_suite.sh"],
-    args = [
-        "e2e/features/products/products-trigger-queue-integration.spec.ts",
-    ],
+    srcs = ["//tools/bazel:products_trigger_queue_e2e.sh"],
     data = [
         ":playwright_gate_inputs",
         ":node_modules",

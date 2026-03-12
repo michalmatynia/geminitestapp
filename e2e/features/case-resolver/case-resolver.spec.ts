@@ -170,7 +170,7 @@ const createInitialCaseResolverWorkspaceSetting = (): string =>
         folder: '',
         parentCaseId: 'case-1',
         referenceCaseIds: [],
-        documentDate: '',
+        documentDate: null,
         originalDocumentContent: '',
         explodedDocumentContent: '',
         activeDocumentVersion: 'original',
@@ -219,6 +219,7 @@ const createInitialFilemakerDatabaseSetting = (): string =>
 const createPendingCapturePayload = (overrides?: {
   createdAt?: string;
   expiresAt?: string;
+  payloadVersion?: number;
   transferId?: string;
   sessionId?: string;
 }) => {
@@ -233,6 +234,7 @@ const createPendingCapturePayload = (overrides?: {
     source: 'prompt-exploder',
     target: 'case-resolver',
     createdAt,
+    payloadVersion: overrides?.payloadVersion ?? 2,
     ...(overrides?.expiresAt ? { expiresAt: overrides.expiresAt } : {}),
     ...(overrides?.transferId ? { transferId: overrides.transferId } : {}),
     caseResolverContext: {
@@ -266,6 +268,10 @@ const createPendingCapturePayload = (overrides?: {
       },
     },
   };
+};
+
+const waitForRequestedCaseResolverContext = async (page: Page): Promise<void> => {
+  await expect(page.getByText('Loading case context...')).toBeHidden({ timeout: 15_000 });
 };
 
 test.describe('Case Resolver', () => {
@@ -303,7 +309,7 @@ test.describe('Case Resolver', () => {
         value: createInitialFilemakerDatabaseSetting(),
       },
     ]);
-    const payload = createPendingCapturePayload();
+    const payload = createPendingCapturePayload({ transferId: 'pe-transfer-apply-e2e' });
     await page.addInitScript(
       ({ storageKey, storagePayload }) => {
         window.localStorage.setItem(storageKey, JSON.stringify(storagePayload));
@@ -320,6 +326,7 @@ test.describe('Case Resolver', () => {
         waitUntil: 'networkidle',
       }
     );
+    await waitForRequestedCaseResolverContext(page);
 
     const applyMappingButton = page.getByRole('button', { name: 'Apply Mapping' });
     await expect(applyMappingButton).toBeVisible();
@@ -345,7 +352,11 @@ test.describe('Case Resolver', () => {
     await expect
       .poll(() => {
         const doc = settingsHarness.readWorkspaceDocument('doc-1');
-        return typeof doc?.['documentDate'] === 'string' ? doc['documentDate'] : null;
+        const documentDate =
+          doc?.['documentDate'] && typeof doc['documentDate'] === 'object'
+            ? (doc['documentDate'] as { isoDate?: string })
+            : null;
+        return typeof documentDate?.isoDate === 'string' ? documentDate.isoDate : null;
       })
       .toBe('2026-01-25');
     await expect
@@ -395,7 +406,7 @@ test.describe('Case Resolver', () => {
         value: createInitialFilemakerDatabaseSetting(),
       },
     ]);
-    const payload = createPendingCapturePayload();
+    const payload = createPendingCapturePayload({ transferId: 'pe-transfer-dismiss-e2e' });
     await page.addInitScript(
       ({ storageKey, storagePayload }) => {
         window.localStorage.setItem(storageKey, JSON.stringify(storagePayload));
@@ -412,6 +423,7 @@ test.describe('Case Resolver', () => {
         waitUntil: 'networkidle',
       }
     );
+    await waitForRequestedCaseResolverContext(page);
 
     const dismissButton = page.getByRole('button', { name: 'Dismiss (No Mapping)' });
     await expect(dismissButton).toBeVisible();
@@ -437,9 +449,9 @@ test.describe('Case Resolver', () => {
     await expect
       .poll(() => {
         const doc = settingsHarness.readWorkspaceDocument('doc-1');
-        return typeof doc?.['documentDate'] === 'string' ? doc['documentDate'] : null;
+        return doc?.['documentDate'] ?? null;
       })
-      .toBe('');
+      .toBeNull();
     await expect
       .poll(() => {
         const doc = settingsHarness.readWorkspaceDocument('doc-1');
@@ -500,6 +512,7 @@ test.describe('Case Resolver', () => {
         waitUntil: 'networkidle',
       }
     );
+    await waitForRequestedCaseResolverContext(page);
 
     await expect
       .poll(async () =>
@@ -553,6 +566,7 @@ test.describe('Case Resolver', () => {
         waitUntil: 'networkidle',
       }
     );
+    await waitForRequestedCaseResolverContext(page);
 
     await expect(page.getByText('This transfer expired before apply.')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Apply Prompt Exploder Output' })).toBeHidden();

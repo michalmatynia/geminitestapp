@@ -1,9 +1,11 @@
 import type { KangurTutorAnchorKind } from '@/features/kangur/ui/context/kangur-tutor-types';
 import type {
   KangurAiTutorFollowUpAction,
+  KangurAiTutorKnowledgeReference,
   KangurAiTutorMotionPresetKind,
   KangurAiTutorPromptMode,
 } from '@/shared/contracts/kangur-ai-tutor';
+import type { Point2d, Size2d } from '@/shared/contracts/geometry';
 import type { TutorSurface } from './KangurAiTutorWidget.types';
 
 export const EDGE_GAP = 16;
@@ -31,16 +33,6 @@ export type TutorMotionPosition = {
   bottom?: number | string;
 };
 
-export type TutorViewportSize = {
-  width: number;
-  height: number;
-};
-
-export type TutorPanelSize = {
-  width: number;
-  height: number;
-};
-
 export type TutorPanelSnapState =
   | 'free'
   | 'left'
@@ -54,10 +46,8 @@ export type TutorPanelSnapState =
 
 export type TutorPanelPositionMode = 'contextual' | 'manual';
 
-export type TutorEntryDirection = 'left' | 'right';
+export type TutorHorizontalSide = 'left' | 'right';
 
-export type TutorAvatarAttachmentSide = 'left' | 'right';
-export type TutorPointerSide = TutorAvatarAttachmentSide;
 export type TutorBubblePlacementStrategy =
   | 'dock'
   | 'right'
@@ -69,11 +59,36 @@ export type TutorBubblePlacementStrategy =
   | 'bottom-right'
   | 'bottom-left';
 
+export type TutorAvatarPointer = {
+  end: Point2d;
+  height: number;
+  left: number;
+  side: TutorHorizontalSide;
+  start: Point2d;
+  top: number;
+  width: number;
+};
+
+export type TutorGuidedArrowhead = {
+  angle: number;
+  anchorAvatarLeft: number;
+  anchorAvatarTop: number;
+  anchorOffsetX: number;
+  anchorOffsetY: number;
+  left: number;
+  quadrant: 'top' | 'right' | 'bottom' | 'left';
+  side: TutorHorizontalSide;
+  targetX: number;
+  targetY: number;
+  top: number;
+};
+
 export type TutorConversationFocus = {
   assignmentId: string | null;
   contentId: string | null;
   id: string | null;
   kind: KangurTutorAnchorKind | 'selection' | null;
+  knowledgeReference: KangurAiTutorKnowledgeReference | null;
   label: string | null;
   surface: TutorSurface | null;
 };
@@ -144,7 +159,7 @@ export type TutorRecommendation = {
 export const getTutorEntryDirection = (
   rect: Pick<DOMRect, 'left' | 'width'> | null,
   viewportWidth: number
-): TutorEntryDirection => {
+): TutorHorizontalSide => {
   if (!rect) {
     return 'right';
   }
@@ -156,7 +171,7 @@ export const getTutorEntryDirection = (
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(Math.max(value, min), max);
 
-const getTutorPanelBounds = (viewport: TutorViewportSize, panelSize: TutorPanelSize) => ({
+const getTutorPanelBounds = (viewport: Size2d, panelSize: Size2d) => ({
   maxLeft: Math.max(EDGE_GAP, viewport.width - EDGE_GAP - panelSize.width),
   maxTop: Math.max(EDGE_GAP, viewport.height - EDGE_GAP - panelSize.height),
   minLeft: EDGE_GAP,
@@ -164,10 +179,10 @@ const getTutorPanelBounds = (viewport: TutorViewportSize, panelSize: TutorPanelS
 });
 
 export const clampTutorPanelPoint = (
-  point: { x: number; y: number },
-  viewport: TutorViewportSize,
-  panelSize: TutorPanelSize
-): { x: number; y: number } => {
+  point: Point2d,
+  viewport: Size2d,
+  panelSize: Size2d
+): Point2d => {
   const { maxLeft, maxTop, minLeft, minTop } = getTutorPanelBounds(viewport, panelSize);
 
   return {
@@ -177,11 +192,11 @@ export const clampTutorPanelPoint = (
 };
 
 export const applyTutorPanelSnapState = (
-  point: { x: number; y: number },
+  point: Point2d,
   snap: TutorPanelSnapState,
-  viewport: TutorViewportSize,
-  panelSize: TutorPanelSize
-): { x: number; y: number } => {
+  viewport: Size2d,
+  panelSize: Size2d
+): Point2d => {
   const clampedPoint = clampTutorPanelPoint(point, viewport, panelSize);
   const { maxLeft, maxTop, minLeft, minTop } = getTutorPanelBounds(viewport, panelSize);
 
@@ -204,9 +219,9 @@ export const applyTutorPanelSnapState = (
 const TUTOR_PANEL_SNAP_THRESHOLD = 36;
 
 export const getTutorPanelSnapState = (
-  point: { x: number; y: number },
-  viewport: TutorViewportSize,
-  panelSize: TutorPanelSize
+  point: Point2d,
+  viewport: Size2d,
+  panelSize: Size2d
 ): TutorPanelSnapState => {
   const { maxLeft, maxTop, minLeft, minTop } = getTutorPanelBounds(viewport, panelSize);
   const nearLeft = Math.abs(point.x - minLeft) <= TUTOR_PANEL_SNAP_THRESHOLD;
@@ -250,10 +265,10 @@ export const getTutorPanelSnapState = (
 };
 
 export const snapTutorPanelPoint = (
-  point: { x: number; y: number },
-  viewport: TutorViewportSize,
-  panelSize: TutorPanelSize
-): { point: { x: number; y: number }; snap: TutorPanelSnapState } => {
+  point: Point2d,
+  viewport: Size2d,
+  panelSize: Size2d
+): { point: Point2d; snap: TutorPanelSnapState } => {
   const clampedPoint = clampTutorPanelPoint(point, viewport, panelSize);
   const snap = getTutorPanelSnapState(clampedPoint, viewport, panelSize);
 

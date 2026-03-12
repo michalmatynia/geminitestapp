@@ -1,5 +1,5 @@
-import prisma from '@/shared/lib/db/prisma';
-import { Prisma } from '@/shared/lib/db/prisma-client';
+import type { InputJsonValue } from '@/shared/contracts/json';
+import { getAgentBrowserLogDelegate } from '@/features/ai/agent-runtime/store-delegates';
 
 import { normalizeExtractionItemsWithLLM } from '../llm';
 
@@ -11,6 +11,7 @@ export function createToolLogger(args: {
   prompt: string;
 }) {
   const { runId, stepId, model, outputNormalizationModel, prompt } = args;
+  const agentBrowserLog = getAgentBrowserLogDelegate();
 
   const log = async (
     level: string,
@@ -61,13 +62,17 @@ export function createToolLogger(args: {
 
     const normalizedMetadata = await normalizeLogMetadata(metadata ? { ...metadata } : undefined);
 
-    await prisma.agentBrowserLog.create({
+    if (!agentBrowserLog) {
+      return;
+    }
+
+    await agentBrowserLog.create({
       data: {
         runId,
         stepId,
         level,
         message,
-        metadata: normalizedMetadata as Prisma.InputJsonValue,
+        metadata: normalizedMetadata as InputJsonValue,
       },
     });
   };

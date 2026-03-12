@@ -4,8 +4,12 @@ import { randomUUID } from 'crypto';
 import { promises as fs } from 'fs';
 import path from 'path';
 
-import prisma from '@/shared/lib/db/prisma';
-import { Prisma } from '@/shared/lib/db/prisma-client';
+import {
+  getAgentBrowserLogDelegate,
+  getAgentBrowserSnapshotDelegate,
+  getChatbotAgentRunDelegate,
+} from '@/features/ai/agent-runtime/store-delegates';
+import type { InputJsonValue } from '@/shared/contracts/json';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import {
@@ -19,6 +23,12 @@ import { extractTargetUrl } from './utils';
 
 import type { AgentControlAction, AgentToolResult } from './tool-types';
 import type { Browser, BrowserContext, Page } from 'playwright';
+
+type BrowserControlRunRecord = {
+  prompt: string;
+  agentBrowser: string | null;
+  runHeadless: boolean | null;
+};
 
 export async function runAgentBrowserControl({
   runId,
@@ -34,21 +44,26 @@ export async function runAgentBrowserControl({
   stepLabel?: string | undefined;
 }): Promise<AgentToolResult> {
   const debugEnabled = process.env['DEBUG_CHATBOT'] === 'true';
-  if (!('agentBrowserLog' in prisma) || !('agentBrowserSnapshot' in prisma)) {
+  const chatbotAgentRun = getChatbotAgentRunDelegate();
+  const agentBrowserLog = getAgentBrowserLogDelegate();
+  const agentBrowserSnapshot = getAgentBrowserSnapshotDelegate();
+  if (!agentBrowserLog || !agentBrowserSnapshot) {
     void ErrorSystem.logWarning('[chatbot][agent][tool] Agent browser tables not initialized.', {
       service: 'agent-control',
       runId,
     });
     return {
       ok: false,
-      error: 'Agent browser tables not initialized. Run prisma generate/db push.',
+      error: 'Agent browser storage is unavailable.',
     };
   }
 
   let launch: Browser | null = null;
   let context: BrowserContext | null = null;
   try {
-    const run = await prisma.chatbotAgentRun.findUnique({ where: { id: runId } });
+    const run = chatbotAgentRun
+      ? await chatbotAgentRun.findUnique<BrowserControlRunRecord>({ where: { id: runId } })
+      : null;
     if (!run) {
       return { ok: false, error: 'Agent run not found.' };
     }
@@ -62,18 +77,18 @@ export async function runAgentBrowserControl({
       message: string,
       metadata?: Record<string, unknown>
     ): Promise<void> => {
-      await prisma.agentBrowserLog.create({
+      await agentBrowserLog.create({
         data: {
-          runId,
-          stepId: activeStepId,
-          level,
-          message,
-          metadata: metadata as Prisma.InputJsonValue,
-        },
-      });
+        runId,
+        stepId: activeStepId,
+        level,
+        message,
+        metadata: metadata as InputJsonValue,
+      },
+    });
     };
 
-    const latestSnapshot = await prisma.agentBrowserSnapshot.findFirst({
+    const latestSnapshot = await agentBrowserSnapshot.findFirst<{ url: string }>({
       where: { runId },
       orderBy: { createdAt: 'desc' },
     });
@@ -124,12 +139,12 @@ export async function runAgentBrowserControl({
     await collectUiInventory(page, runId, safeLabel, log, activeStepId);
     await captureSessionContext(page, context, runId, safeLabel, log, activeStepId);
 
-    const logCount = await prisma.agentBrowserLog.count({ where: { runId } });
+    const logCount = await agentBrowserLog.count({ where: { runId } });
 
     // We need to return snapshotId, captureSnapshot doesn't return ID directly but creates it.
     // I should have made captureSnapshot return the object.
     // For now I'll query it or just rely on latest.
-    const freshSnapshot = await prisma.agentBrowserSnapshot.findFirst({
+    const freshSnapshot = await agentBrowserSnapshot.findFirst<{ id: string }>({
       where: { runId },
       orderBy: { createdAt: 'desc' },
     });
@@ -166,7 +181,7 @@ export async function runAgentBrowserControl({
     }
 
     try {
-      await prisma.agentBrowserLog.create({
+      await agentBrowserLog.create({
         data: {
           runId,
           level: 'error',

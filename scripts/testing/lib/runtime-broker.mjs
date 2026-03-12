@@ -21,6 +21,7 @@ const AGENT_ID_ENV_KEYS = [
   'CODEX_AGENT_ID',
   'AGENT_ID',
   'CODEX_SESSION_ID',
+  'CODEX_THREAD_ID',
   'USER',
 ];
 const NPM_EXECUTABLE = process.platform === 'win32' ? 'npm.cmd' : 'npm';

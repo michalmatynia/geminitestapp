@@ -109,6 +109,8 @@ export function useKangurAiTutorGuidedShellState(input: {
   } = input;
   const shouldUseSelectionGuidanceLayout =
     Boolean(guidedFocusRect) && (guidedMode === 'selection' || showSelectionGuidanceCallout);
+  const isMobileHomeOnboardingSheet =
+    guidedMode === 'home_onboarding' && viewport.width < motionProfile.sheetBreakpoint;
 
   const guidedSelectionCalloutProtectedRect =
     shouldUseSelectionGuidanceLayout &&
@@ -161,14 +163,36 @@ export function useKangurAiTutorGuidedShellState(input: {
       }
     )
     : null;
-  const guidedCalloutLayout = guidedCalloutClusterLayout
-    ? {
-      entryDirection: guidedCalloutClusterLayout.entryDirection,
-      placement: guidedCalloutClusterLayout.placement,
-      style: guidedCalloutClusterLayout.style,
-    }
-    : null;
-  const guidedCalloutStyle = guidedCalloutClusterLayout?.style ?? null;
+  const mobileHomeOnboardingCalloutWidth = clamp(
+    viewport.width - EDGE_GAP * 2,
+    Math.min(280, viewport.width - EDGE_GAP * 2),
+    motionProfile.mobileBubbleWidth
+  );
+  const mobileHomeOnboardingCalloutBottom = viewport.height < 640 ? 8 : 16;
+  const mobileHomeOnboardingCalloutStyle: CSSProperties | null =
+    guidedFocusRect && isMobileHomeOnboardingSheet
+      ? ({
+        position: 'fixed',
+        left: Math.max(EDGE_GAP, Math.round((viewport.width - mobileHomeOnboardingCalloutWidth) / 2)),
+        bottom: mobileHomeOnboardingCalloutBottom,
+        width: mobileHomeOnboardingCalloutWidth,
+      } satisfies CSSProperties)
+      : null;
+  const guidedCalloutLayout =
+    guidedCalloutClusterLayout
+      ? {
+        entryDirection: guidedCalloutClusterLayout.entryDirection,
+        placement: guidedCalloutClusterLayout.placement,
+        style: mobileHomeOnboardingCalloutStyle ?? guidedCalloutClusterLayout.style,
+      }
+      : mobileHomeOnboardingCalloutStyle
+        ? {
+          entryDirection: 'right' as const,
+          placement: 'bottom' as const,
+          style: mobileHomeOnboardingCalloutStyle,
+        }
+        : null;
+  const guidedCalloutStyle = guidedCalloutLayout?.style ?? null;
   const guidedAvatarLayout =
     guidedCalloutClusterLayout
       ? {

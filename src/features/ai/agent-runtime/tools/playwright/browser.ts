@@ -3,7 +3,10 @@ import 'server-only';
 import { promises as fs } from 'fs';
 import path from 'path';
 
-import prisma from '@/shared/lib/db/prisma';
+import {
+  getAgentAuditLogDelegate,
+  getAgentBrowserSnapshotDelegate,
+} from '@/features/ai/agent-runtime/store-delegates';
 
 import { toDataUrl } from '../utils';
 
@@ -78,6 +81,7 @@ export const captureSessionContext = async (
   activeStepId?: string | null
 ): Promise<void> => {
   if (!page || !context) return;
+  const agentAuditLog = getAgentAuditLogDelegate();
   try {
     const cookies = await context.cookies();
     const cookieSummary = cookies.map((cookie: Cookie) => ({
@@ -102,21 +106,23 @@ export const captureSessionContext = async (
       };
     });
 
-    await prisma.agentAuditLog.create({
-      data: {
-        runId,
-        level: 'info',
-        message: 'Captured session context.',
-        metadata: {
-          label,
-          url: page.url(),
-          title: await page.title(),
-          cookies: cookieSummary,
-          storage: storageSummary,
-          stepId: activeStepId ?? null,
+    if (agentAuditLog) {
+      await agentAuditLog.create({
+        data: {
+          runId,
+          level: 'info',
+          message: 'Captured session context.',
+          metadata: {
+            label,
+            url: page.url(),
+            title: await page.title(),
+            cookies: cookieSummary,
+            storage: storageSummary,
+            stepId: activeStepId ?? null,
+          },
         },
-      },
-    });
+      });
+    }
     if (log) {
       await log('info', 'Captured session context.', {
         label,
@@ -149,6 +155,7 @@ export const captureSnapshot = async (
   if (!page) {
     return { id: '', domText: '', domHtml: '', url: '' };
   }
+  const agentBrowserSnapshot = getAgentBrowserSnapshotDelegate();
   const domHtml = await page.content();
   const domText = await page.evaluate(
     () => document.body?.innerText || document.documentElement?.innerText || ''
@@ -162,22 +169,24 @@ export const captureSnapshot = async (
   await fs.writeFile(screenshotPath, screenshotBuffer);
   const viewport = page.viewportSize();
 
-  const snapshot = await prisma.agentBrowserSnapshot.create({
-    data: {
-      runId,
-      url: snapshotUrl,
-      title,
-      domHtml,
-      domText,
-      screenshotData: toDataUrl(screenshotBuffer),
-      screenshotPath: screenshotFile,
-      stepId: activeStepId ?? null,
-      mouseX: null,
-      mouseY: null,
-      viewportWidth: viewport?.width ?? null,
-      viewportHeight: viewport?.height ?? null,
-    },
-  });
+  const snapshot = agentBrowserSnapshot
+    ? await agentBrowserSnapshot.create<{ id: string }>({
+      data: {
+        runId,
+        url: snapshotUrl,
+        title,
+        domHtml,
+        domText,
+        screenshotData: toDataUrl(screenshotBuffer),
+        screenshotPath: screenshotFile,
+        stepId: activeStepId ?? null,
+        mouseX: null,
+        mouseY: null,
+        viewportWidth: viewport?.width ?? null,
+        viewportHeight: viewport?.height ?? null,
+      },
+    })
+    : null;
 
   if (log) {
     await log('info', 'Captured DOM snapshot.', {
@@ -193,5 +202,5 @@ export const captureSnapshot = async (
   // to avoid circular dependency and keep functions focused.
   // Caller should call them if needed.
 
-  return { id: snapshot.id, domText, domHtml, url: snapshotUrl };
+  return { id: snapshot?.id ?? '', domText, domHtml, url: snapshotUrl };
 };

@@ -222,6 +222,37 @@ describe('resolveKangurAiTutorNativeGuideResponse', () => {
     );
   });
 
+  it('prefers an explicit Mongo knowledge reference for dropped-section explains', async () => {
+    const resolution = await resolveKangurAiTutorNativeGuideResolution({
+      latestUserMessage: 'Opowiedz mi o tym miejscu.',
+      context: {
+        surface: 'game',
+        promptMode: 'chat',
+        focusKind: 'leaderboard',
+        focusId: 'kangur-game-leaderboard',
+        focusLabel: 'Ranking',
+        interactionIntent: 'explain',
+        knowledgeReference: {
+          sourceCollection: 'kangur_ai_tutor_native_guides',
+          sourceRecordId: 'shared-leaderboard',
+          sourcePath: 'entry:shared-leaderboard',
+        },
+      },
+      locale: 'pl',
+    });
+
+    expect(resolution).toMatchObject({
+      status: 'hit',
+      entryId: 'shared-leaderboard',
+      coverageLevel: 'specific',
+      matchedSignals: ['knowledge_reference'],
+    });
+    expect(resolution.status === 'hit' ? resolution.message : '').toContain('Ranking');
+    expect(resolution.status === 'hit' ? resolution.message : '').toContain(
+      'Ranking pokazuje wyniki i pozycje na tle innych prob.'
+    );
+  });
+
   it('marks section-specific requests that fall back to an overview entry as a coverage gap', async () => {
     const resolution = await resolveKangurAiTutorNativeGuideResolution({
       latestUserMessage: 'Wyjasnij ten fragment.',

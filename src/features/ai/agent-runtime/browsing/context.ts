@@ -1,5 +1,9 @@
 import { DEBUG_CHATBOT } from '@/features/ai/agent-runtime/core/config';
-import prisma from '@/shared/lib/db/prisma';
+import {
+  getAgentAuditLogDelegate,
+  getAgentBrowserLogDelegate,
+  getAgentBrowserSnapshotDelegate,
+} from '@/features/ai/agent-runtime/store-delegates';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export async function getBrowserContextSummary(runId: string): Promise<{
@@ -9,17 +13,26 @@ export async function getBrowserContextSummary(runId: string): Promise<{
   logs: { level: string; message: string }[];
   uiInventory: unknown;
 } | null> {
-  if (!('agentBrowserSnapshot' in prisma) || !('agentBrowserLog' in prisma)) {
+  const agentBrowserSnapshot = getAgentBrowserSnapshotDelegate();
+  const agentBrowserLog = getAgentBrowserLogDelegate();
+  if (!agentBrowserSnapshot || !agentBrowserLog) {
     return null;
   }
   try {
-    const snapshot = await prisma.agentBrowserSnapshot.findFirst({
+    const snapshot = await agentBrowserSnapshot.findFirst<{
+      url: string;
+      title: string | null;
+      domText: string | null;
+    }>({
       where: { runId },
       orderBy: { createdAt: 'desc' },
       select: { url: true, title: true, domText: true },
     });
     if (!snapshot) return null;
-    const logs = await prisma.agentBrowserLog.findMany({
+    const logs = await agentBrowserLog.findMany<{
+      level: string;
+      message: string;
+    }>({
       where: { runId },
       orderBy: { createdAt: 'desc' },
       take: 20,
@@ -27,8 +40,9 @@ export async function getBrowserContextSummary(runId: string): Promise<{
     });
     const domTextSample = snapshot.domText?.slice(0, 4000) ?? '';
     let uiInventory: unknown = undefined;
-    if ('agentAuditLog' in prisma) {
-      const latestInventory = await prisma.agentAuditLog.findFirst({
+    const agentAuditLog = getAgentAuditLogDelegate();
+    if (agentAuditLog) {
+      const latestInventory = await agentAuditLog.findFirst<{ metadata?: unknown }>({
         where: { runId, message: 'Captured UI inventory.' },
         orderBy: { createdAt: 'desc' },
         select: { metadata: true },

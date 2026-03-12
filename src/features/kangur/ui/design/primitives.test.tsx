@@ -24,10 +24,12 @@ import {
   KangurMetricCard,
   KangurMenuItem,
   KangurOptionCardButton,
+  KangurPanelIntro,
   KangurPageContainer,
   KangurProgressBar,
   KangurProse,
   KangurResultBadge,
+  KangurSectionEyebrow,
   KangurSectionHeading,
   KangurSelectField,
   KangurStatusChip,
@@ -109,6 +111,16 @@ describe('Kangur shared primitives', () => {
           label='Sekcja'
           tone='accent'
           title='Shared title'
+        />
+        <KangurSectionEyebrow data-testid='kangur-section-eyebrow'>
+          Shared eyebrow
+        </KangurSectionEyebrow>
+        <KangurPanelIntro
+          data-testid='kangur-panel-intro'
+          description='Shared panel description'
+          eyebrow='Panel section'
+          title='Shared panel title'
+          titleAs='h3'
         />
         <KangurMetricCard
           accent='emerald'
@@ -283,6 +295,20 @@ describe('Kangur shared primitives', () => {
     expect(screen.getByText('Sekcja')).toHaveClass(
       '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(224_231_255))]',
       '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(224_231_255))]'
+    );
+    expect(screen.getByTestId('kangur-section-eyebrow')).toHaveClass(
+      'text-[11px]',
+      'font-bold',
+      'uppercase'
+    );
+    expect(screen.getByTestId('kangur-panel-intro')).toHaveTextContent('Panel section');
+    expect(screen.getByRole('heading', { level: 3, name: 'Shared panel title' })).toHaveClass(
+      'font-semibold',
+      '[color:var(--kangur-page-text)]'
+    );
+    expect(screen.getByText('Shared panel description')).toHaveClass(
+      'text-sm',
+      '[color:var(--kangur-page-muted-text)]'
     );
     expect(screen.getByTestId('kangur-metric')).toHaveClass(
       'soft-card',

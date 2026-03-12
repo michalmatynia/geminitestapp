@@ -5,9 +5,9 @@ import {
 } from '@/features/ai/agent-runtime/audit/gate';
 import { getBrowserContextSummary } from '@/features/ai/agent-runtime/browsing/context';
 import { buildCheckpointState } from '@/features/ai/agent-runtime/memory/checkpoint';
+import { getChatbotAgentRunDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import { AgentExecutionContext, PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
-import prisma from '@/shared/lib/db/prisma';
-import { Prisma } from '@/shared/lib/db/prisma-client';
+import type { InputJsonValue } from '@/shared/contracts/json';
 
 export async function evaluateApproval(args: {
   step: PlanStep;
@@ -79,30 +79,33 @@ export async function evaluateApproval(args: {
 
   if (preferences.requireHumanApproval && requiresApproval && approvalGrantedStepId !== step.id) {
     nextApprovalRequestedStepId = step.id;
-    await prisma.chatbotAgentRun.update({
-      where: { id: runId },
-      data: {
-        status: 'waiting_human',
-        requiresHumanIntervention: true,
-        activeStepId: step.id,
-        planState: buildCheckpointState({
-          steps: planSteps,
+    const chatbotAgentRun = getChatbotAgentRunDelegate();
+    if (chatbotAgentRun) {
+      await chatbotAgentRun.update({
+        where: { id: runId },
+        data: {
+          status: 'waiting_human',
+          requiresHumanIntervention: true,
           activeStepId: step.id,
+          planState: buildCheckpointState({
+            steps: planSteps,
+            activeStepId: step.id,
           lastError,
           taskType,
           approvalRequestedStepId: nextApprovalRequestedStepId,
-          approvalGrantedStepId,
-          summaryCheckpoint,
+            approvalGrantedStepId,
+            summaryCheckpoint,
           settings,
           preferences,
           contextRegistry,
-        }) as Prisma.InputJsonValue,
-        checkpointedAt: new Date(),
-        logLines: {
-          push: `[${new Date().toISOString()}] Approval required for step.`,
+          }) as InputJsonValue,
+          checkpointedAt: new Date(),
+          logLines: {
+            push: `[${new Date().toISOString()}] Approval required for step.`,
+          },
         },
-      },
-    });
+      });
+    }
     await logAgentAudit(runId, 'warning', 'Approval required.', {
       type: 'approval-gate',
       stepId: step.id,

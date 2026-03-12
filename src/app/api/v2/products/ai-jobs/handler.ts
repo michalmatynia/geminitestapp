@@ -16,7 +16,7 @@ import {
 } from '@/shared/lib/api/query-schema';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
-const isLegacyPrismaSchemaMismatchError = (
+const isLegacySchemaMismatchError = (
   error: unknown
 ): error is { code: 'P2021' | 'P2022' } => {
   if (!error || typeof error !== 'object') return false;
@@ -83,10 +83,10 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
       }
     );
   } catch (error: unknown) {
-    if (isLegacyPrismaSchemaMismatchError(error)) {
+    if (isLegacySchemaMismatchError(error)) {
       await logSystemEvent({
         level: 'warn',
-        message: '[api/products/ai-jobs] Prisma schema mismatch; returning empty job list.',
+        message: '[api/products/ai-jobs] Legacy schema mismatch; returning empty job list.',
         context: { code: error.code },
       });
       return NextResponse.json({ jobs: [] });

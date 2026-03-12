@@ -5,6 +5,7 @@ import {
   KangurEmptyState,
   KangurGlassPanel,
   KangurMetricCard,
+  KangurSectionEyebrow,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
@@ -119,9 +120,9 @@ export function KangurLearnerAssignmentsPanel({
   return (
     <div className='flex flex-col gap-4'>
       <KangurGlassPanel padding='lg' surface='mistStrong' variant='soft'>
-        <div className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
+        <KangurSectionEyebrow>
           Przebieg przydzielonych zadan
-        </div>
+        </KangurSectionEyebrow>
         <div className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
           Sprawdz, co jest nadal aktywne, ile zadan masz juz za soba i co bylo ostatnim sukcesem.
         </div>

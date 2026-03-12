@@ -16,10 +16,8 @@ import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurUser } from '@/features/kangur/services/ports';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
-import {
-  useKangurLoginModal,
-  type KangurLoginModalAuthMode,
-} from '@/features/kangur/ui/context/KangurLoginModalContext';
+import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
 import { internalError } from '@/shared/errors/app-error';
 
 type KangurAuthError = {
@@ -36,7 +34,7 @@ type KangurAuthContextValue = {
   authError: KangurAuthError | null;
   appPublicSettings: null;
   logout: (shouldRedirect?: boolean) => void;
-  navigateToLogin: (options?: { authMode?: KangurLoginModalAuthMode }) => void;
+  navigateToLogin: (options?: { authMode?: KangurAuthMode }) => void;
   checkAppState: () => Promise<void>;
   selectLearner: (learnerId: string) => Promise<void>;
 };
@@ -159,7 +157,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
   }, [checkAppState, router]);
 
   const navigateToLogin = useCallback(
-    (options?: { authMode?: KangurLoginModalAuthMode }): void => {
+    (options?: { authMode?: KangurAuthMode }): void => {
       openLoginModal(window.location.href, { authMode: options?.authMode });
     },
     [openLoginModal]

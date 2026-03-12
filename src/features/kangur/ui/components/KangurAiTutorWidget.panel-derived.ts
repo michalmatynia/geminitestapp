@@ -8,10 +8,8 @@ import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-co
 import { isAuthGuidedTutorTarget } from './KangurAiTutorWidget.helpers';
 import { getTutorSurfaceLabel } from './KangurAiTutorWidget.coordinator.helpers';
 
-import type {
-  TutorProactiveNudge,
-  TutorRenderedMessage,
-} from './KangurAiTutorPanelBody.context';
+import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/shared/contracts/kangur-ai-tutor';
+import type { TutorProactiveNudge } from './KangurAiTutorPanelBody.context';
 import type { ActiveTutorFocus } from './KangurAiTutorWidget.shared';
 import type {
   GuidedTutorTarget,

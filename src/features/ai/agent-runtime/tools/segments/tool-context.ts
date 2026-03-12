@@ -3,7 +3,11 @@ import path from 'path';
 
 
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
-import prisma from '@/shared/lib/db/prisma';
+import {
+  getAgentBrowserLogDelegate,
+  getAgentBrowserSnapshotDelegate,
+  getChatbotAgentRunDelegate,
+} from '@/features/ai/agent-runtime/store-delegates';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { launchBrowser, createBrowserContext } from '../playwright/browser';
@@ -12,31 +16,73 @@ import { type AgentToolRequest } from './types';
 
 import type { Browser, BrowserContext } from 'playwright';
 
+type ToolContextRunRecord = {
+  model: string | null;
+  searchProvider: string | null;
+  planState: unknown;
+  memoryKey: string | null;
+};
+
+type ResolvedToolContext = {
+  runId: string;
+  prompt: string;
+  stepId: string | undefined;
+  stepLabel: string | undefined;
+  targetUrl: string;
+  targetHostname: string | null;
+  runRecord: ToolContextRunRecord | null;
+  runDir: string;
+  launch: Browser | null;
+  context: BrowserContext;
+  config: {
+    resolvedModel: string;
+    resolvedSearchProvider: string;
+    ignoreRobotsTxt: boolean;
+    memoryKey: string | null;
+    memoryValidationModel: string | null;
+    memorySummarizationModel: string | null;
+    extractionValidationModel: string | null;
+    toolRouterModel: string | null;
+    selectorInferenceModel: string | null;
+    outputNormalizationModel: string | null;
+  };
+};
+
 export async function resolveToolContext(input: {
   request: AgentToolRequest;
   injectedBrowser?: Browser;
   injectedContext?: BrowserContext;
-}) {
+}): Promise<ResolvedToolContext> {
   const { request, injectedBrowser, injectedContext } = input;
-  const { runId, prompt, browser, runHeadless, stepId, stepLabel } = request.input;
+  const {
+    runId,
+    prompt = '',
+    browser,
+    runHeadless,
+    stepId,
+    stepLabel,
+  } = request.input;
 
   if (!runId) {
     throw new Error('Missing runId for tool execution.');
   }
 
-  if (!('agentBrowserLog' in prisma) || !('agentBrowserSnapshot' in prisma)) {
+  const agentBrowserLog = getAgentBrowserLogDelegate();
+  const agentBrowserSnapshot = getAgentBrowserSnapshotDelegate();
+  const chatbotAgentRun = getChatbotAgentRunDelegate();
+
+  if (!agentBrowserLog || !agentBrowserSnapshot) {
     void ErrorSystem.logWarning('[chatbot][agent][tool] Agent browser tables not initialized.', {
       service: 'agent-tool',
       runId,
     });
-    throw new Error('Agent browser tables not initialized. Run prisma generate/db push.');
+    throw new Error('Agent browser storage is unavailable.');
   }
 
   const targetUrl = extractTargetUrl(prompt) ?? 'about:blank';
   const targetHostname = getTargetHostname(prompt);
-  const runRecord =
-    'chatbotAgentRun' in prisma
-      ? await prisma.chatbotAgentRun.findUnique({
+  const runRecord = chatbotAgentRun
+    ? await chatbotAgentRun.findUnique<ToolContextRunRecord>({
         where: { id: runId },
         select: {
           model: true,
@@ -45,7 +91,7 @@ export async function resolveToolContext(input: {
           memoryKey: true,
         },
       })
-      : null;
+    : null;
 
   const [
     defaultConfig,

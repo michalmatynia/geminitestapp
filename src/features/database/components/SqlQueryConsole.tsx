@@ -260,7 +260,7 @@ export function SqlQueryConsole({
           value={command}
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setCommand(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={`{\n  "collection": "products",\n  "operation": "find",\n  "filter": {}\n}`}
+          placeholder={'{\n  "collection": "products",\n  "operation": "find",\n  "filter": {}\n}'}
           className='w-full min-h-[140px] bg-card/60 p-3 font-mono text-xs text-gray-200 placeholder:text-gray-600 focus:border-emerald-500/50'
           spellCheck={false}
         />

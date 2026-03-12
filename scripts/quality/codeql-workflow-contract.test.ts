@@ -19,7 +19,7 @@ describe('CodeQL workflow contract', () => {
     expect(workflowText).toContain('pull_request:');
     expect(workflowText).toContain('push:');
     expect(workflowText).toContain('schedule:');
-    expect(workflowText).toContain("node-version-file: '.nvmrc'");
+    expect(workflowText).toContain('node-version-file: \'.nvmrc\'');
     expect(workflowText).toContain('cache: npm');
     expect(workflowText).toContain('cache-dependency-path: package-lock.json');
     expect(workflowText).toContain('run: npm ci');
@@ -43,8 +43,8 @@ describe('CodeQL workflow contract', () => {
     expect(configText).toContain('paths-ignore:');
     expect(configText).toContain('  - docs');
     expect(configText).toContain('  - e2e');
-    expect(configText).toContain("  - '**/*.test.ts'");
-    expect(configText).toContain("  - '**/*.test.tsx'");
+    expect(configText).toContain('  - \'**/*.test.ts\'');
+    expect(configText).toContain('  - \'**/*.test.tsx\'');
   });
 
   it('keeps CodeQL discoverable through the build docs and contract bundle', () => {

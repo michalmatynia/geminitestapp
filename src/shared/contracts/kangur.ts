@@ -63,6 +63,20 @@ export const kangurLessonNarrationVoiceSchema = z.enum([
 ]);
 export type KangurLessonNarrationVoice = z.infer<typeof kangurLessonNarrationVoiceSchema>;
 
+export const kangurQuestionChoiceSchema = z.union([z.number(), z.string()]);
+export type KangurQuestionChoice = z.infer<typeof kangurQuestionChoiceSchema>;
+
+export const kangurExamQuestionSchema = z.object({
+  id: nonEmptyTrimmedString.max(120),
+  question: z.string().max(10_000),
+  choices: z.array(kangurQuestionChoiceSchema).min(1).max(10),
+  answer: kangurQuestionChoiceSchema,
+  explanation: z.string().max(5_000).optional(),
+  image: z.string().nullable().optional(),
+  choiceDescriptions: z.array(z.string()).max(10).optional(),
+});
+export type KangurExamQuestion = z.infer<typeof kangurExamQuestionSchema>;
+
 export const kangurLessonSchema = z.object({
   id: nonEmptyTrimmedString.max(120),
   componentId: kangurLessonComponentIdSchema,

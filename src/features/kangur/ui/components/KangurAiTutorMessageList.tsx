@@ -3,10 +3,8 @@ import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTu
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { cn, sanitizeSvg } from '@/shared/utils';
 
-import {
-  useKangurAiTutorPanelBodyContext,
-  type TutorRenderedMessage,
-} from './KangurAiTutorPanelBody.context';
+import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/shared/contracts/kangur-ai-tutor';
+import { useKangurAiTutorPanelBodyContext } from './KangurAiTutorPanelBody.context';
 import {
   getAssistantMessageFeedbackKey,
   toFollowUpHref,

@@ -124,6 +124,12 @@ export const productParameterValueSchema = z.object({
 
 export type ProductParameterValue = z.infer<typeof productParameterValueSchema>;
 
+export const resolvedProductParameterValueSchema = productParameterValueSchema.extend({
+  value: z.string(),
+});
+
+export type ResolvedProductParameterValue = z.infer<typeof resolvedProductParameterValueSchema>;
+
 /**
  * Product Contract
  */

@@ -611,7 +611,7 @@
           "aiPrompt"
         ]
       },
-      "configFieldCount": 41,
+      "configFieldCount": 42,
       "docs": {
         "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/database.json",
         "semanticNodeHash": "eadd4fae4b6fd18c8374000db6b359b5cc64ea57a4ded245991a360e13e1eb73",

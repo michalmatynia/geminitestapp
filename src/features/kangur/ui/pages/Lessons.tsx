@@ -62,6 +62,7 @@ const LESSONS_CARD_TRANSITION = {
 } as const;
 const LESSONS_CARD_STAGGER_DELAY = 0.06;
 const LESSONS_ROUTE_ACKNOWLEDGE_MS = 110;
+const ACTIVE_LESSON_HEADER_SCROLL_MAX_FRAMES = 18;
 
 const LessonLoadingFallback = (): React.JSX.Element => (
   <LessonLoadingFallbackCard />
@@ -557,15 +558,40 @@ export default function Lessons() {
       return;
     }
 
-    const frameId = window.requestAnimationFrame(() => {
-      activeLessonHeaderRef.current?.scrollIntoView({
-        behavior: 'auto',
-        block: 'start',
-      });
-    });
+    let frameId: number | null = null;
+    let remainingFrames = ACTIVE_LESSON_HEADER_SCROLL_MAX_FRAMES;
+
+    const scrollHeaderIntoView = (): void => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+
+      const header = activeLessonHeaderRef.current;
+      if (header) {
+        header.scrollIntoView({
+          behavior: 'auto',
+          block: 'start',
+        });
+
+        if (window.scrollY <= 8 || Math.abs(header.getBoundingClientRect().top) <= 8) {
+          frameId = null;
+          return;
+        }
+      }
+
+      remainingFrames -= 1;
+      if (remainingFrames <= 0) {
+        frameId = null;
+        return;
+      }
+
+      frameId = window.requestAnimationFrame(scrollHeaderIntoView);
+    };
+
+    frameId = window.requestAnimationFrame(scrollHeaderIntoView);
 
     return () => {
-      window.cancelAnimationFrame(frameId);
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
     };
   }, [activeLesson?.id]);
   useKangurTutorAnchor({

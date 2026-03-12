@@ -6,10 +6,41 @@ import {
   defaultCurrencies,
   defaultLanguages,
 } from '@/features/internationalization/lib/internationalizationDefaults';
-import type { Prisma } from '@/shared/lib/db/prisma-client';
+
+type CodeRecord = {
+  code: string;
+  id: string;
+};
+
+type InternationalizationSeedTransaction = {
+  country: {
+    createMany(args: { data: typeof defaultCountries; skipDuplicates: true }): Promise<unknown>;
+    findMany(args: { select: { code: true; id: true } }): Promise<CodeRecord[]>;
+  };
+  countryCurrency: {
+    createMany(args: {
+      data: Array<{ countryId: string; currencyId: string }>;
+      skipDuplicates: true;
+    }): Promise<unknown>;
+  };
+  currency: {
+    createMany(args: { data: typeof defaultCurrencies; skipDuplicates: true }): Promise<unknown>;
+    findMany(args: { select: { code: true; id: true } }): Promise<CodeRecord[]>;
+  };
+  language: {
+    createMany(args: { data: typeof defaultLanguages; skipDuplicates: true }): Promise<unknown>;
+    findMany(args: { select: { code: true; id: true } }): Promise<CodeRecord[]>;
+  };
+  languageCountry: {
+    createMany(args: {
+      data: Array<{ countryId: string; languageId: string }>;
+      skipDuplicates: true;
+    }): Promise<unknown>;
+  };
+};
 
 export async function ensureInternationalizationDefaults(
-  tx: Prisma.TransactionClient
+  tx: InternationalizationSeedTransaction
 ): Promise<void> {
   await tx.currency.createMany({
     data: defaultCurrencies,

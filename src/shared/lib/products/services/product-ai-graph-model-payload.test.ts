@@ -16,7 +16,6 @@ let resolveGraphModelDispatchInspection: typeof import('@/shared/lib/products/se
 let prepareGraphModelExecutionInput: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').prepareGraphModelExecutionInput;
 let readGraphModelAiPathsRunContext: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').readGraphModelAiPathsRunContext;
 let readGraphModelPayloadGraphString: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').readGraphModelPayloadGraphString;
-let resolveGraphModelExecutionInspection: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').resolveGraphModelExecutionInspection;
 let resolveGraphModelExecutionPayload: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').resolveGraphModelExecutionPayload;
 let resolveGraphModelExecutionContext: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').resolveGraphModelExecutionContext;
 let resolveGraphModelCacheKey: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').resolveGraphModelCacheKey;
@@ -53,7 +52,6 @@ beforeEach(async () => {
     prepareGraphModelExecutionInput,
     readGraphModelAiPathsRunContext,
     readGraphModelPayloadGraphString,
-    resolveGraphModelExecutionInspection,
     resolveGraphModelExecutionPayload,
     resolveGraphModelExecutionContext,
     resolveGraphModelCacheKey,

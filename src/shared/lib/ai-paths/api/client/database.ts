@@ -84,39 +84,32 @@ const resolveDbActionTimeoutMs = (timeoutMs?: number): number => {
 };
 
 export async function databaseAction<T>(
-  payload: DbActionPayload,
+  input: DbActionPayload,
   options?: DbRequestOptions
 ): Promise<ApiResponse<T>> {
-  const provider = normalizeDbProvider(payload.provider);
-  return apiPost<T>(
-    '/api/ai-paths/db-action',
-    {
-      ...(provider ? { provider } : {}),
-      collection: payload.collection,
-      ...(payload.collectionMap ? { collectionMap: payload.collectionMap } : {}),
-      action: payload.action,
-      ...(payload.filter !== undefined ? { filter: payload.filter } : {}),
-      ...(payload.pipeline !== undefined ? { pipeline: payload.pipeline } : {}),
-      ...(payload.document !== undefined ? { document: payload.document } : {}),
-      ...(payload.documents !== undefined ? { documents: payload.documents } : {}),
-      ...(payload.update !== undefined ? { update: payload.update } : {}),
-      ...(payload.projection !== undefined ? { projection: payload.projection } : {}),
-      ...(payload.sort !== undefined ? { sort: payload.sort } : {}),
-      ...(payload.limit !== undefined ? { limit: payload.limit } : {}),
-      ...(payload.idType !== undefined ? { idType: payload.idType } : {}),
-      ...(payload.distinctField !== undefined
-        ? { distinctField: payload.distinctField }
-        : {}),
-      ...(payload.upsert !== undefined ? { upsert: payload.upsert } : {}),
-      ...(payload.returnDocument !== undefined
-        ? { returnDocument: payload.returnDocument }
-        : {}),
-    },
-    {
-      timeoutMs: resolveDbActionTimeoutMs(options?.timeoutMs),
-      ...(options?.signal ? { signal: options.signal } : {}),
-    }
-  );
+  const provider = normalizeDbProvider(input.provider);
+  const payload: DbActionPayload = {
+    ...(provider ? { provider } : {}),
+    collection: input.collection,
+    ...(input.collectionMap ? { collectionMap: input.collectionMap } : {}),
+    action: input.action,
+    ...(input.filter !== undefined ? { filter: input.filter } : {}),
+    ...(input.pipeline !== undefined ? { pipeline: input.pipeline } : {}),
+    ...(input.document !== undefined ? { document: input.document } : {}),
+    ...(input.documents !== undefined ? { documents: input.documents } : {}),
+    ...(input.update !== undefined ? { update: input.update } : {}),
+    ...(input.projection !== undefined ? { projection: input.projection } : {}),
+    ...(input.sort !== undefined ? { sort: input.sort } : {}),
+    ...(input.limit !== undefined ? { limit: input.limit } : {}),
+    ...(input.idType !== undefined ? { idType: input.idType } : {}),
+    ...(input.distinctField !== undefined ? { distinctField: input.distinctField } : {}),
+    ...(input.upsert !== undefined ? { upsert: input.upsert } : {}),
+    ...(input.returnDocument !== undefined ? { returnDocument: input.returnDocument } : {}),
+  };
+  return apiPost<T>('/api/ai-paths/db-action', payload, {
+    timeoutMs: resolveDbActionTimeoutMs(options?.timeoutMs),
+    ...(options?.signal ? { signal: options.signal } : {}),
+  });
 }
 
 export async function databaseQuery<T>(payload: DbQueryPayload): Promise<ApiResponse<T>> {

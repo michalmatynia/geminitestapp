@@ -7,18 +7,24 @@ import {
   type TargetAndTransition,
   type Transition,
 } from 'framer-motion';
-import { X } from 'lucide-react';
 
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { useKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
 import { cn } from '@/shared/utils';
 
+import {
+  KangurAiTutorChromeBadge,
+  KangurAiTutorChromeCloseButton,
+  KangurAiTutorChromeKicker,
+  KangurAiTutorChromeTextButton,
+} from './KangurAiTutorChrome';
 import { KangurAiTutorMoodAvatar } from './KangurAiTutorMoodAvatar';
 import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
 
 import type {
-  TutorEntryDirection,
+  TutorAvatarPointer,
+  TutorHorizontalSide,
   TutorMotionProfile,
   TutorPanelSnapState,
 } from './KangurAiTutorWidget.shared';
@@ -39,21 +45,7 @@ type ReducedMotionTransitions = {
   };
 };
 
-type AvatarPointer = {
-  end: {
-    x: number;
-    y: number;
-  };
-  height: number;
-  left: number;
-  side: 'left' | 'right';
-  start: {
-    x: number;
-    y: number;
-  };
-  top: number;
-  width: number;
-};
+type AvatarPointer = TutorAvatarPointer;
 
 type Props = {
   attachedAvatarStyle: CSSProperties;
@@ -62,10 +54,10 @@ type Props = {
     y: number;
   };
   avatarAnchorKind: string;
-  avatarAttachmentSide: 'left' | 'right';
+  avatarAttachmentSide: TutorHorizontalSide;
   avatarButtonClassName: string;
   avatarPointer: AvatarPointer | null;
-  bubbleEntryDirection: TutorEntryDirection;
+  bubbleEntryDirection: TutorHorizontalSide;
   bubbleMode: 'bubble' | 'sheet';
   bubbleLaunchOrigin: 'dock-bottom-right' | 'sheet';
   bubbleStrategy: string;
@@ -523,27 +515,27 @@ export function KangurAiTutorPanelChrome({
                   onPointerUp={onHeaderPointerUp}
                 >
                   <div className='min-w-0 flex flex-1 flex-col'>
-                    <span className='flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] [color:var(--kangur-chat-kicker-text,var(--kangur-page-text))]'>
-                      <span
-                        className='inline-flex h-1.5 w-1.5 rounded-full'
-                        style={{
-                          backgroundColor:
-                            'var(--kangur-chat-kicker-dot, var(--kangur-chat-kicker-text, var(--kangur-page-text)))',
-                        }}
-                      />
+                    <KangurAiTutorChromeKicker
+                      className='[color:var(--kangur-chat-kicker-text,var(--kangur-page-text))]'
+                      dotClassName='[background:var(--kangur-chat-kicker-dot,var(--kangur-chat-kicker-text,var(--kangur-page-text)))]'
+                      dotStyle={{
+                        backgroundColor:
+                          'var(--kangur-chat-kicker-dot, var(--kangur-chat-kicker-text, var(--kangur-page-text)))',
+                      }}
+                    >
                       AI Tutor
-                    </span>
+                    </KangurAiTutorChromeKicker>
                     <span className='mt-1 text-sm font-semibold leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text,#1e293b))]'>
                       {tutorDisplayName}
                     </span>
                     {!shouldUseMinimalPanelShell ? (
-                      <span
+                      <KangurAiTutorChromeBadge
                         data-testid='kangur-ai-tutor-mood-chip'
                         data-mood-id={tutorBehaviorMoodId}
-                        className='mt-2 inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] shadow-[0_4px_12px_-8px_rgba(245,158,11,0.18)] [border-color:var(--kangur-chat-chip-border,var(--kangur-chat-header-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-chip-background,linear-gradient(135deg,color-mix(in_srgb,var(--kangur-soft-card-background)_88%,#fef3c7),color-mix(in_srgb,var(--kangur-soft-card-background)_80%,#fff7ed)))] [color:var(--kangur-chat-chip-text,var(--kangur-page-text))]'
+                        className='mt-2 tracking-[0.1em] shadow-[0_4px_12px_-8px_rgba(245,158,11,0.18)] [border-color:var(--kangur-chat-chip-border,var(--kangur-chat-header-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-chip-background,linear-gradient(135deg,color-mix(in_srgb,var(--kangur-soft-card-background)_88%,#fef3c7),color-mix(in_srgb,var(--kangur-soft-card-background)_80%,#fff7ed)))] [color:var(--kangur-chat-chip-text,var(--kangur-page-text))]'
                       >
                         {tutorContent.panelChrome.moodPrefix}: {tutorBehaviorMoodLabel}
-                      </span>
+                      </KangurAiTutorChromeBadge>
                     ) : null}
                     {shouldRenderPanelMoodDescription ? (
                       <span
@@ -554,12 +546,12 @@ export function KangurAiTutorPanelChrome({
                       </span>
                     ) : null}
                     {isFollowingContext && uiMode === 'freeform' ? (
-                      <span
+                      <KangurAiTutorChromeBadge
                         data-testid='kangur-ai-tutor-following-context-badge'
-                        className='mt-2 inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] [border-color:var(--kangur-chat-chip-border,var(--kangur-chat-header-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-chip-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-chip-text,var(--kangur-page-text))]'
+                        className='mt-2 tracking-[0.08em] [border-color:var(--kangur-chat-chip-border,var(--kangur-chat-header-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-chip-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-chip-text,var(--kangur-page-text))]'
                       >
                         {tutorContent.panelChrome.followingContextLabel}
-                      </span>
+                      </KangurAiTutorChromeBadge>
                     ) : null}
                     {sessionSurfaceLabel ? (
                       <span className='mt-2 text-[11px] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
@@ -567,72 +559,61 @@ export function KangurAiTutorPanelChrome({
                       </span>
                     ) : null}
                     {snapPreviewTargetLabel ? (
-                      <span
+                      <KangurAiTutorChromeBadge
                         data-testid='kangur-ai-tutor-snap-preview'
-                        className='mt-2 inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-page-text))]'
+                        className='mt-2 tracking-[0.08em] [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-page-text))]'
                       >
                         {`${tutorContent.panelChrome.snapPreviewPrefix}: ${snapPreviewTargetLabel}`}
-                      </span>
+                      </KangurAiTutorChromeBadge>
                     ) : null}
                   </div>
                   <div className='ml-3 flex items-center gap-2 pt-0.5'>
                     {!shouldUseMinimalPanelShell ? (
                       canDetachPanelFromContext && uiMode === 'freeform' ? (
-                        <button
+                        <KangurAiTutorChromeTextButton
                           data-testid='kangur-ai-tutor-detach-from-context'
-                          type='button'
                           onClick={onDetachPanelFromContext}
-                          className='cursor-pointer rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-page-text))] hover:[background:var(--kangur-chat-control-hover-background,var(--kangur-soft-card-background))]'
                           aria-label={tutorContent.panelChrome.detachFromContextAria}
                         >
                           {tutorContent.panelChrome.detachFromContextLabel}
-                        </button>
+                        </KangurAiTutorChromeTextButton>
                       ) : null
                     ) : null}
                     {!shouldUseMinimalPanelShell ? (
                       canMovePanelToContext && uiMode === 'freeform' ? (
-                        <button
+                        <KangurAiTutorChromeTextButton
                           data-testid='kangur-ai-tutor-move-to-context'
-                          type='button'
                           onClick={onMovePanelToContext}
-                          className='cursor-pointer rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-page-text))] hover:[background:var(--kangur-chat-control-hover-background,var(--kangur-soft-card-background))]'
                           aria-label={tutorContent.panelChrome.moveToContextAria}
                         >
                           {tutorContent.panelChrome.moveToContextLabel}
-                        </button>
+                        </KangurAiTutorChromeTextButton>
                       ) : null
                     ) : null}
                     {!shouldUseMinimalPanelShell ? (
                       canResetPanelPosition && uiMode === 'freeform' ? (
-                        <button
+                        <KangurAiTutorChromeTextButton
                           data-testid='kangur-ai-tutor-reset-position'
-                          type='button'
                           onClick={onResetPanelPosition}
-                          className='cursor-pointer rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-page-text))] hover:[background:var(--kangur-chat-control-hover-background,var(--kangur-soft-card-background))]'
                           aria-label={tutorContent.panelChrome.resetPositionAria}
                         >
                           {tutorContent.panelChrome.resetPositionLabel}
-                        </button>
+                        </KangurAiTutorChromeTextButton>
                       ) : null
                     ) : null}
                     {!shouldUseMinimalPanelShell ? (
-                      <button
-                        type='button'
+                      <KangurAiTutorChromeTextButton
                         onClick={onDisableTutor}
-                        className='cursor-pointer rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-page-text))] hover:[background:var(--kangur-chat-control-hover-background,var(--kangur-soft-card-background))]'
                         aria-label={tutorContent.common.disableTutorAria}
                       >
                         {tutorContent.common.disableTutorLabel}
-                      </button>
+                      </KangurAiTutorChromeTextButton>
                     ) : null}
-                    <button
-                      type='button'
+                    <KangurAiTutorChromeCloseButton
                       onClick={onClose}
-                      className='shrink-0 cursor-pointer rounded-full border p-1 transition-[background-color,box-shadow,transform,color] [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-page-text))] hover:-translate-y-[1px] hover:scale-[1.03] hover:[background:var(--kangur-chat-control-hover-background,var(--kangur-soft-card-background))] hover:shadow-[0_10px_20px_-14px_rgba(180,83,9,0.42)]'
+                      iconClassName='h-4 w-4'
                       aria-label={tutorContent.common.closeAria}
-                    >
-                      <X className='h-4 w-4' />
-                    </button>
+                    />
                   </div>
                 </div>
 

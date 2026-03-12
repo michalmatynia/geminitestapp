@@ -198,6 +198,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     persistedSelectionPageRects,
     persistedSelectionRect,
     sectionResponsePending,
+    sheetBreakpoint: motionProfile.sheetBreakpoint,
     selectionGuidanceCalloutVisibleText,
     selectionResponsePending,
     sessionContentId: sessionContext?.contentId,

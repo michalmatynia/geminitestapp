@@ -16,6 +16,7 @@ import {
   KangurInfoCard,
   KangurMetricCard,
   KangurProgressBar,
+  KangurSectionEyebrow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
@@ -264,9 +265,9 @@ export default function ScoreHistory({
       </div>
 
       <KangurGlassPanel padding='md' surface='mistStrong' variant='soft'>
-        <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+        <KangurSectionEyebrow as='p' className='mb-3' tone='slate'>
           Obraz ostatnich {SCORE_INSIGHT_WINDOW_DAYS} dni
-        </p>
+        </KangurSectionEyebrow>
         <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3'>
           <KangurMetricCard accent='sky' label='Sesje tygodnia' value={insights.recentGames}>
             <p className='text-xs text-sky-800/80'>
@@ -347,9 +348,9 @@ export default function ScoreHistory({
       </KangurGlassPanel>
 
       <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
-        <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+        <KangurSectionEyebrow as='p' className='mb-3' tone='slate'>
           Wyniki wg operacji
-        </p>
+        </KangurSectionEyebrow>
         <div className='flex flex-col gap-2'>
           {Object.entries(opBreakdown).map(([operation, data]) => {
             const percent = Math.round((data.correct / data.total) * 100);

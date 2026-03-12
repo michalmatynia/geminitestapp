@@ -9,7 +9,7 @@ import { badRequestError } from '@/shared/errors/app-error';
 export type { MigrationDirection };
 
 const LEGACY_PRODUCT_MIGRATION_REMOVED_MESSAGE =
-  'Legacy Prisma product migration has been removed. Products are stored in MongoDB only.';
+  'Legacy product migration has been removed. Products are stored in MongoDB only.';
 
 export async function getProductMigrationTotal(_direction: MigrationDirection): Promise<number> {
   throw badRequestError(LEGACY_PRODUCT_MIGRATION_REMOVED_MESSAGE);

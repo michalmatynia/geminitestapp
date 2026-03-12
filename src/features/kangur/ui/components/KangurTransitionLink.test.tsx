@@ -9,6 +9,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   nextLinkPropsMock,
   startRouteTransitionMock,
+  useOptionalKangurRouteTransitionStateMock,
+  useOptionalKangurRoutingMock,
   usePathnameMock,
   routerPushMock,
   routerReplaceMock,
@@ -16,6 +18,8 @@ const {
 } = vi.hoisted(() => ({
   nextLinkPropsMock: vi.fn(),
   startRouteTransitionMock: vi.fn(),
+  useOptionalKangurRouteTransitionStateMock: vi.fn(),
+  useOptionalKangurRoutingMock: vi.fn(),
   usePathnameMock: vi.fn(),
   routerPushMock: vi.fn(),
   routerReplaceMock: vi.fn(),
@@ -51,6 +55,11 @@ vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
   useOptionalKangurRouteTransitionActions: () => ({
     startRouteTransition: startRouteTransitionMock,
   }),
+  useOptionalKangurRouteTransitionState: useOptionalKangurRouteTransitionStateMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
+  useOptionalKangurRouting: useOptionalKangurRoutingMock,
 }));
 
 import { KangurTransitionLink } from '@/features/kangur/ui/components/KangurTransitionLink';
@@ -59,6 +68,8 @@ describe('KangurTransitionLink', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     usePathnameMock.mockReturnValue('/kangur');
+    useOptionalKangurRouteTransitionStateMock.mockReturnValue(null);
+    useOptionalKangurRoutingMock.mockReturnValue(null);
     startRouteTransitionMock.mockReturnValue({
       acknowledgeMs: 0,
       started: true,
@@ -177,5 +188,42 @@ describe('KangurTransitionLink', () => {
     vi.advanceTimersByTime(110);
 
     expect(routerPushMock).toHaveBeenCalledWith('/kangur/lessons', { scroll: false });
+  });
+
+  it('does not let stale waiting-for-ready state block navigation away from the committed page', () => {
+    usePathnameMock.mockReturnValue('/kangur/lessons');
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+      pageKey: 'Lessons',
+      requestedHref: '/kangur/lessons',
+      requestedPath: '/kangur/lessons',
+    });
+    useOptionalKangurRouteTransitionStateMock.mockReturnValue({
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionRequestedHref: '/kangur/lessons',
+      activeTransitionSkeletonVariant: 'lessons',
+      activeTransitionSourceId: 'top-nav:lessons',
+      isRouteAcknowledging: false,
+      isRoutePending: false,
+      isRouteRevealing: false,
+      isRouteWaitingForReady: true,
+      pendingPageKey: null,
+      transitionPhase: 'waiting_for_ready',
+    });
+    startRouteTransitionMock.mockReturnValue({
+      acknowledgeMs: 0,
+      started: false,
+    });
+
+    render(
+      <KangurTransitionLink href='/kangur/profile' targetPageKey='LearnerProfile'>
+        Profil
+      </KangurTransitionLink>
+    );
+
+    fireEvent.click(screen.getByRole('link', { name: 'Profil' }));
+
+    expect(routerPushMock).toHaveBeenCalledWith('/kangur/profile', { scroll: false });
   });
 });

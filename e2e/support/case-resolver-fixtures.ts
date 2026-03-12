@@ -36,7 +36,7 @@ const defaultSettings: SettingsRecord[] = [
           folder: '',
           parentCaseId: 'case-1',
           referenceCaseIds: [],
-          documentDate: '',
+          documentDate: null,
           originalDocumentContent: '',
           explodedDocumentContent: '',
           activeDocumentVersion: 'original',

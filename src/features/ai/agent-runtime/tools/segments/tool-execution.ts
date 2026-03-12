@@ -32,7 +32,7 @@ export async function runAgentTool(
   injectedBrowser?: Browser,
   injectedContext?: BrowserContext
 ): Promise<AgentToolResult> {
-  let contextData;
+  let contextData: Awaited<ReturnType<typeof resolveToolContext>>;
   try {
     contextData = await resolveToolContext({ request, injectedBrowser, injectedContext });
   } catch (error) {

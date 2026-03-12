@@ -113,7 +113,7 @@ describe('KangurGameHomeActionsWidget', () => {
     expect(screen.getByRole('button', { name: /kangur matematyczny/i })).toBeEnabled();
   });
 
-  it('adds extra spacing between the front-page action pills', () => {
+  it('switches the front-page actions to a compact mobile grid', () => {
     useKangurGameRuntimeMock.mockReturnValue({
       basePath: '/kangur',
       canStartFromHome: true,
@@ -124,7 +124,14 @@ describe('KangurGameHomeActionsWidget', () => {
 
     render(<KangurGameHomeActionsWidget />);
 
-    expect(screen.getByTestId('kangur-home-actions-list')).toHaveClass('space-y-6', 'sm:space-y-7');
+    expect(screen.getByTestId('kangur-home-actions-list')).toHaveClass(
+      'grid',
+      'grid-cols-2',
+      'gap-3',
+      'sm:grid-cols-1',
+      'sm:gap-0',
+      'sm:space-y-7'
+    );
   });
 
   it('stays mounted outside the home screen when the transition override is disabled', () => {

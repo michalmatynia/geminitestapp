@@ -8,10 +8,8 @@ import {
   type KangurAiTutorContent,
 } from '@/shared/contracts/kangur-ai-tutor-content';
 
-import type {
-  TutorProactiveNudge,
-  TutorRenderedMessage,
-} from './KangurAiTutorPanelBody.context';
+import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/shared/contracts/kangur-ai-tutor';
+import type { TutorProactiveNudge } from './KangurAiTutorPanelBody.context';
 import type { ActiveTutorFocus, TutorQuickAction } from './KangurAiTutorWidget.shared';
 import type { TutorSurface } from './KangurAiTutorWidget.types';
 
@@ -675,12 +673,38 @@ export function useKangurAiTutorConversationViewState(
     isSectionExplainPendingMode
       ? []
       : quickActions;
+  const navigationNudge = useMemo((): TutorProactiveNudge | null => {
+    if (input.messages.length === 0 || input.proactiveNudges === 'off') {
+      return null;
+    }
+
+    const lastAssistant = [...input.messages]
+      .reverse()
+      .find((m) => m.role === 'assistant');
+    if (!lastAssistant?.websiteHelpTarget) {
+      return null;
+    }
+
+    const target = lastAssistant.websiteHelpTarget;
+    return {
+      mode: 'gentle',
+      title: 'Mogę Ci pokazać',
+      description: `Chcesz zobaczyć gdzie to jest? Poprowadzę Cię do: ${target.label}`,
+      action: {
+        id: 'navigate_to_target',
+        label: target.label,
+        prompt: `Pokaż mi "${target.label}"`,
+        promptMode: 'chat',
+      },
+    };
+  }, [input.messages, input.proactiveNudges]);
+
   const visibleProactiveNudge =
     input.shouldRenderContextlessTutorUi ||
     isSelectionExplainPendingMode ||
     isSectionExplainPendingMode
       ? null
-      : proactiveNudge;
+      : (navigationNudge ?? proactiveNudge);
   const emptyStateMessage = input.shouldRenderContextlessTutorUi
     ? input.contextlessEmptyStateMessage
     : getEmptyStateMessage({

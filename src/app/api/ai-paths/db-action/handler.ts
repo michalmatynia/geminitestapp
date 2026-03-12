@@ -150,6 +150,16 @@ const normalizeReplaceDoc = (update: unknown): Record<string, unknown> | null =>
   return null;
 };
 
+const extractFlatUpdates = (update: unknown): Record<string, unknown> | null => {
+  if (update && typeof update === 'object' && !Array.isArray(update)) {
+    const keys = Object.keys(update as Record<string, unknown>);
+    if (!keys.some((key: string) => key.startsWith('$'))) {
+      return update as Record<string, unknown>;
+    }
+  }
+  return null;
+};
+
 type DbProvider = 'mongodb';
 type DbActionRequestedProvider = 'auto' | DbProvider | undefined;
 type ProviderResolutionErrorCode =
@@ -241,8 +251,9 @@ export async function postAiPathsDbActionHandler(
 
     const mongo = await getMongoDb();
     const collectionRef = mongo.collection(resolvedCollection);
+    const where = coerceQuery(filter);
     const normalizedFilter = normalizeObjectId(coerceQuery(filter), idType);
-    const hasFilter = Object.keys(normalizedFilter).length > 0;
+    const hasFilter = Object.keys(where).length > 0;
     const now = new Date();
 
     const requireFilter = [
@@ -352,8 +363,9 @@ export async function postAiPathsDbActionHandler(
     }
 
     if (action === 'replaceOne') {
+      const flatUpdates = extractFlatUpdates(update);
       const replacement = normalizeReplaceDoc(update);
-      if (!replacement) {
+      if (!replacement || !flatUpdates) {
         throw badRequestError('Replacement document is required');
       }
       const nextReplacement = shouldAutoStampUpdatedAt(resolvedCollection)

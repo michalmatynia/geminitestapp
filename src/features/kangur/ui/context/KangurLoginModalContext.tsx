@@ -13,16 +13,15 @@ import {
 import { getKangurHomeHref, getKangurLoginHref } from '@/features/kangur/config/routing';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { type KangurAuthMode, parseKangurAuthMode } from '@/shared/contracts/kangur-auth';
 import { internalError } from '@/shared/errors/app-error';
 
-export type KangurLoginModalAuthMode = 'sign-in' | 'create-account';
-
 type KangurLoginModalOpenOptions = {
-  authMode?: KangurLoginModalAuthMode;
+  authMode?: KangurAuthMode;
 };
 
 type KangurLoginModalContextValue = {
-  authMode: KangurLoginModalAuthMode;
+  authMode: KangurAuthMode;
   callbackUrl: string;
   closeLoginModal: () => void;
   dismissLoginModal: () => void;
@@ -47,7 +46,7 @@ type KangurLoginModalProviderProps = {
 };
 
 type InlineLoginModalState = {
-  authMode: KangurLoginModalAuthMode;
+  authMode: KangurAuthMode;
   callbackUrl: string | null;
   isOpen: boolean;
 };
@@ -68,9 +67,6 @@ const getPathnameFromHref = (href: string): string => {
   }
 };
 
-const resolveAuthMode = (value: string | null | undefined): KangurLoginModalAuthMode =>
-  value?.trim().toLowerCase() === 'create-account' ? 'create-account' : 'sign-in';
-
 export const KangurLoginModalProvider = ({
   children,
 }: KangurLoginModalProviderProps): React.JSX.Element => {
@@ -85,7 +81,7 @@ export const KangurLoginModalProvider = ({
     [homeHref, searchParams]
   );
   const requestedAuthMode = useMemo(
-    () => resolveAuthMode(searchParams.get('authMode')),
+    () => parseKangurAuthMode(searchParams.get('authMode')),
     [searchParams]
   );
   const [inlineState, setInlineState] = useState<InlineLoginModalState>({

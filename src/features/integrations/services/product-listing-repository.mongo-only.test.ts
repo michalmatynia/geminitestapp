@@ -11,8 +11,8 @@ describe('product-listing-repository mongo-only contract', () => {
   it('does not import Prisma runtime modules', () => {
     const source = readFileSync(repositoryPath, 'utf8');
 
-    expect(source).not.toContain("@/shared/lib/db/prisma'");
-    expect(source).not.toContain("@/shared/lib/db/prisma-client'");
+    expect(source).not.toContain('@/shared/lib/db/prisma\'');
+    expect(source).not.toContain('@/shared/lib/db/prisma-client\'');
   });
 
   it('does not reintroduce provider switching for product listings', () => {

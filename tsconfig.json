@@ -163,8 +163,14 @@
     ".next-dev-products-fix/dev/types/**/*.ts",
     ".next-dev-products-fix-3200/types/**/*.ts",
     ".next-dev-products-fix-3200/dev/types/**/*.ts",
-    ".next-dev-playwright-broker-web-dev-michalmatynia/types/**/*.ts",
-    ".next-dev-playwright-broker-web-dev-michalmatynia/dev/types/**/*.ts"
+    ".next-dev-playwright-broker-web-dev-*/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-*/dev/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-selection-handoff-fresh-20260312-1/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-selection-handoff-fresh-20260312-1/dev/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-selection-handoff-fresh-20260312-timeout60/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-selection-handoff-fresh-20260312-timeout60/dev/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-selection-handoff-fresh-20260312-slowfix/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-selection-handoff-fresh-20260312-slowfix/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

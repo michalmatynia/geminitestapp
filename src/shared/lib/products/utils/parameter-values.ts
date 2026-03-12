@@ -1,10 +1,7 @@
-import type { ProductParameterValue } from '@/shared/contracts/products';
-
-export type ResolvedProductParameterValue = {
-  parameterId: string;
-  value: string;
-  valuesByLanguage?: Record<string, string>;
-};
+import type {
+  ProductParameterValue,
+  ResolvedProductParameterValue,
+} from '@/shared/contracts/products';
 
 const normalizeTrimmedString = (value: unknown): string => {
   if (typeof value !== 'string') return '';

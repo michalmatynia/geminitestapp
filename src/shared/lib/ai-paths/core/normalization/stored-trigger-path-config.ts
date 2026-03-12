@@ -10,7 +10,7 @@ import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine'
 
 import { normalizeLoadedPathName, sanitizeTriggerPathConfig } from './trigger-normalization';
 
-const LEGACY_TRIGGER_PROVIDER_ALIASES = new Set(['all', 'prisma']);
+const LEGACY_TRIGGER_PROVIDER_ALIASES = new Set(['all']);
 
 export const repairLegacyTriggerProviderAliases = (
   config: PathConfig
@@ -198,11 +198,11 @@ const resolveSeededStarterFallbackConfig = (args: {
     description: normalizeOptionalText(parsedConfig?.['description']),
     isActive:
       typeof parsedConfig?.['isActive'] === 'boolean'
-        ? (parsedConfig['isActive'] as boolean)
+        ? parsedConfig['isActive']
         : entry.seedPolicy?.isActive,
     isLocked:
       typeof parsedConfig?.['isLocked'] === 'boolean'
-        ? (parsedConfig['isLocked'] as boolean)
+        ? parsedConfig['isLocked']
         : entry.seedPolicy?.isLocked,
     seededDefault: true,
     updatedAt: normalizeOptionalText(parsedConfig?.['updatedAt']),

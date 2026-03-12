@@ -873,6 +873,54 @@ describe('kangur ai tutor chat handler', () => {
     );
   });
 
+  it('passes explicit knowledge references through to the native-guide resolver', async () => {
+    resolveKangurAiTutorNativeGuideResolutionMock.mockResolvedValue({
+      status: 'hit',
+      message: 'Ranking pokazuje wyniki i pozycje na tle innych prob.',
+      followUpActions: [],
+      entryId: 'shared-leaderboard',
+      matchedSignals: ['knowledge_reference'],
+      coverageLevel: 'specific',
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Powiedz mi o tej sekcji.' }],
+          context: {
+            surface: 'game',
+            contentId: 'game:home',
+            promptMode: 'explain',
+            focusKind: 'leaderboard',
+            focusId: 'kangur-game-leaderboard',
+            focusLabel: 'Ranking',
+            interactionIntent: 'explain',
+            knowledgeReference: {
+              sourceCollection: 'kangur_ai_tutor_native_guides',
+              sourceRecordId: 'shared-leaderboard',
+              sourcePath: 'entry:shared-leaderboard',
+            },
+          },
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(200);
+    expect(resolveKangurAiTutorNativeGuideResolutionMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        latestUserMessage: 'Powiedz mi o tej sekcji.',
+        context: expect.objectContaining({
+          knowledgeReference: {
+            sourceCollection: 'kangur_ai_tutor_native_guides',
+            sourceRecordId: 'shared-leaderboard',
+            sourcePath: 'entry:shared-leaderboard',
+          },
+        }),
+      })
+    );
+  });
+
   it('returns adaptive follow-up actions with the tutor response', async () => {
     buildKangurAiTutorAdaptiveGuidanceMock.mockResolvedValue({
       instructions:

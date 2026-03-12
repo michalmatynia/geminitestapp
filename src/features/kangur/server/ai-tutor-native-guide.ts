@@ -60,6 +60,7 @@ type KangurAiTutorNativeGuideResponse = {
 };
 
 type KangurAiTutorNativeGuideMatchSignal =
+  | 'knowledge_reference'
   | 'surface'
   | 'focus_kind'
   | 'focus_id_exact'
@@ -183,6 +184,13 @@ const shouldUseNativeGuide = (input: {
   const focusKind = input.context?.focusKind ?? null;
 
   if (
+    input.context?.knowledgeReference?.sourceCollection === 'kangur_ai_tutor_native_guides' &&
+    input.context?.interactionIntent === 'explain'
+  ) {
+    return true;
+  }
+
+  if (
     input.context?.promptMode === 'explain' &&
     focusKind &&
     ALWAYS_NATIVE_EXPLAIN_FOCUS_KINDS.has(focusKind)
@@ -274,6 +282,32 @@ const analyzeEntryMatch = (
   };
 };
 
+const selectGuideEntryFromKnowledgeReference = (
+  entries: KangurAiTutorNativeGuideEntry[],
+  context: KangurAiTutorConversationContext | undefined
+): RankedNativeGuideEntry | null => {
+  const knowledgeReference = context?.knowledgeReference;
+  if (knowledgeReference?.sourceCollection !== 'kangur_ai_tutor_native_guides') {
+    return null;
+  }
+
+  const sourceRecordId = knowledgeReference.sourceRecordId.trim();
+  if (!sourceRecordId) {
+    return null;
+  }
+
+  const entry = entries.find((candidate) => candidate.enabled && candidate.id === sourceRecordId);
+  if (!entry) {
+    return null;
+  }
+
+  return {
+    entry,
+    score: Number.MAX_SAFE_INTEGER,
+    matchedSignals: ['knowledge_reference'],
+  };
+};
+
 const selectGuideEntry = (
   entries: KangurAiTutorNativeGuideEntry[],
   input: {
@@ -281,6 +315,11 @@ const selectGuideEntry = (
     context: KangurAiTutorConversationContext | undefined;
   }
 ): RankedNativeGuideEntry | null => {
+  const directEntry = selectGuideEntryFromKnowledgeReference(entries, input.context);
+  if (directEntry) {
+    return directEntry;
+  }
+
   const normalizedMessage = normalizeMessage(input.latestUserMessage);
   const enabledEntries = entries.filter((entry) => entry.enabled);
 

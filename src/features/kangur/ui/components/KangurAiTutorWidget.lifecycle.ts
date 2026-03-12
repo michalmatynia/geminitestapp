@@ -13,11 +13,14 @@ import {
   applyTutorPanelSnapState,
   clampTutorPanelPoint,
 } from './KangurAiTutorWidget.shared';
+import { scrollToAndSpotlightAnchor } from './KangurAiTutorWidget.navigation-spotlight';
 import {
+  clearPersistedPendingNavigationTarget,
   clearPersistedTutorAvatarPosition,
   clearPersistedTutorPanelPosition,
   clearPersistedPendingTutorFollowUp,
   clearPersistedTutorSessionKey,
+  loadPersistedPendingNavigationTarget,
   loadPersistedPendingTutorFollowUp,
   persistTutorAvatarPosition,
   persistTutorPanelPosition,
@@ -800,6 +803,57 @@ export function useKangurAiTutorLifecycleEffects({
     sessionContext?.contentId,
     sessionContext?.surface,
   ]);
+
+  useEffect(() => {
+    if (!mounted) {
+      return;
+    }
+
+    const pendingTarget = loadPersistedPendingNavigationTarget();
+    if (!pendingTarget) {
+      return;
+    }
+
+    const createdAtMs = Date.parse(pendingTarget.createdAt);
+    if (Number.isNaN(createdAtMs) || Date.now() - createdAtMs > FOLLOW_UP_COMPLETION_MAX_AGE_MS) {
+      clearPersistedPendingNavigationTarget();
+      return;
+    }
+
+    const currentLocation = getCurrentLocation();
+    if (currentLocation?.pathname !== pendingTarget.pathname) {
+      return;
+    }
+
+    clearPersistedPendingNavigationTarget();
+
+    const anchorId = pendingTarget.anchorId;
+    if (!anchorId) {
+      trackKangurClientEvent('kangur_ai_tutor_navigation_target_arrived', {
+        nodeId: pendingTarget.nodeId,
+        label: pendingTarget.label,
+        targetPath: pendingTarget.pathname,
+        anchorId: null,
+        spotlightApplied: false,
+      });
+      return;
+    }
+
+    const rafId = requestAnimationFrame(() => {
+      const result = scrollToAndSpotlightAnchor(anchorId);
+      trackKangurClientEvent('kangur_ai_tutor_navigation_target_arrived', {
+        nodeId: pendingTarget.nodeId,
+        label: pendingTarget.label,
+        targetPath: pendingTarget.pathname,
+        anchorId,
+        spotlightApplied: Boolean(result),
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(rafId);
+    };
+  }, [getCurrentLocation, mounted]);
 
   useEffect(() => {
     if (!contextSwitchNotice || !isOpen) {

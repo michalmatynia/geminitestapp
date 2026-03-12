@@ -647,16 +647,6 @@ const expectRouteToResetScrollAfterCommit = (
   ).toBe(true);
 };
 
-const expectNoRouteSkeletonFlash = (
-  samples: RouteScrollMonitorSample[],
-  stepLabel: string
-): void => {
-  expect(
-    samples.some((sample) => sample.hasSkeleton),
-    `${stepLabel}: navigation showed the blocking route skeleton during a fast route hop`
-  ).toBe(false);
-};
-
 const expectNoAppLoaderFlash = (
   samples: RouteScrollMonitorSample[],
   stepLabel: string

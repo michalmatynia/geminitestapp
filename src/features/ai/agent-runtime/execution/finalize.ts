@@ -2,6 +2,7 @@ import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import { getBrowserContextSummary } from '@/features/ai/agent-runtime/browsing/context';
 import { addAgentMemory } from '@/features/ai/agent-runtime/memory';
 import { buildCheckpointState } from '@/features/ai/agent-runtime/memory/checkpoint';
+import { getChatbotAgentRunDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import {
   buildSelfImprovementReviewWithLLM,
   verifyPlanWithLLM,
@@ -11,8 +12,7 @@ import type {
   PlanStep,
   PlannerMeta,
 } from '@/shared/contracts/agent-runtime';
-import prisma from '@/shared/lib/db/prisma';
-import { Prisma } from '@/shared/lib/db/prisma-client';
+import type { InputJsonValue } from '@/shared/contracts/json';
 
 type FinalizeRunInput = {
   context: AgentExecutionContext;
@@ -41,34 +41,41 @@ export async function finalizeAgentRun(input: FinalizeRunInput): Promise<{
     memorySummarizationModel,
   } = context;
   const status = requiresHuman ? 'waiting_human' : overallOk ? 'completed' : 'failed';
+  const chatbotAgentRun = getChatbotAgentRunDelegate();
 
-  await prisma.chatbotAgentRun.update({
-    where: { id: run.id },
-    data: {
-      status,
-      requiresHumanIntervention: requiresHuman,
-      finishedAt: new Date(),
-      errorMessage: status === 'failed' ? lastError : null,
-      activeStepId: null,
-      planState: buildCheckpointState({
-        steps: planSteps,
+  if (chatbotAgentRun) {
+    await chatbotAgentRun.update({
+      where: { id: run.id },
+      data: {
+        status,
+        requiresHumanIntervention: requiresHuman,
+        finishedAt: new Date(),
+        errorMessage: status === 'failed' ? lastError : null,
         activeStepId: null,
-        lastError,
-        approvalRequestedStepId: null,
-        approvalGrantedStepId: null,
-        summaryCheckpoint,
-        settings,
-        preferences,
-        contextRegistry,
-      }) as Prisma.InputJsonValue,
-      checkpointedAt: new Date(),
-      logLines: {
-        push: `[${new Date().toISOString()}] Playwright tool ${
-          status === 'completed' ? 'completed' : status === 'waiting_human' ? 'paused' : 'failed'
-        }.`,
+        planState: buildCheckpointState({
+          steps: planSteps,
+          activeStepId: null,
+          lastError,
+          approvalRequestedStepId: null,
+          approvalGrantedStepId: null,
+          summaryCheckpoint,
+          settings,
+          preferences,
+          contextRegistry,
+        }) as InputJsonValue,
+        checkpointedAt: new Date(),
+        logLines: {
+          push: `[${new Date().toISOString()}] Playwright tool ${
+            status === 'completed'
+              ? 'completed'
+              : status === 'waiting_human'
+                ? 'paused'
+                : 'failed'
+          }.`,
+        },
       },
-    },
-  });
+    });
+  }
 
   const verificationContext = await getBrowserContextSummary(run.id);
   const verification = await verifyPlanWithLLM({

@@ -13,7 +13,9 @@ import { internalError } from '@/shared/errors/app-error';
 
 import type { KangurAiTutorPanelBodyContextValue } from './KangurAiTutorPanelBody.context';
 import type {
-  TutorEntryDirection,
+  TutorAvatarPointer,
+  TutorGuidedArrowhead,
+  TutorHorizontalSide,
   TutorMotionPosition,
   TutorMotionProfile,
   TutorPanelSnapState,
@@ -38,35 +40,8 @@ type ReducedMotionTransitions = {
   };
 };
 
-type GuidedArrowhead = {
-  angle: number;
-  anchorAvatarLeft: number;
-  anchorAvatarTop: number;
-  anchorOffsetX: number;
-  anchorOffsetY: number;
-  left: number;
-  quadrant: 'top' | 'right' | 'bottom' | 'left';
-  side: 'left' | 'right';
-  targetX: number;
-  targetY: number;
-  top: number;
-};
-
-type AvatarPointer = {
-  end: {
-    x: number;
-    y: number;
-  };
-  height: number;
-  left: number;
-  side: 'left' | 'right';
-  start: {
-    x: number;
-    y: number;
-  };
-  top: number;
-  width: number;
-};
+type GuidedArrowhead = TutorGuidedArrowhead;
+type AvatarPointer = TutorAvatarPointer;
 
 export type KangurAiTutorPortalContextValue = {
   avatar: {
@@ -126,7 +101,7 @@ export type KangurAiTutorPortalContextValue = {
     calloutKey: string;
     calloutTestId: string;
     detail: string;
-    entryDirection: TutorEntryDirection;
+    entryDirection: TutorHorizontalSide;
     headerLabel: string;
     mode: GuidedMode;
     placement: EdgePlacement;
@@ -155,10 +130,10 @@ export type KangurAiTutorPortalContextValue = {
       y: number;
     };
     avatarAnchorKind: string;
-    avatarAttachmentSide: 'left' | 'right';
+    avatarAttachmentSide: TutorHorizontalSide;
     avatarButtonClassName: string;
     avatarPointer: AvatarPointer | null;
-    bubbleEntryDirection: TutorEntryDirection;
+    bubbleEntryDirection: TutorHorizontalSide;
     bubbleLaunchOrigin: 'dock-bottom-right' | 'sheet';
     bubbleMode: 'bubble' | 'sheet';
     bubbleStrategy: string;

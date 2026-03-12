@@ -369,6 +369,7 @@ const collectCoreContractViolations = (root, allowPartial) => {
     'system-log-repository.ts'
   );
   const prismaFile = path.join(root, 'prisma', 'schema.prisma');
+  const prismaClientFile = path.join(root, 'src', 'shared', 'lib', 'db', 'prisma-client.ts');
   const diagnosticsManifestFile = path.join(
     root,
     'src',
@@ -381,7 +382,7 @@ const collectCoreContractViolations = (root, allowPartial) => {
 
   const contractText = readFileIfExists(contractFile);
   const repositoryText = readFileIfExists(repositoryFile);
-  const prismaText = readFileIfExists(prismaFile);
+  const prismaText = readFileIfExists(prismaFile) ?? readFileIfExists(prismaClientFile);
   const manifestText = readFileIfExists(diagnosticsManifestFile);
   const apiHandlerText = readFileIfExists(apiHandlerFile);
 

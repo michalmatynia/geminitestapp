@@ -552,6 +552,7 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
             value={presetName}
             onChange={(event) => setPresetName(event.target.value)}
             placeholder='Preset name'
+            aria-label='Preset name'
             className='h-8'
           />
         </div>
@@ -573,6 +574,7 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
         type='file'
         accept='application/json,.json'
         className='hidden'
+        aria-label='Import presets file'
         onChange={(event) => {
           void handleImportFromFile(event);
         }}

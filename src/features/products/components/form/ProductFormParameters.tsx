@@ -303,6 +303,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                           label: getParameterLabel(param, preferredLocale),
                         }))}
                         placeholder='Select parameter'
+                        ariaLabel='Parameter'
                         triggerClassName='h-9 bg-gray-900 border-border/50'
                       />
                     </div>
@@ -320,6 +321,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                                 event.target.value
                               )
                             }
+                            aria-label={`Value (${activeParameterLanguage.label})`}
                             placeholder={`Value (${activeParameterLanguage.label})`}
                             disabled={!entry.parameterId}
                             className='min-h-[84px] bg-gray-900'
@@ -422,6 +424,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                               value: label,
                               label,
                             }))}
+                            ariaLabel={`Value (${activeParameterLanguage.label})`}
                             placeholder={`Select value (${activeParameterLanguage.label})`}
                             triggerClassName='h-9 bg-gray-900 border-border/50'
                             disabled={!entry.parameterId}
@@ -435,6 +438,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                                 event.target.value
                               )
                             }
+                            aria-label={`Value (${activeParameterLanguage.label})`}
                             placeholder={`Value (${activeParameterLanguage.label})`}
                             disabled={!entry.parameterId}
                             className='h-9'
@@ -447,6 +451,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                       variant='ghost'
                       size='icon'
                       className='h-9 w-9 text-gray-500 hover:text-red-400'
+                      aria-label='Remove parameter'
                       onClick={() => removeParameterValue(index)}
                     >
                       <X className='h-4 w-4' />

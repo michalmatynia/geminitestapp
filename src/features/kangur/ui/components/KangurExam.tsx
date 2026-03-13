@@ -214,7 +214,7 @@ function ExamQuestion({
           return (
             <KangurAnswerChoiceCard
               accent={accent}
-              aria-label={`Odpowiedz ${String.fromCharCode(65 + index)}. ${String(choice)}`}
+              aria-label={`Odpowiedź ${String.fromCharCode(65 + index)}. ${String(choice)}`}
               aria-pressed={isSelected}
               buttonClassName={cn(
                 'flex items-center gap-3 px-4 py-3 font-semibold',

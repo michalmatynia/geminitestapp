@@ -34,6 +34,7 @@ export function FrontendNewsletterSection(): React.ReactNode {
           <input
             type='email'
             placeholder={placeholder}
+            aria-label={placeholder}
             className='cms-appearance-input flex-1 rounded-md border px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:rounded-r-none'
             readOnly
           />

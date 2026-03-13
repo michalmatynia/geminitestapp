@@ -32,6 +32,23 @@ const panelBodyContextMock = vi.hoisted(() => ({
   selectedTextPreview: null,
 }));
 
+const pageContentQueryMock = vi.hoisted(() => ({
+  entry: null as {
+    fragments: Array<{
+      aliases: string[];
+      enabled: boolean;
+      explanation: string;
+      id: string;
+      nativeGuideIds: string[];
+      sortOrder: number;
+      text: string;
+      triggerPhrases: string[];
+    }>;
+    summary: string;
+    title: string;
+  } | null,
+}));
+
 vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
   motion: {
@@ -61,6 +78,10 @@ vi.mock('./KangurAiTutorWidget.state', () => ({
 
 vi.mock('./KangurAiTutorPanelBody.context', () => ({
   useKangurAiTutorPanelBodyContext: () => panelBodyContextMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: () => pageContentQueryMock,
 }));
 
 vi.mock('@/features/kangur/ui/design/primitives', () => ({
@@ -106,6 +127,7 @@ describe('KangurAiTutorGuidedCallout', () => {
     panelBodyContextMock.isSelectionExplainPendingMode = false;
     panelBodyContextMock.messages = [];
     panelBodyContextMock.selectedTextPreview = null;
+    pageContentQueryMock.entry = null;
   });
 
   it('renders the mobile home onboarding sheet without hitting a temporal dead zone error', () => {
@@ -148,6 +170,22 @@ describe('KangurAiTutorGuidedCallout', () => {
   });
 
   it('keeps the guided selection shell and injects the saved source plus resolved answer inline', () => {
+    pageContentQueryMock.entry = {
+      fragments: [
+        {
+          aliases: ['MISTRZOSTWO 67% 2/4 odznak'],
+          enabled: true,
+          explanation: 'Ta ścieżka pokazuje postęp w odznakach i lekcjach dla poziomu mistrzostwa.',
+          id: 'badge-track-mastery',
+          nativeGuideIds: [],
+          sortOrder: 0,
+          text: '🏗️ MISTRZOSTWO 67% 2/4 odznak Budowniczy mistrzostwa · 2/3 lekcje',
+          triggerPhrases: [],
+        },
+      ],
+      summary: 'Zobacz poziom, serie, skuteczność i najbliższe odznaki w jednym miejscu.',
+      title: 'Postępy ucznia',
+    };
     widgetStateContextMock.guidedTutorTarget = {
       kind: 'selection_excerpt',
       mode: 'selection',
@@ -216,15 +254,22 @@ describe('KangurAiTutorGuidedCallout', () => {
       />
     );
 
-    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
-      'Wyjaśniam ten fragment.'
-    );
+    expect(
+      screen.queryByText('Wyjaśniam ten fragment.')
+    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-selection-preview')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('🏗️ MISTRZOSTWO 67% 2/4 odznak Budowniczy mistrzostwa · 2/3 lekcje')
+    ).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-source')).toHaveTextContent(
       'Postęp gracza'
     );
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-source')).toHaveTextContent(
-      'entry:game-home-progress#fragment:badge-track-mastery'
+      'Ta ścieżka pokazuje postęp w odznakach i lekcjach dla poziomu mistrzostwa.'
     );
+    expect(
+      screen.queryByText('entry:game-home-progress#fragment:badge-track-mastery')
+    ).not.toBeInTheDocument();
     expect(
       screen.getByTestId('kangur-ai-tutor-selection-guided-page-content-badge')
     ).toHaveTextContent('Zapisana tresc strony');
@@ -232,6 +277,101 @@ describe('KangurAiTutorGuidedCallout', () => {
       'To ścieżka mistrzostwa pokazuje Twój postęp w odznakach i lekcjach.'
     );
     expect(screen.queryByText('Za chwilę otworzę wyjaśnienie dokładnie dla zaznaczonego tekstu.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Już przygotowuję wyjaśnienie…')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Rozumiem' })).toBeInTheDocument();
+  });
+
+  it('shows the saved page-content fragment in the first guided modal before the answer resolves', () => {
+    pageContentQueryMock.entry = {
+      fragments: [
+        {
+          aliases: ['MISTRZOSTWO 67% 2/4 odznak'],
+          enabled: true,
+          explanation: 'Ta ścieżka zbiera odznaki mistrzostwa i pokazuje, ile lekcji zostało do ukończenia.',
+          id: 'badge-track-mastery',
+          nativeGuideIds: [],
+          sortOrder: 0,
+          text: '🏗️ MISTRZOSTWO 67% 2/4 odznak Budowniczy mistrzostwa · 2/3 lekcje',
+          triggerPhrases: [],
+        },
+      ],
+      summary: 'Zobacz poziom, serie, skuteczność i najbliższe odznaki w jednym miejscu.',
+      title: 'Postępy ucznia',
+    };
+    widgetStateContextMock.guidedTutorTarget = {
+      kind: 'selection_excerpt',
+      mode: 'selection',
+      selectedText: '🏗️ MISTRZOSTWO 67% 2/4 odznak Budowniczy mistrzostwa · 2/3 lekcje',
+    };
+    widgetStateContextMock.selectionConversationContext = {
+      focusLabel: 'Postęp gracza',
+      knowledgeReference: {
+        sourceCollection: 'kangur_page_content',
+        sourceRecordId: 'game-home-progress',
+        sourcePath: 'entry:game-home-progress#fragment:badge-track-mastery',
+      },
+      messageStartIndex: 1,
+      selectedText: '🏗️ MISTRZOSTWO 67% 2/4 odznak Budowniczy mistrzostwa · 2/3 lekcje',
+    };
+    panelBodyContextMock.activeSelectedText =
+      '🏗️ MISTRZOSTWO 67% 2/4 odznak Budowniczy mistrzostwa · 2/3 lekcje';
+    panelBodyContextMock.isLoading = true;
+    panelBodyContextMock.isSelectionExplainPendingMode = true;
+    panelBodyContextMock.activeFocus = {
+      conversationFocus: {
+        knowledgeReference: {
+          sourceCollection: 'kangur_page_content',
+          sourceRecordId: 'game-home-progress',
+          sourcePath: 'entry:game-home-progress#fragment:badge-track-mastery',
+        },
+        label: 'Postęp gracza',
+      },
+    };
+
+    render(
+      <KangurAiTutorGuidedCallout
+        avatarPlacement='left'
+        calloutKey='selection-pending'
+        calloutTestId='kangur-ai-tutor-selection-guided-callout'
+        detail='Za chwilę otworzę wyjaśnienie dokładnie dla zaznaczonego tekstu.'
+        entryDirection='left'
+        headerLabel='Janek · wyjaśnienie'
+        mode='selection'
+        onAction={vi.fn()}
+        placement='right'
+        prefersReducedMotion
+        reducedMotionTransitions={{
+          instant: { duration: 0 },
+          stableState: { opacity: 1, scale: 1, y: 0 },
+        }}
+        sectionGuidanceLabel={null}
+        sectionResponsePendingKind={null}
+        selectionPreview='🏗️ MISTRZOSTWO 67% 2/4 odznak'
+        shouldRender
+        showSectionGuidanceCallout={false}
+        showSelectionGuidanceCallout
+        stepLabel={null}
+        style={{ left: 16, position: 'fixed', top: 24, width: 320 }}
+        title='Wyjaśniam ten fragment.'
+        transitionDuration={0}
+        transitionEase={[0.22, 1, 0.36, 1]}
+      />
+    );
+
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-source')).toHaveTextContent(
+      'Postęp gracza'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-source')).toHaveTextContent(
+      'Ta ścieżka zbiera odznaki mistrzostwa i pokazuje, ile lekcji zostało do ukończenia.'
+    );
+    expect(screen.queryByTestId('kangur-ai-tutor-selection-preview')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('🏗️ MISTRZOSTWO 67% 2/4 odznak Budowniczy mistrzostwa · 2/3 lekcje')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('entry:game-home-progress#fragment:badge-track-mastery')
+    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-selection-guided-answer')).not.toBeInTheDocument();
+    expect(screen.getByText('Za chwilę otworzę wyjaśnienie dokładnie dla zaznaczonego tekstu.')).toBeInTheDocument();
   });
 });

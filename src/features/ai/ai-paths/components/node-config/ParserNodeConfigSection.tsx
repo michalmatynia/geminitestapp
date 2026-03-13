@@ -387,6 +387,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
             description: (p as { description?: string }).description,
           }))}
           placeholder='Select preset'
+          ariaLabel='Preset'
           variant='subtle'
         />
         <div className='mt-3 flex flex-wrap gap-2'>
@@ -429,6 +430,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
               { value: 'custom', label: 'Custom' },
             ]}
             placeholder='Entity type'
+            ariaLabel='Sample entity type'
             variant='subtle'
           />
           <div className='space-y-2'>
@@ -446,6 +448,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
                   },
                 }))
               }
+              aria-label='Sample entity id'
               placeholder='Entity ID'
             />
             {simulationOptions.length > 0 && (
@@ -472,6 +475,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
                   label: opt.label,
                 }))}
                 placeholder='Use simulation ID'
+                ariaLabel='Simulation id'
                 variant='subtle'
                 triggerClassName='h-8 text-[10px]'
               />
@@ -507,6 +511,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
               },
             }))
           }
+          aria-label='Sample JSON'
           placeholder='{ "id": "123", "title": "Sample" }'
         />
         <div className='mt-2 flex flex-wrap gap-2'>
@@ -526,6 +531,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
               { value: 'top', label: 'Top-level fields' },
               { value: 'flatten', label: 'Flatten nested' },
             ]}
+            ariaLabel='Sample mapping mode'
             className='w-[180px]'
           />
           <SelectSimple
@@ -541,6 +547,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
               }))
             }
             options={[1, 2, 3, 4].map((d: number) => ({ value: String(d), label: `Depth ${d}` }))}
+            ariaLabel='Sample depth'
             className='w-[160px]'
           />
           <Button
@@ -579,6 +586,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
                 { value: 'path', label: 'Path keys' },
                 { value: 'leaf', label: 'Leaf keys' },
               ]}
+              ariaLabel='Sample key style'
               className='w-[170px]'
             />
           )}
@@ -629,6 +637,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
             { value: 'individual', label: 'Individual outputs' },
             { value: 'bundle', label: 'Single bundle output' },
           ]}
+          ariaLabel='Output mode'
           variant='subtle'
         />
       </FormField>
@@ -684,6 +693,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 updateMappingKey(index, event.target.value)
               }
+              aria-label='Output key'
               placeholder='output key'
             />
             <div className='space-y-2'>
@@ -694,6 +704,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                   updateMappingPath(index, event.target.value)
                 }
+                aria-label='Output path'
                 placeholder='$.path.to.value'
               />
               <SelectSimple
@@ -701,6 +712,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
                 onValueChange={(value: string) => updateMappingPath(index, value)}
                 options={uniqueSuggestedPathOptions}
                 placeholder='Pick a suggested path'
+                ariaLabel='Suggested output path'
                 variant='subtle'
                 triggerClassName='h-8 text-[10px]'
                 value=''

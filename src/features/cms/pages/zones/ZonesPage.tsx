@@ -165,20 +165,21 @@ export default function ZonesPage(): React.JSX.Element {
         id: 'alias',
         header: 'Alias Configuration',
         cell: ({ row }) => (
-          <SelectSimple
-            size='xs'
-            value={row.original.aliasOf ?? 'none'}
-            onValueChange={(val) => {
-              void handleAliasChange(row.original.id, val);
-            }}
-            options={[
-              { value: 'none', label: 'Keep Independent' },
-              ...domains
-                .filter((d) => d.id !== row.original.id)
-                .map((d) => ({ value: d.id, label: `Alias of ${d.domain}` })),
-            ]}
-            className='h-7 w-44 text-[10px]'
-          />
+            <SelectSimple
+              size='xs'
+              value={row.original.aliasOf ?? 'none'}
+              onValueChange={(val) => {
+                void handleAliasChange(row.original.id, val);
+              }}
+              options={[
+                { value: 'none', label: 'Keep Independent' },
+                ...domains
+                  .filter((d) => d.id !== row.original.id)
+                  .map((d) => ({ value: d.id, label: `Alias of ${d.domain}` })),
+              ]}
+              ariaLabel={`Alias configuration for ${row.original.domain ?? 'zone'}`}
+              className='h-7 w-44 text-[10px]'
+            />
         ),
       },
       {
@@ -190,6 +191,7 @@ export default function ZonesPage(): React.JSX.Element {
               variant='ghost'
               size='xs'
               className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
+              aria-label={`Delete zone ${row.original.domain ?? ''}`.trim()}
               onClick={() => {
                 setZoneToDelete(row.original.id);
               }}

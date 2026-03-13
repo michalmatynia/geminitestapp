@@ -147,6 +147,7 @@ export function QueryDevPanel({
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder='Filter queries…'
+                aria-label='Filter queries'
                 className='h-7 text-xs flex-1'
               />
               <Button

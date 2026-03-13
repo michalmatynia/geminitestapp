@@ -183,6 +183,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
               <Input
                 type='text'
                 value={editingName}
+                aria-label='Notebook name'
                 onChange={(e) => setEditingName(e.target.value)}
                 className='h-8 py-0'
                 ref={(node) => {

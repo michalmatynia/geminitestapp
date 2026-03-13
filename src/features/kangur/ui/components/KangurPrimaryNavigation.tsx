@@ -1,6 +1,7 @@
 'use client';
 
 import { BookOpen, BrainCircuit, LayoutGrid, LogIn, LogOut, UserPlus } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { useEffect, useRef, useState } from 'react';
 
 import {
@@ -11,6 +12,17 @@ import {
   getKangurHomeHref,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
+import {
+  KANGUR_STOREFRONT_THEME_OPTIONS,
+  parseKangurStorefrontAppearanceMode,
+  type KangurStorefrontAppearanceMode,
+} from '@/features/kangur/storefront-appearance-settings';
+import {
+  getKangurThemeSettingsKeyForAppearanceMode,
+  KANGUR_DEFAULT_THEME,
+  KANGUR_THEME_SETTINGS_KEY,
+  resolveKangurThemeSettingsRawForMode,
+} from '@/features/kangur/theme-settings';
 import {
   loadPersistedTutorVisibilityHidden,
   persistTutorVisibilityHidden,
@@ -32,6 +44,10 @@ import {
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
+import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { SelectSimple } from '@/shared/ui/select-simple';
+import { serializeSetting } from '@/shared/utils/settings-json';
 
 type KangurPrimaryNavigationPage =
   | 'Game'
@@ -186,10 +202,13 @@ export function KangurPrimaryNavigation({
   rightAccessory,
   showParentDashboard = canManageLearners,
 }: KangurPrimaryNavigationProps): React.JSX.Element {
+  const { data: session } = useSession();
   const storefrontAppearance = useOptionalCmsStorefrontAppearance();
   const tutorContent = useKangurAiTutorContent();
   const tutor = useOptionalKangurAiTutor();
   const auth = useOptionalKangurAuth();
+  const settingsStore = useSettingsStore();
+  const updateSetting = useUpdateSetting();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const guestPlayerNameValue = typeof guestPlayerName === 'string' ? guestPlayerName : '';
   const guestPlayerPlaceholderText = guestPlayerNamePlaceholder;
@@ -231,6 +250,20 @@ export function KangurPrimaryNavigation({
   const profileTransitionSourceId = 'kangur-primary-nav:profile';
   const parentDashboardTransitionSourceId = 'kangur-primary-nav:parent-dashboard';
   const kangurAppearance = useKangurStorefrontAppearance();
+  const selectedThemeMode = parseKangurStorefrontAppearanceMode(storefrontAppearance?.mode);
+  const rawLegacyTheme = settingsStore.get(KANGUR_THEME_SETTINGS_KEY);
+  const rawDailyTheme = settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('default'));
+  const rawNightlyTheme = settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('dark'));
+  const selectedThemeRaw =
+    resolveKangurThemeSettingsRawForMode({
+      mode: selectedThemeMode,
+      dailyThemeRaw: rawDailyTheme,
+      nightlyThemeRaw: rawNightlyTheme,
+      legacyThemeRaw: rawLegacyTheme,
+    }) ?? serializeSetting(KANGUR_DEFAULT_THEME);
+  const canManageStorefrontDefaultAppearance = Boolean(
+    session?.user?.isElevated || session?.user?.permissions?.includes('settings.manage')
+  );
 
   useEffect(() => subscribeToTutorVisibilityChanges(setIsTutorHidden), []);
 
@@ -477,6 +510,65 @@ export function KangurPrimaryNavigation({
       testId='kangur-primary-nav-appearance-controls'
     />
   ) : null;
+  const defaultAppearanceControls = canManageStorefrontDefaultAppearance ? (
+    <div
+      className='flex min-w-[220px] flex-col gap-2 rounded-[22px] border border-[color:var(--kangur-soft-card-border)] bg-[color:color-mix(in_srgb,var(--kangur-soft-card-background)_92%,transparent)] px-3 py-2 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.35)]'
+      data-testid='kangur-primary-nav-default-appearance-controls'
+    >
+      <span className='px-1 text-[11px] font-semibold uppercase tracking-[0.12em] [color:var(--kangur-page-muted-text)]'>
+        Selektor motywu
+      </span>
+      <SelectSimple
+        ariaLabel='Wybrany motyw Kangura'
+        className='min-w-[132px]'
+        contentClassName='min-w-[12rem]'
+        disabled={updateSetting.isPending}
+        onValueChange={(nextValue) => {
+          const nextMode = parseKangurStorefrontAppearanceMode(nextValue);
+          if (nextMode === selectedThemeMode) {
+            return;
+          }
+          storefrontAppearance?.setMode(nextMode);
+        }}
+        options={KANGUR_STOREFRONT_THEME_OPTIONS}
+        size='sm'
+        value={selectedThemeMode}
+        variant='subtle'
+      />
+      <div className='flex flex-wrap gap-2'>
+        <KangurButton
+          className='flex-1 px-3'
+          disabled={updateSetting.isPending}
+          onClick={() => {
+            void updateSetting.mutateAsync({
+              key: getKangurThemeSettingsKeyForAppearanceMode('default'),
+              value: selectedThemeRaw,
+            });
+          }}
+          size='sm'
+          type='button'
+          variant='navigation'
+        >
+          Ustaw dzienny
+        </KangurButton>
+        <KangurButton
+          className='flex-1 px-3'
+          disabled={updateSetting.isPending}
+          onClick={() => {
+            void updateSetting.mutateAsync({
+              key: getKangurThemeSettingsKeyForAppearanceMode('dark'),
+              value: selectedThemeRaw,
+            });
+          }}
+          size='sm'
+          type='button'
+          variant='navigation'
+        >
+          Ustaw nocny
+        </KangurButton>
+      </div>
+    </div>
+  ) : null;
   const primaryActions = (
     <div
       className='flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap'
@@ -501,11 +593,12 @@ export function KangurPrimaryNavigation({
     </div>
   );
   const utilityActions =
-    appearanceControls || rightAccessory || parentDashboardAction || authAction ? (
+    defaultAppearanceControls || appearanceControls || rightAccessory || parentDashboardAction || authAction ? (
       <div
         className='ml-auto flex w-full flex-wrap items-center justify-end gap-2 max-sm:ml-0 max-sm:justify-start sm:w-auto'
         data-testid='kangur-primary-nav-utility-actions'
       >
+        {defaultAppearanceControls}
         {appearanceControls}
         {rightAccessory}
         {parentDashboardAction ? renderNavAction(parentDashboardAction) : null}

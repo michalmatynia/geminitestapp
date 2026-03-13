@@ -30,6 +30,8 @@ export const GUIDED_CALLOUT_HEIGHT = 260;
 const GUIDED_CALLOUT_FOCUS_GAP = 28;
 const GUIDED_SELECTION_CALLOUT_ATTACHMENT_HEIGHT_MAX = 255;
 const GUIDED_SELECTION_CALLOUT_ATTACHMENT_HEIGHT_MIN = 219;
+const GUIDED_SELECTION_KNOWLEDGE_CONTEXT_EXTRA_HEIGHT = 104;
+const GUIDED_SELECTION_RESOLVED_ANSWER_EXTRA_HEIGHT = 124;
 const GUIDED_SELECTION_PREVIEW_HEIGHT = 36;
 const GUIDED_SELECTION_PREVIEW_EDGE_INSET_X = 20;
 const GUIDED_SELECTION_PREVIEW_TOP_OFFSET = 122;
@@ -850,6 +852,22 @@ export const getGuidedSelectionCalloutAttachmentHeight = (calloutWidth: number):
     GUIDED_SELECTION_CALLOUT_ATTACHMENT_HEIGHT_MIN,
     GUIDED_SELECTION_CALLOUT_ATTACHMENT_HEIGHT_MAX
   );
+
+export const getGuidedSelectionCalloutHeight = (
+  viewport: { width: number; height: number },
+  options?: {
+    hasKnowledgeContext?: boolean;
+    hasResolvedAnswer?: boolean;
+  }
+): number => {
+  const maxHeight = Math.max(GUIDED_CALLOUT_HEIGHT, viewport.height - EDGE_GAP * 2);
+  const estimatedHeight =
+    GUIDED_CALLOUT_HEIGHT +
+    (options?.hasKnowledgeContext ? GUIDED_SELECTION_KNOWLEDGE_CONTEXT_EXTRA_HEIGHT : 0) +
+    (options?.hasResolvedAnswer ? GUIDED_SELECTION_RESOLVED_ANSWER_EXTRA_HEIGHT : 0);
+
+  return clamp(estimatedHeight, GUIDED_CALLOUT_HEIGHT, Math.min(560, maxHeight));
+};
 
 export const getEstimatedBubbleHeight = (
   viewport: { width: number; height: number },

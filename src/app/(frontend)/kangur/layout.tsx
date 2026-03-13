@@ -1,9 +1,7 @@
-import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
 import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
 
 import type { ReactNode } from 'react';
-
-const KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY = 'kangur-storefront-appearance-mode';
 
 export default function Layout({
   children,
@@ -11,11 +9,8 @@ export default function Layout({
   children: ReactNode;
 }): ReactNode {
   return (
-    <CmsStorefrontAppearanceProvider
-      initialMode='default'
-      storageKey={KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY}
-    >
+    <KangurStorefrontAppearanceProvider>
       <KangurSurfaceClassSync>{children}</KangurSurfaceClassSync>
-    </CmsStorefrontAppearanceProvider>
+    </KangurStorefrontAppearanceProvider>
   );
 }

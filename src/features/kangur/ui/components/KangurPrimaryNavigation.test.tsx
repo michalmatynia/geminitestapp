@@ -22,6 +22,18 @@ const { useKangurPageContentEntryMock } = vi.hoisted(() => ({
   useKangurPageContentEntryMock: vi.fn(),
 }));
 
+const { sessionMock } = vi.hoisted(() => ({
+  sessionMock: vi.fn(),
+}));
+
+const { settingsStoreGetMock } = vi.hoisted(() => ({
+  settingsStoreGetMock: vi.fn<(key: string) => string | undefined>(),
+}));
+
+const { updateSettingMutateAsyncMock } = vi.hoisted(() => ({
+  updateSettingMutateAsyncMock: vi.fn(),
+}));
+
 vi.mock('next/link', () => ({
   default: ({
     children,
@@ -33,6 +45,10 @@ vi.mock('next/link', () => ({
       {children}
     </a>
   ),
+}));
+
+vi.mock('next-auth/react', () => ({
+  useSession: () => sessionMock(),
 }));
 
 vi.mock('framer-motion', () => {
@@ -90,7 +106,59 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
+vi.mock('@/shared/providers/SettingsStoreProvider', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/providers/SettingsStoreProvider')>();
+  return {
+    ...actual,
+    useSettingsStore: () => ({
+      get: settingsStoreGetMock,
+    }),
+  };
+});
+
+vi.mock('@/shared/hooks/use-settings', () => ({
+  useUpdateSetting: () => ({
+    isPending: false,
+    mutateAsync: updateSettingMutateAsyncMock,
+  }),
+}));
+
+vi.mock('@/shared/ui/select-simple', () => ({
+  SelectSimple: ({
+    ariaLabel,
+    disabled,
+    onValueChange,
+    options,
+    value,
+  }: {
+    ariaLabel?: string;
+    disabled?: boolean;
+    onValueChange: (value: string) => void;
+    options: Array<{ value: string; label: string }>;
+    value?: string;
+  }) => (
+    <select
+      aria-label={ariaLabel}
+      data-testid='mock-select-simple'
+      disabled={disabled}
+      onChange={(event) => onValueChange(event.target.value)}
+      value={value}
+    >
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  ),
+}));
+
 import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+import {
+  KANGUR_DAILY_THEME_SETTINGS_KEY,
+  KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
+  KANGUR_THEME_SETTINGS_KEY,
+} from '@/features/kangur/theme-settings';
 import { KangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
 import {
   loadPersistedTutorVisibilityHidden,
@@ -103,6 +171,17 @@ describe('KangurPrimaryNavigation', () => {
     vi.clearAllMocks();
     optionalAuthMock.mockReturnValue(null);
     optionalTutorMock.mockReturnValue(null);
+    sessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
+    settingsStoreGetMock.mockReset();
+    settingsStoreGetMock.mockReturnValue(undefined);
+    updateSettingMutateAsyncMock.mockReset();
+    updateSettingMutateAsyncMock.mockResolvedValue({
+      key: KANGUR_DAILY_THEME_SETTINGS_KEY,
+      value: 'default',
+    });
     useKangurPageContentEntryMock.mockReturnValue({
       data: undefined,
       entry: null,
@@ -277,6 +356,110 @@ describe('KangurPrimaryNavigation', () => {
       'aria-pressed',
       'true'
     );
+  });
+
+  it('shows the theme selector for elevated users and previews the selected slot theme', () => {
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          id: 'session-user-1',
+          isElevated: true,
+          permissions: [],
+          role: 'super_admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    render(
+      <CmsStorefrontAppearanceProvider initialMode='default'>
+        <KangurPrimaryNavigation
+          basePath='/kangur'
+          currentPage='Lessons'
+          isAuthenticated
+          onLogout={vi.fn()}
+        />
+      </CmsStorefrontAppearanceProvider>
+    );
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Wybrany motyw Kangura' }), {
+      target: { value: 'dark' },
+    });
+
+    expect(screen.getByRole('button', { name: 'Switch to Default theme' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+  });
+
+  it('lets elevated users save the selected theme into the nightly slot', () => {
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          id: 'session-user-1',
+          isElevated: true,
+          permissions: [],
+          role: 'super_admin',
+        },
+      },
+      status: 'authenticated',
+    });
+    settingsStoreGetMock.mockImplementation((key: string) => {
+      if (key === KANGUR_DAILY_THEME_SETTINGS_KEY) {
+        return '{"theme":"daily"}';
+      }
+      if (key === KANGUR_THEME_SETTINGS_KEY) {
+        return '{"theme":"legacy"}';
+      }
+      return undefined;
+    });
+
+    render(
+      <CmsStorefrontAppearanceProvider initialMode='default'>
+        <KangurPrimaryNavigation
+          basePath='/kangur'
+          currentPage='Lessons'
+          isAuthenticated
+          onLogout={vi.fn()}
+        />
+      </CmsStorefrontAppearanceProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ustaw nocny' }));
+
+    expect(updateSettingMutateAsyncMock).toHaveBeenCalledWith({
+      key: KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
+      value: '{"theme":"daily"}',
+    });
+  });
+
+  it('does not show the theme selector for non-elevated users', () => {
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          id: 'session-user-2',
+          isElevated: false,
+          permissions: [],
+          role: 'user',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    render(
+      <CmsStorefrontAppearanceProvider initialMode='default'>
+        <KangurPrimaryNavigation
+          basePath='/kangur'
+          currentPage='Lessons'
+          isAuthenticated
+          onLogout={vi.fn()}
+        />
+      </CmsStorefrontAppearanceProvider>
+    );
+
+    expect(
+      screen.queryByTestId('kangur-primary-nav-default-appearance-controls')
+    ).toBeNull();
   });
 
   it('keeps the parent dashboard and logout actions inside the navbar and aligned right', () => {

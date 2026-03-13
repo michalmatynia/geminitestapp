@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useId } from 'react';
 
 import {
   productAdvancedFilterGroupSchema,
@@ -35,6 +35,7 @@ export function AdvancedFilterModal(props: AdvancedFilterModalProps): React.JSX.
   const [group, setGroup] = useState<ProductAdvancedFilterGroup>(createEmptyGroup());
   const [presetName, setPresetName] = useState('');
   const [savingPreset, setSavingPreset] = useState(false);
+  const presetNameId = useId().replace(/:/g, '');
 
   useEffect(() => {
     if (!open) return;
@@ -125,6 +126,8 @@ export function AdvancedFilterModal(props: AdvancedFilterModalProps): React.JSX.
                   Save As Preset
                 </Label>
                 <Input
+                  id={presetNameId}
+                  aria-label='Preset name'
                   value={presetName}
                   onChange={(event) => setPresetName(event.target.value)}
                   placeholder='Preset name'

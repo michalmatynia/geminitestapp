@@ -155,6 +155,7 @@ export function useKangurAiTutorLifecycleEffects({
     setContextSwitchNotice,
     setDismissedSelectedText,
     setDraggedAvatarPoint,
+    setGuestAuthFormVisible,
     setGuestIntroHelpVisible,
     setGuestIntroVisible,
     setGuidedTutorTarget,
@@ -376,6 +377,7 @@ export function useKangurAiTutorLifecycleEffects({
     setAskModalVisible(false);
     askModalReturnStateRef.current = null;
     setGuidedTutorTarget(null);
+    setGuestAuthFormVisible(false);
     setGuestIntroVisible(false);
     setGuestIntroHelpVisible(false);
     setHomeOnboardingStepIndex(null);
@@ -416,6 +418,7 @@ export function useKangurAiTutorLifecycleEffects({
     setAskModalVisible,
     setDismissedSelectedText,
     setDraggedAvatarPoint,
+    setGuestAuthFormVisible,
     setGuestIntroHelpVisible,
     setGuestIntroVisible,
     setGuidedTutorTarget,

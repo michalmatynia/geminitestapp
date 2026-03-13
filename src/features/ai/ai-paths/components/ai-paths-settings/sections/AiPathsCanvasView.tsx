@@ -495,6 +495,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                       onChange={(event) => {
                         setRuntimeKernelNodeTypesDraft(event.target.value);
                       }}
+                      aria-label='Runtime kernel node types'
                       placeholder='kernel nodes: constant, math'
                       disabled={runtimeKernelLoading || runtimeKernelSaving}
                       className='h-8 w-[220px] rounded-md border border-cyan-500/40 bg-card/60 px-2 text-[11px] text-cyan-50 outline-none ring-offset-background placeholder:text-cyan-200/50 focus-visible:ring-2 focus-visible:ring-cyan-500/60 focus-visible:ring-offset-2'
@@ -506,6 +507,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                       onChange={(event) => {
                         setRuntimeKernelResolverIdsDraft(event.target.value);
                       }}
+                      aria-label='Runtime kernel resolver ids'
                       placeholder='resolvers: kernel.primary, kernel.fallback'
                       disabled={runtimeKernelLoading || runtimeKernelSaving}
                       className='h-8 w-[260px] rounded-md border border-cyan-500/40 bg-card/60 px-2 text-[11px] text-cyan-50 outline-none ring-offset-background placeholder:text-cyan-200/50 focus-visible:ring-2 focus-visible:ring-cyan-500/60 focus-visible:ring-offset-2'
@@ -547,6 +549,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                       onChange={(event) => {
                         setPathRuntimeKernelNodeTypesDraft(event.target.value);
                       }}
+                      aria-label='Path runtime kernel node types'
                       placeholder='path kernel nodes: template, parser'
                       disabled={!activePath || pathRuntimeKernelSaving}
                       className='h-8 w-[220px] rounded-md border border-emerald-500/40 bg-card/60 px-2 text-[11px] text-emerald-50 outline-none ring-offset-background placeholder:text-emerald-200/50 focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2'
@@ -558,6 +561,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                       onChange={(event) => {
                         setPathRuntimeKernelResolverIdsDraft(event.target.value);
                       }}
+                      aria-label='Path runtime kernel resolver ids'
                       placeholder='path resolvers: resolver.path'
                       disabled={!activePath || pathRuntimeKernelSaving}
                       className='h-8 w-[240px] rounded-md border border-emerald-500/40 bg-card/60 px-2 text-[11px] text-emerald-50 outline-none ring-offset-background placeholder:text-emerald-200/50 focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2'
@@ -784,6 +788,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                   onChange={(event) => {
                     setRenameDraft(event.target.value);
                   }}
+                  aria-label='Path name'
                   onBlur={commitPathNameEdit}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter') {
@@ -825,6 +830,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                 }}
                 options={pathOptions}
                 placeholder='Select path'
+                ariaLabel='Active path'
                 className='w-[240px]'
                 triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
                 disabled={pathOptions.length === 0}

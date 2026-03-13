@@ -165,6 +165,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
                 <Input
                   type='text'
                   value={editingName}
+                  aria-label='Tag name'
                   onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                     setEditingName(event.target.value)
                   }
@@ -177,6 +178,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
                   <Input
                     type='color'
                     value={editingColor}
+                    aria-label='Tag color'
                     onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                       setEditingColor(event.target.value)
                     }

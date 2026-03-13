@@ -20,6 +20,7 @@ function FieldInput(props: {
       <span className='w-20 shrink-0 text-right text-[10px] text-gray-500'>{label}</span>
       <Input
         value={value}
+        aria-label={label}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className='h-6 flex-1 rounded border border-border/60 bg-background/50 px-2 text-xs text-gray-200 placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-ring'
@@ -55,6 +56,7 @@ export function CanvasOutputNodeConfigSection(): React.JSX.Element | null {
         <Label className='text-xs text-gray-400'>Output Key</Label>
         <Input
           value={cfg.outputKey ?? 'image_studio_bounds'}
+          aria-label='Output key'
           onChange={(e) => update({ outputKey: e.target.value.trim() || 'image_studio_bounds' })}
           placeholder='image_studio_bounds'
           className='mt-2 h-7 text-xs'
@@ -102,6 +104,7 @@ export function CanvasOutputNodeConfigSection(): React.JSX.Element | null {
         <Label className='text-xs text-gray-400'>Bounds Path (optional)</Label>
         <Input
           value={cfg.boundsPath ?? ''}
+          aria-label='Bounds path'
           onChange={(e) => update({ boundsPath: e.target.value.trim() || undefined })}
           placeholder='e.g. objectBounds (leave empty to read from root)'
           className='mt-2 h-7 text-xs'

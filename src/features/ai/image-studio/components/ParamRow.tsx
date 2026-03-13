@@ -99,6 +99,8 @@ export const ParamRow = React.memo(function ParamRow({
     label: opt === 'auto' ? autoLabel : paramUiControlLabel(opt),
   }));
   const enumOptions = spec?.enumOptions?.map((opt: string) => ({ value: opt, label: opt })) ?? [];
+  const paramLabel = leaf.path || 'parameter';
+  const valueLabel = `${paramLabel} value`;
 
   return (
     <div className={cn('rounded border bg-card/60 p-2', borderClass)}>
@@ -227,6 +229,7 @@ export const ParamRow = React.memo(function ParamRow({
                 <Input
                   size='sm'
                   value={value}
+                  aria-label={valueLabel}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
                   className='h-8'
                 />
@@ -251,6 +254,7 @@ export const ParamRow = React.memo(function ParamRow({
                   max={spec?.max ?? 1}
                   step={spec?.step ?? 0.01}
                   value={Math.min(spec?.max ?? value, Math.max(spec?.min ?? value, value))}
+                  aria-label={`${paramLabel} slider`}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     const next = Number(e.target.value);
                     if (!Number.isFinite(next)) return;
@@ -263,6 +267,7 @@ export const ParamRow = React.memo(function ParamRow({
                 size='sm'
                 type='number'
                 value={String(value)}
+                aria-label={valueLabel}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const next = Number(e.target.value);
                   if (!Number.isFinite(next)) return;
@@ -285,6 +290,7 @@ export const ParamRow = React.memo(function ParamRow({
                     size='sm'
                     type='number'
                     value={String((value as unknown[])[index] ?? '')}
+                    aria-label={`${paramLabel} ${label} value`}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       const next = Number(e.target.value);
                       if (!Number.isFinite(next)) return;
@@ -311,6 +317,7 @@ export const ParamRow = React.memo(function ParamRow({
                     size='sm'
                     type='number'
                     value={String((value as unknown[])[index] ?? '')}
+                    aria-label={`${paramLabel} ${label} value`}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       const next = Number(e.target.value);
                       if (!Number.isFinite(next)) return;
@@ -333,6 +340,7 @@ export const ParamRow = React.memo(function ParamRow({
               <Textarea
                 size='sm'
                 value={value}
+                aria-label={`${paramLabel} text`}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value)}
                 className='h-24 font-mono text-[11px]'
               />
@@ -340,6 +348,7 @@ export const ParamRow = React.memo(function ParamRow({
               <Input
                 size='sm'
                 value={value}
+                aria-label={valueLabel}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
                 className='h-8'
               />
@@ -350,6 +359,7 @@ export const ParamRow = React.memo(function ParamRow({
             <Textarea
               size='sm'
               value={safeJsonStringify(value)}
+              aria-label={`${paramLabel} JSON`}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
                 const raw = e.target.value;
                 try {

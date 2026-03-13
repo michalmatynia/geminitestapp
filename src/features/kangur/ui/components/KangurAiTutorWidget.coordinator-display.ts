@@ -4,6 +4,7 @@ import { useMemo, type CSSProperties } from 'react';
 
 import type { KangurAiTutorContextValue } from '@/features/kangur/ui/context/KangurAiTutorRuntime.shared';
 import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
+import { KANGUR_PAGE_CONTENT_COLLECTION } from '@/shared/contracts/kangur-page-content';
 import { cn } from '@/shared/utils';
 
 import { useKangurAiTutorConversationViewState } from './KangurAiTutorWidget.conversation-view';
@@ -107,6 +108,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     selectionResponsePending,
     setSectionResponseComplete,
     setSectionResponsePending,
+    setSelectionGuidanceCalloutVisibleText,
     setSelectionGuidanceHandoffText,
     setSelectionResponseComplete,
     setSelectionResponsePending,
@@ -245,13 +247,16 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     sectionResponseComplete,
     sectionResponseCompleteTimeoutRef,
     sectionResponsePending,
+    messages,
     selectionConversationSelectedText: selectionConversationContext?.selectedText ?? null,
+    selectionConversationStartIndex: selectionConversationContext?.messageStartIndex ?? null,
     selectionGuidanceHandoffText,
     selectionResponseComplete,
     selectionResponseCompleteTimeoutRef,
     selectionResponsePending,
     setSectionResponseComplete,
     setSectionResponsePending,
+    setSelectionGuidanceCalloutVisibleText,
     setSelectionResponseComplete,
     setSelectionResponsePending,
     telemetryContext,
@@ -299,6 +304,17 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     viewport,
     viewportTick,
   });
+
+  const showSelectionKnowledgeContext =
+    showSelectionGuidanceCallout &&
+    (
+      selectionConversationContext?.knowledgeReference?.sourceCollection ===
+        KANGUR_PAGE_CONTENT_COLLECTION ||
+      activeFocus.conversationFocus.knowledgeReference?.sourceCollection ===
+        KANGUR_PAGE_CONTENT_COLLECTION
+    );
+  const showSelectionResolvedAnswer =
+    showSelectionGuidanceCallout && selectionResponseComplete !== null;
 
   useKangurAiTutorSelectionGuidanceHandoffEffect({
     activeSelectedText: effectiveSelectedText,
@@ -476,6 +492,8 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     isTutorHidden,
     motionProfile,
     prefersReducedMotion: Boolean(prefersReducedMotion),
+    showSelectionKnowledgeContext,
+    showSelectionResolvedAnswer,
     showSectionGuidanceCallout,
     showSelectionGuidanceCallout,
     viewport,

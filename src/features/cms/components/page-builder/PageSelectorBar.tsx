@@ -124,6 +124,7 @@ export function PageSelectorBar({ variant = 'bar' }: PageSelectorBarProps): Reac
           label: page.name,
         }))}
         placeholder='Select a page...'
+        ariaLabel='Page'
         className={isToolbar ? 'w-56' : 'w-64'}
         triggerClassName={isToolbar ? 'h-8' : undefined}
       />

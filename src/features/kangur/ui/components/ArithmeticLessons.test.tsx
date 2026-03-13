@@ -188,7 +188,7 @@ describe('Arithmetic lessons shared surfaces', () => {
   it('uses shared equation, chip, and game header surfaces in the multiplication lesson', () => {
     const { unmount } = renderLesson(<MultiplicationLesson />);
 
-    fireEvent.click(screen.getByRole('button', { name: /co to mnozenie/i }));
+    fireEvent.click(screen.getByRole('button', { name: /co to mnożenie/i }));
 
     expect(screen.getByTestId('multiplication-lesson-intro-equation')).toHaveClass(
       'text-2xl',

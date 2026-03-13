@@ -418,6 +418,7 @@ export function CategoriesSettings(): React.JSX.Element {
                 label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`,
               }))}
               placeholder='Select a catalog...'
+              ariaLabel='Catalog'
             />
           </div>
         </Card>

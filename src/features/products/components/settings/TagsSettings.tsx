@@ -152,6 +152,7 @@ export function TagsSettings(): React.JSX.Element {
               label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`,
             }))}
             placeholder='Select a catalog...'
+            ariaLabel='Catalog'
           />
         </div>
       </FormSection>

@@ -92,6 +92,7 @@ export function JobQueueControls(): React.JSX.Element {
               value: String(value),
               label: `${value / 1000}s`,
             }))}
+            ariaLabel='Base interval'
             triggerClassName='h-7 w-[110px] border-border bg-card/70 text-[11px] text-white'
           />
         </div>

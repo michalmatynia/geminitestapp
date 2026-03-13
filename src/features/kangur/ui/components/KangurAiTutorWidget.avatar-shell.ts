@@ -42,6 +42,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
     SetStateAction<'selection_explain' | 'section_explain' | null>
   >;
   setDraggedAvatarPoint: Dispatch<SetStateAction<TutorPoint | null>>;
+  setGuestAuthFormVisible: Dispatch<SetStateAction<boolean>>;
   setGuestIntroHelpVisible: Dispatch<SetStateAction<boolean>>;
   setGuestIntroVisible: Dispatch<SetStateAction<boolean>>;
   setGuidedTutorTarget: Dispatch<SetStateAction<GuidedTutorTarget | null>>;
@@ -72,6 +73,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
     setCanonicalTutorModalVisible,
     setContextualTutorMode,
     setDraggedAvatarPoint,
+    setGuestAuthFormVisible,
     setGuestIntroHelpVisible,
     setGuestIntroVisible,
     setGuidedTutorTarget,
@@ -119,11 +121,13 @@ export function useKangurAiTutorAvatarShellActions(input: {
     setContextualTutorMode(null);
     setSelectionGuidanceHandoffText(null);
     setGuidedTutorTarget(null);
+    setGuestAuthFormVisible(false);
     setGuestIntroVisible(false);
     setGuestIntroHelpVisible(false);
   }, [
     clearPendingGuidance,
     setContextualTutorMode,
+    setGuestAuthFormVisible,
     setGuestIntroHelpVisible,
     setGuestIntroVisible,
     setGuidedTutorTarget,
@@ -180,6 +184,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
       setCanonicalTutorModalVisible(false);
       setGuestIntroVisible(false);
       setGuestIntroHelpVisible(false);
+      setGuestAuthFormVisible(false);
       return;
     }
 
@@ -192,6 +197,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
     launcherPromptVisible,
     openCanonicalOnboarding,
     setCanonicalTutorModalVisible,
+    setGuestAuthFormVisible,
     setGuestIntroHelpVisible,
     setGuestIntroVisible,
     suppressAvatarClickRef,

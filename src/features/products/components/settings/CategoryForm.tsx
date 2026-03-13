@@ -21,6 +21,11 @@ export function CategoryForm(): React.JSX.Element | null {
     loadingCategories,
     modalCatalogName,
   } = useCategoryFormContext();
+  const fieldId = React.useId().replace(/:/g, '');
+  const nameId = `category-name-${fieldId}`;
+  const descriptionId = `category-description-${fieldId}`;
+  const colorPickerId = `category-color-picker-${fieldId}`;
+  const colorValueId = `category-color-value-${fieldId}`;
   if (!open) return null;
 
   return (
@@ -34,8 +39,11 @@ export function CategoryForm(): React.JSX.Element | null {
     >
       <div className='space-y-4'>
         <div>
-          <Label className='text-xs text-gray-400'>Name</Label>
+          <Label htmlFor={nameId} className='text-xs text-gray-400'>
+            Name
+          </Label>
           <Input
+            id={nameId}
             className='mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white'
             value={formData.name}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
@@ -46,8 +54,11 @@ export function CategoryForm(): React.JSX.Element | null {
         </div>
 
         <div>
-          <Label className='text-xs text-gray-400'>Description</Label>
+          <Label htmlFor={descriptionId} className='text-xs text-gray-400'>
+            Description
+          </Label>
           <Textarea
+            id={descriptionId}
             className='mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white'
             rows={3}
             value={formData.description}
@@ -80,6 +91,7 @@ export function CategoryForm(): React.JSX.Element | null {
               }))}
               placeholder='Select catalog'
               triggerClassName='w-full bg-gray-900 border-border text-white'
+              ariaLabel='Catalog'
             />
           </div>
         </div>
@@ -105,6 +117,7 @@ export function CategoryForm(): React.JSX.Element | null {
               ]}
               placeholder='Select parent category'
               triggerClassName='w-full bg-gray-900 border-border text-white'
+              ariaLabel='Parent category'
             />
           </div>
           {loadingCategories && <p className='mt-1 text-xs text-gray-500'>Loading categories...</p>}
@@ -120,20 +133,24 @@ export function CategoryForm(): React.JSX.Element | null {
           <div className='mt-2 flex items-center gap-3'>
             <Input
               type='color'
+              id={colorPickerId}
               className='h-10 w-20 cursor-pointer rounded border border-border bg-gray-900'
               value={formData.color}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                 onFormDataChange((prev) => ({ ...prev, color: e.target.value }))
               }
+              aria-label='Category color picker'
             />
             <Input
               type='text'
+              id={colorValueId}
               className='flex-1 rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white'
               value={formData.color}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                 onFormDataChange((prev) => ({ ...prev, color: e.target.value }))
               }
               placeholder='#10b981'
+              aria-label='Category color value'
             />
           </div>
         </div>

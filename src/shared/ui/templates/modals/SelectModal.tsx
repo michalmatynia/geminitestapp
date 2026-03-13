@@ -119,6 +119,7 @@ function SelectModalRuntime(): React.JSX.Element {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onClear={() => setSearch('')}
+            aria-label='Search options'
             disabled={loading}
             size='sm'
           />

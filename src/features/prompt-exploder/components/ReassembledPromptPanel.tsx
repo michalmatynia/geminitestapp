@@ -46,6 +46,7 @@ export function ReassembledPromptPanel(): React.JSX.Element {
           className='min-h-[420px] font-mono text-[11px]'
           value={documentState?.reassembledPrompt ?? ''}
           readOnly
+          aria-label='Reassembled prompt'
         />
       </div>
     </FormSection>

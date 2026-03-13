@@ -203,6 +203,7 @@ export function TemplateNodeConfigSection(): React.JSX.Element | null {
               template: { template: event.target.value },
             })
           }
+          aria-label='Template'
         />
         <p className='mt-2 text-[11px] text-gray-500'>
           Use placeholders like <span className='text-gray-300'>{'{{context.entity.title}}'}</span>{' '}

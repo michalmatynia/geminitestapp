@@ -55,6 +55,7 @@ export function ValidationHeader(): React.JSX.Element {
               value={selectedPathId}
               onValueChange={(value: string) => setSelectedPathId(value)}
               options={pathOptions}
+              ariaLabel='Path'
               className='mt-2'
             />
           </div>

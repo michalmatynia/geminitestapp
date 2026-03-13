@@ -526,6 +526,7 @@ export function RunDetailDialog(): React.JSX.Element {
                   onValueChange={onHistoryNodeSelect}
                   options={historyOptions.map((opt) => ({ value: opt.id, label: opt.label }))}
                   placeholder='Select node'
+                  ariaLabel='History node'
                   triggerClassName='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'
                 />
               ) : (

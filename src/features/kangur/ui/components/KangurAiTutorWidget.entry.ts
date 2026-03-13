@@ -57,6 +57,7 @@ export function useKangurAiTutorGuestIntroFlow(input: {
   canonicalTutorModalVisible: boolean;
   enabled: boolean;
   guestIntroCheckStartedRef: MutableRefObject<boolean>;
+  guestAuthFormVisible: boolean;
   guestIntroHelpVisible: boolean;
   guestIntroLocalSuppressionTrackedRef: MutableRefObject<boolean>;
   guestIntroRecord: KangurAiTutorGuestIntroRecord | null;
@@ -73,6 +74,7 @@ export function useKangurAiTutorGuestIntroFlow(input: {
   selectionExplainTimeoutRef: MutableRefObject<number | null>;
   selectionResponsePending: PendingSelectionResponse | null;
   setCanonicalTutorModalVisible: (value: boolean) => void;
+  setGuestAuthFormVisible: (value: boolean) => void;
   setGuidedTutorTarget: Dispatch<SetStateAction<GuidedTutorTarget | null>>;
   setGuestIntroHelpVisible: (value: boolean) => void;
   setGuestIntroRecord: (value: KangurAiTutorGuestIntroRecord | null) => void;
@@ -86,6 +88,7 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     canonicalTutorModalVisible,
     enabled,
     guestIntroCheckStartedRef,
+    guestAuthFormVisible,
     guestIntroHelpVisible,
     guestIntroLocalSuppressionTrackedRef,
     guestIntroRecord,
@@ -94,6 +97,7 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     contextualTutorMode,
     guidedTutorTarget,
     handleCloseChat,
+    handleOpenChat,
     isOpen,
     isTutorHidden,
     mounted,
@@ -101,6 +105,7 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     selectionExplainTimeoutRef,
     selectionResponsePending,
     setCanonicalTutorModalVisible,
+    setGuestAuthFormVisible,
     setGuidedTutorTarget,
     setGuestIntroHelpVisible,
     setGuestIntroRecord,
@@ -127,6 +132,7 @@ export function useKangurAiTutorGuestIntroFlow(input: {
       !hasContextualTakeover &&
       !guestIntroVisible &&
       !guestIntroHelpVisible &&
+      !guestAuthFormVisible &&
       !isOpen &&
       !guestIntroRecord
   );
@@ -156,6 +162,7 @@ export function useKangurAiTutorGuestIntroFlow(input: {
       setCanonicalTutorModalVisible(false);
       setGuestIntroVisible(false);
       setGuestIntroHelpVisible(false);
+      setGuestAuthFormVisible(false);
       return;
     }
 
@@ -166,6 +173,7 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     if (authState.isAuthenticated) {
       setGuestIntroVisible(false);
       setGuestIntroHelpVisible(false);
+      setGuestAuthFormVisible(false);
       return;
     }
 
@@ -176,10 +184,11 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     if (hasContextualTakeover) {
       setGuestIntroVisible(false);
       setGuestIntroHelpVisible(false);
+      setGuestAuthFormVisible(false);
       return;
     }
 
-    if (guestIntroVisible || guestIntroHelpVisible) {
+    if (guestIntroVisible || guestIntroHelpVisible || guestAuthFormVisible) {
       return;
     }
 
@@ -291,6 +300,7 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     guestIntroRecord,
     guestIntroShownForCurrentEntryRef,
     guestIntroVisible,
+    guestAuthFormVisible,
     canonicalTutorModalVisible,
     contextualTutorMode,
     guidedTutorTarget,
@@ -300,6 +310,7 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     selectionGuidanceHandoffText,
     selectionResponsePending,
     setCanonicalTutorModalVisible,
+    setGuestAuthFormVisible,
     setGuestIntroHelpVisible,
     setGuestIntroRecord,
     setGuestIntroVisible,
@@ -312,9 +323,11 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     setGuestIntroRecord(nextRecord);
     setGuestIntroVisible(false);
     setGuestIntroHelpVisible(false);
+    setGuestAuthFormVisible(false);
     trackKangurClientEvent('kangur_ai_tutor_guest_intro_dismissed');
   }, [
     setCanonicalTutorModalVisible,
+    setGuestAuthFormVisible,
     setGuestIntroHelpVisible,
     setGuestIntroRecord,
     setGuestIntroVisible,
@@ -339,6 +352,7 @@ export function useKangurAiTutorGuestIntroFlow(input: {
         selectionExplainTimeoutRef.current = null;
       }
       setCanonicalTutorModalVisible(false);
+      setGuestAuthFormVisible(false);
       if (isOpen) {
         handleCloseChat('toggle');
       }
@@ -355,6 +369,7 @@ export function useKangurAiTutorGuestIntroFlow(input: {
       isOpen,
       selectionExplainTimeoutRef,
       setCanonicalTutorModalVisible,
+      setGuestAuthFormVisible,
       setGuidedTutorTarget,
       setHasNewMessage,
       suppressAvatarClickRef,
@@ -380,15 +395,19 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     trackKangurClientEvent('kangur_ai_tutor_guest_intro_accepted', {
       hasInteractiveTutor: enabled,
     });
-
-    startGuidedGuestLogin('sign-in');
+    if (!isOpen) {
+      handleOpenChat('toggle');
+    }
+    setGuestAuthFormVisible(true);
   }, [
     enabled,
+    handleOpenChat,
+    isOpen,
     setCanonicalTutorModalVisible,
+    setGuestAuthFormVisible,
     setGuestIntroHelpVisible,
     setGuestIntroRecord,
     setGuestIntroVisible,
-    startGuidedGuestLogin,
   ]);
 
   return {

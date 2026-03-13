@@ -949,7 +949,7 @@ describe('AdminKangurObservabilityPage', () => {
   it('switches the summary range from the segmented control', async () => {
     render(<AdminKangurObservabilityPage />);
 
-    fireEvent.click(screen.getByRole('button', { name: '7d' }));
+    fireEvent.click(screen.getByRole('radio', { name: '7d' }));
 
     await waitFor(() => {
       expect(replaceMock).toHaveBeenCalledWith('/admin/kangur/observability?range=7d', {

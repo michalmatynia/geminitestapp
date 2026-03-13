@@ -44,6 +44,8 @@ export function PromptModal(props: PromptModalProps): React.JSX.Element {
   const [value, setValue] = useState(defaultValue);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
+  const inputId = React.useId().replace(/:/g, '');
+  const resolvedAriaLabel = label ? undefined : placeholder ?? title ?? 'Input value';
 
   useEffect(() => {
     if (open) {
@@ -93,10 +95,16 @@ export function PromptModal(props: PromptModalProps): React.JSX.Element {
       <div className='space-y-4 py-2'>
         {message && <p className='text-sm text-gray-400'>{message}</p>}
         <div className='space-y-2'>
-          {label && <Label className='text-xs font-medium text-gray-300'>{label}</Label>}
+          {label && (
+            <Label htmlFor={inputId} className='text-xs font-medium text-gray-300'>
+              {label}
+            </Label>
+          )}
           <Input
+            id={inputId}
             ref={inputRef}
             value={value}
+            aria-label={resolvedAriaLabel}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}

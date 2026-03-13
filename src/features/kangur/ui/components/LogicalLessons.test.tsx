@@ -44,7 +44,7 @@ describe('Logical lessons shared surfaces', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /wzorce.*wprowadzenie/i }));
 
-    expect(screen.getByText(/Wzorce sa wszedzie:/i).parentElement).toHaveClass(
+    expect(screen.getByText(/Wzorce są wszędzie:/i).parentElement).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
 
@@ -59,14 +59,14 @@ describe('Logical lessons shared surfaces', () => {
   it('uses the lighter copy palette in the logical reasoning lesson', async () => {
     renderLesson(<LogicalReasoningLesson />);
 
-    fireEvent.click(screen.getByRole('button', { name: /wnioskowanie.*jesli/i }));
+    fireEvent.click(screen.getByRole('button', { name: /wnioskowanie.*jeśli/i }));
 
     expect(screen.getByText(/Wnioskowanie to wyciaganie nowych wniosków/i)).toHaveClass(
       '[color:var(--kangur-page-text)]'
     );
 
     fireEvent.click(screen.getByTestId('lesson-slide-indicator-1'));
-    await screen.findByText(/Jesli… to…/i);
+    await screen.findByText(/Jeśli… to…/i);
 
     expect(getParagraphByTextContent('NIE znaczy')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'

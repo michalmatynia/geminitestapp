@@ -37,6 +37,7 @@ const {
   clearSelectionGlowMock,
   trackKangurClientEventMock,
   speechSynthesisMock,
+  useKangurPageContentEntryMock,
 } = vi.hoisted(() => ({
   settingsStoreMock: {
     get: vi.fn<(key: string) => string | undefined>(),
@@ -65,6 +66,7 @@ const {
     paused: false,
     speaking: false,
   },
+  useKangurPageContentEntryMock: vi.fn(),
 }));
 
 vi.mock('framer-motion', () => ({
@@ -189,6 +191,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurTextHighlight', () => ({
   useKangurTextHighlight: useKangurTextHighlightMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useOptionalKangurRouting: useOptionalKangurRoutingMock,
 }));
@@ -267,6 +273,7 @@ describe('KangurAiTutorWidget - UI', () => {
       selectionRect: null,
       clearSelection: clearSelectionMock,
     });
+    useKangurPageContentEntryMock.mockReturnValue({ entry: null });
     Object.defineProperty(window, 'speechSynthesis', {
       configurable: true,
       value: speechSynthesisMock,

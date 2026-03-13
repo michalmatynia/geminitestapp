@@ -367,6 +367,7 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
           value={linkValue}
           onChange={(e) => setImageLinkAt(index, e.target.value)}
           placeholder='Paste image link'
+          aria-label={`Image link for slot ${index + 1}`}
           className={
             minimalUi
               ? `h-7 ${minimalLayoutWidthClass} px-2 text-[10px]`

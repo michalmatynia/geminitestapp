@@ -26,14 +26,19 @@ export function FrontendContactFormSection(): React.ReactNode {
           {fields.map((field: string) => {
             const isTextarea = field.toLowerCase() === 'message';
             const label = field.charAt(0).toUpperCase() + field.slice(1);
+            const fieldId = `contact-${field.toLowerCase().replace(/[^a-z0-9_-]/g, '-')}`;
 
             return (
               <div key={field}>
-                <label className='cms-appearance-muted-text mb-1.5 block text-sm font-medium'>
+                <label
+                  htmlFor={fieldId}
+                  className='cms-appearance-muted-text mb-1.5 block text-sm font-medium'
+                >
                   {label}
                 </label>
                 {isTextarea ? (
                   <textarea
+                    id={fieldId}
                     rows={4}
                     placeholder={label}
                     className='cms-appearance-input w-full rounded-md border px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
@@ -41,6 +46,7 @@ export function FrontendContactFormSection(): React.ReactNode {
                   />
                 ) : (
                   <input
+                    id={fieldId}
                     type={field.toLowerCase() === 'email' ? 'email' : 'text'}
                     placeholder={label}
                     className='cms-appearance-input w-full rounded-md border px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'

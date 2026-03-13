@@ -56,6 +56,7 @@ function FilemakerEntityTableFilters(): React.JSX.Element {
           }}
           onClear={() => runtime.onQueryChange('')}
           placeholder={runtime.queryPlaceholder}
+          aria-label={runtime.queryPlaceholder}
           size='sm'
         />
       </div>

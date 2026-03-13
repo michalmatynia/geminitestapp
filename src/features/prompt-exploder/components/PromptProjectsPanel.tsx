@@ -86,6 +86,7 @@ export function PromptProjectsPanel(): React.JSX.Element {
               onChange={(event) => {
                 setLibraryNameDraft(event.target.value);
               }}
+              aria-label='Project name'
               placeholder='Project name'
             />
           </div>

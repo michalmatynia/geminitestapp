@@ -210,9 +210,12 @@ export function KangurAiTutorPanelChrome({
   const tutorMoodId = tutor?.tutorMoodId ?? 'default';
   const tutorBehaviorMoodId = tutor?.tutorBehaviorMoodId ?? tutorMoodId;
   const tutorBehaviorMoodLabel = tutor?.tutorBehaviorMoodLabel ?? tutorBehaviorMoodId;
-  const panelMoodDescription = isCompactDockedTutorPanel
-    ? panelEmptyStateMessage
-    : (tutor?.tutorBehaviorMoodDescription ?? panelEmptyStateMessage);
+  const isGenericEmptyStateMessage =
+    panelEmptyStateMessage === tutorContent.emptyStates.lesson ||
+    panelEmptyStateMessage === tutorContent.emptyStates.game;
+  const panelMoodDescription =
+    (isGenericEmptyStateMessage ? tutor?.tutorBehaviorMoodDescription : null) ??
+    panelEmptyStateMessage;
   const snapPreviewTargetLabel =
     isPanelDragging && panelSnapState !== 'free' && panelSnapState !== 'none'
       ? tutorContent.panelChrome.snapTargets[SNAP_TARGET_CONTENT_KEYS[panelSnapState]]

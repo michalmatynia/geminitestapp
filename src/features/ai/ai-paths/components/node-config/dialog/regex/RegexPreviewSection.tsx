@@ -33,6 +33,7 @@ export function RegexPreviewSection(props: RegexPreviewSectionProps): React.JSX.
         onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
           onSampleChange(event.target.value)
         }
+        aria-label='Preview sample'
         placeholder='Paste example strings here (one per line). Leave empty to use runtime inputs.'
       />
       <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>

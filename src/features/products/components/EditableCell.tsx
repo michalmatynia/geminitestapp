@@ -48,6 +48,7 @@ function EditableCellInput(): React.JSX.Element {
       step={field === 'price' ? '0.01' : '1'}
       min='0'
       value={editValue}
+      aria-label={field === 'price' ? 'Price' : 'Stock'}
       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditValue(e.target.value)}
       onKeyDown={handleKeyDown}
       onBlur={handleBlur}

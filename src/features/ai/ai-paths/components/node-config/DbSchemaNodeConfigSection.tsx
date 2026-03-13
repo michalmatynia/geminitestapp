@@ -253,6 +253,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                 onValueChange={(value: string) =>
                   updateSchemaConfig({ provider: value as 'auto' | 'mongodb' })
                 }
+                ariaLabel='Schema provider'
                 options={[
                   { value: 'auto', label: 'Auto (Primary DB)' },
                   { value: 'mongodb', label: 'MongoDB' },
@@ -269,6 +270,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                 onValueChange={(value: string) =>
                   updateSchemaConfig({ mode: value as 'all' | 'selected' })
                 }
+                ariaLabel='Collection mode'
                 options={[
                   { value: 'all', label: 'All Collections' },
                   { value: 'selected', label: 'Selected Collections Only' },
@@ -363,6 +365,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                 onValueChange={(value: string) =>
                   updateSchemaConfig({ formatAs: value as 'json' | 'text' })
                 }
+                ariaLabel='Output format'
                 options={[
                   { value: 'text', label: 'Text (Human Readable)' },
                   { value: 'json', label: 'JSON (Structured)' },
@@ -431,6 +434,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                         onValueChange={(value: string) => {
                           setBrowseProvider((value as 'mongodb') || null);
                         }}
+                        ariaLabel='Browse provider'
                         options={availableProviders.map((provider) => ({
                           value: provider,
                           label: provider,
@@ -449,6 +453,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                         setBrowseQuery('');
                         setExpandedDocId(null);
                       }}
+                      ariaLabel='Browse collection'
                       options={schemaCollections
                         .filter((collection) =>
                           browseProvider ? collection.provider === browseProvider : true

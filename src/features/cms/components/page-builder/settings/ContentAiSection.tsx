@@ -40,6 +40,7 @@ function ContentAiSection(): React.JSX.Element {
               value={brainAiProvider === 'agent' ? 'Deepthinking agent' : 'AI model'}
               readOnly
               disabled
+              aria-label='Provider'
               className='cursor-not-allowed'
             />
           </FormField>
@@ -52,6 +53,7 @@ function ContentAiSection(): React.JSX.Element {
               }
               readOnly
               disabled
+              aria-label={brainAiProvider === 'agent' ? 'Deepthinking agent' : 'Model'}
               className='cursor-not-allowed'
             />
           </FormField>
@@ -64,6 +66,7 @@ function ContentAiSection(): React.JSX.Element {
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
                 setContentAiPrompt(e.target.value)
               }
+              aria-label='Prompt'
               placeholder={`Describe the content you want.\n\nContext:\n${contentAiPlaceholder}`}
               className='min-h-[120px] text-xs'
               spellCheck={false}
@@ -89,6 +92,7 @@ function ContentAiSection(): React.JSX.Element {
           <Textarea
             value={contentAiPlaceholder}
             readOnly
+            aria-label='Context placeholders'
             className='min-h-[64px] text-xs font-mono text-gray-300'
           />
           <div className='text-[11px] text-gray-500'>
@@ -122,6 +126,7 @@ function ContentAiSection(): React.JSX.Element {
               <Textarea
                 value={contentAiOutput}
                 readOnly
+                aria-label='AI output'
                 className='min-h-[140px] text-xs font-mono text-gray-300'
               />
             </FormSection>

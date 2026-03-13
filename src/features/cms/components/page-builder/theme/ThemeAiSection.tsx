@@ -35,6 +35,7 @@ export function ThemeAiSection(): React.JSX.Element {
           value={brainAiProvider === 'agent' ? 'Deepthinking agent' : 'AI model'}
           readOnly
           disabled
+          aria-label='Provider'
           className='cursor-not-allowed'
         />
       </div>
@@ -50,6 +51,7 @@ export function ThemeAiSection(): React.JSX.Element {
           }
           readOnly
           disabled
+          aria-label={brainAiProvider === 'agent' ? 'Deepthinking agent' : 'Model'}
           className='cursor-not-allowed'
         />
       </div>
@@ -60,6 +62,7 @@ export function ThemeAiSection(): React.JSX.Element {
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
             setSchemeAiPrompt(e.target.value)
           }
+          aria-label='Prompt'
           placeholder='Describe the theme you want (e.g. cinematic dark with neon accents).'
           className='min-h-[90px] text-xs'
           spellCheck={false}
@@ -91,6 +94,7 @@ export function ThemeAiSection(): React.JSX.Element {
           <Textarea
             value={schemeAiOutput}
             readOnly
+            aria-label='AI output'
             className='min-h-[90px] text-xs font-mono text-gray-300'
           />
         </div>

@@ -408,6 +408,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
               setNewListName(event.target.value);
             }}
             placeholder='List name'
+            aria-label='List name'
             className='h-9'
           />
           <SelectSimple
@@ -426,6 +427,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
               setNewListDescription(event.target.value);
             }}
             placeholder='Optional description'
+            aria-label='List description'
             className='h-9'
           />
           <Button type='button' onClick={handleAddList} className='h-9 whitespace-nowrap'>

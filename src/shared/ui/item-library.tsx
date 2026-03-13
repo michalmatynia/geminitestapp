@@ -70,6 +70,10 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
   const [editingItem, setEditingItem] = useState<T | null>(null);
   const [draft, setDraft] = useState<Partial<T>>({});
   const [itemToDelete, setItemToDelete] = useState<T | null>(null);
+  const fieldId = React.useId().replace(/:/g, '');
+  const normalizedEntityName = entityName.toLowerCase().replace(/\s+/g, '-');
+  const nameId = `${normalizedEntityName}-name-${fieldId}`;
+  const descriptionId = `${normalizedEntityName}-description-${fieldId}`;
 
   const sortedItems = useMemo(() => {
     return [...items].sort((a, b) => {
@@ -262,8 +266,9 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
         <div className='space-y-6'>
           <div className='grid gap-4 md:grid-cols-2'>
             <div className='space-y-2'>
-              <Label>Name</Label>
+              <Label htmlFor={nameId}>Name</Label>
               <Input
+                id={nameId}
                 value={draft.name || ''}
                 onChange={(e) =>
                   setDraft((current) => ({
@@ -275,8 +280,9 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
               />
             </div>
             <div className='space-y-2'>
-              <Label>Description</Label>
+              <Label htmlFor={descriptionId}>Description</Label>
               <Textarea
+                id={descriptionId}
                 value={draft.description || ''}
                 onChange={(e) =>
                   setDraft((current) => ({

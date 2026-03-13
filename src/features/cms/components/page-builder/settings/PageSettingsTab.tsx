@@ -56,6 +56,7 @@ function PageSettingsTab(): React.ReactNode {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                   handleNameChange(e.target.value)
                 }
+                aria-label='Page name'
                 onBlur={(): void => setIsEditingName(false)}
                 onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
                   if (event.key === 'Enter' || event.key === 'Escape') {

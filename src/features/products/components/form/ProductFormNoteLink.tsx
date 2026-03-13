@@ -93,6 +93,7 @@ export default function ProductFormNoteLink(): React.JSX.Element {
             id='note-link-search'
             value={query}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
+            aria-label='Search notes'
             placeholder='Type at least 2 characters...'
             className='max-w-md h-9'
           />
@@ -103,6 +104,7 @@ export default function ProductFormNoteLink(): React.JSX.Element {
               size='icon'
               onClick={() => setQuery('')}
               title='Clear search'
+              aria-label='Clear search'
               className='h-9 w-9'
             >
               <X className='size-4' />

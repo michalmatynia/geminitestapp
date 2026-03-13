@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { render, screen } from '@/__tests__/test-utils';
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
@@ -22,6 +22,9 @@ const {
     useKangurAssignmentsMock: vi.fn(),
     useSessionMock: vi.fn(),
   }));
+
+let requestAnimationFrameMock: ReturnType<typeof vi.spyOn> | null = null;
+let cancelAnimationFrameMock: ReturnType<typeof vi.spyOn> | null = null;
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
@@ -97,6 +100,15 @@ const lessonsSettingsValue = JSON.stringify([
 describe('Lessons page focus query support', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    requestAnimationFrameMock = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback: FrameRequestCallback) => {
+        callback(0);
+        return 0;
+      });
+    cancelAnimationFrameMock = vi
+      .spyOn(window, 'cancelAnimationFrame')
+      .mockImplementation(() => {});
     useKangurRoutingMock.mockReturnValue({ basePath: '/kangur' });
     useKangurAuthMock.mockReturnValue({
       user: null,
@@ -147,12 +159,19 @@ describe('Lessons page focus query support', () => {
     useKangurProgressStateMock.mockReturnValue(createDefaultKangurProgressState());
   });
 
+  afterEach(() => {
+    requestAnimationFrameMock?.mockRestore();
+    cancelAnimationFrameMock?.mockRestore();
+    requestAnimationFrameMock = null;
+    cancelAnimationFrameMock = null;
+  });
+
   it('auto-opens the focused lesson when focus query maps to operation', async () => {
     window.history.replaceState({}, '', '/kangur/lessons?focus=division');
 
     renderLessonsPage();
 
-    expect(await screen.findByTestId('active-lesson-header')).toHaveTextContent('Aktywna lekcja');
+    expect(await screen.findByTestId('active-lesson-header')).toHaveTextContent('Dzielenie');
     expect(await screen.findByText('Co to dzielenie?')).toBeInTheDocument();
     expect(screen.getByTestId('active-lesson-parent-completed-chip')).toHaveTextContent(
       'Ukończone dla rodzica'

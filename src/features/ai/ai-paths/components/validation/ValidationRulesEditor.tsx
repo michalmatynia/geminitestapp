@@ -39,6 +39,7 @@ export function ValidationRulesEditor(): React.JSX.Element {
           className={`min-h-[320px] font-mono text-xs ${rulesDraftError ? 'border-rose-500/50' : ''}`}
           value={rulesDraft}
           onChange={(event) => setRulesDraft(event.target.value)}
+          aria-label='Validation rules JSON'
         />
         {rulesDraftError ? (
           <div className='mt-2 text-xs font-medium text-rose-400'>{rulesDraftError}</div>
@@ -128,6 +129,7 @@ export function ValidationRulesEditor(): React.JSX.Element {
                         className='h-7 w-12 text-[10px]'
                         defaultValue={String(rule.sequence ?? 0)}
                         onBlur={(event) => handleRuleSequenceBlur(rule.id, event.target.value)}
+                        aria-label='Sequence'
                       />
                     </div>
                     <Button

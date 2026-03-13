@@ -41,6 +41,7 @@ export function ValidatorInstanceBehaviorPanel(): React.JSX.Element {
                       { value: 'mute_session', label: 'Stop For This Session' },
                       { value: 'ask_again', label: 'Ask Again Next Validation' },
                     ]}
+                    ariaLabel={`${INSTANCE_SCOPE_LABELS[scope]} deny behavior`}
                     disabled={settingsBusy}
                   />
                 </ValidatorDocTooltip>

@@ -34,6 +34,7 @@ export function RuleItemSimilarPatternsSection(): React.JSX.Element | null {
             <Input
               className='h-8 font-mono'
               value={sim.pattern}
+              aria-label={`Similar pattern ${index + 1} pattern`}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                 updateSimilar(index, { pattern: event.target.value });
               }}
@@ -44,6 +45,7 @@ export function RuleItemSimilarPatternsSection(): React.JSX.Element | null {
             <Input
               className='h-8 font-mono'
               value={sim.flags ?? ''}
+              aria-label={`Similar pattern ${index + 1} flags`}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                 updateSimilar(index, {
                   flags: event.target.value.trim() || undefined,
@@ -56,6 +58,7 @@ export function RuleItemSimilarPatternsSection(): React.JSX.Element | null {
             <Input
               className='h-8'
               value={sim.suggestion}
+              aria-label={`Similar pattern ${index + 1} suggestion`}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                 updateSimilar(index, { suggestion: event.target.value });
               }}
@@ -66,6 +69,7 @@ export function RuleItemSimilarPatternsSection(): React.JSX.Element | null {
             <Input
               className='h-8'
               value={sim.comment ?? ''}
+              aria-label={`Similar pattern ${index + 1} comment`}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                 updateSimilar(index, {
                   comment: event.target.value.trim() || null,

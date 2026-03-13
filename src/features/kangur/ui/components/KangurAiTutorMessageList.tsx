@@ -1,6 +1,6 @@
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
-import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import { KangurButton, KangurTextField } from '@/features/kangur/ui/design/primitives';
 import { cn, sanitizeSvg } from '@/shared/utils';
 
 import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/shared/contracts/kangur-ai-tutor';
@@ -12,7 +12,7 @@ import {
 } from './KangurAiTutorWidget.helpers';
 import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
 
-import type { JSX } from 'react';
+import { useCallback, useEffect, useId, useState, type JSX } from 'react';
 
 const AI_TUTOR_FOLLOW_UP_ROUTE_ACKNOWLEDGE_MS = 110;
 
@@ -71,14 +71,40 @@ export function KangurAiTutorMessageList(): JSX.Element {
     showSources,
     tutorSessionKey,
   } = useKangurAiTutorPanelBodyContext();
-  const { messageFeedbackByKey, messagesEndRef } = useKangurAiTutorWidgetStateContext();
+  const {
+    guestAuthFormVisible,
+    messageFeedbackByKey,
+    messagesEndRef,
+    setGuestAuthFormVisible,
+  } = useKangurAiTutorWidgetStateContext();
   const shouldSuppressConversationHistory =
     isSelectionExplainPendingMode || isSectionExplainPendingMode;
   const visibleMessages = shouldSuppressConversationHistory ? [] : messages;
+  const showGuestAuthForm =
+    guestAuthFormVisible && !isSelectionExplainPendingMode && !isSectionExplainPendingMode;
+  const authLoginFieldId = useId();
+  const authPasswordFieldId = useId();
+  const [guestLogin, setGuestLogin] = useState('');
+  const [guestPassword, setGuestPassword] = useState('');
+
+  useEffect(() => {
+    if (!guestAuthFormVisible) {
+      setGuestLogin('');
+      setGuestPassword('');
+    }
+  }, [guestAuthFormVisible]);
+
+  const handleAuthDismiss = useCallback(() => {
+    setGuestAuthFormVisible(false);
+  }, [setGuestAuthFormVisible]);
+
+  const handleAuthSubmit = useCallback(() => {
+    setGuestAuthFormVisible(false);
+  }, [setGuestAuthFormVisible]);
 
   return (
     <div className='flex-1 min-h-0 space-y-3 overflow-y-auto kangur-chat-padding-lg'>
-      {visibleMessages.length === 0 ? (
+      {visibleMessages.length === 0 && !showGuestAuthForm ? (
         <div className='flex flex-col items-center justify-center py-6'>
           <div
             className='mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full kangur-chat-surface-warm kangur-chat-surface-warm-shadow [color:var(--kangur-chat-kicker-text,var(--kangur-page-text))]'
@@ -379,6 +405,80 @@ export function KangurAiTutorMessageList(): JSX.Element {
           );
         })
       )}
+      {showGuestAuthForm ? (
+        <div className='flex justify-start' data-testid='kangur-ai-tutor-guest-auth-form'>
+          <div className='w-full max-w-full space-y-2 sm:max-w-[90%]'>
+            <div
+              className='tutor-assistant-bubble kangur-chat-bubble kangur-chat-padding-sm border [border-color:var(--kangur-soft-card-border)] text-sm leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
+              data-kangur-tts-ignore='true'
+            >
+              <div className='text-sm font-semibold'>
+                {tutorContent.guidedCallout.authTitles.signInForm}
+              </div>
+              <div className='mt-1 text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
+                {tutorContent.guidedCallout.authDetails.signInForm}
+              </div>
+              <div className='mt-3 space-y-2'>
+                <label
+                  className='text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
+                  htmlFor={authLoginFieldId}
+                >
+                  Login
+                </label>
+                <KangurTextField
+                  id={authLoginFieldId}
+                  value={guestLogin}
+                  onChange={(event) => setGuestLogin(event.target.value)}
+                  autoComplete='username'
+                  size='sm'
+                  accent='amber'
+                  data-testid='kangur-ai-tutor-guest-auth-login'
+                  placeholder='Login'
+                />
+                <label
+                  className='text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
+                  htmlFor={authPasswordFieldId}
+                >
+                  Hasło
+                </label>
+                <KangurTextField
+                  id={authPasswordFieldId}
+                  value={guestPassword}
+                  onChange={(event) => setGuestPassword(event.target.value)}
+                  autoComplete='current-password'
+                  size='sm'
+                  accent='amber'
+                  type='password'
+                  data-testid='kangur-ai-tutor-guest-auth-password'
+                  placeholder='Hasło'
+                />
+              </div>
+              <div className='mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end'>
+                <KangurButton
+                  type='button'
+                  size='sm'
+                  variant='primary'
+                  className='w-full sm:w-auto'
+                  onClick={handleAuthSubmit}
+                  disabled={!guestLogin.trim() || !guestPassword}
+                  data-testid='kangur-ai-tutor-guest-auth-submit'
+                >
+                  {tutorContent.common.signInLabel}
+                </KangurButton>
+                <KangurButton
+                  type='button'
+                  size='sm'
+                  variant='surface'
+                  className='w-full sm:w-auto'
+                  onClick={handleAuthDismiss}
+                >
+                  {tutorContent.guestIntro.browseLabel}
+                </KangurButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {isLoading ? (
         <div className='flex justify-start'>
           <div className='tutor-assistant-bubble kangur-chat-bubble kangur-chat-padding-md border [border-color:var(--kangur-soft-card-border)]'>

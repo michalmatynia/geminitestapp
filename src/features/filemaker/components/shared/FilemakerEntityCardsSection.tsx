@@ -71,6 +71,7 @@ export function FilemakerEntityCardsSection<TItem extends { id: string }>(
                     type='button'
                     variant='outline'
                     className='h-8 w-8 p-0'
+                    aria-label='Edit item'
                     onClick={(): void => {
                       onEdit(item);
                     }}
@@ -81,6 +82,7 @@ export function FilemakerEntityCardsSection<TItem extends { id: string }>(
                     type='button'
                     variant='outline'
                     className='h-8 w-8 p-0 text-red-300 hover:text-red-200 hover:border-red-500/40'
+                    aria-label='Delete item'
                     onClick={(): void => {
                       onDelete(item);
                     }}

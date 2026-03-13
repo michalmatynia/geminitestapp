@@ -173,7 +173,7 @@ describe('useKangurAiTutorSelectionGuidanceHandoffEffect', () => {
 });
 
 describe('useKangurAiTutorGuidedFlow', () => {
-  it('starts loading the selection explanation before the reveal timer finishes and delays docking until the response-ready handoff', async () => {
+  it('starts loading the selection explanation without revealing the guided modal before the answer thread resolves', async () => {
     vi.useFakeTimers();
 
     const activateSelectionGlowMock = vi.fn(() => true);
@@ -293,19 +293,12 @@ describe('useKangurAiTutorGuidedFlow', () => {
     expect(handleOpenChatMock).not.toHaveBeenCalled();
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(419);
+      await vi.runAllTimersAsync();
     });
 
     expect(handleOpenChatMock).not.toHaveBeenCalled();
     expect(setSelectionGuidanceCalloutVisibleTextMock).not.toHaveBeenCalledWith('2 + 2');
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(1);
-    });
-
-    expect(setSelectionGuidanceCalloutVisibleTextMock).toHaveBeenCalledWith('2 + 2');
-    expect(setSelectionGuidanceHandoffTextMock).toHaveBeenCalledWith('2 + 2');
-    expect(handleOpenChatMock).not.toHaveBeenCalled();
+    expect(setSelectionGuidanceHandoffTextMock).not.toHaveBeenCalledWith('2 + 2');
     expect(setGuidedTutorTargetMock).toHaveBeenCalledWith({
       kind: 'selection_excerpt',
       mode: 'selection',

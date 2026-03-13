@@ -102,6 +102,8 @@ function NoteFormInner(): React.JSX.Element {
               size='icon'
               className='absolute right-4 top-4 rounded-full bg-black/20 text-white hover:bg-black/40'
               onClick={() => setLightboxImage(null)}
+              aria-label='Close image preview'
+              title='Close image preview'
             >
               <X size={24} />
             </Button>

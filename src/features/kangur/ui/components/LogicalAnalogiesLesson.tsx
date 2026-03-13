@@ -283,7 +283,7 @@ export default function LogicalAnalogiesLesson(): React.JSX.Element {
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-pink-500'
         dotDoneClass='bg-pink-300'
-        gradientClass='from-pink-500 to-rose-500'
+        gradientClass='kangur-gradient-accent-rose-reverse'
       />
     );
   }
@@ -292,7 +292,7 @@ export default function LogicalAnalogiesLesson(): React.JSX.Element {
     <LessonHub
       lessonEmoji='🔗'
       lessonTitle='Analogie'
-      gradientClass='from-pink-500 to-rose-500'
+      gradientClass='kangur-gradient-accent-rose-reverse'
       progressDotClassName='bg-pink-300'
       sections={HUB_SECTIONS.map((section) => ({
         ...section,

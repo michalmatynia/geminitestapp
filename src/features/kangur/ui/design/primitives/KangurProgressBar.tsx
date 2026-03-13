@@ -22,17 +22,6 @@ export const kangurProgressBarVariants = cva(
   }
 );
 
-export const KANGUR_PROGRESS_BAR_GRADIENTS: Record<KangurAccent, string> = {
-  indigo: 'from-purple-500 to-indigo-500',
-  violet: 'from-violet-500 to-fuchsia-500',
-  emerald: 'from-emerald-500 to-cyan-500',
-  sky: 'from-sky-400 to-indigo-400',
-  amber: 'from-orange-400 to-yellow-400',
-  rose: 'from-red-400 to-pink-400',
-  teal: 'from-blue-500 to-teal-400',
-  slate: 'from-slate-400 to-slate-600',
-};
-
 export type KangurProgressBarProps = React.HTMLAttributes<HTMLDivElement> &
   VariantProps<typeof kangurProgressBarVariants> & {
     accent?: KangurAccent;
@@ -55,7 +44,6 @@ export function KangurProgressBar({
   const clampedValue = Math.max(0, Math.min(100, value));
   const fillClasses = cn(
     'kangur-progress-fill h-full rounded-full bg-gradient-to-r',
-    KANGUR_PROGRESS_BAR_GRADIENTS[accent],
     !animated && 'transition-[width] duration-500 ease-out',
     fillClassName
   );

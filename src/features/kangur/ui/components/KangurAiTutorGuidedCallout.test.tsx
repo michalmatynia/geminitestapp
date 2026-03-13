@@ -278,6 +278,9 @@ describe('KangurAiTutorGuidedCallout', () => {
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-answer')).toHaveTextContent(
       'To ścieżka mistrzostwa pokazuje Twój postęp w odznakach i lekcjach.'
     );
+    expect(
+      screen.getByRole('region', { name: 'Wyjaśniam ten fragment.' })
+    ).toHaveAttribute('aria-live', 'polite');
     expect(screen.queryByText('Za chwilę otworzę wyjaśnienie dokładnie dla zaznaczonego tekstu.')).not.toBeInTheDocument();
     expect(screen.queryByText('Już przygotowuję wyjaśnienie…')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Rozumiem' })).toBeInTheDocument();

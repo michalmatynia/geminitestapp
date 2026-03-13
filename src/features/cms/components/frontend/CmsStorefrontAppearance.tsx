@@ -417,6 +417,23 @@ const DEFAULT_KANGUR_RUNTIME_VARS = {
   '--kangur-lesson-inset-radius': '18px',
   '--kangur-gradient-icon-tile-radius-md': '16px',
   '--kangur-gradient-icon-tile-radius-lg': '24px',
+  '--kangur-accent-indigo-start': '#a855f7',
+  '--kangur-accent-indigo-end': '#6366f1',
+  '--kangur-accent-violet-start': '#8b5cf6',
+  '--kangur-accent-violet-end': '#d946ef',
+  '--kangur-accent-emerald-start': '#10b981',
+  '--kangur-accent-emerald-end': '#06b6d4',
+  '--kangur-accent-sky-start': '#38bdf8',
+  '--kangur-accent-sky-end': '#818cf8',
+  '--kangur-accent-amber-start': '#fb923c',
+  '--kangur-accent-amber-end': '#facc15',
+  '--kangur-accent-rose-start': '#f87171',
+  '--kangur-accent-rose-end': '#f472b6',
+  '--kangur-accent-teal-start': '#3b82f6',
+  '--kangur-accent-teal-end': '#2dd4bf',
+  '--kangur-accent-slate-start': '#94a3b8',
+  '--kangur-accent-slate-end': '#475569',
+  '--kangur-gradient-soft-mid': '#ffffff',
   '--kangur-chat-bubble-radius': '22px',
   '--kangur-chat-card-radius': '22px',
   '--kangur-chat-inset-radius': '20px',
@@ -1169,6 +1186,11 @@ const resolveThemedKangurStorefrontAppearance = (
     isDarkStorefrontAppearanceMode(mode)
       ? mixCssColor(theme.backgroundColor, '#000000', 34)
       : mixCssColor(primary, '#000000', 12);
+  const progressTrack = theme.progressTrackColor?.trim()
+    ? theme.progressTrackColor
+    : isDarkStorefrontAppearanceMode(mode)
+      ? mixCssColor(borderColor, pageTone.background, 48)
+      : mixCssColor(borderColor, pageTone.background, 64);
   const glassPanelShadow = buildShadow({
     x: theme.containerShadowX,
     y: theme.containerShadowY,
@@ -1183,6 +1205,68 @@ const resolveThemedKangurStorefrontAppearance = (
     color: cardShadowBase,
     opacity: theme.cardShadowOpacity,
   });
+  const gradientSoftMid = mixCssColor(
+    surfaceTone.background,
+    '#ffffff',
+    isDarkStorefrontAppearanceMode(mode) ? 24 : 92
+  );
+  const primaryGradientStart = mixCssColor(
+    primaryButtonBackground,
+    '#ffffff',
+    isDarkStorefrontAppearanceMode(mode) ? 82 : 68
+  );
+  const primaryGradientMid = mixCssColor(
+    primaryButtonBackground,
+    '#ffffff',
+    isDarkStorefrontAppearanceMode(mode) ? 74 : 58
+  );
+  const primaryGradientEnd = darkenCssColor(
+    primaryButtonBackground,
+    isDarkStorefrontAppearanceMode(mode) ? 18 : 8
+  );
+  const primaryGradientHoverStart = mixCssColor(
+    primaryButtonBackground,
+    '#ffffff',
+    isDarkStorefrontAppearanceMode(mode) ? 74 : 58
+  );
+  const primaryGradientHoverMid = darkenCssColor(
+    primaryButtonBackground,
+    isDarkStorefrontAppearanceMode(mode) ? 10 : 2
+  );
+  const primaryGradientHoverEnd = darkenCssColor(
+    primaryButtonBackground,
+    isDarkStorefrontAppearanceMode(mode) ? 20 : 10
+  );
+  const warningGradientStart = mixCssColor(
+    warningBackground,
+    isDarkStorefrontAppearanceMode(mode) ? '#000000' : '#ffffff',
+    isDarkStorefrontAppearanceMode(mode) ? 84 : 76
+  );
+  const warningGradientEnd = mixCssColor(
+    warningBackground,
+    pageTone.background,
+    isDarkStorefrontAppearanceMode(mode) ? 88 : 68
+  );
+  const warningGradientHoverStart = mixCssColor(
+    warningBackground,
+    '#ffffff',
+    isDarkStorefrontAppearanceMode(mode) ? 74 : 68
+  );
+  const warningGradientHoverEnd = mixCssColor(
+    warningBackground,
+    pageTone.background,
+    isDarkStorefrontAppearanceMode(mode) ? 82 : 62
+  );
+  const successGradientStart = mixCssColor(
+    successBackground,
+    isDarkStorefrontAppearanceMode(mode) ? '#000000' : '#ffffff',
+    isDarkStorefrontAppearanceMode(mode) ? 86 : 78
+  );
+  const successGradientEnd = mixCssColor(
+    successBackground,
+    pageTone.background,
+    isDarkStorefrontAppearanceMode(mode) ? 90 : 70
+  );
 
   return {
     background,
@@ -1257,10 +1341,36 @@ const resolveThemedKangurStorefrontAppearance = (
         isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(inputTone.border, '#ffffff', 18)
           : mixCssColor(inputTone.border, pageTone.background, 72),
-      '--kangur-progress-track':
-        isDarkStorefrontAppearanceMode(mode)
-          ? mixCssColor(borderColor, pageTone.background, 48)
-          : mixCssColor(borderColor, pageTone.background, 64),
+      '--kangur-progress-track': progressTrack,
+      '--kangur-accent-indigo-start': theme.gradientIndigoStart,
+      '--kangur-accent-indigo-end': theme.gradientIndigoEnd,
+      '--kangur-accent-violet-start': theme.gradientVioletStart,
+      '--kangur-accent-violet-end': theme.gradientVioletEnd,
+      '--kangur-accent-emerald-start': theme.gradientEmeraldStart,
+      '--kangur-accent-emerald-end': theme.gradientEmeraldEnd,
+      '--kangur-accent-sky-start': theme.gradientSkyStart,
+      '--kangur-accent-sky-end': theme.gradientSkyEnd,
+      '--kangur-accent-amber-start': theme.gradientAmberStart,
+      '--kangur-accent-amber-end': theme.gradientAmberEnd,
+      '--kangur-accent-rose-start': theme.gradientRoseStart,
+      '--kangur-accent-rose-end': theme.gradientRoseEnd,
+      '--kangur-accent-teal-start': theme.gradientTealStart,
+      '--kangur-accent-teal-end': theme.gradientTealEnd,
+      '--kangur-accent-slate-start': theme.gradientSlateStart,
+      '--kangur-accent-slate-end': theme.gradientSlateEnd,
+      '--kangur-gradient-soft-mid': gradientSoftMid,
+      '--kangur-cta-primary-start': primaryGradientStart,
+      '--kangur-cta-primary-mid': primaryGradientMid,
+      '--kangur-cta-primary-end': primaryGradientEnd,
+      '--kangur-cta-primary-hover-start': primaryGradientHoverStart,
+      '--kangur-cta-primary-hover-mid': primaryGradientHoverMid,
+      '--kangur-cta-primary-hover-end': primaryGradientHoverEnd,
+      '--kangur-cta-warning-start': warningGradientStart,
+      '--kangur-cta-warning-end': warningGradientEnd,
+      '--kangur-cta-warning-hover-start': warningGradientHoverStart,
+      '--kangur-cta-warning-hover-end': warningGradientHoverEnd,
+      '--kangur-cta-success-start': successGradientStart,
+      '--kangur-cta-success-end': successGradientEnd,
       '--kangur-page-text': toneText,
       '--kangur-page-muted-text': pageMutedText,
       '--kangur-button-primary-background':

@@ -179,7 +179,7 @@ export default function DivisionLesson(): React.JSX.Element {
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-blue-500'
         dotDoneClass='bg-blue-300'
-        gradientClass='from-blue-500 to-teal-400'
+        gradientClass='kangur-gradient-accent-teal'
       />
     );
   }
@@ -188,7 +188,7 @@ export default function DivisionLesson(): React.JSX.Element {
     <LessonHub
       lessonEmoji='➗'
       lessonTitle='Dzielenie'
-      gradientClass='from-blue-500 to-teal-400'
+      gradientClass='kangur-gradient-accent-teal'
       progressDotClassName='bg-blue-300'
       sections={HUB_SECTIONS.map((section) =>
         section.isGame

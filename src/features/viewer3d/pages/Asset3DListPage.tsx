@@ -212,22 +212,26 @@ export function Asset3DListPage(): React.JSX.Element {
             headerAction={
               <div className='flex items-center overflow-hidden rounded-md border border-border bg-muted/20'>
                 {' '}
-                <Button
-                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                  size='icon'
-                  className='h-8 w-8 rounded-none'
-                  onClick={() => setViewMode('grid')}
-                >
-                  <Grid className='h-4 w-4' />
-                </Button>
-                <Button
-                  variant={viewMode === 'list' ? 'default' : 'ghost'}
-                  size='icon'
-                  className='h-8 w-8 rounded-none'
-                  onClick={() => setViewMode('list')}
-                >
-                  <List className='h-4 w-4' />
-                </Button>
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'ghost'}
+              size='icon'
+              className='h-8 w-8 rounded-none'
+              onClick={() => setViewMode('grid')}
+              aria-label='Grid view'
+              title='Grid view'
+            >
+              <Grid className='h-4 w-4' />
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size='icon'
+              className='h-8 w-8 rounded-none'
+              onClick={() => setViewMode('list')}
+              aria-label='List view'
+              title='List view'
+            >
+              <List className='h-4 w-4' />
+            </Button>
               </div>
             }
           />

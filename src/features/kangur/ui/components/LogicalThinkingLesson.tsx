@@ -289,7 +289,7 @@ export default function LogicalThinkingLesson(): React.JSX.Element {
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-violet-500'
         dotDoneClass='bg-violet-300'
-        gradientClass='from-violet-500 to-blue-500'
+        gradientClass='kangur-gradient-accent-indigo'
       />
     );
   }
@@ -298,7 +298,7 @@ export default function LogicalThinkingLesson(): React.JSX.Element {
     <LessonHub
       lessonEmoji='🧠'
       lessonTitle='Myślenie logiczne'
-      gradientClass='from-violet-500 to-blue-500'
+      gradientClass='kangur-gradient-accent-indigo'
       progressDotClassName='bg-violet-300'
       sections={HUB_SECTIONS.map((section) => ({
         ...section,

@@ -129,7 +129,7 @@ function TutorToggleField({
         <div
           className={`h-5 w-10 rounded-full transition-all ${
             checked
-              ? 'bg-gradient-to-r from-amber-400 to-orange-400 shadow-[0_8px_18px_-14px_rgba(249,115,22,0.72)]'
+              ? 'bg-gradient-to-r kangur-gradient-accent-amber shadow-[0_8px_18px_-14px_rgba(249,115,22,0.72)]'
               : '[background:color-mix(in_srgb,var(--kangur-soft-card-border)_86%,#94a3b8)]'
           }`}
         />
@@ -479,7 +479,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
           <div
             className={`w-10 h-5 rounded-full transition-all ${
               enabled
-                ? 'bg-gradient-to-r from-amber-400 to-orange-400 shadow-[0_8px_18px_-14px_rgba(249,115,22,0.72)]'
+                ? 'bg-gradient-to-r kangur-gradient-accent-amber shadow-[0_8px_18px_-14px_rgba(249,115,22,0.72)]'
                 : '[background:color-mix(in_srgb,var(--kangur-soft-card-border)_86%,#94a3b8)]'
             }`}
           />

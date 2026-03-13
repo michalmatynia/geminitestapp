@@ -130,7 +130,7 @@ describe('Kangur CTA contract cleanup', () => {
     const source = readFileSync(kangurParentDashboardAiTutorWidgetPath, 'utf8');
 
     expect(source).toContain('accent=\'amber\'');
-    expect(source).toContain('bg-gradient-to-r from-amber-400 to-orange-400');
+    expect(source).toContain('bg-gradient-to-r kangur-gradient-accent-amber');
     expect(source).toContain('border border-amber-100 bg-amber-50/75');
     expect(source).toContain('text-orange-500');
     expect(source).not.toContain('accent=\'indigo\'');

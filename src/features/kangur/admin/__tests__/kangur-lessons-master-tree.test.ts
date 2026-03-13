@@ -16,7 +16,7 @@ const createLesson = (overrides: Partial<KangurLesson>): KangurLesson => ({
   title: 'Default lesson',
   description: 'Default description',
   emoji: '📚',
-  color: 'from-blue-500 to-blue-600',
+  color: 'kangur-gradient-accent-indigo',
   activeBg: 'bg-blue-600',
   sortOrder: 1_000,
   enabled: true,

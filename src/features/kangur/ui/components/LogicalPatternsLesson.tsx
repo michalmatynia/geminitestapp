@@ -241,7 +241,7 @@ export default function LogicalPatternsLesson(): React.JSX.Element {
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-violet-500'
         dotDoneClass='bg-violet-300'
-        gradientClass='from-violet-500 to-purple-600'
+        gradientClass='kangur-gradient-accent-violet'
       />
     );
   }
@@ -250,7 +250,7 @@ export default function LogicalPatternsLesson(): React.JSX.Element {
     <LessonHub
       lessonEmoji='🔢'
       lessonTitle='Wzorce i ciągi'
-      gradientClass='from-violet-500 to-purple-600'
+      gradientClass='kangur-gradient-accent-violet'
       progressDotClassName='bg-violet-300'
       sections={HUB_SECTIONS.map((section) => ({
         ...section,

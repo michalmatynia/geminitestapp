@@ -70,8 +70,8 @@ describe('Kangur CTA hover styles', () => {
     expect(source).toContain(".kangur-cta-pill[class*='bg-[linear-gradient']");
     expect(source).toContain('color-mix(in srgb, var(--tw-gradient-from, transparent) 88%, var(--tw-gradient-to, transparent) 12%)');
     expect(source).toContain(".kangur-progress-fill[data-kangur-accent='rose']");
-    expect(source).toContain('--kangur-progress-primary: #f87171;');
-    expect(source).toContain('--kangur-progress-secondary: #f472b6;');
+    expect(source).toContain('--kangur-progress-primary: var(--kangur-accent-rose-start, #f87171);');
+    expect(source).toContain('--kangur-progress-secondary: var(--kangur-accent-rose-end, #f472b6);');
     expect(primaryCtaBlock).not.toContain('background-position 420ms ease');
     expect(primaryCtaBlock).not.toContain('background 220ms ease');
     expect(warningCtaBlock).not.toContain('background-position 420ms ease');

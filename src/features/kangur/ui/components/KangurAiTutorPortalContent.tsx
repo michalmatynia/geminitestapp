@@ -32,9 +32,30 @@ export function KangurAiTutorPortalContent() {
   } = useKangurAiTutorPortalContext();
   void guestIntro;
   void KangurAiTutorGuestIntroPanel;
+  const accessibilityStatusText = guestIntro.shouldRender
+    ? [guestIntro.guestIntroHeadline, guestIntro.guestIntroDescription].filter(Boolean).join(' ')
+    : guidedCallout.shouldRender
+      ? [guidedCallout.stepLabel, guidedCallout.title, guidedCallout.detail].filter(Boolean).join(' ')
+      : panel.isOpen && !panel.suppressPanelSurface
+        ? ['Czat AI Tutora otwarty.', panel.sessionSurfaceLabel].filter(Boolean).join(' ')
+        : selectionAction.shouldRender
+          ? 'Zaznaczono fragment. Możesz użyć przycisku Zapytaj o to.'
+          : avatar.showFloatingAvatar
+            ? avatar.ariaLabel
+            : '';
 
   return (
     <>
+      <div
+        role='status'
+        aria-live='polite'
+        aria-atomic='true'
+        className='sr-only'
+        data-testid='kangur-ai-tutor-accessibility-status'
+      >
+        {accessibilityStatusText}
+      </div>
+
       <div
         hidden
         data-testid='kangur-ai-tutor-surface-diagnostics'

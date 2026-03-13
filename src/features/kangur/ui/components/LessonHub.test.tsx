@@ -35,7 +35,7 @@ describe('LessonHub', () => {
 
     render(
       <LessonHub
-        gradientClass='from-emerald-400 to-teal-500'
+        gradientClass='kangur-gradient-accent-emerald'
         lessonEmoji='📅'
         lessonTitle='Nauka kalendarza'
         onBack={vi.fn()}
@@ -98,7 +98,7 @@ describe('LessonHub', () => {
   it('renders a compact read-only progress strip under lesson pills', () => {
     render(
       <LessonHub
-        gradientClass='from-emerald-400 to-teal-500'
+        gradientClass='kangur-gradient-accent-emerald'
         lessonEmoji='📅'
         lessonTitle='Nauka kalendarza'
         onBack={vi.fn()}
@@ -132,7 +132,7 @@ describe('LessonHub', () => {
   it('uses explicit game progress instead of the generic one-pill fallback', () => {
     render(
       <LessonHub
-        gradientClass='from-emerald-400 to-teal-500'
+        gradientClass='kangur-gradient-accent-emerald'
         lessonEmoji='📅'
         lessonTitle='Nauka kalendarza'
         onBack={vi.fn()}

@@ -58,7 +58,7 @@ describe('LessonSlideSection', () => {
         onBack={vi.fn()}
         dotActiveClass='bg-orange-400'
         dotDoneClass='bg-orange-200'
-        gradientClass='from-orange-400 to-yellow-400'
+        gradientClass='kangur-gradient-accent-amber'
       />
     );
 
@@ -85,7 +85,7 @@ describe('LessonSlideSection', () => {
         onProgressChange={onProgressChange}
         dotActiveClass='bg-orange-400'
         dotDoneClass='bg-orange-200'
-        gradientClass='from-orange-400 to-yellow-400'
+        gradientClass='kangur-gradient-accent-amber'
       />
     );
 
@@ -141,7 +141,7 @@ describe('LessonSlideSection', () => {
           slides={[{ title: 'Slajd 1', content: <div>Pierwszy</div> }]}
           dotActiveClass='bg-orange-400'
           dotDoneClass='bg-orange-200'
-          gradientClass='from-orange-400 to-yellow-400'
+          gradientClass='kangur-gradient-accent-amber'
         />
       </KangurLessonNavigationProvider>
     );
@@ -166,7 +166,7 @@ describe('LessonSlideSection', () => {
         onBack={vi.fn()}
         dotActiveClass='bg-orange-400'
         dotDoneClass='bg-orange-200'
-        gradientClass='from-orange-400 to-yellow-400'
+        gradientClass='kangur-gradient-accent-amber'
       />
     );
 
@@ -193,7 +193,7 @@ describe('LessonSlideSection', () => {
           slides={[{ title: 'Slajd 1', content: <div>Pierwszy</div> }]}
           dotActiveClass='bg-orange-400'
           dotDoneClass='bg-orange-200'
-          gradientClass='from-orange-400 to-yellow-400'
+          gradientClass='kangur-gradient-accent-amber'
         />
       </KangurLessonNavigationProvider>
     );
@@ -217,7 +217,7 @@ describe('LessonSlideSection', () => {
         onBack={vi.fn()}
         dotActiveClass='bg-orange-400'
         dotDoneClass='bg-orange-200'
-        gradientClass='from-orange-400 to-yellow-400'
+        gradientClass='kangur-gradient-accent-amber'
       />
     );
 

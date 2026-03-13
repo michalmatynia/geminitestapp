@@ -1013,7 +1013,7 @@ export default function ClockLesson(): React.JSX.Element {
         onProgressChange={(viewedCount) => markSectionViewedCount(view.sectionId, viewedCount)}
         dotActiveClass='bg-indigo-500'
         dotDoneClass='bg-indigo-200'
-        gradientClass='from-indigo-400 to-purple-500'
+        gradientClass='kangur-gradient-accent-indigo-reverse'
       />
     );
   }
@@ -1056,7 +1056,7 @@ export default function ClockLesson(): React.JSX.Element {
     <LessonHub
       lessonEmoji='🕐'
       lessonTitle='Nauka zegara'
-      gradientClass='from-indigo-400 to-purple-500'
+      gradientClass='kangur-gradient-accent-indigo-reverse'
       progressDotClassName='bg-indigo-200'
       sections={lessonHubSectionsWithGameProgress}
       onSelect={(sectionId) => {

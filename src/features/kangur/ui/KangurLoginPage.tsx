@@ -978,7 +978,7 @@ function KangurLoginPageContent(): JSX.Element {
             </div>
             <KangurGradientHeading
               className='mt-3 text-[2rem] tracking-[-0.05em] sm:text-[2.65rem]'
-              gradientClass='from-amber-500 via-orange-500 to-indigo-500'
+              gradientClass='kangur-gradient-hero'
               id={titleId}
               size='lg'
             >

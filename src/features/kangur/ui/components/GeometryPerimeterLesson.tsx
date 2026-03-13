@@ -148,7 +148,7 @@ export default function GeometryPerimeterLesson(): React.JSX.Element {
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-amber-500'
         dotDoneClass='bg-amber-300'
-        gradientClass='from-amber-500 to-orange-500'
+        gradientClass='kangur-gradient-accent-amber-reverse'
       />
     );
   }
@@ -157,7 +157,7 @@ export default function GeometryPerimeterLesson(): React.JSX.Element {
     <LessonHub
       lessonEmoji='📏'
       lessonTitle='Obwód figur'
-      gradientClass='from-amber-500 to-orange-500'
+      gradientClass='kangur-gradient-accent-amber-reverse'
       progressDotClassName='bg-amber-300'
       sections={HUB_SECTIONS.map((section) => ({
         ...section,

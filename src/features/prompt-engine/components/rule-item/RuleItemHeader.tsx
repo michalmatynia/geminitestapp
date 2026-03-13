@@ -122,6 +122,8 @@ export function RuleItemHeader({
             variant='ghost'
             size='icon'
             onClick={() => void handleCopy(draft.text, 'Rule')}
+            aria-label={copyJsonTooltip}
+            title={copyJsonTooltip}
           >
             <Copy className='size-4' />
           </Button>

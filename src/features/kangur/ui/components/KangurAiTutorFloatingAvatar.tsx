@@ -15,6 +15,8 @@ import type {
 } from './KangurAiTutorWidget.shared';
 import type { CSSProperties, JSX, MouseEvent, PointerEvent } from 'react';
 
+const KANGUR_AI_TUTOR_PANEL_SURFACE_ID = 'kangur-ai-tutor-panel-surface';
+
 type GuidedArrowhead = TutorGuidedArrowhead;
 
 type ReducedMotionTransitions = {
@@ -168,6 +170,8 @@ export function KangurAiTutorFloatingAvatar({
       )}
       style={avatarButtonStyle}
       aria-label={ariaLabel}
+      aria-controls={KANGUR_AI_TUTOR_PANEL_SURFACE_ID}
+      aria-expanded={isOpen ? 'true' : 'false'}
     >
       <KangurAiTutorMoodAvatar
         svgContent={tutor?.tutorAvatarSvg ?? null}

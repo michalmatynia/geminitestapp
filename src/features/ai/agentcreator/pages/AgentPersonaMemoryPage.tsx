@@ -92,6 +92,11 @@ export function AgentPersonaMemoryPage({
             variant='ghost'
             className='h-7 w-7'
             onClick={() => toggleExpanded(row.original.id)}
+            aria-label={
+              expanded[row.original.id] ? 'Collapse memory details' : 'Expand memory details'
+            }
+            aria-expanded={expanded[row.original.id]}
+            title={expanded[row.original.id] ? 'Collapse memory details' : 'Expand memory details'}
           >
             {expanded[row.original.id] ? (
               <ChevronUp className='size-4' />

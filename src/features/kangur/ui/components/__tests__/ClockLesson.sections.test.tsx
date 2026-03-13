@@ -611,7 +611,7 @@ describe('ClockLesson section hub layout', () => {
           iconTestId='clock-header-icon'
           lesson={{
             activeBg: 'bg-indigo-500',
-            color: 'from-indigo-400 to-purple-500',
+            color: 'kangur-gradient-accent-indigo-reverse',
             componentId: 'clock',
             contentMode: 'component',
             description: 'Odczytuj godziny z zegara analogowego',

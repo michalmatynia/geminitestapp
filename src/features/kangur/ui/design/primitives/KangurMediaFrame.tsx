@@ -8,14 +8,14 @@ import { KANGUR_SURFACE_CARD_CLASSNAME, type KangurAccent } from '../tokens';
 export const kangurMediaFrameVariants = cva(`${KANGUR_SURFACE_CARD_CLASSNAME}`, {
   variants: {
     accent: {
-      indigo: 'border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-violet-50',
-      violet: 'border-violet-100 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50',
-      emerald: 'border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-teal-50',
-      sky: 'border-sky-100 bg-gradient-to-br from-sky-50 via-white to-indigo-50',
-      amber: 'border-amber-100 bg-gradient-to-br from-amber-50 via-white to-orange-50',
-      rose: 'border-rose-100 bg-gradient-to-br from-rose-50 via-white to-pink-50',
-      teal: 'border-teal-100 bg-gradient-to-br from-teal-50 via-white to-cyan-50',
-      slate: 'border-slate-200/85 bg-gradient-to-br from-slate-50 via-white to-slate-100',
+      indigo: 'border-indigo-100 bg-gradient-to-br kangur-gradient-accent-soft-indigo',
+      violet: 'border-violet-100 bg-gradient-to-br kangur-gradient-accent-soft-violet',
+      emerald: 'border-emerald-100 bg-gradient-to-br kangur-gradient-accent-soft-emerald',
+      sky: 'border-sky-100 bg-gradient-to-br kangur-gradient-accent-soft-sky',
+      amber: 'border-amber-100 bg-gradient-to-br kangur-gradient-accent-soft-amber',
+      rose: 'border-rose-100 bg-gradient-to-br kangur-gradient-accent-soft-rose',
+      teal: 'border-teal-100 bg-gradient-to-br kangur-gradient-accent-soft-teal',
+      slate: 'border-slate-200/85 bg-gradient-to-br kangur-gradient-accent-soft-slate',
     },
     padding: {
       sm: 'kangur-media-padding-sm',

@@ -273,6 +273,8 @@ function Admin3DAssetsContent(): React.JSX.Element {
               size='icon'
               className='h-8 w-8 rounded-none'
               onClick={() => setViewMode('grid')}
+              aria-label='Grid view'
+              title='Grid view'
             >
               <Grid className='h-4 w-4' />
             </Button>
@@ -281,6 +283,8 @@ function Admin3DAssetsContent(): React.JSX.Element {
               size='icon'
               className='h-8 w-8 rounded-none'
               onClick={() => setViewMode('list')}
+              aria-label='List view'
+              title='List view'
             >
               <List className='h-4 w-4' />
             </Button>

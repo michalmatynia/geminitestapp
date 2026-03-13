@@ -12,8 +12,8 @@ export {
   KANGUR_THEME_SETTINGS_KEY,
 };
 
-export const KANGUR_DEFAULT_THEME: ThemeSettings = normalizeThemeSettings({
-  ...DEFAULT_THEME,
+/** Shared shape/layout overrides applied to both day and night themes. */
+const KANGUR_SHAPE_OVERRIDES = {
   headingFont: 'system-ui, sans-serif',
   bodyFont: 'system-ui, sans-serif',
   maxContentWidth: 1440,
@@ -36,6 +36,26 @@ export const KANGUR_DEFAULT_THEME: ThemeSettings = normalizeThemeSettings({
   btnFontSize: 14,
   inputHeight: 50,
   inputRadius: 22,
+} as const;
+
+/**
+ * Default nightly theme — restored to commit 2d7d6e963.
+ * Shape/layout overrides on top of DEFAULT_THEME; no explicit color overrides.
+ * Used as the nightly reset target.
+ */
+export const KANGUR_DEFAULT_THEME: ThemeSettings = normalizeThemeSettings({
+  ...DEFAULT_THEME,
+  ...KANGUR_SHAPE_OVERRIDES,
+});
+
+/**
+ * Default daily theme — restored to commit 2d7d6e963 baseline.
+ * Shape/layout overrides on top of DEFAULT_THEME; no explicit color overrides.
+ * Used as the daily reset target.
+ */
+export const KANGUR_DEFAULT_DAILY_THEME: ThemeSettings = normalizeThemeSettings({
+  ...DEFAULT_THEME,
+  ...KANGUR_SHAPE_OVERRIDES,
 });
 
 const KANGUR_LEGACY_DEFAULT_PATCH_KEYS: Array<keyof ThemeSettings> = [
@@ -112,4 +132,35 @@ export const resolveKangurThemeSettingsRawForMode = ({
     : legacyThemeRaw?.trim()
       ? legacyThemeRaw
       : null;
+};
+
+// ─── Theme Catalog ───────────────────────────────────────────────────────────
+
+export const KANGUR_THEME_CATALOG_KEY = 'kangur_cms_theme_catalog_v1';
+
+export type KangurThemeCatalogEntry = {
+  id: string;
+  name: string;
+  settings: ThemeSettings;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export const parseKangurThemeCatalog = (
+  raw: string | null | undefined
+): KangurThemeCatalogEntry[] => {
+  if (typeof raw !== 'string' || !raw.trim()) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (e): e is KangurThemeCatalogEntry =>
+        e !== null &&
+        typeof e === 'object' &&
+        typeof (e as Record<string, unknown>)['id'] === 'string' &&
+        typeof (e as Record<string, unknown>)['name'] === 'string'
+    );
+  } catch {
+    return [];
+  }
 };

@@ -34,6 +34,7 @@ export type KangurAiTutorPanelBodyContextValue = {
   canStartHomeOnboardingManually: boolean;
   drawingImageData: string | null;
   drawingMode: boolean;
+  guestAuthFormVisible: boolean;
   emptyStateMessage: string;
   focusChipLabel: string | null;
   handleClearDrawing: () => void;

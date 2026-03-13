@@ -1,17 +1,25 @@
 'use client';
 
+import { useState } from 'react';
+
 import {
   FONT_OPTIONS,
   ThemeSettingsFieldsSection,
   ThemeSettingsProvider,
 } from '@/features/cms/public';
 import {
+  KANGUR_DAILY_THEME_SETTINGS_KEY,
+  KANGUR_DEFAULT_DAILY_THEME,
   KANGUR_DEFAULT_THEME,
-  KANGUR_THEME_SETTINGS_KEY,
+  KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
 } from '@/features/kangur/theme-settings';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import { Alert, FormSection } from '@/shared/ui';
+import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { Alert, Button, FormSection, useToast } from '@/shared/ui';
 import type { SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import { serializeSetting } from '@/shared/utils/settings-json';
+
+type ThemeMode = 'daily' | 'nightly';
 
 const KANGUR_THEME_SECTIONS: Array<{
   title: string;
@@ -219,15 +227,105 @@ const KANGUR_THEME_SECTIONS: Array<{
   },
 ];
 
+const MODE_CONFIG: Record<
+  ThemeMode,
+  { label: string; storageKey: string; defaultTheme: ThemeSettings; resetLabel: string }
+> = {
+  daily: {
+    label: 'Motyw dzienny',
+    storageKey: KANGUR_DAILY_THEME_SETTINGS_KEY,
+    defaultTheme: KANGUR_DEFAULT_DAILY_THEME,
+    resetLabel: 'Przywróć motyw dzienny',
+  },
+  nightly: {
+    label: 'Motyw nocny',
+    storageKey: KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
+    defaultTheme: KANGUR_DEFAULT_THEME,
+    resetLabel: 'Przywróć motyw nocny',
+  },
+};
+
 export function KangurThemeSettingsPanel(): React.JSX.Element {
+  const [mode, setMode] = useState<ThemeMode>('daily');
+  const config = MODE_CONFIG[mode];
+
   return (
-    <ThemeSettingsProvider storageKey={KANGUR_THEME_SETTINGS_KEY} defaultTheme={KANGUR_DEFAULT_THEME}>
-      <KangurThemeSettingsEditor />
-    </ThemeSettingsProvider>
+    <div className='space-y-4'>
+      {/* Day / Night tab strip */}
+      <div className='flex gap-2 rounded-2xl border border-border/60 bg-card/30 p-1.5'>
+        {(Object.entries(MODE_CONFIG) as Array<[ThemeMode, (typeof MODE_CONFIG)[ThemeMode]]>).map(
+          ([key, cfg]) => (
+            <button
+              key={key}
+              type='button'
+              onClick={() => setMode(key)}
+              className={[
+                'flex-1 rounded-xl px-4 py-2 text-sm font-semibold transition-colors',
+                mode === key
+                  ? 'bg-card text-foreground shadow-sm ring-1 ring-border/60'
+                  : 'text-muted-foreground hover:text-foreground',
+              ].join(' ')}
+            >
+              {cfg.label}
+            </button>
+          )
+        )}
+      </div>
+
+      {/* Re-mount provider when mode changes so the editor reads the correct key */}
+      <ThemeSettingsProvider
+        key={config.storageKey}
+        storageKey={config.storageKey}
+        defaultTheme={config.defaultTheme}
+      >
+        <KangurThemeSettingsEditor
+          mode={mode}
+          storageKey={config.storageKey}
+          defaultTheme={config.defaultTheme}
+          resetLabel={config.resetLabel}
+        />
+      </ThemeSettingsProvider>
+    </div>
   );
 }
 
-export function KangurThemeSettingsEditor(): React.JSX.Element {
+function KangurThemeSettingsEditor({
+  mode,
+  storageKey,
+  defaultTheme,
+  resetLabel,
+}: {
+  mode: ThemeMode;
+  storageKey: string;
+  defaultTheme: ThemeSettings;
+  resetLabel: string;
+}): React.JSX.Element {
+  const updateSetting = useUpdateSetting();
+  const { toast } = useToast();
+  const [isResetting, setIsResetting] = useState(false);
+
+  const handleReset = async (): Promise<void> => {
+    setIsResetting(true);
+    try {
+      await updateSetting.mutateAsync({
+        key: storageKey,
+        value: serializeSetting(defaultTheme),
+      });
+      toast(
+        mode === 'daily'
+          ? 'Motyw dzienny przywrócony do domyślnych ustawień.'
+          : 'Motyw nocny przywrócony do domyślnych ustawień.',
+        { variant: 'success' }
+      );
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Nie udało się przywrócić motywu.', {
+        variant: 'error',
+      });
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   return (
     <div className='space-y-4'>
       <Alert variant='info' title='Autosave'>
@@ -235,6 +333,28 @@ export function KangurThemeSettingsEditor(): React.JSX.Element {
         theme. This panel only shows tokens that the public Kangur runtime maps today, so every
         field here has a live storefront effect.
       </Alert>
+
+      {/* Reset to default */}
+      <div className='flex items-center justify-between rounded-xl border border-border/60 bg-card/30 px-4 py-3'>
+        <div className='min-w-0'>
+          <p className='text-sm font-medium text-foreground'>{resetLabel}</p>
+          <p className='text-xs text-muted-foreground'>
+            {mode === 'daily'
+              ? 'Nadpisuje ten motyw pięknym, ciepłym wzorcem dziennym.'
+              : 'Nadpisuje ten motyw ciemnym wzorcem nocnym.'}
+          </p>
+        </div>
+        <Button
+          size='sm'
+          variant='outline'
+          disabled={isResetting}
+          onClick={() => void handleReset()}
+          className='ml-4 shrink-0'
+        >
+          {isResetting ? 'Przywracam...' : 'Przywróć domyślne'}
+        </Button>
+      </div>
+
       <div className='space-y-4'>
         {KANGUR_THEME_SECTIONS.map((section) => (
           <FormSection

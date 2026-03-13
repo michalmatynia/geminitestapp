@@ -62,16 +62,19 @@ export function KangurAiTutorPortalContent() {
 
       <AnimatePresence>
         {guestIntro.shouldRender ? (
-          <KangurAiTutorGuestIntroPanel
-            isAnonymousVisitor={guestIntro.isAnonymousVisitor}
-            guestTutorLabel={guestIntro.guestTutorLabel}
-            guestIntroHeadline={guestIntro.guestIntroHeadline}
-            guestIntroDescription={guestIntro.guestIntroDescription}
-            prefersReducedMotion={guestIntro.prefersReducedMotion}
-            panelStyle={guestIntro.panelStyle}
-            onClose={guestIntro.onClose}
-            onAccept={guestIntro.onAccept}
-          />
+          <KangurAiTutorPanelBodyProvider value={panel.panelBodyContextValue}>
+            <KangurAiTutorGuestIntroPanel
+              isAnonymousVisitor={guestIntro.isAnonymousVisitor}
+              guestTutorLabel={guestIntro.guestTutorLabel}
+              guestIntroHeadline={guestIntro.guestIntroHeadline}
+              guestIntroDescription={guestIntro.guestIntroDescription}
+              prefersReducedMotion={guestIntro.prefersReducedMotion}
+              panelStyle={guestIntro.panelStyle}
+              onClose={guestIntro.onClose}
+              onAccept={guestIntro.onAccept}
+              onStartChat={guestIntro.onStartChat}
+            />
+          </KangurAiTutorPanelBodyProvider>
         ) : null}
       </AnimatePresence>
 

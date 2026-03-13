@@ -7,6 +7,11 @@ const __dirname = path.dirname(__filename);
 
 /** @type {import('next').NextConfig} */
 const isDev = process.env.NODE_ENV !== 'production';
+// VERCEL=1 is set automatically by Vercel on all build/deploy containers.
+// output:'standalone' is only needed for Docker/self-hosted deploys; enabling
+// it on Vercel adds unnecessary filesystem work (tracing + copying node_modules)
+// that contributes to the 45-minute build timeout.
+const isVercel = Boolean(process.env.VERCEL);
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -40,11 +45,18 @@ const nextConfig = {
   // when `next build` and `next dev` are triggered in parallel.
   distDir: process.env.NEXT_DIST_DIR || (isDev ? '.next-dev' : '.next'),
   compress: true, // Ensure gzip compression is enabled
-  output: 'standalone', // Docker-friendly build output
-  outputFileTracingRoot: __dirname,
-  outputFileTracingExcludes: {
-    '/api/ai-paths/playwright/[runId]/artifacts/[file]': ['./test-results/**/*'],
-  },
+  // Standalone output is needed for Docker/self-hosted deploys (see Dockerfile).
+  // On Vercel, Vercel manages deployment itself and standalone output only adds
+  // expensive file-tracing work that can push builds past the 45-minute limit.
+  ...(isVercel
+    ? {}
+    : {
+        output: 'standalone',
+        outputFileTracingRoot: __dirname,
+        outputFileTracingExcludes: {
+          '/api/ai-paths/playwright/[runId]/artifacts/[file]': ['./test-results/**/*'],
+        },
+      }),
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },

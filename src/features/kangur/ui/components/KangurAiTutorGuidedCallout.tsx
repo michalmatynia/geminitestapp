@@ -220,7 +220,7 @@ export function KangurAiTutorGuidedCallout({
   const shouldShowSelectionIntro =
     !(mode === 'selection' && isResolvedSelectionCallout);
   const shouldShowSelectionPreview =
-    mode !== 'selection' && Boolean(resolvedSelectedPreview ?? selectionPreview);
+    Boolean(resolvedSelectedPreview ?? selectionPreview);
   const shouldShowSelectionPageContentBadge =
     resolvedSelectionAssistantMessage?.answerResolutionMode === 'page_content';
   const shouldShowSelectionPreparingBadge =

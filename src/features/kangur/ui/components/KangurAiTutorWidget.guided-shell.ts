@@ -251,6 +251,8 @@ export function useKangurAiTutorGuidedShellState(input: {
     Boolean(guidedFocusRect && guidedCalloutStyle) &&
     (guidedMode === 'home_onboarding' ||
       guidedMode === 'auth' ||
+      guidedMode === 'selection' ||
+      guidedMode === 'section' ||
       showSectionGuidanceCallout ||
       showSelectionGuidanceCallout ||
       isAnonymousVisitor);

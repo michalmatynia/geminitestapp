@@ -1,6 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
+import { createRef } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -12,6 +13,46 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
       closeAria: 'Zamknij modal tutora',
       acceptLabel: 'Tak',
     },
+    common: {
+      questionInputAria: 'Napisz pytanie',
+      sendAria: 'Wyślij',
+    },
+  }),
+}));
+
+vi.mock('./KangurAiTutorWidget.state', () => ({
+  useKangurAiTutorWidgetStateContext: () => ({
+    guestAuthFormVisible: false,
+    inputValue: '',
+    inputRef: createRef<HTMLInputElement>(),
+    messageFeedbackByKey: {},
+    messagesEndRef: createRef<HTMLDivElement>(),
+    setInputValue: vi.fn(),
+    setGuestAuthFormVisible: vi.fn(),
+    setDrawingImageData: vi.fn(),
+  }),
+}));
+
+vi.mock('./KangurAiTutorPanelBody.context', () => ({
+  useKangurAiTutorPanelBodyContext: () => ({
+    askModalHelperText: 'Zapytaj tutora.',
+    basePath: '',
+    canSendMessages: true,
+    drawingImageData: null,
+    emptyStateMessage: 'Brak wiadomości.',
+    handleFollowUpClick: vi.fn(),
+    handleMessageFeedback: vi.fn(),
+    handleSend: vi.fn(),
+    handleWebsiteHelpTargetClick: vi.fn(),
+    inputPlaceholder: 'Zapytaj tutora...',
+    isAskModalMode: false,
+    isLoading: false,
+    isSectionExplainPendingMode: false,
+    isSelectionExplainPendingMode: false,
+    messages: [],
+    panelEmptyStateMessage: 'Brak wiadomości.',
+    showSources: false,
+    tutorSessionKey: 'session-test',
   }),
 }));
 
@@ -27,6 +68,7 @@ describe('KangurAiTutorGuestIntroPanel', () => {
         isAnonymousVisitor={false}
         onAccept={vi.fn()}
         onClose={onClose}
+        onStartChat={vi.fn()}
         panelStyle={{}}
         prefersReducedMotion
       />
@@ -41,6 +83,7 @@ describe('KangurAiTutorGuestIntroPanel', () => {
     expect(janekLabels.at(-1)).toHaveClass(
       '[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
     );
+    expect(screen.getByTestId('kangur-ai-tutor-guest-intro-drawing')).toBeVisible();
     expect(screen.getByText('Minimal tutor modal')).toHaveClass(
       '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
     );

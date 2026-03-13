@@ -22,6 +22,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
     canSendMessages,
     canStartHomeOnboardingManually,
     drawingMode,
+    guestAuthFormVisible,
     handleQuickAction,
     handleStartHomeOnboarding,
     handleToggleDrawing,
@@ -89,17 +90,19 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
                 {homeOnboardingReplayLabel}
               </KangurButton>
             ) : null}
-            <KangurButton
-              data-testid='kangur-ai-tutor-toolbox-drawing-toggle'
-              type='button'
-              size='sm'
-              variant={drawingMode ? 'primary' : 'surface'}
-              className='h-9 px-3 text-xs'
-              disabled={isLoading || !canSendMessages}
-              onClick={handleToggleDrawing}
-            >
-              {drawingContent?.toggleLabel ?? 'Rysuj'}
-            </KangurButton>
+            {!guestAuthFormVisible ? (
+              <KangurButton
+                data-testid='kangur-ai-tutor-toolbox-drawing-toggle'
+                type='button'
+                size='sm'
+                variant={drawingMode ? 'primary' : 'surface'}
+                className='h-9 px-3 text-xs'
+                disabled={isLoading || !canSendMessages}
+                onClick={handleToggleDrawing}
+              >
+                {drawingContent?.toggleLabel ?? 'Rysuj'}
+              </KangurButton>
+            ) : null}
             {visibleQuickActions.map((action) => (
               <KangurButton
                 key={action.id}

@@ -25,7 +25,6 @@ import {
   useKangurAiTutorBubblePlacementState,
   useKangurAiTutorFocusLayoutState,
 } from './KangurAiTutorWidget.focus-layout';
-import { useKangurAiTutorSelectionGuidanceHandoffEffect } from './KangurAiTutorWidget.guided';
 import { getEstimatedBubbleHeight } from './KangurAiTutorGuidedLayout';
 import { useKangurAiTutorGuidedShellState } from './KangurAiTutorWidget.guided-shell';
 import {
@@ -225,16 +224,6 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
   const effectiveSelectionRect = effectiveSelectedText
     ? activeSelectionRect ?? guidedSelectionRect
     : activeSelectionRect;
-  const hasSelectionPanelReady =
-    isOpen &&
-    panelShellMode === 'minimal' &&
-    contextualTutorMode === 'selection_explain' &&
-    selectionConversationContext !== null &&
-    areTutorSelectionTextsEquivalent(
-      selectionConversationContext.selectedText,
-      effectiveSelectedText
-    );
-
   useKangurAiTutorGuidanceCompletionEffects({
     activeSelectedText: effectiveSelectedText,
     contextualTutorMode,
@@ -257,12 +246,13 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     setSectionResponseComplete,
     setSectionResponsePending,
     setSelectionGuidanceCalloutVisibleText,
+    setSelectionGuidanceHandoffText,
     setSelectionResponseComplete,
     setSelectionResponsePending,
     telemetryContext,
   });
 
-  const tutorPanelMotionState =
+  const tutorPanelMotionState: 'animating' | 'settled' =
     widgetState.panelMotionState === 'animating' ? 'animating' : 'settled';
 
   const {
@@ -315,20 +305,6 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     );
   const showSelectionResolvedAnswer =
     showSelectionGuidanceCallout && selectionResponseComplete !== null;
-
-  useKangurAiTutorSelectionGuidanceHandoffEffect({
-    activeSelectedText: effectiveSelectedText,
-    hasSelectionPanelReady,
-    isLoading,
-    isOpen,
-    panelMotionState: tutorPanelMotionState,
-    selectionConversationSelectedText: selectionConversationContext?.selectedText ?? null,
-    selectionGuidanceHandoffText,
-    setSelectionGuidanceHandoffText,
-    setSelectionResponseComplete,
-    setSelectionResponsePending,
-    telemetryContext,
-  });
 
   const conversationMessages = useMemo(() => {
     if (
@@ -628,6 +604,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     activeFocus,
     activeSectionRect,
     activeSelectedText,
+    activeSelectionRect: effectiveSelectionRect,
     activeSelectionPageRect,
     askModalHelperText,
     avatarAnchorKind,
@@ -649,6 +626,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     conversationMessages,
     emptyStateMessage,
     floatingAvatarPlacement,
+    guestTutorAssistantLabel,
     guidedArrowheadTransition,
     guidedAvatarArrowhead,
     guidedAvatarArrowheadDisplayAngle,
@@ -683,6 +661,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     panelBubbleStyle,
     panelEmptyStateMessage,
     panelOpenAnimation,
+    panelShellMode,
     panelSnapState,
     panelTransition,
     pointerMarkerId,

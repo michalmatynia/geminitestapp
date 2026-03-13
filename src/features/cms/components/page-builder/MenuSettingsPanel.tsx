@@ -622,6 +622,7 @@ export function MenuSettingsPanel({
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                       updateMenuItem(item.id, 'label', e.target.value)
                     }
+                    aria-label='Menu item label'
                     placeholder='Label'
                     className='h-7 bg-gray-800/40 text-xs'
                   />
@@ -630,6 +631,7 @@ export function MenuSettingsPanel({
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                       updateMenuItem(item.id, 'url', e.target.value)
                     }
+                    aria-label='Menu item URL'
                     placeholder='URL'
                     className='h-7 bg-gray-800/40 text-xs'
                   />
@@ -639,6 +641,7 @@ export function MenuSettingsPanel({
                       onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                         updateMenuItem(item.id, 'imageUrl', e.target.value)
                       }
+                      aria-label='Menu item image URL'
                       placeholder='Image URL'
                       className='h-7 bg-gray-800/40 text-xs'
                     />
@@ -650,6 +653,7 @@ export function MenuSettingsPanel({
                   onClick={(): void => removeMenuItem(item.id)}
                   className='mt-1 size-7 p-0 text-gray-500 hover:text-red-300 hover:bg-red-500/10'
                   title='Remove item'
+                  aria-label='Remove menu item'
                 >
                   <Trash2 className='size-3.5' />
                 </Button>
@@ -711,6 +715,7 @@ export function MenuSettingsPanel({
                     })),
                   ]}
                   placeholder='Select zone'
+                  ariaLabel='Menu scope'
                   triggerClassName='h-8 text-xs'
                 />
                 {menuScopeId !== 'default' && !hasScopedMenu ? (

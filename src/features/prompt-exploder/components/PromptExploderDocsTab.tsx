@@ -50,6 +50,7 @@ export function PromptExploderDocsTab(): React.JSX.Element {
             onChange={(event) => {
               setQuery(event.target.value);
             }}
+            aria-label='Search docs entries'
             placeholder='Search docs entries, actions, sections, aliases...'
           />
           <div className='rounded border border-border/50 bg-card/20 px-3 py-2 text-xs text-gray-400'>

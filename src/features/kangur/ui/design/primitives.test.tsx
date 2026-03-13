@@ -336,7 +336,7 @@ describe('Kangur shared primitives', () => {
       'items-center',
       'text-center'
     );
-    expect(screen.getByText('Gra z piłkami!')).toHaveClass('text-2xl', 'text-amber-700');
+    expect(screen.getByText('Gra z piłkami!')).toHaveClass('text-xl', 'text-amber-700');
     expect(screen.getByText('🎮')).toHaveClass(
       'h-16',
       'w-16',

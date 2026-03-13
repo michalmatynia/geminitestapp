@@ -1,8 +1,16 @@
 import { DEFAULT_THEME, normalizeThemeSettings, type ThemeSettings } from '@/shared/contracts/cms-theme';
-import { KANGUR_THEME_SETTINGS_KEY } from '@/shared/contracts/kangur';
+import {
+  KANGUR_DAILY_THEME_SETTINGS_KEY,
+  KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
+  KANGUR_THEME_SETTINGS_KEY,
+} from '@/shared/contracts/kangur';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
-export { KANGUR_THEME_SETTINGS_KEY };
+export {
+  KANGUR_DAILY_THEME_SETTINGS_KEY,
+  KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
+  KANGUR_THEME_SETTINGS_KEY,
+};
 
 export const KANGUR_DEFAULT_THEME: ThemeSettings = normalizeThemeSettings({
   ...DEFAULT_THEME,
@@ -81,4 +89,27 @@ export const parseKangurThemeSettings = (
   }
 
   return applyKangurLegacyThemeBaseline(normalizeThemeSettings(parsed, KANGUR_DEFAULT_THEME));
+};
+
+export const getKangurThemeSettingsKeyForAppearanceMode = (
+  mode: 'default' | 'dark'
+): string => (mode === 'dark' ? KANGUR_NIGHTLY_THEME_SETTINGS_KEY : KANGUR_DAILY_THEME_SETTINGS_KEY);
+
+export const resolveKangurThemeSettingsRawForMode = ({
+  mode,
+  dailyThemeRaw,
+  nightlyThemeRaw,
+  legacyThemeRaw,
+}: {
+  mode: 'default' | 'dark';
+  dailyThemeRaw: string | null | undefined;
+  nightlyThemeRaw: string | null | undefined;
+  legacyThemeRaw: string | null | undefined;
+}): string | null => {
+  const slotThemeRaw = mode === 'dark' ? nightlyThemeRaw : dailyThemeRaw;
+  return typeof slotThemeRaw === 'string' && slotThemeRaw.trim().length > 0
+    ? slotThemeRaw
+    : legacyThemeRaw?.trim()
+      ? legacyThemeRaw
+      : null;
 };

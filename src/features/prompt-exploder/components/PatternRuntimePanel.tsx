@@ -315,6 +315,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
               value: option.value,
               label: option.label,
             }))}
+            ariaLabel='Validation stack'
           />{' '}
         </div>
         <div className='min-w-0 space-y-1'>
@@ -333,6 +334,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
               { value: 'pattern_pack', label: 'Pattern Pack Only' },
               { value: 'learned_only', label: 'Learned Rules Only' },
             ]}
+            ariaLabel='Runtime rule profile'
           />
         </div>
         <div className='min-w-0 space-y-1'>
@@ -357,6 +359,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             max={0.95}
             step={0.01}
             value={learningDraft.similarityThreshold.toFixed(2)}
+            aria-label='Similarity threshold'
             onChange={(event) => {
               const value = Number(event.target.value);
               if (!Number.isFinite(value)) return;
@@ -375,6 +378,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             max={0.95}
             step={0.01}
             value={learningDraft.templateMergeThreshold.toFixed(2)}
+            aria-label='Template merge threshold'
             onChange={(event) => {
               const value = Number(event.target.value);
               if (!Number.isFinite(value)) return;
@@ -393,6 +397,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             max={20}
             step={1}
             value={String(learningDraft.minApprovalsForMatching)}
+            aria-label='Minimum approvals for match'
             onChange={(event) => {
               const value = Number(event.target.value);
               if (!Number.isFinite(value)) return;
@@ -411,6 +416,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             max={5000}
             step={10}
             value={String(learningDraft.maxTemplates)}
+            aria-label='Runtime template cap'
             onChange={(event) => {
               const value = Number(event.target.value);
               if (!Number.isFinite(value)) return;
@@ -537,6 +543,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
           <Input
             className='md:col-span-2'
             value={snapshotDraftName}
+            aria-label='Snapshot name'
             onChange={(event) => setSnapshotDraftName(event.target.value)}
             placeholder='Snapshot name (optional)'
           />
@@ -552,6 +559,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
                 }))
                 : [{ value: '', label: 'No snapshots' }]
             }
+            ariaLabel='Snapshot selection'
           />
           <div className='flex items-center gap-2'>
             <Button
@@ -638,6 +646,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
                       { value: 'active', label: 'Active' },
                       { value: 'disabled', label: 'Disabled' },
                     ]}
+                    ariaLabel='Template state'
                   />
                   <Button
                     type='button'

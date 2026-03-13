@@ -97,10 +97,16 @@ export function KangurAiTutorChromeCloseButton({
   className,
   iconClassName,
   type = 'button',
+  'aria-label': ariaLabel,
   ...props
 }: ChromeCloseButtonProps): JSX.Element {
   return (
-    <button className={cn(iconButtonClassName, className)} type={type} {...props}>
+    <button
+      className={cn(iconButtonClassName, className)}
+      type={type}
+      aria-label={ariaLabel ?? 'Close'}
+      {...props}
+    >
       <X className={cn('h-3.5 w-3.5', iconClassName)} />
     </button>
   );

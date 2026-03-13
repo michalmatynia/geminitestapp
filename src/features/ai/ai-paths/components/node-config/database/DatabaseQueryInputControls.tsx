@@ -62,6 +62,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
               { value: 'auto', label: 'Auto' },
               { value: 'mongodb', label: 'MongoDB' },
             ]}
+            ariaLabel='Database provider'
             triggerClassName='h-7 w-[130px] border-border bg-card/70 text-xs text-white'
           />
           <SelectSimple
@@ -76,6 +77,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
                 label: option.label,
               })
             )}
+            ariaLabel='Database action category'
             triggerClassName='h-7 w-[140px] border-border bg-card/70 text-xs text-white'
           />
           <SelectSimple
@@ -86,6 +88,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
               value: option.value,
               label: option.label,
             }))}
+            ariaLabel='Database action'
             triggerClassName='h-7 w-[170px] border-border bg-card/70 text-xs text-white'
           />
         </div>
@@ -161,6 +164,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
               onFilterChange?.(event.target.value)
             }
+            aria-label='Filter template'
             placeholder={(filterTemplateValue ?? '').trim() === '' ? filterPlaceholder : undefined}
           />
         </div>
@@ -179,6 +183,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
               onQueryChange(event.target.value)
             }
+            aria-label='Update document template'
             placeholder={queryTemplateValue.trim() === '' ? queryPlaceholder : undefined}
           />
         </div>
@@ -191,6 +196,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             onQueryChange(event.target.value)
           }
+          aria-label='Query template'
           placeholder={queryTemplateValue.trim() === '' ? queryPlaceholder : undefined}
         />
       )}

@@ -7,6 +7,8 @@ import {
   useOptionalCmsStorefrontAppearance,
 } from '@/features/cms/public';
 import {
+  getKangurThemeSettingsKeyForAppearanceMode,
+  resolveKangurThemeSettingsRawForMode,
   KANGUR_THEME_SETTINGS_KEY,
   parseKangurThemeSettings,
 } from '@/features/kangur/theme-settings';
@@ -16,7 +18,12 @@ export const useKangurStorefrontAppearance = () => {
   const settingsStore = useSettingsStore();
   const appearance = useOptionalCmsStorefrontAppearance();
   const mode = appearance?.mode ?? 'default';
-  const rawTheme = settingsStore.get(KANGUR_THEME_SETTINGS_KEY);
+  const rawTheme = resolveKangurThemeSettingsRawForMode({
+    mode,
+    dailyThemeRaw: settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('default')),
+    nightlyThemeRaw: settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('dark')),
+    legacyThemeRaw: settingsStore.get(KANGUR_THEME_SETTINGS_KEY),
+  });
   const theme = useMemo(() => parseKangurThemeSettings(rawTheme), [rawTheme]);
 
   return useMemo(

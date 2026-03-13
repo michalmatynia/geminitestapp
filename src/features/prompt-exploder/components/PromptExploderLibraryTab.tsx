@@ -233,6 +233,7 @@ export function PromptExploderLibraryTab(): React.JSX.Element {
                 className='min-h-[180px] font-mono text-[11px]'
                 value={selectedSegmentationRecord.sourcePrompt}
                 readOnly
+                aria-label='Pre-segmentation text'
               />
             </div>
 
@@ -244,6 +245,7 @@ export function PromptExploderLibraryTab(): React.JSX.Element {
                 className='min-h-[180px] font-mono text-[11px]'
                 value={selectedSegmentationRecord.reassembledPrompt}
                 readOnly
+                aria-label='Post-segmentation reassembled output'
               />
             </div>
 

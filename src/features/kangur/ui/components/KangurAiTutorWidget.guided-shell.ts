@@ -8,6 +8,7 @@ import {
   GUIDED_CALLOUT_HEIGHT,
   getGuidedCalloutClusterLayout,
   getGuidedCalloutLayout,
+  getGuidedSelectionCalloutHeight,
   getMotionPositionPoint,
   getSelectionGlowStyle,
   getSelectionSpotlightStyle,
@@ -82,6 +83,8 @@ export function useKangurAiTutorGuidedShellState(input: {
   isTutorHidden: boolean;
   motionProfile: TutorMotionProfile;
   prefersReducedMotion: boolean;
+  showSelectionKnowledgeContext: boolean;
+  showSelectionResolvedAnswer: boolean;
   showSectionGuidanceCallout: boolean;
   showSelectionGuidanceCallout: boolean;
   viewport: { width: number; height: number };
@@ -103,6 +106,8 @@ export function useKangurAiTutorGuidedShellState(input: {
     isTutorHidden,
     motionProfile,
     prefersReducedMotion,
+    showSelectionKnowledgeContext,
+    showSelectionResolvedAnswer,
     showSectionGuidanceCallout,
     showSelectionGuidanceCallout,
     viewport,
@@ -151,7 +156,13 @@ export function useKangurAiTutorGuidedShellState(input: {
         (rect): rect is DOMRect => Boolean(rect)
       )
       : [];
-  const guidedCalloutAttachmentHeight = GUIDED_CALLOUT_HEIGHT;
+  const guidedCalloutAttachmentHeight =
+    shouldUseSelectionGuidanceLayout
+      ? getGuidedSelectionCalloutHeight(viewport, {
+          hasKnowledgeContext: showSelectionKnowledgeContext,
+          hasResolvedAnswer: showSelectionResolvedAnswer,
+        })
+      : GUIDED_CALLOUT_HEIGHT;
   const guidedCalloutClusterLayout = guidedFocusRect
     ? getGuidedCalloutClusterLayout(
       guidedFocusRect,

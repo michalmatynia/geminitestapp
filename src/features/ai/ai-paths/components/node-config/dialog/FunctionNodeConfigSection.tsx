@@ -109,6 +109,7 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
           placeholder={'// inputs, context are available\nreturn inputs.value;'}
           value={functionConfig.script}
           onChange={handleScriptChange}
+          aria-label='Function script'
         />
         <p className='mt-2 text-[11px] text-gray-500'>
           The script runs as <span className='font-mono text-gray-300'>fn(inputs, context)</span>.
@@ -131,6 +132,7 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
           placeholder='{"factor": 2, "mode": "debug"}'
           value={functionConfig.contextJson ?? ''}
           onChange={handleContextJsonChange}
+          aria-label='Context JSON'
         />
         <p className='mt-2 text-[11px] text-gray-500'>
           Parsed once and passed as <span className='font-mono text-gray-300'>context</span>. If
@@ -173,6 +175,7 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
             { value: 'object', label: 'object' },
             { value: 'array', label: 'array' },
           ]}
+          ariaLabel='Expected output type'
           placeholder='Any type'
           variant='subtle'
         />
@@ -194,6 +197,7 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
             placeholder='e.g. 2000'
             value={functionConfig.maxExecutionMs?.toString() ?? ''}
             onChange={handleMaxExecutionMsChange}
+            aria-label='Max execution time in milliseconds'
           />
           <p className='mt-1 text-[11px] text-gray-500'>
             Soft limit for this node&apos;s script. If execution exceeds this, the node fails with{' '}
@@ -211,6 +215,7 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
             placeholder='e.g. 32768'
             value={functionConfig.maxOutputBytes?.toString() ?? ''}
             onChange={handleMaxOutputBytesChange}
+            aria-label='Max output size in bytes'
           />
           <p className='mt-1 text-[11px] text-gray-500'>
             Soft limit on serialized outputs. If exceeded, the node fails with{' '}

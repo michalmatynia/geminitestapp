@@ -9,6 +9,7 @@ export * from './KangurIconBadge';
 export * from './KangurGradientIconTile';
 export * from './KangurDisplayEmoji';
 export * from './KangurHeadline';
+export * from './KangurFeatureHeader';
 export * from './KangurCardTitle';
 export * from './KangurCardDescription';
 export * from './KangurMetaText';

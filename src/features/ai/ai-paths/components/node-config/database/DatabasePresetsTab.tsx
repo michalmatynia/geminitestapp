@@ -118,6 +118,7 @@ export function DatabasePresetsTab(): React.JSX.Element {
                           })
                         )
                       }
+                      aria-label='Preset name'
                       onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
                         if (event.key === 'Enter') {
                           void handleRename(preset.id, draftName);
@@ -170,6 +171,7 @@ export function DatabasePresetsTab(): React.JSX.Element {
               className='min-h-[120px] w-full rounded-md border border-border bg-card/70 text-xs text-white'
               value={activePreset?.queryTemplate ?? ''}
               readOnly
+              aria-label='Filter query'
             />
           </div>
           <div className='space-y-1'>
@@ -180,6 +182,7 @@ export function DatabasePresetsTab(): React.JSX.Element {
                 activePreset?.updateTemplate?.trim() ? activePreset.updateTemplate : '// Not set'
               }
               readOnly
+              aria-label='Update document'
             />
           </div>
         </div>

@@ -61,6 +61,7 @@ export function CatalogPriceGroupsSection(): React.JSX.Element {
               onValueChange={setCatalogDefaultPriceGroupId}
               disabled={catalogPriceGroupIds.length === 0}
               placeholder='Select default price group'
+              ariaLabel='Default price group'
               options={catalogPriceGroupIds.map((id) => {
                 const group = priceGroups.find((g) => g.id === id);
                 return {

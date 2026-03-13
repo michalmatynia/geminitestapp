@@ -559,6 +559,7 @@ export function PagePreviewPanel(): React.ReactNode {
                     label: `/${slug}`,
                   }))}
                   placeholder='Preview slug'
+                  ariaLabel='Preview slug'
                   triggerClassName='h-8 w-[200px] text-xs'
                 />
               ) : zoneSlugValues.length === 1 ? (

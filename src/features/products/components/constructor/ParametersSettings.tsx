@@ -217,6 +217,7 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
               label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`,
             }))}
             placeholder='Select a catalog...'
+            ariaLabel='Catalog'
           />
         </div>
       </FormSection>

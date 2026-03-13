@@ -73,6 +73,7 @@ export function SourcePromptPanel(): React.JSX.Element {
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
             setPromptText(event.target.value);
           }}
+          aria-label='Source prompt'
           placeholder='Paste prompt text...'
         />
       </div>

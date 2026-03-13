@@ -79,6 +79,7 @@ export function PriceGroupsSettings(): React.JSX.Element {
               label: `${group.name} (${group.groupId})`,
             }))}
             placeholder='Select default price group'
+            ariaLabel='Default price group'
           />
           {defaultGroupSaving ? (
             <p className='mt-2 text-xs text-gray-500'>Saving default...</p>

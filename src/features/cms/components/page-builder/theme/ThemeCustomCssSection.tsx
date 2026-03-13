@@ -32,6 +32,7 @@ export function ThemeCustomCssSection(): React.JSX.Element {
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
             update('customCss', e.target.value)
           }
+          aria-label='CSS code'
           placeholder={'.my-class {\n  color: red;\n}'}
           className='w-full bg-card/40 p-2 font-mono text-xs text-gray-300 placeholder:text-gray-600 min-h-[120px]'
           spellCheck={false}

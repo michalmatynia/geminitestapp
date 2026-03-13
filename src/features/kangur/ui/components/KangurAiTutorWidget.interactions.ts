@@ -50,6 +50,7 @@ type UseKangurAiTutorPanelInteractionsInput = {
     | 'setContextualTutorMode'
     | 'setDismissedSelectedText'
     | 'setDraggedAvatarPoint'
+    | 'setGuestAuthFormVisible'
     | 'setGuestIntroHelpVisible'
     | 'setGuestIntroVisible'
     | 'setGuidedTutorTarget'
@@ -113,6 +114,7 @@ export function useKangurAiTutorPanelInteractions({
     setContextualTutorMode,
     setDismissedSelectedText,
     setDraggedAvatarPoint,
+    setGuestAuthFormVisible,
     setGuestIntroHelpVisible,
     setGuestIntroVisible,
     setGuidedTutorTarget,
@@ -206,6 +208,7 @@ export function useKangurAiTutorPanelInteractions({
       }
 
       setCanonicalTutorModalVisible(false);
+      setGuestAuthFormVisible(false);
       setGuestIntroVisible(false);
       setGuestIntroHelpVisible(false);
       setLauncherPromptVisible(false);
@@ -232,6 +235,7 @@ export function useKangurAiTutorPanelInteractions({
       resetAskModalState,
       setCanonicalTutorModalVisible,
       setContextualTutorMode,
+      setGuestAuthFormVisible,
       setGuestIntroHelpVisible,
       setGuestIntroVisible,
       setLauncherPromptVisible,
@@ -250,6 +254,7 @@ export function useKangurAiTutorPanelInteractions({
         messageCount,
       });
       setCanonicalTutorModalVisible(false);
+      setGuestAuthFormVisible(false);
       setGuestIntroVisible(false);
       setGuestIntroHelpVisible(false);
       if (selectionExplainTimeoutRef.current !== null) {
@@ -292,6 +297,7 @@ export function useKangurAiTutorPanelInteractions({
       closeChat,
       messageCount,
       setCanonicalTutorModalVisible,
+      setGuestAuthFormVisible,
       setGuestIntroHelpVisible,
       setGuestIntroVisible,
       setGuidedTutorTarget,
@@ -331,6 +337,7 @@ export function useKangurAiTutorPanelInteractions({
       setDraggedAvatarPoint(null);
       clearPersistedTutorAvatarPosition();
       setLauncherPromptVisible(returnState?.launcherPromptVisible ?? false);
+      setGuestAuthFormVisible(false);
       setGuestIntroVisible(returnState?.guestIntroVisible ?? false);
       setGuestIntroHelpVisible(returnState?.guestIntroHelpVisible ?? false);
       setGuidedTutorTarget(returnState?.guidedTutorTarget ?? null);
@@ -348,6 +355,7 @@ export function useKangurAiTutorPanelInteractions({
       setAskModalVisible,
       setDraggedAvatarPoint,
       setContextualTutorMode,
+      setGuestAuthFormVisible,
       setGuestIntroHelpVisible,
       setGuestIntroVisible,
       setGuidedTutorTarget,
@@ -368,6 +376,7 @@ export function useKangurAiTutorPanelInteractions({
     askModalReturnStateRef.current = null;
     setGuidedTutorTarget(null);
     setContextualTutorMode(null);
+    setGuestAuthFormVisible(false);
     setGuestIntroVisible(false);
     setGuestIntroHelpVisible(false);
     if (selectionExplainTimeoutRef.current !== null) {
@@ -403,11 +412,12 @@ export function useKangurAiTutorPanelInteractions({
     closeChat,
     isOpen,
     messageCount,
-    setAskModalVisible,
-    setGuestIntroHelpVisible,
-    setGuestIntroVisible,
-    setGuidedTutorTarget,
-    setHasNewMessage,
+      setAskModalVisible,
+      setGuestIntroHelpVisible,
+      setGuestIntroVisible,
+      setGuestAuthFormVisible,
+      setGuidedTutorTarget,
+      setHasNewMessage,
     setDraggedAvatarPoint,
     setPanelPosition,
     setPanelPositionMode,

@@ -107,6 +107,7 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
   const effectiveSearchPlaceholder = runtimeSearchPlaceholder ?? searchPlaceholder ?? 'Search...';
   const [isExpanded, setIsExpanded] = useState(defaultExpanded ?? !compact);
   const [localSearch, setLocalSearch] = useState(externalSearch);
+  const searchInputId = React.useId().replace(/:/g, '');
 
   // Sync local search with external search (e.g. on reset)
   useEffect(() => {
@@ -154,8 +155,10 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
             <div className='relative flex-1'>
               <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-gray-400' />
               <Input
+                id={`panel-filters-search-${searchInputId}`}
                 type='text'
                 placeholder={effectiveSearchPlaceholder}
+                aria-label={effectiveSearchPlaceholder}
                 value={localSearch}
                 onChange={(e) => setLocalSearch(e.target.value)}
                 className='pl-8 pr-8'
@@ -238,6 +241,9 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
 
   const runtime = usePanelFiltersRuntime();
   const value = runtime.values[field.key];
+  const fieldId = React.useId().replace(/:/g, '');
+  const inputId = `panel-filter-${field.key}-${fieldId}`;
+  const labelId = `${inputId}-label`;
   const onChange = useCallback(
     (nextValue: unknown): void => {
       runtime.onFilterChange(field.key, nextValue);
@@ -286,7 +292,10 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
       if (field.multi || field.type === 'multi-select') {
         return (
           <div style={containerStyle} className={cn('flex flex-col gap-1', field.className)}>
-            <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>
+            <Label
+              id={labelId}
+              className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'
+            >
               {field.label}
             </Label>
             <MultiSelect
@@ -302,7 +311,10 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
 
       return (
         <div style={containerStyle} className={cn('flex flex-col gap-1', field.className)}>
-          <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>
+          <Label
+            id={labelId}
+            className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'
+          >
             {field.label}
           </Label>
           <SelectSimple
@@ -321,10 +333,15 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
     case 'search':
       return (
         <div style={containerStyle} className={cn('flex flex-col gap-1', field.className)}>
-          <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>
+          <Label
+            id={labelId}
+            className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'
+          >
             {field.label}
           </Label>
           <SearchInput
+            id={inputId}
+            aria-labelledby={labelId}
             placeholder={field.placeholder ?? `Search ${field.label.toLowerCase()}...`}
             value={String(localValue ?? '')}
             onChange={(e) => setLocalValue(e.target.value)}
@@ -355,10 +372,15 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
     case 'number':
       return (
         <div style={containerStyle} className={cn('flex flex-col gap-1', field.className)}>
-          <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>
+          <Label
+            htmlFor={inputId}
+            id={labelId}
+            className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'
+          >
             {field.label}
           </Label>
           <Input
+            id={inputId}
             type='number'
             placeholder={field.placeholder}
             value={localValue ?? ''}
@@ -371,10 +393,15 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
     case 'date':
       return (
         <div style={containerStyle} className={cn('flex flex-col gap-1', field.className)}>
-          <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>
+          <Label
+            htmlFor={inputId}
+            id={labelId}
+            className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'
+          >
             {field.label}
           </Label>
           <Input
+            id={inputId}
             type='date'
             value={(localValue as string) || ''}
             onChange={(e) => setLocalValue(e.target.value || undefined)}
@@ -387,13 +414,18 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
       const rangeValue = value as { from?: string; to?: string } | undefined;
       return (
         <div style={containerStyle} className={cn('flex flex-col gap-1', field.className)}>
-          <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>
+          <Label
+            id={labelId}
+            className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'
+          >
             {field.label}
           </Label>
-          <div className='flex gap-1'>
+          <div className='flex gap-1' role='group' aria-labelledby={labelId}>
             <Input
               type='date'
               placeholder='From'
+              id={`${inputId}-from`}
+              aria-label={`${field.label} from`}
               value={rangeValue?.from || ''}
               onChange={(e) =>
                 onChange({
@@ -406,6 +438,8 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
             <Input
               type='date'
               placeholder='To'
+              id={`${inputId}-to`}
+              aria-label={`${field.label} to`}
               value={rangeValue?.to || ''}
               onChange={(e) =>
                 onChange({
@@ -424,10 +458,15 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
     default:
       return (
         <div style={containerStyle} className={cn('flex flex-col gap-1', field.className)}>
-          <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>
+          <Label
+            htmlFor={inputId}
+            id={labelId}
+            className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'
+          >
             {field.label}
           </Label>
           <Input
+            id={inputId}
             type='text'
             placeholder={field.placeholder}
             value={(localValue as string) || ''}

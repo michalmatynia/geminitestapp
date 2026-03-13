@@ -64,6 +64,7 @@ export function CatalogLanguagesSection(): React.JSX.Element {
                         className='h-6 w-6'
                         onClick={() => moveLanguage(id, 'up')}
                         disabled={index === 0}
+                        aria-label={`Move ${label} up`}
                       >
                         ↑
                       </Button>
@@ -73,6 +74,7 @@ export function CatalogLanguagesSection(): React.JSX.Element {
                         className='h-6 w-6'
                         onClick={() => moveLanguage(id, 'down')}
                         disabled={index === selectedLanguageIds.length - 1}
+                        aria-label={`Move ${label} down`}
                       >
                         ↓
                       </Button>
@@ -114,6 +116,7 @@ export function CatalogLanguagesSection(): React.JSX.Element {
               onValueChange={setDefaultLanguageId}
               disabled={selectedLanguageIds.length === 0}
               placeholder='Select default language'
+              ariaLabel='Default language'
               options={selectedLanguageIds.map((id) => {
                 const lang = getLanguage(id);
                 return {

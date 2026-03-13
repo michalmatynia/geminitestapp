@@ -103,6 +103,7 @@ export function StateNodeConfigSection(): React.JSX.Element | null {
           placeholder='e.g. totalCount'
           value={stateConfig.key ?? ''}
           onChange={handleKeyChange}
+          aria-label='Variable key'
         />
         <p className='mt-1 text-[11px] text-gray-500'>
           Shared variable name in{' '}
@@ -112,7 +113,10 @@ export function StateNodeConfigSection(): React.JSX.Element | null {
       <div className='space-y-2'>
         <Label className='text-xs text-gray-400'>Mode</Label>
         <Select value={stateConfig.mode ?? 'read'} onValueChange={handleModeChange}>
-          <SelectTrigger className='h-8 w-full rounded-md border border-border bg-card/70 text-xs text-gray-100'>
+          <SelectTrigger
+            className='h-8 w-full rounded-md border border-border bg-card/70 text-xs text-gray-100'
+            aria-label='State mode'
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -137,6 +141,7 @@ export function StateNodeConfigSection(): React.JSX.Element | null {
           placeholder='{"count": 0}'
           value={stateConfig.initialJson ?? ''}
           onChange={handleInitialJsonChange}
+          aria-label='Initial value JSON'
         />
         <p className='mt-1 text-[11px] text-gray-500'>
           Used only when the variable does not yet exist. If empty or invalid, the node will fall
@@ -156,6 +161,7 @@ export function StateNodeConfigSection(): React.JSX.Element | null {
           placeholder='e.g. 32768'
           value={stateConfig.maxValueBytes?.toString() ?? ''}
           onChange={handleMaxValueBytesChange}
+          aria-label='Max stored size in bytes'
         />
         <p className='mt-1 text-[11px] text-gray-500'>
           Soft limit on serialized variable size. If exceeded, the node fails with{' '}
@@ -166,7 +172,10 @@ export function StateNodeConfigSection(): React.JSX.Element | null {
       <div className='space-y-2'>
         <Label className='text-xs text-gray-400'>Expected value type (optional)</Label>
         <Select value={stateConfig.expectedType ?? ''} onValueChange={handleExpectedTypeChange}>
-          <SelectTrigger className='h-8 w-full rounded-md border border-border bg-card/70 text-xs text-gray-100'>
+          <SelectTrigger
+            className='h-8 w-full rounded-md border border-border bg-card/70 text-xs text-gray-100'
+            aria-label='Expected value type'
+          >
             <SelectValue placeholder='Any type' />
           </SelectTrigger>
           <SelectContent>

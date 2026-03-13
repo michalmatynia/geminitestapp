@@ -162,6 +162,7 @@ export function ImageStudioRunsQueuePanel(): React.JSX.Element {
                     value={statusFilter}
                     onValueChange={(v) => setStatusFilter(v as 'all' | ImageStudioRunStatus)}
                     options={STATUS_OPTIONS}
+                    ariaLabel='Filter by status'
                     size='xs'
                     className='w-44 mt-[-2px]'
                   />

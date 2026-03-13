@@ -32,6 +32,7 @@ const createAvatarShellInput = (
   setCanonicalTutorModalVisible: vi.fn(),
   setContextualTutorMode: vi.fn(),
   setDraggedAvatarPoint: vi.fn() as AvatarShellInput['setDraggedAvatarPoint'],
+  setGuestAuthFormVisible: vi.fn(),
   setGuestIntroHelpVisible: vi.fn(),
   setGuestIntroVisible: vi.fn(),
   setGuidedTutorTarget: vi.fn() as AvatarShellInput['setGuidedTutorTarget'],

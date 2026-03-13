@@ -42,6 +42,7 @@ export function RegexAiProposalSection(
                 onApplyVariant(value);
               }
             }}
+            ariaLabel='Proposal variant'
             placeholder='Select variant'
             triggerClassName='h-8 w-[180px] border-border bg-card/70 text-xs text-white'
             contentClassName='border-border bg-gray-900'

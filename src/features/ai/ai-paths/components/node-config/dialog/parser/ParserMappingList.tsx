@@ -35,6 +35,7 @@ export function ParserMappingList(props: ParserMappingListProps): React.JSX.Elem
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
               updateMappingKey(index, event.target.value)
             }
+            aria-label='Output key'
             placeholder='output key'
           />
           <div className='space-y-2'>
@@ -45,6 +46,7 @@ export function ParserMappingList(props: ParserMappingListProps): React.JSX.Elem
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 updateMappingPath(index, event.target.value)
               }
+              aria-label='Output path'
               placeholder='$.path.to.value'
             />
             <SelectSimple
@@ -52,6 +54,7 @@ export function ParserMappingList(props: ParserMappingListProps): React.JSX.Elem
               onValueChange={(value: string) => updateMappingPath(index, value)}
               options={uniqueSuggestedPathOptions}
               placeholder='Pick a suggested path'
+              ariaLabel='Suggested output path'
               variant='subtle'
               triggerClassName='h-8 text-[10px]'
               value=''

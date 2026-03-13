@@ -80,6 +80,7 @@ export function PlaceholderMatrixDialog(props: PlaceholderMatrixDialogProps): Re
               onValueChange={(value: string) => onTargetChange(value as PlaceholderTarget)}
               options={resolvedTargets}
               placeholder='Pick target'
+              ariaLabel='Insert target'
               triggerClassName='h-7 w-[160px] border-border bg-card/70 text-xs text-white'
             />
           ) : (

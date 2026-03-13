@@ -10,6 +10,7 @@ import { areTutorSelectionTextsEquivalent } from './KangurAiTutorWidget.helpers'
 
 import type { ActiveTutorFocus, TutorMotionProfile, TutorQuickAction } from './KangurAiTutorWidget.shared';
 import type { PendingSelectionResponse, SectionExplainContext } from './KangurAiTutorWidget.types';
+import type { KangurAiTutorRuntimeMessage } from '@/shared/contracts/kangur-ai-tutor';
 
 type TelemetryContext = {
   surface: string | null;
@@ -43,12 +44,15 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
   sectionResponseCompleteTimeoutRef: MutableRefObject<number | null>;
   sectionResponsePending: SectionExplainContext | null;
   selectionConversationSelectedText: string | null;
+  selectionConversationStartIndex: number | null;
   selectionGuidanceHandoffText: string | null;
+  messages: KangurAiTutorRuntimeMessage[];
   selectionResponseComplete: PendingSelectionResponse | null;
   selectionResponseCompleteTimeoutRef: MutableRefObject<number | null>;
   selectionResponsePending: PendingSelectionResponse | null;
   setSectionResponseComplete: (value: SectionExplainContext | null) => void;
   setSectionResponsePending: (value: SectionExplainContext | null) => void;
+  setSelectionGuidanceCalloutVisibleText: (value: string | null) => void;
   setSelectionResponseComplete: (value: PendingSelectionResponse | null) => void;
   setSelectionResponsePending: (value: PendingSelectionResponse | null) => void;
   telemetryContext: TelemetryContext;
@@ -66,18 +70,26 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
     sectionResponseCompleteTimeoutRef,
     sectionResponsePending,
     selectionConversationSelectedText,
+    selectionConversationStartIndex,
     selectionGuidanceHandoffText,
+    messages,
     selectionResponseComplete,
     selectionResponseCompleteTimeoutRef,
     selectionResponsePending,
     setSectionResponseComplete,
     setSectionResponsePending,
+    setSelectionGuidanceCalloutVisibleText,
     setSelectionResponseComplete,
     setSelectionResponsePending,
     telemetryContext,
   } = input;
 
   useEffect(() => {
+    const hasSelectionResponseMessage =
+      selectionConversationStartIndex !== null &&
+      messages
+        .slice(selectionConversationStartIndex)
+        .some((message) => message.role === 'assistant');
     const isSelectionContextStillOwningMinimalPanel =
       contextualTutorMode === 'selection_explain' &&
       panelShellMode === 'minimal' &&
@@ -85,14 +97,21 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
         selectionConversationSelectedText,
         selectionResponsePending?.selectedText ?? null
       );
+    const shouldRevealGuidedSelectionCallout =
+      isSelectionGuidedMode &&
+      selectionGuidanceHandoffText === null &&
+      hasSelectionResponseMessage;
+    const shouldFinalizeSelectionPanel =
+      !isSelectionGuidedMode &&
+      isOpen &&
+      selectionGuidanceHandoffText === null &&
+      !isSelectionContextStillOwningMinimalPanel &&
+      hasSelectionResponseMessage;
 
     if (
       !selectionResponsePending ||
       isLoading ||
-      isSelectionGuidedMode ||
-      !isOpen ||
-      selectionGuidanceHandoffText !== null ||
-      isSelectionContextStillOwningMinimalPanel
+      (!shouldRevealGuidedSelectionCallout && !shouldFinalizeSelectionPanel)
     ) {
       return;
     }
@@ -105,15 +124,21 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
       selectedText: selectionResponsePending.selectedText,
     });
     setSelectionResponsePending(null);
+    if (shouldRevealGuidedSelectionCallout) {
+      setSelectionGuidanceCalloutVisibleText(selectionResponsePending.selectedText);
+    }
   }, [
+    messages,
     isLoading,
     isOpen,
     panelShellMode,
     contextualTutorMode,
     isSelectionGuidedMode,
     selectionConversationSelectedText,
+    selectionConversationStartIndex,
     selectionGuidanceHandoffText,
     selectionResponsePending,
+    setSelectionGuidanceCalloutVisibleText,
     setSelectionResponseComplete,
     setSelectionResponsePending,
     telemetryContext,

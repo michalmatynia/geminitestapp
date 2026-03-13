@@ -5,6 +5,7 @@ import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { useKangurAiTutorGuidedShellState } from './KangurAiTutorWidget.guided-shell';
+import { getGuidedSelectionCalloutHeight } from './KangurAiTutorGuidedLayout';
 import { AVATAR_SIZE } from './KangurAiTutorWidget.shared';
 
 import type { TutorMotionProfile } from './KangurAiTutorWidget.shared';
@@ -42,11 +43,23 @@ const buildInput = (
   isTutorHidden: false,
   motionProfile,
   prefersReducedMotion: false,
+  showSelectionKnowledgeContext: false,
+  showSelectionResolvedAnswer: false,
   showSectionGuidanceCallout: false,
   showSelectionGuidanceCallout: false,
   viewport: { width: 1280, height: 720 },
   ...overrides,
 });
+
+const getRectOverlapArea = (left: DOMRect, right: DOMRect): number => {
+  const overlapLeft = Math.max(left.left, right.left);
+  const overlapTop = Math.max(left.top, right.top);
+  const overlapRight = Math.min(left.right, right.right);
+  const overlapBottom = Math.min(left.bottom, right.bottom);
+  const overlapWidth = Math.max(0, overlapRight - overlapLeft);
+  const overlapHeight = Math.max(0, overlapBottom - overlapTop);
+  return overlapWidth * overlapHeight;
+};
 
 const getRectSeparationDistance = (left: DOMRect, right: DOMRect): number => {
   const horizontalGap = Math.max(0, left.left - right.right, right.left - left.right);
@@ -134,5 +147,41 @@ describe('KangurAiTutorWidget.guided-shell', () => {
 
     expect(getRectSeparationDistance(avatarRect, guidedFocusRect)).toBeLessThanOrEqual(96);
     expect(getRectSeparationDistance(calloutRect, guidedFocusRect)).toBeLessThanOrEqual(48);
+  });
+
+  it('keeps a tall knowledge-backed selection callout clear of the highlighted text', () => {
+    const viewport = { width: 1280, height: 720 };
+    const guidedFocusRect = new DOMRect(620, 520, 220, 48);
+    const { result } = renderHook(() =>
+      useKangurAiTutorGuidedShellState(
+        buildInput({
+          activeSelectionProtectedRect: new DOMRect(600, 500, 280, 112),
+          guidedFocusRect,
+          guidedSelectionSpotlightRect: guidedFocusRect,
+          showSelectionGuidanceCallout: true,
+          showSelectionKnowledgeContext: true,
+          showSelectionResolvedAnswer: true,
+          viewport,
+        })
+      )
+    );
+
+    const calloutStyle = result.current.guidedCalloutStyle as {
+      left: number;
+      top: number;
+      width: number;
+    };
+    const estimatedHeight = getGuidedSelectionCalloutHeight(viewport, {
+      hasKnowledgeContext: true,
+      hasResolvedAnswer: true,
+    });
+    const calloutRect = new DOMRect(
+      calloutStyle.left,
+      calloutStyle.top,
+      calloutStyle.width,
+      estimatedHeight
+    );
+
+    expect(getRectOverlapArea(calloutRect, guidedFocusRect)).toBe(0);
   });
 });

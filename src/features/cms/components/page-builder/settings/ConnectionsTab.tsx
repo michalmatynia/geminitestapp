@@ -35,6 +35,7 @@ function ConnectionsTab(): React.ReactNode {
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
             updateConnectionSetting({ source: e.target.value })
           }
+          aria-label='Data source'
           placeholder='e.g. product, collection, hero'
           className='h-8 text-xs'
         />
@@ -46,6 +47,7 @@ function ConnectionsTab(): React.ReactNode {
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
             updateConnectionSetting({ path: e.target.value })
           }
+          aria-label='Key path'
           placeholder='e.g. title, hero.text'
           className='h-8 text-xs'
         />
@@ -57,6 +59,7 @@ function ConnectionsTab(): React.ReactNode {
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
             updateConnectionSetting({ fallback: e.target.value })
           }
+          aria-label='Fallback'
           placeholder='Optional fallback text'
           className='h-8 text-xs'
         />

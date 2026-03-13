@@ -289,6 +289,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               variant='subtle'
               size='sm'
               value={config.apiKeyName ?? ''}
+              aria-label='API key name'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ apiKeyName: event.target.value })
               }
@@ -298,6 +299,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               variant='subtle'
               size='sm'
               value={config.apiKeyValueTemplate ?? ''}
+              aria-label='API key value template'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ apiKeyValueTemplate: event.target.value })
               }
@@ -312,6 +314,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                   apiKeyPlacement: value as AdvancedApiConfig['apiKeyPlacement'],
                 })
               }
+              ariaLabel='API key placement'
               options={apiKeyPlacementOptions}
               placeholder='Placement'
             />
@@ -322,6 +325,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
             variant='subtle'
             size='sm'
             value={config.bearerTokenTemplate ?? ''}
+            aria-label='Bearer token template'
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               update({ bearerTokenTemplate: event.target.value })
             }
@@ -335,6 +339,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               variant='subtle'
               size='sm'
               value={config.basicUsernameTemplate ?? ''}
+              aria-label='Basic auth username template'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ basicUsernameTemplate: event.target.value })
               }
@@ -344,6 +349,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               variant='subtle'
               size='sm'
               value={config.basicPasswordTemplate ?? ''}
+              aria-label='Basic auth password template'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ basicPasswordTemplate: event.target.value })
               }
@@ -357,6 +363,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               variant='subtle'
               size='sm'
               value={config.oauthTokenUrl ?? ''}
+              aria-label='OAuth token URL'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ oauthTokenUrl: event.target.value })
               }
@@ -366,6 +373,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               variant='subtle'
               size='sm'
               value={config.oauthScopeTemplate ?? ''}
+              aria-label='OAuth scope template'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ oauthScopeTemplate: event.target.value })
               }
@@ -375,6 +383,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               variant='subtle'
               size='sm'
               value={config.oauthClientIdTemplate ?? ''}
+              aria-label='OAuth client ID template'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ oauthClientIdTemplate: event.target.value })
               }
@@ -384,6 +393,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               variant='subtle'
               size='sm'
               value={config.oauthClientSecretTemplate ?? ''}
+              aria-label='OAuth client secret template'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ oauthClientSecretTemplate: event.target.value })
               }
@@ -397,6 +407,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               variant='subtle'
               size='sm'
               value={config.connectionIdTemplate ?? ''}
+              aria-label='Connection ID template'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ connectionIdTemplate: event.target.value })
               }
@@ -406,6 +417,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               variant='subtle'
               size='sm'
               value={config.connectionHeaderName ?? ''}
+              aria-label='Connection header name'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ connectionHeaderName: event.target.value })
               }
@@ -430,6 +442,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               size='sm'
               min={1}
               value={String(config.retryAttempts ?? '')}
+              aria-label='Retry attempts'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ retryAttempts: parseOptionalInteger(event.target.value) })
               }
@@ -442,6 +455,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               onValueChange={(value: string): void =>
                 update({ retryBackoff: value as AdvancedApiConfig['retryBackoff'] })
               }
+              ariaLabel='Retry backoff strategy'
               options={retryBackoffOptions}
               placeholder='Backoff'
             />
@@ -451,6 +465,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               size='sm'
               min={0}
               value={String(config.retryBackoffMs ?? '')}
+              aria-label='Retry backoff (ms)'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ retryBackoffMs: parseOptionalInteger(event.target.value) })
               }
@@ -462,6 +477,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               size='sm'
               min={0}
               value={String(config.retryMaxBackoffMs ?? '')}
+              aria-label='Retry max backoff (ms)'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ retryMaxBackoffMs: parseOptionalInteger(event.target.value) })
               }
@@ -475,6 +491,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               max={1}
               step='0.05'
               value={String(config.retryJitterRatio ?? '')}
+              aria-label='Retry jitter ratio (0-1)'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ retryJitterRatio: parseOptionalFloat(event.target.value) })
               }
@@ -536,6 +553,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               variant='subtle'
               size='sm'
               value={config.pageParam ?? 'page'}
+              aria-label='Pagination page param'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ pageParam: event.target.value })
               }
@@ -545,6 +563,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               variant='subtle'
               size='sm'
               value={config.limitParam ?? 'limit'}
+              aria-label='Pagination limit param'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ limitParam: event.target.value })
               }
@@ -556,6 +575,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               size='sm'
               min={1}
               value={String(config.startPage ?? '')}
+              aria-label='Pagination start page'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ startPage: parseOptionalInteger(event.target.value) })
               }
@@ -567,6 +587,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               size='sm'
               min={1}
               value={String(config.pageSize ?? '')}
+              aria-label='Pagination page size'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ pageSize: parseOptionalInteger(event.target.value) })
               }
@@ -580,6 +601,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               variant='subtle'
               size='sm'
               value={config.cursorParam ?? 'cursor'}
+              aria-label='Pagination cursor param'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ cursorParam: event.target.value })
               }
@@ -589,6 +611,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               variant='subtle'
               size='sm'
               value={config.cursorPath ?? ''}
+              aria-label='Pagination cursor path'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ cursorPath: event.target.value })
               }
@@ -600,6 +623,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               size='sm'
               min={1}
               value={String(config.pageSize ?? '')}
+              aria-label='Pagination page size'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ pageSize: parseOptionalInteger(event.target.value) })
               }
@@ -613,6 +637,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               variant='subtle'
               size='sm'
               value={config.itemsPath ?? ''}
+              aria-label='Pagination items path'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ itemsPath: event.target.value })
               }
@@ -624,6 +649,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               size='sm'
               min={1}
               value={String(config.maxPages ?? '')}
+              aria-label='Pagination max pages'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ maxPages: parseOptionalInteger(event.target.value) })
               }
@@ -648,6 +674,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               size='sm'
               min={1}
               value={String(config.rateLimitRequests ?? '')}
+              aria-label='Rate limit requests'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ rateLimitRequests: parseOptionalInteger(event.target.value) })
               }
@@ -659,6 +686,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               size='sm'
               min={1}
               value={String(config.rateLimitIntervalMs ?? '')}
+              aria-label='Rate limit interval (ms)'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({
                   rateLimitIntervalMs: parseOptionalInteger(event.target.value),
@@ -672,6 +700,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               size='sm'
               min={1}
               value={String(config.rateLimitConcurrency ?? '')}
+              aria-label='Rate limit concurrency'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({
                   rateLimitConcurrency: parseOptionalInteger(event.target.value),
@@ -688,6 +717,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                   rateLimitOnLimit: value as AdvancedApiConfig['rateLimitOnLimit'],
                 })
               }
+              ariaLabel='On rate limit'
               options={rateLimitOnLimitOptions}
               placeholder='On limit'
             />
@@ -708,6 +738,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               variant='subtle'
               size='sm'
               value={config.idempotencyHeaderName ?? 'Idempotency-Key'}
+              aria-label='Idempotency header name'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ idempotencyHeaderName: event.target.value })
               }
@@ -717,6 +748,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               variant='subtle'
               size='sm'
               value={config.idempotencyKeyTemplate ?? ''}
+              aria-label='Idempotency key template'
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 update({ idempotencyKeyTemplate: event.target.value })
               }

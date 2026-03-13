@@ -135,6 +135,7 @@ export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.
             onValueChange={(value: string): void =>
               onUpdateRegex({ mode: value as NonNullable<RegexConfig['mode']> })
             }
+            ariaLabel='Regex mode'
             placeholder='Select mode'
             triggerClassName='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white'
             contentClassName='border-border bg-gray-900'
@@ -153,6 +154,7 @@ export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.
             onValueChange={(value: string): void =>
               onUpdateRegex({ matchMode: value as NonNullable<RegexConfig['matchMode']> })
             }
+            ariaLabel='Regex match mode'
             placeholder='Select mode'
             triggerClassName='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white'
             contentClassName='border-border bg-gray-900'
@@ -174,6 +176,7 @@ export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.
             onValueChange={(value: string): void =>
               onUpdateRegex({ outputMode: value as NonNullable<RegexConfig['outputMode']> })
             }
+            ariaLabel='Grouped output mode'
             placeholder='Select output'
             triggerClassName='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white'
             contentClassName='border-border bg-gray-900'
@@ -195,6 +198,7 @@ export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.
               jsonIntegrityPolicy: value === 'strict' ? 'strict' : 'repair',
             })
           }
+          ariaLabel='JSON integrity policy'
           placeholder='Select policy'
           triggerClassName='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white md:w-[280px]'
           contentClassName='border-border bg-gray-900'
@@ -219,6 +223,7 @@ export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               onUpdateVariantField('groupBy', event.target.value)
             }
+            aria-label={isExtractMode ? 'Extract by' : 'Group by'}
             placeholder={
               isExtractMode ? 'match | 1 | amount | groups | captures' : 'match | 1 | prefix'
             }
@@ -276,6 +281,7 @@ export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               onUpdateRegex({ unmatchedKey: event.target.value })
             }
+            aria-label='Unmatched key'
             placeholder='__unmatched__'
           />
         </div>

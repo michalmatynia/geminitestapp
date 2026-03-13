@@ -10,7 +10,11 @@ const nonEmptyTrimmedString = z.string().trim().min(1);
 export const KANGUR_LESSONS_SETTING_KEY = 'kangur_lessons_v1';
 export const KANGUR_LESSON_DOCUMENTS_SETTING_KEY = 'kangur_lesson_documents_v1';
 export const KANGUR_THEME_SETTINGS_KEY = 'kangur_cms_theme_v1';
+export const KANGUR_DAILY_THEME_SETTINGS_KEY = 'kangur_cms_theme_daily_v1';
+export const KANGUR_NIGHTLY_THEME_SETTINGS_KEY = 'kangur_cms_theme_nightly_v1';
 export const KANGUR_CLASS_OVERRIDES_SETTING_KEY = 'kangur_class_overrides_v1';
+export const KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY =
+  'kangur_storefront_default_mode_v1';
 
 export const kangurLessonComponentIdSchema = z.enum([
   'clock',

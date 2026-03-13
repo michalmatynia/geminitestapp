@@ -90,7 +90,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                   >
                     {isActiveLearner
                       ? 'Aktualnie wybrany profil'
-                      : 'Kliknij, aby przelaczyc profil'}
+                      : 'Kliknij, aby przełączyć profil'}
                   </div>
                 }
                 footerClassName='mt-2'

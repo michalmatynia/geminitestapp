@@ -41,17 +41,32 @@ export function PageAiTabContent({
           onValueChange={(value: string): void => ai.setPageAiTask(value as 'layout' | 'seo')}
           options={pageAiTaskOptions}
           placeholder='Select task'
+          ariaLabel='Task'
         />
       </div>
       <div className='space-y-2'>
         <Label className='text-xs text-gray-400'>Provider</Label>
-        <Input size='sm' value={providerLabel} readOnly disabled className='cursor-not-allowed' />
+        <Input
+          size='sm'
+          value={providerLabel}
+          readOnly
+          disabled
+          aria-label='Provider'
+          className='cursor-not-allowed'
+        />
       </div>
       <div className='space-y-2'>
         <Label className='text-xs text-gray-400'>
           {ai.pageAiProvider === 'agent' ? 'Deepthinking agent' : 'Model'}
         </Label>
-        <Input size='sm' value={targetValue} readOnly disabled className='cursor-not-allowed' />
+        <Input
+          size='sm'
+          value={targetValue}
+          readOnly
+          disabled
+          aria-label={ai.pageAiProvider === 'agent' ? 'Deepthinking agent' : 'Model'}
+          className='cursor-not-allowed'
+        />
       </div>
       <div className='rounded border border-border/40 bg-gray-800/20 px-3 py-2 text-[11px] text-gray-400'>
         Routing for this assistant is managed in AI Brain via the CMS CSS Stream capability. Local
@@ -64,6 +79,7 @@ export function PageAiTabContent({
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
             ai.setPageAiPrompt(e.target.value)
           }
+          aria-label='Prompt'
           placeholder={`Describe what you need.\n\nContext:\n${pageAiPlaceholder}`}
           className='min-h-[120px] text-xs'
           spellCheck={false}
@@ -89,6 +105,7 @@ export function PageAiTabContent({
       <Textarea
         value={pageAiPlaceholder}
         readOnly
+        aria-label='Context placeholders'
         className='min-h-[64px] text-xs font-mono text-gray-300'
       />
       <div className='flex flex-wrap items-center justify-between gap-2'>
@@ -129,6 +146,7 @@ export function PageAiTabContent({
           <Textarea
             value={ai.pageAiOutput}
             readOnly
+            aria-label='AI output'
             className='min-h-[140px] text-xs font-mono text-gray-300'
           />
         </div>

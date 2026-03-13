@@ -431,6 +431,7 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
                   onChange={(event) => handleValueChange(event.target.value)}
                   className='h-8'
                   placeholder={useMultiValueInput ? 'Value 1, value 2, ...' : 'Value'}
+                  aria-label='Condition value'
                 />
                 {valueOptions && valueOptions.length > 0 && fieldConfig.kind === 'string' ? (
                   <datalist id={dataListId}>
@@ -462,6 +463,7 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
               onChange={(event) => handleValueToChange(event.target.value)}
               className='h-8'
               placeholder='Second value'
+              aria-label='Condition value to'
             />
           </div>
         ) : (

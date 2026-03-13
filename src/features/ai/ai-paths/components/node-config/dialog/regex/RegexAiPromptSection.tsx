@@ -66,6 +66,7 @@ export function RegexAiPromptSection(props: RegexAiPromptSectionProps): React.JS
         onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
           onUpdateRegex({ aiPrompt: event.target.value })
         }
+        aria-label='AI prompt'
         onKeyDown={(event: React.KeyboardEvent<HTMLTextAreaElement>): void => {
           if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
             event.preventDefault();

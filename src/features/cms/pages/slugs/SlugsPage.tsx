@@ -214,6 +214,7 @@ export default function SlugsPage(): React.JSX.Element {
                 description: hostDomainId === item.id ? 'host' : undefined,
               }))}
               placeholder='Select domain...'
+              ariaLabel='Domain'
               className='w-[200px]'
               size='sm'
             />

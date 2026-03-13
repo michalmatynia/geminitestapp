@@ -25,14 +25,8 @@ import {
   useKangurAiTutorHomeOnboardingFlow,
 } from './KangurAiTutorWidget.entry';
 import { useKangurAiTutorWidgetEnvironment } from './KangurAiTutorWidget.environment';
-import {
-  useKangurAiTutorGuidedFlow,
-  useKangurAiTutorSelectionGuidanceDockOpenEffect,
-} from './KangurAiTutorWidget.guided';
-import {
-  areTutorSelectionTextsEquivalent,
-  isAuthGuidedTutorTarget,
-} from './KangurAiTutorWidget.helpers';
+import { useKangurAiTutorGuidedFlow } from './KangurAiTutorWidget.guided';
+import { isAuthGuidedTutorTarget } from './KangurAiTutorWidget.helpers';
 import { useKangurAiTutorPanelInteractions } from './KangurAiTutorWidget.interactions';
 import { useKangurAiTutorLifecycleEffects } from './KangurAiTutorWidget.lifecycle';
 import { useKangurAiTutorPanelActions } from './KangurAiTutorWidget.panel-actions';
@@ -105,6 +99,7 @@ export function useKangurAiTutorWidgetCoordinator({
     drawingImageData,
     drawingMode,
     guestIntroCheckStartedRef,
+    guestAuthFormVisible,
     guestIntroHelpVisible,
     guestIntroLocalSuppressionTrackedRef,
     guestIntroRecord,
@@ -138,6 +133,7 @@ export function useKangurAiTutorWidgetCoordinator({
     setDraggedAvatarPoint,
     setDrawingImageData,
     setDrawingMode,
+    setGuestAuthFormVisible,
     setGuestIntroHelpVisible,
     setGuestIntroRecord,
     setGuestIntroVisible,
@@ -355,12 +351,6 @@ export function useKangurAiTutorWidgetCoordinator({
 
   const selectionTakeoverText =
     selectionGuidanceHandoffText ?? selectionResponsePending?.selectedText ?? null;
-  const stableSelectionGuidanceText =
-    selectionTakeoverText ?? selectionConversationContext?.selectedText ?? null;
-  const effectiveSelectionGuidanceText =
-    contextualTutorMode === 'selection_explain' || selectionTakeoverText !== null
-      ? stableSelectionGuidanceText ?? activeSelectedText
-      : activeSelectedText;
   const hasSelectionMinimalPanelSurface =
     tutorRuntime.isOpen &&
     panelShellMode === 'minimal' &&
@@ -397,8 +387,11 @@ export function useKangurAiTutorWidgetCoordinator({
   const suppressPanelSurface =
     tutorSurfaceMode === 'onboarding' ||
     tutorSurfaceMode === 'auth_guided' ||
-    tutorSurfaceMode === 'selection_guided' ||
-    tutorSurfaceMode === 'section_guided';
+    (
+      tutorSurfaceMode === 'selection_guided' &&
+      (selectionResponsePending !== null || selectionGuidanceHandoffText !== null)
+    ) ||
+    (tutorSurfaceMode === 'section_guided' && sectionResponsePending !== null);
 
   useKangurAiTutorTelemetryBridge({
     activeFocus,
@@ -469,6 +462,7 @@ export function useKangurAiTutorWidgetCoordinator({
       setContextualTutorMode,
       setDismissedSelectedText,
       setDraggedAvatarPoint,
+      setGuestAuthFormVisible,
       setGuestIntroHelpVisible,
       setGuestIntroVisible,
       setGuidedTutorTarget,
@@ -501,34 +495,18 @@ export function useKangurAiTutorWidgetCoordinator({
     },
   });
 
-  const hasSelectionPanelReady =
-    tutorRuntime.isOpen &&
-    panelShellMode === 'minimal' &&
-    contextualTutorMode === 'selection_explain' &&
-    selectionConversationContext !== null &&
-    areTutorSelectionTextsEquivalent(
-      selectionConversationContext.selectedText,
-      effectiveSelectionGuidanceText
-    );
-
-  useKangurAiTutorSelectionGuidanceDockOpenEffect({
-    activeSelectedText: effectiveSelectionGuidanceText,
-    handleOpenChat,
-    hasSelectionPanelReady,
-    isLoading,
-    selectionConversationSelectedText: selectionConversationContext?.selectedText ?? null,
-    selectionGuidanceHandoffText,
-  });
+  const { openLoginModal } = loginModal;
 
   const {
     handleGuestIntroDismiss,
-    handleGuestIntroAccept,
+    handleGuestIntroAccept: handleGuestIntroAcceptBase,
     startGuidedGuestLogin,
   } = useKangurAiTutorGuestIntroFlow({
     authState,
     canonicalTutorModalVisible,
     enabled,
     guestIntroCheckStartedRef,
+    guestAuthFormVisible,
     guestIntroHelpVisible,
     guestIntroLocalSuppressionTrackedRef,
     guestIntroRecord,
@@ -545,6 +523,7 @@ export function useKangurAiTutorWidgetCoordinator({
     selectionExplainTimeoutRef,
     selectionResponsePending,
     setCanonicalTutorModalVisible,
+    setGuestAuthFormVisible,
     setGuidedTutorTarget,
     setGuestIntroHelpVisible,
     setGuestIntroRecord,
@@ -553,6 +532,11 @@ export function useKangurAiTutorWidgetCoordinator({
     shouldRepeatGuestIntroOnEntry,
     suppressAvatarClickRef,
   });
+
+  const handleGuestIntroAcceptAndLogin = useCallback((): void => {
+    handleGuestIntroAcceptBase();
+    openLoginModal(null, { authMode: 'sign-in' });
+  }, [handleGuestIntroAcceptBase, openLoginModal]);
 
   const {
     focusSectionRect,
@@ -681,6 +665,7 @@ export function useKangurAiTutorWidgetCoordinator({
     setCanonicalTutorModalVisible,
     setContextualTutorMode,
     setDraggedAvatarPoint,
+    setGuestAuthFormVisible,
     setGuestIntroHelpVisible,
     setGuestIntroVisible,
     setGuidedTutorTarget,
@@ -920,7 +905,7 @@ export function useKangurAiTutorWidgetCoordinator({
       handleStartHomeOnboarding();
     },
     handleAuthenticatedOnboardingDismiss,
-    handleGuestIntroAccept,
+    handleGuestIntroAccept: handleGuestIntroAcceptAndLogin,
     handleGuestIntroDismiss,
     handleHomeOnboardingAdvance,
     handleHomeOnboardingBack,

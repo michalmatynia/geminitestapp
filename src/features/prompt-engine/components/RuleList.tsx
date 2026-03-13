@@ -325,6 +325,7 @@ export function RuleList(): React.JSX.Element {
                       <Input
                         className='mt-1 h-8 bg-black/20 border-cyan-500/20'
                         value={groupDraft.label}
+                        aria-label='Group label'
                         onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                           setGroupDrafts((prev: Record<string, SequenceGroupDraft>) => {
                             const current = prev[group.id] ?? {
@@ -350,6 +351,7 @@ export function RuleList(): React.JSX.Element {
                         max={30000}
                         className='mt-1 h-8 bg-black/20 border-cyan-500/20'
                         value={groupDraft.debounceMs}
+                        aria-label='Group debounce in milliseconds'
                         onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                           setGroupDrafts((prev: Record<string, SequenceGroupDraft>) => {
                             const current = prev[group.id] ?? {

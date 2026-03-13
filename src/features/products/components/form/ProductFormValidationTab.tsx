@@ -42,6 +42,7 @@ export function ProductFormValidationTab(): React.JSX.Element {
             { value: 'mute_session', label: 'Stop For This Session' },
             { value: 'ask_again', label: 'Ask Again Next Validation' },
           ]}
+          ariaLabel='Validation deny behavior'
         />
         <p className='text-[11px] text-gray-400'>
           Current context:{' '}

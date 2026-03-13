@@ -138,6 +138,7 @@ export function MiniRichTextEditor(props: {
                 { value: 'heading-2', label: 'Heading 2' },
                 { value: 'heading-3', label: 'Heading 3' },
               ]}
+              ariaLabel='Format'
               triggerClassName='h-7 w-32 bg-card/40 text-xs'
             />
           </div>

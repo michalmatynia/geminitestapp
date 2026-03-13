@@ -71,6 +71,7 @@ export function AssignmentEditor(props: {
             options={filteredProviderOptions}
             disabled={!!readOnly || filteredProviderOptions.length <= 1}
             placeholder='Select provider'
+            ariaLabel='Provider'
           />
         </div>
 
@@ -82,6 +83,7 @@ export function AssignmentEditor(props: {
             max={2}
             step={0.1}
             value={assignment.temperature ?? ''}
+            aria-label='Temperature'
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               updateField({
                 temperature: e.target.value === '' ? undefined : Number(e.target.value),
@@ -95,6 +97,7 @@ export function AssignmentEditor(props: {
           <Label className='text-xs text-gray-400'>Model ID</Label>
           <Input
             value={assignment.modelId}
+            aria-label='Model ID'
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               updateField({ modelId: e.target.value })
             }
@@ -110,6 +113,7 @@ export function AssignmentEditor(props: {
               disabled={!!readOnly || resolvedProvider !== 'model'}
               size='sm'
               className='mt-1'
+              ariaLabel='Model preset'
             />
           ) : null}
         </div>
@@ -118,6 +122,7 @@ export function AssignmentEditor(props: {
           <Label className='text-xs text-gray-400'>Agent ID</Label>
           <Input
             value={assignment.agentId}
+            aria-label='Agent ID'
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               updateField({ agentId: e.target.value })
             }
@@ -133,6 +138,7 @@ export function AssignmentEditor(props: {
               disabled={!!readOnly || resolvedProvider !== 'agent'}
               size='sm'
               className='mt-1'
+              ariaLabel='Agent preset'
             />
           ) : null}
         </div>
@@ -145,6 +151,7 @@ export function AssignmentEditor(props: {
             max={8192}
             step={1}
             value={assignment.maxTokens ?? ''}
+            aria-label='Max tokens'
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               updateField({ maxTokens: e.target.value === '' ? undefined : Number(e.target.value) })
             }
@@ -158,6 +165,7 @@ export function AssignmentEditor(props: {
           <Label className='text-xs text-gray-400'>System prompt</Label>
           <Textarea
             value={assignment.systemPrompt ?? ''}
+            aria-label='System prompt'
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
               updateField({ systemPrompt: e.target.value })
             }
@@ -172,6 +180,7 @@ export function AssignmentEditor(props: {
         <Label className='text-xs text-gray-400'>Notes</Label>
         <Textarea
           value={assignment.notes ?? ''}
+          aria-label='Notes'
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
             updateField({ notes: e.target.value })
           }

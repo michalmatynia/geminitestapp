@@ -530,17 +530,6 @@ export function useKangurAiTutorGuidedFlow(input: {
         surface: selectionConversationFocus.surface ?? undefined,
       });
 
-      const guidanceDelayMs = prefersReducedMotion
-        ? 0
-        : Math.max(180, Math.round(motionProfile.guidedAvatarTransition.duration * 1000));
-      selectionGuidanceRevealTimeoutRef.current = window.setTimeout(() => {
-        selectionGuidanceRevealTimeoutRef.current = null;
-        setSelectionGuidanceCalloutVisibleText(selectionText);
-      }, guidanceDelayMs);
-      selectionExplainTimeoutRef.current = window.setTimeout(() => {
-        selectionExplainTimeoutRef.current = null;
-        setSelectionGuidanceHandoffText(selectionText);
-      }, guidanceDelayMs);
     },
     [
       activeSelectionPageRect,

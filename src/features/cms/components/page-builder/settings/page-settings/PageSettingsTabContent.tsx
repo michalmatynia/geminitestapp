@@ -174,6 +174,7 @@ export function PageSettingsTabContent({ allSlugs }: { allSlugs: Slug[] }): Reac
         <Input
           value={search}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearch(e.target.value)}
+          aria-label='Search slugs'
           placeholder='Search slugs...'
           className='h-8 text-xs'
         />

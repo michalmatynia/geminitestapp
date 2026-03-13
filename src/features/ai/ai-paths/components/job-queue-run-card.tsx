@@ -646,6 +646,7 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                   className='mt-1 min-h-[160px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                   readOnly
                   value={safePrettyJson(detailRun.graph)}
+                  aria-label='Graph snapshot'
                 />
               </CollapsibleSection>
 

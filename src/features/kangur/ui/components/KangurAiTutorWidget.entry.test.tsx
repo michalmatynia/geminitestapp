@@ -34,6 +34,7 @@ const createGuestIntroFlowInput = (
   canonicalTutorModalVisible: false,
   enabled: true,
   guestIntroCheckStartedRef: { current: false } as MutableRefObject<boolean>,
+  guestAuthFormVisible: false,
   guestIntroHelpVisible: false,
   guestIntroLocalSuppressionTrackedRef: { current: false } as MutableRefObject<boolean>,
   guestIntroRecord: null,
@@ -50,6 +51,7 @@ const createGuestIntroFlowInput = (
   selectionExplainTimeoutRef: { current: null } as MutableRefObject<number | null>,
   selectionResponsePending: null,
   setCanonicalTutorModalVisible: vi.fn(),
+  setGuestAuthFormVisible: vi.fn(),
   setGuidedTutorTarget: vi.fn(),
   setGuestIntroHelpVisible: vi.fn(),
   setGuestIntroRecord: vi.fn(),
@@ -82,19 +84,16 @@ describe('useKangurAiTutorGuestIntroFlow', () => {
     expect(input.setCanonicalTutorModalVisible).not.toHaveBeenCalled();
   });
 
-  it('routes guest intro accept into guided login instead of reopening chat', () => {
+  it('opens the chat and shows the inline auth fields after accepting the guest intro', () => {
     const input = createGuestIntroFlowInput();
 
     const { result } = renderHook(() => useKangurAiTutorGuestIntroFlow(input));
 
     result.current.handleGuestIntroAccept();
 
-    expect(input.handleOpenChat).not.toHaveBeenCalled();
-    expect(input.setGuidedTutorTarget).toHaveBeenCalledWith({
-      mode: 'auth',
-      authMode: 'sign-in',
-      kind: 'login_action',
-    });
+    expect(input.handleOpenChat).toHaveBeenCalledWith('toggle');
+    expect(input.setGuestAuthFormVisible).toHaveBeenCalledWith(true);
+    expect(input.setGuidedTutorTarget).not.toHaveBeenCalled();
     expect(input.setCanonicalTutorModalVisible).toHaveBeenCalledWith(false);
     expect(input.setGuestIntroVisible).toHaveBeenCalledWith(false);
     expect(input.setGuestIntroHelpVisible).toHaveBeenCalledWith(false);

@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { resolveKangurPageContentFragment } from '@/features/kangur/page-content-fragments';
 import { resolveKangurTutorSectionKnowledgeReference } from '@/features/kangur/ai-tutor-section-knowledge';
 import { getKangurAiTutorNativeGuideStore } from '@/features/kangur/server/ai-tutor-native-guide-repository';
 import { getKangurPageContentStore } from '@/features/kangur/server/page-content-repository';
@@ -48,119 +49,15 @@ const normalizeText = (value: string | null | undefined): string =>
         .trim()
     : '';
 
-const normalizeFragmentText = (value: string | null | undefined): string =>
-  typeof value === 'string'
-    ? value
-        .toLocaleLowerCase()
-        .normalize('NFKD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^\p{L}\p{N}]+/gu, ' ')
-        .replace(/\s+/g, ' ')
-        .trim()
-    : '';
-
-const FRAGMENT_SOURCE_PATH_PATTERN = /#fragment:([^#]+)$/u;
-
-const resolveExplicitFragmentFromReference = (
-  section: KangurPageContentEntry,
-  reference: KangurAiTutorKnowledgeReference | undefined
-): KangurPageContentFragment | null => {
-  if (reference?.sourceCollection !== 'kangur_page_content') {
-    return null;
-  }
-
-  const fragmentMatch = reference.sourcePath.match(FRAGMENT_SOURCE_PATH_PATTERN);
-  const fragmentId = fragmentMatch?.[1]?.trim();
-  if (!fragmentId) {
-    return null;
-  }
-
-  return (
-    section.fragments.find((fragment) => fragment.enabled && fragment.id === fragmentId) ?? null
-  );
-};
-
-const scoreFragmentCandidateText = (
-  normalizedSelection: string,
-  normalizedCandidate: string
-): number => {
-  if (!normalizedSelection || !normalizedCandidate) {
-    return 0;
-  }
-
-  if (normalizedSelection === normalizedCandidate) {
-    return 1_000 + normalizedCandidate.length;
-  }
-
-  const allowContains =
-    normalizedSelection.length >= 8 && normalizedCandidate.length >= 8;
-  if (!allowContains) {
-    return 0;
-  }
-
-  if (normalizedSelection.includes(normalizedCandidate)) {
-    return 720 + normalizedCandidate.length;
-  }
-
-  if (normalizedCandidate.includes(normalizedSelection)) {
-    return 680 + normalizedSelection.length;
-  }
-
-  return 0;
-};
-
 const resolveSelectedTextFragment = (input: {
   context: KangurAiTutorConversationContext;
   section: KangurPageContentEntry;
-}): KangurPageContentFragment | null => {
-  const explicitFragment = resolveExplicitFragmentFromReference(
-    input.section,
-    input.context.knowledgeReference
-  );
-  if (explicitFragment) {
-    return explicitFragment;
-  }
-
-  const normalizedSelection = normalizeFragmentText(input.context.selectedText);
-  if (!normalizedSelection) {
-    return null;
-  }
-
-  const rankedFragments = input.section.fragments
-    .filter((fragment) => fragment.enabled)
-    .map((fragment) => {
-      const scores = [
-        scoreFragmentCandidateText(normalizedSelection, normalizeFragmentText(fragment.text)),
-        ...fragment.aliases.map((alias) =>
-          scoreFragmentCandidateText(normalizedSelection, normalizeFragmentText(alias))
-        ),
-      ];
-      const score = Math.max(0, ...scores);
-      return { fragment, score };
-    })
-    .filter((candidate) => candidate.score > 0)
-    .sort((left, right) => {
-      if (left.score !== right.score) {
-        return right.score - left.score;
-      }
-      if (left.fragment.sortOrder !== right.fragment.sortOrder) {
-        return left.fragment.sortOrder - right.fragment.sortOrder;
-      }
-      return left.fragment.id.localeCompare(right.fragment.id);
-    });
-
-  const bestMatch = rankedFragments[0] ?? null;
-  const secondBestMatch = rankedFragments[1] ?? null;
-  if (!bestMatch) {
-    return null;
-  }
-
-  if (secondBestMatch?.score === bestMatch.score) {
-    return null;
-  }
-
-  return bestMatch.fragment;
-};
+}) =>
+  resolveKangurPageContentFragment({
+    entry: input.section,
+    knowledgeReference: input.context.knowledgeReference,
+    selectedText: input.context.selectedText,
+  });
 
 const isLocationLookup = (value: string | null | undefined): boolean => {
   const normalized = normalizeText(value);

@@ -144,6 +144,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                         onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                           updateMapping(index, { targetPath: event.target.value })
                         }
+                        aria-label='Target path'
                         placeholder='Target path (e.g. description_pl)'
                       />
                       <SelectSimple
@@ -153,6 +154,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                         onValueChange={(value: string): void =>
                           updateMapping(index, { sourcePort: value })
                         }
+                        ariaLabel='Source port'
                         options={availablePorts.map((port: string) => ({
                           value: port,
                           label: formatPortLabel(port),
@@ -166,6 +168,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                         onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                           updateMapping(index, { sourcePath: event.target.value })
                         }
+                        aria-label='Source path'
                         placeholder='Source path (optional)'
                       />
                       <Button

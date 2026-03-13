@@ -97,6 +97,7 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
             node?.focus();
           }}
           value={controller.renameDraft}
+          aria-label={`Rename ${node.name}`}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
             controller.updateRenameDraft(event.target.value);
           }}
@@ -146,6 +147,7 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
                     setSelectedNote(null);
                     setIsCreating(true);
                   }}
+                  aria-label='Add note'
                   className='size-6 p-0 text-gray-400 hover:bg-white/10 hover:text-white'
                 >
                   <FilePlus className='size-3' />
@@ -166,6 +168,7 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
                     event.stopPropagation();
                     void (operations as NotesAppTreeNodeOperations).handleCreateFolder(folderId);
                   }}
+                  aria-label='Add subfolder'
                   className='size-6 p-0 text-gray-400 hover:bg-white/10 hover:text-white'
                 >
                   <FolderPlus className='size-3' />
@@ -189,6 +192,7 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
                   event.stopPropagation();
                   void (operations as NotesAppTreeNodeOperations).handleDuplicateNote(noteId);
                 }}
+                aria-label='Duplicate note'
                 className='size-6 p-0 text-gray-400 hover:bg-white/10 hover:text-white'
               >
                 <Copy className='size-3' />
@@ -208,6 +212,7 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
                 event.stopPropagation();
                 startRename();
               }}
+              aria-label='Rename'
               className='size-6 p-0 text-gray-400 hover:bg-white/10 hover:text-white'
             >
               <Edit2 className='size-3' />
@@ -232,6 +237,7 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
                   void (operations as NotesAppTreeNodeOperations).handleDeleteNoteFromTree(noteId);
                 }
               }}
+              aria-label='Delete'
               className='size-6 p-0 text-rose-400 hover:bg-red-500/20 hover:text-rose-300'
             >
               <Trash2 className='size-3' />

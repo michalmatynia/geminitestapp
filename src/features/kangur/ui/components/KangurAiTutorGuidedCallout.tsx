@@ -3,8 +3,10 @@
 import { useMemo } from 'react';
 import { AnimatePresence, motion, type Transition } from 'framer-motion';
 
+import { resolveKangurPageContentFragment } from '@/features/kangur/page-content-fragments';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { KANGUR_PAGE_CONTENT_COLLECTION } from '@/shared/contracts/kangur-page-content';
 import { cn } from '@/shared/utils';
 
@@ -172,6 +174,22 @@ export function KangurAiTutorGuidedCallout({
     null;
   const resolvedSelectedKnowledgeLabel =
     selectionConversationContext?.focusLabel ?? activeFocus.conversationFocus.label ?? null;
+  const selectedKnowledgeEntryId =
+    resolvedSelectedKnowledgeReference?.sourceCollection === KANGUR_PAGE_CONTENT_COLLECTION
+      ? resolvedSelectedKnowledgeReference.sourceRecordId
+      : null;
+  const { entry: selectedKnowledgeEntry } = useKangurPageContentEntry(selectedKnowledgeEntryId);
+  const selectedKnowledgeFragment = useMemo(
+    () =>
+      selectedKnowledgeEntry
+        ? resolveKangurPageContentFragment({
+            entry: selectedKnowledgeEntry,
+            knowledgeReference: resolvedSelectedKnowledgeReference,
+            selectedText: resolvedSelectedText,
+          })
+        : null,
+    [resolvedSelectedKnowledgeReference, resolvedSelectedText, selectedKnowledgeEntry]
+  );
   const resolvedSelectionAssistantMessage = useMemo(
     () => (mode === 'selection' ? getLatestAssistantMessage(messages) : null),
     [messages, mode]
@@ -183,20 +201,30 @@ export function KangurAiTutorGuidedCallout({
     !isLoading &&
     resolvedSelectionAssistantMessage !== null;
   const shouldShowSelectedKnowledgeReference =
-    isResolvedSelectionCallout &&
+    mode === 'selection' &&
+    showSelectionGuidanceCallout &&
     (
       resolvedSelectedKnowledgeReference?.sourceCollection === KANGUR_PAGE_CONTENT_COLLECTION ||
       resolvedSelectionAssistantMessage?.answerResolutionMode === 'page_content'
     );
+  const selectedKnowledgeTitle =
+    resolvedSelectedKnowledgeLabel ?? selectedKnowledgeEntry?.title ?? null;
+  const selectedKnowledgeSummary =
+    selectedKnowledgeFragment?.explanation ?? selectedKnowledgeEntry?.summary ?? null;
   const resolvedSelectionDetail =
     resolvedSelectionAssistantMessage?.answerResolutionMode === 'page_content'
       ? 'Wyjaśnienie korzysta z zapisanej treści strony dla tego zaznaczenia.'
       : isResolvedSelectionCallout
         ? 'Wyjaśnienie jest już gotowe dla zaznaczonego fragmentu.'
         : detail;
-  const shouldShowSelectionPreview = Boolean(resolvedSelectedPreview ?? selectionPreview);
+  const shouldShowSelectionIntro =
+    !(mode === 'selection' && isResolvedSelectionCallout);
+  const shouldShowSelectionPreview =
+    mode !== 'selection' && Boolean(resolvedSelectedPreview ?? selectionPreview);
   const shouldShowSelectionPageContentBadge =
     resolvedSelectionAssistantMessage?.answerResolutionMode === 'page_content';
+  const shouldShowSelectionPreparingBadge =
+    mode === 'selection' && !isResolvedSelectionCallout && !shouldShowSelectedKnowledgeReference;
 
   return (
     <AnimatePresence mode='wait'>
@@ -271,22 +299,26 @@ export function KangurAiTutorGuidedCallout({
                   {stepLabel}
                 </div>
               ) : null}
-              <div
-                className={cn(
-                  'mt-1 text-sm font-semibold leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
-                  isMobileHomeOnboardingSheet && 'text-[13px] leading-6'
-                )}
-              >
-                {title}
-              </div>
-              <div
-                className={cn(
-                  'mt-2 text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]',
-                  isMobileHomeOnboardingSheet && 'mt-1.5 line-clamp-3 text-[11px] leading-5'
-                )}
-              >
-                {resolvedSelectionDetail}
-              </div>
+              {shouldShowSelectionIntro ? (
+                <>
+                  <div
+                    className={cn(
+                      'mt-1 text-sm font-semibold leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
+                      isMobileHomeOnboardingSheet && 'text-[13px] leading-6'
+                    )}
+                  >
+                    {title}
+                  </div>
+                  <div
+                    className={cn(
+                      'mt-2 text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]',
+                      isMobileHomeOnboardingSheet && 'mt-1.5 line-clamp-3 text-[11px] leading-5'
+                    )}
+                  >
+                    {resolvedSelectionDetail}
+                  </div>
+                </>
+              ) : null}
               {shouldShowSelectionPreview ? (
                 <KangurAiTutorWarmInsetCard
                   data-testid='kangur-ai-tutor-selection-preview'
@@ -305,52 +337,47 @@ export function KangurAiTutorGuidedCallout({
                   {tutorContent.guidedCallout.sectionPrefix}: {sectionLabel}
                 </KangurAiTutorWarmInsetCard>
               ) : null}
-              {isResolvedSelectionCallout ? (
-                <>
-                  {shouldShowSelectedKnowledgeReference ? (
-                    <KangurAiTutorWarmInsetCard
-                      data-testid='kangur-ai-tutor-selection-guided-source'
-                      tone='panel'
-                      className='mt-3 px-3 py-3'
-                    >
-                      <div className='flex flex-wrap items-center gap-2'>
-                        {resolvedSelectedKnowledgeLabel ? (
-                          <KangurAiTutorChromeBadge className='px-3 py-1 text-[10px] normal-case tracking-normal'>
-                            {resolvedSelectedKnowledgeLabel}
-                          </KangurAiTutorChromeBadge>
-                        ) : null}
-                        <KangurAiTutorChromeBadge className='px-3 py-1 text-[10px]'>
-                          Tresc strony
-                        </KangurAiTutorChromeBadge>
-                      </div>
-                      <div className='mt-2 text-[11px] leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
-                        Zapisany kontekst z bazy wiedzy zostal wstrzykniety do tego wyjasnienia.
-                      </div>
-                      {resolvedSelectedKnowledgeReference?.sourcePath ? (
-                        <div className='mt-2 rounded-2xl border px-3 py-2 font-mono text-[11px] [border-color:var(--kangur-chat-divider,var(--kangur-soft-card-border))] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
-                          {resolvedSelectedKnowledgeReference.sourcePath}
-                        </div>
-                      ) : null}
-                    </KangurAiTutorWarmInsetCard>
-                  ) : null}
-                  <div className='mt-3 space-y-2'>
-                    {shouldShowSelectionPageContentBadge ? (
-                      <KangurAiTutorChromeBadge
-                        data-testid='kangur-ai-tutor-selection-guided-page-content-badge'
-                        className='w-fit max-w-full px-3 py-1 text-[10px]'
-                      >
-                        Zapisana tresc strony
+              {shouldShowSelectedKnowledgeReference ? (
+                <KangurAiTutorWarmInsetCard
+                  data-testid='kangur-ai-tutor-selection-guided-source'
+                  tone='panel'
+                  className='mt-3 px-3 py-3'
+                >
+                  <div className='flex flex-wrap items-center gap-2'>
+                    {selectedKnowledgeTitle ? (
+                      <KangurAiTutorChromeBadge className='px-3 py-1 text-[10px] normal-case tracking-normal'>
+                        {selectedKnowledgeTitle}
                       </KangurAiTutorChromeBadge>
                     ) : null}
-                    <KangurAiTutorWarmInsetCard
-                      data-testid='kangur-ai-tutor-selection-guided-answer'
-                      tone='panel'
-                      className='px-3 py-3 text-sm leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
-                    >
-                      {resolvedSelectionAssistantMessage?.content}
-                    </KangurAiTutorWarmInsetCard>
+                    <KangurAiTutorChromeBadge className='px-3 py-1 text-[10px]'>
+                      {selectedKnowledgeFragment ? 'Fragment z bazy wiedzy' : 'Tresc strony'}
+                    </KangurAiTutorChromeBadge>
                   </div>
-                </>
+                  {selectedKnowledgeSummary ? (
+                    <div className='mt-2 text-xs leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
+                      {selectedKnowledgeSummary}
+                    </div>
+                  ) : null}
+                </KangurAiTutorWarmInsetCard>
+              ) : null}
+              {isResolvedSelectionCallout ? (
+                <div className='mt-3 space-y-2'>
+                  {shouldShowSelectionPageContentBadge ? (
+                    <KangurAiTutorChromeBadge
+                      data-testid='kangur-ai-tutor-selection-guided-page-content-badge'
+                      className='w-fit max-w-full px-3 py-1 text-[10px]'
+                    >
+                      Zapisana tresc strony
+                    </KangurAiTutorChromeBadge>
+                  ) : null}
+                  <KangurAiTutorWarmInsetCard
+                    data-testid='kangur-ai-tutor-selection-guided-answer'
+                    tone='panel'
+                    className='px-3 py-3 text-sm leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
+                  >
+                    {resolvedSelectionAssistantMessage?.content}
+                  </KangurAiTutorWarmInsetCard>
+                </div>
               ) : null}
               <div
                 className={cn(
@@ -401,7 +428,7 @@ export function KangurAiTutorGuidedCallout({
                     >
                       {tutorContent.guidedCallout.buttons.understand}
                     </KangurButton>
-                  ) : (
+                  ) : shouldShowSelectionPreparingBadge ? (
                     <KangurAiTutorChromeBadge
                       className={cn(
                         'w-fit max-w-full self-start px-3 py-1 text-[11px] normal-case tracking-normal [color:var(--kangur-chat-control-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))] [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] sm:self-auto',
@@ -410,7 +437,7 @@ export function KangurAiTutorGuidedCallout({
                     >
                       {tutorContent.guidedCallout.selectionPreparingBadge}
                     </KangurAiTutorChromeBadge>
-                  )
+                  ) : null
                 ) : (
                   <KangurButton
                     type='button'

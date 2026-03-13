@@ -42,6 +42,7 @@ describe('useKangurAiTutorPanelInteractions', () => {
       setContextualTutorMode: vi.fn(),
       setDismissedSelectedText: vi.fn(),
       setDraggedAvatarPoint: vi.fn(),
+      setGuestAuthFormVisible: vi.fn(),
       setGuestIntroHelpVisible: vi.fn(),
       setGuestIntroVisible: vi.fn(),
       setGuidedTutorTarget: vi.fn(),

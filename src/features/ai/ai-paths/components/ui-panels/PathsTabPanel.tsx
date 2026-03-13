@@ -375,6 +375,7 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
                 setImportPayload(event.target.value)
               }
+              aria-label='Import path JSON'
               placeholder='Paste AI Path JSON payload here...'
             />
             <div className='flex items-center justify-end gap-2'>

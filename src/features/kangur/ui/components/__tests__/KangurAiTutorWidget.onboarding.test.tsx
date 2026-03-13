@@ -39,6 +39,7 @@ const {
   speechSynthesisMock,
   audioPlayMock,
   audioPauseMock,
+  useKangurPageContentEntryMock,
 } = vi.hoisted(() => ({
   settingsStoreMock: {
     get: vi.fn<(key: string) => string | undefined>(),
@@ -69,6 +70,7 @@ const {
   },
   audioPlayMock: vi.fn().mockResolvedValue(undefined),
   audioPauseMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(),
 }));
 
 vi.mock('framer-motion', () => ({
@@ -191,6 +193,10 @@ vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurTextHighlight', () => ({
   useKangurTextHighlight: useKangurTextHighlightMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
@@ -426,6 +432,7 @@ describe('KangurAiTutorWidget - Onboarding', () => {
       openLoginModal: vi.fn(),
     });
     useReducedMotionMock.mockReturnValue(false);
+    useKangurPageContentEntryMock.mockReturnValue({ entry: null });
   });
 
   afterEach(() => {

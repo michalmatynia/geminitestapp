@@ -53,6 +53,7 @@ export function DocsConnectionsPanel(): React.JSX.Element {
         className='mt-2 min-h-[96px]'
         value={docsSourcesDraft}
         onChange={(event) => setDocsSourcesDraft(event.target.value)}
+        aria-label='Docs sources'
       />
 
       <div className='mt-4 flex flex-wrap items-center justify-between gap-2'>

@@ -103,6 +103,22 @@ const renderLearnerProfilePage = () =>
     </KangurGuestPlayerProvider>
   );
 
+const toLocalDateKey = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const now = new Date();
+const recentDate = new Date(now);
+recentDate.setDate(now.getDate() - 2);
+const nextDate = new Date(recentDate);
+nextDate.setDate(recentDate.getDate() + 1);
+const recentDateKey = toLocalDateKey(recentDate);
+const nextDateKey = toLocalDateKey(nextDate);
+const recentDateIso = recentDate.toISOString();
+
 const baseProgress: KangurProgressState = {
   totalXp: 620,
   gamesPlayed: 22,
@@ -120,7 +136,7 @@ const baseProgress: KangurProgressState = {
       masteryPercent: 45,
       bestScorePercent: 60,
       lastScorePercent: 40,
-      lastCompletedAt: '2026-03-06T10:00:00.000Z',
+      lastCompletedAt: recentDateIso,
     },
     clock: {
       attempts: 4,
@@ -128,7 +144,7 @@ const baseProgress: KangurProgressState = {
       masteryPercent: 92,
       bestScorePercent: 100,
       lastScorePercent: 90,
-      lastCompletedAt: '2026-03-06T12:00:00.000Z',
+      lastCompletedAt: recentDateIso,
     },
   },
 };
@@ -141,7 +157,7 @@ const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord =
   total_questions: 10,
   correct_answers: 8,
   time_taken: 42,
-  created_date: '2026-03-06T12:00:00.000Z',
+  created_date: recentDateIso,
   created_by: 'jan@example.com',
   ...overrides,
 });
@@ -214,11 +230,11 @@ describe('LearnerProfile page', () => {
       'aria-valuenow',
       '30'
     );
-    expect(screen.getByTestId('learner-profile-weekly-activity-2026-03-06')).toHaveAttribute(
+    expect(screen.getByTestId(`learner-profile-weekly-activity-${recentDateKey}`)).toHaveAttribute(
       'data-active',
       'true'
     );
-    expect(screen.getByTestId('learner-profile-weekly-activity-2026-03-07')).toHaveAttribute(
+    expect(screen.getByTestId(`learner-profile-weekly-activity-${nextDateKey}`)).toHaveAttribute(
       'data-active',
       'false'
     );

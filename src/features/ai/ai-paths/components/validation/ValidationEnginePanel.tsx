@@ -25,6 +25,11 @@ export function ValidationEnginePanel(): React.JSX.Element {
     handleResetToDefaults,
     handleRebuildRulesFromDocs,
   } = useAdminAiPathsValidationContext();
+  const fieldId = React.useId().replace(/:/g, '');
+  const baseScoreId = `validation-base-score-${fieldId}`;
+  const warnThresholdId = `validation-warn-threshold-${fieldId}`;
+  const blockThresholdId = `validation-block-threshold-${fieldId}`;
+  const schemaVersionId = `validation-schema-version-${fieldId}`;
 
   return (
     <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
@@ -48,6 +53,7 @@ export function ValidationEnginePanel(): React.JSX.Element {
             onValueChange={(value: string) => updateDraft({ enabled: value !== 'disabled' })}
             options={ENABLE_OPTIONS}
             className='mt-2'
+            ariaLabel='Status'
           />
         </div>
         <div>
@@ -67,11 +73,15 @@ export function ValidationEnginePanel(): React.JSX.Element {
             }}
             options={VALIDATION_POLICY_OPTIONS}
             className='mt-2'
+            ariaLabel='Policy'
           />
         </div>
         <div>
-          <Label className='text-xs text-gray-400'>Base Score</Label>
+          <Label htmlFor={baseScoreId} className='text-xs text-gray-400'>
+            Base Score
+          </Label>
           <Input
+            id={baseScoreId}
             type='number'
             min={0}
             max={100}
@@ -85,8 +95,11 @@ export function ValidationEnginePanel(): React.JSX.Element {
           />
         </div>
         <div>
-          <Label className='text-xs text-gray-400'>Warn Threshold</Label>
+          <Label htmlFor={warnThresholdId} className='text-xs text-gray-400'>
+            Warn Threshold
+          </Label>
           <Input
+            id={warnThresholdId}
             type='number'
             min={0}
             max={100}
@@ -100,8 +113,11 @@ export function ValidationEnginePanel(): React.JSX.Element {
           />
         </div>
         <div>
-          <Label className='text-xs text-gray-400'>Block Threshold</Label>
+          <Label htmlFor={blockThresholdId} className='text-xs text-gray-400'>
+            Block Threshold
+          </Label>
           <Input
+            id={blockThresholdId}
             type='number'
             min={0}
             max={100}
@@ -115,8 +131,11 @@ export function ValidationEnginePanel(): React.JSX.Element {
           />
         </div>
         <div>
-          <Label className='text-xs text-gray-400'>Schema Version</Label>
+          <Label htmlFor={schemaVersionId} className='text-xs text-gray-400'>
+            Schema Version
+          </Label>
           <Input
+            id={schemaVersionId}
             className='mt-2 h-9'
             value={String(validationDraft.schemaVersion ?? 2)}
             readOnly={true}

@@ -41,6 +41,7 @@ export function SubgraphNodeConfigSection(): React.JSX.Element | null {
           className='h-8 rounded-md border border-border bg-card/70 text-xs text-gray-100'
           placeholder='e.g. path_123'
           value={subgraphConfig.pathId ?? ''}
+          aria-label='Subgraph path ID'
           onChange={handleFieldChange('pathId')}
         />
         <p className='mt-1 text-[11px] text-gray-500'>
@@ -54,6 +55,7 @@ export function SubgraphNodeConfigSection(): React.JSX.Element | null {
           className='h-8 rounded-md border border-border bg-card/70 text-xs text-gray-100'
           placeholder='Node ID inside the subgraph to treat as trigger'
           value={subgraphConfig.triggerNodeId ?? ''}
+          aria-label='Subgraph trigger node ID'
           onChange={handleFieldChange('triggerNodeId')}
         />
         <p className='mt-1 text-[11px] text-gray-500'>
@@ -66,6 +68,7 @@ export function SubgraphNodeConfigSection(): React.JSX.Element | null {
           className='h-8 rounded-md border border-border bg-card/70 text-xs text-gray-100'
           placeholder='e.g. enrichment_subgraph'
           value={subgraphConfig.subgraphName ?? ''}
+          aria-label='Subgraph name'
           onChange={handleFieldChange('subgraphName')}
         />
       </div>
@@ -75,6 +78,7 @@ export function SubgraphNodeConfigSection(): React.JSX.Element | null {
           className='mt-1 min-h-[80px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-gray-100'
           placeholder={'{\n  "value": "subgraphInput",\n  "context": "subgraphContext"\n}'}
           value={subgraphConfig.inputMappingJson ?? ''}
+          aria-label='Input mapping JSON'
           onChange={handleFieldChange('inputMappingJson')}
         />
         <p className='mt-1 text-[11px] text-gray-500'>
@@ -88,6 +92,7 @@ export function SubgraphNodeConfigSection(): React.JSX.Element | null {
           className='mt-1 min-h-[80px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-gray-100'
           placeholder={'{\n  "subgraphResult": "value"\n}'}
           value={subgraphConfig.outputMappingJson ?? ''}
+          aria-label='Output mapping JSON'
           onChange={handleFieldChange('outputMappingJson')}
         />
         <p className='mt-1 text-[11px] text-gray-500'>

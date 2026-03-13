@@ -135,6 +135,7 @@ export function RuntimeEventLogPanel(): React.JSX.Element {
             value={levelFilter}
             onValueChange={(value) => setLevelFilter(value as RuntimeEventLevelFilter)}
             options={LEVEL_OPTIONS}
+            ariaLabel='Event level filter'
             triggerClassName='h-6 min-w-[70px] px-2 bg-transparent border-border/40 text-[10px]'
           />
           {/* Export */}

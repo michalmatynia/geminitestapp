@@ -174,6 +174,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
         <SelectSimple
           size='sm'
           value={operatorValue}
+          ariaLabel='Logical operator'
           onValueChange={(next: string) => {
             if (next === 'none') {
               applyPatch({
@@ -235,6 +236,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
                     <SelectSimple
                       size='sm'
                       value={condition.joinWithPrevious === 'or' ? 'or' : 'and'}
+                      ariaLabel='Condition join'
                       onValueChange={(next: string) => {
                         if (!isLogicalJoin(next)) return;
                         updateCondition(conditionIndex, {
@@ -254,6 +256,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
                   <SelectSimple
                     size='sm'
                     value={selectedParamPath}
+                    ariaLabel='Referenced parameter'
                     onValueChange={(next: string) => {
                       updateCondition(conditionIndex, {
                         paramPath: next.trim(),
@@ -272,6 +275,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
                   <SelectSimple
                     size='sm'
                     value={comparatorValue}
+                    ariaLabel='Comparator'
                     onValueChange={(next: string) => {
                       if (!isLogicalComparator(next)) return;
                       updateCondition(conditionIndex, {
@@ -294,6 +298,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
                       <SelectSimple
                         size='sm'
                         value={String(Boolean(condition.value))}
+                        ariaLabel='Condition value'
                         onValueChange={(next: string) => {
                           updateCondition(conditionIndex, {
                             value: next === 'true',
@@ -311,6 +316,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
                           value={String(
                             condition.value ?? selectedParamEntry.spec.enumOptions[0] ?? ''
                           )}
+                          ariaLabel='Condition value'
                           onValueChange={(next: string) => {
                             updateCondition(conditionIndex, {
                               value: next,
@@ -325,6 +331,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
                         <Input
                           type='number'
                           value={String(condition.value ?? '')}
+                          aria-label='Condition value'
                           onChange={(event) => {
                             const next = Number(event.target.value);
                             if (!Number.isFinite(next)) return;
@@ -340,6 +347,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
                               ? condition.value
                               : promptExploderSafeJsonStringify(condition.value ?? '')
                           }
+                          aria-label='Condition value'
                           onChange={(event) => {
                             const rawValue = event.target.value;
                             if (
@@ -375,6 +383,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
                     type='button'
                     variant='outline'
                     className='h-9 w-full px-2'
+                    aria-label='Remove condition'
                     onClick={() => {
                       removeCondition(conditionIndex);
                     }}

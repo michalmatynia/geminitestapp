@@ -67,6 +67,7 @@ export function PromptExploderParserTuningPanel(): React.JSX.Element {
                 <Label className='text-[10px] text-gray-500'>Title</Label>
                 <Input
                   value={draft.title}
+                  aria-label='Title'
                   onChange={(event) => {
                     onPatchDraft(draft.id, {
                       title: event.target.value,
@@ -89,6 +90,7 @@ export function PromptExploderParserTuningPanel(): React.JSX.Element {
                     value: option.value,
                     label: option.label,
                   }))}
+                  ariaLabel='Type hint'
                 />
               </div>
             </div>
@@ -98,6 +100,7 @@ export function PromptExploderParserTuningPanel(): React.JSX.Element {
               <Textarea
                 className='min-h-[64px] text-[11px]'
                 value={draft.description ?? ''}
+                aria-label='Description'
                 onChange={(event) => {
                   onPatchDraft(draft.id, {
                     description: event.target.value.trim() || null,
@@ -112,6 +115,7 @@ export function PromptExploderParserTuningPanel(): React.JSX.Element {
                 <Textarea
                   className='min-h-[72px] font-mono text-[11px]'
                   value={draft.pattern}
+                  aria-label='Pattern'
                   onChange={(event) => {
                     onPatchDraft(draft.id, {
                       pattern: event.target.value,
@@ -124,6 +128,7 @@ export function PromptExploderParserTuningPanel(): React.JSX.Element {
                 <Input
                   className='font-mono text-[11px]'
                   value={draft.flags}
+                  aria-label='Flags'
                   onChange={(event) => {
                     onPatchDraft(draft.id, {
                       flags: event.target.value,
@@ -142,6 +147,7 @@ export function PromptExploderParserTuningPanel(): React.JSX.Element {
                   max={50}
                   step={1}
                   value={String(draft.promptExploderPriority)}
+                  aria-label='Priority'
                   onChange={(event) => {
                     const value = Number(event.target.value);
                     if (!Number.isFinite(value)) return;
@@ -159,6 +165,7 @@ export function PromptExploderParserTuningPanel(): React.JSX.Element {
                   max={0.5}
                   step={0.01}
                   value={draft.promptExploderConfidenceBoost.toFixed(2)}
+                  aria-label='Confidence boost'
                   onChange={(event) => {
                     const value = Number(event.target.value);
                     if (!Number.isFinite(value)) return;

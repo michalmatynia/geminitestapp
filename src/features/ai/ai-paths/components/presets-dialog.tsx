@@ -61,6 +61,7 @@ export function PresetsDialog(): React.JSX.Element {
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
               setPresetsJson(event.target.value)
             }
+            aria-label='Presets JSON'
           />
           <div className='flex flex-wrap items-center gap-2'>
             <Button

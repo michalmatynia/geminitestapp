@@ -214,6 +214,7 @@ function useWidgetSelectionState() {
 function useWidgetOnboardingState() {
   const [guestIntroVisible, setGuestIntroVisible] = useState(false);
   const [guestIntroHelpVisible, setGuestIntroHelpVisible] = useState(false);
+  const [guestAuthFormVisible, setGuestAuthFormVisible] = useState(false);
   const [guidedTutorTarget, setGuidedTutorTarget] = useState<GuidedTutorTarget | null>(null);
   const [homeOnboardingStepIndex, setHomeOnboardingStepIndex] = useState<number | null>(null);
   const [guestIntroRecord, setGuestIntroRecord] = useState<KangurAiTutorGuestIntroRecord | null>(
@@ -228,6 +229,7 @@ function useWidgetOnboardingState() {
 
   return {
     guestIntroCheckStartedRef,
+    guestAuthFormVisible,
     guestIntroHelpVisible,
     guestIntroLocalSuppressionTrackedRef,
     guestIntroRecord,
@@ -237,6 +239,7 @@ function useWidgetOnboardingState() {
     homeOnboardingRecord,
     homeOnboardingShownForCurrentEntryRef,
     homeOnboardingStepIndex,
+    setGuestAuthFormVisible,
     setGuestIntroHelpVisible,
     setGuestIntroRecord,
     setGuestIntroVisible,

@@ -76,6 +76,7 @@ function EventEffectsTab(): React.ReactNode {
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                 handleEventSettingChange('eventClickUrl', e.target.value)
               }
+              aria-label='Click URL'
               placeholder='https://example.com'
               className='h-8 text-xs'
             />
@@ -100,6 +101,7 @@ function EventEffectsTab(): React.ReactNode {
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                 handleEventSettingChange('eventClickScrollTarget', e.target.value)
               }
+              aria-label='Scroll target ID'
               placeholder='hero-section'
               className='h-8 text-xs'
             />

@@ -41,6 +41,7 @@ function CategoryMapperExpandButton(): React.JSX.Element {
       variant='ghost'
       size='xs'
       onClick={onToggleExpand}
+      aria-label={isExpanded ? 'Collapse category' : 'Expand category'}
       className='mr-2 p-0.5 text-gray-400 hover:text-white h-6 w-6'
     >
       {isExpanded ? <ChevronDown className='h-4 w-4' /> : <ChevronRight className='h-4 w-4' />}

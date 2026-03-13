@@ -36,6 +36,7 @@ const {
   clearSelectionMock,
   clearSelectionGlowMock,
   trackKangurClientEventMock,
+  useKangurPageContentEntryMock,
 } = vi.hoisted(() => ({
   settingsStoreMock: {
     get: vi.fn<(key: string) => string | undefined>(),
@@ -56,6 +57,7 @@ const {
   clearSelectionMock: vi.fn(),
   clearSelectionGlowMock: vi.fn(),
   trackKangurClientEventMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(),
 }));
 
 vi.mock('framer-motion', () => ({
@@ -180,6 +182,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurTextHighlight', () => ({
   useKangurTextHighlight: useKangurTextHighlightMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useOptionalKangurRouting: useOptionalKangurRoutingMock,
 }));
@@ -241,6 +247,7 @@ describe('KangurAiTutorWidget - Actions', () => {
       openLoginModal: vi.fn(),
     });
     useReducedMotionMock.mockReturnValue(false);
+    useKangurPageContentEntryMock.mockReturnValue({ entry: null });
   });
 
   afterEach(() => {

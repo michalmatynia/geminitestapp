@@ -100,6 +100,7 @@ function CssAiSection(): React.JSX.Element {
             value={brainAiProvider === 'agent' ? 'Deepthinking agent' : 'AI model'}
             readOnly
             disabled
+            aria-label='Provider'
             className='cursor-not-allowed'
           />
         </FormField>
@@ -112,6 +113,7 @@ function CssAiSection(): React.JSX.Element {
             }
             readOnly
             disabled
+            aria-label={brainAiProvider === 'agent' ? 'Deepthinking agent' : 'Model'}
             className='cursor-not-allowed'
           />
         </FormField>
@@ -121,6 +123,7 @@ function CssAiSection(): React.JSX.Element {
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
               updateCustomCssAiConfig({ prompt: e.target.value })
             }
+            aria-label='CSS prompt'
             placeholder={`Describe the CSS you want.\n\nContext:\n${contextPlaceholder}`}
             className='min-h-[120px] text-xs'
             spellCheck={false}
@@ -146,6 +149,7 @@ function CssAiSection(): React.JSX.Element {
         <Textarea
           value={contextPlaceholder}
           readOnly
+          aria-label='Context placeholders'
           className='min-h-[64px] text-xs font-mono text-gray-300'
         />
         <div className='text-[11px] text-gray-500'>
@@ -213,6 +217,7 @@ function CssAiSection(): React.JSX.Element {
                 <Textarea
                   value={pageContextPreview}
                   readOnly
+                  aria-label='Page context preview'
                   className='min-h-[160px] text-xs font-mono text-gray-300'
                 />
               </TabsContent>
@@ -231,6 +236,7 @@ function CssAiSection(): React.JSX.Element {
                 <Textarea
                   value={elementContextPreview}
                   readOnly
+                  aria-label='Element context preview'
                   className='min-h-[160px] text-xs font-mono text-gray-300'
                 />
               </TabsContent>
@@ -300,6 +306,7 @@ function CssAiSection(): React.JSX.Element {
             <Textarea
               value={cssAiOutput}
               readOnly
+              aria-label='Generated CSS'
               className='min-h-[120px] text-xs font-mono text-gray-300'
             />
             <div className='rounded border border-border/40 bg-gray-900/40 p-2'>

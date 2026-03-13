@@ -46,7 +46,7 @@ describe('Geometry lessons shared surfaces', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /punkt i odcinek/i }));
 
-    expect(screen.getByText(/odcinek ma poczatek i koniec/i)).toHaveClass(
+    expect(screen.getByText(/odcinek ma początek i koniec/i)).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
   });
@@ -67,12 +67,12 @@ describe('Geometry lessons shared surfaces', () => {
   it('uses the lighter helper copy palette in the symmetry lesson', () => {
     renderLesson(<GeometrySymmetryLesson />);
 
-    fireEvent.click(screen.getByRole('button', { name: /os symetrii/i }));
+    fireEvent.click(screen.getByRole('button', { name: /oś symetrii/i }));
 
-    expect(screen.getByText(/pionowa kreska to os symetrii/i)).toHaveClass(
+    expect(screen.getByText(/pionowa kreska to oś symetrii/i)).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
-    expect(screen.getByText(/figura może miec więcej niż jedna os symetrii/i)).toHaveClass(
+    expect(screen.getByText(/figura może mieć więcej niż jedną oś symetrii/i)).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
   });

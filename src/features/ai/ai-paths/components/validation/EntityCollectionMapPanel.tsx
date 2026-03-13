@@ -23,6 +23,7 @@ export function EntityCollectionMapPanel(): React.JSX.Element {
         className='mt-2 min-h-[120px] font-mono text-xs'
         value={collectionMapDraft}
         onChange={(event) => setCollectionMapDraft(event.target.value)}
+        aria-label='Entity collection map'
         placeholder='product:ProductCollection&#10;customer:CustomerCollection'
       />
     </Card>

@@ -336,6 +336,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
               value,
               label,
             }))}
+            ariaLabel='New operation type'
             triggerClassName='w-[180px]'
           />
           <Button

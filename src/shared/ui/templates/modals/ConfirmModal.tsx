@@ -63,6 +63,7 @@ const { Context: ConfirmModalRuntimeContext, useStrictContext: useConfirmModalRu
 function ConfirmModalPasswordField(): React.JSX.Element | null {
   const runtime = useConfirmModalRuntime();
   const inputRef = React.useRef<HTMLInputElement | null>(null);
+  const inputId = React.useId().replace(/:/g, '');
   React.useEffect(() => {
     if (!runtime.loading) {
       inputRef.current?.focus();
@@ -72,8 +73,11 @@ function ConfirmModalPasswordField(): React.JSX.Element | null {
 
   return (
     <div className='space-y-2'>
-      <Label className='text-xs font-medium text-gray-300'>{runtime.confirmPasswordLabel}</Label>
+      <Label htmlFor={inputId} className='text-xs font-medium text-gray-300'>
+        {runtime.confirmPasswordLabel}
+      </Label>
       <Input
+        id={inputId}
         ref={inputRef}
         type='password'
         value={runtime.confirmPassword}

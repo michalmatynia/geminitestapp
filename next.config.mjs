@@ -57,6 +57,9 @@ const nextConfig = {
           '/api/ai-paths/playwright/[runId]/artifacts/[file]': ['./test-results/**/*'],
         },
       }),
+  // Skip TypeScript type-checking during `next build` — already enforced in CI.
+  // Saves ~5-10 minutes on a 5926-file project.
+  typescript: { ignoreBuildErrors: true },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
@@ -73,8 +76,10 @@ const nextConfig = {
       '@radix-ui/react-dialog',
       '@radix-ui/react-dropdown-menu',
       '@radix-ui/react-label',
+      '@radix-ui/react-menu',
       '@radix-ui/react-radio-group',
       '@radix-ui/react-select',
+      '@radix-ui/react-separator',
       '@radix-ui/react-slot',
       '@radix-ui/react-switch',
       '@radix-ui/react-tabs',
@@ -85,6 +90,8 @@ const nextConfig = {
       'three',
       '@react-three/drei',
       '@react-three/fiber',
+      '@react-three/postprocessing',
+      'postprocessing',
       'papaparse',
       'gsap',
       'zod',
@@ -128,6 +135,15 @@ const nextConfig = {
     config.optimization = config.optimization || {};
     config.optimization.moduleIds = 'deterministic';
     config.optimization.minimize = process.env.NODE_ENV === 'production';
+
+    // Enable persistent filesystem cache to speed up subsequent builds.
+    // Vercel caches .next between deploys, so this carries across builds.
+    config.cache = {
+      type: 'filesystem',
+      buildDependencies: {
+        config: [__filename],
+      },
+    };
     
     config.resolve ??= {};
     config.resolve.alias ??= {};

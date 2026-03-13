@@ -1,9 +1,3 @@
-# Documentation (23MB) — not needed at build time
-docs/
-
-# Build/quality scripts — not needed at build time
-scripts/
-
 # Test artifacts and playwright outputs
 test-results/
 playwright-report/

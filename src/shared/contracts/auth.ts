@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema } from './base';
+import type { JsonValue } from './json';
 import { productAdvancedFilterPresetSchema } from './products/filters';
 
 /**
@@ -204,14 +205,6 @@ export const registerSchema = z.object({
 });
 
 export type Register = z.infer<typeof registerSchema>;
-
-export type JsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: JsonValue }
-  | JsonValue[];
 
 export const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
   z.union([

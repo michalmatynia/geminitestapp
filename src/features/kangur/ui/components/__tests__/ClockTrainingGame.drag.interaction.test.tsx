@@ -272,9 +272,8 @@ describe('ClockTrainingGame drag interactions', () => {
     const minuteHand = getMinuteHand(container);
 
     expect(screen.queryByTestId('clock-training-section-badge')).toBeNull();
-    expect(screen.getByTestId('clock-training-guidance-title')).toHaveTextContent(
-      'Trening minut'
-    );
+    expect(screen.queryByTestId('clock-training-guidance')).toBeNull();
+    expect(screen.queryByTestId('clock-training-guidance-title')).toBeNull();
     expect(screen.getByText('Ustaw minuty na tarczy')).toBeInTheDocument();
     expect(screen.getByTestId('clock-task-prompt')).toHaveTextContent(
       'Krótka wskazówka zostaje na 12'

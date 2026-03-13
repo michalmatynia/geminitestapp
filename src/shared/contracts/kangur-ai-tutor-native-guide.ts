@@ -80,7 +80,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
     kangurAiTutorNativeGuideStoreSchema.parse(
       repairKangurPolishCopy({
         locale: 'pl',
-        version: 7,
+        version: 8,
         entries: [
         createGuideEntry({
           id: 'lesson-overview',
@@ -197,6 +197,310 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           ],
           followUpActions: [{ id: 'lesson-library-open', label: 'Wybierz temat', page: 'Lessons' }],
           triggerPhrases: ['lista lekcji', 'biblioteka', 'karty lekcji', 'która lekcje wybrać'],
+          sortOrder: 46,
+        }),
+        createGuideEntry({
+          id: 'lesson-topic-clock',
+          surface: 'lesson',
+          contentIdPrefixes: ['kangur-lesson-clock', 'lesson-clock'],
+          title: 'Lekcja: Nauka zegara',
+          shortDescription: 'Uczy odczytywania godzin i minut na zegarze analogowym.',
+          fullDescription:
+            'Lekcja Nauka zegara prowadzi przez wskazówki, pełne godziny, połówki i kwadranse. Uczeń ćwiczy łączenie położenia wskazówek z zapisem czasu i planem dnia.',
+          hints: [
+            'Najpierw rozpoznaj długą wskazówkę minutową, potem krótką godzinową.',
+            'Ćwicz różnicę między pełną godziną, połówką i kwadransem.',
+            'Po przykładzie wypowiedz czas na głos, aby go utrwalić.',
+          ],
+          followUpActions: [
+            { id: 'lesson-topic-clock-open', label: 'Wróć do lekcji', page: 'Lessons' },
+            { id: 'lesson-topic-clock-game', label: 'Przejdź do gry', page: 'Game' },
+          ],
+          triggerPhrases: ['nauka zegara', 'zegar', 'godziny', 'minuty', 'kwadrans', 'czas'],
+          sortOrder: 46,
+        }),
+        createGuideEntry({
+          id: 'lesson-topic-calendar',
+          surface: 'lesson',
+          contentIdPrefixes: ['kangur-lesson-calendar', 'lesson-calendar'],
+          title: 'Lekcja: Nauka kalendarza',
+          shortDescription: 'Uczy dni tygodnia, miesięcy, dat i planowania czasu.',
+          fullDescription:
+            'Lekcja kalendarza pomaga rozumieć dni tygodnia, miesiące, daty oraz pory roku. Uczeń ćwiczy liczenie odstępów czasu i planowanie wydarzeń.',
+          hints: [
+            'Najpierw nazwij dzień tygodnia, a potem sprawdź numer daty.',
+            'Ćwicz liczenie "za ile dni" krok po kroku.',
+            'Zwróć uwagę, ile dni ma dany miesiąc.',
+          ],
+          followUpActions: [
+            { id: 'lesson-topic-calendar-open', label: 'Wróć do lekcji', page: 'Lessons' },
+            { id: 'lesson-topic-calendar-game', label: 'Przejdź do gry', page: 'Game' },
+          ],
+          triggerPhrases: ['kalendarz', 'dni tygodnia', 'miesiące', 'daty', 'pory roku'],
+          sortOrder: 46,
+        }),
+        createGuideEntry({
+          id: 'lesson-topic-adding',
+          surface: 'lesson',
+          contentIdPrefixes: ['kangur-lesson-adding', 'lesson-adding'],
+          title: 'Lekcja: Dodawanie',
+          shortDescription: 'Dodawanie jednocyfrowe i dwucyfrowe, także z przejściem przez dziesiątkę.',
+          fullDescription:
+            'Lekcja dodawania ćwiczy sumowanie w pamięci i na papierze, w tym przejście przez dziesiątkę. Uczeń poznaje strategie łączenia liczb, rozbijania składników i sprawdzania wyniku.',
+          hints: [
+            'Rozbij większą liczbę tak, aby dopełnić do 10.',
+            'Najpierw dodaj dziesiątki, potem jedności.',
+            'Sprawdzaj wynik odejmowaniem.',
+          ],
+          relatedGames: ['Dodawanie', 'Szybki trening działań'],
+          followUpActions: [
+            { id: 'lesson-topic-adding-open', label: 'Wróć do lekcji', page: 'Lessons' },
+            { id: 'lesson-topic-adding-game', label: 'Przejdź do gry', page: 'Game' },
+          ],
+          triggerPhrases: ['dodawanie', 'suma', 'plus', 'dodaj', 'przejście przez dziesiątkę'],
+          sortOrder: 46,
+        }),
+        createGuideEntry({
+          id: 'lesson-topic-subtracting',
+          surface: 'lesson',
+          contentIdPrefixes: ['kangur-lesson-subtracting', 'lesson-subtracting'],
+          title: 'Lekcja: Odejmowanie',
+          shortDescription: 'Odejmowanie jednocyfrowe i dwucyfrowe, także z pożyczaniem.',
+          fullDescription:
+            'Lekcja odejmowania uczy liczyć różnicę oraz pracować z pożyczaniem w zapisie pisemnym. Uczeń kontroluje wynik przez dodawanie i porównywanie liczb.',
+          hints: [
+            'Najpierw odejmij dziesiątki, potem jedności.',
+            'Gdy brakuje jedności, pożycz jedną dziesiątkę.',
+            'Sprawdzaj wynik dodawaniem.',
+          ],
+          relatedGames: ['Odejmowanie', 'Szybki trening działań'],
+          followUpActions: [
+            { id: 'lesson-topic-subtracting-open', label: 'Wróć do lekcji', page: 'Lessons' },
+            { id: 'lesson-topic-subtracting-game', label: 'Przejdź do gry', page: 'Game' },
+          ],
+          triggerPhrases: ['odejmowanie', 'różnica', 'minus', 'odejmij', 'pożyczanie'],
+          sortOrder: 46,
+        }),
+        createGuideEntry({
+          id: 'lesson-topic-multiplication',
+          surface: 'lesson',
+          contentIdPrefixes: ['kangur-lesson-multiplication', 'lesson-multiplication'],
+          title: 'Lekcja: Mnożenie',
+          shortDescription: 'Tabliczka mnożenia i rozumienie mnożenia jako grupowania.',
+          fullDescription:
+            'Lekcja mnożenia utrwala tabliczkę mnożenia i pokazuje, że mnożenie to powtarzające się dodawanie. Uczeń buduje automatyzm i uczy się sprawdzać wynik przez dzielenie.',
+          hints: [
+            'Myśl o grupach: 3 × 4 to 4 + 4 + 4.',
+            'Zapamiętuj krótkie fakty, a potem łącz je w większe.',
+            'Sprawdzaj wynik dzieleniem.',
+          ],
+          relatedGames: ['Mnożenie', 'Szybki trening działań'],
+          followUpActions: [
+            { id: 'lesson-topic-multiplication-open', label: 'Wróć do lekcji', page: 'Lessons' },
+            { id: 'lesson-topic-multiplication-game', label: 'Przejdź do gry', page: 'Game' },
+          ],
+          triggerPhrases: ['mnożenie', 'iloczyn', 'tabliczka mnożenia', 'razy', 'mnożyć'],
+          sortOrder: 46,
+        }),
+        createGuideEntry({
+          id: 'lesson-topic-division',
+          surface: 'lesson',
+          contentIdPrefixes: ['kangur-lesson-division', 'lesson-division'],
+          title: 'Lekcja: Dzielenie',
+          shortDescription: 'Dzielenie na równe części, także z resztą.',
+          fullDescription:
+            'Lekcja dzielenia uczy rozkładania na równe grupy i rozpoznawania reszty. Pokazuje związek między dzieleniem a mnożeniem oraz sposoby sprawdzania wyniku.',
+          hints: [
+            'Najpierw podziel na równe grupy.',
+            'Jeśli zostaje reszta, nazwij ją i zapisz.',
+            'Sprawdzaj wynik mnożeniem.',
+          ],
+          relatedGames: ['Dzielenie', 'Szybki trening działań'],
+          followUpActions: [
+            { id: 'lesson-topic-division-open', label: 'Wróć do lekcji', page: 'Lessons' },
+            { id: 'lesson-topic-division-game', label: 'Przejdź do gry', page: 'Game' },
+          ],
+          triggerPhrases: ['dzielenie', 'iloraz', 'reszta', 'podziel', 'dzielić'],
+          sortOrder: 46,
+        }),
+        createGuideEntry({
+          id: 'lesson-topic-geometry-basics',
+          surface: 'lesson',
+          contentIdPrefixes: ['kangur-lesson-geometry_basics', 'lesson-geometry_basics'],
+          title: 'Lekcja: Podstawy geometrii',
+          shortDescription: 'Wprowadza pojęcia: punkt, odcinek, prosta, bok i kąt.',
+          fullDescription:
+            'Lekcja podstaw geometrii uczy rozpoznawać i nazywać elementy figur. To fundament potrzebny do dalszych tematów, takich jak figury, symetria i obwód.',
+          hints: [
+            'Nazwij elementy na rysunku, zanim zaczniesz liczyć.',
+            'Sprawdź różnicę między prostą a odcinkiem.',
+            'Zwracaj uwagę na wierzchołek kąta.',
+          ],
+          followUpActions: [
+            { id: 'lesson-topic-geometry-basics-open', label: 'Wróć do lekcji', page: 'Lessons' },
+            { id: 'lesson-topic-geometry-basics-game', label: 'Przejdź do gry', page: 'Game' },
+          ],
+          triggerPhrases: ['podstawy geometrii', 'punkt', 'odcinek', 'prosta', 'kąt', 'bok'],
+          sortOrder: 46,
+        }),
+        createGuideEntry({
+          id: 'lesson-topic-geometry-shapes',
+          surface: 'lesson',
+          contentIdPrefixes: ['kangur-lesson-geometry_shapes', 'lesson-geometry_shapes'],
+          title: 'Lekcja: Figury geometryczne',
+          shortDescription: 'Rozpoznawanie i nazywanie figur oraz ich cech.',
+          fullDescription:
+            'Lekcja figur geometrycznych uczy cech trójkąta, kwadratu, prostokąta i koła. Uczeń ćwiczy liczenie boków i kątów oraz rozpoznawanie figur w różnych ułożeniach.',
+          hints: [
+            'Policz boki i kąty, zanim wybierzesz odpowiedź.',
+            'Sprawdź, czy wszystkie boki są równe.',
+            'Pamiętaj, że obrót figury nie zmienia jej nazwy.',
+          ],
+          followUpActions: [
+            { id: 'lesson-topic-geometry-shapes-open', label: 'Wróć do lekcji', page: 'Lessons' },
+            { id: 'lesson-topic-geometry-shapes-game', label: 'Przejdź do gry', page: 'Game' },
+          ],
+          triggerPhrases: ['figury', 'kształty', 'trójkąt', 'kwadrat', 'prostokąt', 'koło'],
+          sortOrder: 46,
+        }),
+        createGuideEntry({
+          id: 'lesson-topic-geometry-symmetry',
+          surface: 'lesson',
+          contentIdPrefixes: ['kangur-lesson-geometry_symmetry', 'lesson-geometry_symmetry'],
+          title: 'Lekcja: Symetria',
+          shortDescription: 'Oś symetrii i odbicia lustrzane w figurach.',
+          fullDescription:
+            'Lekcja symetrii uczy znajdowania osi symetrii i rozpoznawania odbić lustrzanych. Uczeń ćwiczy, czy obie strony są równe i jak dorysować brakującą połowę.',
+          hints: [
+            'Wyobraź sobie lustro ustawione na osi symetrii.',
+            'Sprawdź, czy odległości po obu stronach osi są równe.',
+            'Rysuj oś przez środek figury, gdy to możliwe.',
+          ],
+          followUpActions: [
+            { id: 'lesson-topic-geometry-symmetry-open', label: 'Wróć do lekcji', page: 'Lessons' },
+            { id: 'lesson-topic-geometry-symmetry-game', label: 'Przejdź do gry', page: 'Game' },
+          ],
+          triggerPhrases: ['symetria', 'oś symetrii', 'odbicie', 'lustro', 'symetryczny'],
+          sortOrder: 46,
+        }),
+        createGuideEntry({
+          id: 'lesson-topic-geometry-perimeter',
+          surface: 'lesson',
+          contentIdPrefixes: ['kangur-lesson-geometry_perimeter', 'lesson-geometry_perimeter'],
+          title: 'Lekcja: Obwód figur',
+          shortDescription: 'Liczenie obwodu jako sumy długości boków.',
+          fullDescription:
+            'Lekcja obwodu uczy dodawania długości wszystkich boków figury. Uczeń pilnuje jednostek i uczy się szybszych sposobów liczenia, gdy boki są równe.',
+          hints: [
+            'Dodawaj boki po kolei i zapisuj wynik z jednostką.',
+            'Jeśli boki są równe, możesz użyć mnożenia.',
+            'Sprawdź, czy wszystkie długości zostały uwzględnione.',
+          ],
+          followUpActions: [
+            { id: 'lesson-topic-geometry-perimeter-open', label: 'Wróć do lekcji', page: 'Lessons' },
+            { id: 'lesson-topic-geometry-perimeter-game', label: 'Przejdź do gry', page: 'Game' },
+          ],
+          triggerPhrases: ['obwód', 'perymetr', 'długość boków', 'liczenie obwodu'],
+          sortOrder: 46,
+        }),
+        createGuideEntry({
+          id: 'lesson-topic-logical-thinking',
+          surface: 'lesson',
+          contentIdPrefixes: ['kangur-lesson-logical_thinking', 'lesson-logical_thinking'],
+          title: 'Lekcja: Myślenie logiczne',
+          shortDescription: 'Wprowadzenie do reguł, wzorców, klasyfikacji i analogii.',
+          fullDescription:
+            'Lekcja myślenia logicznego uczy patrzeć na zadania krok po kroku i szukać reguł. To baza do późniejszych zadań z wnioskowania i analogii.',
+          hints: [
+            'Najpierw poszukaj reguły, a dopiero potem zgaduj.',
+            'Sprawdź, czy elementy mają wspólne cechy.',
+            'Wyjaśnij własnymi słowami, dlaczego rozwiązanie pasuje.',
+          ],
+          followUpActions: [
+            { id: 'lesson-topic-logical-thinking-open', label: 'Wróć do lekcji', page: 'Lessons' },
+            { id: 'lesson-topic-logical-thinking-game', label: 'Przejdź do gry', page: 'Game' },
+          ],
+          triggerPhrases: ['myślenie logiczne', 'logika', 'reguła', 'wzorce', 'analogie'],
+          sortOrder: 46,
+        }),
+        createGuideEntry({
+          id: 'lesson-topic-logical-patterns',
+          surface: 'lesson',
+          contentIdPrefixes: ['kangur-lesson-logical_patterns', 'lesson-logical_patterns'],
+          title: 'Lekcja: Wzorce i ciągi',
+          shortDescription: 'Rozpoznawanie reguł w sekwencjach i przewidywanie kolejnych elementów.',
+          fullDescription:
+            'Lekcja wzorców i ciągów uczy odnajdywać regułę w sekwencjach liczb, kształtów lub kolorów. Uczeń ćwiczy przewidywanie kolejnego elementu i sprawdzanie własnej reguły.',
+          hints: [
+            'Sprawdź różnice między kolejnymi elementami.',
+            'Szukaj powtarzających się układów.',
+            'Zapisz regułę jednym zdaniem.',
+          ],
+          followUpActions: [
+            { id: 'lesson-topic-logical-patterns-open', label: 'Wróć do lekcji', page: 'Lessons' },
+            { id: 'lesson-topic-logical-patterns-game', label: 'Przejdź do gry', page: 'Game' },
+          ],
+          triggerPhrases: ['wzorce', 'ciągi', 'sekwencje', 'reguła', 'schemat'],
+          sortOrder: 46,
+        }),
+        createGuideEntry({
+          id: 'lesson-topic-logical-classification',
+          surface: 'lesson',
+          contentIdPrefixes: ['kangur-lesson-logical_classification', 'lesson-logical_classification'],
+          title: 'Lekcja: Klasyfikacja',
+          shortDescription: 'Grupowanie po cechach i znajdowanie elementu niepasującego.',
+          fullDescription:
+            'Lekcja klasyfikacji uczy porządkowania obiektów według cech i wskazywania intruza. Rozwija umiejętność porównywania i budowania kategorii.',
+          hints: [
+            'Wypisz cechy wspólne, zanim wybierzesz intruza.',
+            'Sprawdź, co się różni w każdej grupie.',
+            'Najpierw grupuj, potem wybieraj.',
+          ],
+          followUpActions: [
+            { id: 'lesson-topic-logical-classification-open', label: 'Wróć do lekcji', page: 'Lessons' },
+            { id: 'lesson-topic-logical-classification-game', label: 'Przejdź do gry', page: 'Game' },
+          ],
+          triggerPhrases: ['klasyfikacja', 'sortowanie', 'grupowanie', 'intruzi', 'kategorie'],
+          sortOrder: 46,
+        }),
+        createGuideEntry({
+          id: 'lesson-topic-logical-reasoning',
+          surface: 'lesson',
+          contentIdPrefixes: ['kangur-lesson-logical_reasoning', 'lesson-logical_reasoning'],
+          title: 'Lekcja: Wnioskowanie',
+          shortDescription: 'Jeśli... to... i łączenie faktów w poprawny tok rozumowania.',
+          fullDescription:
+            'Lekcja wnioskowania ćwiczy logiczne kroki: od faktów do wniosku. Pomaga budować poprawny tok rozumowania i unikać zgadywania.',
+          hints: [
+            'Zapisz znane fakty, zanim wyciągniesz wniosek.',
+            'Sprawdź, co wynika z każdego zdania.',
+            'Nie pomijaj pośrednich kroków.',
+          ],
+          followUpActions: [
+            { id: 'lesson-topic-logical-reasoning-open', label: 'Wróć do lekcji', page: 'Lessons' },
+            { id: 'lesson-topic-logical-reasoning-game', label: 'Przejdź do gry', page: 'Game' },
+          ],
+          triggerPhrases: ['wnioskowanie', 'jeśli to', 'wniosek', 'przyczyna i skutek'],
+          sortOrder: 46,
+        }),
+        createGuideEntry({
+          id: 'lesson-topic-logical-analogies',
+          surface: 'lesson',
+          contentIdPrefixes: ['kangur-lesson-logical_analogies', 'lesson-logical_analogies'],
+          title: 'Lekcja: Analogie',
+          shortDescription: 'Relacje typu A:B = C:? i szukanie podobnych zależności.',
+          fullDescription:
+            'Lekcja analogii uczy rozpoznawać relacje między pojęciami i przenosić je na nowy przykład. Pomaga porównywać funkcje, a nie tylko wygląd.',
+          hints: [
+            'Najpierw nazwij relację między pierwszą parą.',
+            'Sprawdź, czy druga para ma tę samą relację.',
+            'Unikaj mylenia podobieństwa z relacją.',
+          ],
+          followUpActions: [
+            { id: 'lesson-topic-logical-analogies-open', label: 'Wróć do lekcji', page: 'Lessons' },
+            { id: 'lesson-topic-logical-analogies-game', label: 'Przejdź do gry', page: 'Game' },
+          ],
+          triggerPhrases: ['analogie', 'porównania', 'relacje', 'A do B', 'A:B=C:?'],
           sortOrder: 46,
         }),
         createGuideEntry({

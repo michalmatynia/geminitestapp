@@ -139,32 +139,49 @@ function KangurHomeActionCard({
 
       <span
         className={cn(
-          'relative z-10 flex min-w-0 flex-col items-center justify-center gap-0.5 text-[12px] font-semibold leading-tight tracking-[-0.03em] sm:flex-row sm:gap-5 sm:text-[22px] sm:leading-none sm:tracking-[-0.04em]'
+          'relative z-10 flex w-full min-w-0 flex-col items-center justify-center gap-0.5 text-[12px] font-semibold leading-tight tracking-[-0.03em]',
+          'sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-5 sm:text-[22px] sm:leading-none sm:tracking-[-0.04em]'
         )}
       >
         <span
           className={cn(
             'leading-none',
             'text-[18px] sm:text-[24px]',
-            tone.icon
+            tone.icon,
+            'sm:justify-self-end'
           )}
           aria-hidden='true'
         >
           {actionSymbol}
         </span>
-        <span className='max-w-full text-balance text-center'>{actionLabel}</span>
+        <span className='max-w-full text-balance text-center sm:justify-self-center'>
+          {actionLabel}
+        </span>
         {actionTrailingSymbol ? (
           <span
             className={cn(
               'leading-none',
               'text-[18px] sm:text-[24px]',
-              tone.icon
+              tone.icon,
+              'sm:justify-self-start'
             )}
             aria-hidden='true'
           >
             {actionTrailingSymbol}
           </span>
-        ) : null}
+        ) : (
+          <span
+            className={cn(
+              'hidden sm:inline-flex leading-none',
+              'text-[18px] sm:text-[24px]',
+              tone.icon,
+              'opacity-0 sm:justify-self-start'
+            )}
+            aria-hidden='true'
+          >
+            {actionSymbol}
+          </span>
+        )}
       </span>
 
       <span className='home-action-featured-sparkle home-action-featured-sparkle-1 pointer-events-none absolute left-[14%] top-[28%] text-[9px] text-white/60 sm:text-[13px]'>

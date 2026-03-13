@@ -79,6 +79,8 @@ export function useKangurAiTutorGuidedShellState(input: {
   isAvatarDragging: boolean;
   isContextualPanelAnchor: boolean;
   isOpen: boolean;
+  panelShellMode: 'default' | 'minimal';
+  suppressPanelSurface: boolean;
   selectionGlowSupported: boolean;
   isTutorHidden: boolean;
   motionProfile: TutorMotionProfile;
@@ -103,6 +105,8 @@ export function useKangurAiTutorGuidedShellState(input: {
     isAvatarDragging,
     isContextualPanelAnchor,
     isOpen,
+    panelShellMode,
+    suppressPanelSurface,
     isTutorHidden,
     motionProfile,
     prefersReducedMotion,
@@ -247,6 +251,7 @@ export function useKangurAiTutorGuidedShellState(input: {
       : undefined;
   const shouldRenderGuidedCallout =
     !isTutorHidden &&
+    (!isOpen || panelShellMode === 'minimal' || suppressPanelSurface) &&
     (guidedMode !== null || showSelectionGuidanceCallout || showSectionGuidanceCallout) &&
     Boolean(guidedFocusRect && guidedCalloutStyle) &&
     (guidedMode === 'home_onboarding' ||

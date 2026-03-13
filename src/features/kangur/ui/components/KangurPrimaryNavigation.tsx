@@ -470,11 +470,20 @@ export function KangurPrimaryNavigation({
       transitionSourceId: parentDashboardTransitionSourceId,
     }
     : null;
+  const kangurAppearanceModes = ['default', 'dawn', 'sunset', 'dark'] as const;
+  const kangurAppearanceLabels = {
+    default: 'Daily',
+    dawn: 'Dawn',
+    sunset: 'Sunset',
+    dark: 'Nightly',
+  };
   const appearanceControls = storefrontAppearance ? (
     <CmsStorefrontAppearanceButtons
       tone={kangurAppearance.tone}
       label='Kangur appearance'
       testId='kangur-primary-nav-appearance-controls'
+      modes={[...kangurAppearanceModes]}
+      modeLabels={kangurAppearanceLabels}
     />
   ) : null;
   const primaryActions = (

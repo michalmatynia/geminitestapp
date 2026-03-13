@@ -68,6 +68,8 @@ function VectorToolbarToolButtons(): JSX.Element {
           type='button'
           variant={tool === 'select' ? 'secondary' : 'outline'}
           size='icon'
+          aria-label='Select tool'
+          aria-pressed={tool === 'select'}
           onClick={() => onSelectTool('select')}
         >
           <MousePointer2 className='size-4' />
@@ -78,6 +80,8 @@ function VectorToolbarToolButtons(): JSX.Element {
           type='button'
           variant={tool === 'polygon' ? 'secondary' : 'outline'}
           size='icon'
+          aria-label='Polygon tool'
+          aria-pressed={tool === 'polygon'}
           onClick={() => onSelectTool('polygon')}
         >
           <Pentagon className='size-4' />
@@ -88,6 +92,8 @@ function VectorToolbarToolButtons(): JSX.Element {
           type='button'
           variant={tool === 'lasso' ? 'secondary' : 'outline'}
           size='icon'
+          aria-label='Lasso tool'
+          aria-pressed={tool === 'lasso'}
           onClick={() => onSelectTool('lasso')}
         >
           <Lasso className='size-4' />
@@ -98,6 +104,8 @@ function VectorToolbarToolButtons(): JSX.Element {
           type='button'
           variant={tool === 'rect' ? 'secondary' : 'outline'}
           size='icon'
+          aria-label='Rectangle tool'
+          aria-pressed={tool === 'rect'}
           onClick={() => onSelectTool('rect')}
         >
           <RectangleHorizontal className='size-4' />
@@ -108,6 +116,8 @@ function VectorToolbarToolButtons(): JSX.Element {
           type='button'
           variant={tool === 'ellipse' ? 'secondary' : 'outline'}
           size='icon'
+          aria-label='Ellipse tool'
+          aria-pressed={tool === 'ellipse'}
           onClick={() => onSelectTool('ellipse')}
         >
           <Circle className='size-4' />
@@ -118,6 +128,8 @@ function VectorToolbarToolButtons(): JSX.Element {
           type='button'
           variant={tool === 'brush' ? 'secondary' : 'outline'}
           size='icon'
+          aria-label='Brush tool'
+          aria-pressed={tool === 'brush'}
           onClick={() => onSelectTool('brush')}
         >
           <Brush className='size-4' />

@@ -2,7 +2,7 @@ import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
 
 import {
   KANGUR_SEGMENTED_CONTROL_ITEM_ACTIVE_CLASSNAME,
@@ -69,14 +69,60 @@ export type KangurButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
   };
 
 export const KangurButton = React.forwardRef<HTMLButtonElement, KangurButtonProps>(
-  ({ className, variant, size, fullWidth, asChild = false, ...props }, ref) => {
+  (
+    {
+      className,
+      variant,
+      size,
+      fullWidth,
+      asChild = false,
+      onClick,
+      tabIndex,
+      disabled,
+      children,
+      title,
+      'aria-label': ariaLabelProp,
+      'aria-labelledby': ariaLabelledByProp,
+      ...props
+    },
+    ref
+  ) => {
     const Comp = asChild ? Slot : 'button';
+    const isDisabled = Boolean(disabled);
+    const handleClick: React.MouseEventHandler<HTMLElement> = (event) => {
+      if (isDisabled) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      onClick?.(event as React.MouseEvent<HTMLButtonElement>);
+    };
+    const resolvedTabIndex = isDisabled && asChild ? -1 : tabIndex;
+    const disabledClassName = isDisabled && asChild ? 'pointer-events-none cursor-not-allowed opacity-40' : null;
+    const { hasText, ariaLabel: resolvedAriaLabel, hasAccessibleLabel } = resolveAccessibleLabel({
+      children,
+      ariaLabel: ariaLabelProp,
+      ariaLabelledBy: ariaLabelledByProp,
+      title,
+    });
+    if (!hasAccessibleLabel && !hasText) {
+      warnMissingAccessibleLabel({ componentName: 'KangurButton', hasAccessibleLabel });
+    }
     return (
       <Comp
         {...props}
-        className={cn(kangurButtonVariants({ variant, size, fullWidth, className }))}
+        onClick={isDisabled || onClick ? handleClick : undefined}
+        tabIndex={resolvedTabIndex}
+        className={cn(kangurButtonVariants({ variant, size, fullWidth, className }), disabledClassName)}
+        disabled={isDisabled}
+        aria-disabled={isDisabled ? 'true' : undefined}
+        aria-label={resolvedAriaLabel}
+        aria-labelledby={ariaLabelledByProp}
+        title={title}
         ref={ref}
-      />
+      >
+        {children}
+      </Comp>
     );
   }
 );

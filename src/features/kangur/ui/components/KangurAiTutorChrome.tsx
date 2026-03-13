@@ -1,7 +1,7 @@
 import { X } from 'lucide-react';
 
 import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
-import { cn } from '@/shared/utils';
+import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
 
 import type {
   ButtonHTMLAttributes,
@@ -80,10 +80,29 @@ export function KangurAiTutorChromeTextButton({
   children,
   className,
   type = 'button',
+  title,
+  'aria-label': ariaLabelProp,
+  'aria-labelledby': ariaLabelledByProp,
   ...props
 }: ChromeTextButtonProps): JSX.Element {
+  const { hasText, ariaLabel: resolvedAriaLabel, hasAccessibleLabel } = resolveAccessibleLabel({
+    children,
+    ariaLabel: ariaLabelProp,
+    ariaLabelledBy: ariaLabelledByProp,
+    title,
+  });
+  if (!hasAccessibleLabel && !hasText) {
+    warnMissingAccessibleLabel({ componentName: 'KangurAiTutorChromeTextButton', hasAccessibleLabel });
+  }
   return (
-    <button className={cn(textButtonClassName, className)} type={type} {...props}>
+    <button
+      className={cn(textButtonClassName, className)}
+      type={type}
+      aria-label={resolvedAriaLabel}
+      aria-labelledby={ariaLabelledByProp}
+      title={title}
+      {...props}
+    >
       {children}
     </button>
   );

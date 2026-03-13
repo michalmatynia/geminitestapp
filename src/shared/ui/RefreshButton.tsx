@@ -35,6 +35,8 @@ const { Context: RefreshButtonRuntimeContext, useStrictContext: useRefreshButton
 
 function RefreshButtonControl(): React.JSX.Element {
   const runtime = useRefreshButtonRuntime();
+  const ariaLabel =
+    runtime.size === 'icon' || !runtime.label ? runtime.label || 'Refresh' : undefined;
   return (
     <Button
       variant={runtime.variant}
@@ -42,6 +44,7 @@ function RefreshButtonControl(): React.JSX.Element {
       onClick={runtime.onRefresh}
       disabled={runtime.isRefreshing}
       className={cn('gap-2', runtime.className)}
+      aria-label={ariaLabel}
     >
       <RefreshCcw className={cn('size-4', runtime.isRefreshing && 'animate-spin')} />
       {runtime.label && <span>{runtime.label}</span>}

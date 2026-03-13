@@ -1,7 +1,7 @@
 import { Slot } from '@radix-ui/react-slot';
 import React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
 
 export type TreeActionSlotShow = 'hover' | 'always';
 export type TreeActionSlotAlign = 'end' | 'inline';
@@ -64,14 +64,32 @@ export function TreeActionButton({
   tone = 'default',
   size = 'xs',
   className,
+  children,
+  title,
+  'aria-label': ariaLabelProp,
+  'aria-labelledby': ariaLabelledByProp,
   ...props
 }: TreeActionButtonProps): React.JSX.Element {
   const Comp = asChild ? Slot : 'button';
+  const { hasText, ariaLabel: resolvedAriaLabel, hasAccessibleLabel } = resolveAccessibleLabel({
+    children,
+    ariaLabel: ariaLabelProp,
+    ariaLabelledBy: ariaLabelledByProp,
+    title,
+  });
+  if (!hasAccessibleLabel && !hasText) {
+    warnMissingAccessibleLabel({ componentName: 'TreeActionButton', hasAccessibleLabel });
+  }
   return (
     <Comp
       type='button'
       className={cn('rounded transition', SIZE_CLASSES[size], TONE_CLASSES[tone], className)}
+      aria-label={resolvedAriaLabel}
+      aria-labelledby={ariaLabelledByProp}
+      title={title}
       {...props}
-    />
+    >
+      {children}
+    </Comp>
   );
 }

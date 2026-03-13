@@ -343,19 +343,15 @@ describe('KangurPrimaryNavigation', () => {
     );
 
     const utilityActions = screen.getByTestId('kangur-primary-nav-utility-actions');
-    const themeToggleButton = screen.getByRole('button', { name: 'Switch to Dark theme' });
+    const themeToggleButton = screen.getByRole('button', { name: 'Switch to Dawn theme' });
 
     expect(utilityActions).toContainElement(
       screen.getByTestId('kangur-primary-nav-appearance-controls')
     );
-    expect(themeToggleButton).toHaveAttribute('aria-pressed', 'false');
 
     fireEvent.click(themeToggleButton);
 
-    expect(screen.getByRole('button', { name: 'Switch to Default theme' })).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
+    expect(screen.getByRole('button', { name: 'Switch to Sunset theme' })).toBeInTheDocument();
   });
 
   it('does not show the theme selector for non-elevated users', () => {    sessionMock.mockReturnValue({

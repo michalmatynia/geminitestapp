@@ -573,7 +573,8 @@ export default function CalendarInteractiveGame({
               let dayAccent: KangurAccent = isWeekend ? 'rose' : 'slate';
               let dayEmphasis: 'neutral' | 'accent' = 'neutral';
               let dayClassName = cn(
-                'h-10 rounded-[16px] p-0 text-xs font-semibold',
+                'h-10 rounded-[16px] text-xs font-semibold',
+                'flex items-center justify-center leading-none !p-0 !text-center',
                 isWeekend ? 'text-rose-600' : '[color:var(--kangur-page-text)]',
                 !isClickable && 'cursor-default hover:translate-y-0'
               );

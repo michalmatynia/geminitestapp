@@ -97,16 +97,52 @@ export default function LessonSlideSection({
     return unregister;
   }, [registerSubsectionNavigation]);
 
+  const shouldRenderPanelNavigation = totalSlides > 1;
+
   return (
     <div className='flex w-full max-w-md flex-col items-center gap-4'>
-      <div className='flex w-full flex-wrap items-center justify-between gap-3'>
+      <div className='flex w-full flex-wrap items-center gap-3'>
         <KangurButton onClick={handleBack} size='sm' variant='surface'>
           <ChevronLeft className='w-4 h-4' />
           Wróć do tematów
         </KangurButton>
 
+        {shouldRenderPanelNavigation ? (
+          <div className='flex items-center gap-2'>
+            {isFirst ? null : (
+              <KangurButton
+                onClick={handlePreviousSlide}
+                aria-label='Poprzedni panel'
+                className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)]'
+                data-testid='lesson-slide-prev-button'
+                size='sm'
+                type='button'
+                title='Poprzedni panel'
+                variant='surface'
+              >
+                <ChevronLeft className='h-4 w-4 flex-shrink-0' />
+              </KangurButton>
+            )}
+
+            {isLast ? null : (
+              <KangurButton
+                onClick={handleNextSlide}
+                aria-label='Nastepny panel'
+                className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)]'
+                data-testid='lesson-slide-next-button'
+                size='sm'
+                type='button'
+                title='Nastepny panel'
+                variant='surface'
+              >
+                <ChevronRight className='h-4 w-4 flex-shrink-0' />
+              </KangurButton>
+            )}
+          </div>
+        ) : null}
+
         {shouldRenderNavigationPills ? (
-          <div className='flex gap-2'>
+          <div className='ml-auto flex flex-wrap items-center gap-2'>
             {slides.map((_, i) => (
               <button
                 key={i}
@@ -172,43 +208,6 @@ export default function LessonSlideSection({
         </motion.div>
       </AnimatePresence>
 
-      {slides.length > 1 ? (
-        <div className='flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-          {isFirst ? (
-            <div className='hidden min-w-[72px] sm:block' />
-          ) : (
-            <KangurButton
-              onClick={handlePreviousSlide}
-              aria-label='Poprzedni panel'
-              className='w-full justify-center px-5 shadow-sm [border-color:var(--kangur-soft-card-border)] sm:min-w-[72px] sm:w-auto'
-              data-testid='lesson-slide-prev-button'
-              size='sm'
-              type='button'
-              title='Poprzedni panel'
-              variant='surface'
-            >
-              <ChevronLeft className='h-4 w-4 flex-shrink-0' />
-            </KangurButton>
-          )}
-
-          {isLast ? (
-            <div className='hidden min-w-[72px] sm:block' />
-          ) : (
-            <KangurButton
-              onClick={handleNextSlide}
-              aria-label='Nastepny panel'
-              className='w-full justify-center px-5 shadow-sm [border-color:var(--kangur-soft-card-border)] sm:min-w-[72px] sm:w-auto'
-              data-testid='lesson-slide-next-button'
-              size='sm'
-              type='button'
-              title='Nastepny panel'
-              variant='surface'
-            >
-              <ChevronRight className='h-4 w-4 flex-shrink-0' />
-            </KangurButton>
-          )}
-        </div>
-      ) : null}
     </div>
   );
 }

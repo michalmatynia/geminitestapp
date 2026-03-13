@@ -2,6 +2,7 @@ import { DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE } from '@/shared/contracts/k
 import {
   kangurPageContentStoreSchema,
   type KangurPageContentEntry,
+  type KangurPageContentFragment,
   type KangurPageContentPageKey,
   type KangurPageContentStore,
 } from '@/shared/contracts/kangur-page-content';
@@ -11,6 +12,8 @@ import {
   type KangurAiTutorPageCoverageEntry,
 } from './ai-tutor-page-coverage-manifest';
 import { getKangurHomeHref, getKangurPageSlug } from './config/routing';
+import type { KangurLessonComponentId } from '@/shared/contracts/kangur';
+import { KANGUR_LESSON_COMPONENT_OPTIONS, KANGUR_LESSON_LIBRARY } from './settings';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 
 const KANGUR_HOME_ROUTE = getKangurHomeHref('/');
@@ -182,6 +185,91 @@ const PAGE_CONTENT_COPY_OVERRIDES: Partial<
   },
 };
 
+const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
+  KangurLessonComponentId,
+  {
+    explanation: string;
+    triggerPhrases: string[];
+    aliases?: string[];
+  }
+> = {
+  clock: {
+    explanation:
+      'Lekcja uczy odczytywania godzin i minut na zegarze analogowym, w tym pełnych godzin, połówek i kwadransów. Przydatna, gdy temat to czas i plan dnia.',
+    triggerPhrases: ['zegar', 'czas', 'godziny', 'minuty', 'kwadrans'],
+  },
+  calendar: {
+    explanation:
+      'Ćwiczy dni tygodnia, miesiące, daty i pory roku oraz liczenie odstępów czasu. Wybierz ją, gdy zadania dotyczą kalendarza lub planowania.',
+    triggerPhrases: ['kalendarz', 'daty', 'dni tygodnia', 'miesiące', 'pory roku'],
+  },
+  adding: {
+    explanation:
+      'Dodawanie jednocyfrowe i dwucyfrowe, także z przejściem przez dziesiątkę. Dziecko ćwiczy strategie łączenia liczb i sprawdzanie sum.',
+    triggerPhrases: ['dodawanie', 'suma', 'plus', 'dodaj'],
+  },
+  subtracting: {
+    explanation:
+      'Odejmowanie jednocyfrowe i dwucyfrowe, także z pożyczaniem. Pomaga zrozumieć różnicę i kontrolować wynik przez dodawanie.',
+    triggerPhrases: ['odejmowanie', 'różnica', 'minus', 'odejmij'],
+  },
+  multiplication: {
+    explanation:
+      'Utrwala tabliczkę mnożenia, mnożenie jako grupowanie i prosty algorytm. Dobra do automatyzacji iloczynów.',
+    triggerPhrases: ['mnożenie', 'iloczyn', 'tabliczka mnożenia', 'razy'],
+  },
+  division: {
+    explanation:
+      'Uczy dzielenia na równe części oraz pracy z resztą. Pomaga łączyć dzielenie z mnożeniem jako sprawdzaniem wyniku.',
+    triggerPhrases: ['dzielenie', 'iloraz', 'reszta', 'podziel'],
+  },
+  geometry_basics: {
+    explanation:
+      'Poznajesz podstawy geometrii: punkt, odcinek, prosta, bok i kąt. Lekcja uczy słownictwa i rozpoznawania elementów figur.',
+    triggerPhrases: ['podstawy geometrii', 'punkt', 'odcinek', 'kąt', 'bok'],
+  },
+  geometry_shapes: {
+    explanation:
+      'Rozpoznawanie figur (trójkąt, kwadrat, prostokąt, koło) i ich cech. Uczy nazywania i odróżniania kształtów.',
+    triggerPhrases: ['figury', 'kształty', 'trójkąt', 'kwadrat', 'prostokąt', 'koło'],
+  },
+  geometry_symmetry: {
+    explanation:
+      'Oś symetrii i odbicia lustrzane. Ćwiczy zauważanie, czy kształty są symetryczne i gdzie przebiega oś.',
+    triggerPhrases: ['symetria', 'oś symetrii', 'odbicie', 'lustro'],
+  },
+  geometry_perimeter: {
+    explanation:
+      'Obliczanie obwodu jako sumy długości boków. Lekcja uczy liczyć krok po kroku i kontrolować jednostki.',
+    triggerPhrases: ['obwód', 'długość boków', 'perymetr'],
+  },
+  logical_thinking: {
+    explanation:
+      'Wprowadzenie do myślenia logicznego: wzorce, klasyfikacja i analogie. Dobry start dla zadań wymagających analizy.',
+    triggerPhrases: ['myślenie logiczne', 'logika', 'wstęp do logiki', 'wzorce', 'analogie'],
+  },
+  logical_patterns: {
+    explanation:
+      'Szukanie reguły w ciągach i wzorcach, uzupełnianie braków. Ćwiczy przewidywanie następnego elementu.',
+    triggerPhrases: ['wzorce', 'ciągi', 'sekwencje', 'reguła', 'schemat'],
+  },
+  logical_classification: {
+    explanation:
+      'Grupowanie po cechach, sortowanie i znajdowanie elementu niepasującego. Uczy porównywania i tworzenia kategorii.',
+    triggerPhrases: ['klasyfikacja', 'sortowanie', 'grupowanie', 'intruzi', 'kategorie'],
+  },
+  logical_reasoning: {
+    explanation:
+      'Wnioskowanie "jeśli... to..." i łączenie faktów w ciąg kroków. Pomaga budować poprawny tok rozumowania.',
+    triggerPhrases: ['wnioskowanie', 'jeśli to', 'wniosek', 'przyczyna i skutek'],
+  },
+  logical_analogies: {
+    explanation:
+      'Analogie i relacje między pojęciami. Uczy rozpoznawać podobieństwa typu A:B = C:?.',
+    triggerPhrases: ['analogie', 'porównania', 'relacje', 'A do B'],
+  },
+};
+
 const dedupeOrdered = (values: readonly string[]): string[] => {
   const seen = new Set<string>();
   const normalized: string[] = [];
@@ -197,6 +285,37 @@ const dedupeOrdered = (values: readonly string[]): string[] => {
 
   return normalized;
 };
+
+const LESSON_LIBRARY_COMPONENT_ORDER = KANGUR_LESSON_COMPONENT_OPTIONS.map(
+  (option) => option.value
+) as KangurLessonComponentId[];
+
+const buildLessonLibraryFragments = (): KangurPageContentFragment[] =>
+  LESSON_LIBRARY_COMPONENT_ORDER.map((componentId, index) => {
+    const lesson = KANGUR_LESSON_LIBRARY[componentId];
+    const detail = LESSON_LIBRARY_FRAGMENT_DETAILS[componentId];
+    const normalizedComponentId = componentId.replace(/_/g, ' ');
+
+    return {
+      id: `lesson:${componentId}`,
+      text: lesson.title,
+      aliases: dedupeOrdered([
+        lesson.description,
+        lesson.label,
+        ...(detail.aliases ?? []),
+      ]),
+      explanation: detail.explanation,
+      nativeGuideIds: [],
+      triggerPhrases: dedupeOrdered([
+        lesson.title,
+        lesson.description,
+        normalizedComponentId,
+        ...detail.triggerPhrases,
+      ]),
+      enabled: true,
+      sortOrder: (index + 1) * 10,
+    };
+  });
 
 const toRouteFromPageKey = (pageKey: KangurPageContentPageKey): string => {
   if (pageKey === 'Login' || pageKey === 'SharedChrome') {
@@ -302,7 +421,7 @@ const buildSectionEntry = (
     nativeGuideIds: [...linkedGuideIds],
     triggerPhrases: buildTriggerPhrases(entry, linkedGuideIds),
     tags: buildTags(entry, linkedGuideIds),
-    fragments: [],
+    fragments: entry.id === 'lessons-library' ? buildLessonLibraryFragments() : [],
     notes: entry.notes,
     enabled: true,
     sortOrder: index * 10,

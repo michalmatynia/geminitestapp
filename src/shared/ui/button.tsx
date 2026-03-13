@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { Loader2 } from 'lucide-react';
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
 
 const buttonVariants = cva(
   'inline-flex items-center justify-center whitespace-nowrap rounded-lg border border-transparent text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 ring-offset-background cursor-pointer',
@@ -49,10 +49,52 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
-    { className, variant, size, asChild = false, loading = false, loadingText, children, ...props },
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      loading = false,
+      loadingText,
+      children,
+      onClick,
+      tabIndex,
+      disabled,
+      title,
+      type,
+      'aria-label': ariaLabelProp,
+      'aria-busy': ariaBusyProp,
+      'aria-labelledby': ariaLabelledByProp,
+      ...props
+    },
     ref
   ) => {
     const Comp = asChild ? Slot : 'button';
+    const isDisabled = loading || disabled;
+    const resolvedAriaBusy = ariaBusyProp || loading || undefined;
+    const handleClick: React.MouseEventHandler<HTMLElement> = (event) => {
+      if (isDisabled) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      onClick?.(event as React.MouseEvent<HTMLButtonElement>);
+    };
+    const resolvedTabIndex = isDisabled && asChild ? -1 : tabIndex;
+    const disabledClassName = isDisabled && asChild ? 'pointer-events-none cursor-not-allowed opacity-50' : null;
+    const isIconButton = size === 'icon' || size === 'icon-lg';
+    const { hasText, ariaLabel: resolvedAriaLabel, hasAccessibleLabel } = resolveAccessibleLabel({
+      children,
+      ariaLabel: ariaLabelProp,
+      ariaLabelledBy: ariaLabelledByProp,
+      title,
+      fallbackLabel: loadingText,
+    });
+    const resolvedType = asChild ? undefined : type;
+
+    if (!hasAccessibleLabel && (isIconButton || !hasText)) {
+      warnMissingAccessibleLabel({ componentName: 'Button', hasAccessibleLabel });
+    }
 
     const content = loading ? (
       <>
@@ -66,9 +108,18 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <Comp
         {...props}
-        className={cn(buttonVariants({ variant, size, className }), loading && 'gap-2')}
-        disabled={loading || props.disabled}
-        aria-busy={props['aria-busy'] || loading || undefined}
+        onClick={isDisabled || onClick ? handleClick : undefined}
+        tabIndex={resolvedTabIndex}
+        className={cn(buttonVariants({ variant, size, className }), loading && 'gap-2', disabledClassName)}
+        disabled={isDisabled}
+        aria-disabled={isDisabled ? 'true' : undefined}
+        aria-busy={resolvedAriaBusy}
+        aria-label={resolvedAriaLabel}
+        aria-labelledby={ariaLabelledByProp}
+        aria-live={loading ? 'polite' : undefined}
+        aria-atomic={loading ? 'true' : undefined}
+        title={title}
+        type={resolvedType}
         ref={ref}
       >
         {content}

@@ -38,7 +38,6 @@ import {
   getKangurPageSlug,
   normalizeKangurRequestedPath,
 } from '@/features/kangur/config/routing';
-import { KangurLoginModal } from '@/features/kangur/ui/components/KangurLoginModal';
 import { KangurAuthProvider } from '@/features/kangur/ui/context/KangurAuthContext';
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { KangurLoginModalProvider } from '@/features/kangur/ui/context/KangurLoginModalContext';
@@ -628,7 +627,6 @@ export function KangurCmsPreviewPanel(): React.ReactNode {
                                 </KangurScoreSyncProvider>
                               </KangurProgressSyncProvider>
                             </KangurAuthProvider>
-                            <KangurLoginModal />
                           </KangurLoginModalProvider>
                         </KangurGuestPlayerProvider>
                       </KangurRoutingProvider>

@@ -123,6 +123,9 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
       ...telemetryContext,
       selectionLength: selectionGuidanceHandoffText.length,
     });
+    handleOpenChat('selection_explain', {
+      panelShellMode: 'minimal',
+    });
     setSelectionResponseComplete({
       selectedText: selectionGuidanceHandoffText,
     });
@@ -130,9 +133,6 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
       current?.selectedText === selectionGuidanceHandoffText ? null : current
     );
     setSelectionGuidanceHandoffText(null);
-    handleOpenChat('selection_explain', {
-      panelShellMode: 'minimal',
-    });
   }, [
     handleOpenChat,
     hasSelectionPanelReady,

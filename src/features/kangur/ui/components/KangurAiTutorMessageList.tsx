@@ -1,5 +1,6 @@
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
+import { useOptionalKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { cn, sanitizeSvg } from '@/shared/utils';
 
@@ -54,6 +55,7 @@ const getMessageArtifacts = (
 
 export function KangurAiTutorMessageList(): JSX.Element {
   const tutorContent = useKangurAiTutorContent();
+  const tutor = useOptionalKangurAiTutor();
   const drawingContent = (tutorContent as { drawing?: TutorDrawingContent }).drawing;
   const {
     askModalHelperText,
@@ -85,9 +87,20 @@ export function KangurAiTutorMessageList(): JSX.Element {
         ? askModalHelperText
         : emptyStateMessage;
   const shouldRenderEmptyState = Boolean(emptyStateCopy?.trim());
+  const chatTitleSuffix = tutorContent.narrator?.chatTitleSuffix ?? '';
+  const tutorName = tutor?.tutorName ?? tutorContent.common.defaultTutorName;
+  const conversationLabel = `${tutorName} ${chatTitleSuffix}`.trim();
 
   return (
-    <div className='flex-1 min-h-0 space-y-3 overflow-y-auto kangur-chat-padding-lg'>
+    <div
+      className='flex-1 min-h-0 space-y-3 overflow-y-auto kangur-chat-padding-lg'
+      role='log'
+      aria-live='polite'
+      aria-relevant='additions text'
+      aria-atomic='false'
+      aria-busy={isLoading ? 'true' : undefined}
+      aria-label={conversationLabel}
+    >
       {visibleMessages.length === 0 ? (
         shouldRenderEmptyState ? (
         <div className='flex flex-col items-center justify-center py-6'>
@@ -390,7 +403,13 @@ export function KangurAiTutorMessageList(): JSX.Element {
       {isLoading ? (
         <div className='flex justify-start'>
           <div className='tutor-assistant-bubble kangur-chat-bubble kangur-chat-padding-md border [border-color:var(--kangur-soft-card-border)]'>
-            <div className='flex items-center gap-1.5' aria-label={tutorContent.messageList.loadingLabel}>
+            <div
+              className='flex items-center gap-1.5'
+              role='status'
+              aria-live='polite'
+              aria-atomic='true'
+              aria-label={tutorContent.messageList.loadingLabel}
+            >
               <span className='tutor-typing-dot' />
               <span className='tutor-typing-dot' />
               <span className='tutor-typing-dot' />

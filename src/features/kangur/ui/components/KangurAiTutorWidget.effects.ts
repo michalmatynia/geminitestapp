@@ -87,11 +87,13 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
   } = input;
 
   useEffect(() => {
-    const hasSelectionResponseMessage =
-      selectionConversationStartIndex !== null &&
-      messages
-        .slice(selectionConversationStartIndex)
-        .some((message) => message.role === 'assistant');
+    const selectionThreadMessages =
+      selectionConversationStartIndex !== null
+        ? messages.slice(selectionConversationStartIndex)
+        : [];
+    const latestSelectionResponseMessage =
+      [...selectionThreadMessages].reverse().find((message) => message.role === 'assistant') ?? null;
+    const hasSelectionResponseMessage = latestSelectionResponseMessage !== null;
     const isSelectionContextStillOwningMinimalPanel =
       contextualTutorMode === 'selection_explain' &&
       panelShellMode === 'minimal' &&
@@ -99,6 +101,8 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
         selectionConversationSelectedText,
         selectionResponsePending?.selectedText ?? null
       );
+    const shouldKeepSelectionAnswerInGuidedCallout =
+      latestSelectionResponseMessage?.answerResolutionMode === 'page_content';
     const shouldRevealGuidedSelectionCallout =
       isSelectionGuidedMode &&
       selectionGuidanceHandoffText === null &&
@@ -128,7 +132,9 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
     setSelectionResponsePending(null);
     if (shouldRevealGuidedSelectionCallout) {
       setSelectionGuidanceCalloutVisibleText(selectionResponsePending.selectedText);
-      setSelectionGuidanceHandoffText(selectionResponsePending.selectedText);
+      if (!shouldKeepSelectionAnswerInGuidedCallout) {
+        setSelectionGuidanceHandoffText(selectionResponsePending.selectedText);
+      }
     }
   }, [
     messages,

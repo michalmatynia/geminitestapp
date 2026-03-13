@@ -106,6 +106,7 @@ export function useKangurAiTutorGuidedDisplayState(input: {
   sectionResponsePending: SectionExplainContext | null;
   sheetBreakpoint: number;
   selectionGuidanceCalloutVisibleText: string | null;
+  selectionResponseComplete: PendingSelectionResponse | null;
   selectionResponsePending: PendingSelectionResponse | null;
   sessionContentId: string | null | undefined;
   sessionSurface: TutorSurface | null | undefined;
@@ -138,6 +139,7 @@ export function useKangurAiTutorGuidedDisplayState(input: {
     sectionResponsePending,
     sheetBreakpoint,
     selectionGuidanceCalloutVisibleText,
+    selectionResponseComplete,
     selectionResponsePending,
     sessionContentId,
     sessionSurface,
@@ -288,7 +290,7 @@ export function useKangurAiTutorGuidedDisplayState(input: {
   }, [authGuidedAnchorRetryTick, guidedTargetAnchor, guidedTutorTarget, viewportTick]);
 
   const guidedSelectionRect = useMemo(() => {
-    if (!isSelectionGuidedTutorTarget(guidedTutorTarget) && !selectionResponsePending) {
+    if (!isSelectionGuidedTutorTarget(guidedTutorTarget) && !selectionResponsePending && !selectionResponseComplete) {
       return null;
     }
 
@@ -314,10 +316,11 @@ export function useKangurAiTutorGuidedDisplayState(input: {
     persistedSelectionPageRect,
     persistedSelectionRect,
     selectionResponsePending,
+    selectionResponseComplete,
   ]);
 
   const guidedSelectionSpotlightRect =
-    isSelectionGuidedTutorTarget(guidedTutorTarget) || selectionResponsePending
+    isSelectionGuidedTutorTarget(guidedTutorTarget) || selectionResponsePending || selectionResponseComplete
       ? cloneRect(guidedSelectionRect)
       : null;
   const guidedSelectionGlowRects: DOMRect[] = [];
@@ -328,13 +331,13 @@ export function useKangurAiTutorGuidedDisplayState(input: {
   const isAskModalMode = false;
   const selectionGuidanceCalloutText = isSelectionGuidedTutorMode
     ? guidedTutorTarget.selectedText
-    : (selectionResponsePending?.selectedText ?? null);
+    : (selectionResponsePending?.selectedText ?? selectionResponseComplete?.selectedText ?? null);
   const showSelectionGuidanceCallout =
     selectionGuidanceCalloutText !== null &&
     selectionGuidanceCalloutVisibleText === selectionGuidanceCalloutText &&
     (
       isSelectionGuidedTutorMode ||
-      (!isTutorHidden && isOpen && !isAskModalState && selectionResponsePending !== null)
+      (!isTutorHidden && isOpen && !isAskModalState && (selectionResponsePending !== null || selectionResponseComplete !== null))
     );
   const showSectionGuidanceCallout =
     isSectionGuidedTutorMode ||
@@ -430,9 +433,9 @@ export function useKangurAiTutorGuidedDisplayState(input: {
       : null;
 
   const guidedSelectionPreview = showSelectionGuidanceCallout
-    ? (isSelectionGuidedTutorTarget(guidedTutorTarget)
+    ? (isSelectionGuidedTutorMode
       ? guidedTutorTarget.selectedText
-      : (selectionResponsePending?.selectedText ?? '')
+      : (selectionResponsePending?.selectedText ?? selectionResponseComplete?.selectedText ?? '')
     ).slice(0, 120)
     : null;
 

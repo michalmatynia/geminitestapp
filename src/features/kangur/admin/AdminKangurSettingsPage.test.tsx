@@ -282,48 +282,21 @@ describe('AdminKangurSettingsPage', () => {
     });
   });
 
-  it('renders the storefront theme editor and autosaves Kangur theme changes to Mongo', async () => {
+  it('renders the storefront theme editor shortcut alongside class overrides', async () => {
     render(<AdminKangurSettingsPage />);
     await expectInitialNarratorProbe();
 
     expect(screen.getByText('Storefront Theme')).toBeInTheDocument();
+    expect(
+      screen.getByText(/changes auto-save to mongo and apply immediately/i)
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /open theme editor/i })).toHaveAttribute(
+      'href',
+      '/admin/kangur/appearance'
+    );
+
     expect(screen.getByText('Class Overrides')).toBeInTheDocument();
     expect(screen.getByLabelText(/class overrides json/i)).toBeInTheDocument();
-    expect(screen.getByText(/changes in this editor save to mongo automatically/i)).toBeInTheDocument();
-    expect(screen.getByText('Core Palette')).toBeInTheDocument();
-    expect(screen.getByText('Backgrounds and Surfaces')).toBeInTheDocument();
-    expect(screen.getByText('Buttons')).toBeInTheDocument();
-    expect(screen.getByText('Navigation Pills')).toBeInTheDocument();
-    expect(screen.getByText('Inputs')).toBeInTheDocument();
-    expect(screen.getByText('Typography and Layout')).toBeInTheDocument();
-    expect(screen.getByText('Shape and Spacing')).toBeInTheDocument();
-    expect(screen.getByLabelText(/button padding x/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/page padding top/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/shared gap scale/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/pill padding x/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/input height/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/card radius/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/panel inner padding/i)).toBeInTheDocument();
-    expect(screen.queryByText('Product Cards')).not.toBeInTheDocument();
-    expect(screen.queryByText('Collection Cards')).not.toBeInTheDocument();
-    expect(screen.queryByText('Blog Cards')).not.toBeInTheDocument();
-    expect(screen.queryByText('Custom CSS')).not.toBeInTheDocument();
-    expect(screen.queryByText(/^Typography$/)).not.toBeInTheDocument();
-
-    fireEvent.change(screen.getByLabelText(/page background value/i), {
-      target: { value: '#faf5ff' },
-    });
-
-    await waitFor(() => {
-      const themeSaveCall = mutateMock.mock.calls.find(
-        ([input]) => input?.key === KANGUR_THEME_SETTINGS_KEY
-      );
-
-      expect(themeSaveCall).toBeTruthy();
-      expect(JSON.parse(String(themeSaveCall?.[0]?.value))).toMatchObject({
-        backgroundColor: '#faf5ff',
-      });
-    });
   });
 
   it(

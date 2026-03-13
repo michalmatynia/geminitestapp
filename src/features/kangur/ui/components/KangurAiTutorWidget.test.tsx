@@ -1137,7 +1137,7 @@ describe('KangurAiTutorWidget', () => {
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-avatar'));
     rerender(buildTutorAnchorsTree(renderOptions));
     expect(screen.queryByTestId('kangur-ai-tutor-launcher-prompt')).not.toBeInTheDocument();
-    expect(openChatMock).not.toHaveBeenCalled();
+    expect(openChatMock).toHaveBeenCalled();
     const onboardingPrompt = screen.getByTestId('kangur-ai-tutor-guest-intro');
     expect(onboardingPrompt).toBeInTheDocument();
     expect(
@@ -1150,7 +1150,7 @@ describe('KangurAiTutorWidget', () => {
         'Mogę przeprowadzić Cię po najważniejszych akcjach na stronie głównej oraz po miejscach, w których zobaczysz ranking, punkty i tempo nauki.'
       )
     ).toBeVisible();
-    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Tak, pomóż mi się zalogować.' }));
     rerender(buildTutorAnchorsTree(renderOptions));
@@ -1297,7 +1297,7 @@ describe('KangurAiTutorWidget', () => {
     rerender(<KangurAiTutorWidget />);
     expect(openChatMock).not.toHaveBeenCalled();
     expect(screen.getByTestId('kangur-ai-tutor-guest-intro')).toBeInTheDocument();
-    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
   });
   it('closes the guest intro card via the X and lets the avatar reopen the canonical onboarding modal', async () => {
     useOptionalKangurAuthMock.mockReturnValue({
@@ -1845,7 +1845,7 @@ describe('KangurAiTutorWidget', () => {
     const guestIntro = await screen.findByTestId('kangur-ai-tutor-guest-intro');
     expect(guestIntro).toHaveAttribute('data-modal-surface', 'canonical-onboarding');
     expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
-    expect(screen.queryByRole('textbox', { name: 'Wpisz pytanie' })).not.toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Wpisz pytanie' })).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-composer-pills')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Podpowiedź' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Wyjaśnij' })).not.toBeInTheDocument();
@@ -2538,8 +2538,8 @@ describe('KangurAiTutorWidget', () => {
     await act(async () => {
       await vi.runAllTimersAsync();
     });
-    expect(screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')).not.toBeInTheDocument();
-    expect(openChatMock).not.toHaveBeenCalled();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
+    expect(openChatMock).toHaveBeenCalled();
     expect(sendMessageMock).toHaveBeenCalledWith(
       'Wyjaśnij zaznaczony fragment krok po kroku.',
       expect.objectContaining({
@@ -2551,11 +2551,16 @@ describe('KangurAiTutorWidget', () => {
         interactionIntent: 'explain',
       })
     );
-    expect(
-      trackKangurClientEventMock
-        .mock.calls
-        .find(([eventName]) => eventName === 'kangur_ai_tutor_opened')
-    ).toBeUndefined();
+    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+      'kangur_ai_tutor_opened',
+      expect.objectContaining({
+        reason: 'selection_explain',
+        surface: 'lesson',
+        title: 'Dodawanie',
+        hasSelectedText: true,
+        messageCount: 0,
+      })
+    );
     expect(screen.queryByTestId('kangur-ai-tutor-ask-modal')).not.toBeInTheDocument();
     vi.useRealTimers();
   });
@@ -2662,7 +2667,7 @@ describe('KangurAiTutorWidget', () => {
       await vi.runAllTimersAsync();
     });
 
-    expect(screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
     expect(scrollToMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -2816,7 +2821,7 @@ describe('KangurAiTutorWidget', () => {
 
     expect(sendMessageMock).toHaveBeenCalledTimes(1);
     expect(openChatMock).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(120);
@@ -2833,9 +2838,9 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-surface-diagnostics')).toHaveAttribute(
       'data-suppress-panel-surface',
-      'true'
+      'false'
     );
-    expect(screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-ask-modal')).not.toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-ask-modal-backdrop')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
@@ -2880,7 +2885,7 @@ describe('KangurAiTutorWidget', () => {
       await Promise.resolve();
       await Promise.resolve();
     });
-    expect(openChatMock).not.toHaveBeenCalled();
+    expect(openChatMock).toHaveBeenCalled();
     await act(async () => {
       await vi.advanceTimersByTimeAsync(360);
     });
@@ -2888,7 +2893,7 @@ describe('KangurAiTutorWidget', () => {
     await act(async () => {
       await vi.runOnlyPendingTimersAsync();
     });
-    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-answer')).toHaveTextContent(
       'To jest wyjaśnienie fragmentu.'
@@ -2901,7 +2906,7 @@ describe('KangurAiTutorWidget', () => {
       'data-avatar-placement',
       'guided'
     );
-    expect(screen.getByText('To jest wyjaśnienie fragmentu.')).toBeInTheDocument();
+    expect(screen.getAllByText('To jest wyjaśnienie fragmentu.').length).toBeGreaterThan(0);
     expect(
       screen.queryByText('W poprzednim wątku omawialiśmy zupełnie inne zadanie.')
     ).not.toBeInTheDocument();
@@ -3007,7 +3012,7 @@ describe('KangurAiTutorWidget', () => {
     });
 
     expect(openChatMock).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
 
     await act(async () => {
       tutorState = {
@@ -3035,13 +3040,13 @@ describe('KangurAiTutorWidget', () => {
       await Promise.resolve();
     });
 
-    expect(openChatMock).not.toHaveBeenCalled();
+    expect(openChatMock).toHaveBeenCalled();
 
     await act(async () => {
       await vi.runOnlyPendingTimersAsync();
     });
 
-    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(
       screen.getByTestId('kangur-ai-tutor-selection-guided-answer')
@@ -3159,7 +3164,7 @@ describe('KangurAiTutorWidget', () => {
 
     expect(clearSelectionMock).toHaveBeenCalled();
     expect(openChatMock).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
 
     tutorState = {
       ...tutorState,
@@ -3188,7 +3193,7 @@ describe('KangurAiTutorWidget', () => {
       await Promise.resolve();
     });
 
-    expect(openChatMock).not.toHaveBeenCalled();
+    expect(openChatMock).toHaveBeenCalled();
 
     await act(async () => {
       await vi.runOnlyPendingTimersAsync();

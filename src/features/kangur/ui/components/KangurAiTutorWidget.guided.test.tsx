@@ -98,6 +98,7 @@ describe('useKangurAiTutorSelectionGuidanceDockOpenEffect', () => {
 
 describe('useKangurAiTutorSelectionGuidanceHandoffEffect', () => {
   it('finalizes the selection handoff without clearing the guided selection surface', async () => {
+    const handleOpenChatMock = vi.fn();
     const setSelectionGuidanceHandoffTextMock = vi.fn();
     const setSelectionResponseCompleteMock = vi.fn();
     const setSelectionResponsePendingMock = vi.fn();
@@ -105,6 +106,7 @@ describe('useKangurAiTutorSelectionGuidanceHandoffEffect', () => {
     renderHook(() =>
       useKangurAiTutorSelectionGuidanceHandoffEffect({
         activeSelectedText: 'Ranking wynikow',
+        handleOpenChat: handleOpenChatMock,
         hasSelectionPanelReady: true,
         isLoading: false,
         isOpen: true,
@@ -127,6 +129,9 @@ describe('useKangurAiTutorSelectionGuidanceHandoffEffect', () => {
         selectedText: 'Ranking wynikow',
       })
     );
+    expect(handleOpenChatMock).toHaveBeenCalledWith('selection_explain', {
+      panelShellMode: 'minimal',
+    });
     expect(setSelectionGuidanceHandoffTextMock).toHaveBeenCalledWith(null);
     expect(setSelectionResponseCompleteMock).toHaveBeenCalledTimes(1);
 
@@ -139,6 +144,7 @@ describe('useKangurAiTutorSelectionGuidanceHandoffEffect', () => {
   });
 
   it('finalizes the selection handoff when the live excerpt reflows but the stored selection is unchanged', async () => {
+    const handleOpenChatMock = vi.fn();
     const setSelectionGuidanceHandoffTextMock = vi.fn();
     const setSelectionResponseCompleteMock = vi.fn();
     const setSelectionResponsePendingMock = vi.fn();
@@ -146,6 +152,7 @@ describe('useKangurAiTutorSelectionGuidanceHandoffEffect', () => {
     renderHook(() =>
       useKangurAiTutorSelectionGuidanceHandoffEffect({
         activeSelectedText: '🏗️ MISTRZOSTWO\n67%\n2/4 odznak',
+        handleOpenChat: handleOpenChatMock,
         hasSelectionPanelReady: true,
         isLoading: false,
         isOpen: true,
@@ -168,6 +175,9 @@ describe('useKangurAiTutorSelectionGuidanceHandoffEffect', () => {
         selectedText: '🏗️ MISTRZOSTWO 67% 2/4 odznak',
       })
     );
+    expect(handleOpenChatMock).toHaveBeenCalledWith('selection_explain', {
+      panelShellMode: 'minimal',
+    });
     expect(setSelectionGuidanceHandoffTextMock).toHaveBeenCalledWith(null);
   });
 });
@@ -297,7 +307,7 @@ describe('useKangurAiTutorGuidedFlow', () => {
     });
 
     expect(handleOpenChatMock).not.toHaveBeenCalled();
-    expect(setSelectionGuidanceCalloutVisibleTextMock).not.toHaveBeenCalledWith('2 + 2');
+    expect(setSelectionGuidanceCalloutVisibleTextMock).toHaveBeenCalledWith('2 + 2');
     expect(setSelectionGuidanceHandoffTextMock).not.toHaveBeenCalledWith('2 + 2');
     expect(setGuidedTutorTargetMock).toHaveBeenCalledWith({
       kind: 'selection_excerpt',

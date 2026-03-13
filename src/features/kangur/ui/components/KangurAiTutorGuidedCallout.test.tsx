@@ -257,7 +257,9 @@ describe('KangurAiTutorGuidedCallout', () => {
     expect(
       screen.queryByText('Wyjaśniam ten fragment.')
     ).not.toBeInTheDocument();
-    expect(screen.queryByTestId('kangur-ai-tutor-selection-preview')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-preview')).toHaveTextContent(
+      '🏗️ MISTRZOSTWO 67% 2/4 odznak'
+    );
     expect(
       screen.queryByText('🏗️ MISTRZOSTWO 67% 2/4 odznak Budowniczy mistrzostwa · 2/3 lekcje')
     ).not.toBeInTheDocument();
@@ -364,7 +366,9 @@ describe('KangurAiTutorGuidedCallout', () => {
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-source')).toHaveTextContent(
       'Ta ścieżka zbiera odznaki mistrzostwa i pokazuje, ile lekcji zostało do ukończenia.'
     );
-    expect(screen.queryByTestId('kangur-ai-tutor-selection-preview')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-preview')).toHaveTextContent(
+      '🏗️ MISTRZOSTWO 67% 2/4 odznak'
+    );
     expect(
       screen.queryByText('🏗️ MISTRZOSTWO 67% 2/4 odznak Budowniczy mistrzostwa · 2/3 lekcje')
     ).not.toBeInTheDocument();

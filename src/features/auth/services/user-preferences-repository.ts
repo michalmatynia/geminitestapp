@@ -5,8 +5,8 @@ import { ObjectId } from 'mongodb';
 import {
   type UserPreferences,
   type UserPreferencesUpdate as UserPreferencesData,
-  type JsonValue,
 } from '@/shared/contracts/auth';
+import type { JsonValue } from '@/shared/contracts/json';
 import { operationFailedError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 

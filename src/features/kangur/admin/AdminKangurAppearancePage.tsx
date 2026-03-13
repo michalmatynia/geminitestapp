@@ -925,14 +925,12 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
   // ── catalog ──────────────────────────────────────────────────────────────
   const catalog = useMemo(
     () => parseKangurThemeCatalog(settingsStore.get(KANGUR_THEME_CATALOG_KEY)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [settingsStore.get(KANGUR_THEME_CATALOG_KEY)]
   );
 
   // ── slot assignments ──────────────────────────────────────────────────────
   const slotAssignments = useMemo(
     () => parseSlotAssignments(settingsStore.get(KANGUR_SLOT_ASSIGNMENTS_KEY)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [settingsStore.get(KANGUR_SLOT_ASSIGNMENTS_KEY)]
   );
 
@@ -940,14 +938,12 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
     const raw = settingsStore.get(KANGUR_DAILY_THEME_SETTINGS_KEY);
     if (!raw?.trim() || !slotAssignments.daily) return 'Fabryczny';
     return slotAssignments.daily.name;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slotAssignments, settingsStore.get(KANGUR_DAILY_THEME_SETTINGS_KEY)]);
 
   const nightlySlotLabel = useMemo(() => {
     const raw = settingsStore.get(KANGUR_NIGHTLY_THEME_SETTINGS_KEY);
     if (!raw?.trim() || !slotAssignments.nightly) return 'Fabryczny';
     return slotAssignments.nightly.name;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slotAssignments, settingsStore.get(KANGUR_NIGHTLY_THEME_SETTINGS_KEY)]);
 
   // ── selected theme ────────────────────────────────────────────────────────
@@ -978,7 +974,6 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
         ? normalizeThemeSettings(entry.settings, KANGUR_DEFAULT_DAILY_THEME)
         : KANGUR_DEFAULT_DAILY_THEME;
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       catalog,
       settingsStore.get(KANGUR_DAILY_THEME_SETTINGS_KEY),

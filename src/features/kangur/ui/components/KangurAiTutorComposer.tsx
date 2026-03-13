@@ -1,4 +1,5 @@
-import { Pen, X } from 'lucide-react';
+import { ArrowUp, Pen, X } from 'lucide-react';
+import { useCallback } from 'react';
 
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurButton, KangurTextField } from '@/features/kangur/ui/design/primitives';
@@ -28,6 +29,7 @@ export function KangurAiTutorComposer(): JSX.Element {
     handleDrawingComplete,
     handleKeyDown,
     handleQuickAction,
+    handleSend,
     handleToggleDrawing,
     inputPlaceholder,
     isAskModalMode,
@@ -37,6 +39,15 @@ export function KangurAiTutorComposer(): JSX.Element {
   } = useKangurAiTutorPanelBodyContext();
   const { inputRef, inputValue, setInputValue } = useKangurAiTutorWidgetStateContext();
   const showDrawingToggle = !showToolboxLayout && !guestAuthFormVisible;
+
+  const canSubmit = Boolean(inputValue.trim() || drawingImageData);
+
+  const handleSubmit = useCallback(() => {
+    if (!canSubmit || isLoading || !canSendMessages) {
+      return;
+    }
+    void handleSend();
+  }, [canSubmit, canSendMessages, handleSend, isLoading]);
 
   if (drawingMode) {
     return (
@@ -88,7 +99,13 @@ export function KangurAiTutorComposer(): JSX.Element {
             ref={inputRef}
             value={inputValue}
             onChange={(event) => setInputValue(event.target.value)}
-            onKeyDown={handleKeyDown}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                handleSubmit();
+              }
+              handleKeyDown(event);
+            }}
             accent='amber'
             size='sm'
             className={`w-full shadow-[0_4px_12px_-8px_rgba(15,23,42,0.06)] ${
@@ -113,6 +130,18 @@ export function KangurAiTutorComposer(): JSX.Element {
             </KangurButton>
           ) : null}
         </div>
+        <KangurButton
+          data-testid='kangur-ai-tutor-send-button'
+          type='button'
+          size='sm'
+          variant='primary'
+          className='h-9 w-9 shrink-0 rounded-full p-0 kangur-cta-pill'
+          disabled={!canSubmit || isLoading || !canSendMessages}
+          onClick={handleSubmit}
+          aria-label={tutorContent.common.sendAria}
+        >
+          <ArrowUp className='h-4 w-4' />
+        </KangurButton>
       </div>
       {!showToolboxLayout && visibleQuickActions.length ? (
         <div

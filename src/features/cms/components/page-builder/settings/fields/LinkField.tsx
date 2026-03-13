@@ -11,8 +11,9 @@ export function LinkField(props: {
   value: string;
   onChange: (v: string) => void;
   ariaLabel?: string;
+  id?: string;
 }): React.ReactNode {
-  const { value, onChange, ariaLabel = 'Link' } = props;
+  const { value, onChange, ariaLabel = 'Link', id } = props;
 
   const [open, setOpen] = useState(false);
   const { data: slugs = [] } = useCmsSlugs();
@@ -30,6 +31,7 @@ export function LinkField(props: {
   return (
     <div className='flex gap-2'>
       <Input
+        id={id}
         value={value}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
         placeholder='URL or pick a slug...'

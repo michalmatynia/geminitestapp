@@ -352,6 +352,14 @@ describe('KangurPrimaryNavigation', () => {
     fireEvent.click(themeToggleButton);
 
     expect(screen.getByRole('button', { name: 'Switch to Sunset theme' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Switch to Sunset theme' }));
+
+    expect(screen.getByRole('button', { name: 'Switch to Nightly theme' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Switch to Nightly theme' }));
+
+    expect(screen.getByRole('button', { name: 'Switch to Daily theme' })).toBeInTheDocument();
   });
 
   it('does not show the theme selector for non-elevated users', () => {    sessionMock.mockReturnValue({

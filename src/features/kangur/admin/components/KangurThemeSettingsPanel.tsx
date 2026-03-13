@@ -25,6 +25,39 @@ import { serializeSetting } from '@/shared/utils/settings-json';
 
 type ThemeMode = 'daily' | 'dawn' | 'sunset' | 'nightly';
 
+const HOME_ACTION_FIELD_GROUPS = [
+  { prefix: 'homeActionLessons', label: 'Lessons' },
+  { prefix: 'homeActionPlay', label: 'Play' },
+  { prefix: 'homeActionTraining', label: 'Training' },
+  { prefix: 'homeActionKangur', label: 'Kangur' },
+] as const;
+
+const HOME_ACTION_FIELD_TOKENS = [
+  { suffix: 'TextColor', label: 'Text Color' },
+  { suffix: 'TextActiveColor', label: 'Active Text Color' },
+  { suffix: 'AccentStart', label: 'Accent Gradient Start' },
+  { suffix: 'AccentMid', label: 'Accent Gradient Mid' },
+  { suffix: 'AccentEnd', label: 'Accent Gradient End' },
+  { suffix: 'UnderlayStart', label: 'Underlay Gradient Start' },
+  { suffix: 'UnderlayMid', label: 'Underlay Gradient Mid' },
+  { suffix: 'UnderlayEnd', label: 'Underlay Gradient End' },
+  { suffix: 'UnderlayTintStart', label: 'Underlay Tint Start' },
+  { suffix: 'UnderlayTintMid', label: 'Underlay Tint Mid' },
+  { suffix: 'UnderlayTintEnd', label: 'Underlay Tint End' },
+  { suffix: 'AccentShadowColor', label: 'Accent Shadow' },
+  { suffix: 'UnderlayShadowColor', label: 'Underlay Shadow' },
+  { suffix: 'SurfaceShadowColor', label: 'Surface Shadow' },
+] as const;
+
+const HOME_ACTION_FIELDS: SettingsField<ThemeSettings>[] = HOME_ACTION_FIELD_GROUPS.flatMap(
+  (group) =>
+    HOME_ACTION_FIELD_TOKENS.map((token) => ({
+      key: `${group.prefix}${token.suffix}` as keyof ThemeSettings,
+      label: `${group.label} ${token.label}`,
+      type: 'color',
+    }))
+);
+
 const KANGUR_THEME_SECTIONS: Array<{
   title: string;
   subtitle: string;
@@ -40,6 +73,29 @@ const KANGUR_THEME_SECTIONS: Array<{
       { key: 'successColor', label: 'Success Accent', type: 'color' },
       { key: 'textColor', label: 'Primary Text', type: 'color' },
       { key: 'mutedTextColor', label: 'Muted Text', type: 'color' },
+    ],
+  },
+  {
+    title: 'Logo & Loader',
+    subtitle: 'Tune the Kangur logo gradients used on the boot loader and navigation.',
+    fields: [
+      {
+        key: 'logoWordStart',
+        label: 'Wordmark Start',
+        type: 'background',
+        placeholder: 'Auto',
+        helperText: 'Leave empty to derive from the active palette.',
+      },
+      { key: 'logoWordMid', label: 'Wordmark Mid', type: 'background', placeholder: 'Auto' },
+      { key: 'logoWordEnd', label: 'Wordmark End', type: 'background', placeholder: 'Auto' },
+      { key: 'logoRingStart', label: 'Ring Start', type: 'background', placeholder: 'Auto' },
+      { key: 'logoRingEnd', label: 'Ring End', type: 'background', placeholder: 'Auto' },
+      { key: 'logoAccentStart', label: 'Accent Start', type: 'background', placeholder: 'Auto' },
+      { key: 'logoAccentEnd', label: 'Accent End', type: 'background', placeholder: 'Auto' },
+      { key: 'logoInnerStart', label: 'Inner Glow Start', type: 'background', placeholder: 'Auto' },
+      { key: 'logoInnerEnd', label: 'Inner Glow End', type: 'background', placeholder: 'Auto' },
+      { key: 'logoShadow', label: 'Logo Shadow', type: 'background', placeholder: 'Auto' },
+      { key: 'logoGlint', label: 'Logo Glint', type: 'background', placeholder: 'Auto' },
     ],
   },
   {
@@ -68,9 +124,19 @@ const KANGUR_THEME_SECTIONS: Array<{
     title: 'Buttons',
     subtitle: 'Primary and secondary CTA colors used by the live storefront.',
     fields: [
-      { key: 'btnPrimaryBg', label: 'Primary Button Background', type: 'color' },
+      {
+        key: 'btnPrimaryBg',
+        label: 'Primary Button Background',
+        type: 'background',
+        helperText: 'CSS color or gradient (e.g. #ff8a3d or linear-gradient(...)).',
+      },
       { key: 'btnPrimaryText', label: 'Primary Button Text', type: 'color' },
-      { key: 'btnSecondaryBg', label: 'Secondary Button Background', type: 'color' },
+      {
+        key: 'btnSecondaryBg',
+        label: 'Secondary Button Background',
+        type: 'background',
+        helperText: 'CSS color or gradient (e.g. #ffffff or linear-gradient(...)).',
+      },
       { key: 'btnSecondaryText', label: 'Secondary Button Text', type: 'color' },
       { key: 'btnPaddingX', label: 'Button Padding X', type: 'number', min: 8, max: 40, suffix: 'px' },
       { key: 'btnPaddingY', label: 'Button Padding Y', type: 'number', min: 6, max: 24, suffix: 'px' },
@@ -121,6 +187,12 @@ const KANGUR_THEME_SECTIONS: Array<{
       { key: 'gradientSlateStart', label: 'Slate Gradient Start', type: 'color' },
       { key: 'gradientSlateEnd', label: 'Slate Gradient End', type: 'color' },
     ],
+  },
+  {
+    title: 'Home Actions',
+    subtitle:
+      'Theme the four main home buttons (icons stay untouched). Leave a field empty to keep the default tone.',
+    fields: HOME_ACTION_FIELDS,
   },
   {
     title: 'Progress Bars',

@@ -24,6 +24,7 @@ export type FieldType =
   | 'checkbox'
   | 'switch'
   | 'color'
+  | 'background'
   | 'range'
   | 'custom';
 
@@ -85,6 +86,8 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
   const { fields, values, errors, onChange, disabled = false, className } = props;
   const resolvedErrors: Partial<Record<keyof T, string>> =
     errors ?? ({} as Partial<Record<keyof T, string>>);
+  const isHexColor = (value: string): boolean =>
+    /^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(value.trim());
 
   const handleFieldChange = (key: keyof T, value: unknown) => {
     onChange({ [key]: value } as Partial<T>);
@@ -96,14 +99,21 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
         const fieldKey = `${String(field.key)}-${index}`;
         const fieldId = `settings-field-${fieldKey}`;
         const fieldError = resolvedErrors[field.key];
+        const descriptionId = field.helperText ? `${fieldId}-description` : undefined;
+        const errorId = fieldError ? `${fieldId}-error` : undefined;
+        const describedBy = [descriptionId, errorId].filter(Boolean).join(' ') || undefined;
+        const isInvalid = Boolean(fieldError);
         return (
           <div key={fieldKey}>
             {field.render ? (
               <FormField
+                id={fieldId}
                 label={field.label}
                 required={field.required}
                 description={field.helperText}
+                descriptionId={descriptionId}
                 error={fieldError}
+                errorId={errorId}
               >
                 {field.render({
                   value: values[field.key],
@@ -114,10 +124,13 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
               </FormField>
             ) : field.type === 'textarea' ? (
               <FormField
+                controlId={fieldId}
                 label={field.label}
                 required={field.required}
                 description={field.helperText}
+                descriptionId={descriptionId}
                 error={fieldError}
+                errorId={errorId}
               >
                 <Textarea
                   id={fieldId}
@@ -126,15 +139,21 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                   placeholder={field.placeholder}
                   disabled={field.disabled || disabled}
                   className='min-h-[100px]'
+                  aria-describedby={describedBy}
+                  aria-invalid={isInvalid || undefined}
+                  aria-errormessage={errorId}
                   aria-label={field.label}
                 />
               </FormField>
             ) : field.type === 'select' ? (
               <FormField
+                controlId={fieldId}
                 label={field.label}
                 required={field.required}
                 description={field.helperText}
+                descriptionId={descriptionId}
                 error={fieldError}
+                errorId={errorId}
               >
                 <SelectSimple
                   value={String(values[field.key] || '')}
@@ -146,6 +165,10 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                   }
                   placeholder={field.placeholder || 'Select an option'}
                   ariaLabel={field.label}
+                  id={fieldId}
+                  ariaDescribedBy={describedBy}
+                  ariaInvalid={isInvalid || undefined}
+                  ariaErrorMessage={errorId}
                 />
               </FormField>
             ) : field.type === 'checkbox' ? (
@@ -155,15 +178,24 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                   checked={(values[field.key] as boolean) || false}
                   onCheckedChange={(checked) => handleFieldChange(field.key, !!checked)}
                   disabled={field.disabled || disabled}
+                  aria-describedby={describedBy}
+                  aria-invalid={isInvalid || undefined}
+                  aria-errormessage={errorId}
                 />
                 <Label htmlFor={fieldId} className='text-sm cursor-pointer'>
                   {field.label}
                   {field.required && <span className='text-red-500 ml-1'>*</span>}
                 </Label>
                 {field.helperText && (
-                  <p className='text-xs text-muted-foreground ml-6'>{field.helperText}</p>
+                  <p className='text-xs text-muted-foreground ml-6' id={descriptionId}>
+                    {field.helperText}
+                  </p>
                 )}
-                {fieldError && <p className='text-xs text-red-500 ml-6'>{fieldError}</p>}
+                {fieldError && (
+                  <p className='text-xs text-red-500 ml-6' id={errorId} role='alert'>
+                    {fieldError}
+                  </p>
+                )}
               </div>
             ) : field.type === 'switch' ? (
               <div className='flex items-center justify-between p-3 rounded-md border border-white/5 bg-card/30 transition-colors hover:bg-card/50'>
@@ -176,7 +208,9 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                     {field.required && <span className='text-red-500 ml-1'>*</span>}
                   </Label>
                   {field.helperText && (
-                    <p className='text-[11px] text-muted-foreground'>{field.helperText}</p>
+                    <p className='text-[11px] text-muted-foreground' id={descriptionId}>
+                      {field.helperText}
+                    </p>
                   )}
                 </div>
                 <Switch
@@ -184,15 +218,25 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                   checked={(values[field.key] as boolean) || false}
                   onCheckedChange={(checked) => handleFieldChange(field.key, !!checked)}
                   disabled={field.disabled || disabled}
+                  aria-describedby={describedBy}
+                  aria-invalid={isInvalid || undefined}
+                  aria-errormessage={errorId}
                 />
-                {fieldError && <p className='text-xs text-red-500 mt-1'>{fieldError}</p>}
+                {fieldError && (
+                  <p className='text-xs text-red-500 mt-1' id={errorId} role='alert'>
+                    {fieldError}
+                  </p>
+                )}
               </div>
             ) : field.type === 'color' ? (
               <FormField
+                controlId={fieldId}
                 label={field.label}
                 required={field.required}
                 description={field.helperText}
+                descriptionId={descriptionId}
                 error={fieldError}
+                errorId={errorId}
               >
                 <div className='flex items-center gap-2'>
                   <div
@@ -206,6 +250,9 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                       onChange={(e) => handleFieldChange(field.key, e.target.value)}
                       className='opacity-0 size-full cursor-pointer'
                       disabled={field.disabled || disabled}
+                      aria-describedby={describedBy}
+                      aria-invalid={isInvalid || undefined}
+                      aria-errormessage={errorId}
                       aria-label={`${field.label} color picker`}
                     />
                   </div>
@@ -216,16 +263,65 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                     placeholder='#000000'
                     disabled={field.disabled || disabled}
                     className='font-mono'
+                    aria-describedby={describedBy}
+                    aria-invalid={isInvalid || undefined}
+                    aria-errormessage={errorId}
+                    aria-label={`${field.label} value`}
+                  />
+                </div>
+              </FormField>
+            ) : field.type === 'background' ? (
+              <FormField
+                controlId={fieldId}
+                label={field.label}
+                required={field.required}
+                description={field.helperText}
+                descriptionId={descriptionId}
+                error={fieldError}
+                errorId={errorId}
+              >
+                <div className='flex items-center gap-2'>
+                  <div
+                    className='size-8 rounded border border-border shrink-0 overflow-hidden'
+                    style={{ background: String(values[field.key] || '#000000') }}
+                  />
+                  {isHexColor(String(values[field.key] || '')) ? (
+                    <input
+                      type='color'
+                      id={`${fieldId}-picker`}
+                      value={String(values[field.key] || '#000000')}
+                      onChange={(e) => handleFieldChange(field.key, e.target.value)}
+                      className='h-8 w-8 cursor-pointer rounded border border-border'
+                      disabled={field.disabled || disabled}
+                      aria-describedby={describedBy}
+                      aria-invalid={isInvalid || undefined}
+                      aria-errormessage={errorId}
+                      aria-label={`${field.label} color picker`}
+                    />
+                  ) : null}
+                  <Input
+                    id={fieldId}
+                    value={String(values[field.key] || '')}
+                    onChange={(e) => handleFieldChange(field.key, e.target.value)}
+                    placeholder={field.placeholder}
+                    disabled={field.disabled || disabled}
+                    className='font-mono'
+                    aria-describedby={describedBy}
+                    aria-invalid={isInvalid || undefined}
+                    aria-errormessage={errorId}
                     aria-label={`${field.label} value`}
                   />
                 </div>
               </FormField>
             ) : field.type === 'range' ? (
               <FormField
+                controlId={fieldId}
                 label={field.label}
                 required={field.required}
                 description={field.helperText}
+                descriptionId={descriptionId}
                 error={fieldError}
+                errorId={errorId}
                 actions={
                   <span className='text-xs font-mono text-muted-foreground'>
                     {(values[field.key] as number) ?? 0}
@@ -243,15 +339,21 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                   onChange={(e) => handleFieldChange(field.key, Number(e.target.value))}
                   className='w-full accent-primary h-2 bg-muted rounded-lg appearance-none cursor-pointer'
                   disabled={field.disabled || disabled}
+                  aria-describedby={describedBy}
+                  aria-invalid={isInvalid || undefined}
+                  aria-errormessage={errorId}
                   aria-label={field.label}
                 />
               </FormField>
             ) : (
               <FormField
+                controlId={fieldId}
                 label={field.label}
                 required={field.required}
                 description={field.helperText}
+                descriptionId={descriptionId}
                 error={fieldError}
+                errorId={errorId}
               >
                 <div className='flex items-center gap-2'>
                   <Input
@@ -274,6 +376,9 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                     max={field.max}
                     step={field.step}
                     className='flex-1'
+                    aria-describedby={describedBy}
+                    aria-invalid={isInvalid || undefined}
+                    aria-errormessage={errorId}
                     aria-label={field.label}
                   />
                   {field.suffix && (

@@ -5,11 +5,10 @@ import { cn } from '@/shared/utils';
 
 import { KANGUR_ACCENT_STYLES, type KangurAccent } from '../tokens';
 import {
-  KangurHeadline,
   KANGUR_HEADLINE_CLASSNAMES,
   kangurHeadlineVariants,
 } from './KangurHeadline';
-import { KangurIconBadge, kangurIconBadgeVariants } from './KangurIconBadge';
+import { kangurIconBadgeVariants } from './KangurIconBadge';
 
 export type KangurSectionHeadingProps = React.HTMLAttributes<HTMLDivElement> & {
   accent?: KangurAccent;

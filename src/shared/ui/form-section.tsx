@@ -83,15 +83,34 @@ interface FormFieldProps {
   required?: boolean | undefined;
   className?: string | undefined;
   id?: string | undefined;
+  controlId?: string | undefined;
+  descriptionId?: string | undefined;
+  errorId?: string | undefined;
 }
 
 export function FormField(props: FormFieldProps): React.JSX.Element {
-  const { label, description, actions, children, error, required, className, id } = props;
+  const {
+    label,
+    description,
+    actions,
+    children,
+    error,
+    required,
+    className,
+    id,
+    controlId,
+    descriptionId,
+    errorId,
+  } = props;
 
   const generatedId = useId().replace(/:/g, '');
-  const fieldId = id ?? (label ? `form-field-${generatedId}` : undefined);
+  const fieldId = controlId ?? id ?? (label ? `form-field-${generatedId}` : undefined);
+  const resolvedDescriptionId =
+    descriptionId ?? (description && fieldId ? `${fieldId}-description` : undefined);
+  const resolvedErrorId = errorId ?? (error && fieldId ? `${fieldId}-error` : undefined);
 
   const linkedChildren =
+    !controlId &&
     fieldId &&
     isValidElement<{ id?: string }>(children) &&
     (children.props.id === undefined || children.props.id === '')
@@ -120,12 +139,21 @@ export function FormField(props: FormFieldProps): React.JSX.Element {
           </div>
         ) : null}
         {description && (
-          <p className='text-[10px] text-gray-500 italic leading-relaxed'>{description}</p>
+          <p
+            className='text-[10px] text-gray-500 italic leading-relaxed'
+            id={resolvedDescriptionId}
+          >
+            {description}
+          </p>
         )}
       </div>
       {linkedChildren ?? null}
       {error && (
-        <p className='text-[10px] font-medium text-red-400 mt-1' role='alert'>
+        <p
+          className='text-[10px] font-medium text-red-400 mt-1'
+          role='alert'
+          id={resolvedErrorId}
+        >
           {error}
         </p>
       )}

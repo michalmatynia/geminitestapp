@@ -210,7 +210,8 @@ export function KangurAiTutorGuestIntroPanel({
   prefersReducedMotion,
 }: Props): JSX.Element | null {
   const tutorContent = useKangurAiTutorContent();
-  const { guestAuthFormVisible, setDrawingImageData } = useKangurAiTutorWidgetStateContext();
+  const { guestAuthFormVisible, setDrawingImageData, guestIntroNarrationRootRef } =
+    useKangurAiTutorWidgetStateContext();
   const { messages } = useKangurAiTutorPanelBodyContext();
   const shouldShowMessageList = messages.length > 0 || guestAuthFormVisible;
   const [isDrawingOpen, setIsDrawingOpen] = useState(false);
@@ -271,16 +272,18 @@ export function KangurAiTutorGuestIntroPanel({
             padding='lg'
             className='flex min-h-0 max-h-[min(72vh,560px)] flex-col'
           >
-            <KangurAiTutorGuestIntroHeader />
-            {shouldShowMessageList ? (
-              <div className='mt-3 flex min-h-0 flex-1 flex-col'>
-                <KangurAiTutorMessageList />
+            <div ref={guestIntroNarrationRootRef} className='flex min-h-0 flex-1 flex-col'>
+              <KangurAiTutorGuestIntroHeader />
+              {shouldShowMessageList ? (
+                <div className='mt-3 flex min-h-0 flex-1 flex-col'>
+                  <KangurAiTutorMessageList />
+                </div>
+              ) : null}
+              <div className='mt-2 flex justify-start'>
+                <KangurAiTutorGuestIntroActionPill />
               </div>
-            ) : null}
-            <div className='mt-2 flex justify-start'>
-              <KangurAiTutorGuestIntroActionPill />
+              <KangurAiTutorGuestIntroChatInput />
             </div>
-            <KangurAiTutorGuestIntroChatInput />
           </KangurAiTutorWarmOverlayPanel>
         </motion.div>
         {isDrawingOpen ? (

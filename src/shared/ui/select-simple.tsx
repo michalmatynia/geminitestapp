@@ -32,7 +32,11 @@ interface SelectSimpleProps {
   triggerClassName?: string | undefined;
   contentClassName?: string | undefined;
   disabled?: boolean | undefined;
+  id?: string | undefined;
   ariaLabel?: string | undefined;
+  ariaDescribedBy?: string | undefined;
+  ariaInvalid?: boolean | undefined;
+  ariaErrorMessage?: string | undefined;
   size?: 'default' | 'sm' | 'xs';
   variant?: 'default' | 'subtle';
   dataDocId?: string | undefined;
@@ -51,7 +55,11 @@ type SelectSimpleRuntimeValue = {
   placeholder: string;
   triggerClassName?: string | undefined;
   contentClassName?: string | undefined;
+  id?: string | undefined;
   ariaLabel?: string | undefined;
+  ariaDescribedBy?: string | undefined;
+  ariaInvalid?: boolean | undefined;
+  ariaErrorMessage?: string | undefined;
   size: 'default' | 'sm' | 'xs';
   variant: 'default' | 'subtle';
   dataDocId?: string | undefined;
@@ -76,6 +84,7 @@ function SelectSimpleControl(): React.JSX.Element {
       disabled={runtime.disabled}
     >
       <SelectTrigger
+        id={runtime.id}
         className={cn(
           'w-full [&>span]:max-w-[calc(100%-1.5rem)] [&>span]:truncate [&>span]:text-left',
           runtime.size === 'sm' && 'h-8 text-xs',
@@ -85,6 +94,9 @@ function SelectSimpleControl(): React.JSX.Element {
           runtime.triggerClassName
         )}
         aria-label={runtime.ariaLabel}
+        aria-describedby={runtime.ariaDescribedBy}
+        aria-invalid={runtime.ariaInvalid || undefined}
+        aria-errormessage={runtime.ariaErrorMessage}
         data-doc-id={runtime.dataDocId}
         data-doc-alias={runtime.dataDocAlias}
       >
@@ -136,7 +148,11 @@ export function SelectSimple({
   triggerClassName,
   contentClassName,
   disabled = false,
+  id,
   ariaLabel,
+  ariaDescribedBy,
+  ariaInvalid,
+  ariaErrorMessage,
   size = 'default',
   variant = 'default',
   dataDocId,
@@ -190,7 +206,11 @@ export function SelectSimple({
       placeholder,
       triggerClassName,
       contentClassName,
+      id,
       ariaLabel: resolvedAriaLabel,
+      ariaDescribedBy,
+      ariaInvalid,
+      ariaErrorMessage,
       size,
       variant,
       dataDocId,
@@ -204,7 +224,11 @@ export function SelectSimple({
       placeholder,
       triggerClassName,
       contentClassName,
+      id,
       resolvedAriaLabel,
+      ariaDescribedBy,
+      ariaInvalid,
+      ariaErrorMessage,
       size,
       variant,
       dataDocId,

@@ -1,12 +1,9 @@
 /**
  * @vitest-environment jsdom
  */
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { useLayoutEffect, useRef } from 'react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
-import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
 
 import type {
@@ -422,99 +419,6 @@ describe('KangurAiTutorWidget - Actions', () => {
         action: 'bridge-to-game',
         promptMode: 'chat',
         bridgeActionId: 'bridge-to-game',
-        isBridgeAction: true,
-      })
-    );
-  });
-
-  it('promotes a game-to-lesson bridge quick action after a completed tutor training follow-up', async () => {
-    useKangurTextHighlightMock.mockReturnValue({
-      selectedText: null,
-      selectionRect: null,
-      selectionContainerRect: null,
-      clearSelection: clearSelectionMock,
-    });
-    useKangurAiTutorMock.mockReturnValue({
-      enabled: true,
-      tutorSettings: {
-        enabled: true,
-        agentPersonaId: null,
-        motionPresetId: null,
-        uiMode: 'anchored',
-        allowCrossPagePersistence: true,
-        allowLessons: true,
-        testAccessMode: 'guided',
-        showSources: true,
-        allowSelectedTextSupport: true,
-        proactiveNudges: 'gentle',
-        dailyMessageLimit: null,
-      },
-      tutorName: 'Pomocnik',
-      tutorMoodId: 'neutral',
-      tutorAvatarSvg:
-        '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="34" fill="#ffffff" /></svg>',
-      tutorAvatarImageUrl: null,
-      sessionContext: {
-        surface: 'game',
-        contentId: 'game-training-addition-summary',
-        title: 'Trening dodawania',
-        answerRevealed: true,
-      },
-      learnerMemory: {
-        lastRecommendedAction: 'Completed follow-up: Uruchom trening',
-        lastSuccessfulIntervention:
-          'The learner completed the tutor follow-up Uruchom trening on Game.',
-        lastCoachingMode: 'next_best_action',
-      },
-      isOpen: true,
-      messages: [],
-      isLoading: false,
-      isUsageLoading: false,
-      highlightedText: null,
-      usageSummary: null,
-      openChat: openChatMock,
-      closeChat: closeChatMock,
-      sendMessage: sendMessageMock,
-      recordFollowUpCompletion: recordFollowUpCompletionMock,
-      setHighlightedText: setHighlightedTextMock,
-      tutorBehaviorMoodId: 'neutral',
-      tutorBehaviorMoodLabel: 'Neutralny',
-      tutorBehaviorMoodDescription: 'Neutralny nastroj.',
-    });
-    render(<KangurAiTutorWidget />);
-    expect(screen.getByRole('button', { name: 'Po treningu: lekcja' })).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-bridge-chip')).toHaveTextContent(
-      'Most: po treningu'
-    );
-    expect(screen.getByTestId('kangur-ai-tutor-bridge-chip')).toHaveAttribute(
-      'data-bridge-action-id',
-      'bridge-to-lesson'
-    );
-    expect(screen.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveTextContent(
-      'Po treningu: lekcja'
-    );
-    expect(screen.getByTestId('kangur-ai-tutor-mood-description')).toHaveTextContent(
-      'Masz już wykonany poprzedni krok. Zapytaj o jedną konkretną lekcję po tym treningu.'
-    );
-    expect(screen.getByPlaceholderText('Zapytaj o lekcję po tym treningu')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Po treningu: lekcja' }));
-    await waitFor(() =>
-      expect(sendMessageMock).toHaveBeenCalledWith(
-        'Pomóż mi wybrać jedną konkretną lekcję po tym treningu.',
-        expect.objectContaining({
-          promptMode: 'chat',
-          interactionIntent: 'next_step',
-        })
-      )
-    );
-    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
-      'kangur_ai_tutor_quick_action_clicked',
-      expect.objectContaining({
-        surface: 'game',
-        title: 'Trening dodawania',
-        action: 'bridge-to-lesson',
-        promptMode: 'chat',
-        bridgeActionId: 'bridge-to-lesson',
         isBridgeAction: true,
       })
     );

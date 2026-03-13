@@ -5,6 +5,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { KANGUR_DEFAULT_DAILY_THEME } from '@/features/kangur/theme-settings';
 import { DEFAULT_THEME } from '@/shared/contracts/cms-theme';
 
 import {
@@ -184,6 +185,19 @@ describe('CmsStorefrontAppearance', () => {
     expect(appearance.vars['--kangur-input-height']).toBe('50px');
     expect(appearance.vars['--kangur-button-radius']).toBe('999px');
     expect(appearance.vars['--kangur-input-radius']).toBe('22px');
+  });
+
+  it('preserves custom button gradients for Kangur themes', () => {
+    const gradient = 'linear-gradient(135deg, #ff8a3d 0%, #ff5f6d 100%)';
+    const appearance = resolveKangurStorefrontAppearance('default', {
+      ...KANGUR_DEFAULT_DAILY_THEME,
+      btnPrimaryBg: gradient,
+      btnSecondaryBg: gradient,
+    });
+
+    expect(appearance.vars['--kangur-button-primary-background']).toBe(gradient);
+    expect(appearance.vars['--kangur-button-primary-hover-background']).toBe(gradient);
+    expect(appearance.vars['--kangur-button-secondary-background']).toBe(gradient);
   });
 
   it('builds Kangur appearance variables from a provided theme document', () => {

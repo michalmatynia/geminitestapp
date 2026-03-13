@@ -17,6 +17,7 @@ type KangurAdminContentShellProps = {
   description: string;
   breadcrumbs: BreadcrumbItem[];
   headerActions?: ReactNode;
+  headerLayout?: 'inline' | 'stacked';
   refresh?: KangurAdminRefresh | undefined;
   children: ReactNode;
   className?: string;
@@ -30,6 +31,7 @@ const KangurAdminContentShellContext = createContext<{
   description: string;
   breadcrumbs: BreadcrumbItem[];
   headerActions?: ReactNode;
+  headerLayout?: 'inline' | 'stacked';
   refresh?: KangurAdminRefresh | undefined;
 } | null>(null);
 
@@ -42,8 +44,9 @@ const useKangurAdminContentShellContext = () => {
 };
 
 function KangurAdminContentShellHeader(): React.JSX.Element {
-  const { title, description, breadcrumbs, headerActions, refresh } =
+  const { title, description, breadcrumbs, headerActions, headerLayout, refresh } =
     useKangurAdminContentShellContext();
+  const isStacked = headerLayout === 'stacked';
   const resolvedHeaderActions = headerActions ? (
     <div className='flex flex-wrap items-center justify-end gap-2 sm:gap-3'>{headerActions}</div>
   ) : null;
@@ -63,16 +66,24 @@ function KangurAdminContentShellHeader(): React.JSX.Element {
         <SectionHeader
           title={title}
           description={description}
-          actions={resolvedHeaderActions}
+          actions={isStacked ? undefined : resolvedHeaderActions}
           refresh={refresh}
-          className='gap-6'
+          className={cn('gap-6', isStacked ? 'lg:flex-col lg:items-stretch' : null)}
+          actionsClassName={isStacked ? 'w-full justify-start' : undefined}
         >
-          <div className='mt-3 flex flex-wrap items-center gap-3'>
-            <Breadcrumbs items={breadcrumbs} className='mt-0' />
-            <span className='hidden h-4 w-px bg-white/12 md:block' />
-            <span className='text-xs text-slate-300/80'>
-              Focused editing shell for lessons, tests, and content operations.
-            </span>
+          <div className='mt-3 space-y-3'>
+            {isStacked && resolvedHeaderActions ? (
+              <div className='flex flex-wrap items-center gap-2 sm:gap-3'>
+                {resolvedHeaderActions}
+              </div>
+            ) : null}
+            <div className='flex flex-wrap items-center gap-3'>
+              <Breadcrumbs items={breadcrumbs} className='mt-0' />
+              <span className='hidden h-4 w-px bg-white/12 md:block' />
+              <span className='text-xs text-slate-300/80'>
+                Focused editing shell for lessons, tests, and content operations.
+              </span>
+            </div>
           </div>
         </SectionHeader>
       </div>
@@ -85,6 +96,7 @@ export function KangurAdminContentShell({
   description,
   breadcrumbs,
   headerActions,
+  headerLayout = 'inline',
   refresh,
   children,
   className,
@@ -97,6 +109,7 @@ export function KangurAdminContentShell({
     description,
     breadcrumbs,
     headerActions,
+    headerLayout,
     refresh,
   };
   const panelSurfaceClassName = cn(

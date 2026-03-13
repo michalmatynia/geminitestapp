@@ -89,6 +89,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     contextualTutorMode,
     contextSwitchNotice,
     draggedAvatarPoint,
+    guestIntroNarrationRootRef,
     guidedTutorTarget,
     highlightedSection,
     homeOnboardingRecord,
@@ -520,7 +521,9 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
         : isOpen
           ? 'chat'
         : 'idle_avatar';
+  const shouldSuppressStandardChatPanel = tutorSurfaceMode === 'chat';
   const suppressPanelSurface =
+    shouldSuppressStandardChatPanel ||
     loginModalIsOpen ||
     (tutorSurfaceMode !== 'chat' && (
       tutorSurfaceMode === 'onboarding' ||
@@ -690,6 +693,8 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     setTutorNarrationObservedText,
     shouldEnableTutorNarration,
     tutorNarrationRootRef,
+    guestIntroNarrationRootRef,
+    preferGuestIntroRoot: shouldRenderGuestIntroUi,
   });
 
   const avatarButtonClassName = cn(

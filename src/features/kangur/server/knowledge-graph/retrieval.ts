@@ -17,6 +17,12 @@ import {
 import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
 import { getKangurAiTutorNativeGuideStore } from '@/features/kangur/server/ai-tutor-native-guide-repository';
 import { getKangurPageContentStore } from '@/features/kangur/server/page-content-repository';
+import { cmsService } from '@/features/cms/services/cms-service';
+import type { Page } from '@/shared/contracts/cms';
+import {
+  extractCmsPageTextContent,
+  buildCmsPageCanonicalText,
+} from '@/features/cms/utils/cms-text-extractor';
 import { KANGUR_KNOWLEDGE_GRAPH_VECTOR_INDEX } from '@/features/kangur/server/knowledge-graph/neo4j-repository';
 import { isNeo4jEnabled } from '@/shared/lib/neo4j/config';
 import { runNeo4jStatements } from '@/shared/lib/neo4j/client';
@@ -93,6 +99,7 @@ type HydratedKnowledgeGraphHit = KangurKnowledgeGraphHit & {
     | 'kangur_page_content'
     | 'kangur_ai_tutor_content'
     | 'kangur_ai_tutor_native_guides'
+    | 'cms_pages'
     | 'kangur-runtime-context'
     | 'graph_fallback';
 };
@@ -802,6 +809,8 @@ const buildInstructions = (
         return `Navigation: ${pathParts.join(' → ')} [${routeLabel}${anchorLabel}]`;
       });
 
+    const hasCmsPageHits = hits.some((hit) => hit.hydrationSource === 'cms_pages');
+
     return [
       'Kangur website-help graph context:',
       ...sections,
@@ -810,8 +819,13 @@ const buildInstructions = (
       'Use Mongo-backed Kangur tutor knowledge as the canonical explanation source when available. Use Neo4j only to resolve the best related page, flow, route, or anchor.',
       'When the learner asks where something is or how to find a feature, reference the specific page name and section. The system will generate a clickable navigation card from the resolved target that can physically navigate the learner to the right place.',
       'Be specific: mention the exact page or section name, do not use vague directions.',
+      ...(hasCmsPageHits
+        ? ['When referencing CMS website pages, mention the page name and URL so the learner can navigate directly.']
+        : []),
     ].join('\n');
   }
+
+  const hasCmsPageHits = hits.some((hit) => hit.hydrationSource === 'cms_pages');
 
   return [
     'Kangur semantic graph context:',
@@ -819,6 +833,9 @@ const buildInstructions = (
     'Use Mongo-backed Kangur tutor knowledge as the canonical explanation source when available. Use Neo4j to resolve the best matching Kangur surface, panel, section, or flow for the current conversation.',
     'Prioritize hits that match the current surface, focus kind, focus id, content id, or visible section label before falling back to generic overviews.',
     'Keep the answer grounded in what the learner currently sees on the Kangur page. Do not invent UI elements that are not present in the matched graph context.',
+    ...(hasCmsPageHits
+      ? ['When referencing CMS website pages, mention the page name and URL so the learner can navigate directly.']
+      : []),
   ].join('\n');
 };
 
@@ -1019,13 +1036,17 @@ const hydrateKnowledgeGraphHits = async (
   const needsPageContentStore = hits.some(
     (hit) => hit.sourceCollection === 'kangur_page_content'
   );
+  const needsCmsPages = hits.some(
+    (hit) => hit.sourceCollection === 'cms_pages'
+  );
 
-  const [tutorContent, nativeGuideStore, pageContentStore] = await Promise.all([
+  const [tutorContent, nativeGuideStore, pageContentStore, cmsPages] = await Promise.all([
     needsTutorContent ? getKangurAiTutorContent(locale).catch(() => null) : Promise.resolve(null),
     needsNativeGuideStore
       ? getKangurAiTutorNativeGuideStore(locale).catch(() => null)
       : Promise.resolve(null),
     needsPageContentStore ? getKangurPageContentStore(locale).catch(() => null) : Promise.resolve(null),
+    needsCmsPages ? cmsService.getPages().catch(() => [] as Page[]) : Promise.resolve([] as Page[]),
   ]);
 
   const nativeGuideEntriesById = new Map(
@@ -1033,6 +1054,9 @@ const hydrateKnowledgeGraphHits = async (
   );
   const pageContentEntriesById = new Map(
     (pageContentStore?.entries ?? []).map((entry) => [entry.id, entry] as const)
+  );
+  const cmsPagesById = new Map(
+    cmsPages.map((page) => [page.id, page] as const)
   );
 
   return hits.map((hit) => {
@@ -1060,6 +1084,22 @@ const hydrateKnowledgeGraphHits = async (
           canonicalTags: [...new Set([...hit.tags, ...entry.tags, 'mongo-canonical'])],
           canonicalSourceCollection: 'kangur_page_content',
           hydrationSource: 'kangur_page_content',
+        };
+      }
+    }
+
+    if (hit.sourceCollection === 'cms_pages' && hit.sourceRecordId) {
+      const cmsPage = cmsPagesById.get(hit.sourceRecordId);
+      if (cmsPage) {
+        const textContent = extractCmsPageTextContent(cmsPage);
+        return {
+          ...hit,
+          canonicalTitle: cmsPage.seoTitle ?? cmsPage.name,
+          canonicalSummary: cmsPage.seoDescription ?? null,
+          canonicalText: buildCmsPageCanonicalText(textContent),
+          canonicalTags: [...new Set([...hit.tags, 'cms', 'cms-page', 'mongo-canonical'])],
+          canonicalSourceCollection: 'cms_pages',
+          hydrationSource: 'cms_pages',
         };
       }
     }

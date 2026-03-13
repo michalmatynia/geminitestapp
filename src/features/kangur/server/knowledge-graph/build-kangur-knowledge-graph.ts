@@ -16,6 +16,12 @@ import {
 } from '@/shared/contracts/kangur-ai-tutor-native-guide';
 import { buildDefaultKangurPageContentStore } from '@/features/kangur/page-content-catalog';
 import type { KangurPageContentStore } from '@/shared/contracts/kangur-page-content';
+import type { Page } from '@/shared/contracts/cms';
+import {
+  extractCmsPageTextContent,
+  buildCmsPageSemanticText,
+  hasMeaningfulTextContent,
+} from '@/features/cms/utils/cms-text-extractor';
 import {
   KANGUR_KNOWLEDGE_GRAPH_KEY,
   type KangurKnowledgeEdgeKind,
@@ -33,6 +39,7 @@ type BuildKangurKnowledgeGraphOptions = {
   tutorContent?: KangurAiTutorContent;
   nativeGuideStore?: KangurAiTutorNativeGuideStore;
   pageContentStore?: KangurPageContentStore;
+  cmsPages?: Page[];
 };
 
 type LocalizedValue<T> = T | Partial<Record<string, T>>;
@@ -791,6 +798,55 @@ export const buildKangurKnowledgeGraph = (
         description: `${entry.title} resolves to the ${nativeGuideId} native guide explanation.`,
       });
     }
+  }
+
+  // Source 6: CMS pages
+  const cmsPages = options.cmsPages ?? [];
+  for (const page of cmsPages) {
+    if (page.status !== 'published') {
+      continue;
+    }
+
+    const textContent = extractCmsPageTextContent(page);
+    if (!hasMeaningfulTextContent(textContent)) {
+      continue;
+    }
+
+    const cmsNodeId = `cms-page:${page.id}`;
+    const defaultSlug = page.slugs?.[0]?.slug;
+    const route = defaultSlug ? `/${defaultSlug}` : undefined;
+    const title = page.seoTitle ?? page.name;
+    const triggerPhrases: string[] = [];
+
+    if (page.name) {
+      triggerPhrases.push(page.name.toLowerCase());
+    }
+    if (defaultSlug) {
+      triggerPhrases.push(defaultSlug.replace(/-/g, ' '));
+    }
+
+    createNode(nodes, {
+      id: cmsNodeId,
+      kind: 'page',
+      title,
+      summary: page.seoDescription ?? '',
+      source: 'cms_pages',
+      locale,
+      route,
+      sourceCollection: 'cms_pages',
+      sourceRecordId: page.id,
+      sourcePath: `cms-page:${page.id}`,
+      triggerPhrases,
+      semanticText: buildCmsPageSemanticText(textContent),
+      tags: ['cms', 'cms-page', 'website'],
+    });
+
+    createEdge(edges, {
+      kind: 'RELATED_TO',
+      from: 'app:kangur',
+      to: cmsNodeId,
+      description: `Kangur CMS website page: ${title}.`,
+    });
   }
 
   return {

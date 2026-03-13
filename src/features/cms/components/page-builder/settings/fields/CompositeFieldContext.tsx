@@ -8,7 +8,9 @@ export type CompositeFieldContextValue = {
   value: unknown;
   onChange: (value: unknown) => void;
   fieldLabel: string;
+  fieldId: string;
   buildAriaLabel: (suffix: string) => string;
+  buildControlId: (suffix: string) => string;
 };
 
 export const CompositeFieldContext = createContext<CompositeFieldContextValue | null>(null);

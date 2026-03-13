@@ -8,15 +8,24 @@ import { useCompositeFieldContext } from '../CompositeFieldContext';
 import { FONT_FAMILY_OPTIONS, FONT_WEIGHT_OPTIONS } from '../settings-field-constants';
 
 export function TypographyField(): React.ReactNode {
-  const { value, onChange, buildAriaLabel } = useCompositeFieldContext();
+  const { value, onChange, buildAriaLabel, buildControlId } = useCompositeFieldContext();
   const typo = (value as Record<string, unknown>) ?? {};
   const update = (key: string, v: unknown): void => {
     onChange({ ...typo, [key]: v });
   };
+  const familyId = buildControlId('font-family');
+  const weightId = buildControlId('font-weight');
+  const sizeId = buildControlId('font-size');
+  const lineHeightId = buildControlId('line-height');
+  const letterSpacingId = buildControlId('letter-spacing');
+  const colorValueId = buildControlId('text-color-value');
+  const colorPickerId = buildControlId('text-color-picker');
   return (
     <div className='space-y-2'>
       <div className='space-y-0.5'>
-        <span className='text-[10px] text-gray-500 uppercase'>Font Family</span>
+        <label className='text-[10px] text-gray-500 uppercase' htmlFor={familyId}>
+          Font Family
+        </label>
         <SelectSimple
           size='sm'
           value={(typo['fontFamily'] as string) ?? 'Inter, sans-serif'}
@@ -24,11 +33,14 @@ export function TypographyField(): React.ReactNode {
           options={FONT_FAMILY_OPTIONS}
           triggerClassName='text-xs h-7'
           ariaLabel={buildAriaLabel('font family')}
+          id={familyId}
         />
       </div>
       <div className='grid grid-cols-2 gap-2'>
         <div className='space-y-0.5'>
-          <span className='text-[10px] text-gray-500 uppercase'>Weight</span>
+          <label className='text-[10px] text-gray-500 uppercase' htmlFor={weightId}>
+            Weight
+          </label>
           <SelectSimple
             size='sm'
             value={String((typo['fontWeight'] as string | number) ?? '400')}
@@ -36,11 +48,15 @@ export function TypographyField(): React.ReactNode {
             options={FONT_WEIGHT_OPTIONS}
             triggerClassName='text-xs h-7'
             ariaLabel={buildAriaLabel('font weight')}
+            id={weightId}
           />
         </div>
         <div className='space-y-0.5'>
-          <span className='text-[10px] text-gray-500 uppercase'>Size (px)</span>
+          <label className='text-[10px] text-gray-500 uppercase' htmlFor={sizeId}>
+            Size (px)
+          </label>
           <Input
+            id={sizeId}
             type='number'
             value={(typo['fontSize'] as number) ?? 16}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
@@ -55,8 +71,11 @@ export function TypographyField(): React.ReactNode {
       </div>
       <div className='grid grid-cols-2 gap-2'>
         <div className='space-y-0.5'>
-          <span className='text-[10px] text-gray-500 uppercase'>Line Height</span>
+          <label className='text-[10px] text-gray-500 uppercase' htmlFor={lineHeightId}>
+            Line Height
+          </label>
           <Input
+            id={lineHeightId}
             type='number'
             value={(typo['lineHeight'] as number) ?? 1.5}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
@@ -70,8 +89,11 @@ export function TypographyField(): React.ReactNode {
           />
         </div>
         <div className='space-y-0.5'>
-          <span className='text-[10px] text-gray-500 uppercase'>Letter Spacing</span>
+          <label className='text-[10px] text-gray-500 uppercase' htmlFor={letterSpacingId}>
+            Letter Spacing
+          </label>
           <Input
+            id={letterSpacingId}
             type='number'
             value={(typo['letterSpacing'] as number) ?? 0}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
@@ -84,10 +106,13 @@ export function TypographyField(): React.ReactNode {
         </div>
       </div>
       <div className='space-y-0.5'>
-        <span className='text-[10px] text-gray-500 uppercase'>Text Color</span>
+        <label className='text-[10px] text-gray-500 uppercase' htmlFor={colorValueId}>
+          Text Color
+        </label>
         <div className='flex items-center gap-2'>
           <input
             type='color'
+            id={colorPickerId}
             value={(typo['textColor'] as string) ?? '#ffffff'}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
               update('textColor', e.target.value)
@@ -96,6 +121,7 @@ export function TypographyField(): React.ReactNode {
             aria-label={buildAriaLabel('text color picker')}
           />
           <Input
+            id={colorValueId}
             value={(typo['textColor'] as string) ?? '#ffffff'}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
               update('textColor', e.target.value)

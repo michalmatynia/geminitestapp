@@ -276,11 +276,6 @@ export const kangurAiTutorContentSchema = z.object({
       prompt: tutorCopySchema,
       summaryChip: tutorCopySchema,
     }),
-    toLesson: z.object({
-      label: tutorCopySchema,
-      prompt: tutorCopySchema,
-      summaryChip: tutorCopySchema,
-    }),
   }),
   quickActions: z.object({
     review: z.object({
@@ -336,8 +331,6 @@ export const kangurAiTutorContentSchema = z.object({
     selectedTextGentle: tutorCopySchema,
     bridgeToGameCoach: tutorCopySchema,
     bridgeToGameGentle: tutorCopySchema,
-    bridgeToLessonCoach: tutorCopySchema,
-    bridgeToLessonGentle: tutorCopySchema,
     reviewCoach: tutorCopySchema,
     reviewGentle: tutorCopySchema,
     stepByStepCoach: tutorCopySchema,
@@ -354,7 +347,6 @@ export const kangurAiTutorContentSchema = z.object({
     selectedText: tutorCopySchema,
     activeQuestion: tutorCopySchema,
     bridgeToGame: tutorCopySchema,
-    bridgeToLesson: tutorCopySchema,
     reviewQuestion: tutorCopySchema,
     reviewGame: tutorCopySchema,
     reviewTest: tutorCopySchema,
@@ -369,7 +361,6 @@ export const kangurAiTutorContentSchema = z.object({
     selectedText: tutorCopySchema,
     activeQuestion: tutorCopySchema,
     bridgeToGame: tutorCopySchema,
-    bridgeToLesson: tutorCopySchema,
     reviewQuestion: tutorCopySchema,
     reviewGame: tutorCopySchema,
     reviewTest: tutorCopySchema,
@@ -840,11 +831,6 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
         prompt: 'Pomóż mi wybrać jeden konkretny trening po tej lekcji: {title}.',
         summaryChip: 'Most: po lekcji',
       },
-      toLesson: {
-        label: 'Po treningu: lekcja',
-        prompt: 'Pomóż mi wybrać jedną konkretną lekcję po tym treningu.',
-        summaryChip: 'Most: po treningu',
-      },
     },
     quickActions: {
       review: {
@@ -909,9 +895,6 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
       bridgeToGameCoach:
         'Tutor proponuje od razu zamienić tę lekcję w jeden konkretny trening.',
       bridgeToGameGentle: 'Zacznij od jednego konkretnego treningu po tej lekcji.',
-      bridgeToLessonCoach:
-        'Tutor proponuje domknąć ten trening jedną pasującą lekcją.',
-      bridgeToLessonGentle: 'Zapytaj o jedną konkretną lekcję po tym treningu.',
       reviewCoach:
         'Tutor sugeruje najpierw omówić próbę, a dopiero potem wybierać dalsze ćwiczenie.',
       reviewGentle: 'Najspokojniej będzie zacząć od krótkiego omówienia ostatniej próby.',
@@ -935,8 +918,6 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
         'Poproś o wskazówkę do tego pytania. Tutor nie poda gotowej odpowiedzi.',
       bridgeToGame:
         'Masz już wykonany poprzedni krok. Zapytaj o jeden konkretny trening po tej lekcji.',
-      bridgeToLesson:
-        'Masz już wykonany poprzedni krok. Zapytaj o jedną konkretną lekcję po tym treningu.',
       reviewQuestion:
         'Poproś o omówienie odpowiedzi albo o kolejny krok do ćwiczenia.',
       reviewGame: 'Poproś o omówienie gry albo plan następnych ćwiczeń.',
@@ -952,7 +933,6 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
       selectedText: 'Zapytaj o zaznaczony fragment',
       activeQuestion: 'Poproś o wskazówkę do pytania',
       bridgeToGame: 'Zapytaj o trening po tej lekcji',
-      bridgeToLesson: 'Zapytaj o lekcję po tym treningu',
       reviewQuestion: 'Poproś o omówienie odpowiedzi',
       reviewGame: 'Zapytaj o grę lub następny krok',
       reviewTest: 'Zapytaj o wynik lub następny krok',

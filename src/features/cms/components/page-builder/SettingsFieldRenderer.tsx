@@ -41,18 +41,22 @@ function CompositeFieldProvider(props: {
   value: unknown;
   onChange: (value: unknown) => void;
   fieldLabel: string;
+  fieldId: string;
   children: React.ReactNode;
 }): React.JSX.Element {
-  const { value, onChange, fieldLabel, children } = props;
+  const { value, onChange, fieldLabel, fieldId, children } = props;
 
   const contextValue = useMemo(
     (): CompositeFieldContextValue => ({
       value,
       onChange,
       fieldLabel,
+      fieldId,
       buildAriaLabel: (suffix: string): string => `${fieldLabel} ${suffix}`.trim(),
+      buildControlId: (suffix: string): string =>
+        `${fieldId}-${suffix.replace(/[^a-zA-Z0-9-_]/g, '-').toLowerCase()}`,
     }),
-    [fieldLabel, onChange, value]
+    [fieldId, fieldLabel, onChange, value]
   );
 
   return (
@@ -99,6 +103,11 @@ export function SettingsFieldRenderer(props: {
     },
     [field.key, onChange]
   );
+  const generatedId = React.useId().replace(/:/g, '');
+  const controlId = useMemo(
+    () => `settings-field-${String(field.key).replace(/[^a-zA-Z0-9-_]/g, '-')}-${generatedId}`,
+    [field.key, generatedId]
+  );
 
   const imageValue = typeof value === 'string' ? value : '';
   const openColorSchemeCreator = useCallback((): void => {
@@ -114,7 +123,10 @@ export function SettingsFieldRenderer(props: {
     <div className='space-y-1.5'>
       {field.type === 'text' && (
         <>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+          <Label
+            className='text-xs font-medium uppercase tracking-wide text-gray-400'
+            htmlFor={controlId}
+          >
             {field.label}
           </Label>
           <TextField
@@ -123,22 +135,34 @@ export function SettingsFieldRenderer(props: {
             onChange={handleChange}
             disabled={isDisabled}
             ariaLabel={field.label}
+            id={controlId}
           />
         </>
       )}
 
       {field.type === 'link' && (
         <>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+          <Label
+            className='text-xs font-medium uppercase tracking-wide text-gray-400'
+            htmlFor={controlId}
+          >
             {field.label}
           </Label>
-          <LinkField value={(value as string) ?? ''} onChange={handleChange} ariaLabel={field.label} />
+          <LinkField
+            value={(value as string) ?? ''}
+            onChange={handleChange}
+            ariaLabel={field.label}
+            id={controlId}
+          />
         </>
       )}
 
       {field.type === 'number' && (
         <>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+          <Label
+            className='text-xs font-medium uppercase tracking-wide text-gray-400'
+            htmlFor={controlId}
+          >
             {field.label}
           </Label>
           <NumberField
@@ -147,6 +171,7 @@ export function SettingsFieldRenderer(props: {
             onChange={handleChange}
             disabled={isDisabled}
             ariaLabel={field.label}
+            id={controlId}
             {...(field.min !== undefined && { min: field.min })}
             {...(field.max !== undefined && { max: field.max })}
           />
@@ -155,7 +180,10 @@ export function SettingsFieldRenderer(props: {
 
       {field.type === 'select' && (
         <>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+          <Label
+            className='text-xs font-medium uppercase tracking-wide text-gray-400'
+            htmlFor={controlId}
+          >
             {field.label}
           </Label>
           <SelectSimple
@@ -174,6 +202,7 @@ export function SettingsFieldRenderer(props: {
             }))}
             disabled={isDisabled}
             ariaLabel={field.label}
+            id={controlId}
             triggerClassName='h-7 bg-card/40 text-xs mt-1'
           />
         </>
@@ -181,10 +210,13 @@ export function SettingsFieldRenderer(props: {
 
       {field.type === 'alignment' && (
         <>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+          <Label
+            className='text-xs font-medium uppercase tracking-wide text-gray-400'
+            id={`${controlId}-label`}
+          >
             {field.label}
           </Label>
-          <div className='grid grid-cols-3 gap-2'>
+          <div className='grid grid-cols-3 gap-2' aria-labelledby={`${controlId}-label`}>
             {(
               field.options ?? [
                 { label: 'Left', value: 'left' },
@@ -273,7 +305,10 @@ export function SettingsFieldRenderer(props: {
 
       {field.type === 'range' && (
         <>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+          <Label
+            className='text-xs font-medium uppercase tracking-wide text-gray-400'
+            htmlFor={controlId}
+          >
             {field.label}
           </Label>
           <RangeField
@@ -284,13 +319,17 @@ export function SettingsFieldRenderer(props: {
             max={field.max ?? 12}
             disabled={isDisabled}
             ariaLabel={field.label}
+            id={controlId}
           />
         </>
       )}
 
       {field.type === 'color-scheme' && (
         <div className='space-y-2'>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+          <Label
+            className='text-xs font-medium uppercase tracking-wide text-gray-400'
+            htmlFor={controlId}
+          >
             {field.label}
           </Label>
           <SelectSimple
@@ -303,6 +342,7 @@ export function SettingsFieldRenderer(props: {
             }))}
             disabled={isDisabled}
             ariaLabel={field.label}
+            id={controlId}
             triggerClassName='h-7 bg-card/40 text-xs mt-1'
           />
           <div className='flex items-center justify-between text-[11px] text-gray-500'>
@@ -323,7 +363,10 @@ export function SettingsFieldRenderer(props: {
 
       {field.type === 'color' && (
         <>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+          <Label
+            className='text-xs font-medium uppercase tracking-wide text-gray-400'
+            htmlFor={controlId}
+          >
             {field.label}
           </Label>
           <ColorField
@@ -332,13 +375,17 @@ export function SettingsFieldRenderer(props: {
             onChange={handleChange}
             disabled={isDisabled}
             ariaLabel={field.label}
+            id={controlId}
           />
         </>
       )}
 
       {field.type === 'font-family' && (
         <>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+          <Label
+            className='text-xs font-medium uppercase tracking-wide text-gray-400'
+            htmlFor={controlId}
+          >
             {field.label}
           </Label>
           <SelectSimple
@@ -354,6 +401,7 @@ export function SettingsFieldRenderer(props: {
             options={FONT_FAMILY_OPTIONS}
             disabled={isDisabled}
             ariaLabel={field.label}
+            id={controlId}
             triggerClassName='h-7 bg-card/40 text-xs mt-1'
           />
         </>
@@ -361,7 +409,10 @@ export function SettingsFieldRenderer(props: {
 
       {field.type === 'font-weight' && (
         <>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+          <Label
+            className='text-xs font-medium uppercase tracking-wide text-gray-400'
+            htmlFor={controlId}
+          >
             {field.label}
           </Label>
           <SelectSimple
@@ -371,6 +422,7 @@ export function SettingsFieldRenderer(props: {
             options={FONT_WEIGHT_OPTIONS}
             disabled={isDisabled}
             ariaLabel={field.label}
+            id={controlId}
             triggerClassName='h-7 bg-card/40 text-xs mt-1'
           />
         </>
@@ -378,56 +430,106 @@ export function SettingsFieldRenderer(props: {
 
       {field.type === 'spacing' && (
         <>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+          <Label
+            className='text-xs font-medium uppercase tracking-wide text-gray-400'
+            id={`${controlId}-label`}
+          >
             {field.label}
           </Label>
-          <CompositeFieldProvider value={value} onChange={handleChange} fieldLabel={field.label}>
-            <SpacingField />
-          </CompositeFieldProvider>
+          <div role='group' aria-labelledby={`${controlId}-label`}>
+            <CompositeFieldProvider
+              value={value}
+              onChange={handleChange}
+              fieldLabel={field.label}
+              fieldId={controlId}
+            >
+              <SpacingField />
+            </CompositeFieldProvider>
+          </div>
         </>
       )}
 
       {field.type === 'border' && (
         <>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+          <Label
+            className='text-xs font-medium uppercase tracking-wide text-gray-400'
+            id={`${controlId}-label`}
+          >
             {field.label}
           </Label>
-          <CompositeFieldProvider value={value} onChange={handleChange} fieldLabel={field.label}>
-            <BorderField />
-          </CompositeFieldProvider>
+          <div role='group' aria-labelledby={`${controlId}-label`}>
+            <CompositeFieldProvider
+              value={value}
+              onChange={handleChange}
+              fieldLabel={field.label}
+              fieldId={controlId}
+            >
+              <BorderField />
+            </CompositeFieldProvider>
+          </div>
         </>
       )}
 
       {field.type === 'shadow' && (
         <>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+          <Label
+            className='text-xs font-medium uppercase tracking-wide text-gray-400'
+            id={`${controlId}-label`}
+          >
             {field.label}
           </Label>
-          <CompositeFieldProvider value={value} onChange={handleChange} fieldLabel={field.label}>
-            <ShadowField />
-          </CompositeFieldProvider>
+          <div role='group' aria-labelledby={`${controlId}-label`}>
+            <CompositeFieldProvider
+              value={value}
+              onChange={handleChange}
+              fieldLabel={field.label}
+              fieldId={controlId}
+            >
+              <ShadowField />
+            </CompositeFieldProvider>
+          </div>
         </>
       )}
 
       {field.type === 'background' && (
         <>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+          <Label
+            className='text-xs font-medium uppercase tracking-wide text-gray-400'
+            id={`${controlId}-label`}
+          >
             {field.label}
           </Label>
-          <CompositeFieldProvider value={value} onChange={handleChange} fieldLabel={field.label}>
-            <BackgroundField />
-          </CompositeFieldProvider>
+          <div role='group' aria-labelledby={`${controlId}-label`}>
+            <CompositeFieldProvider
+              value={value}
+              onChange={handleChange}
+              fieldLabel={field.label}
+              fieldId={controlId}
+            >
+              <BackgroundField />
+            </CompositeFieldProvider>
+          </div>
         </>
       )}
 
       {field.type === 'typography' && (
         <>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+          <Label
+            className='text-xs font-medium uppercase tracking-wide text-gray-400'
+            id={`${controlId}-label`}
+          >
             {field.label}
           </Label>
-          <CompositeFieldProvider value={value} onChange={handleChange} fieldLabel={field.label}>
-            <TypographyField />
-          </CompositeFieldProvider>
+          <div role='group' aria-labelledby={`${controlId}-label`}>
+            <CompositeFieldProvider
+              value={value}
+              onChange={handleChange}
+              fieldLabel={field.label}
+              fieldId={controlId}
+            >
+              <TypographyField />
+            </CompositeFieldProvider>
+          </div>
         </>
       )}
     </div>

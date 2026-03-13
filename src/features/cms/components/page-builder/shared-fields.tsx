@@ -24,6 +24,7 @@ interface FieldProps<T> {
   className?: string;
   disabled?: boolean;
   ariaLabel?: string;
+  id?: string;
 }
 
 export function ImagePickerField(props: FieldProps<string>): React.JSX.Element {
@@ -256,11 +257,13 @@ export function Asset3DPickerField(props: FieldProps<string>): React.JSX.Element
 }
 
 export function ColorField(props: FieldProps<string>): React.JSX.Element {
-  const { label, value, onChange, className, disabled, ariaLabel } = props;
+  const { label, value, onChange, className, disabled, ariaLabel, id } = props;
   const resolvedLabel = ariaLabel ?? label ?? 'Color';
+  const generatedId = React.useId().replace(/:/g, '');
+  const controlId = id ?? `color-field-${generatedId}`;
 
   return (
-    <FormField label={label} className={className}>
+    <FormField label={label} className={className} controlId={controlId}>
       <div className='flex items-center gap-2 mt-1'>
         <div
           className={cn(
@@ -275,10 +278,12 @@ export function ColorField(props: FieldProps<string>): React.JSX.Element {
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
             className='absolute inset-0 size-full cursor-pointer opacity-0'
             disabled={disabled}
+            id={`${controlId}-picker`}
           />
           <div className='size-full rounded' style={{ backgroundColor: value || '#ffffff' }} />
         </div>
         <Input
+          id={controlId}
           value={value || '#ffffff'}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
           className='h-7 flex-1 bg-card/40 text-xs font-mono'
@@ -299,13 +304,16 @@ export function NumberField(
     step?: number;
   }
 ): React.JSX.Element {
-  const { label, value, onChange, className, disabled, suffix, min, max, step } = props;
+  const { label, value, onChange, className, disabled, suffix, min, max, step, id } = props;
   const resolvedLabel = props.ariaLabel ?? label ?? 'Number value';
+  const generatedId = React.useId().replace(/:/g, '');
+  const controlId = id ?? `number-field-${generatedId}`;
 
   return (
-    <FormField label={label} className={className}>
+    <FormField label={label} className={className} controlId={controlId}>
       <div className='flex items-center gap-1.5 mt-1'>
         <Input
+          id={controlId}
           type='number'
           value={value ?? 0}
           min={min}
@@ -332,14 +340,17 @@ export function RangeField(
     suffix?: string;
   }
 ): React.JSX.Element {
-  const { label, value, onChange, className, disabled, min, max, step, suffix } = props;
+  const { label, value, onChange, className, disabled, min, max, step, suffix, id } = props;
   const resolvedLabel = props.ariaLabel ?? label ?? 'Range value';
+  const generatedId = React.useId().replace(/:/g, '');
+  const controlId = id ?? `range-field-${generatedId}`;
 
   const safeValue = Number.isFinite(value) ? value : min;
   return (
     <FormField
       label={label}
       className={className}
+      controlId={controlId}
       actions={
         <span className='text-[11px] text-gray-300'>
           {safeValue}
@@ -348,6 +359,7 @@ export function RangeField(
       }
     >
       <input
+        id={controlId}
         type='range'
         min={min}
         max={max}
@@ -370,11 +382,13 @@ export function SelectField(
     placeholder?: string;
   }
 ): React.JSX.Element {
-  const { label, value, onChange, options, className, disabled, placeholder } = props;
+  const { label, value, onChange, options, className, disabled, placeholder, id } = props;
   const resolvedLabel = props.ariaLabel ?? label;
+  const generatedId = React.useId().replace(/:/g, '');
+  const controlId = id ?? `select-field-${generatedId}`;
 
   return (
-    <FormField label={label} className={className}>
+    <FormField label={label} className={className} controlId={controlId}>
       <SelectSimple
         size='sm'
         value={value}
@@ -383,6 +397,7 @@ export function SelectField(
         options={options}
         placeholder={placeholder}
         ariaLabel={resolvedLabel}
+        id={controlId}
         triggerClassName='h-7 bg-card/40 text-xs mt-1'
       />
     </FormField>
@@ -417,12 +432,15 @@ export function CheckboxField(props: {
 }
 
 export function TextField(props: FieldProps<string> & { placeholder?: string }): React.JSX.Element {
-  const { label, value, onChange, className, disabled, placeholder, ariaLabel } = props;
+  const { label, value, onChange, className, disabled, placeholder, ariaLabel, id } = props;
   const resolvedLabel = ariaLabel ?? label;
+  const generatedId = React.useId().replace(/:/g, '');
+  const controlId = id ?? `text-field-${generatedId}`;
 
   return (
-    <FormField label={label} className={className}>
+    <FormField label={label} className={className} controlId={controlId}>
       <Input
+        id={controlId}
         value={value || ''}
         onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
         placeholder={placeholder}

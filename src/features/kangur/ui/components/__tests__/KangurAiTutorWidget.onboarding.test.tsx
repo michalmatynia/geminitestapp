@@ -1019,7 +1019,7 @@ describe('KangurAiTutorWidget - Onboarding', () => {
     ).toBeVisible();
     expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Tak' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tak, pomóż mi się zalogować.' }));
     rerender(buildTutorAnchorsTree(renderOptions));
 
     expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();

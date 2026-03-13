@@ -68,6 +68,12 @@ export const buildAdminNav = (handlers: {
             href: '/admin/kangur/observability',
           },
           {
+            id: 'workspace/kangur/appearance',
+            label: 'Appearance',
+            href: '/admin/kangur/appearance',
+            keywords: ['theme', 'theming', 'styling', 'brand'],
+          },
+          {
             id: 'workspace/kangur/settings',
             label: 'Settings',
             href: '/admin/kangur/settings',

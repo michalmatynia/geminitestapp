@@ -1152,7 +1152,7 @@ describe('KangurAiTutorWidget', () => {
     ).toBeVisible();
     expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Tak' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tak, pomóż mi się zalogować.' }));
     rerender(buildTutorAnchorsTree(renderOptions));
 
     expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
@@ -1216,7 +1216,7 @@ describe('KangurAiTutorWidget', () => {
     expect(
       screen.getByText('Mogę pokazać, gdzie się zalogować albo jak założyć konto rodzica.')
     ).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Tak' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Tak, pomóż mi się zalogować.' })).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Nie' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Pokaż logowanie' })).not.toBeInTheDocument();
     expect(
@@ -1566,7 +1566,7 @@ describe('KangurAiTutorWidget', () => {
       })
     );
   });
-  it('accepts the anonymous login prompt by opening inline auth fields inside the tutor panel', async () => {
+  it('accepts the anonymous login prompt by opening the login modal', async () => {
     useOptionalKangurAuthMock.mockReturnValue({
       isAuthenticated: false,
       isLoadingAuth: false,
@@ -1632,8 +1632,8 @@ describe('KangurAiTutorWidget', () => {
       };
     });
     const { rerender } = renderWithTutorAnchors(renderOptions);
-    fireEvent.click(await screen.findByRole('button', { name: 'Tak' }));
-    expect(openLoginModalMock).not.toHaveBeenCalled();
+    fireEvent.click(await screen.findByRole('button', { name: 'Tak, pomóż mi się zalogować.' }));
+    expect(openLoginModalMock).toHaveBeenCalledWith(expect.any(String), { authMode: 'sign-in' });
     rerender(buildTutorAnchorsTree(renderOptions));
     await waitFor(() =>
       expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument()
@@ -1652,10 +1652,8 @@ describe('KangurAiTutorWidget', () => {
       screen.queryByRole('button', { name: 'Pokaż tworzenie konta' })
     ).not.toBeInTheDocument();
     expect(navigateToLoginMock).not.toHaveBeenCalled();
-    expect(await screen.findByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-guest-auth-form')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-guest-auth-login')).toBeVisible();
-    expect(screen.getByTestId('kangur-ai-tutor-guest-auth-password')).toBeVisible();
+    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-guest-auth-form')).not.toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-guided-login-help')).not.toBeInTheDocument();
   });
   it('reopens the canonical onboarding modal from the avatar after closing the guest intro', async () => {
@@ -1790,7 +1788,7 @@ describe('KangurAiTutorWidget', () => {
     expect(guestIntro).toHaveAttribute('data-modal-motion', 'fade-only');
     expect(guestIntro).toHaveAttribute('data-modal-actions', 'single-primary');
     expect(guestIntro).toHaveAttribute('data-modal-card', 'warm-glow-soft');
-    expect(screen.getByRole('button', { name: 'Tak' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Tak, pomóż mi się zalogować.' })).toBeVisible();
     expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-ask-modal')).not.toBeInTheDocument();
   });
@@ -1907,7 +1905,7 @@ describe('KangurAiTutorWidget', () => {
       })
     );
     render(<KangurAiTutorWidget />);
-    expect(await screen.findByRole('button', { name: 'Tak' })).toBeVisible();
+    expect(await screen.findByRole('button', { name: 'Tak, pomóż mi się zalogować.' })).toBeVisible();
     expect(screen.getByTestId('kangur-ai-tutor-guest-intro-close')).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Nie' })).not.toBeInTheDocument();
   });
@@ -1998,7 +1996,7 @@ describe('KangurAiTutorWidget', () => {
     expect(utterance.text).toContain('Dodawanie podstawy');
     expect(utterance.text).toContain('Dodawanie łączy liczby i tworzy sumę.');
     expect(utterance.text).not.toContain('Otwórz lekcję');
-    expect(utterance.text).not.toContain('Tak');
+    expect(utterance.text).not.toContain('Tak, pomóż mi się zalogować.');
     expect(utterance.text).not.toContain('Jeszcze nie');
     expect(utterance.text).not.toContain('Wyłącz');
     expect(utterance.text).not.toContain('Czytaj');

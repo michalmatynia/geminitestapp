@@ -64,6 +64,9 @@ const nextConfig = {
     // Default proxy body clone limit (~10MB) is too low for multi-image product forms.
     // Raise it so multipart requests don't fail before route handlers read formData().
     proxyClientMaxBodySize: '50mb',
+    // Reduce memory usage during builds
+    workerThreads: false,
+    cpus: 1,
     optimizePackageImports: [
       'lucide-react',
       '@radix-ui/react-alert-dialog',
@@ -125,6 +128,14 @@ const nextConfig = {
     },
   },
   webpack: (config, { isServer, webpack }) => {
+    // Reduce memory usage
+    config.optimization = config.optimization || {};
+    config.optimization.moduleIds = 'deterministic';
+    config.optimization.minimize = process.env.NODE_ENV === 'production';
+    
+    // Limit parallel processing to reduce memory
+    config.parallelism = 1;
+    
     config.resolve ??= {};
     config.resolve.alias ??= {};
     config.resolve.alias['@docs'] = path.resolve(__dirname, 'docs');

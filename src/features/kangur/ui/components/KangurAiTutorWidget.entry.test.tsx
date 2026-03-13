@@ -84,7 +84,7 @@ describe('useKangurAiTutorGuestIntroFlow', () => {
     expect(input.setCanonicalTutorModalVisible).not.toHaveBeenCalled();
   });
 
-  it('opens the chat and shows the inline auth fields after accepting the guest intro', () => {
+  it('opens the chat and closes the guest intro after accepting the guest intro', () => {
     const input = createGuestIntroFlowInput();
 
     const { result } = renderHook(() => useKangurAiTutorGuestIntroFlow(input));
@@ -92,7 +92,7 @@ describe('useKangurAiTutorGuestIntroFlow', () => {
     result.current.handleGuestIntroAccept();
 
     expect(input.handleOpenChat).toHaveBeenCalledWith('toggle');
-    expect(input.setGuestAuthFormVisible).toHaveBeenCalledWith(true);
+    expect(input.setGuestAuthFormVisible).not.toHaveBeenCalled();
     expect(input.setGuidedTutorTarget).not.toHaveBeenCalled();
     expect(input.setCanonicalTutorModalVisible).toHaveBeenCalledWith(false);
     expect(input.setGuestIntroVisible).toHaveBeenCalledWith(false);

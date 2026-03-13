@@ -12,51 +12,36 @@ export {
   KANGUR_THEME_SETTINGS_KEY,
 };
 
-/** Shared shape/layout overrides applied to both day and night themes. */
-const KANGUR_SHAPE_OVERRIDES = {
-  headingFont: 'system-ui, sans-serif',
-  bodyFont: 'system-ui, sans-serif',
-  maxContentWidth: 1440,
-  gridGutter: 24,
-  containerPaddingInner: 24,
-  pagePadding: 32,
-  pagePaddingTop: 40,
-  pagePaddingRight: 32,
-  pagePaddingBottom: 80,
-  pagePaddingLeft: 32,
-  containerRadius: 26,
-  cardRadius: 26,
-  btnRadius: 999,
-  pillRadius: 20,
-  pillPaddingX: 16,
-  pillPaddingY: 10,
-  pillFontSize: 14,
-  btnPaddingX: 20,
-  btnPaddingY: 10,
-  btnFontSize: 14,
-  inputHeight: 50,
-  inputRadius: 22,
-} as const;
+/**
+ * Factory theme baseline — matches commit dda089a3c2c6956952afc10aac328dd42c65b6a4.
+ * The Kangur defaults were the CMS DEFAULT_THEME with dark mode enabled.
+ */
+const KANGUR_FACTORY_THEME: ThemeSettings = normalizeThemeSettings({
+  ...DEFAULT_THEME,
+  darkMode: true,
+});
+
+/** Factory daily theme (commit dda089a...). */
+export const KANGUR_FACTORY_DAILY_THEME: ThemeSettings = normalizeThemeSettings({
+  ...KANGUR_FACTORY_THEME,
+});
+
+/** Factory nightly theme (commit dda089a...). */
+export const KANGUR_FACTORY_NIGHTLY_THEME: ThemeSettings = normalizeThemeSettings({
+  ...KANGUR_FACTORY_THEME,
+});
 
 /**
- * Default nightly theme — restored to commit 2d7d6e963.
- * Shape/layout overrides on top of DEFAULT_THEME; no explicit color overrides.
+ * Default nightly theme — uses factory nightly baseline.
  * Used as the nightly reset target.
  */
-export const KANGUR_DEFAULT_THEME: ThemeSettings = normalizeThemeSettings({
-  ...DEFAULT_THEME,
-  ...KANGUR_SHAPE_OVERRIDES,
-});
+export const KANGUR_DEFAULT_THEME: ThemeSettings = KANGUR_FACTORY_NIGHTLY_THEME;
 
 /**
- * Default daily theme — restored to commit 2d7d6e963 baseline.
- * Shape/layout overrides on top of DEFAULT_THEME; no explicit color overrides.
+ * Default daily theme — uses factory daily baseline.
  * Used as the daily reset target.
  */
-export const KANGUR_DEFAULT_DAILY_THEME: ThemeSettings = normalizeThemeSettings({
-  ...DEFAULT_THEME,
-  ...KANGUR_SHAPE_OVERRIDES,
-});
+export const KANGUR_DEFAULT_DAILY_THEME: ThemeSettings = KANGUR_FACTORY_DAILY_THEME;
 
 const KANGUR_LEGACY_DEFAULT_PATCH_KEYS: Array<keyof ThemeSettings> = [
   'headingFont',

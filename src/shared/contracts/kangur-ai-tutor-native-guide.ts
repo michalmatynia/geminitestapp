@@ -270,10 +270,11 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           title: 'Postęp',
           shortDescription: 'Postęp pokazuje, jak regularnie i jak skutecznie uczeń pracuje.',
           fullDescription:
-            'Sekcja postępu zbiera informacje o regularności, skuteczności i tempie pracy. Nie służy tylko do patrzenia na wynik. Pomaga zobaczyć, czy uczeń wraca do materiału, czy utrzymuje serię oraz gdzie potrzebuje jeszcze kilku spokojnych powtórek.',
+            'Sekcja postępu zbiera informacje o regularności, skuteczności, tempie i zdobytych punktach. Nie służy tylko do patrzenia na wynik. Pomaga zobaczyć, czy uczeń wraca do materiału, czy utrzymuje serię oraz gdzie potrzebuje jeszcze kilku spokojnych powtórek.',
           hints: [
             'Patrz nie tylko na liczbę punktów, ale tez na regularność.',
             'Jeśli postęp zwalnia, najlepszy ruch to krótka powtórka, a nie losowa nowa aktywność.',
+            'Regularne krótkie sesje dają stabilniejszy postęp niż pojedyncze długie próby.',
           ],
           followUpActions: [
             { id: 'progress-profile', label: 'Otwórz profil', page: 'LearnerProfile' },
@@ -290,10 +291,11 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           title: 'Ranking',
           shortDescription: 'Ranking pokazuje wyniki i pozycje na tle innych prób.',
           fullDescription:
-            'Ranking służy do lekkiej motywacji i porównania wyników, ale nie jest najważniejszym celem nauki. Największa wartość daje wtedy, gdy pomaga zauważyć postęp, a nie tylko miejsce na liście.',
+            'Ranking służy do lekkiej motywacji i porównania wyników, ale nie jest najważniejszym celem nauki. Największa wartość daje wtedy, gdy pomaga zauważyć postęp, a nie tylko miejsce na liście. To dobry sygnał do obserwowania własnej poprawy, a nie do stresowania się wynikiem innych.',
           hints: [
             'Najpierw patrz na własny postęp, dopiero potem na pozycje.',
             'Lepsza regularna seria spokojnych prób niż jedna szybka próba dla rankingu.',
+            'Porównuj się głównie do własnego wyniku z poprzednich dni.',
           ],
           followUpActions: [{ id: 'leaderboard-profile', label: 'Zobacz profil', page: 'LearnerProfile' }],
           triggerPhrases: ['ranking', 'tablica wyników', 'pozycja', 'jak działa ranking'],
@@ -307,10 +309,11 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           title: 'Szybkie akcje',
           shortDescription: 'To skróty do najwazniejszych aktywności w Kangur.',
           fullDescription:
-            'Szybkie akcje są po to, aby uczeń albo rodzic od razu przeszedł do najważniejszego następnego ruchu: lekcji, gry albo innego kroku zaproponowanego przez aplikację. To sekcja do szybkiego startu, bez szukania po całym ekranie.',
+            'Szybkie akcje to skróty do startu: lekcje, szybka gra, trening mieszany lub Kangur Matematyczny. Dzięki temu uczeń albo rodzic może od razu wejść w najważniejszy krok bez szukania po całym ekranie. Najlepiej wybrać akcję zgodną z celem: zrozumieć temat w lekcji albo utrwalić go w grze.',
           hints: [
             'Użyj tej sekcji, gdy nie wiesz, od czego zacząć.',
-            'Najczęściej najlepszy start to lekcja albo krótki trening w grze.',
+            'Gdy potrzebujesz wyjaśnienia, wybierz lekcję. Gdy potrzebujesz praktyki, wybierz grę.',
+            'Jeśli masz misję dnia lub zadanie priorytetowe, zacznij właśnie od niego.',
           ],
           followUpActions: [
             { id: 'home-actions-lessons', label: 'Przejdź do lekcji', page: 'Lessons' },
@@ -327,10 +330,11 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           title: 'Misja dnia',
           shortDescription: 'Misja dnia podpowiada jeden mały, konkretny cel na teraz.',
           fullDescription:
-            'Misja dnia ogranicza wybór do jednego sensownego celu. Zamiast wielu opcji uczeń dostaje jeden jasny kierunek: dokończyć lekcję, zagrać szybki trening albo wrócić do konkretnego obszaru.',
+            'Misja dnia ogranicza wybór do jednego sensownego celu. Zamiast wielu opcji uczeń dostaje jeden jasny kierunek: dokończyć lekcję, zagrać szybki trening albo wrócić do konkretnego obszaru. Misja jest dobierana na podstawie postępu i zadań, więc często jest najlepszym startem sesji.',
           hints: [
             'Traktuj misję jako jeden mały cel, nie jako długą listę zadań.',
             'Po wykonaniu misji warto sprawdzić postęp albo przejść do lekkiej powtórki.',
+            'Jeśli misja jest niejasna, otwórz ją i sprawdź szczegóły kroku.',
           ],
           followUpActions: [
             { id: 'home-quest-lessons', label: 'Realizuj w lekcjach', page: 'Lessons' },
@@ -347,10 +351,11 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           title: 'Priorytetowe zadania',
           shortDescription: 'To najważniejsze rzeczy do zrobienia w tej chwili.',
           fullDescription:
-            'Priorytetowe zadania porządkują to, co uczeń powinien wykonać jako pierwsze. Ta sekcja zbiera zaległe, aktywne albo najbardziej potrzebne kroki, żeby nie trzeba było samemu zgadywać, co teraz da najwięcej korzyści.',
+            'Priorytetowe zadania porządkują to, co uczeń powinien wykonać jako pierwsze. Ta sekcja zbiera zaległe, aktywne albo najbardziej potrzebne kroki, często ustawione przez rodzica lub opiekuna, żeby nie trzeba było samemu zgadywać, co teraz da najwięcej korzyści.',
           hints: [
             'Zacznij od pierwszego zadania, nie od najłatwiejszego na oko.',
             'Jeśli zadanie prowadzi do lekcji, najpierw zrozum temat, potem przejdź do gry.',
+            'Gdy zadanie jest niejasne, wróć do opisu lekcji albo zapytaj rodzica o cel.',
           ],
           followUpActions: [{ id: 'priority-assignments-open', label: 'Przejdź do lekcji', page: 'Lessons' }],
           triggerPhrases: ['zadania priorytetowe', 'priorytety', 'co mam zrobić najpierw'],
@@ -388,11 +393,12 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           shortDescription:
             'Tutaj ustawiasz jedną sesję treningową: poziom, kategorie i liczbę pytań.',
           fullDescription:
-            'Konfiguracja treningu służy do przygotowania jednej rundy ćwiczeń. Uczeń dobiera trudność, zakres kategorii i liczbę pytań, żeby dopasować tempo do aktualnej formy. To dobre miejsce, gdy trzeba zrobić krótszą, celowaną serię zamiast przechodzić przez cały materiał naraz.',
+            'Konfiguracja treningu służy do przygotowania jednej rundy ćwiczeń. Uczeń dobiera trudność, zakres kategorii i liczbę pytań, żeby dopasować tempo do aktualnej formy. To dobre miejsce, gdy trzeba zrobić krótszą, celowaną serię zamiast przechodzić przez cały materiał naraz. Im węższy zakres, tym łatwiej utrzymać dokładność i szybciej zauważyć postęp.',
           hints: [
             'Najpierw wybierz poziom, który pozwoli utrzymać dokładność.',
             'Potem ogranicz kategorie do tego, co uczeń ćwiczy teraz najbardziej.',
             'Na start lepsza jest krótsza seria pytań niż zbyt długa runda bez przerwy.',
+            'Jeśli pojawia się dużo błędów, obniż poziom albo zawęź kategorie.',
           ],
           followUpActions: [{ id: 'game-training-setup-open', label: 'Skonfiguruj trening', page: 'Game' }],
           triggerPhrases: [
@@ -415,10 +421,11 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           shortDescription:
             'Tutaj wybierasz rodzaj gry lub szybkie ćwiczenie najlepiej pasujące do celu.',
           fullDescription:
-            'Wybór rodzaju gry pomaga zdecydować, czy teraz lepszy będzie trening działań, kalendarz, figury albo inna szybka aktywność. Ta sekcja nie sprawdza jeszcze wyniku. Jej rola to skierować ucznia do rodzaju praktyki, który najlepiej utrwali aktualny temat albo rytm nauki.',
+            'Wybór rodzaju gry pomaga zdecydować, czy teraz lepszy będzie trening działań, kalendarz, figury albo inna szybka aktywność. Ta sekcja nie sprawdza jeszcze wyniku. Jej rola to skierować ucznia do rodzaju praktyki, który najlepiej utrwali aktualny temat albo rytm nauki. Warto wracać tutaj zawsze, gdy chcesz zmienić obszar ćwiczeń.',
           hints: [
             'Wybierz aktywność zgodną z tym, co było ostatnio ćwiczone w lekcji.',
             'Jeśli uczeń potrzebuje powtórki podstaw, zacznij od prostszej gry zamiast od trybu konkursowego.',
+            'Skup się na jednym rodzaju ćwiczeń naraz, zamiast mieszać kilka obszarów w jednej sesji.',
           ],
           relatedGames: ['Dodawanie', 'Odejmowanie', 'Kalendarz', 'Figury'],
           followUpActions: [{ id: 'game-operation-selector-open', label: 'Wybierz grę', page: 'Game' }],
@@ -595,10 +602,11 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           shortDescription:
             'To miejsce do zobaczenia, co poszło dobrze i co warto poprawić w kolejnej rundzie.',
           fullDescription:
-            'Omówienie wyniku gry pomaga zauważyć wzór po zakończonej rundzie: czy problemem było tempo, nieuwaga albo konkretny typ zadań. Zamiast patrzeć tylko na liczbę punktów, warto sprawdzić, co było stabilne i jaki jeden ruch poprawi kolejną próbę.',
+            'Omówienie wyniku gry pomaga zauważyć wzór po zakończonej rundzie: czy problemem było tempo, nieuwaga albo konkretny typ zadań. Zamiast patrzeć tylko na liczbę punktów, warto sprawdzić, co było stabilne i jaki jeden ruch poprawi kolejną próbę. Najlepiej wybrać jeden wniosek i zastosować go od razu w kolejnej rundzie.',
           hints: [
             'Nie oceniaj rundy tylko po jednym wyniku. Sprawdź, czy błąd się powtarza.',
             'Po słabszej próbie wybierz jeden konkretny obszar do poprawy, zamiast zmieniać wszystko naraz.',
+            'Jeśli błąd dotyczy podstaw, wróć do lekcji lub łatwiejszego poziomu.',
           ],
           followUpActions: [
             { id: 'game-review-retry', label: 'Spróbuj jeszcze raz', page: 'Game' },
@@ -622,10 +630,11 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           shortDescription:
             'Ta sekcja pokazuje pozycję po zakończonej rundzie i pozwala porównać wynik z innymi próbami.',
           fullDescription:
-            'Ranking po rundzie jest dodatkiem do wyniku gry. Pomaga zobaczyć, jak dana próba wypada na tle innych, ale jego największa wartość polega na motywowaniu do regularnej poprawy, a nie do pogoni za pojedynczym miejscem.',
+            'Ranking po rundzie jest dodatkiem do wyniku gry. Pomaga zobaczyć, jak dana próba wypada na tle innych, ale jego największa wartość polega na motywowaniu do regularnej poprawy, a nie do pogoni za pojedynczym miejscem. Najważniejsze jest porównanie z własnymi poprzednimi wynikami.',
           hints: [
             'Najpierw przeczytaj własny wynik, a dopiero potem patrz na pozycje w rankingu.',
             'Jeśli pozycja jest nizsza niż oczekiwana, potraktuj to jako wskazówkę do spokojnej powtórki, nie jako porażkę.',
+            'Porównuj serie z kilku prób, a nie tylko jedną rundę.',
           ],
           followUpActions: [
             { id: 'game-result-leaderboard-retry', label: 'Spróbuj jeszcze raz', page: 'Game' },
@@ -642,10 +651,11 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           title: 'Podsumowanie gry',
           shortDescription: 'Podsumowanie gry pokazuje, co już wychodzi, a co wymaga jeszcze jednej serii.',
           fullDescription:
-            'Podsumowanie gry zbiera wynik po próbie: skuteczność, tempo i ogólny efekt sesji. Najważniejsze jest tu uchwycenie wzoru: czy uczeń popełnia te same błędy, czy poprawia serię i czy warto jeszcze raz powtórzyć ten sam zakres.',
+            'Podsumowanie gry zbiera wynik po próbie: skuteczność, tempo i ogólny efekt sesji. Najważniejsze jest tu uchwycenie wzoru: czy uczeń popełnia te same błędy, czy poprawia serię i czy warto jeszcze raz powtórzyć ten sam zakres. To moment na decyzję: powtórzyć ten sam poziom, wrócić do lekcji czy zwiększyć trudność.',
           hints: [
             'Jeśli dokładność spada, wróć do wolniejszego tempa.',
             'Jeśli wynik jest stabilny, dopiero wtedy zwiększ trudność albo tempo.',
+            'Wybierz jeden wniosek i zamień go na kolejny krok: powtórka lub nowy zakres.',
           ],
           followUpActions: [{ id: 'game-summary-retry', label: 'Spróbuj jeszcze raz', page: 'Game' }],
           triggerPhrases: ['podsumowanie gry', 'wynik gry', 'co oznacza ten wynik'],
@@ -657,11 +667,12 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           title: 'Ekran testu',
           shortDescription: 'Test służy do sprawdzenia, co uczeń już umie samodzielnie.',
           fullDescription:
-            'Ekran testu sprawdza samodzielne rozumienie i gotowość do rozwiązywania zadań. Test jest bardziej o spokojnym czytaniu i myśleniu niż o tempie. Tutor może tutaj pomagać z orientacją w ekranie i strategią podejścia, ale nie powinien zdradzać odpowiedzi.',
+            'Ekran testu sprawdza samodzielne rozumienie i gotowość do rozwiązywania zadań. Test jest bardziej o spokojnym czytaniu i myśleniu niż o tempie. Tutor może tutaj pomagać z orientacją w ekranie i strategią podejścia, ale nie powinien zdradzać odpowiedzi. Najlepsze efekty daje praca krok po kroku i świadome sprawdzanie wyboru.',
           hints: [
             'Najpierw przeczytaj całe polecenie i wszystkie odpowiedzi.',
             'Spróbuj samodzielnie rozwiązać zadanie przed sięgnięciem po omówienie.',
             'Po odpowiedzi porównaj wynik z omówieniem, zamiast od razu zgadywać kolejną opcję.',
+            'Jeśli utkniesz, wróć do treści zadania i podkreśl kluczowe liczby lub słowa.',
           ],
           relatedTests: ['Powtórka po lekcji', 'Sprawdzenie rozumienia tematu'],
           triggerPhrases: ['test', 'ekran testu', 'jak działa ten test', 'na czym polega ten test'],
@@ -701,10 +712,11 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           title: 'Podsumowanie testu',
           shortDescription: 'Podsumowanie testu pokazuje wynik, ale przede wszystkim kierunek dalszej pracy.',
           fullDescription:
-            'Podsumowanie testu zbiera wynik całej próby i pomaga zauważyć, gdzie uczeń radził sobie dobrze, a gdzie potrzebuje jeszcze powtórki. Nie chodzi tylko o końcowy procent. Ta sekcja podpowiada, czy najlepiej wrócić do lekcji, czy zrobić jeszcze jedną próbę.',
+            'Podsumowanie testu zbiera wynik całej próby i pomaga zauważyć, gdzie uczeń radził sobie dobrze, a gdzie potrzebuje jeszcze powtórki. Nie chodzi tylko o końcowy procent. Ta sekcja podpowiada, czy najlepiej wrócić do lekcji, czy zrobić jeszcze jedną próbę. Warto wybrać jeden temat do poprawy zamiast próbować wszystko naraz.',
           hints: [
             'Patrz na błędy jako wskazówkę, do czego wrócić, a nie jako porażkę.',
             'Po słabszym teście najlepszy ruch to krótka powtórka konkretnego tematu.',
+            'Po dobrym wyniku spróbuj trudniejszego zakresu lub kolejnego testu.',
           ],
           followUpActions: [{ id: 'test-summary-lessons', label: 'Wróć do lekcji', page: 'Lessons' }],
           triggerPhrases: ['podsumowanie testu', 'wynik testu', 'co oznacza ten wynik'],
@@ -718,11 +730,12 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           title: 'Pytanie testowe',
           shortDescription: 'To miejsce do spokojnego przeczytania treści i samodzielnej próby.',
           fullDescription:
-            'Sekcja pytania testowego pokazuje jedno zadanie wraz z odpowiedziami lub miejscem na rozwiązanie. Najważniejsze jest tutaj spokojne przeczytanie treści, zauważenie danych i dopiero potem wybór odpowiedzi. Tutor może podpowiedzieć strategię czytania i myślenia, ale nie gotowy wynik.',
+            'Sekcja pytania testowego pokazuje jedno zadanie wraz z odpowiedziami lub miejscem na rozwiązanie. Najważniejsze jest tutaj spokojne przeczytanie treści, zauważenie danych i dopiero potem wybór odpowiedzi. Tutor może podpowiedzieć strategię czytania i myślenia, ale nie gotowy wynik. Dobrze działa krótkie streszczenie własnymi słowami przed wyborem odpowiedzi.',
           hints: [
             'Przeczytaj pytanie od początku do końca jeszcze raz, zanim wybierzesz odpowiedź.',
             'Zwracaj uwagę na liczby, jednostki i słowa, które zmieniają sens zadania.',
             'Gdy są odpowiedzi do wyboru, najpierw skreśl te, które na pewno nie pasują.',
+            'Jeśli zadanie ma kilka kroków, zapisz lub powiedz na głos pierwszy krok.',
           ],
           triggerPhrases: ['pytanie testowe', 'jak podejść do pytania', 'co robi ta sekcja pytania'],
           sortOrder: 140,
@@ -736,11 +749,12 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           shortDescription:
             'Ta karta pokazuje aktualnie zaznaczoną odpowiedź przed sprawdzeniem wyniku.',
           fullDescription:
-            'Wybrana odpowiedź w teście to tymczasowy wybór ucznia przed odkryciem poprawnego wyniku. Tutor nie powinien od razu oceniać, czy odpowiedź jest dobra, ale może pomóc zauważyć, co oznacza ten wybór, jak wrócić do treści zadania i co jeszcze sprawdzić przed kliknięciem sprawdzenia.',
+            'Wybrana odpowiedź w teście to tymczasowy wybór ucznia przed odkryciem poprawnego wyniku. Tutor nie powinien od razu oceniać, czy odpowiedź jest dobra, ale może pomóc zauważyć, co oznacza ten wybór, jak wrócić do treści zadania i co jeszcze sprawdzić przed kliknięciem sprawdzenia. To dobry moment na spokojne sprawdzenie obliczeń lub logiki.',
           hints: [
             'Przeczytaj jeszcze raz pytanie i porównaj je tylko z tą jedną zaznaczoną odpowiedzią.',
             'Sprawdź, czy wybrana opcja naprawdę odpowiada na to, o co pyta zadanie, a nie tylko wygląda znajomo.',
             'Jeśli masz wątpliwość, porównaj swój wybór z jedną inną opcją zamiast zgadywać od razu.',
+            'Wróć do danych z treści i sprawdź, czy nie pominąłeś żadnego warunku.',
           ],
           triggerPhrases: [
             'wybrana odpowiedź',
@@ -758,10 +772,11 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           title: 'Omówienie po teście',
           shortDescription: 'Omówienie pomaga zrozumieć błąd i wyciągnąć jeden następny wniosek.',
           fullDescription:
-            'Sekcja omówienia po teście wyjaśnia, co zadziałało, gdzie pojawił się błąd i jaki jeden krok poprawi kolejną próbę. To nie tylko miejsce na zobaczenie prawidłowej odpowiedzi. Najważniejsze jest zrozumienie, dlaczego właśnie taka odpowiedź jest poprawna.',
+            'Sekcja omówienia po teście wyjaśnia, co zadziałało, gdzie pojawił się błąd i jaki jeden krok poprawi kolejną próbę. To nie tylko miejsce na zobaczenie prawidłowej odpowiedzi. Najważniejsze jest zrozumienie, dlaczego właśnie taka odpowiedź jest poprawna oraz jak unikać podobnego błędu w przyszłości.',
           hints: [
             'Najpierw porównaj swój tok myślenia z omówieniem.',
             'Zapisz albo zapamiętaj jeden konkretny błąd, którego chcesz uniknąć następnym razem.',
+            'Jeśli omówienie odnosi się do lekcji, wróć do tej lekcji i przejrzyj jeden przykład.',
           ],
           followUpActions: [{ id: 'test-review-lessons', label: 'Powtórz temat', page: 'Lessons' }],
           triggerPhrases: ['omówienie', 'recenzja odpowiedzi', 'wyjaśnij ten błąd', 'co pokazuje omówienie'],
@@ -775,10 +790,11 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           shortDescription:
             'Profil ucznia zbiera postęp, rekomendacje i historię pracy w jednym miejscu.',
           fullDescription:
-            'Profil ucznia pokazuje, jak wygląda nauka w dłuższej perspektywie. To nie jest pojedyncze zadanie do rozwiązania, tylko panel do czytania postępu, wybierania następnych priorytetów i zauważania, co idzie coraz lepiej.',
+            'Profil ucznia pokazuje, jak wygląda nauka w dłuższej perspektywie. To nie jest pojedyncze zadanie do rozwiązania, tylko panel do czytania postępu, wybierania następnych priorytetów i zauważania, co idzie coraz lepiej. Znajdziesz tu karty z postępem, rekomendacjami, zadaniami, opanowaniem i historią sesji, żeby łatwo znaleźć jeden konkretny krok.',
           hints: [
             'Najpierw spójrz na ogólny postęp, a dopiero potem przejdź do szczegółowych kart.',
             'To dobre miejsce, by zdecydować, czy lepszy będzie powrót do lekcji, czy kolejna próba w grze.',
+            'Wybierz jedną kartę i wróć tutaj po wykonaniu wskazanego kroku.',
           ],
           followUpActions: [
             { id: 'profile-overview-lessons', label: 'Wróć do lekcji', page: 'Lessons' },
@@ -873,10 +889,11 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           shortDescription:
             'Ta sekcja podpowiada, jaki następny krok najlepiej pasuje do obecnego postępu ucznia.',
           fullDescription:
-            'Rekomendacje porządkują kolejne ruchy: która lekcja, jaka gra albo jaki powrót da teraz najwięcej korzyści. Ich celem jest ograniczenie chaosu i wskazanie jednego sensownego priorytetu.',
+            'Rekomendacje porządkują kolejne ruchy: która lekcja, jaka gra albo jaki powrót da teraz najwięcej korzyści. Powstają na podstawie ostatnich sesji, wyników i zadań, aby szybko wskazać jeden sensowny priorytet.',
           hints: [
             'Najlepiej wybrać jedną rekomendację i domknąć ją do końca, zamiast otwierać kilka naraz.',
             'Jeśli rekomendacja pokrywa się z ostatnim słabszym wynikiem, zacznij właśnie od niej.',
+            'Po wykonaniu rekomendacji wróć, by sprawdzić następny krok.',
           ],
           followUpActions: [{ id: 'profile-recommendations-open', label: 'Otwórz rekomendacje', page: 'LearnerProfile' }],
           triggerPhrases: ['rekomendacje', 'co dalej dla ucznia', 'jaki następny krok wybrać'],
@@ -966,10 +983,11 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           shortDescription:
             'Panel rodzica zbiera nadzór nad uczniem: postęp, wyniki, zadania i ustawienia profilu.',
           fullDescription:
-            'Panel rodzica nie służy do rozwiązywania zadań, tylko do czytania obrazu nauki i ustawiania kolejnych priorytetów. To miejsce do spokojnego sprawdzenia, co dzieje się z uczniem i jaki następny ruch ma największy sens.',
+            'Panel rodzica nie służy do rozwiązywania zadań, tylko do czytania obrazu nauki i ustawiania kolejnych priorytetów. To miejsce do spokojnego sprawdzenia, co dzieje się z uczniem i jaki następny ruch ma największy sens. W tym panelu rodzic może też planować zadania oraz ustalać, na czym uczeń ma się skupić w najbliższej sesji.',
           hints: [
             'Najpierw wybierz zakładkę zgodną z tym, czego chcesz się dowiedzieć: postęp, wyniki, zadania albo Tutor-AI.',
             'Najlepiej wyciągać jeden konkretny wniosek i od razu zamieniać go na działanie dla ucznia.',
+            'Zanim przejdziesz do szczegółów, upewnij się, że wybrany jest właściwy uczeń.',
           ],
           followUpActions: [
             { id: 'parent-dashboard-overview-profile', label: 'Zobacz profil ucznia', page: 'LearnerProfile' },
@@ -1102,10 +1120,11 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           shortDescription:
             'Ta zakładka pokazuje zadania przypisane uczniowi i pomaga ustawić priorytety.',
           fullDescription:
-            'Zakładka zadań w panelu rodzica służy do planowania najbliższej pracy ucznia. Pokazuje, co jest aktywne, co wymaga pilnego domknięcia i jaki obszar nauki powinien mieć teraz pierwszeństwo.',
+            'Zakładka zadań w panelu rodzica służy do planowania najbliższej pracy ucznia. Pokazuje, co jest aktywne, co wymaga pilnego domknięcia i jaki obszar nauki powinien mieć teraz pierwszeństwo. To tutaj najłatwiej przekształcić obserwacje z wyników w konkretne zadania.',
           hints: [
             'Najlepiej utrzymywać jedną główną rzecz do zrobienia, zamiast wielu równoległych priorytetów.',
             'Jeśli zadanie nie pasuje do aktualnego poziomu ucznia, najpierw wróć do profilu i sprawdź opanowanie materiału.',
+            'Po zakończeniu zadania wróć, aby upewnić się, że priorytety są nadal aktualne.',
           ],
           followUpActions: [{ id: 'parent-dashboard-assignments-game', label: 'Przejdź do gry', page: 'Game' }],
           triggerPhrases: ['zadania ucznia w panelu rodzica', 'co jest przypisane', 'priorytety dla ucznia'],
@@ -1138,10 +1157,11 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           shortDescription:
             'To wspólny ekran wejścia do Kangur dla ucznia i rodzica, z miejscem na logowanie oraz założenie konta rodzica.',
           fullDescription:
-            'Ekran logowania porządkuje dwa scenariusze: uczeń wchodzi nickiem i hasłem, a rodzic emailem i hasłem albo zakłada nowe konto. Tutor może tu tłumaczyć, które pole do czego służy, czym różni się logowanie ucznia od rodzica i kiedy trzeba przełączyć formularz na tworzenie konta.',
+            'Ekran logowania porządkuje dwa scenariusze: uczeń wchodzi nickiem i hasłem, a rodzic emailem i hasłem albo zakłada nowe konto. Tutor może tu tłumaczyć, które pole do czego służy, czym różni się logowanie ucznia od rodzica i kiedy trzeba przełączyć formularz na tworzenie konta. To także miejsce, w którym można szybko przejść między logowaniem a rejestracją.',
           hints: [
             'Najpierw ustal, czy loguje się uczeń, czy rodzic, bo od tego zależy jaki identyfikator trzeba wpisać.',
             'Jeśli rodzic nie ma jeszcze konta, przejdź na tryb tworzenia konta zamiast próbować zgadywać hasło.',
+            'Jeśli masz już konto, upewnij się, że formularz jest w trybie logowania.',
           ],
           triggerPhrases: [
             'ekran logowania',
@@ -1161,10 +1181,11 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           shortDescription:
             'Ten formularz zbiera dane potrzebne do wejścia ucznia albo rodzica do aplikacji.',
           fullDescription:
-            'Formularz logowania łączy dwa tryby pracy: zwykle logowanie i założenie konta rodzica. W zależności od wybranego scenariusza pokazuje odpowiednie pola, komunikaty i przycisk akcji, dlatego Tutor-AI powinien wyjaśniać nie tylko gdzie wpisać dane, ale tez jaki tryb jest teraz aktywny.',
+            'Formularz logowania łączy dwa tryby pracy: zwykle logowanie i założenie konta rodzica. W zależności od wybranego scenariusza pokazuje odpowiednie pola, komunikaty i przycisk akcji, dlatego Tutor-AI powinien wyjaśniać nie tylko gdzie wpisać dane, ale tez jaki tryb jest teraz aktywny. Jeśli widzisz dodatkowe pola rejestracji, oznacza to, że formularz jest w trybie tworzenia konta.',
           hints: [
             'Jeśli na formularzu widać tryb tworzenia konta, rodzic powinien wpisać email i nowe hasło, a nie dane ucznia.',
             'Gdy uczeń loguje się nickiem, najważniejsze jest poprawne wpisanie identyfikatora bez spacji.',
+            'Gdy pojawia się błąd, sprawdź czy wybrany jest właściwy tryb: logowanie lub tworzenie konta.',
           ],
           triggerPhrases: [
             'formularz logowania',
@@ -1188,6 +1209,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           hints: [
             'Rodzic wpisuje pełny email z symbolem @.',
             'Uczeń wpisuje swój nick dokładnie tak, jak został zapisany w Kangur.',
+            'Nie dodawaj spacji ani dodatkowych znaków na początku lub końcu wpisu.',
           ],
           triggerPhrases: [
             'pole logowania',
@@ -1206,10 +1228,11 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           shortDescription:
             'Ten przycisk prowadzi rodzica do założenia nowego konta zamiast zwykłego logowania.',
           fullDescription:
-            'Akcja utworzenia konta jest przeznaczona dla rodzica, który jeszcze nie ma danych do logowania. Po jej wybraniu formularz przechodzi w tryb rejestracji i zaczyna prowadzić przez utworzenie konta oraz potwierdzenie emaila.',
+            'Akcja utworzenia konta jest przeznaczona dla rodzica, który jeszcze nie ma danych do logowania. Po jej wybraniu formularz przechodzi w tryb rejestracji i zaczyna prowadzić przez utworzenie konta oraz potwierdzenie emaila. Po zakończeniu rejestracji wraca się do logowania na nowe konto.',
           hints: [
             'Użyj tej akcji wtedy, gdy rodzic wchodzi pierwszy raz i nie ma jeszcze hasła.',
             'Po założeniu konta trzeba zwykle potwierdzić adres email, zanim logowanie zacznie działać.',
+            'Sprawdź skrzynkę pocztową, jeśli potwierdzenie nie pojawia się od razu.',
           ],
           triggerPhrases: [
             'utwórz konto',
@@ -1228,10 +1251,11 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           shortDescription:
             'Ten przycisk prowadzi do wejścia na istniejące konto ucznia albo rodzica.',
           fullDescription:
-            'Akcja logowania służy do przejścia na ekran, na którym wpisuje się istniejące dane dostępowe. Tutor-AI powinien tłumaczyć, że to właściwa droga dla osób, które mają już konto, a nie dla rodzica dopiero tworzącego pierwszy dostęp.',
+            'Akcja logowania służy do przejścia na ekran, na którym wpisuje się istniejące dane dostępowe. Tutor-AI powinien tłumaczyć, że to właściwa droga dla osób, które mają już konto, a nie dla rodzica dopiero tworzącego pierwszy dostęp. Po jej wybraniu formularz powinien pokazywać pola logowania, a nie rejestracji.',
           hints: [
             'Kliknij logowanie, gdy konto jest już założone i trzeba tylko podać dane.',
             'Jeśli rodzic jeszcze nie ma konta, lepszym wyborem będzie akcja utworzenia konta.',
+            'Gdy widzisz pola rejestracji, przełącz się z powrotem na logowanie.',
           ],
           triggerPhrases: [
             'zaloguj się',

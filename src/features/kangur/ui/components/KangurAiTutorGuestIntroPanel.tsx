@@ -1,6 +1,6 @@
 'use client';
 
-import { Send } from 'lucide-react';
+import { Pen } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { createContext, useCallback, useContext, useState } from 'react';
 
@@ -43,7 +43,6 @@ type KangurAiTutorGuestIntroPanelContextValue = {
   panelStyle: CSSProperties;
   prefersReducedMotion: boolean;
   closeAria: string;
-  acceptLabel: string;
   drawLabel: string;
 };
 
@@ -94,39 +93,25 @@ function KangurAiTutorGuestIntroHeader(): JSX.Element {
   );
 }
 
-function KangurAiTutorGuestIntroActions(): JSX.Element {
+function KangurAiTutorGuestIntroActionPill(): JSX.Element {
   const {
-    acceptLabel,
-    drawLabel,
     isAnonymousVisitor,
     onAccept,
-    onDraw,
     onStartChat,
   } = useKangurAiTutorGuestIntroPanelContext();
   const handlePrimaryAction = isAnonymousVisitor ? onStartChat : onAccept;
+  const loginHelpLabel = 'Tak, pomóż mi się zalogować.';
 
   return (
-    <div className='mt-4 flex flex-col justify-stretch gap-2 sm:flex-row sm:justify-end'>
-      <KangurButton
-        data-testid='kangur-ai-tutor-guest-intro-drawing'
-        type='button'
-        size='sm'
-        variant='surface'
-        className='w-full sm:w-auto'
-        onClick={onDraw}
-      >
-        {drawLabel}
-      </KangurButton>
-      <KangurButton
-        type='button'
-        size='sm'
-        variant='primary'
-        className='w-full sm:w-auto'
-        onClick={handlePrimaryAction}
-      >
-        {acceptLabel}
-      </KangurButton>
-    </div>
+    <KangurButton
+      type='button'
+      size='sm'
+      variant='surface'
+      className='h-8 rounded-full px-4 text-[11px] shadow-[0_4px_10px_-8px_rgba(15,23,42,0.1)]'
+      onClick={handlePrimaryAction}
+    >
+      {loginHelpLabel}
+    </KangurButton>
   );
 }
 
@@ -140,6 +125,7 @@ function KangurAiTutorGuestIntroChatInput(): JSX.Element {
     inputPlaceholder,
   } = useKangurAiTutorPanelBodyContext();
   const { inputRef, inputValue, setInputValue } = useKangurAiTutorWidgetStateContext();
+  const { drawLabel, onDraw } = useKangurAiTutorGuestIntroPanelContext();
   const canSubmit = Boolean(inputValue.trim() || drawingImageData);
 
   const handleSubmit = useCallback(() => {
@@ -150,36 +136,39 @@ function KangurAiTutorGuestIntroChatInput(): JSX.Element {
   }, [canSubmit, canSendMessages, handleSend, isLoading]);
 
   return (
-    <div className='mt-4'>
+    <div className='mt-2'>
       <div className='flex items-center gap-2'>
-        <KangurTextField
-          ref={inputRef}
-          value={inputValue}
-          onChange={(event) => setInputValue(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' && !event.shiftKey) {
-              event.preventDefault();
-              handleSubmit();
-            }
-          }}
-          accent='amber'
-          size='sm'
-          className='flex-1 shadow-[0_4px_12px_-8px_rgba(15,23,42,0.06)]'
-          disabled={isLoading || !canSendMessages}
-          placeholder={inputPlaceholder}
-          aria-label={tutorContent.common.questionInputAria}
-        />
-        <KangurButton
-          type='button'
-          size='sm'
-          variant='primary'
-          className='kangur-chat-send-shadow'
-          onClick={handleSubmit}
-          disabled={!canSubmit || isLoading || !canSendMessages}
-          aria-label={tutorContent.common.sendAria}
-        >
-          <Send className='h-3.5 w-3.5' />
-        </KangurButton>
+        <div className='relative flex-1'>
+          <KangurTextField
+            ref={inputRef}
+            value={inputValue}
+            onChange={(event) => setInputValue(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                handleSubmit();
+              }
+            }}
+            accent='amber'
+            size='sm'
+            className='w-full pr-11 shadow-[0_4px_12px_-8px_rgba(15,23,42,0.06)]'
+            disabled={isLoading || !canSendMessages}
+            placeholder={inputPlaceholder}
+            aria-label={tutorContent.common.questionInputAria}
+          />
+          <KangurButton
+            data-testid='kangur-ai-tutor-guest-intro-drawing'
+            type='button'
+            size='sm'
+            variant='surface'
+            className='absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 p-0'
+            disabled={isLoading || !canSendMessages}
+            onClick={onDraw}
+            aria-label={drawLabel}
+          >
+            <Pen className='h-3.5 w-3.5' />
+          </KangurButton>
+        </div>
       </div>
     </div>
   );
@@ -197,7 +186,9 @@ export function KangurAiTutorGuestIntroPanel({
   prefersReducedMotion,
 }: Props): JSX.Element | null {
   const tutorContent = useKangurAiTutorContent();
-  const { setDrawingImageData } = useKangurAiTutorWidgetStateContext();
+  const { guestAuthFormVisible, setDrawingImageData } = useKangurAiTutorWidgetStateContext();
+  const { messages } = useKangurAiTutorPanelBodyContext();
+  const shouldShowMessageList = messages.length > 0 || guestAuthFormVisible;
   const [isDrawingOpen, setIsDrawingOpen] = useState(false);
   const handleDrawOpen = () => setIsDrawingOpen(true);
   const handleDrawClose = () => setIsDrawingOpen(false);
@@ -210,7 +201,6 @@ export function KangurAiTutorGuestIntroPanel({
     <KangurAiTutorGuestIntroPanelContext.Provider
       value={{
         closeAria: tutorContent.guestIntro.closeAria,
-        acceptLabel: tutorContent.guestIntro.acceptLabel,
         guestIntroDescription,
         guestIntroHeadline,
         guestTutorLabel,
@@ -258,11 +248,15 @@ export function KangurAiTutorGuestIntroPanel({
             className='flex min-h-0 max-h-[min(72vh,560px)] flex-col'
           >
             <KangurAiTutorGuestIntroHeader />
-            <div className='mt-4 flex min-h-0 flex-1 flex-col'>
-              <KangurAiTutorMessageList />
+            {shouldShowMessageList ? (
+              <div className='mt-3 flex min-h-0 flex-1 flex-col'>
+                <KangurAiTutorMessageList />
+              </div>
+            ) : null}
+            <div className='mt-2 flex justify-start'>
+              <KangurAiTutorGuestIntroActionPill />
             </div>
             <KangurAiTutorGuestIntroChatInput />
-            <KangurAiTutorGuestIntroActions />
           </KangurAiTutorWarmOverlayPanel>
         </motion.div>
         {isDrawingOpen ? (

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import type { Document, Filter } from 'mongodb';
 
 import { getKangurPageContentStore } from '@/features/kangur/server/page-content-repository';

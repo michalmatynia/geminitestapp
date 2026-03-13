@@ -228,7 +228,6 @@ export function useKangurAiTutorWidgetCoordinator({
 
   const selectionTakeoverText =
     widgetState.selectionGuidanceHandoffText ?? widgetState.selectionResponsePending?.selectedText ?? null;
-  const selectionGuidanceHandoffText = widgetState.selectionGuidanceHandoffText;
   
   const hasSelectionMinimalPanelSurface =
     tutorRuntime.isOpen &&
@@ -409,7 +408,9 @@ export function useKangurAiTutorWidgetCoordinator({
 
   const handleGuestIntroStartChat = useCallback((): void => {
     if (isAnonymousVisitor) {
-      widgetState.setGuestAuthFormVisible(true);
+      guestIntroFlow.handleGuestIntroAcceptSilent();
+      const callbackUrl = typeof window === 'undefined' ? null : window.location.href;
+      loginModal.openLoginModal(callbackUrl, { authMode: 'sign-in' });
       return;
     }
 
@@ -417,7 +418,14 @@ export function useKangurAiTutorWidgetCoordinator({
     if (!tutorRuntime.isOpen) {
       interactions.handleOpenChat('toggle');
     }
-  }, [handleAuthenticatedOnboardingDismiss, interactions, isAnonymousVisitor, tutorRuntime.isOpen, widgetState]);
+  }, [
+    guestIntroFlow,
+    handleAuthenticatedOnboardingDismiss,
+    interactions,
+    isAnonymousVisitor,
+    loginModal,
+    tutorRuntime.isOpen,
+  ]);
 
   const avatarShellActions = useKangurAiTutorAvatarShellActions({
     canonicalTutorModalVisible: widgetState.canonicalTutorModalVisible,

@@ -42,6 +42,10 @@ yarn-error.log*
 next-env.d.ts
 /lib/generated/prisma
 
+# build cache
+.next.cache.config.js
+.eslintcache*
+
 # files
 /public
 

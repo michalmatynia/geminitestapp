@@ -386,32 +386,43 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     startGuidedGuestLogin('create-account');
   }, [setGuestIntroHelpVisible, startGuidedGuestLogin]);
 
+  const finalizeGuestIntroAccept = useCallback(
+    (options?: { openChat?: boolean }): void => {
+      const shouldOpenChat = options?.openChat ?? true;
+      const nextRecord = persistGuestIntroRecord('accepted');
+      setCanonicalTutorModalVisible(false);
+      setGuestIntroRecord(nextRecord);
+      setGuestIntroVisible(false);
+      setGuestIntroHelpVisible(false);
+      trackKangurClientEvent('kangur_ai_tutor_guest_intro_accepted', {
+        hasInteractiveTutor: enabled,
+      });
+      if (shouldOpenChat && !isOpen) {
+        handleOpenChat('toggle');
+      }
+    },
+    [
+      enabled,
+      handleOpenChat,
+      isOpen,
+      setCanonicalTutorModalVisible,
+      setGuestIntroHelpVisible,
+      setGuestIntroRecord,
+      setGuestIntroVisible,
+    ]
+  );
+
   const handleGuestIntroAccept = useCallback((): void => {
-    const nextRecord = persistGuestIntroRecord('accepted');
-    setCanonicalTutorModalVisible(false);
-    setGuestIntroRecord(nextRecord);
-    setGuestIntroVisible(false);
-    setGuestIntroHelpVisible(false);
-    trackKangurClientEvent('kangur_ai_tutor_guest_intro_accepted', {
-      hasInteractiveTutor: enabled,
-    });
-    if (!isOpen) {
-      handleOpenChat('toggle');
-    }
-    setGuestAuthFormVisible(true);
-  }, [
-    enabled,
-    handleOpenChat,
-    isOpen,
-    setCanonicalTutorModalVisible,
-    setGuestAuthFormVisible,
-    setGuestIntroHelpVisible,
-    setGuestIntroRecord,
-    setGuestIntroVisible,
-  ]);
+    finalizeGuestIntroAccept({ openChat: true });
+  }, [finalizeGuestIntroAccept]);
+
+  const handleGuestIntroAcceptSilent = useCallback((): void => {
+    finalizeGuestIntroAccept({ openChat: false });
+  }, [finalizeGuestIntroAccept]);
 
   return {
     handleGuestIntroAccept,
+    handleGuestIntroAcceptSilent,
     handleGuestIntroCreateAccount,
     handleGuestIntroDismiss,
     handleGuestIntroHelpClose,

@@ -6,6 +6,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FONT_OPTIONS, resolveKangurStorefrontAppearance } from '@/features/cms/public';
 import {
   getKangurThemeSettingsKeyForAppearanceMode,
+  KANGUR_FACTORY_DAILY_THEME,
+  KANGUR_FACTORY_NIGHTLY_THEME,
   KANGUR_DEFAULT_DAILY_THEME,
   KANGUR_DEFAULT_THEME,
   KANGUR_DAILY_THEME_SETTINGS_KEY,
@@ -522,10 +524,37 @@ const THEME_SECTIONS: Array<{
 
 const BUILTIN_DAILY_ID = '__daily__';
 const BUILTIN_NIGHTLY_ID = '__nightly__';
+const FACTORY_DAILY_ID = '__factory_daily__';
+const FACTORY_NIGHTLY_ID = '__factory_nightly__';
 
 const SECTION_CARD_CLASS = 'rounded-2xl border-border/60 bg-card/40 shadow-sm';
 
-type ThemeSelectionId = string; // '__daily__' | '__nightly__' | catalog-entry-id
+type ThemeSelectionId = string; // '__daily__' | '__nightly__' | '__factory_*' | catalog-entry-id
+
+// ─── Slot assignment tracking ────────────────────────────────────────────────
+// Stores which named catalog theme is currently assigned to each slot.
+// Null / missing means the slot is using the factory/builtin settings.
+
+const KANGUR_SLOT_ASSIGNMENTS_KEY = 'kangur_cms_slot_assignments_v1';
+
+type SlotAssignment = { id: string; name: string };
+type SlotAssignments = {
+  daily?: SlotAssignment | null;
+  nightly?: SlotAssignment | null;
+};
+
+const parseSlotAssignments = (raw: string | null | undefined): SlotAssignments => {
+  if (!raw) return {};
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as SlotAssignments;
+    }
+  } catch {
+    // ignore malformed
+  }
+  return {};
+};
 
 // ─── Live preview panel ───────────────────────────────────────────────────────
 
@@ -768,14 +797,47 @@ function KangurThemePreviewPanel({
 const resolveDefaultForBuiltin = (id: ThemeSelectionId): ThemeSettings =>
   id === BUILTIN_NIGHTLY_ID ? KANGUR_DEFAULT_THEME : KANGUR_DEFAULT_DAILY_THEME;
 
+const resolveFactoryTheme = (id: ThemeSelectionId): ThemeSettings =>
+  id === FACTORY_NIGHTLY_ID ? KANGUR_FACTORY_NIGHTLY_THEME : KANGUR_FACTORY_DAILY_THEME;
+
+// ─── Slot status badge ────────────────────────────────────────────────────────
+
+function SlotStatusBadge({
+  slotLabel,
+  themeLabel,
+  isActive,
+}: {
+  slotLabel: string;
+  themeLabel: string;
+  isActive: boolean;
+}): React.JSX.Element {
+  return (
+    <span className='flex items-center gap-1.5 text-xs'>
+      <span className='text-muted-foreground'>{slotLabel}:</span>
+      <span
+        className={[
+          'rounded-full px-2 py-0.5 font-medium',
+          isActive
+            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+            : themeLabel === 'Fabryczny'
+              ? 'bg-muted/60 text-muted-foreground'
+              : 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+        ].join(' ')}
+      >
+        {themeLabel}{isActive ? ' \u2713' : ''}
+      </span>
+    </span>
+  );
+}
+
 // ─── Create Theme Dialog ─────────────────────────────────────────────────────
 
 type StartFrom = 'daily' | 'nightly' | 'current';
 
 const START_FROM_OPTIONS: Array<{ value: StartFrom; label: string }> = [
   { value: 'current', label: 'Current draft settings' },
-  { value: 'daily', label: 'Daily default (lavender)' },
-  { value: 'nightly', label: 'Nightly default (dark amber)' },
+  { value: 'daily', label: 'Daily factory default' },
+  { value: 'nightly', label: 'Nightly factory default' },
 ];
 
 function CreateThemeDialog({
@@ -867,13 +929,38 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
     [settingsStore.get(KANGUR_THEME_CATALOG_KEY)]
   );
 
+  // ── slot assignments ──────────────────────────────────────────────────────
+  const slotAssignments = useMemo(
+    () => parseSlotAssignments(settingsStore.get(KANGUR_SLOT_ASSIGNMENTS_KEY)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [settingsStore.get(KANGUR_SLOT_ASSIGNMENTS_KEY)]
+  );
+
+  const dailySlotLabel = useMemo(() => {
+    const raw = settingsStore.get(KANGUR_DAILY_THEME_SETTINGS_KEY);
+    if (!raw?.trim() || !slotAssignments.daily) return 'Fabryczny';
+    return slotAssignments.daily.name;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slotAssignments, settingsStore.get(KANGUR_DAILY_THEME_SETTINGS_KEY)]);
+
+  const nightlySlotLabel = useMemo(() => {
+    const raw = settingsStore.get(KANGUR_NIGHTLY_THEME_SETTINGS_KEY);
+    if (!raw?.trim() || !slotAssignments.nightly) return 'Fabryczny';
+    return slotAssignments.nightly.name;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slotAssignments, settingsStore.get(KANGUR_NIGHTLY_THEME_SETTINGS_KEY)]);
+
   // ── selected theme ────────────────────────────────────────────────────────
   const [selectedId, setSelectedId] = useState<ThemeSelectionId>(BUILTIN_DAILY_ID);
 
+  const isFactory = selectedId === FACTORY_DAILY_ID || selectedId === FACTORY_NIGHTLY_ID;
   const isBuiltin = selectedId === BUILTIN_DAILY_ID || selectedId === BUILTIN_NIGHTLY_ID;
 
   const loadTheme = useCallback(
     (id: ThemeSelectionId): ThemeSettings => {
+      if (id === FACTORY_DAILY_ID || id === FACTORY_NIGHTLY_ID) {
+        return resolveFactoryTheme(id);
+      }
       if (id === BUILTIN_DAILY_ID) {
         return (
           parseKangurThemeSettings(settingsStore.get(KANGUR_DAILY_THEME_SETTINGS_KEY)) ??
@@ -906,7 +993,7 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
 
   // ── preview mode ──────────────────────────────────────────────────────────
   const [previewMode, setPreviewMode] = useState<PreviewMode>(
-    selectedId === BUILTIN_NIGHTLY_ID ? 'dark' : 'default'
+    selectedId === BUILTIN_NIGHTLY_ID || selectedId === FACTORY_NIGHTLY_ID ? 'dark' : 'default'
   );
 
   // Reload draft when selection changes (and confirm unsaved changes if dirty)
@@ -927,6 +1014,10 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
 
   // ── save ──────────────────────────────────────────────────────────────────
   const handleSave = useCallback(async (): Promise<void> => {
+    if (isFactory) {
+      toast('Motyw fabryczny jest tylko do odczytu.', { variant: 'info' });
+      return;
+    }
     setIsSaving(true);
     try {
       if (selectedId === BUILTIN_DAILY_ID) {
@@ -934,12 +1025,26 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
           key: KANGUR_DAILY_THEME_SETTINGS_KEY,
           value: serializeSetting(draft),
         });
+        // Clear daily slot assignment — the slot is now the directly-edited builtin theme
+        if (slotAssignments.daily) {
+          await updateSetting.mutateAsync({
+            key: KANGUR_SLOT_ASSIGNMENTS_KEY,
+            value: serializeSetting({ ...slotAssignments, daily: null }),
+          });
+        }
         toast('Motyw dzienny zapisany.', { variant: 'success' });
       } else if (selectedId === BUILTIN_NIGHTLY_ID) {
         await updateSetting.mutateAsync({
           key: KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
           value: serializeSetting(draft),
         });
+        // Clear nightly slot assignment
+        if (slotAssignments.nightly) {
+          await updateSetting.mutateAsync({
+            key: KANGUR_SLOT_ASSIGNMENTS_KEY,
+            value: serializeSetting({ ...slotAssignments, nightly: null }),
+          });
+        }
         toast('Motyw nocny zapisany.', { variant: 'success' });
       } else {
         // Catalog theme: update the entry in the array
@@ -962,7 +1067,7 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
     } finally {
       setIsSaving(false);
     }
-  }, [catalog, draft, selectedId, toast, updateSetting]);
+  }, [catalog, draft, isFactory, selectedId, slotAssignments, toast, updateSetting]);
 
   // ── assign as daily/nightly ───────────────────────────────────────────────
   const handleAssign = useCallback(
@@ -972,6 +1077,16 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
         await updateSetting.mutateAsync({
           key: getKangurThemeSettingsKeyForAppearanceMode(slot === 'daily' ? 'default' : 'dark'),
           value: serializeSetting(draft),
+        });
+        // Record which named theme is now assigned to this slot
+        const assignedEntry = catalog.find((e) => e.id === selectedId);
+        const assignmentName = assignedEntry?.name ?? selectedId;
+        await updateSetting.mutateAsync({
+          key: KANGUR_SLOT_ASSIGNMENTS_KEY,
+          value: serializeSetting({
+            ...slotAssignments,
+            [slot]: { id: selectedId, name: assignmentName },
+          }),
         });
         toast(
           slot === 'daily'
@@ -987,17 +1102,22 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
         setIsSaving(false);
       }
     },
-    [draft, toast, updateSetting]
+    [catalog, draft, selectedId, slotAssignments, toast, updateSetting]
   );
 
   // ── reset to defaults ─────────────────────────────────────────────────────
   const handleReset = useCallback((): void => {
+    if (isFactory) {
+      setDraft(resolveFactoryTheme(selectedId));
+      setIsDirty(false);
+      return;
+    }
     const defaults = isBuiltin
       ? resolveDefaultForBuiltin(selectedId)
       : KANGUR_DEFAULT_DAILY_THEME;
     setDraft(defaults);
     setIsDirty(true);
-  }, [isBuiltin, selectedId]);
+  }, [isBuiltin, isFactory, selectedId]);
 
   // ── create new theme ──────────────────────────────────────────────────────
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -1036,7 +1156,7 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
 
   // ── delete catalog theme ──────────────────────────────────────────────────
   const handleDelete = useCallback(async (): Promise<void> => {
-    if (isBuiltin) return;
+    if (isBuiltin || isFactory) return;
     setIsSaving(true);
     try {
       const updatedCatalog = catalog.filter((e) => e.id !== selectedId);
@@ -1053,11 +1173,13 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
     } finally {
       setIsSaving(false);
     }
-  }, [catalog, isBuiltin, selectedId, switchSelection, toast, updateSetting]);
+  }, [catalog, isBuiltin, isFactory, selectedId, switchSelection, toast, updateSetting]);
 
   // ── selector options ──────────────────────────────────────────────────────
   const selectorOptions = useMemo(() => {
     const opts: Array<{ value: string; label: string }> = [
+      { value: FACTORY_DAILY_ID, label: 'Motyw dzienny (fabryczny)' },
+      { value: FACTORY_NIGHTLY_ID, label: 'Motyw nocny (fabryczny)' },
       { value: BUILTIN_DAILY_ID, label: 'Motyw dzienny (wbudowany)' },
       { value: BUILTIN_NIGHTLY_ID, label: 'Motyw nocny (wbudowany)' },
     ];
@@ -1088,7 +1210,7 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
             </Button>
             <Button
               onClick={() => void handleSave()}
-              disabled={!isDirty || isSaving}
+              disabled={!isDirty || isSaving || isFactory}
               size='sm'
             >
               {isSaving ? 'Zapisuję...' : 'Zapisz motyw'}
@@ -1144,6 +1266,18 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
                   <p className='text-xs text-muted-foreground'>
                     Zastosuj bieżące ustawienia tego motywu jako domyślny motyw dzienny lub nocny.
                   </p>
+                  <div className='mt-2.5 flex flex-wrap gap-3'>
+                    <SlotStatusBadge
+                      slotLabel='Dzienny'
+                      themeLabel={dailySlotLabel}
+                      isActive={slotAssignments.daily?.id === selectedId}
+                    />
+                    <SlotStatusBadge
+                      slotLabel='Nocny'
+                      themeLabel={nightlySlotLabel}
+                      isActive={slotAssignments.nightly?.id === selectedId}
+                    />
+                  </div>
                 </div>
                 <div className='flex gap-2'>
                   <Button
@@ -1184,6 +1318,12 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
                 : 'Edytujesz motyw nocny — jest on aktywny dla użytkowników w trybie nocnym. Kliknij „Zapisz motyw" aby zapisać zmiany.'}
             </Alert>
           )}
+          {isFactory && (
+            <Alert variant='info'>
+              To fabryczny motyw Kangura (commit d932510...). Jest tylko do odczytu — użyj „Nowy motyw”
+              aby skopiować ustawienia lub przypisz go jako dzienny/nocny.
+            </Alert>
+          )}
 
           {/* ── Theme field sections ── */}
           {THEME_SECTIONS.map((section) => (
@@ -1198,7 +1338,7 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
                 fields={section.fields}
                 values={draft}
                 onChange={handleFieldChange}
-                disabled={isSaving}
+                disabled={isSaving || isFactory}
               />
             </FormSection>
           ))}
@@ -1209,14 +1349,14 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
               <Button
                 variant='ghost'
                 size='sm'
-                disabled={isSaving}
+                disabled={isSaving || isFactory}
                 onClick={handleReset}
               >
                 Przywróć domyślne
               </Button>
               <Button
                 onClick={() => void handleSave()}
-                disabled={!isDirty || isSaving}
+                disabled={!isDirty || isSaving || isFactory}
               >
                 {isSaving ? 'Zapisuję...' : 'Zapisz motyw'}
               </Button>

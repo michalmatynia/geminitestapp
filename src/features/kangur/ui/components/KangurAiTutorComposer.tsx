@@ -1,4 +1,4 @@
-import { Pen, Send, X } from 'lucide-react';
+import { Pen, X } from 'lucide-react';
 
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurButton, KangurTextField } from '@/features/kangur/ui/design/primitives';
@@ -28,7 +28,6 @@ export function KangurAiTutorComposer(): JSX.Element {
     handleDrawingComplete,
     handleKeyDown,
     handleQuickAction,
-    handleSend,
     handleToggleDrawing,
     inputPlaceholder,
     isAskModalMode,
@@ -37,6 +36,7 @@ export function KangurAiTutorComposer(): JSX.Element {
     visibleQuickActions,
   } = useKangurAiTutorPanelBodyContext();
   const { inputRef, inputValue, setInputValue } = useKangurAiTutorWidgetStateContext();
+  const showDrawingToggle = !showToolboxLayout && !guestAuthFormVisible;
 
   if (drawingMode) {
     return (
@@ -83,43 +83,36 @@ export function KangurAiTutorComposer(): JSX.Element {
         </div>
       ) : null}
       <div className='flex items-center gap-2'>
-        {!showToolboxLayout && !guestAuthFormVisible ? (
-          <KangurButton
-            data-testid='kangur-ai-tutor-drawing-toggle'
-            type='button'
+        <div className='relative flex-1'>
+          <KangurTextField
+            ref={inputRef}
+            value={inputValue}
+            onChange={(event) => setInputValue(event.target.value)}
+            onKeyDown={handleKeyDown}
+            accent='amber'
             size='sm'
-            variant='surface'
-            className='h-9 w-9 shrink-0 p-0'
+            className={`w-full shadow-[0_4px_12px_-8px_rgba(15,23,42,0.06)] ${
+              showDrawingToggle ? 'pr-11' : ''
+            }`}
             disabled={isLoading || !canSendMessages}
-            onClick={handleToggleDrawing}
-            aria-label={drawingContent?.toggleLabel ?? 'Rysuj'}
-          >
-            <Pen className='h-3.5 w-3.5' />
-          </KangurButton>
-        ) : null}
-        <KangurTextField
-          ref={inputRef}
-          value={inputValue}
-          onChange={(event) => setInputValue(event.target.value)}
-          onKeyDown={handleKeyDown}
-          accent='amber'
-          size='sm'
-          className='flex-1 shadow-[0_4px_12px_-8px_rgba(15,23,42,0.06)]'
-          disabled={isLoading || !canSendMessages}
-          placeholder={isAskModalMode ? tutorContent.placeholders.askModal : inputPlaceholder}
-          aria-label={tutorContent.common.questionInputAria}
-        />
-        <KangurButton
-          type='button'
-          size='sm'
-          variant='primary'
-          className='kangur-chat-send-shadow'
-          onClick={() => void handleSend()}
-          disabled={(!inputValue.trim() && !drawingImageData) || isLoading || !canSendMessages}
-          aria-label={tutorContent.common.sendAria}
-        >
-          <Send className='h-3.5 w-3.5' />
-        </KangurButton>
+            placeholder={isAskModalMode ? tutorContent.placeholders.askModal : inputPlaceholder}
+            aria-label={tutorContent.common.questionInputAria}
+          />
+          {showDrawingToggle ? (
+            <KangurButton
+              data-testid='kangur-ai-tutor-drawing-toggle'
+              type='button'
+              size='sm'
+              variant='surface'
+              className='absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 p-0'
+              disabled={isLoading || !canSendMessages}
+              onClick={handleToggleDrawing}
+              aria-label={drawingContent?.toggleLabel ?? 'Rysuj'}
+            >
+              <Pen className='h-3.5 w-3.5' />
+            </KangurButton>
+          ) : null}
+        </div>
       </div>
       {!showToolboxLayout && visibleQuickActions.length ? (
         <div

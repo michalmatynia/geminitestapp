@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { useLayoutEffect, useRef } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -754,7 +754,8 @@ describe('KangurAiTutorWidget - Selection', () => {
       await vi.runAllTimersAsync();
     });
     expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
-    expect(screen.getByText('To jest wyjaśnienie fragmentu.')).toBeInTheDocument();
+    const panel = screen.getByTestId('kangur-ai-tutor-panel');
+    expect(within(panel).getByText('To jest wyjaśnienie fragmentu.')).toBeInTheDocument();
     vi.useRealTimers();
   });
 

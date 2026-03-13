@@ -373,7 +373,7 @@ describe('KangurAiTutorWidget - UI', () => {
     expect(utterance.text).toContain('Dodawanie podstawy');
     expect(utterance.text).toContain('Dodawanie łączy liczby i tworzy sumę.');
     expect(utterance.text).not.toContain('Otwórz lekcję');
-    expect(utterance.text).not.toContain('Tak');
+    expect(utterance.text).not.toContain('Tak, pomóż mi się zalogować.');
     expect(utterance.text).not.toContain('Jeszcze nie');
     expect(utterance.text).not.toContain('Wyłącz');
     expect(utterance.text).not.toContain('Czytaj');

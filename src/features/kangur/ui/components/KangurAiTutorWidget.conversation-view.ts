@@ -476,7 +476,7 @@ const getEmptyStateMessage = (input: {
   }
 
   if (input.surface === 'game') {
-    return input.tutorContent.emptyStates.game;
+    return '';
   }
 
   return input.tutorContent.emptyStates.lesson;

@@ -942,7 +942,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
       reviewGame: 'Poproś o omówienie gry albo plan następnych ćwiczeń.',
       reviewTest: 'Poproś o omówienie wyniku albo plan następnych ćwiczeń.',
       assignment: 'Poproś o plan wykonania zadania albo krótkie wyjaśnienie tematu.',
-      game: 'Masz pytanie dotyczące gry? Poproś o wyjaśnienie albo następny krok.',
+      game: 'Masz pytanie dotyczące gry? Poproś o wskazówkę albo następny krok.',
       lesson: 'Masz pytanie dotyczące lekcji? Poproś o wyjaśnienie albo następny krok.',
       selectionPending: 'Czekaj, wyjaśniam zaznaczony fragment.',
       sectionPending: 'Czekaj, wyjaśniam wybraną sekcję.',

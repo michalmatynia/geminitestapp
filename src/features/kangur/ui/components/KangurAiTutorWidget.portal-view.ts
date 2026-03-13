@@ -254,10 +254,9 @@ export function useKangurAiTutorPortalViewModel(
     !hasContextualTutorLock &&
     !hasGuidedContextualTransition &&
     (input.canonicalTutorModalVisible || (!input.isAskModalMode && !isGuidedAvatarMode));
-  const isContextualMinimalPanelMode = false;
   const isMinimalPanelMode =
     !input.isAskModalMode &&
-    (isContextualMinimalPanelMode || input.shouldRenderContextlessTutorUi);
+    (input.panelShellMode === 'minimal' || input.shouldRenderContextlessTutorUi);
   const panelChromeVariant: TutorPanelChromeVariant =
     input.showSelectionExplainCompleteState || input.showSectionExplainCompleteState
       ? 'contextual_result'

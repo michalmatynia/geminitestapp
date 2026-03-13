@@ -11,7 +11,7 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
   useKangurAiTutorContent: () => ({
     guestIntro: {
       closeAria: 'Zamknij modal tutora',
-      acceptLabel: 'Tak',
+      acceptLabel: 'Tak, pomóż mi się zalogować.',
     },
     common: {
       questionInputAria: 'Napisz pytanie',

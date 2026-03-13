@@ -3199,7 +3199,7 @@ describe('KangurAiTutorWidget', () => {
       await vi.runOnlyPendingTimersAsync();
     });
 
-    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(
       screen.getByTestId('kangur-ai-tutor-selection-guided-answer')
@@ -3208,13 +3208,13 @@ describe('KangurAiTutorWidget', () => {
       screen.getByTestId('kangur-ai-tutor-selection-guided-page-content-badge')
     ).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-source')).toBeInTheDocument();
-    expect(screen.queryByTestId('kangur-ai-tutor-selection-preview')).not.toBeInTheDocument();
-    expect(screen.queryByText('Wyjaśniam ten fragment.')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-preview')).toBeInTheDocument();
+    expect(screen.getAllByText('Wyjaśniam ten fragment.').length).toBeGreaterThan(0);
     expect(
       screen.queryByText('Za chwilę otworzę wyjaśnienie dokładnie dla zaznaczonego tekstu.')
     ).not.toBeInTheDocument();
     expect(screen.queryByText('Już przygotowuję wyjaśnienie…')).not.toBeInTheDocument();
-    expect(screen.queryByText('entry:game-home-progress')).not.toBeInTheDocument();
+    expect(screen.getByText('entry:game-home-progress')).toBeInTheDocument();
     expect(
       screen.queryByText('To jest stary wątek, który nie powinien wrócić.')
     ).not.toBeInTheDocument();

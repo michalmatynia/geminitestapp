@@ -219,10 +219,11 @@ export function KangurAiTutorGuidedCallout({
         : detail;
   const shouldShowSelectionIntro =
     !(mode === 'selection' && isResolvedSelectionCallout);
-  const shouldShowSelectionPreview =
-    Boolean(resolvedSelectedPreview ?? selectionPreview);
   const shouldShowSelectionPageContentBadge =
     resolvedSelectionAssistantMessage?.answerResolutionMode === 'page_content';
+  const shouldShowSelectionPreview =
+    Boolean(resolvedSelectedPreview ?? selectionPreview) &&
+    (!isResolvedSelectionCallout || shouldShowSelectionPageContentBadge);
   const shouldShowSelectionPreparingBadge =
     mode === 'selection' && !isResolvedSelectionCallout && !shouldShowSelectedKnowledgeReference;
 

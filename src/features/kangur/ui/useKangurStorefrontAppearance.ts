@@ -21,6 +21,8 @@ export const useKangurStorefrontAppearance = () => {
   const rawTheme = resolveKangurThemeSettingsRawForMode({
     mode,
     dailyThemeRaw: settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('default')),
+    dawnThemeRaw: settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('dawn')),
+    sunsetThemeRaw: settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('sunset')),
     nightlyThemeRaw: settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('dark')),
     legacyThemeRaw: settingsStore.get(KANGUR_THEME_SETTINGS_KEY),
   });

@@ -1,12 +1,12 @@
 'use client';
 
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, Sunrise, Sunset } from 'lucide-react';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { darkenCssColor } from '@/shared/utils/color-utils';
 
-export type CmsStorefrontAppearanceMode = 'default' | 'dark';
+export type CmsStorefrontAppearanceMode = 'default' | 'dark' | 'dawn' | 'sunset';
 
 export type CmsAppearanceTone = {
   background?: string;
@@ -31,6 +31,8 @@ type CmsStorefrontAppearanceButtonsProps = {
   className?: string;
   label?: string;
   testId?: string;
+  modes?: CmsStorefrontAppearanceMode[];
+  modeLabels?: Partial<Record<CmsStorefrontAppearanceMode, string>>;
 };
 
 const DEFAULT_TONE: Required<CmsAppearanceTone> = {
@@ -40,7 +42,25 @@ const DEFAULT_TONE: Required<CmsAppearanceTone> = {
   accent: '#2563eb',
 };
 
-const VALID_MODES = new Set<CmsStorefrontAppearanceMode>(['default', 'dark']);
+export const isDarkStorefrontAppearanceMode = (
+  mode: CmsStorefrontAppearanceMode
+): boolean => mode === 'dark' || mode === 'sunset';
+
+const DEFAULT_MODE_LABELS: Record<CmsStorefrontAppearanceMode, string> = {
+  default: 'Default',
+  dawn: 'Dawn',
+  sunset: 'Sunset',
+  dark: 'Dark',
+};
+
+const MODE_ICON_MAP: Record<CmsStorefrontAppearanceMode, typeof Sun> = {
+  default: Sun,
+  dawn: Sunrise,
+  sunset: Sunset,
+  dark: Moon,
+};
+
+const VALID_MODES = new Set<CmsStorefrontAppearanceMode>(['default', 'dark', 'dawn', 'sunset']);
 
 const CmsStorefrontAppearanceContext =
   createContext<CmsStorefrontAppearanceContextValue | null>(null);
@@ -91,7 +111,7 @@ export const resolveStorefrontAppearanceTone = (
 ): Required<CmsAppearanceTone> => {
   const baseTone = withFallbackTone(tone);
 
-  if (mode === 'dark') {
+  if (isDarkStorefrontAppearanceMode(mode)) {
     return {
       ...baseTone,
       background: `color-mix(in srgb, ${baseTone.background} 18%, black)`,
@@ -208,7 +228,7 @@ export const resolveCmsStorefrontAppearance = (
     mode
   );
   const resolvedPrimaryButtonTone =
-    mode === 'dark'
+    isDarkStorefrontAppearanceMode(mode)
       ? {
           ...primaryButtonTone,
           background: darkenCssColor(theme.btnPrimaryBg || accent, 28),
@@ -218,11 +238,11 @@ export const resolveCmsStorefrontAppearance = (
       : primaryButtonTone;
 
   const subtleSurface =
-    mode === 'dark'
+    isDarkStorefrontAppearanceMode(mode)
       ? `color-mix(in srgb, ${surfaceTone.background} 72%, ${pageTone.background})`
       : `color-mix(in srgb, ${surfaceTone.background} 88%, ${pageTone.background})`;
   const mutedText =
-    mode === 'dark'
+    isDarkStorefrontAppearanceMode(mode)
       ? 'rgba(243,244,246,0.72)'
       : theme.mutedTextColor ||
         `color-mix(in srgb, ${pageTone.text} 62%, ${pageTone.background})`;
@@ -258,6 +278,48 @@ const mixCssColor = (base: string, mixin: string, weight: number): string =>
   `color-mix(in srgb, ${base} ${Math.max(0, Math.min(100, weight))}%, ${mixin})`;
 
 const toCssPx = (value: number): string => `${Math.max(0, Math.round(value * 100) / 100)}px`;
+const toCssPxSigned = (value: number): string => `${Math.round(value * 100) / 100}px`;
+const clampNumber = (value: number, min: number, max: number): number =>
+  Math.min(max, Math.max(min, value));
+
+const toShadowColor = (color: string, opacity: number): string => {
+  const clamped = clampNumber(opacity, 0, 1);
+  if (clamped <= 0) return 'transparent';
+  if (clamped >= 1) return color;
+  const percent = Math.round(clamped * 100);
+  return `color-mix(in srgb, ${color} ${percent}%, transparent)`;
+};
+
+const applyTransparency = (color: string, opacity: number): string => {
+  const clamped = clampNumber(opacity, 0, 1);
+  if (clamped <= 0) return 'transparent';
+  if (clamped >= 1) return color;
+  const percent = Math.round(clamped * 100);
+  return `color-mix(in srgb, ${color} ${percent}%, transparent)`;
+};
+
+const buildShadow = ({
+  x,
+  y,
+  blur,
+  spread,
+  color,
+  opacity,
+}: {
+  x: number;
+  y: number;
+  blur: number;
+  spread?: number;
+  color: string;
+  opacity: number;
+}): string => {
+  const safeBlur = Math.max(0, blur);
+  const safeSpread = spread ? ` ${toCssPxSigned(Math.max(0, spread))}` : '';
+  return `${toCssPxSigned(x)} ${toCssPxSigned(y)} ${toCssPxSigned(safeBlur)}${safeSpread} ${toShadowColor(
+    color,
+    opacity
+  )}`;
+};
 
 const resolvePagePadding = (theme: ThemeSettings) => {
   const basePadding = theme.pagePadding;
@@ -575,7 +637,7 @@ const resolveDefaultKangurStorefrontAppearance = (
   tone: Required<CmsAppearanceTone>;
   vars: Record<string, string>;
 } => {
-  if (mode === 'dark') {
+  if (isDarkStorefrontAppearanceMode(mode)) {
     return {
       background:
         'radial-gradient(circle at top, #283044 0%, #1b2333 44%, #111827 100%)',
@@ -805,13 +867,13 @@ const resolveThemedKangurStorefrontAppearance = (
   const dangerBackground = theme.errorColor || '#ef4444';
   const chatBackground = theme.containerBg || surfaceBackground;
   const runtimeThemeVars = resolveKangurRuntimeThemeVars(theme);
-  const toneText = mode === 'dark' ? '#f8fafc' : theme.textColor;
+  const toneText = isDarkStorefrontAppearanceMode(mode) ? '#f8fafc' : theme.textColor;
   const pageMutedText =
-    mode === 'dark'
+    isDarkStorefrontAppearanceMode(mode)
       ? mixCssColor(theme.mutedTextColor, '#ffffff', 72)
       : theme.mutedTextColor;
   const pageTone =
-    mode === 'dark'
+    isDarkStorefrontAppearanceMode(mode)
       ? resolveStorefrontAppearanceTone(
           {
             background: theme.backgroundColor,
@@ -828,7 +890,7 @@ const resolveThemedKangurStorefrontAppearance = (
           accent,
         };
   const surfaceTone =
-    mode === 'dark'
+    isDarkStorefrontAppearanceMode(mode)
       ? resolveStorefrontAppearanceTone(
           {
             background: surfaceBackground,
@@ -845,7 +907,7 @@ const resolveThemedKangurStorefrontAppearance = (
           accent,
         };
   const inputTone =
-    mode === 'dark'
+    isDarkStorefrontAppearanceMode(mode)
       ? resolveStorefrontAppearanceTone(
           {
             background: inputBackground,
@@ -862,217 +924,265 @@ const resolveThemedKangurStorefrontAppearance = (
           accent,
         };
   const background =
-    mode === 'dark'
+    isDarkStorefrontAppearanceMode(mode)
       ? `radial-gradient(circle at top, ${mixCssColor(primary, theme.backgroundColor, 18)} 0%, ${mixCssColor(theme.surfaceColor, theme.backgroundColor, 64)} 44%, ${darkenCssColor(theme.backgroundColor, 22)} 100%)`
       : `radial-gradient(circle at top, ${mixCssColor(accent, theme.backgroundColor, 12)} 0%, ${mixCssColor(theme.surfaceColor, theme.backgroundColor, 52)} 48%, ${mixCssColor(secondary, theme.backgroundColor, 10)} 100%)`;
   const softSurfaceStart = mixCssColor(
     surfaceTone.background,
     pageTone.background,
-    mode === 'dark' ? 92 : 92
+    isDarkStorefrontAppearanceMode(mode) ? 92 : 92
   );
   const softSurfaceEnd = mixCssColor(
     surfaceTone.background,
     pageTone.background,
-    mode === 'dark' ? 86 : 84
+    isDarkStorefrontAppearanceMode(mode) ? 86 : 84
   );
   const warmSurfaceStart = mixCssColor(
     surfaceTone.background,
     warningBackground,
-    mode === 'dark' ? 90 : 92
+    isDarkStorefrontAppearanceMode(mode) ? 90 : 92
   );
   const warmSurfaceEnd = mixCssColor(
     surfaceTone.background,
     warningBackground,
-    mode === 'dark' ? 84 : 86
+    isDarkStorefrontAppearanceMode(mode) ? 84 : 86
   );
   const infoSurfaceStart = mixCssColor(
     surfaceTone.background,
     infoBackground,
-    mode === 'dark' ? 88 : 90
+    isDarkStorefrontAppearanceMode(mode) ? 88 : 90
   );
   const infoSurfaceEnd = mixCssColor(
     surfaceTone.background,
     infoBackground,
-    mode === 'dark' ? 82 : 86
+    isDarkStorefrontAppearanceMode(mode) ? 82 : 86
   );
   const successSurface = mixCssColor(
     surfaceTone.background,
     successBackground,
-    mode === 'dark' ? 86 : 82
+    isDarkStorefrontAppearanceMode(mode) ? 86 : 82
   );
-  const dividerColor = mixCssColor(borderColor, warningBackground, mode === 'dark' ? 68 : 74);
+  const dividerColor = mixCssColor(borderColor, warningBackground, isDarkStorefrontAppearanceMode(mode) ? 68 : 74);
   const softSurfaceShadow =
-    mode === 'dark'
+    isDarkStorefrontAppearanceMode(mode)
       ? `0 12px 28px -18px ${mixCssColor(theme.backgroundColor, '#000000', 60)}`
       : `0 12px 28px -18px ${mixCssColor(theme.backgroundColor, '#000000', 18)}`;
   const warmSurfaceShadow = `0 8px 18px -12px ${mixCssColor(
     warningBackground,
     '#000000',
-    mode === 'dark' ? 54 : 24
+    isDarkStorefrontAppearanceMode(mode) ? 54 : 24
   )}`;
   const infoSurfaceShadow = `0 8px 18px -12px ${mixCssColor(
     infoBackground,
     '#000000',
-    mode === 'dark' ? 54 : 24
+    isDarkStorefrontAppearanceMode(mode) ? 54 : 24
   )}`;
   const successSurfaceShadow = `0 6px 16px -10px ${mixCssColor(
     successBackground,
     '#000000',
-    mode === 'dark' ? 52 : 22
+    isDarkStorefrontAppearanceMode(mode) ? 52 : 22
   )}`;
   const composerBackground = `linear-gradient(180deg, ${mixCssColor(
     surfaceTone.background,
     'transparent',
-    mode === 'dark' ? 92 : 88
+    isDarkStorefrontAppearanceMode(mode) ? 92 : 88
   )} 0%, transparent 100%)`;
   const selectionBadgeBackground = `color-mix(in srgb, ${surfaceTone.background} ${
-    mode === 'dark' ? 28 : 18
-  }%, rgba(255,255,255,${mode === 'dark' ? '0.14' : '0.16'}))`;
+    isDarkStorefrontAppearanceMode(mode) ? 28 : 18
+  }%, rgba(255,255,255,${isDarkStorefrontAppearanceMode(mode) ? '0.14' : '0.16'}))`;
   const backdropBase = '#0f172a';
-  const backdrop = `color-mix(in srgb, ${backdropBase} ${mode === 'dark' ? 28 : 18}%, transparent)`;
-  const backdropStrong = `color-mix(in srgb, ${backdropBase} ${mode === 'dark' ? 44 : 32}%, transparent)`;
-  const accentBorder = mode === 'dark'
+  const backdrop = `color-mix(in srgb, ${backdropBase} ${isDarkStorefrontAppearanceMode(mode) ? 28 : 18}%, transparent)`;
+  const backdropStrong = `color-mix(in srgb, ${backdropBase} ${isDarkStorefrontAppearanceMode(mode) ? 44 : 32}%, transparent)`;
+  const accentBorder = isDarkStorefrontAppearanceMode(mode)
     ? mixCssColor(warningBackground, '#ffffff', 68)
     : darkenCssColor(warningBackground, 6);
   const userBubbleBackground = `linear-gradient(135deg, ${mixCssColor(
     warningBackground,
     '#ffffff',
-    mode === 'dark' ? 70 : 82
-  )} 0%, ${mixCssColor(warningBackground, '#000000', mode === 'dark' ? 18 : 10)} 100%)`;
+    isDarkStorefrontAppearanceMode(mode) ? 70 : 82
+  )} 0%, ${mixCssColor(warningBackground, '#000000', isDarkStorefrontAppearanceMode(mode) ? 18 : 10)} 100%)`;
   const userBubbleShadow = `0 14px 28px -18px ${mixCssColor(
     warningBackground,
     '#000000',
-    mode === 'dark' ? 60 : 36
-  )}, 0 1px 0 ${mixCssColor('#ffffff', '#ffffff', mode === 'dark' ? 10 : 18)} inset`;
+    isDarkStorefrontAppearanceMode(mode) ? 60 : 36
+  )}, 0 1px 0 ${mixCssColor('#ffffff', '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 10 : 18)} inset`;
   const userBubbleBorder = mixCssColor(
     warningBackground,
     '#ffffff',
-    mode === 'dark' ? 32 : 58
+    isDarkStorefrontAppearanceMode(mode) ? 32 : 58
   );
   const userBubbleText = theme.btnPrimaryText || '#ffffff';
   const userDrawingBorder = `color-mix(in srgb, ${warningBackground} ${
-    mode === 'dark' ? 30 : 40
+    isDarkStorefrontAppearanceMode(mode) ? 30 : 40
   }%, transparent)`;
   const userDrawingShadow = `0 8px 20px -12px ${mixCssColor(
     warningBackground,
     '#000000',
-    mode === 'dark' ? 58 : 32
+    isDarkStorefrontAppearanceMode(mode) ? 58 : 32
   )}`;
-  const typingDot = mode === 'dark'
+  const typingDot = isDarkStorefrontAppearanceMode(mode)
     ? mixCssColor(warningBackground, '#000000', 38)
     : darkenCssColor(warningBackground, 28);
   const floatingAvatarBackground = `linear-gradient(135deg, ${mixCssColor(
     warningBackground,
     '#ffffff',
-    mode === 'dark' ? 64 : 72
-  )} 0%, ${mixCssColor(warningBackground, '#ffffff', mode === 'dark' ? 44 : 56)} 55%, ${mixCssColor(
+    isDarkStorefrontAppearanceMode(mode) ? 64 : 72
+  )} 0%, ${mixCssColor(warningBackground, '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 44 : 56)} 55%, ${mixCssColor(
     warningBackground,
     '#000000',
-    mode === 'dark' ? 22 : 12
+    isDarkStorefrontAppearanceMode(mode) ? 22 : 12
   )} 100%)`;
   const floatingAvatarBorder = mixCssColor(
     warningBackground,
     '#000000',
-    mode === 'dark' ? 62 : 72
+    isDarkStorefrontAppearanceMode(mode) ? 62 : 72
   );
   const floatingAvatarShadow = `0 14px 28px -16px ${mixCssColor(
     warningBackground,
     '#000000',
-    mode === 'dark' ? 62 : 32
+    isDarkStorefrontAppearanceMode(mode) ? 62 : 32
   )}`;
   const floatingAvatarFocusRing = mixCssColor(
     warningBackground,
     '#ffffff',
-    mode === 'dark' ? 42 : 34
+    isDarkStorefrontAppearanceMode(mode) ? 42 : 34
   );
   const noticeBadgeBackground =
-    mode === 'dark' ? mixCssColor(dangerBackground, '#000000', 12) : dangerBackground;
+    isDarkStorefrontAppearanceMode(mode) ? mixCssColor(dangerBackground, '#000000', 12) : dangerBackground;
   const noticeBadgeRing = '#ffffff';
   const noticeBadgeDot = '#ffffff';
-  const infoText = mode === 'dark'
+  const infoText = isDarkStorefrontAppearanceMode(mode)
     ? mixCssColor(infoBackground, '#ffffff', 72)
     : darkenCssColor(infoBackground, 22);
   const infoPillBackground = `color-mix(in srgb, ${infoBackground} ${
-    mode === 'dark' ? 24 : 18
+    isDarkStorefrontAppearanceMode(mode) ? 24 : 18
   }%, ${surfaceTone.background})`;
   const feedbackPositiveBackground = `color-mix(in srgb, ${successBackground} ${
-    mode === 'dark' ? 20 : 12
+    isDarkStorefrontAppearanceMode(mode) ? 20 : 12
   }%, ${surfaceTone.background})`;
   const feedbackPositiveBorder = mixCssColor(
     successBackground,
     '#ffffff',
-    mode === 'dark' ? 32 : 62
+    isDarkStorefrontAppearanceMode(mode) ? 32 : 62
   );
-  const feedbackPositiveText = mode === 'dark'
+  const feedbackPositiveText = isDarkStorefrontAppearanceMode(mode)
     ? mixCssColor(successBackground, '#ffffff', 78)
     : darkenCssColor(successBackground, 30);
   const feedbackNegativeBackground = `color-mix(in srgb, ${dangerBackground} ${
-    mode === 'dark' ? 18 : 12
+    isDarkStorefrontAppearanceMode(mode) ? 18 : 12
   }%, ${surfaceTone.background})`;
   const feedbackNegativeBorder = mixCssColor(
     dangerBackground,
     '#ffffff',
-    mode === 'dark' ? 30 : 62
+    isDarkStorefrontAppearanceMode(mode) ? 30 : 62
   );
-  const feedbackNegativeText = mode === 'dark'
+  const feedbackNegativeText = isDarkStorefrontAppearanceMode(mode)
     ? mixCssColor(dangerBackground, '#ffffff', 78)
     : darkenCssColor(dangerBackground, 18);
   const dangerHoverBackground = `color-mix(in srgb, ${dangerBackground} ${
-    mode === 'dark' ? 22 : 10
+    isDarkStorefrontAppearanceMode(mode) ? 22 : 10
   }%, ${surfaceTone.background})`;
-  const dangerText = mode === 'dark'
+  const dangerText = isDarkStorefrontAppearanceMode(mode)
     ? mixCssColor(dangerBackground, '#ffffff', 82)
     : darkenCssColor(dangerBackground, 6);
   const selectionActionShadow = `0 12px 28px -14px ${mixCssColor(
     warningBackground,
     '#000000',
-    mode === 'dark' ? 54 : 32
+    isDarkStorefrontAppearanceMode(mode) ? 54 : 32
   )}, 0 4px 10px -6px ${mixCssColor(
     theme.backgroundColor,
     '#000000',
-    mode === 'dark' ? 60 : 24
+    isDarkStorefrontAppearanceMode(mode) ? 60 : 24
   )}`;
   const sendShadow = `0 8px 20px -10px ${mixCssColor(
     warningBackground,
     '#000000',
-    mode === 'dark' ? 52 : 30
+    isDarkStorefrontAppearanceMode(mode) ? 52 : 30
   )}`;
   const panelSnapRing = mixCssColor(
     warningBackground,
     '#ffffff',
-    mode === 'dark' ? 60 : 34
+    isDarkStorefrontAppearanceMode(mode) ? 60 : 34
   );
   const panelSnapShadow = `0 0 0 1px ${mixCssColor(
     warningBackground,
     '#ffffff',
-    mode === 'dark' ? 26 : 22
+    isDarkStorefrontAppearanceMode(mode) ? 26 : 22
   )}, 0 28px 56px -28px ${mixCssColor(
     warningBackground,
     '#000000',
-    mode === 'dark' ? 72 : 46
-  )}, inset 0 1px 0 ${mixCssColor('#ffffff', '#ffffff', mode === 'dark' ? 16 : 60)}`;
+    isDarkStorefrontAppearanceMode(mode) ? 72 : 46
+  )}, inset 0 1px 0 ${mixCssColor('#ffffff', '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 16 : 60)}`;
   const warmOverlayBackground = `radial-gradient(circle at top, ${mixCssColor(
     surfaceTone.background,
     warningBackground,
-    mode === 'dark' ? 26 : 22
-  )} 0%, ${mixCssColor(surfaceTone.background, pageTone.background, mode === 'dark' ? 76 : 64)} 44%, ${mixCssColor(
+    isDarkStorefrontAppearanceMode(mode) ? 26 : 22
+  )} 0%, ${mixCssColor(surfaceTone.background, pageTone.background, isDarkStorefrontAppearanceMode(mode) ? 76 : 64)} 44%, ${mixCssColor(
     pageTone.background,
     warningBackground,
-    mode === 'dark' ? 8 : 12
+    isDarkStorefrontAppearanceMode(mode) ? 8 : 12
   )} 100%)`;
-  const warmOverlayBorder = mixCssColor(borderColor, warningBackground, mode === 'dark' ? 54 : 60);
+  const warmOverlayBorder = mixCssColor(borderColor, warningBackground, isDarkStorefrontAppearanceMode(mode) ? 54 : 60);
   const warmOverlayInset =
-    mode === 'dark' ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.5)';
+    isDarkStorefrontAppearanceMode(mode) ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.5)';
   const warmOverlayShadowCallout = `0 20px 48px -30px ${mixCssColor(
     warningBackground,
     '#000000',
-    mode === 'dark' ? 60 : 34
+    isDarkStorefrontAppearanceMode(mode) ? 60 : 34
   )}, inset 0 1px 0 ${warmOverlayInset}`;
   const warmOverlayShadowModal = `0 26px 60px -34px ${mixCssColor(
     warningBackground,
     '#000000',
-    mode === 'dark' ? 60 : 34
+    isDarkStorefrontAppearanceMode(mode) ? 60 : 34
   )}, inset 0 1px 0 ${warmOverlayInset}`;
+  const panelTransparency = clampNumber(theme.panelTransparency ?? 1, 0, 1);
+  const navTransparency = clampNumber(theme.navTransparency ?? 1, 0, 1);
+  const panelGradientStart = theme.panelGradientStart?.trim()
+    ? theme.panelGradientStart
+    : isDarkStorefrontAppearanceMode(mode)
+      ? mixCssColor(surfaceTone.background, '#000000', 80)
+      : mixCssColor(surfaceTone.background, '#ffffff', 86);
+  const panelGradientEnd = theme.panelGradientEnd?.trim()
+    ? theme.panelGradientEnd
+    : isDarkStorefrontAppearanceMode(mode)
+      ? mixCssColor(surfaceTone.background, pageTone.background, 86)
+      : mixCssColor(surfaceTone.background, pageTone.background, 92);
+  const navGradientStart = theme.navGradientStart?.trim()
+    ? theme.navGradientStart
+    : isDarkStorefrontAppearanceMode(mode)
+      ? mixCssColor(navBackground, '#000000', 84)
+      : mixCssColor(navBackground, '#ffffff', 90);
+  const navGradientEnd = theme.navGradientEnd?.trim()
+    ? theme.navGradientEnd
+    : isDarkStorefrontAppearanceMode(mode)
+      ? mixCssColor(navBackground, pageTone.background, 88)
+      : mixCssColor(navBackground, pageTone.background, 86);
+  const panelGradientStartWithAlpha = applyTransparency(panelGradientStart, panelTransparency);
+  const panelGradientEndWithAlpha = applyTransparency(panelGradientEnd, panelTransparency);
+  const navGradientStartWithAlpha = applyTransparency(navGradientStart, navTransparency);
+  const navGradientEndWithAlpha = applyTransparency(navGradientEnd, navTransparency);
+  const panelShadowBase =
+    isDarkStorefrontAppearanceMode(mode)
+      ? mixCssColor(theme.backgroundColor, '#000000', 42)
+      : mixCssColor(primary, '#000000', 18);
+  const cardShadowBase =
+    isDarkStorefrontAppearanceMode(mode)
+      ? mixCssColor(theme.backgroundColor, '#000000', 34)
+      : mixCssColor(primary, '#000000', 12);
+  const glassPanelShadow = buildShadow({
+    x: theme.containerShadowX,
+    y: theme.containerShadowY,
+    blur: theme.containerShadowBlur,
+    color: panelShadowBase,
+    opacity: theme.containerShadowOpacity,
+  });
+  const softCardShadow = buildShadow({
+    x: theme.cardShadowX,
+    y: theme.cardShadowY,
+    blur: theme.cardShadowBlur,
+    color: cardShadowBase,
+    opacity: theme.cardShadowOpacity,
+  });
 
   return {
     background,
@@ -1085,185 +1195,173 @@ const resolveThemedKangurStorefrontAppearance = (
     vars: {
       ...runtimeThemeVars,
       '--kangur-page-background': background,
-      '--kangur-glass-panel-background':
-        mode === 'dark'
-          ? `linear-gradient(180deg, ${mixCssColor(surfaceTone.background, '#000000', 80)} 0%, ${mixCssColor(surfaceTone.background, pageTone.background, 86)} 100%)`
-          : `linear-gradient(180deg, ${mixCssColor(surfaceTone.background, '#ffffff', 86)} 0%, ${mixCssColor(surfaceTone.background, pageTone.background, 92)} 100%)`,
+      '--kangur-glass-panel-background': `linear-gradient(180deg, ${panelGradientStartWithAlpha} 0%, ${panelGradientEndWithAlpha} 100%)`,
       '--kangur-glass-panel-border':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(borderColor, '#ffffff', 34)
           : mixCssColor(borderColor, '#ffffff', 74),
-      '--kangur-glass-panel-shadow':
-        mode === 'dark'
-          ? `0 24px 60px ${mixCssColor(theme.backgroundColor, '#000000', 42)}`
-          : `0 20px 60px ${mixCssColor(primary, '#000000', 18)}`,
+      '--kangur-glass-panel-shadow': glassPanelShadow,
       '--kangur-soft-card-background':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(surfaceTone.background, pageTone.background, 90)
           : mixCssColor(surfaceTone.background, '#ffffff', 94),
       '--kangur-soft-card-border':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(borderColor, '#ffffff', 28)
           : darkenCssColor(borderColor, 4),
-      '--kangur-soft-card-shadow':
-        mode === 'dark'
-          ? `0 18px 42px ${mixCssColor(theme.backgroundColor, '#000000', 38)}`
-          : `0 16px 38px ${mixCssColor(primary, '#000000', 12)}`,
+      '--kangur-soft-card-shadow': softCardShadow,
       '--kangur-soft-card-text': toneText,
-      '--kangur-nav-group-background':
-        mode === 'dark'
-          ? `linear-gradient(180deg, ${mixCssColor(navBackground, '#000000', 84)} 0%, ${mixCssColor(navBackground, pageTone.background, 88)} 100%)`
-          : `linear-gradient(180deg, ${mixCssColor(navBackground, '#ffffff', 90)} 0%, ${mixCssColor(navBackground, pageTone.background, 86)} 100%)`,
+      '--kangur-nav-group-background': `linear-gradient(180deg, ${navGradientStartWithAlpha} 0%, ${navGradientEndWithAlpha} 100%)`,
       '--kangur-nav-group-border':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(borderColor, '#ffffff', 34)
           : mixCssColor(borderColor, '#ffffff', 72),
       '--kangur-nav-item-text':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(navText, '#ffffff', 84)
           : navText,
       '--kangur-nav-item-hover-background':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(navBackground, pageTone.background, 76)
           : mixCssColor(navBackground, '#ffffff', 94),
       '--kangur-nav-item-hover-border':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(borderColor, '#ffffff', 40)
           : mixCssColor(borderColor, '#ffffff', 76),
       '--kangur-nav-item-hover-text': toneText,
       '--kangur-nav-item-active-background':
-        `linear-gradient(180deg, ${mixCssColor(navActiveBackground, mode === 'dark' ? '#000000' : '#ffffff', mode === 'dark' ? 88 : 72)} 0%, ${darkenCssColor(navActiveBackground, mode === 'dark' ? 22 : 8)} 100%)`,
+        `linear-gradient(180deg, ${mixCssColor(navActiveBackground, isDarkStorefrontAppearanceMode(mode) ? '#000000' : '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 88 : 72)} 0%, ${darkenCssColor(navActiveBackground, isDarkStorefrontAppearanceMode(mode) ? 22 : 8)} 100%)`,
       '--kangur-nav-item-active-border':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(navActiveBackground, '#ffffff', 38)
           : mixCssColor(navActiveBackground, '#ffffff', 56),
       '--kangur-nav-item-active-text':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(navActiveText, '#ffffff', 92)
           : darkenCssColor(navActiveBackground, 24),
       '--kangur-text-field-background': inputTone.background,
       '--kangur-text-field-border':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(inputTone.border, '#ffffff', 28)
           : inputTone.border,
       '--kangur-text-field-text': inputTone.text,
       '--kangur-text-field-placeholder':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(theme.inputPlaceholder, '#ffffff', 78)
           : theme.inputPlaceholder,
       '--kangur-text-field-disabled-background':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(inputTone.background, pageTone.background, 72)
           : mixCssColor(inputTone.background, pageTone.background, 84),
       '--kangur-text-field-disabled-border':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(inputTone.border, '#ffffff', 18)
           : mixCssColor(inputTone.border, pageTone.background, 72),
       '--kangur-progress-track':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(borderColor, pageTone.background, 48)
           : mixCssColor(borderColor, pageTone.background, 64),
       '--kangur-page-text': toneText,
       '--kangur-page-muted-text': pageMutedText,
       '--kangur-button-primary-background':
-        `linear-gradient(90deg, ${mixCssColor(primaryButtonBackground, '#ffffff', mode === 'dark' ? 82 : 68)} 0%, ${darkenCssColor(primaryButtonBackground, mode === 'dark' ? 18 : 8)} 100%)`,
+        `linear-gradient(90deg, ${mixCssColor(primaryButtonBackground, '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 82 : 68)} 0%, ${darkenCssColor(primaryButtonBackground, isDarkStorefrontAppearanceMode(mode) ? 18 : 8)} 100%)`,
       '--kangur-button-primary-hover-background':
-        `linear-gradient(90deg, ${mixCssColor(primaryButtonBackground, '#ffffff', mode === 'dark' ? 74 : 58)} 0%, ${darkenCssColor(primaryButtonBackground, mode === 'dark' ? 10 : 2)} 56%, ${darkenCssColor(primaryButtonBackground, mode === 'dark' ? 20 : 10)} 100%)`,
+        `linear-gradient(90deg, ${mixCssColor(primaryButtonBackground, '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 74 : 58)} 0%, ${darkenCssColor(primaryButtonBackground, isDarkStorefrontAppearanceMode(mode) ? 10 : 2)} 56%, ${darkenCssColor(primaryButtonBackground, isDarkStorefrontAppearanceMode(mode) ? 20 : 10)} 100%)`,
       '--kangur-button-primary-shadow':
-        `0 12px 24px ${mixCssColor(primaryButtonBackground, '#000000', mode === 'dark' ? 34 : 24)}, inset 0 1px 0 ${mixCssColor(theme.btnPrimaryText || '#ffffff', '#ffffff', mode === 'dark' ? 18 : 38)}`,
+        `0 12px 24px ${mixCssColor(primaryButtonBackground, '#000000', isDarkStorefrontAppearanceMode(mode) ? 34 : 24)}, inset 0 1px 0 ${mixCssColor(theme.btnPrimaryText || '#ffffff', '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 18 : 38)}`,
       '--kangur-button-primary-hover-shadow':
-        `0 22px 34px -18px ${mixCssColor(primaryButtonBackground, '#000000', mode === 'dark' ? 40 : 30)}, 0 14px 24px -18px ${mixCssColor(accent, '#000000', mode === 'dark' ? 22 : 16)}, inset 0 1px 0 ${mixCssColor(theme.btnPrimaryText || '#ffffff', '#ffffff', mode === 'dark' ? 24 : 42)}`,
+        `0 22px 34px -18px ${mixCssColor(primaryButtonBackground, '#000000', isDarkStorefrontAppearanceMode(mode) ? 40 : 30)}, 0 14px 24px -18px ${mixCssColor(accent, '#000000', isDarkStorefrontAppearanceMode(mode) ? 22 : 16)}, inset 0 1px 0 ${mixCssColor(theme.btnPrimaryText || '#ffffff', '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 24 : 42)}`,
       '--kangur-button-secondary-background':
-        `linear-gradient(180deg, ${mixCssColor(secondaryButtonBackground, mode === 'dark' ? '#000000' : '#ffffff', mode === 'dark' ? 88 : 92)} 0%, ${mixCssColor(secondaryButtonBackground, pageTone.background, mode === 'dark' ? 92 : 84)} 100%)`,
+        `linear-gradient(180deg, ${mixCssColor(secondaryButtonBackground, isDarkStorefrontAppearanceMode(mode) ? '#000000' : '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 88 : 92)} 0%, ${mixCssColor(secondaryButtonBackground, pageTone.background, isDarkStorefrontAppearanceMode(mode) ? 92 : 84)} 100%)`,
       '--kangur-button-secondary-hover-background':
-        `linear-gradient(180deg, ${mixCssColor(secondaryButtonBackground, mode === 'dark' ? '#ffffff' : '#ffffff', mode === 'dark' ? 78 : 86)} 0%, ${mixCssColor(secondaryButtonBackground, pageTone.background, mode === 'dark' ? 88 : 80)} 100%)`,
+        `linear-gradient(180deg, ${mixCssColor(secondaryButtonBackground, isDarkStorefrontAppearanceMode(mode) ? '#ffffff' : '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 78 : 86)} 0%, ${mixCssColor(secondaryButtonBackground, pageTone.background, isDarkStorefrontAppearanceMode(mode) ? 88 : 80)} 100%)`,
       '--kangur-button-secondary-shadow':
-        `0 16px 28px -24px ${mixCssColor(secondaryButtonBackground, '#000000', mode === 'dark' ? 52 : 28)}, inset 0 1px 0 ${mixCssColor(theme.btnSecondaryText || toneText, '#ffffff', mode === 'dark' ? 10 : 28)}`,
+        `0 16px 28px -24px ${mixCssColor(secondaryButtonBackground, '#000000', isDarkStorefrontAppearanceMode(mode) ? 52 : 28)}, inset 0 1px 0 ${mixCssColor(theme.btnSecondaryText || toneText, '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 10 : 28)}`,
       '--kangur-button-secondary-text':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(theme.btnSecondaryText || toneText, '#ffffff', 92)
           : theme.btnSecondaryText || toneText,
       '--kangur-button-secondary-hover-text': toneText,
       '--kangur-button-surface-background':
-        `linear-gradient(180deg, ${mixCssColor(surfaceBackground, mode === 'dark' ? '#000000' : '#ffffff', mode === 'dark' ? 92 : 90)} 0%, ${mixCssColor(primary, surfaceBackground, mode === 'dark' ? 12 : 16)} 100%)`,
+        `linear-gradient(180deg, ${mixCssColor(surfaceBackground, isDarkStorefrontAppearanceMode(mode) ? '#000000' : '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 92 : 90)} 0%, ${mixCssColor(primary, surfaceBackground, isDarkStorefrontAppearanceMode(mode) ? 12 : 16)} 100%)`,
       '--kangur-button-surface-hover-background':
-        `linear-gradient(180deg, ${mixCssColor(surfaceBackground, '#ffffff', mode === 'dark' ? 82 : 84)} 0%, ${mixCssColor(primary, surfaceBackground, mode === 'dark' ? 18 : 22)} 100%)`,
+        `linear-gradient(180deg, ${mixCssColor(surfaceBackground, '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 82 : 84)} 0%, ${mixCssColor(primary, surfaceBackground, isDarkStorefrontAppearanceMode(mode) ? 18 : 22)} 100%)`,
       '--kangur-button-surface-shadow':
-        `0 16px 28px -24px ${mixCssColor(primary, '#000000', mode === 'dark' ? 26 : 18)}, inset 0 1px 0 ${mixCssColor(primary, '#ffffff', mode === 'dark' ? 10 : 18)}`,
+        `0 16px 28px -24px ${mixCssColor(primary, '#000000', isDarkStorefrontAppearanceMode(mode) ? 26 : 18)}, inset 0 1px 0 ${mixCssColor(primary, '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 10 : 18)}`,
       '--kangur-button-surface-text':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(primary, '#ffffff', 72)
           : darkenCssColor(primary, 8),
       '--kangur-button-surface-hover-text':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(primary, '#ffffff', 88)
           : darkenCssColor(primary, 16),
       '--kangur-button-warning-background':
-        `linear-gradient(180deg, ${mixCssColor(warningBackground, mode === 'dark' ? '#000000' : '#ffffff', mode === 'dark' ? 84 : 76)} 0%, ${mixCssColor(warningBackground, pageTone.background, mode === 'dark' ? 88 : 68)} 100%)`,
+        `linear-gradient(180deg, ${mixCssColor(warningBackground, isDarkStorefrontAppearanceMode(mode) ? '#000000' : '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 84 : 76)} 0%, ${mixCssColor(warningBackground, pageTone.background, isDarkStorefrontAppearanceMode(mode) ? 88 : 68)} 100%)`,
       '--kangur-button-warning-hover-background':
-        `linear-gradient(180deg, ${mixCssColor(warningBackground, mode === 'dark' ? '#ffffff' : '#ffffff', mode === 'dark' ? 74 : 68)} 0%, ${mixCssColor(warningBackground, pageTone.background, mode === 'dark' ? 82 : 62)} 100%)`,
+        `linear-gradient(180deg, ${mixCssColor(warningBackground, isDarkStorefrontAppearanceMode(mode) ? '#ffffff' : '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 74 : 68)} 0%, ${mixCssColor(warningBackground, pageTone.background, isDarkStorefrontAppearanceMode(mode) ? 82 : 62)} 100%)`,
       '--kangur-button-warning-shadow':
-        `0 16px 28px -24px ${mixCssColor(warningBackground, '#000000', mode === 'dark' ? 44 : 26)}, inset 0 1px 0 ${mixCssColor('#ffffff', '#ffffff', mode === 'dark' ? 10 : 50)}`,
+        `0 16px 28px -24px ${mixCssColor(warningBackground, '#000000', isDarkStorefrontAppearanceMode(mode) ? 44 : 26)}, inset 0 1px 0 ${mixCssColor('#ffffff', '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 10 : 50)}`,
       '--kangur-button-warning-hover-shadow':
-        `0 20px 32px -24px ${mixCssColor(warningBackground, '#000000', mode === 'dark' ? 52 : 34)}, 0 14px 24px -24px ${mixCssColor(accent, '#000000', mode === 'dark' ? 18 : 10)}, inset 0 1px 0 ${mixCssColor('#ffffff', '#ffffff', mode === 'dark' ? 14 : 56)}`,
+        `0 20px 32px -24px ${mixCssColor(warningBackground, '#000000', isDarkStorefrontAppearanceMode(mode) ? 52 : 34)}, 0 14px 24px -24px ${mixCssColor(accent, '#000000', isDarkStorefrontAppearanceMode(mode) ? 18 : 10)}, inset 0 1px 0 ${mixCssColor('#ffffff', '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 14 : 56)}`,
       '--kangur-button-warning-text':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor('#fde68a', '#ffffff', 92)
           : darkenCssColor(warningBackground, 42),
       '--kangur-button-warning-hover-text':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor('#fef3c7', '#ffffff', 96)
           : darkenCssColor(warningBackground, 50),
       '--kangur-button-success-background':
-        `linear-gradient(180deg, ${mixCssColor(successBackground, mode === 'dark' ? '#000000' : '#ffffff', mode === 'dark' ? 86 : 78)} 0%, ${mixCssColor(successBackground, pageTone.background, mode === 'dark' ? 90 : 70)} 100%)`,
+        `linear-gradient(180deg, ${mixCssColor(successBackground, isDarkStorefrontAppearanceMode(mode) ? '#000000' : '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 86 : 78)} 0%, ${mixCssColor(successBackground, pageTone.background, isDarkStorefrontAppearanceMode(mode) ? 90 : 70)} 100%)`,
       '--kangur-button-success-shadow':
-        `0 16px 28px -24px ${mixCssColor(successBackground, '#000000', mode === 'dark' ? 42 : 24)}, inset 0 1px 0 ${mixCssColor('#ffffff', '#ffffff', mode === 'dark' ? 10 : 42)}`,
+        `0 16px 28px -24px ${mixCssColor(successBackground, '#000000', isDarkStorefrontAppearanceMode(mode) ? 42 : 24)}, inset 0 1px 0 ${mixCssColor('#ffffff', '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 10 : 42)}`,
       '--kangur-button-success-text':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor('#d1fae5', '#ffffff', 92)
           : darkenCssColor(successBackground, 36),
       '--kangur-button-success-hover-text':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor('#ecfdf5', '#ffffff', 96)
           : darkenCssColor(successBackground, 44),
       '--kangur-chat-panel-background':
-        `linear-gradient(180deg, ${mixCssColor(chatBackground, mode === 'dark' ? '#000000' : '#ffffff', mode === 'dark' ? 92 : 94)} 0%, ${mixCssColor(chatBackground, pageTone.background, mode === 'dark' ? 94 : 88)} 100%)`,
+        `linear-gradient(180deg, ${mixCssColor(chatBackground, isDarkStorefrontAppearanceMode(mode) ? '#000000' : '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 92 : 94)} 0%, ${mixCssColor(chatBackground, pageTone.background, isDarkStorefrontAppearanceMode(mode) ? 94 : 88)} 100%)`,
       '--kangur-chat-panel-border':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(accent, '#ffffff', 24)
           : mixCssColor(accent, '#ffffff', 34),
       '--kangur-chat-panel-shadow':
-        `0 20px 48px -30px ${mixCssColor(chatBackground, '#000000', mode === 'dark' ? 52 : 20)}, inset 0 1px 0 ${mixCssColor('#ffffff', '#ffffff', mode === 'dark' ? 6 : 22)}`,
+        `0 20px 48px -30px ${mixCssColor(chatBackground, '#000000', isDarkStorefrontAppearanceMode(mode) ? 52 : 20)}, inset 0 1px 0 ${mixCssColor('#ffffff', '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 6 : 22)}`,
       '--kangur-chat-header-background':
-        `linear-gradient(180deg, ${mixCssColor(accent, chatBackground, mode === 'dark' ? 32 : 22)} 0%, ${mixCssColor(chatBackground, pageTone.background, mode === 'dark' ? 92 : 86)} 100%)`,
+        `linear-gradient(180deg, ${mixCssColor(accent, chatBackground, isDarkStorefrontAppearanceMode(mode) ? 32 : 22)} 0%, ${mixCssColor(chatBackground, pageTone.background, isDarkStorefrontAppearanceMode(mode) ? 92 : 86)} 100%)`,
       '--kangur-chat-header-snap-background':
-        `linear-gradient(180deg, ${mixCssColor(surfaceTone.background, warningBackground, mode === 'dark' ? 28 : 22)} 0%, ${mixCssColor(surfaceTone.background, warningBackground, mode === 'dark' ? 36 : 28)} 100%)`,
+        `linear-gradient(180deg, ${mixCssColor(surfaceTone.background, warningBackground, isDarkStorefrontAppearanceMode(mode) ? 28 : 22)} 0%, ${mixCssColor(surfaceTone.background, warningBackground, isDarkStorefrontAppearanceMode(mode) ? 36 : 28)} 100%)`,
       '--kangur-chat-header-border':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(accent, '#ffffff', 20)
           : mixCssColor(accent, '#ffffff', 28),
       '--kangur-chat-spotlight-border':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(accent, '#ffffff', 36)
           : mixCssColor(accent, '#ffffff', 46),
       '--kangur-chat-spotlight-background':
-        `color-mix(in srgb, ${accent} ${mode === 'dark' ? 18 : 12}%, transparent)`,
+        `color-mix(in srgb, ${accent} ${isDarkStorefrontAppearanceMode(mode) ? 18 : 12}%, transparent)`,
       '--kangur-chat-spotlight-shadow':
-        `color-mix(in srgb, ${accent} ${mode === 'dark' ? 22 : 12}%, transparent)`,
+        `color-mix(in srgb, ${accent} ${isDarkStorefrontAppearanceMode(mode) ? 22 : 12}%, transparent)`,
       '--kangur-chat-avatar-shell-background':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(chatBackground, '#ffffff', 24)
           : mixCssColor(surfaceTone.background, '#ffffff', 78),
       '--kangur-chat-avatar-shell-border':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(borderColor, '#ffffff', 34)
           : mixCssColor(borderColor, '#ffffff', 72),
       '--kangur-chat-avatar-shell-shadow':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? 'inset 0 1px 0 rgba(255,255,255,0.18), 0 1px 2px rgba(15,23,42,0.12)'
           : 'inset 0 1px 0 rgba(255,255,255,0.24), 0 1px 2px rgba(15,23,42,0.06)',
       '--kangur-chat-avatar-svg-shadow':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? '0 1px 2px rgba(15,23,42,0.18)'
           : '0 1px 2px rgba(15,23,42,0.12)',
       '--kangur-chat-warm-overlay-background': warmOverlayBackground,
@@ -1271,23 +1369,23 @@ const resolveThemedKangurStorefrontAppearance = (
       '--kangur-chat-warm-overlay-shadow-callout': warmOverlayShadowCallout,
       '--kangur-chat-warm-overlay-shadow-modal': warmOverlayShadowModal,
       '--kangur-chat-pointer-glow':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(warningBackground, '#ffffff', 18)
           : mixCssColor(warningBackground, '#ffffff', 16),
       '--kangur-chat-pointer-marker':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(warningBackground, '#ffffff', 72)
           : mixCssColor(warningBackground, '#000000', 82),
       '--kangur-chat-tail-background':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(surfaceTone.background, pageTone.background, 90)
           : mixCssColor(surfaceTone.background, '#ffffff', 94),
       '--kangur-chat-tail-border':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(accent, '#ffffff', 20)
           : mixCssColor(accent, '#ffffff', 28),
       '--kangur-chat-sheet-handle-background':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(accent, '#ffffff', 20)
           : mixCssColor(accent, '#ffffff', 28),
       '--kangur-chat-composer-background': composerBackground,
@@ -1343,30 +1441,30 @@ const resolveThemedKangurStorefrontAppearance = (
       '--kangur-chat-surface-success-shadow': successSurfaceShadow,
       '--kangur-chat-panel-text': toneText,
       '--kangur-chat-muted-text':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(pageMutedText, '#ffffff', 84)
           : mixCssColor(pageMutedText, toneText, 76),
       '--kangur-chat-kicker-text':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(warningBackground, '#ffffff', 62)
           : darkenCssColor(warningBackground, 18),
       '--kangur-chat-kicker-dot': warningBackground,
       '--kangur-chat-chip-background':
-        `linear-gradient(135deg, ${mixCssColor(accent, chatBackground, mode === 'dark' ? 44 : 34)}, ${mixCssColor(chatBackground, pageTone.background, mode === 'dark' ? 88 : 82)})`,
+        `linear-gradient(135deg, ${mixCssColor(accent, chatBackground, isDarkStorefrontAppearanceMode(mode) ? 44 : 34)}, ${mixCssColor(chatBackground, pageTone.background, isDarkStorefrontAppearanceMode(mode) ? 88 : 82)})`,
       '--kangur-chat-chip-border':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(accent, '#ffffff', 22)
           : mixCssColor(accent, '#ffffff', 30),
       '--kangur-chat-chip-text':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(theme.btnPrimaryText || '#fff7ed', '#ffffff', 92)
           : toneText,
       '--kangur-chat-control-background':
-        `linear-gradient(180deg, ${mixCssColor(accent, chatBackground, mode === 'dark' ? 34 : 26)} 0%, ${mixCssColor(chatBackground, pageTone.background, mode === 'dark' ? 86 : 80)} 100%)`,
+        `linear-gradient(180deg, ${mixCssColor(accent, chatBackground, isDarkStorefrontAppearanceMode(mode) ? 34 : 26)} 0%, ${mixCssColor(chatBackground, pageTone.background, isDarkStorefrontAppearanceMode(mode) ? 86 : 80)} 100%)`,
       '--kangur-chat-control-hover-background':
-        `linear-gradient(180deg, ${mixCssColor(accent, mode === 'dark' ? '#ffffff' : '#ffffff', mode === 'dark' ? 28 : 22)} 0%, ${mixCssColor(chatBackground, pageTone.background, mode === 'dark' ? 82 : 76)} 100%)`,
+        `linear-gradient(180deg, ${mixCssColor(accent, isDarkStorefrontAppearanceMode(mode) ? '#ffffff' : '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 28 : 22)} 0%, ${mixCssColor(chatBackground, pageTone.background, isDarkStorefrontAppearanceMode(mode) ? 82 : 76)} 100%)`,
       '--kangur-chat-control-border':
-        mode === 'dark'
+        isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(accent, '#ffffff', 22)
           : mixCssColor(accent, '#ffffff', 28),
       '--kangur-chat-control-text': toneText,
@@ -1438,27 +1536,39 @@ export function CmsStorefrontAppearanceButtons({
   className,
   label = 'Storefront appearance',
   testId,
+  modes,
+  modeLabels,
 }: CmsStorefrontAppearanceButtonsProps): React.JSX.Element | null {
   const appearance = useOptionalCmsStorefrontAppearance();
   if (!appearance) return null;
 
   const { mode, setMode } = appearance;
+  const fallbackModes: CmsStorefrontAppearanceMode[] = ['default', 'dark'];
+  const resolvedModes = (modes && modes.length > 0 ? modes : fallbackModes)
+    .map((entry) => (VALID_MODES.has(entry) ? entry : null))
+    .filter(Boolean) as CmsStorefrontAppearanceMode[];
+  const uniqueModes = Array.from(new Set(resolvedModes));
+  const orderedModes = uniqueModes.length >= 2 ? uniqueModes : fallbackModes;
+  const currentIndex = orderedModes.indexOf(mode);
+  const safeIndex = currentIndex >= 0 ? currentIndex : 0;
+  const nextMode = orderedModes[(safeIndex + 1) % orderedModes.length];
+  const nextLabel = modeLabels?.[nextMode] ?? DEFAULT_MODE_LABELS[nextMode] ?? nextMode;
+  const buttonAriaLabel = `Switch to ${nextLabel} theme`;
+  const isTogglePair = orderedModes.length === 2;
   const resolvedTone = withFallbackTone(tone);
-  const isDarkMode = mode === 'dark';
-  const nextMode: CmsStorefrontAppearanceMode = isDarkMode ? 'default' : 'dark';
-  const buttonLabel = isDarkMode ? 'Default' : 'Dark';
-  const buttonAriaLabel = isDarkMode ? 'Switch to Default theme' : 'Switch to Dark theme';
+  const isDarkMode = isDarkStorefrontAppearanceMode(mode);
   const buttonAccentWeight = isDarkMode ? '11%' : '16%';
   const wrapperClassName = ['inline-flex flex-wrap items-center gap-2', className]
     .filter(Boolean)
     .join(' ');
+  const NextIcon = MODE_ICON_MAP[nextMode] ?? Sun;
 
   return (
     <div className={wrapperClassName} role='group' aria-label={label} data-testid={testId}>
       <button
         type='button'
         aria-label={buttonAriaLabel}
-        aria-pressed={isDarkMode}
+        aria-pressed={isTogglePair ? isDarkMode : undefined}
         onClick={() => setMode(nextMode)}
         title={buttonAriaLabel}
         className='relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-[background-color,border-color,color,box-shadow,transform] duration-300 ease-out hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0'
@@ -1469,21 +1579,8 @@ export function CmsStorefrontAppearanceButtons({
           boxShadow: `0 14px 24px -20px ${isDarkMode ? 'rgba(15,23,42,0.45)' : resolvedTone.accent}`,
         }}
       >
-        <Sun
-          aria-hidden='true'
-          className={[
-            'absolute h-4 w-4 transition-all duration-300 ease-out',
-            isDarkMode ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0',
-          ].join(' ')}
-        />
-        <Moon
-          aria-hidden='true'
-          className={[
-            'absolute h-4 w-4 transition-all duration-300 ease-out',
-            isDarkMode ? 'rotate-90 scale-0 opacity-0' : 'rotate-0 scale-100 opacity-100',
-          ].join(' ')}
-        />
-        <span className='sr-only'>{buttonLabel}</span>
+        <NextIcon aria-hidden='true' className='h-4 w-4' />
+        <span className='sr-only'>{nextLabel}</span>
       </button>
     </div>
   );

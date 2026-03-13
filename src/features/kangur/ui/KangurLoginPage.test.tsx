@@ -1194,6 +1194,7 @@ describe('KangurLoginPage', () => {
       })
     );
     await waitFor(() => {
+      expect(checkAppStateMock).toHaveBeenCalledTimes(1);
       expect(routerPushMock).toHaveBeenCalledWith('/tests?focus=division', {
         scroll: false,
       });

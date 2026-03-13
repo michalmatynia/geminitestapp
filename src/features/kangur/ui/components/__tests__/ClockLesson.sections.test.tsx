@@ -222,6 +222,30 @@ describe('ClockLesson section hub layout', () => {
     );
   });
 
+  it('shows the first minutes practice panel as the last step of the Minuty subsection', async () => {
+    render(<ClockLesson />);
+
+    fireEvent.click(screen.getByTestId('lesson-hub-section-minutes'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Co pokazuje długa wskazówka?')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('lesson-slide-indicator-3'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Ćwiczenie: Minuty')).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('mock-clock-training-game')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-clock-training-section')).toHaveTextContent('minutes');
+    expect(screen.getByTestId('mock-clock-training-mode')).toHaveTextContent('practice');
+    expect(screen.getByTestId('mock-clock-training-target')).toHaveTextContent('12:15');
+    expect(screen.getByTestId('mock-clock-training-show-time-display')).toHaveTextContent(
+      'visible'
+    );
+  });
+
   it('keeps the combined section locked until hours and minutes are completed', async () => {
     render(<ClockLesson />);
 
@@ -247,9 +271,9 @@ describe('ClockLesson section hub layout', () => {
     await waitFor(() => {
       expect(screen.getByText('Co pokazuje długa wskazówka?')).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByTestId('lesson-slide-indicator-2'));
+    fireEvent.click(screen.getByTestId('lesson-slide-indicator-3'));
     await waitFor(() => {
-      expect(screen.getByText('Szybki test minut')).toBeInTheDocument();
+      expect(screen.getByText('Ćwiczenie: Minuty')).toBeInTheDocument();
     });
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do tematów' }));
     await waitFor(() => {
@@ -882,7 +906,7 @@ describe('ClockLesson section hub layout', () => {
     await waitFor(() => {
       expect(screen.getByText('Co pokazuje długa wskazówka?')).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByTestId('lesson-slide-indicator-2'));
+    fireEvent.click(screen.getByTestId('lesson-slide-indicator-3'));
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do tematów' }));
 
     await waitFor(() => {

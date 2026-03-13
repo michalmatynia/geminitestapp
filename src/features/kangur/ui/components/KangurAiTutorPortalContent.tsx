@@ -192,6 +192,7 @@ export function KangurAiTutorPortalContent() {
         minimalPanelStyle={panel.minimalPanelStyle}
         motionProfile={panel.motionProfile}
         panelAvatarPlacement={panel.panelAvatarPlacement}
+        panelBodyContextValue={panel.panelBodyContextValue}
         panelEmptyStateMessage={panel.panelEmptyStateMessage}
         panelOpenAnimation={panel.panelOpenAnimation}
         panelSnapState={panel.panelSnapState}

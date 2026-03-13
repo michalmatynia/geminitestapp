@@ -16,6 +16,7 @@ import {
 } from './KangurAiTutorChrome';
 import { useKangurAiTutorPanelBodyContext } from './KangurAiTutorPanelBody.context';
 import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
+import { KangurNarratorControl } from './KangurNarratorControl';
 
 import type { CSSProperties, JSX } from 'react';
 
@@ -62,6 +63,12 @@ const useKangurAiTutorGuestIntroPanelContext = (): KangurAiTutorGuestIntroPanelC
 };
 
 function KangurAiTutorGuestIntroHeader(): JSX.Element {
+  const tutorContent = useKangurAiTutorContent();
+  const {
+    narratorSettings,
+    tutorNarrationScript,
+    tutorNarratorContextRegistry,
+  } = useKangurAiTutorPanelBodyContext();
   const {
     closeAria,
     guestIntroDescription,
@@ -73,9 +80,26 @@ function KangurAiTutorGuestIntroHeader(): JSX.Element {
   return (
     <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
       <div className='min-w-0'>
-        <KangurAiTutorChromeKicker>
-          {guestTutorLabel}
-        </KangurAiTutorChromeKicker>
+        <div className='flex items-center gap-2'>
+          <KangurAiTutorChromeKicker>
+            {guestTutorLabel}
+          </KangurAiTutorChromeKicker>
+          <KangurNarratorControl
+            className='w-auto'
+            contextRegistry={tutorNarratorContextRegistry}
+            displayMode='icon'
+            docId='kangur_ai_tutor_narrator'
+            engine={narratorSettings.engine}
+            pauseLabel={tutorContent.narrator.pauseLabel}
+            readLabel={tutorContent.narrator.readLabel}
+            renderWhenEmpty
+            resumeLabel={tutorContent.narrator.resumeLabel}
+            script={tutorNarrationScript}
+            shellTestId='kangur-ai-tutor-narrator-guest-intro'
+            showFeedback={false}
+            voice={narratorSettings.voice}
+          />
+        </div>
         <div className='mt-1.5 text-sm font-semibold leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
           {guestIntroHeadline}
         </div>
@@ -99,8 +123,8 @@ function KangurAiTutorGuestIntroActionPill(): JSX.Element {
     onAccept,
     onStartChat,
   } = useKangurAiTutorGuestIntroPanelContext();
+  const tutorContent = useKangurAiTutorContent();
   const handlePrimaryAction = isAnonymousVisitor ? onStartChat : onAccept;
-  const loginHelpLabel = 'Tak, pomóż mi się zalogować.';
 
   return (
     <KangurButton
@@ -110,7 +134,7 @@ function KangurAiTutorGuestIntroActionPill(): JSX.Element {
       className='h-8 rounded-full px-4 text-[11px] shadow-[0_4px_10px_-8px_rgba(15,23,42,0.1)]'
       onClick={handlePrimaryAction}
     >
-      {loginHelpLabel}
+      {tutorContent.guestIntro.acceptLabel}
     </KangurButton>
   );
 }

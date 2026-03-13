@@ -113,8 +113,8 @@ export function KangurAiTutorSpotlightOverlays({
           --kangur-ai-tutor-selection-spotlight-fill: rgba(245, 158, 11, 0.08);
         }
 
-        [data-kangur-appearance='dark'],
-        [data-kangur-appearance-mode='dark'] {
+        :is([data-kangur-appearance='dark'], [data-kangur-appearance='sunset']),
+        :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset']) {
           --kangur-ai-tutor-selection-gradient-fallback: #fde68a;
           --kangur-ai-tutor-selection-gradient-start: #fef3c7;
           --kangur-ai-tutor-selection-gradient-mid: #fcd34d;
@@ -150,16 +150,20 @@ export function KangurAiTutorSpotlightOverlays({
           transition: color 220ms ease, box-shadow 220ms ease;
         }
 
-        [data-kangur-appearance='dark'] [data-kangur-ai-tutor-selection-emphasis='gradient'],
-        [data-kangur-appearance-mode='dark'] [data-kangur-ai-tutor-selection-emphasis='gradient'] {
+        :is([data-kangur-appearance='dark'], [data-kangur-appearance='sunset'])
+          [data-kangur-ai-tutor-selection-emphasis='gradient'],
+        :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset'])
+          [data-kangur-ai-tutor-selection-emphasis='gradient'] {
           color: var(--kangur-ai-tutor-selection-gradient-fallback);
           background-image: none;
           box-shadow: none;
         }
 
         @supports ((-webkit-background-clip: text) or (background-clip: text)) {
-          [data-kangur-appearance='dark'] [data-kangur-ai-tutor-selection-emphasis='gradient'],
-          [data-kangur-appearance-mode='dark'] [data-kangur-ai-tutor-selection-emphasis='gradient'] {
+          :is([data-kangur-appearance='dark'], [data-kangur-appearance='sunset'])
+            [data-kangur-ai-tutor-selection-emphasis='gradient'],
+          :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset'])
+            [data-kangur-ai-tutor-selection-emphasis='gradient'] {
             background-image: linear-gradient(
               110deg,
               var(--kangur-ai-tutor-selection-gradient-start) 0%,
@@ -178,8 +182,10 @@ export function KangurAiTutorSpotlightOverlays({
         }
 
         @media (prefers-reduced-motion: reduce) {
-          [data-kangur-appearance='dark'] [data-kangur-ai-tutor-selection-emphasis='gradient'],
-          [data-kangur-appearance-mode='dark'] [data-kangur-ai-tutor-selection-emphasis='gradient'] {
+          :is([data-kangur-appearance='dark'], [data-kangur-appearance='sunset'])
+            [data-kangur-ai-tutor-selection-emphasis='gradient'],
+          :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset'])
+            [data-kangur-ai-tutor-selection-emphasis='gradient'] {
             animation: none;
             background-position: 50% 50%;
           }

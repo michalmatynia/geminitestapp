@@ -13,10 +13,6 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
   useKangurAiTutorContent: () => DEFAULT_KANGUR_AI_TUTOR_CONTENT,
 }));
 
-vi.mock('./KangurNarratorControl', () => ({
-  KangurNarratorControl: () => <div data-testid='kangur-ai-tutor-narrator-shell' />,
-}));
-
 const createPanelBodyContextValue = (
   overrides: Partial<KangurAiTutorPanelBodyContextValue> = {}
 ): KangurAiTutorPanelBodyContextValue => ({

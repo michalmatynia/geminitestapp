@@ -170,9 +170,6 @@ export function getClockTrainingSectionContent(
     case 'minutes':
       return {
         accent: 'emerald',
-        guidance: 'Skup się na długiej wskazówce. Krótka wskazówka stoi na 12, więc liczysz tylko minuty.',
-        guidanceTitle: 'Trening minut',
-        legend: 'Przesuwasz tylko długą wskazówkę. Godzina zostaje ustawiona na 12.',
         promptLabel: 'Ustaw minuty na tarczy',
       };
     case 'combined':

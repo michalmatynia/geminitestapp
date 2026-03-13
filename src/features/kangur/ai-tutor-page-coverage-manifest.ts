@@ -314,7 +314,8 @@ export const KANGUR_AI_TUTOR_PAGE_COVERAGE_MANIFEST: readonly KangurAiTutorPageC
       focusKind: 'hero',
       contentIdPrefixes: ['lesson:list'],
       currentKnowledgeEntryIds: ['lesson-list-intro'],
-      notes: 'Sekcja ma dedykowany tutor anchor i wpis Mongo native guide.',
+      notes:
+        'Karta wprowadzająca do ekranu Lekcje. Wyjaśnia, że tutaj wybiera się temat i przechodzi do nauki lub powtórki. Sekcja ma dedykowany tutor anchor i wpis Mongo native guide.',
     }),
     createCoverageEntry({
       id: 'lessons-library',
@@ -330,7 +331,8 @@ export const KANGUR_AI_TUTOR_PAGE_COVERAGE_MANIFEST: readonly KangurAiTutorPageC
       focusKind: 'library',
       contentIdPrefixes: ['lesson:list'],
       currentKnowledgeEntryIds: ['lesson-library'],
-      notes: 'Biblioteka lekcji ma dedykowany tutor anchor i wpis Mongo native guide.',
+      notes:
+        'Lista kart lekcji. Każda karta pokazuje tytuł, opis, poziom opanowania i ewentualny priorytet od rodzica; kliknięcie otwiera lekcję. Dostępne tematy: Nauka zegara, Nauka kalendarza, Dodawanie, Odejmowanie, Mnożenie, Dzielenie, Podstawy geometrii, Figury geometryczne, Symetria, Obwód figur, Myślenie logiczne, Wzorce i ciągi, Klasyfikacja, Wnioskowanie, Analogie. Biblioteka lekcji ma dedykowany tutor anchor i wpis Mongo native guide.',
     }),
     createCoverageEntry({
       id: 'lessons-list-empty-state',
@@ -346,7 +348,8 @@ export const KANGUR_AI_TUTOR_PAGE_COVERAGE_MANIFEST: readonly KangurAiTutorPageC
       focusKind: 'empty_state',
       contentIdPrefixes: ['lesson:list'],
       currentKnowledgeEntryIds: ['lesson-empty-state'],
-      notes: 'Pusty stan listy ma dedykowany tutor anchor i wpis Mongo native guide.',
+      notes:
+        'Stan pustej listy pokazuje, że nie ma aktywnych lekcji do wyboru. Zwykle oznacza to brak włączonych tematów w panelu admina lub brak dostępnej treści. Pusty stan listy ma dedykowany tutor anchor i wpis Mongo native guide.',
     }),
     createCoverageEntry({
       id: 'lessons-active-header',
@@ -361,7 +364,8 @@ export const KANGUR_AI_TUTOR_PAGE_COVERAGE_MANIFEST: readonly KangurAiTutorPageC
       anchorIdPrefix: 'kangur-lesson-header',
       focusKind: 'lesson_header',
       currentKnowledgeEntryIds: ['lesson-header'],
-      notes: 'Nagłówek aktywnej lekcji ma dedykowany anchor i wpis Mongo native guide.',
+      notes:
+        'Nagłówek aktywnej lekcji pokazuje tytuł, krótki opis tematu i najważniejszy kontekst startowy. To punkt orientacyjny przed przejściem do treści. Nagłówek aktywnej lekcji ma dedykowany anchor i wpis Mongo native guide.',
     }),
     createCoverageEntry({
       id: 'lessons-active-assignment',
@@ -376,7 +380,8 @@ export const KANGUR_AI_TUTOR_PAGE_COVERAGE_MANIFEST: readonly KangurAiTutorPageC
       anchorIdPrefix: 'kangur-lesson-assignment',
       focusKind: 'assignment',
       currentKnowledgeEntryIds: ['lesson-assignment'],
-      notes: 'Sekcja zadania ma dedykowany anchor i wpis Mongo native guide.',
+      notes:
+        'Sekcja zadania informuje o priorytecie od rodzica lub statusie wykonania powiązanego zadania. Pomaga zdecydować, czy ta lekcja jest teraz najważniejsza. Sekcja zadania ma dedykowany anchor i wpis Mongo native guide.',
     }),
     createCoverageEntry({
       id: 'lessons-active-document',
@@ -391,7 +396,8 @@ export const KANGUR_AI_TUTOR_PAGE_COVERAGE_MANIFEST: readonly KangurAiTutorPageC
       anchorIdPrefix: 'kangur-lesson-document',
       focusKind: 'document',
       currentKnowledgeEntryIds: ['lesson-document'],
-      notes: 'Główna treść aktywnej lekcji ma dedykowany anchor i wpis Mongo native guide.',
+      notes:
+        'Główna treść aktywnej lekcji zawiera dokument, przykłady, ilustracje i bloki wyjaśniające. To miejsce do spokojnego czytania i zrozumienia materiału. Główna treść aktywnej lekcji ma dedykowany anchor i wpis Mongo native guide.',
     }),
     createCoverageEntry({
       id: 'lessons-active-secret-panel',
@@ -406,7 +412,8 @@ export const KANGUR_AI_TUTOR_PAGE_COVERAGE_MANIFEST: readonly KangurAiTutorPageC
       anchorIdPrefix: 'kangur-lesson-screen-secret',
       focusKind: 'screen',
       currentKnowledgeEntryIds: ['lesson-screen'],
-      notes: 'Sekretna plansza ma dedykowany tutor anchor i wpis Mongo native guide.',
+      notes:
+        'Specjalna plansza pojawia się w wyjątkowych stanach (np. ukryty finisz). Częściej podsumowuje postęp niż wprowadza nową treść. Sekretna plansza ma dedykowany tutor anchor i wpis Mongo native guide.',
     }),
     createCoverageEntry({
       id: 'lessons-active-empty-document',
@@ -421,7 +428,8 @@ export const KANGUR_AI_TUTOR_PAGE_COVERAGE_MANIFEST: readonly KangurAiTutorPageC
       anchorIdPrefix: 'kangur-lesson-empty-document',
       focusKind: 'empty_state',
       currentKnowledgeEntryIds: ['lesson-empty-state'],
-      notes: 'Stan pustej zawartosci dokumentu ma dedykowany tutor anchor i wpis Mongo native guide.',
+      notes:
+        'Komunikat informuje, że lekcja ma tryb dokumentu, ale treść nie została jeszcze zapisana. Warto wrócić do listy lub wybrać inną lekcję. Stan pustej zawartości dokumentu ma dedykowany tutor anchor i wpis Mongo native guide.',
     }),
     createCoverageEntry({
       id: 'lessons-active-navigation',
@@ -436,7 +444,8 @@ export const KANGUR_AI_TUTOR_PAGE_COVERAGE_MANIFEST: readonly KangurAiTutorPageC
       anchorIdPrefix: 'kangur-lesson-navigation',
       focusKind: 'navigation',
       currentKnowledgeEntryIds: ['lesson-navigation'],
-      notes: 'Nawigacja lekcji ma dedykowany tutor anchor i wpis Mongo native guide.',
+      notes:
+        'Nawigacja pozwala przejść do poprzedniej lub następnej lekcji bez wracania do listy. Ułatwia płynne przechodzenie między tematami. Nawigacja lekcji ma dedykowany tutor anchor i wpis Mongo native guide.',
     }),
     createCoverageEntry({
       id: 'tests-empty-state',

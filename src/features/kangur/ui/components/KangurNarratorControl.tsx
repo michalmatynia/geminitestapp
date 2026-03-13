@@ -32,10 +32,13 @@ type KangurNarratorControlProps = {
   voice: KangurLessonTtsVoice;
   contextRegistry?: ContextRegistryConsumerEnvelope | null;
   className?: string;
+  displayMode?: 'button' | 'icon';
   diagnosticsVisible?: boolean;
   pauseLabel?: string;
   readLabel?: string;
   resumeLabel?: string;
+  renderWhenEmpty?: boolean;
+  showFeedback?: boolean;
   shellTestId?: string;
   docId?: string;
 };
@@ -46,13 +49,18 @@ export function KangurNarratorControl({
   voice,
   contextRegistry = null,
   className,
+  displayMode = 'button',
   diagnosticsVisible = false,
   pauseLabel = 'Pause',
   readLabel = 'Read',
   resumeLabel = 'Resume',
+  renderWhenEmpty = false,
+  showFeedback,
   shellTestId,
   docId,
 }: KangurNarratorControlProps): React.JSX.Element | null {
+  const isIconMode = displayMode === 'icon';
+  const shouldShowFeedback = showFeedback ?? !isIconMode;
   const narratorDocId = docId;
   const contextRegistrySignature = useMemo(
     () => buildKangurLessonTtsEnvelopeSignature(contextRegistry),
@@ -366,10 +374,12 @@ export function KangurNarratorControl({
 
   const activeSegmentText =
     manifest?.segments[currentIndex]?.text ?? script.segments[currentIndex]?.text ?? script.title;
-  const controlButtonMinWidth = useMemo(
-    () => `calc(${Math.max(readLabel.length, pauseLabel.length, resumeLabel.length, 6)}ch + 2.75rem)`,
-    [pauseLabel, readLabel, resumeLabel]
-  );
+  const controlButtonMinWidth = useMemo(() => {
+    if (isIconMode) {
+      return undefined;
+    }
+    return `calc(${Math.max(readLabel.length, pauseLabel.length, resumeLabel.length, 6)}ch + 2.75rem)`;
+  }, [isIconMode, pauseLabel, readLabel, resumeLabel]);
   const controlLabel =
     status === 'playing' ? pauseLabel : status === 'paused' ? resumeLabel : readLabel;
   const ControlIcon =
@@ -382,15 +392,18 @@ export function KangurNarratorControl({
           : Volume2;
   const handlePrimaryAction = status === 'playing' ? handlePause : () => void handlePlay();
 
-  if (!hasKangurLessonNarrationContent(script)) {
+  const hasNarration = hasKangurLessonNarrationContent(script);
+  if (!hasNarration && !renderWhenEmpty) {
     return null;
   }
+
+  const isControlDisabled = status === 'loading' || !hasNarration;
 
   return (
     <div
       data-kangur-tts-ignore='true'
       data-testid={shellTestId}
-      className={cn('w-full', className)}
+      className={cn(isIconMode ? 'w-auto' : 'w-full', className)}
     >
       <audio ref={audioRef} preload='none' className='hidden'>
         <track
@@ -401,23 +414,33 @@ export function KangurNarratorControl({
           srcLang={script.locale}
         />
       </audio>
-      <div className='flex flex-wrap items-center gap-3'>
+      <div className={cn('flex items-center', isIconMode ? 'gap-0' : 'flex-wrap gap-3')}>
         <KangurButton
           type='button'
           onClick={handlePrimaryAction}
-          disabled={status === 'loading'}
-          className='justify-center'
+          disabled={isControlDisabled}
+          aria-label={isIconMode ? controlLabel : undefined}
+          title={isIconMode ? controlLabel : undefined}
+          className={cn(
+            isIconMode ? 'h-6 w-6 rounded-full p-0' : 'justify-center',
+            status === 'loading' ? 'cursor-wait' : null
+          )}
           size='sm'
-          style={{ minWidth: controlButtonMinWidth }}
-          variant='surface'
+          style={controlButtonMinWidth ? { minWidth: controlButtonMinWidth } : undefined}
+          variant={isIconMode ? 'ghost' : 'surface'}
           {...(narratorDocId ? { 'data-doc-id': narratorDocId } : {})}
         >
-          <ControlIcon className={cn('size-4', status === 'loading' ? 'animate-spin' : undefined)} />{' '}
-          {controlLabel}
+          <ControlIcon
+            className={cn(
+              isIconMode ? 'size-3.5' : 'size-4',
+              status === 'loading' ? 'animate-spin' : undefined
+            )}
+          />
+          {!isIconMode ? ` ${controlLabel}` : null}
         </KangurButton>
       </div>
 
-      {errorMessage ? (
+      {shouldShowFeedback && errorMessage ? (
         <KangurSummaryPanel
           accent='rose'
           className='mt-4'
@@ -426,7 +449,7 @@ export function KangurNarratorControl({
           tone='accent'
         />
       ) : null}
-      {!errorMessage && fallbackMessage ? (
+      {shouldShowFeedback && !errorMessage && fallbackMessage ? (
         <KangurSummaryPanel
           accent='amber'
           className='mt-4'

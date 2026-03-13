@@ -1,14 +1,18 @@
 import { DEFAULT_THEME, normalizeThemeSettings, type ThemeSettings } from '@/shared/contracts/cms-theme';
 import {
   KANGUR_DAILY_THEME_SETTINGS_KEY,
+  KANGUR_DAWN_THEME_SETTINGS_KEY,
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
+  KANGUR_SUNSET_THEME_SETTINGS_KEY,
   KANGUR_THEME_SETTINGS_KEY,
 } from '@/shared/contracts/kangur';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export {
   KANGUR_DAILY_THEME_SETTINGS_KEY,
+  KANGUR_DAWN_THEME_SETTINGS_KEY,
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
+  KANGUR_SUNSET_THEME_SETTINGS_KEY,
   KANGUR_THEME_SETTINGS_KEY,
 };
 
@@ -267,6 +271,385 @@ export const KANGUR_DAILY_THEME: ThemeSettings = normalizeThemeSettings({
   badgeSoldOutBg: '#f1effb',
   badgeSoldOutText: '#64728a',
 });
+
+/** Kangur Daily Bloom theme — warm sunrise palette (2026-03-13). */
+export const KANGUR_DAILY_BLOOM_THEME: ThemeSettings = normalizeThemeSettings({
+  ...KANGUR_DAILY_THEME,
+  themePreset: 'kangur-daily-bloom',
+  primaryColor: '#2f7d7a',
+  secondaryColor: '#e57d6b',
+  accentColor: '#f2b255',
+  backgroundColor: '#f7f1e8',
+  surfaceColor: '#fffefc',
+  textColor: '#2e2a30',
+  mutedTextColor: '#6f6a73',
+  borderColor: '#eadfce',
+  errorColor: '#e36b6b',
+  successColor: '#3fbf8f',
+  colorSchemes: [
+    {
+      id: 'kangur-bloom-ivory',
+      name: 'Bloom Ivory',
+      colors: {
+        background: '#f7f1e8',
+        surface: '#fff8f1',
+        text: '#2e2a30',
+        accent: '#2f7d7a',
+        border: '#eadfce',
+      },
+    },
+    {
+      id: 'kangur-bloom-rose',
+      name: 'Bloom Rose',
+      colors: {
+        background: '#fff1f1',
+        surface: '#fff7f7',
+        text: '#2e2a30',
+        accent: '#e57d6b',
+        border: '#f0d6d2',
+      },
+    },
+    {
+      id: 'kangur-bloom-sky',
+      name: 'Bloom Sky',
+      colors: {
+        background: '#eef6ff',
+        surface: '#f7fbff',
+        text: '#2e2a30',
+        accent: '#5aa4ff',
+        border: '#d7e6f7',
+      },
+    },
+    {
+      id: 'kangur-bloom-sage',
+      name: 'Bloom Sage',
+      colors: {
+        background: '#edf7f1',
+        surface: '#f6fbf8',
+        text: '#2e2a30',
+        accent: '#5fb38c',
+        border: '#d6ece1',
+      },
+    },
+  ],
+  activeColorSchemeId: 'kangur-bloom-ivory',
+  headingFont: 'Outfit, sans-serif',
+  bodyFont: '\'Plus Jakarta Sans\', sans-serif',
+  headingSizeScale: 1.06,
+  lineHeight: 1.62,
+  btnPrimaryBg: 'linear-gradient(135deg, #2f7d7a 0%, #3aa890 52%, #64cfb1 100%)',
+  btnPrimaryText: '#ffffff',
+  btnSecondaryBg: 'rgba(255, 255, 255, 0.9)',
+  btnSecondaryText: '#3d3a40',
+  btnOutlineBorder: '#e4d6c8',
+  btnBorderOpacity: 70,
+  btnShadowOpacity: 0.12,
+  btnShadowY: 8,
+  btnShadowBlur: 24,
+  pillBg: 'rgba(255, 255, 255, 0.72)',
+  pillText: '#5f5a63',
+  pillActiveBg: '#e6f4ef',
+  pillActiveText: '#2f7d7a',
+  pillBorderColor: '#eadfce',
+  pillBorderOpacity: 70,
+  pillShadowOpacity: 0.08,
+  inputBorderColor: '#e2d5c8',
+  inputBg: '#ffffff',
+  inputText: '#343038',
+  inputFocusBorder: '#b7d7cc',
+  inputPlaceholder: '#918b94',
+  inputShadowOpacity: 0.06,
+  inputShadowY: 8,
+  inputShadowBlur: 22,
+  cardColorScheme: 'kangur-bloom-ivory',
+  cardBg: '#fffdfb',
+  cardBorderOpacity: 70,
+  cardShadowOpacity: 0.12,
+  collectionColorScheme: 'kangur-bloom-ivory',
+  collectionOverlayColor: 'rgba(255, 255, 255, 0.72)',
+  blogColorScheme: 'kangur-bloom-ivory',
+  containerBg: '#fffefc',
+  containerBorderColor: '#f7efe6',
+  panelGradientStart: 'rgba(255, 255, 255, 0.99)',
+  panelGradientEnd: 'rgba(249, 243, 236, 0.94)',
+  panelTransparency: 0.96,
+  navGradientStart: 'rgba(255, 255, 255, 0.96)',
+  navGradientEnd: 'rgba(249, 244, 237, 0.9)',
+  navTransparency: 0.94,
+  containerShadowOpacity: 0.12,
+  imageBorderColor: '#eee2d6',
+  imagePlaceholderBg: '#f4ede4',
+  dropdownBg: '#fff8f2',
+  dropdownBorder: '#e6d9cc',
+  dropdownShadowOpacity: 0.12,
+  dropdownShadowY: 12,
+  dropdownShadowBlur: 30,
+  popupOverlayColor: 'rgba(47, 45, 40, 0.18)',
+  drawerBg: '#fff6ef',
+  drawerOverlayColor: 'rgba(47, 45, 40, 0.18)',
+  drawerBorderColor: '#efe2d5',
+  drawerShadowOpacity: 0.14,
+  badgeDefaultBg: '#f1e8dd',
+  badgeDefaultText: '#5a5560',
+  badgeSaleColorScheme: 'kangur-bloom-rose',
+  badgeSaleBg: '#ffd7c2',
+  badgeSaleText: '#8a4b2b',
+  badgeSoldOutColorScheme: 'kangur-bloom-ivory',
+  badgeSoldOutBg: '#f3ede6',
+  badgeSoldOutText: '#7b7680',
+});
+
+/** Kangur Dawn theme — dawn-inspired palette based on the Daily Bloom theme (2026-03-13). */
+export const KANGUR_DAWN_THEME: ThemeSettings = {
+  ...KANGUR_DAILY_BLOOM_THEME,
+  themePreset: 'kangur-dawn',
+};
+
+/** Kangur Nightly Aurora theme — deep neon night palette (2026-03-13). */
+export const KANGUR_NIGHTLY_AURORA_THEME: ThemeSettings = normalizeThemeSettings({
+  ...KANGUR_DAILY_THEME,
+  themePreset: 'kangur-nightly-aurora',
+  darkMode: true,
+  primaryColor: '#64f4ff',
+  secondaryColor: '#7aa2ff',
+  accentColor: '#b08bff',
+  backgroundColor: '#0a0f1d',
+  surfaceColor: '#121a2b',
+  textColor: '#e9f2ff',
+  mutedTextColor: '#a1afc9',
+  borderColor: '#1d2740',
+  errorColor: '#ff7b88',
+  successColor: '#52e0b7',
+  colorSchemes: [
+    {
+      id: 'kangur-aurora-teal',
+      name: 'Aurora Teal',
+      colors: {
+        background: '#0a0f1d',
+        surface: '#121a2b',
+        text: '#e9f2ff',
+        accent: '#64f4ff',
+        border: '#1b2640',
+      },
+    },
+    {
+      id: 'kangur-aurora-violet',
+      name: 'Aurora Violet',
+      colors: {
+        background: '#120f25',
+        surface: '#1a1732',
+        text: '#e9f2ff',
+        accent: '#b08bff',
+        border: '#2a2346',
+      },
+    },
+    {
+      id: 'kangur-aurora-blue',
+      name: 'Aurora Blue',
+      colors: {
+        background: '#0b1326',
+        surface: '#131f35',
+        text: '#e9f2ff',
+        accent: '#7aa2ff',
+        border: '#1d2a48',
+      },
+    },
+    {
+      id: 'kangur-aurora-emerald',
+      name: 'Aurora Mint',
+      colors: {
+        background: '#0c141c',
+        surface: '#111d28',
+        text: '#e9f2ff',
+        accent: '#52e0b7',
+        border: '#1b2b39',
+      },
+    },
+  ],
+  activeColorSchemeId: 'kangur-aurora-teal',
+  headingFont: '\'Space Grotesk\', sans-serif',
+  bodyFont: 'Manrope, sans-serif',
+  headingSizeScale: 1.08,
+  lineHeight: 1.62,
+  headingLineHeight: 1.18,
+  borderRadius: 26,
+  hoverScale: 1.015,
+  btnRadius: 18,
+  btnPrimaryBg: 'linear-gradient(135deg, #64f4ff 0%, #7aa2ff 56%, #b08bff 100%)',
+  btnPrimaryText: '#0a0f1d',
+  btnSecondaryBg: 'rgba(12, 18, 35, 0.9)',
+  btnSecondaryText: '#e9f2ff',
+  btnOutlineBorder: '#263150',
+  btnBorderOpacity: 70,
+  btnBorderRadius: 18,
+  btnShadowOpacity: 0.22,
+  btnShadowY: 12,
+  btnShadowBlur: 34,
+  pillBg: 'rgba(18, 26, 46, 0.82)',
+  pillText: '#c2d0eb',
+  pillActiveBg: 'rgba(24, 50, 72, 0.9)',
+  pillActiveText: '#64f4ff',
+  pillBorderColor: '#263151',
+  pillBorderOpacity: 60,
+  pillShadowOpacity: 0.12,
+  inputBorderColor: '#2a3552',
+  inputBg: '#0f172c',
+  inputText: '#e9f2ff',
+  inputFocusBorder: '#64f4ff',
+  inputPlaceholder: '#7f8fb3',
+  inputShadowOpacity: 0.1,
+  inputShadowY: 12,
+  inputShadowBlur: 30,
+  cardColorScheme: 'kangur-aurora-blue',
+  cardBg: '#111a2e',
+  cardBorderOpacity: 65,
+  cardShadowOpacity: 0.2,
+  cardShadowY: 20,
+  cardShadowBlur: 42,
+  collectionColorScheme: 'kangur-aurora-blue',
+  collectionOverlayColor: 'rgba(6, 12, 26, 0.6)',
+  blogColorScheme: 'kangur-aurora-blue',
+  containerBg: '#0f172b',
+  containerBorderColor: '#1f2a45',
+  panelGradientStart: '#16223b',
+  panelGradientEnd: '#0c1326',
+  panelTransparency: 0.92,
+  navGradientStart: '#131c33',
+  navGradientEnd: '#0a1124',
+  navTransparency: 0.9,
+  containerShadowOpacity: 0.22,
+  imageBorderColor: '#1f2a46',
+  imagePlaceholderBg: '#0c1326',
+  dropdownBg: '#131c33',
+  dropdownBorder: '#283554',
+  dropdownShadowOpacity: 0.24,
+  dropdownShadowY: 16,
+  dropdownShadowBlur: 38,
+  popupOverlayColor: 'rgba(5, 8, 18, 0.55)',
+  drawerBg: '#0f172b',
+  drawerOverlayColor: 'rgba(5, 8, 18, 0.6)',
+  drawerBorderColor: '#1f2a45',
+  drawerShadowOpacity: 0.24,
+  badgeDefaultBg: '#1a2541',
+  badgeDefaultText: '#cbd6ef',
+  badgeSaleColorScheme: 'kangur-aurora-violet',
+  badgeSaleBg: '#f0a3ff',
+  badgeSaleText: '#2a1430',
+  badgeSoldOutColorScheme: 'kangur-aurora-blue',
+  badgeSoldOutBg: '#132036',
+  badgeSoldOutText: '#7f8fb3',
+});
+
+/** Kangur Sunset theme — warm dusk palette (2026-03-13). */
+export const KANGUR_SUNSET_THEME: ThemeSettings = normalizeThemeSettings({
+  ...KANGUR_NIGHTLY_AURORA_THEME,
+  themePreset: 'kangur-sunset',
+  primaryColor: '#f97316',
+  secondaryColor: '#fb7185',
+  accentColor: '#fbbf24',
+  backgroundColor: '#140b14',
+  surfaceColor: '#1d131f',
+  textColor: '#fff4e6',
+  mutedTextColor: '#e2bfa8',
+  borderColor: '#2a1b2f',
+  errorColor: '#fb7185',
+  successColor: '#34d399',
+  colorSchemes: [
+    {
+      id: 'kangur-sunset-ember',
+      name: 'Sunset Ember',
+      colors: {
+        background: '#140b14',
+        surface: '#1d131f',
+        text: '#fff4e6',
+        accent: '#f97316',
+        border: '#2a1b2f',
+      },
+    },
+    {
+      id: 'kangur-sunset-rose',
+      name: 'Sunset Rose',
+      colors: {
+        background: '#180d1a',
+        surface: '#241322',
+        text: '#fff4e6',
+        accent: '#fb7185',
+        border: '#332035',
+      },
+    },
+    {
+      id: 'kangur-sunset-amber',
+      name: 'Sunset Amber',
+      colors: {
+        background: '#16100f',
+        surface: '#231816',
+        text: '#fff4e6',
+        accent: '#fbbf24',
+        border: '#332620',
+      },
+    },
+    {
+      id: 'kangur-sunset-coral',
+      name: 'Sunset Coral',
+      colors: {
+        background: '#140e13',
+        surface: '#20141a',
+        text: '#fff4e6',
+        accent: '#fb923c',
+        border: '#2f2027',
+      },
+    },
+  ],
+  activeColorSchemeId: 'kangur-sunset-ember',
+  btnPrimaryBg: 'linear-gradient(135deg, #f97316 0%, #fb923c 52%, #fbbf24 100%)',
+  btnPrimaryText: '#1f130a',
+  btnSecondaryBg: 'rgba(24, 16, 24, 0.9)',
+  btnSecondaryText: '#fff3e0',
+  btnOutlineBorder: '#3a2a2f',
+  pillBg: 'rgba(24, 16, 24, 0.82)',
+  pillText: '#e8c8b4',
+  pillActiveBg: 'rgba(45, 28, 36, 0.9)',
+  pillActiveText: '#fbbf24',
+  pillBorderColor: '#3a2a2f',
+  inputBorderColor: '#3a2a2f',
+  inputBg: '#160f16',
+  inputText: '#fff3e0',
+  inputFocusBorder: '#fbbf24',
+  inputPlaceholder: '#c9a88e',
+  cardColorScheme: 'kangur-sunset-ember',
+  cardBg: '#1a121c',
+  collectionColorScheme: 'kangur-sunset-ember',
+  collectionOverlayColor: 'rgba(10, 6, 12, 0.6)',
+  blogColorScheme: 'kangur-sunset-ember',
+  containerBg: '#171019',
+  containerBorderColor: '#2a1b2f',
+  panelGradientStart: '#221423',
+  panelGradientEnd: '#120a14',
+  navGradientStart: '#1e111f',
+  navGradientEnd: '#0f0811',
+  imageBorderColor: '#2d1d2e',
+  imagePlaceholderBg: '#120a14',
+  dropdownBg: '#1e111f',
+  dropdownBorder: '#3a2a2f',
+  popupOverlayColor: 'rgba(10, 6, 12, 0.6)',
+  drawerBg: '#171019',
+  drawerOverlayColor: 'rgba(10, 6, 12, 0.6)',
+  drawerBorderColor: '#2a1b2f',
+  badgeDefaultBg: '#241824',
+  badgeDefaultText: '#f1d2bd',
+  badgeSaleColorScheme: 'kangur-sunset-rose',
+  badgeSaleBg: '#fcd7c2',
+  badgeSaleText: '#7a3b21',
+  badgeSoldOutColorScheme: 'kangur-sunset-ember',
+  badgeSoldOutBg: '#1d121c',
+  badgeSoldOutText: '#c7a390',
+});
+
+/** Factory dawn theme — baseline for the dawn slot. */
+export const KANGUR_FACTORY_DAWN_THEME: ThemeSettings = KANGUR_DAWN_THEME;
+
+/** Factory sunset theme — baseline for the sunset slot. */
+export const KANGUR_FACTORY_SUNSET_THEME: ThemeSettings = KANGUR_SUNSET_THEME;
 /** Factory nightly theme (commit dda089a...). */
 export const KANGUR_FACTORY_NIGHTLY_THEME: ThemeSettings = normalizeThemeSettings({
   ...KANGUR_FACTORY_THEME,
@@ -283,6 +666,18 @@ export const KANGUR_DEFAULT_THEME: ThemeSettings = KANGUR_FACTORY_NIGHTLY_THEME;
  * Used as the daily reset target.
  */
 export const KANGUR_DEFAULT_DAILY_THEME: ThemeSettings = KANGUR_DAILY_THEME;
+
+/**
+ * Default dawn theme — uses factory dawn baseline.
+ * Used as the dawn reset target.
+ */
+export const KANGUR_DEFAULT_DAWN_THEME: ThemeSettings = KANGUR_DAWN_THEME;
+
+/**
+ * Default sunset theme — uses factory sunset baseline.
+ * Used as the sunset reset target.
+ */
+export const KANGUR_DEFAULT_SUNSET_THEME: ThemeSettings = KANGUR_SUNSET_THEME;
 
 const KANGUR_LEGACY_DEFAULT_PATCH_KEYS: Array<keyof ThemeSettings> = [
   'headingFont',
@@ -338,26 +733,50 @@ export const parseKangurThemeSettings = (
 };
 
 export const getKangurThemeSettingsKeyForAppearanceMode = (
-  mode: 'default' | 'dark'
-): string => (mode === 'dark' ? KANGUR_NIGHTLY_THEME_SETTINGS_KEY : KANGUR_DAILY_THEME_SETTINGS_KEY);
+  mode: 'default' | 'dawn' | 'sunset' | 'dark'
+): string => {
+  switch (mode) {
+    case 'dawn':
+      return KANGUR_DAWN_THEME_SETTINGS_KEY;
+    case 'sunset':
+      return KANGUR_SUNSET_THEME_SETTINGS_KEY;
+    case 'dark':
+      return KANGUR_NIGHTLY_THEME_SETTINGS_KEY;
+    default:
+      return KANGUR_DAILY_THEME_SETTINGS_KEY;
+  }
+};
 
 export const resolveKangurThemeSettingsRawForMode = ({
   mode,
   dailyThemeRaw,
+  dawnThemeRaw,
+  sunsetThemeRaw,
   nightlyThemeRaw,
   legacyThemeRaw,
 }: {
-  mode: 'default' | 'dark';
+  mode: 'default' | 'dawn' | 'sunset' | 'dark';
   dailyThemeRaw: string | null | undefined;
+  dawnThemeRaw: string | null | undefined;
+  sunsetThemeRaw: string | null | undefined;
   nightlyThemeRaw: string | null | undefined;
   legacyThemeRaw: string | null | undefined;
 }): string | null => {
-  const slotThemeRaw = mode === 'dark' ? nightlyThemeRaw : dailyThemeRaw;
-  return typeof slotThemeRaw === 'string' && slotThemeRaw.trim().length > 0
-    ? slotThemeRaw
-    : legacyThemeRaw?.trim()
-      ? legacyThemeRaw
-      : null;
+  const resolveThemeRaw = (raw: string | null | undefined): string | null =>
+    typeof raw === 'string' && raw.trim().length > 0 ? raw : null;
+  const legacyFallback = resolveThemeRaw(legacyThemeRaw);
+
+  if (mode === 'dawn') {
+    return resolveThemeRaw(dawnThemeRaw) ?? resolveThemeRaw(dailyThemeRaw) ?? legacyFallback;
+  }
+  if (mode === 'sunset') {
+    return resolveThemeRaw(sunsetThemeRaw) ?? resolveThemeRaw(nightlyThemeRaw) ?? legacyFallback;
+  }
+  if (mode === 'dark') {
+    return resolveThemeRaw(nightlyThemeRaw) ?? legacyFallback;
+  }
+
+  return resolveThemeRaw(dailyThemeRaw) ?? legacyFallback;
 };
 
 // ─── Theme Catalog ───────────────────────────────────────────────────────────

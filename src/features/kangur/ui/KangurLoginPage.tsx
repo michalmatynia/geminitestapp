@@ -542,14 +542,13 @@ function KangurLoginPageContent(): JSX.Element {
     }
 
     const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-    if (navigationTarget.kind === 'router' && navigationTarget.href === currentHref) {
-      router.refresh();
-      await auth?.checkAppState?.();
-      onClose?.();
-      return;
-    }
-
     if (navigationTarget.kind === 'router') {
+      await auth?.checkAppState?.();
+      if (navigationTarget.href === currentHref) {
+        router.refresh();
+        onClose?.();
+        return;
+      }
       onClose?.();
       routeNavigator.push(navigationTarget.href, {
         acknowledgeMs: LOGIN_ROUTE_ACKNOWLEDGE_MS,

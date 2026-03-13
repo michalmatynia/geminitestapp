@@ -7,7 +7,6 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
-  openLoginModalMock,
   useRouterMock,
   routerPushMock,
   routerRefreshMock,
@@ -18,7 +17,6 @@ const {
   selectLearnerMock,
   logKangurClientErrorMock,
 } = vi.hoisted(() => ({
-  openLoginModalMock: vi.fn(),
   useRouterMock: vi.fn(),
   routerPushMock: vi.fn(),
   routerRefreshMock: vi.fn(),
@@ -48,16 +46,11 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
   }),
 }));
 
-vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
-  useKangurLoginModal: () => ({
-    openLoginModal: openLoginModalMock,
-  }),
-}));
-
 vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: logKangurClientErrorMock,
 }));
 
+import { getKangurLoginHref } from '@/features/kangur/config/routing';
 import { KangurAuthProvider, useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 
 const AUTHENTICATED_USER = {
@@ -133,7 +126,7 @@ describe('KangurAuthContext', () => {
     });
   });
 
-  it('opens the Kangur login modal in place using the current location as callback target', async () => {
+  it('navigates to the Kangur login page using the current location as callback target', async () => {
     const user = userEvent.setup();
 
     render(
@@ -149,15 +142,14 @@ describe('KangurAuthContext', () => {
 
     await user.click(screen.getByRole('button', { name: 'Open login' }));
 
-    expect(openLoginModalMock).toHaveBeenCalledWith(window.location.href, {
-      authMode: undefined,
-    });
+    expect(routerPushMock).toHaveBeenCalledWith(
+      getKangurLoginHref('/kangur', window.location.href)
+    );
     expect(prepareLoginHrefMock).not.toHaveBeenCalled();
-    expect(routerPushMock).not.toHaveBeenCalled();
     expect(redirectToLoginMock).not.toHaveBeenCalled();
   });
 
-  it('opens the Kangur login modal directly in create-account mode when requested', async () => {
+  it('navigates to the Kangur login page in create-account mode when requested', async () => {
     const user = userEvent.setup();
 
     render(
@@ -173,11 +165,13 @@ describe('KangurAuthContext', () => {
 
     await user.click(screen.getByRole('button', { name: 'Open create-account' }));
 
-    expect(openLoginModalMock).toHaveBeenCalledWith(window.location.href, {
-      authMode: 'create-account',
-    });
+    const loginHref = getKangurLoginHref('/kangur', window.location.href);
+    const parsed = new URL(loginHref, 'https://kangur.local');
+    parsed.searchParams.set('authMode', 'create-account');
+    expect(routerPushMock).toHaveBeenCalledWith(
+      `${parsed.pathname}${parsed.search}${parsed.hash}`
+    );
     expect(prepareLoginHrefMock).not.toHaveBeenCalled();
-    expect(routerPushMock).not.toHaveBeenCalled();
     expect(redirectToLoginMock).not.toHaveBeenCalled();
   });
 

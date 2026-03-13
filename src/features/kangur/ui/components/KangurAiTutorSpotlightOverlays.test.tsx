@@ -91,8 +91,10 @@ describe('KangurAiTutorSpotlightOverlays', () => {
     const { container } = render(<SpotlightOverlaysHarness />);
     const style = container.querySelector('style');
 
-    expect(style?.textContent).toContain('[data-kangur-appearance=\'dark\'],');
-    expect(style?.textContent).toContain('[data-kangur-appearance-mode=\'dark\'] {');
+    expect(style?.textContent).toContain("data-kangur-appearance='dark'");
+    expect(style?.textContent).toContain("data-kangur-appearance='sunset'");
+    expect(style?.textContent).toContain("data-kangur-appearance-mode='dark'");
+    expect(style?.textContent).toContain("data-kangur-appearance-mode='sunset'");
     expect(style?.textContent).not.toContain('.dark {');
   });
 
@@ -100,9 +102,9 @@ describe('KangurAiTutorSpotlightOverlays', () => {
     const { container } = render(<SpotlightOverlaysHarness />);
     const style = container.querySelector('style');
 
-    expect(style?.textContent).toMatch(
-      /\[data-kangur-appearance='dark'\]\s+\[data-kangur-ai-tutor-selection-emphasis='gradient'\],[\s\S]*-webkit-text-fill-color:\s*transparent;/
-    );
+    expect(style?.textContent).toContain("data-kangur-ai-tutor-selection-emphasis='gradient'");
+    expect(style?.textContent).toContain("data-kangur-appearance='sunset'");
+    expect(style?.textContent).toContain('-webkit-text-fill-color: transparent;');
     expect(style?.textContent).not.toMatch(
       /@supports[\s\S]*?\n\s*\[data-kangur-ai-tutor-selection-emphasis='gradient'\]\s*\{[\s\S]*?-webkit-text-fill-color:\s*transparent;/
     );

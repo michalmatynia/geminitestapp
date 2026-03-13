@@ -2,9 +2,8 @@
 
 import { useEffect, type ReactNode } from 'react';
 
-import {
-  useOptionalCmsStorefrontAppearance,
-} from '@/features/cms/public';
+import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
+import type { CmsStorefrontAppearanceMode } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import { useKangurClassOverrides } from '@/features/kangur/ui/useKangurClassOverrides';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 
@@ -47,7 +46,7 @@ const getKangurSurfaceTargets = (): KangurSurfaceTarget[] => {
 
 const applyKangurSurfaceStyle = (
   target: HTMLElement,
-  mode: 'default' | 'dark',
+  mode: CmsStorefrontAppearanceMode,
   background: string,
   vars: Record<string, string>
 ): void => {

@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
 
 import { KANGUR_ACCENT_STYLES, KANGUR_OPTION_CARD_CLASSNAME, type KangurAccent } from '../tokens';
 
@@ -35,13 +35,38 @@ export type KangurOptionCardButtonProps = React.ButtonHTMLAttributes<HTMLButtonE
 export const KangurOptionCardButton = React.forwardRef<
   HTMLButtonElement,
   KangurOptionCardButtonProps
->(({ accent = 'slate', className, disabled, emphasis, state, type, ...props }, ref) => {
+>(
+  (
+    {
+      accent = 'slate',
+      className,
+      disabled,
+      emphasis,
+      state,
+      type,
+      children,
+      title,
+      'aria-label': ariaLabelProp,
+      'aria-labelledby': ariaLabelledByProp,
+      ...props
+    },
+    ref
+  ) => {
   const accentStyles = KANGUR_ACCENT_STYLES[accent];
   const cursorClassName = disabled
     ? 'cursor-not-allowed'
     : state === 'muted'
       ? null
       : 'cursor-pointer';
+  const { hasText, ariaLabel: resolvedAriaLabel, hasAccessibleLabel } = resolveAccessibleLabel({
+    children,
+    ariaLabel: ariaLabelProp,
+    ariaLabelledBy: ariaLabelledByProp,
+    title,
+  });
+  if (!hasAccessibleLabel && !hasText) {
+    warnMissingAccessibleLabel({ componentName: 'KangurOptionCardButton', hasAccessibleLabel });
+  }
 
   return (
     <button
@@ -60,8 +85,14 @@ export const KangurOptionCardButton = React.forwardRef<
       )}
       disabled={disabled}
       type={type ?? 'button'}
+      aria-label={resolvedAriaLabel}
+      aria-labelledby={ariaLabelledByProp}
+      title={title}
       {...props}
-    />
+    >
+      {children}
+    </button>
   );
-});
+}
+);
 KangurOptionCardButton.displayName = 'KangurOptionCardButton';

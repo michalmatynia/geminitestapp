@@ -576,7 +576,25 @@ export default function ClockLesson(): React.JSX.Element {
           ),
         },
       ],
-      minutes: MINUTES_SLIDES,
+      minutes: [
+        ...MINUTES_SLIDES,
+        {
+          title: 'Ćwiczenie: Minuty',
+          tts: 'Teraz przechodzisz do praktyki minut. Ustawiaj długą wskazówkę tak jak w pierwszym panelu ćwiczenia minut.',
+          content: (
+            <ClockTrainingGame
+              completionPrimaryActionLabel='Wróć do tematów'
+              enableAdaptiveRetry={false}
+              hideModeSwitch
+              onFinish={handleReturnToHub}
+              practiceTasks={TRAINING_PANEL_TASKS.minutes.learn}
+              section='minutes'
+              showTaskTitle
+              showTimeDisplay
+            />
+          ),
+        },
+      ],
       combined: COMBINED_SLIDES,
     };
   }

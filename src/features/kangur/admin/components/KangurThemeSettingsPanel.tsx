@@ -9,9 +9,13 @@ import {
 } from '@/features/cms/public';
 import {
   KANGUR_DAILY_THEME_SETTINGS_KEY,
+  KANGUR_DAWN_THEME_SETTINGS_KEY,
   KANGUR_DEFAULT_DAILY_THEME,
+  KANGUR_DEFAULT_DAWN_THEME,
+  KANGUR_DEFAULT_SUNSET_THEME,
   KANGUR_DEFAULT_THEME,
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
+  KANGUR_SUNSET_THEME_SETTINGS_KEY,
 } from '@/features/kangur/theme-settings';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -19,7 +23,7 @@ import { Alert, Button, FormSection, useToast } from '@/shared/ui';
 import type { SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
-type ThemeMode = 'daily' | 'nightly';
+type ThemeMode = 'daily' | 'dawn' | 'sunset' | 'nightly';
 
 const KANGUR_THEME_SECTIONS: Array<{
   title: string;
@@ -46,6 +50,16 @@ const KANGUR_THEME_SECTIONS: Array<{
       { key: 'surfaceColor', label: 'Surface Background', type: 'color' },
       { key: 'cardBg', label: 'Card Background', type: 'color' },
       { key: 'containerBg', label: 'Container Background', type: 'color' },
+      { key: 'panelGradientStart', label: 'Panel Gradient Start', type: 'color' },
+      { key: 'panelGradientEnd', label: 'Panel Gradient End', type: 'color' },
+      {
+        key: 'panelTransparency',
+        label: 'Panel Transparency',
+        type: 'range',
+        min: 0,
+        max: 1,
+        step: 0.05,
+      },
       { key: 'borderColor', label: 'Base Border', type: 'color' },
       { key: 'containerBorderColor', label: 'Surface Border', type: 'color' },
     ],
@@ -67,6 +81,16 @@ const KANGUR_THEME_SECTIONS: Array<{
     title: 'Navigation Pills',
     subtitle: 'Sidebar and tab pill styling for default and active states.',
     fields: [
+      { key: 'navGradientStart', label: 'Navbar Gradient Start', type: 'color' },
+      { key: 'navGradientEnd', label: 'Navbar Gradient End', type: 'color' },
+      {
+        key: 'navTransparency',
+        label: 'Navbar Transparency',
+        type: 'range',
+        min: 0,
+        max: 1,
+        step: 0.05,
+      },
       { key: 'pillBg', label: 'Pill Background', type: 'color' },
       { key: 'pillText', label: 'Pill Text', type: 'color' },
       { key: 'pillActiveBg', label: 'Active Pill Background', type: 'color' },
@@ -75,6 +99,33 @@ const KANGUR_THEME_SECTIONS: Array<{
       { key: 'pillPaddingY', label: 'Pill Padding Y', type: 'number', min: 4, max: 24, suffix: 'px' },
       { key: 'pillFontSize', label: 'Pill Font Size', type: 'number', min: 11, max: 18, suffix: 'px' },
     ],
+  },
+  {
+    title: 'Gradients',
+    subtitle: 'Accent gradients used by lesson tiles, badges, and decorative highlights.',
+    fields: [
+      { key: 'gradientIndigoStart', label: 'Indigo Gradient Start', type: 'color' },
+      { key: 'gradientIndigoEnd', label: 'Indigo Gradient End', type: 'color' },
+      { key: 'gradientVioletStart', label: 'Violet Gradient Start', type: 'color' },
+      { key: 'gradientVioletEnd', label: 'Violet Gradient End', type: 'color' },
+      { key: 'gradientEmeraldStart', label: 'Emerald Gradient Start', type: 'color' },
+      { key: 'gradientEmeraldEnd', label: 'Emerald Gradient End', type: 'color' },
+      { key: 'gradientSkyStart', label: 'Sky Gradient Start', type: 'color' },
+      { key: 'gradientSkyEnd', label: 'Sky Gradient End', type: 'color' },
+      { key: 'gradientAmberStart', label: 'Amber Gradient Start', type: 'color' },
+      { key: 'gradientAmberEnd', label: 'Amber Gradient End', type: 'color' },
+      { key: 'gradientRoseStart', label: 'Rose Gradient Start', type: 'color' },
+      { key: 'gradientRoseEnd', label: 'Rose Gradient End', type: 'color' },
+      { key: 'gradientTealStart', label: 'Teal Gradient Start', type: 'color' },
+      { key: 'gradientTealEnd', label: 'Teal Gradient End', type: 'color' },
+      { key: 'gradientSlateStart', label: 'Slate Gradient Start', type: 'color' },
+      { key: 'gradientSlateEnd', label: 'Slate Gradient End', type: 'color' },
+    ],
+  },
+  {
+    title: 'Progress Bars',
+    subtitle: 'Track colors for progress indicators across Kangur.',
+    fields: [{ key: 'progressTrackColor', label: 'Progress Track', type: 'color' }],
   },
   {
     title: 'Inputs',
@@ -225,23 +276,120 @@ const KANGUR_THEME_SECTIONS: Array<{
       },
     ],
   },
+  {
+    title: 'Shadows and Depth',
+    subtitle: 'Fine-tune glass panel and card shadow softness.',
+    fields: [
+      {
+        key: 'containerShadowOpacity',
+        label: 'Panel Shadow Opacity',
+        type: 'range',
+        min: 0,
+        max: 1,
+        step: 0.05,
+      },
+      {
+        key: 'containerShadowBlur',
+        label: 'Panel Shadow Blur',
+        type: 'number',
+        min: 0,
+        max: 80,
+        suffix: 'px',
+      },
+      {
+        key: 'containerShadowY',
+        label: 'Panel Shadow Y',
+        type: 'number',
+        min: -20,
+        max: 60,
+        suffix: 'px',
+      },
+      {
+        key: 'containerShadowX',
+        label: 'Panel Shadow X',
+        type: 'number',
+        min: -20,
+        max: 20,
+        suffix: 'px',
+      },
+      {
+        key: 'cardShadowOpacity',
+        label: 'Card Shadow Opacity',
+        type: 'range',
+        min: 0,
+        max: 1,
+        step: 0.05,
+      },
+      {
+        key: 'cardShadowBlur',
+        label: 'Card Shadow Blur',
+        type: 'number',
+        min: 0,
+        max: 80,
+        suffix: 'px',
+      },
+      {
+        key: 'cardShadowY',
+        label: 'Card Shadow Y',
+        type: 'number',
+        min: -20,
+        max: 60,
+        suffix: 'px',
+      },
+      {
+        key: 'cardShadowX',
+        label: 'Card Shadow X',
+        type: 'number',
+        min: -20,
+        max: 20,
+        suffix: 'px',
+      },
+    ],
+  },
 ];
 
 const MODE_CONFIG: Record<
   ThemeMode,
-  { label: string; storageKey: string; defaultTheme: ThemeSettings; resetLabel: string }
+  {
+    label: string;
+    storageKey: string;
+    defaultTheme: ThemeSettings;
+    resetLabel: string;
+    resetDescription: string;
+    toastMessage: string;
+  }
 > = {
   daily: {
     label: 'Motyw dzienny',
     storageKey: KANGUR_DAILY_THEME_SETTINGS_KEY,
     defaultTheme: KANGUR_DEFAULT_DAILY_THEME,
     resetLabel: 'Przywróć motyw dzienny',
+    resetDescription: 'Nadpisuje ten motyw pięknym, ciepłym wzorcem dziennym.',
+    toastMessage: 'Motyw dzienny przywrócony do domyślnych ustawień.',
+  },
+  dawn: {
+    label: 'Motyw świtowy',
+    storageKey: KANGUR_DAWN_THEME_SETTINGS_KEY,
+    defaultTheme: KANGUR_DEFAULT_DAWN_THEME,
+    resetLabel: 'Przywróć motyw świtowy',
+    resetDescription: 'Nadpisuje ten motyw jasnym, porannym wzorcem świtu.',
+    toastMessage: 'Motyw świtowy przywrócony do domyślnych ustawień.',
+  },
+  sunset: {
+    label: 'Motyw zachodu',
+    storageKey: KANGUR_SUNSET_THEME_SETTINGS_KEY,
+    defaultTheme: KANGUR_DEFAULT_SUNSET_THEME,
+    resetLabel: 'Przywróć motyw zachodu',
+    resetDescription: 'Nadpisuje ten motyw ciepłym wzorcem zachodu.',
+    toastMessage: 'Motyw zachodu przywrócony do domyślnych ustawień.',
   },
   nightly: {
     label: 'Motyw nocny',
     storageKey: KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
     defaultTheme: KANGUR_DEFAULT_THEME,
     resetLabel: 'Przywróć motyw nocny',
+    resetDescription: 'Nadpisuje ten motyw ciemnym wzorcem nocnym.',
+    toastMessage: 'Motyw nocny przywrócony do domyślnych ustawień.',
   },
 };
 
@@ -251,7 +399,7 @@ export function KangurThemeSettingsPanel(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
-      {/* Day / Night tab strip */}
+      {/* Theme mode tab strip */}
       <div className='flex gap-2 rounded-2xl border border-border/60 bg-card/30 p-1.5'>
         {(Object.entries(MODE_CONFIG) as Array<[ThemeMode, (typeof MODE_CONFIG)[ThemeMode]]>).map(
           ([key, cfg]) => (
@@ -311,12 +459,7 @@ function KangurThemeSettingsEditor({
         key: storageKey,
         value: serializeSetting(defaultTheme),
       });
-      toast(
-        mode === 'daily'
-          ? 'Motyw dzienny przywrócony do domyślnych ustawień.'
-          : 'Motyw nocny przywrócony do domyślnych ustawień.',
-        { variant: 'success' }
-      );
+      toast(MODE_CONFIG[mode].toastMessage, { variant: 'success' });
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Nie udało się przywrócić motywu.', {
         variant: 'error',
@@ -339,9 +482,7 @@ function KangurThemeSettingsEditor({
         <div className='min-w-0'>
           <p className='text-sm font-medium text-foreground'>{resetLabel}</p>
           <p className='text-xs text-muted-foreground'>
-            {mode === 'daily'
-              ? 'Nadpisuje ten motyw pięknym, ciepłym wzorcem dziennym.'
-              : 'Nadpisuje ten motyw ciemnym wzorcem nocnym.'}
+            {MODE_CONFIG[mode].resetDescription}
           </p>
         </div>
         <Button

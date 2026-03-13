@@ -125,6 +125,7 @@ export function KangurAiTutorComposer(): JSX.Element {
               disabled={isLoading || !canSendMessages}
               onClick={handleToggleDrawing}
               aria-label={drawingContent?.toggleLabel ?? 'Rysuj'}
+              aria-pressed={drawingMode}
             >
               <Pen className='h-3.5 w-3.5' />
             </KangurButton>

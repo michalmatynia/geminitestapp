@@ -1,38 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { resolveImageStudioContextRegistryEnvelope } from '@/features/ai/image-studio/context-registry/server';
-import { buildImageStudioWorkspaceSystemPrompt } from '@/features/ai/image-studio/context-registry/workspace-prompt';
+import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import {
-  IMAGE_STUDIO_SETTINGS_KEY,
-  parsePersistedImageStudioSettings,
-} from '@/features/ai/server';
-import { auth } from '@/features/auth/server';
+  runBrainChatCompletion,
+  supportsBrainJsonMode,
+} from '@/shared/lib/ai-brain/server-runtime-client';
 import {
-  imageStudioPromptExtractRequestSchema,
+  imageStudioPromptExtractModeSchema,
   type ImageStudioPromptExtractResponse,
   type ImageStudioPromptExtractSource,
 } from '@/shared/contracts/image-studio';
+import {
+  IMAGE_STUDIO_SETTINGS_KEY,
+  parsePersistedImageStudioSettings,
+} from '@/features/ai/image-studio/server';
+import { auth } from '@/features/auth/server';
+import { getSettingValue } from '@/shared/lib/ai/server-settings';
+import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine';
+import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
+import { validateProgrammaticPrompt } from '@/shared/lib/prompt-engine';
+import {
+  parsePromptEngineSettings,
+  PROMPT_ENGINE_SETTINGS_KEY,
+} from '@/shared/lib/prompt-engine/settings';
 import type {
   PromptValidationIssue,
   PromptValidationSettings,
 } from '@/shared/contracts/prompt-engine';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, badRequestError, internalError } from '@/shared/errors/app-error';
-import { getSettingValue } from '@/shared/lib/ai/server-settings';
-import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
-import {
-  runBrainChatCompletion,
-  supportsBrainJsonMode,
-} from '@/shared/lib/ai-brain/server-runtime-client';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine';
-import { validateProgrammaticPrompt } from '@/shared/lib/prompt-engine';
-import {
-  parsePromptEngineSettings,
-  PROMPT_ENGINE_SETTINGS_KEY,
-} from '@/shared/lib/prompt-engine/settings';
-import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
+
+const payloadSchema = z.object({
+  prompt: z.string().trim().min(1),
+  mode: imageStudioPromptExtractModeSchema.optional(),
+  applyAutofix: z.boolean().optional(),
+});
 
 const responseSchema = z.object({
   params: z.record(z.string(), z.unknown()),
@@ -203,7 +207,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     session?.user?.isElevated || session?.user?.permissions?.includes('ai_paths.manage');
   if (!hasAccess) throw authError('Unauthorized.');
 
-  const parsed = await parseJsonBody(req, imageStudioPromptExtractRequestSchema, {
+  const parsed = await parseJsonBody(req, payloadSchema, {
     logPrefix: 'image-studio.prompt-extract.POST',
   });
   if (!parsed.ok) return parsed.response;
@@ -270,25 +274,13 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     });
   }
 
-  const contextRegistry = await resolveImageStudioContextRegistryEnvelope(
-    parsed.data.contextRegistry ?? null
-  );
-  const contextRegistryPrompt = buildImageStudioWorkspaceSystemPrompt({
-    registryBundle: contextRegistry?.resolved,
-    taskLabel: 'prompt parameter extraction and normalization',
-    extraInstructions:
-      'Use the selected slot, active prompt draft, params, and mask state when they clarify ambiguous field names.',
-  });
   const systemPrompt = [
     'You extract a JSON params object from a prompt.',
     'If the prompt includes a params object (JS-like or JSON), extract it and normalize to strict JSON.',
     'If the prompt does not include a params object, infer a best-effort params object from explicit key/value settings only; otherwise return an empty object.',
     'Return ONLY JSON matching: { "params": { ... } } with no extra text.',
     'Preserve booleans, numbers, arrays, and nested objects when present.',
-    contextRegistryPrompt,
-  ]
-    .filter(Boolean)
-    .join('\n');
+  ].join('\n');
   let model = '';
   let aiError: string | null;
   try {

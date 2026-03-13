@@ -3,7 +3,6 @@ import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { formatKangurAiTutorTemplate } from '@/shared/contracts/kangur-ai-tutor-content';
 import { cn } from '@/shared/utils';
 import { useKangurAiTutorPanelBodyContext } from './KangurAiTutorPanelBody.context';
-import { KangurNarratorControl } from './KangurNarratorControl';
 
 import type { JSX } from 'react';
 
@@ -29,17 +28,13 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
     homeOnboardingReplayLabel,
     isLoading,
     isUsageLoading,
-    narratorSettings,
     remainingMessages,
     showToolboxLayout,
     shouldRenderAuxiliaryPanelControls,
-    tutorNarrationScript,
-    tutorNarratorContextRegistry,
     usageSummary,
     visibleProactiveNudge,
     visibleQuickActions,
   } = useKangurAiTutorPanelBodyContext();
-  const shouldRenderNarratorControl = Boolean(tutorNarrationScript);
   const shouldRenderToolbox = showToolboxLayout;
 
   if (!shouldRenderAuxiliaryPanelControls && !shouldRenderToolbox) {
@@ -64,20 +59,6 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
               'Skróty do wskazówek, rysowania i kolejnych kroków w bieżącej rozmowie.'}
           </div>
           <div className='mt-3 flex flex-wrap gap-2'>
-            {shouldRenderNarratorControl ? (
-              <KangurNarratorControl
-                className='w-auto'
-                contextRegistry={tutorNarratorContextRegistry}
-                docId='kangur_ai_tutor_narrator'
-                engine={narratorSettings.engine}
-                pauseLabel={tutorContent.narrator.pauseLabel}
-                readLabel={tutorContent.narrator.readLabel}
-                resumeLabel={tutorContent.narrator.resumeLabel}
-                script={tutorNarrationScript}
-                shellTestId='kangur-ai-tutor-narrator-shell'
-                voice={narratorSettings.voice}
-              />
-            ) : null}
             {canStartHomeOnboardingManually ? (
               <KangurButton
                 data-testid='kangur-ai-tutor-home-onboarding-replay'
@@ -99,6 +80,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
                 className='h-9 px-3 text-xs'
                 disabled={isLoading || !canSendMessages}
                 onClick={handleToggleDrawing}
+                aria-pressed={drawingMode}
               >
                 {drawingContent?.toggleLabel ?? 'Rysuj'}
               </KangurButton>
@@ -119,20 +101,6 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
             ))}
           </div>
         </div>
-      ) : null}
-      {!shouldRenderToolbox && shouldRenderNarratorControl ? (
-        <KangurNarratorControl
-          className='w-auto'
-          contextRegistry={tutorNarratorContextRegistry}
-          docId='kangur_ai_tutor_narrator'
-          engine={narratorSettings.engine}
-          pauseLabel={tutorContent.narrator.pauseLabel}
-          readLabel={tutorContent.narrator.readLabel}
-          resumeLabel={tutorContent.narrator.resumeLabel}
-          script={tutorNarrationScript}
-          shellTestId='kangur-ai-tutor-narrator-shell'
-          voice={narratorSettings.voice}
-        />
       ) : null}
       {!shouldRenderToolbox && canStartHomeOnboardingManually ? (
         <KangurButton

@@ -1222,11 +1222,11 @@
     color: var(--cms-appearance-page-text, #111827);
   }
 
-  [data-cms-appearance-scope='true'][data-appearance-mode='dark'] {
+  [data-cms-appearance-scope='true']:is([data-appearance-mode='dark'], [data-appearance-mode='sunset']) {
     color-scheme: dark;
   }
 
-  [data-cms-appearance-scope='true']:not([data-appearance-mode='dark']) {
+  [data-cms-appearance-scope='true']:not([data-appearance-mode='dark']):not([data-appearance-mode='sunset']) {
     color-scheme: light;
   }
 
@@ -1288,17 +1288,17 @@
     color: var(--cms-appearance-muted-text, #6b7280) !important;
   }
 
-  [data-cms-appearance-scope='true'][data-appearance-mode='dark']
+  [data-cms-appearance-scope='true']:is([data-appearance-mode='dark'], [data-appearance-mode='sunset'])
     :is(.text-gray-300, .text-gray-200) {
     color: var(--cms-appearance-page-text, #f3f4f6) !important;
   }
 
-  [data-cms-appearance-scope='true'][data-appearance-mode='dark']
+  [data-cms-appearance-scope='true']:is([data-appearance-mode='dark'], [data-appearance-mode='sunset'])
     :is(.bg-gray-800, .bg-gray-800\/50, .bg-gray-800\/30, .bg-gray-800\/20) {
     background-color: var(--cms-appearance-subtle-surface, #1f2937) !important;
   }
 
-  [data-cms-appearance-scope='true'][data-appearance-mode='dark']
+  [data-cms-appearance-scope='true']:is([data-appearance-mode='dark'], [data-appearance-mode='sunset'])
     :is(.border-gray-700\/50, .border-gray-600, .border-gray-300) {
     border-color: var(--cms-appearance-surface-border, rgba(255, 255, 255, 0.18)) !important;
   }
@@ -1611,7 +1611,7 @@
     filter: saturate(1.03);
   }
 
-  [data-kangur-appearance-mode='dark'] .home-action-soft {
+  :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset']) .home-action-soft {
     border-color: rgba(148, 163, 184, 0.26);
     background: linear-gradient(
       180deg,
@@ -1625,8 +1625,8 @@
       0 0 0 1px rgba(148, 163, 184, 0.12);
   }
 
-  [data-kangur-appearance-mode='dark'] .home-action-soft:hover,
-  [data-kangur-appearance-mode='dark'] .home-action-soft:focus-visible {
+  :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset']) .home-action-soft:hover,
+  :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset']) .home-action-soft:focus-visible {
     box-shadow:
       0 32px 64px rgba(2, 6, 23, 0.42),
       inset 0 6px 14px rgba(255, 255, 255, 0.1),
@@ -1634,7 +1634,7 @@
       0 0 0 1px rgba(191, 219, 254, 0.16);
   }
 
-  [data-kangur-appearance-mode='dark'] .home-action-featured-shell {
+  :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset']) .home-action-featured-shell {
     --home-action-active-text-color: #f8fafc;
     --home-action-face-border: rgba(148, 163, 184, 0.22);
     --home-action-face-hover-border: rgba(191, 219, 254, 0.3);
@@ -1657,7 +1657,7 @@
       0 0 0 1px rgba(191, 219, 254, 0.16);
   }
 
-  [data-kangur-appearance-mode='dark'] .home-action-theme-neutral {
+  :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset']) .home-action-theme-neutral {
     --home-action-rest-text-color: #dbe7ff;
     --home-action-accent-shadow-rgb: 90, 110, 224;
     --home-action-underlay-shadow-rgb: 56, 74, 168;
@@ -1677,7 +1677,7 @@
     );
   }
 
-  [data-kangur-appearance-mode='dark'] .home-action-theme-violet {
+  :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset']) .home-action-theme-violet {
     --home-action-rest-text-color: #efe9ff;
     --home-action-accent-shadow-rgb: 120, 92, 228;
     --home-action-underlay-shadow-rgb: 88, 66, 176;
@@ -1697,7 +1697,7 @@
     );
   }
 
-  [data-kangur-appearance-mode='dark'] .home-action-theme-sky {
+  :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset']) .home-action-theme-sky {
     --home-action-rest-text-color: #d8f2ff;
     --home-action-accent-shadow-rgb: 74, 146, 214;
     --home-action-underlay-shadow-rgb: 45, 104, 166;
@@ -1717,7 +1717,7 @@
     );
   }
 
-  [data-kangur-appearance-mode='dark'] .home-action-theme-mist {
+  :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset']) .home-action-theme-mist {
     --home-action-rest-text-color: #e0e7ff;
     --home-action-accent-shadow-rgb: 101, 118, 212;
     --home-action-underlay-shadow-rgb: 70, 86, 160;
@@ -1737,7 +1737,7 @@
     );
   }
 
-  [data-kangur-appearance-mode='dark'] .home-action-theme-sand {
+  :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset']) .home-action-theme-sand {
     --home-action-rest-text-color: #ffedd5;
     --home-action-accent-shadow-rgb: 196, 106, 48;
     --home-action-underlay-shadow-rgb: 144, 78, 34;

@@ -20,6 +20,7 @@ import {
   KangurAiTutorChromeTextButton,
 } from './KangurAiTutorChrome';
 import { KangurAiTutorMoodAvatar } from './KangurAiTutorMoodAvatar';
+import { KangurNarratorControl } from './KangurNarratorControl';
 import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
 
 import type {
@@ -28,6 +29,7 @@ import type {
   TutorMotionProfile,
   TutorPanelSnapState,
 } from './KangurAiTutorWidget.shared';
+import type { KangurAiTutorPanelBodyContextValue } from './KangurAiTutorPanelBody.context';
 import type { CSSProperties, JSX, PointerEvent, ReactNode } from 'react';
 
 type ReducedMotionTransitions = {
@@ -82,6 +84,7 @@ type Props = {
   isTutorHidden: boolean;
   minimalPanelStyle: CSSProperties;
   panelAvatarPlacement: string;
+  panelBodyContextValue: KangurAiTutorPanelBodyContextValue;
   panelEmptyStateMessage: string;
   panelOpenAnimation: 'dock-launch' | 'fade' | 'sheet';
   panelSnapState: TutorPanelSnapState | 'none';
@@ -173,6 +176,7 @@ export function KangurAiTutorPanelChrome({
   minimalPanelStyle,
   motionProfile,
   panelAvatarPlacement,
+  panelBodyContextValue,
   panelEmptyStateMessage,
   panelOpenAnimation,
   panelSnapState,
@@ -204,9 +208,16 @@ export function KangurAiTutorPanelChrome({
   const tutor = useKangurAiTutor();
   const { panelMotionState, panelRef, tutorNarrationRootRef } =
     useKangurAiTutorWidgetStateContext();
+  const {
+    narratorSettings,
+    tutorNarrationScript,
+    tutorNarratorContextRegistry,
+  } = panelBodyContextValue;
   const shouldUseMinimalPanelShell = isMinimalPanelMode && !isAskModalMode;
   const isContextualResultChrome = chromeVariant === 'contextual_result';
   const tutorDisplayName = tutor?.tutorName ?? tutorContent.common.defaultTutorName;
+  const chatTitleSuffix = tutorContent.narrator?.chatTitleSuffix ?? '';
+  const dialogLabel = `${tutorDisplayName} ${chatTitleSuffix}`.trim();
   const tutorMoodId = tutor?.tutorMoodId ?? 'default';
   const tutorBehaviorMoodId = tutor?.tutorBehaviorMoodId ?? tutorMoodId;
   const tutorBehaviorMoodLabel = tutor?.tutorBehaviorMoodLabel ?? tutorBehaviorMoodId;
@@ -360,6 +371,7 @@ export function KangurAiTutorPanelChrome({
               data-ui-mode={uiMode}
               role={isAskModalMode ? 'dialog' : undefined}
               aria-modal={isAskModalMode ? 'true' : undefined}
+              aria-label={isAskModalMode ? dialogLabel : undefined}
               initial={directionalPanelInitialState}
               animate={
                 isAskModalMode
@@ -540,17 +552,34 @@ export function KangurAiTutorPanelChrome({
                     >
                       AI Tutor
                     </KangurAiTutorChromeKicker>
-                    <span
-                      data-testid='kangur-ai-tutor-display-name'
-                      className={cn(
-                        'mt-1 text-sm font-semibold leading-relaxed',
-                        isContextualResultChrome
-                          ? '[color:var(--kangur-chat-kicker-text,var(--kangur-chat-accent-border,#f59e0b))]'
-                          : '[color:var(--kangur-chat-panel-text,var(--kangur-page-text,#1e293b))]'
-                      )}
-                    >
-                      {tutorDisplayName}
-                    </span>
+                    <div className='mt-1 flex items-center gap-2'>
+                      <span
+                        data-testid='kangur-ai-tutor-display-name'
+                        className={cn(
+                          'text-sm font-semibold leading-relaxed',
+                          isContextualResultChrome
+                            ? '[color:var(--kangur-chat-kicker-text,var(--kangur-chat-accent-border,#f59e0b))]'
+                            : '[color:var(--kangur-chat-panel-text,var(--kangur-page-text,#1e293b))]'
+                        )}
+                      >
+                        {tutorDisplayName}
+                      </span>
+                      <KangurNarratorControl
+                        className='w-auto'
+                        contextRegistry={tutorNarratorContextRegistry}
+                        displayMode='icon'
+                        docId='kangur_ai_tutor_narrator'
+                        engine={narratorSettings.engine}
+                        pauseLabel={tutorContent.narrator.pauseLabel}
+                        readLabel={tutorContent.narrator.readLabel}
+                        renderWhenEmpty
+                        resumeLabel={tutorContent.narrator.resumeLabel}
+                        script={tutorNarrationScript}
+                        shellTestId='kangur-ai-tutor-narrator-header'
+                        showFeedback={false}
+                        voice={narratorSettings.voice}
+                      />
+                    </div>
                     {!shouldUseMinimalPanelShell && !isContextualResultChrome ? (
                       <KangurAiTutorChromeBadge
                         data-testid='kangur-ai-tutor-mood-chip'

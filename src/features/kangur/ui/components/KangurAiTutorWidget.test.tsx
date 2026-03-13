@@ -172,6 +172,7 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
 }));
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useKangurAiTutor: useKangurAiTutorMock,
+  useOptionalKangurAiTutor: useKangurAiTutorMock,
 }));
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
   useKangurAiTutorContent: () => DEFAULT_KANGUR_AI_TUTOR_CONTENT,
@@ -1047,119 +1048,6 @@ describe('KangurAiTutorWidget', () => {
       })
     );
   });
-  it('reopens the authenticated home onboarding prompt from the docked Game avatar and restarts the guided page tour', async () => {
-    useOptionalKangurRoutingMock.mockReturnValue({
-      basePath: '/kangur',
-      embedded: false,
-      pageKey: 'Game',
-      requestedPath: '/kangur/game',
-    });
-    window.localStorage.setItem(
-      'kangur-ai-tutor-home-onboarding-v1',
-      JSON.stringify({
-        status: 'dismissed',
-        version: 1,
-        updatedAt: '2026-03-08T10:00:00.000Z',
-      })
-    );
-    useKangurTextHighlightMock.mockReturnValue({
-      selectedText: null,
-      selectionRect: null,
-      selectionContainerRect: null,
-      clearSelection: clearSelectionMock,
-    });
-    let tutorState = {
-      enabled: true,
-      appSettings: {
-        agentPersonaId: null,
-        motionPresetId: null,
-        dailyMessageLimit: null,
-        guestIntroMode: 'first_visit',
-        homeOnboardingMode: 'off',
-      },
-      tutorSettings: {
-        enabled: true,
-        agentPersonaId: null,
-        motionPresetId: null,
-        uiMode: 'anchored',
-        allowCrossPagePersistence: true,
-        allowLessons: true,
-        allowGames: true,
-        testAccessMode: 'guided',
-        showSources: true,
-        allowSelectedTextSupport: true,
-        hintDepth: 'guided',
-        proactiveNudges: 'gentle',
-        dailyMessageLimit: null,
-      },
-      tutorName: 'Pomocnik',
-      tutorMoodId: 'neutral',
-      tutorAvatarSvg:
-        '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="34" fill="#ffffff" /></svg>',
-      tutorAvatarImageUrl: null,
-      sessionContext: {
-        surface: 'game',
-        contentId: 'game:home',
-        title: 'Ekran startowy',
-      },
-      isOpen: false,
-      messages: [],
-      isLoading: false,
-      isUsageLoading: false,
-      highlightedText: null,
-      usageSummary: null,
-      openChat: openChatMock,
-      closeChat: closeChatMock,
-      sendMessage: sendMessageMock,
-      recordFollowUpCompletion: recordFollowUpCompletionMock,
-      setHighlightedText: setHighlightedTextMock,
-      tutorBehaviorMoodId: 'neutral',
-      tutorBehaviorMoodLabel: 'Neutralny',
-      tutorBehaviorMoodDescription: 'Neutralny nastroj.',
-    };
-    useKangurAiTutorMock.mockImplementation(() => tutorState);
-    openChatMock.mockImplementation(() => {
-      tutorState = {
-        ...tutorState,
-        isOpen: true,
-      };
-    });
-    closeChatMock.mockImplementation(() => {
-      tutorState = {
-        ...tutorState,
-        isOpen: false,
-      };
-    });
-    const renderOptions = {
-      homeAnchorKinds: ['home_actions', 'home_quest', 'leaderboard', 'progress'] as const,
-    };
-    const { rerender } = renderWithTutorAnchors(renderOptions);
-    fireEvent.click(screen.getByTestId('kangur-ai-tutor-avatar'));
-    rerender(buildTutorAnchorsTree(renderOptions));
-    expect(screen.queryByTestId('kangur-ai-tutor-launcher-prompt')).not.toBeInTheDocument();
-    expect(openChatMock).toHaveBeenCalled();
-    const onboardingPrompt = screen.getByTestId('kangur-ai-tutor-guest-intro');
-    expect(onboardingPrompt).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        'Czy chcesz, żebym pokazała główne przyciski oraz elementy wyniku i postępu?'
-      )
-    ).toBeVisible();
-    expect(
-      screen.getByText(
-        'Mogę przeprowadzić Cię po najważniejszych akcjach na stronie głównej oraz po miejscach, w których zobaczysz ranking, punkty i tempo nauki.'
-      )
-    ).toBeVisible();
-    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Tak, pomóż mi się zalogować.' }));
-    rerender(buildTutorAnchorsTree(renderOptions));
-
-    expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
-    expect(await screen.findByTestId('kangur-ai-tutor-home-onboarding')).toBeInTheDocument();
-    expect(screen.getByText('Krok 1 z 4')).toBeVisible();
-    expect(screen.getByText('Tutaj wybierasz, jak chcesz zacząć.')).toBeVisible();
-  });
   it('shows the guest intro prompt for a first anonymous visit and stores a local marker', async () => {
     useOptionalKangurAuthMock.mockReturnValue({
       isAuthenticated: false,
@@ -1216,7 +1104,7 @@ describe('KangurAiTutorWidget', () => {
     expect(
       screen.getByText('Mogę pokazać, gdzie się zalogować albo jak założyć konto rodzica.')
     ).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Tak, pomóż mi się zalogować.' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Tak' })).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Nie' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Pokaż logowanie' })).not.toBeInTheDocument();
     expect(
@@ -1297,7 +1185,7 @@ describe('KangurAiTutorWidget', () => {
     rerender(<KangurAiTutorWidget />);
     expect(openChatMock).not.toHaveBeenCalled();
     expect(screen.getByTestId('kangur-ai-tutor-guest-intro')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
   });
   it('closes the guest intro card via the X and lets the avatar reopen the canonical onboarding modal', async () => {
     useOptionalKangurAuthMock.mockReturnValue({
@@ -1566,7 +1454,7 @@ describe('KangurAiTutorWidget', () => {
       })
     );
   });
-  it('accepts the anonymous login prompt by opening the login modal', async () => {
+  it('accepts the anonymous login prompt by starting guided login help', async () => {
     useOptionalKangurAuthMock.mockReturnValue({
       isAuthenticated: false,
       isLoadingAuth: false,
@@ -1632,7 +1520,7 @@ describe('KangurAiTutorWidget', () => {
       };
     });
     const { rerender } = renderWithTutorAnchors(renderOptions);
-    fireEvent.click(await screen.findByRole('button', { name: 'Tak, pomóż mi się zalogować.' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Tak' }));
     expect(openLoginModalMock).toHaveBeenCalledWith(expect.any(String), { authMode: 'sign-in' });
     rerender(buildTutorAnchorsTree(renderOptions));
     await waitFor(() =>
@@ -1788,7 +1676,7 @@ describe('KangurAiTutorWidget', () => {
     expect(guestIntro).toHaveAttribute('data-modal-motion', 'fade-only');
     expect(guestIntro).toHaveAttribute('data-modal-actions', 'single-primary');
     expect(guestIntro).toHaveAttribute('data-modal-card', 'warm-glow-soft');
-    expect(screen.getByRole('button', { name: 'Tak, pomóż mi się zalogować.' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Tak' })).toBeVisible();
     expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-ask-modal')).not.toBeInTheDocument();
   });
@@ -1905,7 +1793,7 @@ describe('KangurAiTutorWidget', () => {
       })
     );
     render(<KangurAiTutorWidget />);
-    expect(await screen.findByRole('button', { name: 'Tak, pomóż mi się zalogować.' })).toBeVisible();
+    expect(await screen.findByRole('button', { name: 'Tak' })).toBeVisible();
     expect(screen.getByTestId('kangur-ai-tutor-guest-intro-close')).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Nie' })).not.toBeInTheDocument();
   });
@@ -1996,7 +1884,7 @@ describe('KangurAiTutorWidget', () => {
     expect(utterance.text).toContain('Dodawanie podstawy');
     expect(utterance.text).toContain('Dodawanie łączy liczby i tworzy sumę.');
     expect(utterance.text).not.toContain('Otwórz lekcję');
-    expect(utterance.text).not.toContain('Tak, pomóż mi się zalogować.');
+    expect(utterance.text).not.toContain('Tak');
     expect(utterance.text).not.toContain('Jeszcze nie');
     expect(utterance.text).not.toContain('Wyłącz');
     expect(utterance.text).not.toContain('Czytaj');
@@ -2539,7 +2427,6 @@ describe('KangurAiTutorWidget', () => {
       await vi.runAllTimersAsync();
     });
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
-    expect(openChatMock).toHaveBeenCalled();
     expect(sendMessageMock).toHaveBeenCalledWith(
       'Wyjaśnij zaznaczony fragment krok po kroku.',
       expect.objectContaining({
@@ -2549,16 +2436,6 @@ describe('KangurAiTutorWidget', () => {
         focusId: 'selection',
         focusLabel: '2 + 2',
         interactionIntent: 'explain',
-      })
-    );
-    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
-      'kangur_ai_tutor_opened',
-      expect.objectContaining({
-        reason: 'selection_explain',
-        surface: 'lesson',
-        title: 'Dodawanie',
-        hasSelectedText: true,
-        messageCount: 0,
       })
     );
     expect(screen.queryByTestId('kangur-ai-tutor-ask-modal')).not.toBeInTheDocument();
@@ -2821,7 +2698,7 @@ describe('KangurAiTutorWidget', () => {
 
     expect(sendMessageMock).toHaveBeenCalledTimes(1);
     expect(openChatMock).not.toHaveBeenCalled();
-    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')).not.toBeInTheDocument();
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(120);
@@ -2838,7 +2715,7 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-surface-diagnostics')).toHaveAttribute(
       'data-suppress-panel-surface',
-      'false'
+      'true'
     );
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-ask-modal')).not.toBeInTheDocument();
@@ -2885,7 +2762,6 @@ describe('KangurAiTutorWidget', () => {
       await Promise.resolve();
       await Promise.resolve();
     });
-    expect(openChatMock).toHaveBeenCalled();
     await act(async () => {
       await vi.advanceTimersByTimeAsync(360);
     });
@@ -2893,7 +2769,7 @@ describe('KangurAiTutorWidget', () => {
     await act(async () => {
       await vi.runOnlyPendingTimersAsync();
     });
-    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-answer')).toHaveTextContent(
       'To jest wyjaśnienie fragmentu.'
@@ -3040,13 +2916,11 @@ describe('KangurAiTutorWidget', () => {
       await Promise.resolve();
     });
 
-    expect(openChatMock).toHaveBeenCalled();
-
     await act(async () => {
       await vi.runOnlyPendingTimersAsync();
     });
 
-    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(
       screen.getByTestId('kangur-ai-tutor-selection-guided-answer')
@@ -3055,6 +2929,7 @@ describe('KangurAiTutorWidget', () => {
       screen.getByTestId('kangur-ai-tutor-selection-guided-page-content-badge')
     ).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-source')).toBeInTheDocument();
+    expect(openChatMock).not.toHaveBeenCalled();
     expect(
       screen.queryByText('To jest stary wątek, który nie powinien wrócić.')
     ).not.toBeInTheDocument();
@@ -3193,13 +3068,11 @@ describe('KangurAiTutorWidget', () => {
       await Promise.resolve();
     });
 
-    expect(openChatMock).toHaveBeenCalled();
-
     await act(async () => {
       await vi.runOnlyPendingTimersAsync();
     });
 
-    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(
       screen.getByTestId('kangur-ai-tutor-selection-guided-answer')
@@ -3209,12 +3082,11 @@ describe('KangurAiTutorWidget', () => {
     ).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-source')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-preview')).toBeInTheDocument();
-    expect(screen.getAllByText('Wyjaśniam ten fragment.').length).toBeGreaterThan(0);
+    expect(openChatMock).not.toHaveBeenCalled();
     expect(
       screen.queryByText('Za chwilę otworzę wyjaśnienie dokładnie dla zaznaczonego tekstu.')
     ).not.toBeInTheDocument();
     expect(screen.queryByText('Już przygotowuję wyjaśnienie…')).not.toBeInTheDocument();
-    expect(screen.getByText('entry:game-home-progress')).toBeInTheDocument();
     expect(
       screen.queryByText('To jest stary wątek, który nie powinien wrócić.')
     ).not.toBeInTheDocument();
@@ -3289,7 +3161,7 @@ describe('KangurAiTutorWidget', () => {
     });
 
     expect(openChatMock).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-avatar-placement',
@@ -3298,12 +3170,14 @@ describe('KangurAiTutorWidget', () => {
 
     fireEvent.pointerDown(document.body);
 
-    expect(closeChatMock).not.toHaveBeenCalled();
+    expect(closeChatMock).toHaveBeenCalled();
     expect(clearSelectionMock).toHaveBeenCalled();
-    expect(screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')
+    ).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-avatar-placement',
-      'guided'
+      'floating'
     );
 
     vi.useRealTimers();
@@ -3375,7 +3249,7 @@ describe('KangurAiTutorWidget', () => {
     });
 
     expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-avatar-placement',
       'guided'
@@ -3459,7 +3333,7 @@ describe('KangurAiTutorWidget', () => {
       await vi.runAllTimersAsync();
     });
     expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-avatar-placement',
       'guided'

@@ -48,6 +48,7 @@ type UseKangurAiTutorPanelDerivedStateInput = {
   focusChipLabel: string | null;
   guidedTutorTarget: GuidedTutorTarget | null;
   highlightedSection: SectionExplainContext | null;
+  inputValue: string;
   isAskModalMode: boolean;
   isGuidedTutorMode: boolean;
   isOpen: boolean;
@@ -79,6 +80,7 @@ export function useKangurAiTutorPanelDerivedState({
   focusChipLabel,
   guidedTutorTarget,
   highlightedSection,
+  inputValue,
   isAskModalMode,
   isGuidedTutorMode,
   isOpen,
@@ -240,25 +242,32 @@ export function useKangurAiTutorPanelDerivedState({
     visibleProactiveNudge,
   ]);
 
-  const tutorNarrationText =
-    tutorNarrationObservedText.trim().length > 0
+  const trimmedInputValue = inputValue.trim();
+  const shouldNarrateModalOnly = isAskModalMode || shouldRenderGuestIntroUi;
+  const baseNarrationText = shouldNarrateModalOnly
+    ? trimmedInputValue
+    : tutorNarrationObservedText.trim().length > 0
       ? tutorNarrationObservedText
       : tutorNarrationFallbackText;
+  const tutorNarrationText = baseNarrationText;
 
   const tutorNarrationScript = useMemo(
     () =>
       buildKangurLessonNarrationScriptFromText({
         lessonId: tutorNarrationScriptId,
-        title: isAskModalMode
-          ? `${tutorName} - ${tutorContent.narrator.helpTitleSuffix}`
-          : `${tutorName} - ${tutorContent.narrator.chatTitleSuffix}`,
-        description: sessionContext.title ?? null,
+        title: shouldNarrateModalOnly
+          ? ''
+          : isAskModalMode
+            ? `${tutorName} - ${tutorContent.narrator.helpTitleSuffix}`
+            : `${tutorName} - ${tutorContent.narrator.chatTitleSuffix}`,
+        description: shouldNarrateModalOnly ? null : sessionContext.title ?? null,
         text: tutorNarrationText,
         locale: 'pl-PL',
       }),
     [
       isAskModalMode,
       sessionContext.title,
+      shouldNarrateModalOnly,
       tutorContent.narrator.chatTitleSuffix,
       tutorContent.narrator.helpTitleSuffix,
       tutorName,
@@ -282,8 +291,7 @@ export function useKangurAiTutorPanelDerivedState({
     canStartHomeOnboardingManually ||
     Boolean(visibleProactiveNudge) ||
     (!isCompactDockedTutorPanel &&
-      (canNarrateTutorText ||
-        canStartHomeOnboardingManually ||
+      (canStartHomeOnboardingManually ||
         Boolean(usageSummary && usageSummary.dailyMessageLimit !== null)));
 
   const sessionSurfaceLabel =

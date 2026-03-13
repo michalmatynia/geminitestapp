@@ -29,12 +29,22 @@ import { getEstimatedBubbleHeight } from './KangurAiTutorGuidedLayout';
 import { useKangurAiTutorGuidedShellState } from './KangurAiTutorWidget.guided-shell';
 import {
   areTutorSelectionTextsEquivalent,
+  cloneRect,
   isAuthGuidedTutorTarget,
 } from './KangurAiTutorWidget.helpers';
 import { useKangurAiTutorPanelDerivedState } from './KangurAiTutorWidget.panel-derived';
 import { useKangurAiTutorPanelShellState } from './KangurAiTutorWidget.panel-shell';
 
 import type { KangurAiTutorWidgetState } from './KangurAiTutorWidget.state';
+
+type TutorSurfaceMode =
+  | 'idle_avatar'
+  | 'onboarding'
+  | 'auth_guided'
+  | 'selection_guided'
+  | 'section_guided'
+  | 'chat';
+  ;
 
 type UseKangurAiTutorWidgetCoordinatorDisplayInput = {
   authIsAuthenticated?: boolean;
@@ -84,6 +94,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     homeOnboardingRecord,
     homeOnboardingStepIndex,
     hoveredSectionAnchorId,
+    inputValue,
     isAvatarDragging,
     isTutorHidden,
     isPanelDragging,
@@ -176,7 +187,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     sectionGuidanceLabel,
     sectionResponsePendingKind,
     showSectionGuidanceCallout,
-    showSelectionGuidanceCallout,
+    showSelectionGuidanceCallout: showSelectionGuidanceCalloutBase,
   } = useKangurAiTutorGuidedDisplayState({
     activeSectionRect,
     activeSelectionPageRect,
@@ -224,6 +235,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
   const effectiveSelectionRect = effectiveSelectedText
     ? activeSelectionRect ?? guidedSelectionRect
     : activeSelectionRect;
+
   useKangurAiTutorGuidanceCompletionEffects({
     activeSelectedText: effectiveSelectedText,
     contextualTutorMode,
@@ -236,10 +248,10 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     sectionResponseComplete,
     sectionResponseCompleteTimeoutRef,
     sectionResponsePending,
-    messages,
     selectionConversationSelectedText: selectionConversationContext?.selectedText ?? null,
     selectionConversationStartIndex: selectionConversationContext?.messageStartIndex ?? null,
     selectionGuidanceHandoffText,
+    messages,
     selectionResponseComplete,
     selectionResponseCompleteTimeoutRef,
     selectionResponsePending,
@@ -296,7 +308,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
   });
 
   const showSelectionKnowledgeContext =
-    showSelectionGuidanceCallout &&
+    showSelectionGuidanceCalloutBase &&
     (
       selectionConversationContext?.knowledgeReference?.sourceCollection ===
         KANGUR_PAGE_CONTENT_COLLECTION ||
@@ -304,7 +316,37 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
         KANGUR_PAGE_CONTENT_COLLECTION
     );
   const showSelectionResolvedAnswer =
-    showSelectionGuidanceCallout && selectionResponseComplete !== null;
+    showSelectionGuidanceCalloutBase && selectionResponseComplete !== null;
+
+  const guidedFocusRect = useMemo(() => {
+    if (guidedMode === 'home_onboarding') {
+      return cloneRect(homeOnboardingAnchor?.getRect());
+    }
+
+    if (showSelectionGuidanceCalloutBase || guidedMode === 'selection') {
+      return cloneRect(guidedSelectionRect);
+    }
+
+    if (showSectionGuidanceCallout || guidedMode === 'section') {
+      return cloneRect(guidedSectionFocusRect);
+    }
+
+    if (isAuthGuidedTutorTarget(guidedTutorTarget) || guidedMode === 'auth') {
+      return cloneRect(guidedTargetAnchor?.getRect()) ?? guidedFallbackRect;
+    }
+
+    return null;
+  }, [
+    guidedFallbackRect,
+    guidedMode,
+    guidedSectionFocusRect,
+    guidedSelectionRect,
+    guidedTargetAnchor,
+    guidedTutorTarget,
+    homeOnboardingAnchor,
+    showSectionGuidanceCallout,
+    showSelectionGuidanceCalloutBase,
+  ]);
 
   const conversationMessages = useMemo(() => {
     if (
@@ -320,6 +362,16 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
 
     return messages.slice(selectionConversationContext.messageStartIndex);
   }, [effectiveSelectedText, messages, selectionConversationContext]);
+
+  const displayMessages = useMemo(() => {
+    if (contextualTutorMode === 'selection_explain' && selectionConversationContext) {
+      const sliced = messages.slice(selectionConversationContext.messageStartIndex);
+      if (sliced.length > 0) {
+        return sliced;
+      }
+    }
+    return conversationMessages;
+  }, [contextualTutorMode, conversationMessages, messages, selectionConversationContext]);
 
   const {
     bridgeQuickAction,
@@ -347,7 +399,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     isLoading,
     isOpen,
     learnerMemory,
-    messages: conversationMessages,
+    messages: displayMessages,
     proactiveNudges,
     sectionResponseComplete,
     sectionResponsePending,
@@ -424,17 +476,61 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     visibleQuickActions.length,
   ]);
 
-  const guidedFocusRect =
-    guidedMode === 'home_onboarding'
-      ? (homeOnboardingAnchor?.getRect() ?? null)
-      : showSectionGuidanceCallout
-        ? guidedSectionFocusRect
-        : isSelectionGuidedTutorMode || showSelectionGuidanceCallout
-          ? guidedSelectionRect
-          : (guidedTargetAnchor?.getRect() ?? guidedFallbackRect);
+  const selectionTakeoverText =
+    selectionGuidanceHandoffText ?? selectionResponsePending?.selectedText ?? null;
+  
+  const hasSelectionMinimalPanelSurface =
+    isOpen &&
+    panelShellMode === 'minimal' &&
+    (selectionTakeoverText !== null ||
+      contextualTutorMode === 'selection_explain' ||
+      selectionResponsePending !== null);
+  
+  const hasSectionMinimalPanelSurface =
+    isOpen &&
+    panelShellMode === 'minimal' &&
+    (highlightedSection !== null ||
+      sectionResponsePending !== null ||
+      contextualTutorMode === 'section_explain');
 
-  const {
-    guidedArrowheadTransition,
+  const isSelectionGuidedModeForSurface =
+    isSelectionGuidedTutorMode ||
+    selectionTakeoverText !== null ||
+    contextualTutorMode === 'selection_explain' ||
+    isSelectionExplainPendingMode ||
+    hasSelectionMinimalPanelSurface;
+
+  const isSectionGuidedModeForSurface =
+    isSectionGuidedTutorMode ||
+    highlightedSection !== null ||
+    sectionResponsePending !== null ||
+    contextualTutorMode === 'section_explain' ||
+    isSectionExplainPendingMode ||
+    hasSectionMinimalPanelSurface;
+
+  const tutorSurfaceMode: TutorSurfaceMode =
+    isSelectionGuidedModeForSurface && (selectionResponsePending !== null || selectionGuidanceHandoffText !== null)
+      ? 'selection_guided'
+      : isSectionGuidedModeForSurface && sectionResponsePending !== null
+        ? 'section_guided'
+        : isAuthGuidedTutorTarget(guidedTutorTarget)
+          ? 'auth_guided'
+        : widgetState.canonicalTutorModalVisible || widgetState.guestIntroVisible || widgetState.guestIntroHelpVisible
+          ? 'onboarding'
+        : isOpen
+          ? 'chat'
+        : 'idle_avatar';
+  const suppressPanelSurface =
+    loginModalIsOpen ||
+    (tutorSurfaceMode !== 'chat' && (
+      tutorSurfaceMode === 'onboarding' ||
+      tutorSurfaceMode === 'auth_guided' ||
+      guidedMode === 'home_onboarding' ||
+      (!isOpen && (tutorSurfaceMode === 'selection_guided' || tutorSurfaceMode === 'section_guided') &&
+        panelShellMode === 'minimal')
+    ));
+
+  const {    guidedArrowheadTransition,
     guidedAvatarArrowhead,
     guidedAvatarArrowheadDisplayAngle,
     guidedAvatarArrowheadDisplayAngleLabel,
@@ -464,6 +560,8 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     isAvatarDragging,
     isContextualPanelAnchor,
     isOpen,
+    panelShellMode,
+    suppressPanelSurface,
     selectionGlowSupported,
     isTutorHidden,
     motionProfile,
@@ -471,7 +569,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     showSelectionKnowledgeContext,
     showSelectionResolvedAnswer,
     showSectionGuidanceCallout,
-    showSelectionGuidanceCallout,
+    showSelectionGuidanceCallout: showSelectionGuidanceCalloutBase,
     viewport,
   });
 
@@ -505,6 +603,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     focusChipLabel: conversationFocusChipLabel,
     guidedTutorTarget,
     highlightedSection,
+    inputValue,
     isAskModalMode,
     isGuidedTutorMode,
     isOpen,
@@ -582,7 +681,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     prefersReducedMotion: prefersReducedMotion ?? false,
     reducedMotionTransitions,
     showSectionGuidanceCallout,
-    showSelectionGuidanceCallout,
+    showSelectionGuidanceCallout: showSelectionGuidanceCalloutBase,
     viewport,
   });
 
@@ -603,7 +702,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
   return {
     activeFocus,
     activeSectionRect,
-    activeSelectedText,
+    activeSelectedText: effectiveSelectedText,
     activeSelectionRect: effectiveSelectionRect,
     activeSelectionPageRect,
     askModalHelperText,
@@ -653,8 +752,11 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     isContextualPanelAnchor,
     isEligibleForHomeOnboarding,
     isGuidedTutorMode,
+    isMinimalPanelMode: !isAskModalMode && (panelShellMode === 'minimal' || shouldRenderContextlessTutorUi),
     isPanelDraggable,
     isPanelDragging: isPanelCurrentlyDragging,
+    isSectionGuidedTutorMode,
+    isSelectionGuidedTutorMode,
     isSectionExplainPendingMode,
     isSelectionExplainPendingMode,
     panelAvatarPlacement,
@@ -684,9 +786,11 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     showSectionExplainCompleteState,
     showSectionGuidanceCallout,
     showSelectionExplainCompleteState,
-    showSelectionGuidanceCallout,
+    showSelectionGuidanceCallout: showSelectionGuidanceCalloutBase,
+    suppressPanelSurface,
     tutorPanelMotionState,
     tutorNarrationScript,
+    tutorSurfaceMode,
     visibleProactiveNudge,
     visibleQuickActions,
   };

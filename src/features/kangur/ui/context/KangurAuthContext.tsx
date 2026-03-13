@@ -16,7 +16,8 @@ import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurUser } from '@/features/kangur/services/ports';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
-import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import { getKangurLoginHref, KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
+import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
 import { internalError } from '@/shared/errors/app-error';
 
@@ -71,9 +72,25 @@ const resolveErrorMessage = (value: unknown): string => {
   return 'Authentication check failed';
 };
 
+const appendAuthModeParam = (href: string, authMode?: KangurAuthMode): string => {
+  if (!authMode) {
+    return href;
+  }
+  try {
+    const parsed = new URL(href, 'https://kangur.local');
+    parsed.searchParams.set('authMode', authMode);
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    const joiner = href.includes('?') ? '&' : '?';
+    return `${href}${joiner}authMode=${encodeURIComponent(authMode)}`;
+  }
+};
+
 export const KangurAuthProvider = ({ children }: { children: ReactNode }): React.JSX.Element => {
   const router = useRouter();
-  const { openLoginModal } = useKangurLoginModal();
+  const routing = useOptionalKangurRouting();
+  const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
+  const fallbackCallbackUrl = routing?.requestedPath ?? basePath;
   const authRequestVersionRef = useRef(0);
   const [user, setUser] = useState<KangurUser | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -158,9 +175,15 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
 
   const navigateToLogin = useCallback(
     (options?: { authMode?: KangurAuthMode }): void => {
-      openLoginModal(window.location.href, { authMode: options?.authMode });
+      const callbackUrl =
+        typeof window === 'undefined' ? fallbackCallbackUrl : window.location.href;
+      const loginHref = appendAuthModeParam(
+        getKangurLoginHref(basePath, callbackUrl),
+        options?.authMode
+      );
+      router.push(loginHref);
     },
-    [openLoginModal]
+    [basePath, fallbackCallbackUrl, router]
   );
 
   const selectLearner = useCallback(async (learnerId: string): Promise<void> => {

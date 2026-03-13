@@ -464,9 +464,8 @@ export function AdminKangurLessonsManagerPage({
         return;
       }
       setContentDraft(result.document);
-      toast('Imported legacy lesson. Review and save to apply.', { variant: 'success' });
-    } catch (error) {
-      logClientError(error, {
+      toast('Legacy lesson imported. Review and save to apply.', { variant: 'success' });
+      } catch (error) {      logClientError(error, {
         context: { source: 'AdminKangurLessonsManagerPage', action: 'importLegacy' },
       });
       toast('Failed to import legacy lesson.', { variant: 'error' });

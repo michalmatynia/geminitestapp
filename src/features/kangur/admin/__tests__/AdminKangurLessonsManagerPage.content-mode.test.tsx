@@ -496,7 +496,7 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
     );
     expect(screen.getByTestId('mock-doc-editor-json')).toHaveTextContent('"type":"activity"');
     expect(toastMock).toHaveBeenCalledWith(
-      expect.stringContaining('Imported'),
+      expect.stringContaining('Legacy lesson imported'),
       expect.objectContaining({ variant: 'success' })
     );
   });

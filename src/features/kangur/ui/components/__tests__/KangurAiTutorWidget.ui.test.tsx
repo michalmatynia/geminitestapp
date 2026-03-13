@@ -291,6 +291,7 @@ describe('KangurAiTutorWidget - UI', () => {
         testAccessMode: 'guided',
         showSources: true,
         allowSelectedTextSupport: true,
+        proactiveNudges: 'off',
         dailyMessageLimit: null,
       },
       tutorName: 'Pomocnik',
@@ -353,9 +354,10 @@ describe('KangurAiTutorWidget - UI', () => {
     });
 
     render(<KangurAiTutorWidget />);
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak');
     fireEvent.click(await screen.findByRole('button', { name: 'Czytaj' }));
-    await waitFor(() => expect(speechSynthesisMock.speak).toHaveBeenCalledTimes(1));
-    const utterance = speechSynthesisMock.speak.mock.calls[0]?.[0] as MockSpeechSynthesisUtterance;
+    await waitFor(() => expect(speakSpy).toHaveBeenCalledTimes(1));
+    const utterance = speakSpy.mock.calls[0]?.[0] as MockSpeechSynthesisUtterance;
     expect(utterance.text).toContain('Policz najpierw pierwszą parę, a potem sprawdź drugą.');
     expect(utterance.text).toContain(
       'Daj tylko jeden mały krok albo pytanie kontrolne, bez pełnego rozwiązania.'
@@ -383,6 +385,7 @@ describe('KangurAiTutorWidget - UI', () => {
         testAccessMode: 'guided',
         showSources: true,
         allowSelectedTextSupport: true,
+        proactiveNudges: 'off',
         dailyMessageLimit: null,
       },
       tutorName: 'Pomocnik',
@@ -398,7 +401,7 @@ describe('KangurAiTutorWidget - UI', () => {
         contentId: 'lesson-1',
         title: 'Dodawanie',
       },
-      isOpen: true,
+      isOpen: false,
       messages: [],
       isLoading: false,
       isUsageLoading: false,
@@ -415,7 +418,7 @@ describe('KangurAiTutorWidget - UI', () => {
       'kangur-chat-avatar-shell'
     );
     expect(screen.getByTestId('kangur-ai-tutor-avatar-image').querySelector('svg')).not.toBeNull();
-    expect(screen.getByTestId('kangur-ai-tutor-header')).toHaveTextContent('Pomocnik');
+    expect(screen.queryByTestId('kangur-ai-tutor-header')).not.toBeInTheDocument();
   });
 
   it('renders persona image avatars in the tutor surface when an image URL is available', () => {
@@ -445,7 +448,7 @@ describe('KangurAiTutorWidget - UI', () => {
         contentId: 'lesson-1',
         title: 'Dodawanie',
       },
-      isOpen: true,
+      isOpen: false,
       messages: [],
       isLoading: false,
       isUsageLoading: false,
@@ -467,10 +470,15 @@ describe('KangurAiTutorWidget - UI', () => {
       'src',
       'data:image/png;base64,AAA'
     );
-    expect(screen.getByTestId('kangur-ai-tutor-header')).toHaveTextContent('Pomocnik');
+    expect(screen.queryByTestId('kangur-ai-tutor-header')).not.toBeInTheDocument();
   });
 
   it('shows the learner-specific tutor mood in the modal header without depending on avatar changes', () => {
+    useOptionalKangurAuthMock.mockReturnValue({
+      isAuthenticated: false,
+      isLoadingAuth: false,
+      navigateToLogin: navigateToLoginMock,
+    });
     useKangurAiTutorMock.mockReturnValue({
       enabled: true,
       tutorSettings: {
@@ -483,6 +491,7 @@ describe('KangurAiTutorWidget - UI', () => {
         testAccessMode: 'guided',
         showSources: true,
         allowSelectedTextSupport: true,
+        proactiveNudges: 'off',
         dailyMessageLimit: null,
       },
       tutorName: 'Pomocnik',
@@ -495,8 +504,7 @@ describe('KangurAiTutorWidget - UI', () => {
       tutorAvatarImageUrl: null,
       sessionContext: {
         surface: 'lesson',
-        contentId: 'lesson-1',
-        title: 'Dodawanie',
+        contentId: 'some-lesson',
       },
       isOpen: true,
       messages: [],

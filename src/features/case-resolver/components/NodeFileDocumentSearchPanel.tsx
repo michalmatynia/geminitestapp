@@ -143,6 +143,7 @@ export function NodeFileDocumentSearchPanel(): React.JSX.Element {
         <SegmentedControl
           size='xs'
           value={documentSearchScope}
+          ariaLabel='Document search scope'
           onChange={(value) => {
             setDocumentSearchScope(value);
           }}

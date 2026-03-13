@@ -4,9 +4,9 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const globalStylesheetPath = path.join(process.cwd(), 'src/app/globals.css');
-const kangurPrimitivesPath = path.join(
+const kangurButtonPath = path.join(
   process.cwd(),
-  'src/features/kangur/ui/design/primitives.tsx'
+  'src/features/kangur/ui/design/primitives/KangurButton.tsx'
 );
 const kangurAiTutorWidgetDisplayPath = path.join(
   process.cwd(),
@@ -88,7 +88,7 @@ describe('Kangur CTA contract cleanup', () => {
   });
 
   it('keeps a single primary button variant without the removed warm alias', () => {
-    const source = readFileSync(kangurPrimitivesPath, 'utf8');
+    const source = readFileSync(kangurButtonPath, 'utf8');
 
     expect(source).toContain('primary:');
     expect(source).not.toContain('warm:');

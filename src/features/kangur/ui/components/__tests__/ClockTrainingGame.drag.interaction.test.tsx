@@ -235,18 +235,14 @@ describe('ClockTrainingGame drag interactions', () => {
     });
   });
 
-  it('locks the minute hand in the hours section and shows section guidance', async () => {
+  it('locks the minute hand in the hours section and hides section guidance', async () => {
     const { container } = render(<ClockTrainingGame onFinish={vi.fn()} section='hours' />);
     const hourHand = getHourHand(container);
     const minuteHand = getMinuteHand(container);
 
     expect(screen.queryByTestId('clock-training-section-badge')).toBeNull();
-    expect(screen.getByTestId('clock-training-guidance-title')).toHaveTextContent(
-      'Trening godzin'
-    );
-    expect(screen.getByTestId('clock-training-guidance-title')).toHaveClass(
-      '[color:var(--kangur-page-text)]'
-    );
+    expect(screen.queryByTestId('clock-training-guidance')).toBeNull();
+    expect(screen.queryByTestId('clock-training-guidance-title')).toBeNull();
     expect(screen.getByText('Ustaw pełną godzinę')).toBeInTheDocument();
     expect(screen.queryByTestId('clock-snap-mode-switch')).toBeNull();
     expect(screen.getByTestId('clock-interaction-hint')).toHaveTextContent(

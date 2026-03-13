@@ -302,6 +302,7 @@ const buildSectionEntry = (
     nativeGuideIds: [...linkedGuideIds],
     triggerPhrases: buildTriggerPhrases(entry, linkedGuideIds),
     tags: buildTags(entry, linkedGuideIds),
+    fragments: [],
     notes: entry.notes,
     enabled: true,
     sortOrder: index * 10,

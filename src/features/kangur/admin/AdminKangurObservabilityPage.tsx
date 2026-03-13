@@ -2723,6 +2723,7 @@ export function AdminKangurObservabilityPage(): JSX.Element {
             value={range}
             onChange={handleRangeChange}
             size='sm'
+            ariaLabel='Observability time range'
           />
           <Button asChild variant='outline' size='sm'>
             <Link href={headerLogsHref} data-doc-id='admin_observability_quick_links'>

@@ -205,6 +205,7 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
                   variant='destructive'
                   size='icon'
                   className='absolute right-0 top-0 h-6 w-6 rounded-full'
+                  aria-label={`Clear image from slot ${index + 1}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     void clearVisibleImage(index);

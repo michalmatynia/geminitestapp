@@ -62,6 +62,7 @@ function Asset3DResourceCard(): JSX.Element {
             variant='ghost'
             size='icon'
             className='h-7 w-7 text-muted-foreground hover:text-blue-400'
+            aria-label='Edit asset'
             onClick={(e: MouseEvent): void => {
               e.stopPropagation();
               runtime.onEditAsset();
@@ -73,6 +74,7 @@ function Asset3DResourceCard(): JSX.Element {
             variant='ghost'
             size='icon'
             className='h-7 w-7 text-muted-foreground hover:text-red-400'
+            aria-label='Delete asset'
             onClick={(e: MouseEvent): void => {
               e.stopPropagation();
               runtime.onDeleteAsset();

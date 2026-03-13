@@ -146,6 +146,7 @@ function VectorToolbarActionButtons(): JSX.Element {
             type='button'
             variant='outline'
             size='icon'
+            aria-label='Undo last point'
             onClick={onUndo}
             disabled={disableUndo}
           >
@@ -159,6 +160,7 @@ function VectorToolbarActionButtons(): JSX.Element {
             type='button'
             variant='outline'
             size='icon'
+            aria-label='Close polygon'
             onClick={onClose}
             disabled={disableClose}
           >
@@ -172,6 +174,7 @@ function VectorToolbarActionButtons(): JSX.Element {
             type='button'
             variant='outline'
             size='icon'
+            aria-label='Detach polygon'
             onClick={onDetach}
             disabled={disableDetach}
           >
@@ -185,6 +188,7 @@ function VectorToolbarActionButtons(): JSX.Element {
             type='button'
             variant='outline'
             size='icon'
+            aria-label='Clear shapes'
             onClick={onClear}
             disabled={disableClear}
           >

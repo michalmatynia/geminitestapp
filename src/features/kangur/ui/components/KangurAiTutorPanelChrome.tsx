@@ -46,6 +46,7 @@ type ReducedMotionTransitions = {
 };
 
 type AvatarPointer = TutorAvatarPointer;
+type TutorPanelChromeVariant = 'default' | 'contextual_result';
 
 type Props = {
   attachedAvatarStyle: CSSProperties;
@@ -67,6 +68,7 @@ type Props = {
   canDetachPanelFromContext: boolean;
   children: ReactNode;
   canMovePanelToContext: boolean;
+  chromeVariant: TutorPanelChromeVariant;
   compactDockedTutorPanelWidth: number;
   canResetPanelPosition: boolean;
   isAskModalMode: boolean;
@@ -156,6 +158,7 @@ export function KangurAiTutorPanelChrome({
   canDetachPanelFromContext,
   children,
   canMovePanelToContext,
+  chromeVariant,
   compactDockedTutorPanelWidth,
   canResetPanelPosition,
   isAskModalMode,
@@ -202,6 +205,7 @@ export function KangurAiTutorPanelChrome({
   const { panelMotionState, panelRef, tutorNarrationRootRef } =
     useKangurAiTutorWidgetStateContext();
   const shouldUseMinimalPanelShell = isMinimalPanelMode && !isAskModalMode;
+  const isContextualResultChrome = chromeVariant === 'contextual_result';
   const tutorDisplayName = tutor?.tutorName ?? tutorContent.common.defaultTutorName;
   const tutorMoodId = tutor?.tutorMoodId ?? 'default';
   const tutorBehaviorMoodId = tutor?.tutorBehaviorMoodId ?? tutorMoodId;
@@ -515,6 +519,7 @@ export function KangurAiTutorPanelChrome({
                   data-panel-dragging={isPanelDragging ? 'true' : 'false'}
                   data-panel-snap={panelSnapState}
                   data-panel-snap-preview={hasSnapPreview ? 'true' : 'false'}
+                  data-panel-chrome-variant={chromeVariant}
                   className={panelHeaderClassName}
                   onPointerCancel={onHeaderPointerCancel}
                   onPointerDown={onHeaderPointerDown}
@@ -532,10 +537,18 @@ export function KangurAiTutorPanelChrome({
                     >
                       AI Tutor
                     </KangurAiTutorChromeKicker>
-                    <span className='mt-1 text-sm font-semibold leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text,#1e293b))]'>
+                    <span
+                      data-testid='kangur-ai-tutor-display-name'
+                      className={cn(
+                        'mt-1 text-sm font-semibold leading-relaxed',
+                        isContextualResultChrome
+                          ? '[color:var(--kangur-chat-kicker-text,var(--kangur-chat-accent-border,#f59e0b))]'
+                          : '[color:var(--kangur-chat-panel-text,var(--kangur-page-text,#1e293b))]'
+                      )}
+                    >
                       {tutorDisplayName}
                     </span>
-                    {!shouldUseMinimalPanelShell ? (
+                    {!shouldUseMinimalPanelShell && !isContextualResultChrome ? (
                       <KangurAiTutorChromeBadge
                         data-testid='kangur-ai-tutor-mood-chip'
                         data-mood-id={tutorBehaviorMoodId}
@@ -544,7 +557,7 @@ export function KangurAiTutorPanelChrome({
                         {tutorContent.panelChrome.moodPrefix}: {tutorBehaviorMoodLabel}
                       </KangurAiTutorChromeBadge>
                     ) : null}
-                    {shouldRenderPanelMoodDescription ? (
+                    {shouldRenderPanelMoodDescription && !isContextualResultChrome ? (
                       <span
                         data-testid='kangur-ai-tutor-mood-description'
                         className='mt-2 text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
@@ -608,7 +621,7 @@ export function KangurAiTutorPanelChrome({
                         </KangurAiTutorChromeTextButton>
                       ) : null
                     ) : null}
-                    {!shouldUseMinimalPanelShell ? (
+                    {!shouldUseMinimalPanelShell && !isContextualResultChrome ? (
                       <KangurAiTutorChromeTextButton
                         onClick={onDisableTutor}
                         aria-label={tutorContent.common.disableTutorAria}

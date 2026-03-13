@@ -96,6 +96,7 @@ export function AdvancedMotionPathSection(): React.JSX.Element {
                   type='button'
                   size='icon'
                   variant='outline'
+                  aria-label='Draw motion path'
                   onClick={handleDraw}
                   className='h-9 w-9'
                 >
@@ -107,6 +108,7 @@ export function AdvancedMotionPathSection(): React.JSX.Element {
                   type='button'
                   size='icon'
                   variant='ghost'
+                  aria-label='Clear motion path'
                   onClick={handleClear}
                   disabled={!motionPathPathValue && motionPathShapesValue.length === 0}
                   className='h-9 w-9'

@@ -23,6 +23,33 @@ async function openTutorFromSelection(page: Page): Promise<void> {
   }
 }
 
+async function selectAllTextInElement(page: Page, selector: string): Promise<void> {
+  const root = page.locator(selector).first();
+  await root.waitFor();
+  await root.scrollIntoViewIfNeeded();
+
+  await page.evaluate((nextSelector) => {
+    const rootElement = document.querySelector(nextSelector);
+    if (!rootElement) {
+      throw new Error(`Missing selection root for selector: ${nextSelector}`);
+    }
+
+    const range = document.createRange();
+    range.selectNodeContents(rootElement);
+
+    const selection = window.getSelection();
+    if (!selection) {
+      throw new Error('Selection API is unavailable in this browser context.');
+    }
+
+    selection.removeAllRanges();
+    selection.addRange(range);
+    document.dispatchEvent(new Event('selectionchange'));
+    window.dispatchEvent(new Event('resize'));
+    window.dispatchEvent(new Event('scroll'));
+  }, selector);
+}
+
 async function gotoTutorRoute(page: Page, href: string): Promise<void> {
   await page.goto(href, { waitUntil: 'domcontentloaded' });
 }
@@ -532,6 +559,77 @@ test.describe('Kangur AI Tutor', () => {
     await expect(
       selectedLessonBlock.getByText(lessonSelectedText, { exact: true })
     ).toBeVisible();
+  });
+
+  test('opens the docked tutor with the home progress badge-track explanation after the browser selection clears', async ({
+    page,
+  }) => {
+    const { chatRequests, hintResponse } = await mockKangurTutorEnvironment(page, {
+      chatResponseDelayMs: 200,
+      initialProgress: {
+        totalXp: 280,
+        gamesPlayed: 4,
+        perfectGames: 1,
+        lessonsCompleted: 3,
+        recommendedSessionsCompleted: 0,
+        clockPerfect: 1,
+        calendarPerfect: 1,
+        geometryPerfect: 0,
+        badges: ['first_game', 'lesson_hero', 'clock_master', 'calendar_keeper'],
+        operationsPlayed: ['addition', 'subtraction'],
+        lessonMastery: {
+          adding: {
+            attempts: 1,
+            completions: 1,
+            masteryPercent: 80,
+            bestScorePercent: 80,
+            lastScorePercent: 80,
+            lastCompletedAt: '2026-03-07T12:00:00.000Z',
+          },
+          subtracting: {
+            attempts: 1,
+            completions: 1,
+            masteryPercent: 76,
+            bestScorePercent: 76,
+            lastScorePercent: 76,
+            lastCompletedAt: '2026-03-07T12:00:00.000Z',
+          },
+        },
+        totalCorrectAnswers: 50,
+        totalQuestionsAnswered: 60,
+        bestWinStreak: 2,
+        activityStats: {},
+        dailyQuestsCompleted: 0,
+      },
+    });
+
+    await gotoTutorRoute(page, '/kangur');
+    await dismissHomeOnboardingIfVisible(page);
+
+    const masteryTrack = page.getByTestId('player-progress-badge-track-mastery');
+    await expect(masteryTrack).toBeVisible();
+    await expect(masteryTrack).toContainText('Mistrzostwo');
+    await expect(masteryTrack).toContainText('Budowniczy mistrzostwa');
+
+    await selectAllTextInElement(page, '[data-testid="player-progress-badge-track-mastery"]');
+    await openTutorFromSelection(page);
+
+    await expect(page.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeVisible();
+    await expect.poll(() => chatRequests.length, { timeout: 20_000 }).toBe(1);
+    expect(chatRequests[0]?.context?.focusId).toBe('kangur-game-home-progress');
+    expect(chatRequests[0]?.context?.focusKind).toBe('progress');
+    expect(chatRequests[0]?.context?.promptMode).toBe('selected_text');
+    expect(chatRequests[0]?.context?.selectedText).toContain('MISTRZOSTWO');
+    expect(chatRequests[0]?.context?.selectedText).toContain('Budowniczy mistrzostwa');
+
+    await expect(
+      page.getByTestId('kangur-ai-tutor-selection-guided-answer')
+    ).toContainText(hintResponse, { timeout: 20_000 });
+    await expect(
+      page.getByText('Już przygotowuję wyjaśnienie dokładnie dla zaznaczonego tekstu.')
+    ).toHaveCount(0);
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
+    await expect(page.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeVisible();
   });
 
   test('shows the minimalist tutor modal from the avatar for a logged-in learner without resurfacing onboarding', async ({

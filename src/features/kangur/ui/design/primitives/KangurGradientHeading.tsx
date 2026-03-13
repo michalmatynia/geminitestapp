@@ -1,37 +1,45 @@
+import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
 import { cn } from '@/shared/utils';
 
-import { KangurHeadline, type KangurHeadlineProps } from './KangurHeadline';
+export const kangurGradientHeadingVariants = cva(
+  'bg-gradient-to-r bg-clip-text font-extrabold text-transparent',
+  {
+    variants: {
+      size: {
+        md: 'text-2xl',
+        lg: 'text-4xl',
+      },
+      shadow: {
+        true: 'drop-shadow',
+        false: '',
+      },
+    },
+    defaultVariants: {
+      size: 'md',
+      shadow: true,
+    },
+  }
+);
 
-const KANGUR_GRADIENT_HEADING_SIZE_CLASSNAMES: Record<
-  NonNullable<KangurHeadlineProps['size']>,
-  string
-> = {
-  xs: 'text-xl',
-  sm: 'text-2xl',
-  md: 'text-3xl',
-  lg: 'text-4xl',
-};
-
-export type KangurGradientHeadingProps = Omit<KangurHeadlineProps, 'accent'> & {
-  gradientClass?: string;
-};
+export type KangurGradientHeadingProps = React.HTMLAttributes<HTMLHeadingElement> &
+  VariantProps<typeof kangurGradientHeadingVariants> & {
+    as?: 'h1' | 'h2' | 'h3';
+    gradientClass: string;
+  };
 
 export function KangurGradientHeading({
+  as: Comp = 'h1',
   className,
-  gradientClass = 'from-indigo-500 to-violet-500',
-  size = 'md',
+  gradientClass,
+  shadow,
+  size,
   ...props
 }: KangurGradientHeadingProps): React.JSX.Element {
   return (
-    <KangurHeadline
-      className={cn(
-        'inline-block bg-gradient-to-r bg-clip-text text-transparent',
-        KANGUR_GRADIENT_HEADING_SIZE_CLASSNAMES[size],
-        gradientClass,
-        className
-      )}
+    <Comp
+      className={cn(kangurGradientHeadingVariants({ size, shadow }), gradientClass, className)}
       {...props}
     />
   );

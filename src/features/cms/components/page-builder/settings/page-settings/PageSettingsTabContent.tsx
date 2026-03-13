@@ -149,6 +149,7 @@ export function PageSettingsTabContent({ allSlugs }: { allSlugs: Slug[] }): Reac
           options={STATUS_OPTIONS}
           size='sm'
           className='w-full'
+          ariaLabel='Page status'
         />
         {page.publishedAt && page.status === 'published' && (
           <p className='text-[10px] text-gray-500'>

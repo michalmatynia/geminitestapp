@@ -2,61 +2,50 @@ import * as React from 'react';
 
 import { cn } from '@/shared/utils';
 
-import { KangurCardDescription } from './KangurCardDescription';
-import { KangurCardTitle, type KangurCardTitleProps } from './KangurCardTitle';
-import { KangurSectionEyebrow } from './KangurSectionEyebrow';
+import {
+  KangurSectionEyebrow,
+  type KANGUR_SECTION_EYEBROW_CLASSNAMES,
+} from './KangurSectionEyebrow';
 
 export type KangurPanelIntroProps = React.HTMLAttributes<HTMLDivElement> & {
-  align?: 'left' | 'center';
   description?: React.ReactNode;
   descriptionClassName?: string;
   eyebrow?: React.ReactNode;
   eyebrowClassName?: string;
+  eyebrowTone?: keyof typeof KANGUR_SECTION_EYEBROW_CLASSNAMES;
   title?: React.ReactNode;
-  titleAs?: KangurCardTitleProps['as'];
+  titleAs?: 'div' | 'h2' | 'h3' | 'p';
   titleClassName?: string;
 };
 
 export function KangurPanelIntro({
-  align = 'left',
   className,
   description,
   descriptionClassName,
   eyebrow,
   eyebrowClassName,
+  eyebrowTone = 'muted',
   title,
-  titleAs = 'div',
+  titleAs: TitleComp = 'div',
   titleClassName,
   ...props
 }: KangurPanelIntroProps): React.JSX.Element {
-  const isCentered = align === 'center';
-
   return (
-    <div className={cn('space-y-1', isCentered && 'text-center', className)} {...props}>
+    <div className={cn('flex flex-col gap-1', className)} {...props}>
       {eyebrow ? (
-        <KangurSectionEyebrow
-          className={cn(isCentered && 'justify-center', eyebrowClassName)}
-        >
+        <KangurSectionEyebrow className={eyebrowClassName} tone={eyebrowTone}>
           {eyebrow}
         </KangurSectionEyebrow>
       ) : null}
       {title ? (
-        <KangurCardTitle
-          as={titleAs}
-          className={cn(isCentered && 'text-center', titleClassName)}
-          size='sm'
-        >
+        <TitleComp className={cn('font-semibold [color:var(--kangur-page-text)]', titleClassName)}>
           {title}
-        </KangurCardTitle>
+        </TitleComp>
       ) : null}
       {description ? (
-        <KangurCardDescription
-          as='div'
-          className={cn(isCentered && 'mx-auto text-center', descriptionClassName)}
-          size='sm'
-        >
+        <div className={cn('text-sm [color:var(--kangur-page-muted-text)]', descriptionClassName)}>
           {description}
-        </KangurCardDescription>
+        </div>
       ) : null}
     </div>
   );

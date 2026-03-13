@@ -48,6 +48,7 @@ type MockKangurTutorEnvironmentOptions = {
   tutorLearnerMoodId?: string | null;
   chatResponseDelayMs?: number;
   narratorEngine?: 'server' | 'client';
+  initialProgress?: Record<string, unknown>;
 };
 
 const NOW_ISO = '2026-03-07T12:00:00.000Z';
@@ -110,6 +111,7 @@ export async function mockKangurTutorEnvironment(
     tutorLearnerMoodId = null,
     chatResponseDelayMs = 0,
     narratorEngine = 'server',
+    initialProgress = {},
   } = options;
   const learner = {
     id: 'learner-ada',
@@ -149,7 +151,10 @@ export async function mockKangurTutorEnvironment(
   const questionPrompt = 'Ile to 8 + 5?';
   const hintResponse =
     'Podpowiedź do pytania: dopełnij 8 do 10, a potem dodaj pozostałe 3.';
-  let progress = createDefaultProgress();
+  let progress = {
+    ...createDefaultProgress(),
+    ...initialProgress,
+  };
   const tutorPersonaId = 'persona-mila';
   const tutorPersona = tutorPersonaImageUrl
     ? {

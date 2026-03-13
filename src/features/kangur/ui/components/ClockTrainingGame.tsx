@@ -85,9 +85,9 @@ type DraggableClockProps = {
 
 type ClockTrainingSectionContent = {
   accent: 'amber' | 'emerald' | 'indigo' | 'rose';
-  guidance: string;
-  guidanceTitle: string;
-  legend: string;
+  guidance?: string;
+  guidanceTitle?: string;
+  legend?: string;
   promptLabel: string;
 };
 
@@ -165,9 +165,6 @@ export function getClockTrainingSectionContent(
     case 'hours':
       return {
         accent: 'rose',
-        guidance: 'Skup się na krótkiej wskazówce. Długa wskazówka zostaje na 12, więc ustawiasz tylko pełne godziny.',
-        guidanceTitle: 'Trening godzin',
-        legend: 'Przesuwasz tylko krótką wskazówkę. Minuty są zablokowane na :00.',
         promptLabel: 'Ustaw pełną godzinę',
       };
     case 'minutes':
@@ -1409,7 +1406,11 @@ export default function ClockTrainingGame({
           </KangurButton>
         </div>
       ) : null}
-      {section !== 'mixed' && gameMode !== 'challenge' && (
+      {section !== 'mixed' &&
+      gameMode !== 'challenge' &&
+      trainingSectionContent.guidanceTitle &&
+      trainingSectionContent.guidance &&
+      trainingSectionContent.legend ? (
         <KangurInfoCard
           accent={trainingSectionContent.accent}
           className='w-full max-w-md'
@@ -1430,7 +1431,7 @@ export default function ClockTrainingGame({
             {trainingSectionContent.legend}
           </p>
         </KangurInfoCard>
-      )}
+      ) : null}
       {gameMode === 'challenge' ? (
         <div className='inline-flex flex-wrap items-center gap-2'>
           <KangurStatusChip

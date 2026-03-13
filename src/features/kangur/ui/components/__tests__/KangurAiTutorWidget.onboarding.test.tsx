@@ -890,9 +890,6 @@ describe('KangurAiTutorWidget - Onboarding', () => {
       sendMessage: sendMessageMock,
       recordFollowUpCompletion: recordFollowUpCompletionMock,
       setHighlightedText: setHighlightedTextMock,
-      tutorBehaviorMoodId: 'neutral',
-      tutorBehaviorMoodLabel: 'Neutralny',
-      tutorBehaviorMoodDescription: 'Neutralny nastroj.',
     });
     renderWithTutorAnchors({
       homeAnchorKinds: ['home_actions', 'home_quest', 'leaderboard', 'progress'],
@@ -979,9 +976,6 @@ describe('KangurAiTutorWidget - Onboarding', () => {
       sendMessage: sendMessageMock,
       recordFollowUpCompletion: recordFollowUpCompletionMock,
       setHighlightedText: setHighlightedTextMock,
-      tutorBehaviorMoodId: 'neutral',
-      tutorBehaviorMoodLabel: 'Neutralny',
-      tutorBehaviorMoodDescription: 'Neutralny nastroj.',
     };
     useKangurAiTutorMock.mockImplementation(() => tutorState);
     openChatMock.mockImplementation(() => {

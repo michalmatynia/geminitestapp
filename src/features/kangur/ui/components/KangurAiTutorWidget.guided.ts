@@ -79,9 +79,6 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
   panelMotionState: 'animating' | 'settled';
   selectionConversationSelectedText: string | null;
   selectionGuidanceHandoffText: string | null;
-  setContextualTutorMode: Dispatch<SetStateAction<'selection_explain' | 'section_explain' | null>>;
-  setGuidedTutorTarget: Dispatch<SetStateAction<GuidedTutorTarget | null>>;
-  setSelectionGuidanceCalloutVisibleText: (value: string | null) => void;
   setSelectionGuidanceHandoffText: (value: string | null) => void;
   setSelectionResponseComplete: (value: PendingSelectionResponse | null) => void;
   setSelectionResponsePending: Dispatch<SetStateAction<PendingSelectionResponse | null>>;
@@ -94,9 +91,6 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
     panelMotionState,
     selectionConversationSelectedText,
     selectionGuidanceHandoffText,
-    setContextualTutorMode,
-    setGuidedTutorTarget,
-    setSelectionGuidanceCalloutVisibleText,
     setSelectionGuidanceHandoffText,
     setSelectionResponseComplete,
     setSelectionResponsePending,
@@ -128,10 +122,7 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
     setSelectionResponsePending((current) =>
       current?.selectedText === selectionGuidanceHandoffText ? null : current
     );
-    setSelectionGuidanceCalloutVisibleText(null);
     setSelectionGuidanceHandoffText(null);
-    setContextualTutorMode((current) => (current === 'selection_explain' ? null : current));
-    setGuidedTutorTarget(releaseSelectionGuidedTarget(selectionGuidanceHandoffText));
   }, [
     hasSelectionPanelReady,
     isLoading,
@@ -139,9 +130,6 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
     panelMotionState,
     selectionConversationSelectedText,
     selectionGuidanceHandoffText,
-    setContextualTutorMode,
-    setGuidedTutorTarget,
-    setSelectionGuidanceCalloutVisibleText,
     setSelectionGuidanceHandoffText,
     setSelectionResponseComplete,
     setSelectionResponsePending,
@@ -194,13 +182,6 @@ export function useKangurAiTutorSelectionGuidanceDockOpenEffect(input: {
     selectionGuidanceHandoffText,
   ]);
 }
-
-const releaseSelectionGuidedTarget = (
-  selectionText: string
-): ((current: GuidedTutorTarget | null) => GuidedTutorTarget | null) => {
-  return (current) =>
-    current?.mode === 'selection' && current.selectedText === selectionText ? null : current;
-};
 
 export function useKangurAiTutorGuidedFlow(input: {
   activeSelectionPageRect: DOMRect | null;

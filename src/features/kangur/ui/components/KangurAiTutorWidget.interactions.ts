@@ -271,6 +271,7 @@ export function useKangurAiTutorPanelInteractions({
       setHighlightedSection(null);
       setHoveredSectionAnchorId(null);
       if (activeSelectedText) {
+        setDismissedSelectedText(activeSelectedText);
         clearSelection();
         setHighlightedText(null);
         setPersistedSelectionRect(null);
@@ -281,6 +282,9 @@ export function useKangurAiTutorPanelInteractions({
       setContextualTutorMode(null);
       setPanelShellMode('default');
       closeChat();
+      if (activeSelectedText) {
+        setHighlightedText(null);
+      }
     },
     [
       activeSelectedText,
@@ -294,6 +298,7 @@ export function useKangurAiTutorPanelInteractions({
       setHighlightedSection,
       setHighlightedText,
       setContextualTutorMode,
+      setDismissedSelectedText,
       setHoveredSectionAnchorId,
       setPanelShellMode,
       setPersistedSelectionContainerRect,

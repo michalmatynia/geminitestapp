@@ -41,6 +41,10 @@ const { Context: SearchInputRuntimeContext, useStrictContext: useSearchInputRunt
 
 const SearchInputContent = React.forwardRef<HTMLInputElement>(function SearchInputContent(_, ref) {
   const runtime = useSearchInputRuntime();
+  const { 'aria-label': ariaLabel, 'aria-labelledby': ariaLabelledBy, id, placeholder, ...rest } =
+    runtime.inputProps;
+  const resolvedAriaLabel =
+    ariaLabel ?? (ariaLabelledBy || id ? undefined : placeholder ?? 'Search');
   return (
     <div className={cn('relative flex items-center', runtime.containerClassName)}>
       <Search className='absolute left-3 size-4 text-gray-500' aria-hidden='true' />
@@ -50,7 +54,11 @@ const SearchInputContent = React.forwardRef<HTMLInputElement>(function SearchInp
         variant={runtime.variant}
         size={runtime.size}
         className={cn('pl-9 pr-9', runtime.className)}
-        {...runtime.inputProps}
+        id={id}
+        placeholder={placeholder}
+        aria-label={resolvedAriaLabel}
+        aria-labelledby={ariaLabelledBy}
+        {...rest}
       />
       {runtime.value && runtime.onClear && (
         <Button

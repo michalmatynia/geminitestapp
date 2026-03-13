@@ -269,11 +269,15 @@ export function useKangurAiTutorWidgetCoordinator({
           ? 'onboarding'
         : 'idle_avatar';
 
-    const suppressPanelSurface =
-      tutorSurfaceMode === 'onboarding' ||
-      tutorSurfaceMode === 'auth_guided' ||
-      (displayState.panelShellMode === 'minimal' && 
-        (widgetState.selectionResponsePending !== null || widgetState.selectionGuidanceHandoffText !== null || widgetState.sectionResponsePending !== null));
+  const suppressPanelSurface =
+    loginModal.isOpen ||
+    tutorSurfaceMode === 'onboarding' ||
+    tutorSurfaceMode === 'auth_guided' ||
+    displayState.guidedMode === 'home_onboarding' ||
+    (displayState.panelShellMode === 'minimal' &&
+      (widgetState.selectionResponsePending !== null ||
+        widgetState.selectionGuidanceHandoffText !== null ||
+        widgetState.sectionResponsePending !== null));
 
   useKangurAiTutorTelemetryBridge({
     activeFocus: displayState.activeFocus,
@@ -415,16 +419,11 @@ export function useKangurAiTutorWidgetCoordinator({
     }
 
     handleAuthenticatedOnboardingDismiss();
-    if (!tutorRuntime.isOpen) {
-      interactions.handleOpenChat('toggle');
-    }
   }, [
     guestIntroFlow,
     handleAuthenticatedOnboardingDismiss,
-    interactions,
     isAnonymousVisitor,
     loginModal,
-    tutorRuntime.isOpen,
   ]);
 
   const avatarShellActions = useKangurAiTutorAvatarShellActions({

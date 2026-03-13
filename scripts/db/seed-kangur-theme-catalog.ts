@@ -8,6 +8,7 @@ import { serializeSetting } from '@/shared/utils/settings-json';
 import {
   KANGUR_DAILY_BLOOM_THEME,
   KANGUR_NIGHTLY_AURORA_THEME,
+  KANGUR_SUNSET_HORIZON_THEME,
   KANGUR_THEME_CATALOG_KEY,
   type KangurThemeCatalogEntry,
 } from '@/features/kangur/theme-settings';
@@ -22,6 +23,7 @@ type SettingDoc = MongoPersistedStringSettingRecord<string, Date>;
 const SETTINGS_COLLECTION = 'settings';
 const DAILY_BLOOM_ID = 'kangur-daily-bloom';
 const NIGHTLY_AURORA_ID = 'kangur-nightly-aurora';
+const SUNSET_HORIZON_ID = 'kangur-sunset-horizon';
 
 const parseArgs = (argv: string[]): CliOptions => {
   const options: CliOptions = {
@@ -85,6 +87,17 @@ const buildNightlyAuroraEntry = (
   updatedAt,
 });
 
+const buildSunsetHorizonEntry = (
+  createdAt: string,
+  updatedAt: string
+): KangurThemeCatalogEntry => ({
+  id: SUNSET_HORIZON_ID,
+  name: 'Sunset Horizon',
+  settings: KANGUR_SUNSET_HORIZON_THEME as ThemeSettings,
+  createdAt,
+  updatedAt,
+});
+
 async function main(): Promise<void> {
   const options = parseArgs(process.argv.slice(2));
   if (!process.env['MONGODB_URI']) {
@@ -107,6 +120,7 @@ async function main(): Promise<void> {
     const catalog = parseCatalog(currentValue);
     const existingDaily = catalog.find((entry) => entry.id === DAILY_BLOOM_ID);
     const existingNightly = catalog.find((entry) => entry.id === NIGHTLY_AURORA_ID);
+    const existingSunset = catalog.find((entry) => entry.id === SUNSET_HORIZON_ID);
     const nowIso = new Date().toISOString();
 
     const nextCatalog = (() => {
@@ -134,6 +148,7 @@ async function main(): Promise<void> {
 
       upsert(DAILY_BLOOM_ID, buildDailyBloomEntry, existingDaily);
       upsert(NIGHTLY_AURORA_ID, buildNightlyAuroraEntry, existingNightly);
+      upsert(SUNSET_HORIZON_ID, buildSunsetHorizonEntry, existingSunset);
 
       return next;
     })();
@@ -167,6 +182,7 @@ async function main(): Promise<void> {
           entryPresent: {
             [DAILY_BLOOM_ID]: Boolean(existingDaily),
             [NIGHTLY_AURORA_ID]: Boolean(existingNightly),
+            [SUNSET_HORIZON_ID]: Boolean(existingSunset),
           },
         },
         null,

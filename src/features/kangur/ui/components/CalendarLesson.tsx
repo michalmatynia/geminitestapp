@@ -399,7 +399,7 @@ export default function CalendarLesson(): React.JSX.Element {
         onProgressChange={(viewedCount) => markSectionViewedCount(view.sectionId, viewedCount)}
         dotActiveClass='bg-emerald-500'
         dotDoneClass='bg-emerald-200'
-        gradientClass='from-green-400 to-teal-500'
+        gradientClass='kangur-gradient-accent-emerald'
       />
     );
   }
@@ -408,7 +408,7 @@ export default function CalendarLesson(): React.JSX.Element {
     <LessonHub
       lessonEmoji='📅'
       lessonTitle='Nauka kalendarza'
-      gradientClass='from-green-400 to-teal-500'
+      gradientClass='kangur-gradient-accent-emerald'
       progressDotClassName='bg-emerald-200'
       sections={lessonHubSections}
       onSelect={(sectionId) => {

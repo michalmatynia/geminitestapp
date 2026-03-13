@@ -226,7 +226,7 @@ export default function MultiplicationLesson(): React.JSX.Element {
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-purple-500'
         dotDoneClass='bg-purple-300'
-        gradientClass='from-purple-500 to-indigo-500'
+        gradientClass='kangur-gradient-accent-indigo'
       />
     );
   }
@@ -235,7 +235,7 @@ export default function MultiplicationLesson(): React.JSX.Element {
     <LessonHub
       lessonEmoji='✖️'
       lessonTitle='Mnozenie'
-      gradientClass='from-purple-500 to-indigo-500'
+      gradientClass='kangur-gradient-accent-indigo'
       progressDotClassName='bg-purple-300'
       sections={HUB_SECTIONS.map((section) =>
         section.isGame

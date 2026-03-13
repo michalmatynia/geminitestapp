@@ -304,7 +304,7 @@ export default function LogicalReasoningLesson(): React.JSX.Element {
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-indigo-500'
         dotDoneClass='bg-indigo-300'
-        gradientClass='from-indigo-500 to-blue-600'
+        gradientClass='kangur-gradient-accent-indigo'
       />
     );
   }
@@ -313,7 +313,7 @@ export default function LogicalReasoningLesson(): React.JSX.Element {
     <LessonHub
       lessonEmoji='💡'
       lessonTitle='Wnioskowanie'
-      gradientClass='from-indigo-500 to-blue-600'
+      gradientClass='kangur-gradient-accent-indigo'
       progressDotClassName='bg-indigo-300'
       sections={HUB_SECTIONS.map((section) => ({
         ...section,

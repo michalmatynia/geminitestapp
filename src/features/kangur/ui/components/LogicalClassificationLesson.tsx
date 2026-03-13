@@ -277,7 +277,7 @@ export default function LogicalClassificationLesson(): React.JSX.Element {
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-teal-500'
         dotDoneClass='bg-teal-300'
-        gradientClass='from-teal-500 to-cyan-500'
+        gradientClass='kangur-gradient-accent-teal'
       />
     );
   }
@@ -286,7 +286,7 @@ export default function LogicalClassificationLesson(): React.JSX.Element {
     <LessonHub
       lessonEmoji='📦'
       lessonTitle='Klasyfikacja'
-      gradientClass='from-teal-500 to-cyan-500'
+      gradientClass='kangur-gradient-accent-teal'
       progressDotClassName='bg-teal-300'
       sections={HUB_SECTIONS.map((section) => ({
         ...section,

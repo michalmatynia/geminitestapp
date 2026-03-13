@@ -116,7 +116,7 @@ export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLesson
     title: 'Nauka zegara',
     description: 'Godziny, minuty i pełny czas na zegarze analogowym',
     emoji: '🕐',
-    color: 'from-indigo-400 to-purple-500',
+    color: 'kangur-gradient-accent-indigo-reverse',
     activeBg: 'bg-indigo-500',
   },
   calendar: {
@@ -125,7 +125,7 @@ export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLesson
     title: 'Nauka kalendarza',
     description: 'Dni, miesiące, daty i pory roku',
     emoji: '📅',
-    color: 'from-green-400 to-teal-500',
+    color: 'kangur-gradient-accent-emerald',
     activeBg: 'bg-green-500',
   },
   adding: {
@@ -134,7 +134,7 @@ export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLesson
     title: 'Dodawanie',
     description: 'Jednocyfrowe, dwucyfrowe i gra z piłkami!',
     emoji: '➕',
-    color: 'from-orange-400 to-yellow-400',
+    color: 'kangur-gradient-accent-amber',
     activeBg: 'bg-orange-400',
   },
   subtracting: {
@@ -143,7 +143,7 @@ export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLesson
     title: 'Odejmowanie',
     description: 'Jednocyfrowe, dwucyfrowe i reszta',
     emoji: '➖',
-    color: 'from-red-400 to-pink-400',
+    color: 'kangur-gradient-accent-rose',
     activeBg: 'bg-red-400',
   },
   multiplication: {
@@ -152,7 +152,7 @@ export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLesson
     title: 'Mnożenie',
     description: 'Tabliczka mnożenia i algorytmy',
     emoji: '✖️',
-    color: 'from-purple-500 to-indigo-500',
+    color: 'kangur-gradient-accent-indigo',
     activeBg: 'bg-purple-500',
   },
   division: {
@@ -161,7 +161,7 @@ export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLesson
     title: 'Dzielenie',
     description: 'Proste dzielenie i reszta z dzielenia',
     emoji: '➗',
-    color: 'from-blue-500 to-teal-400',
+    color: 'kangur-gradient-accent-teal',
     activeBg: 'bg-blue-500',
   },
   geometry_basics: {
@@ -170,7 +170,7 @@ export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLesson
     title: 'Podstawy geometrii',
     description: 'Punkt, odcinek, bok i kąt',
     emoji: '📐',
-    color: 'from-cyan-500 to-sky-500',
+    color: 'kangur-gradient-accent-sky',
     activeBg: 'bg-cyan-500',
   },
   geometry_shapes: {
@@ -179,7 +179,7 @@ export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLesson
     title: 'Figury geometryczne',
     description: 'Poznaj figury i narysuj je w grze',
     emoji: '🔷',
-    color: 'from-fuchsia-500 to-violet-500',
+    color: 'kangur-gradient-accent-violet-reverse',
     activeBg: 'bg-fuchsia-500',
   },
   geometry_symmetry: {
@@ -188,7 +188,7 @@ export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLesson
     title: 'Symetria',
     description: 'Oś symetrii i odbicia lustrzane',
     emoji: '🪞',
-    color: 'from-emerald-500 to-lime-500',
+    color: 'kangur-gradient-accent-emerald',
     activeBg: 'bg-emerald-500',
   },
   geometry_perimeter: {
@@ -197,7 +197,7 @@ export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLesson
     title: 'Obwód figur',
     description: 'Liczenie długości boków krok po kroku',
     emoji: '📏',
-    color: 'from-amber-500 to-orange-500',
+    color: 'kangur-gradient-accent-amber-reverse',
     activeBg: 'bg-amber-500',
   },
   logical_thinking: {
@@ -206,7 +206,7 @@ export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLesson
     title: 'Myślenie logiczne',
     description: 'Wprowadzenie do wzorców, klasyfikacji i analogii',
     emoji: '🧠',
-    color: 'from-violet-500 to-blue-500',
+    color: 'kangur-gradient-accent-indigo',
     activeBg: 'bg-violet-500',
   },
   logical_patterns: {
@@ -215,7 +215,7 @@ export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLesson
     title: 'Wzorce i ciągi',
     description: 'Odkryj zasady kryjące się w ciągach i wzorcach',
     emoji: '🔢',
-    color: 'from-violet-500 to-purple-600',
+    color: 'kangur-gradient-accent-violet',
     activeBg: 'bg-violet-500',
   },
   logical_classification: {
@@ -224,7 +224,7 @@ export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLesson
     title: 'Klasyfikacja',
     description: 'Grupuj, sortuj i znajdź intruza',
     emoji: '📦',
-    color: 'from-teal-500 to-cyan-500',
+    color: 'kangur-gradient-accent-teal',
     activeBg: 'bg-teal-500',
   },
   logical_reasoning: {
@@ -233,7 +233,7 @@ export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLesson
     title: 'Wnioskowanie',
     description: 'Jeśli... to... — myśl krok po kroku',
     emoji: '💡',
-    color: 'from-indigo-500 to-blue-600',
+    color: 'kangur-gradient-accent-indigo',
     activeBg: 'bg-indigo-500',
   },
   logical_analogies: {
@@ -242,7 +242,7 @@ export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLesson
     title: 'Analogie',
     description: 'Znajdź tę samą relację w nowym kontekście',
     emoji: '🔗',
-    color: 'from-pink-500 to-rose-500',
+    color: 'kangur-gradient-accent-rose-reverse',
     activeBg: 'bg-pink-500',
   },
 };

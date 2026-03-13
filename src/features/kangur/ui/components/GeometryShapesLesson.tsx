@@ -152,7 +152,7 @@ export default function GeometryShapesLesson(): React.JSX.Element {
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-fuchsia-500'
         dotDoneClass='bg-fuchsia-300'
-        gradientClass='from-fuchsia-500 to-violet-500'
+        gradientClass='kangur-gradient-accent-violet-reverse'
       />
     );
   }
@@ -161,7 +161,7 @@ export default function GeometryShapesLesson(): React.JSX.Element {
     <LessonHub
       lessonEmoji='🔷'
       lessonTitle='Figury geometryczne'
-      gradientClass='from-fuchsia-500 to-violet-500'
+      gradientClass='kangur-gradient-accent-violet-reverse'
       progressDotClassName='bg-fuchsia-300'
       sections={HUB_SECTIONS.map((section) =>
         section.isGame

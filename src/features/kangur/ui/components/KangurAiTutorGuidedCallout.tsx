@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import { AnimatePresence, motion, type Transition } from 'framer-motion';
 
 import { resolveKangurPageContentFragment } from '@/features/kangur/page-content-fragments';
@@ -103,6 +103,8 @@ export function KangurAiTutorGuidedCallout({
   transitionEase,
 }: Props): JSX.Element {
   const tutorContent = useKangurAiTutorContent();
+  const calloutLabelId = useId();
+  const calloutDescriptionId = useId();
   const {
     activeSelectedText,
     activeFocus,
@@ -226,6 +228,12 @@ export function KangurAiTutorGuidedCallout({
     (!isResolvedSelectionCallout || shouldShowSelectionPageContentBadge);
   const shouldShowSelectionPreparingBadge =
     mode === 'selection' && !isResolvedSelectionCallout && !shouldShowSelectedKnowledgeReference;
+  const shouldAnnounceCallout =
+    mode === 'selection' || mode === 'section' || mode === 'auth';
+  const accessibleCalloutTitle = title ?? headerLabel;
+  const accessibleCalloutDescription = [stepLabel, resolvedSelectionDetail]
+    .filter((value): value is string => Boolean(value))
+    .join(' ');
 
   return (
     <AnimatePresence mode='wait'>
@@ -266,9 +274,22 @@ export function KangurAiTutorGuidedCallout({
           transition={
             calloutTransition
           }
+          role='region'
+          aria-live={shouldAnnounceCallout ? 'polite' : undefined}
+          aria-atomic={shouldAnnounceCallout ? 'true' : undefined}
+          aria-labelledby={calloutLabelId}
+          aria-describedby={accessibleCalloutDescription ? calloutDescriptionId : undefined}
           style={style}
           className='z-[73]'
         >
+          <h2 id={calloutLabelId} className='sr-only'>
+            {accessibleCalloutTitle}
+          </h2>
+          {accessibleCalloutDescription ? (
+            <p id={calloutDescriptionId} className='sr-only'>
+              {accessibleCalloutDescription}
+            </p>
+          ) : null}
           <KangurAiTutorWarmOverlayPanel
             padding='md'
             className={cn(

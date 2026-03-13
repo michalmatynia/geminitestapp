@@ -590,6 +590,8 @@ export function TemplatesTabContent(): React.JSX.Element {
                       size='icon'
                       className='h-9 w-9 text-gray-500 hover:text-red-400'
                       onClick={() => removeMappingRow(i)}
+                      aria-label='Remove mapping row'
+                      title='Remove mapping row'
                     >
                       <Trash2 className='size-4' />
                     </Button>

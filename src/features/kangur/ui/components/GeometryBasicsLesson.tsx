@@ -156,7 +156,7 @@ export default function GeometryBasicsLesson(): React.JSX.Element {
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-cyan-500'
         dotDoneClass='bg-cyan-300'
-        gradientClass='from-cyan-500 to-sky-500'
+        gradientClass='kangur-gradient-accent-sky'
       />
     );
   }
@@ -165,7 +165,7 @@ export default function GeometryBasicsLesson(): React.JSX.Element {
     <LessonHub
       lessonEmoji='📐'
       lessonTitle='Podstawy geometrii'
-      gradientClass='from-cyan-500 to-sky-500'
+      gradientClass='kangur-gradient-accent-sky'
       progressDotClassName='bg-cyan-300'
       sections={HUB_SECTIONS.map((section) => ({
         ...section,

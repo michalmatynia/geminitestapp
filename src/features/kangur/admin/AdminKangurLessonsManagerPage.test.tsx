@@ -81,7 +81,7 @@ describe('AdminKangurLessonsManagerPage', () => {
             title: 'Nauka zegara',
             description: 'Odczytuj godziny',
             emoji: '🕐',
-            color: 'from-indigo-400 to-purple-500',
+            color: 'kangur-gradient-accent-indigo-reverse',
             activeBg: 'bg-indigo-500',
             sortOrder: 1000,
             enabled: true,

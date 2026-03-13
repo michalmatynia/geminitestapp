@@ -601,6 +601,241 @@
     border-radius: var(--kangur-gradient-icon-tile-radius-lg, 24px);
   }
 
+  .kangur-gradient-accent-indigo {
+    --tw-gradient-from: var(--kangur-accent-indigo-start, #a855f7);
+    --tw-gradient-to: var(--kangur-accent-indigo-end, #6366f1);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-indigo-reverse {
+    --tw-gradient-from: var(--kangur-accent-indigo-end, #6366f1);
+    --tw-gradient-to: var(--kangur-accent-indigo-start, #a855f7);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-violet {
+    --tw-gradient-from: var(--kangur-accent-violet-start, #8b5cf6);
+    --tw-gradient-to: var(--kangur-accent-violet-end, #d946ef);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-violet-reverse {
+    --tw-gradient-from: var(--kangur-accent-violet-end, #d946ef);
+    --tw-gradient-to: var(--kangur-accent-violet-start, #8b5cf6);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-emerald {
+    --tw-gradient-from: var(--kangur-accent-emerald-start, #10b981);
+    --tw-gradient-to: var(--kangur-accent-emerald-end, #06b6d4);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-emerald-reverse {
+    --tw-gradient-from: var(--kangur-accent-emerald-end, #06b6d4);
+    --tw-gradient-to: var(--kangur-accent-emerald-start, #10b981);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-sky {
+    --tw-gradient-from: var(--kangur-accent-sky-start, #38bdf8);
+    --tw-gradient-to: var(--kangur-accent-sky-end, #818cf8);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-sky-reverse {
+    --tw-gradient-from: var(--kangur-accent-sky-end, #818cf8);
+    --tw-gradient-to: var(--kangur-accent-sky-start, #38bdf8);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-amber {
+    --tw-gradient-from: var(--kangur-accent-amber-start, #fb923c);
+    --tw-gradient-to: var(--kangur-accent-amber-end, #facc15);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-amber-reverse {
+    --tw-gradient-from: var(--kangur-accent-amber-end, #facc15);
+    --tw-gradient-to: var(--kangur-accent-amber-start, #fb923c);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-rose {
+    --tw-gradient-from: var(--kangur-accent-rose-start, #f87171);
+    --tw-gradient-to: var(--kangur-accent-rose-end, #f472b6);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-rose-reverse {
+    --tw-gradient-from: var(--kangur-accent-rose-end, #f472b6);
+    --tw-gradient-to: var(--kangur-accent-rose-start, #f87171);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-teal {
+    --tw-gradient-from: var(--kangur-accent-teal-start, #3b82f6);
+    --tw-gradient-to: var(--kangur-accent-teal-end, #2dd4bf);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-teal-reverse {
+    --tw-gradient-from: var(--kangur-accent-teal-end, #2dd4bf);
+    --tw-gradient-to: var(--kangur-accent-teal-start, #3b82f6);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-slate {
+    --tw-gradient-from: var(--kangur-accent-slate-start, #94a3b8);
+    --tw-gradient-to: var(--kangur-accent-slate-end, #475569);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-slate-reverse {
+    --tw-gradient-from: var(--kangur-accent-slate-end, #475569);
+    --tw-gradient-to: var(--kangur-accent-slate-start, #94a3b8);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-with-mid {
+    --tw-gradient-via: var(
+      --kangur-gradient-mid,
+      color-mix(in srgb, var(--tw-gradient-from, transparent) 52%, var(--tw-gradient-to, transparent) 48%)
+    );
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-soft-indigo {
+    --tw-gradient-from: color-mix(
+      in srgb,
+      var(--kangur-accent-indigo-start, #a855f7) 18%,
+      var(--kangur-gradient-soft-mid, #ffffff)
+    );
+    --tw-gradient-to: color-mix(
+      in srgb,
+      var(--kangur-accent-indigo-end, #6366f1) 18%,
+      var(--kangur-gradient-soft-mid, #ffffff)
+    );
+    --tw-gradient-via: var(--kangur-gradient-soft-mid, #ffffff);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-soft-violet {
+    --tw-gradient-from: color-mix(
+      in srgb,
+      var(--kangur-accent-violet-start, #8b5cf6) 18%,
+      var(--kangur-gradient-soft-mid, #ffffff)
+    );
+    --tw-gradient-to: color-mix(
+      in srgb,
+      var(--kangur-accent-violet-end, #d946ef) 18%,
+      var(--kangur-gradient-soft-mid, #ffffff)
+    );
+    --tw-gradient-via: var(--kangur-gradient-soft-mid, #ffffff);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-soft-emerald {
+    --tw-gradient-from: color-mix(
+      in srgb,
+      var(--kangur-accent-emerald-start, #10b981) 18%,
+      var(--kangur-gradient-soft-mid, #ffffff)
+    );
+    --tw-gradient-to: color-mix(
+      in srgb,
+      var(--kangur-accent-emerald-end, #06b6d4) 18%,
+      var(--kangur-gradient-soft-mid, #ffffff)
+    );
+    --tw-gradient-via: var(--kangur-gradient-soft-mid, #ffffff);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-soft-sky {
+    --tw-gradient-from: color-mix(
+      in srgb,
+      var(--kangur-accent-sky-start, #38bdf8) 18%,
+      var(--kangur-gradient-soft-mid, #ffffff)
+    );
+    --tw-gradient-to: color-mix(
+      in srgb,
+      var(--kangur-accent-sky-end, #818cf8) 18%,
+      var(--kangur-gradient-soft-mid, #ffffff)
+    );
+    --tw-gradient-via: var(--kangur-gradient-soft-mid, #ffffff);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-soft-amber {
+    --tw-gradient-from: color-mix(
+      in srgb,
+      var(--kangur-accent-amber-start, #fb923c) 18%,
+      var(--kangur-gradient-soft-mid, #ffffff)
+    );
+    --tw-gradient-to: color-mix(
+      in srgb,
+      var(--kangur-accent-amber-end, #facc15) 18%,
+      var(--kangur-gradient-soft-mid, #ffffff)
+    );
+    --tw-gradient-via: var(--kangur-gradient-soft-mid, #ffffff);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-soft-rose {
+    --tw-gradient-from: color-mix(
+      in srgb,
+      var(--kangur-accent-rose-start, #f87171) 18%,
+      var(--kangur-gradient-soft-mid, #ffffff)
+    );
+    --tw-gradient-to: color-mix(
+      in srgb,
+      var(--kangur-accent-rose-end, #f472b6) 18%,
+      var(--kangur-gradient-soft-mid, #ffffff)
+    );
+    --tw-gradient-via: var(--kangur-gradient-soft-mid, #ffffff);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-soft-teal {
+    --tw-gradient-from: color-mix(
+      in srgb,
+      var(--kangur-accent-teal-start, #3b82f6) 18%,
+      var(--kangur-gradient-soft-mid, #ffffff)
+    );
+    --tw-gradient-to: color-mix(
+      in srgb,
+      var(--kangur-accent-teal-end, #2dd4bf) 18%,
+      var(--kangur-gradient-soft-mid, #ffffff)
+    );
+    --tw-gradient-via: var(--kangur-gradient-soft-mid, #ffffff);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-accent-soft-slate {
+    --tw-gradient-from: color-mix(
+      in srgb,
+      var(--kangur-accent-slate-start, #94a3b8) 18%,
+      var(--kangur-gradient-soft-mid, #ffffff)
+    );
+    --tw-gradient-to: color-mix(
+      in srgb,
+      var(--kangur-accent-slate-end, #475569) 18%,
+      var(--kangur-gradient-soft-mid, #ffffff)
+    );
+    --tw-gradient-via: var(--kangur-gradient-soft-mid, #ffffff);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to);
+  }
+
+  .kangur-gradient-hero {
+    --tw-gradient-from: var(--kangur-accent-amber-start, #fb923c);
+    --tw-gradient-via: color-mix(
+      in srgb,
+      var(--kangur-accent-amber-end, #facc15) 52%,
+      var(--kangur-accent-indigo-start, #a855f7) 48%
+    );
+    --tw-gradient-to: var(--kangur-accent-indigo-end, #6366f1);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to);
+  }
+
   .kangur-chat-bubble {
     border-radius: var(--kangur-chat-bubble-radius, 22px);
   }
@@ -2022,12 +2257,27 @@
 
   .primary-cta {
     --kangur-gradient-angle: 90deg;
-    --kangur-gradient-start: #ffb347;
-    --kangur-gradient-mid: color-mix(in srgb, #ffb347 46%, #ff7a45 54%);
-    --kangur-gradient-end: #ff7a45;
-    --kangur-gradient-start-shifted: color-mix(in srgb, #ffb347 68%, #ff7a45 32%);
-    --kangur-gradient-mid-shifted: color-mix(in srgb, #ffb347 30%, #ff7a45 70%);
-    --kangur-gradient-end-shifted: color-mix(in srgb, #ff7a45 82%, #ffb347 18%);
+    --kangur-gradient-start: var(--kangur-cta-primary-start, #ffb347);
+    --kangur-gradient-mid: var(
+      --kangur-cta-primary-mid,
+      color-mix(in srgb, var(--kangur-gradient-start) 46%, var(--kangur-gradient-end) 54%)
+    );
+    --kangur-gradient-end: var(--kangur-cta-primary-end, #ff7a45);
+    --kangur-gradient-start-shifted: color-mix(
+      in srgb,
+      var(--kangur-gradient-start) 68%,
+      var(--kangur-gradient-end) 32%
+    );
+    --kangur-gradient-mid-shifted: color-mix(
+      in srgb,
+      var(--kangur-gradient-start) 30%,
+      var(--kangur-gradient-end) 70%
+    );
+    --kangur-gradient-end-shifted: color-mix(
+      in srgb,
+      var(--kangur-gradient-end) 82%,
+      var(--kangur-gradient-start) 18%
+    );
     background: var(
       --kangur-button-primary-background,
       linear-gradient(90deg, #ffb347 0%, #ff7a45 100%)
@@ -2046,12 +2296,24 @@
 
   .primary-cta:hover,
   .primary-cta:focus-visible {
-    --kangur-gradient-start: #ffc670;
-    --kangur-gradient-mid: #ff985f;
-    --kangur-gradient-end: #ff7a45;
-    --kangur-gradient-start-shifted: color-mix(in srgb, #ffc670 72%, #ff985f 28%);
-    --kangur-gradient-mid-shifted: color-mix(in srgb, #ffc670 28%, #ff7a45 72%);
-    --kangur-gradient-end-shifted: color-mix(in srgb, #ff7a45 84%, #ff985f 16%);
+    --kangur-gradient-start: var(--kangur-cta-primary-hover-start, #ffc670);
+    --kangur-gradient-mid: var(--kangur-cta-primary-hover-mid, #ff985f);
+    --kangur-gradient-end: var(--kangur-cta-primary-hover-end, #ff7a45);
+    --kangur-gradient-start-shifted: color-mix(
+      in srgb,
+      var(--kangur-gradient-start) 72%,
+      var(--kangur-gradient-mid) 28%
+    );
+    --kangur-gradient-mid-shifted: color-mix(
+      in srgb,
+      var(--kangur-gradient-start) 28%,
+      var(--kangur-gradient-end) 72%
+    );
+    --kangur-gradient-end-shifted: color-mix(
+      in srgb,
+      var(--kangur-gradient-end) 84%,
+      var(--kangur-gradient-mid) 16%
+    );
     background: var(
       --kangur-button-primary-hover-background,
       linear-gradient(90deg, #ffc670 0%, #ff985f 56%, #ff7a45 100%)
@@ -2205,12 +2467,28 @@
 
   .warning-cta {
     --kangur-gradient-angle: 180deg;
-    --kangur-gradient-start: rgba(255, 246, 226, 0.98);
-    --kangur-gradient-mid: color-mix(in srgb, rgba(255, 246, 226, 0.98) 42%, rgba(253, 235, 202, 0.98) 58%);
-    --kangur-gradient-end: rgba(253, 235, 202, 0.98);
-    --kangur-gradient-start-shifted: color-mix(in srgb, rgba(255, 246, 226, 0.98) 68%, rgba(253, 235, 202, 0.98) 32%);
-    --kangur-gradient-mid-shifted: color-mix(in srgb, rgba(255, 246, 226, 0.98) 26%, rgba(253, 235, 202, 0.98) 74%);
-    --kangur-gradient-end-shifted: color-mix(in srgb, rgba(253, 235, 202, 0.98) 82%, rgba(255, 246, 226, 0.98) 18%);
+    --kangur-gradient-start: var(--kangur-cta-warning-start, rgba(255, 246, 226, 0.98));
+    --kangur-gradient-mid: color-mix(
+      in srgb,
+      var(--kangur-gradient-start) 42%,
+      var(--kangur-gradient-end) 58%
+    );
+    --kangur-gradient-end: var(--kangur-cta-warning-end, rgba(253, 235, 202, 0.98));
+    --kangur-gradient-start-shifted: color-mix(
+      in srgb,
+      var(--kangur-gradient-start) 68%,
+      var(--kangur-gradient-end) 32%
+    );
+    --kangur-gradient-mid-shifted: color-mix(
+      in srgb,
+      var(--kangur-gradient-start) 26%,
+      var(--kangur-gradient-end) 74%
+    );
+    --kangur-gradient-end-shifted: color-mix(
+      in srgb,
+      var(--kangur-gradient-end) 82%,
+      var(--kangur-gradient-start) 18%
+    );
     background: var(
       --kangur-button-warning-background,
       linear-gradient(
@@ -2233,12 +2511,28 @@
 
   .warning-cta:hover,
   .warning-cta:focus-visible {
-    --kangur-gradient-start: rgba(255, 247, 230, 0.99);
-    --kangur-gradient-mid: color-mix(in srgb, rgba(255, 247, 230, 0.99) 38%, rgba(255, 232, 195, 0.96) 62%);
-    --kangur-gradient-end: rgba(255, 232, 195, 0.96);
-    --kangur-gradient-start-shifted: color-mix(in srgb, rgba(255, 247, 230, 0.99) 70%, rgba(255, 232, 195, 0.96) 30%);
-    --kangur-gradient-mid-shifted: color-mix(in srgb, rgba(255, 247, 230, 0.99) 24%, rgba(255, 232, 195, 0.96) 76%);
-    --kangur-gradient-end-shifted: color-mix(in srgb, rgba(255, 232, 195, 0.96) 84%, rgba(255, 247, 230, 0.99) 16%);
+    --kangur-gradient-start: var(--kangur-cta-warning-hover-start, rgba(255, 247, 230, 0.99));
+    --kangur-gradient-mid: color-mix(
+      in srgb,
+      var(--kangur-gradient-start) 38%,
+      var(--kangur-gradient-end) 62%
+    );
+    --kangur-gradient-end: var(--kangur-cta-warning-hover-end, rgba(255, 232, 195, 0.96));
+    --kangur-gradient-start-shifted: color-mix(
+      in srgb,
+      var(--kangur-gradient-start) 70%,
+      var(--kangur-gradient-end) 30%
+    );
+    --kangur-gradient-mid-shifted: color-mix(
+      in srgb,
+      var(--kangur-gradient-start) 24%,
+      var(--kangur-gradient-end) 76%
+    );
+    --kangur-gradient-end-shifted: color-mix(
+      in srgb,
+      var(--kangur-gradient-end) 84%,
+      var(--kangur-gradient-start) 16%
+    );
     background: var(
       --kangur-button-warning-hover-background,
       linear-gradient(
@@ -2259,12 +2553,28 @@
 
   .success-cta {
     --kangur-gradient-angle: 180deg;
-    --kangur-gradient-start: rgba(236, 253, 245, 0.98);
-    --kangur-gradient-mid: color-mix(in srgb, rgba(236, 253, 245, 0.98) 44%, rgba(210, 250, 229, 0.98) 56%);
-    --kangur-gradient-end: rgba(210, 250, 229, 0.98);
-    --kangur-gradient-start-shifted: color-mix(in srgb, rgba(236, 253, 245, 0.98) 70%, rgba(210, 250, 229, 0.98) 30%);
-    --kangur-gradient-mid-shifted: color-mix(in srgb, rgba(236, 253, 245, 0.98) 32%, rgba(210, 250, 229, 0.98) 68%);
-    --kangur-gradient-end-shifted: color-mix(in srgb, rgba(210, 250, 229, 0.98) 82%, rgba(236, 253, 245, 0.98) 18%);
+    --kangur-gradient-start: var(--kangur-cta-success-start, rgba(236, 253, 245, 0.98));
+    --kangur-gradient-mid: color-mix(
+      in srgb,
+      var(--kangur-gradient-start) 44%,
+      var(--kangur-gradient-end) 56%
+    );
+    --kangur-gradient-end: var(--kangur-cta-success-end, rgba(210, 250, 229, 0.98));
+    --kangur-gradient-start-shifted: color-mix(
+      in srgb,
+      var(--kangur-gradient-start) 70%,
+      var(--kangur-gradient-end) 30%
+    );
+    --kangur-gradient-mid-shifted: color-mix(
+      in srgb,
+      var(--kangur-gradient-start) 32%,
+      var(--kangur-gradient-end) 68%
+    );
+    --kangur-gradient-end-shifted: color-mix(
+      in srgb,
+      var(--kangur-gradient-end) 82%,
+      var(--kangur-gradient-start) 18%
+    );
     background: var(
       --kangur-button-success-background,
       linear-gradient(
@@ -2400,43 +2710,43 @@
   }
 
   .kangur-progress-fill[data-kangur-accent='indigo'] {
-    --kangur-progress-primary: #a855f7;
-    --kangur-progress-secondary: #6366f1;
+    --kangur-progress-primary: var(--kangur-accent-indigo-start, #a855f7);
+    --kangur-progress-secondary: var(--kangur-accent-indigo-end, #6366f1);
   }
 
   .kangur-progress-fill[data-kangur-accent='violet'] {
-    --kangur-progress-primary: #8b5cf6;
-    --kangur-progress-secondary: #d946ef;
+    --kangur-progress-primary: var(--kangur-accent-violet-start, #8b5cf6);
+    --kangur-progress-secondary: var(--kangur-accent-violet-end, #d946ef);
   }
 
   .kangur-progress-fill[data-kangur-accent='emerald'] {
-    --kangur-progress-primary: #10b981;
-    --kangur-progress-secondary: #06b6d4;
+    --kangur-progress-primary: var(--kangur-accent-emerald-start, #10b981);
+    --kangur-progress-secondary: var(--kangur-accent-emerald-end, #06b6d4);
   }
 
   .kangur-progress-fill[data-kangur-accent='sky'] {
-    --kangur-progress-primary: #38bdf8;
-    --kangur-progress-secondary: #818cf8;
+    --kangur-progress-primary: var(--kangur-accent-sky-start, #38bdf8);
+    --kangur-progress-secondary: var(--kangur-accent-sky-end, #818cf8);
   }
 
   .kangur-progress-fill[data-kangur-accent='amber'] {
-    --kangur-progress-primary: #fb923c;
-    --kangur-progress-secondary: #facc15;
+    --kangur-progress-primary: var(--kangur-accent-amber-start, #fb923c);
+    --kangur-progress-secondary: var(--kangur-accent-amber-end, #facc15);
   }
 
   .kangur-progress-fill[data-kangur-accent='rose'] {
-    --kangur-progress-primary: #f87171;
-    --kangur-progress-secondary: #f472b6;
+    --kangur-progress-primary: var(--kangur-accent-rose-start, #f87171);
+    --kangur-progress-secondary: var(--kangur-accent-rose-end, #f472b6);
   }
 
   .kangur-progress-fill[data-kangur-accent='teal'] {
-    --kangur-progress-primary: #3b82f6;
-    --kangur-progress-secondary: #2dd4bf;
+    --kangur-progress-primary: var(--kangur-accent-teal-start, #3b82f6);
+    --kangur-progress-secondary: var(--kangur-accent-teal-end, #2dd4bf);
   }
 
   .kangur-progress-fill[data-kangur-accent='slate'] {
-    --kangur-progress-primary: #94a3b8;
-    --kangur-progress-secondary: #475569;
+    --kangur-progress-primary: var(--kangur-accent-slate-start, #94a3b8);
+    --kangur-progress-secondary: var(--kangur-accent-slate-end, #475569);
   }
 
   button[class*='bg-gradient-to-r'],

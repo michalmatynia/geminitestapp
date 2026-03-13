@@ -151,7 +151,7 @@ export default function GeometrySymmetryLesson(): React.JSX.Element {
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-emerald-500'
         dotDoneClass='bg-emerald-300'
-        gradientClass='from-emerald-500 to-lime-500'
+        gradientClass='kangur-gradient-accent-emerald'
       />
     );
   }
@@ -160,7 +160,7 @@ export default function GeometrySymmetryLesson(): React.JSX.Element {
     <LessonHub
       lessonEmoji='🪞'
       lessonTitle='Symetria'
-      gradientClass='from-emerald-500 to-lime-500'
+      gradientClass='kangur-gradient-accent-emerald'
       progressDotClassName='bg-emerald-300'
       sections={HUB_SECTIONS.map((section) => ({
         ...section,

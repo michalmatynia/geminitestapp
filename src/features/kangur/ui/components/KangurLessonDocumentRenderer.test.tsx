@@ -218,7 +218,7 @@ describe('KangurLessonDocumentRenderer', () => {
       'kangur-card-surface',
       'kangur-media-padding-md',
       'border-amber-100',
-      'from-amber-50'
+      'kangur-gradient-accent-soft-amber'
     );
     expect(screen.getByText('Triangle')).toBeInTheDocument();
     expect(screen.getByText('Triangle')).toHaveClass(
@@ -228,7 +228,7 @@ describe('KangurLessonDocumentRenderer', () => {
     expect(screen.getByTestId('lesson-svg-frame-svg-1')).toHaveClass(
       'soft-card',
       'border-sky-100',
-      'from-sky-50'
+      'kangur-gradient-accent-soft-sky'
     );
     expect(screen.getByText('Clock practice')).toBeInTheDocument();
     expect(screen.getByText(/live game widget is hidden in editor preview/i)).toBeInTheDocument();
@@ -314,7 +314,7 @@ describe('KangurLessonDocumentRenderer', () => {
       'kangur-card-surface',
       'kangur-media-padding-md',
       'border-amber-100',
-      'from-amber-50'
+      'kangur-gradient-accent-soft-amber'
     );
     expect(screen.getByText('This page has no blocks yet.').parentElement).toHaveClass(
       'soft-card',

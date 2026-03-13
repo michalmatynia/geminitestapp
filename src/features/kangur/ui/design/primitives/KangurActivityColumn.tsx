@@ -5,14 +5,14 @@ import { cn } from '@/shared/utils';
 import { type KangurAccent } from '../tokens';
 
 export const KANGUR_ACTIVITY_COLUMN_CLASSNAMES: Record<KangurAccent, string> = {
-  indigo: 'from-indigo-500 to-purple-400',
-  violet: 'from-violet-500 to-fuchsia-400',
-  emerald: 'from-emerald-500 to-teal-400',
-  sky: 'from-sky-400 to-indigo-300',
-  amber: 'from-amber-400 to-orange-400',
-  rose: 'from-rose-500 to-pink-400',
-  teal: 'from-teal-500 to-cyan-400',
-  slate: 'from-slate-300 to-slate-200',
+  indigo: 'kangur-gradient-accent-indigo',
+  violet: 'kangur-gradient-accent-violet',
+  emerald: 'kangur-gradient-accent-emerald',
+  sky: 'kangur-gradient-accent-sky',
+  amber: 'kangur-gradient-accent-amber',
+  rose: 'kangur-gradient-accent-rose',
+  teal: 'kangur-gradient-accent-teal',
+  slate: 'kangur-gradient-accent-slate',
 };
 
 export type KangurActivityColumnProps = React.HTMLAttributes<HTMLDivElement> & {

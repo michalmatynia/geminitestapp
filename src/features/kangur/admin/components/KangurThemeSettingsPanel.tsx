@@ -19,7 +19,7 @@ import {
 } from '@/features/kangur/theme-settings';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Alert, Button, FormSection, useToast } from '@/shared/ui';
+import { Alert, Button, FormSection, Input, useToast } from '@/shared/ui';
 import type { SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -125,7 +125,56 @@ const KANGUR_THEME_SECTIONS: Array<{
   {
     title: 'Progress Bars',
     subtitle: 'Track colors for progress indicators across Kangur.',
-    fields: [{ key: 'progressTrackColor', label: 'Progress Track', type: 'color' }],
+    fields: [
+      {
+        key: 'progressTrackColor',
+        label: 'Progress Track',
+        type: 'custom',
+        helperText: 'Leave empty to let Kangur pick a track color based on the current mode.',
+        render: ({ value, onChange, disabled }) => {
+          const resolvedValue = typeof value === 'string' ? value : '';
+          const trimmedValue = resolvedValue.trim();
+          const isAuto = trimmedValue.length === 0;
+
+          return (
+            <div className='flex items-center gap-2'>
+              <div
+                className={`size-8 rounded border border-border shrink-0 overflow-hidden ${
+                  isAuto ? 'bg-muted/40' : ''
+                }`}
+                style={isAuto ? undefined : { backgroundColor: trimmedValue }}
+              >
+                <input
+                  type='color'
+                  value={trimmedValue || '#000000'}
+                  onChange={(event) => onChange(event.target.value)}
+                  className='opacity-0 size-full cursor-pointer'
+                  disabled={disabled}
+                  aria-label='Progress track color picker'
+                />
+              </div>
+              <Input
+                value={resolvedValue}
+                onChange={(event) => onChange(event.target.value)}
+                placeholder='Auto'
+                disabled={disabled}
+                className='font-mono'
+                aria-label='Progress track color value'
+              />
+              <Button
+                type='button'
+                size='xs'
+                variant={isAuto ? 'secondary' : 'outline'}
+                onClick={() => onChange('')}
+                disabled={disabled || isAuto}
+              >
+                Auto
+              </Button>
+            </div>
+          );
+        },
+      },
+    ],
   },
   {
     title: 'Inputs',

@@ -70,7 +70,7 @@ function LessonActivityStageTopBar(): React.JSX.Element {
               type='button'
               onClick={secretLessonPill.onOpen}
               aria-label='Otwórz sekretny panel'
-              className='kangur-cta-pill h-[14px] min-w-[40px] cursor-pointer justify-center bg-gradient-to-r from-amber-300 via-yellow-300 to-amber-500 text-[10px] font-black text-amber-950 shadow-sm ring-1 ring-amber-300/90'
+              className='kangur-cta-pill h-[14px] min-w-[40px] cursor-pointer justify-center bg-gradient-to-r kangur-gradient-accent-amber kangur-gradient-with-mid text-[10px] font-black text-amber-950 shadow-sm ring-1 ring-amber-300/90'
               data-testid='lesson-activity-secret-indicator'
               title='Sekretny panel'
             >

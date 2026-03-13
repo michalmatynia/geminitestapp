@@ -32,6 +32,8 @@ import type {
 import type { KangurAiTutorPanelBodyContextValue } from './KangurAiTutorPanelBody.context';
 import type { CSSProperties, JSX, PointerEvent, ReactNode } from 'react';
 
+const KANGUR_AI_TUTOR_PANEL_SURFACE_ID = 'kangur-ai-tutor-panel-surface';
+
 type ReducedMotionTransitions = {
   instant: {
     duration: number;
@@ -369,9 +371,10 @@ export function KangurAiTutorPanelChrome({
                   : 'none'
               }
               data-ui-mode={uiMode}
-              role={isAskModalMode ? 'dialog' : undefined}
+              role={isAskModalMode ? 'dialog' : 'region'}
               aria-modal={isAskModalMode ? 'true' : undefined}
-              aria-label={isAskModalMode ? dialogLabel : undefined}
+              aria-label={dialogLabel}
+              aria-busy={panelBodyContextValue.isLoading ? 'true' : undefined}
               initial={directionalPanelInitialState}
               animate={
                 isAskModalMode
@@ -495,6 +498,7 @@ export function KangurAiTutorPanelChrome({
               ) : null}
 
               <KangurGlassPanel
+                id={KANGUR_AI_TUTOR_PANEL_SURFACE_ID}
                 data-testid={panelSurfaceTestId}
                 surface='warmGlow'
                 variant='soft'

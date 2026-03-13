@@ -681,6 +681,8 @@ export function ProductSyncSettings(): React.JSX.Element {
                 variant='ghost'
                 onClick={(): void => removeRule(rule.id)}
                 disabled={draft.fieldRules.length <= 1}
+                aria-label='Remove synchronization rule'
+                title='Remove synchronization rule'
               >
                 <Trash2 className='size-4' />
               </Button>

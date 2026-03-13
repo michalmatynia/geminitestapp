@@ -229,7 +229,7 @@ export default function SubtractingLesson(): React.JSX.Element {
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-red-400'
         dotDoneClass='bg-red-200'
-        gradientClass='from-red-400 to-pink-400'
+        gradientClass='kangur-gradient-accent-rose'
       />
     );
   }
@@ -238,7 +238,7 @@ export default function SubtractingLesson(): React.JSX.Element {
     <LessonHub
       lessonEmoji='➖'
       lessonTitle='Odejmowanie'
-      gradientClass='from-red-400 to-pink-400'
+      gradientClass='kangur-gradient-accent-rose'
       progressDotClassName='bg-red-200'
       sections={HUB_SECTIONS.map((section) =>
         section.isGame

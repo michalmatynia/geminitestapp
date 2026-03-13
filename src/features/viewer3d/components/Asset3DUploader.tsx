@@ -227,6 +227,8 @@ export function Asset3DUploader({ className }: Asset3DUploaderProps): React.JSX.
               size='icon'
               onClick={() => setFile(null)}
               disabled={isUploading}
+              aria-label='Clear selected file'
+              title='Clear selected file'
             >
               <X className='h-4 w-4' />
             </Button>

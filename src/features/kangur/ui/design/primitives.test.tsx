@@ -63,7 +63,7 @@ describe('Kangur shared primitives', () => {
         </KangurIconBadge>
         <KangurGradientIconTile
           data-testid='kangur-gradient-icon-tile'
-          gradientClass='from-indigo-400 to-fuchsia-500'
+          gradientClass='kangur-gradient-accent-indigo'
           size='lg'
         >
           📚
@@ -76,7 +76,7 @@ describe('Kangur shared primitives', () => {
         </KangurDisplayEmoji>
         <KangurGradientHeading
           data-testid='kangur-gradient-heading'
-          gradientClass='from-indigo-500 to-purple-600'
+          gradientClass='kangur-gradient-accent-indigo'
           size='lg'
         >
           Gradient title
@@ -286,8 +286,7 @@ describe('Kangur shared primitives', () => {
       'h-16',
       'w-16',
       'kangur-gradient-icon-tile-lg',
-      'from-indigo-400',
-      'to-fuchsia-500'
+      'kangur-gradient-accent-indigo'
     );
     expect(screen.getByTestId('kangur-display-emoji')).toHaveClass('inline-flex', 'text-6xl');
     expect(screen.getByTestId('kangur-display-emoji-xs')).toHaveClass('inline-flex', 'text-3xl');
@@ -296,8 +295,7 @@ describe('Kangur shared primitives', () => {
       'bg-clip-text',
       'text-transparent',
       'text-4xl',
-      'from-indigo-500',
-      'to-purple-600'
+      'kangur-gradient-accent-indigo'
     );
     expect(screen.getByTestId('kangur-headline')).toHaveClass('text-2xl', 'text-green-700');
     expect(screen.getByTestId('kangur-headline-xs')).toHaveClass('text-lg', 'text-indigo-700');
@@ -363,8 +361,7 @@ describe('Kangur shared primitives', () => {
     expect(screen.getByTestId('kangur-divider')).toHaveClass('h-px', 'w-12', 'bg-indigo-200');
     expect(screen.getByTestId('kangur-activity-column')).toHaveClass(
       'bg-gradient-to-t',
-      'from-indigo-500',
-      'to-purple-400'
+      'kangur-gradient-accent-indigo'
     );
     expect(screen.getByTestId('kangur-activity-column')).toHaveAttribute('data-active', 'true');
     expect(screen.getByTestId('kangur-activity-column')).toHaveStyle({ height: '72%' });
@@ -508,7 +505,7 @@ describe('Kangur shared primitives', () => {
       'kangur-card-surface',
       'kangur-media-padding-md',
       'border-amber-100',
-      'from-amber-50'
+      'kangur-gradient-accent-soft-amber'
     );
     expect(screen.getByTestId('kangur-result-badge')).toHaveClass(
       'border-emerald-200',
@@ -535,9 +532,7 @@ describe('Kangur shared primitives', () => {
     );
     expect(screen.getByTestId('kangur-progress')).toHaveAttribute('aria-valuenow', '65');
     expect(screen.getByTestId('kangur-progress').firstElementChild).toHaveClass(
-      'bg-gradient-to-r',
-      'from-red-400',
-      'to-pink-400'
+      'bg-gradient-to-r'
     );
     expect(screen.getByTestId('kangur-progress').firstElementChild).toHaveAttribute(
       'data-kangur-accent',

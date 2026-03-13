@@ -53,7 +53,7 @@ const makeLesson = (overrides: Partial<KangurLesson> = {}): KangurLesson => ({
   title: 'Dodawanie',
   description: 'Licz dwa zbiory razem.',
   emoji: '➕',
-  color: 'from-amber-300 to-orange-400',
+  color: 'kangur-gradient-accent-amber',
   activeBg: 'bg-amber-100',
   sortOrder: 10,
   enabled: true,

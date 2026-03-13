@@ -236,7 +236,7 @@ export default function AddingLesson(): React.JSX.Element {
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-orange-400'
         dotDoneClass='bg-orange-200'
-        gradientClass='from-orange-400 to-yellow-400'
+        gradientClass='kangur-gradient-accent-amber'
       />
     );
   }
@@ -245,7 +245,7 @@ export default function AddingLesson(): React.JSX.Element {
     <LessonHub
       lessonEmoji='➕'
       lessonTitle='Dodawanie'
-      gradientClass='from-orange-400 to-yellow-400'
+      gradientClass='kangur-gradient-accent-amber'
       progressDotClassName='bg-orange-200'
       sections={HUB_SECTIONS.map((section) =>
         section.isGame

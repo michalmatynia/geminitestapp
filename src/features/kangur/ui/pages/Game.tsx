@@ -430,11 +430,7 @@ function GameContent(): React.JSX.Element {
         <KangurPageContainer
           id={GAME_MAIN_ID}
           aria-labelledby={`${GAME_TITLE_ID} ${GAME_SCREEN_TITLE_ID}`}
-          className={`flex flex-col items-center gap-8 sm:gap-10${
-            screen === 'home'
-              ? ' [--kangur-page-padding-top:12px] sm:[--kangur-page-padding-top:20px]'
-              : ''
-          }`}
+          className='flex flex-col items-center gap-8 pt-3 sm:gap-10'
         >
           <h1 id={GAME_TITLE_ID} className='sr-only'>
             {GAME_BRAND_NAME}

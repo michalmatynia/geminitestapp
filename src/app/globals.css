@@ -1992,6 +1992,218 @@
     );
   }
 
+  .home-action-featured-shell[data-home-action='lessons'] {
+    --home-action-rest-text-color: var(--kangur-home-action-lessons-text, #314380);
+    --home-action-active-text-color: var(--kangur-home-action-lessons-text-active, #ffffff);
+    --home-action-accent-shadow-rgb: var(--kangur-home-action-lessons-accent-shadow-rgb, 118, 131, 255);
+    --home-action-underlay-shadow-rgb: var(--kangur-home-action-lessons-underlay-shadow-rgb, 106, 120, 232);
+    --home-action-surface-shadow-rgb: var(--kangur-home-action-lessons-surface-shadow-rgb, 108, 118, 214);
+    --home-action-accent-gradient: linear-gradient(
+      90deg,
+      var(--kangur-home-action-lessons-accent-start, #7387ff) 0%,
+      var(--kangur-home-action-lessons-accent-mid, #92a1ff) 44%,
+      var(--kangur-home-action-lessons-accent-end, #c6a9ff) 100%
+    );
+    --home-action-underlay-fill-gradient: linear-gradient(
+      180deg,
+      var(--kangur-home-action-lessons-underlay-start, rgba(210, 218, 255, 0.42)) 0%,
+      var(--kangur-home-action-lessons-underlay-mid, rgba(202, 212, 255, 0.34)) 46%,
+      var(--kangur-home-action-lessons-underlay-end, rgba(220, 208, 255, 0.44)) 100%
+    );
+    --home-action-underlay-tint-gradient: linear-gradient(
+      180deg,
+      var(--kangur-home-action-lessons-underlay-tint-start, rgba(108, 122, 232, 0.22)) 0%,
+      var(--kangur-home-action-lessons-underlay-tint-mid, rgba(118, 131, 240, 0.46)) 52%,
+      var(--kangur-home-action-lessons-underlay-tint-end, rgba(170, 128, 255, 0.68)) 100%
+    );
+  }
+
+  .home-action-featured-shell[data-home-action='play'] {
+    --home-action-rest-text-color: var(--kangur-home-action-play-text, #33407d);
+    --home-action-active-text-color: var(--kangur-home-action-play-text-active, #ffffff);
+    --home-action-accent-shadow-rgb: var(--kangur-home-action-play-accent-shadow-rgb, 126, 100, 255);
+    --home-action-underlay-shadow-rgb: var(--kangur-home-action-play-underlay-shadow-rgb, 117, 96, 255);
+    --home-action-surface-shadow-rgb: var(--kangur-home-action-play-surface-shadow-rgb, 116, 104, 203);
+    --home-action-accent-gradient: linear-gradient(
+      90deg,
+      var(--kangur-home-action-play-accent-start, #6e79ff) 0%,
+      var(--kangur-home-action-play-accent-mid, #8c7cff) 44%,
+      var(--kangur-home-action-play-accent-end, #d48bff) 100%
+    );
+    --home-action-underlay-fill-gradient: linear-gradient(
+      180deg,
+      var(--kangur-home-action-play-underlay-start, rgba(204, 197, 255, 0.38)) 0%,
+      var(--kangur-home-action-play-underlay-mid, rgba(193, 201, 255, 0.3)) 46%,
+      var(--kangur-home-action-play-underlay-end, rgba(213, 196, 255, 0.42)) 100%
+    );
+    --home-action-underlay-tint-gradient: linear-gradient(
+      180deg,
+      var(--kangur-home-action-play-underlay-tint-start, rgba(111, 89, 231, 0.22)) 0%,
+      var(--kangur-home-action-play-underlay-tint-mid, rgba(116, 90, 237, 0.48)) 52%,
+      var(--kangur-home-action-play-underlay-tint-end, rgba(170, 108, 255, 0.72)) 100%
+    );
+  }
+
+  .home-action-featured-shell[data-home-action='training'] {
+    --home-action-rest-text-color: var(--kangur-home-action-training-text, #205184);
+    --home-action-active-text-color: var(--kangur-home-action-training-text-active, #ffffff);
+    --home-action-accent-shadow-rgb: var(--kangur-home-action-training-accent-shadow-rgb, 87, 162, 255);
+    --home-action-underlay-shadow-rgb: var(--kangur-home-action-training-underlay-shadow-rgb, 78, 145, 236);
+    --home-action-surface-shadow-rgb: var(--kangur-home-action-training-surface-shadow-rgb, 84, 140, 205);
+    --home-action-accent-gradient: linear-gradient(
+      90deg,
+      var(--kangur-home-action-training-accent-start, #59a9ff) 0%,
+      var(--kangur-home-action-training-accent-mid, #67c7ff) 48%,
+      var(--kangur-home-action-training-accent-end, #96dcff) 100%
+    );
+    --home-action-underlay-fill-gradient: linear-gradient(
+      180deg,
+      var(--kangur-home-action-training-underlay-start, rgba(196, 232, 255, 0.42)) 0%,
+      var(--kangur-home-action-training-underlay-mid, rgba(192, 222, 255, 0.34)) 46%,
+      var(--kangur-home-action-training-underlay-end, rgba(202, 216, 255, 0.42)) 100%
+    );
+    --home-action-underlay-tint-gradient: linear-gradient(
+      180deg,
+      var(--kangur-home-action-training-underlay-tint-start, rgba(78, 146, 236, 0.22)) 0%,
+      var(--kangur-home-action-training-underlay-tint-mid, rgba(72, 173, 247, 0.44)) 50%,
+      var(--kangur-home-action-training-underlay-tint-end, rgba(109, 209, 255, 0.66)) 100%
+    );
+  }
+
+  .home-action-featured-shell[data-home-action='kangur'] {
+    --home-action-rest-text-color: var(--kangur-home-action-kangur-text, #7c4d20);
+    --home-action-active-text-color: var(--kangur-home-action-kangur-text-active, #ffffff);
+    --home-action-accent-shadow-rgb: var(--kangur-home-action-kangur-accent-shadow-rgb, 238, 140, 91);
+    --home-action-underlay-shadow-rgb: var(--kangur-home-action-kangur-underlay-shadow-rgb, 221, 129, 86);
+    --home-action-surface-shadow-rgb: var(--kangur-home-action-kangur-surface-shadow-rgb, 194, 132, 132);
+    --home-action-accent-gradient: linear-gradient(
+      90deg,
+      var(--kangur-home-action-kangur-accent-start, #ffb368) 0%,
+      var(--kangur-home-action-kangur-accent-mid, #ff9b81) 48%,
+      var(--kangur-home-action-kangur-accent-end, #d8a0ff) 100%
+    );
+    --home-action-underlay-fill-gradient: linear-gradient(
+      180deg,
+      var(--kangur-home-action-kangur-underlay-start, rgba(255, 226, 198, 0.42)) 0%,
+      var(--kangur-home-action-kangur-underlay-mid, rgba(255, 214, 196, 0.34)) 46%,
+      var(--kangur-home-action-kangur-underlay-end, rgba(241, 210, 255, 0.42)) 100%
+    );
+    --home-action-underlay-tint-gradient: linear-gradient(
+      180deg,
+      var(--kangur-home-action-kangur-underlay-tint-start, rgba(230, 134, 84, 0.2)) 0%,
+      var(--kangur-home-action-kangur-underlay-tint-mid, rgba(241, 148, 96, 0.42)) 52%,
+      var(--kangur-home-action-kangur-underlay-tint-end, rgba(194, 131, 255, 0.64)) 100%
+    );
+  }
+
+  :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset'])
+    .home-action-featured-shell[data-home-action='lessons'] {
+    --home-action-rest-text-color: var(--kangur-home-action-lessons-text, #dbe7ff);
+    --home-action-active-text-color: var(--kangur-home-action-lessons-text-active, #f8fafc);
+    --home-action-accent-shadow-rgb: var(--kangur-home-action-lessons-accent-shadow-rgb, 90, 110, 224);
+    --home-action-underlay-shadow-rgb: var(--kangur-home-action-lessons-underlay-shadow-rgb, 56, 74, 168);
+    --home-action-surface-shadow-rgb: var(--kangur-home-action-lessons-surface-shadow-rgb, 36, 50, 116);
+    --home-action-accent-gradient: linear-gradient(
+      90deg,
+      var(--kangur-home-action-lessons-accent-start, #4f62db) 0%,
+      var(--kangur-home-action-lessons-accent-mid, #5d67d3) 44%,
+      var(--kangur-home-action-lessons-accent-end, #7f5ad5) 100%
+    );
+    --home-action-underlay-fill-gradient: linear-gradient(
+      180deg,
+      var(--kangur-home-action-lessons-underlay-start, rgba(70, 84, 150, 0.44)) 0%,
+      var(--kangur-home-action-lessons-underlay-mid, rgba(52, 64, 122, 0.4)) 46%,
+      var(--kangur-home-action-lessons-underlay-end, rgba(75, 57, 133, 0.48)) 100%
+    );
+    --home-action-underlay-tint-gradient: linear-gradient(
+      180deg,
+      var(--kangur-home-action-lessons-underlay-tint-start, rgba(47, 67, 163, 0.26)) 0%,
+      var(--kangur-home-action-lessons-underlay-tint-mid, rgba(61, 79, 188, 0.48)) 52%,
+      var(--kangur-home-action-lessons-underlay-tint-end, rgba(104, 73, 186, 0.62)) 100%
+    );
+  }
+
+  :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset'])
+    .home-action-featured-shell[data-home-action='play'] {
+    --home-action-rest-text-color: var(--kangur-home-action-play-text, #efe9ff);
+    --home-action-active-text-color: var(--kangur-home-action-play-text-active, #f8fafc);
+    --home-action-accent-shadow-rgb: var(--kangur-home-action-play-accent-shadow-rgb, 120, 92, 228);
+    --home-action-underlay-shadow-rgb: var(--kangur-home-action-play-underlay-shadow-rgb, 88, 66, 176);
+    --home-action-surface-shadow-rgb: var(--kangur-home-action-play-surface-shadow-rgb, 60, 42, 128);
+    --home-action-accent-gradient: linear-gradient(
+      90deg,
+      var(--kangur-home-action-play-accent-start, #5f54d8) 0%,
+      var(--kangur-home-action-play-accent-mid, #735add) 44%,
+      var(--kangur-home-action-play-accent-end, #9a5be2) 100%
+    );
+    --home-action-underlay-fill-gradient: linear-gradient(
+      180deg,
+      var(--kangur-home-action-play-underlay-start, rgba(86, 72, 152, 0.44)) 0%,
+      var(--kangur-home-action-play-underlay-mid, rgba(68, 56, 124, 0.4)) 46%,
+      var(--kangur-home-action-play-underlay-end, rgba(92, 63, 150, 0.5)) 100%
+    );
+    --home-action-underlay-tint-gradient: linear-gradient(
+      180deg,
+      var(--kangur-home-action-play-underlay-tint-start, rgba(83, 63, 172, 0.28)) 0%,
+      var(--kangur-home-action-play-underlay-tint-mid, rgba(103, 71, 196, 0.5)) 52%,
+      var(--kangur-home-action-play-underlay-tint-end, rgba(146, 84, 214, 0.64)) 100%
+    );
+  }
+
+  :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset'])
+    .home-action-featured-shell[data-home-action='training'] {
+    --home-action-rest-text-color: var(--kangur-home-action-training-text, #d8f2ff);
+    --home-action-active-text-color: var(--kangur-home-action-training-text-active, #f8fafc);
+    --home-action-accent-shadow-rgb: var(--kangur-home-action-training-accent-shadow-rgb, 74, 146, 214);
+    --home-action-underlay-shadow-rgb: var(--kangur-home-action-training-underlay-shadow-rgb, 45, 104, 166);
+    --home-action-surface-shadow-rgb: var(--kangur-home-action-training-surface-shadow-rgb, 27, 69, 120);
+    --home-action-accent-gradient: linear-gradient(
+      90deg,
+      var(--kangur-home-action-training-accent-start, #2f88d8) 0%,
+      var(--kangur-home-action-training-accent-mid, #3ea1da) 48%,
+      var(--kangur-home-action-training-accent-end, #58b8df) 100%
+    );
+    --home-action-underlay-fill-gradient: linear-gradient(
+      180deg,
+      var(--kangur-home-action-training-underlay-start, rgba(50, 101, 145, 0.42)) 0%,
+      var(--kangur-home-action-training-underlay-mid, rgba(39, 82, 128, 0.4)) 46%,
+      var(--kangur-home-action-training-underlay-end, rgba(46, 91, 144, 0.48)) 100%
+    );
+    --home-action-underlay-tint-gradient: linear-gradient(
+      180deg,
+      var(--kangur-home-action-training-underlay-tint-start, rgba(39, 104, 178, 0.26)) 0%,
+      var(--kangur-home-action-training-underlay-tint-mid, rgba(42, 126, 188, 0.48)) 50%,
+      var(--kangur-home-action-training-underlay-tint-end, rgba(61, 164, 209, 0.58)) 100%
+    );
+  }
+
+  :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset'])
+    .home-action-featured-shell[data-home-action='kangur'] {
+    --home-action-rest-text-color: var(--kangur-home-action-kangur-text, #ffedd5);
+    --home-action-active-text-color: var(--kangur-home-action-kangur-text-active, #f8fafc);
+    --home-action-accent-shadow-rgb: var(--kangur-home-action-kangur-accent-shadow-rgb, 196, 106, 48);
+    --home-action-underlay-shadow-rgb: var(--kangur-home-action-kangur-underlay-shadow-rgb, 144, 78, 34);
+    --home-action-surface-shadow-rgb: var(--kangur-home-action-kangur-surface-shadow-rgb, 96, 54, 28);
+    --home-action-accent-gradient: linear-gradient(
+      90deg,
+      var(--kangur-home-action-kangur-accent-start, #c96f36) 0%,
+      var(--kangur-home-action-kangur-accent-mid, #d17b49) 48%,
+      var(--kangur-home-action-kangur-accent-end, #a865c5) 100%
+    );
+    --home-action-underlay-fill-gradient: linear-gradient(
+      180deg,
+      var(--kangur-home-action-kangur-underlay-start, rgba(122, 74, 46, 0.44)) 0%,
+      var(--kangur-home-action-kangur-underlay-mid, rgba(99, 60, 37, 0.4)) 46%,
+      var(--kangur-home-action-kangur-underlay-end, rgba(92, 56, 94, 0.46)) 100%
+    );
+    --home-action-underlay-tint-gradient: linear-gradient(
+      180deg,
+      var(--kangur-home-action-kangur-underlay-tint-start, rgba(155, 86, 42, 0.24)) 0%,
+      var(--kangur-home-action-kangur-underlay-tint-mid, rgba(176, 92, 48, 0.44)) 52%,
+      var(--kangur-home-action-kangur-underlay-tint-end, rgba(131, 79, 178, 0.56)) 100%
+    );
+  }
+
   .home-action-featured-accent {
     position: absolute;
     inset: 0;

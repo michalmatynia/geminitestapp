@@ -306,6 +306,7 @@ export function useKangurAiTutorWidgetState() {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const tutorNarrationRootRef = useRef<HTMLDivElement | null>(null);
+  const guestIntroNarrationRootRef = useRef<HTMLDivElement | null>(null);
   const persistedSessionKey = useMemo(() => loadPersistedTutorSessionKey(), []);
   const previousSessionKeyRef = useRef<string | null>(persistedSessionKey);
   const lastTrackedFocusKeyRef = useRef<string | null>(null);
@@ -331,6 +332,7 @@ export function useKangurAiTutorWidgetState() {
     askModalVisible,
     canonicalTutorModalVisible,
     contextSwitchNotice,
+    guestIntroNarrationRootRef,
     hasNewMessage,
     isTutorHidden,
     lastTrackedFocusKeyRef,

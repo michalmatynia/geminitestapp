@@ -45,7 +45,7 @@ const baseInput: PanelDerivedInput = {
 };
 
 describe('useKangurAiTutorPanelDerivedState', () => {
-  it('limits ask-modal narration to the input field text', () => {
+  it('includes modal content plus input text for ask-modal narration', () => {
     const inputValue = 'Ile to 2 + 2?';
     const observedText = 'Pomoc w zadaniu';
 
@@ -63,6 +63,6 @@ describe('useKangurAiTutorPanelDerivedState', () => {
       .join('\n');
 
     expect(narrationText).toContain(inputValue);
-    expect(narrationText).not.toContain(observedText);
+    expect(narrationText).toContain(observedText);
   });
 });

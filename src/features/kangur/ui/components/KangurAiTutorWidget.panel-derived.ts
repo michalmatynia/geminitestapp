@@ -99,7 +99,7 @@ export function useKangurAiTutorPanelDerivedState({
   viewportWidth,
   visibleProactiveNudge,
 }: UseKangurAiTutorPanelDerivedStateInput) {
-  const shouldEnableTutorNarration = isOpen && !isGuidedTutorMode && !shouldRenderGuestIntroUi;
+  const shouldEnableTutorNarration = (isOpen || shouldRenderGuestIntroUi) && !isGuidedTutorMode;
   const panelEmptyStateMessage = isSelectionExplainPendingMode
     ? tutorContent.emptyStates.selectionPending
     : isSectionExplainPendingMode
@@ -244,11 +244,12 @@ export function useKangurAiTutorPanelDerivedState({
 
   const trimmedInputValue = inputValue.trim();
   const shouldNarrateModalOnly = isAskModalMode || shouldRenderGuestIntroUi;
+  const observedNarrationText = tutorNarrationObservedText.trim();
+  const fallbackNarrationText = tutorNarrationFallbackText.trim();
+  const modalNarrationSeed = observedNarrationText || fallbackNarrationText;
   const baseNarrationText = shouldNarrateModalOnly
-    ? trimmedInputValue
-    : tutorNarrationObservedText.trim().length > 0
-      ? tutorNarrationObservedText
-      : tutorNarrationFallbackText;
+    ? [modalNarrationSeed, trimmedInputValue].filter(Boolean).join('\n\n')
+    : observedNarrationText || fallbackNarrationText;
   const tutorNarrationText = baseNarrationText;
 
   const tutorNarrationScript = useMemo(

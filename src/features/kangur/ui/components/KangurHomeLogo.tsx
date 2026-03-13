@@ -36,9 +36,9 @@ export function KangurHomeLogo({
           y1='52'
           y2='200'
         >
-          <stop offset='0' stopColor='#4457D7' />
-          <stop offset='0.55' stopColor='#5566F2' />
-          <stop offset='1' stopColor='#7C52FF' />
+          <stop offset='0' stopColor='var(--kangur-logo-word-start, #4457D7)' />
+          <stop offset='0.55' stopColor='var(--kangur-logo-word-mid, #5566F2)' />
+          <stop offset='1' stopColor='var(--kangur-logo-word-end, #7C52FF)' />
         </linearGradient>
         <linearGradient
           id={ringGradId}
@@ -48,8 +48,8 @@ export function KangurHomeLogo({
           y1='58'
           y2='182'
         >
-          <stop offset='0' stopColor='#4F63F8' />
-          <stop offset='1' stopColor='#8A5DFF' />
+          <stop offset='0' stopColor='var(--kangur-logo-ring-start, #4F63F8)' />
+          <stop offset='1' stopColor='var(--kangur-logo-ring-end, #8A5DFF)' />
         </linearGradient>
         <linearGradient
           id={amberId}
@@ -59,8 +59,8 @@ export function KangurHomeLogo({
           y1='78'
           y2='142'
         >
-          <stop offset='0' stopColor='#FFD560' />
-          <stop offset='1' stopColor='#FF9A35' />
+          <stop offset='0' stopColor='var(--kangur-logo-accent-start, #FFD560)' />
+          <stop offset='1' stopColor='var(--kangur-logo-accent-end, #FF9A35)' />
         </linearGradient>
         <linearGradient
           id={innerId}
@@ -70,14 +70,14 @@ export function KangurHomeLogo({
           y1='96'
           y2='142'
         >
-          <stop offset='0' stopColor='#FFFFFF' />
-          <stop offset='1' stopColor='#E6EEFF' />
+          <stop offset='0' stopColor='var(--kangur-logo-inner-start, #FFFFFF)' />
+          <stop offset='1' stopColor='var(--kangur-logo-inner-end, #E6EEFF)' />
         </linearGradient>
         <filter height='180%' id={shadowId} width='120%' x='-10%' y='-30%'>
           <feDropShadow
             dx='0'
             dy='6'
-            floodColor='#B4B7DA'
+            floodColor='var(--kangur-logo-shadow, #B4B7DA)'
             floodOpacity='0.20'
             stdDeviation='8'
           />
@@ -104,7 +104,7 @@ export function KangurHomeLogo({
           strokeWidth='14'
         />
         <circle cx='696' cy='74' fill={`url(#${amberId})`} r='11' />
-        <circle cx='696' cy='74' fill='#FFF6C6' r='4.5' />
+        <circle cx='696' cy='74' fill='var(--kangur-logo-glint, #FFF6C6)' r='4.5' />
       </g>
     </svg>
   );

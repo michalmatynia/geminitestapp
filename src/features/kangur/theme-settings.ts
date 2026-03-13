@@ -399,6 +399,151 @@ export const KANGUR_DAILY_BLOOM_THEME: ThemeSettings = normalizeThemeSettings({
   badgeSoldOutText: '#7b7680',
 });
 
+/** Kangur Logo Glow theme — logo-aligned indigo + amber daylight palette (2026-03-13). */
+export const KANGUR_LOGO_GLOW_THEME: ThemeSettings = normalizeThemeSettings({
+  ...KANGUR_DAILY_THEME,
+  themePreset: 'kangur-logo-glow',
+  primaryColor: '#4f63f8',
+  secondaryColor: '#8a5dff',
+  accentColor: '#ffb35c',
+  backgroundColor: '#f4f6ff',
+  surfaceColor: '#ffffff',
+  textColor: '#2a2f45',
+  mutedTextColor: '#667089',
+  borderColor: '#e1e6f4',
+  errorColor: '#f06b7a',
+  successColor: '#33bfa5',
+  gradientIndigoStart: '#4f63f8',
+  gradientIndigoEnd: '#7c52ff',
+  gradientVioletStart: '#5f54d8',
+  gradientVioletEnd: '#9a5be2',
+  gradientEmeraldStart: '#22cba0',
+  gradientEmeraldEnd: '#62e7c9',
+  gradientSkyStart: '#5aa9ff',
+  gradientSkyEnd: '#8fd6ff',
+  gradientAmberStart: '#ff9a35',
+  gradientAmberEnd: '#ffd560',
+  gradientRoseStart: '#fb7185',
+  gradientRoseEnd: '#f9a8d4',
+  gradientTealStart: '#2dd4bf',
+  gradientTealEnd: '#5eead4',
+  gradientSlateStart: '#9aa6c3',
+  gradientSlateEnd: '#5a6480',
+  colorSchemes: [
+    {
+      id: 'kangur-logo-indigo',
+      name: 'Logo Indigo',
+      colors: {
+        background: '#f4f6ff',
+        surface: '#ffffff',
+        text: '#2a2f45',
+        accent: '#4f63f8',
+        border: '#e1e6f4',
+      },
+    },
+    {
+      id: 'kangur-logo-violet',
+      name: 'Logo Violet',
+      colors: {
+        background: '#f6f1ff',
+        surface: '#ffffff',
+        text: '#2a2f45',
+        accent: '#8a5dff',
+        border: '#e7ddfb',
+      },
+    },
+    {
+      id: 'kangur-logo-amber',
+      name: 'Logo Amber',
+      colors: {
+        background: '#fff6ed',
+        surface: '#ffffff',
+        text: '#2a2f45',
+        accent: '#ffb35c',
+        border: '#f2e1d2',
+      },
+    },
+    {
+      id: 'kangur-logo-sky',
+      name: 'Logo Sky',
+      colors: {
+        background: '#eef6ff',
+        surface: '#ffffff',
+        text: '#2a2f45',
+        accent: '#5aa9ff',
+        border: '#d9e6f6',
+      },
+    },
+  ],
+  activeColorSchemeId: 'kangur-logo-indigo',
+  headingFont: '\'Space Grotesk\', sans-serif',
+  bodyFont: '\'DM Sans\', sans-serif',
+  headingSizeScale: 1.06,
+  lineHeight: 1.62,
+  headingLineHeight: 1.18,
+  borderRadius: 26,
+  btnPrimaryBg: 'linear-gradient(135deg, #4f63f8 0%, #7c52ff 52%, #ffb35c 100%)',
+  btnPrimaryText: '#ffffff',
+  btnSecondaryBg: 'rgba(255, 255, 255, 0.92)',
+  btnSecondaryText: '#2f3451',
+  btnOutlineBorder: '#d9dff2',
+  btnBorderOpacity: 70,
+  btnShadowOpacity: 0.14,
+  btnShadowY: 10,
+  btnShadowBlur: 28,
+  pillBg: 'rgba(255, 255, 255, 0.78)',
+  pillText: '#5b637e',
+  pillActiveBg: '#e7e9ff',
+  pillActiveText: '#4f63f8',
+  pillBorderColor: '#dfe4f3',
+  pillBorderOpacity: 70,
+  pillShadowOpacity: 0.1,
+  inputBorderColor: '#dfe4f3',
+  inputBg: '#ffffff',
+  inputText: '#2f3451',
+  inputFocusBorder: '#9aa6ff',
+  inputPlaceholder: '#8a92ad',
+  inputShadowOpacity: 0.08,
+  inputShadowY: 10,
+  inputShadowBlur: 26,
+  cardColorScheme: 'kangur-logo-indigo',
+  cardBg: '#ffffff',
+  cardBorderOpacity: 70,
+  cardShadowOpacity: 0.14,
+  collectionColorScheme: 'kangur-logo-indigo',
+  collectionOverlayColor: 'rgba(255, 255, 255, 0.72)',
+  blogColorScheme: 'kangur-logo-indigo',
+  containerBg: '#ffffff',
+  containerBorderColor: '#edf0fb',
+  panelGradientStart: 'rgba(255, 255, 255, 0.98)',
+  panelGradientEnd: 'rgba(242, 244, 255, 0.92)',
+  panelTransparency: 0.95,
+  navGradientStart: 'rgba(255, 255, 255, 0.96)',
+  navGradientEnd: 'rgba(238, 241, 255, 0.9)',
+  navTransparency: 0.94,
+  containerShadowOpacity: 0.14,
+  imageBorderColor: '#e3e7f6',
+  imagePlaceholderBg: '#f1f4ff',
+  dropdownBg: '#ffffff',
+  dropdownBorder: '#e1e6f4',
+  dropdownShadowOpacity: 0.14,
+  dropdownShadowY: 12,
+  dropdownShadowBlur: 30,
+  popupOverlayColor: 'rgba(42, 49, 88, 0.14)',
+  drawerBg: '#f9faff',
+  drawerOverlayColor: 'rgba(42, 49, 88, 0.16)',
+  drawerBorderColor: '#e3e7f6',
+  drawerShadowOpacity: 0.16,
+  badgeDefaultBg: '#edf0ff',
+  badgeDefaultText: '#4b5676',
+  badgeSaleColorScheme: 'kangur-logo-amber',
+  badgeSaleBg: '#ffd7b3',
+  badgeSaleText: '#8a4b2b',
+  badgeSoldOutColorScheme: 'kangur-logo-indigo',
+  badgeSoldOutBg: '#f2f4ff',
+  badgeSoldOutText: '#6c7390',
+});
+
 /** Kangur Dawn theme — dawn-inspired palette based on the Daily Bloom theme (2026-03-13). */
 export const KANGUR_DAWN_THEME: ThemeSettings = {
   ...KANGUR_DAILY_BLOOM_THEME,
@@ -886,18 +1031,38 @@ export const resolveKangurThemeSettingsRawForMode = ({
   const resolveThemeRaw = (raw: string | null | undefined): string | null =>
     typeof raw === 'string' && raw.trim().length > 0 ? raw : null;
   const legacyFallback = resolveThemeRaw(legacyThemeRaw);
+  const dailyRaw = resolveThemeRaw(dailyThemeRaw);
+  const dawnRaw = resolveThemeRaw(dawnThemeRaw);
+  const sunsetRaw = resolveThemeRaw(sunsetThemeRaw);
+  const nightlyRaw = resolveThemeRaw(nightlyThemeRaw);
 
   if (mode === 'dawn') {
-    return resolveThemeRaw(dawnThemeRaw) ?? resolveThemeRaw(dailyThemeRaw) ?? legacyFallback;
+    return dawnRaw;
   }
   if (mode === 'sunset') {
-    return resolveThemeRaw(sunsetThemeRaw) ?? resolveThemeRaw(nightlyThemeRaw) ?? legacyFallback;
+    return sunsetRaw;
   }
   if (mode === 'dark') {
-    return resolveThemeRaw(nightlyThemeRaw) ?? legacyFallback;
+    return nightlyRaw ?? legacyFallback;
   }
 
-  return resolveThemeRaw(dailyThemeRaw) ?? legacyFallback;
+  return dailyRaw ?? legacyFallback;
+};
+
+export const resolveKangurDefaultThemeForMode = (
+  mode: 'default' | 'dawn' | 'sunset' | 'dark'
+): ThemeSettings => {
+  switch (mode) {
+    case 'dawn':
+      return KANGUR_DEFAULT_DAWN_THEME;
+    case 'sunset':
+      return KANGUR_DEFAULT_SUNSET_THEME;
+    case 'dark':
+      return KANGUR_DEFAULT_THEME;
+    case 'default':
+    default:
+      return KANGUR_DEFAULT_DAILY_THEME;
+  }
 };
 
 // ─── Theme Catalog ───────────────────────────────────────────────────────────

@@ -73,7 +73,7 @@ export function KangurAppLoader({ visible }: KangurAppLoaderProps): React.JSX.El
               className='absolute -right-2 -top-2 h-14 w-14 rounded-full blur-md'
               style={{
                 background:
-                  'radial-gradient(circle, rgba(255,213,96,0.82) 0%, rgba(255,154,53,0.18) 54%, transparent 76%)',
+                  'radial-gradient(circle, color-mix(in srgb, var(--kangur-logo-accent-start, #FFD560) 82%, transparent) 0%, color-mix(in srgb, var(--kangur-logo-accent-end, #FF9A35) 22%, transparent) 54%, transparent 76%)',
               }}
             />
             <div

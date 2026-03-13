@@ -11,7 +11,7 @@ import { useCompositeFieldContext } from '../CompositeFieldContext';
 import { BG_TYPE_OPTIONS, GRADIENT_DIRECTION_OPTIONS } from '../settings-field-constants';
 
 export function BackgroundField(): React.ReactNode {
-  const { value, onChange, buildAriaLabel } = useCompositeFieldContext();
+  const { value, onChange, buildAriaLabel, buildControlId } = useCompositeFieldContext();
   const bg: Record<string, unknown> = isObjectRecord(value) ? value : { type: 'none' };
   const bgType = typeof bg['type'] === 'string' ? bg['type'] : 'none';
   const update = (key: string, v: unknown): void => {
@@ -31,9 +31,22 @@ export function BackgroundField(): React.ReactNode {
   const fromOpacity =
     typeof bg['gradientFromOpacity'] === 'number' ? bg['gradientFromOpacity'] : 100;
   const toOpacity = typeof bg['gradientToOpacity'] === 'number' ? bg['gradientToOpacity'] : 100;
+  const typeId = buildControlId('type');
+  const solidColorId = buildControlId('solid-color');
+  const gradientDirectionId = buildControlId('gradient-direction');
+  const gradientFromPickerId = buildControlId('gradient-from-picker');
+  const gradientFromValueId = buildControlId('gradient-from-value');
+  const gradientFromOpacityId = buildControlId('gradient-from-opacity');
+  const gradientToPickerId = buildControlId('gradient-to-picker');
+  const gradientToValueId = buildControlId('gradient-to-value');
+  const gradientToOpacityId = buildControlId('gradient-to-opacity');
+  const gradientAngleId = buildControlId('gradient-angle');
 
   return (
     <div className='space-y-2'>
+      <label className='sr-only' htmlFor={typeId}>
+        Background type
+      </label>
       <SelectSimple
         size='sm'
         value={bgType}
@@ -41,6 +54,7 @@ export function BackgroundField(): React.ReactNode {
         options={BG_TYPE_OPTIONS}
         triggerClassName='text-xs h-7'
         ariaLabel={buildAriaLabel('type')}
+        id={typeId}
       />
 
       {bgType === 'none' && (
@@ -53,6 +67,7 @@ export function BackgroundField(): React.ReactNode {
         <div className='flex items-center gap-2'>
           <input
             type='color'
+            id={`${solidColorId}-picker`}
             value={(bg['color'] as string) ?? '#000000'}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
               update('color', e.target.value)
@@ -61,6 +76,7 @@ export function BackgroundField(): React.ReactNode {
             aria-label={buildAriaLabel('solid color picker')}
           />
           <Input
+            id={solidColorId}
             value={(bg['color'] as string) ?? '#000000'}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
               update('color', e.target.value)
@@ -75,7 +91,9 @@ export function BackgroundField(): React.ReactNode {
       {bgType === 'gradient' && (
         <div className='space-y-1.5'>
           <div className='flex items-center gap-2'>
-            <span className='text-[10px] text-gray-500 w-10'>Dir</span>
+            <label className='text-[10px] text-gray-500 w-10' htmlFor={gradientDirectionId}>
+              Dir
+            </label>
             <SelectSimple
               size='sm'
               value={currentDirectionValue}
@@ -87,12 +105,14 @@ export function BackgroundField(): React.ReactNode {
               className='flex-1'
               triggerClassName='text-xs h-7'
               ariaLabel={buildAriaLabel('gradient direction')}
+              id={gradientDirectionId}
             />
           </div>
           <div className='flex items-center gap-2'>
             <span className='text-[10px] text-gray-500 w-10'>From</span>
             <input
               type='color'
+              id={gradientFromPickerId}
               value={(bg['gradientFrom'] as string) ?? '#000000'}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                 update('gradientFrom', e.target.value)
@@ -101,6 +121,7 @@ export function BackgroundField(): React.ReactNode {
               aria-label={buildAriaLabel('gradient from color picker')}
             />
             <Input
+              id={gradientFromValueId}
               value={(bg['gradientFrom'] as string) ?? '#000000'}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                 update('gradientFrom', e.target.value)
@@ -110,6 +131,7 @@ export function BackgroundField(): React.ReactNode {
               aria-label={buildAriaLabel('gradient from color value')}
             />
             <Input
+              id={gradientFromOpacityId}
               type='number'
               value={fromOpacity}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
@@ -126,6 +148,7 @@ export function BackgroundField(): React.ReactNode {
             <span className='text-[10px] text-gray-500 w-10'>To</span>
             <input
               type='color'
+              id={gradientToPickerId}
               value={(bg['gradientTo'] as string) ?? '#ffffff'}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                 update('gradientTo', e.target.value)
@@ -134,6 +157,7 @@ export function BackgroundField(): React.ReactNode {
               aria-label={buildAriaLabel('gradient to color picker')}
             />
             <Input
+              id={gradientToValueId}
               value={(bg['gradientTo'] as string) ?? '#ffffff'}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                 update('gradientTo', e.target.value)
@@ -143,6 +167,7 @@ export function BackgroundField(): React.ReactNode {
               aria-label={buildAriaLabel('gradient to color value')}
             />
             <Input
+              id={gradientToOpacityId}
               type='number'
               value={toOpacity}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
@@ -156,8 +181,11 @@ export function BackgroundField(): React.ReactNode {
             />
           </div>
           <div className='flex items-center gap-2'>
-            <span className='text-[10px] text-gray-500 w-10'>Angle</span>
+            <label className='text-[10px] text-gray-500 w-10' htmlFor={gradientAngleId}>
+              Angle
+            </label>
             <Input
+              id={gradientAngleId}
               type='number'
               value={currentAngle}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>

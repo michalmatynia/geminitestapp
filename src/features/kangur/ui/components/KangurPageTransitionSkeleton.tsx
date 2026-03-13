@@ -87,22 +87,61 @@ const SkeletonLine = ({ className }: { className?: string }): React.JSX.Element 
 );
 
 const GameHomeSkeleton = (): React.JSX.Element => (
-  <div className='flex w-full flex-col gap-6'>
-    <SkeletonPanel className='min-h-[240px]'>
-      <div className='flex flex-col gap-4'>
-        <SkeletonChip className='h-8 w-32' />
-        <SkeletonLine className='h-10 w-3/4 max-w-[420px]' />
-        <SkeletonLine className='w-full max-w-[520px]' />
-        <SkeletonLine className='w-2/3 max-w-[360px]' />
-        <div className='mt-4 flex flex-wrap gap-3'>
-          <SkeletonChip className='h-14 w-40' />
-          <SkeletonChip className='h-14 w-44' />
-          <SkeletonChip className='h-14 w-36' />
+  <div className='flex w-full flex-col items-center gap-8 sm:gap-10'>
+    <div className='w-full max-w-[560px]'>
+      <SkeletonPanel className='min-h-[340px] sm:min-h-[352px]'>
+        <div className='grid grid-cols-1 gap-3 sm:gap-4'>
+          <SkeletonBlock className='h-16 rounded-full bg-slate-200/76' />
+          <SkeletonBlock className='h-16 rounded-full bg-slate-200/76' />
+          <SkeletonBlock className='h-16 rounded-full bg-slate-200/76' />
+          <SkeletonBlock className='h-16 rounded-full bg-slate-200/76' />
         </div>
+      </SkeletonPanel>
+    </div>
+
+    <div className='w-full max-w-[900px]'>
+      <SkeletonPanel className='min-h-[240px]'>
+        <div className='space-y-4'>
+          <div className='flex flex-wrap gap-2'>
+            <SkeletonChip className='h-7 w-28' />
+            <SkeletonChip className='h-7 w-24' />
+            <SkeletonChip className='h-7 w-32' />
+          </div>
+          <SkeletonLine className='h-9 w-3/4 max-w-[520px]' />
+          <SkeletonLine className='w-full max-w-[640px]' />
+          <SkeletonLine className='w-2/3 max-w-[420px]' />
+          <div className='flex flex-wrap gap-2'>
+            <SkeletonChip className='h-6 w-24' />
+            <SkeletonChip className='h-6 w-28' />
+            <SkeletonChip className='h-6 w-20' />
+          </div>
+          <SkeletonLine className='h-3 w-1/3 max-w-[200px]' />
+          <SkeletonBlock className='h-11 w-full max-w-[220px] rounded-[20px] bg-slate-200/76' />
+        </div>
+      </SkeletonPanel>
+    </div>
+
+    <div className='w-full max-w-[900px] space-y-4'>
+      <div className='space-y-2'>
+        <SkeletonLine className='h-4 w-32' />
+        <SkeletonLine className='h-7 w-2/3 max-w-[420px]' />
       </div>
-    </SkeletonPanel>
+      <SkeletonPanel className='min-h-[180px]'>
+        <div className='space-y-4'>
+          <SkeletonChip className='h-7 w-36' />
+          <SkeletonLine className='h-9 w-3/4 max-w-[520px]' />
+          <SkeletonLine className='w-full max-w-[640px]' />
+          <SkeletonLine className='w-2/3 max-w-[420px]' />
+        </div>
+      </SkeletonPanel>
+      <div className='grid gap-3 min-[360px]:grid-cols-2'>
+        <SkeletonPanel className='min-h-[160px]' />
+        <SkeletonPanel className='min-h-[160px]' />
+      </div>
+    </div>
+
     <div
-      className='mx-auto grid w-full max-w-[900px] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]'
+      className='mx-auto grid w-full max-w-[900px] items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]'
       data-testid='kangur-page-transition-skeleton-game-home-progress-grid'
     >
       <SkeletonPanel className='min-h-[320px]'>
@@ -401,7 +440,16 @@ export function KangurPageTransitionSkeleton({
         className='pointer-events-none'
         tone={SKELETON_TONE_BY_PAGE[resolvedPageKey]}
       >
-        <KangurPageContainer className='flex flex-col items-center gap-6 pt-24 sm:pt-28'>
+        <KangurPageContainer
+          className={cn(
+            'flex flex-col items-center gap-6',
+            resolvedPageKey === 'Lessons'
+              ? 'pt-[calc(var(--kangur-top-bar-height,88px)+clamp(24px,calc(var(--kangur-page-padding-top,40px)*0.6),var(--kangur-page-padding-top,40px)))] sm:pt-[calc(var(--kangur-top-bar-height,88px)+var(--kangur-page-padding-top,40px))]'
+              : resolvedPageKey === 'Game'
+                ? 'pt-[calc(var(--kangur-top-bar-height,88px)+12px)]'
+                : 'pt-24 sm:pt-28'
+          )}
+        >
           {renderSkeletonVariant(resolvedVariant)}
         </KangurPageContainer>
       </KangurPageShell>

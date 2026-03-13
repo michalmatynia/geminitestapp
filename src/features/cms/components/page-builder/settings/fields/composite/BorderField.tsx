@@ -8,7 +8,7 @@ import { useCompositeFieldContext } from '../CompositeFieldContext';
 import { BORDER_STYLE_OPTIONS } from '../settings-field-constants';
 
 export function BorderField(): React.ReactNode {
-  const { value, onChange, buildAriaLabel } = useCompositeFieldContext();
+  const { value, onChange, buildAriaLabel, buildControlId } = useCompositeFieldContext();
   const border = (value as Record<string, unknown>) ?? {
     width: 0,
     style: 'solid',
@@ -18,12 +18,20 @@ export function BorderField(): React.ReactNode {
   const update = (key: string, v: unknown): void => {
     onChange({ ...border, [key]: v });
   };
+  const widthId = buildControlId('width');
+  const radiusId = buildControlId('radius');
+  const styleId = buildControlId('style');
+  const colorValueId = buildControlId('color-value');
+  const colorPickerId = buildControlId('color-picker');
   return (
     <div className='space-y-2'>
       <div className='grid grid-cols-2 gap-2'>
         <div className='space-y-0.5'>
-          <span className='text-[10px] text-gray-500 uppercase'>Width</span>
+          <label className='text-[10px] text-gray-500 uppercase' htmlFor={widthId}>
+            Width
+          </label>
           <Input
+            id={widthId}
             type='number'
             value={(border['width'] as number) ?? 0}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
@@ -35,8 +43,11 @@ export function BorderField(): React.ReactNode {
           />
         </div>
         <div className='space-y-0.5'>
-          <span className='text-[10px] text-gray-500 uppercase'>Radius</span>
+          <label className='text-[10px] text-gray-500 uppercase' htmlFor={radiusId}>
+            Radius
+          </label>
           <Input
+            id={radiusId}
             type='number'
             value={(border['radius'] as number) ?? 0}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
@@ -50,7 +61,9 @@ export function BorderField(): React.ReactNode {
       </div>
       <div className='grid grid-cols-2 gap-2'>
         <div className='space-y-0.5'>
-          <span className='text-[10px] text-gray-500 uppercase'>Style</span>
+          <label className='text-[10px] text-gray-500 uppercase' htmlFor={styleId}>
+            Style
+          </label>
           <SelectSimple
             size='sm'
             value={(border['style'] as string) ?? 'solid'}
@@ -58,13 +71,17 @@ export function BorderField(): React.ReactNode {
             options={BORDER_STYLE_OPTIONS}
             triggerClassName='text-xs h-7'
             ariaLabel={buildAriaLabel('style')}
+            id={styleId}
           />
         </div>
         <div className='space-y-0.5'>
-          <span className='text-[10px] text-gray-500 uppercase'>Color</span>
+          <label className='text-[10px] text-gray-500 uppercase' htmlFor={colorValueId}>
+            Color
+          </label>
           <div className='flex items-center gap-1'>
             <input
               type='color'
+              id={colorPickerId}
               value={(border['color'] as string) ?? '#4b5563'}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                 update('color', e.target.value)
@@ -73,6 +90,7 @@ export function BorderField(): React.ReactNode {
               aria-label={buildAriaLabel('color picker')}
             />
             <Input
+              id={colorValueId}
               value={(border['color'] as string) ?? '#4b5563'}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                 update('color', e.target.value)

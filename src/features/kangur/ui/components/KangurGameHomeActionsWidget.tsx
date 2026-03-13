@@ -218,6 +218,7 @@ function KangurHomeActionCard({
       }
       className={wrapperClassName}
       data-nav-state={navState}
+      data-home-action={actionId}
       data-testid={`kangur-home-action-${actionId}`}
     >
       <div className='home-action-featured-underlay' />

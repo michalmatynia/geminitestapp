@@ -218,9 +218,10 @@ export const resolveCmsStorefrontAppearance = (
     },
     mode
   );
+  const primaryButtonBase = resolveSolidColor(theme.btnPrimaryBg, accent);
   const primaryButtonTone = resolveStorefrontAppearanceTone(
     {
-      background: theme.btnPrimaryBg || accent,
+      background: primaryButtonBase,
       text: theme.btnPrimaryText || '#ffffff',
       border: theme.borderColor,
       accent,
@@ -231,11 +232,19 @@ export const resolveCmsStorefrontAppearance = (
     isDarkStorefrontAppearanceMode(mode)
       ? {
           ...primaryButtonTone,
-          background: darkenCssColor(theme.btnPrimaryBg || accent, 28),
-          border: darkenCssColor(theme.btnPrimaryBg || accent, 36),
+          background: darkenCssColor(primaryButtonBase, 28),
+          border: darkenCssColor(primaryButtonBase, 36),
           text: '#f8fafc',
         }
       : primaryButtonTone;
+  const primaryButtonBackground = resolveBackgroundValue(
+    theme.btnPrimaryBg,
+    resolvedPrimaryButtonTone.background
+  );
+  const resolvedPrimaryButtonToneWithBackground = {
+    ...resolvedPrimaryButtonTone,
+    background: primaryButtonBackground,
+  };
 
   const subtleSurface =
     isDarkStorefrontAppearanceMode(mode)
@@ -253,7 +262,7 @@ export const resolveCmsStorefrontAppearance = (
     subtleSurface,
     mutedText,
     inputTone,
-    primaryButtonTone: resolvedPrimaryButtonTone,
+    primaryButtonTone: resolvedPrimaryButtonToneWithBackground,
     vars: {
       '--cms-appearance-page-background': pageTone.background,
       '--cms-appearance-page-text': pageTone.text,
@@ -267,7 +276,7 @@ export const resolveCmsStorefrontAppearance = (
       '--cms-appearance-input-background': inputTone.background,
       '--cms-appearance-input-text': inputTone.text,
       '--cms-appearance-input-border': inputTone.border,
-      '--cms-appearance-button-primary-background': resolvedPrimaryButtonTone.background,
+      '--cms-appearance-button-primary-background': primaryButtonBackground,
       '--cms-appearance-button-primary-text': resolvedPrimaryButtonTone.text,
       '--cms-appearance-button-primary-border': resolvedPrimaryButtonTone.border,
     },
@@ -276,6 +285,96 @@ export const resolveCmsStorefrontAppearance = (
 
 const mixCssColor = (base: string, mixin: string, weight: number): string =>
   `color-mix(in srgb, ${base} ${Math.max(0, Math.min(100, weight))}%, ${mixin})`;
+
+const isNonEmptyString = (value: unknown): value is string =>
+  typeof value === 'string' && value.trim().length > 0;
+const isGradientValue = (value: string | null | undefined): boolean =>
+  isNonEmptyString(value) && value.toLowerCase().includes('gradient(');
+const extractFirstColorStop = (value: string): string | null => {
+  const hexMatch = value.match(/#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})/i);
+  if (hexMatch) return hexMatch[0];
+  const rgbMatch = value.match(/rgba?\([^)]+\)/i);
+  if (rgbMatch) return rgbMatch[0];
+  const hslMatch = value.match(/hsla?\([^)]+\)/i);
+  if (hslMatch) return hslMatch[0];
+  return null;
+};
+const resolveSolidColor = (value: string | undefined, fallback: string): string => {
+  if (!isNonEmptyString(value)) return fallback;
+  const trimmed = value.trim();
+  if (!isGradientValue(trimmed)) return trimmed;
+  return extractFirstColorStop(trimmed) ?? fallback;
+};
+const resolveBackgroundValue = (value: string | undefined, fallback: string): string => {
+  if (isGradientValue(value)) return value.trim();
+  return fallback;
+};
+
+const clampRgbChannel = (value: number): number => Math.max(0, Math.min(255, Math.round(value)));
+
+const parseRgbTuple = (value: string): [number, number, number] | null => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  if (trimmed.startsWith('#')) {
+    const normalized = trimmed.slice(1);
+    if (normalized.length === 3 || normalized.length === 4) {
+      const [r, g, b] = normalized.split('').map((channel) => channel + channel);
+      return [
+        clampRgbChannel(parseInt(r, 16)),
+        clampRgbChannel(parseInt(g, 16)),
+        clampRgbChannel(parseInt(b, 16)),
+      ];
+    }
+    if (normalized.length === 6 || normalized.length === 8) {
+      return [
+        clampRgbChannel(parseInt(normalized.slice(0, 2), 16)),
+        clampRgbChannel(parseInt(normalized.slice(2, 4), 16)),
+        clampRgbChannel(parseInt(normalized.slice(4, 6), 16)),
+      ];
+    }
+  }
+
+  const tupleMatch = trimmed.match(/^(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})$/);
+  if (tupleMatch) {
+    return [
+      clampRgbChannel(Number(tupleMatch[1])),
+      clampRgbChannel(Number(tupleMatch[2])),
+      clampRgbChannel(Number(tupleMatch[3])),
+    ];
+  }
+
+  const rgbMatch = trimmed.match(/^rgba?\(([^)]+)\)$/i);
+  if (rgbMatch) {
+    const parts = rgbMatch[1]
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean);
+    if (parts.length >= 3) {
+      const channels = parts.slice(0, 3).map((part) => {
+        if (part.endsWith('%')) {
+          const percent = Number(part.replace('%', ''));
+          if (Number.isNaN(percent)) return null;
+          return clampRgbChannel((percent / 100) * 255);
+        }
+        const value = Number(part);
+        if (Number.isNaN(value)) return null;
+        return clampRgbChannel(value);
+      });
+      if (channels.every((c): c is number => typeof c === 'number')) {
+        return channels as [number, number, number];
+      }
+    }
+  }
+
+  return null;
+};
+
+const toRgbTupleString = (value: string): string | null => {
+  const parsed = parseRgbTuple(value);
+  if (!parsed) return null;
+  return `${parsed[0]}, ${parsed[1]}, ${parsed[2]}`;
+};
 
 const toCssPx = (value: number): string => `${Math.max(0, Math.round(value * 100) / 100)}px`;
 const toCssPxSigned = (value: number): string => `${Math.round(value * 100) / 100}px`;
@@ -647,6 +746,90 @@ const resolveKangurRuntimeThemeVars = (theme: ThemeSettings): Record<string, str
   };
 };
 
+const HOME_ACTION_THEME_CONFIG = [
+  { id: 'lessons', prefix: 'homeActionLessons' },
+  { id: 'play', prefix: 'homeActionPlay' },
+  { id: 'training', prefix: 'homeActionTraining' },
+  { id: 'kangur', prefix: 'homeActionKangur' },
+] as const;
+
+const resolveHomeActionVars = (theme: ThemeSettings): Record<string, string> => {
+  const vars: Record<string, string> = {};
+  const setVar = (name: string, value: unknown): void => {
+    if (isNonEmptyString(value)) {
+      vars[name] = value.trim();
+    }
+  };
+  const setMidVar = (
+    name: string,
+    start: string | undefined,
+    mid: string | undefined,
+    end: string | undefined
+  ): void => {
+    if (isNonEmptyString(mid)) {
+      vars[name] = mid.trim();
+      return;
+    }
+    if (isNonEmptyString(start) && isNonEmptyString(end)) {
+      vars[name] = mixCssColor(start.trim(), end.trim(), 50);
+    }
+  };
+  const setRgbVar = (name: string, value: string | undefined): void => {
+    if (!isNonEmptyString(value)) return;
+    const tuple = toRgbTupleString(value);
+    if (tuple) vars[name] = tuple;
+  };
+
+  HOME_ACTION_THEME_CONFIG.forEach(({ id, prefix }) => {
+    const get = (suffix: string): string | undefined =>
+      (theme as Record<string, string>)[`${prefix}${suffix}`];
+
+    const text = get('TextColor');
+    const textActive = get('TextActiveColor');
+    setVar(`--kangur-home-action-${id}-text`, text);
+    setVar(`--kangur-home-action-${id}-text-active`, textActive);
+
+    const accentStart = get('AccentStart');
+    const accentMid = get('AccentMid');
+    const accentEnd = get('AccentEnd');
+    setVar(`--kangur-home-action-${id}-accent-start`, accentStart);
+    setVar(`--kangur-home-action-${id}-accent-end`, accentEnd);
+    setMidVar(`--kangur-home-action-${id}-accent-mid`, accentStart, accentMid, accentEnd);
+
+    const underlayStart = get('UnderlayStart');
+    const underlayMid = get('UnderlayMid');
+    const underlayEnd = get('UnderlayEnd');
+    setVar(`--kangur-home-action-${id}-underlay-start`, underlayStart);
+    setVar(`--kangur-home-action-${id}-underlay-end`, underlayEnd);
+    setMidVar(`--kangur-home-action-${id}-underlay-mid`, underlayStart, underlayMid, underlayEnd);
+
+    const underlayTintStart = get('UnderlayTintStart');
+    const underlayTintMid = get('UnderlayTintMid');
+    const underlayTintEnd = get('UnderlayTintEnd');
+    setVar(`--kangur-home-action-${id}-underlay-tint-start`, underlayTintStart);
+    setVar(`--kangur-home-action-${id}-underlay-tint-end`, underlayTintEnd);
+    setMidVar(
+      `--kangur-home-action-${id}-underlay-tint-mid`,
+      underlayTintStart,
+      underlayTintMid,
+      underlayTintEnd
+    );
+
+    const accentShadowSource =
+      get('AccentShadowColor') || accentMid || accentStart || accentEnd;
+    const underlayShadowSource =
+      get('UnderlayShadowColor') || underlayTintMid || underlayMid || underlayTintStart || underlayStart;
+    const surfaceShadowSource =
+      get('SurfaceShadowColor') || underlayTintEnd || underlayEnd || underlayTintMid || underlayMid;
+
+    setRgbVar(`--kangur-home-action-${id}-accent-shadow-rgb`, accentShadowSource);
+    setRgbVar(`--kangur-home-action-${id}-underlay-shadow-rgb`, underlayShadowSource);
+    setRgbVar(`--kangur-home-action-${id}-surface-shadow-rgb`, surfaceShadowSource);
+  });
+
+  return vars;
+};
+
 const resolveDefaultKangurStorefrontAppearance = (
   mode: CmsStorefrontAppearanceMode
 ): {
@@ -877,13 +1060,14 @@ const resolveThemedKangurStorefrontAppearance = (
   const navText = theme.pillText || theme.mutedTextColor;
   const navActiveBackground = theme.pillActiveBg || primary;
   const navActiveText = theme.pillActiveText || theme.btnPrimaryText || '#ffffff';
-  const primaryButtonBackground = theme.btnPrimaryBg || primary;
-  const secondaryButtonBackground = theme.btnSecondaryBg || surfaceBackground;
+  const primaryButtonBase = resolveSolidColor(theme.btnPrimaryBg, primary);
+  const secondaryButtonBase = resolveSolidColor(theme.btnSecondaryBg, surfaceBackground);
   const warningBackground = theme.accentColor || accent;
   const successBackground = theme.successColor || '#22c55e';
   const dangerBackground = theme.errorColor || '#ef4444';
   const chatBackground = theme.containerBg || surfaceBackground;
   const runtimeThemeVars = resolveKangurRuntimeThemeVars(theme);
+  const homeActionVars = resolveHomeActionVars(theme);
   const toneText = isDarkStorefrontAppearanceMode(mode) ? '#f8fafc' : theme.textColor;
   const pageMutedText =
     isDarkStorefrontAppearanceMode(mode)
@@ -1205,36 +1389,83 @@ const resolveThemedKangurStorefrontAppearance = (
     color: cardShadowBase,
     opacity: theme.cardShadowOpacity,
   });
+  const primaryButtonBackgroundComputed = `linear-gradient(90deg, ${mixCssColor(
+    primaryButtonBase,
+    '#ffffff',
+    isDarkStorefrontAppearanceMode(mode) ? 82 : 68
+  )} 0%, ${darkenCssColor(primaryButtonBase, isDarkStorefrontAppearanceMode(mode) ? 18 : 8)} 100%)`;
+  const primaryButtonHoverBackgroundComputed = `linear-gradient(90deg, ${mixCssColor(
+    primaryButtonBase,
+    '#ffffff',
+    isDarkStorefrontAppearanceMode(mode) ? 74 : 58
+  )} 0%, ${darkenCssColor(primaryButtonBase, isDarkStorefrontAppearanceMode(mode) ? 10 : 2)} 56%, ${darkenCssColor(
+    primaryButtonBase,
+    isDarkStorefrontAppearanceMode(mode) ? 20 : 10
+  )} 100%)`;
+  const secondaryButtonBackgroundComputed = `linear-gradient(180deg, ${mixCssColor(
+    secondaryButtonBase,
+    isDarkStorefrontAppearanceMode(mode) ? '#000000' : '#ffffff',
+    isDarkStorefrontAppearanceMode(mode) ? 88 : 92
+  )} 0%, ${mixCssColor(
+    secondaryButtonBase,
+    pageTone.background,
+    isDarkStorefrontAppearanceMode(mode) ? 92 : 84
+  )} 100%)`;
+  const secondaryButtonHoverBackgroundComputed = `linear-gradient(180deg, ${mixCssColor(
+    secondaryButtonBase,
+    '#ffffff',
+    isDarkStorefrontAppearanceMode(mode) ? 78 : 86
+  )} 0%, ${mixCssColor(
+    secondaryButtonBase,
+    pageTone.background,
+    isDarkStorefrontAppearanceMode(mode) ? 88 : 80
+  )} 100%)`;
+  const primaryButtonBackground = resolveBackgroundValue(
+    theme.btnPrimaryBg,
+    primaryButtonBackgroundComputed
+  );
+  const primaryButtonHoverBackground = resolveBackgroundValue(
+    theme.btnPrimaryBg,
+    primaryButtonHoverBackgroundComputed
+  );
+  const secondaryButtonBackground = resolveBackgroundValue(
+    theme.btnSecondaryBg,
+    secondaryButtonBackgroundComputed
+  );
+  const secondaryButtonHoverBackground = resolveBackgroundValue(
+    theme.btnSecondaryBg,
+    secondaryButtonHoverBackgroundComputed
+  );
   const gradientSoftMid = mixCssColor(
     surfaceTone.background,
     '#ffffff',
     isDarkStorefrontAppearanceMode(mode) ? 24 : 92
   );
   const primaryGradientStart = mixCssColor(
-    primaryButtonBackground,
+    primaryButtonBase,
     '#ffffff',
     isDarkStorefrontAppearanceMode(mode) ? 82 : 68
   );
   const primaryGradientMid = mixCssColor(
-    primaryButtonBackground,
+    primaryButtonBase,
     '#ffffff',
     isDarkStorefrontAppearanceMode(mode) ? 74 : 58
   );
   const primaryGradientEnd = darkenCssColor(
-    primaryButtonBackground,
+    primaryButtonBase,
     isDarkStorefrontAppearanceMode(mode) ? 18 : 8
   );
   const primaryGradientHoverStart = mixCssColor(
-    primaryButtonBackground,
+    primaryButtonBase,
     '#ffffff',
     isDarkStorefrontAppearanceMode(mode) ? 74 : 58
   );
   const primaryGradientHoverMid = darkenCssColor(
-    primaryButtonBackground,
+    primaryButtonBase,
     isDarkStorefrontAppearanceMode(mode) ? 10 : 2
   );
   const primaryGradientHoverEnd = darkenCssColor(
-    primaryButtonBackground,
+    primaryButtonBase,
     isDarkStorefrontAppearanceMode(mode) ? 20 : 10
   );
   const warningGradientStart = mixCssColor(
@@ -1267,6 +1498,43 @@ const resolveThemedKangurStorefrontAppearance = (
     pageTone.background,
     isDarkStorefrontAppearanceMode(mode) ? 90 : 70
   );
+  const resolveLogoOverride = (value: string | undefined, fallback: string): string =>
+    isNonEmptyString(value) ? value.trim() : fallback;
+  const logoWordStart = resolveLogoOverride(theme.logoWordStart, primary);
+  const logoWordMid = resolveLogoOverride(theme.logoWordMid, mixCssColor(primary, secondary, 60));
+  const logoWordEnd = resolveLogoOverride(theme.logoWordEnd, secondary);
+  const logoRingStart = resolveLogoOverride(
+    theme.logoRingStart,
+    mixCssColor(primary, '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 70 : 82)
+  );
+  const logoRingEnd = resolveLogoOverride(
+    theme.logoRingEnd,
+    mixCssColor(secondary, '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 68 : 80)
+  );
+  const logoAccentStart = resolveLogoOverride(
+    theme.logoAccentStart,
+    mixCssColor(warningBackground, '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 70 : 86)
+  );
+  const logoAccentEnd = resolveLogoOverride(
+    theme.logoAccentEnd,
+    mixCssColor(warningBackground, '#000000', isDarkStorefrontAppearanceMode(mode) ? 30 : 12)
+  );
+  const logoInnerStart = resolveLogoOverride(
+    theme.logoInnerStart,
+    mixCssColor(surfaceTone.background, '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 24 : 94)
+  );
+  const logoInnerEnd = resolveLogoOverride(
+    theme.logoInnerEnd,
+    mixCssColor(surfaceTone.background, pageTone.background, isDarkStorefrontAppearanceMode(mode) ? 40 : 86)
+  );
+  const logoShadow = resolveLogoOverride(
+    theme.logoShadow,
+    darkenCssColor(primary, isDarkStorefrontAppearanceMode(mode) ? 48 : 20)
+  );
+  const logoGlint = resolveLogoOverride(
+    theme.logoGlint,
+    mixCssColor(warningBackground, '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 82 : 92)
+  );
 
   return {
     background,
@@ -1278,7 +1546,19 @@ const resolveThemedKangurStorefrontAppearance = (
     },
     vars: {
       ...runtimeThemeVars,
+      ...homeActionVars,
       '--kangur-page-background': background,
+      '--kangur-logo-word-start': logoWordStart,
+      '--kangur-logo-word-mid': logoWordMid,
+      '--kangur-logo-word-end': logoWordEnd,
+      '--kangur-logo-ring-start': logoRingStart,
+      '--kangur-logo-ring-end': logoRingEnd,
+      '--kangur-logo-accent-start': logoAccentStart,
+      '--kangur-logo-accent-end': logoAccentEnd,
+      '--kangur-logo-inner-start': logoInnerStart,
+      '--kangur-logo-inner-end': logoInnerEnd,
+      '--kangur-logo-shadow': logoShadow,
+      '--kangur-logo-glint': logoGlint,
       '--kangur-glass-panel-background': `linear-gradient(180deg, ${panelGradientStartWithAlpha} 0%, ${panelGradientEndWithAlpha} 100%)`,
       '--kangur-glass-panel-border':
         isDarkStorefrontAppearanceMode(mode)
@@ -1373,20 +1653,16 @@ const resolveThemedKangurStorefrontAppearance = (
       '--kangur-cta-success-end': successGradientEnd,
       '--kangur-page-text': toneText,
       '--kangur-page-muted-text': pageMutedText,
-      '--kangur-button-primary-background':
-        `linear-gradient(90deg, ${mixCssColor(primaryButtonBackground, '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 82 : 68)} 0%, ${darkenCssColor(primaryButtonBackground, isDarkStorefrontAppearanceMode(mode) ? 18 : 8)} 100%)`,
-      '--kangur-button-primary-hover-background':
-        `linear-gradient(90deg, ${mixCssColor(primaryButtonBackground, '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 74 : 58)} 0%, ${darkenCssColor(primaryButtonBackground, isDarkStorefrontAppearanceMode(mode) ? 10 : 2)} 56%, ${darkenCssColor(primaryButtonBackground, isDarkStorefrontAppearanceMode(mode) ? 20 : 10)} 100%)`,
+      '--kangur-button-primary-background': primaryButtonBackground,
+      '--kangur-button-primary-hover-background': primaryButtonHoverBackground,
       '--kangur-button-primary-shadow':
-        `0 12px 24px ${mixCssColor(primaryButtonBackground, '#000000', isDarkStorefrontAppearanceMode(mode) ? 34 : 24)}, inset 0 1px 0 ${mixCssColor(theme.btnPrimaryText || '#ffffff', '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 18 : 38)}`,
+        `0 12px 24px ${mixCssColor(primaryButtonBase, '#000000', isDarkStorefrontAppearanceMode(mode) ? 34 : 24)}, inset 0 1px 0 ${mixCssColor(theme.btnPrimaryText || '#ffffff', '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 18 : 38)}`,
       '--kangur-button-primary-hover-shadow':
-        `0 22px 34px -18px ${mixCssColor(primaryButtonBackground, '#000000', isDarkStorefrontAppearanceMode(mode) ? 40 : 30)}, 0 14px 24px -18px ${mixCssColor(accent, '#000000', isDarkStorefrontAppearanceMode(mode) ? 22 : 16)}, inset 0 1px 0 ${mixCssColor(theme.btnPrimaryText || '#ffffff', '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 24 : 42)}`,
-      '--kangur-button-secondary-background':
-        `linear-gradient(180deg, ${mixCssColor(secondaryButtonBackground, isDarkStorefrontAppearanceMode(mode) ? '#000000' : '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 88 : 92)} 0%, ${mixCssColor(secondaryButtonBackground, pageTone.background, isDarkStorefrontAppearanceMode(mode) ? 92 : 84)} 100%)`,
-      '--kangur-button-secondary-hover-background':
-        `linear-gradient(180deg, ${mixCssColor(secondaryButtonBackground, isDarkStorefrontAppearanceMode(mode) ? '#ffffff' : '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 78 : 86)} 0%, ${mixCssColor(secondaryButtonBackground, pageTone.background, isDarkStorefrontAppearanceMode(mode) ? 88 : 80)} 100%)`,
+        `0 22px 34px -18px ${mixCssColor(primaryButtonBase, '#000000', isDarkStorefrontAppearanceMode(mode) ? 40 : 30)}, 0 14px 24px -18px ${mixCssColor(accent, '#000000', isDarkStorefrontAppearanceMode(mode) ? 22 : 16)}, inset 0 1px 0 ${mixCssColor(theme.btnPrimaryText || '#ffffff', '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 24 : 42)}`,
+      '--kangur-button-secondary-background': secondaryButtonBackground,
+      '--kangur-button-secondary-hover-background': secondaryButtonHoverBackground,
       '--kangur-button-secondary-shadow':
-        `0 16px 28px -24px ${mixCssColor(secondaryButtonBackground, '#000000', isDarkStorefrontAppearanceMode(mode) ? 52 : 28)}, inset 0 1px 0 ${mixCssColor(theme.btnSecondaryText || toneText, '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 10 : 28)}`,
+        `0 16px 28px -24px ${mixCssColor(secondaryButtonBase, '#000000', isDarkStorefrontAppearanceMode(mode) ? 52 : 28)}, inset 0 1px 0 ${mixCssColor(theme.btnSecondaryText || toneText, '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 10 : 28)}`,
       '--kangur-button-secondary-text':
         isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(theme.btnSecondaryText || toneText, '#ffffff', 92)

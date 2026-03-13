@@ -16,10 +16,20 @@ export function ThemeButtonsSection(): React.JSX.Element {
     { key: 'btnFontWeight', label: 'Font weight', type: 'select', options: WEIGHT_OPTIONS },
     { key: 'btnRadius', label: 'Radius', type: 'number', min: 0, max: 24, suffix: 'px' },
 
-    { key: 'btnPrimaryBg', label: 'Primary Background', type: 'color' },
+    {
+      key: 'btnPrimaryBg',
+      label: 'Primary Background',
+      type: 'background',
+      helperText: 'CSS color or gradient (e.g. #ff8a3d or linear-gradient(...)).',
+    },
     { key: 'btnPrimaryText', label: 'Primary Text', type: 'color' },
 
-    { key: 'btnSecondaryBg', label: 'Secondary Background', type: 'color' },
+    {
+      key: 'btnSecondaryBg',
+      label: 'Secondary Background',
+      type: 'background',
+      helperText: 'CSS color or gradient (e.g. #ffffff or linear-gradient(...)).',
+    },
     { key: 'btnSecondaryText', label: 'Secondary Text', type: 'color' },
 
     { key: 'btnOutlineBorder', label: 'Outline border', type: 'color' },

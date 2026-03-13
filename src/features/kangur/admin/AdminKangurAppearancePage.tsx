@@ -102,6 +102,29 @@ const THEME_SECTIONS: Array<{
     ],
   },
   {
+    title: 'Logo & Loader',
+    subtitle: 'Fine-tune the Kangur logo gradients used on the loader and navigation.',
+    fields: [
+      {
+        key: 'logoWordStart',
+        label: 'Wordmark Start',
+        type: 'background',
+        placeholder: 'Auto',
+        helperText: 'Leave empty to derive from the active theme palette.',
+      },
+      { key: 'logoWordMid', label: 'Wordmark Mid', type: 'background', placeholder: 'Auto' },
+      { key: 'logoWordEnd', label: 'Wordmark End', type: 'background', placeholder: 'Auto' },
+      { key: 'logoRingStart', label: 'Ring Start', type: 'background', placeholder: 'Auto' },
+      { key: 'logoRingEnd', label: 'Ring End', type: 'background', placeholder: 'Auto' },
+      { key: 'logoAccentStart', label: 'Accent Start', type: 'background', placeholder: 'Auto' },
+      { key: 'logoAccentEnd', label: 'Accent End', type: 'background', placeholder: 'Auto' },
+      { key: 'logoInnerStart', label: 'Inner Glow Start', type: 'background', placeholder: 'Auto' },
+      { key: 'logoInnerEnd', label: 'Inner Glow End', type: 'background', placeholder: 'Auto' },
+      { key: 'logoShadow', label: 'Logo Shadow', type: 'background', placeholder: 'Auto' },
+      { key: 'logoGlint', label: 'Logo Glint', type: 'background', placeholder: 'Auto' },
+    ],
+  },
+  {
     title: 'Backgrounds and Surfaces',
     subtitle: 'Base page, panel, card, and chat shell colors.',
     fields: [
@@ -129,9 +152,19 @@ const THEME_SECTIONS: Array<{
     title: 'Buttons',
     subtitle: 'Primary and secondary CTA colors, sizing, weight, border, and shadow.',
     fields: [
-      { key: 'btnPrimaryBg', label: 'Primary Background', type: 'color' },
+      {
+        key: 'btnPrimaryBg',
+        label: 'Primary Background',
+        type: 'background',
+        helperText: 'CSS color or gradient (e.g. #ff8a3d or linear-gradient(...)).',
+      },
       { key: 'btnPrimaryText', label: 'Primary Text', type: 'color' },
-      { key: 'btnSecondaryBg', label: 'Secondary Background', type: 'color' },
+      {
+        key: 'btnSecondaryBg',
+        label: 'Secondary Background',
+        type: 'background',
+        helperText: 'CSS color or gradient (e.g. #ffffff or linear-gradient(...)).',
+      },
       { key: 'btnSecondaryText', label: 'Secondary Text', type: 'color' },
       { key: 'btnOutlineBorder', label: 'Outline Border Color', type: 'color' },
       { key: 'btnPaddingX', label: 'Padding X', type: 'number', min: 8, max: 40, suffix: 'px' },
@@ -589,11 +622,14 @@ const parseSlotAssignments = (raw: string | null | undefined): SlotAssignments =
 
 type PreviewMode = 'default' | 'dawn' | 'sunset' | 'dark';
 
-const PREVIEW_MODE_LABELS: Record<PreviewMode, string> = {
-  default: 'Daily',
+type PreviewTarget = 'current' | 'daily' | 'dawn' | 'sunset' | 'nightly';
+
+const PREVIEW_TARGET_LABELS: Record<PreviewTarget, string> = {
+  current: 'Current',
+  daily: 'Daily',
   dawn: 'Dawn',
   sunset: 'Sunset',
-  dark: 'Nightly',
+  nightly: 'Nightly',
 };
 
 const SLOT_ORDER: ThemeSlotKey[] = ['daily', 'dawn', 'sunset', 'nightly'];
@@ -672,20 +708,22 @@ const SLOT_CONFIG: Record<
   },
 };
 
-const PREVIEW_MODE_ORDER: PreviewMode[] = SLOT_ORDER.map((slot) => SLOT_CONFIG[slot].mode);
+const PREVIEW_TARGET_ORDER: PreviewTarget[] = ['current', ...SLOT_ORDER];
 
 function KangurThemePreviewPanel({
-  draft,
+  previewTheme,
   previewMode,
-  onModeChange,
+  previewTarget,
+  onTargetChange,
 }: {
-  draft: ThemeSettings;
+  previewTheme: ThemeSettings;
   previewMode: PreviewMode;
-  onModeChange: (mode: PreviewMode) => void;
+  previewTarget: PreviewTarget;
+  onTargetChange: (target: PreviewTarget) => void;
 }): React.JSX.Element {
   const appearance = useMemo(
-    () => resolveKangurStorefrontAppearance(previewMode, draft),
-    [previewMode, draft]
+    () => resolveKangurStorefrontAppearance(previewMode, previewTheme),
+    [previewMode, previewTheme]
   );
 
   const sceneStyle: React.CSSProperties = {
@@ -736,7 +774,7 @@ function KangurThemePreviewPanel({
 
   const btnPrimary: React.CSSProperties = {
     background: 'var(--kangur-button-primary-background)',
-    color: draft.btnPrimaryText,
+    color: previewTheme.btnPrimaryText,
     borderRadius: 'var(--kangur-button-radius)',
     paddingTop: 'var(--kangur-button-padding-y)',
     paddingBottom: 'var(--kangur-button-padding-y)',
@@ -781,23 +819,20 @@ function KangurThemePreviewPanel({
     <div className='overflow-hidden rounded-2xl border border-border/60 shadow-md'>
       {/* mode toggle header */}
       <div className='flex items-center justify-between gap-2 border-b border-border/60 bg-muted/40 px-3 py-2'>
-        <span className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-          Live Preview
-        </span>
         <div className='flex rounded-full border border-border/60 bg-background/60 p-0.5'>
-          {PREVIEW_MODE_ORDER.map((m) => (
+          {PREVIEW_TARGET_ORDER.map((target) => (
             <button
-              key={m}
+              key={target}
               type='button'
-              onClick={() => onModeChange(m)}
+              onClick={() => onTargetChange(target)}
               className={[
                 'rounded-full px-3 py-0.5 text-xs font-medium transition-colors',
-                previewMode === m
+                previewTarget === target
                   ? 'bg-foreground text-background'
                   : 'text-muted-foreground hover:text-foreground',
               ].join(' ')}
             >
-              {PREVIEW_MODE_LABELS[m]}
+              {PREVIEW_TARGET_LABELS[target]}
             </button>
           ))}
         </div>
@@ -1228,10 +1263,43 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // ── preview mode ──────────────────────────────────────────────────────────
-  const [previewMode, setPreviewMode] = useState<PreviewMode>(
-    resolvePreviewModeForSelection(selectedId, slotAssignments)
+  const slotThemes = useMemo(
+    () => ({
+      daily:
+        parseKangurThemeSettings(settingsStore.get(KANGUR_DAILY_THEME_SETTINGS_KEY)) ??
+        KANGUR_DEFAULT_DAILY_THEME,
+      dawn:
+        parseKangurThemeSettings(settingsStore.get(KANGUR_DAWN_THEME_SETTINGS_KEY)) ??
+        KANGUR_DEFAULT_DAWN_THEME,
+      sunset:
+        parseKangurThemeSettings(settingsStore.get(KANGUR_SUNSET_THEME_SETTINGS_KEY)) ??
+        KANGUR_DEFAULT_SUNSET_THEME,
+      nightly:
+        parseKangurThemeSettings(settingsStore.get(KANGUR_NIGHTLY_THEME_SETTINGS_KEY)) ??
+        KANGUR_DEFAULT_THEME,
+    }),
+    [
+      settingsStore.get(KANGUR_DAILY_THEME_SETTINGS_KEY),
+      settingsStore.get(KANGUR_DAWN_THEME_SETTINGS_KEY),
+      settingsStore.get(KANGUR_SUNSET_THEME_SETTINGS_KEY),
+      settingsStore.get(KANGUR_NIGHTLY_THEME_SETTINGS_KEY),
+    ]
   );
+
+  // ── preview target ───────────────────────────────────────────────────────
+  const [previewTarget, setPreviewTarget] = useState<PreviewTarget>('current');
+  const previewSelection = useMemo(() => {
+    if (previewTarget === 'current') {
+      return {
+        theme: draft,
+        mode: resolvePreviewModeForSelection(selectedId, slotAssignments),
+      };
+    }
+    return {
+      theme: slotThemes[previewTarget],
+      mode: SLOT_CONFIG[previewTarget].mode,
+    };
+  }, [draft, previewTarget, selectedId, slotAssignments, slotThemes]);
 
   // Reload draft when selection changes (and confirm unsaved changes if dirty)
   const switchSelection = useCallback(
@@ -1251,7 +1319,6 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
     }
     if (resolvedInitialSelection !== BUILTIN_DAILY_ID) {
       switchSelection(resolvedInitialSelection);
-      setPreviewMode(resolvePreviewModeForSelection(resolvedInitialSelection, slotAssignments));
     }
     initialSelectionSyncedRef.current = true;
   }, [
@@ -1480,6 +1547,7 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
       <KangurAdminContentShell
         title='Kangur Appearance'
         description='Theme editor and catalog for daily, dawn, sunset, and nightly defaults.'
+        headerLayout='stacked'
         breadcrumbs={[
           { label: 'Admin', href: '/admin' },
           { label: 'Kangur', href: '/admin/kangur' },
@@ -1541,8 +1609,8 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
           {/* ── Assign bar (shown for catalog themes) ── */}
           {!isBuiltin && (
             <Card variant='subtle' padding='md' className={SECTION_CARD_CLASS}>
-              <div className='flex flex-wrap items-center gap-3'>
-                <div className='flex-1 min-w-0'>
+              <div className='flex flex-col gap-4 lg:flex-row lg:items-start'>
+                <div className='w-full min-w-0 lg:flex-1 lg:min-w-[320px]'>
                   <p className='text-sm font-medium text-foreground'>
                     Przypisz motyw <span className='text-muted-foreground'>„{selectedLabel}"</span>
                   </p>
@@ -1561,7 +1629,7 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
                     ))}
                   </div>
                 </div>
-                <div className='flex gap-2'>
+                <div className='flex flex-wrap gap-2 lg:ml-auto lg:justify-end'>
                   {SLOT_ORDER.map((slot) => (
                     <Button
                       key={slot}
@@ -1642,9 +1710,10 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
           {/* ── Right column: live preview ── */}
           <div className='hidden xl:sticky xl:top-4 xl:block xl:self-start'>
             <KangurThemePreviewPanel
-              draft={draft}
-              previewMode={previewMode}
-              onModeChange={setPreviewMode}
+              previewTheme={previewSelection.theme}
+              previewMode={previewSelection.mode}
+              previewTarget={previewTarget}
+              onTargetChange={setPreviewTarget}
             />
           </div>
         </div>

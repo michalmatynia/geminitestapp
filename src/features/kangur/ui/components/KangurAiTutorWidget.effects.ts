@@ -450,12 +450,16 @@ export function useKangurAiTutorNarrationObserverEffect(input: {
   setTutorNarrationObservedText: (value: string) => void;
   shouldEnableTutorNarration: boolean;
   tutorNarrationRootRef: RefObject<HTMLDivElement | null>;
+  guestIntroNarrationRootRef?: RefObject<HTMLDivElement | null>;
+  preferGuestIntroRoot?: boolean;
 }): void {
   const {
     observationKey,
     setTutorNarrationObservedText,
     shouldEnableTutorNarration,
     tutorNarrationRootRef,
+    guestIntroNarrationRootRef,
+    preferGuestIntroRoot,
   } = input;
 
   useLayoutEffect(() => {
@@ -464,7 +468,11 @@ export function useKangurAiTutorNarrationObserverEffect(input: {
       return;
     }
 
-    const root = tutorNarrationRootRef.current;
+    const rootRef =
+      preferGuestIntroRoot && guestIntroNarrationRootRef
+        ? guestIntroNarrationRootRef
+        : tutorNarrationRootRef;
+    const root = rootRef.current;
     if (!root) {
       setTutorNarrationObservedText('');
       return;
@@ -500,5 +508,12 @@ export function useKangurAiTutorNarrationObserverEffect(input: {
         window.clearTimeout(timeoutId);
       }
     };
-  }, [observationKey, setTutorNarrationObservedText, shouldEnableTutorNarration, tutorNarrationRootRef]);
+  }, [
+    observationKey,
+    setTutorNarrationObservedText,
+    shouldEnableTutorNarration,
+    tutorNarrationRootRef,
+    guestIntroNarrationRootRef,
+    preferGuestIntroRoot,
+  ]);
 }

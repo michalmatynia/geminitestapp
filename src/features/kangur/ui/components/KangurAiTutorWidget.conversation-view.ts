@@ -90,16 +90,6 @@ const buildCompletedFollowUpBridgeQuickAction = (input: {
     };
   }
 
-  if (input.surface === 'game' && (!input.hasCurrentQuestion || input.answerRevealed)) {
-    return {
-      id: 'bridge-to-lesson',
-      interactionIntent: 'next_step',
-      label: input.tutorContent.bridge.toLesson.label,
-      prompt: input.tutorContent.bridge.toLesson.prompt,
-      promptMode: 'chat',
-    };
-  }
-
   return null;
 };
 
@@ -113,9 +103,7 @@ const getBridgeSummaryChipLabel = (
 
   return bridgeQuickAction.id === 'bridge-to-game'
     ? tutorContent.bridge.toGame.summaryChip
-    : bridgeQuickAction.id === 'bridge-to-lesson'
-      ? tutorContent.bridge.toLesson.summaryChip
-      : null;
+    : null;
 };
 
 const buildQuickActions = (input: {
@@ -330,7 +318,7 @@ const buildProactiveNudge = (input: {
     input.proactiveNudges === 'coach'
       ? input.tutorContent.proactiveNudges.coachTitle
       : input.tutorContent.proactiveNudges.gentleTitle;
-  const bridgeAction = pickQuickAction(input.quickActions, ['bridge-to-game', 'bridge-to-lesson']);
+  const bridgeAction = pickQuickAction(input.quickActions, ['bridge-to-game']);
 
   if (input.hasSelectedText) {
     const action = pickQuickAction(input.quickActions, ['selected-text', 'explain']);
@@ -351,13 +339,9 @@ const buildProactiveNudge = (input: {
     return {
       action: bridgeAction,
       description:
-        bridgeAction.id === 'bridge-to-game'
-          ? input.proactiveNudges === 'coach'
-            ? input.tutorContent.proactiveNudges.bridgeToGameCoach
-            : input.tutorContent.proactiveNudges.bridgeToGameGentle
-          : input.proactiveNudges === 'coach'
-            ? input.tutorContent.proactiveNudges.bridgeToLessonCoach
-            : input.tutorContent.proactiveNudges.bridgeToLessonGentle,
+        input.proactiveNudges === 'coach'
+          ? input.tutorContent.proactiveNudges.bridgeToGameCoach
+          : input.tutorContent.proactiveNudges.bridgeToGameGentle,
       mode: input.proactiveNudges,
       title,
     };
@@ -459,10 +443,6 @@ const getEmptyStateMessage = (input: {
     return input.tutorContent.emptyStates.bridgeToGame;
   }
 
-  if (input.bridgeQuickAction?.id === 'bridge-to-lesson') {
-    return input.tutorContent.emptyStates.bridgeToLesson;
-  }
-
   if ((input.surface === 'test' || input.surface === 'game') && input.answerRevealed) {
     return input.hasCurrentQuestion
       ? input.tutorContent.emptyStates.reviewQuestion
@@ -510,10 +490,6 @@ const getInputPlaceholder = (input: {
 
   if (input.bridgeQuickAction?.id === 'bridge-to-game') {
     return input.tutorContent.placeholders.bridgeToGame;
-  }
-
-  if (input.bridgeQuickAction?.id === 'bridge-to-lesson') {
-    return input.tutorContent.placeholders.bridgeToLesson;
   }
 
   if ((input.surface === 'test' || input.surface === 'game') && input.answerRevealed) {
@@ -615,7 +591,7 @@ export function useKangurAiTutorConversationViewState(
   );
 
   const bridgeQuickAction = useMemo(
-    () => pickQuickAction(quickActions, ['bridge-to-game', 'bridge-to-lesson']),
+    () => pickQuickAction(quickActions, ['bridge-to-game']),
     [quickActions]
   );
   const bridgeSummaryChipLabel = useMemo(

@@ -92,4 +92,15 @@ describe('SettingsFieldRenderer Component', () => {
     fireEvent.change(slider, { target: { value: '75' } });
     expect(mockOnChange).toHaveBeenCalledWith('width', 75);
   });
+
+  it('associates labels with rendered inputs', () => {
+    const field = { key: 'title', label: 'Title', type: 'text' as const };
+    render(<SettingsFieldRenderer field={field} value='Hello' onChange={mockOnChange} />, {
+      wrapper,
+    });
+
+    const input = screen.getByLabelText('Title');
+    const label = screen.getByText('Title');
+    expect(label).toHaveAttribute('for', input.getAttribute('id'));
+  });
 });

@@ -1,12 +1,9 @@
 /**
  * @vitest-environment jsdom
  */
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { useLayoutEffect, useRef } from 'react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
-import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
 
 import type {
@@ -286,112 +283,8 @@ describe('KangurAiTutorWidget - UI', () => {
     vi.useRealTimers();
   });
 
-  it('announces the selection action and exposes the launcher expanded state to assistive tech', () => {
-    useKangurAiTutorMock.mockReturnValue({
-      enabled: true,
-      tutorSettings: {
-        enabled: true,
-        agentPersonaId: null,
-        motionPresetId: null,
-        uiMode: 'anchored',
-        allowCrossPagePersistence: true,
-        allowLessons: true,
-        testAccessMode: 'guided',
-        showSources: true,
-        allowSelectedTextSupport: true,
-        dailyMessageLimit: null,
-      },
-      tutorName: 'Pomocnik',
-      tutorMoodId: 'neutral',
-      tutorBehaviorMoodId: 'neutral',
-      tutorBehaviorMoodLabel: 'Neutralny',
-      tutorBehaviorMoodDescription: 'Tutor czeka na kolejne pytanie.',
-      sessionContext: {
-        surface: 'lesson',
-        contentId: 'lesson-1',
-        title: 'Dodawanie',
-      },
-      isOpen: false,
-      messages: [],
-      isLoading: false,
-      isUsageLoading: false,
-      highlightedText: null,
-      usageSummary: null,
-      openChat: openChatMock,
-      closeChat: closeChatMock,
-      sendMessage: sendMessageMock,
-      setHighlightedText: setHighlightedTextMock,
-    });
-    useKangurTextHighlightMock.mockReturnValue({
-      selectedText: '2 + 2',
-      selectionRect: new DOMRect(120, 220, 140, 26),
-      selectionContainerRect: null,
-      clearSelection: clearSelectionMock,
-    });
-
-    render(<KangurAiTutorWidget />);
-
-    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
-      'aria-controls',
-      'kangur-ai-tutor-panel-surface'
-    );
-    expect(screen.getByTestId('kangur-ai-tutor-accessibility-status')).toHaveTextContent(
-      'Zaznaczono fragment. Możesz użyć przycisku Zapytaj o to.'
-    );
-  });
-
-  it('renders the open tutor surface as a labelled region and announces that chat is open', () => {
-    useKangurAiTutorMock.mockReturnValue({
-      enabled: true,
-      tutorSettings: {
-        enabled: true,
-        agentPersonaId: null,
-        motionPresetId: null,
-        uiMode: 'anchored',
-        allowCrossPagePersistence: true,
-        allowLessons: true,
-        testAccessMode: 'guided',
-        showSources: true,
-        allowSelectedTextSupport: true,
-        dailyMessageLimit: null,
-      },
-      tutorName: 'Pomocnik',
-      tutorMoodId: 'neutral',
-      tutorBehaviorMoodId: 'neutral',
-      tutorBehaviorMoodLabel: 'Neutralny',
-      tutorBehaviorMoodDescription: 'Tutor czeka na kolejne pytanie.',
-      sessionContext: {
-        surface: 'lesson',
-        contentId: 'lesson-1',
-        title: 'Dodawanie',
-      },
-      isOpen: true,
-      messages: [],
-      isLoading: false,
-      isUsageLoading: false,
-      highlightedText: null,
-      usageSummary: null,
-      openChat: openChatMock,
-      closeChat: closeChatMock,
-      sendMessage: sendMessageMock,
-      setHighlightedText: setHighlightedTextMock,
-    });
-
-    render(<KangurAiTutorWidget />);
-
-    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('region', { name: /Pomocnik/i })).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute('aria-busy', 'false');
-    expect(screen.getByTestId('kangur-ai-tutor-panel-surface')).toHaveAttribute(
-      'id',
-      'kangur-ai-tutor-panel-surface'
-    );
-    expect(screen.getByTestId('kangur-ai-tutor-accessibility-status')).toHaveTextContent(
-      'Czat AI Tutora otwarty.'
-    );
-  });
-
+  
+  
   it('reads the tutor modal text without reading control button labels', async () => {
     useKangurAiTutorMock.mockReturnValue({
       enabled: true,

@@ -11,6 +11,7 @@ import {
   resolveKangurThemeSettingsRawForMode,
   KANGUR_THEME_SETTINGS_KEY,
   parseKangurThemeSettings,
+  resolveKangurDefaultThemeForMode,
 } from '@/features/kangur/theme-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
@@ -26,7 +27,11 @@ export const useKangurStorefrontAppearance = () => {
     nightlyThemeRaw: settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('dark')),
     legacyThemeRaw: settingsStore.get(KANGUR_THEME_SETTINGS_KEY),
   });
-  const theme = useMemo(() => parseKangurThemeSettings(rawTheme), [rawTheme]);
+  const fallbackTheme = useMemo(() => resolveKangurDefaultThemeForMode(mode), [mode]);
+  const theme = useMemo(
+    () => parseKangurThemeSettings(rawTheme) ?? fallbackTheme,
+    [fallbackTheme, rawTheme]
+  );
 
   return useMemo(
     () => ({

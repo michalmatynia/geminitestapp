@@ -39,6 +39,7 @@ const createPanelBodyContextValue = (
   canStartHomeOnboardingManually: false,
   drawingImageData: null,
   drawingMode: false,
+  guestAuthFormVisible: false,
   emptyStateMessage: 'Pytaj…',
   focusChipLabel: null,
   handleClearDrawing: vi.fn(),

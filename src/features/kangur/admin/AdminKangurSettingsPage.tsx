@@ -54,7 +54,6 @@ import { KangurAiTutorContentSettingsPanel } from './components/KangurAiTutorCon
 import { KangurAiTutorNativeGuideSettingsPanel } from './components/KangurAiTutorNativeGuideSettingsPanel';
 import { KangurClassOverridesSettingsPanel } from './components/KangurClassOverridesSettingsPanel';
 import { KangurPageContentSettingsPanel } from './components/KangurPageContentSettingsPanel';
-import { KangurThemeSettingsPanel } from './components/KangurThemeSettingsPanel';
 
 const TEST_NARRATOR_TEMPLATE_TEXT =
   'A bright classroom welcomes curious minds. Here is a short narration sample to verify the chosen voice.';
@@ -509,10 +508,23 @@ export function AdminKangurSettingsPage(): ReactElement {
       <div id='kangur-admin-settings-page' className='space-y-6'>
         <FormSection
           title='Storefront Theme'
-          description='Edit the shared Mongo-backed Kangur theme document that powers the public app appearance.'
+          description='Edit daily and nightly Kangur themes. Changes auto-save to Mongo and apply immediately to the live app.'
           className={SETTINGS_SECTION_CLASS_NAME}
         >
-          <KangurThemeSettingsPanel />
+          <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+            <div className='flex items-center justify-between gap-4'>
+              <div>
+                <div className='text-sm font-semibold text-foreground'>Daily &amp; nightly themes</div>
+                <p className='mt-1 text-sm text-muted-foreground'>
+                  Customise colours, typography, and spacing for both the day and night variants of
+                  the Kangur storefront. Includes a reset-to-default option per theme.
+                </p>
+              </div>
+              <Button asChild variant='outline' size='sm' className='shrink-0'>
+                <Link href='/admin/kangur/appearance'>Open theme editor</Link>
+              </Button>
+            </div>
+          </Card>
         </FormSection>
 
         <FormSection

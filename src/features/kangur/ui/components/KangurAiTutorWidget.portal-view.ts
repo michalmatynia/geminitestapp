@@ -69,6 +69,7 @@ type UseKangurAiTutorPortalViewModelInput = {
   emptyStateMessage: KangurAiTutorPanelBodyContextValue['emptyStateMessage'];
   floatingAvatarPlacement: KangurAiTutorPortalContextValue['avatar']['floatingAvatarPlacement'];
   focusChipLabel: KangurAiTutorPanelBodyContextValue['focusChipLabel'];
+  guestAuthFormVisible: boolean;
   guestIntroHelpVisible: boolean;
   guestTutorAssistantLabel: string;
   guidedArrowheadTransition: KangurAiTutorPortalContextValue['avatar']['guidedArrowheadTransition'];
@@ -121,6 +122,7 @@ type UseKangurAiTutorPortalViewModelInput = {
   handleFollowUpClick: KangurAiTutorPanelBodyContextValue['handleFollowUpClick'];
   handleWebsiteHelpTargetClick: KangurAiTutorPanelBodyContextValue['handleWebsiteHelpTargetClick'];
   handleGuestIntroAccept: KangurAiTutorPortalContextValue['guestIntro']['onAccept'];
+  handleGuestIntroStartChat: KangurAiTutorPortalContextValue['guestIntro']['onStartChat'];
   handleHomeOnboardingAdvance: KangurAiTutorPortalContextValue['guidedCallout']['onAdvanceHomeOnboarding'];
   handleHomeOnboardingBack: KangurAiTutorPortalContextValue['guidedCallout']['onBackHomeOnboarding'];
   handleHomeOnboardingFinishEarly: KangurAiTutorPortalContextValue['guidedCallout']['onFinishHomeOnboarding'];
@@ -272,7 +274,7 @@ export function useKangurAiTutorPortalViewModel(
     ? input.guidedAvatarLayout.placement
     : null;
 
-  const panelBodyContextValue = useMemo<KangurAiTutorPanelBodyContextValue>(
+    const panelBodyContextValue = useMemo<KangurAiTutorPanelBodyContextValue>(
     () => ({
       activeFocus: input.activeFocus,
       activeSectionRect: input.activeSectionRect,
@@ -287,6 +289,7 @@ export function useKangurAiTutorPortalViewModel(
       canStartHomeOnboardingManually: input.canStartHomeOnboardingManually,
       drawingImageData: input.drawingImageData,
       drawingMode: input.drawingMode,
+      guestAuthFormVisible: input.guestAuthFormVisible,
       emptyStateMessage: input.emptyStateMessage,
       focusChipLabel: input.focusChipLabel,
       handleClearDrawing: input.handleClearDrawing,
@@ -341,6 +344,7 @@ export function useKangurAiTutorPortalViewModel(
       input.canStartHomeOnboardingManually,
       input.drawingImageData,
       input.drawingMode,
+      input.guestAuthFormVisible,
       input.emptyStateMessage,
       input.focusChipLabel,
       input.handleClearDrawing,
@@ -445,6 +449,7 @@ export function useKangurAiTutorPortalViewModel(
         shouldRender: shouldRenderGuestIntro,
         onAccept: handleCanonicalOnboardingAccept,
         onClose: handleCanonicalOnboardingDismiss,
+        onStartChat: input.handleGuestIntroStartChat,
       },
       guidedCallout: {
         avatarPlacement: guidedCalloutAvatarPlacement,
@@ -616,6 +621,7 @@ export function useKangurAiTutorPortalViewModel(
       input.handleFloatingAvatarPointerMove,
       input.handleFloatingAvatarPointerUp,
       input.handleGuestIntroAccept,
+      input.handleGuestIntroStartChat,
       input.handleHomeOnboardingAdvance,
       input.handleHomeOnboardingBack,
       input.handleHomeOnboardingFinishEarly,

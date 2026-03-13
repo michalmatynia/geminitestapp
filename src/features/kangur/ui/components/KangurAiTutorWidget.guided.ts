@@ -73,6 +73,12 @@ const buildSectionExplainPrompt = (
 
 export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
   activeSelectedText: string | null;
+  handleOpenChat: (
+    reason: 'section_explain' | 'selection_explain',
+    options?: {
+      panelShellMode?: 'default' | 'minimal';
+    }
+  ) => void;
   hasSelectionPanelReady: boolean;
   isLoading?: boolean;
   isOpen: boolean;
@@ -85,6 +91,7 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
   telemetryContext: TelemetryContext;
 }): void {
   const {
+    handleOpenChat,
     hasSelectionPanelReady,
     isLoading = false,
     isOpen,
@@ -123,7 +130,11 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
       current?.selectedText === selectionGuidanceHandoffText ? null : current
     );
     setSelectionGuidanceHandoffText(null);
+    handleOpenChat('selection_explain', {
+      panelShellMode: 'minimal',
+    });
   }, [
+    handleOpenChat,
     hasSelectionPanelReady,
     isLoading,
     isOpen,
@@ -530,11 +541,24 @@ export function useKangurAiTutorGuidedFlow(input: {
         surface: selectionConversationFocus.surface ?? undefined,
       });
 
+      const revealDelayMs = prefersReducedMotion
+        ? 0
+        : Math.max(220, Math.round(motionProfile.guidedAvatarTransition.duration * 1000));
+      selectionGuidanceRevealTimeoutRef.current = window.setTimeout(() => {
+        selectionGuidanceRevealTimeoutRef.current = null;
+        setSelectionGuidanceCalloutVisibleText(selectionText);
+        if (messageCount === 0) {
+          handleOpenChat('selection_explain', {
+            panelShellMode: 'minimal',
+          });
+        }
+      }, revealDelayMs);
     },
     [
       activeSelectionPageRect,
       activateSelectionGlow,
       focusSelectionPageRect,
+      handleOpenChat,
       messageCount,
       motionProfile.guidedAvatarTransition.duration,
       prefersReducedMotion,

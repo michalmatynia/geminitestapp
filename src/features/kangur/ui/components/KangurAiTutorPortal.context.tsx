@@ -96,6 +96,7 @@ export type KangurAiTutorPortalContextValue = {
     shouldRender: boolean;
     onAccept: () => void;
     onClose: () => void;
+    onStartChat: () => void;
   };
   guidedCallout: {
     avatarPlacement: 'top' | 'bottom' | 'left' | 'right' | null;

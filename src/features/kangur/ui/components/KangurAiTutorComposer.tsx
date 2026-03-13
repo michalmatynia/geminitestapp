@@ -23,6 +23,7 @@ export function KangurAiTutorComposer(): JSX.Element {
     canSendMessages,
     drawingImageData,
     drawingMode,
+    guestAuthFormVisible,
     handleClearDrawing,
     handleDrawingComplete,
     handleKeyDown,
@@ -82,7 +83,7 @@ export function KangurAiTutorComposer(): JSX.Element {
         </div>
       ) : null}
       <div className='flex items-center gap-2'>
-        {!showToolboxLayout ? (
+        {!showToolboxLayout && !guestAuthFormVisible ? (
           <KangurButton
             data-testid='kangur-ai-tutor-drawing-toggle'
             type='button'

@@ -157,6 +157,7 @@ export function Asset3DEditModal(props: Asset3DEditModalProps): React.JSX.Elemen
               type='button'
               variant='secondary'
               size='icon'
+              aria-label='Add tag'
               onClick={handleAddTag}
               className='h-9 w-9'
             >

@@ -544,7 +544,7 @@ describe('KangurAiTutorWidget - Actions', () => {
         contentId: 'lesson-1',
         title: 'Dodawanie',
       },
-      isOpen: false,
+      isOpen: true,
       messages: [],
       isLoading: false,
       isUsageLoading: false,

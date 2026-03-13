@@ -98,6 +98,7 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
                     type='button'
                     size='icon'
                     variant='outline'
+                    aria-label='Draw SVG path'
                     onClick={handleSvgDrawCanvas}
                     className='h-9 w-9'
                   >
@@ -109,6 +110,7 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
                     type='button'
                     size='icon'
                     variant='ghost'
+                    aria-label='Clear SVG path'
                     onClick={() => onChange({ ...config, svgDrawPath: '', svgDrawShapes: [] })}
                     disabled={!svgDrawPathValue && svgDrawShapesValue.length === 0}
                     className='h-9 w-9'
@@ -183,6 +185,7 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
                     type='button'
                     size='icon'
                     variant='outline'
+                    aria-label='Draw morph target path'
                     onClick={handleSvgMorphDraw}
                     className='h-9 w-9'
                   >
@@ -194,6 +197,7 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
                     type='button'
                     size='icon'
                     variant='ghost'
+                    aria-label='Clear morph target path'
                     onClick={() => onChange({ ...config, svgMorphTo: '', svgMorphShapes: [] })}
                     disabled={!svgMorphToValue && svgMorphShapesValue.length === 0}
                     className='h-9 w-9'

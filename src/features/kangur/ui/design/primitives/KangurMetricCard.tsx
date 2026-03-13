@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { cn } from '@/shared/utils';
 
-import { KANGUR_ACCENT_STYLES, type KangurAccent } from '../tokens';
+import { KANGUR_ACCENT_STYLES } from '../tokens';
 import { kangurInfoCardVariants, type KangurInfoCardProps } from './KangurInfoCard';
 
 export type KangurMetricCardProps = React.HTMLAttributes<HTMLDivElement> &

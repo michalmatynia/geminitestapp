@@ -61,6 +61,7 @@ export function CaseResolverPartySelectField(
         <SegmentedControl
           size='xs'
           value={filter}
+          ariaLabel='Filter party options'
           onChange={(v) => setFilter(v)}
           options={[
             { value: 'all', label: 'All' },

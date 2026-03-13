@@ -253,7 +253,7 @@ const resolveLessonDocumentSelectedTextSnippet = (input: {
       (
         candidate
       ): candidate is { text: string; explanation: string | null; score: number } =>
-        candidate !== null && candidate.score > 0
+        candidate !== null && typeof candidate === 'object' && candidate.score > 0
     )
     .sort((left, right) => right.score - left.score);
 

@@ -202,7 +202,7 @@ describe('useKangurAiTutorGuidedDisplayState', () => {
     );
   });
 
-  it('uses the owning section rect as the guided spotlight when the excerpt resolves to a tutor anchor', () => {
+  it('keeps the guided spotlight on the selected text even when the excerpt resolves to a tutor anchor', () => {
     const sectionRect = new DOMRect(80, 140, 520, 240);
 
     render(
@@ -246,10 +246,10 @@ describe('useKangurAiTutorGuidedDisplayState', () => {
     );
     expect(screen.getByTestId('guided-selection-spotlight-rect')).toHaveTextContent(
       JSON.stringify({
-        left: 80,
-        top: 140,
-        width: 520,
-        height: 240,
+        left: 120,
+        top: 180,
+        width: 182,
+        height: 56,
       })
     );
   });

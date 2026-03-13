@@ -42,6 +42,7 @@ type ReducedMotionTransitions = {
 
 type GuidedArrowhead = TutorGuidedArrowhead;
 type AvatarPointer = TutorAvatarPointer;
+type TutorPanelChromeVariant = 'default' | 'contextual_result';
 
 export type KangurAiTutorPortalContextValue = {
   avatar: {
@@ -142,6 +143,7 @@ export type KangurAiTutorPortalContextValue = {
     bubbleWidth?: number;
     canDetachPanelFromContext: boolean;
     canMovePanelToContext: boolean;
+    chromeVariant: TutorPanelChromeVariant;
     compactDockedTutorPanelWidth: number;
     isAskModalMode: boolean;
     isCompactDockedTutorPanel: boolean;

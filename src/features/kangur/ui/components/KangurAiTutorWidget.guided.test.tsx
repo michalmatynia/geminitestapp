@@ -97,10 +97,7 @@ describe('useKangurAiTutorSelectionGuidanceDockOpenEffect', () => {
 });
 
 describe('useKangurAiTutorSelectionGuidanceHandoffEffect', () => {
-  it('finalizes the selection handoff once the docked panel is ready even for section-aware excerpts', async () => {
-    const setContextualTutorModeMock = vi.fn();
-    const setGuidedTutorTargetMock = vi.fn();
-    const setSelectionGuidanceCalloutVisibleTextMock = vi.fn();
+  it('finalizes the selection handoff without clearing the guided selection surface', async () => {
     const setSelectionGuidanceHandoffTextMock = vi.fn();
     const setSelectionResponseCompleteMock = vi.fn();
     const setSelectionResponsePendingMock = vi.fn();
@@ -114,9 +111,6 @@ describe('useKangurAiTutorSelectionGuidanceHandoffEffect', () => {
         panelMotionState: 'settled',
         selectionConversationSelectedText: 'Ranking wynikow',
         selectionGuidanceHandoffText: 'Ranking wynikow',
-        setContextualTutorMode: setContextualTutorModeMock,
-        setGuidedTutorTarget: setGuidedTutorTargetMock,
-        setSelectionGuidanceCalloutVisibleText: setSelectionGuidanceCalloutVisibleTextMock,
         setSelectionGuidanceHandoffText: setSelectionGuidanceHandoffTextMock,
         setSelectionResponseComplete: setSelectionResponseCompleteMock,
         setSelectionResponsePending: setSelectionResponsePendingMock,
@@ -128,38 +122,13 @@ describe('useKangurAiTutorSelectionGuidanceHandoffEffect', () => {
       })
     );
 
-    await waitFor(() => expect(setGuidedTutorTargetMock).toHaveBeenCalledTimes(1));
-
-    const updater = setGuidedTutorTargetMock.mock.calls[0]?.[0];
-    expect(typeof updater).toBe('function');
-    expect(
-      updater({
-        kind: 'selection_excerpt',
-        mode: 'selection',
+    await waitFor(() =>
+      expect(setSelectionResponseCompleteMock).toHaveBeenCalledWith({
         selectedText: 'Ranking wynikow',
       })
-    ).toBeNull();
-    expect(
-      updater({
-        kind: 'selection_excerpt',
-        mode: 'selection',
-        selectedText: 'Inny fragment',
-      })
-    ).toEqual({
-      kind: 'selection_excerpt',
-      mode: 'selection',
-      selectedText: 'Inny fragment',
-    });
-    expect(setSelectionResponseCompleteMock).toHaveBeenCalledWith({
-      selectedText: 'Ranking wynikow',
-    });
-    expect(setSelectionGuidanceCalloutVisibleTextMock).toHaveBeenCalledWith(null);
+    );
     expect(setSelectionGuidanceHandoffTextMock).toHaveBeenCalledWith(null);
-
-    const contextualModeUpdater = setContextualTutorModeMock.mock.calls[0]?.[0];
-    expect(typeof contextualModeUpdater).toBe('function');
-    expect(contextualModeUpdater('selection_explain')).toBeNull();
-    expect(contextualModeUpdater('section_explain')).toBe('section_explain');
+    expect(setSelectionResponseCompleteMock).toHaveBeenCalledTimes(1);
 
     const pendingUpdater = setSelectionResponsePendingMock.mock.calls[0]?.[0];
     expect(typeof pendingUpdater).toBe('function');
@@ -170,9 +139,6 @@ describe('useKangurAiTutorSelectionGuidanceHandoffEffect', () => {
   });
 
   it('finalizes the selection handoff when the live excerpt reflows but the stored selection is unchanged', async () => {
-    const setContextualTutorModeMock = vi.fn();
-    const setGuidedTutorTargetMock = vi.fn();
-    const setSelectionGuidanceCalloutVisibleTextMock = vi.fn();
     const setSelectionGuidanceHandoffTextMock = vi.fn();
     const setSelectionResponseCompleteMock = vi.fn();
     const setSelectionResponsePendingMock = vi.fn();
@@ -186,9 +152,6 @@ describe('useKangurAiTutorSelectionGuidanceHandoffEffect', () => {
         panelMotionState: 'settled',
         selectionConversationSelectedText: '🏗️ MISTRZOSTWO 67% 2/4 odznak',
         selectionGuidanceHandoffText: '🏗️ MISTRZOSTWO 67% 2/4 odznak',
-        setContextualTutorMode: setContextualTutorModeMock,
-        setGuidedTutorTarget: setGuidedTutorTargetMock,
-        setSelectionGuidanceCalloutVisibleText: setSelectionGuidanceCalloutVisibleTextMock,
         setSelectionGuidanceHandoffText: setSelectionGuidanceHandoffTextMock,
         setSelectionResponseComplete: setSelectionResponseCompleteMock,
         setSelectionResponsePending: setSelectionResponsePendingMock,
@@ -205,7 +168,7 @@ describe('useKangurAiTutorSelectionGuidanceHandoffEffect', () => {
         selectedText: '🏗️ MISTRZOSTWO 67% 2/4 odznak',
       })
     );
-    expect(setGuidedTutorTargetMock).toHaveBeenCalledTimes(1);
+    expect(setSelectionGuidanceHandoffTextMock).toHaveBeenCalledWith(null);
   });
 });
 

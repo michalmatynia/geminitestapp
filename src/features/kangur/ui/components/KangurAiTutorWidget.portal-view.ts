@@ -24,6 +24,7 @@ type TutorSurfaceMode =
   | 'auth_guided'
   | 'selection_guided'
   | 'section_guided';
+type TutorPanelChromeVariant = 'default' | 'contextual_result';
 type GuidedCalloutAvatarPlacement = 'top' | 'bottom' | 'left' | 'right';
 
 const isGuidedCalloutAvatarPlacement = (
@@ -255,6 +256,10 @@ export function useKangurAiTutorPortalViewModel(
   const isMinimalPanelMode =
     !input.isAskModalMode &&
     (isContextualMinimalPanelMode || input.shouldRenderContextlessTutorUi);
+  const panelChromeVariant: TutorPanelChromeVariant =
+    input.showSelectionExplainCompleteState || input.showSectionExplainCompleteState
+      ? 'contextual_result'
+      : 'default';
   const minimalPanelStyle = getGuestIntroPanelStyle(input.viewport);
   const showToolboxLayout =
     input.uiMode === 'freeform' &&
@@ -490,6 +495,7 @@ export function useKangurAiTutorPortalViewModel(
         canDetachPanelFromContext: input.isPanelFollowingContext,
         canMovePanelToContext:
           input.isPanelContextMoveAvailable && !input.isPanelFollowingContext,
+        chromeVariant: panelChromeVariant,
         canResetPanelPosition: input.isPanelPositionCustomized,
         compactDockedTutorPanelWidth: input.compactDockedTutorPanelWidth,
         isAskModalMode: input.isAskModalMode,
@@ -567,6 +573,7 @@ export function useKangurAiTutorPortalViewModel(
       input.handleDetachPanelFromContext,
       input.compactDockedTutorPanelWidth,
       input.contextualTutorMode,
+      panelChromeVariant,
       input.guestTutorAssistantLabel,
       input.guidedArrowheadTransition,
       input.guidedAvatarArrowhead,

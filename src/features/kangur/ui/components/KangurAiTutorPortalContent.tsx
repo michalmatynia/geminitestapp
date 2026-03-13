@@ -75,44 +75,46 @@ export function KangurAiTutorPortalContent() {
         ) : null}
       </AnimatePresence>
 
-      <KangurAiTutorGuidedCallout
-        avatarPlacement={guidedCallout.avatarPlacement}
-        calloutKey={guidedCallout.calloutKey}
-        calloutTestId={guidedCallout.calloutTestId}
-        detail={guidedCallout.detail}
-        entryDirection={guidedCallout.entryDirection}
-        headerLabel={guidedCallout.headerLabel}
-        mode={guidedCallout.mode}
-        onAction={(action) => {
-          if (action === 'advance_home_onboarding') {
-            guidedCallout.onAdvanceHomeOnboarding();
-            return;
-          }
-          if (action === 'back_home_onboarding') {
-            guidedCallout.onBackHomeOnboarding();
-            return;
-          }
-          if (action === 'finish_home_onboarding') {
-            guidedCallout.onFinishHomeOnboarding();
-            return;
-          }
-          guidedCallout.onClose();
-        }}
-        placement={guidedCallout.placement}
-        prefersReducedMotion={guidedCallout.prefersReducedMotion}
-        reducedMotionTransitions={guidedCallout.reducedMotionTransitions}
-        sectionGuidanceLabel={guidedCallout.sectionGuidanceLabel}
-        sectionResponsePendingKind={guidedCallout.sectionResponsePendingKind}
-        selectionPreview={guidedCallout.selectionPreview}
-        shouldRender={guidedCallout.shouldRender}
-        showSectionGuidanceCallout={guidedCallout.showSectionGuidanceCallout}
-        showSelectionGuidanceCallout={guidedCallout.showSelectionGuidanceCallout}
-        stepLabel={guidedCallout.stepLabel}
-        style={guidedCallout.style}
-        title={guidedCallout.title}
-        transitionDuration={guidedCallout.transitionDuration}
-        transitionEase={guidedCallout.transitionEase}
-      />
+      <KangurAiTutorPanelBodyProvider value={panel.panelBodyContextValue}>
+        <KangurAiTutorGuidedCallout
+          avatarPlacement={guidedCallout.avatarPlacement}
+          calloutKey={guidedCallout.calloutKey}
+          calloutTestId={guidedCallout.calloutTestId}
+          detail={guidedCallout.detail}
+          entryDirection={guidedCallout.entryDirection}
+          headerLabel={guidedCallout.headerLabel}
+          mode={guidedCallout.mode}
+          onAction={(action) => {
+            if (action === 'advance_home_onboarding') {
+              guidedCallout.onAdvanceHomeOnboarding();
+              return;
+            }
+            if (action === 'back_home_onboarding') {
+              guidedCallout.onBackHomeOnboarding();
+              return;
+            }
+            if (action === 'finish_home_onboarding') {
+              guidedCallout.onFinishHomeOnboarding();
+              return;
+            }
+            guidedCallout.onClose();
+          }}
+          placement={guidedCallout.placement}
+          prefersReducedMotion={guidedCallout.prefersReducedMotion}
+          reducedMotionTransitions={guidedCallout.reducedMotionTransitions}
+          sectionGuidanceLabel={guidedCallout.sectionGuidanceLabel}
+          sectionResponsePendingKind={guidedCallout.sectionResponsePendingKind}
+          selectionPreview={guidedCallout.selectionPreview}
+          shouldRender={guidedCallout.shouldRender}
+          showSectionGuidanceCallout={guidedCallout.showSectionGuidanceCallout}
+          showSelectionGuidanceCallout={guidedCallout.showSelectionGuidanceCallout}
+          stepLabel={guidedCallout.stepLabel}
+          style={guidedCallout.style}
+          title={guidedCallout.title}
+          transitionDuration={guidedCallout.transitionDuration}
+          transitionEase={guidedCallout.transitionEase}
+        />
+      </KangurAiTutorPanelBodyProvider>
 
       <KangurAiTutorSpotlightOverlays
         guidedMode={spotlights.guidedMode}
@@ -172,6 +174,7 @@ export function KangurAiTutorPortalContent() {
         bubbleWidth={panel.bubbleWidth}
         canDetachPanelFromContext={panel.canDetachPanelFromContext}
         canMovePanelToContext={panel.canMovePanelToContext}
+        chromeVariant={panel.chromeVariant}
         canResetPanelPosition={panel.canResetPanelPosition}
         compactDockedTutorPanelWidth={panel.compactDockedTutorPanelWidth}
         isAskModalMode={panel.isAskModalMode}

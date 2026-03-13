@@ -22,7 +22,7 @@ export const kangurCardTitleVariants = cva(
 
 export type KangurCardTitleProps = React.HTMLAttributes<HTMLElement> &
   VariantProps<typeof kangurCardTitleVariants> & {
-    as?: 'div' | 'h3' | 'h4' | 'p' | 'span';
+    as?: 'div' | 'h1' | 'h2' | 'h3' | 'h4' | 'p' | 'span';
   };
 
 export function KangurCardTitle({

@@ -61,7 +61,10 @@ vi.mock('@/shared/lib/security/csrf-client', () => ({
   withCsrfHeaders: (headers?: HeadersInit) => new Headers(headers),
 }));
 
-import { resolveKangurLoginCallbackNavigation } from '@/features/kangur/ui/KangurLoginPage';
+import {
+  KangurLoginPage,
+  resolveKangurLoginCallbackNavigation,
+} from '@/features/kangur/ui/KangurLoginPage';
 
 describe('KangurLoginPage', () => {
   const originalLocation = window.location;

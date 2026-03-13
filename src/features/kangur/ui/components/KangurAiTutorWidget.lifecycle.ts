@@ -189,6 +189,16 @@ export function useKangurAiTutorLifecycleEffects({
     setViewportTick,
   } = widgetState;
 
+  const shouldPreserveSelectionGuidanceState =
+    contextualTutorMode === 'selection_explain' &&
+    (
+      guidedTutorTarget?.mode === 'selection' ||
+      selectionConversationContext !== null ||
+      selectionGuidanceCalloutVisibleText !== null ||
+      selectionGuidanceHandoffText !== null ||
+      selectionResponsePending !== null
+    );
+
   useEffect(() => {
     setMounted(true);
   }, [setMounted]);
@@ -621,7 +631,7 @@ export function useKangurAiTutorLifecycleEffects({
       return;
     }
 
-    if (!isOpen) {
+    if (!isOpen && !shouldPreserveSelectionGuidanceState) {
       setSelectionConversationContext(null);
       setHighlightedText(null);
     }
@@ -631,6 +641,7 @@ export function useKangurAiTutorLifecycleEffects({
     selectedText,
     setHighlightedText,
     setSelectionConversationContext,
+    shouldPreserveSelectionGuidanceState,
   ]);
 
   useEffect(() => {
@@ -649,16 +660,6 @@ export function useKangurAiTutorLifecycleEffects({
   }, [dismissedSelectedText, rawSelectedText, selectedText, setDismissedSelectedText]);
 
   useEffect(() => {
-    const shouldPreserveSelectionGuidanceState =
-      contextualTutorMode === 'selection_explain' &&
-      (
-        guidedTutorTarget?.mode === 'selection' ||
-        selectionConversationContext !== null ||
-        selectionGuidanceCalloutVisibleText !== null ||
-        selectionGuidanceHandoffText !== null ||
-        selectionResponsePending !== null
-      );
-
     if (!isOpen) {
       setPanelAnchorMode('dock');
       setDismissedSelectedText(null);

@@ -21,7 +21,6 @@ import {
   isSectionExplainableTutorAnchor,
   isSectionGuidedTutorTarget,
   isSelectionGuidedTutorTarget,
-  selectBestSelectionAnchor,
 } from './KangurAiTutorWidget.helpers';
 
 import type {
@@ -317,38 +316,9 @@ export function useKangurAiTutorGuidedDisplayState(input: {
     selectionResponsePending,
   ]);
 
-  const guidedSelectionAnchor = useMemo(() => {
-    if (
-      (!isSelectionGuidedTutorTarget(guidedTutorTarget) && !selectionResponsePending) ||
-      !activeSelectionRect ||
-      !tutorAnchorContext
-    ) {
-      return null;
-    }
-
-    const anchor = selectBestSelectionAnchor({
-      anchors: tutorAnchorContext.anchors,
-      selectionRect: activeSelectionRect,
-      sessionContentId,
-      sessionSurface,
-    });
-
-    return anchor && isSectionExplainableTutorAnchor(anchor) ? anchor : null;
-  }, [
-    activeSelectionRect,
-    guidedTutorTarget,
-    selectionResponsePending,
-    sessionContentId,
-    sessionSurface,
-    tutorAnchorContext,
-    viewportTick,
-  ]);
-
-  const guidedSelectionSectionRect = cloneRect(guidedSelectionAnchor?.getRect());
-
   const guidedSelectionSpotlightRect =
     isSelectionGuidedTutorTarget(guidedTutorTarget) || selectionResponsePending
-      ? cloneRect(guidedSelectionSectionRect ?? guidedSelectionRect)
+      ? cloneRect(guidedSelectionRect)
       : null;
   const guidedSelectionGlowRects: DOMRect[] = [];
 

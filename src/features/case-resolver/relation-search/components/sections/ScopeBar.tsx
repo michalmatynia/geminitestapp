@@ -56,6 +56,7 @@ export function ScopeBar(): React.JSX.Element {
         ]}
         value={documentSearchScope}
         onChange={setDocumentSearchScope}
+        ariaLabel='Document search scope'
       />
 
       {showFileTypeFilter && (
@@ -104,13 +105,14 @@ export function ScopeBar(): React.JSX.Element {
       <SegmentedControl
         size='xs'
         options={[
-          { value: 'compact', label: '', icon: AlignJustify },
-          { value: 'normal', label: '', icon: List },
-          { value: 'expanded', label: '', icon: ListPlus },
+          { value: 'compact', label: '', icon: AlignJustify, ariaLabel: 'Compact view' },
+          { value: 'normal', label: '', icon: List, ariaLabel: 'Comfortable view' },
+          { value: 'expanded', label: '', icon: ListPlus, ariaLabel: 'Expanded view' },
         ]}
         value={resultHeight}
         onChange={(v) => setResultHeight(v)}
         activeClassName='text-cyan-300'
+        ariaLabel='Result density'
       />
     </div>
   );

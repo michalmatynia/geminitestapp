@@ -309,6 +309,7 @@ export function Asset3DUploader({ className }: Asset3DUploaderProps): React.JSX.
                   type='button'
                   variant='secondary'
                   size='icon'
+                  aria-label='Add tag'
                   onClick={handleAddTag}
                   disabled={isUploading}
                   className='h-9 w-9'

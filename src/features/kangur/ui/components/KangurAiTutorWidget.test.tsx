@@ -446,6 +446,8 @@ describe('KangurAiTutorWidget', () => {
       speechSynthesisMock.speaking = true;
       utterance.onstart?.();
     });
+    clearSelectionMock.mockImplementation(() => undefined);
+    clearSelectionGlowMock.mockImplementation(() => undefined);
     openChatMock.mockImplementation(() => undefined);
     closeChatMock.mockImplementation(() => undefined);
     settingsStoreMock.get.mockImplementation((key: string) => {
@@ -2731,9 +2733,7 @@ describe('KangurAiTutorWidget', () => {
         ...tutorState,
         isOpen: true,
       };
-      act(() => {
-        rerenderWidget?.();
-      });
+      rerenderWidget?.();
     });
     const { rerender } = render(<KangurAiTutorWidget />);
     rerenderWidget = () => {
@@ -2849,11 +2849,22 @@ describe('KangurAiTutorWidget', () => {
     await act(async () => {
       await vi.runOnlyPendingTimersAsync();
     });
-    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
-    expect(screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-surface-diagnostics')).toHaveAttribute(
       'data-suppress-panel-surface',
-      'false'
+      'true'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-answer')).toHaveTextContent(
+      'To jest wyjaśnienie fragmentu.'
+    );
+    expect(screen.getByRole('button', { name: 'Rozumiem' })).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('kangur-ai-tutor-selection-guided-page-content-badge')
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
+      'data-avatar-placement',
+      'guided'
     );
     expect(screen.getByText('To jest wyjaśnienie fragmentu.')).toBeInTheDocument();
     expect(
@@ -2964,6 +2975,159 @@ describe('KangurAiTutorWidget', () => {
       '🏗️ MISTRZOSTWO 67% 2/4 odznak Budowniczy mistrzostwa · 2/3 lekcje'
     );
 
+    await act(async () => {
+      tutorState = {
+        ...tutorState,
+        isLoading: false,
+        messages: [
+          {
+            role: 'assistant',
+            content: 'To jest stary wątek, który nie powinien wrócić.',
+          },
+          {
+            role: 'user',
+            content: 'Wyjaśnij zaznaczony fragment krok po kroku.',
+          },
+          {
+            role: 'assistant',
+            content: 'To jest wyjaśnienie postępu z zapisanej treści strony.',
+            answerResolutionMode: 'page_content',
+          },
+        ],
+      };
+      rerenderWidget?.();
+      resolveSendMessage?.();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(openChatMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+
+    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('kangur-ai-tutor-selection-guided-answer')
+    ).toHaveTextContent('To jest wyjaśnienie postępu z zapisanej treści strony.');
+    expect(
+      screen.getByTestId('kangur-ai-tutor-selection-guided-page-content-badge')
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-source')).toBeInTheDocument();
+    expect(
+      screen.queryByText('To jest stary wątek, który nie powinien wrócić.')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Już przygotowuję wyjaśnienie dokładnie dla zaznaczonego tekstu.')
+    ).not.toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it('keeps the home-progress excerpt thread alive when the browser selection clears before the docked tutor opens', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('scrollTo', vi.fn());
+    let resolveSendMessage: (() => void) | null = null;
+    let liveSelectedText =
+      '🏗️ MISTRZOSTWO 67% 2/4 odznak Budowniczy mistrzostwa · 2/3 lekcje';
+    let tutorState = {
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        allowGames: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      sessionContext: {
+        surface: 'game',
+        contentId: 'game:practice:addition',
+        title: 'Podsumowanie gry',
+      },
+      isOpen: false,
+      messages: [
+        {
+          role: 'assistant',
+          content: 'To jest stary wątek, który nie powinien wrócić.',
+        },
+      ],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: null,
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    };
+    useKangurAiTutorMock.mockImplementation(() => tutorState);
+    useKangurTextHighlightMock.mockImplementation(() => ({
+      activateSelectionGlow: activateSelectionGlowMock,
+      selectedText: liveSelectedText,
+      selectionLineRects: liveSelectedText ? [new DOMRect(180, 1040, 260, 52)] : [],
+      selectionRect: liveSelectedText ? new DOMRect(180, 1040, 260, 52) : null,
+      selectionContainerRect: liveSelectedText ? new DOMRect(120, 980, 420, 220) : null,
+      clearSelection: clearSelectionMock,
+      clearSelectionGlow: clearSelectionGlowMock,
+      selectionGlowSupported: false,
+    }));
+    let rerenderWidget: (() => void) | null = null;
+    openChatMock.mockImplementation(() => {
+      tutorState = {
+        ...tutorState,
+        isOpen: true,
+      };
+      act(() => {
+        rerenderWidget?.();
+      });
+    });
+    clearSelectionMock.mockImplementation(() => {
+      liveSelectedText = null;
+      rerenderWidget?.();
+    });
+    const { rerender } = renderWithTutorAnchors({ homeAnchorKinds: ['progress'] });
+    rerenderWidget = () => {
+      rerender(buildTutorAnchorsTree({ homeAnchorKinds: ['progress'] }));
+    };
+    sendMessageMock.mockImplementation(() => {
+      tutorState = {
+        ...tutorState,
+        isLoading: true,
+        messages: [
+          ...tutorState.messages,
+          {
+            role: 'user',
+            content: 'Wyjaśnij zaznaczony fragment krok po kroku.',
+          },
+        ],
+      };
+      rerenderWidget?.();
+      return new Promise<void>((resolve) => {
+        resolveSendMessage = resolve;
+      });
+    });
+
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    expect(clearSelectionMock).toHaveBeenCalled();
+    expect(openChatMock).not.toHaveBeenCalled();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
+      '🏗️ MISTRZOSTWO 67% 2/4 odznak Budowniczy mistrzostwa · 2/3 lekcje'
+    );
+
     tutorState = {
       ...tutorState,
       isLoading: false,
@@ -2997,11 +3161,15 @@ describe('KangurAiTutorWidget', () => {
       await vi.runOnlyPendingTimersAsync();
     });
 
-    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(
-      screen.getByText('To jest wyjaśnienie postępu z zapisanej treści strony.')
+      screen.getByTestId('kangur-ai-tutor-selection-guided-answer')
+    ).toHaveTextContent('To jest wyjaśnienie postępu z zapisanej treści strony.');
+    expect(
+      screen.getByTestId('kangur-ai-tutor-selection-guided-page-content-badge')
     ).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-page-content-answer-badge')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-source')).toBeInTheDocument();
     expect(
       screen.queryByText('To jest stary wątek, który nie powinien wrócić.')
     ).not.toBeInTheDocument();
@@ -3010,6 +3178,7 @@ describe('KangurAiTutorWidget', () => {
     ).not.toBeInTheDocument();
     vi.useRealTimers();
   });
+
   it('redocks the pending selection guidance when the learner clicks away before the docked tutor opens', async () => {
     vi.useFakeTimers();
     vi.stubGlobal('scrollTo', vi.fn());
@@ -3082,7 +3251,7 @@ describe('KangurAiTutorWidget', () => {
 
     expect(closeChatMock).toHaveBeenCalledTimes(1);
     expect(clearSelectionMock).toHaveBeenCalled();
-    expect(setHighlightedTextMock).toHaveBeenLastCalledWith(null);
+    expect(setHighlightedTextMock).toHaveBeenCalledWith(null);
     expect(screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')).not.toBeInTheDocument();
     expect(trackKangurClientEventMock).toHaveBeenCalledWith(
       'kangur_ai_tutor_closed',
@@ -6584,7 +6753,7 @@ describe('KangurAiTutorWidget', () => {
     render(<KangurAiTutorWidget />);
     expect(screen.queryByTestId('kangur-ai-tutor-context-switch')).not.toBeInTheDocument();
   });
-  it('keeps the underlying section anchor when Zapytaj o to is used inside a registered tutor section', async () => {
+  it('keeps the selection spotlight scoped to the highlighted fragment inside the home progress anchor', async () => {
     vi.useFakeTimers();
     openChatMock.mockImplementation(() => undefined);
     sendMessageMock.mockImplementation(() => Promise.resolve());
@@ -6622,22 +6791,22 @@ describe('KangurAiTutorWidget', () => {
     });
     useKangurTextHighlightMock.mockReturnValue({
       activateSelectionGlow: activateSelectionGlowMock,
-      selectedText: 'Ranking wynikow',
-      selectionLineRects: [new DOMRect(180, 1040, 180, 26)],
-      selectionRect: new DOMRect(180, 1040, 180, 26),
-      selectionContainerRect: new DOMRect(120, 980, 420, 220),
+      selectedText: 'Mistrzostwo 67%',
+      selectionLineRects: [new DOMRect(680, 1040, 180, 26)],
+      selectionRect: new DOMRect(680, 1040, 180, 26),
+      selectionContainerRect: new DOMRect(620, 980, 420, 220),
       clearSelection: clearSelectionMock,
       clearSelectionGlow: clearSelectionGlowMock,
       selectionGlowSupported: false,
     });
-    renderWithTutorAnchors({ homeAnchorKinds: ['leaderboard'] });
+    renderWithTutorAnchors({ homeAnchorKinds: ['progress'] });
 
     fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
 
     expect(screen.queryByTestId('kangur-ai-tutor-selection-glow')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-spotlight')).toHaveStyle({
-      width: '440px',
-      height: '240px',
+      width: '200px',
+      height: '46px',
     });
 
     await act(async () => {
@@ -6648,10 +6817,10 @@ describe('KangurAiTutorWidget', () => {
       'Wyjaśnij zaznaczony fragment krok po kroku.',
       expect.objectContaining({
         promptMode: 'selected_text',
-        selectedText: 'Ranking wynikow',
-        focusKind: 'leaderboard',
-        focusId: 'kangur-game-leaderboard',
-        focusLabel: 'Ranking',
+        selectedText: 'Mistrzostwo 67%',
+        focusKind: 'progress',
+        focusId: 'kangur-game-progress',
+        focusLabel: 'Postęp gracza',
         assignmentId: null,
       })
     );

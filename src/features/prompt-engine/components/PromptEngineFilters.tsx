@@ -94,6 +94,7 @@ export function PromptEngineFilters(): React.JSX.Element {
           size='md'
           className='w-full max-w-md'
           value={patternTab}
+          ariaLabel='Prompt engine pattern tabs'
           onChange={(value) => {
             setPatternTab(value);
           }}
@@ -108,6 +109,7 @@ export function PromptEngineFilters(): React.JSX.Element {
           size='md'
           className='w-full max-w-2xl'
           value={exploderSubTab}
+          ariaLabel='Prompt exploder rule categories'
           onChange={(value) => {
             setExploderSubTab(value);
           }}

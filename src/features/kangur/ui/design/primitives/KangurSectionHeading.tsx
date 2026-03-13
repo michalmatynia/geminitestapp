@@ -1,23 +1,22 @@
+import { type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
 import { cn } from '@/shared/utils';
 
-import { type KangurAccent } from '../tokens';
-import { KangurCardDescription } from './KangurCardDescription';
-import { KangurHeadline, type KangurHeadlineProps } from './KangurHeadline';
-import { KangurIconBadge, type KangurIconBadgeProps } from './KangurIconBadge';
+import { KANGUR_ACCENT_STYLES, type KangurAccent } from '../tokens';
+import { KANGUR_HEADLINE_CLASSNAMES, kangurHeadlineVariants } from './KangurHeadline';
+import { kangurIconBadgeVariants } from './KangurIconBadge';
 
 export type KangurSectionHeadingProps = React.HTMLAttributes<HTMLDivElement> & {
   accent?: KangurAccent;
   align?: 'left' | 'center';
   description?: React.ReactNode;
-  descriptionClassName?: string;
   descriptionId?: string;
-  headingAs?: KangurHeadlineProps['as'];
-  headingSize?: KangurHeadlineProps['size'];
+  headingAs?: 'h1' | 'h2' | 'h3';
+  headingSize?: VariantProps<typeof kangurHeadlineVariants>['size'];
   icon?: React.ReactNode;
   iconAccent?: KangurAccent;
-  iconSize?: KangurIconBadgeProps['size'];
+  iconSize?: VariantProps<typeof kangurIconBadgeVariants>['size'];
   layout?: 'stacked' | 'inline';
   title: React.ReactNode;
   titleId?: string;
@@ -28,52 +27,52 @@ export function KangurSectionHeading({
   align = 'center',
   className,
   description,
-  descriptionClassName,
   descriptionId,
   headingAs = 'h2',
-  headingSize = 'md',
+  headingSize = 'sm',
   icon,
   iconAccent,
-  iconSize = 'lg',
+  iconSize = 'md',
   layout = 'stacked',
   title,
   titleId,
   ...props
 }: KangurSectionHeadingProps): React.JSX.Element {
   const isInline = layout === 'inline';
-  const isCentered = align === 'center';
+  const alignmentClassName = align === 'left' ? 'items-start text-left' : 'items-center text-center';
+  const HeadingComp = headingAs;
 
   return (
     <div
       className={cn(
-        'flex gap-4',
+        'flex gap-3',
         isInline ? 'flex-row' : 'flex-col',
-        isCentered ? 'items-center text-center' : 'items-start text-left',
+        alignmentClassName,
         className
       )}
       {...props}
     >
       {icon ? (
-        <KangurIconBadge accent={iconAccent ?? accent} size={iconSize}>
+        <span
+          className={cn(
+            kangurIconBadgeVariants({ size: iconSize }),
+            KANGUR_ACCENT_STYLES[iconAccent ?? accent].icon
+          )}
+        >
           {icon}
-        </KangurIconBadge>
+        </span>
       ) : null}
-      <div className={cn('min-w-0 space-y-2', isCentered && 'flex flex-col items-center')}>
-        <KangurHeadline accent={accent} as={headingAs} id={titleId} size={headingSize}>
+      <div className={cn('space-y-1', isInline ? 'min-w-0' : undefined)}>
+        <HeadingComp
+          className={cn(kangurHeadlineVariants({ size: headingSize }), KANGUR_HEADLINE_CLASSNAMES[accent])}
+          id={titleId}
+        >
           {title}
-        </KangurHeadline>
+        </HeadingComp>
         {description ? (
-          <KangurCardDescription
-            as='div'
-            className={cn(
-              isCentered && 'mx-auto max-w-2xl',
-              descriptionClassName
-            )}
-            id={descriptionId}
-            size='sm'
-          >
+          <p className='text-sm [color:var(--kangur-page-muted-text)]' id={descriptionId}>
             {description}
-          </KangurCardDescription>
+          </p>
         ) : null}
       </div>
     </div>

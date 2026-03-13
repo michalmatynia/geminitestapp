@@ -397,12 +397,16 @@ export function useKangurAiTutorGuestIntroFlow(input: {
       trackKangurClientEvent('kangur_ai_tutor_guest_intro_accepted', {
         hasInteractiveTutor: enabled,
       });
+      if (!shouldOpenChat && isOpen) {
+        handleCloseChat('toggle');
+      }
       if (shouldOpenChat && !isOpen) {
         handleOpenChat('toggle');
       }
     },
     [
       enabled,
+      handleCloseChat,
       handleOpenChat,
       isOpen,
       setCanonicalTutorModalVisible,

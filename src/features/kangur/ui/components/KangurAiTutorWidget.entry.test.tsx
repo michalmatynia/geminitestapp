@@ -99,6 +99,20 @@ describe('useKangurAiTutorGuestIntroFlow', () => {
     expect(input.setGuestIntroHelpVisible).toHaveBeenCalledWith(false);
   });
 
+  it('closes the chat when the guest intro is accepted silently while the panel is open', () => {
+    const input = createGuestIntroFlowInput({ isOpen: true });
+
+    const { result } = renderHook(() => useKangurAiTutorGuestIntroFlow(input));
+
+    result.current.handleGuestIntroAcceptSilent();
+
+    expect(input.handleCloseChat).toHaveBeenCalledWith('toggle');
+    expect(input.handleOpenChat).not.toHaveBeenCalled();
+    expect(input.setCanonicalTutorModalVisible).toHaveBeenCalledWith(false);
+    expect(input.setGuestIntroVisible).toHaveBeenCalledWith(false);
+    expect(input.setGuestIntroHelpVisible).toHaveBeenCalledWith(false);
+  });
+
   it('ignores a late guest-intro response once selection guidance has taken over', async () => {
     const deferredPayload = createDeferred<{
       reason: string;

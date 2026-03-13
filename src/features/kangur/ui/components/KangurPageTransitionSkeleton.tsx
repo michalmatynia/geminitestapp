@@ -401,11 +401,9 @@ export function KangurPageTransitionSkeleton({
         className='pointer-events-none'
         tone={SKELETON_TONE_BY_PAGE[resolvedPageKey]}
       >
-        <div className='w-full'>
-          <KangurPageContainer className='flex flex-col items-center gap-6 pt-24 sm:pt-28'>
-            {renderSkeletonVariant(resolvedVariant)}
-          </KangurPageContainer>
-        </div>
+        <KangurPageContainer className='flex flex-col items-center gap-6 pt-24 sm:pt-28'>
+          {renderSkeletonVariant(resolvedVariant)}
+        </KangurPageContainer>
       </KangurPageShell>
     </div>
   );

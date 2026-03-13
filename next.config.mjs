@@ -67,6 +67,9 @@ const nextConfig = {
     // Default proxy body clone limit (~10MB) is too low for multi-image product forms.
     // Raise it so multipart requests don't fail before route handlers read formData().
     proxyClientMaxBodySize: '50mb',
+    // Limit worker processes to 2 — each worker inherits NODE_OPTIONS heap size.
+    // On Vercel free tier (8GB total), 1 main + 2 workers × 3.5GB = fits in memory.
+    cpus: 2,
     optimizePackageImports: [
       'lucide-react',
       '@radix-ui/react-alert-dialog',
@@ -136,15 +139,6 @@ const nextConfig = {
     config.optimization.moduleIds = 'deterministic';
     config.optimization.minimize = process.env.NODE_ENV === 'production';
 
-    // Enable persistent filesystem cache to speed up subsequent builds.
-    // Vercel caches .next between deploys, so this carries across builds.
-    config.cache = {
-      type: 'filesystem',
-      buildDependencies: {
-        config: [__filename],
-      },
-    };
-    
     config.resolve ??= {};
     config.resolve.alias ??= {};
     config.resolve.alias['@docs'] = path.resolve(__dirname, 'docs');

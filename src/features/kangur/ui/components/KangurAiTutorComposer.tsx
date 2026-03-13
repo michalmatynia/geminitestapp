@@ -138,7 +138,7 @@ export function KangurAiTutorComposer(): JSX.Element {
           className='h-9 w-9 shrink-0 rounded-full p-0 kangur-cta-pill'
           disabled={!canSubmit || isLoading || !canSendMessages}
           onClick={handleSubmit}
-          aria-label={tutorContent.common.sendAria}
+          aria-label='Wyślij'
         >
           <ArrowUp className='h-4 w-4' />
         </KangurButton>

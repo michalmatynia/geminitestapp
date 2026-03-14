@@ -189,7 +189,7 @@ describe('kangur tts script builder', () => {
           {
             id: 'svg-1',
             type: 'svg',
-            title: 'Widoczny tytul ilustracji',
+            title: 'Widoczny tytuł ilustracji',
             ttsDescription: 'To jest opis narracyjny ilustracji.',
             markup: '<svg viewBox="0 0 100 100"></svg>',
             viewBox: '0 0 100 100',
@@ -206,7 +206,7 @@ describe('kangur tts script builder', () => {
     expect(spokenText).toContain('Czytaj ten tekst inaczej.');
     expect(spokenText).toContain('To jest opis narracyjny ilustracji.');
     expect(spokenText).not.toContain('Widoczny tekst dla ucznia.');
-    expect(spokenText).not.toContain('Ilustracja. Widoczny tytul ilustracji.');
+    expect(spokenText).not.toContain('Ilustracja. Widoczny tytuł ilustracji.');
   });
 
   it('chunks long raw text into multiple narration segments', () => {

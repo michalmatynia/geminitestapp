@@ -60,10 +60,10 @@ describe('resolveKangurAiTutorMoodFromSignals', () => {
       messages: [
         {
           role: 'user',
-          content: 'Chce zrozumiec, gdzie zrobilem blad.',
+          content: 'Chce zrozumieć, gdzie zrobilem blad.',
         },
       ],
-      latestUserMessage: 'Chce zrozumiec, gdzie zrobilem blad.',
+      latestUserMessage: 'Chce zrozumieć, gdzie zrobilem blad.',
       personaSuggestedMoodId: 'thinking',
       previousMood: null,
       computedAt: '2026-03-08T12:00:00.000Z',

@@ -555,7 +555,7 @@ describe('kangur ai tutor chat handler', () => {
   it('extracts tutor drawing artifacts from the model response and strips the drawing block from persisted text', async () => {
     runBrainChatCompletionMock
       .mockResolvedValueOnce({
-        text: 'Widac dwie grupy kropek ustawione obok siebie.',
+        text: 'Widać dwie grupy kropek ustawione obok siebie.',
       })
       .mockResolvedValueOnce({
         text: [
@@ -744,7 +744,9 @@ describe('kangur ai tutor chat handler', () => {
   it('logs a coverage-gap warning when a section-specific explain request falls back to an overview guide entry', async () => {
     resolveKangurAiTutorNativeGuideResolutionMock.mockResolvedValue({
       status: 'hit',
-      message: 'Ekran lekcji.\n\nTo tutaj uczen przechodzi przez temat krok po kroku.',
+      message: 'Ekran lekcji.
+
+To tutaj uczeń przechodzi przez temat krok po kroku.',
       followUpActions: [],
       entryId: 'lesson-overview',
       matchedSignals: ['surface'],
@@ -840,7 +842,7 @@ describe('kangur ai tutor chat handler', () => {
     const response = await postKangurAiTutorChatHandler(
       createPostRequest(
         JSON.stringify({
-          messages: [{ role: 'user', content: 'Jak sie zalogowac?' }],
+          messages: [{ role: 'user', content: 'Jak się zalogować?' }],
           context: {
             surface: 'auth',
             contentId: 'login',
@@ -921,7 +923,7 @@ describe('kangur ai tutor chat handler', () => {
           focusIdPrefixes: ['kangur-game-home-actions'],
           contentIdPrefixes: ['game:home'],
           title: 'Szybkie akcje',
-          shortDescription: 'Pomagaja wejsc od razu do wlasciwego trybu pracy.',
+          shortDescription: 'Pomagaja wejść od razu do wlasciwego trybu pracy.',
           fullDescription: 'Ta karta zbiera najkrótsze przejścia do głównych aktywności Kangura.',
           hints: [],
           relatedGames: [],
@@ -1588,12 +1590,12 @@ describe('kangur ai tutor chat handler', () => {
     expect(response.status).toBe(200);
     const body = await response.json();
 
-    expect(body.message).toContain('Ostatnia sesja: Zegar (83% skutecznosci, 5/6, +28 XP).');
+    expect(body.message).toContain('Ostatnia sesja: Zegar (83% skuteczności, 5/6, +28 XP).');
     expect(body.message).toContain(
       'Najmocniejsza operacja teraz: Dodawanie ze srednia skutecznoscia 91%.'
     );
     expect(body.message).toContain(
-      'Najwiecej pracy wymaga: Zegar ze srednia skutecznoscia 68% po 2 probach.'
+      'Najwięcej pracy wymaga: Zegar ze srednia skutecznoscia 68% po 2 próbach.'
     );
     expect(body.sources).toEqual(
       expect.arrayContaining([
@@ -1651,14 +1653,14 @@ describe('kangur ai tutor chat handler', () => {
         sourcePath: 'src/features/kangur/ui/pages/ParentDashboard.tsx',
         title: 'Wyniki ucznia w dashboardzie rodzica',
         summary: 'Ta sekcja pokazuje najnowsze wyniki i historie gier ucznia.',
-        body: 'Pomaga rodzicowi zobaczyc ostatnie podejscia i stabilnosc gry dziecka.',
+        body: 'Pomaga rodzicowi zobaczyć ostatnie podejścia i stabilnosc gry dziecka.',
         anchorIdPrefix: 'kangur-parent-dashboard-scores',
         focusKind: 'summary',
         contentIdPrefixes: ['parent-dashboard:learner-1:scores'],
         nativeGuideIds: ['parent-dashboard-scores'],
         triggerPhrases: ['wyniki ucznia'],
         tags: ['page-content', 'parent-dashboard'],
-        notes: 'Zakladka wynikow w panelu rodzica.',
+        notes: 'Zakładka wyników w panelu rodzica.',
         enabled: true,
         sortOrder: 10,
       },
@@ -1685,7 +1687,7 @@ describe('kangur ai tutor chat handler', () => {
     const response = await postKangurAiTutorChatHandler(
       createPostRequest(
         JSON.stringify({
-          messages: [{ role: 'user', content: 'Co pokazuje ta zakladka wynikow?' }],
+          messages: [{ role: 'user', content: 'Co pokazuje ta zakładka wyników?' }],
           context: {
             surface: 'parent_dashboard',
             contentId: 'parent-dashboard:learner-1:scores',
@@ -1709,7 +1711,7 @@ describe('kangur ai tutor chat handler', () => {
     const body = await response.json();
 
     expect(body.message).toContain(
-      'Ostatnia sesja: Dodawanie (90% skutecznosci, 9/10, +18 XP).'
+      'Ostatnia sesja: Dodawanie (90% skuteczności, 9/10, +18 XP).'
     );
     expect(body.answerResolutionMode).toBe('page_content');
     expect(body.sources).toEqual(
@@ -1992,7 +1994,7 @@ describe('kangur ai tutor chat handler', () => {
     const response = await postKangurAiTutorChatHandler(
       createPostRequest(
         JSON.stringify({
-          messages: [{ role: 'user', content: 'Co pokazuje ten naglowek lekcji?' }],
+          messages: [{ role: 'user', content: 'Co pokazuje ten nagłówek lekcji?' }],
           context: {
             surface: 'lesson',
             contentId: 'adding',
@@ -2048,7 +2050,7 @@ describe('kangur ai tutor chat handler', () => {
         sourcePath: 'src/features/kangur/ui/pages/Lessons.tsx',
         title: 'Nawigacja lekcji',
         summary:
-          'Przechodz do poprzedniej lub kolejnej lekcji bez wracania do calej listy tematow.',
+          'Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy tematów.',
         body: 'Ta sekcja daje szybkie przejście między sąsiednimi lekcjami.',
         anchorIdPrefix: 'kangur-lesson-navigation',
         focusKind: 'navigation',
@@ -2066,14 +2068,15 @@ describe('kangur ai tutor chat handler', () => {
         {
           documentId: 'lesson-navigation',
           collectionId: 'kangur_page_content',
-          text: 'Nawigacja lekcji\nPrzechodz do poprzedniej lub kolejnej lekcji bez wracania do calej listy tematow.',
+          text: 'Nawigacja lekcji
+Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy tematów.',
           score: 0.99,
           metadata: {
             source: 'manual-text',
             sourceId: 'lesson-navigation',
             title: 'Nawigacja lekcji',
             description:
-              'Przechodz do poprzedniej lub kolejnej lekcji bez wracania do calej listy tematow.',
+              'Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy tematów.',
             tags: ['kangur', 'page-content', 'lesson'],
           },
         },
@@ -2084,7 +2087,7 @@ describe('kangur ai tutor chat handler', () => {
     const response = await postKangurAiTutorChatHandler(
       createPostRequest(
         JSON.stringify({
-          messages: [{ role: 'user', content: 'Do czego sluzy ta nawigacja lekcji?' }],
+          messages: [{ role: 'user', content: 'Do czego służy ta nawigacja lekcji?' }],
           context: {
             surface: 'lesson',
             contentId: 'adding',
@@ -2639,7 +2642,7 @@ describe('kangur ai tutor chat handler', () => {
   it('passes explicit knowledge references through to the native-guide resolver', async () => {
     resolveKangurAiTutorNativeGuideResolutionMock.mockResolvedValue({
       status: 'hit',
-      message: 'Ranking pokazuje wyniki i pozycje na tle innych prob.',
+      message: 'Ranking pokazuje wyniki i pozycje na tle innych prób.',
       followUpActions: [],
       entryId: 'shared-leaderboard',
       matchedSignals: ['knowledge_reference'],
@@ -2701,9 +2704,9 @@ describe('kangur ai tutor chat handler', () => {
       ],
       coachingFrame: {
         mode: 'next_best_action',
-        label: 'Nastepny krok',
-        description: 'Wskaz jedna konkretna aktywnosc Kangur jako najlepszy dalszy ruch.',
-        rationale: 'Najwiecej wartosci da teraz jedna jasna aktywnosc, a nie kilka opcji naraz.',
+        label: 'Następny krok',
+        description: 'Wskaz jedna konkretna aktywność Kangur jako najlepszy dalszy ruch.',
+        rationale: 'Najwięcej wartosci da teraz jedna jasna aktywność, a nie kilka opcji naraz.',
       },
     });
     contextRegistryResolveRefsMock.mockResolvedValue(
@@ -2765,9 +2768,9 @@ describe('kangur ai tutor chat handler', () => {
       ],
       coachingFrame: {
         mode: 'next_best_action',
-        label: 'Nastepny krok',
-        description: 'Wskaz jedna konkretna aktywnosc Kangur jako najlepszy dalszy ruch.',
-        rationale: 'Najwiecej wartosci da teraz jedna jasna aktywnosc, a nie kilka opcji naraz.',
+        label: 'Następny krok',
+        description: 'Wskaz jedna konkretna aktywność Kangur jako najlepszy dalszy ruch.',
+        rationale: 'Najwięcej wartosci da teraz jedna jasna aktywność, a nie kilka opcji naraz.',
       },
       suggestedMoodId: 'encouraging',
       tutorMood: {
@@ -2803,7 +2806,7 @@ describe('kangur ai tutor chat handler', () => {
       coachingFrame: null,
     });
     runBrainChatCompletionMock.mockResolvedValue({
-      text: 'Skup sie na zaznaczonym fragmencie i policz krok po kroku.',
+      text: 'Skup się na zaznaczonym fragmencie i policz krok po kroku.',
     });
     const response = await postKangurAiTutorChatHandler(
       createPostRequest(
@@ -2836,7 +2839,7 @@ describe('kangur ai tutor chat handler', () => {
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body).toMatchObject({
-      message: 'Skup sie na zaznaczonym fragmencie i policz krok po kroku.',
+      message: 'Skup się na zaznaczonym fragmencie i policz krok po kroku.',
       followUpActions: [],
       suggestedMoodId: 'encouraging',
       tutorMood: {
@@ -2991,7 +2994,7 @@ describe('kangur ai tutor chat handler', () => {
         createRequestContext()
       )
     ).rejects.toMatchObject({
-      message: 'AI tutor is available in tests only after the answer has been revealed.',
+      message: 'AI Tutor is available in tests only after the answer has been revealed.',
       httpStatus: 400,
     });
     expect(runBrainChatCompletionMock).not.toHaveBeenCalled();
@@ -3058,7 +3061,7 @@ describe('kangur ai tutor chat handler', () => {
         createRequestContext()
       )
     ).rejects.toMatchObject({
-      message: 'AI tutor is disabled for games for this learner.',
+      message: 'AI Tutor is disabled for games for this learner.',
       httpStatus: 400,
     });
     expect(runBrainChatCompletionMock).not.toHaveBeenCalled();
@@ -3126,7 +3129,7 @@ describe('kangur ai tutor chat handler', () => {
         createRequestContext()
       )
     ).rejects.toMatchObject({
-      message: 'Daily AI tutor message limit reached for this learner. Try again tomorrow.',
+      message: 'Daily AI Tutor message limit reached for this learner. Try again tomorrow.',
       httpStatus: 429,
     });
     expect(runBrainChatCompletionMock).not.toHaveBeenCalled();
@@ -3268,7 +3271,9 @@ describe('kangur ai tutor chat handler', () => {
       vectorHitCount: 3,
       vectorRecallAttempted: true,
       instructions:
-        'Kangur semantic graph context:\n- Ranking wynikow [guide]\n  Tutaj widac porownanie ostatnich wynikow i pozycje ucznia.',
+        'Kangur semantic graph context:
+- Ranking wyników [guide]
+  Tutaj widać porownanie ostatnich wyników i pozycje ucznia.',
       nodeIds: ['guide:native:game-leaderboard'],
       sourceCollections: ['kangur_ai_tutor_native_guides'],
       hydrationSources: ['kangur_ai_tutor_native_guides'],
@@ -3276,13 +3281,14 @@ describe('kangur ai tutor chat handler', () => {
         {
           documentId: 'guide:native:game-leaderboard',
           collectionId: 'kangur_ai_tutor_native_guides',
-          text: 'Ranking wynikow (guide)\nSekcja rankingu pokazuje wyniki i pozycje ucznia.',
+          text: 'Ranking wyników (guide)
+Sekcja rankingu pokazuje wyniki i pozycje ucznia.',
           score: 0.94,
           metadata: {
             source: 'manual-text',
             sourceId: 'guide:native:game-leaderboard',
-            title: 'Ranking wynikow',
-            description: 'Tutaj widac porownanie ostatnich wynikow i pozycje ucznia.',
+            title: 'Ranking wyników',
+            description: 'Tutaj widać porownanie ostatnich wyników i pozycje ucznia.',
             tags: ['kangur-knowledge-graph', 'guide', 'game', 'leaderboard'],
           },
         },

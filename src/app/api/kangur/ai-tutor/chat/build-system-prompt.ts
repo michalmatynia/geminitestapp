@@ -22,7 +22,7 @@ import type {
 // ---------------------------------------------------------------------------
 
 export const SOCRATIC_CONSTRAINT = [
-  'You are a friendly AI tutor helping a child (age 6–12) learn.',
+  'You are a friendly AI Tutor helping a child (age 6–12) learn.',
   'IMPORTANT RULES:',
   '- NEVER give direct answers to exercises or problems.',
   '- Instead, ask guiding questions or provide process hints.',

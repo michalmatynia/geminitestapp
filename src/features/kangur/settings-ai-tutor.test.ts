@@ -299,7 +299,7 @@ describe('kangur ai tutor settings', () => {
       {
         surface: 'game',
         contentId: 'game',
-        title: 'Pytanie do rozwiazania',
+        title: 'Pytanie do rozwiązania',
         currentQuestion: 'Ile to 8 + 5?',
         questionProgressLabel: 'Pytanie 2/10',
       }

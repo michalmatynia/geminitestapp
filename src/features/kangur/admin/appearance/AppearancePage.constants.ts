@@ -7,6 +7,8 @@ import {
   KANGUR_FACTORY_DAWN_THEME,
   KANGUR_FACTORY_SUNSET_THEME,
   KANGUR_FACTORY_NIGHTLY_THEME,
+  KANGUR_DAILY_CRYSTAL_THEME,
+  KANGUR_NIGHTLY_CRYSTAL_THEME,
 } from '@/features/kangur/theme-settings';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import type { SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
@@ -24,6 +26,9 @@ export const BUILTIN_DAILY_ID = 'builtin_daily';
 export const BUILTIN_DAWN_ID = 'builtin_dawn';
 export const BUILTIN_SUNSET_ID = 'builtin_sunset';
 export const BUILTIN_NIGHTLY_ID = 'builtin_nightly';
+
+export const PRESET_DAILY_CRYSTAL_ID = 'preset_daily_crystal';
+export const PRESET_NIGHTLY_CRYSTAL_ID = 'preset_nightly_crystal';
 
 export type ThemeSelectionId =
   | string
@@ -84,6 +89,10 @@ export const resolveFactoryTheme = (id: ThemeSelectionId): ThemeSettings => {
       return KANGUR_FACTORY_SUNSET_THEME;
     case FACTORY_NIGHTLY_ID:
       return KANGUR_FACTORY_NIGHTLY_THEME;
+    case PRESET_DAILY_CRYSTAL_ID:
+      return KANGUR_DAILY_CRYSTAL_THEME;
+    case PRESET_NIGHTLY_CRYSTAL_ID:
+      return KANGUR_NIGHTLY_CRYSTAL_THEME;
     default:
       return KANGUR_FACTORY_DAILY_THEME;
   }
@@ -159,6 +168,9 @@ export const HOME_ACTION_FIELD_TOKENS = [
   { suffix: 'LabelStart', label: 'Label Gradient Start' },
   { suffix: 'LabelMid', label: 'Label Gradient Mid' },
   { suffix: 'LabelEnd', label: 'Label Gradient End' },
+  { suffix: 'LabelStartActive', label: 'Active Label Gradient Start' },
+  { suffix: 'LabelMidActive', label: 'Active Label Gradient Mid' },
+  { suffix: 'LabelEndActive', label: 'Active Label Gradient End' },
   { suffix: 'AccentStart', label: 'Accent Gradient Start' },
   { suffix: 'AccentMid', label: 'Accent Gradient Mid' },
   { suffix: 'AccentEnd', label: 'Accent Gradient End' },
@@ -331,7 +343,7 @@ export const THEME_SECTIONS: Array<{
     subtitle: 'Fonts used for headings and body text.',
     fields: [
       {
-        key: 'fontHeading',
+        key: 'headingFont',
         label: 'Heading Font',
         type: 'select',
         options: [
@@ -343,7 +355,7 @@ export const THEME_SECTIONS: Array<{
         ],
       },
       {
-        key: 'fontBody',
+        key: 'bodyFont',
         label: 'Body Font',
         type: 'select',
         options: [
@@ -355,16 +367,40 @@ export const THEME_SECTIONS: Array<{
         ],
       },
       {
-        key: 'fontHeadingWeight',
+        key: 'baseSize',
+        label: 'Base Font Size',
+        type: 'number',
+        min: 12,
+        max: 24,
+        suffix: 'px',
+      },
+      {
+        key: 'headingWeight',
         label: 'Heading Weight',
         type: 'select',
         options: FONT_WEIGHT_OPTIONS,
       },
       {
-        key: 'fontBodyWeight',
+        key: 'bodyWeight',
         label: 'Body Weight',
         type: 'select',
         options: FONT_WEIGHT_OPTIONS,
+      },
+      {
+        key: 'lineHeight',
+        label: 'Body Line Height',
+        type: 'range',
+        min: 1.2,
+        max: 2,
+        step: 0.05,
+      },
+      {
+        key: 'headingLineHeight',
+        label: 'Heading Line Height',
+        type: 'range',
+        min: 1,
+        max: 1.6,
+        step: 0.05,
       },
     ],
   },
@@ -415,6 +451,7 @@ export const THEME_SECTIONS: Array<{
       { key: 'btnGlossOpacity', label: 'Gloss Opacity', type: 'number', step: 0.05, min: 0, max: 1 },
       { key: 'btnGlossHeight', label: 'Gloss Height (%)', type: 'number', step: 1, min: 0, max: 100 },
       { key: 'btnGlossAngle', label: 'Gloss Angle (deg)', type: 'number', step: 1, min: 0, max: 360 },
+      { key: 'btnGlossColor', label: 'Gloss Tint Color', type: 'background', placeholder: '#ffffff' },
       { key: 'btnInsetHighlightOpacity', label: 'Inset Highlight Opacity', type: 'number', step: 0.05 },
       { key: 'btnInsetShadowOpacity', label: 'Inset Shadow Opacity', type: 'number', step: 0.05 },
       { key: 'btnInsetShadowBlur', label: 'Inset Shadow Blur', type: 'number', step: 1 },
@@ -424,6 +461,7 @@ export const THEME_SECTIONS: Array<{
       { key: 'btnTextShadowBlur', label: 'Text Shadow Blur', type: 'number', step: 1 },
       { key: 'btnGlowOpacity', label: 'Button Glow Opacity', type: 'number', step: 0.05 },
       { key: 'btnGlowSpread', label: 'Button Glow Spread', type: 'number' },
+      { key: 'btnGlowColor', label: 'Glow Color Override', type: 'background', placeholder: 'Auto (button bg)' },
     ],
   },
   {

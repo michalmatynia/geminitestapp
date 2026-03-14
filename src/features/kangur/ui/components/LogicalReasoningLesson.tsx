@@ -5,6 +5,14 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
+  DeductionFlowAnimation,
+  EliminationGridAnimation,
+  IfThenArrowAnimation,
+  InductionGatherAnimation,
+  QuantifierScopeAnimation,
+} from '@/features/kangur/ui/components/LogicalReasoningAnimations';
+import LogicalReasoningIfThenGame from '@/features/kangur/ui/components/LogicalReasoningIfThenGame';
+import {
   KangurLessonCallout,
   KangurLessonCaption,
   KangurLessonInset,
@@ -15,6 +23,49 @@ import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubPro
 
 type SectionId = 'wnioskowanie' | 'kwantyfikatory' | 'zagadki' | 'podsumowanie';
 
+const IF_THEN_GAME_CASES = [
+  {
+    id: 'case-umbrella',
+    rule: 'Jeśli pada deszcz, to biorę parasol.',
+    fact: 'Pada deszcz.',
+    conclusion: 'Biorę parasol.',
+    valid: true,
+    explanation: 'Warunek jest spełniony, więc wniosek wynika.',
+  },
+  {
+    id: 'case-even',
+    rule: 'Jeśli liczba jest parzysta, to dzieli się przez 2.',
+    fact: '8 jest parzyste.',
+    conclusion: '8 ÷ 2 = 4.',
+    valid: true,
+    explanation: 'Z parzystości wynika podzielność przez 2.',
+  },
+  {
+    id: 'case-reverse',
+    rule: 'Jeśli jestem kotem, to mam wąsy.',
+    fact: 'Mam wąsy.',
+    conclusion: 'Jestem kotem.',
+    valid: false,
+    explanation: 'To odwrotność. Wąsy nie oznaczają, że to na pewno kot.',
+  },
+  {
+    id: 'case-contrary',
+    rule: 'Jeśli mam bilet, to mogę wejść.',
+    fact: 'Nie mam biletu.',
+    conclusion: 'Nie mogę wejść.',
+    valid: false,
+    explanation: 'To zaprzeczenie warunku. Brak biletu nie mówi nic pewnego.',
+  },
+  {
+    id: 'case-sun',
+    rule: 'Jeśli świeci słońce, to jest jasno.',
+    fact: 'Świeci słońce.',
+    conclusion: 'Jest jasno.',
+    valid: true,
+    explanation: 'Gdy P jest prawdziwe, Q też musi być prawdziwe.',
+  },
+];
+
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   wnioskowanie: [
     {
@@ -22,7 +73,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Wnioskowanie to wyciaganie nowych wniosków z tego, co juz wiemy. Idziemy od znanych
+            Wnioskowanie to wyciaganie nowych wniosków z tego, co już wiemy. Idziemy od znanych
             faktów do nowej prawdy.
           </KangurLessonLead>
           <KangurLessonCallout
@@ -85,6 +136,73 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               </KangurLessonCaption>
             </KangurLessonCallout>
           </div>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Dedukcja w praktyce',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Dedukcja prowadzi od ogólnej reguły do konkretnego wniosku.
+          </KangurLessonLead>
+          <KangurLessonInset accent='indigo' className='w-full text-center' padding='sm'>
+            <div className='mx-auto h-28 w-72'>
+              <DeductionFlowAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Reguła + fakt = pewny wniosek.
+            </KangurLessonCaption>
+          </KangurLessonInset>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Indukcja — szukanie reguły',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Indukcja zbiera obserwacje i buduje prawdopodobną regułę.
+          </KangurLessonLead>
+          <KangurLessonInset accent='emerald' className='w-full text-center' padding='sm'>
+            <div className='mx-auto h-28 w-72'>
+              <InductionGatherAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Im więcej przykładów, tym pewniejsza reguła.
+            </KangurLessonCaption>
+          </KangurLessonInset>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Warunek logiczny',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Warunek pokazuje związek: gdy P jest prawdziwe, Q musi być prawdziwe.
+          </KangurLessonLead>
+          <KangurLessonInset accent='indigo' className='w-full text-center' padding='sm'>
+            <div className='mx-auto h-24 w-72'>
+              <IfThenArrowAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Strzałka oznacza kierunek wniosku.
+            </KangurLessonCaption>
+          </KangurLessonInset>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Gra: Czy wniosek wynika?',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Przeciągnij karty do pola „Wynika” lub „Nie wynika” i sprawdź poprawność.
+          </KangurLessonLead>
+          <KangurLessonInset accent='indigo' className='w-full' padding='sm'>
+            <LogicalReasoningIfThenGame cases={IF_THEN_GAME_CASES} />
+          </KangurLessonInset>
         </KangurLessonStack>
       ),
     },
@@ -169,6 +287,24 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
         </KangurLessonStack>
       ),
     },
+    {
+      title: 'Zasięg kwantyfikatorów',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Sprawdzaj, czy zdanie dotyczy wszystkich, tylko niektórych, czy żadnych elementów.
+          </KangurLessonLead>
+          <KangurLessonInset accent='emerald' className='w-full text-center' padding='sm'>
+            <div className='mx-auto h-24 w-72'>
+              <QuantifierScopeAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Zmiana kwantyfikatora potrafi całkowicie zmienić sens zdania.
+            </KangurLessonCaption>
+          </KangurLessonInset>
+        </KangurLessonStack>
+      ),
+    },
   ],
   zagadki: [
     {
@@ -228,6 +364,24 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           >
             Dobry logik nigdy nie zgaduje — zawsze uzasadnia każdy krok!
           </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Eliminuj niemożliwe',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Skreślaj opcje, które nie pasują do wskazówek, aż zostanie właściwa odpowiedź.
+          </KangurLessonLead>
+          <KangurLessonInset accent='rose' className='w-full text-center' padding='sm'>
+            <div className='mx-auto h-24 w-72'>
+              <EliminationGridAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Eliminacja to najkrótsza droga do poprawnego rozwiązania.
+            </KangurLessonCaption>
+          </KangurLessonInset>
         </KangurLessonStack>
       ),
     },

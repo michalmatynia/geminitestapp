@@ -162,7 +162,7 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
       data: undefined,
       entry: {
         id: 'parent-dashboard-learner-management',
-        title: 'Zarzadzaj profilami bez opuszczania panelu',
+        title: 'Zarządzaj profilami bez opuszczania panelu',
         summary: 'Wybierz ucznia i popraw jego dane bez wychodzenia z panelu.',
       },
       error: null,

@@ -50,8 +50,15 @@ export function KangurErrorFallback({
       data-kangur-appearance='default'
       data-testid='kangur-error-shell'
     >
-      <div className='glass-panel w-full max-w-lg rounded-3xl p-8 text-center shadow-2xl'>
-        <div className='mb-4 text-4xl font-black text-indigo-500'>K</div>
+      <div
+        className='glass-panel w-full max-w-lg rounded-3xl p-8 text-center shadow-2xl'
+        role='alert'
+        aria-live='assertive'
+        aria-atomic='true'
+      >
+        <div className='mb-4 text-4xl font-black text-indigo-500' aria-hidden='true'>
+          K
+        </div>
         <h2 className='text-2xl font-extrabold [color:var(--kangur-page-text)]'>
           Kangur encountered an error
         </h2>

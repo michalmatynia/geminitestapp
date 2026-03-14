@@ -30,8 +30,8 @@ describe('kangur knowledge graph semantic helpers', () => {
 
     expect(
       buildKangurKnowledgeNodeSemanticText({
-        title: 'Ranking wynikow',
-        summary: 'Porownanie wynikow ucznia.',
+        title: 'Ranking wyników',
+        summary: 'Porownanie wyników ucznia.',
         kind: 'guide',
         surface: 'game',
         focusKind: 'leaderboard',
@@ -40,7 +40,7 @@ describe('kangur knowledge graph semantic helpers', () => {
         refId: undefined,
         focusIdPrefixes: ['kangur-game-result-leaderboard'],
         contentIdPrefixes: ['game:practice:'],
-        triggerPhrases: ['ranking', 'tablica wynikow'],
+        triggerPhrases: ['ranking', 'tablica wyników'],
         sourcePath: 'entry:game-leaderboard',
         tags: ['game', 'leaderboard'],
         semanticText: undefined,
@@ -61,8 +61,8 @@ describe('kangur knowledge graph semantic helpers', () => {
         {
           id: 'guide:native:game-leaderboard',
           kind: 'guide',
-          title: 'Ranking wynikow',
-          summary: 'Porownanie wynikow ucznia.',
+          title: 'Ranking wyników',
+          summary: 'Porownanie wyników ucznia.',
           source: 'kangur_ai_tutor_native_guides',
           sourceCollection: 'kangur_ai_tutor_native_guides',
           sourceRecordId: 'game-leaderboard',
@@ -80,12 +80,12 @@ describe('kangur knowledge graph semantic helpers', () => {
     expect(generateBrainEmbeddingMock).toHaveBeenCalledWith(
       expect.objectContaining({
         modelId: 'text-embedding-3-small',
-        text: expect.stringContaining('Ranking wynikow'),
+        text: expect.stringContaining('Ranking wyników'),
       })
     );
     expect(snapshot.nodes[0]).toEqual(
       expect.objectContaining({
-        semanticText: expect.stringContaining('Ranking wynikow'),
+        semanticText: expect.stringContaining('Ranking wyników'),
         embedding: expect.any(Array),
         embeddingModel: 'text-embedding-3-small',
         embeddingDimensions: 2,

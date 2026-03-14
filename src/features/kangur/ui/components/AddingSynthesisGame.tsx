@@ -586,13 +586,14 @@ export default function AddingSynthesisGame({
 
       <div className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_300px]'>
         <KangurGlassPanel
+          className='min-w-0'
           data-testid='adding-synthesis-board-shell'
           padding='lg'
           surface='playGlow'
           variant='elevated'
         >
           <KangurGlassPanel
-            className='relative overflow-hidden rounded-[26px] !p-2.5 min-[360px]:!p-3 sm:rounded-[30px] sm:!p-4'
+            className='relative overflow-hidden rounded-[26px] !p-2.5 min-[360px]:!p-3 sm:rounded-[30px] sm:!p-4 min-w-0'
             data-testid='adding-synthesis-stage-shell'
             surface='playField'
             variant='soft'
@@ -618,7 +619,7 @@ export default function AddingSynthesisGame({
               ))}
             </div>
 
-            <div className='relative h-[420px]'>
+            <div className='relative h-[420px] overflow-hidden min-w-0'>
               <div className='absolute inset-y-0 left-0 right-0 grid grid-cols-4 gap-1.5 sm:gap-3'>
                 {LANE_STYLES.map((laneStyle, laneIndex) => (
                   <div
@@ -646,46 +647,50 @@ export default function AddingSynthesisGame({
 
               {currentNote ? (
                 <div
-                  className='pointer-events-none absolute left-1/2 z-20 w-[calc(100%-0.75rem)] max-w-[460px] -translate-x-1/2 transition-transform duration-75 ease-linear min-[360px]:w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)]'
+                  className='pointer-events-none absolute inset-x-0 z-20 px-2 min-[360px]:px-3 sm:px-4'
                   style={{
                     top: `${noteTop}px`,
-                    transform: `translateX(-50%) scale(${noteScale})`,
                   }}
                   data-testid='adding-synthesis-note'
                 >
-                  <KangurGlassPanel
-                    className='rounded-[24px] !p-3 shadow-[0_22px_60px_-34px_rgba(79,70,229,0.32)] backdrop-blur min-[360px]:!p-4 sm:rounded-[28px]'
-                    data-testid='adding-synthesis-note-shell'
-                    padding='md'
-                    surface='solid'
-                    variant='soft'
+                  <div
+                    className='mx-auto max-w-[460px] transition-transform duration-75 ease-linear'
+                    style={{ transform: `scale(${noteScale})` }}
                   >
-                    <div className='flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between'>
-                      <KangurStatusChip
-                        accent='violet'
-                        className='text-[11px] uppercase tracking-[0.18em]'
-                        data-testid='adding-synthesis-note-stage'
-                        size='sm'
-                      >
-                        {currentStage.icon} {currentStage.title}
-                      </KangurStatusChip>
-                      <KangurStatusChip
-                        accent='slate'
-                        data-testid='adding-synthesis-note-hit-line'
-                        size='sm'
-                      >
-                        Linia przy {Math.round(ADDING_SYNTHESIS_HIT_LINE_RATIO * 100)}%
-                      </KangurStatusChip>
-                    </div>
-                    <div className='mt-3 text-center'>
-                      <p className='text-xs font-semibold uppercase tracking-[0.18em] text-amber-500 min-[360px]:text-sm min-[360px]:tracking-[0.22em]'>
-                        Uderz we właściwy tor
-                      </p>
-                      <p className='mt-2 text-3xl font-extrabold tracking-[-0.04em] [color:var(--kangur-page-text)] min-[360px]:text-4xl sm:text-5xl'>
-                        {currentNote.left} + {currentNote.right}
-                      </p>
-                    </div>
-                  </KangurGlassPanel>
+                    <KangurGlassPanel
+                      className='rounded-[24px] !p-3 shadow-[0_22px_60px_-34px_rgba(79,70,229,0.32)] backdrop-blur min-[360px]:!p-4 sm:rounded-[28px]'
+                      data-testid='adding-synthesis-note-shell'
+                      padding='md'
+                      surface='solid'
+                      variant='soft'
+                    >
+                      <div className='flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between'>
+                        <KangurStatusChip
+                          accent='violet'
+                          className='text-[11px] uppercase tracking-[0.18em]'
+                          data-testid='adding-synthesis-note-stage'
+                          size='sm'
+                        >
+                          {currentStage.icon} {currentStage.title}
+                        </KangurStatusChip>
+                        <KangurStatusChip
+                          accent='slate'
+                          data-testid='adding-synthesis-note-hit-line'
+                          size='sm'
+                        >
+                          Linia przy {Math.round(ADDING_SYNTHESIS_HIT_LINE_RATIO * 100)}%
+                        </KangurStatusChip>
+                      </div>
+                      <div className='mt-3 text-center'>
+                        <p className='text-xs font-semibold uppercase tracking-[0.18em] text-amber-500 min-[360px]:text-sm min-[360px]:tracking-[0.22em]'>
+                          Uderz we właściwy tor
+                        </p>
+                        <p className='mt-2 text-3xl font-extrabold tracking-[-0.04em] [color:var(--kangur-page-text)] min-[360px]:text-4xl sm:text-5xl'>
+                          {currentNote.left} + {currentNote.right}
+                        </p>
+                      </div>
+                    </KangurGlassPanel>
+                  </div>
                 </div>
               ) : null}
 

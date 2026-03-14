@@ -45,7 +45,7 @@ describe('kangur auth contract runtime', () => {
       callbackUrl: '/tests?focus=division',
       emailVerified: true,
       message:
-        'Email zostal zweryfikowany. Konto rodzica jest gotowe, AI Tutor jest odblokowany i mozesz zalogowac sie emailem oraz haslem.',
+        'Email został zweryfikowany. Konto rodzica jest gotowe, AI Tutor jest odblokowany i możesz zalogować się emailem oraz hasłem.',
     };
     expect(kangurParentEmailVerifyResponseSchema.safeParse(verifyPayload).success).toBe(true);
     expect(parseKangurParentEmailVerifyResponse(verifyPayload)?.emailVerified).toBe(true);

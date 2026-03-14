@@ -40,8 +40,8 @@ vi.mock('@/features/kangur/ui/components/MultiplicationArrayGame', () => ({
 vi.mock('@/features/kangur/ui/components/MultiplicationGame', () => ({
   default: createMockGame('MultiplicationGame'),
 }));
-vi.mock('@/features/kangur/ui/components/SubtractingGame', () => ({
-  default: createMockGame('SubtractingGame'),
+vi.mock('@/features/kangur/ui/components/SubtractingGardenGame', () => ({
+  default: createMockGame('SubtractingGardenGame'),
 }));
 
 import { KangurLessonActivityBlock } from '@/features/kangur/ui/components/KangurLessonActivityBlock';

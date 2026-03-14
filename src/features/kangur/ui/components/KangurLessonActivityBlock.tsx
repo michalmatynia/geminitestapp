@@ -20,7 +20,7 @@ import DivisionGame from './DivisionGame';
 import GeometryDrawingGame from './GeometryDrawingGame';
 import MultiplicationArrayGame from './MultiplicationArrayGame';
 import MultiplicationGame from './MultiplicationGame';
-import SubtractingGame from './SubtractingGame';
+import SubtractingGardenGame from './SubtractingGardenGame';
 
 type KangurLessonActivityBlockProps = {
   block: KangurLessonActivityBlockType;
@@ -37,7 +37,7 @@ const ACTIVITY_COMPONENTS: Record<
 > = {
   'adding-ball': AddingBallGame,
   'adding-synthesis': AddingSynthesisGame,
-  'subtracting-game': SubtractingGame,
+  'subtracting-game': SubtractingGardenGame,
   'multiplication-array': MultiplicationArrayGame,
   'multiplication-quiz': MultiplicationGame,
   'division-game': DivisionGame,

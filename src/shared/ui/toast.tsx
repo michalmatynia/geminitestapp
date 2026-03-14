@@ -218,7 +218,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
                 >
                   <div className='flex items-center gap-3 text-sm'>
                     {IconComponent && (
-                      <IconComponent className={`size-4 flex-shrink-0 ${classes.icon}`} />
+                      <IconComponent
+                        className={`size-4 flex-shrink-0 ${classes.icon}`}
+                        aria-hidden='true'
+                      />
                     )}
                     <div className='flex-1 font-medium'>{item.message}</div>
                     <Button
@@ -228,7 +231,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
                       onClick={() => removeToast(item.id)}
                       aria-label='Dismiss notification'
                     >
-                      <X className='size-4' />
+                      <X className='size-4' aria-hidden='true' />
                     </Button>
                   </div>
                   {item.variant === 'error' && actions.length > 0 && (

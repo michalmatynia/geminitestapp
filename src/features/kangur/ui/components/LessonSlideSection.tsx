@@ -136,7 +136,7 @@ export default function LessonSlideSection({
         accent='slate'
         align='center'
         data-testid='lesson-slide-empty'
-        description='Dodaj przynajmniej jeden slajd, aby uruchomic te sekcje lekcji.'
+        description='Dodaj przynajmniej jeden slajd, aby uruchomić te sekcję lekcji.'
         padding='lg'
         title='Brak slajdu.'
       />
@@ -200,14 +200,14 @@ export default function LessonSlideSection({
             {isLast ? null : (
               <KangurButton
                 onClick={handleNextSlide}
-                aria-label='Nastepny panel'
+                aria-label='Następny panel'
                 aria-keyshortcuts='ArrowRight PageDown'
                 aria-controls={slidePanelId}
                 className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)]'
                 data-testid='lesson-slide-next-button'
                 size='sm'
                 type='button'
-                title='Nastepny panel'
+                title='Następny panel'
                 variant='surface'
               >
                 <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />

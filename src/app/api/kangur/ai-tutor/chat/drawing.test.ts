@@ -83,7 +83,7 @@ describe('drawing helpers', () => {
       systemPrompt: 'Analyze the learner sketch in Polish.',
     });
     runBrainChatCompletionMock.mockResolvedValue({
-      text: '  Widac   trzy grupy kropek i brak podpisu pod druga grupa.  ',
+      text: '  Widać   trzy grupy kropek i brak podpisu pod druga grupa.  ',
     });
 
     await expect(
@@ -96,7 +96,7 @@ describe('drawing helpers', () => {
         },
         latestUserMessage: 'Czy ten szkic jest dobry?',
       })
-    ).resolves.toBe('Widac trzy grupy kropek i brak podpisu pod druga grupa.');
+    ).resolves.toBe('Widać trzy grupy kropek i brak podpisu pod druga grupa.');
 
     expect(resolveBrainExecutionConfigForCapabilityMock).toHaveBeenCalledWith(
       'kangur_ai_tutor.drawing_analysis',
@@ -157,14 +157,14 @@ Najpierw policz po kolei.
 
   it('drops malformed drawing blocks that do not include an svg payload', () => {
     const response = extractTutorDrawingArtifactsFromResponse(`
-Sprobuj jeszcze raz.
+Spróbuj jeszcze raz.
 <kangur_tutor_drawing>
 <title>Bez szkicu</title>
 </kangur_tutor_drawing>
     `);
 
     expect(response).toEqual({
-      message: 'Sprobuj jeszcze raz.',
+      message: 'Spróbuj jeszcze raz.',
       artifacts: [],
     });
   });

@@ -34,6 +34,8 @@ import {
   FACTORY_DAWN_ID,
   FACTORY_SUNSET_ID,
   FACTORY_NIGHTLY_ID,
+  PRESET_DAILY_CRYSTAL_ID,
+  PRESET_NIGHTLY_CRYSTAL_ID,
   KANGUR_SLOT_ASSIGNMENTS_KEY,
   parseSlotAssignments,
   resolveFactoryTheme,
@@ -55,10 +57,12 @@ type AppearancePageContextValue = {
   slotAssignments: Record<AppearanceSlot, { id: string; name: string } | null>;
   slotLabelsByKey: Record<AppearanceSlot, string>;
   slotThemes: Record<AppearanceSlot, ThemeSettings>;
+  handleAssignToSlot: (slot: AppearanceSlot) => Promise<void>;
   handleDefaultModeChange: (next: KangurStorefrontAppearanceMode) => Promise<void>;
   handleResetToFactory: () => void;
   handleSave: () => Promise<void>;
   handleSelect: (id: ThemeSelectionId) => void;
+  handleUnassignFromSlot: (slot: AppearanceSlot) => Promise<void>;
   setDraft: React.Dispatch<React.SetStateAction<ThemeSettings>>;
   updateCatalog: (nextRaw: string) => void;
 };
@@ -98,10 +102,17 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
     [settingsStore.get(KANGUR_SLOT_ASSIGNMENTS_KEY)]
   );
 
+  const SLOT_FACTORY_LABELS: Record<AppearanceSlot, string> = {
+    daily: 'Motyw dzienny (fabryczny)',
+    dawn: 'Motyw świtowy (fabryczny)',
+    sunset: 'Motyw zachodu (fabryczny)',
+    nightly: 'Motyw nocny (fabryczny)',
+  };
+
   const slotLabelsByKey = useMemo(() => {
     const getLabel = (slot: AppearanceSlot, key: string) => {
       const raw = settingsStore.get(key);
-      if (!raw?.trim() || !slotAssignments[slot]) return 'Fabryczny';
+      if (!raw?.trim() || !slotAssignments[slot]) return SLOT_FACTORY_LABELS[slot];
       return slotAssignments[slot]!.name;
     };
     return {
@@ -148,7 +159,7 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
   
   const loadTheme = useCallback(
     (id: ThemeSelectionId): ThemeSettings => {
-      if ([FACTORY_DAILY_ID, FACTORY_DAWN_ID, FACTORY_SUNSET_ID, FACTORY_NIGHTLY_ID].includes(id)) {
+      if ([FACTORY_DAILY_ID, FACTORY_DAWN_ID, FACTORY_SUNSET_ID, FACTORY_NIGHTLY_ID, PRESET_DAILY_CRYSTAL_ID, PRESET_NIGHTLY_CRYSTAL_ID].includes(id)) {
         return resolveFactoryTheme(id);
       }
       const slotMap: Record<string, { key: string; default: ThemeSettings }> = {
@@ -197,17 +208,73 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
 
   const handleResetToFactory = useCallback(() => {
     const factoryId =
-      selectedId === BUILTIN_DAWN_ID || selectedId === FACTORY_DAWN_ID
-        ? FACTORY_DAWN_ID
-        : selectedId === BUILTIN_SUNSET_ID || selectedId === FACTORY_SUNSET_ID
-          ? FACTORY_SUNSET_ID
-          : selectedId === BUILTIN_NIGHTLY_ID || selectedId === FACTORY_NIGHTLY_ID
-            ? FACTORY_NIGHTLY_ID
-            : FACTORY_DAILY_ID;
+      selectedId === PRESET_DAILY_CRYSTAL_ID
+        ? PRESET_DAILY_CRYSTAL_ID
+        : selectedId === PRESET_NIGHTLY_CRYSTAL_ID
+          ? PRESET_NIGHTLY_CRYSTAL_ID
+          : selectedId === BUILTIN_DAWN_ID || selectedId === FACTORY_DAWN_ID
+            ? FACTORY_DAWN_ID
+            : selectedId === BUILTIN_SUNSET_ID || selectedId === FACTORY_SUNSET_ID
+              ? FACTORY_SUNSET_ID
+              : selectedId === BUILTIN_NIGHTLY_ID || selectedId === FACTORY_NIGHTLY_ID
+                ? FACTORY_NIGHTLY_ID
+                : FACTORY_DAILY_ID;
 
     setDraft(resolveFactoryTheme(factoryId));
     setIsDirty(true);
   }, [selectedId]);
+
+  const resolveThemeName = useCallback(
+    (id: ThemeSelectionId): string => {
+      if (id === PRESET_DAILY_CRYSTAL_ID) return 'Daily Crystal (preset)';
+      if (id === PRESET_NIGHTLY_CRYSTAL_ID) return 'Nightly Crystal (preset)';
+      if (id === BUILTIN_DAILY_ID) return 'Motyw dzienny (wbudowany)';
+      if (id === BUILTIN_DAWN_ID) return 'Motyw świtowy (wbudowany)';
+      if (id === BUILTIN_SUNSET_ID) return 'Motyw zachodu (wbudowany)';
+      if (id === BUILTIN_NIGHTLY_ID) return 'Motyw nocny (wbudowany)';
+      if (id === FACTORY_DAILY_ID) return 'Motyw dzienny (fabryczny)';
+      if (id === FACTORY_DAWN_ID) return 'Motyw świtowy (fabryczny)';
+      if (id === FACTORY_SUNSET_ID) return 'Motyw zachodu (fabryczny)';
+      if (id === FACTORY_NIGHTLY_ID) return 'Motyw nocny (fabryczny)';
+      const entry = catalog.find((e) => e.id === id);
+      return entry?.name ?? String(id);
+    },
+    [catalog]
+  );
+
+  const slotSettingsKey = (slot: AppearanceSlot): string =>
+    slot === 'dawn' ? KANGUR_DAWN_THEME_SETTINGS_KEY
+    : slot === 'sunset' ? KANGUR_SUNSET_THEME_SETTINGS_KEY
+    : slot === 'nightly' ? KANGUR_NIGHTLY_THEME_SETTINGS_KEY
+    : KANGUR_DAILY_THEME_SETTINGS_KEY;
+
+  const handleAssignToSlot = useCallback(
+    async (slot: AppearanceSlot): Promise<void> => {
+      try {
+        await updateSetting.mutateAsync({ key: slotSettingsKey(slot), value: serializeSetting(draft) });
+        const nextAssignments = { ...slotAssignments, [slot]: { id: selectedId, name: resolveThemeName(selectedId) } };
+        await updateSetting.mutateAsync({ key: KANGUR_SLOT_ASSIGNMENTS_KEY, value: serializeSetting(nextAssignments) });
+        toast(`Motyw przypisany do slotu "${SLOT_CONFIG[slot].label}".`, { variant: 'success' });
+      } catch (error) {
+        toast(error instanceof Error ? error.message : 'Nie udało się przypisać motywu.', { variant: 'error' });
+      }
+    },
+    [draft, resolveThemeName, selectedId, slotAssignments, toast, updateSetting]
+  );
+
+  const handleUnassignFromSlot = useCallback(
+    async (slot: AppearanceSlot): Promise<void> => {
+      try {
+        await updateSetting.mutateAsync({ key: slotSettingsKey(slot), value: '' });
+        const nextAssignments = { ...slotAssignments, [slot]: null };
+        await updateSetting.mutateAsync({ key: KANGUR_SLOT_ASSIGNMENTS_KEY, value: serializeSetting(nextAssignments) });
+        toast(`Slot "${SLOT_CONFIG[slot].label}" przywrócony do fabrycznego.`, { variant: 'success' });
+      } catch (error) {
+        toast(error instanceof Error ? error.message : 'Nie udało się odpisać motywu.', { variant: 'error' });
+      }
+    },
+    [slotAssignments, toast, updateSetting]
+  );
 
   const handleSave = useCallback(async () => {
     const isBuiltin = [BUILTIN_DAILY_ID, BUILTIN_DAWN_ID, BUILTIN_SUNSET_ID, BUILTIN_NIGHTLY_ID].includes(selectedId);
@@ -261,10 +328,12 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
       slotAssignments,
       slotLabelsByKey,
       slotThemes,
+      handleAssignToSlot,
       handleDefaultModeChange,
       handleResetToFactory,
       handleSave,
       handleSelect,
+      handleUnassignFromSlot,
       setDraft,
       updateCatalog,
     }),
@@ -281,10 +350,12 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
       slotAssignments,
       slotLabelsByKey,
       slotThemes,
+      handleAssignToSlot,
       handleDefaultModeChange,
       handleResetToFactory,
       handleSave,
       handleSelect,
+      handleUnassignFromSlot,
       updateCatalog,
     ]
   );

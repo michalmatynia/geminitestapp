@@ -170,7 +170,7 @@ function ExamQuestion({
               lessonContentRef={narrationSourceRef}
               readLabel='Czytaj pytanie'
               pauseLabel='Pauza'
-              resumeLabel='Wznow'
+              resumeLabel='Wznów'
               loadingLabel='Przygotowywanie...'
             />
             {pointLabel ? (

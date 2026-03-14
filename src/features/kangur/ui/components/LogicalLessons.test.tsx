@@ -66,7 +66,7 @@ describe('Logical lessons shared surfaces', () => {
     );
 
     fireEvent.click(screen.getByTestId('lesson-slide-indicator-1'));
-    await screen.findByText(/Jeśli… to…/i);
+    await screen.findByRole('heading', { name: /Jeśli… to…/i });
 
     expect(getParagraphByTextContent('NIE znaczy')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
@@ -83,7 +83,7 @@ describe('Logical lessons shared surfaces', () => {
     );
 
     fireEvent.click(screen.getByTestId('lesson-slide-indicator-1'));
-    await screen.findByText(/Grupowanie według cech/i);
+    await screen.findByRole('heading', { name: /Grupowanie według cech/i });
 
     expect(screen.getByText(/Cecha: mają skrzydła/i)).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'

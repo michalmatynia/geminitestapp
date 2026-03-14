@@ -163,7 +163,7 @@ describe('KangurAiTutorMessageList', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Policz najpierw pierwszą parę.')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-page-content-answer-badge')).toHaveTextContent(
-      'Zapisana tresc strony'
+      'Zapisana treść strony'
     );
     expect(screen.getByText('Kolejny krok')).toBeInTheDocument();
     expect(screen.getByText('Powtórz lekcję: Dodawanie').parentElement).toHaveClass(

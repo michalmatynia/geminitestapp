@@ -57,7 +57,7 @@ describe('KangurAiTutorNativeGuideSettingsPanel', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: new RegExp(repairKangurPolishCopy('Naglowek lekcji'), 'i'),
+        name: new RegExp(repairKangurPolishCopy('Nagłówek lekcji'), 'i'),
       })
     );
     fireEvent.click(screen.getByRole('button', { name: 'Move down' }));
@@ -71,12 +71,12 @@ describe('KangurAiTutorNativeGuideSettingsPanel', () => {
 
     expect(reorderedTitles).toEqual([
       'Ekran lekcji',
-      repairKangurPolishCopy('Glowna tresc lekcji'),
-      repairKangurPolishCopy('Naglowek lekcji'),
+      repairKangurPolishCopy('Główna treść lekcji'),
+      repairKangurPolishCopy('Nagłówek lekcji'),
     ]);
     expect(parsedStore.entries[2]?.sortOrder).toBe(30);
     expect(screen.getByLabelText('Native guide entry title')).toHaveValue(
-      repairKangurPolishCopy('Naglowek lekcji')
+      repairKangurPolishCopy('Nagłówek lekcji')
     );
     expect(screen.getByLabelText('Native guide sort order')).toHaveValue(30);
   });

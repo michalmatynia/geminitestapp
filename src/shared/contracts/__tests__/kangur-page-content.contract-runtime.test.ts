@@ -22,7 +22,7 @@ describe('kangur page content contract', () => {
           sourcePath: 'src/features/kangur/ui/pages/Lessons.tsx',
           title: 'Biblioteka lekcji',
           summary: 'Domyslny opis biblioteki lekcji.',
-          body: 'Domyslna tresc biblioteki lekcji.',
+          body: 'Domyslna treść biblioteki lekcji.',
           anchorIdPrefix: 'kangur-lessons-library',
           focusKind: 'library',
           contentIdPrefixes: ['lesson:list'],
@@ -49,8 +49,8 @@ describe('kangur page content contract', () => {
           widget: 'KangurLessonsCatalogWidget',
           sourcePath: 'src/features/kangur/ui/pages/Lessons.tsx',
           title: 'Biblioteka lekcji',
-          summary: 'Wlasny opis zapisany w Mongo.',
-          body: 'Wlasna tresc zapisna w Mongo.',
+          summary: 'Własny opis zapisany w Mongo.',
+          body: 'Wlasna treść zapisna w Mongo.',
           anchorIdPrefix: 'kangur-lessons-library',
           focusKind: 'library',
           contentIdPrefixes: ['lesson:list:custom'],
@@ -61,7 +61,7 @@ describe('kangur page content contract', () => {
               id: 'lesson-library-priority',
               text: 'Najwyzszy priorytet',
               aliases: ['Priorytet'],
-              explanation: 'To etykieta wskazujaca lekcje, od ktorej najlepiej zaczac.',
+              explanation: 'To etykieta wskazujaca lekcje, od której najlepiej zacząć.',
               nativeGuideIds: ['lesson-library-custom'],
               triggerPhrases: ['priorytet'],
               enabled: true,
@@ -83,7 +83,7 @@ describe('kangur page content contract', () => {
           sourcePath: 'src/features/kangur/ui/pages/Game.tsx',
           title: 'Dodatkowa sekcja',
           summary: 'Dodatkowa sekcja spoza seedu.',
-          body: 'Pelna tresc dodatkowej sekcji.',
+          body: 'Pelna treść dodatkowej sekcji.',
           anchorIdPrefix: 'custom-extra',
           focusKind: 'screen',
           contentIdPrefixes: [],
@@ -99,8 +99,8 @@ describe('kangur page content contract', () => {
     const lessonLibrary = merged.entries.find((entry) => entry.id === 'lesson-library');
 
     expect(merged.version).toBe(1);
-    expect(lessonLibrary?.summary).toBe('Wlasny opis zapisany w Mongo.');
-    expect(lessonLibrary?.body).toBe('Wlasna tresc zapisna w Mongo.');
+    expect(lessonLibrary?.summary).toBe('Własny opis zapisany w Mongo.');
+    expect(lessonLibrary?.body).toBe('Wlasna treść zapisna w Mongo.');
     expect(lessonLibrary?.contentIdPrefixes).toEqual(['lesson:list', 'lesson:list:custom']);
     expect(lessonLibrary?.nativeGuideIds).toEqual(['lesson-library', 'lesson-library-custom']);
     expect(lessonLibrary?.fragments).toEqual([
@@ -108,7 +108,7 @@ describe('kangur page content contract', () => {
         id: 'lesson-library-priority',
         text: 'Najwyzszy priorytet',
         aliases: ['Priorytet'],
-        explanation: 'To etykieta wskazujaca lekcje, od ktorej najlepiej zaczac.',
+        explanation: 'To etykieta wskazujaca lekcje, od której najlepiej zacząć.',
         nativeGuideIds: ['lesson-library-custom'],
         triggerPhrases: ['priorytet'],
         enabled: true,
@@ -136,7 +136,7 @@ describe('kangur page content contract', () => {
             sourcePath: 'src/features/kangur/ui/pages/Game.tsx',
             title: 'Szybkie akcje',
             summary: 'Sekcja szybkich akcji.',
-            body: 'Pelny opis sekcji szybkich akcji.',
+            body: 'Pełny opis sekcji szybkich akcji.',
             anchorIdPrefix: 'kangur-game-home-actions',
             focusKind: 'home_actions',
             contentIdPrefixes: ['game:home'],
@@ -157,7 +157,7 @@ describe('kangur page content contract', () => {
             sourcePath: 'src/features/kangur/ui/pages/Game.tsx',
             title: 'Szybkie akcje kopia',
             summary: 'Duplikat sekcji szybkich akcji.',
-            body: 'Pelny opis duplikatu sekcji szybkich akcji.',
+            body: 'Pełny opis duplikatu sekcji szybkich akcji.',
             anchorIdPrefix: 'kangur-game-home-actions-copy',
             focusKind: 'home_actions',
             contentIdPrefixes: ['game:home'],

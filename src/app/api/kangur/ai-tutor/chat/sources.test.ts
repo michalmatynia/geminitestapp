@@ -46,7 +46,7 @@ describe('source helpers', () => {
         {
           kind: 'text',
           title: 'Intro',
-          text: 'Policz dwie grupy kropek i polacz wynik.',
+          text: 'Policz dwie grupy kropek i połącz wynik.',
         },
       ],
     });
@@ -54,9 +54,9 @@ describe('source helpers', () => {
       id: 'runtime:assignment',
       entityType: 'kangur_assignment_context',
       title: 'Zadanie domowe',
-      summary: 'Skoncz trzy cwiczenia z dodawania.',
+      summary: 'Skoncz trzy ćwiczenia z dodawania.',
       facts: {
-        assignmentSummary: 'Skoncz trzy cwiczenia z dodawania.',
+        assignmentSummary: 'Skoncz trzy ćwiczenia z dodawania.',
       },
     });
 

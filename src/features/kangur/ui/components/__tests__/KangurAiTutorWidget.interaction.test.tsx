@@ -248,8 +248,8 @@ describe('KangurAiTutorWidget - Interaction', () => {
       messages: [
         {
           role: 'assistant',
-          content: 'Sprobuj najpierw policzyc dziesiatke.',
-          coachingFrame: { mode: 'hint_ladder', label: 'Jeden trop', description: 'Daj tylko jeden maly krok.' },
+          content: 'Spróbuj najpierw policzyc dziesiatke.',
+          coachingFrame: { mode: 'hint_ladder', label: 'Jeden trop', description: 'Daj tylko jeden mały krok.' },
         },
       ],
       openChat: mocks.openChatMock,

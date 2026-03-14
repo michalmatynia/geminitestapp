@@ -6,6 +6,15 @@ import LessonSlideSection, {
   type LessonSlide as LessonSlideSectionSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
+  CalendarDateFormatAnimation,
+  CalendarDateHighlightAnimation,
+  CalendarDaysStripAnimation,
+  CalendarMonthLengthAnimation,
+  CalendarMonthsLoopAnimation,
+  CalendarSeasonsCycleAnimation,
+  CalendarWeekendPulseAnimation,
+} from '@/features/kangur/ui/components/CalendarLessonAnimations';
+import {
   KangurLessonCallout,
   KangurLessonCaption,
   KangurLessonStack,
@@ -149,6 +158,38 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
         </KangurLessonStack>
       ),
     },
+    {
+      title: 'Rok w pętli',
+      tts: 'Miesiące wracają co roku w tej samej kolejności.',
+      content: (
+        <KangurLessonStack className='text-center'>
+          <KangurLessonCallout accent='emerald' className='max-w-xs'>
+            <div className='mx-auto h-40 w-40 sm:h-44 sm:w-44'>
+              <CalendarMonthsLoopAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Styczeń po grudniu znów wraca.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Pory roku',
+      tts: 'Mamy cztery pory roku, które powtarzają się cyklicznie.',
+      content: (
+        <KangurLessonStack className='text-center'>
+          <KangurLessonCallout accent='emerald' className='max-w-xs'>
+            <div className='mx-auto h-40 w-40 sm:h-44 sm:w-44'>
+              <CalendarSeasonsCycleAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Wiosna, lato, jesień, zima.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
   ],
   dni: [
     {
@@ -181,6 +222,38 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
             </KangurLessonCallout>
           ))}
         </div>
+      ),
+    },
+    {
+      title: 'Tydzień w rytmie',
+      tts: 'Dni tygodnia następują po sobie w stałej kolejności.',
+      content: (
+        <KangurLessonStack className='text-center'>
+          <KangurLessonCallout accent='indigo' className='max-w-xs'>
+            <div className='mx-auto h-24 w-72'>
+              <CalendarDaysStripAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Po niedzieli znowu jest poniedziałek.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Weekend',
+      tts: 'Sobota i niedziela to weekend.',
+      content: (
+        <KangurLessonStack className='text-center'>
+          <KangurLessonCallout accent='rose' className='max-w-xs'>
+            <div className='mx-auto h-24 w-72'>
+              <CalendarWeekendPulseAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Weekend wyróżnia się kolorem.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
       ),
     },
   ],
@@ -250,6 +323,38 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
         </KangurLessonStack>
       ),
     },
+    {
+      title: 'Koło miesięcy',
+      tts: 'Miesiące ustawiają się w kole i powtarzają co roku.',
+      content: (
+        <KangurLessonStack className='text-center'>
+          <KangurLessonCallout accent='emerald' className='max-w-xs'>
+            <div className='mx-auto h-32 w-32'>
+              <CalendarMonthsLoopAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Miesiące krążą bez końca.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Długość miesięcy',
+      tts: 'Niektóre miesiące mają 31 dni, inne 30, a luty 28.',
+      content: (
+        <KangurLessonStack className='text-center'>
+          <KangurLessonCallout accent='emerald' className='max-w-xs'>
+            <div className='mx-auto h-24 w-72'>
+              <CalendarMonthLengthAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Zapamiętaj długości miesięcy.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
   ],
   data: [
     {
@@ -267,6 +372,38 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
               📝 Lub: <strong>15/03/2025</strong>
             </KangurLessonCaption>
             <p className='mt-1 font-bold text-indigo-700'>Dzień / Miesiąc / Rok</p>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Zapis daty',
+      tts: 'Datę zapisujemy jako dzień, miesiąc i rok, na przykład 15/03/2025.',
+      content: (
+        <KangurLessonStack className='text-center'>
+          <KangurLessonCallout accent='indigo' className='max-w-xs'>
+            <div className='mx-auto h-24 w-72'>
+              <CalendarDateFormatAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Dzień / Miesiąc / Rok.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Znajdź dzień',
+      tts: 'W kalendarzu wybieramy konkretny dzień.',
+      content: (
+        <KangurLessonStack className='text-center'>
+          <KangurLessonCallout accent='indigo' className='max-w-xs'>
+            <div className='mx-auto h-32 w-56'>
+              <CalendarDateHighlightAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Wskaż właściwą datę.
+            </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
@@ -417,7 +554,7 @@ export default function CalendarLesson(): React.JSX.Element {
           return;
         }
         if (sectionId === 'game_months') {
-          handleStartTraining('miesiace');
+          handleStartTraining('miesiące');
           return;
         }
         if (sectionId === 'game_dates') {

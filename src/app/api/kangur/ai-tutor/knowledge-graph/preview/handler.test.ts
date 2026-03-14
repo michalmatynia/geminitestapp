@@ -98,8 +98,8 @@ describe('kangur ai tutor knowledge graph preview handler', () => {
       lexicalHitCount: 1,
       vectorHitCount: 0,
       vectorRecallAttempted: false,
-      querySeed: 'Jak sie zalogowac do Kangura?',
-      normalizedQuerySeed: 'jak sie zalogowac do kangura',
+      querySeed: 'Jak się zalogować do Kangura?',
+      normalizedQuerySeed: 'jak się zalogować do kangura',
       tokens: ['zalogowac', 'kangura'],
       instructions: 'Kangur website-help graph context:\n- Sign in flow [flow]',
       websiteHelpTarget: {
@@ -114,7 +114,7 @@ describe('kangur ai tutor knowledge graph preview handler', () => {
         {
           documentId: 'flow:kangur:sign-in',
           collectionId: 'kangur_ai_tutor_content',
-          text: 'Kliknij Zaloguj sie.',
+          text: 'Kliknij Zaloguj się.',
           score: 0.94,
           metadata: {
             source: 'manual-text',
@@ -153,7 +153,7 @@ describe('kangur ai tutor knowledge graph preview handler', () => {
         method: 'POST',
       }),
       createRequestContext({
-        latestUserMessage: 'Jak sie zalogowac do Kangura?',
+        latestUserMessage: 'Jak się zalogować do Kangura?',
         locale: 'pl',
         context: {
           surface: 'lesson',
@@ -176,7 +176,7 @@ describe('kangur ai tutor knowledge graph preview handler', () => {
     );
     expect(previewKangurWebsiteHelpGraphContextMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        latestUserMessage: 'Jak sie zalogowac do Kangura?',
+        latestUserMessage: 'Jak się zalogować do Kangura?',
         locale: 'pl',
         runtimeDocuments: expect.arrayContaining([
           expect.objectContaining({ entityType: 'kangur_learner_snapshot' }),
@@ -207,7 +207,7 @@ describe('kangur ai tutor knowledge graph preview handler', () => {
           vectorHitCount: 0,
           vectorRecallAttempted: false,
           tokenCount: 2,
-          normalizedQuerySeed: 'jak sie zalogowac do kangura',
+          normalizedQuerySeed: 'jak się zalogować do kangura',
           websiteHelpTargetNodeId: 'flow:kangur:sign-in',
         },
         retrieval: expect.objectContaining({
@@ -217,8 +217,8 @@ describe('kangur ai tutor knowledge graph preview handler', () => {
           lexicalHitCount: 1,
           vectorHitCount: 0,
           vectorRecallAttempted: false,
-          querySeed: 'Jak sie zalogowac do Kangura?',
-          normalizedQuerySeed: 'jak sie zalogowac do kangura',
+          querySeed: 'Jak się zalogować do Kangura?',
+          normalizedQuerySeed: 'jak się zalogować do kangura',
           nodeIds: ['flow:kangur:sign-in'],
           tokens: ['zalogowac', 'kangura'],
           websiteHelpTarget: {
@@ -269,7 +269,7 @@ describe('kangur ai tutor knowledge graph preview handler', () => {
           method: 'POST',
         }),
         createRequestContext({
-          latestUserMessage: 'Jak sie zalogowac do Kangura?',
+          latestUserMessage: 'Jak się zalogować do Kangura?',
         })
       )
     ).rejects.toMatchObject(

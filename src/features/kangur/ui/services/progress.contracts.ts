@@ -220,6 +220,11 @@ export const ACTIVITY_LABELS: Record<string, string> = {
   geometry_symmetry: 'Symetria',
   geometry_perimeter: 'Obwod',
   logical_thinking: 'Logiczne myślenie',
+  logical_patterns: 'Wzorce',
+  logical_classification: 'Klasyfikacja',
+  logical_reasoning: 'Wnioskowanie',
+  logical_analogies: 'Analogie',
+  logical: 'Logika',
 };
 
 export const LESSON_KEY_TO_OPERATION: Record<string, string> = {
@@ -233,6 +238,11 @@ export const LESSON_KEY_TO_OPERATION: Record<string, string> = {
   geometry_shapes: 'geometry',
   geometry_symmetry: 'geometry',
   geometry_perimeter: 'geometry',
+  logical_thinking: 'logical',
+  logical_patterns: 'logical',
+  logical_classification: 'logical',
+  logical_reasoning: 'logical',
+  logical_analogies: 'logical',
 };
 
 export const CLOCK_TRAINING_SECTION_LABELS: Record<string, string> = {

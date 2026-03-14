@@ -243,7 +243,6 @@ const LEGACY_IMPORTERS: Record<KangurLessonComponentId, LegacyImportDefinition> 
   }),
   multiplication: createSectionedDefinition(MULTIPLICATION_HUB_SECTIONS, MULTIPLICATION_SLIDES, {
     game_array: 'multiplication-array',
-    game_quiz: 'multiplication-quiz',
   }),
   division: createSectionedDefinition(DIVISION_HUB_SECTIONS, DIVISION_SLIDES, {
     game: 'division-game',

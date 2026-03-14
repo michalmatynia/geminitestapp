@@ -5,6 +5,13 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
+import {
+  GeometrySymmetryAxesAnimation,
+  GeometrySymmetryCheckAnimation,
+  GeometrySymmetryFoldAnimation,
+  GeometrySymmetryMirrorAnimation,
+  GeometrySymmetryRotationAnimation,
+} from '@/features/kangur/ui/components/GeometryLessonAnimations';
 import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import {
   addXp,
@@ -12,7 +19,82 @@ import {
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 
-type SectionId = 'intro' | 'os' | 'figury' | 'podsumowanie';
+type SectionId = 'intro' | 'os' | 'figury' | 'animacje' | 'podsumowanie';
+
+const SYMMETRY_ANIMATION_SLIDES: LessonSlide[] = [
+  {
+    title: 'Oś symetrii w ruchu',
+    content: (
+      <div className='flex flex-col gap-4 text-center'>
+        <p className='[color:var(--kangur-page-text)]'>
+          Oś symetrii dzieli figurę na dwie pasujące połówki.
+        </p>
+        <KangurLessonCallout accent='slate' className='border-emerald-200/85'>
+          <div className='mx-auto h-28 w-40'>
+            <GeometrySymmetryFoldAnimation />
+          </div>
+          <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
+            Jedna strona odbija się w drugiej.
+          </p>
+        </KangurLessonCallout>
+      </div>
+    ),
+  },
+  {
+    title: 'Wiele osi symetrii',
+    content: (
+      <div className='flex flex-col gap-4 text-center'>
+        <p className='[color:var(--kangur-page-text)]'>
+          Niektóre figury mają więcej niż jedną oś.
+        </p>
+        <KangurLessonCallout accent='emerald'>
+          <div className='mx-auto h-28 w-40'>
+            <GeometrySymmetryAxesAnimation />
+          </div>
+          <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
+            Koło ma osi nieskończenie wiele.
+          </p>
+        </KangurLessonCallout>
+      </div>
+    ),
+  },
+  {
+    title: 'Odbicie lustrzane',
+    content: (
+      <div className='flex flex-col gap-4 text-center'>
+        <p className='[color:var(--kangur-page-text)]'>
+          Gdy złożysz figurę na osi, obie strony pokrywają się.
+        </p>
+        <KangurLessonCallout accent='emerald'>
+          <div className='mx-auto h-28 w-40'>
+            <GeometrySymmetryMirrorAnimation />
+          </div>
+          <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
+            To właśnie odbicie lustrzane.
+          </p>
+        </KangurLessonCallout>
+      </div>
+    ),
+  },
+  {
+    title: 'Symetria obrotowa',
+    content: (
+      <div className='flex flex-col gap-4 text-center'>
+        <p className='[color:var(--kangur-page-text)]'>
+          Niektóre figury wyglądają tak samo po obrocie.
+        </p>
+        <KangurLessonCallout accent='emerald'>
+          <div className='mx-auto h-28 w-28'>
+            <GeometrySymmetryRotationAnimation />
+          </div>
+          <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
+            Kwadrat ma symetrię obrotową.
+          </p>
+        </KangurLessonCallout>
+      </div>
+    ),
+  },
+];
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   intro: [
@@ -34,6 +116,24 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
         </div>
       ),
     },
+    {
+      title: 'Symetria lustrzana',
+      content: (
+        <div className='flex flex-col gap-4 text-center'>
+          <p className='[color:var(--kangur-page-text)]'>
+            Oś działa jak lustro: prawa strona odbija lewą.
+          </p>
+          <KangurLessonCallout accent='emerald'>
+            <div className='mx-auto h-28 w-40'>
+              <GeometrySymmetryMirrorAnimation />
+            </div>
+            <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
+              Po złożeniu obie części są takie same.
+            </p>
+          </KangurLessonCallout>
+        </div>
+      ),
+    },
   ],
   os: [
     {
@@ -45,10 +145,8 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             części.
           </p>
           <KangurLessonCallout accent='slate' className='border-emerald-200/85'>
-            <div className='mx-auto flex h-28 w-40 items-center justify-center gap-4'>
-              <div className='h-20 w-16 rounded-l-full bg-emerald-300' />
-              <div className='h-24 w-0.5 bg-emerald-600' />
-              <div className='h-20 w-16 rounded-r-full bg-emerald-300' />
+            <div className='mx-auto h-28 w-40'>
+              <GeometrySymmetryFoldAnimation />
             </div>
             <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
               Pionowa kreska to oś symetrii.
@@ -57,6 +155,24 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <p className='text-sm [color:var(--kangur-page-muted-text)]'>
             Figura może mieć więcej niż jedną oś symetrii!
           </p>
+        </div>
+      ),
+    },
+    {
+      title: 'Oś w praktyce',
+      content: (
+        <div className='flex flex-col gap-4 text-center'>
+          <p className='[color:var(--kangur-page-text)]'>
+            Linia osi pokazuje, gdzie figura się „zgina”.
+          </p>
+          <KangurLessonCallout accent='slate' className='border-emerald-200/85'>
+            <div className='mx-auto h-28 w-40'>
+              <GeometrySymmetryFoldAnimation />
+            </div>
+            <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
+              Oś dzieli figurę na dwie równe części.
+            </p>
+          </KangurLessonCallout>
         </div>
       ),
     },
@@ -91,7 +207,38 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
         </div>
       ),
     },
+    {
+      title: 'Symetryczne czy nie?',
+      content: (
+        <div className='flex flex-col gap-3 text-center'>
+          <KangurLessonCallout accent='emerald'>
+            <div className='mx-auto h-28 w-48'>
+              <GeometrySymmetryCheckAnimation />
+            </div>
+            <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
+              Symetryczne figury mają pasujące połówki.
+            </p>
+          </KangurLessonCallout>
+        </div>
+      ),
+    },
+    {
+      title: 'Symetria obrotowa',
+      content: (
+        <div className='flex flex-col gap-3 text-center'>
+          <KangurLessonCallout accent='emerald'>
+            <div className='mx-auto h-28 w-28'>
+              <GeometrySymmetryRotationAnimation />
+            </div>
+            <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
+              Obrót nie zmienia wyglądu figury.
+            </p>
+          </KangurLessonCallout>
+        </div>
+      ),
+    },
   ],
+  animacje: SYMMETRY_ANIMATION_SLIDES,
   podsumowanie: [
     {
       title: 'Podsumowanie',
@@ -115,6 +262,45 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
         </div>
       ),
     },
+    {
+      title: 'Podsumowanie w ruchu',
+      content: (
+        <div className='grid gap-3 text-center sm:grid-cols-2'>
+          <KangurLessonCallout accent='emerald' padding='sm'>
+            <div className='mx-auto h-28 w-40'>
+              <GeometrySymmetryFoldAnimation />
+            </div>
+            <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
+              Złóż figurę wzdłuż osi.
+            </p>
+          </KangurLessonCallout>
+          <KangurLessonCallout accent='emerald' padding='sm'>
+            <div className='mx-auto h-28 w-40'>
+              <GeometrySymmetryAxesAnimation />
+            </div>
+            <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
+              Symetria to zgodność po obu stronach osi.
+            </p>
+          </KangurLessonCallout>
+          <KangurLessonCallout accent='emerald' padding='sm'>
+            <div className='mx-auto h-28 w-40'>
+              <GeometrySymmetryMirrorAnimation />
+            </div>
+            <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
+              Odbicie lustrzane po osi.
+            </p>
+          </KangurLessonCallout>
+          <KangurLessonCallout accent='emerald' padding='sm'>
+            <div className='mx-auto h-28 w-28'>
+              <GeometrySymmetryRotationAnimation />
+            </div>
+            <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
+              Symetria obrotowa.
+            </p>
+          </KangurLessonCallout>
+        </div>
+      ),
+    },
   ],
 };
 
@@ -126,6 +312,12 @@ export const HUB_SECTIONS = [
     emoji: '🔵',
     title: 'Figury symetryczne',
     description: 'Które figury maja symetrię?',
+  },
+  {
+    id: 'animacje',
+    emoji: '🎞️',
+    title: 'Animacje',
+    description: 'Symetria w ruchu',
   },
   { id: 'podsumowanie', emoji: '📋', title: 'Podsumowanie', description: 'Wszystko razem' },
 ];

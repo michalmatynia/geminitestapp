@@ -140,7 +140,7 @@ describe('KangurLearnerProfileAiTutorMoodWidget', () => {
     );
     expect(screen.getByTestId('learner-profile-ai-tutor-mood')).toHaveTextContent(
       repairKangurPolishCopy(
-        'W trybie lokalnym tutor dziala, ale nastroj nie zapisuje sie per uczen.'
+        'W trybie lokalnym tutor działa, ale nastrój nie zapisuje się per uczeń.'
       )
     );
     expect(screen.getByTestId('learner-profile-ai-tutor-mood-updated')).toHaveTextContent(
@@ -152,7 +152,7 @@ describe('KangurLearnerProfileAiTutorMoodWidget', () => {
     useKangurPageContentEntryMock.mockReturnValue({
       entry: {
         id: 'learner-profile-ai-tutor-mood',
-        title: 'Nastroj Tutor-AI',
+        title: 'Nastrój Tutor-AI',
         summary: 'Mongo opis tonu wsparcia i ostatniej analizy nastroju.',
       },
       data: undefined,
@@ -164,7 +164,7 @@ describe('KangurLearnerProfileAiTutorMoodWidget', () => {
 
     render(<KangurLearnerProfileAiTutorMoodWidget />);
 
-    expect(screen.getByText('Nastroj Tutor-AI')).toBeInTheDocument();
+    expect(screen.getByText('Nastrój Tutor-AI')).toBeInTheDocument();
     expect(
       screen.getByText('Mongo opis tonu wsparcia i ostatniej analizy nastroju.')
     ).toBeInTheDocument();

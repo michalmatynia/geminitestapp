@@ -447,6 +447,14 @@ const KANGUR_THEME_SECTIONS: Array<{
         step: 0.05,
       },
       {
+        key: 'headingLineHeight',
+        label: 'Heading Line Height',
+        type: 'range',
+        min: 1,
+        max: 1.6,
+        step: 0.05,
+      },
+      {
         key: 'maxContentWidth',
         label: 'Page Width',
         type: 'range',

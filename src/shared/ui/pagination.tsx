@@ -60,7 +60,7 @@ function PaginationInfo(): React.JSX.Element | null {
     <div className='text-sm text-gray-400'>
       {isLoading ? (
         <div className='flex items-center gap-2'>
-          <Loader2 className='h-4 w-4 animate-spin text-blue-500' />
+          <Loader2 className='h-4 w-4 animate-spin text-blue-500' aria-hidden='true' />
           <span>Loading...</span>
         </div>
       ) : (
@@ -127,7 +127,7 @@ function PaginationControls(): React.JSX.Element {
         className='h-8 w-8 p-0'
         aria-label='Previous page'
       >
-        <ChevronLeft className='h-4 w-4' />
+        <ChevronLeft className='h-4 w-4' aria-hidden='true' />
       </Button>
 
       <div className='text-xs font-medium text-gray-400 min-w-[80px] text-center'>
@@ -151,7 +151,7 @@ function PaginationControls(): React.JSX.Element {
         className='h-8 w-8 p-0'
         aria-label='Next page'
       >
-        <ChevronRight className='h-4 w-4' />
+        <ChevronRight className='h-4 w-4' aria-hidden='true' />
       </Button>
     </div>
   );

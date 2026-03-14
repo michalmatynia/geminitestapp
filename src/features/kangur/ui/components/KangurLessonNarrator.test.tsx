@@ -176,7 +176,7 @@ describe('KangurLessonNarrator', () => {
     });
 
     render(
-      <NarratorHarness readLabel='Czytaj' pauseLabel='Pauza' resumeLabel='Wznow' />
+      <NarratorHarness readLabel='Czytaj' pauseLabel='Pauza' resumeLabel='Wznów' />
     );
 
     await waitFor(() =>

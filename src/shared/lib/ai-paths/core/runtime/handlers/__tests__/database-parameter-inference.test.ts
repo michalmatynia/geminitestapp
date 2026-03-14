@@ -374,7 +374,7 @@ describe('mergeTranslatedParameterUpdates', () => {
     const result = mergeTranslatedParameterUpdates({
       targetPath: 'parameters',
       updates: {
-        parameters: [{ parameterId: 'unknown', value: 'Nowa wartosc' }],
+        parameters: [{ parameterId: 'unknown', value: 'Nowa wartość' }],
       },
       templateInputs: {
         context: {

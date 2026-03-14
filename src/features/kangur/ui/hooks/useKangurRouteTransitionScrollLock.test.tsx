@@ -17,7 +17,7 @@ function RouteTransitionScrollLockProbe({
   active: boolean;
 }): React.JSX.Element {
   useKangurRouteTransitionScrollLock(active);
-  return <div>Scroll lock probe</div>;
+  return <div>Scroll lock próbę</div>;
 }
 
 describe('useKangurRouteTransitionScrollLock', () => {

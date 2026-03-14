@@ -34,7 +34,7 @@ const assignment: KangurAssignmentSnapshot & { target: { type: 'practice' } } = 
   id: 'assignment-practice-division',
   learnerKey: 'jan@example.com',
   title: 'Praktyka: Dzielenie',
-  description: 'Wykonaj jedna sesje dzielenia i osiagnij co najmniej 80% skutecznosci.',
+  description: 'Wykonaj jedna sesje dzielenia i osiagnij co najmniej 80% skuteczności.',
   priority: 'high',
   archived: false,
   target: {

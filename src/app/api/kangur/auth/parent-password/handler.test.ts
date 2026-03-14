@@ -67,7 +67,7 @@ describe('kangur parent password handler', () => {
       ok: true,
       email: 'parent@example.com',
       hasPassword: true,
-      message: 'Haslo rodzica zostalo ustawione. Od teraz mozesz logowac sie emailem i haslem.',
+      message: 'Hasło rodzica zostało ustawione. Od teraz możesz logowac się emailem i hasłem.',
     });
   });
 });

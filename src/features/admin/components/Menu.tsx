@@ -392,6 +392,7 @@ export default function Menu(): React.ReactNode {
   return (
     <nav
       data-admin-menu
+      aria-label='Admin menu'
       className={cn('flex flex-col gap-3', isMenuCollapsed ? 'items-stretch' : '')}
     >
       {!isMenuCollapsed ? (

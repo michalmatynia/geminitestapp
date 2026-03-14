@@ -34,6 +34,27 @@ import type { KangurLessonComponentId, KangurRouteAction } from '@/shared/contra
 
 const QUICK_PRACTICE_OPTIONS = [
   {
+    accent: 'rose',
+    description: 'Szybka seria odejmowania z natychmiastowa odpowiedzia.',
+    emoji: '➖',
+    label: 'Quiz odejmowania',
+    onSelectScreen: 'subtraction_quiz',
+  },
+  {
+    accent: 'sky',
+    description: 'Szybki quiz z dzielenia na równe grupy.',
+    emoji: '➗',
+    label: 'Quiz dzielenia',
+    onSelectScreen: 'division_quiz',
+  },
+  {
+    accent: 'violet',
+    description: 'Sprawdź tabliczke w krótkim quizie z mnozenia.',
+    emoji: '✖️',
+    label: 'Quiz mnozenia',
+    onSelectScreen: 'multiplication_quiz',
+  },
+  {
     accent: 'emerald',
     description: 'Sprawdź daty, dni tygodnia i miesiące w krótkich zadaniach.',
     emoji: '📅',
@@ -51,7 +72,12 @@ const QUICK_PRACTICE_OPTIONS = [
 
 type KangurRecommendedSelectorScreen = Extract<
   KangurGameScreen,
-  'calendar_quiz' | 'geometry_quiz' | 'training'
+  | 'calendar_quiz'
+  | 'geometry_quiz'
+  | 'subtraction_quiz'
+  | 'division_quiz'
+  | 'multiplication_quiz'
+  | 'training'
 >;
 
 type KangurOperationSelectorRecommendationTarget =
@@ -213,6 +239,15 @@ const getRecommendationActionLabel = (
     }
     if (target.screen === 'geometry_quiz') {
       return 'Ćwicz figury';
+    }
+    if (target.screen === 'subtraction_quiz') {
+      return 'Ćwicz odejmowanie';
+    }
+    if (target.screen === 'division_quiz') {
+      return 'Ćwicz dzielenie';
+    }
+    if (target.screen === 'multiplication_quiz') {
+      return 'Ćwicz mnożenie';
     }
     return 'Uruchom trening';
   }
@@ -497,7 +532,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
         <KangurSectionHeading
           accent='violet'
           align='left'
-          description='Dwa szybkie tryby ćwiczeń w tej samej karcie i rytmie co mini-gry z Lekcji.'
+          description='Szybkie tryby ćwiczeń w tej samej karcie i rytmie co mini-gry z Lekcji.'
           headingAs='h3'
           headingSize='sm'
           title='Szybkie ćwiczenia'

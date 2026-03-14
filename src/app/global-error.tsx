@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 
+import { SkipToContentLink } from '@/shared/ui/SkipToContentLink';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export default function RootGlobalError({
@@ -21,15 +22,18 @@ export default function RootGlobalError({
   return (
     <html lang='en'>
       <body className='m-0 bg-[#0b0d12] text-[#e7edf3]'>
+        <SkipToContentLink />
         <main
           id='app-content'
           tabIndex={-1}
           className='mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center gap-4 p-6 text-center focus:outline-none'
         >
-          <h1 className='text-2xl font-semibold'>Something went wrong</h1>
-          <p className='text-sm text-[#9aa7b6]'>
-            {error.message || 'An unexpected error occurred while rendering the application.'}
-          </p>
+          <div role='alert' aria-live='assertive' aria-atomic='true'>
+            <h1 className='text-2xl font-semibold'>Something went wrong</h1>
+            <p className='mt-2 text-sm text-[#9aa7b6]'>
+              {error.message || 'An unexpected error occurred while rendering the application.'}
+            </p>
+          </div>
           <button
             type='button'
             onClick={() => reset()}

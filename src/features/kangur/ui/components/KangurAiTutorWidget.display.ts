@@ -399,7 +399,7 @@ export function useKangurAiTutorGuidedDisplayState(input: {
       : showSelectionGuidanceCallout
         ? isLoading
           ? tutorContent.guidedCallout.selectionDetailPending
-          : tutorContent.guidedCallout.selectionDetailSoon
+          : null
         : showSectionGuidanceCallout
           ? isLoading
             ? tutorContent.guidedCallout.sectionDetailPending
@@ -571,7 +571,7 @@ export function useKangurAiTutorGuidedDisplayState(input: {
     guidedMode === 'home_onboarding'
       ? tutorContent.homeOnboarding.calloutHeaderLabel
       : showSelectionGuidanceCallout || showSectionGuidanceCallout
-        ? `${tutorName.trim() || 'Tutor'}${tutorContent.guidedCallout.explanationHeaderSuffix}`
+        ? (tutorName.trim() || 'Tutor')
         : guestTutorAssistantLabel;
 
   const sectionResponsePendingKind = showSectionGuidanceCallout

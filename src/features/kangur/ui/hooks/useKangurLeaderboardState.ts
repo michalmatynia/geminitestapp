@@ -253,7 +253,7 @@ export const useKangurLeaderboardState = (
 
   return {
     currentUser,
-    emptyStateLabel: error ?? 'Brak wynikow dla tych filtrow.',
+    emptyStateLabel: error ?? 'Brak wyników dla tych filtrow.',
     error,
     items,
     loading,

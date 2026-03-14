@@ -656,7 +656,7 @@ export const defaultPromptValidationRules: PromptValidationRule[] = [
     description:
       'Hints for Kangur games and tests must guide the learner without revealing answers directly.',
     pattern:
-      '^(?![\\s\\S]*(?:poprawna odpowiedz|prawidlowa odpowiedz|prawidłowa odpowiedź|wlasciwa odpowiedz|właściwa odpowiedź|odpowiedz to|odpowiedź to|wynik to))[\\s\\S]*$',
+      '^(?![\\s\\S]*(?:poprawna odpowiedz|prawidlowa odpowiedz|prawidłowa odpowiedź|właściwa odpowiedz|właściwa odpowiedź|odpowiedz to|odpowiedź to|wynik to))[\\s\\S]*$',
     flags: 'i',
     message: 'Hints must stay non-spoiler and cannot reveal the answer directly.',
     similar: [],

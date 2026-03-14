@@ -416,7 +416,7 @@ describe('kangur tts server', () => {
     );
   });
 
-  it('reports billing failures from the narrator probe', async () => {
+  it('reports billing failures from the narrator próbę', async () => {
     readStoredSettingValueMock.mockImplementation(async (key: string): Promise<string | null> => {
       if (key === 'openai_api_key') return 'test-openai-key';
       return null;

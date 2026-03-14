@@ -505,7 +505,7 @@ describe('KangurAiTutorWidget - UI', () => {
       tutorMoodId: 'neutral',
       tutorBehaviorMoodId: 'supportive',
       tutorBehaviorMoodLabel: 'Wspierajacy',
-      tutorBehaviorMoodDescription: 'Tutor aktywnie podtrzymuje ucznia w biezacej probie.',
+      tutorBehaviorMoodDescription: 'Tutor aktywnie podtrzymuje ucznia w bieżącej próbie.',
       tutorAvatarSvg:
         '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="34" fill="#ffffff" /></svg>',
       tutorAvatarImageUrl: null,
@@ -526,14 +526,14 @@ describe('KangurAiTutorWidget - UI', () => {
     });
     render(<KangurAiTutorWidget />);
     expect(screen.getByTestId('kangur-ai-tutor-mood-chip')).toHaveTextContent(
-      'Nastrój: Wspierajacy'
+      'Nastrój: Wspierający'
     );
     expect(screen.getByTestId('kangur-ai-tutor-mood-chip')).toHaveAttribute(
       'data-mood-id',
       'supportive'
     );
     expect(screen.getByTestId('kangur-ai-tutor-mood-description')).toHaveTextContent(
-      'Tutor aktywnie podtrzymuje ucznia w biezacej probie.'
+      'Tutor aktywnie podtrzymuje ucznia w bieżącej próbie.'
     );
     expect(screen.getByTestId('kangur-ai-tutor-mood-description')).toHaveClass(
       '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'

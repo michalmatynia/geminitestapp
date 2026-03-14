@@ -271,7 +271,7 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
                 className='mt-2 kangur-chat-padding-md'
               >
                 <div className='text-[10px] font-bold uppercase tracking-[0.16em] [color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'>
-                  Zapisane zrodlo
+                  Zapisane źródło
                 </div>
                 <div className='mt-2 flex flex-wrap items-center gap-2'>
                   {resolvedSelectedKnowledgeLabel ? (
@@ -280,11 +280,11 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
                     </KangurAiTutorPanelContextChip>
                   ) : null}
                   <KangurAiTutorPanelContextChip className='text-[10px] font-bold uppercase tracking-[0.14em]'>
-                    Tresc strony
+                    Treść strony
                   </KangurAiTutorPanelContextChip>
                 </div>
                 <div className='mt-2 text-xs leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
-                  Tutor korzysta tu z zapisanego wpisu strony zamiast zgadywac kontekst samego zaznaczenia.
+                  Tutor korzysta tu z zapisanego wpisu strony zamiast zgadywać kontekst samego zaznaczenia.
                 </div>
                 <div className='mt-2 rounded-2xl border kangur-chat-padding-sm font-mono text-[11px] [border-color:var(--kangur-chat-divider,var(--kangur-soft-card-border))] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
                   {resolvedSelectedKnowledgeReference.sourcePath}

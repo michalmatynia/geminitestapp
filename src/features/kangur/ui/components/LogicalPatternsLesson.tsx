@@ -1,20 +1,35 @@
 import { useState } from 'react';
 
+import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
+import LogicalPatternsWorkshopGame from '@/features/kangur/ui/components/LogicalPatternsWorkshopGame';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
   KangurLessonLead,
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
+import {
+  ArithmeticStepAnimation,
+  ArithmeticReverseAnimation,
+  FibonacciSumAnimation,
+  GeometricDotsAnimation,
+  GeometricGrowthAnimation,
+  PatternCycleAnimation,
+  PatternMissingAnimation,
+  PatternUnitAnimation,
+  RuleChecklistAnimation,
+  RuleCheckAnimation,
+} from '@/features/kangur/ui/components/LogicalPatternsAnimations';
 import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 
-type SectionId = 'intro' | 'ciagi_arytm' | 'ciagi_geom' | 'strategie';
+type SectionId = 'intro' | 'ciagi_arytm' | 'ciagi_geom' | 'strategie' | 'game_warsztat';
+type SlideSectionId = Exclude<SectionId, 'game_warsztat'>;
 
-export const SLIDES: Record<SectionId, LessonSlide[]> = {
+export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   intro: [
     {
       title: 'Co to jest wzorzec?',
@@ -68,6 +83,60 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
         </KangurLessonStack>
       ),
     },
+    {
+      title: 'Jednostka wzorca',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Jednostka wzorca to najmniejszy fragment, który się powtarza.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
+            <div className='mx-auto h-20 w-72'>
+              <PatternUnitAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Zaznaczamy powtarzającą się parę i przesuwamy dalej.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Uzupełnij brakujący element',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Gdy znasz jednostkę, możesz szybko uzupełnić brakujące miejsce.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
+            <div className='mx-auto h-20 w-72'>
+              <PatternMissingAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Wzorzec AAB powtarza się w tej samej kolejności.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Wzorzec trzy-elementowy',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Czasem wzorzec ma trzy elementy, które powtarzają się w tej samej kolejności.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
+            <div className='mx-auto h-20 w-72'>
+              <PatternCycleAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Zaznacz cykl A-B-C i obserwuj, jak się powtarza.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
   ],
   ciagi_arytm: [
     {
@@ -97,6 +166,42 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               </KangurLessonCallout>
             ))}
           </div>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Stały krok',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            W ciągu arytmetycznym dodajemy tę samą liczbę na każdym kroku.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
+            <div className='mx-auto h-24 w-72'>
+              <ArithmeticStepAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Ten sam krok powtarza się w każdym miejscu.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Ciąg malejący',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            W ciągu arytmetycznym możemy też odejmować stałą liczbę.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='sky' className='w-full text-center' padding='sm'>
+            <div className='mx-auto h-24 w-72'>
+              <ArithmeticReverseAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Każdy krok to ten sam spadek.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
@@ -132,6 +237,60 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
         </KangurLessonStack>
       ),
     },
+    {
+      title: 'Wzrost geometryczny',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Gdy iloraz jest stały, każdy wyraz rośnie szybciej od poprzedniego.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
+            <div className='mx-auto h-28 w-72'>
+              <GeometricGrowthAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Podwajanie daje coraz wyższe słupki.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Fibonacci w ruchu',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Każdy wyraz to suma dwóch poprzednich.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='amber' className='w-full text-center' padding='sm'>
+            <div className='mx-auto h-24 w-72'>
+              <FibonacciSumAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              3 + 5 daje 8.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Podwajanie w kropkach',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Geometria liczb może być widoczna jako rosnąca liczba kropek.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='emerald' className='w-full text-center' padding='sm'>
+            <div className='mx-auto h-24 w-72'>
+              <GeometricDotsAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Każdy etap to dwa razy więcej elementów.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
   ],
   strategie: [
     {
@@ -164,6 +323,42 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             <p className='text-violet-600 font-bold text-sm mt-1'>
               Iloraz: 2, 2, 2 — stały! Reguła: ×2 → <b>48</b>
             </p>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Sprawdź różnicę i iloraz',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Najpierw sprawdź różnicę, a jeśli nie działa, poszukaj stałego ilorazu.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
+            <div className='mx-auto h-28 w-72'>
+              <RuleCheckAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Dwie szybkie kontrole pomagają znaleźć regułę.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Lista kontrolna',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Zawsze przechodź po tych samych krokach, a reguła szybko się ujawni.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
+            <div className='mx-auto h-28 w-72'>
+              <RuleChecklistAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Odhaczaj kolejne pomysły, aż znajdziesz właściwy.
+            </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
@@ -225,6 +420,13 @@ export const HUB_SECTIONS = [
     title: 'Jak szukać reguły?',
     description: 'Strategia + podsumowanie',
   },
+  {
+    id: 'game_warsztat',
+    emoji: '🛠️',
+    title: 'Gra: Warsztat wzorców',
+    description: 'Uzupełnij sekwencje i poznaj reguły',
+    isGame: true,
+  },
 ];
 
 export default function LogicalPatternsLesson(): React.JSX.Element {
@@ -232,13 +434,32 @@ export default function LogicalPatternsLesson(): React.JSX.Element {
   const { markSectionOpened, markSectionViewedCount, sectionProgress } =
     useLessonHubProgress(SLIDES);
 
+  if (activeSection === 'game_warsztat') {
+    const gameSection = HUB_SECTIONS.find((section) => section.id === activeSection) ?? null;
+    return (
+      <LessonActivityStage
+        accent='violet'
+        icon='🛠️'
+        maxWidthClassName='max-w-3xl'
+        onBack={() => setActiveSection(null)}
+        sectionHeader={gameSection}
+        shellTestId='logical-patterns-game-shell'
+        title='Warsztat wzorców'
+      >
+        <LogicalPatternsWorkshopGame onFinish={() => setActiveSection(null)} />
+      </LessonActivityStage>
+    );
+  }
+
   if (activeSection) {
     return (
       <LessonSlideSection
-        slides={SLIDES[activeSection]}
+        slides={SLIDES[activeSection as SlideSectionId]}
         sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
         onBack={() => setActiveSection(null)}
-        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
+        onProgressChange={(viewedCount) =>
+          markSectionViewedCount(activeSection as SlideSectionId, viewedCount)
+        }
         dotActiveClass='bg-violet-500'
         dotDoneClass='bg-violet-300'
         gradientClass='kangur-gradient-accent-violet'
@@ -252,12 +473,18 @@ export default function LogicalPatternsLesson(): React.JSX.Element {
       lessonTitle='Wzorce i ciągi'
       gradientClass='kangur-gradient-accent-violet'
       progressDotClassName='bg-violet-300'
-      sections={HUB_SECTIONS.map((section) => ({
-        ...section,
-        progress: sectionProgress[section.id as SectionId],
-      }))}
+      sections={HUB_SECTIONS.map((section) =>
+        section.isGame
+          ? section
+          : {
+              ...section,
+              progress: sectionProgress[section.id as SlideSectionId],
+            }
+      )}
       onSelect={(id) => {
-        markSectionOpened(id as SectionId);
+        if (id !== 'game_warsztat') {
+          markSectionOpened(id as SlideSectionId);
+        }
         setActiveSection(id as SectionId);
       }}
     />

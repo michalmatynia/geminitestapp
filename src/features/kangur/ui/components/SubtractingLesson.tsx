@@ -5,11 +5,13 @@ import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
-import SubtractingGame from '@/features/kangur/ui/components/SubtractingGame';
+import SubtractingGardenGame from '@/features/kangur/ui/components/SubtractingGardenGame';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
+  KangurLessonChip,
   KangurLessonLead,
+  KangurLessonInset,
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import {
@@ -260,6 +262,79 @@ function SubtractingTenFrameAnimation(): React.JSX.Element {
   );
 }
 
+function SubtractingDifferenceBarAnimation(): React.JSX.Element {
+  return (
+    <svg
+      aria-label='Animacja roznicy: 12 minus 7 zostawia 5.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 420 140'
+    >
+      <style>{`
+        .unit-top { fill: #f59e0b; }
+        .unit-bottom { fill: #60a5fa; }
+        .unit-diff {
+          fill: #34d399;
+          transform-box: fill-box;
+          transform-origin: left center;
+          animation: diffReveal 6s ease-in-out infinite;
+        }
+        .label { fill: #475569; font-size: 12px; font-weight: 600; }
+        .diff-label { fill: #0f172a; font-size: 12px; font-weight: 700; }
+        @keyframes diffReveal {
+          0%, 35% { opacity: 0; transform: scaleX(0.6); }
+          55%, 100% { opacity: 1; transform: scaleX(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .unit-diff { animation: none; opacity: 1; transform: none; }
+        }
+      `}</style>
+      <text className='label' x='18' y='48'>12</text>
+      <text className='label' x='18' y='92'>7</text>
+      <text className='diff-label' x='300' y='118'>roznica 5</text>
+      <g>
+        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((index) => (
+          <rect
+            key={`top-${index}`}
+            className='unit-top'
+            height='18'
+            rx='4'
+            width='22'
+            x={40 + index * 28}
+            y='36'
+          />
+        ))}
+      </g>
+      <g>
+        {[0, 1, 2, 3, 4, 5, 6].map((index) => (
+          <rect
+            key={`bottom-${index}`}
+            className='unit-bottom'
+            height='18'
+            rx='4'
+            width='22'
+            x={40 + index * 28}
+            y='80'
+          />
+        ))}
+      </g>
+      <g>
+        {[7, 8, 9, 10, 11].map((index) => (
+          <rect
+            key={`diff-${index}`}
+            className='unit-diff'
+            height='18'
+            rx='4'
+            width='22'
+            x={40 + index * 28}
+            y='36'
+          />
+        ))}
+      </g>
+    </svg>
+  );
+}
+
 function SubtractingAbacusAnimation(): React.JSX.Element {
   return (
     <svg
@@ -443,7 +518,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
                   2
                 </KangurIconBadge>
                 <span>
-                  Cofnij sie o 4 kroki: 8, 7, 6, <b>5</b>
+                  Cofnij się o 4 kroki: 8, 7, 6, <b>5</b>
                 </span>
               </div>
               <div className='flex items-start gap-2'>
@@ -618,31 +693,187 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
   ],
   zapamietaj: [
     {
-      title: 'Zapamiętaj!',
+      title: 'Zasady odejmowania',
       content: (
         <KangurLessonStack>
+          <div className='flex flex-wrap justify-center gap-2 text-xs font-semibold'>
+            <KangurLessonChip accent='rose'>Kolejnosc ma znaczenie: 7 − 3 ≠ 3 − 7</KangurLessonChip>
+            <KangurLessonChip accent='sky'>Odejmowanie 0: 8 − 0 = 8</KangurLessonChip>
+            <KangurLessonChip accent='emerald'>Sprawdź dodawaniem: 5 + 3 = 8</KangurLessonChip>
+            <KangurLessonChip accent='amber'>Rozbij na kroki: 13 − 5 = 10 − 2</KangurLessonChip>
+          </div>
           <div className='grid w-full gap-3 sm:grid-cols-2'>
-            <KangurLessonCallout accent='emerald' className='text-sm' padding='sm'>
-              <p className='text-xs font-semibold uppercase tracking-wide text-emerald-700'>
-                Pamietaj
-              </p>
-              <p className='mt-1'>
-                Odejmowanie 0 nic nie zmienia: <b>8 − 0 = 8</b>
-              </p>
-              <p className='mt-2'>
-                Sprawdz wynik dodawaniem: <b>5 + 3 = 8</b>
-              </p>
-            </KangurLessonCallout>
             <KangurLessonCallout accent='rose' className='text-sm' padding='sm'>
               <p className='text-xs font-semibold uppercase tracking-wide text-rose-700'>
-                Uwaga
+                Cofaj się krokami
               </p>
               <p className='mt-1'>
-                Odejmowanie NIE jest przemienne: <b>7 − 3 ≠ 3 − 7</b>
+                Startuj od wiekszej liczby: <b>9 − 4</b>
               </p>
-              <p className='mt-2'>Cofaj sie na osi lub rozkladaj na skladniki.</p>
+              <p className='mt-2'>
+                9 {'->'} 8 {'->'} 7 {'->'} 6 {'->'} <b>5</b>
+              </p>
+            </KangurLessonCallout>
+            <KangurLessonCallout accent='emerald' className='text-sm' padding='sm'>
+              <p className='text-xs font-semibold uppercase tracking-wide text-emerald-700'>
+                Sprawdzaj dodawaniem
+              </p>
+              <p className='mt-1'>
+                Jeśli wynik + odjemnik daje odjemna, to dobrze.
+              </p>
+              <p className='mt-2'>
+                <b>5 + 3 = 8</b>
+              </p>
+            </KangurLessonCallout>
+            <KangurLessonCallout accent='slate' className='text-sm' padding='sm'>
+              <p className='text-xs font-semibold uppercase tracking-wide text-slate-600'>
+                Kolejnosc ma znaczenie
+              </p>
+              <p className='mt-1'>
+                <b>7 − 3</b> to nie to samo co <b>3 − 7</b>.
+              </p>
             </KangurLessonCallout>
           </div>
+          <div className='grid w-full items-center gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]'>
+            <KangurLessonInset accent='rose' className='text-center'>
+              <div className='flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide text-rose-700'>
+                <KangurIconBadge accent='rose' size='sm'>
+                  &lt;-
+                </KangurIconBadge>
+                <span>Odejmowanie w ruchu</span>
+              </div>
+              <p className='mt-2 text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
+                Zabierasz część i patrzysz, ile zostało.
+              </p>
+              <div className='mt-2'>
+                <SubtractingSvgAnimation />
+              </div>
+              <KangurLessonCaption className='mt-2'>
+                Dwie kropki "odchodza", zostaja trzy.
+              </KangurLessonCaption>
+            </KangurLessonInset>
+            <div className='w-full max-w-md rounded-2xl border border-slate-200/70 bg-white px-4 py-3 text-left text-sm'>
+              <p className='text-xs font-semibold uppercase tracking-wide text-slate-500'>Ścieżka</p>
+              <div className='mt-2 space-y-2 border-l-2 border-slate-200 pl-3'>
+                <div>
+                  <p className='font-semibold text-slate-700'>Rozbij odjemnik</p>
+                  <p className='text-xs text-slate-500'>5 = 3 + 2</p>
+                </div>
+                <div>
+                  <p className='font-semibold text-slate-700'>Zejdz do 10</p>
+                  <p className='text-xs text-slate-500'>13 − 3 = 10</p>
+                </div>
+                <div>
+                  <p className='font-semibold text-slate-700'>Odejmij reszte</p>
+                  <p className='text-xs text-slate-500'>10 − 2 = 8</p>
+                </div>
+                <div>
+                  <p className='font-semibold text-slate-700'>Sprawdź dodawaniem</p>
+                  <p className='text-xs text-slate-500'>8 + 5 = 13</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Skoki wstecz',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonInset accent='sky' className='text-center'>
+            <div className='flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide text-sky-700'>
+              <KangurIconBadge accent='sky' size='sm'>
+                &lt;-
+              </KangurIconBadge>
+              <span>Skoki na osi</span>
+            </div>
+            <p className='mt-2 text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
+              Cofaj się w dwoch krokach: do 10, potem dalej.
+            </p>
+            <div className='mt-2'>
+              <SubtractingNumberLineAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>13 − 5 = 8.</KangurLessonCaption>
+          </KangurLessonInset>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Ramka dziesiatki',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonInset accent='amber' className='text-center'>
+            <div className='flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide text-amber-700'>
+              <KangurIconBadge accent='amber' size='sm'>
+                10
+              </KangurIconBadge>
+              <span>Ramka dziesiatki</span>
+            </div>
+            <p className='mt-2 text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
+              Najpierw zdejmij nadwyzke, potem reszte z ramki.
+            </p>
+            <div className='mt-2'>
+              <SubtractingTenFrameAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>13 − 5 = 8.</KangurLessonCaption>
+          </KangurLessonInset>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Sprawdź wynik dodawaniem',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonInset accent='emerald' className='text-center'>
+            <div className='flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide text-emerald-700'>
+              <KangurIconBadge accent='emerald' size='sm'>
+                OK
+              </KangurIconBadge>
+              <span>Sprawdzanie</span>
+            </div>
+            <p className='mt-2 text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
+              Dodaj odjemnik do wyniku i zobacz, czy wracasz do odjemnej.
+            </p>
+            <div className='mt-3 grid gap-2'>
+              <KangurEquationDisplay accent='emerald' size='sm'>
+                8 − 5 = 3
+              </KangurEquationDisplay>
+              <KangurEquationDisplay accent='emerald' size='sm'>
+                3 + 5 = 8
+              </KangurEquationDisplay>
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Jeśli dodawanie zgadza się, odejmowanie jest poprawne.
+            </KangurLessonCaption>
+          </KangurLessonInset>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Roznica liczb',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonInset accent='teal' className='text-center'>
+            <div className='flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide text-teal-700'>
+              <KangurIconBadge accent='teal' size='sm'>
+                =
+              </KangurIconBadge>
+              <span>Roznica</span>
+            </div>
+            <p className='mt-2 text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
+              Porównaj dwie liczby i zobacz, ile brakuje do wiekszej.
+            </p>
+            <div className='mt-2'>
+              <SubtractingDifferenceBarAnimation />
+            </div>
+            <KangurEquationDisplay accent='teal' className='mt-2' size='sm'>
+              12 - 7 = 5
+            </KangurEquationDisplay>
+            <KangurLessonCaption className='mt-1'>
+              Roznica to "brakujaca" część.
+            </KangurLessonCaption>
+          </KangurLessonInset>
         </KangurLessonStack>
       ),
     },
@@ -673,7 +904,7 @@ export const HUB_SECTIONS = [
     id: 'game',
     emoji: '🎮',
     title: 'Gra z odejmowaniem',
-    description: 'Cwicz w interaktywnej grze',
+    description: 'Przeciagaj i zabieraj obiekty',
     isGame: true,
   },
 ];
@@ -689,13 +920,13 @@ export default function SubtractingLesson(): React.JSX.Element {
         accent='rose'
         headerTestId='subtracting-lesson-game-header'
         icon='🎮'
-        maxWidthClassName='max-w-sm'
+        maxWidthClassName='max-w-none'
         onBack={() => setActiveSection(null)}
         sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
         shellTestId='subtracting-lesson-game-shell'
         title='Gra z odejmowaniem!'
       >
-        <SubtractingGame
+        <SubtractingGardenGame
           finishLabel='Wróć do tematów'
           onFinish={() => setActiveSection(null)}
         />

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import DivisionGame from '@/features/kangur/ui/components/DivisionGame';
+import DivisionGroupsGame from '@/features/kangur/ui/components/DivisionGroupsGame';
 import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
@@ -182,6 +182,32 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               <li>✅ Sprawdź: wynik × dzielnik + reszta = liczba</li>
             </ul>
           </KangurLessonCallout>
+          <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
+            <KangurLessonCallout accent='sky' className='text-center' padding='sm'>
+              <div className='mx-auto w-full max-w-[180px]'>
+                <DivisionEqualGroupsAnimation />
+              </div>
+              <KangurLessonCaption className='mt-2'>
+                Dziel równo na grupy – każda grupa ma tyle samo.
+              </KangurLessonCaption>
+            </KangurLessonCallout>
+            <KangurLessonCallout accent='indigo' className='text-center' padding='sm'>
+              <div className='mx-auto w-full max-w-[180px]'>
+                <DivisionInverseAnimation />
+              </div>
+              <KangurLessonCaption className='mt-2'>
+                Dzielenie i mnożenie to działania odwrotne.
+              </KangurLessonCaption>
+            </KangurLessonCallout>
+            <KangurLessonCallout accent='teal' className='text-center' padding='sm'>
+              <div className='mx-auto w-full max-w-[180px]'>
+                <DivisionRemainderAnimation />
+              </div>
+              <KangurLessonCaption className='mt-2'>
+                Reszta pokazuje, co zostaje poza pełnymi grupami.
+              </KangurLessonCaption>
+            </KangurLessonCallout>
+          </div>
         </KangurLessonStack>
       ),
     },
@@ -202,7 +228,7 @@ export const HUB_SECTIONS = [
     id: 'game',
     emoji: '🎮',
     title: 'Gra z dzieleniem',
-    description: 'Cwicz dzielenie w grze',
+    description: 'Podziel elementy na równe grupy',
     isGame: true,
   },
 ];
@@ -218,13 +244,16 @@ export default function DivisionLesson(): React.JSX.Element {
         accent='sky'
         headerTestId='division-lesson-game-header'
         icon='🎮'
-        maxWidthClassName='max-w-sm'
+        maxWidthClassName='max-w-none'
         onBack={() => setActiveSection(null)}
         sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
         shellTestId='division-lesson-game-shell'
         title='Gra z dzieleniem!'
       >
-        <DivisionGame finishLabel='Wróć do tematów' onFinish={() => setActiveSection(null)} />
+        <DivisionGroupsGame
+          finishLabel='Wróć do tematów'
+          onFinish={() => setActiveSection(null)}
+        />
       </LessonActivityStage>
     );
   }

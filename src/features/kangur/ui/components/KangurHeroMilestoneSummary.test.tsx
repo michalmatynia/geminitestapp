@@ -43,7 +43,7 @@ describe('KangurHeroMilestoneSummary', () => {
     expect(nextBadgeCardStyle).toContain(
       'border-color: color-mix(in srgb, var(--kangur-soft-card-border) 94%, #d97706 6%)'
     );
-    expect(screen.getByText('Nastepny kamien milowy').getAttribute('style')).toContain(
+    expect(screen.getByText('Następny kamień milowy').getAttribute('style')).toContain(
       'color: color-mix(in srgb, var(--kangur-page-text) 70%, #92400e 30%)'
     );
     expect(

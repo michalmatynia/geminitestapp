@@ -472,6 +472,9 @@ export const isKangurGameScreen = (value: string | null | undefined): value is K
   value === 'kangur' ||
   value === 'calendar_quiz' ||
   value === 'geometry_quiz' ||
+  value === 'subtraction_quiz' ||
+  value === 'multiplication_quiz' ||
+  value === 'division_quiz' ||
   value === 'operation' ||
   value === 'playing' ||
   value === 'result';

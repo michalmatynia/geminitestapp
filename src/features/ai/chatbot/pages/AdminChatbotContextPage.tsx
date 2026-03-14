@@ -138,7 +138,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
     <AdminChatbotPageLayout
       title='Chatbot Context'
       current='Context'
-      description='Define global instructions and reference material applied to every chat.'
+      description='Define global instructions and reference materiał applied to every chat.'
       icon={<MessageSquareQuote className='size-4' />}
       headerActions={
         <>

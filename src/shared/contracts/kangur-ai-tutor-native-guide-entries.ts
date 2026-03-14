@@ -1,9 +1,12 @@
 import {
   type KangurAiTutorNativeGuideEntry,
-  type KangurAiTutorFocusKind,
-  type KangurAiTutorFollowUpAction,
-  type KangurAiTutorSurface,
+  kangurAiTutorNativeGuideEntrySchema,
 } from './kangur-ai-tutor-native-guide';
+import type {
+  KangurAiTutorFocusKind,
+  KangurAiTutorFollowUpAction,
+  KangurAiTutorSurface,
+} from './kangur-ai-tutor';
 
 const createGuideEntry = (input: {
   id: string;

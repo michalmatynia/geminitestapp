@@ -300,7 +300,7 @@ describe('AdminKangurSettingsPage', () => {
   });
 
   it(
-    'loads and saves global AI tutor settings from the admin page',
+    'loads and saves global AI Tutor settings from the admin page',
     async () => {
       render(<AdminKangurSettingsPage />);
       await expectInitialNarratorProbe();
@@ -338,14 +338,14 @@ describe('AdminKangurSettingsPage', () => {
         })
       );
 
-      expect(toastMock).toHaveBeenCalledWith('Kangur AI tutor settings saved.', {
+      expect(toastMock).toHaveBeenCalledWith('Kangur AI Tutor settings saved.', {
         variant: 'success',
       });
     },
     60_000
   );
 
-  it('loads Mongo-backed AI tutor content and saves edited content JSON', async () => {
+  it('loads Mongo-backed AI Tutor content and saves edited content JSON', async () => {
     render(<AdminKangurSettingsPage />);
     await expectInitialNarratorProbe();
 
@@ -383,7 +383,7 @@ describe('AdminKangurSettingsPage', () => {
       )
     );
 
-    expect(toastMock).toHaveBeenCalledWith('Kangur AI tutor content saved.', {
+    expect(toastMock).toHaveBeenCalledWith('Kangur AI Tutor content saved.', {
       variant: 'success',
     });
   });
@@ -431,7 +431,7 @@ describe('AdminKangurSettingsPage', () => {
     const saveButton = screen.getByRole('button', { name: /save mongo content/i });
 
     fireEvent.change(headlineInput, {
-      target: { value: 'TODO uzupelnic naglowek' },
+      target: { value: 'TODO uzupelnic nagłówek' },
     });
 
     expect(
@@ -509,7 +509,7 @@ describe('AdminKangurSettingsPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('runs the narrator probe automatically without showing probe toasts', async () => {
+  it('runs the narrator próbę automatically without showing próbę toasts', async () => {
     render(<AdminKangurSettingsPage />);
 
     await expectInitialNarratorProbe();
@@ -518,7 +518,7 @@ describe('AdminKangurSettingsPage', () => {
     expect(toastMock).not.toHaveBeenCalledWith('Server narrator is ready.', {
       variant: 'success',
     });
-    expect(toastMock).not.toHaveBeenCalledWith('Server narrator probe found an issue.', {
+    expect(toastMock).not.toHaveBeenCalledWith('Server narrator próbę found an issue.', {
       variant: 'error',
     });
 
@@ -569,7 +569,7 @@ describe('AdminKangurSettingsPage', () => {
 
     expect(screen.getByText('Server narrator unavailable')).toBeInTheDocument();
     expect(screen.getByText(/billing is inactive/i)).toBeInTheDocument();
-    expect(toastMock).toHaveBeenCalledWith('Server narrator probe found an issue.', {
+    expect(toastMock).toHaveBeenCalledWith('Server narrator próbę found an issue.', {
       variant: 'error',
     });
   });

@@ -2,8 +2,8 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 import MultiplicationArrayGame from '@/features/kangur/ui/components/MultiplicationArrayGame';
 
@@ -49,5 +49,25 @@ describe('MultiplicationArrayGame', () => {
       '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,rgb(124_58_237))]'
     );
     expect(firstGroup).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('advances to the next round after collecting all groups', () => {
+    vi.useFakeTimers();
+    render(<MultiplicationArrayGame onFinish={() => undefined} />);
+
+    const progress = screen.getByTestId('multiplication-array-progress-bar');
+    const groups = screen.getAllByTestId(/multiplication-array-group-/);
+    groups.forEach((group) => {
+      fireEvent.click(group);
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(1500);
+    });
+
+    const nextValue = Number(progress.getAttribute('aria-valuenow'));
+    expect(nextValue).toBeGreaterThan(0);
+
+    vi.useRealTimers();
   });
 });

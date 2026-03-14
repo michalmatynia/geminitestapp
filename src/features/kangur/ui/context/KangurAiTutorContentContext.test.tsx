@@ -53,7 +53,7 @@ describe('KangurAiTutorContentContext', () => {
     vi.resetAllMocks();
   });
 
-  it('falls back to the default AI tutor content when no provider is mounted', () => {
+  it('falls back to the default AI Tutor content when no provider is mounted', () => {
     render(<Harness />);
 
     expect(screen.getByTestId('restore-label')).toHaveTextContent(
@@ -68,7 +68,7 @@ describe('KangurAiTutorContentContext', () => {
     expect(screen.getByTestId('step-label')).toHaveTextContent('Krok 2 z 5');
   });
 
-  it('hydrates the AI tutor content from the API when the provider is mounted', async () => {
+  it('hydrates the AI Tutor content from the API when the provider is mounted', async () => {
     apiGetMock.mockResolvedValue({
       ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
       navigation: {

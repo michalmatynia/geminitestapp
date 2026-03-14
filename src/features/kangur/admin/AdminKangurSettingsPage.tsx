@@ -331,7 +331,7 @@ export function AdminKangurSettingsPage(): ReactElement {
       }
       setNarratorProbe(response);
       if (notify) {
-        toast(response.ok ? 'Server narrator is ready.' : 'Server narrator probe found an issue.', {
+        toast(response.ok ? 'Server narrator is ready.' : 'Server narrator próbę found an issue.', {
           variant: response.ok ? 'success' : 'error',
         });
       }
@@ -340,7 +340,7 @@ export function AdminKangurSettingsPage(): ReactElement {
         return;
       }
       if (notify) {
-        toast(error instanceof Error ? error.message : 'Failed to probe the server narrator.', {
+        toast(error instanceof Error ? error.message : 'Failed to próbę the server narrator.', {
           variant: 'error',
         });
       }
@@ -467,7 +467,7 @@ export function AdminKangurSettingsPage(): ReactElement {
       } else if (savedSections[0] === 'narrator') {
         toast('Kangur narrator settings saved.', { variant: 'success' });
       } else if (savedSections[0] === 'ai-tutor') {
-        toast('Kangur AI tutor settings saved.', { variant: 'success' });
+        toast('Kangur AI Tutor settings saved.', { variant: 'success' });
       } else if (savedSections[0] === 'parent-verification') {
         toast('Kangur parent verification email settings saved.', {
           variant: 'success',
@@ -735,7 +735,7 @@ export function AdminKangurSettingsPage(): ReactElement {
               <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
                 <FormField
                   label='Dzienny limit wiadomości'
-                  description='Kazda wyslana wiadomosc do tutora zuzywa 1 punkt limitu. Puste pole oznacza brak limitu.'
+                  description='Kazda wyslana wiadomość do tutora zuzywa 1 punkt limitu. Puste pole oznacza brak limitu.'
                 >
                   <Input
                     type='number'

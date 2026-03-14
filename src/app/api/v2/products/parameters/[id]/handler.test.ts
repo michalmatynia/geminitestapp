@@ -61,7 +61,7 @@ describe('products/parameters/[id] handler', () => {
       catalogId: 'catalog-1',
       selectorType: 'text',
       optionLabels: [],
-      name_en: 'Material updated',
+      name_en: 'Materiał updated',
       name_pl: null,
       name_de: null,
     });
@@ -70,14 +70,14 @@ describe('products/parameters/[id] handler', () => {
       new NextRequest('http://localhost/api/v2/products/parameters/param-1'),
       {
         body: {
-          name_en: 'Material updated',
+          name_en: 'Materiał updated',
         },
       } as ApiHandlerContext,
       { id: 'param-1' }
     );
 
     expect(response.status).toBe(200);
-    expect(updateParameterMock).toHaveBeenCalledWith('param-1', { name_en: 'Material updated' });
+    expect(updateParameterMock).toHaveBeenCalledWith('param-1', { name_en: 'Materiał updated' });
     expect(invalidateAllMock).toHaveBeenCalledTimes(1);
   });
 

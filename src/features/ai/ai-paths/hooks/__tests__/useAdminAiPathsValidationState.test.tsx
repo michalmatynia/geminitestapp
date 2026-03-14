@@ -57,7 +57,7 @@ const buildLegacyTriggerConfig = (pathId: string) => {
     {
       ...seedNode,
       type: 'trigger',
-      title: 'Trigger: Opis i Tytul',
+      title: 'Trigger: Opis i Tytuł',
       inputs: ['context'],
       outputs: ['trigger', 'context', 'entityId', 'entityType'],
       config: {

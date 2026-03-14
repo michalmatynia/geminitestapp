@@ -219,6 +219,7 @@ export function KangurAiTutorGuidedCallout({
         : detail;
   const shouldShowSelectionIntro =
     !(mode === 'selection' && isResolvedSelectionCallout);
+  const shouldShowSelectionDetail = Boolean(resolvedSelectionDetail);
   const shouldShowSelectionPageContentBadge =
     resolvedSelectionAssistantMessage?.answerResolutionMode === 'page_content';
   const shouldShowSelectionPreview =
@@ -329,14 +330,16 @@ export function KangurAiTutorGuidedCallout({
                   >
                     {title}
                   </div>
-                  <div
-                    className={cn(
-                      'mt-2 text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]',
-                      isMobileHomeOnboardingSheet && 'mt-1.5 line-clamp-3 text-[11px] leading-5'
-                    )}
-                  >
-                    {resolvedSelectionDetail}
-                  </div>
+                  {shouldShowSelectionDetail ? (
+                    <div
+                      className={cn(
+                        'mt-2 text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]',
+                        isMobileHomeOnboardingSheet && 'mt-1.5 line-clamp-3 text-[11px] leading-5'
+                      )}
+                    >
+                      {resolvedSelectionDetail}
+                    </div>
+                  ) : null}
                 </>
               ) : null}
               {shouldShowSelectionPreview ? (
@@ -349,7 +352,7 @@ export function KangurAiTutorGuidedCallout({
                     selectionPreviewInsetClassName
                   )}
                 >
-                  „{resolvedSelectedPreview}”
+                  {resolvedSelectedPreview}
                   {selectionPreviewHasOverflow ? '…' : ''}
                 </KangurAiTutorWarmInsetCard>
               ) : showSectionGuidanceCallout ? (
@@ -370,7 +373,7 @@ export function KangurAiTutorGuidedCallout({
                       </KangurAiTutorChromeBadge>
                     ) : null}
                     <KangurAiTutorChromeBadge className='px-3 py-1 text-[10px]'>
-                      {selectedKnowledgeFragment ? 'Fragment z bazy wiedzy' : 'Tresc strony'}
+                      {selectedKnowledgeFragment ? 'Fragment z bazy wiedzy' : 'Treść strony'}
                     </KangurAiTutorChromeBadge>
                   </div>
                   {selectedKnowledgeSummary ? (
@@ -387,7 +390,7 @@ export function KangurAiTutorGuidedCallout({
                       data-testid='kangur-ai-tutor-selection-guided-page-content-badge'
                       className='w-fit max-w-full px-3 py-1 text-[10px]'
                     >
-                      Zapisana tresc strony
+                      Zapisana treść strony
                     </KangurAiTutorChromeBadge>
                   ) : null}
                   <KangurAiTutorWarmInsetCard

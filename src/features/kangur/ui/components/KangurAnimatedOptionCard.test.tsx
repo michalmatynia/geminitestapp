@@ -13,7 +13,7 @@ describe('KangurAnimatedOptionCard', () => {
     render(
       <KangurAnimatedOptionCard
         accent='amber'
-        aria-label='Wybor opcji'
+        aria-label='Wybór opcji'
         buttonClassName='rounded-[28px] px-4 py-4'
         data-testid='animated-option-card'
         emphasis='accent'
@@ -31,6 +31,6 @@ describe('KangurAnimatedOptionCard', () => {
       'border',
       'rounded-[28px]'
     );
-    expect(screen.getByRole('button', { name: 'Wybor opcji' })).toHaveTextContent('Opcja A');
+    expect(screen.getByRole('button', { name: 'Wybór opcji' })).toHaveTextContent('Opcja A');
   });
 });

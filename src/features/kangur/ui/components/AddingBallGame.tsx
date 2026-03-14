@@ -1,6 +1,7 @@
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import {
   KangurPracticeGameProgress,
@@ -93,6 +94,13 @@ type BallProps = {
   small?: boolean;
 };
 
+type DraggableBallProps = {
+  ball: BallItem;
+  index: number;
+  isDragDisabled?: boolean;
+  small?: boolean;
+};
+
 type SurfaceTone = 'neutral' | 'accent';
 
 type SurfaceCardState = {
@@ -118,6 +126,8 @@ const MODES: RoundMode[] = ['complete_equation', 'group_sum', 'pick_answer'];
 const TOTAL_ROUNDS = 6;
 const BALL_POOL_CLASSNAME =
   'flex min-h-[60px] w-full max-w-xs flex-wrap justify-center gap-2 rounded-[24px] shadow-[0_18px_42px_-36px_rgba(15,23,42,0.22)]';
+
+const dragPortal = typeof document === 'undefined' ? null : document.body;
 
 const getRectDropZoneSurface = ({
   isDraggingOver,
@@ -371,17 +381,7 @@ function CompleteEquation({
               {...provided.droppableProps}
             >
               {state.pool.map((ball, i) => (
-                <Draggable key={ball.id} draggableId={ball.id} index={i} isDragDisabled={checked}>
-                  {(draggableProvided) => (
-                    <div
-                      ref={draggableProvided.innerRef}
-                      {...draggableProvided.draggableProps}
-                      {...draggableProvided.dragHandleProps}
-                    >
-                      <Ball ball={ball} />
-                    </div>
-                  )}
-                </Draggable>
+                <DraggableBall key={ball.id} ball={ball} index={i} isDragDisabled={checked} />
               ))}
               {provided.placeholder}
             </KangurInfoCard>
@@ -432,24 +432,23 @@ function SlotZone({ id, items, label, checked, correct }: SlotZoneProps): React.
             <KangurInfoCard
               ref={provided.innerRef}
               accent={surface.accent}
-              className={cn(surface.className, 'min-h-[52px] min-w-[60px]')}
+              className={cn(
+                surface.className,
+                'min-h-[52px] min-w-[60px] w-full max-w-[160px]'
+              )}
               data-testid={slotZoneTestId}
               padding='sm'
               tone={surface.tone}
               {...provided.droppableProps}
             >
               {items.map((ball, i) => (
-                <Draggable key={ball.id} draggableId={ball.id} index={i} isDragDisabled={checked}>
-                  {(draggableProvided) => (
-                    <div
-                      ref={draggableProvided.innerRef}
-                      {...draggableProvided.draggableProps}
-                      {...draggableProvided.dragHandleProps}
-                    >
-                      <Ball ball={ball} small />
-                    </div>
-                  )}
-                </Draggable>
+                <DraggableBall
+                  key={ball.id}
+                  ball={ball}
+                  index={i}
+                  isDragDisabled={checked}
+                  small
+                />
               ))}
               {provided.placeholder}
             </KangurInfoCard>
@@ -554,29 +553,23 @@ function GroupSum({
                     <KangurInfoCard
                       ref={provided.innerRef}
                       accent={surface.accent}
-                      className={cn(surface.className, 'min-h-[52px] min-w-[80px]')}
+                      className={cn(
+                        surface.className,
+                        'min-h-[52px] min-w-[80px] w-full max-w-[160px]'
+                      )}
                       data-testid={`adding-ball-${group.id}`}
                       padding='sm'
                       tone={surface.tone}
                       {...provided.droppableProps}
                     >
                       {state[group.id].map((ball, i) => (
-                        <Draggable
+                        <DraggableBall
                           key={ball.id}
-                          draggableId={ball.id}
+                          ball={ball}
                           index={i}
                           isDragDisabled={checked}
-                        >
-                          {(draggableProvided) => (
-                            <div
-                              ref={draggableProvided.innerRef}
-                              {...draggableProvided.draggableProps}
-                              {...draggableProvided.dragHandleProps}
-                            >
-                              <Ball ball={ball} small />
-                            </div>
-                          )}
-                        </Draggable>
+                          small
+                        />
                       ))}
                       {provided.placeholder}
                     </KangurInfoCard>
@@ -599,17 +592,7 @@ function GroupSum({
               {...provided.droppableProps}
             >
               {state.pool.map((ball, i) => (
-                <Draggable key={ball.id} draggableId={ball.id} index={i} isDragDisabled={checked}>
-                  {(draggableProvided) => (
-                    <div
-                      ref={draggableProvided.innerRef}
-                      {...draggableProvided.draggableProps}
-                      {...draggableProvided.dragHandleProps}
-                    >
-                      <Ball ball={ball} />
-                    </div>
-                  )}
-                </Draggable>
+                <DraggableBall key={ball.id} ball={ball} index={i} isDragDisabled={checked} />
               ))}
               {provided.placeholder}
             </KangurInfoCard>
@@ -734,17 +717,7 @@ function PickAnswer({
               {...provided.droppableProps}
             >
               {balls.map((ball, i) => (
-                <Draggable key={ball.id} draggableId={ball.id} index={i} isDragDisabled={checked}>
-                  {(draggableProvided) => (
-                    <div
-                      ref={draggableProvided.innerRef}
-                      {...draggableProvided.draggableProps}
-                      {...draggableProvided.dragHandleProps}
-                    >
-                      <Ball ball={ball} />
-                    </div>
-                  )}
-                </Draggable>
+                <DraggableBall key={ball.id} ball={ball} index={i} isDragDisabled={checked} />
               ))}
               {provided.placeholder}
             </KangurInfoCard>
@@ -752,6 +725,35 @@ function PickAnswer({
         </Droppable>
       </div>
     </DragDropContext>
+  );
+}
+
+function DraggableBall({
+  ball,
+  index,
+  isDragDisabled = false,
+  small = false,
+}: DraggableBallProps): React.ReactElement | React.ReactPortal {
+  return (
+    <Draggable draggableId={ball.id} index={index} isDragDisabled={isDragDisabled}>
+      {(draggableProvided, snapshot) => {
+        const content = (
+          <div
+            ref={draggableProvided.innerRef}
+            {...draggableProvided.draggableProps}
+            {...draggableProvided.dragHandleProps}
+          >
+            <Ball ball={ball} small={small} />
+          </div>
+        );
+
+        if (snapshot.isDragging && dragPortal) {
+          return createPortal(content, dragPortal);
+        }
+
+        return content;
+      }}
+    </Draggable>
   );
 }
 

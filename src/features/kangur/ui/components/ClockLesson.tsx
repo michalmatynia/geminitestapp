@@ -8,6 +8,16 @@ import LessonSlideSection, {
   type LessonSlide as LessonSlideSectionSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
+  ClockCombinedHandsAnimation,
+  ClockFiveMinuteStepsAnimation,
+  ClockHalfPastAnimation,
+  ClockHourHandSweepAnimation,
+  ClockMinuteByMinuteAnimation,
+  ClockMinuteHandSweepAnimation,
+  ClockQuarterAnimation,
+  ClockSecondHandAnimation,
+} from '@/features/kangur/ui/components/ClockLessonAnimations';
+import {
   KangurLessonCallout,
   KangurLessonCaption,
   KangurLessonStack,
@@ -200,6 +210,14 @@ const HOURS_SLIDES: LessonSlide[] = [
             label='Krótka wskazówka na 8'
           />
         </div>
+        <KangurLessonCallout accent='rose' className='mx-auto max-w-xs' padding='sm'>
+          <div className='mx-auto h-24 w-32'>
+            <ClockHourHandSweepAnimation />
+          </div>
+          <KangurLessonCaption className='mt-2'>
+            Krótka wskazówka przeskakuje z godziny na godzinę.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
         <KangurLessonCaption className='max-w-xs leading-relaxed'>
           Patrzymy na <strong className='text-red-600'>krótką wskazówkę</strong>. Ona mówi nam,
           która jest godzina.
@@ -235,6 +253,14 @@ const HOURS_SLIDES: LessonSlide[] = [
             label='11:00'
           />
         </div>
+        <KangurLessonCallout accent='rose' className='mx-auto max-w-xs' padding='sm'>
+          <div className='mx-auto h-24 w-32'>
+            <ClockSecondHandAnimation />
+          </div>
+          <KangurLessonCaption className='mt-2'>
+            Pełna godzina jest wtedy, gdy długa wskazówka stoi na 12.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
         <KangurLessonCaption className='max-w-xs leading-relaxed'>
           W tej sekcji trenujemy tylko odczyt godziny: 1, 6, 11.
         </KangurLessonCaption>
@@ -253,6 +279,14 @@ const HOURS_SLIDES: LessonSlide[] = [
           showMinuteHand={false}
           label='Jaka to godzina?'
         />
+        <KangurLessonCallout accent='rose' className='mx-auto max-w-xs' padding='sm'>
+          <div className='mx-auto h-24 w-32'>
+            <ClockHourHandSweepAnimation />
+          </div>
+          <KangurLessonCaption className='mt-2'>
+            Skup się na krótkiej wskazówce i nazwij godzinę.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
         <KangurLessonCallout accent='rose' className='max-w-xs text-left'>
           <p className='font-semibold [color:var(--kangur-page-text)]'>Krok:</p>
           <KangurLessonCaption align='left' className='mt-1'>
@@ -280,6 +314,14 @@ const MINUTES_SLIDES: LessonSlide[] = [
           showHourHand={false}
           label='Długa wskazówka = minuty'
         />
+        <KangurLessonCallout accent='emerald' className='mx-auto max-w-xs' padding='sm'>
+          <div className='mx-auto h-24 w-32'>
+            <ClockMinuteHandSweepAnimation />
+          </div>
+          <KangurLessonCaption className='mt-2'>
+            Długa wskazówka robi pełny obrót w 60 minut.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
         <KangurLessonCaption className='max-w-xs leading-relaxed'>
           <strong className='text-green-600'>Długa wskazówka</strong> chodzi po tarczy i mówi,
           ile minut minęło.
@@ -315,6 +357,14 @@ const MINUTES_SLIDES: LessonSlide[] = [
             label='9 = 45 min'
           />
         </div>
+        <KangurLessonCallout accent='emerald' className='mx-auto max-w-xs' padding='sm'>
+          <div className='mx-auto h-24 w-32'>
+            <ClockFiveMinuteStepsAnimation />
+          </div>
+          <KangurLessonCaption className='mt-2'>
+            Skaczemy co 5 minut: :00, :05, :10, :15...
+          </KangurLessonCaption>
+        </KangurLessonCallout>
         <KangurLessonCaption className='max-w-xs leading-relaxed'>
           Zapamiętaj: każda kolejna liczba to +5 minut.
         </KangurLessonCaption>
@@ -333,6 +383,14 @@ const MINUTES_SLIDES: LessonSlide[] = [
           showHourHand={false}
           label='Jaka to liczba minut?'
         />
+        <KangurLessonCallout accent='emerald' className='mx-auto max-w-xs' padding='sm'>
+          <div className='mx-auto h-24 w-32'>
+            <ClockMinuteByMinuteAnimation />
+          </div>
+          <KangurLessonCaption className='mt-2'>
+            Każda mała kreska to 1 minuta.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
         <KangurLessonCallout accent='emerald' className='max-w-xs text-left'>
           <p className='font-semibold [color:var(--kangur-page-text)]'>Krok:</p>
           <KangurLessonCaption align='left' className='mt-1'>
@@ -354,6 +412,14 @@ const COMBINED_SLIDES: LessonSlide[] = [
     content: (
       <KangurLessonStack className='text-center'>
         <AnalogClock hours={8} minutes={30} label='Przykład: 8:30' />
+        <KangurLessonCallout accent='indigo' className='mx-auto max-w-xs' padding='sm'>
+          <div className='mx-auto h-24 w-32'>
+            <ClockCombinedHandsAnimation />
+          </div>
+          <KangurLessonCaption className='mt-2'>
+            Krótka wskazówka pokazuje godzinę, długa minuty.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
         <KangurLessonCallout accent='indigo' className='max-w-xs text-left space-y-2'>
           <p className='font-semibold [color:var(--kangur-page-text)]'>Kroki:</p>
           <KangurLessonCaption align='left'>
@@ -376,6 +442,14 @@ const COMBINED_SLIDES: LessonSlide[] = [
           <AnalogClock hours={5} minutes={15} label='5:15 - kwadrans po 5' />
           <AnalogClock hours={5} minutes={45} label='5:45 - kwadrans do 6' />
         </div>
+        <KangurLessonCallout accent='indigo' className='mx-auto max-w-xs' padding='sm'>
+          <div className='mx-auto h-24 w-32'>
+            <ClockQuarterAnimation />
+          </div>
+          <KangurLessonCaption className='mt-2'>
+            Minuty 15 i 45 to kwadranse.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
         <KangurLessonCaption className='max-w-xs leading-relaxed'>
           Odczytujemy godzinę i minuty jednocześnie.
         </KangurLessonCaption>
@@ -388,6 +462,14 @@ const COMBINED_SLIDES: LessonSlide[] = [
     content: (
       <KangurLessonStack className='text-center'>
         <div className='text-7xl'>✨</div>
+        <KangurLessonCallout accent='indigo' className='mx-auto max-w-xs' padding='sm'>
+          <div className='mx-auto h-24 w-32'>
+            <ClockHalfPastAnimation />
+          </div>
+          <KangurLessonCaption className='mt-2'>
+            Pół godziny to :30, długa wskazówka na 6.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
         <KangurLessonCaption className='max-w-xs leading-relaxed'>
           Brawo! Umiesz:
           <br />
@@ -872,12 +954,12 @@ export default function ClockLesson(): React.JSX.Element {
                   panel: trainingPanels[currentTrainingPanelIndex + 1]!.id,
                 })
               }
-              aria-label='Nastepny panel'
+              aria-label='Następny panel'
               className='w-full justify-center px-5 shadow-sm [border-color:var(--kangur-soft-card-border)] sm:min-w-[72px] sm:w-auto'
               data-testid='clock-lesson-training-next-button'
               size='sm'
               type='button'
-              title='Nastepny panel'
+              title='Następny panel'
               variant='surface'
             >
               <ChevronRight className='h-4 w-4 flex-shrink-0' />

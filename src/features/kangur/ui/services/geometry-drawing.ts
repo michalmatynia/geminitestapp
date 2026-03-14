@@ -14,6 +14,7 @@ export type GeometryDrawingEvaluation = {
   corners: number;
   closureRatio: number;
   aspectRatio: number;
+  lengthRatio: number;
   message: string;
 };
 
@@ -32,6 +33,9 @@ type GeometryShapeRule = {
   minCorners: number;
   maxCorners: number;
   minScore: number;
+  maxClosureRatio?: number;
+  minLengthRatio?: number;
+  maxLengthRatio?: number;
   minAspect?: number;
   maxAspect?: number;
   idealAspect?: number;
@@ -46,6 +50,7 @@ const SHAPE_RULES: Record<GeometryShapeId, GeometryShapeRule> = {
     minCorners: 0,
     maxCorners: 5,
     minScore: 0.59,
+    maxClosureRatio: 0.26,
     minAspect: 0.75,
     maxAspect: 1.35,
     idealAspect: 1,
@@ -58,6 +63,7 @@ const SHAPE_RULES: Record<GeometryShapeId, GeometryShapeRule> = {
     minCorners: 2,
     maxCorners: 5,
     minScore: 0.54,
+    maxClosureRatio: 0.24,
     minAspect: 0.65,
     maxAspect: 2.2,
     successMessage: 'Brawo! To poprawny trójkąt.',
@@ -68,6 +74,7 @@ const SHAPE_RULES: Record<GeometryShapeId, GeometryShapeRule> = {
     minCorners: 3,
     maxCorners: 6,
     minScore: 0.56,
+    maxClosureRatio: 0.23,
     minAspect: 0.75,
     maxAspect: 1.42,
     idealAspect: 1,
@@ -80,6 +87,7 @@ const SHAPE_RULES: Record<GeometryShapeId, GeometryShapeRule> = {
     minCorners: 3,
     maxCorners: 6,
     minScore: 0.55,
+    maxClosureRatio: 0.26,
     minAspect: 1.15,
     maxAspect: 3.4,
     idealAspect: 1.9,
@@ -92,6 +100,7 @@ const SHAPE_RULES: Record<GeometryShapeId, GeometryShapeRule> = {
     minCorners: 4,
     maxCorners: 7,
     minScore: 0.52,
+    maxClosureRatio: 0.26,
     minAspect: 0.62,
     maxAspect: 1.95,
     successMessage: 'Mega! Narysowano pięciokąt.',
@@ -102,6 +111,7 @@ const SHAPE_RULES: Record<GeometryShapeId, GeometryShapeRule> = {
     minCorners: 5,
     maxCorners: 8,
     minScore: 0.51,
+    maxClosureRatio: 0.27,
     minAspect: 0.62,
     maxAspect: 2.1,
     successMessage: 'Świetnie! To wygląda jak sześciokąt.',
@@ -113,6 +123,17 @@ const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 
 const distance = (a: Point2d, b: Point2d): number =>
   Math.hypot(a.x - b.x, a.y - b.y);
+
+const computePathLength = (points: Point2d[]): number => {
+  let total = 0;
+  for (let i = 1; i < points.length; i += 1) {
+    const prev = points[i - 1];
+    const next = points[i];
+    if (!prev || !next) continue;
+    total += distance(prev, next);
+  }
+  return total;
+};
 
 const computeBoundingBox = (points: Point2d[]): BoundingBox => {
   let minX = Number.POSITIVE_INFINITY;
@@ -198,6 +219,31 @@ const samplePath = (points: Point2d[], sampleCount = 120): Point2d[] => {
 
   sampled.push(points[points.length - 1]!);
   return sampled;
+};
+
+const smoothPath = (points: Point2d[], windowSize = 2): Point2d[] => {
+  if (points.length === 0 || windowSize <= 0) return points;
+  const smoothed: Point2d[] = [];
+  const lastIndex = points.length - 1;
+
+  for (let i = 0; i <= lastIndex; i += 1) {
+    let sumX = 0;
+    let sumY = 0;
+    let count = 0;
+    const start = Math.max(0, i - windowSize);
+    const end = Math.min(lastIndex, i + windowSize);
+    for (let j = start; j <= end; j += 1) {
+      const point = points[j];
+      if (!point) continue;
+      sumX += point.x;
+      sumY += point.y;
+      count += 1;
+    }
+    if (count === 0) continue;
+    smoothed.push({ x: sumX / count, y: sumY / count });
+  }
+
+  return smoothed;
 };
 
 const countCorners = (points: Point2d[]): number => {
@@ -299,6 +345,7 @@ const toRejected = (message: string): GeometryDrawingEvaluation => ({
   corners: 0,
   closureRatio: 1,
   aspectRatio: 99,
+  lengthRatio: 0,
   message,
 });
 
@@ -307,10 +354,22 @@ const resolveFailureMessage = (
   rule: GeometryShapeRule,
   corners: number,
   closureRatio: number,
-  aspectRatio: number
+  aspectRatio: number,
+  closureLimit: number,
+  lengthRatio: number,
+  minLengthRatio: number,
+  maxLengthRatio: number
 ): string => {
-  if (closureRatio > 0.34) {
+  if (closureRatio > closureLimit) {
     return 'Domknij figurę. Początek i koniec linii są zbyt daleko.';
+  }
+
+  if (lengthRatio < minLengthRatio) {
+    return 'Linia jest zbyt krótka. Obrysuj kształt bardziej dookoła.';
+  }
+
+  if (lengthRatio > maxLengthRatio) {
+    return 'Linia jest zbyt poszarpana. Spróbuj rysować bardziej płynnie.';
   }
 
   if (corners < rule.minCorners) {
@@ -354,8 +413,14 @@ export const evaluateGeometryDrawing = (
   }
 
   const closureRatio = distance(first, last) / box.diagonal;
-  const closureScore = clamp01(1 - closureRatio / 0.28);
-  const corners = countCorners(sampled);
+  const closureLimit = rule.maxClosureRatio ?? 0.28;
+  const closureScore = clamp01(1 - closureRatio / closureLimit);
+  const pathLength = computePathLength(sanitized);
+  const perimeter = Math.max(1, 2 * (box.width + box.height));
+  const lengthRatio = pathLength / perimeter;
+  const minLengthRatio = rule.minLengthRatio ?? 0.6;
+  const maxLengthRatio = rule.maxLengthRatio ?? 2.8;
+  const corners = countCorners(smoothPath(sampled, 1));
   const aspectRatio =
     Math.max(box.width, box.height) / Math.max(1, Math.min(box.width, box.height));
 
@@ -367,6 +432,9 @@ export const evaluateGeometryDrawing = (
 
   const accepted =
     score >= rule.minScore &&
+    closureRatio <= closureLimit &&
+    lengthRatio >= minLengthRatio &&
+    lengthRatio <= maxLengthRatio &&
     corners >= rule.minCorners &&
     corners <= rule.maxCorners &&
     isAspectInRange(aspectRatio, rule);
@@ -377,8 +445,19 @@ export const evaluateGeometryDrawing = (
     corners,
     closureRatio: Number(closureRatio.toFixed(3)),
     aspectRatio: Number(aspectRatio.toFixed(3)),
+    lengthRatio: Number(lengthRatio.toFixed(3)),
     message: accepted
       ? rule.successMessage
-      : resolveFailureMessage(target, rule, corners, closureRatio, aspectRatio),
+      : resolveFailureMessage(
+        target,
+        rule,
+        corners,
+        closureRatio,
+        aspectRatio,
+        closureLimit,
+        lengthRatio,
+        minLengthRatio,
+        maxLengthRatio
+      ),
   };
 };

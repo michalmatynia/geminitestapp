@@ -65,7 +65,7 @@ export type KangurLessonTtsStatusRequest = z.infer<typeof kangurLessonTtsStatusR
 export const kangurLessonTtsProbeRequestSchema = z.object({
   voice: kangurLessonTtsVoiceSchema.default(KANGUR_TTS_DEFAULT_VOICE),
   locale: z.string().trim().min(2).max(16).default(KANGUR_TTS_DEFAULT_LOCALE),
-  text: nonEmptyTrimmedString.max(400).default('Krotki test narratora Kangur.'),
+  text: nonEmptyTrimmedString.max(400).default('Krótki test narratora Kangur.'),
 });
 export type KangurLessonTtsProbeRequest = z.infer<typeof kangurLessonTtsProbeRequestSchema>;
 

@@ -1,9 +1,11 @@
 import { useState } from 'react';
 
+import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
+import LogicalAnalogiesRelationGame from '@/features/kangur/ui/components/LogicalAnalogiesRelationGame';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
@@ -11,11 +13,19 @@ import {
   KangurLessonLead,
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
+import {
+  AnalogyBridgeAnimation,
+  CauseEffectAnimation,
+  NumberOperationAnimation,
+  PartWholeAnimation,
+  ShapeTransformAnimation,
+} from '@/features/kangur/ui/components/LogicalAnalogiesAnimations';
 import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 
-type SectionId = 'intro' | 'liczby_ksztalty' | 'relacje' | 'podsumowanie';
+type SectionId = 'intro' | 'liczby_ksztalty' | 'relacje' | 'game_relacje' | 'podsumowanie';
+type SlideSectionId = Exclude<SectionId, 'game_relacje'>;
 
-export const SLIDES: Record<SectionId, LessonSlide[]> = {
+export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   intro: [
     {
       title: 'Co to jest analogia?',
@@ -38,6 +48,24 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               </KangurLessonCaption>
               <p className='text-pink-600 font-bold mt-1'>Odpowiedź: pływać 🐟</p>
             </KangurLessonInset>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Relacja A:B = C:D',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            W analogii porównujesz dwie pary, które mają tę samą relację.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='rose' className='w-full text-center' padding='sm'>
+            <div className='mx-auto h-20 w-72'>
+              <AnalogyBridgeAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Najpierw rozpoznaj relację A → B, potem zastosuj ją do C → D.
+            </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
@@ -152,6 +180,42 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
         </KangurLessonStack>
       ),
     },
+    {
+      title: 'Relacja liczbowa w ruchu',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Działanie musi być takie samo po obu stronach analogii.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='rose' className='w-full text-center' padding='sm'>
+            <div className='mx-auto h-24 w-72'>
+              <NumberOperationAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Ta sama operacja przenosi się na drugą parę.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Transformacja kształtu',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Jeśli jeden kształt obraca się, drugi musi zmienić się tak samo.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='rose' className='w-full text-center' padding='sm'>
+            <div className='mx-auto h-24 w-72'>
+              <ShapeTransformAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Reguła obrotu lub skali działa po obu stronach.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
   ],
   relacje: [
     {
@@ -174,6 +238,24 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               </KangurLessonCallout>
             ))}
           </div>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Część i całość — animacja',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Części łączą się w jedną całość, tak jak w analogii.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='rose' className='w-full text-center' padding='sm'>
+            <div className='mx-auto h-24 w-72'>
+              <PartWholeAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Elementy tworzą większy obiekt.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
@@ -202,6 +284,24 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               </KangurLessonCallout>
             ))}
           </div>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Przyczyna i skutek — animacja',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            To, co się dzieje najpierw, wywołuje kolejne zdarzenie.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='rose' className='w-full text-center' padding='sm'>
+            <div className='mx-auto h-24 w-72'>
+              <CauseEffectAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Łańcuch przyczyna → skutek pojawia się w analogii.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
@@ -239,6 +339,24 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
         </KangurLessonStack>
       ),
     },
+    {
+      title: 'Mapa relacji',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Zobacz, jak analogia łączy dwie pary w jedną regułę.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='rose' className='w-full text-center' padding='sm'>
+            <div className='mx-auto h-20 w-72'>
+              <AnalogyBridgeAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Relacja powtarza się w nowej parze.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
   ],
 };
 
@@ -262,6 +380,13 @@ export const HUB_SECTIONS = [
     description: 'Dwa ważne typy analogii relacyjnych',
   },
   {
+    id: 'game_relacje',
+    emoji: '🎯',
+    title: 'Most relacji',
+    description: 'Przeciągnij lub kliknij relacje do par',
+    isGame: true,
+  },
+  {
     id: 'podsumowanie',
     emoji: '📋',
     title: 'Podsumowanie',
@@ -274,13 +399,32 @@ export default function LogicalAnalogiesLesson(): React.JSX.Element {
   const { markSectionOpened, markSectionViewedCount, sectionProgress } =
     useLessonHubProgress(SLIDES);
 
+  if (activeSection === 'game_relacje') {
+    const gameSection = HUB_SECTIONS.find((section) => section.id === activeSection) ?? null;
+    return (
+      <LessonActivityStage
+        accent='rose'
+        icon='🎯'
+        maxWidthClassName='max-w-3xl'
+        onBack={() => setActiveSection(null)}
+        sectionHeader={gameSection}
+        shellTestId='logical-analogies-game-shell'
+        title='Most relacji'
+      >
+        <LogicalAnalogiesRelationGame onFinish={() => setActiveSection(null)} />
+      </LessonActivityStage>
+    );
+  }
+
   if (activeSection) {
     return (
       <LessonSlideSection
-        slides={SLIDES[activeSection]}
+        slides={SLIDES[activeSection as SlideSectionId]}
         sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
         onBack={() => setActiveSection(null)}
-        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
+        onProgressChange={(viewedCount) =>
+          markSectionViewedCount(activeSection as SlideSectionId, viewedCount)
+        }
         dotActiveClass='bg-pink-500'
         dotDoneClass='bg-pink-300'
         gradientClass='kangur-gradient-accent-rose-reverse'
@@ -294,12 +438,18 @@ export default function LogicalAnalogiesLesson(): React.JSX.Element {
       lessonTitle='Analogie'
       gradientClass='kangur-gradient-accent-rose-reverse'
       progressDotClassName='bg-pink-300'
-      sections={HUB_SECTIONS.map((section) => ({
-        ...section,
-        progress: sectionProgress[section.id as SectionId],
-      }))}
+      sections={HUB_SECTIONS.map((section) =>
+        section.isGame
+          ? section
+          : {
+              ...section,
+              progress: sectionProgress[section.id as SlideSectionId],
+            }
+      )}
       onSelect={(id) => {
-        markSectionOpened(id as SectionId);
+        if (id !== 'game_relacje') {
+          markSectionOpened(id as SlideSectionId);
+        }
         setActiveSection(id as SectionId);
       }}
     />

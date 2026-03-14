@@ -178,7 +178,7 @@ describe('Leaderboard', () => {
       'border-dashed',
       'border'
     );
-    expect(screen.getByText('Brak wynikow dla tych filtrow.')).toBeInTheDocument();
+    expect(screen.getByText('Brak wyników dla tych filtrow.')).toBeInTheDocument();
   });
 
   it('uses Mongo-backed page-content titles when available', async () => {
@@ -188,7 +188,7 @@ describe('Leaderboard', () => {
           ? {
             id: 'game-home-leaderboard',
             title: 'Ranking mistrzow',
-            summary: 'Mongo tytul sekcji rankingu.',
+            summary: 'Mongo tytuł sekcji rankingu.',
           }
           : null,
       data: undefined,

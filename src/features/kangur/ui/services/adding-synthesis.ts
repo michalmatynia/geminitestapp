@@ -7,7 +7,7 @@ export const ADDING_SYNTHESIS_STAGES = [
     id: 'warmup',
     icon: '🌱',
     title: 'Rozgrzewka',
-    description: 'Sumy do 10. Najpierw znajdz wieksza liczbe i dolicz reszte.',
+    description: 'Sumy do 10. Najpierw znajdz wieksza liczbę i dolicz reszte.',
     coachingTip: 'Policz od wiekszej liczby i patrz, jak dzialanie spada do linii.',
     accent: 'amber',
     noteCount: 4,
@@ -16,8 +16,8 @@ export const ADDING_SYNTHESIS_STAGES = [
     id: 'bridge_ten',
     icon: '🌉',
     title: 'Most do 10',
-    description: 'Przekraczaj 10, rozbijajac druga liczbe na kawalek do 10 i reszte.',
-    coachingTip: 'Zobacz, ile brakuje do 10, a potem dodaj to, co zostalo.',
+    description: 'Przekraczaj 10, rozbijajac druga liczbę na kawalek do 10 i reszte.',
+    coachingTip: 'Zobacz, ile brakuje do 10, a potem dodaj to, co zostało.',
     accent: 'sky',
     noteCount: 4,
   },
@@ -28,7 +28,7 @@ export const ADDING_SYNTHESIS_STAGES = [
     description:
       'Dodawaj dziesiatki i jednosci osobno, a przy przeniesieniu zamieniaj 10 jednosci na nowa dziesiatke.',
     coachingTip:
-      'Najpierw dziesiatki, potem jednosci. Gdy wyjdzie 10 lub wiecej, przenies jedna dziesiatke.',
+      'Najpierw dziesiatki, potem jednosci. Gdy wyjdzie 10 lub więcej, przenies jedna dziesiatke.',
     accent: 'emerald',
     noteCount: 4,
   },
@@ -157,7 +157,7 @@ const createWarmupNote = (index: number, random: RandomSource): AddingSynthesisN
     answer,
     choices: buildChoices(answer, 'warmup', random),
     hint: buildCountUpHint(left, right),
-    focus: 'Zacznij od wiekszej liczby i dolicz male kroki.',
+    focus: 'Zacznij od wiekszej liczby i dolicz małe kroki.',
   };
 };
 
@@ -175,7 +175,7 @@ const createBridgeTenNote = (index: number, random: RandomSource): AddingSynthes
     answer,
     choices: buildChoices(answer, 'bridge_ten', random),
     hint: buildBridgeTenHint(left, right),
-    focus: 'Najpierw dopelnij do 10, potem dodaj to, co zostalo.',
+    focus: 'Najpierw dopelnij do 10, potem dodaj to, co zostało.',
   };
 };
 
@@ -208,7 +208,7 @@ const createDoubleDigitNote = (index: number, random: RandomSource): AddingSynth
     hint: buildDoubleDigitHint(left, right),
     focus: carry
       ? 'Pilnuj jednosci. Gdy uzbierasz 10, przenies jedna dziesiatke.'
-      : 'Rozdziel dziesiatki i jednosci, a potem polacz oba wyniki.',
+      : 'Rozdziel dziesiatki i jednosci, a potem połącz oba wyniki.',
   };
 };
 

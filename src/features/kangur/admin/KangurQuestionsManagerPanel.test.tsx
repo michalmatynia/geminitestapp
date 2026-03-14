@@ -128,7 +128,7 @@ describe('KangurQuestionsManagerPanel', () => {
             ],
             correctChoiceLabel: 'A',
             pointValue: 5,
-            explanation: 'Wyjasnienie jest niespojne',
+            explanation: 'Wyjaśnienie jest niespojne',
             illustration: {
               type: 'single',
               svgContent:

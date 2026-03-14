@@ -34,6 +34,6 @@ export async function postKangurParentPasswordHandler(
     ok: true,
     email: result.email,
     hasPassword: result.hasPassword,
-    message: 'Haslo rodzica zostalo ustawione. Od teraz mozesz logowac sie emailem i haslem.',
+    message: 'Hasło rodzica zostało ustawione. Od teraz możesz logowac się emailem i hasłem.',
   });
 }

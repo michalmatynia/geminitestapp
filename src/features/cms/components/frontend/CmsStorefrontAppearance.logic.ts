@@ -109,7 +109,8 @@ export const buildGelButtonShadow = (
   }
   if (theme.btnGlowOpacity > 0) {
     const glowOpacity = theme.btnGlowOpacity * (isDark ? 0.7 : 1);
-    parts.push(`0 0 ${Math.max(0, theme.btnGlowSpread)}px ${toShadowColor(baseColor, glowOpacity)}`);
+    const glowColor = isNonEmptyString(theme.btnGlowColor) ? theme.btnGlowColor.trim() : baseColor;
+    parts.push(`0 0 ${Math.max(0, theme.btnGlowSpread)}px ${toShadowColor(glowColor, glowOpacity)}`);
   }
   return parts.join(', ');
 };
@@ -361,6 +362,7 @@ const resolveKangurRuntimeThemeVars = (theme: ThemeSettings): Record<string, str
     '--kangur-font-body': theme.bodyFont,
     '--kangur-font-base-size': toCssPx(theme.baseSize),
     '--kangur-font-line-height': String(theme.lineHeight),
+    '--kangur-font-heading-line-height': String(theme.headingLineHeight),
     '--kangur-page-max-width': toCssPx(theme.maxContentWidth),
     '--kangur-page-padding-top': toCssPx(pagePadding.top),
     '--kangur-page-padding-right': toCssPx(pagePadding.right),
@@ -474,6 +476,18 @@ const resolveHomeActionVars = (theme: ThemeSettings): Record<string, string> => 
     setVar(`--kangur-home-action-${id}-label-start`, labelStart);
     setVar(`--kangur-home-action-${id}-label-end`, labelEnd);
     setMidVar(`--kangur-home-action-${id}-label-mid`, labelStart, labelMid, labelEnd);
+
+    const labelStartActive = get('LabelStartActive');
+    const labelMidActive = get('LabelMidActive');
+    const labelEndActive = get('LabelEndActive');
+    setVar(`--kangur-home-action-${id}-label-start-active`, labelStartActive);
+    setVar(`--kangur-home-action-${id}-label-end-active`, labelEndActive);
+    setMidVar(
+      `--kangur-home-action-${id}-label-mid-active`,
+      labelStartActive,
+      labelMidActive,
+      labelEndActive
+    );
 
     const accentStart = get('AccentStart');
     const accentMid = get('AccentMid');
@@ -754,6 +768,14 @@ const resolveThemedKangurStorefrontAppearance = (
   const buttonGlossOpacity = clampNumber(theme.btnGlossOpacity, 0, 1) * (isDark ? 0.65 : 1);
   const buttonGlossHeight = `${clampNumber(theme.btnGlossHeight, 0, 100)}%`;
   const buttonGlossAngle = `${clampNumber(theme.btnGlossAngle, 0, 360)}deg`;
+  const buttonGlossColor = isNonEmptyString(theme.btnGlossColor) ? theme.btnGlossColor.trim() : '#ffffff';
+  const buttonBorderOpacity = clampNumber(theme.btnBorderOpacity, 0, 100) / 100;
+  const buttonBorderColor = applyTransparency(
+    isNonEmptyString(theme.btnOutlineBorder) ? theme.btnOutlineBorder.trim() : borderColor,
+    buttonBorderOpacity
+  );
+  const buttonBorderWidth = toCssPx(theme.btnBorderWidth);
+  const buttonBorderRadius = toCssPx(theme.btnBorderRadius);
   const primaryButtonBase = resolveSolidColor(theme.btnPrimaryBg, primary);
   const secondaryButtonBase = resolveSolidColor(theme.btnSecondaryBg, surfaceBackground);
   const warningBackground = theme.accentColor || accent;
@@ -1393,6 +1415,10 @@ const resolveThemedKangurStorefrontAppearance = (
       '--kangur-button-gloss-opacity': String(buttonGlossOpacity),
       '--kangur-button-gloss-height': buttonGlossHeight,
       '--kangur-button-gloss-angle': buttonGlossAngle,
+      '--kangur-button-gloss-color': buttonGlossColor,
+      '--kangur-button-border-width': buttonBorderWidth,
+      '--kangur-button-border-color': buttonBorderColor,
+      '--kangur-button-border-radius': buttonBorderRadius,
       '--kangur-button-primary-background': primaryButtonBackground,
       '--kangur-button-primary-text': primaryButtonText,
       '--kangur-button-primary-hover-background': primaryButtonHoverBackground,

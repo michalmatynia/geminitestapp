@@ -32,11 +32,11 @@ describe('KangurAiTutorWidget.coordinator helpers', () => {
   it('treats selections inside tutor roots as tutor-ui selections', () => {
     const tutorRoot = document.createElement('div');
     tutorRoot.setAttribute(KANGUR_AI_TUTOR_UI_ROOT_ATTRIBUTE, 'true');
-    const textNode = document.createTextNode('Wyjasnienie tutora');
+    const textNode = document.createTextNode('Wyjaśnienie tutora');
     tutorRoot.append(textNode);
     document.body.append(tutorRoot);
 
-    mockSelection(textNode, 'Wyjasnienie tutora');
+    mockSelection(textNode, 'Wyjaśnienie tutora');
 
     expect(isSelectionWithinTutorUi()).toBe(true);
   });

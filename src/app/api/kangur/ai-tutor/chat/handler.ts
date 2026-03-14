@@ -81,14 +81,14 @@ import {
 } from './sources';
 
 const AVAILABILITY_ERROR_MESSAGES: Record<KangurAiTutorAvailabilityReason, string> = {
-  disabled: 'AI tutor is not enabled for this learner.',
+  disabled: 'AI Tutor is not enabled for this learner.',
   email_unverified: 'Verify your parent email to unlock AI Tutor.',
-  missing_context: 'AI tutor context is required for Kangur tutoring sessions.',
-  lessons_disabled: 'AI tutor is disabled for lessons for this learner.',
-  games_disabled: 'AI tutor is disabled for games for this learner.',
-  tests_disabled: 'AI tutor is disabled for tests for this learner.',
+  missing_context: 'AI Tutor context is required for Kangur tutoring sessions.',
+  lessons_disabled: 'AI Tutor is disabled for lessons for this learner.',
+  games_disabled: 'AI Tutor is disabled for games for this learner.',
+  tests_disabled: 'AI Tutor is disabled for tests for this learner.',
   review_after_answer_only:
-    'AI tutor is available in tests only after the answer has been revealed.',
+    'AI Tutor is available in tests only after the answer has been revealed.',
 };
 const KANGUR_AI_TUTOR_BRAIN_CAPABILITY = 'kangur_ai_tutor.chat';
 
@@ -882,7 +882,7 @@ export async function postKangurAiTutorChatHandler(
         await logKangurServerEvent({
           source: 'kangur.ai-tutor.chat.drawing-analysis.failed',
           service: 'kangur.ai-tutor',
-          message: 'Failed to analyze the learner drawing for Kangur AI tutor.',
+          message: 'Failed to analyze the learner drawing for Kangur AI Tutor.',
           level: 'warn',
           request: req,
           requestContext: ctx,
@@ -955,7 +955,7 @@ export async function postKangurAiTutorChatHandler(
       await logKangurServerEvent({
         source: 'kangur.ai-tutor.chat.page-content.completed',
         service: 'kangur.ai-tutor',
-        message: 'Kangur AI tutor answered from canonical page-content knowledge.',
+        message: 'Kangur AI Tutor answered from canonical page-content knowledge.',
         request: req,
         requestContext: ctx,
         actor,
@@ -1154,7 +1154,7 @@ export async function postKangurAiTutorChatHandler(
           source: 'kangur.ai-tutor.chat.native-guide.coverage-gap',
           service: 'kangur.ai-tutor',
           message:
-            'Kangur AI tutor used a generic overview entry for a section-specific request.',
+            'Kangur AI Tutor used a generic overview entry for a section-specific request.',
           level: 'warn',
           request: req,
           requestContext: ctx,
@@ -1182,7 +1182,7 @@ export async function postKangurAiTutorChatHandler(
       await logKangurServerEvent({
         source: 'kangur.ai-tutor.chat.native-guide.completed',
         service: 'kangur.ai-tutor',
-        message: 'Kangur AI tutor answered from the native guide repository.',
+        message: 'Kangur AI Tutor answered from the native guide repository.',
         request: req,
         requestContext: ctx,
         actor,
@@ -1244,7 +1244,7 @@ export async function postKangurAiTutorChatHandler(
       await logKangurServerEvent({
         source: 'kangur.ai-tutor.chat.native-guide.missing',
         service: 'kangur.ai-tutor',
-        message: 'Kangur AI tutor did not find a native guide entry for an eligible request.',
+        message: 'Kangur AI Tutor did not find a native guide entry for an eligible request.',
         level: 'warn',
         request: req,
         requestContext: ctx,
@@ -1451,7 +1451,7 @@ export async function postKangurAiTutorChatHandler(
     await logKangurServerEvent({
       source: 'kangur.ai-tutor.chat.completed',
       service: 'kangur.ai-tutor',
-      message: 'Kangur AI tutor chat completed through Brain routing.',
+      message: 'Kangur AI Tutor chat completed through Brain routing.',
       request: req,
       requestContext: ctx,
       actor,
@@ -1524,7 +1524,7 @@ export async function postKangurAiTutorChatHandler(
     await logKangurServerEvent({
       source: 'kangur.ai-tutor.chat.failed',
       service: 'kangur.ai-tutor',
-      message: 'Kangur AI tutor chat failed.',
+      message: 'Kangur AI Tutor chat failed.',
       level: isAppError(error) && error.expected ? 'warn' : 'error',
       request: req,
       requestContext: ctx,

@@ -177,7 +177,7 @@ export const actionNodes: ContextNode[] = [
     kind: 'action',
     name: 'Kangur AI Tutor Chat',
     description:
-      'Runs a Kangur AI tutor turn by resolving learner and page context through the Context Registry, ' +
+      'Runs a Kangur AI Tutor turn by resolving learner and page context through the Context Registry, ' +
       'then passing the resulting bundle to the tutor model.',
     tags: ['kangur', 'ai', 'tutor', 'education'],
     relationships: [

@@ -32,8 +32,12 @@ const resolveUserProgressKey = (user: KangurUser | null): string | null => {
     return activeLearnerId;
   }
 
-  const id = user?.id?.trim();
-  return id && id.length > 0 ? id : null;
+  if (user?.actorType === 'learner') {
+    const id = user?.id?.trim();
+    return id && id.length > 0 ? id : null;
+  }
+
+  return null;
 };
 
 const serializeProgress = (progress: KangurProgressState): string => JSON.stringify(progress);

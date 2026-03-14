@@ -458,7 +458,7 @@ export function ProductSyncSettings(): React.JSX.Element {
                       name: event.target.value,
                     }))
                   }
-                />
+                 aria-label="Name" title="Name"/>
               </FormField>
               <FormField label='Base Connection'>
                 <SelectSimple
@@ -479,7 +479,7 @@ export function ProductSyncSettings(): React.JSX.Element {
                     })),
                   ]}
                   triggerClassName='w-full'
-                />
+                 ariaLabel="Base Connection" title="Base Connection"/>
                 <div className='mt-2'>
                   <Button
                     type='button'
@@ -508,7 +508,7 @@ export function ProductSyncSettings(): React.JSX.Element {
                       inventoryId: event.target.value,
                     }))
                   }
-                />
+                 aria-label="Inventory ID" title="Inventory ID"/>
               </FormField>
               <FormField label='Catalog Filter'>
                 <Input
@@ -522,7 +522,7 @@ export function ProductSyncSettings(): React.JSX.Element {
                     }))
                   }
                   placeholder='optional catalog ID'
-                />
+                 aria-label="optional catalog ID" title="optional catalog ID"/>
               </FormField>
               <FormField label='Interval (min)'>
                 <Input
@@ -541,7 +541,7 @@ export function ProductSyncSettings(): React.JSX.Element {
                       ),
                     }))
                   }
-                />
+                 aria-label="Interval (min)" title="Interval (min)"/>
               </FormField>
               <FormField label='Batch Size'>
                 <Input
@@ -557,7 +557,7 @@ export function ProductSyncSettings(): React.JSX.Element {
                       batchSize: Math.max(1, Math.min(500, Number(event.target.value) || 100)),
                     }))
                   }
-                />
+                 aria-label="Batch Size" title="Batch Size"/>
               </FormField>
             </div>
 
@@ -649,7 +649,7 @@ export function ProductSyncSettings(): React.JSX.Element {
                   label: appFieldLabel(field),
                 }))}
                 triggerClassName='w-full'
-              />
+               ariaLabel="Select option" title="Select option"/>
 
               <Input
                 variant='subtle'
@@ -659,7 +659,7 @@ export function ProductSyncSettings(): React.JSX.Element {
                   updateRule(rule.id, { baseField: event.target.value })
                 }
                 placeholder='Base field path (e.g. text_fields.name)'
-              />
+               aria-label="Base field path (e.g. text_fields.name)" title="Base field path (e.g. text_fields.name)"/>
 
               <SelectSimple
                 variant='subtle'
@@ -673,7 +673,7 @@ export function ProductSyncSettings(): React.JSX.Element {
                   label: directionLabel(direction),
                 }))}
                 triggerClassName='w-full'
-              />
+               ariaLabel="Select option" title="Select option"/>
 
               <Button
                 type='button'

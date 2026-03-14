@@ -176,7 +176,7 @@ function AiPathAnalysisTriggerFull(): React.JSX.Element {
           placeholder='Select a path…'
           ariaLabel='AI Path for object analysis'
           disabled={busy}
-        />
+         title="Select a path…"/>
       </div>
 
       {/* Trigger button */}
@@ -280,7 +280,7 @@ function AiPathAnalysisTriggerFull(): React.JSX.Element {
             }
             options={autoApplyOptions}
             ariaLabel='Auto-apply target'
-          />
+           title="Select option"/>
         </div>
       </div>
 
@@ -466,7 +466,7 @@ function AiPathAnalysisTriggerCompact(): React.JSX.Element {
         placeholder='Select AI Path…'
         ariaLabel='AI Path for object analysis'
         disabled={busy}
-      />
+       title="Select AI Path…"/>
 
       <div className='flex items-center gap-2'>
         {!busy ? (

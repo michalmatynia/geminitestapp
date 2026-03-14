@@ -129,14 +129,14 @@ export function QuestionChoicesEditor(): React.JSX.Element {
                 className='h-7 w-10 shrink-0 px-1 text-center text-sm font-bold'
                 maxLength={4}
                 aria-label='Choice label'
-              />
+               title="Input field"/>
 
               <Input
                 value={choice.text}
                 onChange={(e): void => updateText(index, e.target.value)}
                 placeholder={`Choice ${choice.label} text`}
                 className='h-7 flex-1 text-sm'
-              />
+               aria-label={`Choice ${choice.label} text`} title={`Choice ${choice.label} text`}/>
 
               <div className='flex shrink-0 items-center gap-0.5'>
                 <Button
@@ -186,7 +186,7 @@ export function QuestionChoicesEditor(): React.JSX.Element {
                     onChange={(event): void => updateDescription(index, event.target.value)}
                     placeholder='Optional learner-facing note or visual description'
                     className='min-h-[72px] text-sm'
-                  />
+                   aria-label="Optional learner-facing note or visual description" title="Optional learner-facing note or visual description"/>
                 </FormField>
                 <div className='space-y-1'>
                   <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>

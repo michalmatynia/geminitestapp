@@ -151,10 +151,28 @@ const getSelectionActionLayout = (
   viewport: { width: number; height: number }
 ): SelectionActionLayout => {
   const gap = 12;
+  const isMobileViewport = viewport.width < 640;
+  const mobileBottomGap = 24;
   const maxLeft = viewport.width - EDGE_GAP - CTA_WIDTH;
   const maxTop = viewport.height - EDGE_GAP - CTA_HEIGHT;
   const centeredLeft = rect.left + rect.width / 2 - CTA_WIDTH / 2;
   const centeredTop = rect.top + rect.height / 2 - CTA_HEIGHT / 2;
+
+  if (isMobileViewport) {
+    const left = clamp(centeredLeft, EDGE_GAP, maxLeft);
+    const bottomGap = Math.max(EDGE_GAP, mobileBottomGap);
+    const top = clamp(viewport.height - CTA_HEIGHT - bottomGap, EDGE_GAP, maxTop);
+
+    return {
+      placement: 'bottom',
+      style: {
+        position: 'fixed',
+        left,
+        top,
+      },
+    };
+  }
+
   const candidates: Array<{
     left: number;
     placement: 'top' | 'bottom' | 'left' | 'right';

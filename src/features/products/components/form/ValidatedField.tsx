@@ -72,7 +72,7 @@ export const ValidatedField = memo(function ValidatedField(
             {...register(name)}
             placeholder={placeholder}
             rows={rows ?? 4}
-          />
+           aria-label={placeholder} title={placeholder}/>
         ) : (
           <Input
             id={fieldNameKey}
@@ -81,7 +81,7 @@ export const ValidatedField = memo(function ValidatedField(
             className={inputClassName}
             {...register(name, type === 'number' ? { valueAsNumber: true } : {})}
             placeholder={placeholder}
-          />
+           aria-label={placeholder} title={placeholder}/>
         )}
         {unit && (
           <Hint

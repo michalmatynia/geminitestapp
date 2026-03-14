@@ -746,7 +746,7 @@ export function AdminKangurSettingsPage(): ReactElement {
                     onChange={(event) => setDailyMessageLimitInput(event.target.value)}
                     placeholder='Puste = bez limitu'
                     aria-label='Dzienny limit wiadomości'
-                  />
+                   title="Puste = bez limitu"/>
                 </FormField>
 
                 <FormField
@@ -762,7 +762,7 @@ export function AdminKangurSettingsPage(): ReactElement {
                     options={AI_TUTOR_GUEST_INTRO_MODE_OPTIONS}
                     ariaLabel='Anonimowy onboarding AI Tutora'
                     variant='subtle'
-                  />
+                   title="Anonimowy onboarding AI Tutora"/>
                 </FormField>
 
                 <FormField
@@ -781,7 +781,7 @@ export function AdminKangurSettingsPage(): ReactElement {
                     options={AI_TUTOR_HOME_ONBOARDING_MODE_OPTIONS}
                     ariaLabel='Onboarding pierwszej strony'
                     variant='subtle'
-                  />
+                   title="Onboarding pierwszej strony"/>
                 </FormField>
               </Card>
             </div>
@@ -800,7 +800,7 @@ export function AdminKangurSettingsPage(): ReactElement {
                     options={agentPersonaOptions}
                     ariaLabel='Persona (charakter tutora)'
                     variant='subtle'
-                  />
+                   title="Persona (charakter tutora)"/>
                 </FormField>
 
                 <Card
@@ -846,7 +846,7 @@ export function AdminKangurSettingsPage(): ReactElement {
                     options={motionPresetOptions}
                     ariaLabel='Preset ruchu tutora'
                     variant='subtle'
-                  />
+                   title="Preset ruchu tutora"/>
                 </FormField>
               </Card>
             </div>
@@ -878,7 +878,7 @@ export function AdminKangurSettingsPage(): ReactElement {
                 onChange={(event) => setParentVerificationResendCooldownInput(event.target.value)}
                 aria-label='Czas oczekiwania na ponowne wysłanie e-maila (sekundy)'
                 inputMode='numeric'
-              />
+               title="Czas oczekiwania na ponowne wysłanie e-maila (sekundy)"/>
             </FormField>
             <p className='mt-3 text-xs text-muted-foreground'>
               Akceptowany zakres: {KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MIN}–

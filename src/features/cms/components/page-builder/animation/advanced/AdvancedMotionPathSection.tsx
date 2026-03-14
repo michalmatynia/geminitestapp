@@ -90,7 +90,7 @@ export function AdvancedMotionPathSection(): React.JSX.Element {
                 onChange={handlePathChange}
                 placeholder='SVG path data or selector (#path)'
                 className='flex-1 text-xs font-mono h-9'
-              />
+               aria-label="SVG path data or selector (#path)" title="SVG path data or selector (#path)"/>
               <Tooltip content={drawPathTooltip}>
                 <Button
                   type='button'
@@ -133,7 +133,7 @@ export function AdvancedMotionPathSection(): React.JSX.Element {
                     onChange({ ...config, motionPathStart: Math.max(0, Math.min(1, val)) });
                 }}
                 className='h-9'
-              />
+               aria-label="Start (0-1)" title="Start (0-1)"/>
             </FormField>
             <FormField label='End (0-1)'>
               <Input
@@ -148,7 +148,7 @@ export function AdvancedMotionPathSection(): React.JSX.Element {
                     onChange({ ...config, motionPathEnd: Math.max(0, Math.min(1, val)) });
                 }}
                 className='h-9'
-              />
+               aria-label="End (0-1)" title="End (0-1)"/>
             </FormField>
           </div>
 
@@ -190,7 +190,7 @@ export function AdvancedMotionPathSection(): React.JSX.Element {
                     });
                 }}
                 className='h-9'
-              />
+               aria-label="Rotate offset (deg)" title="Rotate offset (deg)"/>
             </FormField>
           )}
 
@@ -218,7 +218,7 @@ export function AdvancedMotionPathSection(): React.JSX.Element {
                       onChange({ ...config, motionPathSpacing: Math.max(0, Math.min(1, val)) });
                   }}
                   className='h-9'
-                />
+                 aria-label="Spacing (0-1)" title="Spacing (0-1)"/>
               </FormField>
             )}
           </div>

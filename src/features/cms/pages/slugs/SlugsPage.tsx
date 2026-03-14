@@ -217,7 +217,7 @@ export default function SlugsPage(): React.JSX.Element {
               ariaLabel='Domain'
               className='w-[200px]'
               size='sm'
-            />
+             title="Select domain..."/>
           ) : null}
           <div className='flex gap-2'>
             {zoningEnabled && (

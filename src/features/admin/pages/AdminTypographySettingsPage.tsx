@@ -93,7 +93,7 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
                   })
                 )}
                 placeholder='Select a font set'
-              />
+               ariaLabel="Select a font set" title="Select a font set"/>
             </FormField>
 
             <FormActions

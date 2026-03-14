@@ -49,7 +49,7 @@ export function AdvancedDraggableSection(): React.JSX.Element {
               value={draggableTypeValue}
               onValueChange={(v) => onChange({ ...config, draggableType: v as DragAxis })}
               options={DRAG_AXES}
-            />
+             ariaLabel="Axis" title="Axis"/>
           </FormField>
 
           <FormField label='Bounds selector'>
@@ -58,7 +58,7 @@ export function AdvancedDraggableSection(): React.JSX.Element {
               onChange={(e) => onChange({ ...config, draggableBounds: e.target.value })}
               placeholder='e.g. .container'
               className='h-9'
-            />
+             aria-label="e.g. .container" title="e.g. .container"/>
           </FormField>
 
           <div className='grid gap-3 sm:grid-cols-2'>
@@ -75,7 +75,7 @@ export function AdvancedDraggableSection(): React.JSX.Element {
                     onChange({ ...config, draggableSnap: Math.max(0, Math.min(200, val)) });
                 }}
                 className='h-9'
-              />
+               aria-label="Snap (px)" title="Snap (px)"/>
             </FormField>
             <FormField label='Momentum factor'>
               <Input
@@ -93,7 +93,7 @@ export function AdvancedDraggableSection(): React.JSX.Element {
                     });
                 }}
                 className='h-9'
-              />
+               aria-label="Momentum factor" title="Momentum factor"/>
             </FormField>
           </div>
 
@@ -124,7 +124,7 @@ export function AdvancedDraggableSection(): React.JSX.Element {
                   }
                   placeholder='e.g. .track'
                   className='h-9'
-                />
+                 aria-label="e.g. .track" title="e.g. .track"/>
               </FormField>
               <div className='flex items-center gap-2'>
                 <Checkbox

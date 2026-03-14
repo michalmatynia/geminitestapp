@@ -114,6 +114,6 @@ export function InputBlock(): React.ReactNode {
         event.preventDefault();
         submitAction(value);
       }}
-    />
+     title={placeholder}/>
   );
 }

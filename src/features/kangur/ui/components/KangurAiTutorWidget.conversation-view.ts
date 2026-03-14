@@ -7,7 +7,6 @@ import {
 } from '@/shared/contracts/kangur-ai-tutor-content';
 
 import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/shared/contracts/kangur-ai-tutor';
-import type { TutorProactiveNudge } from './KangurAiTutorPanelBody.context';
 import { areTutorSelectionTextsEquivalent } from './KangurAiTutorWidget.helpers';
 import type { ActiveTutorFocus, TutorQuickAction } from './KangurAiTutorWidget.shared';
 import type { TutorSurface } from './KangurAiTutorWidget.types';
@@ -286,136 +285,6 @@ const pickQuickAction = (
   return actions[0] ?? null;
 };
 
-const buildProactiveNudge = (input: {
-  answerRevealed: boolean | undefined;
-  canSendMessages: boolean;
-  hasAssignmentSummary: boolean;
-  hasCurrentQuestion: boolean;
-  hasMessages: boolean;
-  hasSelectedText: boolean;
-  hintDepth: 'brief' | 'guided' | 'step_by_step';
-  proactiveNudges: 'off' | 'gentle' | 'coach';
-  quickActions: TutorQuickAction[];
-  surface: TutorSurface | null | undefined;
-  tutorContent: KangurAiTutorContent;
-}): TutorProactiveNudge | null => {
-  if (
-    input.proactiveNudges === 'off' ||
-    input.hasMessages ||
-    !input.canSendMessages ||
-    input.quickActions.length === 0
-  ) {
-    return null;
-  }
-
-  const isQuestionSurface =
-    input.surface === 'test' || (input.surface === 'game' && input.hasCurrentQuestion);
-  const isReviewSurface =
-    (input.surface === 'test' || input.surface === 'game') && input.answerRevealed;
-  const title =
-    input.proactiveNudges === 'coach'
-      ? input.tutorContent.proactiveNudges.coachTitle
-      : input.tutorContent.proactiveNudges.gentleTitle;
-  const bridgeAction = pickQuickAction(input.quickActions, ['bridge-to-game']);
-
-  if (input.hasSelectedText) {
-    const action = pickQuickAction(input.quickActions, ['selected-text', 'explain']);
-    return action
-      ? {
-        action,
-        description:
-            input.proactiveNudges === 'coach'
-              ? input.tutorContent.proactiveNudges.selectedTextCoach
-              : input.tutorContent.proactiveNudges.selectedTextGentle,
-        mode: input.proactiveNudges,
-        title,
-      }
-      : null;
-  }
-
-  if (bridgeAction) {
-    return {
-      action: bridgeAction,
-      description:
-        input.proactiveNudges === 'coach'
-          ? input.tutorContent.proactiveNudges.bridgeToGameCoach
-          : input.tutorContent.proactiveNudges.bridgeToGameGentle,
-      mode: input.proactiveNudges,
-      title,
-    };
-  }
-
-  if (isReviewSurface) {
-    const action = pickQuickAction(input.quickActions, ['review', 'next-step']);
-    return action
-      ? {
-        action,
-        description:
-            input.proactiveNudges === 'coach'
-              ? input.tutorContent.proactiveNudges.reviewCoach
-              : input.tutorContent.proactiveNudges.reviewGentle,
-        mode: input.proactiveNudges,
-        title,
-      }
-      : null;
-  }
-
-  if (isQuestionSurface) {
-    const action = pickQuickAction(
-      input.quickActions,
-      input.hintDepth === 'step_by_step' ? ['how-think', 'hint'] : ['hint', 'how-think']
-    );
-    return action
-      ? {
-        action,
-        description:
-            input.hintDepth === 'step_by_step'
-              ? input.proactiveNudges === 'coach'
-                ? input.tutorContent.proactiveNudges.stepByStepCoach
-                : input.tutorContent.proactiveNudges.stepByStepGentle
-              : input.proactiveNudges === 'coach'
-                ? input.tutorContent.proactiveNudges.hintCoach
-                : input.tutorContent.proactiveNudges.hintGentle,
-        mode: input.proactiveNudges,
-        title,
-      }
-      : null;
-  }
-
-  if (input.hasAssignmentSummary) {
-    const action = pickQuickAction(input.quickActions, ['next-step', 'explain']);
-    return action
-      ? {
-        action,
-        description:
-            input.proactiveNudges === 'coach'
-              ? input.tutorContent.proactiveNudges.assignmentCoach
-              : input.tutorContent.proactiveNudges.assignmentGentle,
-        mode: input.proactiveNudges,
-        title,
-      }
-      : null;
-  }
-
-  const action = pickQuickAction(
-    input.quickActions,
-    input.proactiveNudges === 'coach'
-      ? ['next-step', 'explain', 'hint']
-      : ['explain', 'hint', 'next-step']
-  );
-  return action
-    ? {
-      action,
-      description:
-          input.proactiveNudges === 'coach'
-            ? input.tutorContent.proactiveNudges.defaultCoach
-            : input.tutorContent.proactiveNudges.defaultGentle,
-      mode: input.proactiveNudges,
-      title,
-    }
-    : null;
-};
-
 const getEmptyStateMessage = (input: {
   answerRevealed: boolean | undefined;
   bridgeQuickAction: TutorQuickAction | null;
@@ -596,36 +465,6 @@ export function useKangurAiTutorConversationViewState(
     () => getBridgeSummaryChipLabel(input.tutorContent, bridgeQuickAction),
     [bridgeQuickAction, input.tutorContent]
   );
-  const proactiveNudge = useMemo(
-    () =>
-      buildProactiveNudge({
-        answerRevealed: input.sessionContext.answerRevealed,
-        canSendMessages: input.canSendMessages,
-        hasAssignmentSummary: input.hasAssignmentSummary,
-        hasCurrentQuestion: input.hasCurrentQuestion,
-        hasMessages: input.messages.length > 0,
-        hasSelectedText: Boolean(input.activeSelectedText),
-        hintDepth: input.hintDepth,
-        proactiveNudges: input.proactiveNudges,
-        quickActions,
-        surface: input.sessionContext.surface,
-        tutorContent: input.tutorContent,
-      }),
-    [
-      input.activeSelectedText,
-      input.canSendMessages,
-      input.hasAssignmentSummary,
-      input.hasCurrentQuestion,
-      input.hintDepth,
-      input.messages.length,
-      input.proactiveNudges,
-      input.sessionContext.answerRevealed,
-      input.sessionContext.surface,
-      input.tutorContent,
-      quickActions,
-    ]
-  );
-
   const isSelectionExplainPendingMode = Boolean(
     input.selectionResponsePending && input.isOpen && !input.isAskModalMode
   );
@@ -651,38 +490,7 @@ export function useKangurAiTutorConversationViewState(
     isSectionExplainPendingMode
       ? []
       : quickActions;
-  const navigationNudge = useMemo((): TutorProactiveNudge | null => {
-    if (input.messages.length === 0 || input.proactiveNudges === 'off') {
-      return null;
-    }
-
-    const lastAssistant = [...input.messages]
-      .reverse()
-      .find((m) => m.role === 'assistant');
-    if (!lastAssistant?.websiteHelpTarget) {
-      return null;
-    }
-
-    const target = lastAssistant.websiteHelpTarget;
-    return {
-      mode: 'gentle',
-      title: 'Mogę Ci pokazać',
-      description: `Chcesz zobaczyć gdzie to jest? Poprowadzę Cię do: ${target.label}`,
-      action: {
-        id: 'navigate_to_target',
-        label: target.label,
-        prompt: `Pokaż mi "${target.label}"`,
-        promptMode: 'chat',
-      },
-    };
-  }, [input.messages, input.proactiveNudges]);
-
-  const visibleProactiveNudge =
-    input.shouldRenderContextlessTutorUi ||
-    isSelectionExplainPendingMode ||
-    isSectionExplainPendingMode
-      ? null
-      : (navigationNudge ?? proactiveNudge);
+  const visibleProactiveNudge = null;
   const emptyStateMessage = input.shouldRenderContextlessTutorUi
     ? input.contextlessEmptyStateMessage
     : getEmptyStateMessage({

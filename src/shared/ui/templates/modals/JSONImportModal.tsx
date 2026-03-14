@@ -73,7 +73,7 @@ function JSONImportModalShell(): React.JSX.Element {
             className='min-h-[320px] font-mono text-xs'
             spellCheck={false}
             disabled={runtime.isLoading}
-          />
+           aria-label={runtime.placeholder} title={runtime.placeholder}/>
         </FormField>
         {runtime.children}
       </div>

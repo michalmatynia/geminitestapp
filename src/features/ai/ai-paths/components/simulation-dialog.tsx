@@ -110,7 +110,7 @@ export function SimulationDialog(): React.JSX.Element | null {
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
               setDraftEntityId(event.target.value);
             }}
-          />
+           aria-label="Entity ID" title="Entity ID"/>
         </FormField>
 
         {isPathLocked ? (

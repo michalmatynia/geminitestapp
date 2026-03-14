@@ -101,6 +101,49 @@ const dedupeOrdered = (values: readonly string[]): string[] => {
   return normalized;
 };
 
+const mergeFragment = (
+  defaultFragment: KangurPageContentFragment,
+  existingFragment: KangurPageContentFragment
+): KangurPageContentFragment =>
+  kangurPageContentFragmentSchema.parse({
+    ...defaultFragment,
+    ...existingFragment,
+    aliases: dedupeOrdered([...defaultFragment.aliases, ...existingFragment.aliases]),
+    nativeGuideIds: dedupeOrdered([
+      ...defaultFragment.nativeGuideIds,
+      ...existingFragment.nativeGuideIds,
+    ]),
+    triggerPhrases: dedupeOrdered([
+      ...defaultFragment.triggerPhrases,
+      ...existingFragment.triggerPhrases,
+    ]),
+  });
+
+const mergeFragments = (
+  defaultFragments: KangurPageContentFragment[],
+  existingFragments: KangurPageContentFragment[]
+): KangurPageContentFragment[] => {
+  const existingById = new Map(existingFragments.map((fragment) => [fragment.id, fragment] as const));
+  const merged: KangurPageContentFragment[] = [];
+
+  for (const fragment of defaultFragments) {
+    const existingFragment = existingById.get(fragment.id);
+    if (existingFragment) {
+      merged.push(mergeFragment(fragment, existingFragment));
+      existingById.delete(fragment.id);
+      continue;
+    }
+
+    merged.push(fragment);
+  }
+
+  for (const fragment of existingById.values()) {
+    merged.push(fragment);
+  }
+
+  return merged;
+};
+
 const mergeEntry = (
   defaultEntry: KangurPageContentEntry,
   existingEntry: KangurPageContentEntry
@@ -121,6 +164,7 @@ const mergeEntry = (
       ...existingEntry.triggerPhrases,
     ]),
     tags: dedupeOrdered([...defaultEntry.tags, ...existingEntry.tags]),
+    fragments: mergeFragments(defaultEntry.fragments, existingEntry.fragments),
   });
 
 export const parseKangurPageContentStore = (value: unknown): KangurPageContentStore =>

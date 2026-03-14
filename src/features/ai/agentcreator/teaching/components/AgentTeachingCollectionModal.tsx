@@ -56,7 +56,7 @@ export function AgentTeachingCollectionModal(): React.JSX.Element | null {
               disabled
               className='cursor-not-allowed'
               placeholder='Not configured in AI Brain'
-            />
+             aria-label="Not configured in AI Brain" title="Not configured in AI Brain"/>
           );
         },
       },

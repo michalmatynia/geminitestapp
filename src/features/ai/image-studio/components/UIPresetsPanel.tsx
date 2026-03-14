@@ -142,7 +142,7 @@ export function UIPresetsPanel(): React.JSX.Element {
         placeholder='Choose prompt'
         triggerClassName='h-8 text-xs'
         ariaLabel='Choose prompt'
-      />
+       title="Choose prompt"/>
       <div className='flex justify-end'>
         <Button
           size='xs'

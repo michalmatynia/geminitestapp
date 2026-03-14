@@ -51,7 +51,7 @@ export function LabeledSlider(props: LabeledSliderProps): React.JSX.Element {
           }}
           disabled={disabled}
           className='h-8'
-        />
+         aria-label={sliderId} title={sliderId}/>
         <span className='w-10 text-right text-[11px] text-gray-400'>{value}</span>
       </div>
     </div>

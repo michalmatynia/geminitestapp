@@ -31,7 +31,7 @@ export function AdvancedTextEffectsSection(): React.JSX.Element {
           value={textEffectValue}
           onValueChange={(v) => onChange({ ...config, textEffect: v as TextEffect })}
           options={TEXT_EFFECTS}
-        />
+         ariaLabel="Mode" title="Mode"/>
       </FormField>
 
       {textEffectValue !== 'none' && (
@@ -52,7 +52,7 @@ export function AdvancedTextEffectsSection(): React.JSX.Element {
                     onChange({ ...config, textStagger: Math.max(0.01, Math.min(2, val)) });
                 }}
                 className='h-9'
-              />
+               aria-label="Stagger (seconds)" title="Stagger (seconds)"/>
             </FormField>
           )}
 
@@ -62,7 +62,7 @@ export function AdvancedTextEffectsSection(): React.JSX.Element {
                 value={textScrambleCharsValue}
                 onChange={(e) => onChange({ ...config, textScrambleChars: e.target.value })}
                 className='h-9'
-              />
+               aria-label="Scramble chars" title="Scramble chars"/>
             </FormField>
           )}
 
@@ -81,7 +81,7 @@ export function AdvancedTextEffectsSection(): React.JSX.Element {
                       onChange({ ...config, textTypingSpeed: Math.max(4, Math.min(120, val)) });
                   }}
                   className='h-9'
-                />
+                 aria-label="Typing speed (chars/sec)" title="Typing speed (chars/sec)"/>
               </FormField>
               <div className='flex items-center gap-2'>
                 <Checkbox
@@ -104,7 +104,7 @@ export function AdvancedTextEffectsSection(): React.JSX.Element {
                     if (!isNaN(val)) onChange({ ...config, textCountFrom: val });
                   }}
                   className='h-9'
-                />
+                 aria-label="From" title="From"/>
               </FormField>
               <FormField label='To'>
                 <Input
@@ -115,7 +115,7 @@ export function AdvancedTextEffectsSection(): React.JSX.Element {
                     if (!isNaN(val)) onChange({ ...config, textCountTo: val });
                   }}
                   className='h-9'
-                />
+                 aria-label="To" title="To"/>
               </FormField>
               <FormField label='Decimals'>
                 <Input
@@ -130,7 +130,7 @@ export function AdvancedTextEffectsSection(): React.JSX.Element {
                       onChange({ ...config, textCountDecimals: Math.max(0, Math.min(6, val)) });
                   }}
                   className='h-9'
-                />
+                 aria-label="Decimals" title="Decimals"/>
               </FormField>
             </div>
           )}

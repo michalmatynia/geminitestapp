@@ -133,7 +133,15 @@ function RowFormModal(props: {
                 }
                 className='font-mono text-xs'
                 disabled={mode === 'edit' && col.isPrimaryKey}
-              />
+               aria-label={typeof col.defaultValue === 'string'
+                    ? col.defaultValue
+                    : col.nullable
+                      ? 'NULL'
+                      : 'required'} title={typeof col.defaultValue === 'string'
+                    ? col.defaultValue
+                    : col.nullable
+                      ? 'NULL'
+                      : 'required'}/>
             </div>
           </FormField>
         ))}

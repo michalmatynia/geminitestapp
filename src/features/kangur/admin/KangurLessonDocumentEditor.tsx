@@ -842,7 +842,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     }}
                     placeholder='Optional stable section id'
                     className='h-9'
-                  />
+                   aria-label="Optional stable section id" title="Optional stable section id"/>
                 </FormField>
                 <FormField label='Section Title'>
                   <Input
@@ -855,7 +855,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     }}
                     placeholder='Optional section heading'
                     className='h-9'
-                  />
+                   aria-label="Optional section heading" title="Optional section heading"/>
                 </FormField>
                 <FormField label='Section Description'>
                   <Textarea
@@ -868,7 +868,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     }}
                     placeholder='Optional summary shared by this section'
                     className='min-h-[96px]'
-                  />
+                   aria-label="Optional summary shared by this section" title="Optional summary shared by this section"/>
                 </FormField>
                 <FormField label='Page Title'>
                   <Input
@@ -881,7 +881,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     }}
                     placeholder='Optional page title'
                     className='h-9'
-                  />
+                   aria-label="Optional page title" title="Optional page title"/>
                 </FormField>
                 <FormField label='Page Description'>
                   <Textarea
@@ -894,7 +894,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     }}
                     placeholder='Optional summary or instructions for this page'
                     className='min-h-[96px]'
-                  />
+                   aria-label="Optional summary or instructions for this page" title="Optional summary or instructions for this page"/>
                 </FormField>
               </div>
             </div>
@@ -914,7 +914,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                   onChange={(event): void => setInsertQuery(event.target.value)}
                   placeholder='Search insert actions...'
                   className='h-9 pl-9'
-                />
+                 aria-label="Search insert actions..." title="Search insert actions..."/>
               </div>
             </div>
             <div className='space-y-4'>
@@ -1096,7 +1096,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                           }));
                         }}
                         className='h-9'
-                      />
+                       aria-label="Columns" title="Columns"/>
                     </FormField>
                     <FormField label='Gap'>
                       <Input
@@ -1111,7 +1111,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                           }));
                         }}
                         className='h-9'
-                      />
+                       aria-label="Gap" title="Gap"/>
                     </FormField>
                     <FormField label='Row Height'>
                       <Input
@@ -1130,7 +1130,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                           }));
                         }}
                         className='h-9'
-                      />
+                       aria-label="Row Height" title="Row Height"/>
                     </FormField>
                     <div className='flex items-end'>
                       <div className='flex w-full items-center justify-between rounded-xl border border-border/60 bg-card/30 px-3 py-2'>
@@ -1330,7 +1330,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                           label: option.label,
                         }))}
                         triggerClassName='h-9'
-                      />
+                       ariaLabel="Block Type" title="Block Type"/>
                     </FormField>
                   </div>
                   {block.type === 'activity' ? (

@@ -143,7 +143,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                   aria-invalid={isInvalid || undefined}
                   aria-errormessage={errorId}
                   aria-label={field.label}
-                />
+                 title={field.placeholder}/>
               </FormField>
             ) : field.type === 'select' ? (
               <FormField
@@ -169,7 +169,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                   ariaDescribedBy={describedBy}
                   ariaInvalid={isInvalid || undefined}
                   ariaErrorMessage={errorId}
-                />
+                 title={field.placeholder || 'Select an option'}/>
               </FormField>
             ) : field.type === 'checkbox' ? (
               <div className='flex items-center gap-2 py-2'>
@@ -267,7 +267,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                     aria-invalid={isInvalid || undefined}
                     aria-errormessage={errorId}
                     aria-label={`${field.label} value`}
-                  />
+                   title="#000000"/>
                 </div>
               </FormField>
             ) : field.type === 'background' ? (
@@ -310,7 +310,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                     aria-invalid={isInvalid || undefined}
                     aria-errormessage={errorId}
                     aria-label={`${field.label} value`}
-                  />
+                   title={field.placeholder}/>
                 </div>
               </FormField>
             ) : field.type === 'range' ? (
@@ -380,7 +380,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                     aria-invalid={isInvalid || undefined}
                     aria-errormessage={errorId}
                     aria-label={field.label}
-                  />
+                   title={field.placeholder}/>
                   {field.suffix && (
                     <span className='text-xs text-muted-foreground'>{field.suffix}</span>
                   )}

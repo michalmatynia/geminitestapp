@@ -86,7 +86,7 @@ export function QuizEditorCard(props: {
                   onChange={(e): void => updateChoice(choice.id, e.target.value)}
                   placeholder={`Choice ${index + 1}`}
                   className='h-8 flex-1'
-                />
+                 aria-label={`Choice ${index + 1}`} title={`Choice ${index + 1}`}/>
                 <Button
                   type='button'
                   size='sm'
@@ -128,7 +128,7 @@ export function QuizEditorCard(props: {
           onChange={(e): void => onChange({ ...block, ttsText: e.target.value })}
           placeholder='Spoken text override for screen readers and narration'
           className='min-h-[72px]'
-        />
+         aria-label="Spoken text override for screen readers and narration" title="Spoken text override for screen readers and narration"/>
       </FormField>
     </div>
   );

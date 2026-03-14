@@ -47,7 +47,7 @@ export function ReassembledPromptPanel(): React.JSX.Element {
           value={documentState?.reassembledPrompt ?? ''}
           readOnly
           aria-label='Reassembled prompt'
-        />
+         title="Textarea"/>
       </div>
     </FormSection>
   );

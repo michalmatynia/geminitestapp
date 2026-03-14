@@ -92,6 +92,8 @@ export function ImportListPreviewSection(): React.JSX.Element {
                 return next;
               });
             }}
+            aria-label={`Select ${row.original.name}`}
+            title={`Select ${row.original.name}`}
           />
         ),
         size: 40,

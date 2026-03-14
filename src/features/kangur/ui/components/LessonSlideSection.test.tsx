@@ -104,11 +104,12 @@ describe('LessonSlideSection', () => {
       'kangur-cta-pill',
       'surface-cta'
     );
-    expect(screen.queryByTestId('lesson-slide-prev-button')).not.toBeInTheDocument();
+    expect(screen.getByTestId('lesson-slide-prev-button')).toBeDisabled();
     expect(screen.getByTestId('lesson-slide-next-button')).toHaveAttribute(
       'aria-label',
       'Następny panel'
     );
+    expect(screen.getByTestId('lesson-slide-next-button')).not.toBeDisabled();
     expect(secondIndicator).toHaveClass(
       'kangur-cta-pill',
       'kangur-step-pill-pending',
@@ -129,7 +130,8 @@ describe('LessonSlideSection', () => {
       'aria-label',
       'Poprzedni panel'
     );
-    expect(screen.queryByTestId('lesson-slide-next-button')).not.toBeInTheDocument();
+    expect(screen.getByTestId('lesson-slide-prev-button')).not.toBeDisabled();
+    expect(screen.getByTestId('lesson-slide-next-button')).toBeDisabled();
   });
 
   it('uses the lesson navigation context for the top back action', () => {
@@ -178,7 +180,8 @@ describe('LessonSlideSection', () => {
     fireEvent.click(screen.getByTestId('lesson-slide-next-button'));
     expect(await screen.findByText('Trzeci')).toBeInTheDocument();
     expect(screen.getByTestId('lesson-slide-prev-button')).toBeInTheDocument();
-    expect(screen.queryByTestId('lesson-slide-next-button')).not.toBeInTheDocument();
+    expect(screen.getByTestId('lesson-slide-prev-button')).not.toBeDisabled();
+    expect(screen.getByTestId('lesson-slide-next-button')).toBeDisabled();
   });
 
   it('renders the unlocked secret pill and routes it through the shared lesson navigation context', () => {

@@ -79,7 +79,7 @@ function EventEffectsTab(): React.ReactNode {
               aria-label='Click URL'
               placeholder='https://example.com'
               className='h-8 text-xs'
-            />
+             title="https://example.com"/>
             <SelectField
               label='Open link'
               value={eventConfig.clickTarget}
@@ -104,7 +104,7 @@ function EventEffectsTab(): React.ReactNode {
               aria-label='Scroll target ID'
               placeholder='hero-section'
               className='h-8 text-xs'
-            />
+             title="hero-section"/>
             <SelectField
               label='Scroll behavior'
               value={eventConfig.clickScrollBehavior}

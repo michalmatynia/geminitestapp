@@ -47,7 +47,7 @@ export function AgentCreatorSettingsSection(): React.ReactElement {
 
                   { value: 'webkit', label: 'WebKit' },
                 ]}
-              />
+               ariaLabel="Browser" title="Browser"/>
             </FormField>
 
             <FormField label='Max Steps' id='agent-max-steps'>
@@ -58,7 +58,7 @@ export function AgentCreatorSettingsSection(): React.ReactElement {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setAgentMaxSteps(Number(e.target.value))
                 }
-              />
+               aria-label="Max Steps" title="Max Steps"/>
             </FormField>
           </div>
 

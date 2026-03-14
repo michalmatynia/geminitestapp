@@ -100,7 +100,7 @@ export function LogicalConditionNodeConfigSection(): React.JSX.Element | null {
           }
           options={combinatorOptions}
           placeholder='Select combinator'
-        />
+         ariaLabel="Select combinator" title="Select combinator"/>
       </FormField>
 
       <div className='space-y-3'>
@@ -143,7 +143,7 @@ export function LogicalConditionNodeConfigSection(): React.JSX.Element | null {
                   }
                   options={inputPortOptions}
                   placeholder='Select input port'
-                />
+                 ariaLabel="Select input port" title="Select input port"/>
               </FormField>
 
               <FormField label='Field path (optional)'>
@@ -155,7 +155,7 @@ export function LogicalConditionNodeConfigSection(): React.JSX.Element | null {
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                     updateCondition(index, { fieldPath: e.target.value || undefined })
                   }
-                />
+                 aria-label="e.g. parameters or data.count" title="e.g. parameters or data.count"/>
               </FormField>
 
               <FormField label='Operator'>
@@ -168,7 +168,7 @@ export function LogicalConditionNodeConfigSection(): React.JSX.Element | null {
                   }
                   options={operatorOptions}
                   placeholder='Select operator'
-                />
+                 ariaLabel="Select operator" title="Select operator"/>
               </FormField>
 
               {showCompareTo && (
@@ -180,7 +180,7 @@ export function LogicalConditionNodeConfigSection(): React.JSX.Element | null {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                       updateCondition(index, { compareTo: e.target.value })
                     }
-                  />
+                   aria-label="Compare to" title="Compare to"/>
                 </FormField>
               )}
 

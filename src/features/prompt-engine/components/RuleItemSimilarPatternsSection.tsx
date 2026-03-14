@@ -38,7 +38,7 @@ export function RuleItemSimilarPatternsSection(): React.JSX.Element | null {
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                 updateSimilar(index, { pattern: event.target.value });
               }}
-            />
+             title="Input field"/>
           </div>
           <div className='space-y-1 md:col-span-1'>
             <Label className='text-[11px] text-slate-300'>Flags</Label>
@@ -51,7 +51,7 @@ export function RuleItemSimilarPatternsSection(): React.JSX.Element | null {
                   flags: event.target.value.trim() || undefined,
                 });
               }}
-            />
+             title="Input field"/>
           </div>
           <div className='space-y-1 md:col-span-2'>
             <Label className='text-[11px] text-slate-300'>Suggestion</Label>
@@ -62,7 +62,7 @@ export function RuleItemSimilarPatternsSection(): React.JSX.Element | null {
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                 updateSimilar(index, { suggestion: event.target.value });
               }}
-            />
+             title="Input field"/>
           </div>
           <div className='space-y-1 md:col-span-5'>
             <Label className='text-[11px] text-slate-300'>Comment</Label>
@@ -75,7 +75,7 @@ export function RuleItemSimilarPatternsSection(): React.JSX.Element | null {
                   comment: event.target.value.trim() || null,
                 });
               }}
-            />
+             title="Input field"/>
           </div>
           <div className='flex items-end md:col-span-1'>
             <Button

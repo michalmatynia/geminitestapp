@@ -241,7 +241,7 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
                       text: event.target.value,
                     }));
                   }}
-                />
+                 aria-label="Input field" title="Input field"/>
                 {rgbLiteral ? (
                   <input
                     type='color'

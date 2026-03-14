@@ -243,7 +243,7 @@ export function Asset3DUploader({ className }: Asset3DUploaderProps): React.JSX.
               placeholder='Enter asset name...'
               className='bg-gray-800 border-gray-700 h-9'
               disabled={isUploading}
-            />
+             aria-label="Enter asset name..." title="Enter asset name..."/>
           </FormField>
 
           {/* Description */}
@@ -257,7 +257,7 @@ export function Asset3DUploader({ className }: Asset3DUploaderProps): React.JSX.
               placeholder='Enter description...'
               className='bg-gray-800 border-gray-700 min-h-[60px] text-sm'
               disabled={isUploading}
-            />
+             aria-label="Enter description..." title="Enter description..."/>
           </FormField>
 
           {/* Category */}
@@ -272,7 +272,7 @@ export function Asset3DUploader({ className }: Asset3DUploaderProps): React.JSX.
               list='upload-categories-list'
               className='bg-gray-800 border-gray-700 h-9'
               disabled={isUploading}
-            />
+             aria-label="Enter category..." title="Enter category..."/>
             <datalist id='upload-categories-list'>
               {existingCategories.map((cat: string) => (
                 <option key={cat} value={cat} />
@@ -299,7 +299,7 @@ export function Asset3DUploader({ className }: Asset3DUploaderProps): React.JSX.
                   list='upload-tags-list'
                   className='bg-gray-800 border-gray-700 flex-1 h-9'
                   disabled={isUploading}
-                />
+                 aria-label="Add tag..." title="Add tag..."/>
                 <datalist id='upload-tags-list'>
                   {existingTags
                     .filter((t: string) => !tags.includes(t))

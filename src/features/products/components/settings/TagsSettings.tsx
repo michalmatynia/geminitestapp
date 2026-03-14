@@ -153,7 +153,7 @@ export function TagsSettings(): React.JSX.Element {
             }))}
             placeholder='Select a catalog...'
             ariaLabel='Catalog'
-          />
+           title="Select a catalog..."/>
         </div>
       </FormSection>
 
@@ -221,7 +221,7 @@ export function TagsSettings(): React.JSX.Element {
                   setFormData((prev: TagFormData) => ({ ...prev, name: e.target.value }))
                 }
                 placeholder='Tag name'
-              />
+               aria-label="Tag name" title="Tag name"/>
             </FormField>
 
             <FormField label='Catalog'>
@@ -239,7 +239,7 @@ export function TagsSettings(): React.JSX.Element {
                   label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`,
                 }))}
                 placeholder='Select catalog'
-              />
+               ariaLabel="Select catalog" title="Select catalog"/>
             </FormField>
 
             <FormField label='Color'>
@@ -251,7 +251,7 @@ export function TagsSettings(): React.JSX.Element {
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                     setFormData((prev: TagFormData) => ({ ...prev, color: e.target.value }))
                   }
-                />
+                 aria-label="Color" title="Color"/>
                 <Input
                   type='text'
                   className='flex-1 h-10 font-mono'
@@ -260,7 +260,7 @@ export function TagsSettings(): React.JSX.Element {
                     setFormData((prev: TagFormData) => ({ ...prev, color: e.target.value }))
                   }
                   placeholder='#38bdf8'
-                />
+                 aria-label="#38bdf8" title="#38bdf8"/>
               </div>
             </FormField>
           </div>

@@ -37,7 +37,7 @@ export function LinkField(props: {
         placeholder='URL or pick a slug...'
         className='h-8 text-xs'
         aria-label={ariaLabel}
-      />
+       title="URL or pick a slug..."/>
       <Button
         size='icon'
         variant='outline'

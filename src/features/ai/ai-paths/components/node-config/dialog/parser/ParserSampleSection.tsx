@@ -54,7 +54,7 @@ export function ParserSampleSection(props: ParserSampleSectionProps): React.JSX.
           ]}
           placeholder='Entity type'
           variant='subtle'
-        />
+         ariaLabel="Entity type" title="Entity type"/>
         <div className='space-y-2'>
           <Input
             variant='subtle'
@@ -71,7 +71,7 @@ export function ParserSampleSection(props: ParserSampleSectionProps): React.JSX.
               }))
             }
             placeholder='Entity ID'
-          />
+           aria-label="Entity ID" title="Entity ID"/>
           {simulationOptions.length > 0 && (
             <SelectSimple
               size='sm'
@@ -93,7 +93,7 @@ export function ParserSampleSection(props: ParserSampleSectionProps): React.JSX.
               placeholder='Use simulation ID'
               variant='subtle'
               triggerClassName='h-8 text-[10px]'
-            />
+             ariaLabel="Use simulation ID" title="Use simulation ID"/>
           )}
         </div>
         <Button
@@ -127,6 +127,8 @@ export function ParserSampleSection(props: ParserSampleSectionProps): React.JSX.
           }))
         }
         placeholder='{ "id": "123", "title": "Sample" }'
+        aria-label='{ "id": "123", "title": "Sample" }'
+        title='{ "id": "123", "title": "Sample" }'
       />
       <div className='mt-2 flex flex-wrap gap-2'>
         <SelectSimple
@@ -146,7 +148,7 @@ export function ParserSampleSection(props: ParserSampleSectionProps): React.JSX.
             { value: 'flatten', label: 'Flatten nested' },
           ]}
           className='w-[180px]'
-        />
+         ariaLabel="Sample JSON" title="Sample JSON"/>
         <SelectSimple
           size='sm'
           value={String(sampleState.depth)}
@@ -161,7 +163,7 @@ export function ParserSampleSection(props: ParserSampleSectionProps): React.JSX.
           }
           options={[1, 2, 3, 4].map((d) => ({ value: String(d), label: `Depth ${d}` }))}
           className='w-[160px]'
-        />
+         ariaLabel="Sample JSON" title="Sample JSON"/>
         <Button
           type='button'
           className={`rounded-md border px-3 text-[10px] ${
@@ -199,7 +201,7 @@ export function ParserSampleSection(props: ParserSampleSectionProps): React.JSX.
               { value: 'leaf', label: 'Leaf keys' },
             ]}
             className='w-[170px]'
-          />
+           ariaLabel="Sample JSON" title="Sample JSON"/>
         )}
       </div>
       {parsedSampleError ? (

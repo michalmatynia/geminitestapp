@@ -62,7 +62,7 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
                         onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                           onUpdateNodeTemplate(template.id, { name: event.target.value })
                         }
-                      />
+                       aria-label="Template Name" title="Template Name"/>
                     </FormField>
                   </div>
                   <div className='flex gap-2 self-end'>
@@ -91,7 +91,7 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
                       onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                         onUpdateNodeTemplate(template.id, { pattern: event.target.value })
                       }
-                    />
+                     aria-label="Pattern" title="Pattern"/>
                   </FormField>
                   <div className='grid grid-cols-2 gap-2'>
                     <FormField label='Flags'>
@@ -102,7 +102,7 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
                           onUpdateNodeTemplate(template.id, { flags: event.target.value })
                         }
                         placeholder='gim'
-                      />
+                       aria-label="gim" title="gim"/>
                     </FormField>
                     <FormField label='Group By'>
                       <Input
@@ -111,7 +111,7 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
                         onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                           onUpdateNodeTemplate(template.id, { groupBy: event.target.value })
                         }
-                      />
+                       aria-label="Group By" title="Group By"/>
                     </FormField>
                   </div>
                 </div>
@@ -132,7 +132,7 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
                         { value: 'extract', label: 'Extract value' },
                         { value: 'extract_json', label: 'Extract JSON/object' },
                       ]}
-                    />
+                     ariaLabel="Select mode" title="Select mode"/>
                   </FormField>
                   <FormField label='Match Mode'>
                     <SelectSimple
@@ -151,7 +151,7 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
                         { value: 'first_overall', label: 'First overall' },
                         { value: 'all', label: 'All matches' },
                       ]}
-                    />
+                     ariaLabel="Select mode" title="Select mode"/>
                   </FormField>
                   <FormField label='Output Mode'>
                     <SelectSimple
@@ -169,7 +169,7 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
                         { value: 'object', label: 'Object (Record)' },
                         { value: 'array', label: 'Array (Groups list)' },
                       ]}
-                    />
+                     ariaLabel="Select output" title="Select output"/>
                   </FormField>
                 </div>
 
@@ -201,7 +201,7 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
                     onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                       onUpdateNodeTemplate(template.id, { unmatchedKey: event.target.value })
                     }
-                  />
+                   aria-label="Unmatched Key" title="Unmatched Key"/>
                 </FormField>
 
                 <div className='text-[10px] text-gray-500'>
@@ -252,7 +252,7 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
                         onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                           onUpdateGlobalTemplate(template.id, { name: event.target.value })
                         }
-                      />
+                       aria-label="Template Name" title="Template Name"/>
                     </FormField>
                   </div>
                   <div className='flex gap-2 self-end'>
@@ -281,7 +281,7 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
                       onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                         onUpdateGlobalTemplate(template.id, { pattern: event.target.value })
                       }
-                    />
+                     aria-label="Pattern" title="Pattern"/>
                   </FormField>
                   <div className='grid grid-cols-2 gap-2'>
                     <FormField label='Flags'>
@@ -292,7 +292,7 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
                           onUpdateGlobalTemplate(template.id, { flags: event.target.value })
                         }
                         placeholder='gim'
-                      />
+                       aria-label="gim" title="gim"/>
                     </FormField>
                     <FormField label='Group By'>
                       <Input
@@ -301,7 +301,7 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
                         onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                           onUpdateGlobalTemplate(template.id, { groupBy: event.target.value })
                         }
-                      />
+                       aria-label="Group By" title="Group By"/>
                     </FormField>
                   </div>
                 </div>
@@ -322,7 +322,7 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
                         { value: 'extract', label: 'Extract value' },
                         { value: 'extract_json', label: 'Extract JSON/object' },
                       ]}
-                    />
+                     ariaLabel="Select mode" title="Select mode"/>
                   </FormField>
                   <FormField label='Match Mode'>
                     <SelectSimple
@@ -341,7 +341,7 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
                         { value: 'first_overall', label: 'First overall' },
                         { value: 'all', label: 'All matches' },
                       ]}
-                    />
+                     ariaLabel="Select mode" title="Select mode"/>
                   </FormField>
                   <FormField label='Output Mode'>
                     <SelectSimple
@@ -359,7 +359,7 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
                         { value: 'object', label: 'Object (Record)' },
                         { value: 'array', label: 'Array (Groups list)' },
                       ]}
-                    />
+                     ariaLabel="Select output" title="Select output"/>
                   </FormField>
                 </div>
 
@@ -391,7 +391,7 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
                     onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                       onUpdateGlobalTemplate(template.id, { unmatchedKey: event.target.value })
                     }
-                  />
+                   aria-label="Unmatched Key" title="Unmatched Key"/>
                 </FormField>
 
                 <div className='text-[10px] text-gray-500'>

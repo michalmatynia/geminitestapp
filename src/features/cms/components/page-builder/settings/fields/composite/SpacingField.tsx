@@ -30,7 +30,7 @@ export function SpacingField(): React.ReactNode {
             }
             className='text-xs h-7 px-1.5'
             aria-label={buildAriaLabel(side)}
-          />
+           title={controlId}/>
           </div>
         );
       })}

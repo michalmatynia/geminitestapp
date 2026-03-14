@@ -213,7 +213,7 @@ function SectionColorsSection(): React.JSX.Element {
                 ]}
                 className='w-[160px]'
                 triggerClassName='h-8 text-xs'
-              />
+               ariaLabel="Select option" title="Select option"/>
             </div>
           );
         })}
@@ -495,7 +495,7 @@ function MenuBuilderSection(): React.JSX.Element {
                     }
                     className='h-8 bg-gray-900/40 text-xs'
                     disabled={selectedNode.isBuiltIn}
-                  />
+                   aria-label="Label" title="Label"/>
                 </FormField>
 
                 <FormField label='Type'>
@@ -514,7 +514,7 @@ function MenuBuilderSection(): React.JSX.Element {
                     }
                     disabled={selectedNode.isBuiltIn}
                     triggerClassName='h-8 text-xs'
-                  />
+                   ariaLabel="Type" title="Type"/>
                 </FormField>
               </div>
 
@@ -528,7 +528,7 @@ function MenuBuilderSection(): React.JSX.Element {
                     placeholder='/admin/...'
                     className='h-8 bg-gray-900/40 text-xs'
                     disabled={selectedNode.isBuiltIn}
-                  />
+                   aria-label="/admin/..." title="/admin/..."/>
                 </FormField>
               ) : null}
 

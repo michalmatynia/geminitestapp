@@ -4,6 +4,7 @@ import {
   getKangurAssignmentRepository,
   getKangurProgressRepository,
   getKangurScoreRepository,
+  requireActiveLearner,
   resolveKangurActor,
 } from '@/features/kangur/server';
 import {
@@ -28,12 +29,13 @@ export const resolveAssignmentActor = async (
   legacyLearnerKey: string | null;
 }> => {
   const actor = await resolveKangurActor(request);
+  const activeLearner = requireActiveLearner(actor);
 
   return {
-    learnerKey: actor.activeLearner.id,
-    learnerName: actor.activeLearner.displayName,
+    learnerKey: activeLearner.id,
+    learnerName: activeLearner.displayName,
     learnerEmail: actor.actorType === 'parent' ? actor.ownerEmail : null,
-    legacyLearnerKey: actor.activeLearner.legacyUserKey,
+    legacyLearnerKey: activeLearner.legacyUserKey,
   };
 };
 

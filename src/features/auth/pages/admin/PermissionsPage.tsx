@@ -286,7 +286,7 @@ function AuthPermissionsForm({
                   placeholder='Manage products'
                   variant='subtle'
                   size='sm'
-                />
+                 aria-label="Manage products" title="Manage products"/>
               </FormField>
 
               <FormField label='Permission ID'>
@@ -299,7 +299,7 @@ function AuthPermissionsForm({
                   placeholder='products.manage'
                   variant='subtle'
                   size='sm'
-                />
+                 aria-label="products.manage" title="products.manage"/>
               </FormField>
 
               <FormField label='Description'>
@@ -312,7 +312,7 @@ function AuthPermissionsForm({
                   placeholder='Create and edit product listings'
                   variant='subtle'
                   size='sm'
-                />
+                 aria-label="Create and edit product listings" title="Create and edit product listings"/>
               </FormField>
 
               <Button onClick={handleAddPermission} variant='default' size='sm' className='w-full'>
@@ -345,7 +345,7 @@ function AuthPermissionsForm({
                         }
                         variant='subtle'
                         size='sm'
-                      />
+                       aria-label="Role name" title="Role name"/>
                     </FormField>
 
                     <FormField label='Description'>
@@ -356,7 +356,7 @@ function AuthPermissionsForm({
                         }
                         variant='subtle'
                         size='sm'
-                      />
+                       aria-label="Description" title="Description"/>
                     </FormField>
 
                     <FormField
@@ -373,7 +373,7 @@ function AuthPermissionsForm({
                         }
                         variant='subtle'
                         size='sm'
-                      />
+                       aria-label="Role level" title="Role level"/>
                     </FormField>
 
                     <div className='text-[10px] text-gray-500 font-mono uppercase tracking-widest'>
@@ -422,7 +422,7 @@ function AuthPermissionsForm({
                   placeholder='Editor'
                   variant='subtle'
                   size='sm'
-                />
+                 aria-label="Editor" title="Editor"/>
               </FormField>
 
               <FormField label='Description'>
@@ -435,7 +435,7 @@ function AuthPermissionsForm({
                   placeholder='Manage content and products'
                   variant='subtle'
                   size='sm'
-                />
+                 aria-label="Manage content and products" title="Manage content and products"/>
               </FormField>
 
               <Button onClick={handleAddRole} variant='default' size='sm' className='w-full'>

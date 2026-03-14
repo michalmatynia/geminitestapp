@@ -4,13 +4,9 @@ import { z } from 'zod';
 
 import { auth, findAuthUserById, normalizeAuthEmail } from '@/server/auth';
 import type { KangurAuthUser, KangurLearnerProfile } from '@/shared/contracts/kangur';
-import { authError, forbiddenError, notFoundError } from '@/shared/errors/app-error';
+import { authError, notFoundError } from '@/shared/errors/app-error';
 
-import {
-  ensureDefaultKangurLearnerForOwner,
-  getKangurLearnerById,
-  listKangurLearnersByOwner,
-} from './kangur-learner-repository';
+import { getKangurLearnerById, listKangurLearnersByOwner } from './kangur-learner-repository';
 import { readKangurLearnerSession } from './kangur-learner-session';
 
 import type { NextRequest } from 'next/server';
@@ -23,7 +19,7 @@ type KangurActorBase = {
   ownerName: string | null;
   ownerEmailVerified: boolean;
   role: 'admin' | 'user';
-  activeLearner: KangurLearnerProfile;
+  activeLearner: KangurLearnerProfile | null;
   learners: KangurLearnerProfile[];
 };
 
@@ -37,6 +33,8 @@ export type KangurLearnerActor = KangurActorBase & {
   actorId: string;
   actorType: 'learner';
   canManageLearners: false;
+  activeLearner: KangurLearnerProfile;
+  learners: KangurLearnerProfile[];
 };
 
 export type KangurActor = KangurParentActor | KangurLearnerActor;
@@ -55,18 +53,15 @@ const resolveRequestedLearnerId = (request?: NextRequest): string | null =>
 const pickActiveLearner = (
   learners: KangurLearnerProfile[],
   requestedLearnerId: string | null
-): KangurLearnerProfile => {
+): KangurLearnerProfile | null => {
   if (learners.length === 0) {
-    throw notFoundError('No Kangur learner profiles are available.');
+    return null;
   }
   if (requestedLearnerId) {
     const requested = learners.find((learner) => learner.id === requestedLearnerId);
-    if (!requested) {
-      throw forbiddenError('This learner profile is not available for the current account.', {
-        learnerId: requestedLearnerId,
-      });
+    if (requested) {
+      return requested;
     }
-    return requested;
   }
   return learners[0]!;
 };
@@ -86,7 +81,11 @@ const normalizeKangurOwnerEmail = (value: string | null | undefined): string | n
 
 const mapActorToAuthUser = (actor: KangurActor): KangurAuthUser => ({
   id: actor.actorId,
-  full_name: actor.activeLearner.displayName,
+  full_name:
+    actor.activeLearner?.displayName ??
+    actor.ownerName ??
+    actor.ownerEmail ??
+    'Konto',
   email: actor.actorType === 'parent' ? normalizeKangurOwnerEmail(actor.ownerEmail) : null,
   role: actor.role,
   actorType: actor.actorType,
@@ -99,6 +98,13 @@ const mapActorToAuthUser = (actor: KangurActor): KangurAuthUser => ({
 
 export const toKangurAuthUser = (actor: KangurActor): KangurAuthUser => mapActorToAuthUser(actor);
 
+export const requireActiveLearner = (actor: KangurActor): KangurLearnerProfile => {
+  if (!actor.activeLearner) {
+    throw notFoundError('No Kangur learner profiles are available.');
+  }
+  return actor.activeLearner;
+};
+
 export const resolveKangurActor = async (request?: NextRequest): Promise<KangurActor> => {
   const session = await auth();
   const requestedLearnerId = resolveRequestedLearnerId(request);
@@ -110,18 +116,7 @@ export const resolveKangurActor = async (request?: NextRequest): Promise<KangurA
       ownerRecord?.email ?? (typeof session.user.email === 'string' ? session.user.email : null)
     );
     const ownerName = typeof session.user.name === 'string' ? session.user.name.trim() : null;
-    let learners = await listKangurLearnersByOwner(ownerUserId);
-
-    if (learners.length === 0) {
-      await ensureDefaultKangurLearnerForOwner({
-        ownerUserId,
-        displayName: ownerName || ownerEmail?.split('@')[0] || 'Uczen',
-        preferredLoginName: ownerEmail?.split('@')[0] || ownerUserId.slice(0, 12),
-        legacyUserKey: ownerEmail || ownerUserId,
-      });
-      learners = await listKangurLearnersByOwner(ownerUserId);
-    }
-
+    const learners = await listKangurLearnersByOwner(ownerUserId);
     const activeLearner = pickActiveLearner(learners, requestedLearnerId);
 
     return {

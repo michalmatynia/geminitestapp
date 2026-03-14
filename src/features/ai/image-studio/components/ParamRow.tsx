@@ -139,7 +139,7 @@ export const ParamRow = React.memo(function ParamRow({
               options={uiControlOptions}
               triggerClassName='h-7 px-2'
               ariaLabel='Parameter control selector'
-            />
+             title="Select option"/>
           </div>
 
           {spec?.hint ? (
@@ -232,7 +232,7 @@ export const ParamRow = React.memo(function ParamRow({
                   aria-label={valueLabel}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
                   className='h-8'
-                />
+                 title="Input field"/>
               ) : (
                 <SelectSimple
                   size='sm'
@@ -241,7 +241,7 @@ export const ParamRow = React.memo(function ParamRow({
                   options={enumOptions}
                   triggerClassName='h-8'
                   ariaLabel='Enum parameter value'
-                />
+                 title="Select option"/>
               )
             ) : null}
 
@@ -277,7 +277,7 @@ export const ParamRow = React.memo(function ParamRow({
                 max={spec?.max}
                 step={spec?.step}
                 className='h-8'
-              />
+               title="Input field"/>
             </div>
           ) : null}
 
@@ -302,7 +302,7 @@ export const ParamRow = React.memo(function ParamRow({
                     max={spec?.max ?? 255}
                     step={spec?.step ?? 1}
                     className='h-8'
-                  />
+                   title="Input field"/>
                 </div>
               ))}
             </div>
@@ -329,7 +329,7 @@ export const ParamRow = React.memo(function ParamRow({
                     max={spec?.max}
                     step={spec?.step ?? 1}
                     className='h-8'
-                  />
+                   title="Input field"/>
                 </div>
               ))}
             </div>
@@ -343,7 +343,7 @@ export const ParamRow = React.memo(function ParamRow({
                 aria-label={`${paramLabel} text`}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value)}
                 className='h-24 font-mono text-[11px]'
-              />
+               title="Textarea"/>
             ) : (
               <Input
                 size='sm'
@@ -351,7 +351,7 @@ export const ParamRow = React.memo(function ParamRow({
                 aria-label={valueLabel}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
                 className='h-8'
-              />
+               title="Input field"/>
             )
           ) : null}
 
@@ -369,7 +369,7 @@ export const ParamRow = React.memo(function ParamRow({
                 }
               }}
               className='h-24 font-mono text-[11px]'
-            />
+             title="Textarea"/>
           ) : null}
         </>
       )}

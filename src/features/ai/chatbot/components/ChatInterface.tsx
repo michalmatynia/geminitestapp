@@ -148,7 +148,7 @@ export function ChatInterface(): React.JSX.Element {
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setInput(e.target.value)}
             placeholder='Type your message...'
             disabled={isSending}
-          />
+           aria-label="Type your message..." title="Type your message..."/>
           <Button
             type='submit'
             variant='solid'

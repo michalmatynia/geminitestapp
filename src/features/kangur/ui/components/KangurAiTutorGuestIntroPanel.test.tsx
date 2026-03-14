@@ -1,92 +1,107 @@
 /**
  * @vitest-environment jsdom
  */
-import { createRef } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { KangurAiTutorGuestIntroPanel } from './KangurAiTutorGuestIntroPanel';
 
-vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
-  useKangurAiTutorContent: () => ({
-    guestIntro: {
-      closeAria: 'Zamknij modal tutora',
-      acceptLabel: 'Tak',
-    },
-    common: {
-      defaultTutorName: 'Tutor',
-      questionInputAria: 'Napisz pytanie',
-      sendAria: 'Wyślij',
-    },
-    narrator: {
-      pauseLabel: 'Pauza',
-      readLabel: 'Czytaj',
-      resumeLabel: 'Wznów',
-    },
-  }),
-}));
-
-vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
-  useOptionalKangurAiTutor: () => null,
-}));
-
-vi.mock('./KangurAiTutorWidget.state', () => ({
-  useKangurAiTutorWidgetStateContext: () => ({
-    guestAuthFormVisible: false,
-    inputValue: '',
-    inputRef: createRef<HTMLInputElement>(),
-    messageFeedbackByKey: {},
-    messagesEndRef: createRef<HTMLDivElement>(),
-    setInputValue: vi.fn(),
-    setGuestAuthFormVisible: vi.fn(),
-    setDrawingImageData: vi.fn(),
-  }),
-}));
-
-vi.mock('./KangurAiTutorPanelBody.context', () => ({
-  useKangurAiTutorPanelBodyContext: () => ({
-    askModalHelperText: 'Zapytaj tutora.',
-    basePath: '',
-    canSendMessages: true,
-    drawingImageData: null,
-    emptyStateMessage: 'Brak wiadomości.',
-    handleFollowUpClick: vi.fn(),
-    handleMessageFeedback: vi.fn(),
-    handleSend: vi.fn(),
-    handleWebsiteHelpTargetClick: vi.fn(),
-    inputPlaceholder: 'Zapytaj tutora...',
-    isAskModalMode: false,
-    isLoading: false,
-    isSectionExplainPendingMode: false,
-    isSelectionExplainPendingMode: false,
-    messages: [],
-    narratorSettings: {
-      engine: 'client',
-      voice: 'coral',
-    },
-    panelEmptyStateMessage: 'Brak wiadomości.',
-    showSources: false,
-    tutorNarrationScript: {
-      lessonId: 'guest-intro',
-      title: 'Guest intro',
-      description: '',
-      locale: 'pl-PL',
-      segments: [{ id: 'segment-1', text: 'Witaj w Kangurze.' }],
-    },
-    tutorNarratorContextRegistry: null,
-    tutorSessionKey: 'session-test',
-  }),
-}));
-
 describe('KangurAiTutorGuestIntroPanel', () => {
-  it('uses a transparent backdrop without page blur and still closes on outside click', () => {
+  it('renders a simple onboarding prompt with Tak and Nie buttons', () => {
+    const onAccept = vi.fn();
     const onClose = vi.fn();
 
     render(
       <KangurAiTutorGuestIntroPanel
-        guestIntroDescription='Minimal tutor modal'
-        guestIntroHeadline='Pomoc logowania'
+        guestIntroDescription='Desc'
+        guestIntroHeadline='Headline'
         guestTutorLabel='Janek'
+        isAnonymousVisitor={false}
+        onAccept={onAccept}
+        onClose={onClose}
+        onStartChat={vi.fn()}
+        panelStyle={{}}
+        prefersReducedMotion
+      />
+    );
+
+    expect(screen.getByText('Janek')).toBeInTheDocument();
+    expect(screen.getByText('Czy chcesz rozpocząć onboarding?')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-onboarding-accept')).toHaveTextContent('Tak');
+    expect(screen.getByTestId('kangur-ai-tutor-onboarding-dismiss')).toHaveTextContent('Nie');
+  });
+
+  it('calls onAccept when Tak is clicked for authenticated users', () => {
+    const onAccept = vi.fn();
+
+    render(
+      <KangurAiTutorGuestIntroPanel
+        guestIntroDescription=''
+        guestIntroHeadline=''
+        guestTutorLabel='Tutor'
+        isAnonymousVisitor={false}
+        onAccept={onAccept}
+        onClose={vi.fn()}
+        onStartChat={vi.fn()}
+        panelStyle={{}}
+        prefersReducedMotion
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('kangur-ai-tutor-onboarding-accept'));
+    expect(onAccept).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onStartChat when Tak is clicked for anonymous users', () => {
+    const onStartChat = vi.fn();
+
+    render(
+      <KangurAiTutorGuestIntroPanel
+        guestIntroDescription=''
+        guestIntroHeadline=''
+        guestTutorLabel='Tutor'
+        isAnonymousVisitor
+        onAccept={vi.fn()}
+        onClose={vi.fn()}
+        onStartChat={onStartChat}
+        panelStyle={{}}
+        prefersReducedMotion
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('kangur-ai-tutor-onboarding-accept'));
+    expect(onStartChat).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onClose when Nie is clicked', () => {
+    const onClose = vi.fn();
+
+    render(
+      <KangurAiTutorGuestIntroPanel
+        guestIntroDescription=''
+        guestIntroHeadline=''
+        guestTutorLabel='Tutor'
+        isAnonymousVisitor
+        onAccept={vi.fn()}
+        onClose={onClose}
+        onStartChat={vi.fn()}
+        panelStyle={{}}
+        prefersReducedMotion
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('kangur-ai-tutor-onboarding-dismiss'));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes on backdrop click', () => {
+    const onClose = vi.fn();
+
+    render(
+      <KangurAiTutorGuestIntroPanel
+        guestIntroDescription=''
+        guestIntroHeadline=''
+        guestTutorLabel='Tutor'
         isAnonymousVisitor={false}
         onAccept={vi.fn()}
         onClose={onClose}
@@ -97,21 +112,9 @@ describe('KangurAiTutorGuestIntroPanel', () => {
     );
 
     const backdrop = screen.getByTestId('kangur-ai-tutor-guest-intro-backdrop');
-
     expect(backdrop.className).toContain('bg-transparent');
-    expect(backdrop.className).not.toContain('backdrop-blur');
-    expect(screen.getByText('Janek')).toBeInTheDocument();
-    expect(screen.getByText(/Pomoc logowania/)).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-guest-intro-drawing')).toBeVisible();
-    expect(screen.getByText(/Minimal tutor modal/)).toHaveClass(
-      '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
-    );
-    expect(screen.getByTestId('kangur-ai-tutor-guest-intro-close')).toHaveClass(
-      '[color:var(--kangur-chat-control-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'
-    );
 
     fireEvent.click(backdrop);
-
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

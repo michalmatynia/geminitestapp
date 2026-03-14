@@ -58,7 +58,7 @@ export function RuleItemBasicSettings(): React.JSX.Element | null {
             { value: 'regex', label: 'Regex' },
             { value: 'params_object', label: 'Params Object' },
           ]}
-        />
+         ariaLabel="Kind" title="Kind"/>
       </FormField>
       <FormField label='Severity'>
         <SelectSimple
@@ -73,7 +73,7 @@ export function RuleItemBasicSettings(): React.JSX.Element | null {
             { value: 'warning', label: 'Warning' },
             { value: 'info', label: 'Info' },
           ]}
-        />
+         ariaLabel="Severity" title="Severity"/>
       </FormField>
       <FormField label='Rule ID' className='md:col-span-2'>
         <Input
@@ -82,7 +82,7 @@ export function RuleItemBasicSettings(): React.JSX.Element | null {
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
             patchRule({ id: event.target.value });
           }}
-        />
+         aria-label="Rule ID" title="Rule ID"/>
       </FormField>
       <FormField label='Title' className='md:col-span-2'>
         <Input
@@ -91,7 +91,7 @@ export function RuleItemBasicSettings(): React.JSX.Element | null {
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
             patchRule({ title: event.target.value });
           }}
-        />
+         aria-label="Title" title="Title"/>
       </FormField>
       <FormField label='Description' className='md:col-span-2'>
         <Input
@@ -100,7 +100,7 @@ export function RuleItemBasicSettings(): React.JSX.Element | null {
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
             patchRule({ description: event.target.value.trim() || null });
           }}
-        />
+         aria-label="Description" title="Description"/>
       </FormField>
       <FormField label='Message' className='md:col-span-4'>
         <Textarea
@@ -109,7 +109,7 @@ export function RuleItemBasicSettings(): React.JSX.Element | null {
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
             patchRule({ message: event.target.value });
           }}
-        />
+         aria-label="Message" title="Message"/>
       </FormField>
       {rule.kind === 'regex' ? (
         <>
@@ -120,7 +120,7 @@ export function RuleItemBasicSettings(): React.JSX.Element | null {
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                 patchRule({ pattern: event.target.value });
               }}
-            />
+             aria-label="Pattern" title="Pattern"/>
           </FormField>
           <FormField label='Flags'>
             <Input
@@ -129,7 +129,7 @@ export function RuleItemBasicSettings(): React.JSX.Element | null {
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                 patchRule({ flags: event.target.value });
               }}
-            />
+             aria-label="Flags" title="Flags"/>
           </FormField>
         </>
       ) : null}

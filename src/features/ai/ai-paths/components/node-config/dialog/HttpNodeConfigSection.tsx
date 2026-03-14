@@ -46,7 +46,7 @@ export function HttpNodeConfigSection(): React.JSX.Element | null {
               http: { ...httpConfig, url: event.target.value },
             })
           }
-        />
+         aria-label="URL" title="URL"/>
       </FormField>
       <div className='grid gap-3 sm:grid-cols-2'>
         <FormField label='Method'>
@@ -61,7 +61,7 @@ export function HttpNodeConfigSection(): React.JSX.Element | null {
             }
             options={methodOptions}
             placeholder='Select method'
-          />
+           ariaLabel="Select method" title="Select method"/>
         </FormField>
         <FormField label='Response Mode'>
           <SelectSimple
@@ -78,7 +78,7 @@ export function HttpNodeConfigSection(): React.JSX.Element | null {
             }
             options={responseModeOptions}
             placeholder='Select mode'
-          />
+           ariaLabel="Select mode" title="Select mode"/>
         </FormField>
       </div>
       <FormField label='Headers (JSON)'>
@@ -92,7 +92,7 @@ export function HttpNodeConfigSection(): React.JSX.Element | null {
               http: { ...httpConfig, headers: event.target.value },
             })
           }
-        />
+         aria-label="Headers (JSON)" title="Headers (JSON)"/>
       </FormField>
       <FormField label='Body Template'>
         <Textarea
@@ -105,7 +105,7 @@ export function HttpNodeConfigSection(): React.JSX.Element | null {
               http: { ...httpConfig, bodyTemplate: event.target.value },
             })
           }
-        />
+         aria-label="Body Template" title="Body Template"/>
       </FormField>
       <FormField
         label='Response Path'
@@ -120,7 +120,7 @@ export function HttpNodeConfigSection(): React.JSX.Element | null {
               http: { ...httpConfig, responsePath: event.target.value },
             })
           }
-        />
+         aria-label="Response Path" title="Response Path"/>
       </FormField>
     </div>
   );

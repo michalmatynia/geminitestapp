@@ -528,7 +528,7 @@ export function RunDetailDialog(): React.JSX.Element {
                   placeholder='Select node'
                   ariaLabel='History node'
                   triggerClassName='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'
-                />
+                 title="Select node"/>
               ) : (
                 <div className='text-[11px] text-gray-400'>
                   {historyOptions[0]?.label ?? 'No nodes'}

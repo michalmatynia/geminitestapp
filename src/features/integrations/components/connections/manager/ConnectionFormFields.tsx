@@ -93,7 +93,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
               name: event.target.value,
             }))
           }
-        />
+         aria-label={connectionNamePlaceholder} title={connectionNamePlaceholder}/>
       </FormField>
       <FormField label={usernameLabel}>
         <Input
@@ -107,7 +107,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
               username: event.target.value,
             }))
           }
-        />
+         aria-label={usernamePlaceholder} title={usernamePlaceholder}/>
       </FormField>
       <FormField label={passwordLabel}>
         <Input
@@ -122,7 +122,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
               password: event.target.value,
             }))
           }
-        />
+         aria-label={passwordPlaceholder} title={passwordPlaceholder}/>
       </FormField>
       {isTradera && (
         <>
@@ -138,7 +138,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
                   traderaDefaultTemplateId: event.target.value,
                 }))
               }
-            />
+             aria-label="tradera-template-1" title="tradera-template-1"/>
           </FormField>
           <FormField label='Default duration (hours)'>
             <Input
@@ -157,7 +157,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
                   ),
                 }))
               }
-            />
+             aria-label="Default duration (hours)" title="Default duration (hours)"/>
           </FormField>
           <FormField label='Auto relist lead (minutes)'>
             <Input
@@ -177,7 +177,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
                   ),
                 }))
               }
-            />
+             aria-label="Auto relist lead (minutes)" title="Auto relist lead (minutes)"/>
           </FormField>
           <div className='flex items-center gap-3 py-1'>
             <Checkbox
@@ -212,7 +212,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
                       traderaApiAppId: event.target.value,
                     }))
                   }
-                />
+                 aria-label="5683" title="5683"/>
               </FormField>
               <FormField label='Tradera API App Key'>
                 <Input
@@ -229,7 +229,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
                       traderaApiAppKey: event.target.value,
                     }))
                   }
-                />
+                 aria-label={isCreateMode ? 'Application key' : 'New application key (leave blank to keep)'} title={isCreateMode ? 'Application key' : 'New application key (leave blank to keep)'}/>
                 {!isCreateMode &&
                   !form.traderaApiAppKey.trim() &&
                   selectedConnection?.hasTraderaApiAppKey && (
@@ -250,7 +250,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
                       traderaApiPublicKey: event.target.value,
                     }))
                   }
-                />
+                 aria-label="Public key" title="Public key"/>
               </FormField>
               <FormField label='Tradera API User ID'>
                 <Input
@@ -265,7 +265,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
                       traderaApiUserId: event.target.value,
                     }))
                   }
-                />
+                 aria-label="Numeric user ID" title="Numeric user ID"/>
               </FormField>
               <FormField label='Tradera API Token'>
                 <Input
@@ -280,7 +280,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
                       traderaApiToken: event.target.value,
                     }))
                   }
-                />
+                 aria-label={isCreateMode ? 'Access token' : 'New token (leave blank to keep)'} title={isCreateMode ? 'Access token' : 'New token (leave blank to keep)'}/>
                 {!isCreateMode &&
                   !form.traderaApiToken.trim() &&
                   selectedConnection?.hasTraderaApiToken && (

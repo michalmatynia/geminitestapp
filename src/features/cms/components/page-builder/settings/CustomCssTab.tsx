@@ -24,7 +24,7 @@ export function CustomCssTab(): React.JSX.Element {
         placeholder={'parent {\n  outline: 1px dashed #4ade80;\n}\n\nchildren {\n  gap: 12px;\n}'}
         className='min-h-[160px] font-mono text-xs'
         spellCheck={false}
-      />
+       title="parent {\n  outline: 1px dashed #4ade80;\n}\n\nchildren {\n  gap: 12px;\n}"/>
     </div>
   );
 }

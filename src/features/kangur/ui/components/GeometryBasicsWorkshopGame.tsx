@@ -493,6 +493,11 @@ export default function GeometryBasicsWorkshopGame({
                   }}
                   role='button'
                   tabIndex={0}
+                  aria-label={
+                    roundState.slot
+                      ? `Plansza: etykieta ${roundState.slot.label}`
+                      : 'Plansza: upuść etykietę'
+                  }
                   onKeyDown={(event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
                       event.preventDefault();

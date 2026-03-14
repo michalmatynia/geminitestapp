@@ -89,7 +89,7 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
                 { value: 'new', label: 'Force New Template' },
                 { value: 'target', label: 'Merge Into Selected Template' },
               ]}
-            />
+             ariaLabel="Select option" title="Select option"/>
           </div>
           {approvalDraft.templateMergeMode === 'target' ? (
             <div className='space-y-1'>
@@ -108,7 +108,7 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
                     ? templateTargetOptions
                     : [{ value: '', label: 'No templates for this type' }]
                 }
-              />
+               ariaLabel="Select option" title="Select option"/>
             </div>
           ) : null}
         </div>
@@ -184,7 +184,7 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
                   ruleTitle: event.target.value,
                 }));
               }}
-            />
+             aria-label="Input field" title="Input field"/>
           </div>
           <div className='space-y-1 md:col-span-2'>
             <Label className='text-[11px] text-gray-400'>Rule Pattern</Label>
@@ -197,7 +197,7 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
                   rulePattern: event.target.value,
                 }));
               }}
-            />
+             aria-label="Textarea" title="Textarea"/>
           </div>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Segment Type Hint</Label>
@@ -246,7 +246,7 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
                 { value: 'conditional_list', label: 'Conditional List' },
                 { value: 'qa_matrix', label: 'QA Matrix' },
               ]}
-            />
+             ariaLabel="Select option" title="Select option"/>
           </div>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Priority</Label>
@@ -264,7 +264,7 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
                   rulePriority: promptExploderClampNumber(Math.floor(value), -50, 50),
                 }));
               }}
-            />
+             aria-label="Input field" title="Input field"/>
           </div>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Confidence Boost</Label>
@@ -282,7 +282,7 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
                   ruleConfidenceBoost: promptExploderClampNumber(value, 0, 0.5),
                 }));
               }}
-            />
+             aria-label="Input field" title="Input field"/>
           </div>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Treat As Heading</Label>

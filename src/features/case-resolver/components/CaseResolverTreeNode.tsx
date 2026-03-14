@@ -336,7 +336,7 @@ export function CaseResolverTreeNode(props: CaseResolverTreeNodeProps): React.JS
                 event.stopPropagation();
               }}
               className='h-7 min-w-0 flex-1 border-blue-500 bg-gray-800 text-sm text-white'
-            />
+             aria-label="Input field" title="Input field"/>
           </div>
         </div>
       ) : (

@@ -67,7 +67,7 @@ export function ClusterPresetsPanel(): React.JSX.Element {
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 setPresetDraft((prev: ClusterPresetDraft) => ({ ...prev, name: event.target.value }))
               }
-            />
+             aria-label={nameFieldId} title={nameFieldId}/>
           </div>
           <div>
             <Label htmlFor={descriptionFieldId} className='text-[10px] uppercase text-gray-500'>
@@ -83,7 +83,7 @@ export function ClusterPresetsPanel(): React.JSX.Element {
                   description: event.target.value,
                 }))
               }
-            />
+             aria-label={descriptionFieldId} title={descriptionFieldId}/>
           </div>
           <div>
             <Label htmlFor={bundlePortsFieldId} className='text-[10px] uppercase text-gray-500'>
@@ -99,7 +99,7 @@ export function ClusterPresetsPanel(): React.JSX.Element {
                   bundlePorts: event.target.value,
                 }))
               }
-            />
+             aria-label={bundlePortsFieldId} title={bundlePortsFieldId}/>
           </div>
           <div>
             <Label htmlFor={templateFieldId} className='text-[10px] uppercase text-gray-500'>
@@ -115,7 +115,7 @@ export function ClusterPresetsPanel(): React.JSX.Element {
                   template: event.target.value,
                 }))
               }
-            />
+             aria-label={templateFieldId} title={templateFieldId}/>
           </div>
           <Button
             className='w-full rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10'

@@ -100,7 +100,7 @@ export function GridItemEditor(props: {
             }))}
             triggerClassName='h-9'
             ariaLabel={`Grid item ${index + 1} type`}
-          />
+           title="Item Type"/>
         </FormField>
 
         <FormField label='Column Span'>
@@ -122,7 +122,7 @@ export function GridItemEditor(props: {
               });
             }}
             className='h-9'
-          />
+           aria-label="Column Span" title="Column Span"/>
         </FormField>
 
         <FormField label='Row Span'>
@@ -138,7 +138,7 @@ export function GridItemEditor(props: {
               });
             }}
             className='h-9'
-          />
+           aria-label="Row Span" title="Row Span"/>
         </FormField>
 
         <FormField label='Column Start'>
@@ -159,7 +159,7 @@ export function GridItemEditor(props: {
               });
             }}
             className='h-9'
-          />
+           aria-label="Auto" title="Auto"/>
         </FormField>
 
         <FormField label='Row Start'>
@@ -176,7 +176,7 @@ export function GridItemEditor(props: {
               });
             }}
             className='h-9'
-          />
+           aria-label="Auto" title="Auto"/>
         </FormField>
       </div>
 

@@ -316,7 +316,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
               label: option.label,
             }))}
             ariaLabel='Validation stack'
-          />{' '}
+           title="Select option"/>{' '}
         </div>
         <div className='min-w-0 space-y-1'>
           <Label className='text-[11px] text-gray-400'>Runtime Rule Profile</Label>
@@ -335,7 +335,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
               { value: 'learned_only', label: 'Learned Rules Only' },
             ]}
             ariaLabel='Runtime rule profile'
-          />
+           title="Select option"/>
         </div>
         <div className='min-w-0 space-y-1'>
           <Label className='text-[11px] text-gray-400'>Learning</Label>
@@ -368,7 +368,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
                 similarityThreshold: promptExploderClampNumber(value, 0.3, 0.95),
               }));
             }}
-          />
+           title="Input field"/>
         </div>
         <div className='min-w-0 space-y-1'>
           <Label className='text-[11px] text-gray-400'>Template Merge Threshold</Label>
@@ -387,7 +387,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
                 templateMergeThreshold: promptExploderClampNumber(value, 0.3, 0.95),
               }));
             }}
-          />
+           title="Input field"/>
         </div>
         <div className='min-w-0 space-y-1'>
           <Label className='text-[11px] text-gray-400'>Min Approvals For Match</Label>
@@ -406,7 +406,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
                 minApprovalsForMatching: promptExploderClampNumber(Math.floor(value), 1, 20),
               }));
             }}
-          />
+           title="Input field"/>
         </div>
         <div className='min-w-0 space-y-1'>
           <Label className='text-[11px] text-gray-400'>Runtime Template Cap</Label>
@@ -425,7 +425,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
                 maxTemplates: promptExploderClampNumber(Math.floor(value), 50, 5000),
               }));
             }}
-          />
+           title="Input field"/>
         </div>
         <div className='min-w-0 space-y-1'>
           <Label className='text-[11px] text-gray-400'>Auto Activate Learned</Label>
@@ -546,7 +546,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             aria-label='Snapshot name'
             onChange={(event) => setSnapshotDraftName(event.target.value)}
             placeholder='Snapshot name (optional)'
-          />
+           title="Snapshot name (optional)"/>
           <SelectSimple
             size='sm'
             value={selectedSnapshotId}
@@ -560,7 +560,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
                 : [{ value: '', label: 'No snapshots' }]
             }
             ariaLabel='Snapshot selection'
-          />
+           title="Select option"/>
           <div className='flex items-center gap-2'>
             <Button
               type='button'
@@ -647,7 +647,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
                       { value: 'disabled', label: 'Disabled' },
                     ]}
                     ariaLabel='Template state'
-                  />
+                   title="Select option"/>
                   <Button
                     type='button'
                     variant='outline'

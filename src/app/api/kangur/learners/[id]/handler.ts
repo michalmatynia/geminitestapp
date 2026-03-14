@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import {
+  deleteKangurLearner,
   getKangurLearnerById,
   resolveKangurActor,
   updateKangurLearner,
@@ -12,6 +13,39 @@ import { parseKangurLearnerUpdatePayload } from '@/shared/validations/kangur';
 
 
 import { readKangurAuthJsonBody } from '../../auth/shared';
+
+export async function deleteKangurLearnerHandler(
+  req: NextRequest,
+  ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
+  const actor = await resolveKangurActor(req);
+  if (!actor.canManageLearners) {
+    throw forbiddenError('Only parent accounts can manage learners.');
+  }
+
+  const learner = await getKangurLearnerById(params.id);
+  if (learner?.ownerUserId !== actor.ownerUserId) {
+    throw forbiddenError('This learner does not belong to the current parent account.', {
+      learnerId: params.id,
+    });
+  }
+
+  const deletedLearner = await deleteKangurLearner(params.id);
+  void logKangurServerEvent({
+    source: 'kangur.learners.delete',
+    message: 'Kangur learner deleted',
+    request: req,
+    requestContext: ctx,
+    actor,
+    statusCode: 200,
+    context: {
+      learnerId: deletedLearner.id,
+      learnerStatus: deletedLearner.status,
+    },
+  });
+  return NextResponse.json(deletedLearner);
+}
 
 export async function patchKangurLearnerHandler(
   req: NextRequest,

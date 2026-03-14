@@ -34,7 +34,7 @@ export function RightSidebarRequestPreviewBody(): React.JSX.Element {
           ]}
           className='w-[240px]'
           triggerClassName='h-8 text-[11px]'
-        />
+         ariaLabel="Select option" title="Select option"/>
       </div>
       <div className='rounded border border-border/60 bg-card/40 p-3 text-[11px] text-gray-300'>
         This is the exact payload enqueued to{' '}

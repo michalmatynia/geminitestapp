@@ -43,7 +43,7 @@ export function ValidatorInstanceBehaviorPanel(): React.JSX.Element {
                     ]}
                     ariaLabel={`${INSTANCE_SCOPE_LABELS[scope]} deny behavior`}
                     disabled={settingsBusy}
-                  />
+                   title="Select option"/>
                 </ValidatorDocTooltip>
               </div>
             </div>

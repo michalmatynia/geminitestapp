@@ -156,7 +156,7 @@ export function SlotInlineEditCardTab(): React.JSX.Element {
               setSlotNameDraft(event.target.value)
             }
             className='h-9'
-          />
+           aria-label="Input field" title="Input field"/>
         </div>
         <div className='space-y-1'>
           <Label className='text-xs text-gray-400'>Folder Path</Label>
@@ -168,7 +168,7 @@ export function SlotInlineEditCardTab(): React.JSX.Element {
             }
             placeholder='e.g. variants/red'
             className='h-9'
-          />
+           aria-label="e.g. variants/red" title="e.g. variants/red"/>
         </div>
       </div>
 

@@ -83,7 +83,7 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
                 onChange={(e) => onChange({ ...config, svgDrawSelector: e.target.value })}
                 placeholder='path, line, circle'
                 className='h-9'
-              />
+               aria-label="path, line, circle" title="path, line, circle"/>
             </FormField>
             <FormField label='Custom path'>
               <div className='flex items-center gap-2'>
@@ -92,7 +92,7 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
                   onChange={(e) => onChange({ ...config, svgDrawPath: e.target.value })}
                   placeholder='Draw or paste SVG path'
                   className='flex-1 text-xs font-mono h-9'
-                />
+                 aria-label="Draw or paste SVG path" title="Draw or paste SVG path"/>
                 <Tooltip content={drawPathTooltip}>
                   <Button
                     type='button'
@@ -134,7 +134,7 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
                       onChange({ ...config, svgDrawFrom: Math.max(0, Math.min(100, val)) });
                   }}
                   className='h-9'
-                />
+                 aria-label="From %" title="From %"/>
               </FormField>
               <FormField label='To %'>
                 <Input
@@ -149,7 +149,7 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
                       onChange({ ...config, svgDrawTo: Math.max(0, Math.min(100, val)) });
                   }}
                   className='h-9'
-                />
+                 aria-label="To %" title="To %"/>
               </FormField>
             </div>
           </div>
@@ -170,7 +170,7 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
                 onChange={(e) => onChange({ ...config, svgMorphSelector: e.target.value })}
                 placeholder='path'
                 className='h-9'
-              />
+               aria-label="path" title="path"/>
             </FormField>
             <FormField label='Target path'>
               <div className='flex items-center gap-2'>
@@ -179,7 +179,7 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
                   onChange={(e) => onChange({ ...config, svgMorphTo: e.target.value })}
                   placeholder='Target path data or selector (#path)'
                   className='flex-1 text-xs font-mono h-9'
-                />
+                 aria-label="Target path data or selector (#path)" title="Target path data or selector (#path)"/>
                 <Tooltip content={drawPathTooltip}>
                   <Button
                     type='button'

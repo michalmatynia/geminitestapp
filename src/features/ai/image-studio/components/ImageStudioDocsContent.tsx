@@ -603,7 +603,7 @@ export function ImageStudioDocsContent(): React.JSX.Element {
             }
             placeholder='Search state, setting path, value...'
             className='h-9 w-full max-w-[360px] bg-card/70'
-          />
+           aria-label="Search state, setting path, value..." title="Search state, setting path, value..."/>
         }
       />
 

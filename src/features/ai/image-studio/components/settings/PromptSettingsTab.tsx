@@ -79,7 +79,7 @@ export function PromptSettingsTab(): React.JSX.Element {
                 disabled
                 className='cursor-not-allowed'
                 placeholder='Not configured in AI Brain'
-              />
+               aria-label="Not configured in AI Brain" title="Not configured in AI Brain"/>
             </FormField>
             <div className='grid grid-cols-2 gap-4'>
               <FormField label='Temperature'>
@@ -98,7 +98,7 @@ export function PromptSettingsTab(): React.JSX.Element {
                       },
                     }))
                   }
-                />
+                 aria-label="Temperature" title="Temperature"/>
               </FormField>
               <FormField label='Max Tokens'>
                 <Input
@@ -116,7 +116,7 @@ export function PromptSettingsTab(): React.JSX.Element {
                       },
                     }))
                   }
-                />
+                 aria-label="Max Tokens" title="Max Tokens"/>
               </FormField>
             </div>
           </div>
@@ -136,7 +136,7 @@ export function PromptSettingsTab(): React.JSX.Element {
                   { value: 'ai', label: 'AI Only' },
                   { value: 'both', label: 'Both (AI + Heuristic)' },
                 ]}
-              />
+               ariaLabel="Extractor Mode" title="Extractor Mode"/>
             </FormField>
             {(studioSettings.uiExtractor.mode === 'ai' ||
               studioSettings.uiExtractor.mode === 'both') && (
@@ -150,7 +150,7 @@ export function PromptSettingsTab(): React.JSX.Element {
                   disabled
                   className='cursor-not-allowed'
                   placeholder='Not configured in AI Brain'
-                />
+                 aria-label="Not configured in AI Brain" title="Not configured in AI Brain"/>
               </FormField>
             )}
           </div>
@@ -198,6 +198,8 @@ export function PromptSettingsTab(): React.JSX.Element {
                           className='h-7 w-7 p-0'
                           onClick={() => moveProjectSequencingOperation(op, -1)}
                           disabled={index <= 0}
+                          aria-label={`Move ${op.replace(/_/g, ' ')} up`}
+                          title='Move operation up'
                         >
                           <ArrowUp className='size-3.5' />
                         </Button>
@@ -207,6 +209,8 @@ export function PromptSettingsTab(): React.JSX.Element {
                           className='h-7 w-7 p-0'
                           onClick={() => moveProjectSequencingOperation(op, 1)}
                           disabled={index >= studioSettings.projectSequencing.operations.length - 1}
+                          aria-label={`Move ${op.replace(/_/g, ' ')} down`}
+                          title='Move operation down'
                         >
                           <ArrowDown className='size-3.5' />
                         </Button>

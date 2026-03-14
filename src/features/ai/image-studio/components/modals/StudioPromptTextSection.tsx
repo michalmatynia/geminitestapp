@@ -37,7 +37,7 @@ export function StudioPromptTextSection(props: StudioPromptTextSectionProps): Re
         }
         className={cn('font-mono text-[11px]', textareaClassName)}
         placeholder={placeholder}
-      />
+       aria-label={placeholder} title={placeholder}/>
     </div>
   );
 }

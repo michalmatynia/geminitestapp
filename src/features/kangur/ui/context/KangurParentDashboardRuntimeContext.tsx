@@ -70,6 +70,7 @@ type KangurParentDashboardRuntimeActionsContextValue = {
   ) => void;
   handleCreateLearner: () => Promise<void>;
   handleSaveLearner: () => Promise<void>;
+  handleDeleteLearner: (learnerId: string) => Promise<void>;
 };
 
 type KangurParentDashboardRuntimeContextValue = KangurParentDashboardRuntimeStateContextValue &
@@ -240,6 +241,26 @@ export function KangurParentDashboardRuntimeProvider({
         } catch (error: unknown) {
           setFeedback(
             error instanceof Error ? error.message : 'Nie udało się zapisać zmian.'
+          );
+        } finally {
+          setIsSubmitting(false);
+        }
+      },
+      handleDeleteLearner: async (learnerId: string) => {
+        if (!canAccessDashboard) {
+          return;
+        }
+
+        setIsSubmitting(true);
+        setFeedback(null);
+
+        try {
+          const removed = await kangurPlatform.learners.delete(learnerId);
+          await checkAppState();
+          setFeedback(`Usunięto profil ucznia: ${removed.displayName}.`);
+        } catch (error: unknown) {
+          setFeedback(
+            error instanceof Error ? error.message : 'Nie udało się usunąć profilu ucznia.'
           );
         } finally {
           setIsSubmitting(false);

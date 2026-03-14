@@ -61,7 +61,7 @@ export function ValidationSettingsTab(): React.JSX.Element {
               value={promptValidationRulesText}
               onChange={(e) => handlePromptValidationRulesChange(e.target.value)}
               spellCheck={false}
-            />
+             aria-label="Validation Rules (JSON)" title="Validation Rules (JSON)"/>
             {promptValidationRulesError && (
               <p className='text-xs font-medium text-rose-400'>
                 {String(promptValidationRulesError)}
@@ -88,7 +88,7 @@ export function ValidationSettingsTab(): React.JSX.Element {
                 { value: 'auto', label: 'Auto' },
                 { value: 'low', label: 'Low' },
               ]}
-            />
+             ariaLabel="Moderation Level" title="Moderation Level"/>
           </FormField>
         </div>
       </FormSection>

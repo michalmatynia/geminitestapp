@@ -57,7 +57,7 @@ export function ExportBaseConfigSection(): React.JSX.Element {
               baseConnections.length === 0 ? 'No connections loaded' : 'Select a connection...'
             }
             triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
-          />
+           ariaLabel={baseConnections.length === 0 ? 'No connections loaded' : 'Select a connection...'} title={baseConnections.length === 0 ? 'No connections loaded' : 'Select a connection...'}/>
         </div>
         <p className='mt-1 text-xs text-gray-500'>
           Used by Product List OneClick export and for loading inventories/warehouses.
@@ -83,7 +83,15 @@ export function ExportBaseConfigSection(): React.JSX.Element {
                 : 'Select default inventory...'
             }
             triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
-          />
+           ariaLabel={inventories.length === 0
+                ? exportInventoryId
+                  ? `Saved inventory (${exportInventoryId})`
+                  : 'No inventories loaded'
+                : 'Select default inventory...'} title={inventories.length === 0
+                ? exportInventoryId
+                  ? `Saved inventory (${exportInventoryId})`
+                  : 'No inventories loaded'
+                : 'Select default inventory...'}/>
         </div>
         <p className='mt-1 text-xs text-gray-500'>Default inventory for product exports</p>
       </div>
@@ -110,7 +118,7 @@ export function ExportBaseConfigSection(): React.JSX.Element {
             ]}
             placeholder='No template (use defaults)'
             triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
-          />
+           ariaLabel="No template (use defaults)" title="No template (use defaults)"/>
         </div>
         <p className='mt-1 text-xs text-gray-500'>Template for field mapping on export</p>
       </div>

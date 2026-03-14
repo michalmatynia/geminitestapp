@@ -223,7 +223,7 @@ export function ViewerNodeConfigSection(): React.JSX.Element | null {
                   },
                 })
               }
-            />
+             aria-label={formatPortLabel(input)} title={formatPortLabel(input)}/>
           </FormField>
         );
       })}

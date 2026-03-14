@@ -76,7 +76,7 @@ export function LoggingSettingsForm({
                 setClientFlags(event.target.value);
                 setDirty(true);
               }}
-            />
+             aria-label="Feature flags (JSON)" title="Feature flags (JSON)"/>
           </FormField>
           <FormField
             label='Tags (JSON)'
@@ -89,7 +89,7 @@ export function LoggingSettingsForm({
                 setClientTags(event.target.value);
                 setDirty(true);
               }}
-            />
+             aria-label="Tags (JSON)" title="Tags (JSON)"/>
           </FormField>
         </div>
 

@@ -538,6 +538,11 @@ export default function LogicalPatternsWorkshopGame({
                           onClick={() => handleSlotClick(cell.id)}
                           role='button'
                           tabIndex={0}
+                          aria-label={
+                            assigned
+                              ? `Pole sekwencji: ${assigned.label}`
+                              : 'Puste pole sekwencji'
+                          }
                           onKeyDown={(event) => {
                             if (event.key === 'Enter' || event.key === ' ') {
                               event.preventDefault();
@@ -568,6 +573,11 @@ export default function LogicalPatternsWorkshopGame({
                                       isDisabled: checked,
                                       isMuted: checked,
                                     })}
+                                    aria-label={
+                                      assigned.kind === 'number'
+                                        ? `Usuń liczbę ${assigned.label} z sekwencji`
+                                        : `Usuń symbol ${assigned.label} z sekwencji`
+                                    }
                                     onClick={(event) => {
                                       event.stopPropagation();
                                       if (checked) return;
@@ -729,6 +739,11 @@ export default function LogicalPatternsWorkshopGame({
                             isDisabled: checked,
                             isMuted: checked,
                           })}
+                          aria-label={
+                            token.kind === 'number'
+                              ? `Kafelek: liczba ${token.label}`
+                              : `Kafelek: symbol ${token.label}`
+                          }
                           aria-pressed={selectedTokenId === token.id}
                           onClick={(event) => {
                             event.preventDefault();

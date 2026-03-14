@@ -139,7 +139,7 @@ export function GenerationToolbarAutoScalerSection(): React.JSX.Element {
             options={autoScaleModeOptions}
             triggerClassName='h-8 text-xs'
             ariaLabel='Auto scaler mode'
-          />,
+           title="Select option"/>,
           'inline-flex w-full'
         )}
         {maybeWrapTooltip(
@@ -172,7 +172,7 @@ export function GenerationToolbarAutoScalerSection(): React.JSX.Element {
             options={autoScaleShadowPolicyOptions}
             triggerClassName='h-8 text-xs'
             ariaLabel='Auto scaler shadow policy'
-          />,
+           title="Select option"/>,
           'inline-flex w-full'
         )}
         <div className='text-[10px] text-gray-500'>

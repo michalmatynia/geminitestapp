@@ -31,10 +31,10 @@ export function DatabaseSaveQueryPresetDialog(): React.JSX.Element {
               setNewQueryPresetName(event.target.value)
             }
             placeholder='My query preset'
-          />
+           aria-label="My query preset" title="My query preset"/>
         </FormField>
         <FormField label='Query preview'>
-          <Textarea readOnly className='min-h-[120px] text-xs' value={queryTemplateValue} />
+          <Textarea readOnly className='min-h-[120px] text-xs' value={queryTemplateValue}  aria-label="Query preview" title="Query preview"/>
         </FormField>
       </div>
     </DetailModal>

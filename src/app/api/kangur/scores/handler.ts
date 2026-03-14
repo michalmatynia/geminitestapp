@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
-import { getKangurScoreRepository, resolveKangurActor } from '@/features/kangur/server';
+import {
+  getKangurScoreRepository,
+  requireActiveLearner,
+  resolveKangurActor,
+} from '@/features/kangur/server';
 import {
   kangurScoreLimitSchema,
   kangurScoreSortSchema,
@@ -113,12 +117,13 @@ export async function postKangurScoresHandler(
 ): Promise<Response> {
   const payload = parseKangurScoreCreatePayload(await resolveBodyJson(req, ctx));
   const actor = await resolveKangurActor(req);
+  const activeLearner = requireActiveLearner(actor);
 
   const repository = await getKangurScoreRepository();
   const row = await repository.createScore({
     ...payload,
     created_by: actor.ownerEmail,
-    learner_id: actor.activeLearner.id,
+    learner_id: activeLearner.id,
     owner_user_id: actor.ownerUserId,
   });
 

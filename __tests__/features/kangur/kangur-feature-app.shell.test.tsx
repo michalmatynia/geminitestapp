@@ -2,10 +2,21 @@ import { render, screen, waitFor } from '@testing-library/react';
 import type { ComponentProps, ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { useKangurAuthMock, useKangurRoutingMock, resolveKangurPageKeyMock } = vi.hoisted(() => ({
+const {
+  useKangurAuthMock,
+  useKangurRoutingMock,
+  resolveKangurPageKeyMock,
+  routeNavigatorMock,
+} = vi.hoisted(() => ({
   useKangurAuthMock: vi.fn(),
   useKangurRoutingMock: vi.fn(),
   resolveKangurPageKeyMock: vi.fn(),
+  routeNavigatorMock: {
+    back: vi.fn(),
+    prefetch: vi.fn(),
+    push: vi.fn(),
+    replace: vi.fn(),
+  },
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
@@ -40,6 +51,10 @@ vi.mock('@/features/kangur/ui/context/KangurTutorAnchorContext', () => ({
 
 vi.mock('@/features/kangur/ui/components/KangurAiTutorWidget', () => ({
   KangurAiTutorWidget: () => null,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
+  useKangurRouteNavigator: () => routeNavigatorMock,
 }));
 
 vi.mock('@/features/kangur/config/routing', async () => {
@@ -93,7 +108,12 @@ const buildAuthState = (overrides: Record<string, unknown> = {}) => ({
 describe('KangurFeatureApp shell behavior', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useKangurRoutingMock.mockReturnValue({ pageKey: 'Game', requestedPath: '/kangur/game' });
+    useKangurRoutingMock.mockReturnValue({
+      pageKey: 'Game',
+      requestedPath: '/kangur/game',
+      basePath: '/kangur',
+      embedded: false,
+    });
     resolveKangurPageKeyMock.mockReturnValue('Game');
     useKangurAuthMock.mockReturnValue(buildAuthState());
   });

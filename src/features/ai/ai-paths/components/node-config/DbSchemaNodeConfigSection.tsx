@@ -259,7 +259,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                   { value: 'mongodb', label: 'MongoDB' },
                 ]}
                 triggerClassName='mt-2 border-border bg-card/70'
-              />
+               title="Select option"/>
             </div>
 
             <div>
@@ -276,7 +276,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                   { value: 'selected', label: 'Selected Collections Only' },
                 ]}
                 triggerClassName='mt-2 border-border bg-card/70'
-              />
+               title="Select option"/>
             </div>
 
             {schemaConfig.mode === 'selected' && (
@@ -371,7 +371,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                   { value: 'json', label: 'JSON (Structured)' },
                 ]}
                 triggerClassName='mt-2 border-border bg-card/70'
-              />
+               title="Select option"/>
             </div>
 
             {/* Preview of selected collections */}
@@ -441,7 +441,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                         }))}
                         triggerClassName='border-border bg-card/70'
                         placeholder='Select provider'
-                      />
+                       title="Select provider"/>
                     )}
                     <SelectSimple
                       size='sm'
@@ -466,7 +466,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                         }))}
                       triggerClassName='flex-1 border-border bg-card/70'
                       placeholder='Select collection to browse'
-                    />
+                     title="Select collection to browse"/>
                   </div>
                   {browseCollection && (
                     <Button

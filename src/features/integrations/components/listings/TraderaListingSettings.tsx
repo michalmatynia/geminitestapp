@@ -32,7 +32,7 @@ export function TraderaListingSettings(): React.JSX.Element {
           }}
           placeholder='tradera-template-1'
           className='h-9 border bg-card/60 text-gray-200'
-        />
+         aria-label="tradera-template-1" title="tradera-template-1"/>
       </FormField>
 
       <FormField label='Listing Duration (Hours)'>
@@ -48,7 +48,7 @@ export function TraderaListingSettings(): React.JSX.Element {
             setSelectedTraderaDurationHours(Math.max(1, Math.min(720, Math.floor(value))));
           }}
           className='h-9 border bg-card/60 text-gray-200'
-        />
+         aria-label="Listing Duration (Hours)" title="Listing Duration (Hours)"/>
       </FormField>
 
       <ToggleRow
@@ -77,7 +77,7 @@ export function TraderaListingSettings(): React.JSX.Element {
             );
           }}
           className='h-9 border bg-card/60 text-gray-200 disabled:opacity-50'
-        />
+         aria-label="Relist Lead Time (Minutes)" title="Relist Lead Time (Minutes)"/>
       </FormField>
     </div>
   );

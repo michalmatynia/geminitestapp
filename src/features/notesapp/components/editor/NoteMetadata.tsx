@@ -88,7 +88,7 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setTitle(e.target.value)}
             className='w-full rounded-lg border bg-card/40 px-4 py-2 text-white'
             required
-          />
+           aria-label="Enter note title" title="Enter note title"/>
         </FormField>
       ) : null}
 
@@ -112,7 +112,7 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
             value={color}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setColor(e.target.value)}
             className='h-10 w-full cursor-pointer rounded-lg border bg-card/40 p-1'
-          />
+           aria-label="Color" title="Color"/>
           <Button
             type='button'
             variant='outline'
@@ -164,7 +164,7 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
                 }
               }}
               className='flex-1 rounded-none border-x-0 border-t border-b border bg-transparent px-0 py-2 text-white text-sm focus:outline-none focus:border-gray-500 placeholder:text-gray-500'
-            />
+             aria-label={selectedTagIds.length === 0 ? 'Search or create tags...' : 'Add tag...'} title={selectedTagIds.length === 0 ? 'Search or create tags...' : 'Add tag...'}/>
           </FormField>
 
           {isTagDropdownOpen && (tagInput || filteredTags.length > 0) && (
@@ -269,7 +269,7 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
               }}
               onFocus={(): void => setIsRelatedDropdownOpen(true)}
               className='flex-1 rounded-none border-x-0 border-t border-b border bg-transparent px-0 py-2 text-white text-sm focus:outline-none focus:border-gray-500 placeholder:text-gray-500'
-            />
+             aria-label="Search notes to relate..." title="Search notes to relate..."/>
 
             {isRelatedDropdownOpen && relatedNoteQuery && (
               <Card

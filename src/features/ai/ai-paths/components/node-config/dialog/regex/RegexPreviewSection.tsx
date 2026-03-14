@@ -35,7 +35,7 @@ export function RegexPreviewSection(props: RegexPreviewSectionProps): React.JSX.
         }
         aria-label='Preview sample'
         placeholder='Paste example strings here (one per line). Leave empty to use runtime inputs.'
-      />
+       title="Paste example strings here (one per line). Leave empty to use runtime inputs."/>
       <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
         <div className='rounded-md border border-border bg-card/50 p-3'>
           <div className='text-[11px] text-gray-300'>Matches</div>

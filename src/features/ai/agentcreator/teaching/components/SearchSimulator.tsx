@@ -63,7 +63,7 @@ export function SearchSimulator(props: SearchSimulatorProps): React.JSX.Element 
             placeholder='Ask a question...'
             className='min-h-[80px]'
             disabled={isSearching || !collectionId}
-          />
+           aria-label="Ask a question..." title="Ask a question..."/>
         </FormField>
 
         <div className='grid grid-cols-2 gap-4'>
@@ -75,7 +75,7 @@ export function SearchSimulator(props: SearchSimulatorProps): React.JSX.Element 
               value={String(topK)}
               onChange={(e) => setTopK(Number(e.target.value))}
               disabled={isSearching || !collectionId}
-            />
+             aria-label="Top K" title="Top K"/>
           </FormField>
           <FormField label='Min Score'>
             <Input
@@ -86,7 +86,7 @@ export function SearchSimulator(props: SearchSimulatorProps): React.JSX.Element 
               value={String(minScore)}
               onChange={(e) => setMinScore(Number(e.target.value))}
               disabled={isSearching || !collectionId}
-            />
+             aria-label="Min Score" title="Min Score"/>
           </FormField>
         </div>
 

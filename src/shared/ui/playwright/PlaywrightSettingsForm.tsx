@@ -152,7 +152,7 @@ function EmulationSection(): ReactElement {
             }
             options={playwrightDeviceOptions}
             placeholder='Select device'
-          />
+           ariaLabel="Select device" title="Select device"/>
         </FormField>
       )}
     </FormSection>
@@ -175,7 +175,7 @@ function TimeoutsSection(): ReactElement {
                 slowMo: toNumber(event.target.value, prev.slowMo),
               }))
             }
-          />
+           aria-label="SlowMo (ms)" title="SlowMo (ms)"/>
         </FormField>
       </FormSection>
       <FormSection variant='subtle-compact' className='p-3'>
@@ -190,7 +190,7 @@ function TimeoutsSection(): ReactElement {
                 timeout: toNumber(event.target.value, prev.timeout),
               }))
             }
-          />
+           aria-label="Timeout (ms)" title="Timeout (ms)"/>
         </FormField>
       </FormSection>
       <FormSection variant='subtle-compact' className='p-3'>
@@ -205,7 +205,7 @@ function TimeoutsSection(): ReactElement {
                 navigationTimeout: toNumber(event.target.value, prev.navigationTimeout),
               }))
             }
-          />
+           aria-label="Navigation Timeout (ms)" title="Navigation Timeout (ms)"/>
         </FormField>
       </FormSection>
     </div>
@@ -241,7 +241,7 @@ function HumanizeSection(): ReactElement {
                 mouseJitter: toNumber(event.target.value, prev.mouseJitter),
               }))
             }
-          />
+           aria-label="Mouse Jitter (pixels)" title="Mouse Jitter (pixels)"/>
         </FormField>
       )}
     </FormSection>
@@ -270,7 +270,7 @@ function DelayInputs(props: {
                 [minKey]: toNumber(event.target.value, prev[minKey] as number),
               }))
             }
-          />
+           aria-label={`${label} min`} title={`${label} min`}/>
         </FormField>
       </FormSection>
       <FormSection variant='subtle-compact' className='p-3'>
@@ -285,7 +285,7 @@ function DelayInputs(props: {
                 [maxKey]: toNumber(event.target.value, prev[maxKey] as number),
               }))
             }
-          />
+           aria-label={`${label} max`} title={`${label} max`}/>
         </FormField>
       </FormSection>
     </div>
@@ -323,7 +323,7 @@ function ProxySection(): ReactElement {
                   proxyServer: event.target.value,
                 }))
               }
-            />
+             aria-label="http://host:port" title="http://host:port"/>
           </FormField>
           <div className='grid gap-4 md:grid-cols-2'>
             <FormField label='Proxy username'>
@@ -337,7 +337,7 @@ function ProxySection(): ReactElement {
                     proxyUsername: event.target.value,
                   }))
                 }
-              />
+               aria-label="Proxy username" title="Proxy username"/>
             </FormField>
             <FormField label='Proxy password'>
               <Input
@@ -350,7 +350,7 @@ function ProxySection(): ReactElement {
                     proxyPassword: event.target.value,
                   }))
                 }
-              />
+               aria-label="Proxy password" title="Proxy password"/>
             </FormField>
           </div>
         </div>

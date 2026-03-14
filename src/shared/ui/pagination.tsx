@@ -108,7 +108,7 @@ function PaginationPageSize(): React.JSX.Element | null {
           label: String(size),
         }))}
         triggerClassName='h-8 w-20 text-xs'
-      />
+       ariaLabel="Select option" title="Select option"/>
     </div>
   );
 }

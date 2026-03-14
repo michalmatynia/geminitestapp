@@ -166,60 +166,66 @@ export default function LessonSlideSection({
     slideTitleRef.current?.focus({ preventScroll: true });
   }, [slide]);
 
-  const shouldRenderPanelNavigation = totalSlides > 1;
+  const isPrevDisabled = isFirst;
+  const isNextDisabled = isLast;
 
   return (
     <div
       className='flex w-full max-w-md flex-col items-center gap-4'
       onKeyDownCapture={handleKeyDownCapture}
     >
-      <div className='flex w-full flex-wrap items-center gap-3'>
-        <KangurButton onClick={handleBack} size='sm' variant='surface'>
+      <div className='flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center'>
+        <KangurButton
+          onClick={handleBack}
+          size='sm'
+          variant='surface'
+          className='w-full justify-center sm:w-auto sm:justify-start'
+        >
           <ChevronLeft className='w-4 h-4' aria-hidden='true' />
           Wróć do tematów
         </KangurButton>
 
-        {shouldRenderPanelNavigation ? (
-          <div className='flex items-center gap-2' role='group' aria-label='Nawigacja paneli'>
-            {isFirst ? null : (
-              <KangurButton
-                onClick={handlePreviousSlide}
-                aria-label='Poprzedni panel'
-                aria-keyshortcuts='ArrowLeft PageUp'
-                aria-controls={slidePanelId}
-                className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)]'
-                data-testid='lesson-slide-prev-button'
-                size='sm'
-                type='button'
-                title='Poprzedni panel'
-                variant='surface'
-              >
-                <ChevronLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
-              </KangurButton>
-            )}
+        <div
+          className='flex w-full items-center justify-center gap-2 sm:w-auto sm:justify-start'
+          role='group'
+          aria-label='Nawigacja paneli'
+        >
+          <KangurButton
+            onClick={handlePreviousSlide}
+            disabled={isPrevDisabled}
+            aria-label='Poprzedni panel'
+            aria-keyshortcuts='ArrowLeft PageUp'
+            aria-controls={slidePanelId}
+            className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-20'
+            data-testid='lesson-slide-prev-button'
+            size='sm'
+            type='button'
+            title='Poprzedni panel'
+            variant='surface'
+          >
+            <ChevronLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
+          </KangurButton>
 
-            {isLast ? null : (
-              <KangurButton
-                onClick={handleNextSlide}
-                aria-label='Następny panel'
-                aria-keyshortcuts='ArrowRight PageDown'
-                aria-controls={slidePanelId}
-                className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)]'
-                data-testid='lesson-slide-next-button'
-                size='sm'
-                type='button'
-                title='Następny panel'
-                variant='surface'
-              >
-                <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
-              </KangurButton>
-            )}
-          </div>
-        ) : null}
+          <KangurButton
+            onClick={handleNextSlide}
+            disabled={isNextDisabled}
+            aria-label='Następny panel'
+            aria-keyshortcuts='ArrowRight PageDown'
+            aria-controls={slidePanelId}
+            className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-20'
+            data-testid='lesson-slide-next-button'
+            size='sm'
+            type='button'
+            title='Następny panel'
+            variant='surface'
+          >
+            <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
+          </KangurButton>
+        </div>
 
         {shouldRenderNavigationPills ? (
           <nav
-            className='ml-auto flex flex-wrap items-center gap-2'
+            className='flex w-full flex-wrap items-center justify-center gap-2 sm:ml-auto sm:w-auto sm:justify-end'
             aria-label='Nawigacja slajdów'
             aria-describedby={slideKeyboardHintId}
           >

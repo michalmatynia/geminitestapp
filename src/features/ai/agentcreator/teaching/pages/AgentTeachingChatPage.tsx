@@ -215,7 +215,7 @@ function AgentTeachingChatPageContent(): React.JSX.Element {
               placeholder='Ask something that should be answered from your embedded knowledge…'
               className='min-h-[90px]'
               disabled={sending || !selectedAgentId}
-            />
+             aria-label="Ask something that should be answered from your embedded knowledge…" title="Ask something that should be answered from your embedded knowledge…"/>
             <div className='flex justify-end gap-2 mt-2'>
               <Button
                 type='button'

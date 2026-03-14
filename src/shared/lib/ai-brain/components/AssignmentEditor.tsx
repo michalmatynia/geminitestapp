@@ -72,7 +72,7 @@ export function AssignmentEditor(props: {
             disabled={!!readOnly || filteredProviderOptions.length <= 1}
             placeholder='Select provider'
             ariaLabel='Provider'
-          />
+           title="Select provider"/>
         </div>
 
         <div className='space-y-1'>
@@ -90,7 +90,7 @@ export function AssignmentEditor(props: {
               })
             }
             disabled={!!readOnly}
-          />
+           title="Input field"/>
         </div>
 
         <div className='space-y-1'>
@@ -103,7 +103,7 @@ export function AssignmentEditor(props: {
             }
             placeholder='gpt-4o-mini'
             disabled={!!readOnly || resolvedProvider !== 'model'}
-          />
+           title="gpt-4o-mini"/>
           {modelQuickPicks.length > 0 ? (
             <SelectSimple
               value=''
@@ -114,7 +114,7 @@ export function AssignmentEditor(props: {
               size='sm'
               className='mt-1'
               ariaLabel='Model preset'
-            />
+             title="Pick model preset"/>
           ) : null}
         </div>
 
@@ -128,7 +128,7 @@ export function AssignmentEditor(props: {
             }
             placeholder='agent_xxx'
             disabled={!!readOnly || resolvedProvider !== 'agent'}
-          />
+           title="agent_xxx"/>
           {agentQuickPicks.length > 0 ? (
             <SelectSimple
               value=''
@@ -139,7 +139,7 @@ export function AssignmentEditor(props: {
               size='sm'
               className='mt-1'
               ariaLabel='Agent preset'
-            />
+             title="Pick agent/persona preset"/>
           ) : null}
         </div>
 
@@ -156,7 +156,7 @@ export function AssignmentEditor(props: {
               updateField({ maxTokens: e.target.value === '' ? undefined : Number(e.target.value) })
             }
             disabled={!!readOnly}
-          />
+           title="Input field"/>
         </div>
       </div>
 
@@ -172,7 +172,7 @@ export function AssignmentEditor(props: {
             placeholder='Optional system prompt enforced by Brain'
             disabled={!!readOnly}
             className='min-h-[120px]'
-          />
+           title="Optional system prompt enforced by Brain"/>
         </div>
       ) : null}
 
@@ -186,7 +186,7 @@ export function AssignmentEditor(props: {
           }
           placeholder='Optional notes for this assignment'
           disabled={!!readOnly}
-        />
+         title="Optional notes for this assignment"/>
       </div>
     </div>
   );

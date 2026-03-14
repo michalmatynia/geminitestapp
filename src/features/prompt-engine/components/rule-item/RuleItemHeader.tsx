@@ -96,7 +96,13 @@ export function RuleItemHeader({
           </Badge>
         )}
         {rule ? (
-          <button type='button' onClick={() => handleToggleRuleEnabled(draft.uid, !rule.enabled)}>
+          <button
+            type='button'
+            onClick={() => handleToggleRuleEnabled(draft.uid, !rule.enabled)}
+            aria-label={rule.enabled ? 'Disable rule' : 'Enable rule'}
+            title='Toggle rule'
+            aria-pressed={rule.enabled}
+          >
             <StatusBadge
               status={rule.enabled ? 'Enabled' : 'Disabled'}
               variant={rule.enabled ? 'active' : 'neutral'}

@@ -215,7 +215,7 @@ export function OperationsTab(): React.JSX.Element {
               }
               options={RANGE_OPTIONS}
               ariaLabel='Operations range'
-            />
+             title="Select option"/>
           </div>
         }
       />

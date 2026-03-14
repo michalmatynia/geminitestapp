@@ -42,7 +42,7 @@ function ContentAiSection(): React.JSX.Element {
               disabled
               aria-label='Provider'
               className='cursor-not-allowed'
-            />
+             title="Provider"/>
           </FormField>
           <FormField label={brainAiProvider === 'agent' ? 'Deepthinking agent' : 'Model'}>
             <Input
@@ -55,7 +55,7 @@ function ContentAiSection(): React.JSX.Element {
               disabled
               aria-label={brainAiProvider === 'agent' ? 'Deepthinking agent' : 'Model'}
               className='cursor-not-allowed'
-            />
+             title={brainAiProvider === 'agent' ? 'Deepthinking agent' : 'Model'}/>
           </FormField>
           <FormField
             label='Prompt'
@@ -70,7 +70,7 @@ function ContentAiSection(): React.JSX.Element {
               placeholder={`Describe the content you want.\n\nContext:\n${contentAiPlaceholder}`}
               className='min-h-[120px] text-xs'
               spellCheck={false}
-            />
+             title={`Describe the content you want.\n\nContext:\n${contentAiPlaceholder}`}/>
           </FormField>
           <div className='flex items-center justify-between'>
             <div className='text-[11px] text-gray-500'>Context placeholders</div>
@@ -94,7 +94,7 @@ function ContentAiSection(): React.JSX.Element {
             readOnly
             aria-label='Context placeholders'
             className='min-h-[64px] text-xs font-mono text-gray-300'
-          />
+           title="Textarea"/>
           <div className='text-[11px] text-gray-500'>
             <span className='font-mono text-gray-300'>allowed_keys</span> ={' '}
             {contentAiAllowedKeys.length ? contentAiAllowedKeys.join(', ') : 'No keys available.'}
@@ -128,7 +128,7 @@ function ContentAiSection(): React.JSX.Element {
                 readOnly
                 aria-label='AI output'
                 className='min-h-[140px] text-xs font-mono text-gray-300'
-              />
+               title="Textarea"/>
             </FormSection>
           )}
         </div>

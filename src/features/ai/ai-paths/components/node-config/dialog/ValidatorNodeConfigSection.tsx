@@ -39,7 +39,7 @@ export function ValidatorNodeConfigSection(): React.JSX.Element | null {
           options={validationModeOptions}
           placeholder='Select mode'
           className='mt-2'
-        />
+         ariaLabel="Select mode" title="Select mode"/>
       </div>
       <div>
         <Label className='text-xs text-gray-400'>Required Paths (one per line)</Label>
@@ -54,7 +54,7 @@ export function ValidatorNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-        />
+         aria-label="Textarea" title="Textarea"/>
         <p className='mt-2 text-[11px] text-gray-500'>
           Paths are relative to the incoming context object.
         </p>

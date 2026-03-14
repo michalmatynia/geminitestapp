@@ -46,7 +46,7 @@ export function GenerationToolbarCropSection(): React.JSX.Element {
           options={cropModeOptions}
           triggerClassName='h-8 text-xs'
           ariaLabel='Crop mode'
-        />
+         title="Select option"/>
         {maybeWrapTooltip(
           cropTooltipContent.cropBoxTool,
           <Button

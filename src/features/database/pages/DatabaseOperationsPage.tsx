@@ -40,7 +40,7 @@ function DatabaseOperationsContent(): React.JSX.Element {
             onValueChange={(value: string): void => setDbType(value as DatabaseType)}
             options={[{ value: 'mongodb', label: 'MongoDB' }]}
             triggerClassName='h-8 text-xs w-[120px]'
-          />
+           ariaLabel="Select option" title="Select option"/>
           <Button asChild variant='outline' size='sm'>
             <Link href='/admin/databases/engine'>Back to Databases</Link>
           </Button>

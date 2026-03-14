@@ -234,7 +234,7 @@ export function useKangurAiTutorPortalViewModel(
     input.showSectionGuidanceCallout;
   const guestIntroHeadline = input.tutorContent.guestIntro.initial.headline;
   const guestIntroDescription = input.tutorContent.guestIntro.initial.description;
-  const handleCanonicalOnboardingAccept = input.handleGuestIntroAcceptSilent;
+  const handleCanonicalOnboardingAccept = input.handleGuestIntroStartChat;
   const handleCanonicalOnboardingDismiss = input.handleGuestIntroDismiss;
   const shouldRenderGuestIntro =
     input.tutorSurfaceMode === 'onboarding' &&

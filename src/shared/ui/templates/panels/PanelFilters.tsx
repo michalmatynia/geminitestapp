@@ -162,7 +162,7 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
                 value={localSearch}
                 onChange={(e) => setLocalSearch(e.target.value)}
                 className='pl-8 pr-8'
-              />
+               title={effectiveSearchPlaceholder}/>
               {localSearch && (
                 <button
                   onClick={() => {
@@ -325,7 +325,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
             placeholder={field.placeholder}
             triggerClassName='h-8 min-w-[9rem]'
             ariaLabel={field.label}
-          />
+           title={field.placeholder}/>
         </div>
       );
     }
@@ -386,7 +386,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
             value={localValue ?? ''}
             onChange={(e) => setLocalValue(e.target.value ? Number(e.target.value) : undefined)}
             className='h-8 text-sm'
-          />
+           aria-label={field.placeholder} title={field.placeholder}/>
         </div>
       );
 
@@ -406,7 +406,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
             value={(localValue as string) || ''}
             onChange={(e) => setLocalValue(e.target.value || undefined)}
             className='h-8 text-sm'
-          />
+           aria-label={inputId} title={inputId}/>
         </div>
       );
 
@@ -434,7 +434,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
                 })
               }
               className='h-8 text-sm'
-            />
+             title="From"/>
             <Input
               type='date'
               placeholder='To'
@@ -448,7 +448,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
                 })
               }
               className='h-8 text-sm'
-            />
+             title="To"/>
           </div>
         </div>
       );
@@ -472,7 +472,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
             value={(localValue as string) || ''}
             onChange={(e) => setLocalValue(e.target.value || undefined)}
             className='h-8 text-sm'
-          />
+           aria-label={field.placeholder} title={field.placeholder}/>
         </div>
       );
   }

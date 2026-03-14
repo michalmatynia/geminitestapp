@@ -73,7 +73,7 @@ export function RuleItemExploderSettings(): React.JSX.Element | null {
             { value: 'none', label: 'No type override' },
             ...PROMPT_EXPLODER_SEGMENT_OPTIONS,
           ]}
-        />
+         ariaLabel="Exploder Segment Type Hint" title="Exploder Segment Type Hint"/>
       </FormField>
       <FormField label='Exploder Priority'>
         <Input
@@ -89,7 +89,7 @@ export function RuleItemExploderSettings(): React.JSX.Element | null {
               promptExploderPriority: Math.min(50, Math.max(-50, Math.floor(parsed))),
             });
           }}
-        />
+         aria-label="Exploder Priority" title="Exploder Priority"/>
       </FormField>
       <FormField label='Exploder Confidence Boost'>
         <Input
@@ -106,7 +106,7 @@ export function RuleItemExploderSettings(): React.JSX.Element | null {
               promptExploderConfidenceBoost: Math.min(0.5, Math.max(0, parsed)),
             });
           }}
-        />
+         aria-label="Exploder Confidence Boost" title="Exploder Confidence Boost"/>
       </FormField>
       <FormField label='Exploder: Treat Match As Heading' className='md:col-span-4'>
         <button
@@ -140,7 +140,7 @@ export function RuleItemExploderSettings(): React.JSX.Element | null {
             });
           }}
           placeholder='case_resolver.addresser.firstName'
-        />
+         aria-label="case_resolver.addresser.firstName" title="case_resolver.addresser.firstName"/>
       </FormField>
       <FormField label='Capture Group'>
         <Input
@@ -161,7 +161,7 @@ export function RuleItemExploderSettings(): React.JSX.Element | null {
               promptExploderCaptureGroup: Math.min(20, Math.max(0, Math.floor(parsed))),
             });
           }}
-        />
+         aria-label="Capture Group" title="Capture Group"/>
       </FormField>
       <FormField label='Capture Apply To'>
         <SelectSimple
@@ -176,7 +176,7 @@ export function RuleItemExploderSettings(): React.JSX.Element | null {
             { value: 'segment', label: 'Whole segment' },
             { value: 'line', label: 'Each line' },
           ]}
-        />
+         ariaLabel="Capture Apply To" title="Capture Apply To"/>
       </FormField>
       <FormField label='Capture Normalize'>
         <SelectSimple
@@ -207,7 +207,7 @@ export function RuleItemExploderSettings(): React.JSX.Element | null {
             { value: 'month', label: 'Month' },
             { value: 'year', label: 'Year' },
           ]}
-        />
+         ariaLabel="Capture Normalize" title="Capture Normalize"/>
       </FormField>
       <FormField label='Capture Overwrite'>
         <button

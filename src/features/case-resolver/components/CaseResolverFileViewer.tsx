@@ -153,7 +153,7 @@ export function CaseResolverFileViewer(): React.JSX.Element {
             }}
             className='min-h-[72px] border-border bg-card/60 text-xs text-white'
             placeholder='Optional description for this file...'
-          />
+           aria-label="Optional description for this file..." title="Optional description for this file..."/>
         </div>
       </div>
 

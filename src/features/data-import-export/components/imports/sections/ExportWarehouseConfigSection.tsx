@@ -43,7 +43,7 @@ export function ExportWarehouseConfigSection(): React.JSX.Element {
             warehouseOptions.length === 0 ? 'Load warehouses first' : 'Skip stock export'
           }
           triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
-        />
+         ariaLabel={warehouseOptions.length === 0 ? 'Load warehouses first' : 'Skip stock export'} title={warehouseOptions.length === 0 ? 'Load warehouses first' : 'Skip stock export'}/>
       </div>
       <p className='mt-1 text-xs text-gray-500'>
         Used for exporting stock quantities to Base.com. Leave blank to skip stock.

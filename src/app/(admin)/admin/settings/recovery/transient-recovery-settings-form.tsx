@@ -156,7 +156,7 @@ export function TransientRecoverySettingsForm({
                     )
                   }
                   disabled={settingsQuery.isPending}
-                />
+                 aria-label="Max attempts" title="Max attempts"/>
               </FormField>
               <div className='grid grid-cols-2 gap-4'>
                 <FormField label='Initial delay (ms)'>
@@ -171,7 +171,7 @@ export function TransientRecoverySettingsForm({
                       )
                     }
                     disabled={settingsQuery.isPending}
-                  />
+                   aria-label="Initial delay (ms)" title="Initial delay (ms)"/>
                 </FormField>
                 <FormField label='Max delay (ms)'>
                   <Input
@@ -185,7 +185,7 @@ export function TransientRecoverySettingsForm({
                       )
                     }
                     disabled={settingsQuery.isPending}
-                  />
+                   aria-label="Max delay (ms)" title="Max delay (ms)"/>
                 </FormField>
               </div>
               <FormField label='Timeout per attempt (ms)' description='Set to 0 to disable.'>
@@ -200,7 +200,7 @@ export function TransientRecoverySettingsForm({
                     )
                   }
                   disabled={settingsQuery.isPending}
-                />
+                 aria-label="Timeout per attempt (ms)" title="Timeout per attempt (ms)"/>
               </FormField>
             </div>
           </FormSection>
@@ -235,7 +235,7 @@ export function TransientRecoverySettingsForm({
                     )
                   }
                   disabled={settingsQuery.isPending}
-                />
+                 aria-label="Failure threshold" title="Failure threshold"/>
               </FormField>
               <FormField
                 label='Reset timeout (ms)'
@@ -252,7 +252,7 @@ export function TransientRecoverySettingsForm({
                     )
                   }
                   disabled={settingsQuery.isPending}
-                />
+                 aria-label="Reset timeout (ms)" title="Reset timeout (ms)"/>
               </FormField>
             </div>
           </FormSection>

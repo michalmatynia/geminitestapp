@@ -119,7 +119,7 @@ export function SettingsTab(): React.JSX.Element {
                 { value: 'google', label: 'Google' },
                 { value: 'bing', label: 'Bing' },
               ]}
-            />
+             ariaLabel="Search Provider" title="Search Provider"/>
           </FormField>
         </div>
         <div className='flex flex-wrap items-center gap-4 mt-4'>
@@ -179,7 +179,7 @@ export function SettingsTab(): React.JSX.Element {
                   })),
                 ]}
                 placeholder='Select persona'
-              />
+               ariaLabel="Select persona" title="Select persona"/>
             </FormField>
             <FormSection variant='subtle' className='p-3 text-xs text-gray-400'>
               {selectedAgentPersona ? (
@@ -238,7 +238,7 @@ export function SettingsTab(): React.JSX.Element {
                     })),
                   ]}
                   placeholder='Select persona'
-                />
+                 ariaLabel="Select persona" title="Select persona"/>
               </FormField>
               <FormSection variant='subtle' className='p-3 text-xs text-gray-400'>
                 {selectedPersona ? (

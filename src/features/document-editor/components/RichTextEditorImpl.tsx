@@ -373,7 +373,7 @@ export default function RichTextEditorImpl({
         )}
         contentClassName='border-border bg-card text-white'
         ariaLabel='Select font family'
-      />
+       title="Font"/>
     );
   };
 

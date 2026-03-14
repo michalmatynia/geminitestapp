@@ -50,7 +50,7 @@ export function CategoryForm(): React.JSX.Element | null {
               onFormDataChange((prev) => ({ ...prev, name: e.target.value }))
             }
             placeholder='Category name'
-          />
+           aria-label="Category name" title="Category name"/>
         </div>
 
         <div>
@@ -69,7 +69,7 @@ export function CategoryForm(): React.JSX.Element | null {
               }))
             }
             placeholder='Optional description'
-          />
+           aria-label="Optional description" title="Optional description"/>
         </div>
 
         <div>
@@ -92,7 +92,7 @@ export function CategoryForm(): React.JSX.Element | null {
               placeholder='Select catalog'
               triggerClassName='w-full bg-gray-900 border-border text-white'
               ariaLabel='Catalog'
-            />
+             title="Select catalog"/>
           </div>
         </div>
 
@@ -118,7 +118,7 @@ export function CategoryForm(): React.JSX.Element | null {
               placeholder='Select parent category'
               triggerClassName='w-full bg-gray-900 border-border text-white'
               ariaLabel='Parent category'
-            />
+             title="Select parent category"/>
           </div>
           {loadingCategories && <p className='mt-1 text-xs text-gray-500'>Loading categories...</p>}
           {!loadingCategories && parentOptions.length === 0 && (
@@ -140,7 +140,7 @@ export function CategoryForm(): React.JSX.Element | null {
                 onFormDataChange((prev) => ({ ...prev, color: e.target.value }))
               }
               aria-label='Category color picker'
-            />
+             title={colorPickerId}/>
             <Input
               type='text'
               id={colorValueId}
@@ -151,7 +151,7 @@ export function CategoryForm(): React.JSX.Element | null {
               }
               placeholder='#10b981'
               aria-label='Category color value'
-            />
+             title="#10b981"/>
           </div>
         </div>
       </div>

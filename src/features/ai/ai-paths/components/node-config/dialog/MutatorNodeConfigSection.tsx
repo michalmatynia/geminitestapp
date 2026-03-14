@@ -27,7 +27,7 @@ export function MutatorNodeConfigSection(): React.JSX.Element | null {
               mutator: { ...mutatorConfig, path: event.target.value },
             })
           }
-        />
+         aria-label="Input field" title="Input field"/>
       </div>
       <div>
         <Label className='text-xs text-gray-400'>Value Template</Label>
@@ -42,7 +42,7 @@ export function MutatorNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-        />
+         aria-label="Textarea" title="Textarea"/>
         <p className='mt-2 text-[11px] text-gray-500'>
           Use <span className='text-gray-300'>{'{{value}}'}</span> for the current value or dot
           paths like <span className='text-gray-300'>{'{{entity.title}}'}</span>.

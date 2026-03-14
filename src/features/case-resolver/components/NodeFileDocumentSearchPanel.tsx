@@ -173,7 +173,7 @@ export function NodeFileDocumentSearchPanel(): React.JSX.Element {
           ]}
           className='w-[160px]'
           triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
-        />
+         ariaLabel="Select option" title="Select option"/>
 
         <Button
           variant='outline'

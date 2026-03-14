@@ -48,7 +48,7 @@ export function NodeNotesTab(): React.JSX.Element | null {
           }}
           placeholder='Add notes about this node...'
           className='min-h-[140px]'
-        />
+         aria-label="Add notes about this node..." title="Add notes about this node..."/>
       </FormField>
 
       <div className='flex items-center gap-3 py-1'>
@@ -91,7 +91,7 @@ export function NodeNotesTab(): React.JSX.Element | null {
                 updateSelectedNodeConfig({ notes: { color: event.target.value } });
               }}
               className='h-8 w-10 cursor-pointer p-1'
-            />
+             aria-label="Note color" title="Note color"/>
             <span className='text-[11px] text-gray-400 font-mono'>{noteColor}</span>
           </div>
         </div>

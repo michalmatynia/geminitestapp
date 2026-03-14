@@ -87,6 +87,8 @@ function AgentTeachingCollectionsContent(): React.JSX.Element {
               className='h-7 w-7 p-0'
               onClick={() => openEdit(row.original)}
               disabled={isSaving || isDeleting}
+              aria-label={`Edit ${row.original.name}`}
+              title='Edit collection'
             >
               <Pencil className='size-3.5' />
             </Button>
@@ -96,6 +98,8 @@ function AgentTeachingCollectionsContent(): React.JSX.Element {
               className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
               onClick={() => setItemToDelete(row.original)}
               disabled={isSaving || isDeleting}
+              aria-label={`Delete ${row.original.name}`}
+              title='Delete collection'
             >
               <Trash2 className='size-3.5' />
             </Button>

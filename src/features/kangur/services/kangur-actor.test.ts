@@ -7,7 +7,6 @@ vi.mock('@/server/auth', () => ({
 }));
 
 vi.mock('./kangur-learner-repository', () => ({
-  ensureDefaultKangurLearnerForOwner: vi.fn(),
   getKangurLearnerById: vi.fn(),
   listKangurLearnersByOwner: vi.fn(),
 }));

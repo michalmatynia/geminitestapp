@@ -178,6 +178,8 @@ export function EventStreamPanel(): React.JSX.Element {
                 className='h-7 w-7 p-0'
                 onClick={() => interpretLogMutation.mutate(row.original.id)}
                 disabled={interpretLogMutation.isPending}
+                aria-label='View AI interpretation'
+                title='View AI interpretation'
               >
                 <Eye className='size-3.5' />
               </Button>

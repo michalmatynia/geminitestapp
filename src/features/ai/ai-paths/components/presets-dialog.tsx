@@ -62,7 +62,7 @@ export function PresetsDialog(): React.JSX.Element {
               setPresetsJson(event.target.value)
             }
             aria-label='Presets JSON'
-          />
+           title="Textarea"/>
           <div className='flex flex-wrap items-center gap-2'>
             <Button
               type='button'

@@ -309,7 +309,7 @@ function Admin3DAssetsContent(): React.JSX.Element {
                   ...categories.map((cat) => ({ value: cat, label: cat })),
                 ]}
                 placeholder='All categories'
-              />
+               ariaLabel="All categories" title="All categories"/>
             </FormField>
 
             <FormField label='Tags'>

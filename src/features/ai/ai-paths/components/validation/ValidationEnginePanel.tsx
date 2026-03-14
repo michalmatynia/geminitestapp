@@ -54,7 +54,7 @@ export function ValidationEnginePanel(): React.JSX.Element {
             options={ENABLE_OPTIONS}
             className='mt-2'
             ariaLabel='Status'
-          />
+           title="Select option"/>
         </div>
         <div>
           <Label className='text-xs text-gray-400'>Policy</Label>
@@ -74,7 +74,7 @@ export function ValidationEnginePanel(): React.JSX.Element {
             options={VALIDATION_POLICY_OPTIONS}
             className='mt-2'
             ariaLabel='Policy'
-          />
+           title="Select option"/>
         </div>
         <div>
           <Label htmlFor={baseScoreId} className='text-xs text-gray-400'>
@@ -92,7 +92,7 @@ export function ValidationEnginePanel(): React.JSX.Element {
               if (!Number.isFinite(parsed)) return;
               updateDraft({ baseScore: Math.max(0, Math.min(100, parsed)) });
             }}
-          />
+           aria-label={baseScoreId} title={baseScoreId}/>
         </div>
         <div>
           <Label htmlFor={warnThresholdId} className='text-xs text-gray-400'>
@@ -110,7 +110,7 @@ export function ValidationEnginePanel(): React.JSX.Element {
               if (!Number.isFinite(parsed)) return;
               updateDraft({ warnThreshold: Math.max(0, Math.min(100, parsed)) });
             }}
-          />
+           aria-label={warnThresholdId} title={warnThresholdId}/>
         </div>
         <div>
           <Label htmlFor={blockThresholdId} className='text-xs text-gray-400'>
@@ -128,7 +128,7 @@ export function ValidationEnginePanel(): React.JSX.Element {
               if (!Number.isFinite(parsed)) return;
               updateDraft({ blockThreshold: Math.max(0, Math.min(100, parsed)) });
             }}
-          />
+           aria-label={blockThresholdId} title={blockThresholdId}/>
         </div>
         <div>
           <Label htmlFor={schemaVersionId} className='text-xs text-gray-400'>
@@ -139,7 +139,7 @@ export function ValidationEnginePanel(): React.JSX.Element {
             className='mt-2 h-9'
             value={String(validationDraft.schemaVersion ?? 2)}
             readOnly={true}
-          />
+           aria-label={schemaVersionId} title={schemaVersionId}/>
         </div>
       </div>
     </Card>

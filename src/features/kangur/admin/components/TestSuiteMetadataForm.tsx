@@ -18,7 +18,7 @@ export function TestSuiteMetadataForm(props: {
           onChange={(e): void => setFormData((f) => ({ ...f, title: e.target.value }))}
           placeholder='e.g. Kangur Matematyczny 2024 — 3 pkt'
           className='h-9'
-        />
+         aria-label="e.g. Kangur Matematyczny 2024 — 3 pkt" title="e.g. Kangur Matematyczny 2024 — 3 pkt"/>
       </FormField>
 
       <FormField label='Description'>
@@ -27,7 +27,7 @@ export function TestSuiteMetadataForm(props: {
           onChange={(e): void => setFormData((f) => ({ ...f, description: e.target.value }))}
           placeholder='Optional description of this test suite'
           className='min-h-[80px]'
-        />
+         aria-label="Optional description of this test suite" title="Optional description of this test suite"/>
       </FormField>
 
       <div className='grid gap-4 sm:grid-cols-3'>
@@ -38,7 +38,7 @@ export function TestSuiteMetadataForm(props: {
             placeholder='e.g. 2024'
             className='h-9'
             maxLength={4}
-          />
+           aria-label="e.g. 2024" title="e.g. 2024"/>
         </FormField>
 
         <FormField label='Grade Level'>
@@ -47,7 +47,7 @@ export function TestSuiteMetadataForm(props: {
             onChange={(e): void => setFormData((f) => ({ ...f, gradeLevel: e.target.value }))}
             placeholder='e.g. III–IV'
             className='h-9'
-          />
+           aria-label="e.g. III–IV" title="e.g. III–IV"/>
         </FormField>
 
         <FormField label='Test group'>
@@ -56,7 +56,7 @@ export function TestSuiteMetadataForm(props: {
             onChange={(e): void => setFormData((f) => ({ ...f, category: e.target.value }))}
             placeholder='e.g. Olympiad 2024, Geometry drills'
             className='h-9'
-          />
+           aria-label="e.g. Olympiad 2024, Geometry drills" title="e.g. Olympiad 2024, Geometry drills"/>
         </FormField>
       </div>
 

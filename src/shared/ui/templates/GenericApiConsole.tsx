@@ -160,14 +160,14 @@ export function GenericApiConsole(props: GenericApiConsoleProps): React.JSX.Elem
               variant='subtle'
               size='sm'
               triggerClassName='w-full'
-            />
+             ariaLabel="Method" title="Method"/>
           ) : (
             <Input
               variant='subtle'
               size='sm'
               value={method}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => onSetMethod(e.target.value)}
-            />
+             aria-label="Method" title="Method"/>
           )}
         </FormField>
         {onSetPath && (
@@ -177,7 +177,7 @@ export function GenericApiConsole(props: GenericApiConsoleProps): React.JSX.Elem
               size='sm'
               value={path || ''}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => onSetPath(e.target.value)}
-            />
+             aria-label="Endpoint path" title="Endpoint path"/>
           </FormField>
         )}
       </div>
@@ -193,7 +193,7 @@ export function GenericApiConsole(props: GenericApiConsoleProps): React.JSX.Elem
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
               onSetBodyOrParams(e.target.value)
             }
-          />
+           aria-label={bodyOrParamsLabel} title={bodyOrParamsLabel}/>
         </FormField>
       </div>
 

@@ -99,7 +99,7 @@ export function InlineEditorCard(props: {
                 label: option.label,
               }))}
               triggerClassName='h-9'
-            />
+             ariaLabel="Alignment" title="Alignment"/>
           </FormField>
 
           <FormField label='Text Content'>
@@ -120,7 +120,7 @@ export function InlineEditorCard(props: {
               }}
               placeholder='Optional spoken version for this block'
               className='min-h-[100px]'
-            />
+             aria-label="Optional spoken version for this block" title="Optional spoken version for this block"/>
           </FormField>
         </div>
       ) : block.type === 'svg' ? (
@@ -134,7 +134,7 @@ export function InlineEditorCard(props: {
                 }}
                 placeholder='Optional SVG title'
                 className='h-9'
-              />
+               aria-label="Optional SVG title" title="Optional SVG title"/>
             </FormField>
             <FormField label='Alignment'>
               <SelectSimple
@@ -150,7 +150,7 @@ export function InlineEditorCard(props: {
                   label: option.label,
                 }))}
                 triggerClassName='h-9'
-              />
+               ariaLabel="Alignment" title="Alignment"/>
             </FormField>
           </div>
 
@@ -163,7 +163,7 @@ export function InlineEditorCard(props: {
                 }}
                 placeholder='0 0 100 100'
                 className='h-9'
-              />
+               aria-label="0 0 100 100" title="0 0 100 100"/>
             </FormField>
 
             <FormField label='Fit'>
@@ -180,7 +180,7 @@ export function InlineEditorCard(props: {
                   label: option.label,
                 }))}
                 triggerClassName='h-9'
-              />
+               ariaLabel="Fit" title="Fit"/>
             </FormField>
 
             <FormField label='Max Width'>
@@ -200,7 +200,7 @@ export function InlineEditorCard(props: {
                   });
                 }}
                 className='h-9'
-              />
+               aria-label="Max Width" title="Max Width"/>
             </FormField>
           </div>
 
@@ -231,7 +231,7 @@ export function InlineEditorCard(props: {
               }}
               placeholder='Optional spoken description of this illustration'
               className='min-h-[100px]'
-            />
+             aria-label="Optional spoken description of this illustration" title="Optional spoken description of this illustration"/>
           </FormField>
         </div>
       ) : (
@@ -245,7 +245,7 @@ export function InlineEditorCard(props: {
                 }}
                 placeholder='Optional image title'
                 className='h-9'
-              />
+               aria-label="Optional image title" title="Optional image title"/>
             </FormField>
             <FormField label='Alt Text'>
               <Input
@@ -255,7 +255,7 @@ export function InlineEditorCard(props: {
                 }}
                 placeholder='Describe the image for accessibility'
                 className='h-9'
-              />
+               aria-label="Describe the image for accessibility" title="Describe the image for accessibility"/>
             </FormField>
           </div>
 
@@ -274,7 +274,7 @@ export function InlineEditorCard(props: {
                   label: option.label,
                 }))}
                 triggerClassName='h-9'
-              />
+               ariaLabel="Alignment" title="Alignment"/>
             </FormField>
 
             <FormField label='Fit'>
@@ -291,7 +291,7 @@ export function InlineEditorCard(props: {
                   label: option.label,
                 }))}
                 triggerClassName='h-9'
-              />
+               ariaLabel="Fit" title="Fit"/>
             </FormField>
 
             <FormField label='Max Width'>
@@ -311,7 +311,7 @@ export function InlineEditorCard(props: {
                   });
                 }}
                 className='h-9'
-              />
+               aria-label="Max Width" title="Max Width"/>
             </FormField>
           </div>
 
@@ -323,7 +323,7 @@ export function InlineEditorCard(props: {
               }}
               placeholder='Optional caption under the image'
               className='min-h-[90px]'
-            />
+             aria-label="Optional caption under the image" title="Optional caption under the image"/>
           </FormField>
 
           <FormField label='Narration Description'>
@@ -334,7 +334,7 @@ export function InlineEditorCard(props: {
               }}
               placeholder='Optional spoken description of this image'
               className='min-h-[100px]'
-            />
+             aria-label="Optional spoken description of this image" title="Optional spoken description of this image"/>
           </FormField>
 
           <FormField label='Image Source (SVG only)'>
@@ -348,7 +348,7 @@ export function InlineEditorCard(props: {
                 onBlur={(): void => commitImageSource(imageSourceDraft)}
                 placeholder='/uploads/...svg or https://...svg'
                 className='h-9'
-              />
+               aria-label="/uploads/...svg or https://...svg" title="/uploads/...svg or https://...svg"/>
               <div className='text-xs text-slate-600'>
                 {imageSourceError ?? SVG_IMAGE_SOURCE_HELPER_TEXT}
               </div>

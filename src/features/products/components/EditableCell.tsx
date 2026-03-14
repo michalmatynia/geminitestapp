@@ -54,7 +54,7 @@ function EditableCellInput(): React.JSX.Element {
       onBlur={handleBlur}
       disabled={isSaving}
       className='h-8 w-24 text-sm'
-    />
+     title="Input field"/>
   );
 }
 

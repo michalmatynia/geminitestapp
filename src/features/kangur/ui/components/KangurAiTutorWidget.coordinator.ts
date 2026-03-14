@@ -38,6 +38,7 @@ import { useKangurAiTutorTelemetryBridge } from './KangurAiTutorWidget.telemetry
 import type { KangurAiTutorPortalContextValue } from './KangurAiTutorPortal.context';
 import type { KangurAiTutorWidgetState } from './KangurAiTutorWidget.state';
 import { areTutorSelectionTextsEquivalent } from './KangurAiTutorWidget.helpers';
+import { persistHomeOnboardingRecord } from './KangurAiTutorWidget.storage';
 
 type LoginModalState = {
   authMode: KangurAuthMode;
@@ -444,27 +445,25 @@ export function useKangurAiTutorWidgetCoordinator({
     shouldRepeatHomeOnboardingOnEntry,
   });
 
-  const handleAuthenticatedOnboardingDismiss = useCallback((): void => {
+  const handleOnboardingAccept = useCallback((): void => {
+    guestIntroFlow.handleGuestIntroAcceptSilent();
     widgetState.setCanonicalTutorModalVisible(false);
-    widgetState.setGuestIntroVisible(false);
-    widgetState.setGuestIntroHelpVisible(false);
-  }, [widgetState]);
 
-  const handleGuestIntroStartChat = useCallback((): void => {
-    if (isAnonymousVisitor) {
-      guestIntroFlow.handleGuestIntroAcceptSilent();
-      const callbackUrl = typeof window === 'undefined' ? null : window.location.href;
-      loginModal.openLoginModal(callbackUrl, { authMode: 'sign-in' });
-      return;
+    if (homeOnboardingSteps.length > 0) {
+      const nextRecord = persistHomeOnboardingRecord('shown');
+      widgetState.setHomeOnboardingRecord(nextRecord);
+      widgetState.setHomeOnboardingStepIndex(0);
+      widgetState.homeOnboardingShownForCurrentEntryRef.current = true;
     }
-
-    handleAuthenticatedOnboardingDismiss();
   }, [
     guestIntroFlow,
-    handleAuthenticatedOnboardingDismiss,
-    isAnonymousVisitor,
-    loginModal,
+    homeOnboardingSteps.length,
+    widgetState,
   ]);
+
+  const handleGuestIntroStartChat = useCallback((): void => {
+    handleOnboardingAccept();
+  }, [handleOnboardingAccept]);
 
   const avatarShellActions = useKangurAiTutorAvatarShellActions({
     canonicalTutorModalVisible: widgetState.canonicalTutorModalVisible,
@@ -491,6 +490,7 @@ export function useKangurAiTutorWidgetCoordinator({
     setGuestIntroHelpVisible: widgetState.setGuestIntroHelpVisible,
     setGuestIntroVisible: widgetState.setGuestIntroVisible,
     setGuidedTutorTarget: widgetState.setGuidedTutorTarget,
+    setHasNewMessage: widgetState.setHasNewMessage,
     setHighlightedSection: widgetState.setHighlightedSection,
     setHoveredSectionAnchorId: widgetState.setHoveredSectionAnchorId,
     setSectionResponseComplete: widgetState.setSectionResponseComplete,

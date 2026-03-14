@@ -63,7 +63,7 @@ export function BindingsPanel(): React.JSX.Element {
                     { value: 'references', label: 'References' },
                     { value: 'uses_param', label: 'Uses Param' },
                   ]}
-                />
+                 ariaLabel="Select option" title="Select option"/>
                 <SelectSimple
                   size='sm'
                   value={bindingDraft.fromSegmentId}
@@ -75,7 +75,7 @@ export function BindingsPanel(): React.JSX.Element {
                     }));
                   }}
                   options={segmentOptions}
-                />
+                 ariaLabel="Select option" title="Select option"/>
                 <SelectSimple
                   size='sm'
                   value={bindingDraft.fromSubsectionId}
@@ -86,7 +86,7 @@ export function BindingsPanel(): React.JSX.Element {
                     }));
                   }}
                   options={fromSubsectionOptions}
-                />
+                 ariaLabel="Select option" title="Select option"/>
               </div>
               <div className='grid gap-2 md:grid-cols-2'>
                 <SelectSimple
@@ -100,7 +100,7 @@ export function BindingsPanel(): React.JSX.Element {
                     }));
                   }}
                   options={segmentOptions}
-                />
+                 ariaLabel="Select option" title="Select option"/>
                 <SelectSimple
                   size='sm'
                   value={bindingDraft.toSubsectionId}
@@ -111,7 +111,7 @@ export function BindingsPanel(): React.JSX.Element {
                     }));
                   }}
                   options={toSubsectionOptions}
-                />
+                 ariaLabel="Select option" title="Select option"/>
               </div>
               <div className='grid gap-2 md:grid-cols-2'>
                 <Input
@@ -123,7 +123,7 @@ export function BindingsPanel(): React.JSX.Element {
                     }));
                   }}
                   placeholder='Source label (optional)'
-                />
+                 aria-label="Source label (optional)" title="Source label (optional)"/>
                 <Input
                   value={bindingDraft.targetLabel}
                   onChange={(event) => {
@@ -133,7 +133,7 @@ export function BindingsPanel(): React.JSX.Element {
                     }));
                   }}
                   placeholder='Target label (optional)'
-                />
+                 aria-label="Target label (optional)" title="Target label (optional)"/>
               </div>
               <div className='flex justify-end'>
                 <Button

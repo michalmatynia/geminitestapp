@@ -213,7 +213,9 @@ export type ProductBulkImagesBase64Response = z.infer<
 /**
  * Product API Paged Result
  */
-export type ProductsPagedResult = {
-  products: ProductWithImages[];
-  total: number;
-};
+export const productsPagedResultSchema = z.object({
+  products: z.array(productWithImagesSchema),
+  total: z.number().int().min(0),
+});
+
+export type ProductsPagedResult = z.infer<typeof productsPagedResultSchema>;

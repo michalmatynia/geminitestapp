@@ -262,7 +262,7 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
               }
             }}
             placeholder={`Write a ${providerLabel} query that finds products where... (Ctrl+Enter to send)`}
-          />
+           aria-label={`Write a ${providerLabel} query that finds products where... (Ctrl+Enter to send)`} title={`Write a ${providerLabel} query that finds products where... (Ctrl+Enter to send)`}/>
           <DatabaseAiPromptConnectionStatus
             aiPrompt={databaseConfig.aiPrompt ?? ''}
             updateQueryConfig={(patch) => {
@@ -317,7 +317,7 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
                   }))}
                   placeholder='Select collection'
                   triggerClassName='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'
-                />
+                 ariaLabel="Select collection" title="Select collection"/>
               )}
               <Input
                 size='sm'
@@ -343,7 +343,7 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
                 }}
                 placeholder='Entity ID (e.g. products/123 or product-uuid)'
                 className='h-7 flex-1 border-border bg-card/70 text-[11px] text-white'
-              />
+               aria-label="Entity ID (e.g. products/123 or product-uuid)" title="Entity ID (e.g. products/123 or product-uuid)"/>
               <Button
                 type='button'
                 className='h-7 rounded-md border border-border bg-card/70 px-3 text-[10px] text-gray-200 hover:bg-muted/60'

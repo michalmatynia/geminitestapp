@@ -37,7 +37,7 @@ export function ParserMappingList(props: ParserMappingListProps): React.JSX.Elem
             }
             aria-label='Output key'
             placeholder='output key'
-          />
+           title="output key"/>
           <div className='space-y-2'>
             <Input
               variant='subtle'
@@ -48,7 +48,7 @@ export function ParserMappingList(props: ParserMappingListProps): React.JSX.Elem
               }
               aria-label='Output path'
               placeholder='$.path.to.value'
-            />
+             title="$.path.to.value"/>
             <SelectSimple
               size='sm'
               onValueChange={(value: string) => updateMappingPath(index, value)}
@@ -58,7 +58,7 @@ export function ParserMappingList(props: ParserMappingListProps): React.JSX.Elem
               variant='subtle'
               triggerClassName='h-8 text-[10px]'
               value=''
-            />
+             title="Pick a suggested path"/>
           </div>
           <Button
             type='button'

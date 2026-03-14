@@ -39,7 +39,7 @@ export function BaseListingSettings(): React.JSX.Element {
               label: inventory.name,
             }))}
           placeholder='Select inventory...'
-        />
+         ariaLabel="Select inventory..." title="Select inventory..."/>
         {inventories.length === 0 && !loadingInventories && (
           <Alert variant='error' className='mt-2 py-1 text-xs'>
             No inventories found. Please check your Base.com account.
@@ -65,7 +65,7 @@ export function BaseListingSettings(): React.JSX.Element {
               })),
           ]}
           placeholder='No template (use defaults)'
-        />
+         ariaLabel="No template (use defaults)" title="No template (use defaults)"/>
       </FormField>
 
       <ToggleRow

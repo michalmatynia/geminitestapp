@@ -118,7 +118,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
             { value: 'database', label: 'Database Query' },
           ]}
           placeholder='Select mode'
-        />
+         ariaLabel="Select mode" title="Select mode"/>
       </FormField>
       <div className='grid gap-3 sm:grid-cols-2'>
         <FormField label='Interval (ms)'>
@@ -133,7 +133,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                 intervalMs: toNumber(event.target.value, resolvedPollConfig.intervalMs),
               })
             }
-          />
+           aria-label="Interval (ms)" title="Interval (ms)"/>
         </FormField>
         <FormField label='Max Attempts'>
           <Input
@@ -147,7 +147,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                 maxAttempts: toNumber(event.target.value, resolvedPollConfig.maxAttempts),
               })
             }
-          />
+           aria-label="Max Attempts" title="Max Attempts"/>
         </FormField>
       </div>
       {resolvedPollConfig.mode === 'job' && (
@@ -176,7 +176,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                   { value: 'mongodb', label: 'MongoDB' },
                 ]}
                 placeholder='Select provider'
-              />
+               ariaLabel="Select provider" title="Select provider"/>
             </FormField>
             <FormField label='Collection'>
               <SelectSimple
@@ -199,7 +199,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                   { value: 'custom', label: 'Custom' },
                 ]}
                 placeholder='Select collection'
-              />
+               ariaLabel="Select collection" title="Select collection"/>
             </FormField>
           </div>
           {collectionOption === 'custom' && (
@@ -216,7 +216,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                     },
                   })
                 }
-              />
+               aria-label="Custom collection" title="Custom collection"/>
             </FormField>
           )}
           <div className='rounded-md border border-border bg-card/60 p-3'>
@@ -249,7 +249,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                   { value: 'custom', label: 'Custom' },
                 ]}
                 placeholder='Select mode'
-              />
+               ariaLabel="Select mode" title="Select mode"/>
             </FormField>
             <FormField label='ID type'>
               <SelectSimple
@@ -269,7 +269,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                   { value: 'objectId', label: 'ObjectId' },
                 ]}
                 placeholder='Select ID type'
-              />
+               ariaLabel="Select ID type" title="Select ID type"/>
             </FormField>
           </div>
           {queryConfig.mode === 'preset' && (
@@ -294,7 +294,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                     { value: 'by_field', label: 'By custom field' },
                   ]}
                   placeholder='Select preset'
-                />
+                 ariaLabel="Select preset" title="Select preset"/>
               </FormField>
               <FormField label='Custom field'>
                 <Input
@@ -310,7 +310,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                       },
                     })
                   }
-                />
+                 aria-label="Custom field" title="Custom field"/>
               </FormField>
             </div>
           )}
@@ -332,7 +332,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                     },
                   })
                 }
-              />
+               aria-label="Query template" title="Query template"/>
             </FormField>
           )}
           <div className='grid gap-3 sm:grid-cols-2'>
@@ -351,7 +351,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                     },
                   })
                 }
-              />
+               aria-label="Limit" title="Limit"/>
             </FormField>
             <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
               <span>Single result</span>
@@ -387,7 +387,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                     },
                   })
                 }
-              />
+               aria-label="Sort JSON" title="Sort JSON"/>
             </FormField>
             <FormField label='Projection JSON'>
               <Textarea
@@ -403,7 +403,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                     },
                   })
                 }
-              />
+               aria-label="Projection JSON" title="Projection JSON"/>
             </FormField>
           </div>
           <div className='grid gap-3 sm:grid-cols-2'>
@@ -415,7 +415,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   updatePollConfig({ successPath: event.target.value })
                 }
-              />
+               aria-label="Success path" title="Success path"/>
             </FormField>
             <FormField label='Success operator'>
               <SelectSimple
@@ -434,7 +434,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                   { value: 'contains', label: 'Contains' },
                 ]}
                 placeholder='Select operator'
-              />
+               ariaLabel="Select operator" title="Select operator"/>
             </FormField>
           </div>
           <div className='grid gap-3 sm:grid-cols-2'>
@@ -446,7 +446,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   updatePollConfig({ successValue: event.target.value })
                 }
-              />
+               aria-label="Success value" title="Success value"/>
             </FormField>
             <FormField label='Result path'>
               <Input
@@ -456,7 +456,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   updatePollConfig({ resultPath: event.target.value })
                 }
-              />
+               aria-label="Result path" title="Result path"/>
             </FormField>
           </div>
           <p className='text-[11px] text-gray-500'>

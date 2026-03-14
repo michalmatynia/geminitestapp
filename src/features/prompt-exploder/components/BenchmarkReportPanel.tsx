@@ -93,7 +93,7 @@ export function BenchmarkReportPanel(): React.JSX.Element {
                   label: 'Custom (JSON)',
                 },
               ]}
-            />
+             ariaLabel="Benchmark Suite" title="Benchmark Suite"/>
           </FormField>
           <FormField label='Low-Confidence Threshold' id='low-confidence-threshold'>
             <Input
@@ -112,7 +112,7 @@ export function BenchmarkReportPanel(): React.JSX.Element {
                 if (!Number.isFinite(value)) return;
                 setBenchmarkLowConfidenceThresholdDraft(promptExploderClampNumber(value, 0.3, 0.9));
               }}
-            />
+             aria-label="Low-Confidence Threshold" title="Low-Confidence Threshold"/>
           </FormField>
           <FormField label='Suggestion Limit / Case' id='suggestion-limit'>
             <Input
@@ -131,7 +131,7 @@ export function BenchmarkReportPanel(): React.JSX.Element {
                   promptExploderClampNumber(Math.floor(value), 1, 20)
                 );
               }}
-            />
+             aria-label="Suggestion Limit / Case" title="Suggestion Limit / Case"/>
           </FormField>
           <div className='md:col-span-2 rounded border border-border/50 bg-card/20 p-2 text-[11px] text-gray-500'>
             Suite controls benchmark depth only. Runtime rules/templates still follow the selected
@@ -145,7 +145,7 @@ export function BenchmarkReportPanel(): React.JSX.Element {
                 value={customCaseDraftId}
                 onChange={(event) => setCustomCaseDraftId(event.target.value)}
                 placeholder='Custom case id (optional override)'
-              />
+               aria-label="Custom case id (optional override)" title="Custom case id (optional override)"/>
               <Button
                 type='button'
                 variant='outline'
@@ -201,6 +201,8 @@ export function BenchmarkReportPanel(): React.JSX.Element {
                 setCustomBenchmarkCasesDraft(event.target.value);
               }}
               placeholder='[{"id":"case_1","prompt":"...","expectedTypes":["sequence"],"minSegments":1}]'
+              aria-label='[{"id":"case_1","prompt":"...","expectedTypes":["sequence"],"minSegments":1}]'
+              title='[{"id":"case_1","prompt":"...","expectedTypes":["sequence"],"minSegments":1}]'
             />
             <div
               className={`mt-1 text-[10px] ${isCustomCasesValid ? 'text-gray-500' : 'text-red-300'}`}

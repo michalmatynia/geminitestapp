@@ -386,7 +386,7 @@ const KANGUR_THEME_SECTIONS: Array<{
                 disabled={disabled}
                 className='font-mono'
                 aria-label='Progress track color value'
-              />
+               title="Auto"/>
               <Button
                 type='button'
                 size='xs'

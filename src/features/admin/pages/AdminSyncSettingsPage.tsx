@@ -159,7 +159,7 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 setIntervalSeconds(Number(event.target.value))
               }
-            />
+             aria-label="Interval (seconds)" title="Interval (seconds)"/>
             <Hint className='mt-1'>Between 10 seconds and 1 hour.</Hint>
           </FormField>
 

@@ -58,12 +58,16 @@ export default function Leaderboard(): React.JSX.Element {
               type='button'
               onClick={filter.select}
               aria-pressed={filter.selected}
+              aria-label={filter.label}
               className='h-10 flex-1 justify-center px-3 text-xs sm:flex-none'
               data-testid={`leaderboard-operation-filter-${filter.id}`}
               size='sm'
               variant={filter.selected ? 'segmentActive' : 'segment'}
             >
-              {filter.displayLabel}
+              <span aria-hidden='true' className='text-base'>
+                {filter.displayLabel.split(' ')[0]}
+              </span>
+              <span className='hidden sm:inline'>{filter.label}</span>
             </KangurButton>
           ))}
         </div>

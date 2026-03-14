@@ -625,7 +625,7 @@ export function MenuSettingsPanel({
                     aria-label='Menu item label'
                     placeholder='Label'
                     className='h-7 bg-gray-800/40 text-xs'
-                  />
+                   title="Label"/>
                   <Input
                     value={item.url}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
@@ -634,7 +634,7 @@ export function MenuSettingsPanel({
                     aria-label='Menu item URL'
                     placeholder='URL'
                     className='h-7 bg-gray-800/40 text-xs'
-                  />
+                   title="URL"/>
                   {settings.showItemImages && (
                     <Input
                       value={item.imageUrl ?? ''}
@@ -644,7 +644,7 @@ export function MenuSettingsPanel({
                       aria-label='Menu item image URL'
                       placeholder='Image URL'
                       className='h-7 bg-gray-800/40 text-xs'
-                    />
+                     title="Image URL"/>
                   )}
                 </div>
                 <Button
@@ -717,7 +717,7 @@ export function MenuSettingsPanel({
                   placeholder='Select zone'
                   ariaLabel='Menu scope'
                   triggerClassName='h-8 text-xs'
-                />
+                 title="Select zone"/>
                 {menuScopeId !== 'default' && !hasScopedMenu ? (
                   <p className='text-[10px] text-gray-500'>
                     Using base menu defaults until you customize this scope.

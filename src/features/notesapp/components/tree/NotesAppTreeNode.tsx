@@ -115,7 +115,7 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
           }}
           onClick={(event: React.MouseEvent<HTMLInputElement>): void => event.stopPropagation()}
           className='h-7 min-w-0 flex-1 border-blue-500 bg-gray-800 px-1 py-0.5 text-sm text-white outline-none'
-        />
+         title="Input field"/>
       ) : (
         <button
           type='button'

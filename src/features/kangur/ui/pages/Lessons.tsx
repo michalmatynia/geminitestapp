@@ -558,7 +558,7 @@ export default function Lessons() {
     });
   };
 
-  const learnerId = user?.activeLearner?.id ?? user?.id ?? null;
+  const learnerId = user?.activeLearner?.id ?? null;
   useEffect(() => {
     if (!isSecretLessonUnlocked) {
       setIsSecretLessonActive(false);

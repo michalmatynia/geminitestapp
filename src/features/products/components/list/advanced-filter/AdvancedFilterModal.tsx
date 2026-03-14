@@ -132,7 +132,7 @@ export function AdvancedFilterModal(props: AdvancedFilterModalProps): React.JSX.
                   onChange={(event) => setPresetName(event.target.value)}
                   placeholder='Preset name'
                   className='h-8'
-                />
+                 title="Preset name"/>
               </div>
               <Button
                 type='button'

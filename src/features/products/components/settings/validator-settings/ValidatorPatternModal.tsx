@@ -90,7 +90,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                 }))
               }
               options={sequenceGroupOptions}
-            />
+             ariaLabel="Sequence Group" title="Sequence Group"/>
           </FormField>
           <FormField label='Sequence'>
             <Input
@@ -103,7 +103,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                 }))
               }
               placeholder='10'
-            />
+             aria-label="10" title="10"/>
           </FormField>
         </div>
 
@@ -119,7 +119,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                 }))
               }
               options={CHAIN_MODE_OPTIONS}
-            />
+             ariaLabel="Chain Mode" title="Chain Mode"/>
           </FormField>
           <FormField label='Max Executions'>
             <Input
@@ -132,7 +132,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                 }))
               }
               placeholder='1'
-            />
+             aria-label="1" title="1"/>
           </FormField>
           <FormField label='Pass Output'>
             <div className='flex items-center justify-between rounded-md border border-border bg-gray-900/70 px-3 py-2 h-9'>
@@ -189,7 +189,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                   setFormData((prev: PatternFormData) => ({ ...prev, regex: event.target.value }))
                 }
                 placeholder='\\s{2,}|\\*{2,}'
-              />
+               aria-label="\\\\s{2,}|\\\\*{2,}" title="\\\\s{2,}|\\\\*{2,}"/>
             </ValidatorDocTooltip>
           </FormField>
           <FormField label='Flags'>
@@ -200,7 +200,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                 setFormData((prev: PatternFormData) => ({ ...prev, flags: event.target.value }))
               }
               placeholder='gim'
-            />
+             aria-label="gim" title="gim"/>
           </FormField>
           <FormField label='Debounce (ms)'>
             <Input
@@ -216,7 +216,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                 }))
               }
               placeholder='0'
-            />
+             aria-label="0" title="0"/>
           </FormField>
         </div>
 
@@ -228,7 +228,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
               setFormData((prev: PatternFormData) => ({ ...prev, message: event.target.value }))
             }
             placeholder='Remove duplicate spaces from product name.'
-          />
+           aria-label="Remove duplicate spaces from product name." title="Remove duplicate spaces from product name."/>
         </FormField>
       </div>
     </FormModal>

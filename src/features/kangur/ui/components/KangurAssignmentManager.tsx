@@ -498,6 +498,8 @@ export function KangurAssignmentManager({
           onChange={(event) => setSearchTerm(event.target.value)}
           placeholder='Szukaj po temacie, typie zadania lub słowie kluczowym...'
           className='mt-5'
+          aria-label='Szukaj zadań'
+          title='Szukaj zadań'
         />
 
         <div className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} mt-4 flex-wrap justify-start sm:w-auto`}>

@@ -3,6 +3,7 @@
 import { Slot } from '@radix-ui/react-slot';
 import * as React from 'react';
 
+import { getTextContent } from '@/shared/utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { Button, type ButtonProps } from './button';
@@ -122,6 +123,14 @@ export function FileUploadButton(props: FileUploadButtonProps): React.JSX.Elemen
     () => getUploadInstructions({ multiple, enableDrop, enablePaste }),
     [multiple, enableDrop, enablePaste]
   );
+  const inferredLabel = React.useMemo(() => {
+    const explicitLabel =
+      (buttonProps['aria-label'] as string | undefined) ??
+      buttonProps.title ??
+      getTextContent(children).trim();
+    if (explicitLabel) return explicitLabel;
+    return multiple ? 'Upload files' : 'Upload file';
+  }, [buttonProps, children, multiple]);
   const describedBy = mergeAriaDescribedBy(
     buttonProps['aria-describedby'],
     instructions ? instructionsId : undefined,
@@ -192,6 +201,8 @@ export function FileUploadButton(props: FileUploadButtonProps): React.JSX.Elemen
         multiple={multiple}
         className='hidden'
         disabled={buttonProps.disabled}
+        aria-label={inferredLabel}
+        title={inferredLabel}
         onChange={(e) => {
           void handleChange(e);
         }}
@@ -372,7 +383,7 @@ export function FileUploadTrigger(props: FileUploadTriggerProps): React.JSX.Elem
         onChange={(e) => {
           void handleChange(e);
         }}
-      />
+       aria-label="Input field" title="Input field"/>
       {asChild ? (
         <Slot
           className={className}

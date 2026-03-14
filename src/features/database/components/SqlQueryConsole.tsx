@@ -263,6 +263,8 @@ export function SqlQueryConsole({
           placeholder={'{\n  "collection": "products",\n  "operation": "find",\n  "filter": {}\n}'}
           className='w-full min-h-[140px] bg-card/60 p-3 font-mono text-xs text-gray-200 placeholder:text-gray-600 focus:border-emerald-500/50'
           spellCheck={false}
+          aria-label={'{\n  "collection": "products",\n  "operation": "find",\n  "filter": {}\n}'}
+          title={'{\n  "collection": "products",\n  "operation": "find",\n  "filter": {}\n}'}
         />
         <p className='mt-1 text-[11px] text-gray-600'>
           Ctrl+Enter to execute. Supported operations: `find`, `insertOne`, `updateOne`,

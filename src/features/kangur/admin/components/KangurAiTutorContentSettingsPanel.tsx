@@ -324,7 +324,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                       }))
                     }
                     aria-label='AI Tutor initial guest intro headline'
-                  />
+                   title="Initial headline"/>
                   {renderAiTutorContentIssues('guestIntro.initial.headline')}
                 </FormField>
                 <FormField label='Initial description'>
@@ -344,7 +344,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                     }
                     rows={4}
                     aria-label='AI Tutor initial guest intro description'
-                  />
+                   title="Initial description"/>
                   {renderAiTutorContentIssues('guestIntro.initial.description')}
                 </FormField>
               </div>
@@ -367,7 +367,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                     }
                     rows={4}
                     aria-label='AI Tutor repeated entry description'
-                  />
+                   title="Repeated-entry description"/>
                   {renderAiTutorContentIssues('guestIntro.repeated.description')}
                 </FormField>
                 <FormField label='Help headline'>
@@ -386,7 +386,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                       }))
                     }
                     aria-label='AI Tutor help headline'
-                  />
+                   title="Help headline"/>
                   {renderAiTutorContentIssues('guestIntro.help.headline')}
                 </FormField>
               </div>
@@ -408,7 +408,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                   }
                   rows={4}
                   aria-label='AI Tutor help description'
-                />
+                 title="Help description"/>
                 {renderAiTutorContentIssues('guestIntro.help.description')}
               </FormField>
             </Card>
@@ -438,7 +438,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                       }))
                     }
                     aria-label='AI Tutor onboarding callout header label'
-                  />
+                   title="Callout header label"/>
                   {renderAiTutorContentIssues('homeOnboarding.calloutHeaderLabel')}
                 </FormField>
                 <FormField label='Step label template'>
@@ -454,7 +454,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                       }))
                     }
                     aria-label='AI Tutor onboarding step label template'
-                  />
+                   title="Step label template"/>
                   {renderAiTutorContentIssues('homeOnboarding.stepLabelTemplate')}
                 </FormField>
               </div>
@@ -473,7 +473,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                       }))
                     }
                     aria-label='AI Tutor onboarding manual start label'
-                  />
+                   title="Manual start label"/>
                   {renderAiTutorContentIssues('homeOnboarding.manualStartLabel')}
                 </FormField>
                 <FormField label='Manual replay label'>
@@ -489,7 +489,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                       }))
                     }
                     aria-label='AI Tutor onboarding manual replay label'
-                  />
+                   title="Manual replay label"/>
                   {renderAiTutorContentIssues('homeOnboarding.manualReplayLabel')}
                 </FormField>
               </div>
@@ -529,7 +529,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                             }))
                           }
                           aria-label={`AI Tutor onboarding ${step.label} title`}
-                        />
+                         title="Step title"/>
                         {renderAiTutorContentIssues(`homeOnboarding.steps.${step.key}.title`)}
                       </FormField>
                       <FormField label='Step description'>
@@ -555,7 +555,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                           }
                           rows={4}
                           aria-label={`AI Tutor onboarding ${step.label} description`}
-                        />
+                         title="Step description"/>
                         {renderAiTutorContentIssues(`homeOnboarding.steps.${step.key}.description`)}
                       </FormField>
                     </div>
@@ -588,7 +588,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                       }))
                     }
                     aria-label='AI Tutor guided callout back button'
-                  />
+                   title="Back button"/>
                   {renderAiTutorContentIssues('guidedCallout.buttons.back')}
                 </FormField>
                 <FormField label='Finish button'>
@@ -607,7 +607,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                       }))
                     }
                     aria-label='AI Tutor guided callout finish button'
-                  />
+                   title="Finish button"/>
                   {renderAiTutorContentIssues('guidedCallout.buttons.finish')}
                 </FormField>
                 <FormField label='Rozumiem button'>
@@ -626,7 +626,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                       }))
                     }
                     aria-label='AI Tutor guided callout understand button'
-                  />
+                   title="Rozumiem button"/>
                   {renderAiTutorContentIssues('guidedCallout.buttons.understand')}
                 </FormField>
               </div>
@@ -655,7 +655,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
             spellCheck={false}
             aria-label='Tutor content JSON'
             className='font-mono text-xs leading-6'
-          />
+           title="Tutor content JSON"/>
         </FormField>
 
         <div className='mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>

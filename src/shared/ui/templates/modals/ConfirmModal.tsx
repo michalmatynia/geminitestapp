@@ -84,7 +84,7 @@ function ConfirmModalPasswordField(): React.JSX.Element | null {
         onChange={(event) => runtime.onConfirmPasswordChange?.(event.target.value)}
         placeholder='Enter your password'
         disabled={runtime.loading}
-      />
+       aria-label="Enter your password" title="Enter your password"/>
     </div>
   );
 }

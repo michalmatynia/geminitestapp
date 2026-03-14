@@ -21,10 +21,7 @@ vi.mock('@/shared/providers/SettingsStoreProvider', async (importOriginal) => {
 });
 
 import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
-import {
-  KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY,
-  KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
-} from '@/features/kangur/storefront-appearance-settings';
+import { KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY } from '@/features/kangur/storefront-appearance-settings';
 import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
 
 function ModeProbe(): React.JSX.Element {
@@ -40,10 +37,20 @@ describe('KangurStorefrontAppearanceProvider', () => {
     window.localStorage.clear();
   });
 
-  it('uses the stored Kangur default appearance mode when no local override exists', () => {
+  it('defaults to the daily appearance mode', () => {
+    render(
+      <KangurStorefrontAppearanceProvider>
+        <ModeProbe />
+      </KangurStorefrontAppearanceProvider>
+    );
+
+    expect(screen.getByTestId('mode-probe')).toHaveTextContent('default');
+  });
+
+  it('uses the stored Kangur default appearance mode', () => {
     settingsStoreGetMock.mockImplementation((key: string) => {
       if (key === KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY) {
-        return 'dark';
+        return 'sunset';
       }
       return undefined;
     });
@@ -54,17 +61,17 @@ describe('KangurStorefrontAppearanceProvider', () => {
       </KangurStorefrontAppearanceProvider>
     );
 
-    expect(screen.getByTestId('mode-probe')).toHaveTextContent('dark');
+    expect(screen.getByTestId('mode-probe')).toHaveTextContent('sunset');
   });
 
-  it('prefers the viewer local override over the shared Kangur default', () => {
+  it('ignores any local override and stays on the daily mode', () => {
     settingsStoreGetMock.mockImplementation((key: string) => {
       if (key === KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY) {
         return 'default';
       }
       return undefined;
     });
-    window.localStorage.setItem(KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY, 'dark');
+    window.localStorage.setItem('kangur-storefront-appearance-mode', 'dark');
 
     render(
       <KangurStorefrontAppearanceProvider>
@@ -72,6 +79,6 @@ describe('KangurStorefrontAppearanceProvider', () => {
       </KangurStorefrontAppearanceProvider>
     );
 
-    expect(screen.getByTestId('mode-probe')).toHaveTextContent('dark');
+    expect(screen.getByTestId('mode-probe')).toHaveTextContent('default');
   });
 });

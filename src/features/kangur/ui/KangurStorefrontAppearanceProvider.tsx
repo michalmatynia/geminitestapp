@@ -2,7 +2,6 @@
 
 import { CmsStorefrontAppearanceProvider } from '@/features/cms/public';
 import {
-  KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY,
   KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
   parseKangurStorefrontAppearanceMode,
 } from '@/features/kangur/storefront-appearance-settings';
@@ -21,10 +20,7 @@ export function KangurStorefrontAppearanceProvider({
   );
 
   return (
-    <CmsStorefrontAppearanceProvider
-      initialMode={defaultMode}
-      storageKey={KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY}
-    >
+    <CmsStorefrontAppearanceProvider initialMode={defaultMode}>
       {children}
     </CmsStorefrontAppearanceProvider>
   );

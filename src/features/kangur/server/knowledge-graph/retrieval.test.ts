@@ -4,6 +4,7 @@ const runNeo4jStatementsMock = vi.fn();
 const getKangurAiTutorContentMock = vi.fn();
 const getKangurAiTutorNativeGuideStoreMock = vi.fn();
 const getKangurPageContentStoreMock = vi.fn();
+const cmsGetPagesMock = vi.fn();
 const generateKangurKnowledgeGraphQueryEmbeddingMock = vi.fn();
 
 vi.mock('@/shared/lib/neo4j/client', () => ({
@@ -20,6 +21,12 @@ vi.mock('@/features/kangur/server/ai-tutor-native-guide-repository', () => ({
 
 vi.mock('@/features/kangur/server/page-content-repository', () => ({
   getKangurPageContentStore: getKangurPageContentStoreMock,
+}));
+
+vi.mock('@/features/cms/services/cms-service', () => ({
+  cmsService: {
+    getPages: (...args: unknown[]) => cmsGetPagesMock(...args),
+  },
 }));
 
 vi.mock('@/features/kangur/server/knowledge-graph/semantic', () => ({
@@ -49,6 +56,7 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
     vi.resetModules();
     vi.clearAllMocks();
     generateKangurKnowledgeGraphQueryEmbeddingMock.mockResolvedValue(null);
+    cmsGetPagesMock.mockResolvedValue([]);
     getKangurAiTutorContentMock.mockResolvedValue({
       common: {
         signInLabel: 'Zaloguj się',
@@ -211,10 +219,11 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
     );
   });
 
-  it('skips graph retrieval when Neo4j is disabled', async () => {
+  it('skips graph retrieval when Neo4j is disabled and no CMS pages match', async () => {
     delete process.env['NEO4J_ENABLED'];
     delete process.env['NEO4J_URI'];
     delete process.env['NEO4J_HTTP_URL'];
+    cmsGetPagesMock.mockResolvedValue([]);
 
     const { resolveKangurWebsiteHelpGraphContext } = await import(
       '@/features/kangur/server/knowledge-graph/retrieval'
@@ -233,6 +242,69 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
       nodeIds: [],
     });
     expect(runNeo4jStatementsMock).not.toHaveBeenCalled();
+  });
+
+  it('falls back to CMS page search when Neo4j is disabled but CMS pages match the query', async () => {
+    delete process.env['NEO4J_ENABLED'];
+    delete process.env['NEO4J_URI'];
+    delete process.env['NEO4J_HTTP_URL'];
+
+    cmsGetPagesMock.mockResolvedValue([
+      {
+        id: 'cms-about',
+        name: 'O nas',
+        status: 'published',
+        seoTitle: 'O Kangurze — Nauka matematyki',
+        seoDescription: 'Poznaj platformę Kangur do nauki matematyki.',
+        themeId: null,
+        showMenu: true,
+        components: [
+          {
+            type: 'section',
+            order: 1,
+            content: {
+              zone: 'template',
+              settings: {},
+              blocks: [
+                { id: 'b1', type: 'Heading', settings: { headingText: 'Witaj w Kangurze' } },
+                { id: 'b2', type: 'Text', settings: { textContent: 'Ucz się matematyki z radością.' } },
+              ],
+              sectionId: 'sec-1',
+              parentSectionId: null,
+            },
+          },
+        ],
+        slugs: [{ id: 's1', slug: 'o-nas', isDefault: true, createdAt: '', updatedAt: '' }],
+        createdAt: '',
+        updatedAt: '',
+      },
+    ]);
+
+    const { resolveKangurAiTutorSemanticGraphContext } = await import(
+      '@/features/kangur/server/knowledge-graph/retrieval'
+    );
+
+    const result = await resolveKangurAiTutorSemanticGraphContext({
+      latestUserMessage: 'Powiedz o stronie Kangur',
+      context: undefined as never,
+      locale: 'pl',
+    });
+
+    expect(runNeo4jStatementsMock).not.toHaveBeenCalled();
+    expect(result.status).toBe('hit');
+    if (result.status !== 'hit') {
+      throw new Error('Expected CMS fallback hit.');
+    }
+    expect(result.sourceCollections).toEqual(['cms_pages']);
+    expect(result.hydrationSources).toEqual(['cms_pages']);
+    expect(result.nodeIds).toEqual(['cms-page:cms-about']);
+    expect(result.sources[0]).toEqual(
+      expect.objectContaining({
+        collectionId: 'cms_pages',
+        text: expect.stringContaining('Witaj w Kangurze'),
+      })
+    );
+    expect(result.instructions).toContain('CMS website pages');
   });
 
   it('falls back to a related route and anchor when the matched node has no direct target', async () => {
@@ -1177,5 +1249,91 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
         documentId: 'guide:native:game-leaderboard',
       })
     );
+  });
+
+  it('hydrates CMS page graph hits from the CMS pages MongoDB collection', async () => {
+    process.env['NEO4J_ENABLED'] = 'true';
+    process.env['NEO4J_HTTP_URL'] = 'http://localhost:7474';
+    process.env['NEO4J_USERNAME'] = 'neo4j';
+    process.env['NEO4J_PASSWORD'] = 'secret';
+
+    cmsGetPagesMock.mockResolvedValue([
+      {
+        id: 'cms-about',
+        name: 'O nas',
+        status: 'published',
+        seoTitle: 'O Kangurze — Nauka matematyki',
+        seoDescription: 'Poznaj platformę Kangur do nauki matematyki.',
+        themeId: null,
+        showMenu: true,
+        components: [
+          {
+            type: 'section',
+            order: 1,
+            content: {
+              zone: 'template',
+              settings: {},
+              blocks: [
+                { id: 'b1', type: 'Heading', settings: { headingText: 'Witaj w Kangurze' } },
+                { id: 'b2', type: 'Text', settings: { textContent: 'Ucz się matematyki z radością.' } },
+              ],
+              sectionId: 'sec-1',
+              parentSectionId: null,
+            },
+          },
+        ],
+        slugs: [{ id: 's1', slug: 'o-nas', isDefault: true, createdAt: '', updatedAt: '' }],
+        createdAt: '',
+        updatedAt: '',
+      },
+    ]);
+
+    runNeo4jStatementsMock.mockResolvedValue([
+      {
+        records: [
+          {
+            id: 'cms-page:cms-about',
+            kind: 'page',
+            title: 'O Kangurze — Nauka matematyki',
+            summary: 'Poznaj platformę Kangur do nauki matematyki.',
+            route: '/o-nas',
+            anchorId: null,
+            sourceCollection: 'cms_pages',
+            sourceRecordId: 'cms-about',
+            sourcePath: 'cms-page:cms-about',
+            tags: ['cms', 'cms-page', 'website'],
+            tokenHits: 2,
+            relations: [],
+          },
+        ],
+      },
+    ]);
+
+    const { resolveKangurAiTutorSemanticGraphContext } = await import(
+      '@/features/kangur/server/knowledge-graph/retrieval'
+    );
+
+    const result = await resolveKangurAiTutorSemanticGraphContext({
+      latestUserMessage: 'Powiedz o stronie o nas',
+      context: undefined as never,
+      locale: 'pl',
+    });
+
+    expect(cmsGetPagesMock).toHaveBeenCalled();
+    expect(result.status).toBe('hit');
+    if (result.status !== 'hit') {
+      throw new Error('Expected semantic graph context hit.');
+    }
+    expect(result.sourceCollections).toEqual(['cms_pages']);
+    expect(result.hydrationSources).toEqual(['cms_pages']);
+    expect(result.sources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          collectionId: 'cms_pages',
+          text: expect.stringContaining('Witaj w Kangurze'),
+        }),
+      ])
+    );
+    expect(result.instructions).toContain('CMS website pages');
   });
 });

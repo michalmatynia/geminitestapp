@@ -1,5 +1,11 @@
+import React from 'react';
 import KangurBadgeTrackHighlights from '@/features/kangur/ui/components/KangurBadgeTrackHighlights';
-import { KangurProgressHighlightCardContent } from '@/features/kangur/ui/components/KangurProgressHighlightCardContent';
+import {
+  KangurProgressHighlightCardContent,
+  KangurProgressHighlightHeader,
+  KangurProgressHighlightChip,
+  KangurProgressHighlightBar,
+} from '@/features/kangur/ui/components/KangurProgressHighlightCardContent';
 import {
   getNextLockedBadge,
   type KangurBadgeTrackKey,
@@ -58,28 +64,36 @@ export default function KangurHeroMilestoneSummary({
               'color-mix(in srgb, var(--kangur-soft-card-border) 94%, #d97706 6%)',
           }}
         >
-          <KangurProgressHighlightCardContent
-            chipAccent='amber'
-            chipClassName='text-[11px]'
-            chipLabel={nextBadge.summary}
-            description={nextBadge.desc}
-            descriptionStyle={{
-              color:
-                'color-mix(in srgb, var(--kangur-page-text) 74%, var(--kangur-page-muted-text) 26%)',
-            }}
-            eyebrow='Nastepny kamien milowy'
-            eyebrowStyle={{
-              color: 'color-mix(in srgb, var(--kangur-page-text) 70%, #92400e 30%)',
-            }}
-            progressAccent='amber'
-            progressBarTestId={`${summaryTestIdPrefix}-next-badge-bar`}
-            progressValue={nextBadge.progressPercent}
-            title={
-              <>
-                {nextBadge.emoji} {nextBadge.name}
-              </>
-            }
-          />
+          <KangurProgressHighlightCardContent>
+            <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
+              <KangurProgressHighlightHeader
+                description={nextBadge.desc}
+                descriptionStyle={{
+                  color:
+                    'color-mix(in srgb, var(--kangur-page-text) 74%, var(--kangur-page-muted-text) 26%)',
+                }}
+                eyebrow='Nastepny kamien milowy'
+                eyebrowStyle={{
+                  color: 'color-mix(in srgb, var(--kangur-page-text) 70%, #92400e 30%)',
+                }}
+                title={
+                  <>
+                    {nextBadge.emoji} {nextBadge.name}
+                  </>
+                }
+              />
+              <KangurProgressHighlightChip
+                accent='amber'
+                className='text-[11px]'
+                label={nextBadge.summary}
+              />
+            </div>
+            <KangurProgressHighlightBar
+              accent='amber'
+              testId={`${summaryTestIdPrefix}-next-badge-bar`}
+              value={nextBadge.progressPercent}
+            />
+          </KangurProgressHighlightCardContent>
         </div>
       ) : null}
 

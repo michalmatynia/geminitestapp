@@ -11,6 +11,7 @@ interface PersistenceConfig {
   storage?: Storage;
   ttl?: number; // Time to live in milliseconds
   maxItemBytes?: number;
+  revalidateOnLoad?: boolean;
 }
 
 const DEFAULT_MAX_ITEM_BYTES = 64 * 1024;
@@ -104,9 +105,12 @@ export function useQueryPersistence(config: PersistenceConfig): { clearPersisted
       const data = loadFromStorage(queryKey);
       if (data) {
         queryClient.setQueryData(queryKey, data);
+        if (config.revalidateOnLoad) {
+          void queryClient.invalidateQueries({ queryKey, exact: true, refetchType: 'active' });
+        }
       }
     });
-  }, [config.queryKeys, loadFromStorage, queryClient]);
+  }, [config.queryKeys, config.revalidateOnLoad, loadFromStorage, queryClient]);
 
   // Save data when queries update
   useEffect((): (() => void) => {

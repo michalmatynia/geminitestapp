@@ -1570,6 +1570,12 @@
   .home-action-featured-shell {
     --home-action-rest-text-color: #33407d;
     --home-action-active-text-color: #ffffff;
+    --home-action-label-start: var(--home-action-rest-text-color);
+    --home-action-label-mid: var(--home-action-rest-text-color);
+    --home-action-label-end: var(--home-action-rest-text-color);
+    --home-action-label-start-active: var(--home-action-active-text-color);
+    --home-action-label-mid-active: var(--home-action-active-text-color);
+    --home-action-label-end-active: var(--home-action-active-text-color);
     --home-action-accent-shadow-rgb: 126, 100, 255;
     --home-action-underlay-shadow-rgb: 117, 96, 255;
     --home-action-surface-shadow-rgb: 116, 104, 203;
@@ -1734,6 +1740,9 @@
     --home-action-underlay-shadow-opacity: 0.3;
     --home-action-underlay-tint-opacity: 0.88;
     --home-action-edge-gloss-opacity: 0.72;
+    --home-action-label-start: var(--home-action-label-start-active);
+    --home-action-label-mid: var(--home-action-label-mid-active);
+    --home-action-label-end: var(--home-action-label-end-active);
   }
 
   .home-action-featured-shell::after {
@@ -1771,6 +1780,19 @@
     transition-duration: 280ms, 220ms;
     transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
     transition-delay: 0s, 0s;
+  }
+
+  .home-action-featured-label {
+    background-image: linear-gradient(
+      90deg,
+      var(--home-action-label-start) 0%,
+      var(--home-action-label-mid) 48%,
+      var(--home-action-label-end) 100%
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
   }
 
   .home-action-featured-shell[data-nav-state='pressed'] .home-action-featured,
@@ -1995,6 +2017,30 @@
   .home-action-featured-shell[data-home-action='lessons'] {
     --home-action-rest-text-color: var(--kangur-home-action-lessons-text, #314380);
     --home-action-active-text-color: var(--kangur-home-action-lessons-text-active, #ffffff);
+    --home-action-label-start: var(
+      --kangur-home-action-lessons-label-start,
+      var(--home-action-rest-text-color)
+    );
+    --home-action-label-mid: var(
+      --kangur-home-action-lessons-label-mid,
+      var(--home-action-rest-text-color)
+    );
+    --home-action-label-end: var(
+      --kangur-home-action-lessons-label-end,
+      var(--home-action-rest-text-color)
+    );
+    --home-action-label-start-active: var(
+      --kangur-home-action-lessons-label-start,
+      var(--home-action-active-text-color)
+    );
+    --home-action-label-mid-active: var(
+      --kangur-home-action-lessons-label-mid,
+      var(--home-action-active-text-color)
+    );
+    --home-action-label-end-active: var(
+      --kangur-home-action-lessons-label-end,
+      var(--home-action-active-text-color)
+    );
     --home-action-accent-shadow-rgb: var(--kangur-home-action-lessons-accent-shadow-rgb, 118, 131, 255);
     --home-action-underlay-shadow-rgb: var(--kangur-home-action-lessons-underlay-shadow-rgb, 106, 120, 232);
     --home-action-surface-shadow-rgb: var(--kangur-home-action-lessons-surface-shadow-rgb, 108, 118, 214);
@@ -2021,6 +2067,30 @@
   .home-action-featured-shell[data-home-action='play'] {
     --home-action-rest-text-color: var(--kangur-home-action-play-text, #33407d);
     --home-action-active-text-color: var(--kangur-home-action-play-text-active, #ffffff);
+    --home-action-label-start: var(
+      --kangur-home-action-play-label-start,
+      var(--home-action-rest-text-color)
+    );
+    --home-action-label-mid: var(
+      --kangur-home-action-play-label-mid,
+      var(--home-action-rest-text-color)
+    );
+    --home-action-label-end: var(
+      --kangur-home-action-play-label-end,
+      var(--home-action-rest-text-color)
+    );
+    --home-action-label-start-active: var(
+      --kangur-home-action-play-label-start,
+      var(--home-action-active-text-color)
+    );
+    --home-action-label-mid-active: var(
+      --kangur-home-action-play-label-mid,
+      var(--home-action-active-text-color)
+    );
+    --home-action-label-end-active: var(
+      --kangur-home-action-play-label-end,
+      var(--home-action-active-text-color)
+    );
     --home-action-accent-shadow-rgb: var(--kangur-home-action-play-accent-shadow-rgb, 126, 100, 255);
     --home-action-underlay-shadow-rgb: var(--kangur-home-action-play-underlay-shadow-rgb, 117, 96, 255);
     --home-action-surface-shadow-rgb: var(--kangur-home-action-play-surface-shadow-rgb, 116, 104, 203);
@@ -2047,6 +2117,30 @@
   .home-action-featured-shell[data-home-action='training'] {
     --home-action-rest-text-color: var(--kangur-home-action-training-text, #205184);
     --home-action-active-text-color: var(--kangur-home-action-training-text-active, #ffffff);
+    --home-action-label-start: var(
+      --kangur-home-action-training-label-start,
+      var(--home-action-rest-text-color)
+    );
+    --home-action-label-mid: var(
+      --kangur-home-action-training-label-mid,
+      var(--home-action-rest-text-color)
+    );
+    --home-action-label-end: var(
+      --kangur-home-action-training-label-end,
+      var(--home-action-rest-text-color)
+    );
+    --home-action-label-start-active: var(
+      --kangur-home-action-training-label-start,
+      var(--home-action-active-text-color)
+    );
+    --home-action-label-mid-active: var(
+      --kangur-home-action-training-label-mid,
+      var(--home-action-active-text-color)
+    );
+    --home-action-label-end-active: var(
+      --kangur-home-action-training-label-end,
+      var(--home-action-active-text-color)
+    );
     --home-action-accent-shadow-rgb: var(--kangur-home-action-training-accent-shadow-rgb, 87, 162, 255);
     --home-action-underlay-shadow-rgb: var(--kangur-home-action-training-underlay-shadow-rgb, 78, 145, 236);
     --home-action-surface-shadow-rgb: var(--kangur-home-action-training-surface-shadow-rgb, 84, 140, 205);
@@ -2073,6 +2167,30 @@
   .home-action-featured-shell[data-home-action='kangur'] {
     --home-action-rest-text-color: var(--kangur-home-action-kangur-text, #7c4d20);
     --home-action-active-text-color: var(--kangur-home-action-kangur-text-active, #ffffff);
+    --home-action-label-start: var(
+      --kangur-home-action-kangur-label-start,
+      var(--home-action-rest-text-color)
+    );
+    --home-action-label-mid: var(
+      --kangur-home-action-kangur-label-mid,
+      var(--home-action-rest-text-color)
+    );
+    --home-action-label-end: var(
+      --kangur-home-action-kangur-label-end,
+      var(--home-action-rest-text-color)
+    );
+    --home-action-label-start-active: var(
+      --kangur-home-action-kangur-label-start,
+      var(--home-action-active-text-color)
+    );
+    --home-action-label-mid-active: var(
+      --kangur-home-action-kangur-label-mid,
+      var(--home-action-active-text-color)
+    );
+    --home-action-label-end-active: var(
+      --kangur-home-action-kangur-label-end,
+      var(--home-action-active-text-color)
+    );
     --home-action-accent-shadow-rgb: var(--kangur-home-action-kangur-accent-shadow-rgb, 238, 140, 91);
     --home-action-underlay-shadow-rgb: var(--kangur-home-action-kangur-underlay-shadow-rgb, 221, 129, 86);
     --home-action-surface-shadow-rgb: var(--kangur-home-action-kangur-surface-shadow-rgb, 194, 132, 132);

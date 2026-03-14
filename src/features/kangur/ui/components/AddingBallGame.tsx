@@ -772,7 +772,6 @@ export default function AddingBallGame({
   onFinish,
 }: AddingBallGameProps): React.JSX.Element {
   const prefersReducedMotion = useReducedMotion();
-  const roundMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const [roundIdx, setRoundIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
@@ -780,6 +779,14 @@ export default function AddingBallGame({
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const [round, setRound] = useState<Round>(() => generateRound(MODES[0] ?? 'complete_equation'));
   const sessionStartedAtRef = useRef(Date.now());
+  // Avoid translate transforms here; they offset drag previews in DnD.
+  const baseRoundMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
+  const roundMotionProps = {
+    ...baseRoundMotionProps,
+    initial: { opacity: baseRoundMotionProps.initial?.opacity ?? 1 },
+    animate: { opacity: baseRoundMotionProps.animate?.opacity ?? 1 },
+    exit: { opacity: baseRoundMotionProps.exit?.opacity ?? 1 },
+  };
   const handleFinishGame = (): void => {
     onFinish();
   };

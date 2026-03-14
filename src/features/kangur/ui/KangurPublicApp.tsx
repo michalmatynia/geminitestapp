@@ -6,6 +6,7 @@ import {
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeaturePageShell } from '@/features/kangur/ui/KangurFeaturePage';
 import { KangurPublicErrorBoundary } from '@/features/kangur/ui/KangurPublicErrorBoundary';
+import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
 import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
 
 import type { JSX } from 'react';
@@ -27,18 +28,20 @@ export function KangurPublicApp({
   const isEmbedded = embedded;
 
   return (
-    <KangurSurfaceClassSync>
-      <KangurPublicErrorBoundary homeHref={homeHref}>
-        <KangurRoutingProvider
-          pageKey={pageKey}
-          requestedPath={requestedPath}
-          requestedHref={requestedPath}
-          basePath={normalizedBasePath}
-          embedded={isEmbedded}
-        >
-          <KangurFeaturePageShell />
-        </KangurRoutingProvider>
-      </KangurPublicErrorBoundary>
-    </KangurSurfaceClassSync>
+    <KangurStorefrontAppearanceProvider>
+      <KangurSurfaceClassSync>
+        <KangurPublicErrorBoundary homeHref={homeHref}>
+          <KangurRoutingProvider
+            pageKey={pageKey}
+            requestedPath={requestedPath}
+            requestedHref={requestedPath}
+            basePath={normalizedBasePath}
+            embedded={isEmbedded}
+          >
+            <KangurFeaturePageShell />
+          </KangurRoutingProvider>
+        </KangurPublicErrorBoundary>
+      </KangurSurfaceClassSync>
+    </KangurStorefrontAppearanceProvider>
   );
 }

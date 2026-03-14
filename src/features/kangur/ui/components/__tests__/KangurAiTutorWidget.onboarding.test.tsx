@@ -9,27 +9,7 @@ import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTu
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
 
 import {
-  settingsStoreMock,
-  useKangurAiTutorMock,
-  useKangurLoginModalMock,
-  useOptionalKangurAuthMock,
-  useKangurTextHighlightMock,
-  useOptionalKangurRoutingMock,
-  useReducedMotionMock,
-  sendMessageMock,
-  openChatMock,
-  closeChatMock,
-  recordFollowUpCompletionMock,
-  navigateToLoginMock,
-  setHighlightedTextMock,
-  activateSelectionGlowMock,
-  clearSelectionMock,
-  clearSelectionGlowMock,
-  trackKangurClientEventMock,
-  useKangurPageContentEntryMock,
-  speechSynthesisMock,
-  audioPlayMock,
-  audioPauseMock,
+  createTutorMocks,
   MockSpeechSynthesisUtterance,
   resetTutorAuthAnchorRects,
   TutorAuthAnchor,
@@ -37,8 +17,10 @@ import {
   type TutorGameAnchorKind,
 } from './KangurAiTutorWidget.test-utils';
 
+const mocks = createTutorMocks();
+
 vi.mock('framer-motion', () => ({
-  useReducedMotion: useReducedMotionMock,
+  useReducedMotion: mocks.useReducedMotionMock,
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   motion: {
     div: ({ children, animate: _a, exit: _e, initial: _i, transition: _t, ...props }: any) => (
@@ -80,12 +62,12 @@ vi.mock('../KangurAiTutorMoodAvatar', () => ({
 }));
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
-  useSettingsStore: () => settingsStoreMock,
+  useSettingsStore: () => mocks.settingsStoreMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
-  useKangurAiTutor: useKangurAiTutorMock,
-  useOptionalKangurAiTutor: useKangurAiTutorMock,
+  useKangurAiTutor: mocks.useKangurAiTutorMock,
+  useOptionalKangurAiTutor: mocks.useKangurAiTutorMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
@@ -93,23 +75,23 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
-  useOptionalKangurAuth: useOptionalKangurAuthMock,
+  useOptionalKangurAuth: mocks.useOptionalKangurAuthMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
-  useKangurLoginModal: useKangurLoginModalMock,
+  useKangurLoginModal: mocks.useKangurLoginModalMock,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurTextHighlight', () => ({
-  useKangurTextHighlight: useKangurTextHighlightMock,
+  useKangurTextHighlight: mocks.useKangurTextHighlightMock,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
-  useKangurPageContentEntry: useKangurPageContentEntryMock,
+  useKangurPageContentEntry: mocks.useKangurPageContentEntryMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
-  useOptionalKangurRouting: useOptionalKangurRoutingMock,
+  useOptionalKangurRouting: mocks.useOptionalKangurRoutingMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', () => ({
@@ -129,7 +111,7 @@ vi.mock('next/link', () => ({
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({
-  trackKangurClientEvent: trackKangurClientEventMock,
+  trackKangurClientEvent: mocks.trackKangurClientEventMock,
 }));
 
 let KangurAiTutorWidget: any;
@@ -225,41 +207,41 @@ describe('KangurAiTutorWidget - Onboarding', () => {
     Element.prototype.scrollIntoView = vi.fn();
     Object.defineProperty(window, 'speechSynthesis', {
       configurable: true,
-      value: speechSynthesisMock,
+      value: mocks.speechSynthesisMock,
     });
     vi.stubGlobal('SpeechSynthesisUtterance', MockSpeechSynthesisUtterance);
     Object.defineProperty(window.HTMLMediaElement.prototype, 'play', {
       configurable: true,
-      value: audioPlayMock,
+      value: mocks.audioPlayMock,
     });
     Object.defineProperty(window.HTMLMediaElement.prototype, 'pause', {
       configurable: true,
-      value: audioPauseMock,
+      value: mocks.audioPauseMock,
     });
     Object.defineProperty(window.HTMLMediaElement.prototype, 'load', {
       configurable: true,
       value: vi.fn(),
     });
     
-    speechSynthesisMock.speak.mockImplementation((utterance: any) => {
-      speechSynthesisMock.speaking = true;
+    mocks.speechSynthesisMock.speak.mockImplementation((utterance: any) => {
+      mocks.speechSynthesisMock.speaking = true;
       utterance.onstart?.();
     });
     
-    settingsStoreMock.get.mockImplementation((key: string) => {
+    mocks.settingsStoreMock.get.mockImplementation((key: string) => {
       if (key === 'kangur_narrator_settings_v1') {
         return JSON.stringify({ engine: 'client', voice: 'coral' });
       }
       return undefined;
     });
     
-    sendMessageMock.mockResolvedValue(undefined);
-    useOptionalKangurAuthMock.mockReturnValue({
+    mocks.sendMessageMock.mockResolvedValue(undefined);
+    mocks.useOptionalKangurAuthMock.mockReturnValue({
       isAuthenticated: true,
       isLoadingAuth: false,
-      navigateToLogin: navigateToLoginMock,
+      navigateToLogin: mocks.navigateToLoginMock,
     });
-    useKangurLoginModalMock.mockReturnValue({
+    mocks.useKangurLoginModalMock.mockReturnValue({
       authMode: 'sign-in',
       callbackUrl: '/kangur',
       closeLoginModal: vi.fn(),
@@ -270,46 +252,62 @@ describe('KangurAiTutorWidget - Onboarding', () => {
       openLoginModal: vi.fn(),
     });
     
-    useOptionalKangurRoutingMock.mockReturnValue({
+    mocks.useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
       embedded: false,
       pageKey: 'Lessons',
       requestedPath: '/kangur/lessons',
     });
     
-    useReducedMotionMock.mockReturnValue(false);
+    mocks.useReducedMotionMock.mockReturnValue(false);
     
-    useKangurAiTutorMock.mockReturnValue({
+    mocks.useKangurAiTutorMock.mockReturnValue({
       enabled: true,
       tutorSettings: {
         enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
         uiMode: 'anchored',
+        allowCrossPagePersistence: true,
         allowLessons: true,
+        allowGames: true,
         testAccessMode: 'guided',
         showSources: true,
         allowSelectedTextSupport: true,
+        hintDepth: 'guided',
+        proactiveNudges: 'gentle',
+        dailyMessageLimit: null,
       },
       tutorName: 'Pomocnik',
       tutorMoodId: 'neutral',
+      tutorAvatarSvg:
+        '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="34" fill="#ffffff" /></svg>',
+      tutorAvatarImageUrl: null,
+      sessionContext: {
+        surface: 'game',
+        contentId: 'game:home',
+        title: 'Ekran startowy',
+      },
       isOpen: false,
       messages: [],
       isLoading: false,
       isUsageLoading: false,
       highlightedText: null,
       usageSummary: null,
-      openChat: openChatMock,
-      closeChat: closeChatMock,
-      sendMessage: sendMessageMock,
-      setHighlightedText: setHighlightedTextMock,
+      openChat: mocks.openChatMock,
+      closeChat: mocks.closeChatMock,
+      sendMessage: mocks.sendMessageMock,
+      recordFollowUpCompletion: mocks.recordFollowUpCompletionMock,
+      setHighlightedText: mocks.setHighlightedTextMock,
     });
     
-    useKangurTextHighlightMock.mockReturnValue({
+    mocks.useKangurTextHighlightMock.mockReturnValue({
       selectedText: null,
       selectionRect: null,
-      clearSelection: clearSelectionMock,
+      clearSelection: mocks.clearSelectionMock,
     });
     
-    useKangurPageContentEntryMock.mockReturnValue({ entry: null });
+    mocks.useKangurPageContentEntryMock.mockReturnValue({ entry: null });
   });
 
   afterEach(() => {
@@ -317,7 +315,7 @@ describe('KangurAiTutorWidget - Onboarding', () => {
   });
 
   it('walks through the full Game home onboarding and persists completion', async () => {
-    useOptionalKangurRoutingMock.mockReturnValue({
+    mocks.useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
       embedded: false,
       pageKey: 'Game',
@@ -353,7 +351,7 @@ describe('KangurAiTutorWidget - Onboarding', () => {
   });
 
   it('ends the Game home onboarding early and docks the tutor back to the launcher', async () => {
-    useOptionalKangurRoutingMock.mockReturnValue({
+    mocks.useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
       embedded: false,
       pageKey: 'Game',
@@ -372,14 +370,14 @@ describe('KangurAiTutorWidget - Onboarding', () => {
     });
     
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute('data-avatar-placement', 'floating');
-    expect(closeChatMock).toHaveBeenCalledTimes(1);
+    expect(mocks.closeChatMock).toHaveBeenCalledTimes(1);
   });
 
   it('shows the guest intro prompt for a first anonymous visit and stores a local marker', async () => {
-    useOptionalKangurAuthMock.mockReturnValue({
+    mocks.useOptionalKangurAuthMock.mockReturnValue({
       isAuthenticated: false,
       isLoadingAuth: false,
-      navigateToLogin: navigateToLoginMock,
+      navigateToLogin: mocks.navigateToLoginMock,
     });
     
     const fetchMock = vi.fn().mockResolvedValue({

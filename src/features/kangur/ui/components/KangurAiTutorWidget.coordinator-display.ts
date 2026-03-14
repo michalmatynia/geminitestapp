@@ -215,6 +215,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     sectionResponsePending,
     sheetBreakpoint: motionProfile.sheetBreakpoint,
     selectionGuidanceCalloutVisibleText,
+    selectionResponseComplete,
     selectionResponsePending,
     sessionContentId: sessionContext?.contentId,
     sessionSurface: sessionContext?.surface,
@@ -521,19 +522,18 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
         : isOpen
           ? 'chat'
         : 'idle_avatar';
-  const shouldSuppressStandardChatPanel = tutorSurfaceMode === 'chat';
   const suppressPanelSurface =
-    shouldSuppressStandardChatPanel ||
     loginModalIsOpen ||
     (tutorSurfaceMode !== 'chat' && (
       tutorSurfaceMode === 'onboarding' ||
       tutorSurfaceMode === 'auth_guided' ||
       guidedMode === 'home_onboarding' ||
-      (!isOpen && (tutorSurfaceMode === 'selection_guided' || tutorSurfaceMode === 'section_guided') &&
-        panelShellMode === 'minimal')
-    ));
-
-  const {    guidedArrowheadTransition,
+      ((tutorSurfaceMode === 'selection_guided' || tutorSurfaceMode === 'section_guided') &&
+        panelShellMode === 'minimal' &&
+        (selectionResponsePending !== null || 
+         sectionResponsePending !== null || 
+         selectionGuidanceHandoffText !== null))
+    ));  const {    guidedArrowheadTransition,
     guidedAvatarArrowhead,
     guidedAvatarArrowheadDisplayAngle,
     guidedAvatarArrowheadDisplayAngleLabel,

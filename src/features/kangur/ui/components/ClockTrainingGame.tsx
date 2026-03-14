@@ -778,32 +778,43 @@ function DraggableClock({
           </KangurButton>
         </div>
       ) : null}
-      <p
-        className='text-xs [color:var(--kangur-page-muted-text)]'
-        data-testid='clock-interaction-hint'
-      >
-        {activeHand === 'hour'
-          ? 'Przestawiasz krótką wskazówkę (godziny).'
-          : activeHand === 'minute'
-            ? 'Przestawiasz długą wskazówkę (minuty).'
-            : submitFeedback === 'correct'
-              ? submitNextStep === 'summary'
-                ? 'Dobra odpowiedź. Za chwilę podsumowanie.'
-                : submitNextStep === 'next-stage'
-                  ? 'Dobra odpowiedź. Za chwilę kolejny etap.'
-                  : 'Dobra odpowiedź. Za chwilę następne zadanie.'
-              : submitFeedback === 'wrong'
+      {(() => {
+        const interactionHint =
+          activeHand === 'hour'
+            ? 'Przestawiasz krótką wskazówkę (godziny).'
+            : activeHand === 'minute'
+              ? 'Przestawiasz długą wskazówkę (minuty).'
+              : submitFeedback === 'correct'
                 ? submitNextStep === 'summary'
-                  ? 'Sprawdziliśmy odpowiedź. Za chwilę podsumowanie.'
+                  ? 'Dobra odpowiedź. Za chwilę podsumowanie.'
                   : submitNextStep === 'next-stage'
-                    ? 'Sprawdziliśmy odpowiedź. Za chwilę kolejny etap.'
-                    : 'Sprawdziliśmy odpowiedź. Za chwilę następne zadanie.'
-                : section === 'hours'
-                  ? 'Długa wskazówka jest zablokowana na 12.'
+                    ? 'Dobra odpowiedź. Za chwilę kolejny etap.'
+                    : 'Dobra odpowiedź. Za chwilę następne zadanie.'
+                : submitFeedback === 'wrong'
+                  ? submitNextStep === 'summary'
+                    ? 'Sprawdziliśmy odpowiedź. Za chwilę podsumowanie.'
+                    : submitNextStep === 'next-stage'
+                      ? 'Sprawdziliśmy odpowiedź. Za chwilę kolejny etap.'
+                      : 'Sprawdziliśmy odpowiedź. Za chwilę następne zadanie.'
                   : section === 'minutes'
-                    ? 'Krótka wskazówka jest zablokowana na 12.'
-                    : 'Wskazówka godzin przesuwa się płynnie razem z minutami.'}
-      </p>
+                    ? null
+                    : section === 'hours'
+                      ? null
+                      : 'Wskazówka godzin przesuwa się płynnie razem z minutami.';
+
+        if (!interactionHint) {
+          return null;
+        }
+
+        return (
+          <p
+            className='text-xs [color:var(--kangur-page-muted-text)]'
+            data-testid='clock-interaction-hint'
+          >
+            {interactionHint}
+          </p>
+        );
+      })()}
 
       <svg
         ref={svgRef}

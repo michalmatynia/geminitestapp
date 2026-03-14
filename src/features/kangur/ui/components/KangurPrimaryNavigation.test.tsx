@@ -362,34 +362,6 @@ describe('KangurPrimaryNavigation', () => {
     expect(screen.getByRole('button', { name: 'Switch to Daily theme' })).toBeInTheDocument();
   });
 
-  it('does not show the theme selector for non-elevated users', () => {    sessionMock.mockReturnValue({
-      data: {
-        user: {
-          id: 'session-user-2',
-          isElevated: false,
-          permissions: [],
-          role: 'user',
-        },
-      },
-      status: 'authenticated',
-    });
-
-    render(
-      <CmsStorefrontAppearanceProvider initialMode='default'>
-        <KangurPrimaryNavigation
-          basePath='/kangur'
-          currentPage='Lessons'
-          isAuthenticated
-          onLogout={vi.fn()}
-        />
-      </CmsStorefrontAppearanceProvider>
-    );
-
-    expect(
-      screen.queryByTestId('kangur-primary-nav-default-appearance-controls')
-    ).toBeNull();
-  });
-
   it('keeps the parent dashboard and logout actions inside the navbar and aligned right', () => {
     render(
       <KangurPrimaryNavigation

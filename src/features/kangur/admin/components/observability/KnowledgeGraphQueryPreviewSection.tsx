@@ -2,7 +2,17 @@
 
 import { type JSX } from 'react';
 
-import { Alert, Button, Card, EmptyState, FormSection, Input, MetadataItem, StatusBadge, Textarea } from '@/shared/ui';
+import {
+  Alert,
+  Button,
+  Card,
+  EmptyState,
+  FormSection,
+  Input,
+  MetadataItem,
+  StatusBadge,
+  Textarea,
+} from '@/shared/ui';
 import { KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO } from '@/features/kangur/ai-tutor-page-coverage-manifest';
 import type { KangurAiTutorPromptMode, KangurAiTutorSurface } from '@/shared/contracts/kangur-ai-tutor';
 
@@ -21,11 +31,12 @@ import {
 } from './utils';
 import { KnowledgeGraphPreviewSelect, KnowledgeGraphPreviewValueBlock } from './helpers';
 
-const KNOWLEDGE_GRAPH_PREVIEW_COVERAGE_PRESET_OPTIONS = KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO.map((entry) => ({
-  value: entry.id,
-  label: `${entry.screenKey} • ${entry.title}`,
-  group: entry.pageKey,
-}));
+const KNOWLEDGE_GRAPH_PREVIEW_COVERAGE_PRESET_OPTIONS =
+  KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO.map((entry) => ({
+    value: entry.id,
+    label: `${entry.screenKey} • ${entry.title}`,
+    group: entry.pageKey,
+  }));
 
 const KNOWLEDGE_GRAPH_PREVIEW_COVERAGE_ENTRY_BY_ID = new Map(
   KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO.map((entry) => [entry.id, entry] as const)
@@ -45,7 +56,9 @@ export function KnowledgeGraphQueryPreviewSection(): JSX.Element {
     runKnowledgeGraphPreview: onRun,
   } = useKnowledgeGraphObservability();
 
-  const previewStatus = result ? resolveKnowledgeGraphPreviewBadgeStatus(result.retrieval.status) : null;
+  const previewStatus = result
+    ? resolveKnowledgeGraphPreviewBadgeStatus(result.retrieval.status)
+    : null;
   const topHits =
     result?.retrieval.status === 'hit' ? result.retrieval.hits.slice(0, 4) : [];
   const replayOptions = replayCandidates.map((candidate) => candidate.option);

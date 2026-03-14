@@ -77,7 +77,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS: Readonly<KangurAiTutorAppSett
 
 export const DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS: Readonly<KangurAiTutorLearnerGuardrails> =
   Object.freeze({
-    enabled: false,
+    enabled: true,
     uiMode: 'anchored',
     allowCrossPagePersistence: true,
     rememberTutorContext: true,

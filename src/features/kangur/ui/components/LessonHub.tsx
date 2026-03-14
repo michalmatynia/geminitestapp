@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 
 import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
+import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
 import { KangurLessonProgressDots } from '@/features/kangur/ui/components/KangurLessonProgressDots';
 import {
   KangurIconBadge,
@@ -63,54 +64,58 @@ export default function LessonHub({
             >
               <KangurIconSummaryOptionCard
                 accent={accent}
-                aside={
-                  <>
-                    <KangurStatusChip accent={accent} className='uppercase tracking-[0.14em]' size='sm'>
-                      {section.locked
-                        ? (section.lockedLabel ?? 'Zablokowane')
-                        : section.isGame
-                          ? 'Gra'
-                          : 'Lekcja'}
-                    </KangurStatusChip>
-                    {resolvedProgress && resolvedProgress.totalCount > 0 ? (
-                      <KangurLessonProgressDots
-                        activeDotClassName={activeProgressDotClassName}
-                        className='self-end'
-                        dotTestIdPrefix={`lesson-hub-progress-dot-${section.id}`}
-                        srLabel={`Obejrzano ${resolvedProgress.viewedCount} z ${resolvedProgress.totalCount} ekranow sekcji.`}
-                        testId={`lesson-hub-progress-${section.id}`}
-                        totalCount={resolvedProgress.totalCount}
-                        viewedCount={resolvedProgress.viewedCount}
-                      />
-                    ) : null}
-                  </>
-                }
-                asideClassName='ml-auto flex shrink-0 flex-col items-end gap-2 self-start'
                 buttonClassName='w-full rounded-[28px] p-4 text-left disabled:cursor-not-allowed disabled:opacity-70'
                 data-testid={`lesson-hub-section-${section.id}`}
-                description={section.description}
-                descriptionClassName='text-slate-500'
                 disabled={section.locked}
                 emphasis={section.isGame ? 'accent' : 'neutral'}
-                icon={
-                  <KangurIconBadge
-                    accent={accent}
-                    className='shrink-0'
-                    data-testid={`lesson-hub-icon-${section.id}`}
-                    size='xl'
-                  >
-                    {section.emoji}
-                  </KangurIconBadge>
-                }
-                layoutClassName='w-full items-center'
                 onClick={() => {
                   if (!section.locked) {
                     handleSectionSelect(section.id);
                   }
                 }}
-                title={section.title}
-                titleClassName='text-slate-800'
-              />
+              >
+                <KangurIconSummaryCardContent
+                  aside={
+                    <div className='flex flex-col items-end gap-2'>
+                      <KangurStatusChip accent={accent} className='uppercase tracking-[0.14em]' size='sm'>
+                        {section.locked
+                          ? (section.lockedLabel ?? 'Zablokowane')
+                          : section.isGame
+                            ? 'Gra'
+                            : 'Lekcja'}
+                      </KangurStatusChip>
+                      {resolvedProgress && resolvedProgress.totalCount > 0 ? (
+                        <KangurLessonProgressDots
+                          activeDotClassName={activeProgressDotClassName}
+                          className='self-end'
+                          dotTestIdPrefix={`lesson-hub-progress-dot-${section.id}`}
+                          srLabel={`Obejrzano ${resolvedProgress.viewedCount} z ${resolvedProgress.totalCount} ekranow sekcji.`}
+                          testId={`lesson-hub-progress-${section.id}`}
+                          totalCount={resolvedProgress.totalCount}
+                          viewedCount={resolvedProgress.viewedCount}
+                        />
+                      ) : null}
+                    </div>
+                  }
+                  asideClassName='ml-auto flex shrink-0 flex-col items-end gap-2 self-start'
+                  className='w-full items-center'
+                  contentClassName='flex-1'
+                  description={section.description}
+                  descriptionClassName='text-slate-500'
+                  icon={
+                    <KangurIconBadge
+                      accent={accent}
+                      className='shrink-0'
+                      data-testid={`lesson-hub-icon-${section.id}`}
+                      size='xl'
+                    >
+                      {section.emoji}
+                    </KangurIconBadge>
+                  }
+                  title={section.title}
+                  titleClassName='text-slate-800'
+                />
+              </KangurIconSummaryOptionCard>
             </motion.div>
           );
         })}

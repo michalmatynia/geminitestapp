@@ -186,10 +186,11 @@ export function KangurPrimaryNavigation({
   rightAccessory,
   showParentDashboard = canManageLearners,
 }: KangurPrimaryNavigationProps): React.JSX.Element {
-  const storefrontAppearance = useOptionalCmsStorefrontAppearance();
   const tutorContent = useKangurAiTutorContent();
   const tutor = useOptionalKangurAiTutor();
   const auth = useOptionalKangurAuth();
+  const storefrontAppearance = useOptionalCmsStorefrontAppearance();
+  const kangurAppearance = useKangurStorefrontAppearance();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const guestPlayerNameValue = typeof guestPlayerName === 'string' ? guestPlayerName : '';
   const guestPlayerPlaceholderText = guestPlayerNamePlaceholder;
@@ -230,7 +231,6 @@ export function KangurPrimaryNavigation({
   const lessonsTransitionSourceId = 'kangur-primary-nav:lessons';
   const profileTransitionSourceId = 'kangur-primary-nav:profile';
   const parentDashboardTransitionSourceId = 'kangur-primary-nav:parent-dashboard';
-  const kangurAppearance = useKangurStorefrontAppearance();
 
   useEffect(() => subscribeToTutorVisibilityChanges(setIsTutorHidden), []);
 

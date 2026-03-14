@@ -45,42 +45,6 @@ type KangurAssignmentManagerProps = {
   featuredDailyQuest?: KangurDailyQuestState | null;
 };
 
-type KangurAssignmentManagerPanelProps = {
-  accent: ComponentProps<typeof KangurSummaryPanel>['accent'];
-  children: ReactNode;
-  className?: string;
-  dataTestId?: string;
-  description?: string;
-  label?: string;
-  padding?: ComponentProps<typeof KangurSummaryPanel>['padding'];
-  tone?: ComponentProps<typeof KangurSummaryPanel>['tone'];
-};
-
-function KangurAssignmentManagerPanel({
-  accent,
-  children,
-  className,
-  dataTestId,
-  description,
-  label,
-  padding = 'lg',
-  tone,
-}: KangurAssignmentManagerPanelProps): React.JSX.Element {
-  return (
-    <KangurSummaryPanel
-      accent={accent}
-      className={className}
-      data-testid={dataTestId}
-      description={description}
-      label={label}
-      padding={padding}
-      tone={tone}
-    >
-      {children}
-    </KangurSummaryPanel>
-  );
-}
-
 type KangurAssignmentManagerItemCardProps = {
   accent?: ComponentProps<typeof KangurInfoCard>['accent'];
   children: ReactNode;
@@ -420,7 +384,7 @@ export function KangurAssignmentManager({
         </div>
 
         {recommendedCatalog.length > 0 ? (
-          <KangurAssignmentManagerPanel
+          <KangurSummaryPanel
             accent='indigo'
             className='mt-5'
             description='Te zadania wynikają z aktualnych słabszych obszarów i rytmu pracy ucznia.'
@@ -462,14 +426,14 @@ export function KangurAssignmentManager({
                 </KangurAssignmentManagerItemCard>
               ))}
             </div>
-          </KangurAssignmentManagerPanel>
+          </KangurSummaryPanel>
         ) : null}
 
         {featuredDailyQuest ? (
-          <KangurAssignmentManagerPanel
+          <KangurSummaryPanel
             accent='violet'
             className='mt-5'
-            dataTestId='assignment-manager-daily-quest'
+            data-testid='assignment-manager-daily-quest'
             description='To aktualna misja dnia ucznia, zsynchronizowana z widokiem gry i profilu.'
             label='Misja dnia ucznia'
         >
@@ -508,13 +472,13 @@ export function KangurAssignmentManager({
                 titleClassName='text-slate-900'
               />
             </div>
-          </KangurAssignmentManagerPanel>
+          </KangurSummaryPanel>
         ) : null}
 
-        <KangurAssignmentManagerPanel
+        <KangurSummaryPanel
           accent='indigo'
           className='mt-5'
-          dataTestId='assignment-manager-track-summary'
+          data-testid='assignment-manager-track-summary'
           description='Najważniejsze ścieżki odznak, które aktualnie buduje uczeń.'
           label='Ścieżki postępu ucznia'
         >
@@ -525,7 +489,7 @@ export function KangurAssignmentManager({
               progress={progress}
             />
           </div>
-        </KangurAssignmentManagerPanel>
+        </KangurSummaryPanel>
 
         <KangurTextField
           accent='indigo'
@@ -554,7 +518,7 @@ export function KangurAssignmentManager({
         </div>
 
         {feedback ? (
-          <KangurAssignmentManagerPanel
+          <KangurSummaryPanel
             accent={
               feedback.toLowerCase().includes('nie uda') || feedback.toLowerCase().includes('już')
                 ? 'rose'
@@ -566,11 +530,11 @@ export function KangurAssignmentManager({
             tone='accent'
           >
             {null}
-          </KangurAssignmentManagerPanel>
+          </KangurSummaryPanel>
         ) : null}
 
         {error ? (
-          <KangurAssignmentManagerPanel
+          <KangurSummaryPanel
             accent='rose'
             className='mt-4'
             description={error}
@@ -578,7 +542,7 @@ export function KangurAssignmentManager({
             tone='accent'
           >
             {null}
-          </KangurAssignmentManagerPanel>
+          </KangurSummaryPanel>
         ) : null}
 
         <div className='mt-5 grid grid-cols-1 gap-3 xl:grid-cols-2'>
@@ -688,7 +652,7 @@ export function KangurAssignmentManager({
           value={`${trackerSummary.completionRate}%`}
         />
 
-        <KangurAssignmentManagerPanel
+        <KangurSummaryPanel
           accent='amber'
           className='mt-4'
           description='Te zadania warto przypomnieć uczniowi albo omówić podczas kolejnej nauki.'
@@ -744,7 +708,7 @@ export function KangurAssignmentManager({
               ))}
             </div>
           )}
-        </KangurAssignmentManagerPanel>
+        </KangurSummaryPanel>
       </KangurGlassPanel>
 
       <KangurAssignmentsList

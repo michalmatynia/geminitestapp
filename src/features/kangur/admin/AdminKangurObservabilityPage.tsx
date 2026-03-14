@@ -5,9 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { createContext, type JSX, useCallback, useContext, useState } from 'react';
 
-import {
-  KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO,
-} from '@/features/kangur/ai-tutor-page-coverage-manifest';
+import { KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO } from '@/features/kangur/ai-tutor-page-coverage-manifest';
 import { KangurAdminContentShell } from '@/features/kangur/admin/components/KangurAdminContentShell';
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import {
@@ -101,9 +99,8 @@ export function AdminKangurObservabilityPage(): JSX.Element {
     tone: 'success' | 'error';
     message: string;
   } | null>(null);
-  const [knowledgeGraphPreviewDraft, setKnowledgeGraphPreviewDraft] = useState<KnowledgeGraphPreviewDraft>(
-    createKnowledgeGraphPreviewDraft
-  );
+  const [knowledgeGraphPreviewDraft, setKnowledgeGraphPreviewDraft] =
+    useState<KnowledgeGraphPreviewDraft>(createKnowledgeGraphPreviewDraft);
   const [knowledgeGraphPreviewResult, setKnowledgeGraphPreviewResult] =
     useState<KangurKnowledgeGraphPreviewResponse | null>(null);
   const [knowledgeGraphPreviewError, setKnowledgeGraphPreviewError] = useState<string | null>(null);

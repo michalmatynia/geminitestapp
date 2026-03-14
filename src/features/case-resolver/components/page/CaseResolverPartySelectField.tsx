@@ -80,7 +80,7 @@ export function CaseResolverPartySelectField(
         placeholder={placeholder}
         disabled={disabled}
         triggerClassName='bg-card/20 border-border/60'
-      />
+       ariaLabel={placeholder} title={placeholder}/>
 
       {/* Clear button — only when a real value is set */}
       {hasValue && !disabled ? (

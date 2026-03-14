@@ -303,6 +303,8 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
                   className='hidden'
                   multiple
                   accept='image/*,application/pdf'
+                  aria-label='Upload scan pages'
+                  title='Upload scan pages'
                 />
               </div>
 
@@ -524,6 +526,8 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
                           className='mt-0.5 h-7 w-7 shrink-0 p-0 text-gray-500 hover:text-red-400'
                           onClick={() => handleUnlinkRelatedFile(draft.id, file.id)}
                           disabled={isEditingDocumentLocked}
+                          aria-label='Unlink related file'
+                          title='Unlink related file'
                         >
                           <X className='size-4' />
                         </Button>
@@ -544,7 +548,7 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
                   onChange={(e) => updateEditingDocumentDraft({ name: e.target.value })}
                   disabled={isEditingDocumentLocked}
                   className='bg-card/20 border-border/60'
-                />
+                 aria-label="File Name" title="File Name"/>
               </FormField>
               <FormField label='Tag'>
                 <SelectSimple
@@ -555,7 +559,7 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
                   options={caseTagOptions}
                   disabled={isEditingDocumentLocked}
                   triggerClassName='bg-card/20 border-border/60'
-                />
+                 ariaLabel="Tag" title="Tag"/>
               </FormField>
               <FormField label='Case Identifier'>
                 <SelectSimple
@@ -566,7 +570,7 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
                   options={caseIdentifierOptions}
                   disabled={isEditingDocumentLocked}
                   triggerClassName='bg-card/20 border-border/60'
-                />
+                 ariaLabel="Case Identifier" title="Case Identifier"/>
               </FormField>
               <FormField label='Category'>
                 <SelectSimple
@@ -577,7 +581,7 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
                   options={caseCategoryOptions}
                   disabled={isEditingDocumentLocked}
                   triggerClassName='bg-card/20 border-border/60'
-                />
+                 ariaLabel="Category" title="Category"/>
               </FormField>
               <CaseResolverPartyFieldRuntimeProvider value={partyFieldRuntimeValue}>
                 <CaseResolverPartySelectField
@@ -602,7 +606,7 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
                   disabled={isEditingDocumentLocked}
                   placeholder='e.g. gpt-4o'
                   className='bg-card/20 border-border/60'
-                />
+                 aria-label="e.g. gpt-4o" title="e.g. gpt-4o"/>
               </FormField>
               <FormField label='OCR Prompt'>
                 <Input
@@ -611,7 +615,7 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
                   disabled={isEditingDocumentLocked}
                   placeholder='Custom OCR instruction...'
                   className='bg-card/20 border-border/60'
-                />
+                 aria-label="Custom OCR instruction..." title="Custom OCR instruction..."/>
               </FormField>
             </div>
           </TabsContent>

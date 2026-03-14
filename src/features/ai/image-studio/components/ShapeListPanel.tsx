@@ -148,7 +148,7 @@ export function ShapeListPanel({ className }: ShapeListPanelProps): React.JSX.El
                     }}
                     className='h-5 px-1 text-xs'
                     onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                  />
+                   aria-label="Input field" title="Input field"/>
                 </div>
               </>
             ) : (
@@ -207,7 +207,7 @@ export function ShapeListPanel({ className }: ShapeListPanelProps): React.JSX.El
                       label: option.label,
                     })),
                   ]}
-                />
+                 ariaLabel="Select option" title="Select option"/>
               </div>
             )}
 

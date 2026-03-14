@@ -107,7 +107,7 @@ export function AnalysisSettingsSection({
             options={modeOptions}
             triggerClassName='h-8 text-xs'
             ariaLabel='Analysis mode'
-          />
+           title="Select option"/>
         </div>
         <div className='space-y-2'>
           <div className='text-[11px] text-gray-400'>Padding %</div>
@@ -160,7 +160,7 @@ export function AnalysisSettingsSection({
             options={shadowPolicyOptions}
             triggerClassName='h-8 text-xs'
             ariaLabel='Analysis shadow policy'
-          />
+           title="Select option"/>
         </div>
       </div>
 
@@ -191,7 +191,7 @@ export function AnalysisSettingsSection({
               options={layoutPresetOptions}
               triggerClassName='h-8 text-xs'
               ariaLabel='Analysis object layout preset'
-            />
+             title="Select option"/>
             <SelectSimple
               size='sm'
               value={layoutDetection}
@@ -201,7 +201,7 @@ export function AnalysisSettingsSection({
               options={detectionOptions}
               triggerClassName='h-8 text-xs'
               ariaLabel='Analysis detection mode'
-            />
+             title="Select option"/>
             <input
               type='number'
               min={WHITE_THRESHOLD_MIN}

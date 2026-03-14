@@ -341,7 +341,7 @@ export function RuleList(): React.JSX.Element {
                             };
                           });
                         }}
-                      />
+                       title="Input field"/>
                     </div>
                     <div>
                       <Label className='text-[11px] text-cyan-100/80'>Debounce (ms)</Label>
@@ -367,7 +367,7 @@ export function RuleList(): React.JSX.Element {
                             };
                           });
                         }}
-                      />
+                       title="Input field"/>
                     </div>
                     <div className='flex items-end'>
                       <Button

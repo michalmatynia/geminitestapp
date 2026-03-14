@@ -241,6 +241,9 @@ export function CanvasSidebar(): React.JSX.Element {
               data-doc-id='palette_mode_data'
               type='button'
               onClick={() => setPaletteMode('data')}
+              aria-label='Show data signal nodes'
+              title='Data signal'
+              aria-pressed={paletteMode === 'data'}
             >
               <StatusBadge
                 status='Data Signal'
@@ -253,6 +256,9 @@ export function CanvasSidebar(): React.JSX.Element {
               data-doc-id='palette_mode_sound'
               type='button'
               onClick={() => setPaletteMode('sound')}
+              aria-label='Show sound signal nodes'
+              title='Sound signal'
+              aria-pressed={paletteMode === 'sound'}
             >
               <StatusBadge
                 status='Sound Signal'
@@ -270,7 +276,7 @@ export function CanvasSidebar(): React.JSX.Element {
               placeholder='Search nodes...'
               aria-label='Search node palette'
               className='h-8 w-full rounded-md border bg-card/70 px-3 text-xs text-white placeholder:text-gray-500'
-            />
+             title="Search nodes..."/>
             {isPaletteSearchActive ? (
               <p className='mt-1 text-[10px] text-gray-500'>
                 {totalFilteredPaletteItems > 0
@@ -466,7 +472,7 @@ export function CanvasSidebar(): React.JSX.Element {
                     onBlur={() => {
                       void savePathConfig({ silent: true, includeNodeConfig: true, force: true });
                     }}
-                  />
+                   aria-label={titleFieldId} title={titleFieldId}/>
                 </div>
                 <div>
                   <Label
@@ -487,7 +493,7 @@ export function CanvasSidebar(): React.JSX.Element {
                     onBlur={() => {
                       void savePathConfig({ silent: true, includeNodeConfig: true, force: true });
                     }}
-                  />
+                   aria-label={descriptionFieldId} title={descriptionFieldId}/>
                 </div>
                 <Card
                   variant='subtle-compact'

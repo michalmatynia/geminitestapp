@@ -21,28 +21,28 @@ export function PersonBasicInfoSection(): React.JSX.Element {
             value={personDraft.firstName ?? ''}
             onChange={(e) => setPersonDraft({ ...personDraft, firstName: e.target.value })}
             placeholder='e.g. John'
-          />
+           aria-label="e.g. John" title="e.g. John"/>
         </FormField>
         <FormField label='Last Name'>
           <Input
             value={personDraft.lastName ?? ''}
             onChange={(e) => setPersonDraft({ ...personDraft, lastName: e.target.value })}
             placeholder='e.g. Doe'
-          />
+           aria-label="e.g. Doe" title="e.g. Doe"/>
         </FormField>
         <FormField label='NIP'>
           <Input
             value={personDraft.nip ?? ''}
             onChange={(e) => setPersonDraft({ ...personDraft, nip: e.target.value })}
             placeholder='Tax Identification Number'
-          />
+           aria-label="Tax Identification Number" title="Tax Identification Number"/>
         </FormField>
         <FormField label='REGON'>
           <Input
             value={personDraft.regon ?? ''}
             onChange={(e) => setPersonDraft({ ...personDraft, regon: e.target.value })}
             placeholder='Business Registry Number'
-          />
+           aria-label="Business Registry Number" title="Business Registry Number"/>
         </FormField>
       </div>
     </FormSection>

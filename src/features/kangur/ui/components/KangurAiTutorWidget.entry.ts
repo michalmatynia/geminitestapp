@@ -1,7 +1,6 @@
 import {
   useCallback,
   useEffect,
-  useRef,
   type Dispatch,
   type MutableRefObject,
   type SetStateAction,
@@ -20,7 +19,6 @@ import {
   clearPersistedTutorAvatarPosition,
   persistGuestIntroRecord,
   persistHomeOnboardingRecord,
-  type KangurAiTutorGuestIntroCheckResponse,
 } from './KangurAiTutorWidget.storage';
 
 import type {
@@ -34,8 +32,6 @@ type KangurAiTutorGuestIntroRecord = KangurAiTutorOnboardingRecord<KangurAiTutor
 type KangurAiTutorHomeOnboardingRecord =
   KangurAiTutorOnboardingRecord<KangurAiTutorHomeOnboardingStatus>;
 
-// Keep the tutor closed on initial page entry; onboarding can be started manually.
-const AUTO_OPEN_GUEST_INTRO_ON_FIRST_VISIT = false;
 const AUTO_START_HOME_ONBOARDING_ON_FIRST_VISIT = false;
 
 export const getGuidedGuestTargetKind = (authMode: KangurAuthMode): GuidedTutorAuthKind => {
@@ -116,48 +112,11 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     shouldRepeatGuestIntroOnEntry,
     suppressAvatarClickRef,
   } = input;
-  const guestIntroRequestVersionRef = useRef(0);
-  const canApplyGuestIntroFetchResultRef = useRef(false);
   const hasContextualTakeover =
     contextualTutorMode !== null ||
     guidedTutorTarget !== null ||
     selectionGuidanceHandoffText !== null ||
     selectionResponsePending !== null;
-
-  canApplyGuestIntroFetchResultRef.current = Boolean(
-    mounted &&
-      authState &&
-      !authState.isLoadingAuth &&
-      !authState.isAuthenticated &&
-      !isTutorHidden &&
-      !canonicalTutorModalVisible &&
-      !hasContextualTakeover &&
-      !guestIntroVisible &&
-      !guestIntroHelpVisible &&
-      !guestAuthFormVisible &&
-      !isOpen &&
-      !guestIntroRecord
-  );
-
-  useEffect(() => {
-    if (
-      !mounted ||
-      isTutorHidden ||
-      authState?.isAuthenticated ||
-      canonicalTutorModalVisible ||
-      hasContextualTakeover ||
-      isOpen
-    ) {
-      guestIntroRequestVersionRef.current += 1;
-    }
-  }, [
-    authState?.isAuthenticated,
-    canonicalTutorModalVisible,
-    hasContextualTakeover,
-    isOpen,
-    isTutorHidden,
-    mounted,
-  ]);
 
   useEffect(() => {
     if (isTutorHidden) {
@@ -202,102 +161,19 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     }
 
     if (shouldRepeatGuestIntroOnEntry) {
-      if (guestIntroShownForCurrentEntryRef.current) {
-        return;
-      }
-
-      guestIntroShownForCurrentEntryRef.current = true;
-      guestIntroLocalSuppressionTrackedRef.current = false;
-      const nextRecord = persistGuestIntroRecord('shown');
-      setGuestIntroRecord(nextRecord);
-      setGuestIntroVisible(true);
-      trackKangurClientEvent('kangur_ai_tutor_guest_intro_shown', {
-        reason: 'admin_every_visit',
-      });
-      return;
-    }
-
-    if (!AUTO_OPEN_GUEST_INTRO_ON_FIRST_VISIT) {
-      return;
-    }
-
-    if (guestIntroRecord) {
-      if (
-        !guestIntroVisible &&
-        !guestIntroHelpVisible &&
-        !guestIntroLocalSuppressionTrackedRef.current
-      ) {
-        guestIntroLocalSuppressionTrackedRef.current = true;
-        trackKangurClientEvent('kangur_ai_tutor_guest_intro_suppressed_local', {
-          status: guestIntroRecord.status,
-        });
-      }
-      return;
-    }
-
-    if (guestIntroCheckStartedRef.current) {
-      return;
-    }
-
-    guestIntroCheckStartedRef.current = true;
-    const requestVersion = guestIntroRequestVersionRef.current + 1;
-    guestIntroRequestVersionRef.current = requestVersion;
-    let cancelled = false;
-
-    void fetch('/api/kangur/ai-tutor/guest-intro', {
-      cache: 'no-store',
-      credentials: 'same-origin',
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          return null;
-        }
-
-        return (await response
-          .json()
-          .catch(() => null)) as KangurAiTutorGuestIntroCheckResponse | null;
-      })
-      .then((payload) => {
-        if (
-          cancelled ||
-          !payload ||
-          requestVersion !== guestIntroRequestVersionRef.current
-        ) {
-          return;
-        }
-
-        guestIntroLocalSuppressionTrackedRef.current = false;
-
-        trackKangurClientEvent('kangur_ai_tutor_guest_intro_checked', {
-          reason: payload.reason ?? null,
-          shouldShow: payload.shouldShow === true,
-        });
-
-        if (payload.shouldShow !== true) {
-          trackKangurClientEvent('kangur_ai_tutor_guest_intro_suppressed_server_seen', {
-            reason: payload.reason ?? null,
-          });
-          return;
-        }
-
-        if (!canApplyGuestIntroFetchResultRef.current) {
-          return;
-        }
-
-        const nextRecord = persistGuestIntroRecord('shown');
-        setGuestIntroRecord(nextRecord);
-        setGuestIntroVisible(true);
+      if (!guestIntroShownForCurrentEntryRef.current) {
+        guestIntroShownForCurrentEntryRef.current = true;
+        setHasNewMessage(true);
         trackKangurClientEvent('kangur_ai_tutor_guest_intro_shown', {
-          reason: payload.reason ?? null,
+          reason: 'admin_every_visit_badge',
         });
-      })
-      .catch(() => {
-        // Keep the prompt best-effort and silent on network failures.
-      });
+      }
+      return;
+    }
 
-    return () => {
-      cancelled = true;
-    };
+    if (!guestIntroRecord && !guestIntroCheckStartedRef.current) {
+      setHasNewMessage(true);
+    }
   }, [
     authState,
     guestIntroCheckStartedRef,

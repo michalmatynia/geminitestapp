@@ -193,7 +193,7 @@ export default function TraderaSettingsPage(): React.JSX.Element {
                 max={720}
                 value={String(durationHours)}
                 onChange={(e) => setDurationHours(Number(e.target.value))}
-              />
+               aria-label="Default Duration (Hours)" title="Default Duration (Hours)"/>
             </FormField>
 
             <FormField
@@ -208,7 +208,7 @@ export default function TraderaSettingsPage(): React.JSX.Element {
                 max={10080}
                 value={String(autoRelistLeadMinutes)}
                 onChange={(e) => setAutoRelistLeadMinutes(Number(e.target.value))}
-              />
+               aria-label="Relist Lead (Minutes)" title="Relist Lead (Minutes)"/>
             </FormField>
           </div>
         </FormSection>
@@ -227,7 +227,7 @@ export default function TraderaSettingsPage(): React.JSX.Element {
                 max={3600000}
                 value={String(schedulerIntervalMs)}
                 onChange={(e) => setSchedulerIntervalMs(Number(e.target.value))}
-              />
+               aria-label="Scheduler Interval (ms)" title="Scheduler Interval (ms)"/>
             </FormField>
 
             <div className='grid gap-3 pt-2'>
@@ -264,7 +264,7 @@ export default function TraderaSettingsPage(): React.JSX.Element {
                 value={listingFormUrl}
                 onChange={(e) => setListingFormUrl(e.target.value)}
                 placeholder='https://www.tradera.com/...'
-              />
+               aria-label="https://www.tradera.com/..." title="https://www.tradera.com/..."/>
             </FormField>
 
             <FormField label='Selector Profile'>
@@ -274,7 +274,7 @@ export default function TraderaSettingsPage(): React.JSX.Element {
                 value={selectorProfile}
                 onChange={(e) => setSelectorProfile(e.target.value)}
                 placeholder='default'
-              />
+               aria-label="default" title="default"/>
             </FormField>
           </div>
         </FormSection>

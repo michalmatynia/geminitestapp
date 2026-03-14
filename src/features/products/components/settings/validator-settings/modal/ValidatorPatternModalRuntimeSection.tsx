@@ -52,7 +52,7 @@ export function ValidatorPatternModalRuntimeSection(): React.JSX.Element {
                 }))
               }
               options={RUNTIME_TYPE_OPTIONS}
-            />
+             ariaLabel="Runtime Type" title="Runtime Type"/>
           </FormField>
           <FormField label='Runtime Config (JSON)'>
             <ValidatorDocTooltip docId='validator.modal.runtime.config'>
@@ -70,7 +70,11 @@ export function ValidatorPatternModalRuntimeSection(): React.JSX.Element {
                     ? '{\n  "systemPrompt": "You validate product data.",\n  "promptTemplate": "Check [fieldName]: [fieldValue]. Return JSON: {\\"match\\":boolean,\\"message\\":string,\\"replacementValue\\":string|null}",\n  "model": "gpt-4o-mini"\n}'
                     : '{\n  "operation": "query",\n  "payload": {\n    "provider": "auto",\n    "collection": "products",\n    "single": false,\n    "limit": 1,\n    "filter": { "sku": "[sku]" }\n  },\n  "resultPath": "count",\n  "operator": "gt",\n  "operand": 0,\n  "replacementPaths": ["items[0].price"]\n}'
                 }
-              />
+               aria-label={formData.runtimeType === 'ai_prompt'
+                    ? '{\n  "systemPrompt": "You validate product data.",\n  "promptTemplate": "Check [fieldName]: [fieldValue]. Return JSON: {\\"match\\":boolean,\\"message\\":string,\\"replacementValue\\":string|null}",\n  "model": "gpt-4o-mini"\n}'
+                    : '{\n  "operation": "query",\n  "payload": {\n    "provider": "auto",\n    "collection": "products",\n    "single": false,\n    "limit": 1,\n    "filter": { "sku": "[sku]" }\n  },\n  "resultPath": "count",\n  "operator": "gt",\n  "operand": 0,\n  "replacementPaths": ["items[0].price"]\n}'} title={formData.runtimeType === 'ai_prompt'
+                    ? '{\n  "systemPrompt": "You validate product data.",\n  "promptTemplate": "Check [fieldName]: [fieldValue]. Return JSON: {\\"match\\":boolean,\\"message\\":string,\\"replacementValue\\":string|null}",\n  "model": "gpt-4o-mini"\n}'
+                    : '{\n  "operation": "query",\n  "payload": {\n    "provider": "auto",\n    "collection": "products",\n    "single": false,\n    "limit": 1,\n    "filter": { "sku": "[sku]" }\n  },\n  "resultPath": "count",\n  "operator": "gt",\n  "operand": 0,\n  "replacementPaths": ["items[0].price"]\n}'}/>
             </ValidatorDocTooltip>
           </FormField>
         </div>

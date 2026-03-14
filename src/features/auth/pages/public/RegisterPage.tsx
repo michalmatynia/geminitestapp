@@ -131,7 +131,7 @@ function RegisterForm(): React.JSX.Element {
                 disabled={!allowSignup}
                 autoComplete='name'
                 className='h-10 bg-gray-900/50'
-              />
+               aria-label="John Doe" title="John Doe"/>
             </FormField>
 
             <FormField id='email' label='Email Address' required>
@@ -145,7 +145,7 @@ function RegisterForm(): React.JSX.Element {
                 disabled={!allowSignup}
                 autoComplete='email'
                 className='h-10 bg-gray-900/50'
-              />
+               aria-label="name@example.com" title="name@example.com"/>
             </FormField>
 
             <FormField id='password' label='Password' required>
@@ -160,7 +160,7 @@ function RegisterForm(): React.JSX.Element {
                 disabled={!allowSignup}
                 autoComplete='new-password'
                 className='h-10 bg-gray-900/50'
-              />
+               aria-label="••••••••" title="••••••••"/>
               <div className='mt-2 flex justify-between items-center px-1'>
                 <Hint>Minimum {DEFAULT_AUTH_SECURITY_POLICY.minPasswordLength} characters.</Hint>
               </div>

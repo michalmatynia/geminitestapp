@@ -385,7 +385,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
                     handleCancelEdit();
                   }
                 }}
-              />
+               aria-label="Input field" title="Input field"/>
             );
           }
 
@@ -587,7 +587,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
                 void handleCreate();
               }
             }}
-          />
+           aria-label="New project ID..." title="New project ID..."/>
         </div>
         <div className='w-[120px] space-y-1'>
           <div className='text-[11px] text-gray-500'>Canvas W (px)</div>
@@ -602,7 +602,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
               setNewProjectCanvasWidthPx(event.target.value);
             }}
             className={cn('h-9', !canvasWidthDraftValid && 'border-red-400/50')}
-          />
+           aria-label="Input field" title="Input field"/>
         </div>
         <div className='w-[120px] space-y-1'>
           <div className='text-[11px] text-gray-500'>Canvas H (px)</div>
@@ -617,7 +617,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
               setNewProjectCanvasHeightPx(event.target.value);
             }}
             className={cn('h-9', !canvasHeightDraftValid && 'border-red-400/50')}
-          />
+           aria-label="Input field" title="Input field"/>
         </div>
         <div className='flex w-full flex-wrap items-center gap-2'>
           <div className='text-[11px] text-gray-500'>Canvas Templates:</div>

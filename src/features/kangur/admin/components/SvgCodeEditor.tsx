@@ -209,7 +209,7 @@ export function SvgCodeEditor({
             placeholder={textareaPlaceholder}
             className={cn('font-mono text-xs', textareaHeight)}
             spellCheck={false}
-          />
+           aria-label={textareaPlaceholder} title={textareaPlaceholder}/>
         </div>
 
         {/* ── Preview pane ── */}

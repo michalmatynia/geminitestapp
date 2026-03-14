@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { KangurCmsRuntimeScreen } from '@/features/kangur/cms-builder/KangurCmsRuntimeScreen';
 import { KANGUR_MAIN_PAGE, kangurPages } from '@/features/kangur/config/pages';
-import { resolveKangurPageKey } from '@/features/kangur/config/routing';
+import { getKangurHomeHref, resolveKangurPageKey } from '@/features/kangur/config/routing';
 import { KangurAiTutorWidget } from '@/features/kangur/ui/components/KangurAiTutorWidget';
 import { KangurAppLoader } from '@/features/kangur/ui/components/KangurAppLoader';
 import { KangurLoginModal } from '@/features/kangur/ui/components/KangurLoginModal';
@@ -32,6 +32,7 @@ import {
 } from '@/features/kangur/ui/context/KangurTopNavigationContext';
 import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
+import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { cn } from '@/shared/utils';
 
 import type { JSX } from 'react';
@@ -40,7 +41,8 @@ const BOOT_SKELETON_MIN_VISIBLE_MS = 280;
 const NAVIGATION_SKELETON_DELAY_MS = 140;
 
 const AuthenticatedApp = (): JSX.Element | null => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useKangurAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, isAuthenticated } =
+    useKangurAuth();
   const {
     isRouteAcknowledging,
     isRoutePending,
@@ -52,9 +54,17 @@ const AuthenticatedApp = (): JSX.Element | null => {
     activeTransitionPageKey,
     activeTransitionSkeletonVariant,
   } = useKangurRouteTransitionState();
-  const { pageKey, embedded, requestedPath } = useKangurRouting();
+  const routeNavigator = useKangurRouteNavigator();
+  const { pageKey, embedded, requestedPath, basePath } = useKangurRouting();
   const authErrorType = authError?.type;
   const resolvedPageKey = resolveKangurPageKey(pageKey, kangurPages, KANGUR_MAIN_PAGE);
+  const homeHref = getKangurHomeHref(basePath);
+  const shouldRedirectToHome =
+    !embedded &&
+    !isLoadingAuth &&
+    !isAuthenticated &&
+    !authErrorType &&
+    resolvedPageKey === 'ParentDashboard';
   const canRenderRouteWhileLoading = resolvedPageKey === 'Lessons';
   const prefersReducedMotion = useReducedMotion();
   const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
@@ -63,7 +73,8 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const isNavigationTransitionActive =
     isRouteAcknowledging || isRoutePending || isRouteWaitingForReady || isRouteRevealing;
   const shouldSkipNavigationSkeletonDelay = activeTransitionSourceId !== null;
-  const shouldBlockRouteContent = isBootLoading && !canRenderRouteWhileLoading;
+  const shouldBlockRouteContent =
+    (isBootLoading && !canRenderRouteWhileLoading) || shouldRedirectToHome;
   const [isBootSkeletonVisible, setIsBootSkeletonVisible] = useState<boolean>(isBootLoading);
   const [isNavigationSkeletonVisible, setIsNavigationSkeletonVisible] = useState<boolean>(false);
   const bootSkeletonShownAtRef = useRef<number | null>(isBootLoading ? Date.now() : null);
@@ -80,6 +91,17 @@ const AuthenticatedApp = (): JSX.Element | null => {
       navigateToLogin();
     }
   }, [authErrorType, navigateToLogin]);
+
+  useEffect(() => {
+    if (!shouldRedirectToHome) {
+      return;
+    }
+
+    routeNavigator.replace(homeHref, {
+      pageKey: KANGUR_MAIN_PAGE,
+      sourceId: 'kangur-auth:redirect-parent-dashboard',
+    });
+  }, [homeHref, routeNavigator, shouldRedirectToHome]);
 
   useEffect(() => {
     if (isBootLoading) {

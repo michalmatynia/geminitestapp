@@ -288,7 +288,7 @@ export function ParallaxSection(): React.ReactNode {
           value={parallaxPresetValue}
           onValueChange={handleParallaxPresetChange}
           options={PARALLAX_PRESETS}
-        />
+         ariaLabel="Preset" title="Preset"/>
       </FormField>
 
       {parallaxPresetValue !== 'none' && (
@@ -300,7 +300,7 @@ export function ParallaxSection(): React.ReactNode {
                 value={parallaxPatternValue}
                 onValueChange={handleParallaxPatternChange}
                 options={PARALLAX_PATTERNS}
-              />
+               ariaLabel="Pattern" title="Pattern"/>
             </FormField>
 
             <div className='flex items-center gap-2 mb-2'>
@@ -318,7 +318,7 @@ export function ParallaxSection(): React.ReactNode {
               value={parallaxAxisValue}
               onValueChange={handleParallaxAxisChange}
               options={parallaxAxisOptions}
-            />
+             ariaLabel="Axis" title="Axis"/>
           </FormField>
 
           <div className='grid gap-3 sm:grid-cols-2'>
@@ -331,7 +331,7 @@ export function ParallaxSection(): React.ReactNode {
                 value={parallaxOffsetValue}
                 onChange={handleParallaxOffsetChange}
                 className='h-9'
-              />
+               aria-label="Offset (px)" title="Offset (px)"/>
             </FormField>
 
             <FormField label='Scrub'>
@@ -343,7 +343,7 @@ export function ParallaxSection(): React.ReactNode {
                 value={parallaxScrubValue}
                 onChange={handleParallaxScrubChange}
                 className='h-9'
-              />
+               aria-label="Scrub" title="Scrub"/>
             </FormField>
           </div>
 
@@ -354,7 +354,7 @@ export function ParallaxSection(): React.ReactNode {
                 onChange={handleParallaxStartChange}
                 placeholder='top bottom'
                 className='h-9'
-              />
+               aria-label="top bottom" title="top bottom"/>
             </FormField>
             <FormField label='End'>
               <Input
@@ -362,7 +362,7 @@ export function ParallaxSection(): React.ReactNode {
                 onChange={handleParallaxEndChange}
                 placeholder='bottom top'
                 className='h-9'
-              />
+               aria-label="bottom top" title="bottom top"/>
             </FormField>
           </div>
 
@@ -373,7 +373,7 @@ export function ParallaxSection(): React.ReactNode {
                 onChange={handleParallaxSelectorChange}
                 placeholder=':scope > *'
                 className='h-9'
-              />
+               aria-label=":scope > *" title=":scope > *"/>
             </FormField>
             <FormField label='Ease'>
               <SelectSimple
@@ -381,7 +381,7 @@ export function ParallaxSection(): React.ReactNode {
                 value={parallaxEaseValue}
                 onValueChange={handleParallaxEaseChange}
                 options={ANIMATION_EASINGS}
-              />
+               ariaLabel="Ease" title="Ease"/>
             </FormField>
           </div>
 
@@ -395,7 +395,7 @@ export function ParallaxSection(): React.ReactNode {
                 value={parallaxScaleFromValue}
                 onChange={handleParallaxScaleFromChange}
                 className='h-9'
-              />
+               aria-label="Scale from" title="Scale from"/>
             </FormField>
             <FormField label='Scale to'>
               <Input
@@ -406,7 +406,7 @@ export function ParallaxSection(): React.ReactNode {
                 value={parallaxScaleToValue}
                 onChange={handleParallaxScaleToChange}
                 className='h-9'
-              />
+               aria-label="Scale to" title="Scale to"/>
             </FormField>
           </div>
 
@@ -420,7 +420,7 @@ export function ParallaxSection(): React.ReactNode {
                 value={parallaxRotateFromValue}
                 onChange={handleParallaxRotateFromChange}
                 className='h-9'
-              />
+               aria-label="Rotate from (deg)" title="Rotate from (deg)"/>
             </FormField>
             <FormField label='Rotate to (deg)'>
               <Input
@@ -431,7 +431,7 @@ export function ParallaxSection(): React.ReactNode {
                 value={parallaxRotateToValue}
                 onChange={handleParallaxRotateToChange}
                 className='h-9'
-              />
+               aria-label="Rotate to (deg)" title="Rotate to (deg)"/>
             </FormField>
           </div>
 
@@ -445,7 +445,7 @@ export function ParallaxSection(): React.ReactNode {
                 value={parallaxOpacityFromValue}
                 onChange={handleParallaxOpacityFromChange}
                 className='h-9'
-              />
+               aria-label="Opacity from" title="Opacity from"/>
             </FormField>
             <FormField label='Opacity to'>
               <Input
@@ -456,7 +456,7 @@ export function ParallaxSection(): React.ReactNode {
                 value={parallaxOpacityToValue}
                 onChange={handleParallaxOpacityToChange}
                 className='h-9'
-              />
+               aria-label="Opacity to" title="Opacity to"/>
             </FormField>
           </div>
 
@@ -470,7 +470,7 @@ export function ParallaxSection(): React.ReactNode {
                 value={parallaxBlurFromValue}
                 onChange={handleParallaxBlurFromChange}
                 className='h-9'
-              />
+               aria-label="Blur from (px)" title="Blur from (px)"/>
             </FormField>
             <FormField label='Blur to (px)'>
               <Input
@@ -481,7 +481,7 @@ export function ParallaxSection(): React.ReactNode {
                 value={parallaxBlurToValue}
                 onChange={handleParallaxBlurToChange}
                 className='h-9'
-              />
+               aria-label="Blur to (px)" title="Blur to (px)"/>
             </FormField>
           </div>
           {parallaxPatternValue === 'increment' && (
@@ -495,7 +495,7 @@ export function ParallaxSection(): React.ReactNode {
                 value={parallaxChildStepValue}
                 onChange={handleParallaxChildStepChange}
                 className='h-9'
-              />
+               aria-label="Per-child step (px)" title="Per-child step (px)"/>
             </FormField>
           )}
 
@@ -510,7 +510,7 @@ export function ParallaxSection(): React.ReactNode {
                   value={parallaxLayerStrengthValue}
                   onChange={handleParallaxLayerStrengthChange}
                   className='h-9'
-                />
+                 aria-label="Layer strength" title="Layer strength"/>
               </FormField>
               <FormField label='Layer scale step'>
                 <Input
@@ -521,7 +521,7 @@ export function ParallaxSection(): React.ReactNode {
                   value={parallaxLayerScaleStepValue}
                   onChange={handleParallaxLayerScaleStepChange}
                   className='h-9'
-                />
+                 aria-label="Layer scale step" title="Layer scale step"/>
               </FormField>
             </div>
           )}
@@ -536,7 +536,7 @@ export function ParallaxSection(): React.ReactNode {
                 value={parallaxRandomSeedValue}
                 onChange={handleParallaxRandomSeedChange}
                 className='h-9'
-              />
+               aria-label="Random seed" title="Random seed"/>
             </FormField>
           )}
 

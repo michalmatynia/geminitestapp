@@ -28,7 +28,7 @@ export function OrganizationBasicInfoSection(): React.JSX.Element {
               }))
             }
             placeholder='e.g. Acme Corp'
-          />
+           aria-label="e.g. Acme Corp" title="e.g. Acme Corp"/>
         </FormField>
       </div>
     </FormSection>

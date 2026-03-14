@@ -1010,6 +1010,8 @@ export function AdminKangurTestSuitesManagerPage({
               value={questionMoveTargetSuiteId}
               onChange={(event): void => setQuestionMoveTargetSuiteId(event.target.value)}
               className='h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm'
+              aria-label='Destination suite'
+              title='Destination suite'
             >
               <option value=''>Choose destination suite</option>
               {targetSuites.map((suite) => (
@@ -1081,7 +1083,7 @@ export function AdminKangurTestSuitesManagerPage({
               onChange={(event): void => setGroupTitle(event.target.value)}
               placeholder='e.g. Olympiad 2024'
               className='h-10'
-            />
+             aria-label="e.g. Olympiad 2024" title="e.g. Olympiad 2024"/>
             <textarea
               value={groupDescription}
               onChange={(event): void => setGroupDescription(event.target.value)}
@@ -1348,7 +1350,7 @@ export function AdminKangurTestSuitesManagerPage({
             onChange={(event): void => setGroupTitle(event.target.value)}
             placeholder='e.g. Olympiad 2024'
             className='h-9'
-          />
+           aria-label="e.g. Olympiad 2024" title="e.g. Olympiad 2024"/>
           <textarea
             value={groupDescription}
             onChange={(event): void => setGroupDescription(event.target.value)}
@@ -1381,6 +1383,8 @@ export function AdminKangurTestSuitesManagerPage({
             value={suiteMoveTargetGroupTitle}
             onChange={(event): void => setSuiteMoveTargetGroupTitle(event.target.value)}
             className='h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm'
+            aria-label='Destination group'
+            title='Destination group'
           >
             <option value=''>Choose destination group</option>
             {resolvedGroups.map((group) => (

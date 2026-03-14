@@ -75,7 +75,7 @@ export function SourcePromptPanel(): React.JSX.Element {
           }}
           aria-label='Source prompt'
           placeholder='Paste prompt text...'
-        />
+         title="Paste prompt text..."/>
       </div>
     </FormSection>
   );

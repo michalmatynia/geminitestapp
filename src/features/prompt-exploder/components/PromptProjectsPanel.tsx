@@ -88,7 +88,7 @@ export function PromptProjectsPanel(): React.JSX.Element {
               }}
               aria-label='Project name'
               placeholder='Project name'
-            />
+             title="Project name"/>
           </div>
           <div className='rounded border border-border/50 bg-card/20 p-2 text-xs text-gray-500'>
             <div>

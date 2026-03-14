@@ -331,7 +331,7 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
               context: { ...contextConfig, role: event.target.value },
             })
           }
-        />
+         aria-label="Filter Role" title="Filter Role"/>
       </FormField>
 
       <div>
@@ -391,7 +391,7 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
               { value: 'log', label: 'Log Entry' },
             ]}
             variant='subtle'
-          />
+           ariaLabel="Collection Type" title="Collection Type"/>
         </FormField>
 
         <FormField
@@ -414,7 +414,7 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
               { value: 'context', label: 'Full context' },
             ]}
             variant='subtle'
-          />
+           ariaLabel="Scope Target" title="Scope Target"/>
         </FormField>
 
         <FormField label='Entity ID Source'>
@@ -435,7 +435,7 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
               { value: 'manual', label: 'Manual ID' },
             ]}
             variant='subtle'
-          />
+           ariaLabel="Entity ID Source" title="Entity ID Source"/>
         </FormField>
       </div>
       <div>
@@ -494,7 +494,7 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
                 context: { ...contextConfig, entityId: event.target.value },
               })
             }
-          />
+           aria-label="Entity ID" title="Entity ID"/>
         </FormField>
       )}
 
@@ -516,7 +516,7 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
             { value: 'exclude', label: 'Exclude listed paths' },
           ]}
           variant='subtle'
-        />
+         ariaLabel="Data Scope" title="Data Scope"/>
       </FormField>
       {(contextConfig.scopeMode === 'include' || contextConfig.scopeMode === 'exclude') && (
         <FormField
@@ -551,7 +551,11 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
                 },
               });
             }}
-          />
+           aria-label={contextConfig.scopeMode === 'include'
+              ? 'Include paths (one per line)'
+              : 'Exclude paths (one per line)'} title={contextConfig.scopeMode === 'include'
+              ? 'Include paths (one per line)'
+              : 'Exclude paths (one per line)'}/>
         </FormField>
       )}
     </div>

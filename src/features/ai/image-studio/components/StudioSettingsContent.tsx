@@ -121,7 +121,7 @@ export function StudioSettingsContent(): React.JSX.Element {
                 ]}
                 size='sm'
                 ariaLabel='Prompt extraction mode'
-              />
+               title="Select option"/>
             </div>
 
             <div className='space-y-1'>
@@ -132,7 +132,7 @@ export function StudioSettingsContent(): React.JSX.Element {
                 disabled
                 size='sm'
                 placeholder='Not configured in AI Brain'
-              />
+               aria-label="Not configured in AI Brain" title="Not configured in AI Brain"/>
             </div>
           </div>
           <div className='grid grid-cols-1 gap-2 sm:grid-cols-3'>
@@ -214,7 +214,7 @@ export function StudioSettingsContent(): React.JSX.Element {
                 ]}
                 size='sm'
                 ariaLabel='UI extractor mode'
-              />
+               title="Select option"/>
             </div>
             <div className='space-y-1'>
               <div className='text-[11px] text-gray-500'>Model</div>
@@ -224,7 +224,7 @@ export function StudioSettingsContent(): React.JSX.Element {
                 disabled
                 size='sm'
                 placeholder='Not configured in AI Brain'
-              />
+               aria-label="Not configured in AI Brain" title="Not configured in AI Brain"/>
             </div>
           </div>
         </div>
@@ -255,7 +255,7 @@ export function StudioSettingsContent(): React.JSX.Element {
                 ]}
                 size='sm'
                 ariaLabel='OpenAI API mode'
-              />
+               title="Select option"/>
             </div>
             <div className='space-y-1'>
               <div className='text-[11px] text-gray-500'>Model</div>
@@ -265,7 +265,7 @@ export function StudioSettingsContent(): React.JSX.Element {
                 disabled
                 size='sm'
                 placeholder='Not configured in AI Brain'
-              />
+               aria-label="Not configured in AI Brain" title="Not configured in AI Brain"/>
             </div>
           </div>
         </div>
@@ -279,7 +279,7 @@ export function StudioSettingsContent(): React.JSX.Element {
             }
             className='h-28 font-mono text-[11px]'
             size='sm'
-          />
+           aria-label="Textarea" title="Textarea"/>
           {advancedOverridesError ? (
             <div className='text-[11px] text-red-300'>{advancedOverridesError}</div>
           ) : null}

@@ -116,7 +116,7 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
             placeholder='Select an active preset'
             triggerClassName='h-9'
             ariaLabel='Active UI preset'
-          />
+           title="Select an active preset"/>
           {activePreset ? (
             <div className='text-[11px] text-gray-500'>
               Active: <span className='text-gray-300'>{activePreset.name}</span>
@@ -179,7 +179,7 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
                     readOnly
                     className='mt-1 h-20 font-mono text-[10px]'
                     value={JSON.stringify(preset.paramUiOverrides ?? {}, null, 2)}
-                  />
+                   aria-label="Textarea" title="Textarea"/>
                 </Card>
               </Card>
             ))}

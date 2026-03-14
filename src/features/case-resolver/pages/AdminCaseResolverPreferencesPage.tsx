@@ -198,7 +198,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
                 { value: 'hierarchy', label: 'Hierarchy' },
                 { value: 'list', label: 'List' },
               ]}
-            />
+             ariaLabel="Default View" title="Default View"/>
           </FormField>
 
           <FormField label='Default Sort By' description='Choose the initial sort field for Cases.'>
@@ -230,7 +230,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
                 { value: 'locked', label: 'Lock state' },
                 { value: 'sent', label: 'Sent state' },
               ]}
-            />
+             ariaLabel="Default Sort By" title="Default Sort By"/>
           </FormField>
 
           <FormField
@@ -250,7 +250,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
                 { value: 'desc', label: 'Descending' },
                 { value: 'asc', label: 'Ascending' },
               ]}
-            />
+             ariaLabel="Default Sort Order" title="Default Sort Order"/>
           </FormField>
 
           <FormField
@@ -273,7 +273,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
                 { value: 'folder', label: 'Folder only' },
                 { value: 'content', label: 'Content only' },
               ]}
-            />
+             ariaLabel="Default Search Scope" title="Default Search Scope"/>
           </FormField>
 
           <FormField
@@ -293,7 +293,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
                 { value: 'hidden', label: 'Hide Filters' },
                 { value: 'shown', label: 'Show Filters' },
               ]}
-            />
+             ariaLabel="Filters Button Default" title="Filters Button Default"/>
           </FormField>
 
           <FormField
@@ -313,7 +313,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
                 { value: 'shown', label: 'Show nested content' },
                 { value: 'hidden', label: 'Hide nested content' },
               ]}
-            />
+             ariaLabel="Default Nested Content" title="Default Nested Content"/>
           </FormField>
         </div>
       </FormSection>

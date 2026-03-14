@@ -65,7 +65,7 @@ function PageSettingsTab(): React.ReactNode {
                 }}
                 placeholder='Page name'
                 className='h-7 flex-1 bg-transparent px-2 text-xs'
-              />
+               title="Page name"/>
             ) : (
               <span className='flex-1 truncate text-xs text-gray-200'>
                 {page.name || 'Untitled page'}

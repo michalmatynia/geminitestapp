@@ -47,7 +47,7 @@ export function VariantPanel(): React.JSX.Element {
           placeholder='Search variants by timestamp'
           className='h-8 text-xs'
           aria-label='Search generated variants by timestamp'
-        />
+         title="Search variants by timestamp"/>
         <span className='shrink-0 text-[11px] text-gray-400'>
           {filteredVariantThumbnails.length}/{visibleVariantThumbnails.length}
         </span>

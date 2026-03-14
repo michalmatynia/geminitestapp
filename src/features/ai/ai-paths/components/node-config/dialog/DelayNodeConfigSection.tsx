@@ -29,7 +29,7 @@ export function DelayNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-        />
+         aria-label="Delay (ms)" title="Delay (ms)"/>
       </FormField>
       <p className='text-[11px] text-gray-500'>Adds a pause before passing inputs downstream.</p>
     </div>

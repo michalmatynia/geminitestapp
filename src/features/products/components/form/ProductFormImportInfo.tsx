@@ -23,7 +23,7 @@ export default function ProductFormImportInfo(): React.JSX.Element {
           className='bg-muted cursor-not-allowed'
           placeholder='Imported from Base.com'
           aria-readonly='true'
-        />
+         aria-label="Imported from Base.com" title="Imported from Base.com"/>
       </FormField>
     </FormSection>
   );

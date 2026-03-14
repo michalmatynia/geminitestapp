@@ -473,7 +473,7 @@ export function AdminAiContextRegistryPage(): React.JSX.Element {
                       onChange={(event) => setRuntimeRefsText(event.target.value)}
                       placeholder={'runtime:kangur:learner:abc123\nruntime:ai-path-run:run_42'}
                       rows={6}
-                    />
+                     aria-label="runtime:kangur:learner:abc123\nruntime:ai-path-run:run_42" title="runtime:kangur:learner:abc123\nruntime:ai-path-run:run_42"/>
                     <Hint variant='muted' size='xs'>
                       Accepted values are raw runtime ref IDs. One per line or comma-separated.
                     </Hint>

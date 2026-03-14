@@ -48,7 +48,7 @@ export function GenerationToolbarMaskSection(): React.JSX.Element {
           triggerClassName='h-8 text-xs'
           disabled={maskGenLoading || !workingSlotPresent}
           ariaLabel='Smart mask mode'
-        />
+         title={maskGenLoading ? 'Detecting...' : 'Smart Mask'}/>
         <Button
           size='xs'
           type='button'
@@ -72,7 +72,7 @@ export function GenerationToolbarMaskSection(): React.JSX.Element {
           options={maskAttachModeOptions}
           triggerClassName='h-8 text-xs'
           ariaLabel='Mask attach mode'
-        />
+         title="Select option"/>
         <Button
           size='xs'
           type='button'

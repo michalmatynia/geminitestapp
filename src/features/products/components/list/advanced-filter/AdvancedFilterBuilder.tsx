@@ -382,7 +382,7 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
             onValueChange={handleFieldChange}
             options={FIELD_OPTIONS}
             ariaLabel='Condition field'
-          />
+           title="Select option"/>
         </div>
 
         <div className='space-y-1'>
@@ -395,7 +395,7 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
             onValueChange={handleOperatorChange}
             options={operatorOptions}
             ariaLabel='Condition operator'
-          />
+           title="Select option"/>
         </div>
 
         {isValueRequired(condition.operator) ? (
@@ -417,7 +417,7 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
                 options={ADVANCED_BOOLEAN_OPTIONS}
                 placeholder='Select value'
                 ariaLabel='Condition boolean value'
-              />
+               title="Select value"/>
             ) : (
               <>
                 <Input
@@ -432,7 +432,7 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
                   className='h-8'
                   placeholder={useMultiValueInput ? 'Value 1, value 2, ...' : 'Value'}
                   aria-label='Condition value'
-                />
+                 title={useMultiValueInput ? 'Value 1, value 2, ...' : 'Value'}/>
                 {valueOptions && valueOptions.length > 0 && fieldConfig.kind === 'string' ? (
                   <datalist id={dataListId}>
                     {valueOptions.map((option: AdvancedFilterValueOption) => (
@@ -464,7 +464,7 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
               className='h-8'
               placeholder='Second value'
               aria-label='Condition value to'
-            />
+             title="Second value"/>
           </div>
         ) : (
           <div className='space-y-1'>
@@ -608,7 +608,7 @@ const AdvancedFilterGroupEditor = memo(function AdvancedFilterGroupEditor(props:
             }
             options={COMBINATOR_OPTIONS}
             ariaLabel='Group combinator'
-          />
+           title="Select option"/>
         </div>
 
         <div className='inline-flex items-center gap-2 text-xs text-muted-foreground'>

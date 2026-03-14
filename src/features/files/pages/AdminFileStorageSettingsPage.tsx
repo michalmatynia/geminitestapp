@@ -157,7 +157,7 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
               onValueChange={(value: string): void => setSource(normalizeSource(value))}
               options={sourceOptions}
               placeholder='Select file source'
-            />
+             ariaLabel="Select file source" title="Select file source"/>
             <Hint className='mt-1'>
               Local keeps uploads in this app. FastComet writes new uploads to your external server.
             </Hint>
@@ -196,7 +196,7 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
                   }))
                 }
                 placeholder='https://files.example.com'
-              />
+               aria-label="https://files.example.com" title="https://files.example.com"/>
               <Hint className='mt-1'>
                 Optional public base URL, e.g. https://files.your-domain.com.
               </Hint>
@@ -212,7 +212,7 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
                   }))
                 }
                 placeholder='https://files.example.com/api/uploads'
-              />
+               aria-label="https://files.example.com/api/uploads" title="https://files.example.com/api/uploads"/>
               <Hint className='mt-1'>
                 Server endpoint that receives multipart upload requests from this app.
               </Hint>
@@ -228,7 +228,7 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
                   }))
                 }
                 placeholder='https://files.example.com/api/uploads/delete'
-              />
+               aria-label="https://files.example.com/api/uploads/delete" title="https://files.example.com/api/uploads/delete"/>
               <Hint className='mt-1'>
                 Optional endpoint used to delete remote files when records are removed.
               </Hint>
@@ -245,7 +245,7 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
                   }))
                 }
                 placeholder='Optional API token'
-              />
+               aria-label="Optional API token" title="Optional API token"/>
               <Hint className='mt-1'>
                 Optional token sent as Authorization: Bearer &lt;token&gt;.
               </Hint>
@@ -263,7 +263,7 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
                     timeoutMs: Number(event.target.value),
                   }))
                 }
-              />
+               aria-label="Request timeout (ms)" title="Request timeout (ms)"/>
               <Hint className='mt-1'>Range: 1000 - 120000 ms.</Hint>
             </FormField>
 

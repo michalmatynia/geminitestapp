@@ -82,7 +82,7 @@ const createPanelBodyContextValue = (
 });
 
 describe('KangurAiTutorPanelAuxiliaryControls', () => {
-  it('renders the usage banner and routes proactive nudges through the quick-action handler', () => {
+  it('renders the usage banner and never renders proactive nudges', () => {
     const handleQuickAction = vi.fn().mockResolvedValue(undefined);
 
     render(
@@ -126,40 +126,8 @@ describe('KangurAiTutorPanelAuxiliaryControls', () => {
       'kangur-chat-padding-sm',
       '[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
     );
-    expect(screen.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveAttribute(
-      'data-nudge-mode',
-      'gentle'
-    );
-    expect(screen.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveClass(
-      'kangur-chat-inset',
-      'kangur-chat-padding-md',
-      'kangur-chat-surface-success'
-    );
-    expect(screen.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveTextContent(
-      'Sugerowany pierwszy krok'
-    );
-    expect(screen.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveTextContent('Ten fragment');
-    expect(screen.getByText('Sugerowany pierwszy krok')).toHaveClass(
-      '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
-    );
-    expect(screen.getByText('Ten fragment')).toHaveClass(
-      '[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
-    );
-    expect(
-      screen.getByText('Zacznij od wyjaśnienia zaznaczonego fragmentu.')
-    ).toHaveClass('[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]');
-
-    fireEvent.click(screen.getByTestId('kangur-ai-tutor-proactive-nudge-button'));
-
-    expect(handleQuickAction).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'selected-text',
-        label: 'Ten fragment',
-      }),
-      {
-        source: 'proactive_nudge',
-      }
-    );
+    expect(screen.queryByTestId('kangur-ai-tutor-proactive-nudge')).not.toBeInTheDocument();
+    expect(handleQuickAction).not.toHaveBeenCalled();
   });
 
   it('hides the proactive nudge card when no nudge is available', () => {

@@ -197,14 +197,14 @@ export function SectionSettingsTab(): React.JSX.Element | null {
               aria-label='Template name'
               placeholder='Name'
               className='h-8 text-xs'
-            />
+             title="Name"/>
             <Input
               value={sectionTemplateCategory}
               onChange={(e) => setSectionTemplateCategory(e.target.value)}
               aria-label='Template category'
               placeholder='Cat'
               className='h-8 text-xs'
-            />
+             title="Cat"/>
           </div>
           <Button
             onClick={() => void handleSaveSectionTemplate()}

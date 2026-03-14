@@ -11,7 +11,6 @@ const {
   findAuthUserByEmailMock,
   findAuthUserByIdMock,
   findActiveEmailVerificationChallengeByEmailMock,
-  ensureDefaultKangurLearnerForOwnerMock,
   getAuthSecurityProfileMock,
   sendAuthEmailMock,
   shouldExposeAuthEmailDebugMock,
@@ -29,7 +28,6 @@ const {
   findAuthUserByEmailMock: vi.fn(),
   findAuthUserByIdMock: vi.fn(),
   findActiveEmailVerificationChallengeByEmailMock: vi.fn(),
-  ensureDefaultKangurLearnerForOwnerMock: vi.fn(),
   getAuthSecurityProfileMock: vi.fn(),
   sendAuthEmailMock: vi.fn(),
   shouldExposeAuthEmailDebugMock: vi.fn(),
@@ -63,9 +61,6 @@ vi.mock('@/server/auth', () => ({
   validatePasswordStrength: validatePasswordStrengthMock,
 }));
 
-vi.mock('@/features/kangur/services/kangur-learner-repository', () => ({
-  ensureDefaultKangurLearnerForOwner: ensureDefaultKangurLearnerForOwnerMock,
-}));
 vi.mock('@/shared/lib/ai-brain/server', () => ({
   readStoredSettingValue: readStoredSettingValueMock,
 }));
@@ -350,18 +345,6 @@ describe('parent email auth service', () => {
       passwordHash: 'hashed-password',
       emailVerified: new Date('2026-03-08T21:10:00.000Z'),
     });
-    ensureDefaultKangurLearnerForOwnerMock.mockResolvedValue({
-      id: 'learner-1',
-      ownerUserId: 'parent-1',
-      displayName: 'Parent',
-      loginName: 'parent',
-      status: 'active',
-      legacyUserKey: 'parent@example.com',
-      aiTutor: undefined,
-      createdAt: '2026-03-08T21:10:00.000Z',
-      updatedAt: '2026-03-08T21:10:00.000Z',
-    });
-
     await expect(verifyKangurParentEmail('verify-link-1')).resolves.toEqual({
       email: 'parent@example.com',
       callbackUrl: '/kangur/lessons',
@@ -374,12 +357,6 @@ describe('parent email auth service', () => {
       emailVerified: expect.any(Date),
     });
     expect(markAuthUserEmailVerifiedMock).not.toHaveBeenCalled();
-    expect(ensureDefaultKangurLearnerForOwnerMock).toHaveBeenCalledWith({
-      ownerUserId: 'parent-1',
-      displayName: 'Parent',
-      preferredLoginName: 'parent',
-      legacyUserKey: 'parent@example.com',
-    });
   });
 
   it('verifies an existing legacy unverified parent account', async () => {
@@ -396,18 +373,6 @@ describe('parent email auth service', () => {
       passwordHash: 'stored-password-hash',
       emailVerified: new Date('2026-03-08T21:10:00.000Z'),
     });
-    ensureDefaultKangurLearnerForOwnerMock.mockResolvedValue({
-      id: 'learner-1',
-      ownerUserId: 'parent-1',
-      displayName: 'Parent',
-      loginName: 'parent',
-      status: 'active',
-      legacyUserKey: 'parent@example.com',
-      aiTutor: undefined,
-      createdAt: '2026-03-08T21:10:00.000Z',
-      updatedAt: '2026-03-08T21:10:00.000Z',
-    });
-
     await expect(verifyKangurParentEmail('verify-link-legacy')).resolves.toEqual({
       email: 'parent@example.com',
       callbackUrl: '/kangur/lessons',

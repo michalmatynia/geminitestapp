@@ -102,7 +102,7 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                     })
                   )}
                   placeholder='Select position'
-                />
+                 ariaLabel="Select position" title="Select position"/>
               </FormField>
 
               {/* Accent Color Setting */}
@@ -122,7 +122,7 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                     })
                   )}
                   placeholder='Select accent color'
-                />
+                 ariaLabel="Select accent color" title="Select accent color"/>
               </FormField>
 
               {/* Color Palette Preview */}
@@ -137,6 +137,8 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                             ? 'ring-2 ring-offset-2 ring-offset-gray-950 ring-white'
                             : 'border hover:border-border/60'
                         }`}
+                        aria-label={`Select ${option.label} accent color`}
+                        title={option.label}
                       >
                         <div className={`size-6 rounded-md ${option.color}`} />
                       </Button>

@@ -288,7 +288,7 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
                       ),
                     }));
                   }}
-                />
+                 aria-label="Subsection Title" title="Subsection Title"/>
               </FormField>
               <div className='grid gap-3 md:grid-cols-2'>
                 <FormField label='Code'>
@@ -307,7 +307,7 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
                         ),
                       }));
                     }}
-                  />
+                   aria-label="Code" title="Code"/>
                 </FormField>
                 <FormField label='Condition'>
                   <Input
@@ -325,7 +325,7 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
                         ),
                       }));
                     }}
-                  />
+                   aria-label="Condition" title="Condition"/>
                 </FormField>
               </div>
               <FormField label='Guidance'>
@@ -345,7 +345,7 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
                       ),
                     }));
                   }}
-                />
+                 aria-label="Guidance" title="Guidance"/>
               </FormField>
             </>
           ) : selectedItem ? (
@@ -366,7 +366,7 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
                       ),
                     }));
                   }}
-                />
+                 aria-label="Item Text" title="Item Text"/>
               </FormField>
               <SegmentEditorListItemLogicalEditor
                 item={selectedItem}

@@ -308,7 +308,7 @@ export function ColorField(props: FieldProps<string>): React.JSX.Element {
           maxLength={7}
           disabled={disabled}
           aria-label={`${resolvedLabel} value`}
-        />
+         title={label}/>
       </div>
     </FormField>
   );
@@ -343,7 +343,7 @@ export function NumberField(
           className='h-7 flex-1 bg-card/40 text-xs'
           disabled={disabled}
           aria-label={resolvedLabel}
-        />
+         title={label}/>
         {suffix && <span className='text-[10px] text-gray-500'>{suffix}</span>}
       </div>
     </FormField>
@@ -417,7 +417,7 @@ export function SelectField(
         ariaLabel={resolvedLabel}
         id={controlId}
         triggerClassName='h-7 bg-card/40 text-xs mt-1'
-      />
+       title={placeholder}/>
     </FormField>
   );
 }
@@ -465,7 +465,7 @@ export function TextField(props: FieldProps<string> & { placeholder?: string }):
         className='h-7 bg-card/40 text-xs mt-1'
         disabled={disabled}
         aria-label={resolvedLabel}
-      />
+       title={placeholder}/>
     </FormField>
   );
 }

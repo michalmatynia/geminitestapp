@@ -10,6 +10,7 @@ import { buildKangurAiTutorContextRegistryRefs } from '@/features/kangur/context
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import {
   buildKangurAiTutorLearnerMood,
+  requireActiveLearner,
   resolveKangurActor,
   setKangurLearnerAiTutorState,
 } from '@/features/kangur/server';
@@ -127,7 +128,8 @@ export async function postKangurAiTutorChatHandler(
   ctx: ApiHandlerContext
 ): Promise<Response> {
   const actor = await resolveKangurActor(req);
-  const learnerId = actor.activeLearner.id;
+  const activeLearner = requireActiveLearner(actor);
+  const learnerId = activeLearner.id;
 
   const parsed = await parseJsonBody(req, kangurAiTutorChatRequestSchema, {
     logPrefix: 'kangur.ai-tutor.chat.POST',
@@ -256,7 +258,7 @@ export async function postKangurAiTutorChatHandler(
         });
       }
     }
-    let tutorMood = actor.activeLearner.aiTutor ?? createDefaultKangurAiTutorLearnerMood();
+    let tutorMood = activeLearner.aiTutor ?? createDefaultKangurAiTutorLearnerMood();
     try {
       tutorMood = await buildKangurAiTutorLearnerMood({
         learnerId,
@@ -264,7 +266,7 @@ export async function postKangurAiTutorChatHandler(
         messages,
         latestUserMessage,
         personaSuggestedMoodId: suggestedPersonaMoodId,
-        previousMood: actor.activeLearner.aiTutor ?? null,
+        previousMood: activeLearner.aiTutor ?? null,
       });
     } catch (error) {
       await logKangurServerEvent({
@@ -281,7 +283,7 @@ export async function postKangurAiTutorChatHandler(
           learnerId,
           surface: context?.surface ?? null,
           contentId: context?.contentId ?? null,
-          previousTutorMoodId: actor.activeLearner.aiTutor?.currentMoodId ?? null,
+          previousTutorMoodId: activeLearner.aiTutor?.currentMoodId ?? null,
         },
       });
     }

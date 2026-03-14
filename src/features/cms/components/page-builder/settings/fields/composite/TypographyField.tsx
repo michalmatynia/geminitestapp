@@ -34,7 +34,7 @@ export function TypographyField(): React.ReactNode {
           triggerClassName='text-xs h-7'
           ariaLabel={buildAriaLabel('font family')}
           id={familyId}
-        />
+         title={familyId}/>
       </div>
       <div className='grid grid-cols-2 gap-2'>
         <div className='space-y-0.5'>
@@ -49,7 +49,7 @@ export function TypographyField(): React.ReactNode {
             triggerClassName='text-xs h-7'
             ariaLabel={buildAriaLabel('font weight')}
             id={weightId}
-          />
+           title={weightId}/>
         </div>
         <div className='space-y-0.5'>
           <label className='text-[10px] text-gray-500 uppercase' htmlFor={sizeId}>
@@ -66,7 +66,7 @@ export function TypographyField(): React.ReactNode {
             min={8}
             max={200}
             aria-label={buildAriaLabel('font size')}
-          />
+           title={sizeId}/>
         </div>
       </div>
       <div className='grid grid-cols-2 gap-2'>
@@ -86,7 +86,7 @@ export function TypographyField(): React.ReactNode {
             max={5}
             step={0.1}
             aria-label={buildAriaLabel('line height')}
-          />
+           title={lineHeightId}/>
         </div>
         <div className='space-y-0.5'>
           <label className='text-[10px] text-gray-500 uppercase' htmlFor={letterSpacingId}>
@@ -102,7 +102,7 @@ export function TypographyField(): React.ReactNode {
             className='text-xs h-7'
             step={0.5}
             aria-label={buildAriaLabel('letter spacing')}
-          />
+           title={letterSpacingId}/>
         </div>
       </div>
       <div className='space-y-0.5'>
@@ -129,7 +129,7 @@ export function TypographyField(): React.ReactNode {
             className='flex-1 text-xs font-mono'
             maxLength={7}
             aria-label={buildAriaLabel('text color value')}
-          />
+           title={colorValueId}/>
         </div>
       </div>
     </div>

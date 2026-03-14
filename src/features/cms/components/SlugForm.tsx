@@ -66,7 +66,7 @@ export function SlugForm(props: SlugFormProps): React.JSX.Element {
                 onChange={(e) => setSlug(e.target.value)}
                 placeholder='e.g. my-awesome-page'
                 className='h-9'
-              />
+               aria-label="e.g. my-awesome-page" title="e.g. my-awesome-page"/>
             </FormField>
 
             <ToggleRow

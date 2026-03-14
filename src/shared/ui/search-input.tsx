@@ -59,7 +59,7 @@ const SearchInputContent = React.forwardRef<HTMLInputElement>(function SearchInp
         aria-label={resolvedAriaLabel}
         aria-labelledby={ariaLabelledBy}
         {...rest}
-      />
+       title={placeholder}/>
       {runtime.value && runtime.onClear && (
         <Button
           type='button'

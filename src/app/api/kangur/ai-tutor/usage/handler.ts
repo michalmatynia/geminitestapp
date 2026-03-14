@@ -2,7 +2,7 @@ import 'server-only';
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { resolveKangurActor } from '@/features/kangur/server';
+import { requireActiveLearner, resolveKangurActor } from '@/features/kangur/server';
 import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
 import { readKangurAiTutorDailyUsage } from '@/features/kangur/server/ai-tutor-usage';
 import {
@@ -24,7 +24,7 @@ export async function getKangurAiTutorUsageHandler(
   const tutorContent = await getKangurAiTutorContent('pl');
   const errorMessages = tutorContent.usageApi.availabilityErrors;
   const actor = await resolveKangurActor(req);
-  const learnerId = actor.activeLearner.id;
+  const learnerId = requireActiveLearner(actor).id;
 
   const rawSettings = await readStoredSettingValue(KANGUR_AI_TUTOR_SETTINGS_KEY);
   const settingsStore = parseKangurAiTutorSettings(rawSettings);

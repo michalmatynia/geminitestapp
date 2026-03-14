@@ -478,6 +478,30 @@ export const updateKangurLearner = async (
   return toPublicLearnerProfile(nextProfile);
 };
 
+export const deleteKangurLearner = async (
+  learnerId: string
+): Promise<KangurLearnerProfile> => {
+  const current = await getKangurStoredLearnerById(learnerId);
+  if (!current) {
+    throw notFoundError('Learner not found.');
+  }
+
+  if (await shouldUseMongoLearnerCollection()) {
+    const collection = await getMongoLearnerCollection();
+    await collection.deleteMany({
+      $or: [{ _id: learnerId }, { id: learnerId }],
+    } as Filter<MongoKangurLearnerDocument>);
+  }
+
+  const profiles = await readLegacyStoredLearners();
+  const nextProfiles = profiles.filter((profile) => profile.id !== learnerId);
+  if (nextProfiles.length !== profiles.length) {
+    await writeLegacyStoredLearners(nextProfiles);
+  }
+
+  return toPublicLearnerProfile(current);
+};
+
 export const setKangurLearnerLegacyUserKey = async (
   learnerId: string,
   legacyUserKey: string | null

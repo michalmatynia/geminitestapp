@@ -204,7 +204,7 @@ export function TemplateNodeConfigSection(): React.JSX.Element | null {
             })
           }
           aria-label='Template'
-        />
+         title="Textarea"/>
         <p className='mt-2 text-[11px] text-gray-500'>
           Use placeholders like <span className='text-gray-300'>{'{{context.entity.title}}'}</span>{' '}
           or <span className='text-gray-300'>{'{{result}}'}</span>.

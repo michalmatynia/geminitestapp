@@ -51,7 +51,7 @@ export function GenerationToolbarUpscaleSection(): React.JSX.Element {
           options={upscaleModeOptions}
           triggerClassName='h-8 text-xs'
           ariaLabel='Upscale mode'
-        />
+         title="Select option"/>
         <SelectSimple
           size='sm'
           className='w-full'
@@ -60,7 +60,7 @@ export function GenerationToolbarUpscaleSection(): React.JSX.Element {
           options={upscaleStrategyOptions}
           triggerClassName='h-8 text-xs'
           ariaLabel='Upscale strategy'
-        />
+         title="Select option"/>
       </div>
       <div className='mt-2'>
         {upscaleStrategy === 'scale' ? (
@@ -72,7 +72,7 @@ export function GenerationToolbarUpscaleSection(): React.JSX.Element {
             options={upscaleScaleOptions}
             triggerClassName='h-8 text-xs'
             ariaLabel='Upscale multiplier'
-          />
+           title="Select option"/>
         ) : (
           <div className='flex h-8 w-full items-center gap-1 rounded border border-border/60 bg-card/40 px-2 sm:w-[180px]'>
             <input
@@ -117,7 +117,7 @@ export function GenerationToolbarUpscaleSection(): React.JSX.Element {
             options={upscaleSmoothingOptions}
             triggerClassName='h-8 text-xs'
             ariaLabel='Upscale smoothing quality'
-          />
+           title="Select option"/>
         </div>
       ) : null}
       <div className='mt-2 flex flex-wrap items-center gap-2'>

@@ -797,7 +797,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                             id: sanitizeRequiredInput(event.target.value, entry.id),
                           }))
                         }
-                      />
+                       title="Canonical section id"/>
                     </FormField>
 
                     <FormField label='Title' description='Human-readable section label.'>
@@ -810,7 +810,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                             title: sanitizeRequiredInput(event.target.value, entry.title),
                           }))
                         }
-                      />
+                       title="Title"/>
                     </FormField>
 
                     <FormField label='Page key'>
@@ -825,7 +825,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                         options={PAGE_KEY_OPTIONS}
                         ariaLabel='Page content page key'
                         variant='subtle'
-                      />
+                       title="Page key"/>
                     </FormField>
 
                     <FormField label='Screen key'>
@@ -838,7 +838,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                             screenKey: sanitizeRequiredInput(event.target.value, entry.screenKey),
                           }))
                         }
-                      />
+                       title="Screen key"/>
                     </FormField>
 
                     <FormField label='Surface'>
@@ -856,7 +856,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                         options={SURFACE_OPTIONS}
                         ariaLabel='Page content surface'
                         variant='subtle'
-                      />
+                       title="Surface"/>
                     </FormField>
 
                     <FormField label='Focus kind'>
@@ -874,7 +874,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                         options={FOCUS_KIND_OPTIONS}
                         ariaLabel='Page content focus kind'
                         variant='subtle'
-                      />
+                       title="Focus kind"/>
                     </FormField>
 
                     <FormField label='Route'>
@@ -888,7 +888,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                           }))
                         }
                         placeholder='/game'
-                      />
+                       title="/game"/>
                     </FormField>
 
                     <FormField label='Anchor id prefix'>
@@ -902,7 +902,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                           }))
                         }
                         placeholder='kangur-game-home-actions'
-                      />
+                       title="kangur-game-home-actions"/>
                     </FormField>
 
                     <FormField label='Component id'>
@@ -918,7 +918,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                             ),
                           }))
                         }
-                      />
+                       title="Component id"/>
                     </FormField>
 
                     <FormField label='Widget'>
@@ -931,7 +931,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                             widget: sanitizeRequiredInput(event.target.value, entry.widget),
                           }))
                         }
-                      />
+                       title="Widget"/>
                     </FormField>
 
                     <FormField label='Source path' className='lg:col-span-2'>
@@ -947,7 +947,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                             ),
                           }))
                         }
-                      />
+                       title="Source path"/>
                     </FormField>
 
                     <FormField label='Summary' className='lg:col-span-2'>
@@ -961,7 +961,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                           }))
                         }
                         rows={3}
-                      />
+                       title="Summary"/>
                     </FormField>
 
                     <FormField label='Body' className='lg:col-span-2'>
@@ -975,7 +975,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                           }))
                         }
                         rows={8}
-                      />
+                       title="Body"/>
                     </FormField>
 
                     <FormField label='Content id prefixes'>
@@ -989,7 +989,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                           }))
                         }
                         rows={4}
-                      />
+                       title="Content id prefixes"/>
                     </FormField>
 
                     <FormField label='Linked native guide ids'>
@@ -1003,7 +1003,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                           }))
                         }
                         rows={4}
-                      />
+                       title="Linked native guide ids"/>
                     </FormField>
 
                     <FormField label='Trigger phrases'>
@@ -1017,7 +1017,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                           }))
                         }
                         rows={4}
-                      />
+                       title="Trigger phrases"/>
                     </FormField>
 
                     <FormField label='Tags'>
@@ -1031,7 +1031,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                           }))
                         }
                         rows={4}
-                      />
+                       title="Tags"/>
                     </FormField>
 
                     <FormField label='Notes' className='lg:col-span-2'>
@@ -1045,7 +1045,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                           }))
                         }
                         rows={4}
-                      />
+                       title="Notes"/>
                     </FormField>
                   </div>
 
@@ -1141,7 +1141,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                                       id: sanitizeRequiredInput(event.target.value, fragment.id),
                                     }))
                                   }
-                                />
+                                 title="Fragment id"/>
                               </FormField>
 
                               <FormField
@@ -1157,7 +1157,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                                       text: sanitizeRequiredInput(event.target.value, fragment.text),
                                     }))
                                   }
-                                />
+                                 title="Highlighted text"/>
                               </FormField>
 
                               <FormField label='Aliases'>
@@ -1171,7 +1171,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                                     }))
                                   }
                                   rows={4}
-                                />
+                                 title="Aliases"/>
                               </FormField>
 
                               <FormField label='Linked native guide ids'>
@@ -1185,7 +1185,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                                     }))
                                   }
                                   rows={4}
-                                />
+                                 title="Linked native guide ids"/>
                               </FormField>
 
                               <FormField label='Trigger phrases'>
@@ -1199,7 +1199,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                                     }))
                                   }
                                   rows={4}
-                                />
+                                 title="Trigger phrases"/>
                               </FormField>
 
                               <FormField label='Explanation' className='lg:col-span-2'>
@@ -1216,7 +1216,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                                     }))
                                   }
                                   rows={6}
-                                />
+                                 title="Explanation"/>
                               </FormField>
                             </div>
 
@@ -1295,7 +1295,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
               aria-label='Page content JSON'
               spellCheck={false}
               className='font-mono text-xs'
-            />
+             title="Page content JSON"/>
           </FormField>
           <div className='mt-2 text-xs text-muted-foreground'>
             {isDirty ? 'Unsaved page-content changes' : 'Page content in sync'}

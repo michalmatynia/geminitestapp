@@ -1001,6 +1001,30 @@ export const KANGUR_NATIVE_GUIDE_ENTRIES: KangurAiTutorNativeGuideEntry[] = [
     sortOrder: 140,
   }),
   createGuideEntry({
+    id: 'test-kangur-q1-squares',
+    surface: 'test',
+    focusKind: 'question',
+    title: 'Kangur: pytanie 1 o rozciętych kwadratach',
+    shortDescription:
+      'Zadanie z arkusza konkursowego: wybierz kwadrat, który po rozcięciu daje dwie różne części.',
+    fullDescription:
+      'Pytanie 1 z arkusza konkursowego Kangura: „Który kwadrat został rozcięty wzdłuż pogrubionych linii na dwie części o różnych kształtach? (A–E)”. To zadanie opiera się na porównaniu kształtów powstałych po rozcięciu, a nie na liczeniu długości.',
+    hints: [
+      'Najpierw wyobraź sobie dwie części po rozcięciu w każdej opcji.',
+      'Sprawdź, czy jedną część można obrócić lub odbić lustrzanie tak, by pokryła drugą.',
+      'Szukaj opcji, w której kontury części nie dają się dopasować przez obrót lub odbicie.',
+    ],
+    relatedTests: ['Kangur - arkusz konkursowy'],
+    triggerPhrases: [
+      'który kwadrat został rozcięty',
+      'pytanie 1 kangur',
+      'kangur pytanie 1',
+      'pogrubione linie',
+      'dwie części o różnych kształtach',
+    ],
+    sortOrder: 142,
+  }),
+  createGuideEntry({
     id: 'test-selection',
     surface: 'test',
     focusKind: 'selection',

@@ -160,7 +160,7 @@ export function ChatbotContextModal(props: ChatbotContextModalProps): React.JSX.
                 }}
                 disabled={isSaving}
                 className='h-9'
-              />
+               aria-label="Add tag" title="Add tag"/>
               <Button
                 type='button'
                 variant='outline'

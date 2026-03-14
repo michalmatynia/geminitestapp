@@ -427,7 +427,7 @@ export function AgentPersonaMoodEditor({
                       placeholder='data:image/png;base64,... or raw SVG markup'
                       className='min-h-[120px] font-mono text-xs'
                       spellCheck={false}
-                    />
+                     aria-label="data:image/png;base64,... or raw SVG markup" title="data:image/png;base64,... or raw SVG markup"/>
                     <div className='flex flex-wrap items-end gap-3'>
                       <FormField
                         label='Base64 MIME'
@@ -477,7 +477,7 @@ export function AgentPersonaMoodEditor({
                     placeholder={`<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">\n  <!-- ${mood.label} avatar -->\n</svg>`}
                     className='min-h-[180px] font-mono text-xs'
                     spellCheck={false}
-                  />
+                   aria-label={`<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">\n  <!-- ${mood.label} avatar -->\n</svg>`} title={`<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">\n  <!-- ${mood.label} avatar -->\n</svg>`}/>
                 </FormField>
               </div>
             );

@@ -270,6 +270,30 @@ const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
   },
 };
 
+const KANGUR_TEST_QUESTION_FRAGMENTS: KangurPageContentFragment[] = [
+  {
+    id: 'kangur-q1-squares',
+    text: 'Który kwadrat został rozcięty wzdłuż pogrubionych linii na dwie części o różnych kształtach?',
+    aliases: [
+      'Pytanie 1 ⭐ 3 pkt (łatwe) Który kwadrat został rozcięty wzdłuż pogrubionych linii na dwie części o różnych kształtach?',
+      'Pytanie 1 3 pkt (łatwe) Który kwadrat został rozcięty wzdłuż pogrubionych linii na dwie części o różnych kształtach?',
+      'Który kwadrat został rozcięty wzdłuż pogrubionych linii na dwie części o różnych kształtach? (A–E)',
+    ],
+    explanation:
+      'To zadanie sprawdza, czy po rozcięciu powstają dwie identyczne czy różne części. Skup się na porównaniu kształtów po obrocie lub odbiciu, zamiast liczyć długości.',
+    nativeGuideIds: ['test-kangur-q1-squares'],
+    triggerPhrases: [
+      'pytanie 1 kangur',
+      'rozcięty kwadrat',
+      'pogrubione linie',
+      'dwie części',
+      'różne kształty',
+    ],
+    enabled: true,
+    sortOrder: 10,
+  },
+];
+
 const dedupeOrdered = (values: readonly string[]): string[] => {
   const seen = new Set<string>();
   const normalized: string[] = [];
@@ -316,6 +340,22 @@ const buildLessonLibraryFragments = (): KangurPageContentFragment[] =>
       sortOrder: (index + 1) * 10,
     };
   });
+
+const buildKangurTestQuestionFragments = (): KangurPageContentFragment[] =>
+  KANGUR_TEST_QUESTION_FRAGMENTS.map((fragment) => ({
+    ...fragment,
+    aliases: dedupeOrdered(fragment.aliases ?? []),
+    nativeGuideIds: dedupeOrdered(fragment.nativeGuideIds ?? []),
+    triggerPhrases: dedupeOrdered(fragment.triggerPhrases ?? []),
+  }));
+
+const PAGE_CONTENT_FRAGMENT_BUILDERS: Partial<
+  Record<string, () => KangurPageContentFragment[]>
+> = {
+  'lessons-library': buildLessonLibraryFragments,
+  'tests-question': buildKangurTestQuestionFragments,
+  'game-kangur-session': buildKangurTestQuestionFragments,
+};
 
 const toRouteFromPageKey = (pageKey: KangurPageContentPageKey): string => {
   if (pageKey === 'Login' || pageKey === 'SharedChrome') {
@@ -421,7 +461,7 @@ const buildSectionEntry = (
     nativeGuideIds: [...linkedGuideIds],
     triggerPhrases: buildTriggerPhrases(entry, linkedGuideIds),
     tags: buildTags(entry, linkedGuideIds),
-    fragments: entry.id === 'lessons-library' ? buildLessonLibraryFragments() : [],
+    fragments: PAGE_CONTENT_FRAGMENT_BUILDERS[entry.id]?.() ?? [],
     notes: entry.notes,
     enabled: true,
     sortOrder: index * 10,

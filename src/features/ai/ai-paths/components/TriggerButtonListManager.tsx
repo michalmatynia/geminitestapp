@@ -346,6 +346,8 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
               size='xs'
               onClick={() => onEdit(row.original)}
               className='h-7 w-7 p-0'
+              aria-label={`Edit ${row.original.name}`}
+              title='Edit trigger button'
             >
               <Edit className='size-3.5' />
             </Button>
@@ -354,6 +356,8 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
               size='xs'
               onClick={() => onDelete(row.original.id)}
               className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
+              aria-label={`Delete ${row.original.name}`}
+              title='Delete trigger button'
             >
               <Trash2 className='size-3.5' />
             </Button>

@@ -96,6 +96,8 @@ export function DatabaseAiQueryReviewSection(): React.JSX.Element | null {
               onClick={(): void =>
                 setSelectedSnippetIndex((prev: number): number => Math.max(0, prev - 1))
               }
+              aria-label='Previous snippet'
+              title='Previous snippet'
             >
               <ChevronUp className='h-3 w-3' />
             </Button>
@@ -108,6 +110,8 @@ export function DatabaseAiQueryReviewSection(): React.JSX.Element | null {
                   Math.min(codeSnippets.length - 1, prev + 1)
                 )
               }
+              aria-label='Next snippet'
+              title='Next snippet'
             >
               <ChevronDown className='h-3 w-3' />
             </Button>

@@ -48,7 +48,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
     kangurAiTutorNativeGuideStoreSchema.parse(
       repairKangurPolishCopy({
         locale: 'pl',
-        version: 8,
+        version: 9,
         entries: KANGUR_NATIVE_GUIDE_ENTRIES,
       })
     )

@@ -79,7 +79,7 @@ export function ThemeForm(props: ThemeFormProps): React.JSX.Element {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
             placeholder='e.g. Modern Dark'
             required
-          />
+           aria-label="e.g. Modern Dark" title="e.g. Modern Dark"/>
         </FormField>
       </FormSection>
 
@@ -98,6 +98,8 @@ export function ThemeForm(props: ThemeFormProps): React.JSX.Element {
                   updateColor(key, e.target.value)
                 }
                 className='h-9 w-10 cursor-pointer rounded border border-border/50 bg-transparent p-0.5'
+                aria-label={`${key} color picker`}
+                title={`${key} color picker`}
               />
               <Input
                 value={colors[key]}
@@ -106,6 +108,8 @@ export function ThemeForm(props: ThemeFormProps): React.JSX.Element {
                 }
                 className='flex-1 text-xs font-mono'
                 maxLength={7}
+                aria-label={`${key} color value`}
+                title={`${key} color value`}
               />
             </div>
           </FormField>
@@ -123,7 +127,7 @@ export function ThemeForm(props: ThemeFormProps): React.JSX.Element {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setTypography((p: CmsThemeTypography) => ({ ...p, headingFont: e.target.value }))
             }
-          />
+           aria-label="Heading Font" title="Heading Font"/>
         </FormField>
         <FormField label='Body Font'>
           <Input
@@ -131,7 +135,7 @@ export function ThemeForm(props: ThemeFormProps): React.JSX.Element {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setTypography((p: CmsThemeTypography) => ({ ...p, bodyFont: e.target.value }))
             }
-          />
+           aria-label="Body Font" title="Body Font"/>
         </FormField>
         <FormField label='Base Size (px)'>
           <Input
@@ -143,7 +147,7 @@ export function ThemeForm(props: ThemeFormProps): React.JSX.Element {
                 baseSize: Number(e.target.value),
               }))
             }
-          />
+           aria-label="Base Size (px)" title="Base Size (px)"/>
         </FormField>
         <FormField label='Heading Weight'>
           <Input
@@ -158,7 +162,7 @@ export function ThemeForm(props: ThemeFormProps): React.JSX.Element {
             min={100}
             max={900}
             step={100}
-          />
+           aria-label="Heading Weight" title="Heading Weight"/>
         </FormField>
         <FormField label='Body Weight' className='col-span-1'>
           <Input
@@ -173,7 +177,7 @@ export function ThemeForm(props: ThemeFormProps): React.JSX.Element {
             min={100}
             max={900}
             step={100}
-          />
+           aria-label="Body Weight" title="Body Weight"/>
         </FormField>
       </FormSection>
 
@@ -188,7 +192,7 @@ export function ThemeForm(props: ThemeFormProps): React.JSX.Element {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setSpacing((p: CmsThemeSpacing) => ({ ...p, sectionPadding: e.target.value }))
             }
-          />
+           aria-label="Section Padding" title="Section Padding"/>
         </FormField>
         <FormField label='Container Max Width'>
           <Input
@@ -196,7 +200,7 @@ export function ThemeForm(props: ThemeFormProps): React.JSX.Element {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setSpacing((p: CmsThemeSpacing) => ({ ...p, containerMaxWidth: e.target.value }))
             }
-          />
+           aria-label="Container Max Width" title="Container Max Width"/>
         </FormField>
       </FormSection>
 

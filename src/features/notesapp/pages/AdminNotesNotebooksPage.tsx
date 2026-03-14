@@ -189,7 +189,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
                 ref={(node) => {
                   node?.focus();
                 }}
-              />
+               title="Input field"/>
             );
           }
 
@@ -324,7 +324,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
                 }
                 className='w-full'
                 placeholder='Enter notebook name'
-              />
+               aria-label="Enter notebook name" title="Enter notebook name"/>
             </FormField>
             <Button
               onClick={(): void => {

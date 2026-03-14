@@ -49,7 +49,7 @@ function GroupSettingsPanel(props: {
             }));
           }}
           placeholder='Sequence / Group'
-        />
+         aria-label="Sequence / Group" title="Sequence / Group"/>
       </FormField>
       <FormField label='Debounce (ms)' className='w-28 shrink-0'>
         <Input
@@ -65,7 +65,7 @@ function GroupSettingsPanel(props: {
               [groupId]: { ...draft, debounceMs: event.target.value },
             }));
           }}
-        />
+         aria-label="Debounce (ms)" title="Debounce (ms)"/>
       </FormField>
       <div className='flex shrink-0 items-end gap-2'>
         <Button

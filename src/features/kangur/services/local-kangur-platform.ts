@@ -208,11 +208,6 @@ const resolveSessionUser = async (): Promise<KangurUser> => {
     }
 
     const mappedUser = parsed.data;
-    if (!mappedUser.activeLearner) {
-      const error = unauthorizedError();
-      cacheResolvedUser(null, true);
-      throw error;
-    }
     syncActiveLearnerStorage(mappedUser);
     cacheResolvedUser(mappedUser, false);
     return mappedUser;
@@ -832,6 +827,58 @@ const updateLearnerViaApi = async (
   }
 };
 
+const deleteLearnerViaApi = async (id: string): Promise<KangurLearnerProfile> => {
+  const endpoint = `${KANGUR_LEARNERS_ENDPOINT}/${encodeURIComponent(id)}`;
+  try {
+    const response = await fetch(endpoint, {
+      method: 'DELETE',
+      headers: createActorAwareHeaders(),
+      credentials: 'same-origin',
+    });
+
+    if (!response.ok) {
+      const error = new Error(
+        `Kangur learner delete request failed with ${response.status}`
+      ) as Error & {
+        status: number;
+      };
+      error.status = response.status;
+      throw error;
+    }
+
+    const payload = (await response.json()) as unknown;
+    const parsed = learnerProfileSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new Error('Kangur learner delete payload validation failed.');
+    }
+    clearSessionUserCache();
+    clearScoreQueryCache();
+    clearStoredActiveLearnerId();
+    trackWriteSuccess('learners.delete', {
+      endpoint,
+      method: 'DELETE',
+      learnerId: parsed.data.id,
+      learnerStatus: parsed.data.status,
+    });
+    return parsed.data;
+  } catch (error: unknown) {
+    trackWriteFailure('learners.delete', error, {
+      endpoint,
+      method: 'DELETE',
+      learnerId: id,
+    });
+    logKangurClientError(error, {
+      source: 'kangur.local-platform',
+      action: 'learners.delete',
+      method: 'DELETE',
+      endpoint,
+      learnerId: id,
+      ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
+    });
+    throw error;
+  }
+};
+
 const selectLearner = async (learnerId: string): Promise<KangurUser> => {
   try {
     setStoredActiveLearnerId(learnerId);
@@ -885,6 +932,7 @@ export const createLocalKangurPlatform = (): KangurPlatform => {
     learners: {
       create: async (input: KangurLearnerCreateInput) => createLearnerViaApi(input),
       update: async (id: string, input: KangurLearnerUpdateInput) => updateLearnerViaApi(id, input),
+      delete: async (id: string) => deleteLearnerViaApi(id),
       select: async (id: string) => selectLearner(id),
     },
     score: {

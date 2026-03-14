@@ -419,7 +419,7 @@ export function CategoriesSettings(): React.JSX.Element {
               }))}
               placeholder='Select a catalog...'
               ariaLabel='Catalog'
-            />
+             title="Select a catalog..."/>
           </div>
         </Card>
 

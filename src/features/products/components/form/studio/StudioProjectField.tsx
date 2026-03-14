@@ -26,7 +26,7 @@ export function StudioProjectField(): React.JSX.Element {
         options={studioProjectOptions}
         placeholder={isStudioLoading ? 'Loading Studio projects...' : 'Select Studio project'}
         disabled={isStudioLoading}
-      />
+       ariaLabel={isStudioLoading ? 'Loading Studio projects...' : 'Select Studio project'} title={isStudioLoading ? 'Loading Studio projects...' : 'Select Studio project'}/>
     </FormField>
   );
 }

@@ -25,7 +25,7 @@ export function AdvancedVelocitySection(): React.JSX.Element {
           value={velocityEffectValue}
           onValueChange={(v) => onChange({ ...config, velocityEffect: v as VelocityEffect })}
           options={VELOCITY_EFFECTS}
-        />
+         ariaLabel="Effect" title="Effect"/>
       </FormField>
       {velocityEffectValue !== 'none' && (
         <div className='grid gap-3 sm:grid-cols-2 mt-4'>
@@ -42,7 +42,7 @@ export function AdvancedVelocitySection(): React.JSX.Element {
                   onChange({ ...config, velocityStrength: Math.max(0.01, Math.min(2, val)) });
               }}
               className='h-9'
-            />
+             aria-label="Strength" title="Strength"/>
           </FormField>
           <FormField label='Max limit'>
             <Input
@@ -57,7 +57,7 @@ export function AdvancedVelocitySection(): React.JSX.Element {
                   onChange({ ...config, velocityMax: Math.max(1, Math.min(60, val)) });
               }}
               className='h-9'
-            />
+             aria-label="Max limit" title="Max limit"/>
           </FormField>
         </div>
       )}

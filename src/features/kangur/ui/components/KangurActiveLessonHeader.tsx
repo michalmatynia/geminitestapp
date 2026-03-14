@@ -74,14 +74,22 @@ function KangurActiveLessonHeaderActions(): React.JSX.Element {
     useKangurActiveLessonHeaderContext();
 
   return (
-    <div className='flex flex-wrap items-start gap-3 sm:items-center' data-testid={headerActionsTestId}>
+    <div
+      className='flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center'
+      data-testid={headerActionsTestId}
+    >
       {onBack ? (
-        <KangurButton onClick={onBack} size='sm' variant='surface'>
+        <KangurButton
+          onClick={onBack}
+          size='sm'
+          variant='surface'
+          className='w-full justify-center sm:w-auto sm:justify-start'
+        >
           {backButtonLabel}
         </KangurButton>
       ) : null}
       <KangurLessonNarrator
-        className='w-auto shrink-0'
+        className='w-full shrink-0 sm:w-auto'
         lesson={lesson}
         lessonDocument={lessonDocument}
         lessonContentRef={lessonContentRef}
@@ -191,7 +199,7 @@ function KangurActiveLessonHeaderIcon(): React.JSX.Element {
   const { iconTestId, lesson } = useKangurActiveLessonHeaderContext();
 
   return (
-    <div className='ml-auto flex shrink-0 justify-end'>
+    <div className='flex w-full shrink-0 justify-end sm:ml-auto sm:w-auto'>
       <KangurGradientIconTile
         data-testid={iconTestId}
         gradientClass={lesson.color}

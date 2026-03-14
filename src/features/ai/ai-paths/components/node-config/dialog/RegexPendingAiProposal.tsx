@@ -62,6 +62,8 @@ export function RegexPendingAiProposal(props: RegexPendingAiProposalProps): Reac
               className='h-5 w-5 rounded-sm border border-purple-600 bg-purple-500/20 p-0 text-purple-200 hover:bg-purple-500/40 disabled:opacity-30'
               disabled={selectedSnippetIndex <= 0}
               onClick={() => onSelectSnippetIndex(Math.max(0, selectedSnippetIndex - 1))}
+              aria-label='Previous snippet'
+              title='Previous snippet'
             >
               <ChevronUp className='h-3 w-3' />
             </Button>
@@ -72,6 +74,8 @@ export function RegexPendingAiProposal(props: RegexPendingAiProposalProps): Reac
               onClick={() =>
                 onSelectSnippetIndex(Math.min(codeSnippets.length - 1, selectedSnippetIndex + 1))
               }
+              aria-label='Next snippet'
+              title='Next snippet'
             >
               <ChevronDown className='h-3 w-3' />
             </Button>

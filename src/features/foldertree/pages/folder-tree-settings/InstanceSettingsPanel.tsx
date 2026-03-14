@@ -125,7 +125,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
                 },
               }));
             }}
-          />
+           ariaLabel="Placeholder Preset" title="Placeholder Preset"/>
         </FormField>
 
         <FormField label='Placeholder Style'>
@@ -145,7 +145,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
                 },
               }));
             }}
-          />
+           ariaLabel="Placeholder Style" title="Placeholder Style"/>
         </FormField>
 
         <FormField label='Placeholder Emphasis'>
@@ -165,7 +165,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
                 },
               }));
             }}
-          />
+           ariaLabel="Placeholder Emphasis" title="Placeholder Emphasis"/>
         </FormField>
 
         <FormField label='Selection Behavior'>
@@ -183,7 +183,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
                 },
               }));
             }}
-          />
+           ariaLabel="Selection Behavior" title="Selection Behavior"/>
         </FormField>
 
         {renderCheckboxCardField({
@@ -215,7 +215,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
                 },
               }));
             }}
-          />
+           aria-label="Root Drop Label" title="Root Drop Label"/>
         </FormField>
 
         <FormField label='Inline Drop Label'>
@@ -230,7 +230,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
                 },
               }));
             }}
-          />
+           aria-label="Inline Drop Label" title="Inline Drop Label"/>
         </FormField>
       </div>
 
@@ -296,7 +296,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
               });
             }}
             placeholder={meta.folderHint}
-          />
+           aria-label={meta.folderHint} title={meta.folderHint}/>
         </FormField>
 
         <FormField label='Allowed File Kinds'>
@@ -314,7 +314,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
               });
             }}
             placeholder={meta.fileHint}
-          />
+           aria-label={meta.fileHint} title={meta.fileHint}/>
         </FormField>
       </div>
 
@@ -332,7 +332,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
           }}
           rows={2}
           placeholder='Example: archive, locked'
-        />
+         aria-label="Example: archive, locked" title="Example: archive, locked"/>
       </FormField>
 
       <div className='grid gap-4 xl:grid-cols-2'>
@@ -459,7 +459,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
           }}
           rows={4}
           placeholder='note=FileText'
-        />
+         aria-label="note=FileText" title="note=FileText"/>
       </FormField>
 
       {/* ── Capabilities ── */}
@@ -615,7 +615,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
                     },
                   }));
                 }}
-              />
+               ariaLabel="Filter Mode" title="Filter Mode"/>
             </FormField>
             <FormField label='Debounce (ms)'>
               <Input
@@ -633,7 +633,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
                     },
                   }));
                 }}
-              />
+               aria-label="Debounce (ms)" title="Debounce (ms)"/>
             </FormField>
             <FormField label='Min Query Length'>
               <Input
@@ -651,7 +651,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
                     },
                   }));
                 }}
-              />
+               aria-label="Min Query Length" title="Min Query Length"/>
             </FormField>
           </div>
         </div>

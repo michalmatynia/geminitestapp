@@ -437,7 +437,7 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                         }))}
                         placeholder='Select node'
                         triggerClassName='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'
-                      />
+                       ariaLabel="Select node" title="Select node"/>
                     </FormField>
                   </div>
                 ) : (
@@ -522,14 +522,14 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                                 className='mt-1 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                                 readOnly
                                 value={safePrettyJson(node.inputs)}
-                              />
+                               aria-label="Inputs" title="Inputs"/>
                             </FormField>
                             <FormField label='Outputs'>
                               <Textarea
                                 className='mt-1 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                                 readOnly
                                 value={safePrettyJson(node.outputs)}
-                              />
+                               aria-label="Outputs" title="Outputs"/>
                             </FormField>
                           </div>
                           {artifactLinks.length > 0 ? (
@@ -612,7 +612,7 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                       value={safePrettyJson(
                         (detailRun.runtimeState as Record<string, unknown>)?.['inputs']
                       )}
-                    />
+                     aria-label="Inputs" title="Inputs"/>
                   </FormField>
                   <FormField label='Outputs'>
                     <Textarea
@@ -621,7 +621,7 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                       value={safePrettyJson(
                         (detailRun.runtimeState as Record<string, unknown>)?.['outputs']
                       )}
-                    />
+                     aria-label="Outputs" title="Outputs"/>
                   </FormField>
                 </div>
                 <div className='mt-3'>
@@ -632,7 +632,7 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                       value={safePrettyJson(
                         (detailRun.runtimeState as Record<string, unknown>)?.['hashes']
                       )}
-                    />
+                     aria-label="Hashes" title="Hashes"/>
                   </FormField>
                 </div>
               </CollapsibleSection>
@@ -647,7 +647,7 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                   readOnly
                   value={safePrettyJson(detailRun.graph)}
                   aria-label='Graph snapshot'
-                />
+                 title="Textarea"/>
               </CollapsibleSection>
 
               <CollapsibleSection
@@ -661,21 +661,21 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                       className='mt-1 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                       readOnly
                       value={safePrettyJson(detailRun)}
-                    />
+                     aria-label="Run" title="Run"/>
                   </FormField>
                   <FormField label='Nodes'>
                     <Textarea
                       className='mt-1 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                       readOnly
                       value={safePrettyJson(nodes)}
-                    />
+                     aria-label="Nodes" title="Nodes"/>
                   </FormField>
                   <FormField label='Events'>
                     <Textarea
                       className='mt-1 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                       readOnly
                       value={safePrettyJson(events)}
-                    />
+                     aria-label="Events" title="Events"/>
                   </FormField>
                 </div>
               </CollapsibleSection>

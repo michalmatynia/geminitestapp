@@ -168,7 +168,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                 onValueChange={(v: string): void => setEnvironment(v as EnvironmentPreset)}
                 options={environmentPresets}
                 triggerClassName='w-full bg-gray-800 border-gray-700 text-white text-sm h-10'
-              />
+               ariaLabel="HDR Environment" title="HDR Environment"/>
             </FormField>
 
             {/* Lighting Preset */}
@@ -203,7 +203,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                 value={lightIntensity}
                 onChange={(e) => setLightIntensity(parseFloat(e.target.value))}
                 className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none mt-2'
-              />
+               aria-label={`Light Intensity: ${lightIntensity.toFixed(1)}`} title={`Light Intensity: ${lightIntensity.toFixed(1)}`}/>
             </FormField>
 
             {/* Background Color */}
@@ -227,7 +227,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                   value={backgroundColor}
                   onChange={(e) => setBackgroundColor(e.target.value)}
                   className='w-8 h-8 rounded-md cursor-pointer p-0 border-none'
-                />
+                 aria-label="Background" title="Background"/>
               </div>
             </FormField>
 
@@ -283,7 +283,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                       value={exposure}
                       onChange={(e) => setExposure(parseFloat(e.target.value))}
                       className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none mt-2'
-                    />
+                     aria-label={`Exposure: ${exposure.toFixed(1)}`} title={`Exposure: ${exposure.toFixed(1)}`}/>
                   </FormField>
                 </div>
               )}
@@ -312,7 +312,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                       value={bloomIntensity}
                       onChange={(e) => setBloomIntensity(parseFloat(e.target.value))}
                       className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none mt-2'
-                    />
+                     aria-label={`Intensity: ${bloomIntensity.toFixed(1)}`} title={`Intensity: ${bloomIntensity.toFixed(1)}`}/>
                   </FormField>
                 </div>
               )}
@@ -351,7 +351,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                       value={pixelSize}
                       onChange={(e) => setPixelSize(parseInt(e.target.value, 10))}
                       className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none mt-2'
-                    />
+                     aria-label={`Pixel Size: ${pixelSize}px`} title={`Pixel Size: ${pixelSize}px`}/>
                   </FormField>
                 </div>
               )}
@@ -392,7 +392,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                         { value: 'custom', label: 'Custom' },
                       ]}
                       triggerClassName='w-full bg-gray-800 border-gray-700 text-xs text-gray-200 h-8'
-                    />
+                     ariaLabel="Preset" title="Preset"/>
                   </FormField>
                   <FormField label={`Grid Size: ${orderedDitheringGridSize.toFixed(1)}`}>
                     <Input
@@ -406,7 +406,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                         setOrderedDitheringPreset('custom');
                       }}
                       className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none mt-2'
-                    />
+                     aria-label={`Grid Size: ${orderedDitheringGridSize.toFixed(1)}`} title={`Grid Size: ${orderedDitheringGridSize.toFixed(1)}`}/>
                   </FormField>
                   <FormField label={`Pixel Ratio: ${orderedDitheringPixelSizeRatio.toFixed(1)}`}>
                     <Input
@@ -420,7 +420,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                         setOrderedDitheringPreset('custom');
                       }}
                       className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none mt-2'
-                    />
+                     aria-label={`Pixel Ratio: ${orderedDitheringPixelSizeRatio.toFixed(1)}`} title={`Pixel Ratio: ${orderedDitheringPixelSizeRatio.toFixed(1)}`}/>
                   </FormField>
                   <FormField label='Luminance'>
                     <SelectSimple
@@ -435,7 +435,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                         label: opt.label,
                       }))}
                       triggerClassName='w-full bg-gray-800 border-gray-700 text-xs text-gray-200 h-8'
-                    />
+                     ariaLabel="Luminance" title="Luminance"/>
                   </FormField>
                   <div className='space-y-2'>
                     <ToggleRow
@@ -487,7 +487,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                       value={ditheringIntensity}
                       onChange={(e) => setDitheringIntensity(parseFloat(e.target.value))}
                       className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none mt-2'
-                    />
+                     aria-label={`Intensity: ${ditheringIntensity.toFixed(1)}`} title={`Intensity: ${ditheringIntensity.toFixed(1)}`}/>
                   </FormField>
                 </div>
               )}
@@ -515,7 +515,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                       value={autoRotateSpeed}
                       onChange={(e) => setAutoRotateSpeed(parseFloat(e.target.value))}
                       className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none mt-2'
-                    />
+                     aria-label={`Speed: ${autoRotateSpeed.toFixed(1)}`} title={`Speed: ${autoRotateSpeed.toFixed(1)}`}/>
                   </FormField>
                 </div>
               )}

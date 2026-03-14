@@ -154,7 +154,7 @@ export function CaseTreeRenderer({
                         value={editingCaseName}
                         onChange={(e) => setEditingCaseName(e.target.value)}
                         className='h-9 bg-black/40'
-                      />
+                       aria-label="Case Name" title="Case Name"/>
                     </FormField>
                     <div className='flex items-end gap-2'>
                       <Button size='sm' onClick={handleSaveCase}>
@@ -179,7 +179,7 @@ export function CaseTreeRenderer({
                           ...parentCaseOptions.filter((o) => o.value !== file.id),
                         ]}
                         triggerClassName='bg-black/40'
-                      />
+                       ariaLabel="Parent Case" title="Parent Case"/>
                     </FormField>
                     <FormField label='Tag'>
                       <SelectSimple
@@ -193,7 +193,7 @@ export function CaseTreeRenderer({
                           ...caseResolverTagOptions,
                         ]}
                         triggerClassName='bg-black/40'
-                      />
+                       ariaLabel="Tag" title="Tag"/>
                     </FormField>
                     <FormField label='Category'>
                       <SelectSimple
@@ -207,7 +207,7 @@ export function CaseTreeRenderer({
                           ...caseResolverCategoryOptions,
                         ]}
                         triggerClassName='bg-black/40'
-                      />
+                       ariaLabel="Category" title="Category"/>
                     </FormField>
                   </div>
                 </div>
@@ -222,6 +222,8 @@ export function CaseTreeRenderer({
                         'mt-1 h-5 w-5 shrink-0 p-0 text-gray-500 hover:bg-white/10 hover:text-gray-300',
                         !hasChildren && 'pointer-events-none opacity-0'
                       )}
+                      aria-label={isCollapsed ? 'Expand case' : 'Collapse case'}
+                      title={isCollapsed ? 'Expand case' : 'Collapse case'}
                     >
                       {isCollapsed ? (
                         <ChevronRight className='size-3.5' />
@@ -258,6 +260,12 @@ export function CaseTreeRenderer({
                             size='sm'
                             onClick={() => handleFilterByCaseIdentifier(identifier.id)}
                             className='group/ident h-auto p-0 font-normal hover:bg-transparent'
+                            aria-label={
+                              caseIdentifierPathById.get(identifier.id)
+                                ? `Filter by ID ${caseIdentifierPathById.get(identifier.id)}`
+                                : 'Filter by ID'
+                            }
+                            title='Filter by case ID'
                           >
                             <MetadataItem
                               variant='minimal'

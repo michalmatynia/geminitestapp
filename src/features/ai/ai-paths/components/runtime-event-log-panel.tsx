@@ -137,7 +137,7 @@ export function RuntimeEventLogPanel(): React.JSX.Element {
             options={LEVEL_OPTIONS}
             ariaLabel='Event level filter'
             triggerClassName='h-6 min-w-[70px] px-2 bg-transparent border-border/40 text-[10px]'
-          />
+           title="Select option"/>
           {/* Export */}
           <Button
             type='button'

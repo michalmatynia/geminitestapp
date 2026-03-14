@@ -100,7 +100,7 @@ export function ReportsTab(): React.JSX.Element {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setAnalyticsScheduleMinutes(Number(e.target.value))
                 }
-              />
+               aria-label="Minutes" title="Minutes"/>
             </FormField>
           </div>
 
@@ -121,7 +121,7 @@ export function ReportsTab(): React.JSX.Element {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setRuntimeAnalyticsScheduleMinutes(Number(e.target.value))
                 }
-              />
+               aria-label="Minutes" title="Minutes"/>
             </FormField>
           </div>
 
@@ -142,7 +142,7 @@ export function ReportsTab(): React.JSX.Element {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setLogsScheduleMinutes(Number(e.target.value))
                 }
-              />
+               aria-label="Minutes" title="Minutes"/>
             </FormField>
             <ToggleRow
               variant='switch'
@@ -168,7 +168,7 @@ export function ReportsTab(): React.JSX.Element {
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 setAnalyticsPromptSystem(e.target.value)
               }
-            />
+             aria-label="Analytics prompt" title="Analytics prompt"/>
           </FormField>
           <FormField label='Runtime analytics prompt'>
             <Textarea
@@ -177,7 +177,7 @@ export function ReportsTab(): React.JSX.Element {
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 setRuntimeAnalyticsPromptSystem(e.target.value)
               }
-            />
+             aria-label="Runtime analytics prompt" title="Runtime analytics prompt"/>
           </FormField>
           <FormField label='Logs prompt'>
             <Textarea
@@ -186,7 +186,7 @@ export function ReportsTab(): React.JSX.Element {
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 setLogsPromptSystem(e.target.value)
               }
-            />
+             aria-label="Logs prompt" title="Logs prompt"/>
           </FormField>
         </div>
       </FormSection>

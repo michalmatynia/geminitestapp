@@ -229,6 +229,8 @@ function DraggableToken({
               className
             )}
             aria-pressed={isSelected}
+            aria-label={item.label}
+            title={item.label}
             onClick={(event) => {
               event.stopPropagation();
               if (snapshot.isDragging) return;
@@ -562,6 +564,7 @@ export default function LogicalClassificationGame({
                     onClick={handleReturnToPool}
                     role='button'
                     tabIndex={0}
+                    aria-label='Pula elementów do sortowania'
                   >
                     {roundState.pool.map((item, index) => (
                       <DraggableToken
@@ -604,6 +607,7 @@ export default function LogicalClassificationGame({
                           onClick={() => handleAssignToken(bin.id)}
                           role='button'
                           tabIndex={0}
+                          aria-label={`${bin.label}: kliknij, aby dodać element`}
                         >
                           <div className='flex items-center justify-between mb-2'>
                             <div className='flex items-center gap-2 text-sm font-bold text-slate-700'>

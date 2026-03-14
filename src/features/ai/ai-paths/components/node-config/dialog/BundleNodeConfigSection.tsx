@@ -46,7 +46,7 @@ export function BundleNodeConfigSection(): React.JSX.Element | null {
               bundle: { includePorts: parsePathList(event.target.value) },
             })
           }
-        />
+         aria-label="Included Ports (one per line)" title="Included Ports (one per line)"/>
       </FormField>
     </div>
   );

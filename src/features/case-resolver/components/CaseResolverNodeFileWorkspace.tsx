@@ -268,6 +268,8 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
                           handleCopyNodeId(node.id);
                         }}
                         className='absolute -top-1.5 -right-1.5 h-4 w-4 p-0 rounded-full bg-card border border-border/60 opacity-0 group-hover/node:opacity-100 transition-opacity'
+                        aria-label='Copy node ID'
+                        title='Copy node ID'
                       >
                         <Copy size={8} />
                       </Button>

@@ -41,7 +41,7 @@ function FieldInput(props: {
         placeholder={placeholder}
         aria-label={label}
         className='h-6 flex-1 rounded border border-border/60 bg-background/50 px-2 text-xs text-gray-200 placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-ring'
-      />
+       title={placeholder}/>
     </div>
   );
 }
@@ -79,7 +79,7 @@ export function BoundsNormalizerNodeConfigSection(): React.JSX.Element | null {
           options={FORMAT_OPTIONS}
           ariaLabel='Input format'
           className='mt-2'
-        />
+         title="Select option"/>
         <p className='mt-1 text-[10px] text-gray-600'>
           Match this to your vision API's bounding box output encoding.
         </p>
@@ -94,7 +94,7 @@ export function BoundsNormalizerNodeConfigSection(): React.JSX.Element | null {
           placeholder='e.g. objectBounds (leave empty to read from root)'
           aria-label='Bounds path'
           className='mt-2 h-7 text-xs'
-        />
+         title="e.g. objectBounds (leave empty to read from root)"/>
         <p className='mt-1 text-[10px] text-gray-600'>
           Dot-path into the incoming value to reach the bounds object. Leave empty if bounds are at
           the root.

@@ -36,6 +36,7 @@ export interface KangurAuthPort {
 export interface KangurLearnerPort {
   create: (input: KangurLearnerCreateInput) => Promise<KangurLearnerProfile>;
   update: (id: string, input: KangurLearnerUpdateInput) => Promise<KangurLearnerProfile>;
+  delete: (id: string) => Promise<KangurLearnerProfile>;
   select: (id: string) => Promise<KangurUser>;
 }
 

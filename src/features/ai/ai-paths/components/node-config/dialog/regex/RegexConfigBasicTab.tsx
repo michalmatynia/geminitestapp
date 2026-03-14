@@ -48,7 +48,7 @@ export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.
                 onUpdateVariantField('pattern', event.target.value)
               }
               placeholder='Example: ^(?<prefix>[A-Z]+)-(?<id>\d+)$'
-            />
+             aria-label="Example: ^(?<prefix>[A-Z]+)-(?<id>\\d+)$" title="Example: ^(?<prefix>[A-Z]+)-(?<id>\\d+)$"/>
             <p className='mt-2 text-[11px] text-gray-500'>
               Pattern is stored without / delimiters. You can paste /pattern/flags and click
               Normalize.
@@ -64,7 +64,7 @@ export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.
                 onUpdateVariantField('flags', event.target.value)
               }
               placeholder='gim'
-            />
+             aria-label="gim" title="gim"/>
             <div className='mt-2 flex gap-2'>
               <Button
                 type='button'
@@ -99,7 +99,7 @@ export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.
                   onTemplateNameChange(event.target.value)
                 }
                 placeholder='Template name'
-              />
+               aria-label="Template name" title="Template name"/>
             </FormField>
           </div>
           <div className='flex gap-2 mb-0.5'>
@@ -144,7 +144,7 @@ export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.
               { value: 'extract', label: 'Extract value' },
               { value: 'extract_json', label: 'Extract JSON/object' },
             ]}
-          />
+           title="Select mode"/>
         </div>
         <div>
           <Label className='text-xs text-gray-400'>Match Mode</Label>
@@ -163,7 +163,7 @@ export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.
               { value: 'first_overall', label: 'First overall' },
               { value: 'all', label: 'All matches' },
             ]}
-          />
+           title="Select mode"/>
           <p className='mt-1 text-[11px] text-gray-500'>
             First overall stops after the first match across all inputs.
           </p>
@@ -184,7 +184,7 @@ export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.
               { value: 'object', label: 'Object (Record)' },
               { value: 'array', label: 'Array (Groups list)' },
             ]}
-          />
+           title="Select output"/>
         </div>
       </div>
 
@@ -206,7 +206,7 @@ export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.
             { value: 'strict', label: 'Strict (no repair)' },
             { value: 'repair', label: 'Repair malformed JSON' },
           ]}
-        />
+         title="Select policy"/>
         <p className='mt-1 text-[11px] text-gray-500'>
           Applies in <span className='text-gray-300'>extract_json</span> mode.
         </p>
@@ -227,7 +227,7 @@ export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.
             placeholder={
               isExtractMode ? 'match | 1 | amount | groups | captures' : 'match | 1 | prefix'
             }
-          />
+           title={isExtractMode ? 'match | 1 | amount | groups | captures' : 'match | 1 | prefix'}/>
           <p className='mt-1 text-[11px] text-gray-500'>
             {isExtractMode ? (
               <>
@@ -283,7 +283,7 @@ export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.
             }
             aria-label='Unmatched key'
             placeholder='__unmatched__'
-          />
+           title="__unmatched__"/>
         </div>
         <div className='rounded-md border border-border bg-card/50 px-3 py-2'>
           <div className='text-[11px] text-gray-300'>Validation</div>

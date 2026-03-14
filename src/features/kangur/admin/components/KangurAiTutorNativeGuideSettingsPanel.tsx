@@ -597,7 +597,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
             spellCheck={false}
             aria-label='Native guide JSON'
             className='font-mono text-xs leading-6'
-          />
+           title="Advanced JSON editor"/>
         </FormField>
 
         <div className='mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>

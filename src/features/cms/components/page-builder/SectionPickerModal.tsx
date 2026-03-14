@@ -183,6 +183,8 @@ export function SectionPickerModal(props: SectionPickerModalProps): React.JSX.El
                                 size='sm'
                                 onClick={() => onDeleteTemplate(template.name)}
                                 className='ml-2 size-8 p-0 text-gray-400 hover:text-red-400'
+                                aria-label={`Delete ${template.name} template`}
+                                title='Delete template'
                               >
                                 <Trash2 className='size-4' />
                               </Button>

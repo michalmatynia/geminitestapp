@@ -44,7 +44,7 @@ export function LearnerAgentForm(props: LearnerAgentFormProps): React.JSX.Elemen
             disabled
             placeholder='Not configured in AI Brain'
             className='cursor-not-allowed'
-          />
+           aria-label="Not configured in AI Brain" title="Not configured in AI Brain"/>
         </FormField>
 
         <FormField
@@ -57,7 +57,7 @@ export function LearnerAgentForm(props: LearnerAgentFormProps): React.JSX.Elemen
             disabled
             placeholder='Not configured in AI Brain'
             className='cursor-not-allowed'
-          />
+           aria-label="Not configured in AI Brain" title="Not configured in AI Brain"/>
         </FormField>
       </div>
 
@@ -69,7 +69,7 @@ export function LearnerAgentForm(props: LearnerAgentFormProps): React.JSX.Elemen
           }
           placeholder='Enter prompt instructions'
           className='min-h-[120px]'
-        />
+         aria-label="Enter prompt instructions" title="Enter prompt instructions"/>
       </FormField>
 
       <div className='grid gap-4 md:grid-cols-2'>
@@ -86,7 +86,7 @@ export function LearnerAgentForm(props: LearnerAgentFormProps): React.JSX.Elemen
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
               onChange({ temperature: Number(event.target.value) })
             }
-          />
+           aria-label="Temperature" title="Temperature"/>
         </FormField>
 
         <FormField label='Max tokens' description='Response length limit (Ollama: num_predict).'>
@@ -98,7 +98,7 @@ export function LearnerAgentForm(props: LearnerAgentFormProps): React.JSX.Elemen
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
               onChange({ maxTokens: Number(event.target.value) })
             }
-          />
+           aria-label="Max tokens" title="Max tokens"/>
         </FormField>
       </div>
 
@@ -114,7 +114,7 @@ export function LearnerAgentForm(props: LearnerAgentFormProps): React.JSX.Elemen
           onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
             onChange({ maxDocsPerCollection: Number(event.target.value) })
           }
-        />
+         aria-label="Max docs scanned per collection" title="Max docs scanned per collection"/>
       </FormField>
 
       <div className='grid gap-4 md:grid-cols-2'>
@@ -127,7 +127,7 @@ export function LearnerAgentForm(props: LearnerAgentFormProps): React.JSX.Elemen
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
               onChange({ retrievalTopK: Number(event.target.value) })
             }
-          />
+           aria-label="Retrieval top K" title="Retrieval top K"/>
         </FormField>
         <FormField
           label='Min similarity score'
@@ -142,7 +142,7 @@ export function LearnerAgentForm(props: LearnerAgentFormProps): React.JSX.Elemen
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
               onChange({ retrievalMinScore: Number(event.target.value) })
             }
-          />
+           aria-label="Min similarity score" title="Min similarity score"/>
         </FormField>
       </div>
 

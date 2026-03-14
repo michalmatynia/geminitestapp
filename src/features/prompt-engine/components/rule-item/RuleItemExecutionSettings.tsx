@@ -59,7 +59,7 @@ export function RuleItemExecutionSettings(): React.JSX.Element | null {
             if (!Number.isFinite(parsed)) return;
             patchRule({ sequence: Math.max(0, Math.floor(parsed)) });
           }}
-        />
+         aria-label="Sequence" title="Sequence"/>
       </FormField>
       <FormField label='Chain Mode'>
         <SelectSimple
@@ -76,7 +76,7 @@ export function RuleItemExecutionSettings(): React.JSX.Element | null {
             { value: 'stop_on_match', label: 'Stop On Match' },
             { value: 'stop_on_replace', label: 'Stop On Replace' },
           ]}
-        />
+         ariaLabel="Chain Mode" title="Chain Mode"/>
       </FormField>
       <FormField label='Max Executions'>
         <Input
@@ -92,7 +92,7 @@ export function RuleItemExecutionSettings(): React.JSX.Element | null {
               maxExecutions: Math.min(20, Math.max(1, Math.floor(parsed))),
             });
           }}
-        />
+         aria-label="Max Executions" title="Max Executions"/>
       </FormField>
       <FormField label='Pass Output To Next'>
         <button
@@ -137,7 +137,7 @@ export function RuleItemExecutionSettings(): React.JSX.Element | null {
               { value: 'gate', label: 'Gate outside scope' },
               { value: 'bypass', label: 'Bypass outside scope' },
             ]}
-          />
+           ariaLabel="Launch Scope Behavior" title="Launch Scope Behavior"/>
         </FormField>
         <FormField label='Launch Scopes' className='md:col-span-2'>
           <MultiSelect
@@ -164,7 +164,7 @@ export function RuleItemExecutionSettings(): React.JSX.Element | null {
               });
             }}
             options={LAUNCH_OPERATORS}
-          />
+           ariaLabel="Launch Operator" title="Launch Operator"/>
         </FormField>
         <FormField label='Launch Flags'>
           <Input
@@ -174,7 +174,7 @@ export function RuleItemExecutionSettings(): React.JSX.Element | null {
               patchRule({ launchFlags: event.target.value.trim() || null })
             }
             placeholder='mi'
-          />
+           aria-label="mi" title="mi"/>
         </FormField>
         <FormField label='Launch Value'>
           <Input
@@ -184,7 +184,7 @@ export function RuleItemExecutionSettings(): React.JSX.Element | null {
               patchRule({ launchValue: event.target.value || null })
             }
             placeholder='contains/equals target'
-          />
+           aria-label="contains/equals target" title="contains/equals target"/>
         </FormField>
       </div>
 

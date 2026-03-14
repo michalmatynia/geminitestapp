@@ -40,7 +40,7 @@ export function ValidationRulesEditor(): React.JSX.Element {
           value={rulesDraft}
           onChange={(event) => setRulesDraft(event.target.value)}
           aria-label='Validation rules JSON'
-        />
+         title="Textarea"/>
         {rulesDraftError ? (
           <div className='mt-2 text-xs font-medium text-rose-400'>{rulesDraftError}</div>
         ) : null}
@@ -130,7 +130,7 @@ export function ValidationRulesEditor(): React.JSX.Element {
                         defaultValue={String(rule.sequence ?? 0)}
                         onBlur={(event) => handleRuleSequenceBlur(rule.id, event.target.value)}
                         aria-label='Sequence'
-                      />
+                       title="Input field"/>
                     </div>
                     <Button
                       type='button'

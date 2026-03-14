@@ -47,7 +47,7 @@ function CmsDomainSelectorControl(): React.JSX.Element {
       className='w-[220px]'
       triggerClassName={runtime.triggerClassName}
       ariaLabel='Zone selector'
-    />
+     title="Select zone"/>
   );
 }
 

@@ -82,7 +82,7 @@ function RuleItemInner(props: RuleItemProps): React.JSX.Element {
                 onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
                   handleRuleTextChange(draft.uid, event.target.value)
                 }
-              />
+               aria-label="Textarea" title="Textarea"/>
               {draft.error ? (
                 <div className='text-xs text-red-300'>{draft.error}</div>
               ) : (

@@ -54,7 +54,7 @@ export function DocsConnectionsPanel(): React.JSX.Element {
         value={docsSourcesDraft}
         onChange={(event) => setDocsSourcesDraft(event.target.value)}
         aria-label='Docs sources'
-      />
+       title="Textarea"/>
 
       <div className='mt-4 flex flex-wrap items-center justify-between gap-2'>
         <Label className='text-xs text-gray-400'>Node Docs Catalog</Label>

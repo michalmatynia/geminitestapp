@@ -99,7 +99,7 @@ export function ScopeBar(): React.JSX.Element {
           options={SORT_OPTIONS}
           className='w-[130px]'
           ariaLabel='Sort results'
-        />
+         title="Select option"/>
       )}
 
       <SegmentedControl

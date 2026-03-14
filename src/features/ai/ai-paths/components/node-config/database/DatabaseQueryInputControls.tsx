@@ -64,7 +64,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
             ]}
             ariaLabel='Database provider'
             triggerClassName='h-7 w-[130px] border-border bg-card/70 text-xs text-white'
-          />
+           title="Select option"/>
           <SelectSimple
             size='xs'
             value={actionCategory}
@@ -79,7 +79,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
             )}
             ariaLabel='Database action category'
             triggerClassName='h-7 w-[140px] border-border bg-card/70 text-xs text-white'
-          />
+           title="Select option"/>
           <SelectSimple
             size='xs'
             value={action}
@@ -90,7 +90,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
             }))}
             ariaLabel='Database action'
             triggerClassName='h-7 w-[170px] border-border bg-card/70 text-xs text-white'
-          />
+           title="Select option"/>
         </div>
         <div className='flex gap-2'>
           <Button
@@ -166,7 +166,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
             }
             aria-label='Filter template'
             placeholder={(filterTemplateValue ?? '').trim() === '' ? filterPlaceholder : undefined}
-          />
+           title={(filterTemplateValue ?? '').trim() === '' ? filterPlaceholder : undefined}/>
         </div>
       ) : null}
       {showFilterInput ? (
@@ -185,7 +185,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
             }
             aria-label='Update document template'
             placeholder={queryTemplateValue.trim() === '' ? queryPlaceholder : undefined}
-          />
+           title={queryTemplateValue.trim() === '' ? queryPlaceholder : undefined}/>
         </div>
       ) : (
         <Textarea
@@ -198,7 +198,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
           }
           aria-label='Query template'
           placeholder={queryTemplateValue.trim() === '' ? queryPlaceholder : undefined}
-        />
+         title={queryTemplateValue.trim() === '' ? queryPlaceholder : undefined}/>
       )}
     </div>
   );

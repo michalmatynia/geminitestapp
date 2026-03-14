@@ -775,7 +775,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
           placeholder={placeholder || 'Input'}
           aria-label={inputAriaLabel || placeholder || 'Input field'}
           className='pointer-events-none w-full'
-        />
+         title={placeholder || 'Input'}/>
       </div>
     );
   }

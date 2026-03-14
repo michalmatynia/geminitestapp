@@ -40,7 +40,7 @@ export function BorderField(): React.ReactNode {
             className='text-xs h-7'
             min={0}
             aria-label={buildAriaLabel('width')}
-          />
+           title={widthId}/>
         </div>
         <div className='space-y-0.5'>
           <label className='text-[10px] text-gray-500 uppercase' htmlFor={radiusId}>
@@ -56,7 +56,7 @@ export function BorderField(): React.ReactNode {
             className='text-xs h-7'
             min={0}
             aria-label={buildAriaLabel('radius')}
-          />
+           title={radiusId}/>
         </div>
       </div>
       <div className='grid grid-cols-2 gap-2'>
@@ -72,7 +72,7 @@ export function BorderField(): React.ReactNode {
             triggerClassName='text-xs h-7'
             ariaLabel={buildAriaLabel('style')}
             id={styleId}
-          />
+           title={styleId}/>
         </div>
         <div className='space-y-0.5'>
           <label className='text-[10px] text-gray-500 uppercase' htmlFor={colorValueId}>
@@ -98,7 +98,7 @@ export function BorderField(): React.ReactNode {
               className='text-xs h-7 font-mono flex-1'
               maxLength={7}
               aria-label={buildAriaLabel('color value')}
-            />
+             title={colorValueId}/>
           </div>
         </div>
       </div>

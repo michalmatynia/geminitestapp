@@ -237,7 +237,7 @@ export function AgentPersonaMemoryPage({
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder='topic or phrase'
                 className='h-8'
-              />
+               aria-label="topic or phrase" title="topic or phrase"/>
             </FormField>
             <FormField label='Tag'>
               <Input
@@ -246,7 +246,7 @@ export function AgentPersonaMemoryPage({
                 onChange={(event) => setTag(event.target.value)}
                 placeholder='tag name'
                 className='h-8'
-              />
+               aria-label="tag name" title="tag name"/>
             </FormField>
             <FormField label='Topic'>
               <Input
@@ -255,7 +255,7 @@ export function AgentPersonaMemoryPage({
                 onChange={(event) => setTopic(event.target.value)}
                 placeholder='fractions'
                 className='h-8'
-              />
+               aria-label="fractions" title="fractions"/>
             </FormField>
             <FormField label='Mood'>
               <SelectSimple
@@ -263,7 +263,7 @@ export function AgentPersonaMemoryPage({
                 value={mood}
                 onValueChange={(value: string) => setMood(value as AgentPersonaMoodId | 'all')}
                 options={MOOD_OPTIONS}
-              />
+               ariaLabel="Mood" title="Mood"/>
             </FormField>
             <FormField label='Source type'>
               <SelectSimple
@@ -271,7 +271,7 @@ export function AgentPersonaMemoryPage({
                 value={sourceType}
                 onValueChange={(value: string) => setSourceType(value as PersonaMemorySourceType | 'all')}
                 options={SOURCE_OPTIONS}
-              />
+               ariaLabel="Source type" title="Source type"/>
             </FormField>
             <FormField label='Limit'>
               <Input
@@ -284,7 +284,7 @@ export function AgentPersonaMemoryPage({
                   setLimit(Math.min(100, Math.max(1, Number.parseInt(event.target.value || '20', 10) || 20)))
                 }
                 className='h-8'
-              />
+               aria-label="Limit" title="Limit"/>
             </FormField>
           </div>
         }

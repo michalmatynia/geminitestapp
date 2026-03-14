@@ -385,23 +385,10 @@ describe('KangurAiTutorWidget - Actions', () => {
     expect(screen.getByTestId('kangur-ai-tutor-bridge-chip')).toHaveClass(
       '[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
     );
-    expect(screen.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveTextContent(
-      'Po lekcji: trening'
-    );
     expect(screen.getByTestId('kangur-ai-tutor-mood-description')).toHaveTextContent(
       'Masz już wykonany poprzedni krok. Zapytaj o jeden konkretny trening po tej lekcji.'
     );
     expect(screen.getByPlaceholderText('Zapytaj o trening po tej lekcji')).toBeInTheDocument();
-    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
-      'kangur_ai_tutor_proactive_nudge_shown',
-      expect.objectContaining({
-        surface: 'lesson',
-        title: 'Dodawanie',
-        actionId: 'bridge-to-game',
-        bridgeActionId: 'bridge-to-game',
-        isBridgeAction: true,
-      })
-    );
     fireEvent.click(screen.getByRole('button', { name: 'Po lekcji: trening' }));
     await waitFor(() =>
       expect(sendMessageMock).toHaveBeenCalledWith(
@@ -425,7 +412,7 @@ describe('KangurAiTutorWidget - Actions', () => {
     );
   });
 
-  it('shows a proactive tutor nudge and routes it through the quick-action send flow', async () => {
+  it('does not render the deprecated proactive nudge card', () => {
     useKangurTextHighlightMock.mockReturnValue({
       selectedText: '2 + 2',
       selectionRect: new DOMRect(100, 100, 50, 20),
@@ -469,42 +456,10 @@ describe('KangurAiTutorWidget - Actions', () => {
     });
 
     render(<KangurAiTutorWidget />);
-    expect(screen.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveAttribute(
-      'data-nudge-mode',
-      'gentle'
-    );
-    expect(screen.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveTextContent(
-      'Sugerowany pierwszy krok'
-    );
-    expect(screen.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveTextContent('Ten fragment');
-    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+    expect(screen.queryByTestId('kangur-ai-tutor-proactive-nudge')).not.toBeInTheDocument();
+    expect(trackKangurClientEventMock).not.toHaveBeenCalledWith(
       'kangur_ai_tutor_proactive_nudge_shown',
-      expect.objectContaining({
-        surface: 'lesson',
-        title: 'Dodawanie',
-        nudgeMode: 'gentle',
-        actionId: 'selected-text',
-      })
-    );
-    fireEvent.click(screen.getByTestId('kangur-ai-tutor-proactive-nudge-button'));
-    await waitFor(() =>
-      expect(sendMessageMock).toHaveBeenCalledWith(
-        'Wytłumacz ten zaznaczony fragment prostymi słowami.',
-        expect.objectContaining({
-          promptMode: 'selected_text',
-          selectedText: '2 + 2',
-          focusKind: 'selection',
-          interactionIntent: 'explain',
-        })
-      )
-    );
-    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
-      'kangur_ai_tutor_quick_action_clicked',
-      expect.objectContaining({
-        source: 'proactive_nudge',
-        action: 'selected-text',
-        promptMode: 'selected_text',
-      })
+      expect.anything()
     );
   });
 

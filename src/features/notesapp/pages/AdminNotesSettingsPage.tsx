@@ -107,7 +107,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
                 updateSettings({ sortBy: value as NoteSettings['sortBy'] })
               }
               placeholder='Select sort field'
-            />
+             ariaLabel="Select sort field" title="Select sort field"/>
           </FormField>
 
           <FormField
@@ -124,7 +124,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
                 })
               }
               placeholder='Select sort order'
-            />
+             ariaLabel="Select sort order" title="Select sort order"/>
           </FormField>
         </FormSection>
 
@@ -177,7 +177,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
                 })
               }
               placeholder='Select search scope'
-            />
+             ariaLabel="Select search scope" title="Select search scope"/>
           </FormField>
         </FormSection>
 

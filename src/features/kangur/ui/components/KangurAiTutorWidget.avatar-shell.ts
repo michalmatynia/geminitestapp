@@ -51,6 +51,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
   setSelectionGuidanceCalloutVisibleText: Dispatch<SetStateAction<string | null>>;
   setSelectionResponseComplete: Dispatch<SetStateAction<PendingSelectionResponse | null>>;
   setSelectionResponsePending: Dispatch<SetStateAction<PendingSelectionResponse | null>>;
+  setHasNewMessage: (value: boolean) => void;
   setSelectionGuidanceHandoffText: Dispatch<SetStateAction<string | null>>;
   startGuidedSelectionExplanation: (selectedText: string) => void;
   suppressAvatarClickRef: MutableRefObject<boolean>;
@@ -82,6 +83,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
     setSelectionGuidanceCalloutVisibleText,
     setSelectionResponseComplete,
     setSelectionResponsePending,
+    setHasNewMessage,
     setSelectionGuidanceHandoffText,
     startGuidedSelectionExplanation,
     suppressAvatarClickRef,
@@ -168,6 +170,8 @@ export function useKangurAiTutorAvatarShellActions(input: {
       return;
     }
 
+    setHasNewMessage(false);
+
     if (homeOnboardingStepIndex !== null) {
       handleHomeOnboardingFinishEarly();
       openCanonicalOnboarding();
@@ -198,6 +202,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
     setGuestAuthFormVisible,
     setGuestIntroHelpVisible,
     setGuestIntroVisible,
+    setHasNewMessage,
     suppressAvatarClickRef,
   ]);
 

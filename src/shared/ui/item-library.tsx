@@ -277,7 +277,7 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
                   }))
                 }
                 placeholder={`Enter ${entityName.toLowerCase()} name`}
-              />
+               aria-label={`Enter ${entityName.toLowerCase()} name`} title={`Enter ${entityName.toLowerCase()} name`}/>
             </div>
             <div className='space-y-2'>
               <Label htmlFor={descriptionId}>Description</Label>
@@ -292,7 +292,7 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
                 }
                 placeholder='Optional description'
                 className='min-h-[90px]'
-              />
+               aria-label="Optional description" title="Optional description"/>
             </div>
           </div>
 

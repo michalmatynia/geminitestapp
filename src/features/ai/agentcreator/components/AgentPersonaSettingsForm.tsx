@@ -113,7 +113,7 @@ function BrainManagedModelField({
         disabled
         placeholder='Not configured in AI Brain'
         className='cursor-not-allowed'
-      />
+       aria-label="Not configured in AI Brain" title="Not configured in AI Brain"/>
     </FormField>
   );
 }
@@ -189,7 +189,7 @@ export function AgentPersonaSettingsForm({
                   ),
                 })
               }
-            />
+             aria-label="Default search limit" title="Default search limit"/>
           </FormField>
           <div className='rounded-md border border-border/60 bg-card/25 px-3 py-2 text-xs text-gray-400'>
             Memories preserve source, source time, capture time, tags, topic hints, and mood hints.

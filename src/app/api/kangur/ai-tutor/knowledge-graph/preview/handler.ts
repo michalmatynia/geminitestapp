@@ -4,7 +4,7 @@ import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server'
 import { buildKangurAiTutorContextRegistryRefs } from '@/features/kangur/context-registry/refs';
 import { buildKangurKnowledgeGraphPreviewResult } from '@/features/kangur/server/knowledge-graph/preview';
 import { resolveKangurAiTutorRuntimeDocuments } from '@/features/kangur/server/context-registry';
-import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
+import { requireActiveLearner, resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { kangurKnowledgeGraphPreviewRequestSchema } from '@/shared/contracts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
@@ -19,7 +19,7 @@ export async function postKangurAiTutorKnowledgeGraphPreviewHandler(
   }
 
   const payload = kangurKnowledgeGraphPreviewRequestSchema.parse(ctx.body);
-  const learnerId = payload.learnerId ?? actor.activeLearner.id;
+  const learnerId = payload.learnerId ?? requireActiveLearner(actor).id;
   const requestedRefs = buildKangurAiTutorContextRegistryRefs({
     learnerId,
     context: payload.context,

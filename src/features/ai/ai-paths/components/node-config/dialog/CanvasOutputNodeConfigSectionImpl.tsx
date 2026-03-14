@@ -24,7 +24,7 @@ function FieldInput(props: {
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className='h-6 flex-1 rounded border border-border/60 bg-background/50 px-2 text-xs text-gray-200 placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-ring'
-      />
+       title={placeholder}/>
     </div>
   );
 }
@@ -60,7 +60,7 @@ export function CanvasOutputNodeConfigSection(): React.JSX.Element | null {
           onChange={(e) => update({ outputKey: e.target.value.trim() || 'image_studio_bounds' })}
           placeholder='image_studio_bounds'
           className='mt-2 h-7 text-xs'
-        />
+         title="image_studio_bounds"/>
         <p className='mt-1 text-[10px] text-gray-600'>
           Image Studio reads this top-level key from the run result. Leave as default unless you
           need multiple canvas output nodes in one path.
@@ -108,7 +108,7 @@ export function CanvasOutputNodeConfigSection(): React.JSX.Element | null {
           onChange={(e) => update({ boundsPath: e.target.value.trim() || undefined })}
           placeholder='e.g. objectBounds (leave empty to read from root)'
           className='mt-2 h-7 text-xs'
-        />
+         title="e.g. objectBounds (leave empty to read from root)"/>
         <p className='mt-1 text-[10px] text-gray-600'>
           Dot-path into the incoming <code className='text-gray-400'>value</code> port to reach the
           bounds object. Leave empty if bounds are at the root.

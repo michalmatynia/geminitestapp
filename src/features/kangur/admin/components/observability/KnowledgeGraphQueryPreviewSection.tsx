@@ -97,7 +97,7 @@ export function KnowledgeGraphQueryPreviewSection(): JSX.Element {
                   onChange={(event) => onDraftChange('latestUserMessage', event.target.value)}
                   rows={3}
                   placeholder='Jak się zalogować do Kangura?'
-                />
+                 aria-label="Jak się zalogować do Kangura?" title="Jak się zalogować do Kangura?"/>
               </div>
 
               <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>
@@ -207,7 +207,7 @@ export function KnowledgeGraphQueryPreviewSection(): JSX.Element {
                     value={draft.contentId}
                     onChange={(event) => onDraftChange('contentId', event.target.value)}
                     placeholder='game:home or lesson-1'
-                  />
+                   aria-label="game:home or lesson-1" title="game:home or lesson-1"/>
                 </div>
                 <div className='space-y-2'>
                   <label
@@ -221,7 +221,7 @@ export function KnowledgeGraphQueryPreviewSection(): JSX.Element {
                     value={draft.focusId}
                     onChange={(event) => onDraftChange('focusId', event.target.value)}
                     placeholder='kangur-game-result-leaderboard'
-                  />
+                   aria-label="kangur-game-result-leaderboard" title="kangur-game-result-leaderboard"/>
                 </div>
                 <div className='space-y-2'>
                   <label
@@ -235,7 +235,7 @@ export function KnowledgeGraphQueryPreviewSection(): JSX.Element {
                     value={draft.focusLabel}
                     onChange={(event) => onDraftChange('focusLabel', event.target.value)}
                     placeholder='Ranking wyników'
-                  />
+                   aria-label="Ranking wyników" title="Ranking wyników"/>
                 </div>
                 <div className='space-y-2 xl:col-span-2'>
                   <label
@@ -249,7 +249,7 @@ export function KnowledgeGraphQueryPreviewSection(): JSX.Element {
                     value={draft.title}
                     onChange={(event) => onDraftChange('title', event.target.value)}
                     placeholder='Podsumowanie gry'
-                  />
+                   aria-label="Podsumowanie gry" title="Podsumowanie gry"/>
                 </div>
               </div>
 
@@ -376,7 +376,7 @@ export function KnowledgeGraphQueryPreviewSection(): JSX.Element {
                     value={draft.questionId}
                     onChange={(event) => onDraftChange('questionId', event.target.value)}
                     placeholder='question-1'
-                  />
+                   aria-label="question-1" title="question-1"/>
                 </div>
                 <div className='space-y-2'>
                   <label
@@ -390,7 +390,7 @@ export function KnowledgeGraphQueryPreviewSection(): JSX.Element {
                     value={draft.assignmentId}
                     onChange={(event) => onDraftChange('assignmentId', event.target.value)}
                     placeholder='assignment-42'
-                  />
+                   aria-label="assignment-42" title="assignment-42"/>
                 </div>
               </div>
 
@@ -426,7 +426,7 @@ export function KnowledgeGraphQueryPreviewSection(): JSX.Element {
                     onChange={(event) => onDraftChange('selectedText', event.target.value)}
                     rows={2}
                     placeholder='Ranking wyników'
-                  />
+                   aria-label="Ranking wyników" title="Ranking wyników"/>
                 </div>
                 <div className='space-y-2'>
                   <label
@@ -441,7 +441,7 @@ export function KnowledgeGraphQueryPreviewSection(): JSX.Element {
                     onChange={(event) => onDraftChange('description', event.target.value)}
                     rows={2}
                     placeholder='Krótki opis sekcji lub widoku.'
-                  />
+                   aria-label="Krótki opis sekcji lub widoku." title="Krótki opis sekcji lub widoku."/>
                 </div>
               </div>
 

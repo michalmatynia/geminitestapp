@@ -244,7 +244,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
             }))}
             placeholder='Select default role'
             triggerClassName='w-64 bg-gray-900 border text-white'
-          />
+           ariaLabel="Select default role" title="Select default role"/>
           <Button
             onClick={() => void saveDefaultRole()}
             disabled={!defaultDirty || updateSetting.isPending}
@@ -282,7 +282,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
                 setSecurityDirty(true);
               }}
               className='bg-gray-900 border text-white'
-            />
+             aria-label="Minimum password length" title="Minimum password length"/>
           </FormField>
           <FormField
             label='Require strong password'
@@ -347,7 +347,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
                 setSecurityDirty(true);
               }}
               className='bg-gray-900 border text-white'
-            />
+             aria-label="Email lockout attempts" title="Email lockout attempts"/>
           </FormField>
           <FormField label='Email lockout window (minutes)'>
             <Input
@@ -363,7 +363,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
                 setSecurityDirty(true);
               }}
               className='bg-gray-900 border text-white'
-            />
+             aria-label="Email lockout window (minutes)" title="Email lockout window (minutes)"/>
           </FormField>
           <FormField label='Email lockout duration (minutes)'>
             <Input
@@ -379,7 +379,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
                 setSecurityDirty(true);
               }}
               className='bg-gray-900 border text-white'
-            />
+             aria-label="Email lockout duration (minutes)" title="Email lockout duration (minutes)"/>
           </FormField>
           <FormField label='IP rate limit attempts'>
             <Input
@@ -395,7 +395,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
                 setSecurityDirty(true);
               }}
               className='bg-gray-900 border text-white'
-            />
+             aria-label="IP rate limit attempts" title="IP rate limit attempts"/>
           </FormField>
           <FormField label='IP rate limit window (minutes)'>
             <Input
@@ -411,7 +411,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
                 setSecurityDirty(true);
               }}
               className='bg-gray-900 border text-white'
-            />
+             aria-label="IP rate limit window (minutes)" title="IP rate limit window (minutes)"/>
           </FormField>
           <FormField label='IP rate limit duration (minutes)'>
             <Input
@@ -427,7 +427,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
                 setSecurityDirty(true);
               }}
               className='bg-gray-900 border text-white'
-            />
+             aria-label="IP rate limit duration (minutes)" title="IP rate limit duration (minutes)"/>
           </FormField>
         </div>
       </FormSection>
@@ -460,7 +460,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
                       }
                       className='bg-gray-900 border text-white w-full'
                       placeholder='123456'
-                    />
+                     aria-label="123456" title="123456"/>
                   </FormField>
                   <Button
                     onClick={() => void handleMfaVerify()}
@@ -491,7 +491,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
                   }
                   className='bg-gray-900 border text-white w-full'
                   placeholder='MFA code or recovery code'
-                />
+                 aria-label="MFA code or recovery code" title="MFA code or recovery code"/>
               </FormField>
               <Button
                 variant='outline'

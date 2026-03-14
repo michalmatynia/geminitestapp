@@ -305,7 +305,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                         placeholder='Select parameter'
                         ariaLabel='Parameter'
                         triggerClassName='h-9 bg-gray-900 border-border/50'
-                      />
+                       title="Select parameter"/>
                     </div>
                     <div className='flex-1 space-y-3'>
                       <div key={`${index}-${activeParameterLanguage.code}`} className='space-y-1'>
@@ -325,7 +325,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                             placeholder={`Value (${activeParameterLanguage.label})`}
                             disabled={!entry.parameterId}
                             className='min-h-[84px] bg-gray-900'
-                          />
+                           title={`Value (${activeParameterLanguage.label})`}/>
                         ) : selectorType === 'radio' ? (
                           <div className='rounded-md border border-border/50 bg-gray-900/50 p-3'>
                             <RadioGroup
@@ -428,7 +428,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                             placeholder={`Select value (${activeParameterLanguage.label})`}
                             triggerClassName='h-9 bg-gray-900 border-border/50'
                             disabled={!entry.parameterId}
-                          />
+                           title={`Select value (${activeParameterLanguage.label})`}/>
                         ) : (
                           <Input
                             value={getLanguageValue(activeParameterLanguage.code)}
@@ -442,7 +442,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                             placeholder={`Value (${activeParameterLanguage.label})`}
                             disabled={!entry.parameterId}
                             className='h-9'
-                          />
+                           title={`Value (${activeParameterLanguage.label})`}/>
                         )}
                       </div>
                     </div>

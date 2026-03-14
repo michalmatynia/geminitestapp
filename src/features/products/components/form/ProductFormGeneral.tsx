@@ -565,12 +565,12 @@ export default function ProductFormGeneral(): React.JSX.Element {
                 { value: 'asin', label: 'ASIN' },
               ]}
               className='w-[100px]'
-            />
+             title="Product Identifier"/>
             <Input
               id={identifierType}
               {...register(identifierType)}
               placeholder={`Enter ${identifierType.toUpperCase()}`}
-            />
+             aria-label={`Enter ${identifierType.toUpperCase()}`} title={`Enter ${identifierType.toUpperCase()}`}/>
           </div>
         </FormField>
       </FormSection>

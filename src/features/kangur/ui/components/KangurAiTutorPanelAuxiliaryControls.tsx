@@ -1,7 +1,6 @@
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { formatKangurAiTutorTemplate } from '@/shared/contracts/kangur-ai-tutor-content';
-import { cn } from '@/shared/utils';
 import { useKangurAiTutorPanelBodyContext } from './KangurAiTutorPanelBody.context';
 
 import type { JSX } from 'react';
@@ -32,7 +31,6 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
     showToolboxLayout,
     shouldRenderAuxiliaryPanelControls,
     usageSummary,
-    visibleProactiveNudge,
     visibleQuickActions,
   } = useKangurAiTutorPanelBodyContext();
   const shouldRenderToolbox = showToolboxLayout;
@@ -136,44 +134,6 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
                   )}
             </span>
           </div>
-        </div>
-      ) : null}
-      {visibleProactiveNudge ? (
-        <div
-          data-testid='kangur-ai-tutor-proactive-nudge'
-          data-nudge-mode={visibleProactiveNudge.mode}
-          className={cn(
-            'w-full kangur-chat-inset border kangur-chat-padding-md',
-            visibleProactiveNudge.mode === 'coach'
-              ? 'kangur-chat-surface-info kangur-chat-surface-info-shadow'
-              : 'kangur-chat-surface-success kangur-chat-surface-success-shadow'
-          )}
-        >
-          <div className='flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
-            <span className='inline-flex h-1.5 w-1.5 rounded-full bg-current opacity-50' />
-            {visibleProactiveNudge.title}
-          </div>
-          <div className='mt-1 text-sm font-semibold [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
-            {visibleProactiveNudge.action.label}
-          </div>
-          <div className='mt-1 text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
-            {visibleProactiveNudge.description}
-          </div>
-          <KangurButton
-            data-testid='kangur-ai-tutor-proactive-nudge-button'
-            type='button'
-            size='sm'
-            variant='surface'
-            className='mt-3 h-9 w-full px-3 text-xs sm:w-auto'
-            disabled={isLoading || !canSendMessages}
-            onClick={() =>
-              void handleQuickAction(visibleProactiveNudge.action, {
-                source: 'proactive_nudge',
-              })
-            }
-          >
-            {tutorContent.proactiveNudges.buttonLabel}
-          </KangurButton>
         </div>
       ) : null}
     </div>

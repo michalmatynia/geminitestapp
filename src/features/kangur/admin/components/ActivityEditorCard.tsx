@@ -44,7 +44,7 @@ export function ActivityEditorCard(props: {
               label: option.label,
             }))}
             triggerClassName='h-9'
-          />
+           ariaLabel="Activity Type" title="Activity Type"/>
         </FormField>
 
         <div className='grid gap-3 md:grid-cols-2'>
@@ -56,7 +56,7 @@ export function ActivityEditorCard(props: {
               }}
               placeholder={definition.title}
               className='h-9'
-            />
+             aria-label={definition.title} title={definition.title}/>
           </FormField>
 
           <FormField label='Description'>
@@ -67,7 +67,7 @@ export function ActivityEditorCard(props: {
               }}
               placeholder={definition.description}
               className='min-h-[96px]'
-            />
+             aria-label={definition.description} title={definition.description}/>
           </FormField>
         </div>
 
@@ -79,7 +79,7 @@ export function ActivityEditorCard(props: {
             }}
             placeholder='Optional spoken introduction for this activity'
             className='min-h-[100px]'
-          />
+           aria-label="Optional spoken introduction for this activity" title="Optional spoken introduction for this activity"/>
         </FormField>
 
         <div className='rounded-xl border border-emerald-200/80 bg-white/75 px-3 py-3 text-sm text-slate-700'>

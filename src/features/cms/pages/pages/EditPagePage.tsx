@@ -304,6 +304,8 @@ function EditPageContent({
                       })
                     }
                     className='h-auto p-0 hover:bg-transparent'
+                    aria-label={`Remove external assignment /${slug.slug}`}
+                    title='Remove external assignment'
                   >
                     <StatusBadge
                       status={'/' + slug.slug + ' ×'}

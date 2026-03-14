@@ -53,7 +53,7 @@ export function CalloutEditorCard(props: {
           onChange={(e): void => onChange({ ...block, title: e.target.value })}
           placeholder='Callout heading'
           className='h-9'
-        />
+         aria-label="Callout heading" title="Callout heading"/>
       </FormField>
 
       <FormField label='Content'>
@@ -69,7 +69,7 @@ export function CalloutEditorCard(props: {
           onChange={(e): void => onChange({ ...block, ttsText: e.target.value })}
           placeholder='Spoken text override for screen readers and narration'
           className='min-h-[72px]'
-        />
+         aria-label="Spoken text override for screen readers and narration" title="Spoken text override for screen readers and narration"/>
       </FormField>
     </div>
   );

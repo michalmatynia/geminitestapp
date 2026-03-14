@@ -3,17 +3,24 @@
  */
 
 import React, { type ReactNode } from 'react';
-import { act, cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   authStateMock,
   routingStateMock,
   routeTransitionStateMock,
+  routeNavigatorMock,
 } = vi.hoisted(() => ({
   authStateMock: vi.fn(),
   routingStateMock: vi.fn(),
   routeTransitionStateMock: vi.fn(),
+  routeNavigatorMock: {
+    back: vi.fn(),
+    prefetch: vi.fn(),
+    push: vi.fn(),
+    replace: vi.fn(),
+  },
 }));
 
 vi.mock('framer-motion', () => ({
@@ -103,6 +110,10 @@ vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
   useKangurRouteTransitionState: () => routeTransitionStateMock(),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
+  useKangurRouteNavigator: () => routeNavigatorMock,
+}));
+
 vi.mock('@/features/kangur/config/pages', () => ({
   KANGUR_MAIN_PAGE: 'Game',
   kangurPages: {
@@ -118,6 +129,7 @@ vi.mock('@/features/kangur/config/routing', () => ({
     pages: Record<string, React.ComponentType>,
     fallbackPageKey: string
   ) => (pageKey && pages[pageKey] ? pageKey : fallbackPageKey),
+  getKangurHomeHref: (basePath = '/kangur') => basePath,
 }));
 
 vi.mock('@/features/kangur/cms-builder/KangurCmsRuntimeScreen', () => ({
@@ -137,11 +149,13 @@ describe('KangurFeatureApp', () => {
       isLoadingPublicSettings: false,
       authError: null,
       navigateToLogin: vi.fn(),
+      isAuthenticated: true,
     });
     routingStateMock.mockReturnValue({
       pageKey: 'Lessons',
       embedded: false,
       requestedPath: '/kangur/lessons',
+      basePath: '/kangur',
     });
     routeTransitionStateMock.mockReturnValue({
       isRouteAcknowledging: false,
@@ -330,16 +344,43 @@ describe('KangurFeatureApp', () => {
       isLoadingPublicSettings: false,
       authError: null,
       navigateToLogin: vi.fn(),
+      isAuthenticated: true,
     });
     routingStateMock.mockReturnValue({
       pageKey: 'Game',
       embedded: false,
       requestedPath: '/kangur',
+      basePath: '/kangur',
     });
 
     render(<KangurFeatureApp />);
 
     expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
+  });
+
+  it('redirects anonymous users away from the parent dashboard route', async () => {
+    authStateMock.mockReturnValue({
+      isLoadingAuth: false,
+      isLoadingPublicSettings: false,
+      authError: null,
+      navigateToLogin: vi.fn(),
+      isAuthenticated: false,
+    });
+    routingStateMock.mockReturnValue({
+      pageKey: 'ParentDashboard',
+      embedded: false,
+      requestedPath: '/parent-dashboard',
+      basePath: '/',
+    });
+
+    render(<KangurFeatureApp />);
+
+    await waitFor(() => {
+      expect(routeNavigatorMock.replace).toHaveBeenCalledWith('/', {
+        pageKey: 'Game',
+        sourceId: 'kangur-auth:redirect-parent-dashboard',
+      });
+    });
   });
 });

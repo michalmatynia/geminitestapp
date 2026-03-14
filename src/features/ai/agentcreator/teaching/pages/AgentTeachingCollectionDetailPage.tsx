@@ -108,6 +108,8 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
               className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
               onClick={() => setDocToDelete(row.original)}
               disabled={adding || deleting}
+              aria-label={`Delete ${row.original.metadata?.title ?? 'document'}`}
+              title='Delete document'
             >
               <Trash2 className='size-3.5' />
             </Button>

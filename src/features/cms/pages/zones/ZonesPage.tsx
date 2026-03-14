@@ -179,7 +179,7 @@ export default function ZonesPage(): React.JSX.Element {
               ]}
               ariaLabel={`Alias configuration for ${row.original.domain ?? 'zone'}`}
               className='h-7 w-44 text-[10px]'
-            />
+             title="Select option"/>
         ),
       },
       {
@@ -221,7 +221,7 @@ export default function ZonesPage(): React.JSX.Element {
                 onChange={(e) => setDomain(e.target.value)}
                 placeholder='e.g. uk.storefront.com'
                 className='h-9'
-              />
+               aria-label="e.g. uk.storefront.com" title="e.g. uk.storefront.com"/>
             </FormField>
             <Button type='submit' size='sm' className='h-9' loading={createDomain.isPending}>
               <PlusIcon className='size-3.5 mr-2' />

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
-import { getKangurProgressRepository, resolveKangurActor } from '@/features/kangur/server';
+import {
+  getKangurProgressRepository,
+  requireActiveLearner,
+  resolveKangurActor,
+} from '@/features/kangur/server';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
@@ -64,9 +68,10 @@ export async function getKangurProgressHandler(
   _ctx: ApiHandlerContext
 ): Promise<Response> {
   const actor = await resolveKangurActor(req);
+  const activeLearner = requireActiveLearner(actor);
   const progress = await loadProgressForLearner({
-    learnerId: actor.activeLearner.id,
-    legacyUserKey: actor.activeLearner.legacyUserKey,
+    learnerId: activeLearner.id,
+    legacyUserKey: activeLearner.legacyUserKey,
   });
 
   return NextResponse.json(progress);
@@ -78,8 +83,9 @@ export async function patchKangurProgressHandler(
 ): Promise<Response> {
   const payload = parseKangurProgressUpdatePayload(await resolveBodyJson(req, ctx));
   const actor = await resolveKangurActor(req);
+  const activeLearner = requireActiveLearner(actor);
   const repository = await getKangurProgressRepository();
-  const progress = await repository.saveProgress(actor.activeLearner.id, payload);
+  const progress = await repository.saveProgress(activeLearner.id, payload);
 
   void logKangurServerEvent({
     source: 'kangur.progress.update',

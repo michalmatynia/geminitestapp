@@ -34,7 +34,7 @@ export function RightSidebarQuickActions(): React.JSX.Element {
             size='sm'
             className='h-8 text-xs cursor-not-allowed'
             aria-label='Brain-managed generation model'
-          />
+           title="Input field"/>
           <div className='text-[11px] text-gray-400'>
             Generation routing is managed in AI Brain. Image Studio no longer stores local model
             presets or fallback model snapshots.

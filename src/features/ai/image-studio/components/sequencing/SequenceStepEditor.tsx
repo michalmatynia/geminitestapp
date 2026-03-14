@@ -98,7 +98,7 @@ export function SequenceStepEditor(props: SequenceStepEditorProps): React.JSX.El
             options={STEP_RUNTIME_OPTIONS}
             triggerClassName='h-7 text-[11px]'
             ariaLabel={`${operation} runtime`}
-          />
+           title="Select option"/>
         )}
         <SelectSimple
           size='sm'
@@ -114,7 +114,7 @@ export function SequenceStepEditor(props: SequenceStepEditorProps): React.JSX.El
           options={STEP_INPUT_SOURCE_OPTIONS}
           triggerClassName='h-7 text-[11px]'
           ariaLabel={`${operation} input source`}
-        />
+         title="Select option"/>
         <SelectSimple
           size='sm'
           value={step.onFailure}
@@ -128,7 +128,7 @@ export function SequenceStepEditor(props: SequenceStepEditorProps): React.JSX.El
           options={STEP_ON_FAILURE_OPTIONS}
           triggerClassName='h-7 text-[11px]'
           ariaLabel={`${operation} on failure behavior`}
-        />
+         title="Select option"/>
         {maybeWrapTooltip(
           sequencerTooltipContent.retries,
           <input
@@ -214,7 +214,7 @@ export function SequenceStepEditor(props: SequenceStepEditorProps): React.JSX.El
             ]}
             triggerClassName='h-7 text-[11px]'
             ariaLabel='Crop kind'
-          />
+           title="Select option"/>
           {step.config.kind === 'selected_shape' ? (
             <SelectSimple
               size='sm'
@@ -242,7 +242,7 @@ export function SequenceStepEditor(props: SequenceStepEditorProps): React.JSX.El
               triggerClassName='h-7 text-[11px]'
               ariaLabel='Crop selected shape'
               disabled={cropShapeOptions.length === 0}
-            />
+             title="Select shape"/>
           ) : (
             <div className='h-7 rounded border border-transparent bg-transparent' />
           )}
@@ -324,7 +324,7 @@ export function SequenceStepEditor(props: SequenceStepEditorProps): React.JSX.El
             ]}
             triggerClassName='h-7 text-[11px]'
             ariaLabel='Mask source'
-          />
+           title="Select option"/>
           <SelectSimple
             size='sm'
             value={step.config.variant}
@@ -347,7 +347,7 @@ export function SequenceStepEditor(props: SequenceStepEditorProps): React.JSX.El
             ]}
             triggerClassName='h-7 text-[11px]'
             ariaLabel='Mask variant'
-          />
+           title="Select option"/>
           {maybeWrapTooltip(
             sequencerTooltipContent.maskFeather,
             <input
@@ -432,7 +432,7 @@ export function SequenceStepEditor(props: SequenceStepEditorProps): React.JSX.El
             ]}
             triggerClassName='h-7 text-[11px]'
             ariaLabel='Prompt mode'
-          />
+           title="Select option"/>
           <input
             type='text'
             value={step.config.modelOverride ?? ''}
@@ -522,7 +522,7 @@ export function SequenceStepEditor(props: SequenceStepEditorProps): React.JSX.El
             ]}
             triggerClassName='h-7 text-[11px]'
             ariaLabel='Reference policy'
-          />
+           title="Select option"/>
           {step.config.promptMode === 'override' ? (
             <input
               type='text'
@@ -568,7 +568,7 @@ export function SequenceStepEditor(props: SequenceStepEditorProps): React.JSX.El
             options={UPSCALE_STRATEGY_OPTIONS}
             triggerClassName='h-7 text-[11px]'
             ariaLabel='Upscale strategy'
-          />
+           title="Select option"/>
 
           {step.config.strategy === 'scale' ? (
             maybeWrapTooltip(
@@ -593,7 +593,7 @@ export function SequenceStepEditor(props: SequenceStepEditorProps): React.JSX.El
                 options={UPSCALE_SCALE_OPTIONS}
                 triggerClassName='h-7 text-[11px]'
                 ariaLabel='Upscale scale'
-              />
+               title="Select option"/>
             )
           ) : (
             <div className='grid h-7 min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1 rounded border border-border/60 bg-card/40 px-2'>
@@ -690,7 +690,7 @@ export function SequenceStepEditor(props: SequenceStepEditorProps): React.JSX.El
             ]}
             triggerClassName='h-7 text-[11px]'
             ariaLabel='Smoothing quality'
-          />
+           title="Select option"/>
         </div>
       ) : null}
 

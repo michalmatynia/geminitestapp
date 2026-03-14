@@ -161,6 +161,8 @@ export function StudioModals(): React.JSX.Element {
         className='hidden'
         accept='image/*'
         multiple={localUploadMode === 'create'}
+        aria-label='Upload images'
+        title='Upload images'
       />
     </>
   );

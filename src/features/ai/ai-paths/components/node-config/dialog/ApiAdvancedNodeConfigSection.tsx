@@ -159,7 +159,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             update({ url: event.target.value })
           }
-        />
+         aria-label="URL" title="URL"/>
       </FormField>
       <div className='grid gap-3 sm:grid-cols-3'>
         <FormField label='Method'>
@@ -172,7 +172,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
             }
             options={methodOptions}
             placeholder='Method'
-          />
+           ariaLabel="Method" title="Method"/>
         </FormField>
         <FormField label='Body mode'>
           <SelectSimple
@@ -184,7 +184,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
             }
             options={bodyModeOptions}
             placeholder='Body mode'
-          />
+           ariaLabel="Body mode" title="Body mode"/>
         </FormField>
         <FormField label='Response mode'>
           <SelectSimple
@@ -196,7 +196,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
             }
             options={responseModeOptions}
             placeholder='Response mode'
-          />
+           ariaLabel="Response mode" title="Response mode"/>
         </FormField>
       </div>
       <div className='grid gap-3 sm:grid-cols-2'>
@@ -210,7 +210,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               update({ timeoutMs: parseOptionalInteger(event.target.value) })
             }
-          />
+           aria-label="Timeout (ms)" title="Timeout (ms)"/>
         </FormField>
         <FormField label='Response path'>
           <Input
@@ -220,7 +220,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               update({ responsePath: event.target.value })
             }
-          />
+           aria-label="Response path" title="Response path"/>
         </FormField>
       </div>
       <FormField label='Path params JSON'>
@@ -232,7 +232,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             update({ pathParamsJson: event.target.value })
           }
-        />
+         aria-label="Path params JSON" title="Path params JSON"/>
       </FormField>
       <FormField label='Query params JSON'>
         <Textarea
@@ -243,7 +243,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             update({ queryParamsJson: event.target.value })
           }
-        />
+         aria-label="Query params JSON" title="Query params JSON"/>
       </FormField>
       <FormField label='Headers JSON'>
         <Textarea
@@ -254,7 +254,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             update({ headersJson: event.target.value })
           }
-        />
+         aria-label="Headers JSON" title="Headers JSON"/>
       </FormField>
       {(config.bodyMode ?? 'none') !== 'none' && (
         <FormField label='Body template'>
@@ -266,7 +266,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
               update({ bodyTemplate: event.target.value })
             }
-          />
+           aria-label="Body template" title="Body template"/>
         </FormField>
       )}
 
@@ -281,7 +281,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
             }
             options={authModeOptions}
             placeholder='Auth mode'
-          />
+           ariaLabel="Auth mode" title="Auth mode"/>
         </FormField>
         {(config.authMode ?? 'none') === 'api_key' && (
           <div className='mt-3 grid gap-3 sm:grid-cols-3'>
@@ -294,7 +294,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ apiKeyName: event.target.value })
               }
               placeholder='API key name'
-            />
+             title="API key name"/>
             <Input
               variant='subtle'
               size='sm'
@@ -304,7 +304,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ apiKeyValueTemplate: event.target.value })
               }
               placeholder='API key value template'
-            />
+             title="API key value template"/>
             <SelectSimple
               size='sm'
               variant='subtle'
@@ -317,7 +317,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               ariaLabel='API key placement'
               options={apiKeyPlacementOptions}
               placeholder='Placement'
-            />
+             title="Placement"/>
           </div>
         )}
         {(config.authMode ?? 'none') === 'bearer' && (
@@ -331,7 +331,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
             }
             placeholder='Bearer token template'
             className='mt-3'
-          />
+           title="Bearer token template"/>
         )}
         {(config.authMode ?? 'none') === 'basic' && (
           <div className='mt-3 grid gap-3 sm:grid-cols-2'>
@@ -344,7 +344,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ basicUsernameTemplate: event.target.value })
               }
               placeholder='Username template'
-            />
+             title="Username template"/>
             <Input
               variant='subtle'
               size='sm'
@@ -354,7 +354,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ basicPasswordTemplate: event.target.value })
               }
               placeholder='Password template'
-            />
+             title="Password template"/>
           </div>
         )}
         {(config.authMode ?? 'none') === 'oauth2_client_credentials' && (
@@ -368,7 +368,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ oauthTokenUrl: event.target.value })
               }
               placeholder='OAuth token URL'
-            />
+             title="OAuth token URL"/>
             <Input
               variant='subtle'
               size='sm'
@@ -378,7 +378,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ oauthScopeTemplate: event.target.value })
               }
               placeholder='OAuth scope template'
-            />
+             title="OAuth scope template"/>
             <Input
               variant='subtle'
               size='sm'
@@ -388,7 +388,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ oauthClientIdTemplate: event.target.value })
               }
               placeholder='Client ID template'
-            />
+             title="Client ID template"/>
             <Input
               variant='subtle'
               size='sm'
@@ -398,7 +398,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ oauthClientSecretTemplate: event.target.value })
               }
               placeholder='Client secret template'
-            />
+             title="Client secret template"/>
           </div>
         )}
         {(config.authMode ?? 'none') === 'connection' && (
@@ -412,7 +412,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ connectionIdTemplate: event.target.value })
               }
               placeholder='Connection ID template'
-            />
+             title="Connection ID template"/>
             <Input
               variant='subtle'
               size='sm'
@@ -422,7 +422,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ connectionHeaderName: event.target.value })
               }
               placeholder='Connection header name'
-            />
+             title="Connection header name"/>
           </div>
         )}
       </div>
@@ -447,7 +447,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ retryAttempts: parseOptionalInteger(event.target.value) })
               }
               placeholder='Attempts'
-            />
+             title="Attempts"/>
             <SelectSimple
               size='sm'
               variant='subtle'
@@ -458,7 +458,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               ariaLabel='Retry backoff strategy'
               options={retryBackoffOptions}
               placeholder='Backoff'
-            />
+             title="Backoff"/>
             <Input
               type='number'
               variant='subtle'
@@ -470,7 +470,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ retryBackoffMs: parseOptionalInteger(event.target.value) })
               }
               placeholder='Backoff ms'
-            />
+             title="Backoff ms"/>
             <Input
               type='number'
               variant='subtle'
@@ -482,7 +482,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ retryMaxBackoffMs: parseOptionalInteger(event.target.value) })
               }
               placeholder='Max backoff ms'
-            />
+             title="Max backoff ms"/>
             <Input
               type='number'
               variant='subtle'
@@ -496,7 +496,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ retryJitterRatio: parseOptionalFloat(event.target.value) })
               }
               placeholder='Jitter (0-1)'
-            />
+             title="Jitter (0-1)"/>
             <ToggleRow
               label='Retry network errors'
               checked={config.retryOnNetworkError !== false}
@@ -515,7 +515,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
                 update({ retryOnStatusJson: event.target.value })
               }
-            />
+             aria-label="Retry on status JSON array" title="Retry on status JSON array"/>
           </FormField>
         )}
       </div>
@@ -532,7 +532,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               }
               options={paginationModeOptions}
               placeholder='Pagination mode'
-            />
+             ariaLabel="Pagination mode" title="Pagination mode"/>
             <SelectSimple
               size='sm'
               variant='subtle'
@@ -544,7 +544,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               }
               options={paginationAggregateOptions}
               placeholder='Aggregate mode'
-            />
+             ariaLabel="Aggregate mode" title="Aggregate mode"/>
           </div>
         </FormField>
         {(config.paginationMode ?? 'none') === 'page' && (
@@ -558,7 +558,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ pageParam: event.target.value })
               }
               placeholder='Page param'
-            />
+             title="Page param"/>
             <Input
               variant='subtle'
               size='sm'
@@ -568,7 +568,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ limitParam: event.target.value })
               }
               placeholder='Limit param'
-            />
+             title="Limit param"/>
             <Input
               type='number'
               variant='subtle'
@@ -580,7 +580,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ startPage: parseOptionalInteger(event.target.value) })
               }
               placeholder='Start page'
-            />
+             title="Start page"/>
             <Input
               type='number'
               variant='subtle'
@@ -592,7 +592,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ pageSize: parseOptionalInteger(event.target.value) })
               }
               placeholder='Page size'
-            />
+             title="Page size"/>
           </div>
         )}
         {(config.paginationMode ?? 'none') === 'cursor' && (
@@ -606,7 +606,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ cursorParam: event.target.value })
               }
               placeholder='Cursor param'
-            />
+             title="Cursor param"/>
             <Input
               variant='subtle'
               size='sm'
@@ -616,7 +616,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ cursorPath: event.target.value })
               }
               placeholder='Cursor path'
-            />
+             title="Cursor path"/>
             <Input
               type='number'
               variant='subtle'
@@ -628,7 +628,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ pageSize: parseOptionalInteger(event.target.value) })
               }
               placeholder='Page size'
-            />
+             title="Page size"/>
           </div>
         )}
         {(config.paginationMode ?? 'none') !== 'none' && (
@@ -642,7 +642,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ itemsPath: event.target.value })
               }
               placeholder='Items path'
-            />
+             title="Items path"/>
             <Input
               type='number'
               variant='subtle'
@@ -654,7 +654,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ maxPages: parseOptionalInteger(event.target.value) })
               }
               placeholder='Max pages'
-            />
+             title="Max pages"/>
           </div>
         )}
       </div>
@@ -679,7 +679,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ rateLimitRequests: parseOptionalInteger(event.target.value) })
               }
               placeholder='Requests'
-            />
+             title="Requests"/>
             <Input
               type='number'
               variant='subtle'
@@ -693,7 +693,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 })
               }
               placeholder='Interval ms'
-            />
+             title="Interval ms"/>
             <Input
               type='number'
               variant='subtle'
@@ -707,7 +707,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 })
               }
               placeholder='Concurrency'
-            />
+             title="Concurrency"/>
             <SelectSimple
               size='sm'
               variant='subtle'
@@ -720,7 +720,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               ariaLabel='On rate limit'
               options={rateLimitOnLimitOptions}
               placeholder='On limit'
-            />
+             title="On limit"/>
           </div>
         )}
       </div>
@@ -743,7 +743,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ idempotencyHeaderName: event.target.value })
               }
               placeholder='Header name'
-            />
+             title="Header name"/>
             <Input
               variant='subtle'
               size='sm'
@@ -753,7 +753,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
                 update({ idempotencyKeyTemplate: event.target.value })
               }
               placeholder='Key template'
-            />
+             title="Key template"/>
           </div>
         )}
       </div>
@@ -767,7 +767,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             update({ outputMappingsJson: event.target.value })
           }
-        />
+         aria-label="Output mappings JSON" title="Output mappings JSON"/>
       </FormField>
       <FormField
         label='Error routes JSON'
@@ -781,7 +781,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             update({ errorRoutesJson: event.target.value })
           }
-        />
+         aria-label="Error routes JSON" title="Error routes JSON"/>
       </FormField>
     </div>
   );

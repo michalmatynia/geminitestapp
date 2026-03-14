@@ -27,11 +27,12 @@ const buildActorContext = (actor?: KangurActor | null): Record<string, unknown> 
     return {};
   }
 
+  const activeLearner = actor.activeLearner ?? null;
   return {
     actorType: actor.actorType,
     ownerUserId: actor.ownerUserId,
-    learnerId: actor.activeLearner.id,
-    learnerStatus: actor.activeLearner.status,
+    learnerId: activeLearner?.id ?? null,
+    learnerStatus: activeLearner?.status ?? null,
     canManageLearners: actor.canManageLearners,
   };
 };

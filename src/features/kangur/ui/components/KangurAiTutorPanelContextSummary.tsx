@@ -73,7 +73,7 @@ function KangurAiTutorPanelContextCard({
           <div className='text-[10px] font-bold uppercase tracking-[0.16em] [color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'>
             {title}
           </div>
-          <div className='mt-2'>{content}</div>
+          {content ? <div className='mt-2'>{content}</div> : null}
         </div>
         <div className='flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end'>
           {primaryAction ? (
@@ -134,7 +134,6 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
     isAskModalMode,
     isSectionExplainPendingMode,
     isSelectionExplainPendingMode,
-    selectedTextPreview,
     showSectionExplainCompleteState,
     showSelectionExplainCompleteState,
   } = useKangurAiTutorPanelBodyContext();
@@ -151,7 +150,6 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
     selectionGuidanceHandoffText ??
     activeSelectedText ??
     null;
-  const resolvedSelectedTextPreview = selectedTextPreview ?? resolvedSelectedText;
   const resolvedSelectedKnowledgeReference =
     selectionConversationContext?.knowledgeReference ??
     activeFocus.conversationFocus.knowledgeReference ??
@@ -221,12 +219,7 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
             <KangurAiTutorPanelContextCard
               testId='kangur-ai-tutor-selected-text-preview'
               title={tutorContent.panelContext.selectedTitle}
-              content={
-                <div className='text-xs italic leading-relaxed'>
-                  „{resolvedSelectedTextPreview}”
-                  {resolvedSelectedText.length > (resolvedSelectedTextPreview?.length ?? 0) ? '…' : ''}
-                </div>
-              }
+              content={null}
               primaryAction={
                 activeSelectionPageRect
                   ? {

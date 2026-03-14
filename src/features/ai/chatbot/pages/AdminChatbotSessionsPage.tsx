@@ -93,7 +93,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
                   ref={(node) => {
                     node?.focus();
                   }}
-                />
+                 aria-label="Input field" title="Input field"/>
               ) : (
                 <span className='font-medium text-white'>
                   {session.title || `Session ${session.id.slice(0, 6)}`}

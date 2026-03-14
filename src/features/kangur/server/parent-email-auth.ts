@@ -8,7 +8,6 @@ import {
   resolveKangurPublicBasePathFromHref,
 } from '@/features/kangur/config/routing';
 import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
-import { ensureDefaultKangurLearnerForOwner } from '@/features/kangur/services/kangur-learner-repository';
 import {
   KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
   parseKangurParentVerificationEmailSettings,
@@ -423,13 +422,6 @@ export const verifyKangurParentEmail = async (tokenId: string): Promise<{
   const email = user?.email ?? token.email;
   const ownerUserId = user?.id;
   if (ownerUserId) {
-    await ensureDefaultKangurLearnerForOwner({
-      ownerUserId,
-      displayName: user?.name ?? buildParentDisplayName(email),
-      preferredLoginName: email.split('@')[0] ?? ownerUserId.slice(0, 12),
-      legacyUserKey: email,
-    });
-
     await assignAuthUserRole({
       userId: ownerUserId,
       roleId: 'studiq_parent',

@@ -218,7 +218,7 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
             }))}
             placeholder='Select a catalog...'
             ariaLabel='Catalog'
-          />
+           title="Select a catalog..."/>
         </div>
       </FormSection>
 
@@ -301,7 +301,7 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
                 }
                 placeholder='Field name in English'
                 className='h-9'
-              />
+               aria-label="Field name in English" title="Field name in English"/>
             </FormField>
             <FormField label='Name (PL)'>
               <Input
@@ -314,7 +314,7 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
                 }
                 placeholder='Optional'
                 className='h-9'
-              />
+               aria-label="Optional" title="Optional"/>
             </FormField>
             <FormField label='Name (DE)'>
               <Input
@@ -327,7 +327,7 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
                 }
                 placeholder='Optional'
                 className='h-9'
-              />
+               aria-label="Optional" title="Optional"/>
             </FormField>
             <FormField label='Selector Type'>
               <SelectSimple
@@ -342,7 +342,7 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
                 options={SELECTOR_TYPE_OPTIONS}
                 placeholder='Select selector type'
                 triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
-              />
+               ariaLabel="Select selector type" title="Select selector type"/>
             </FormField>
             {selectorNeedsOptions && (
               <FormField label='Option Labels'>
@@ -356,7 +356,7 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
                   }
                   className='min-h-[110px] bg-gray-900'
                   placeholder={'One value label per line\nSmall\nMedium\nLarge'}
-                />
+                 aria-label="One value label per line\nSmall\nMedium\nLarge" title="One value label per line\nSmall\nMedium\nLarge"/>
                 <p className='mt-1 text-xs text-gray-500'>
                   Value labels only. Saved labels are exported/imported as plain text values.
                 </p>

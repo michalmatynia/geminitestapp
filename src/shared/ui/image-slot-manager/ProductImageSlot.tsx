@@ -373,7 +373,7 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
               ? `h-7 ${minimalLayoutWidthClass} px-2 text-[10px]`
               : 'h-7 w-full px-2 text-[10px]'
           }
-        />
+         title="Paste image link"/>
       )}
       {!!base64Value.trim() && (
         <div

@@ -38,7 +38,7 @@ export function AnalyticsDashboardHeader(): React.JSX.Element {
                 onValueChange={(val: string): void => setScope(val as AnalyticsScope | 'all')}
                 options={scopes}
                 triggerClassName='h-9 w-25 border-border bg-gray-900/40 text-sm text-white'
-              />
+               ariaLabel="Select option" title="Select option"/>
             </div>
 
             <div className='flex items-center gap-2'>
@@ -49,7 +49,7 @@ export function AnalyticsDashboardHeader(): React.JSX.Element {
                 onValueChange={(val: string): void => setRange(val as AnalyticsRange)}
                 options={ranges}
                 triggerClassName='h-9 w-32.5 border-border bg-gray-900/40 text-sm text-white'
-              />
+               ariaLabel="Select option" title="Select option"/>
             </div>
 
             <Button

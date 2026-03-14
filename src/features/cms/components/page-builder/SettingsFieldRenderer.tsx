@@ -204,7 +204,7 @@ export function SettingsFieldRenderer(props: {
             ariaLabel={field.label}
             id={controlId}
             triggerClassName='h-7 bg-card/40 text-xs mt-1'
-          />
+           title={controlId}/>
         </>
       )}
 
@@ -344,7 +344,7 @@ export function SettingsFieldRenderer(props: {
             ariaLabel={field.label}
             id={controlId}
             triggerClassName='h-7 bg-card/40 text-xs mt-1'
-          />
+           title={controlId}/>
           <div className='flex items-center justify-between text-[11px] text-gray-500'>
             <span>Need a new scheme?</span>
             <Button
@@ -403,7 +403,7 @@ export function SettingsFieldRenderer(props: {
             ariaLabel={field.label}
             id={controlId}
             triggerClassName='h-7 bg-card/40 text-xs mt-1'
-          />
+           title={controlId}/>
         </>
       )}
 
@@ -424,7 +424,7 @@ export function SettingsFieldRenderer(props: {
             ariaLabel={field.label}
             id={controlId}
             triggerClassName='h-7 bg-card/40 text-xs mt-1'
-          />
+           title={controlId}/>
         </>
       )}
 

@@ -265,7 +265,7 @@ export function ProvidersTab(): React.JSX.Element {
                 setOpenaiApiKey(event.target.value)
               }
               placeholder='sk-...'
-            />
+             aria-label="sk-..." title="sk-..."/>
           </div>
           <div className='space-y-1'>
             <Label className='text-xs text-gray-400'>Anthropic API key</Label>
@@ -276,7 +276,7 @@ export function ProvidersTab(): React.JSX.Element {
                 setAnthropicApiKey(event.target.value)
               }
               placeholder='sk-ant-...'
-            />
+             aria-label="sk-ant-..." title="sk-ant-..."/>
           </div>
           <div className='space-y-1'>
             <Label className='text-xs text-gray-400'>Gemini API key</Label>
@@ -287,7 +287,7 @@ export function ProvidersTab(): React.JSX.Element {
                 setGeminiApiKey(event.target.value)
               }
               placeholder='AIza...'
-            />
+             aria-label="AIza..." title="AIza..."/>
           </div>
         </div>
       </FormSection>

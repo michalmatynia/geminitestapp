@@ -512,7 +512,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
               }}
               placeholder='Event name'
               className='h-9'
-            />
+             aria-label="Event name" title="Event name"/>
           </FormField>
         </div>
       </FormSection>
@@ -547,7 +547,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
               }))}
               placeholder='Select address'
               size='sm'
-            />
+             ariaLabel="Select address" title="Select address"/>
           </FormField>
           <div className='flex items-end'>
             <Button type='button' size='sm' className='h-9' onClick={handleAddAddress}>
@@ -590,7 +590,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
               placeholder='Street'
               className='h-9'
               disabled={!selectedAddress}
-            />
+             aria-label="Street" title="Street"/>
           </FormField>
           <FormField label='Street Number'>
             <Input
@@ -601,7 +601,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
               placeholder='Street number'
               className='h-9'
               disabled={!selectedAddress}
-            />
+             aria-label="Street number" title="Street number"/>
           </FormField>
           <FormField label='City'>
             <Input
@@ -612,7 +612,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
               placeholder='City'
               className='h-9'
               disabled={!selectedAddress}
-            />
+             aria-label="City" title="City"/>
           </FormField>
           <FormField label='Postal Code'>
             <Input
@@ -623,7 +623,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
               placeholder='Postal code'
               className='h-9'
               disabled={!selectedAddress}
-            />
+             aria-label="Postal code" title="Postal code"/>
           </FormField>
           <FormField label='Country'>
             <SelectSimple
@@ -638,7 +638,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
               placeholder={countriesQuery.isLoading ? 'Loading countries...' : 'Select country'}
               size='sm'
               disabled={!selectedAddress || countriesQuery.isLoading || countriesQuery.isError}
-            />
+             ariaLabel={countriesQuery.isLoading ? 'Loading countries...' : 'Select country'} title={countriesQuery.isLoading ? 'Loading countries...' : 'Select country'}/>
           </FormField>
         </div>
       </FormSection>

@@ -27,6 +27,7 @@ const runtimeState = vi.hoisted(() => ({
     },
     feedback: 'Zapisano dane ucznia.',
     handleCreateLearner: vi.fn(),
+    handleDeleteLearner: vi.fn(),
     handleSaveLearner: vi.fn(),
     isSubmitting: false,
     learners: [
@@ -97,6 +98,7 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
       },
       feedback: 'Zapisano dane ucznia.',
       handleCreateLearner: vi.fn(),
+      handleDeleteLearner: vi.fn(),
       handleSaveLearner: vi.fn(),
       isSubmitting: false,
       learners: [

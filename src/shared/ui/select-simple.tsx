@@ -37,6 +37,7 @@ interface SelectSimpleProps {
   ariaDescribedBy?: string | undefined;
   ariaInvalid?: boolean | undefined;
   ariaErrorMessage?: string | undefined;
+  title?: string | undefined;
   size?: 'default' | 'sm' | 'xs';
   variant?: 'default' | 'subtle';
   dataDocId?: string | undefined;
@@ -60,6 +61,7 @@ type SelectSimpleRuntimeValue = {
   ariaDescribedBy?: string | undefined;
   ariaInvalid?: boolean | undefined;
   ariaErrorMessage?: string | undefined;
+  title?: string | undefined;
   size: 'default' | 'sm' | 'xs';
   variant: 'default' | 'subtle';
   dataDocId?: string | undefined;
@@ -97,6 +99,7 @@ function SelectSimpleControl(): React.JSX.Element {
         aria-describedby={runtime.ariaDescribedBy}
         aria-invalid={runtime.ariaInvalid || undefined}
         aria-errormessage={runtime.ariaErrorMessage}
+        title={runtime.title}
         data-doc-id={runtime.dataDocId}
         data-doc-alias={runtime.dataDocAlias}
       >
@@ -153,6 +156,7 @@ export function SelectSimple({
   ariaDescribedBy,
   ariaInvalid,
   ariaErrorMessage,
+  title,
   size = 'default',
   variant = 'default',
   dataDocId,
@@ -198,6 +202,12 @@ export function SelectSimple({
     }
     return 'Select option';
   }, [ariaLabel, placeholder]);
+  const resolvedTitle = React.useMemo(() => {
+    if (title?.trim()) {
+      return title.trim();
+    }
+    return resolvedAriaLabel;
+  }, [resolvedAriaLabel, title]);
   const runtimeValue = React.useMemo<SelectSimpleRuntimeValue>(
     () => ({
       safeValue,
@@ -211,6 +221,7 @@ export function SelectSimple({
       ariaDescribedBy,
       ariaInvalid,
       ariaErrorMessage,
+      title: resolvedTitle,
       size,
       variant,
       dataDocId,
@@ -229,6 +240,7 @@ export function SelectSimple({
       ariaDescribedBy,
       ariaInvalid,
       ariaErrorMessage,
+      resolvedTitle,
       size,
       variant,
       dataDocId,

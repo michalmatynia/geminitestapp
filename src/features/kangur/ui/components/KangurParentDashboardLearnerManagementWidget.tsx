@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
 import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
 import { useKangurParentDashboardRuntime } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
@@ -21,6 +23,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
     editForm,
     feedback,
     handleCreateLearner,
+    handleDeleteLearner,
     handleSaveLearner,
     isSubmitting,
     learners,
@@ -31,6 +34,15 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
   const { entry: learnerManagementContent } = useKangurPageContentEntry(
     'parent-dashboard-learner-management'
   );
+  const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
+  const activeLearnerId = activeLearner?.id ?? null;
+  const isRemovalPending = Boolean(activeLearnerId && pendingRemovalId === activeLearnerId);
+
+  useEffect(() => {
+    if (pendingRemovalId && pendingRemovalId !== activeLearnerId) {
+      setPendingRemovalId(null);
+    }
+  }, [activeLearnerId, pendingRemovalId]);
 
   if (!canAccessDashboard) {
     return null;
@@ -132,12 +144,16 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
               value={createForm.displayName}
               onChange={(event) => updateCreateField('displayName', event.target.value)}
               placeholder='Imie ucznia'
+              aria-label='Imie ucznia'
+              title='Imie ucznia'
             />
             <KangurTextField
               accent='indigo'
               value={createForm.loginName}
               onChange={(event) => updateCreateField('loginName', event.target.value)}
               placeholder='Login ucznia'
+              aria-label='Login ucznia'
+              title='Login ucznia'
             />
             <KangurTextField
               accent='indigo'
@@ -145,6 +161,8 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
               value={createForm.password}
               onChange={(event) => updateCreateField('password', event.target.value)}
               placeholder='Hasło ucznia'
+              aria-label='Hasło ucznia'
+              title='Hasło ucznia'
             />
           </div>
 
@@ -184,12 +202,16 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
               value={editForm.displayName}
               onChange={(event) => updateEditField('displayName', event.target.value)}
               placeholder='Imie ucznia'
+              aria-label='Imie ucznia'
+              title='Imie ucznia'
             />
             <KangurTextField
               accent='indigo'
               value={editForm.loginName}
               onChange={(event) => updateEditField('loginName', event.target.value)}
               placeholder='Login ucznia'
+              aria-label='Login ucznia'
+              title='Login ucznia'
             />
             <KangurTextField
               accent='indigo'
@@ -197,6 +219,8 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
               value={editForm.password}
               onChange={(event) => updateEditField('password', event.target.value)}
               placeholder='Nowe hasło (opcjonalnie)'
+              aria-label='Nowe hasło (opcjonalnie)'
+              title='Nowe hasło (opcjonalnie)'
             />
             <KangurSelectField
               accent='indigo'
@@ -207,6 +231,8 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                   event.target.value === 'disabled' ? 'disabled' : 'active'
                 )
               }
+              aria-label='Status ucznia'
+              title='Status ucznia'
             >
               <option value='active'>Aktywny</option>
               <option value='disabled'>Wyłączony</option>
@@ -223,10 +249,54 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
             >
               Zapisz ucznia
             </KangurButton>
+            <KangurButton
+              className='w-full sm:w-auto text-rose-600 hover:text-rose-700'
+              disabled={isSubmitting}
+              onClick={() => setPendingRemovalId(activeLearner.id)}
+              size='sm'
+              variant='surface'
+              data-doc-id='parent_remove_learner'
+            >
+              Usuń profil ucznia
+            </KangurButton>
             <div className='text-xs [color:var(--kangur-page-muted-text)]'>
               Login i hasło należą do ucznia, ale konto pozostaje własnością rodzica.
             </div>
           </div>
+          {isRemovalPending ? (
+            <div
+              className='rounded-[20px] border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-700'
+              role='alert'
+            >
+              <p className='font-semibold'>
+                Uwaga: usunięcie profilu ucznia usuwa jego login i dostęp do danych. Tej operacji nie
+                da się cofnąć.
+              </p>
+              <div className='mt-3 flex flex-col gap-2 sm:flex-row sm:items-center'>
+                <KangurButton
+                  className='w-full sm:w-auto'
+                  disabled={isSubmitting}
+                  onClick={() => setPendingRemovalId(null)}
+                  size='sm'
+                  variant='surface'
+                >
+                  Anuluj
+                </KangurButton>
+                <KangurButton
+                  className='w-full sm:w-auto border-rose-500 bg-rose-500 text-white hover:bg-rose-600 hover:border-rose-600'
+                  disabled={isSubmitting}
+                  onClick={() => {
+                    setPendingRemovalId(null);
+                    void handleDeleteLearner(activeLearner.id);
+                  }}
+                  size='sm'
+                  variant='primary'
+                >
+                  Potwierdź usunięcie
+                </KangurButton>
+              </div>
+            </div>
+          ) : null}
         </KangurGlassPanel>
       ) : null}
     </div>

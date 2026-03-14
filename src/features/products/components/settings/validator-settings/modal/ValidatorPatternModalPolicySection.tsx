@@ -53,7 +53,7 @@ export function ValidatorPatternModalPolicySection(): React.JSX.Element {
             }))
           }
           options={POST_ACCEPT_BEHAVIOR_OPTIONS}
-        />
+         ariaLabel="After Replace Is Accepted" title="After Replace Is Accepted"/>
       </FormField>
 
       <FormField
@@ -71,7 +71,7 @@ export function ValidatorPatternModalPolicySection(): React.JSX.Element {
             }))
           }
           options={DENY_BEHAVIOR_OVERRIDE_OPTIONS}
-        />
+         ariaLabel="Deny Policy Override" title="Deny Policy Override"/>
       </FormField>
 
       <div className='space-y-2 pt-2'>

@@ -149,7 +149,7 @@ export function QueryDevPanel({
                 placeholder='Filter queries…'
                 aria-label='Filter queries'
                 className='h-7 text-xs flex-1'
-              />
+               title="Filter queries…"/>
               <Button
                 size='sm'
                 variant={showInactive ? 'default' : 'outline'}

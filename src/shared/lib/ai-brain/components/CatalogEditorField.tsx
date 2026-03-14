@@ -37,7 +37,7 @@ export function CatalogEditorField(props: {
           onChange(normalizeListFromTextarea(e.target.value))
         }
         placeholder={placeholder}
-      />
+       aria-label={placeholder} title={placeholder}/>
       <div className='text-[11px] text-gray-500'>{description}</div>
     </div>
   );

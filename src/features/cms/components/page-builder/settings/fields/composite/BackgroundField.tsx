@@ -55,7 +55,7 @@ export function BackgroundField(): React.ReactNode {
         triggerClassName='text-xs h-7'
         ariaLabel={buildAriaLabel('type')}
         id={typeId}
-      />
+       title={typeId}/>
 
       {bgType === 'none' && (
         <div className='rounded-md border border-border/60 bg-card/30 px-3 py-2 text-[11px] text-gray-400'>
@@ -84,7 +84,7 @@ export function BackgroundField(): React.ReactNode {
             className='flex-1 text-xs font-mono'
             maxLength={7}
             aria-label={buildAriaLabel('solid color value')}
-          />
+           title={solidColorId}/>
         </div>
       )}
 
@@ -106,7 +106,7 @@ export function BackgroundField(): React.ReactNode {
               triggerClassName='text-xs h-7'
               ariaLabel={buildAriaLabel('gradient direction')}
               id={gradientDirectionId}
-            />
+             title={gradientDirectionId}/>
           </div>
           <div className='flex items-center gap-2'>
             <span className='text-[10px] text-gray-500 w-10'>From</span>
@@ -129,7 +129,7 @@ export function BackgroundField(): React.ReactNode {
               className='flex-1 text-xs font-mono'
               maxLength={7}
               aria-label={buildAriaLabel('gradient from color value')}
-            />
+             title={gradientFromValueId}/>
             <Input
               id={gradientFromOpacityId}
               type='number'
@@ -165,7 +165,7 @@ export function BackgroundField(): React.ReactNode {
               className='flex-1 text-xs font-mono'
               maxLength={7}
               aria-label={buildAriaLabel('gradient to color value')}
-            />
+             title={gradientToValueId}/>
             <Input
               id={gradientToOpacityId}
               type='number'
@@ -195,7 +195,7 @@ export function BackgroundField(): React.ReactNode {
               min={0}
               max={360}
               aria-label={buildAriaLabel('gradient angle')}
-            />
+             title={gradientAngleId}/>
             <span className='text-xs text-gray-500'>deg</span>
           </div>
           <p className='text-[11px] text-gray-500'>

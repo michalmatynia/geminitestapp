@@ -110,7 +110,7 @@ export function PromptModal(props: PromptModalProps): React.JSX.Element {
             placeholder={placeholder}
             className='h-9'
             disabled={isLoading || isSubmitting}
-          />
+           title={placeholder}/>
         </div>
       </div>
     </FormModal>

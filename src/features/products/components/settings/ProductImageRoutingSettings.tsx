@@ -277,7 +277,9 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
               disabled={studioProjectsQuery.isLoading || updateStudioProjectSetting.isPending}
               triggerClassName='h-9'
               ariaLabel='Default Image Studio project'
-            />
+             title={studioProjectsQuery.isLoading
+                  ? 'Loading Image Studio projects...'
+                  : 'Select Image Studio project'}/>
           </FormField>
           <FormActions
             onSave={handleSaveStudioProject}
@@ -350,7 +352,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
               disabled={updateSequenceGenerationModeSetting.isPending}
               triggerClassName='h-9'
               ariaLabel='Product Studio sequence generation mode'
-            />
+             title="Generation + Sequencing Mode"/>
           </FormField>
           <FormActions
             onSave={handleSaveSequenceGenerationMode}
@@ -384,7 +386,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
                 handleAddRoute();
               }
             }}
-          />
+           aria-label={DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL} title={DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL}/>
           <Button
             size='xs'
             type='button'

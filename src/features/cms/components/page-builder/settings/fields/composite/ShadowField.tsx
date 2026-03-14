@@ -39,7 +39,7 @@ export function ShadowField(): React.ReactNode {
               }
               className='text-xs h-7 px-1.5'
               aria-label={buildAriaLabel(prop)}
-            />
+             title={controlId}/>
             </div>
           );
         })}
@@ -66,7 +66,7 @@ export function ShadowField(): React.ReactNode {
           }
           className='text-xs h-7 font-mono flex-1'
           aria-label={buildAriaLabel('color value')}
-        />
+         title={colorValueId}/>
       </div>
     </div>
   );

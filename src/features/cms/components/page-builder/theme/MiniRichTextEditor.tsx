@@ -140,7 +140,7 @@ export function MiniRichTextEditor(props: {
               ]}
               ariaLabel='Format'
               triggerClassName='h-7 w-32 bg-card/40 text-xs'
-            />
+             title="Select option"/>
           </div>
         )}
         <RichTextToolbarButton

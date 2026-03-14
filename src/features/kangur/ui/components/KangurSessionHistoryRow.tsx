@@ -1,5 +1,3 @@
-'use client';
-
 import type { ReactNode } from 'react';
 
 import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
@@ -9,7 +7,7 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/utils/cn';
 
 // ── Session History Sub-components ───────────────────────────────────────────
 

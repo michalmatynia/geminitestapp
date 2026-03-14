@@ -1,5 +1,3 @@
-'use client';
-
 import React, { type ComponentProps } from 'react';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
@@ -12,7 +10,7 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurLesson } from '@/shared/contracts/kangur';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/utils/cn';
 
 // ── Lesson Library Card Sub-components ───────────────────────────────────────
 

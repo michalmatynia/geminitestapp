@@ -101,11 +101,12 @@ export const mongoParameterRepository: ParameterRepository = {
       ] as Filter<ProductParameterDoc>[];
     }
 
-    const params = await db
-      .collection<ProductParameterDoc>(COLLECTION)
-      .find(query)
-      .sort({ name_en: 1 })
-      .toArray();
+    const cursor = db.collection<ProductParameterDoc>(COLLECTION).find(query).sort({ name_en: 1 });
+
+    if (typeof filters.skip === 'number') cursor.skip(filters.skip);
+    if (typeof filters.limit === 'number') cursor.limit(filters.limit);
+
+    const params = await cursor.toArray();
     return params.map(toParameterDomain);
   },
 

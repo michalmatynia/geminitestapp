@@ -12,7 +12,6 @@ import {
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurMode } from '@/features/kangur/ui/types';
-import { cn } from '@/shared/utils';
 
 type KangurSet = {
   id: KangurMode;
@@ -70,29 +69,6 @@ function KangurSetupShell({ children, testId }: KangurSetupShellProps): React.JS
     >
       {children}
     </KangurGlassPanel>
-  );
-}
-
-type KangurSetupChoiceCardProps = ComponentProps<typeof KangurAnimatedOptionCard> & {
-  buttonClassName: string;
-};
-
-function KangurSetupChoiceCard({
-  children,
-  buttonClassName,
-  ...props
-}: KangurSetupChoiceCardProps): React.JSX.Element {
-  return (
-    <KangurAnimatedOptionCard
-      accent='amber'
-      buttonClassName={buttonClassName}
-      whileHover={!props.disabled ? { scale: 1.03 } : {}}
-      whileTap={!props.disabled ? { scale: 0.97 } : {}}
-      wrapperRole='listitem'
-      {...props}
-    >
-      {children}
-    </KangurAnimatedOptionCard>
   );
 }
 
@@ -174,7 +150,8 @@ export default function KangurSetup({
 
           <div aria-labelledby={editionsHeadingId} className='flex w-full flex-col gap-3' role='list'>
             {EDITIONS.map((edition) => (
-              <KangurSetupChoiceCard
+              <KangurAnimatedOptionCard
+                accent='amber'
                 aria-describedby={`kangur-setup-edition-status-${edition.year}`}
                 aria-label={`${edition.label}. ${edition.available ? 'Dostępna.' : 'Niedostępna, wkrótce dostępna.'}`}
                 buttonClassName='flex w-full flex-col items-start gap-3 rounded-[28px] px-5 py-4 text-left sm:flex-row sm:items-center sm:gap-4'
@@ -187,42 +164,45 @@ export default function KangurSetup({
                     setSelectedEdition(edition);
                   }
                 }}
+                whileHover={edition.available ? { scale: 1.03 } : {}}
+                whileTap={edition.available ? { scale: 0.97 } : {}}
+                wrapperRole='listitem'
               >
-                  <KangurIconBadge
-                    accent={edition.available ? 'amber' : 'slate'}
-                    className={edition.available ? undefined : '[color:var(--kangur-page-muted-text)]'}
-                    style={
-                      edition.available
-                        ? undefined
-                        : {
-                            background:
-                              'color-mix(in srgb, var(--kangur-soft-card-background) 78%, #cbd5e1)',
-                          }
-                    }
-                    data-testid={`kangur-setup-edition-icon-${edition.year}`}
-                    size='xl'
+                <KangurIconBadge
+                  accent={edition.available ? 'amber' : 'slate'}
+                  className={edition.available ? undefined : '[color:var(--kangur-page-muted-text)]'}
+                  style={
+                    edition.available
+                      ? undefined
+                      : {
+                          background:
+                            'color-mix(in srgb, var(--kangur-soft-card-background) 78%, #cbd5e1)',
+                        }
+                  }
+                  data-testid={`kangur-setup-edition-icon-${edition.year}`}
+                  size='xl'
+                >
+                  {edition.emoji}
+                </KangurIconBadge>
+                <div className='flex min-w-0 flex-1 flex-col'>
+                  <span className='text-lg font-extrabold [color:var(--kangur-page-text)]'>
+                    {edition.label}
+                  </span>
+                  <span
+                    id={`kangur-setup-edition-status-${edition.year}`}
+                    className='mt-1 flex flex-wrap items-center gap-2'
                   >
-                    {edition.emoji}
-                  </KangurIconBadge>
-                  <div className='flex min-w-0 flex-1 flex-col'>
-                    <span className='text-lg font-extrabold [color:var(--kangur-page-text)]'>
-                      {edition.label}
-                    </span>
-                    <span
-                      id={`kangur-setup-edition-status-${edition.year}`}
-                      className='mt-1 flex flex-wrap items-center gap-2'
-                    >
-                      <KangurStatusChip accent='amber' size='sm'>
-                        {edition.year}
+                    <KangurStatusChip accent='amber' size='sm'>
+                      {edition.year}
+                    </KangurStatusChip>
+                    {!edition.available ? (
+                      <KangurStatusChip accent='slate' size='sm'>
+                        <Lock className='h-3 w-3' /> Wkrótce dostępna
                       </KangurStatusChip>
-                      {!edition.available ? (
-                        <KangurStatusChip accent='slate' size='sm'>
-                          <Lock className='h-3 w-3' /> Wkrótce dostępna
-                        </KangurStatusChip>
-                      ) : null}
-                    </span>
-                  </div>
-              </KangurSetupChoiceCard>
+                    ) : null}
+                  </span>
+                </div>
+              </KangurAnimatedOptionCard>
             ))}
           </div>
 
@@ -292,7 +272,8 @@ export default function KangurSetup({
             };
 
             return (
-              <KangurSetupChoiceCard
+              <KangurAnimatedOptionCard
+                accent='amber'
                 aria-describedby={`kangur-setup-set-description-${setItem.id}`}
                 aria-label={`${setItem.label}. ${setItem.isExam ? 'Tryb konkursowy.' : 'Tryb treningowy.'} ${setItem.available ? 'Dostępny.' : 'Niedostępny, wkrótce dostępny.'}`}
                 buttonClassName='flex w-full flex-col items-start gap-2 rounded-[28px] px-5 py-4'
@@ -301,42 +282,44 @@ export default function KangurSetup({
                 emphasis={setCardEmphasis}
                 key={setItem.id}
                 onClick={handleSelectSet}
+                whileHover={setItem.available ? { scale: 1.03 } : {}}
+                whileTap={setItem.available ? { scale: 0.97 } : {}}
+                wrapperRole='listitem'
               >
-                  <span className='flex flex-wrap items-center gap-2'>
-                    <KangurStatusChip accent={setItem.isExam ? 'indigo' : 'amber'} size='sm'>
-                      {setItem.isExam ? 'Tryb konkursowy' : 'Trening'}
+                <span className='flex flex-wrap items-center gap-2'>
+                  <KangurStatusChip accent={setItem.isExam ? 'indigo' : 'amber'} size='sm'>
+                    {setItem.isExam ? 'Tryb konkursowy' : 'Trening'}
+                  </KangurStatusChip>
+                  {!setItem.available ? (
+                    <KangurStatusChip accent='slate' size='sm'>
+                      <Lock className='h-3 w-3' /> Wkrótce dostępna
                     </KangurStatusChip>
-                    {!setItem.available ? (
-                      <KangurStatusChip accent='slate' size='sm'>
-                        <Lock className='h-3 w-3' /> Wkrótce dostępna
-                      </KangurStatusChip>
-                    ) : null}
-                    {isRecommendedSet ? (
-                      <KangurStatusChip
-                        accent='amber'
-                        data-testid={`kangur-setup-recommendation-chip-${setItem.id}`}
-                        size='sm'
-                      >
-                        {recommendedLabel ?? 'Polecamy teraz'}
-                      </KangurStatusChip>
-                    ) : null}
-                  </span>
-                  <span className='flex items-center gap-2 text-base font-extrabold [color:var(--kangur-page-text)]'>
-                    {setItem.label}
-                    {!setItem.available && <Lock className='h-3.5 w-3.5' />}
-                  </span>
-                  <span
-                    id={`kangur-setup-set-description-${setItem.id}`}
-                    className={cn(
-                      'text-xs',
-                      setItem.available
-                        ? '[color:var(--kangur-page-muted-text)]'
-                        : '[color:color-mix(in_srgb,var(--kangur-page-muted-text)_82%,white)]'
-                    )}
-                  >
-                      {setItem.desc}
-                    </span>
-              </KangurSetupChoiceCard>
+                  ) : null}
+                  {isRecommendedSet ? (
+                    <KangurStatusChip
+                      accent='amber'
+                      data-testid={`kangur-setup-recommendation-chip-${setItem.id}`}
+                      size='sm'
+                    >
+                      {recommendedLabel ?? 'Polecamy teraz'}
+                    </KangurStatusChip>
+                  ) : null}
+                </span>
+                <span className='flex items-center gap-2 text-base font-extrabold [color:var(--kangur-page-text)]'>
+                  {setItem.label}
+                  {!setItem.available && <Lock className='h-3.5 w-3.5' />}
+                </span>
+                <span
+                  id={`kangur-setup-set-description-${setItem.id}`}
+                  className={`text-xs ${
+                    setItem.available
+                      ? '[color:var(--kangur-page-muted-text)]'
+                      : '[color:color-mix(in_srgb,var(--kangur-page-muted-text)_82%,white)]'
+                  }`}
+                >
+                  {setItem.desc}
+                </span>
+              </KangurAnimatedOptionCard>
             );
           })}
         </div>

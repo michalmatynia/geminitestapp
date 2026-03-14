@@ -1,5 +1,3 @@
-'use client';
-
 import { useMemo } from 'react';
 
 import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';

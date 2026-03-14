@@ -1,5 +1,3 @@
-'use client';
-
 import { resolveKangurFeaturePageRoute } from '@/features/kangur/config/routing';
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeaturePageShell } from '@/features/kangur/ui/KangurFeaturePage';

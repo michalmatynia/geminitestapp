@@ -1,5 +1,3 @@
-'use client';
-
 import { useMemo, type CSSProperties } from 'react';
 
 import { resolveKangurTutorSectionKnowledgeReference } from '@/features/kangur/ai-tutor-section-knowledge';

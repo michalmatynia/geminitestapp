@@ -1,5 +1,3 @@
-'use client';
-
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';

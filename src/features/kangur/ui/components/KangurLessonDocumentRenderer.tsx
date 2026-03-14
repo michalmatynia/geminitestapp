@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import { resolveKangurLessonDocumentPages } from '@/features/kangur/lesson-documents';

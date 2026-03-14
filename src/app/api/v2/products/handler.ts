@@ -12,9 +12,12 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, payloadTooLargeError } from '@/shared/errors/app-error';
 import { env } from '@/shared/lib/env';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { formDataToObject } from '@/shared/lib/products/services/product-service-form-utils';
-import { productService } from '@/shared/lib/products/services/productService'; // Direct import
-import { ProductFiltersParsed, productFilterSchema } from '@/shared/lib/products/validations';
+import {
+  formDataToObject,
+  productService,
+  productFilterSchema,
+  type ProductFiltersParsed,
+} from '@/features/products/server';
 
 const freshQuerySchema = z.preprocess(
   (value: unknown) => {

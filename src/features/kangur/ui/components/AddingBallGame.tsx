@@ -772,6 +772,11 @@ export default function AddingBallGame({
   onFinish,
 }: AddingBallGameProps): React.JSX.Element {
   const prefersReducedMotion = useReducedMotion();
+  const resolveMotionOpacity = (value: unknown, fallback: number): number => {
+    if (!value || typeof value !== 'object') return fallback;
+    const opacity = (value as { opacity?: unknown }).opacity;
+    return typeof opacity === 'number' ? opacity : fallback;
+  };
   const [roundIdx, setRoundIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
@@ -783,9 +788,9 @@ export default function AddingBallGame({
   const baseRoundMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const roundMotionProps = {
     ...baseRoundMotionProps,
-    initial: { opacity: baseRoundMotionProps.initial?.opacity ?? 1 },
-    animate: { opacity: baseRoundMotionProps.animate?.opacity ?? 1 },
-    exit: { opacity: baseRoundMotionProps.exit?.opacity ?? 1 },
+    initial: { opacity: resolveMotionOpacity(baseRoundMotionProps.initial, 1) },
+    animate: { opacity: resolveMotionOpacity(baseRoundMotionProps.animate, 1) },
+    exit: { opacity: resolveMotionOpacity(baseRoundMotionProps.exit, 1) },
   };
   const handleFinishGame = (): void => {
     onFinish();

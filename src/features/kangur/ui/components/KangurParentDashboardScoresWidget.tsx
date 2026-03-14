@@ -1,5 +1,3 @@
-'use client';
-
 import ScoreHistory from '@/features/kangur/ui/components/ScoreHistory';
 import {
   type KangurParentDashboardPanelDisplayMode,

@@ -29,7 +29,7 @@ export const useKangurStorefrontAppearance = () => {
   });
   const fallbackTheme = useMemo(() => resolveKangurDefaultThemeForMode(mode), [mode]);
   const theme = useMemo(
-    () => parseKangurThemeSettings(rawTheme) ?? fallbackTheme,
+    () => parseKangurThemeSettings(rawTheme, fallbackTheme) ?? fallbackTheme,
     [fallbackTheme, rawTheme]
   );
 

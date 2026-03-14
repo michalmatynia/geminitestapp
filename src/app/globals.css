@@ -1287,6 +1287,14 @@
     color: var(--kangur-soft-card-text, #334155);
   }
 
+  .kangur-lessons-panel {
+    backdrop-filter: blur(20px);
+    background: var(
+      --kangur-glass-panel-background,
+      linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.58) 100%)
+    ) !important;
+  }
+
   .kangur-nav-group,
   .kangur-segmented-control {
     backdrop-filter: blur(20px);
@@ -1334,10 +1342,33 @@
 
   .kangur-button-shell {
     --kangur-button-scale: var(--kangur-button-scale, 1);
+    position: relative;
+    overflow: hidden;
     font-size: calc(var(--kangur-button-font-size, 14px) * var(--kangur-button-scale));
     min-height: calc(var(--kangur-button-height, 50px) * var(--kangur-button-scale));
     padding-block: calc(var(--kangur-button-padding-y, 10px) * var(--kangur-button-scale));
     padding-inline: calc(var(--kangur-button-padding-x, 20px) * var(--kangur-button-scale));
+    text-shadow: var(--kangur-button-text-shadow, none);
+  }
+
+  .kangur-button-shell::before {
+    content: '';
+    position: absolute;
+    inset: 1px 1px auto;
+    height: var(--kangur-button-gloss-height, 48%);
+    border-radius: inherit;
+    background: linear-gradient(
+      var(--kangur-button-gloss-angle, 180deg),
+      rgba(255, 255, 255, var(--kangur-button-gloss-opacity, 0)),
+      rgba(255, 255, 255, 0)
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .kangur-button-shell > * {
+    position: relative;
+    z-index: 1;
   }
 
   .kangur-button-size-sm {
@@ -2030,16 +2061,16 @@
       var(--home-action-rest-text-color)
     );
     --home-action-label-start-active: var(
-      --kangur-home-action-lessons-label-start,
-      var(--home-action-active-text-color)
+      --kangur-home-action-lessons-label-start-active,
+      var(--kangur-home-action-lessons-label-start, var(--home-action-active-text-color))
     );
     --home-action-label-mid-active: var(
-      --kangur-home-action-lessons-label-mid,
-      var(--home-action-active-text-color)
+      --kangur-home-action-lessons-label-mid-active,
+      var(--kangur-home-action-lessons-label-mid, var(--home-action-active-text-color))
     );
     --home-action-label-end-active: var(
-      --kangur-home-action-lessons-label-end,
-      var(--home-action-active-text-color)
+      --kangur-home-action-lessons-label-end-active,
+      var(--kangur-home-action-lessons-label-end, var(--home-action-active-text-color))
     );
     --home-action-accent-shadow-rgb: var(--kangur-home-action-lessons-accent-shadow-rgb, 118, 131, 255);
     --home-action-underlay-shadow-rgb: var(--kangur-home-action-lessons-underlay-shadow-rgb, 106, 120, 232);
@@ -2080,16 +2111,16 @@
       var(--home-action-rest-text-color)
     );
     --home-action-label-start-active: var(
-      --kangur-home-action-play-label-start,
-      var(--home-action-active-text-color)
+      --kangur-home-action-play-label-start-active,
+      var(--kangur-home-action-play-label-start, var(--home-action-active-text-color))
     );
     --home-action-label-mid-active: var(
-      --kangur-home-action-play-label-mid,
-      var(--home-action-active-text-color)
+      --kangur-home-action-play-label-mid-active,
+      var(--kangur-home-action-play-label-mid, var(--home-action-active-text-color))
     );
     --home-action-label-end-active: var(
-      --kangur-home-action-play-label-end,
-      var(--home-action-active-text-color)
+      --kangur-home-action-play-label-end-active,
+      var(--kangur-home-action-play-label-end, var(--home-action-active-text-color))
     );
     --home-action-accent-shadow-rgb: var(--kangur-home-action-play-accent-shadow-rgb, 126, 100, 255);
     --home-action-underlay-shadow-rgb: var(--kangur-home-action-play-underlay-shadow-rgb, 117, 96, 255);
@@ -2130,16 +2161,16 @@
       var(--home-action-rest-text-color)
     );
     --home-action-label-start-active: var(
-      --kangur-home-action-training-label-start,
-      var(--home-action-active-text-color)
+      --kangur-home-action-training-label-start-active,
+      var(--kangur-home-action-training-label-start, var(--home-action-active-text-color))
     );
     --home-action-label-mid-active: var(
-      --kangur-home-action-training-label-mid,
-      var(--home-action-active-text-color)
+      --kangur-home-action-training-label-mid-active,
+      var(--kangur-home-action-training-label-mid, var(--home-action-active-text-color))
     );
     --home-action-label-end-active: var(
-      --kangur-home-action-training-label-end,
-      var(--home-action-active-text-color)
+      --kangur-home-action-training-label-end-active,
+      var(--kangur-home-action-training-label-end, var(--home-action-active-text-color))
     );
     --home-action-accent-shadow-rgb: var(--kangur-home-action-training-accent-shadow-rgb, 87, 162, 255);
     --home-action-underlay-shadow-rgb: var(--kangur-home-action-training-underlay-shadow-rgb, 78, 145, 236);
@@ -2180,16 +2211,16 @@
       var(--home-action-rest-text-color)
     );
     --home-action-label-start-active: var(
-      --kangur-home-action-kangur-label-start,
-      var(--home-action-active-text-color)
+      --kangur-home-action-kangur-label-start-active,
+      var(--kangur-home-action-kangur-label-start, var(--home-action-active-text-color))
     );
     --home-action-label-mid-active: var(
-      --kangur-home-action-kangur-label-mid,
-      var(--home-action-active-text-color)
+      --kangur-home-action-kangur-label-mid-active,
+      var(--kangur-home-action-kangur-label-mid, var(--home-action-active-text-color))
     );
     --home-action-label-end-active: var(
-      --kangur-home-action-kangur-label-end,
-      var(--home-action-active-text-color)
+      --kangur-home-action-kangur-label-end-active,
+      var(--kangur-home-action-kangur-label-end, var(--home-action-active-text-color))
     );
     --home-action-accent-shadow-rgb: var(--kangur-home-action-kangur-accent-shadow-rgb, 238, 140, 91);
     --home-action-underlay-shadow-rgb: var(--kangur-home-action-kangur-underlay-shadow-rgb, 221, 129, 86);
@@ -2612,6 +2643,7 @@
       --kangur-button-primary-background,
       linear-gradient(90deg, #ffb347 0%, #ff7a45 100%)
     );
+    color: var(--kangur-button-primary-text, #ffffff);
     box-shadow: var(
       --kangur-button-primary-shadow,
       0 12px 24px rgba(255, 137, 77, 0.28),
@@ -2658,6 +2690,30 @@
     transform: translateY(-1px) scale(1.014);
   }
 
+  .primary-cta:active {
+    --kangur-gradient-start: var(--kangur-cta-primary-active-start, var(--kangur-gradient-start));
+    --kangur-gradient-mid: var(--kangur-cta-primary-active-mid, var(--kangur-gradient-mid));
+    --kangur-gradient-end: var(--kangur-cta-primary-active-end, var(--kangur-gradient-end));
+    --kangur-gradient-start-shifted: color-mix(
+      in srgb,
+      var(--kangur-gradient-start) 72%,
+      var(--kangur-gradient-end) 28%
+    );
+    --kangur-gradient-mid-shifted: color-mix(
+      in srgb,
+      var(--kangur-gradient-start) 28%,
+      var(--kangur-gradient-end) 72%
+    );
+    --kangur-gradient-end-shifted: color-mix(
+      in srgb,
+      var(--kangur-gradient-end) 84%,
+      var(--kangur-gradient-mid) 16%
+    );
+    box-shadow: var(--kangur-button-primary-active-shadow, var(--kangur-button-primary-shadow));
+    filter: saturate(1.02) brightness(0.99);
+    transform: translateY(0) scale(0.995);
+  }
+
   .kangur-cta-pill {
     position: relative;
     overflow: hidden;
@@ -2665,16 +2721,6 @@
     box-shadow:
       0 18px 34px -24px rgba(49, 63, 129, 0.28),
       0 10px 18px -18px rgba(49, 63, 129, 0.22);
-  }
-
-  .kangur-cta-pill::before {
-    content: '';
-    position: absolute;
-    inset: 1px 1px auto;
-    height: 48%;
-    border-radius: inherit;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0));
-    pointer-events: none;
   }
 
   .kangur-cta-pill > * {
@@ -2725,6 +2771,12 @@
     ) !important;
     filter: saturate(1.02) brightness(1.01);
     transform: translateY(-1px) scale(1.014);
+  }
+
+  .soft-cta:active {
+    box-shadow: var(--kangur-button-secondary-active-shadow, var(--kangur-button-secondary-shadow));
+    filter: brightness(0.99);
+    transform: translateY(0) scale(0.995);
   }
 
   .kangur-step-pill-pending {
@@ -2793,6 +2845,12 @@
     ) !important;
     filter: saturate(1.02) brightness(1.01);
     transform: translateY(-1px) scale(1.014);
+  }
+
+  .surface-cta:active {
+    box-shadow: var(--kangur-button-surface-active-shadow, var(--kangur-button-surface-shadow));
+    filter: brightness(0.99);
+    transform: translateY(0) scale(0.995);
   }
 
   .warning-cta {
@@ -3453,19 +3511,33 @@
   }
 
   .tutor-assistant-bubble {
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 98%, #ffffff) 0%,
-      color-mix(
-          in srgb,
-          var(--kangur-soft-card-background, #ffffff) 90%,
-          var(--kangur-page-background, #f8fafc)
-        )
-        100%
-    );
-    box-shadow:
-      0 10px 24px -16px rgba(15, 23, 42, 0.12),
-      0 1px 0 rgba(255, 255, 255, 0.8) inset;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  [data-cms-menu='true'][data-menu-placement='top'] {
+    backdrop-filter: blur(12px);
+    box-shadow: 0 16px 32px -28px rgba(15, 23, 42, 0.35);
+  }
+
+  [data-cms-menu='true'] [data-menu-item] {
+    border-radius: 999px;
+    padding: 0.4rem 0.85rem;
+    transition:
+      background-color 200ms ease,
+      color 200ms ease,
+      transform 200ms ease;
+  }
+
+  [data-cms-menu='true'] [data-menu-item]:hover {
+    background-color: var(--cms-menu-hover-bg, transparent);
+  }
+
+  [data-cms-menu='true'][data-active-style='none'] [data-menu-item][aria-current='page'],
+  [data-cms-menu='true'][data-active-style='underline'] [data-menu-item][aria-current='page'],
+  [data-cms-menu='true'][data-active-style='bold'] [data-menu-item][aria-current='page'],
+  [data-cms-menu='true'][data-active-style='border-bottom'] [data-menu-item][aria-current='page'] {
+    background-color: var(--cms-menu-active-bg, transparent);
   }
 
   @media (prefers-reduced-motion: reduce) {

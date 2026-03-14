@@ -1,5 +1,3 @@
-'use client';
-
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { useKangurLessonSubsectionNavigationActive } from '@/features/kangur/ui/context/KangurLessonNavigationContext';

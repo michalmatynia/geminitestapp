@@ -25,7 +25,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 ## Node Contract Files
 
 - Semantic node contract: `docs/ai-paths/semantic-grammar/nodes/poll.json`
-- Semantic hash: `86f5979ebe33fa966505a2c2bdb7ab279df0696faf94fb4605a561b7e196cdb2`
+- Semantic hash: `bb7015cd076699cef0d1a540842e8e22fed2734a68d76cbe89d2dec030485389`
 - v2 code object: `docs/ai-paths/node-code-objects-v2/poll.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/poll.scaffold.json`
 - v3 object id: `node_obj_poll_portable_v3`

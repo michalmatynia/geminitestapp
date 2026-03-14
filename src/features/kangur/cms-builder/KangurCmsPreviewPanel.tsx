@@ -4,6 +4,8 @@ import {
   Eye,
   EyeOff,
   Monitor,
+  PanelRightClose,
+  PanelRightOpen,
   Redo2,
   Save,
   Smartphone,
@@ -113,7 +115,15 @@ function KangurCmsPreviewCanvasSections({
   });
 }
 
-export function KangurCmsPreviewPanel(): React.ReactNode {
+type KangurCmsPreviewPanelProps = {
+  statusSidebarOpen?: boolean;
+  onToggleStatusSidebar?: () => void;
+};
+
+export function KangurCmsPreviewPanel({
+  statusSidebarOpen = true,
+  onToggleStatusSidebar,
+}: KangurCmsPreviewPanelProps): React.ReactNode {
   const { draftProject, savedProject, activeScreenKey, onSwitchScreen, onSave, isSaving } =
     useKangurCmsBuilderRuntime();
   const state = usePageBuilderState();
@@ -528,6 +538,23 @@ export function KangurCmsPreviewPanel(): React.ReactNode {
             >
               Open Runtime
             </Button>
+            {onToggleStatusSidebar ? (
+              <Button
+                type='button'
+                size='sm'
+                variant='outline'
+                className='h-8 px-3 text-xs'
+                onClick={onToggleStatusSidebar}
+                aria-label='Toggle status sidebar'
+              >
+                {statusSidebarOpen ? (
+                  <PanelRightClose className='mr-2 size-4' />
+                ) : (
+                  <PanelRightOpen className='mr-2 size-4' />
+                )}
+                Status
+              </Button>
+            ) : null}
             <Button
               onClick={() => dispatch({ type: 'UNDO' })}
               size='icon'

@@ -1,5 +1,3 @@
-'use client';
-
 import type { ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
 import type { ImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
 import type { ProductImageManagerController } from '@/features/products';

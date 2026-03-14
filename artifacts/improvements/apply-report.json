@@ -1,0 +1,88 @@
+{
+  "kind": "general-improvement-report",
+  "generatedAt": "2026-03-14T08:15:27.599Z",
+  "phase": "apply",
+  "executionMode": "executed",
+  "allowWrite": true,
+  "selectedTrackIds": [
+    "products-parameter-integrity",
+    "products-category-schema-normalization",
+    "repo-quality-baseline"
+  ],
+  "reportPath": "artifacts/improvements/apply-report.json",
+  "steps": [
+    {
+      "id": "products-parameter-integrity-apply",
+      "title": "Apply curated parameter recovery only after review",
+      "trackId": "products-parameter-integrity",
+      "phase": "apply",
+      "mode": "manual",
+      "writes": true,
+      "status": "manual",
+      "outputs": [],
+      "instructions": [
+        "Build curated override files from the reviewed batch mapping packs.",
+        "Apply overrides with npm run products:apply:parameter-curated-overrides only after the parameter ids are finalized."
+      ]
+    },
+    {
+      "id": "products-category-schema-apply",
+      "title": "Apply category/schema normalization only after explicit review",
+      "trackId": "products-category-schema-normalization",
+      "phase": "apply",
+      "mode": "manual",
+      "writes": true,
+      "status": "manual",
+      "outputs": [],
+      "instructions": [
+        "Confirm /tmp/product-parameter-curated-build-latest.json shows only the approved family packs as ready.",
+        "Apply the resulting curated overrides only after the category/schema decision is finalized."
+      ]
+    },
+    {
+      "id": "products-category-schema-build-ready-curated-overrides",
+      "title": "Build ready curated override bundle from completed family mapping packs",
+      "trackId": "products-category-schema-normalization",
+      "phase": "apply",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-curated-build-latest.json",
+        "/tmp/product-parameter-curated-overrides-latest.json"
+      ],
+      "instructions": [],
+      "script": "products:build:ready-parameter-curated-overrides",
+      "durationMs": 263
+    },
+    {
+      "id": "products-category-schema-apply-ready-curated-overrides",
+      "title": "Apply the latest ready curated override bundle",
+      "trackId": "products-category-schema-normalization",
+      "phase": "apply",
+      "mode": "automatic",
+      "writes": true,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-curated-apply-*.json"
+      ],
+      "instructions": [],
+      "script": "products:apply:ready-parameter-curated-overrides",
+      "durationMs": 619
+    },
+    {
+      "id": "repo-quality-baseline-apply",
+      "title": "Apply repo-wide quality fixes manually",
+      "trackId": "repo-quality-baseline",
+      "phase": "apply",
+      "mode": "manual",
+      "writes": true,
+      "status": "manual",
+      "outputs": [],
+      "instructions": [
+        "This track is read-only by default.",
+        "Run targeted fix commands explicitly instead of using the improvement runner for blind write-side quality changes."
+      ]
+    }
+  ]
+}

@@ -1,5 +1,3 @@
-'use client';
-
 export const KANGUR_ACTIVE_LEARNER_STORAGE_KEY = 'kangur.activeLearnerId';
 
 const canUseStorage = (): boolean => typeof window !== 'undefined' && Boolean(window.localStorage);

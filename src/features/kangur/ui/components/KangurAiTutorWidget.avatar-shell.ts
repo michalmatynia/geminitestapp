@@ -1,5 +1,3 @@
-'use client';
-
 import { useCallback, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 
 import { clearPersistedTutorAvatarPosition } from './KangurAiTutorWidget.storage';

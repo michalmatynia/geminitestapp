@@ -18,6 +18,7 @@ import {
 } from '@/shared/lib/ai-context-registry/page-context';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
+  Badge,
   Button,
   FolderTreePanel,
   FormModal,
@@ -58,6 +59,7 @@ import {
   parseKangurLessons,
 } from '../settings';
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
+import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
 import { KangurAdminWorkspaceIntroCard } from './components/KangurAdminWorkspaceIntroCard';
 import { LessonContentEditorDialog } from './components/LessonContentEditorDialog';
 import { LessonMetadataForm } from './components/LessonMetadataForm';
@@ -180,6 +182,10 @@ export function AdminKangurLessonsManagerPage({
   const filterCounts = useMemo(
     () => getKangurLessonAuthoringFilterCounts(lessons, lessonDocuments),
     [lessonDocuments, lessons]
+  );
+  const filterCountMap = useMemo(
+    () => new Map(filterCounts.map((filter) => [filter.id, filter])),
+    [filterCounts]
   );
 
   const masterNodes = useMemo(
@@ -540,6 +546,13 @@ export function AdminKangurLessonsManagerPage({
 
   const isSaveDisabled = !formData.title.trim() || updateSetting.isPending;
   const lessonsNeedingLegacyImport = countLessonsRequiringLegacyImport(lessons, lessonDocuments);
+  const activeFilterLabel =
+    filterCounts.find((filter) => filter.id === authoringFilter)?.label ?? 'All lessons';
+  const needsFixesCount = filterCountMap.get('needsFixes')?.count ?? 0;
+  const missingNarrationCount = filterCountMap.get('missingNarration')?.count ?? 0;
+  const hiddenLessonCount = filterCountMap.get('hidden')?.count ?? 0;
+  const needsAttention =
+    lessonsNeedingLegacyImport > 0 || needsFixesCount > 0 || missingNarrationCount > 0;
   const toolbarButtonClassName =
     'h-8 rounded-xl border-border/60 bg-background/60 px-3 text-xs font-semibold text-foreground shadow-sm hover:bg-card/80';
   const activeSegmentClassName = 'border-primary/30 bg-primary/15 text-foreground shadow-sm';
@@ -564,8 +577,8 @@ export function AdminKangurLessonsManagerPage({
     [lessonById, lessonDocuments, updateSetting.isPending]
   );
 
-  const content = (
-    <div className='flex h-full flex-col gap-4 overflow-hidden'>
+  const mainWorkspace = (
+    <div className='flex h-full flex-col gap-6 overflow-hidden'>
       {standalone ? (
         <KangurAdminWorkspaceIntroCard
           title='Lessons workspace'
@@ -686,7 +699,9 @@ export function AdminKangurLessonsManagerPage({
                       variant='outline'
                       className={cn(
                         'h-8 rounded-xl px-3 text-xs font-semibold',
-                        authoringFilter === filter.id ? activeSegmentClassName : inactiveSegmentClassName
+                        authoringFilter === filter.id
+                          ? activeSegmentClassName
+                          : inactiveSegmentClassName
                       )}
                       onClick={(): void => setAuthoringFilter(filter.id)}
                       disabled={updateSetting.isPending}
@@ -824,6 +839,54 @@ export function AdminKangurLessonsManagerPage({
         }}
       />
     </div>
+  );
+
+  const content = standalone ? (
+    <div className='grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]'>
+      <div className='min-h-0'>{mainWorkspace}</div>
+      <KangurAdminStatusCard
+        title='Status'
+        statusBadge={
+          <Badge variant={needsAttention ? 'warning' : 'secondary'}>
+            {needsAttention ? 'Needs attention' : 'Healthy'}
+          </Badge>
+        }
+        items={[
+          {
+            label: 'View mode',
+            value: <Badge variant='outline'>{isCatalogMode ? 'Catalog' : 'Ordered'}</Badge>,
+          },
+          {
+            label: 'Filter',
+            value: <Badge variant='outline'>{activeFilterLabel}</Badge>,
+          },
+          {
+            label: 'Lessons',
+            value: <span className='text-foreground font-semibold'>{filteredLessons.length}</span>,
+          },
+          {
+            label: 'Needs import',
+            value: (
+              <span className='text-foreground font-semibold'>{lessonsNeedingLegacyImport}</span>
+            ),
+          },
+          {
+            label: 'Needs fixes',
+            value: <span className='text-foreground font-semibold'>{needsFixesCount}</span>,
+          },
+          {
+            label: 'Missing narration',
+            value: <span className='text-foreground font-semibold'>{missingNarrationCount}</span>,
+          },
+          {
+            label: 'Hidden lessons',
+            value: <span className='text-foreground font-semibold'>{hiddenLessonCount}</span>,
+          },
+        ]}
+      />
+    </div>
+  ) : (
+    mainWorkspace
   );
 
   return (

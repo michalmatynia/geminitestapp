@@ -43,13 +43,14 @@ const toCurrencyDomain = (doc: CurrencyDoc): CurrencyRecord => ({
 });
 
 export const mongoCurrencyRepository: CurrencyRepository = {
-  async listCurrencies(): Promise<CurrencyRecord[]> {
+  async listCurrencies(filters?: { skip?: number; limit?: number }): Promise<CurrencyRecord[]> {
     const db = await getMongoDb();
-    const currencies = await db
-      .collection<CurrencyDoc>(COLLECTION)
-      .find({})
-      .sort({ code: 1 })
-      .toArray();
+    const query = db.collection<CurrencyDoc>(COLLECTION).find({}).sort({ code: 1 });
+
+    if (typeof filters?.skip === 'number') query.skip(filters.skip);
+    if (typeof filters?.limit === 'number') query.limit(filters.limit);
+
+    const currencies = await query.toArray();
     return currencies.map(toCurrencyDomain);
   },
 

@@ -1,5 +1,3 @@
-'use client';
-
 import { LogIn } from 'lucide-react';
 
 import { getKangurHomeHref } from '@/features/kangur/config/routing';

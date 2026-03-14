@@ -14,6 +14,7 @@ import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
+  Badge,
   Button,
   FolderTreePanel,
   FormModal,
@@ -60,6 +61,7 @@ import {
 } from '../test-suites';
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
 import { KangurAdminMetricCard } from './components/KangurAdminMetricCard';
+import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
 import { KangurAdminWorkspaceIntroCard } from './components/KangurAdminWorkspaceIntroCard';
 import { TestSuiteMetadataForm } from './components/TestSuiteMetadataForm';
 import { TestSuiteTreeRow } from './components/TestSuiteTreeRow';
@@ -143,6 +145,10 @@ export function AdminKangurTestSuitesManagerPage({
     () => getKangurTestLibraryHealthSummary(suites, suiteHealthById),
     [suiteHealthById, suites]
   );
+  const needsAttention =
+    libraryHealthSummary.suitesNeedingFixCount > 0 ||
+    libraryHealthSummary.suitesNeedingReviewCount > 0 ||
+    libraryHealthSummary.unstableLiveSuiteCount > 0;
   const publishableQuestionIdsBySuiteId = useMemo(() => {
     const map = new Map<string, string[]>();
     for (const question of allQuestions) {
@@ -1044,8 +1050,8 @@ export function AdminKangurTestSuitesManagerPage({
     );
   }
 
-  const content = (
-    <div className='flex h-full flex-col gap-4 overflow-hidden'>
+  const mainWorkspace = (
+    <div className='flex h-full flex-col gap-6 overflow-hidden'>
       <KangurAdminWorkspaceIntroCard
         title='Question bank'
         description='Manage Kangur test suites with the same editorial health model used inside the question workspace. Review-fix pressure and live publish readiness are visible before you open each suite.'
@@ -1480,6 +1486,66 @@ export function AdminKangurTestSuitesManagerPage({
         isDangerous={true}
       />
     </div>
+  );
+
+  const content = standalone ? (
+    <div className='grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]'>
+      <div className='min-h-0'>{mainWorkspace}</div>
+      <KangurAdminStatusCard
+        title='Status'
+        statusBadge={
+          <Badge variant={needsAttention ? 'warning' : 'secondary'}>
+            {needsAttention ? 'Needs attention' : 'Healthy'}
+          </Badge>
+        }
+        items={[
+          {
+            label: 'View mode',
+            value: <Badge variant='outline'>{isCatalogMode ? 'Catalog' : 'Ordered'}</Badge>,
+          },
+          {
+            label: 'Suites',
+            value: (
+              <span className='text-foreground font-semibold'>{libraryHealthSummary.suiteCount}</span>
+            ),
+          },
+          {
+            label: 'Questions',
+            value: (
+              <span className='text-foreground font-semibold'>
+                {libraryHealthSummary.totalQuestionCount}
+              </span>
+            ),
+          },
+          {
+            label: 'Needs fixes',
+            value: (
+              <span className='text-foreground font-semibold'>
+                {libraryHealthSummary.suitesNeedingFixCount}
+              </span>
+            ),
+          },
+          {
+            label: 'Needs review',
+            value: (
+              <span className='text-foreground font-semibold'>
+                {libraryHealthSummary.suitesNeedingReviewCount}
+              </span>
+            ),
+          },
+          {
+            label: 'Live attention',
+            value: (
+              <span className='text-foreground font-semibold'>
+                {libraryHealthSummary.unstableLiveSuiteCount}
+              </span>
+            ),
+          },
+        ]}
+      />
+    </div>
+  ) : (
+    mainWorkspace
   );
 
   if (!standalone) {

@@ -9,6 +9,7 @@ export * from '@/shared/lib/products/services/tag-repository';
 export * from '@/shared/lib/products/services/validation-pattern-repository';
 export * from '@/shared/lib/products/services/product-migration';
 export * from '@/shared/lib/products/services/productService';
+export * from '@/shared/lib/products/services/product-service-form-utils';
 export { CachedProductService } from './performance';
 export { ProductsImagesUploadPOST } from './api/routes/images-upload-route';
 

@@ -1,6 +1,3 @@
-'use client';
-
-
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type {
   ImageStudioRunStatus,

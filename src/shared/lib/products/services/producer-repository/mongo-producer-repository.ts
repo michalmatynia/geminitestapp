@@ -36,11 +36,12 @@ export const mongoProducerRepository: ProducerRepository = {
       ] as Filter<ProducerDoc>[];
     }
 
-    const producers = await db
-      .collection<ProducerDoc>(COLLECTION)
-      .find(query)
-      .sort({ name: 1 })
-      .toArray();
+    const cursor = db.collection<ProducerDoc>(COLLECTION).find(query).sort({ name: 1 });
+
+    if (typeof filters.skip === 'number') cursor.skip(filters.skip);
+    if (typeof filters.limit === 'number') cursor.limit(filters.limit);
+
+    const producers = await cursor.toArray();
     return producers.map(toProducerDomain);
   },
 

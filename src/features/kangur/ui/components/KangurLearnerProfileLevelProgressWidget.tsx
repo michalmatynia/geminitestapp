@@ -1,5 +1,3 @@
-'use client';
-
 import { useKangurLearnerProfileRuntime } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import {
   KangurGlassPanel,

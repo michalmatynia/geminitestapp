@@ -1,5 +1,3 @@
-'use client';
-
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurPageContainer, KangurPageShell } from '@/features/kangur/ui/design/primitives';
 import {

@@ -1,5 +1,3 @@
-'use client';
-
 import { useMemo } from 'react';
 
 import { buildKangurLessonNarrationScriptFromText } from '@/features/kangur/tts/script';

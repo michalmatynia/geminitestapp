@@ -1,5 +1,3 @@
-'use client';
-
 import { useMemo, type MutableRefObject } from 'react';
 
 import {

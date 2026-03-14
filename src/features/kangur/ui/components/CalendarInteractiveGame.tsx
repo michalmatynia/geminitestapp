@@ -40,7 +40,17 @@ const MONTHS_DATA = [
   { name: 'Grudzień', days: 31, season: '❄️ Zima' },
 ] as const;
 
-const DAY_LABELS = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Nd'] as const;
+const DAY_LABELS_SHORT = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Nd'] as const;
+const DAY_LABELS_ABBR = ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd'] as const;
+const DAY_LABELS_FULL = [
+  'Poniedziałek',
+  'Wtorek',
+  'Środa',
+  'Czwartek',
+  'Piątek',
+  'Sobota',
+  'Niedziela',
+] as const;
 const WEEKDAY_NAMES = [
   'poniedziałek',
   'wtorek',
@@ -58,7 +68,7 @@ const SEASON_ACCENTS: Record<Season, KangurAccent> = {
   '❄️ Zima': 'sky',
 };
 
-type DayLabel = (typeof DAY_LABELS)[number];
+type DayLabel = (typeof DAY_LABELS_FULL)[number];
 type Season = (typeof SEASONS)[number];
 export type CalendarInteractiveSectionId = 'dni' | 'miesiace' | 'data';
 export type CalendarInteractiveTaskPoolId = CalendarInteractiveSectionId | 'mixed';
@@ -241,7 +251,7 @@ function generateTask(
 
   if (type === 'click_weekday_name') {
     const targetIdx = Math.floor(Math.random() * 7);
-    const dayLabel = DAY_LABELS[targetIdx] ?? DAY_LABELS[0];
+    const dayLabel = DAY_LABELS_ABBR[targetIdx] ?? DAY_LABELS_ABBR[0];
     return {
       type: 'click_weekday_name',
       targetIdx,
@@ -260,7 +270,7 @@ function generateTask(
     return {
       type: 'click_date',
       targetDay: target,
-      weekdayName: DAY_LABELS[dayIdx] ?? DAY_LABELS[0],
+      weekdayName: DAY_LABELS_FULL[dayIdx] ?? DAY_LABELS_FULL[0],
       month,
       year,
       label: `Kliknij datę w kalendarzu, która wypada w ${WEEKDAY_NAMES[dayIdx] ?? WEEKDAY_NAMES[0]}`,
@@ -439,7 +449,7 @@ export default function CalendarInteractiveGame({
   }
 
   return (
-    <KangurPracticeGameStage className='gap-3'>
+    <KangurPracticeGameStage className='gap-3 mx-auto max-w-lg'>
       {section !== 'mixed' ? (
         <KangurInfoCard
           accent={trainingSectionContent.accent}
@@ -524,7 +534,7 @@ export default function CalendarInteractiveGame({
           </div>
 
           <div className='grid grid-cols-7 gap-0.5 text-center mb-1'>
-            {DAY_LABELS.map((dayLabel, idx) => (
+            {DAY_LABELS_SHORT.map((dayLabel, idx) => (
               <div
                 key={dayLabel}
                 className={`text-xs font-bold py-0.5 ${
@@ -632,9 +642,29 @@ export default function CalendarInteractiveGame({
         </KangurInfoCard>
       )}
 
+      {task.type === 'flip_month' && (
+        <div className='flex w-full flex-col items-center gap-2'>
+          <KangurButton
+            className='w-full max-w-xs'
+            onClick={() => {
+              if (feedback) return;
+              nextRound(month === task.targetMonth);
+            }}
+            size='lg'
+            type='button'
+            variant='primary'
+          >
+            Zrobione
+          </KangurButton>
+          <p className='text-xs [color:var(--kangur-page-muted-text)]'>
+            Kliknij, gdy uważasz, że jesteś na właściwym miesiącu.
+          </p>
+        </div>
+      )}
+
       {task.type === 'click_weekday_name' && (
-        <div className='grid w-full grid-cols-1 gap-2 min-[360px]:grid-cols-2 sm:grid-cols-4'>
-          {DAY_LABELS.map((dayLabel, idx) => {
+        <div className='mx-auto grid w-full max-w-lg grid-cols-1 gap-2 min-[360px]:grid-cols-2 md:grid-cols-3'>
+          {DAY_LABELS_FULL.map((dayLabel, idx) => {
             const isCorrectTarget = feedback !== null && idx === task.targetIdx;
             const isWrongSelection =
               feedback === 'wrong' &&
@@ -650,7 +680,7 @@ export default function CalendarInteractiveGame({
             const buttonEmphasis: 'neutral' | 'accent' =
               isCorrectTarget || isWrongSelection ? 'accent' : 'neutral';
             const className = cn(
-              'rounded-[24px] py-3 text-sm font-bold',
+              'rounded-[24px] px-3 py-2.5 text-[11px] sm:text-xs font-bold leading-snug text-center whitespace-normal min-h-[54px]',
               isCorrectTarget
                 ? KANGUR_ACCENT_STYLES.emerald.activeText
                 : isWrongSelection

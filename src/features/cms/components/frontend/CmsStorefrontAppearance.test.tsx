@@ -5,7 +5,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { KANGUR_DEFAULT_DAILY_THEME } from '@/features/kangur/theme-settings';
 import { DEFAULT_THEME } from '@/shared/contracts/cms-theme';
 
 import {
@@ -190,7 +189,7 @@ describe('CmsStorefrontAppearance', () => {
   it('preserves custom button gradients for Kangur themes', () => {
     const gradient = 'linear-gradient(135deg, #ff8a3d 0%, #ff5f6d 100%)';
     const appearance = resolveKangurStorefrontAppearance('default', {
-      ...KANGUR_DEFAULT_DAILY_THEME,
+      ...DEFAULT_THEME,
       btnPrimaryBg: gradient,
       btnSecondaryBg: gradient,
     });

@@ -136,6 +136,7 @@ export type KangurAiTutorContextValue = {
       knowledgeReference?: KangurAiTutorKnowledgeReference | null;
       interactionIntent?: KangurAiTutorInteractionIntent;
       surface?: KangurAiTutorSurface;
+      suppressUserMessage?: boolean;
     }
   ) => Promise<void>;
   recordFollowUpCompletion?: (input: {
@@ -745,6 +746,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         knowledgeReference?: KangurAiTutorKnowledgeReference | null;
         interactionIntent?: KangurAiTutorInteractionIntent;
         surface?: KangurAiTutorSurface;
+        suppressUserMessage?: boolean;
       }
     ): Promise<void> => {
       if (!text.trim() || !enabled || !activeSessionContext || !activeSessionKey) {
@@ -758,7 +760,11 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         ...(userDrawingArtifacts ? { artifacts: userDrawingArtifacts } : {}),
         ...(options?.drawingImageData ? { drawingImageData: options.drawingImageData } : {}),
       };
-      const outgoingMessages: ChatMessage[] = [...messages, userMessage];
+      const shouldSuppressUserMessage = options?.suppressUserMessage === true;
+      const requestMessages: ChatMessage[] = [...messages, userMessage];
+      const outgoingMessages: ChatMessage[] = shouldSuppressUserMessage
+        ? messages
+        : requestMessages;
       const requestedPromptMode = options?.promptMode ?? 'chat';
       const resolvedPromptMode =
         requestedPromptMode === 'selected_text' && !allowSelectedTextSupport
@@ -818,7 +824,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         selectedChoiceText: trimReplayableTelemetryText(nextContext.selectedChoiceText, 240),
         latestUserMessage: trimReplayableTelemetryText(userMessage.content, 1_000),
         hasDrawingAttachment: Boolean(userDrawingArtifacts?.length),
-        messageCount: outgoingMessages.length,
+        messageCount: requestMessages.length,
         isRepeatedQuestion: repeatCount > 0,
         repeatCount,
         previousCoachingMode,
@@ -836,7 +842,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
 
       try {
         const result = await api.post<KangurAiTutorChatResponse>('/api/kangur/ai-tutor/chat', {
-          messages: outgoingMessages.map((message) => ({
+          messages: requestMessages.map((message) => ({
             role: message.role,
             content: message.content,
             ...(message.artifacts?.length ? { artifacts: message.artifacts } : {}),

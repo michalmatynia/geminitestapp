@@ -31,6 +31,8 @@ export type ProductTagUpdateInput = z.infer<typeof updateProductTagSchema>;
 export const productTagFiltersSchema = z.object({
   catalogId: z.string().optional(),
   search: z.string().optional(),
+  skip: z.number().int().min(0).optional(),
+  limit: z.number().int().min(1).max(100).optional(),
 });
 
 export type ProductTagFilters = z.infer<typeof productTagFiltersSchema>;

@@ -1,18 +1,18 @@
 {
   "summary": {
-    "generatedAt": "2026-03-14T00:15:56.172Z",
-    "scannedSourceFiles": 4725,
-    "scannedJsxFiles": 1753,
-    "componentCount": 2752,
-    "componentsWithForwarding": 76,
-    "componentsWithAnyForwarding": 98,
-    "resolvedTransitionCount": 285,
-    "depth2CandidateChainCount": 285,
-    "candidateChainCount": 74,
-    "highPriorityChainCount": 26,
+    "generatedAt": "2026-03-14T08:14:49.249Z",
+    "scannedSourceFiles": 4726,
+    "scannedJsxFiles": 1754,
+    "componentCount": 2755,
+    "componentsWithForwarding": 77,
+    "componentsWithAnyForwarding": 99,
+    "resolvedTransitionCount": 278,
+    "depth2CandidateChainCount": 278,
+    "candidateChainCount": 68,
+    "highPriorityChainCount": 21,
     "unknownSpreadForwardingCount": 19,
-    "highPropCountComponentCount": 30,
-    "passThroughHotspotCount": 25,
+    "highPropCountComponentCount": 29,
+    "passThroughHotspotCount": 24,
     "topFeatureScopes": [
       {
         "scope": "feature:kangur",
@@ -31,6 +31,10 @@
         "count": 1
       },
       {
+        "scope": "feature:products",
+        "count": 1
+      },
+      {
         "scope": "app",
         "count": 1
       },
@@ -41,62 +45,6 @@
     ]
   },
   "backlog": [
-    {
-      "score": 205,
-      "depth": 5,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-        "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton"
-      ],
-      "propPath": [
-        "showAnswer",
-        "showAnswer",
-        "interactive",
-        "buttonClassName",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "sourceProp": "showAnswer",
-          "targetProp": "showAnswer",
-          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
-          "line": 217
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "sourceProp": "showAnswer",
-          "targetProp": "interactive",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-          "sourceProp": "interactive",
-          "targetProp": "buttonClassName",
-          "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
-          "line": 28
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton",
-          "sourceProp": "buttonClassName",
-          "targetProp": "className",
-          "relativePath": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx",
-          "line": 41
-        }
-      ]
-    },
     {
       "score": 201,
       "depth": 5,
@@ -154,40 +102,32 @@
       ]
     },
     {
-      "score": 166,
+      "score": 186,
       "depth": 4,
-      "rootFanout": 3,
+      "rootFanout": 5,
       "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton",
       "componentPath": [
         "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
         "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard"
+        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
+        "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton"
       ],
       "propPath": [
         "showAnswer",
-        "showAnswer",
         "interactive",
-        "buttonClassName"
+        "buttonClassName",
+        "className"
       ],
       "transitions": [
         {
           "fromComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "sourceProp": "showAnswer",
-          "targetProp": "showAnswer",
-          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
-          "line": 217
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
           "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
           "sourceProp": "showAnswer",
           "targetProp": "interactive",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
+          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
+          "line": 232
         },
         {
           "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
@@ -196,98 +136,14 @@
           "targetProp": "buttonClassName",
           "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
           "line": 28
-        }
-      ]
-    },
-    {
-      "score": 166,
-      "depth": 4,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard"
-      ],
-      "propPath": [
-        "showAnswer",
-        "showAnswer",
-        "interactive",
-        "whileHover"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "sourceProp": "showAnswer",
-          "targetProp": "showAnswer",
-          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
-          "line": 217
         },
         {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "sourceProp": "showAnswer",
-          "targetProp": "interactive",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-          "sourceProp": "interactive",
-          "targetProp": "whileHover",
-          "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
-          "line": 28
-        }
-      ]
-    },
-    {
-      "score": 166,
-      "depth": 4,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard"
-      ],
-      "propPath": [
-        "showAnswer",
-        "showAnswer",
-        "interactive",
-        "whileTap"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "sourceProp": "showAnswer",
-          "targetProp": "showAnswer",
-          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
-          "line": 217
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "sourceProp": "showAnswer",
-          "targetProp": "interactive",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-          "sourceProp": "interactive",
-          "targetProp": "whileTap",
-          "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
-          "line": 28
+          "fromComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton",
+          "sourceProp": "buttonClassName",
+          "targetProp": "className",
+          "relativePath": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx",
+          "line": 41
         }
       ]
     },
@@ -1166,166 +1022,110 @@
       ]
     },
     {
-      "score": 146,
-      "depth": 4,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-        "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton"
-      ],
-      "propPath": [
-        "buttonClassName",
-        "buttonClassName",
-        "buttonClassName",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "sourceProp": "buttonClassName",
-          "targetProp": "buttonClassName",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-          "sourceProp": "buttonClassName",
-          "targetProp": "buttonClassName",
-          "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
-          "line": 28
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton",
-          "sourceProp": "buttonClassName",
-          "targetProp": "className",
-          "relativePath": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx",
-          "line": 41
-        }
-      ]
-    },
-    {
-      "score": 146,
-      "depth": 4,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-        "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton"
-      ],
-      "propPath": [
-        "choiceGrid",
-        "buttonClassName",
-        "buttonClassName",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "sourceProp": "choiceGrid",
-          "targetProp": "buttonClassName",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-          "sourceProp": "buttonClassName",
-          "targetProp": "buttonClassName",
-          "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
-          "line": 28
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton",
-          "sourceProp": "buttonClassName",
-          "targetProp": "className",
-          "relativePath": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx",
-          "line": 41
-        }
-      ]
-    },
-    {
-      "score": 103,
+      "score": 123,
       "depth": 3,
-      "rootFanout": 3,
+      "rootFanout": 5,
       "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
       "componentPath": [
         "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard"
+        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
+        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard"
       ],
       "propPath": [
         "showAnswer",
-        "showAnswer",
-        "interactive"
+        "interactive",
+        "buttonClassName"
       ],
       "transitions": [
         {
           "fromComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "sourceProp": "showAnswer",
-          "targetProp": "showAnswer",
-          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
-          "line": 217
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
           "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
           "sourceProp": "showAnswer",
           "targetProp": "interactive",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
+          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
+          "line": 232
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
+          "toComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
+          "sourceProp": "interactive",
+          "targetProp": "buttonClassName",
+          "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
+          "line": 28
         }
       ]
     },
     {
-      "score": 103,
+      "score": 123,
       "depth": 3,
-      "rootFanout": 3,
+      "rootFanout": 5,
       "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardFeedback",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
       "componentPath": [
         "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardFeedback"
+        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
+        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard"
       ],
       "propPath": [
         "showAnswer",
-        "showAnswer",
-        "showAnswer"
+        "interactive",
+        "whileHover"
       ],
       "transitions": [
         {
           "fromComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
+          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
           "sourceProp": "showAnswer",
-          "targetProp": "showAnswer",
+          "targetProp": "interactive",
           "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
-          "line": 217
+          "line": 232
         },
         {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardFeedback",
+          "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
+          "toComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
+          "sourceProp": "interactive",
+          "targetProp": "whileHover",
+          "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
+          "line": 28
+        }
+      ]
+    },
+    {
+      "score": 123,
+      "depth": 3,
+      "rootFanout": 5,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
+        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
+        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard"
+      ],
+      "propPath": [
+        "showAnswer",
+        "interactive",
+        "whileTap"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
+          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
           "sourceProp": "showAnswer",
-          "targetProp": "showAnswer",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 142
+          "targetProp": "interactive",
+          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
+          "line": 232
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
+          "toComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
+          "sourceProp": "interactive",
+          "targetProp": "whileTap",
+          "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
+          "line": 28
         }
       ]
     },
@@ -2090,6 +1890,42 @@
       "depth": 3,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
+        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
+        "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton"
+      ],
+      "propPath": [
+        "buttonClassName",
+        "buttonClassName",
+        "className"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
+          "toComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
+          "sourceProp": "buttonClassName",
+          "targetProp": "buttonClassName",
+          "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
+          "line": 28
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton",
+          "sourceProp": "buttonClassName",
+          "targetProp": "className",
+          "relativePath": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx",
+          "line": 41
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/KangurBadgeTrackSection.tsx#KangurBadgeTrackSection",
       "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurSectionEyebrow.tsx#KangurSectionEyebrow",
       "componentPath": [
@@ -2270,114 +2106,6 @@
       "depth": 3,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard"
-      ],
-      "propPath": [
-        "buttonClassName",
-        "buttonClassName",
-        "buttonClassName"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "sourceProp": "buttonClassName",
-          "targetProp": "buttonClassName",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-          "sourceProp": "buttonClassName",
-          "targetProp": "buttonClassName",
-          "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
-          "line": 28
-        }
-      ]
-    },
-    {
-      "score": 83,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard"
-      ],
-      "propPath": [
-        "choiceGrid",
-        "buttonClassName",
-        "buttonClassName"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "sourceProp": "choiceGrid",
-          "targetProp": "buttonClassName",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-          "sourceProp": "buttonClassName",
-          "targetProp": "buttonClassName",
-          "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
-          "line": 28
-        }
-      ]
-    },
-    {
-      "score": 83,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceBadge.tsx#KangurAnswerChoiceBadge",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardBadge",
-        "src/features/kangur/ui/components/KangurAnswerChoiceBadge.tsx#KangurAnswerChoiceBadge"
-      ],
-      "propPath": [
-        "badgeClassName",
-        "className",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardBadge",
-          "sourceProp": "badgeClassName",
-          "targetProp": "className",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 140
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardBadge",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceBadge.tsx#KangurAnswerChoiceBadge",
-          "sourceProp": "className",
-          "targetProp": "className",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 23
-        }
-      ]
-    },
-    {
-      "score": 83,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/KangurTestSuitePlayer.tsx#KangurTestSuitePlayer",
       "sinkComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
       "componentPath": [
@@ -2405,7 +2133,7 @@
           "sourceProp": "contentId",
           "targetProp": "contentId",
           "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
-          "line": 217
+          "line": 223
         }
       ]
     },
@@ -3170,6 +2898,188 @@
       ]
     },
     {
+      "score": 92,
+      "depth": 2,
+      "rootFanout": 5,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx#KangurPanelIntro",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
+        "src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx#KangurPanelIntro"
+      ],
+      "propPath": [
+        "showAnswer",
+        "description"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx#KangurPanelIntro",
+          "sourceProp": "showAnswer",
+          "targetProp": "description",
+          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
+          "line": 156
+        }
+      ]
+    },
+    {
+      "score": 92,
+      "depth": 2,
+      "rootFanout": 5,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx#KangurPanelIntro",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
+        "src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx#KangurPanelIntro"
+      ],
+      "propPath": [
+        "showAnswer",
+        "title"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx#KangurPanelIntro",
+          "sourceProp": "showAnswer",
+          "targetProp": "title",
+          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
+          "line": 156
+        }
+      ]
+    },
+    {
+      "score": 92,
+      "depth": 2,
+      "rootFanout": 5,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
+        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard"
+      ],
+      "propPath": [
+        "showAnswer",
+        "interactive"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
+          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
+          "sourceProp": "showAnswer",
+          "targetProp": "interactive",
+          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
+          "line": 232
+        }
+      ]
+    },
+    {
+      "score": 84,
+      "depth": 2,
+      "rootFanout": 5,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
+        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard"
+      ],
+      "propPath": [
+        "showAnswer",
+        "showAnswer"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
+          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
+          "sourceProp": "showAnswer",
+          "targetProp": "showAnswer",
+          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
+          "line": 223
+        }
+      ]
+    },
+    {
+      "score": 84,
+      "depth": 2,
+      "rootFanout": 5,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardFeedback",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
+        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardFeedback"
+      ],
+      "propPath": [
+        "showAnswer",
+        "showAnswer"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
+          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardFeedback",
+          "sourceProp": "showAnswer",
+          "targetProp": "showAnswer",
+          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
+          "line": 247
+        }
+      ]
+    },
+    {
+      "score": 78,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/products/components/ProductCard.tsx#ProductCard",
+      "sinkComponentId": "src/shared/ui/ResourceCard.tsx#ResourceCard",
+      "componentPath": [
+        "src/features/products/components/ProductCard.tsx#ProductCard",
+        "src/shared/ui/ResourceCard.tsx#ResourceCard"
+      ],
+      "propPath": [
+        "className",
+        "media"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/products/components/ProductCard.tsx#ProductCard",
+          "toComponentId": "src/shared/ui/ResourceCard.tsx#ResourceCard",
+          "sourceProp": "className",
+          "targetProp": "media",
+          "relativePath": "src/features/products/components/ProductCard.tsx",
+          "line": 35
+        }
+      ]
+    },
+    {
+      "score": 78,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/products/components/ProductCard.tsx#ProductCard",
+      "sinkComponentId": "src/shared/ui/ResourceCard.tsx#ResourceCard",
+      "componentPath": [
+        "src/features/products/components/ProductCard.tsx#ProductCard",
+        "src/shared/ui/ResourceCard.tsx#ResourceCard"
+      ],
+      "propPath": [
+        "className",
+        "footer"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/products/components/ProductCard.tsx#ProductCard",
+          "toComponentId": "src/shared/ui/ResourceCard.tsx#ResourceCard",
+          "sourceProp": "className",
+          "targetProp": "footer",
+          "relativePath": "src/features/products/components/ProductCard.tsx",
+          "line": 35
+        }
+      ]
+    },
+    {
       "score": 72,
       "depth": 2,
       "rootFanout": 3,
@@ -3252,110 +3162,6 @@
       "depth": 2,
       "rootFanout": 3,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard"
-      ],
-      "propPath": [
-        "choice",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "sourceProp": "choice",
-          "targetProp": "onClick",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
-        }
-      ]
-    },
-    {
-      "score": 72,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardBadge",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardBadge"
-      ],
-      "propPath": [
-        "choice",
-        "label"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardBadge",
-          "sourceProp": "choice",
-          "targetProp": "label",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 140
-        }
-      ]
-    },
-    {
-      "score": 72,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx#KangurPanelIntro",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-        "src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx#KangurPanelIntro"
-      ],
-      "propPath": [
-        "showAnswer",
-        "description"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx#KangurPanelIntro",
-          "sourceProp": "showAnswer",
-          "targetProp": "description",
-          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
-          "line": 150
-        }
-      ]
-    },
-    {
-      "score": 72,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx#KangurPanelIntro",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-        "src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx#KangurPanelIntro"
-      ],
-      "propPath": [
-        "showAnswer",
-        "title"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx#KangurPanelIntro",
-          "sourceProp": "showAnswer",
-          "targetProp": "title",
-          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
-          "line": 150
-        }
-      ]
-    },
-    {
-      "score": 72,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/ProgressOverview.tsx#ProgressOverview",
       "sinkComponentId": "src/features/kangur/ui/components/KangurProgressHighlightCardContent.tsx#KangurProgressHighlightHeader",
       "componentPath": [
@@ -3426,6 +3232,32 @@
           "targetProp": "label",
           "relativePath": "src/features/kangur/ui/components/ProgressOverview.tsx",
           "line": 142
+        }
+      ]
+    },
+    {
+      "score": 70,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/products/components/ProductCard.tsx#ProductCard",
+      "sinkComponentId": "src/shared/ui/ResourceCard.tsx#ResourceCard",
+      "componentPath": [
+        "src/features/products/components/ProductCard.tsx#ProductCard",
+        "src/shared/ui/ResourceCard.tsx#ResourceCard"
+      ],
+      "propPath": [
+        "className",
+        "className"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/products/components/ProductCard.tsx#ProductCard",
+          "toComponentId": "src/shared/ui/ResourceCard.tsx#ResourceCard",
+          "sourceProp": "className",
+          "targetProp": "className",
+          "relativePath": "src/features/products/components/ProductCard.tsx",
+          "line": 35
         }
       ]
     },
@@ -3504,58 +3336,6 @@
           "targetProp": "description",
           "relativePath": "src/features/integrations/pages/marketplaces/allegro/AllegroSubpageScaffold.tsx",
           "line": 30
-        }
-      ]
-    },
-    {
-      "score": 64,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardContent",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardContent"
-      ],
-      "propPath": [
-        "choice",
-        "choice"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardContent",
-          "sourceProp": "choice",
-          "targetProp": "choice",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 141
-        }
-      ]
-    },
-    {
-      "score": 64,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard"
-      ],
-      "propPath": [
-        "showAnswer",
-        "showAnswer"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "sourceProp": "showAnswer",
-          "targetProp": "showAnswer",
-          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
-          "line": 217
         }
       ]
     },
@@ -3712,32 +3492,6 @@
           "targetProp": "tone",
           "relativePath": "src/features/kangur/ui/components/KangurAiTutorPanelContextSummary.tsx",
           "line": 107
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard"
-      ],
-      "propPath": [
-        "showAnswer",
-        "interactive"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "sourceProp": "showAnswer",
-          "targetProp": "interactive",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
         }
       ]
     },
@@ -4283,7 +4037,7 @@
           "sourceProp": "appearanceTone",
           "targetProp": "tone",
           "relativePath": "src/app/(frontend)/home-fallback-content.tsx",
-          "line": 158
+          "line": 282
         }
       ]
     },
@@ -4314,28 +4068,28 @@
       ]
     },
     {
-      "score": 54,
+      "score": 58,
       "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardFeedback",
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurAdminStatusCard.tsx#KangurAdminStatusCard",
+      "sinkComponentId": "src/shared/ui/card.tsx#Card",
       "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardFeedback"
+        "src/features/kangur/admin/components/KangurAdminStatusCard.tsx#KangurAdminStatusCard",
+        "src/shared/ui/card.tsx#Card"
       ],
       "propPath": [
-        "showAnswer",
-        "showAnswer"
+        "sticky",
+        "className"
       ],
       "transitions": [
         {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardFeedback",
-          "sourceProp": "showAnswer",
-          "targetProp": "showAnswer",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 142
+          "fromComponentId": "src/features/kangur/admin/components/KangurAdminStatusCard.tsx#KangurAdminStatusCard",
+          "toComponentId": "src/shared/ui/card.tsx#Card",
+          "sourceProp": "sticky",
+          "targetProp": "className",
+          "relativePath": "src/features/kangur/admin/components/KangurAdminStatusCard.tsx",
+          "line": 31
         }
       ]
     },
@@ -4881,7 +4635,7 @@
           "sourceProp": "completionPrimaryActionLabel",
           "targetProp": "finishLabel",
           "relativePath": "src/features/kangur/ui/components/ClockTrainingGame.tsx",
-          "line": 1312
+          "line": 1323
         }
       ]
     },
@@ -4907,7 +4661,7 @@
           "sourceProp": "section",
           "targetProp": "message",
           "relativePath": "src/features/kangur/ui/components/ClockTrainingGame.tsx",
-          "line": 1312
+          "line": 1323
         }
       ]
     },
@@ -7178,110 +6932,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard"
-      ],
-      "propPath": [
-        "choiceGrid",
-        "buttonClassName"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "sourceProp": "choiceGrid",
-          "targetProp": "buttonClassName",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard"
-      ],
-      "propPath": [
-        "index",
-        "data-testid"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "sourceProp": "index",
-          "targetProp": "data-testid",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard"
-      ],
-      "propPath": [
-        "onSelect",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "sourceProp": "onSelect",
-          "targetProp": "onClick",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardBadge",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardBadge"
-      ],
-      "propPath": [
-        "badgeClassName",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardBadge",
-          "sourceProp": "badgeClassName",
-          "targetProp": "className",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 140
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/KangurTestSuitePlayer.tsx#KangurTestSuitePlayer",
       "sinkComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
       "componentPath": [
@@ -7559,7 +7209,7 @@
           "sourceProp": "open",
           "targetProp": "open",
           "relativePath": "src/features/kangur/admin/AdminKangurAppearancePage.tsx",
-          "line": 1143
+          "line": 1251
         }
       ]
     },
@@ -7585,7 +7235,7 @@
           "sourceProp": "onClose",
           "targetProp": "onClose",
           "relativePath": "src/features/kangur/admin/AdminKangurAppearancePage.tsx",
-          "line": 1143
+          "line": 1251
         }
       ]
     },
@@ -7611,7 +7261,33 @@
           "sourceProp": "isSaving",
           "targetProp": "isSaving",
           "relativePath": "src/features/kangur/admin/AdminKangurAppearancePage.tsx",
-          "line": 1143
+          "line": 1251
+        }
+      ]
+    },
+    {
+      "score": 50,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurAdminStatusCard.tsx#KangurAdminStatusCard",
+      "sinkComponentId": "src/shared/ui/card.tsx#Card",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurAdminStatusCard.tsx#KangurAdminStatusCard",
+        "src/shared/ui/card.tsx#Card"
+      ],
+      "propPath": [
+        "className",
+        "className"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurAdminStatusCard.tsx#KangurAdminStatusCard",
+          "toComponentId": "src/shared/ui/card.tsx#Card",
+          "sourceProp": "className",
+          "targetProp": "className",
+          "relativePath": "src/features/kangur/admin/components/KangurAdminStatusCard.tsx",
+          "line": 31
         }
       ]
     },
@@ -7793,7 +7469,7 @@
           "sourceProp": "finishLabel",
           "targetProp": "finishLabel",
           "relativePath": "src/features/kangur/ui/components/AddingBallGame.tsx",
-          "line": 817
+          "line": 829
         }
       ]
     },
@@ -8963,137 +8639,7 @@
           "sourceProp": "className",
           "targetProp": "className",
           "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 23
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard"
-      ],
-      "propPath": [
-        "accent",
-        "accent"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "sourceProp": "accent",
-          "targetProp": "accent",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard"
-      ],
-      "propPath": [
-        "buttonClassName",
-        "buttonClassName"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "sourceProp": "buttonClassName",
-          "targetProp": "buttonClassName",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard"
-      ],
-      "propPath": [
-        "emphasis",
-        "emphasis"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "sourceProp": "emphasis",
-          "targetProp": "emphasis",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardFeedback",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardFeedback"
-      ],
-      "propPath": [
-        "isChoiceCorrect",
-        "isChoiceCorrect"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardFeedback",
-          "sourceProp": "isChoiceCorrect",
-          "targetProp": "isChoiceCorrect",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 142
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardFeedback",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardFeedback"
-      ],
-      "propPath": [
-        "isSelected",
-        "isSelected"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardFeedback",
-          "sourceProp": "isSelected",
-          "targetProp": "isSelected",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 142
+          "line": 21
         }
       ]
     },
@@ -9119,7 +8665,7 @@
           "sourceProp": "contentId",
           "targetProp": "contentId",
           "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
-          "line": 217
+          "line": 223
         }
       ]
     },
@@ -9145,7 +8691,7 @@
           "sourceProp": "question",
           "targetProp": "question",
           "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
-          "line": 217
+          "line": 223
         }
       ]
     },
@@ -10400,15 +9946,6 @@
   ],
   "componentBacklog": [
     {
-      "componentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "name": "KangurTestChoiceCard",
-      "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 11,
-      "outgoingTransitionCount": 14,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/kangur/ui/components/KangurBadgeTrackSection.tsx#KangurBadgeTrackSection",
       "name": "KangurBadgeTrackSection",
       "relativePath": "src/features/kangur/ui/components/KangurBadgeTrackSection.tsx",
@@ -10553,19 +10090,19 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/integrations/pages/marketplaces/allegro/AllegroSubpageScaffold.tsx#AllegroSubpageScaffold",
-      "name": "AllegroSubpageScaffold",
-      "relativePath": "src/features/integrations/pages/marketplaces/allegro/AllegroSubpageScaffold.tsx",
-      "feature": "feature:integrations",
-      "forwardedPropCount": 3,
-      "outgoingTransitionCount": 5,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
       "name": "KangurTestQuestionRenderer",
       "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
       "feature": "feature:kangur",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 7,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/integrations/pages/marketplaces/allegro/AllegroSubpageScaffold.tsx#AllegroSubpageScaffold",
+      "name": "AllegroSubpageScaffold",
+      "relativePath": "src/features/integrations/pages/marketplaces/allegro/AllegroSubpageScaffold.tsx",
+      "feature": "feature:integrations",
       "forwardedPropCount": 3,
       "outgoingTransitionCount": 5,
       "hasUnknownSpreadForwarding": false
@@ -10877,6 +10414,15 @@
       "hasUnknownSpreadForwarding": true
     },
     {
+      "componentId": "src/features/kangur/admin/components/KangurAdminStatusCard.tsx#KangurAdminStatusCard",
+      "name": "KangurAdminStatusCard",
+      "relativePath": "src/features/kangur/admin/components/KangurAdminStatusCard.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame",
       "name": "ClockTrainingGame",
       "relativePath": "src/features/kangur/ui/components/ClockTrainingGame.tsx",
@@ -11043,6 +10589,15 @@
       "name": "ProgressOverview",
       "relativePath": "src/features/kangur/ui/components/ProgressOverview.tsx",
       "feature": "feature:kangur",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 3,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/products/components/ProductCard.tsx#ProductCard",
+      "name": "ProductCard",
+      "relativePath": "src/features/products/components/ProductCard.tsx",
+      "feature": "feature:products",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 3,
       "hasUnknownSpreadForwarding": false
@@ -11086,15 +10641,6 @@
   ],
   "forwardingComponentBacklog": [
     {
-      "componentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "name": "KangurTestChoiceCard",
-      "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 11,
-      "outgoingTransitionCount": 14,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/kangur/ui/components/KangurBadgeTrackSection.tsx#KangurBadgeTrackSection",
       "name": "KangurBadgeTrackSection",
       "relativePath": "src/features/kangur/ui/components/KangurBadgeTrackSection.tsx",
@@ -11239,19 +10785,19 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/integrations/pages/marketplaces/allegro/AllegroSubpageScaffold.tsx#AllegroSubpageScaffold",
-      "name": "AllegroSubpageScaffold",
-      "relativePath": "src/features/integrations/pages/marketplaces/allegro/AllegroSubpageScaffold.tsx",
-      "feature": "feature:integrations",
-      "forwardedPropCount": 3,
-      "outgoingTransitionCount": 5,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
       "name": "KangurTestQuestionRenderer",
       "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
       "feature": "feature:kangur",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 7,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/integrations/pages/marketplaces/allegro/AllegroSubpageScaffold.tsx#AllegroSubpageScaffold",
+      "name": "AllegroSubpageScaffold",
+      "relativePath": "src/features/integrations/pages/marketplaces/allegro/AllegroSubpageScaffold.tsx",
+      "feature": "feature:integrations",
       "forwardedPropCount": 3,
       "outgoingTransitionCount": 5,
       "hasUnknownSpreadForwarding": false
@@ -11563,6 +11109,15 @@
       "hasUnknownSpreadForwarding": true
     },
     {
+      "componentId": "src/features/kangur/admin/components/KangurAdminStatusCard.tsx#KangurAdminStatusCard",
+      "name": "KangurAdminStatusCard",
+      "relativePath": "src/features/kangur/admin/components/KangurAdminStatusCard.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame",
       "name": "ClockTrainingGame",
       "relativePath": "src/features/kangur/ui/components/ClockTrainingGame.tsx",
@@ -11729,6 +11284,15 @@
       "name": "ProgressOverview",
       "relativePath": "src/features/kangur/ui/components/ProgressOverview.tsx",
       "feature": "feature:kangur",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 3,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/products/components/ProductCard.tsx#ProductCard",
+      "name": "ProductCard",
+      "relativePath": "src/features/products/components/ProductCard.tsx",
+      "feature": "feature:products",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 3,
       "hasUnknownSpreadForwarding": false
@@ -11970,62 +11534,6 @@
   ],
   "chains": [
     {
-      "score": 205,
-      "depth": 5,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-        "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton"
-      ],
-      "propPath": [
-        "showAnswer",
-        "showAnswer",
-        "interactive",
-        "buttonClassName",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "sourceProp": "showAnswer",
-          "targetProp": "showAnswer",
-          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
-          "line": 217
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "sourceProp": "showAnswer",
-          "targetProp": "interactive",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-          "sourceProp": "interactive",
-          "targetProp": "buttonClassName",
-          "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
-          "line": 28
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton",
-          "sourceProp": "buttonClassName",
-          "targetProp": "className",
-          "relativePath": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx",
-          "line": 41
-        }
-      ]
-    },
-    {
       "score": 201,
       "depth": 5,
       "rootFanout": 2,
@@ -12082,40 +11590,32 @@
       ]
     },
     {
-      "score": 166,
+      "score": 186,
       "depth": 4,
-      "rootFanout": 3,
+      "rootFanout": 5,
       "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton",
       "componentPath": [
         "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
         "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard"
+        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
+        "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton"
       ],
       "propPath": [
         "showAnswer",
-        "showAnswer",
         "interactive",
-        "buttonClassName"
+        "buttonClassName",
+        "className"
       ],
       "transitions": [
         {
           "fromComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "sourceProp": "showAnswer",
-          "targetProp": "showAnswer",
-          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
-          "line": 217
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
           "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
           "sourceProp": "showAnswer",
           "targetProp": "interactive",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
+          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
+          "line": 232
         },
         {
           "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
@@ -12124,98 +11624,14 @@
           "targetProp": "buttonClassName",
           "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
           "line": 28
-        }
-      ]
-    },
-    {
-      "score": 166,
-      "depth": 4,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard"
-      ],
-      "propPath": [
-        "showAnswer",
-        "showAnswer",
-        "interactive",
-        "whileHover"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "sourceProp": "showAnswer",
-          "targetProp": "showAnswer",
-          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
-          "line": 217
         },
         {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "sourceProp": "showAnswer",
-          "targetProp": "interactive",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-          "sourceProp": "interactive",
-          "targetProp": "whileHover",
-          "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
-          "line": 28
-        }
-      ]
-    },
-    {
-      "score": 166,
-      "depth": 4,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard"
-      ],
-      "propPath": [
-        "showAnswer",
-        "showAnswer",
-        "interactive",
-        "whileTap"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "sourceProp": "showAnswer",
-          "targetProp": "showAnswer",
-          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
-          "line": 217
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "sourceProp": "showAnswer",
-          "targetProp": "interactive",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-          "sourceProp": "interactive",
-          "targetProp": "whileTap",
-          "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
-          "line": 28
+          "fromComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton",
+          "sourceProp": "buttonClassName",
+          "targetProp": "className",
+          "relativePath": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx",
+          "line": 41
         }
       ]
     },
@@ -13094,166 +12510,110 @@
       ]
     },
     {
-      "score": 146,
-      "depth": 4,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-        "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton"
-      ],
-      "propPath": [
-        "buttonClassName",
-        "buttonClassName",
-        "buttonClassName",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "sourceProp": "buttonClassName",
-          "targetProp": "buttonClassName",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-          "sourceProp": "buttonClassName",
-          "targetProp": "buttonClassName",
-          "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
-          "line": 28
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton",
-          "sourceProp": "buttonClassName",
-          "targetProp": "className",
-          "relativePath": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx",
-          "line": 41
-        }
-      ]
-    },
-    {
-      "score": 146,
-      "depth": 4,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-        "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton"
-      ],
-      "propPath": [
-        "choiceGrid",
-        "buttonClassName",
-        "buttonClassName",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "sourceProp": "choiceGrid",
-          "targetProp": "buttonClassName",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-          "sourceProp": "buttonClassName",
-          "targetProp": "buttonClassName",
-          "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
-          "line": 28
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton",
-          "sourceProp": "buttonClassName",
-          "targetProp": "className",
-          "relativePath": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx",
-          "line": 41
-        }
-      ]
-    },
-    {
-      "score": 103,
+      "score": 123,
       "depth": 3,
-      "rootFanout": 3,
+      "rootFanout": 5,
       "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
       "componentPath": [
         "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard"
+        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
+        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard"
       ],
       "propPath": [
         "showAnswer",
-        "showAnswer",
-        "interactive"
+        "interactive",
+        "buttonClassName"
       ],
       "transitions": [
         {
           "fromComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "sourceProp": "showAnswer",
-          "targetProp": "showAnswer",
-          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
-          "line": 217
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
           "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
           "sourceProp": "showAnswer",
           "targetProp": "interactive",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
+          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
+          "line": 232
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
+          "toComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
+          "sourceProp": "interactive",
+          "targetProp": "buttonClassName",
+          "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
+          "line": 28
         }
       ]
     },
     {
-      "score": 103,
+      "score": 123,
       "depth": 3,
-      "rootFanout": 3,
+      "rootFanout": 5,
       "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardFeedback",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
       "componentPath": [
         "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardFeedback"
+        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
+        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard"
       ],
       "propPath": [
         "showAnswer",
-        "showAnswer",
-        "showAnswer"
+        "interactive",
+        "whileHover"
       ],
       "transitions": [
         {
           "fromComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
+          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
           "sourceProp": "showAnswer",
-          "targetProp": "showAnswer",
+          "targetProp": "interactive",
           "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
-          "line": 217
+          "line": 232
         },
         {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardFeedback",
+          "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
+          "toComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
+          "sourceProp": "interactive",
+          "targetProp": "whileHover",
+          "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
+          "line": 28
+        }
+      ]
+    },
+    {
+      "score": 123,
+      "depth": 3,
+      "rootFanout": 5,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
+        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
+        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard"
+      ],
+      "propPath": [
+        "showAnswer",
+        "interactive",
+        "whileTap"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx#KangurTestQuestionRenderer",
+          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
           "sourceProp": "showAnswer",
-          "targetProp": "showAnswer",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 142
+          "targetProp": "interactive",
+          "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
+          "line": 232
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
+          "toComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
+          "sourceProp": "interactive",
+          "targetProp": "whileTap",
+          "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
+          "line": 28
         }
       ]
     },
@@ -14018,6 +13378,42 @@
       "depth": 3,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
+        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
+        "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton"
+      ],
+      "propPath": [
+        "buttonClassName",
+        "buttonClassName",
+        "className"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
+          "toComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
+          "sourceProp": "buttonClassName",
+          "targetProp": "buttonClassName",
+          "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
+          "line": 28
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx#KangurOptionCardButton",
+          "sourceProp": "buttonClassName",
+          "targetProp": "className",
+          "relativePath": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx",
+          "line": 41
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/KangurBadgeTrackSection.tsx#KangurBadgeTrackSection",
       "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurSectionEyebrow.tsx#KangurSectionEyebrow",
       "componentPath": [
@@ -14198,114 +13594,6 @@
       "depth": 3,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard"
-      ],
-      "propPath": [
-        "buttonClassName",
-        "buttonClassName",
-        "buttonClassName"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "sourceProp": "buttonClassName",
-          "targetProp": "buttonClassName",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-          "sourceProp": "buttonClassName",
-          "targetProp": "buttonClassName",
-          "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
-          "line": 28
-        }
-      ]
-    },
-    {
-      "score": 83,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-        "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard"
-      ],
-      "propPath": [
-        "choiceGrid",
-        "buttonClassName",
-        "buttonClassName"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "sourceProp": "choiceGrid",
-          "targetProp": "buttonClassName",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 127
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx#KangurAnswerChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx#KangurAnimatedOptionCard",
-          "sourceProp": "buttonClassName",
-          "targetProp": "buttonClassName",
-          "relativePath": "src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx",
-          "line": 28
-        }
-      ]
-    },
-    {
-      "score": 83,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceBadge.tsx#KangurAnswerChoiceBadge",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-        "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardBadge",
-        "src/features/kangur/ui/components/KangurAnswerChoiceBadge.tsx#KangurAnswerChoiceBadge"
-      ],
-      "propPath": [
-        "badgeClassName",
-        "className",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
-          "toComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardBadge",
-          "sourceProp": "badgeClassName",
-          "targetProp": "className",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 140
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCardBadge",
-          "toComponentId": "src/features/kangur/ui/components/KangurAnswerChoiceBadge.tsx#KangurAnswerChoiceBadge",
-          "sourceProp": "className",
-          "targetProp": "className",
-          "relativePath": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx",
-          "line": 23
-        }
-      ]
-    },
-    {
-      "score": 83,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/KangurTestSuitePlayer.tsx#KangurTestSuitePlayer",
       "sinkComponentId": "src/features/kangur/ui/components/KangurTestChoiceCard.tsx#KangurTestChoiceCard",
       "componentPath": [
@@ -14333,7 +13621,7 @@
           "sourceProp": "contentId",
           "targetProp": "contentId",
           "relativePath": "src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx",
-          "line": 217
+          "line": 223
         }
       ]
     },

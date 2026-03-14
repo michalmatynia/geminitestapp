@@ -1,5 +1,3 @@
-'use client';
-
 import { createContext, useContext, useEffect, useRef, type RefObject } from 'react';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';

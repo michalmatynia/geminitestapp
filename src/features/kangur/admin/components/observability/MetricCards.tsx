@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { type JSX, type ReactNode } from 'react';
 
 import { Button, Card, MetadataItem, StatusBadge } from '@/shared/ui';
-import type { KangurRouteHealth } from '@/shared/contracts';
+import type { KangurObservabilitySummary, KangurRouteHealth } from '@/shared/contracts';
 
 import { useObservabilitySummaryContext } from '../../AdminKangurObservabilityPage';
 import { formatDuration, formatNumber, formatPercent } from './utils';
@@ -21,7 +21,7 @@ export function MetricCard({
   value: string;
   hint: string;
   icon: ReactNode;
-  alert?: any; // Avoiding deep type import issues for now
+  alert?: KangurObservabilitySummary['alerts'][number] | null;
 }): JSX.Element {
   const alertStatus = alert?.status;
 

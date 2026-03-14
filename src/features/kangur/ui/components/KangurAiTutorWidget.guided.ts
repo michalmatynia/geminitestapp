@@ -1,5 +1,3 @@
-'use client';
-
 import {
   useCallback,
   useEffect,
@@ -443,6 +441,7 @@ export function useKangurAiTutorGuidedFlow(input: {
           knowledgeReference,
           interactionIntent: 'explain',
           surface: anchor.surface,
+          suppressUserMessage: true,
         });
       }, guidanceDelayMs);
     },
@@ -539,6 +538,7 @@ export function useKangurAiTutorGuidedFlow(input: {
         knowledgeReference: selectionConversationFocus.knowledgeReference,
         interactionIntent: 'explain',
         surface: selectionConversationFocus.surface ?? undefined,
+        suppressUserMessage: true,
       });
 
       const revealDelayMs = prefersReducedMotion

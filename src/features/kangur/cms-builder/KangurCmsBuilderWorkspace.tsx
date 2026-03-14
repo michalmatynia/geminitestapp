@@ -20,6 +20,7 @@ import { serializeSetting } from '@/shared/utils/settings-json';
 import { KANGUR_DEFAULT_THEME } from '@/features/kangur/theme-settings';
 import { KangurCmsBuilderLeftPanel } from './KangurCmsBuilderLeftPanel';
 import { KangurCmsBuilderRightPanel } from './KangurCmsBuilderRightPanel';
+import { KangurCmsBuilderStatusSidebar } from './KangurCmsBuilderStatusSidebar';
 import { KangurCmsBuilderRuntimeProvider } from './KangurCmsBuilderRuntimeContext';
 import { KangurCmsPreviewPanel } from './KangurCmsPreviewPanel';
 import {
@@ -54,6 +55,27 @@ function KangurCmsBuilderInner(): React.JSX.Element {
   const isViewing = state.leftPanelCollapsed && state.rightPanelCollapsed;
   const autoCollapsedRightRef = React.useRef(false);
   const wasNarrowRef = React.useRef<boolean | null>(null);
+  const [statusSidebarOpen, setStatusSidebarOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    try {
+      const stored = window.localStorage.getItem('kangur_cms_builder_status_sidebar');
+      return stored !== '0';
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(
+        'kangur_cms_builder_status_sidebar',
+        statusSidebarOpen ? '1' : '0'
+      );
+    } catch {
+      // ignore storage failures
+    }
+  }, [statusSidebarOpen]);
 
   useEffect((): (() => void) => {
     setIsProgrammaticallyCollapsed(true);
@@ -110,7 +132,10 @@ function KangurCmsBuilderInner(): React.JSX.Element {
 
         <KangurCmsBuilderLeftPanel />
 
-        <KangurCmsPreviewPanel />
+        <KangurCmsPreviewPanel
+          statusSidebarOpen={statusSidebarOpen}
+          onToggleStatusSidebar={() => setStatusSidebarOpen((prev) => !prev)}
+        />
 
         {state.rightPanelCollapsed && !isViewing ? (
           <Button
@@ -125,6 +150,7 @@ function KangurCmsBuilderInner(): React.JSX.Element {
         ) : null}
 
         <KangurCmsBuilderRightPanel />
+        <KangurCmsBuilderStatusSidebar visible={statusSidebarOpen} />
       </div>
     </div>
   );

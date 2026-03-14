@@ -122,12 +122,12 @@
       "nodeFamily": "integration",
       "objectFile": "docs/ai-paths/node-code-objects-v2/database.json",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "caed2b853455909bffa191e4aa5bb49b3b756a9660d2c73ee08311b5bab68d79",
+      "objectHash": "5e2dcdc5def3c89c06c7db91c8deea4a1acfe9fa4f2a60f3f85b58d53d7af1f4",
       "semanticNodeHashAlgorithm": "sha256",
-      "semanticNodeHash": "eadd4fae4b6fd18c8374000db6b359b5cc64ea57a4ded245991a360e13e1eb73",
+      "semanticNodeHash": "a17f4531e80e4fb9fdafed92034945f869cc67156426639bbe62733c49e6a6c4",
       "inputCount": 12,
       "outputCount": 4,
-      "configFieldCount": 41
+      "configFieldCount": 42
     },
     {
       "id": "node_obj_db_schema_portable_v2",
@@ -136,9 +136,9 @@
       "nodeFamily": "integration",
       "objectFile": "docs/ai-paths/node-code-objects-v2/db_schema.json",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "d28bf664a7fb67e61d8e996b54df88e9b2d2e1c3fca73962eca01657d09093a8",
+      "objectHash": "e5ed65900f063ed13ff39a7ffcd2e42cfd3c27386f0a633dcde785de5fc251cf",
       "semanticNodeHashAlgorithm": "sha256",
-      "semanticNodeHash": "dc56e39b3002dc63ba6b609293b11b296ef5616fbc1eec589de7882b694ecdc6",
+      "semanticNodeHash": "a872b63af24b71cdcd57441d6a49d748f0a8c9d9a586a5b092a8ba97964a499f",
       "inputCount": 0,
       "outputCount": 2,
       "configFieldCount": 9
@@ -332,9 +332,9 @@
       "nodeFamily": "orchestration",
       "objectFile": "docs/ai-paths/node-code-objects-v2/poll.json",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "96f7eb9628b3d69b261032d582f9e954fcc554dfe8aca3a03e5b2880be207bfb",
+      "objectHash": "132a30ce7acfefc877e05daf612f8309b057c8c82293fabacec331221f58bd69",
       "semanticNodeHashAlgorithm": "sha256",
-      "semanticNodeHash": "86f5979ebe33fa966505a2c2bdb7ab279df0696faf94fb4605a561b7e196cdb2",
+      "semanticNodeHash": "bb7015cd076699cef0d1a540842e8e22fed2734a68d76cbe89d2dec030485389",
       "inputCount": 6,
       "outputCount": 4,
       "configFieldCount": 21

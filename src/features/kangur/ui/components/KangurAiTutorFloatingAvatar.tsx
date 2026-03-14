@@ -1,5 +1,3 @@
-'use client';
-
 import { motion, type TargetAndTransition, type Transition } from 'framer-motion';
 
 import { useKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';

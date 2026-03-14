@@ -3,7 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_THEME } from '@/shared/contracts/cms-theme';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
-import { KANGUR_DEFAULT_THEME, parseKangurThemeSettings } from './theme-settings';
+import {
+  KANGUR_DEFAULT_DAILY_THEME,
+  KANGUR_DEFAULT_THEME,
+  parseKangurThemeSettings,
+  resolveKangurThemeSettingsRawForMode,
+} from './theme-settings';
 
 describe('parseKangurThemeSettings', () => {
   it('returns null when no Kangur theme setting is stored', () => {
@@ -24,6 +29,20 @@ describe('parseKangurThemeSettings', () => {
       ...KANGUR_DEFAULT_THEME,
       backgroundColor: '#faf5ff',
       primaryColor: '#7c3aed',
+    });
+  });
+
+  it('normalizes daily themes against the daily baseline', () => {
+    const parsed = parseKangurThemeSettings(
+      serializeSetting({
+        backgroundColor: '#faf5ff',
+      }),
+      KANGUR_DEFAULT_DAILY_THEME
+    );
+
+    expect(parsed).toMatchObject({
+      backgroundColor: '#faf5ff',
+      darkMode: false,
     });
   });
 
@@ -60,5 +79,42 @@ describe('parseKangurThemeSettings', () => {
       inputHeight: KANGUR_DEFAULT_THEME.inputHeight,
       inputRadius: KANGUR_DEFAULT_THEME.inputRadius,
     });
+  });
+
+  it('uses legacy theme settings only when no slot themes exist', () => {
+    expect(
+      resolveKangurThemeSettingsRawForMode({
+        mode: 'default',
+        dailyThemeRaw: null,
+        dawnThemeRaw: null,
+        sunsetThemeRaw: null,
+        nightlyThemeRaw: null,
+        legacyThemeRaw: 'legacy-theme',
+      })
+    ).toBe('legacy-theme');
+
+    expect(
+      resolveKangurThemeSettingsRawForMode({
+        mode: 'dark',
+        dailyThemeRaw: null,
+        dawnThemeRaw: null,
+        sunsetThemeRaw: null,
+        nightlyThemeRaw: null,
+        legacyThemeRaw: 'legacy-theme',
+      })
+    ).toBe('legacy-theme');
+  });
+
+  it('does not fall back to legacy theme once any slot theme exists', () => {
+    expect(
+      resolveKangurThemeSettingsRawForMode({
+        mode: 'default',
+        dailyThemeRaw: null,
+        dawnThemeRaw: null,
+        sunsetThemeRaw: null,
+        nightlyThemeRaw: 'nightly-theme',
+        legacyThemeRaw: 'legacy-theme',
+      })
+    ).toBeNull();
   });
 });

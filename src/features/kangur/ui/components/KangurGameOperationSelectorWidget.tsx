@@ -1,5 +1,3 @@
-'use client';
-
 import { useMemo } from 'react';
 
 import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';

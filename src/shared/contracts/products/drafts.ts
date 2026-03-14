@@ -148,7 +148,12 @@ export type CategoryRepository = {
   isDescendant(categoryId: string, targetId: string): Promise<boolean>;
 };
 
-export type ParameterFilters = { search?: string; catalogId?: string };
+export type ParameterFilters = {
+  search?: string;
+  catalogId?: string;
+  skip?: number;
+  limit?: number;
+};
 export type ParameterCreateInput = ProductParameterCreateInput;
 export type ParameterUpdateInput = ProductParameterUpdateInput;
 
@@ -164,6 +169,8 @@ export type ParameterRepository = {
 
 export type ProducerFilters = {
   search?: string;
+  skip?: number;
+  limit?: number;
 };
 
 export type ProducerRepository = {

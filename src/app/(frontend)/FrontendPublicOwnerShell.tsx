@@ -3,6 +3,8 @@
 import { usePathname } from 'next/navigation';
 
 import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRouteShell';
+import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
+import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
 
 import type { ReactNode } from 'react';
 
@@ -21,7 +23,13 @@ export default function FrontendPublicOwnerShell({
     normalizedPathname === '/kangur' || normalizedPathname.startsWith('/kangur/');
 
   if (publicOwner === 'kangur' && !isKangurAliasRoute) {
-    return <KangurFeatureRouteShell basePath='/' embedded={normalizedPathname === '/'} />;
+    return (
+      <KangurStorefrontAppearanceProvider>
+        <KangurSurfaceClassSync>
+          <KangurFeatureRouteShell basePath='/' embedded={normalizedPathname === '/'} />
+        </KangurSurfaceClassSync>
+      </KangurStorefrontAppearanceProvider>
+    );
   }
 
   return <>{children}</>;

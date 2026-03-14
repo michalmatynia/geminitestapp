@@ -36,11 +36,12 @@ export const mongoTagRepository: TagRepository = {
       query.name = { $regex: filters.search, $options: 'i' };
     }
 
-    const tags = await db
-      .collection<ProductTagDoc>(COLLECTION)
-      .find(query)
-      .sort({ name: 1 })
-      .toArray();
+    const cursor = db.collection<ProductTagDoc>(COLLECTION).find(query).sort({ name: 1 });
+
+    if (typeof filters.skip === 'number') cursor.skip(filters.skip);
+    if (typeof filters.limit === 'number') cursor.limit(filters.limit);
+
+    const tags = await cursor.toArray();
     return tags.map(toTagDomain);
   },
 

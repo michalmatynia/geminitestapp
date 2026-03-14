@@ -1,5 +1,3 @@
-'use client';
-
 import { useMemo, type CSSProperties } from 'react';
 
 import type { KangurAiTutorContextValue } from '@/features/kangur/ui/context/KangurAiTutorRuntime.shared';

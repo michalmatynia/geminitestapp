@@ -1,4 +1,4 @@
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/utils/cn';
 
 type KangurGrajmyWordmarkProps = React.SVGProps<SVGSVGElement> & {
   idPrefix?: string;
@@ -32,15 +32,15 @@ export function KangurGrajmyWordmark({
           y1='36'
           y2='136'
         >
-          <stop offset='0' stopColor='#4457D7' />
-          <stop offset='0.55' stopColor='#5566F2' />
-          <stop offset='1' stopColor='#7C52FF' />
+          <stop offset='0' stopColor='var(--kangur-logo-word-start, #4457D7)' />
+          <stop offset='0.55' stopColor='var(--kangur-logo-word-mid, #5566F2)' />
+          <stop offset='1' stopColor='var(--kangur-logo-word-end, #7C52FF)' />
         </linearGradient>
         <filter height='180%' id={shadowId} width='120%' x='-10%' y='-30%'>
           <feDropShadow
             dx='0'
             dy='6'
-            floodColor='#B4B7DA'
+            floodColor='var(--kangur-logo-shadow, #B4B7DA)'
             floodOpacity='0.20'
             stdDeviation='8'
           />

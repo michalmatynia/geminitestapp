@@ -1,5 +1,3 @@
-'use client';
-
 import { createContext, type MouseEvent, type ReactNode } from 'react';
 
 import type {

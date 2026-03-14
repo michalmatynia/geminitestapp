@@ -1,5 +1,3 @@
-'use client';
-
 import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
 
 import type { QuestionFormData } from '../test-questions';

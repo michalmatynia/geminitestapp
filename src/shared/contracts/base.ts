@@ -187,6 +187,17 @@ export type ListResponseDto<T> = {
 };
 export type ListResponse<T> = ListResponseDto<T>;
 
+/**
+ * Standard query parameters for pagination.
+ */
+export const paginationQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  pageSize: z.coerce.number().int().positive().max(100).default(20),
+});
+
+export type PaginationQueryDto = z.infer<typeof paginationQuerySchema>;
+export type PaginationQuery = PaginationQueryDto;
+
 export type CodeMessageIssueDto<TCode extends string = string> = {
   code: TCode;
   message: string;

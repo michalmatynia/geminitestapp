@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { type JSX } from 'react';
 
 import { Button, Card, EmptyState, FormSection, MetadataItem, StatusBadge } from '@/shared/ui';
+import type { KangurRouteMetrics } from '@/shared/contracts';
 
 import {
   buildSystemLogsHref,
@@ -29,7 +30,7 @@ import { AlertsGrid, RouteMetricCard } from './MetricCards';
 import { RecentAnalyticsEvents, RecentServerLogs } from './LogSections';
 
 const ROUTE_ENTRIES: Array<{
-  key: any; // Using any to avoid complex keyof KangurRouteMetrics mapping for now
+  key: keyof KangurRouteMetrics;
   label: string;
   description: string;
 }> = [
@@ -92,7 +93,7 @@ export function SummaryContent(): JSX.Element {
   });
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-8'>
       <FormSection title='Operational Snapshot' variant='subtle'>
         <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40'>
           <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
@@ -190,7 +191,7 @@ export function SummaryContent(): JSX.Element {
                 key={entry.key}
                 label={entry.label}
                 description={entry.description}
-                route={summary.routes[entry.key as keyof typeof summary.routes]}
+                route={summary.routes[entry.key]}
               />
             ))}
           </div>

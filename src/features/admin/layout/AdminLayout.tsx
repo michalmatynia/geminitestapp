@@ -122,17 +122,16 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
       : 'w-56 p-3 xl:w-64 xl:p-4';
 
   const contentClassName = isMenuHidden
-    ? 'ml-0'
+    ? 'pl-0'
     : isMenuCollapsed
-      ? 'ml-16 sm:ml-20'
-      : 'ml-56 xl:ml-64';
+      ? 'pl-16 sm:pl-20'
+      : 'pl-56 xl:pl-64';
   const isEmbeddedKangurRoute =
     pathname === '/admin/kangur' ||
     (pathname.startsWith('/admin/kangur/') &&
       !pathname.startsWith('/admin/kangur/lessons-manager'));
-  const mainClassName = `min-h-0 flex-1 min-w-0 max-w-full overflow-x-hidden overflow-y-auto ${
-    isEmbeddedKangurRoute ? 'p-0' : 'p-4'
-  }`;
+  const mainPaddingClassName = isEmbeddedKangurRoute ? 'pt-16' : 'p-4 pt-16';
+  const mainClassName = `min-h-0 flex-1 min-w-0 max-w-full overflow-x-hidden overflow-y-auto ${mainPaddingClassName}`;
 
   return (
     <div className='dark relative h-screen w-full max-w-full overflow-hidden bg-background text-white'>
@@ -169,7 +168,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
         ) : null}
       </aside>
       <div
-        className={`relative flex h-full min-w-0 flex-col overflow-x-hidden transition-[margin-left] duration-300 ${contentClassName}`}
+        className={`relative flex h-full min-w-0 flex-col overflow-x-hidden transition-[padding-left] duration-300 ${contentClassName}`}
       >
         <header
           className='absolute top-0 right-0 z-[90] flex h-14 items-center px-6 pointer-events-none'

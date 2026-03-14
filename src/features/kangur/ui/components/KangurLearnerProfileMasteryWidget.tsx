@@ -1,5 +1,3 @@
-'use client';
-
 import LessonMasteryInsights from '@/features/kangur/ui/components/LessonMasteryInsights';
 import { useKangurLearnerProfileRuntime } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';

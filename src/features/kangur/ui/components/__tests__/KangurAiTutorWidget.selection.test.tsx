@@ -437,7 +437,7 @@ describe('KangurAiTutorWidget - Selection', () => {
     vi.useRealTimers();
   });
 
-  it('keeps anonymous Zapytaj o to on the same guided-selection path even if the guest-intro check resolves mid-transition', async () => {
+  it('keeps anonymous Zapytaj o to on the same guided-selection path without auto guest intro', async () => {
     vi.useFakeTimers();
     const scrollToMock = vi.fn();
     vi.stubGlobal('scrollTo', scrollToMock);
@@ -491,42 +491,14 @@ describe('KangurAiTutorWidget - Selection', () => {
       clearSelectionGlow: clearSelectionGlowMock,
       selectionGlowSupported: false,
     });
-    let resolveGuestIntroPayload: ((value: { ok: true; reason: string; shouldShow: true }) => void) | null =
-      null;
-    const guestIntroPayloadPromise = new Promise<{ ok: true; reason: string; shouldShow: true }>(
-      (resolve) => {
-        resolveGuestIntroPayload = resolve;
-      }
-    );
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockReturnValue(guestIntroPayloadPromise),
-    });
-    vi.stubGlobal('fetch', fetchMock);
-
     render(<KangurAiTutorWidget />);
 
     await act(async () => {
       await Promise.resolve();
     });
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/kangur/ai-tutor/guest-intro', {
-      cache: 'no-store',
-      credentials: 'same-origin',
-    });
-
     fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
     fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
-
-    await act(async () => {
-      resolveGuestIntroPayload?.({
-        ok: true,
-        reason: 'first_visit',
-        shouldShow: true,
-      });
-      await Promise.resolve();
-      await Promise.resolve();
-    });
 
     expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-guest-intro-backdrop')).not.toBeInTheDocument();

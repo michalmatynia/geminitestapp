@@ -1,5 +1,3 @@
-'use client';
-
 import {
   useCallback,
   useEffect,
@@ -35,6 +33,10 @@ import type {
 type KangurAiTutorGuestIntroRecord = KangurAiTutorOnboardingRecord<KangurAiTutorGuestIntroStatus>;
 type KangurAiTutorHomeOnboardingRecord =
   KangurAiTutorOnboardingRecord<KangurAiTutorHomeOnboardingStatus>;
+
+// Keep the tutor closed on initial page entry; onboarding can be started manually.
+const AUTO_OPEN_GUEST_INTRO_ON_FIRST_VISIT = false;
+const AUTO_START_HOME_ONBOARDING_ON_FIRST_VISIT = false;
 
 export const getGuidedGuestTargetKind = (authMode: KangurAuthMode): GuidedTutorAuthKind => {
   return authMode === 'create-account' ? 'create_account_action' : 'login_action';
@@ -212,6 +214,10 @@ export function useKangurAiTutorGuestIntroFlow(input: {
       trackKangurClientEvent('kangur_ai_tutor_guest_intro_shown', {
         reason: 'admin_every_visit',
       });
+      return;
+    }
+
+    if (!AUTO_OPEN_GUEST_INTRO_ON_FIRST_VISIT) {
       return;
     }
 
@@ -501,6 +507,10 @@ export function useKangurAiTutorHomeOnboardingFlow(input: {
     }
 
     if (homeOnboardingMode === 'off') {
+      return;
+    }
+
+    if (!shouldRepeatHomeOnboardingOnEntry && !AUTO_START_HOME_ONBOARDING_ON_FIRST_VISIT) {
       return;
     }
 

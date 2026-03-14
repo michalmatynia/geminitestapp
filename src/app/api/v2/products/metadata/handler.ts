@@ -9,6 +9,7 @@ import {
   getTagRepository,
   getParameterRepository,
 } from '@/features/products/server';
+import { paginationQuerySchema, type PaginationQuery } from '@/shared/contracts/base';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
@@ -20,7 +21,7 @@ import type {
 } from '@/shared/lib/db/services/database-sync-types';
 import { listSimpleParameters } from '@/shared/lib/products/services/simple-parameter-service';
 
-export const querySchema = z.object({
+export const querySchema = paginationQuerySchema.extend({
   catalogId: optionalTrimmedQueryString(),
 });
 
@@ -181,20 +182,24 @@ export async function GET_products_metadata_handler(
   params: { type: string }
 ): Promise<Response> {
   const { type } = params;
-  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const query = (_ctx.query ?? paginationQuerySchema.parse({})) as PaginationQuery & {
+    catalogId?: string;
+  };
   const catalogId = query.catalogId ?? '';
+  const { page, pageSize } = query;
+  const skip = (page - 1) * pageSize;
 
   if (type === 'producers') {
     const repo = await getProducerRepository();
-    return NextResponse.json(await repo.listProducers({}));
+    return NextResponse.json(await repo.listProducers({ skip, limit: pageSize }));
   }
   if (type === 'tags') {
     const repo = await getTagRepository();
-    return NextResponse.json(await repo.listTags({}));
+    return NextResponse.json(await repo.listTags({ skip, limit: pageSize }));
   }
   if (type === 'parameters') {
     const repo = await getParameterRepository();
-    return NextResponse.json(await repo.listParameters({}));
+    return NextResponse.json(await repo.listParameters({ skip, limit: pageSize }));
   }
   if (type === 'simple-parameters') {
     if (!catalogId) throw badRequestError('catalogId is required for simple-parameters');
@@ -206,6 +211,8 @@ export async function GET_products_metadata_handler(
       .collection<MongoPriceGroupDoc>('price_groups')
       .find({})
       .sort({ name: 1 })
+      .skip(skip)
+      .limit(pageSize)
       .toArray()) as MongoPriceGroupDoc[];
     const currencyIds = Array.from(
       new Set(

@@ -23,6 +23,7 @@ const {
   validatePasswordStrengthMock,
   readStoredSettingValueMock,
   getKangurAiTutorContentMock,
+  assignAuthUserRoleMock,
 } = vi.hoisted(() => ({
   createAuthUserWithEmailMock: vi.fn(),
   findAuthUserByEmailMock: vi.fn(),
@@ -40,6 +41,7 @@ const {
   validatePasswordStrengthMock: vi.fn(),
   readStoredSettingValueMock: vi.fn(),
   getKangurAiTutorContentMock: vi.fn(),
+  assignAuthUserRoleMock: vi.fn(),
 }));
 
 vi.mock('@/server/auth', () => ({
@@ -55,6 +57,7 @@ vi.mock('@/server/auth', () => ({
   createEmailVerificationChallenge: createEmailVerificationChallengeMock,
   createAuthUserWithEmail: createAuthUserWithEmailMock,
   findActiveEmailVerificationChallengeByEmail: findActiveEmailVerificationChallengeByEmailMock,
+  assignAuthUserRole: assignAuthUserRoleMock,
   markAuthUserEmailVerified: markAuthUserEmailVerifiedMock,
   setAuthUserPassword: setAuthUserPasswordMock,
   validatePasswordStrength: validatePasswordStrengthMock,

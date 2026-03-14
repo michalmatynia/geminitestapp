@@ -85,8 +85,8 @@ The following files contain the production/Vercel build configuration and must
 - `vercel.json` — Vercel deployment settings (if present)
 
 **Key build constraints that must be preserved:**
-- `--max-old-space-size=3584` in the build script (Vercel: 1 main + 2 workers × 3.5GB = fits 8GB)
-- `experimental.cpus: 2` — limits worker processes to fit Vercel memory
+- `--max-old-space-size=3584` in the build script (Vercel: 1 main + 1 worker × 3.5GB = 7GB, leaves 1GB for OS)
+- `experimental.cpus: 1` — limits worker processes to fit Vercel Standard 8GB machine
 - Conditional `output: 'standalone'` — enabled only for non-Vercel deploys (Docker/self-hosted); disabled on Vercel to avoid expensive file-tracing
 - `typescript.ignoreBuildErrors: true` — type-checking is enforced in CI, not during `next build`
 

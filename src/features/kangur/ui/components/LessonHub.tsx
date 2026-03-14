@@ -54,6 +54,10 @@ export default function LessonHub({
           const accent = section.isGame ? 'indigo' : 'slate';
           const resolvedProgress =
             section.progress ?? (section.isGame ? { totalCount: 1, viewedCount: 0 } : undefined);
+          const sectionKindLabel = section.isGame ? 'Gra' : 'Lekcja';
+          const sectionAriaLabel = `${sectionKindLabel}: ${section.title}${
+            section.locked ? ' (zablokowane)' : ''
+          }`;
 
           return (
             <motion.div
@@ -72,6 +76,7 @@ export default function LessonHub({
                 data-testid={`lesson-hub-section-${section.id}`}
                 disabled={section.locked}
                 emphasis={section.isGame ? 'accent' : 'neutral'}
+                aria-label={sectionAriaLabel}
                 onClick={() => {
                   if (!section.locked) {
                     handleSectionSelect(section.id);

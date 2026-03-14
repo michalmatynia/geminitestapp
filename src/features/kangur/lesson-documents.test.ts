@@ -213,21 +213,21 @@ describe('kangur lesson documents', () => {
     const textBlock = {
       id: 'lesson-root-1',
       type: 'text' as const,
-      html: '<p>Dodawanie przez gre</p>',
-      ttsText: 'Powiedz dziecku, aby uruchomilo gre.',
+      html: '<p>Dodawanie przez grę</p>',
+      ttsText: 'Powiedz dziecku, aby uruchomiło grę.',
       align: 'left' as const,
     };
 
     const activityBlock = convertKangurLessonRootBlockType(textBlock, 'activity');
     expect(activityBlock.id).toBe('lesson-root-1');
     expect(activityBlock.type).toBe('activity');
-    expect(activityBlock.title).toBe('Dodawanie przez gre');
-    expect(activityBlock.description).toBe('Powiedz dziecku, aby uruchomilo gre.');
+    expect(activityBlock.title).toBe('Dodawanie przez grę');
+    expect(activityBlock.description).toBe('Powiedz dziecku, aby uruchomiło grę.');
 
     const convertedBackToText = convertKangurLessonRootBlockType(activityBlock, 'text');
     expect(convertedBackToText.id).toBe('lesson-root-1');
     expect(convertedBackToText.type).toBe('text');
-    expect(convertedBackToText.html).toContain('Powiedz dziecku, aby uruchomilo gre.');
+    expect(convertedBackToText.html).toContain('Powiedz dziecku, aby uruchomiło grę.');
   });
 
   it('detects whether a document has meaningful content', () => {

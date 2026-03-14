@@ -5,7 +5,13 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { KangurBadgeTrackSummaryCard } from '@/features/kangur/ui/components/KangurBadgeTrackSummaryCard';
+import {
+  KangurBadgeTrackSummaryCard,
+  KangurBadgeTrackCardHeader,
+  KangurBadgeTrackCardBody,
+  KangurBadgeTrackCardBar,
+  KANGUR_BADGE_TRACK_ACCENTS,
+} from '@/features/kangur/ui/components/KangurBadgeTrackSummaryCard';
 import type { KangurBadgeTrackSummary } from '@/features/kangur/ui/services/progress';
 
 const track: KangurBadgeTrackSummary = {
@@ -37,12 +43,20 @@ const track: KangurBadgeTrackSummary = {
 
 describe('KangurBadgeTrackSummaryCard', () => {
   it('renders the shared badge-track card body and progress bar', () => {
+    const accent = KANGUR_BADGE_TRACK_ACCENTS[track.key];
+
     render(
-      <KangurBadgeTrackSummaryCard
-        dataTestId='badge-track-card'
-        progressBarTestId='badge-track-card-bar'
-        track={track}
-      />
+      <KangurBadgeTrackSummaryCard dataTestId='badge-track-card'>
+        <div className='flex flex-col gap-3'>
+          <KangurBadgeTrackCardHeader accent={accent} track={track} />
+          <KangurBadgeTrackCardBody track={track} />
+        </div>
+        <KangurBadgeTrackCardBar
+          accent={accent}
+          testId='badge-track-card-bar'
+          value={track.progressPercent}
+        />
+      </KangurBadgeTrackSummaryCard>
     );
 
     expect(screen.getByTestId('badge-track-card')).toHaveTextContent('⚡ Wyzwania');
@@ -71,29 +85,35 @@ describe('KangurBadgeTrackSummaryCard', () => {
       'justify-between',
       'gap-3',
     );
-    expect(screen.getByText('2/4 odznak').parentElement).toHaveClass(
-      'flex',
-      'flex-col',
-      'gap-3',
-    );
+    expect(screen.getByText('2/4 odznak').parentElement).toHaveClass('space-y-1');
   });
 
   it('accepts variant classes for highlight-style layouts', () => {
+    const accent = KANGUR_BADGE_TRACK_ACCENTS[track.key];
+
     render(
-      <KangurBadgeTrackSummaryCard
-        cardClassName='rounded-[24px] text-left'
-        dataTestId='badge-track-card'
-        headerClassName='gap-2'
-        progressBarTestId='badge-track-card-bar'
-        statusChipClassName='text-[11px]'
-        track={track}
-        trackLabelClassName='tracking-[0.16em]'
-      />
+      <KangurBadgeTrackSummaryCard cardClassName='rounded-[24px] text-left' dataTestId='badge-track-card'>
+        <div className='flex flex-col gap-3'>
+          <KangurBadgeTrackCardHeader
+            accent={accent}
+            track={track}
+            className='gap-2'
+            labelClassName='tracking-[0.16em]'
+            statusChipClassName='text-[11px]'
+          />
+          <KangurBadgeTrackCardBody track={track} />
+        </div>
+        <KangurBadgeTrackCardBar
+          accent={accent}
+          testId='badge-track-card-bar'
+          value={track.progressPercent}
+        />
+      </KangurBadgeTrackSummaryCard>
     );
 
     expect(screen.getByTestId('badge-track-card')).toHaveClass('rounded-[24px]', 'text-left');
     expect(screen.getByText('50%')).toHaveClass('text-[11px]');
     expect(screen.getByText('⚡ Wyzwania')).toHaveClass('tracking-[0.16em]');
-    expect(screen.getByText('2/4 odznak').parentElement).toHaveClass('gap-2');
+    expect(screen.getByText('2/4 odznak').parentElement).toHaveClass('space-y-1');
   });
 });

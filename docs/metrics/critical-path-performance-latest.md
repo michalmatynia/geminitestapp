@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-11'
+last_reviewed: '2026-03-14'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Critical Path Performance Report
 
-Generated at: 2026-03-07T10:03:08.199Z
+Generated at: 2026-03-14T15:03:50.298Z
 
 ## Summary
 
@@ -22,31 +22,31 @@ Generated at: 2026-03-07T10:03:08.199Z
 
 | Path | Status | Total LOC | Budget LOC | Delta |
 | --- | --- | ---: | ---: | ---: |
-| Authentication + Session Bootstrap (UI) | PASS | 183 | 220 | -37 |
-| Products CRUD + Listing Refresh (UI) | PASS | 43 | 80 | -37 |
+| Authentication + Session Bootstrap (UI) | PASS | 184 | 220 | -36 |
+| Products CRUD + Listing Refresh (UI) | PASS | 76 | 80 | -4 |
 | Image Studio Generate + Preview (UI) | PASS | 325 | 360 | -35 |
-| AI Paths Run Execution (UI) | PASS | 90 | 120 | -30 |
-| Case Resolver OCR + Capture Mapping (UI) | PASS | 31 | 60 | -29 |
+| AI Paths Run Execution (UI) | PASS | 119 | 120 | -1 |
+| Case Resolver OCR + Capture Mapping (UI) | PASS | 32 | 60 | -28 |
 
 ## Critical API Route Budgets (LOC)
 
 | Path | Status | Total LOC | Budget LOC | LOC Delta | Branch Points | Branch Budget | Branch Delta |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Authentication + Session Bootstrap (API) | PASS | 184 | 240 | -56 | 10 | 14 | -4 |
-| Products CRUD + Listing Refresh (API) | PASS | 138 | 180 | -42 | 10 | 14 | -4 |
-| Image Studio Generate + Preview (API) | PASS | 711 | 760 | -49 | 85 | 95 | -10 |
-| AI Paths Run Execution (API) | PASS | 223 | 260 | -37 | 15 | 22 | -7 |
+| Authentication + Session Bootstrap (API) | PASS | 221 | 240 | -19 | 12 | 14 | -2 |
+| Products CRUD + Listing Refresh (API) | PASS | 180 | 180 | 0 | 14 | 14 | 0 |
+| Image Studio Generate + Preview (API) | PASS | 673 | 760 | -87 | 79 | 95 | -16 |
+| AI Paths Run Execution (API) | PASS | 255 | 260 | -5 | 22 | 22 | 0 |
 | Case Resolver OCR + Capture Mapping (API) | PASS | 90 | 120 | -30 | 11 | 15 | -4 |
 
 ## UI File Breakdown
 
 ### Authentication + Session Bootstrap (UI)
 
-- `src/features/auth/pages/public/SignInPage.tsx`: 183 LOC | 8 branch points
+- `src/features/auth/pages/public/SignInPage.tsx`: 184 LOC | 8 branch points
 
 ### Products CRUD + Listing Refresh (UI)
 
-- `src/features/products/pages/AdminProductsPage.tsx`: 43 LOC | 0 branch points
+- `src/features/products/pages/AdminProductsPage.tsx`: 76 LOC | 0 branch points
 
 ### Image Studio Generate + Preview (UI)
 
@@ -54,29 +54,29 @@ Generated at: 2026-03-07T10:03:08.199Z
 
 ### AI Paths Run Execution (UI)
 
-- `src/features/ai/ai-paths/pages/AdminAiPathsPage.tsx`: 90 LOC | 0 branch points
+- `src/features/ai/ai-paths/pages/AdminAiPathsPage.tsx`: 119 LOC | 0 branch points
 
 ### Case Resolver OCR + Capture Mapping (UI)
 
-- `src/features/case-resolver/pages/AdminCaseResolverPage.tsx`: 31 LOC | 0 branch points
+- `src/features/case-resolver/pages/AdminCaseResolverPage.tsx`: 32 LOC | 0 branch points
 
 ## API File Breakdown
 
 ### Authentication + Session Bootstrap (API)
 
-- `src/app/api/auth/verify-credentials/handler.ts`: 184 LOC | 10 branch points
+- `src/app/api/auth/verify-credentials/handler.ts`: 221 LOC | 12 branch points
 
 ### Products CRUD + Listing Refresh (API)
 
-- `src/app/api/v2/products/handler.ts`: 138 LOC | 10 branch points
+- `src/app/api/v2/products/handler.ts`: 180 LOC | 14 branch points
 
 ### Image Studio Generate + Preview (API)
 
-- `src/app/api/image-studio/projects/[projectId]/handler.ts`: 711 LOC | 85 branch points
+- `src/app/api/image-studio/projects/[projectId]/handler.ts`: 673 LOC | 79 branch points
 
 ### AI Paths Run Execution (API)
 
-- `src/app/api/ai-paths/runs/handler.ts`: 223 LOC | 15 branch points
+- `src/app/api/ai-paths/runs/handler.ts`: 255 LOC | 22 branch points
 
 ### Case Resolver OCR + Capture Mapping (API)
 
@@ -86,31 +86,31 @@ Generated at: 2026-03-07T10:03:08.199Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/kangur/cms-builder/project.ts` | 2855 |
-| `src/features/kangur/ui/design/primitives.tsx` | 1170 |
-| `src/features/cms/components/page-builder/registry/block-definitions-content.ts` | 1138 |
-| `src/features/ai/ai-paths/components/__tests__/canvas-connection-preview.test.tsx` | 1055 |
-| `src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts` | 1003 |
-| `src/shared/contracts/ai-paths.ts` | 993 |
-| `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts` | 989 |
-| `src/shared/contracts/image-studio.ts` | 983 |
-| `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 969 |
-| `src/features/ai/ai-paths/components/JobQueueContext.tsx` | 968 |
+| `src/features/kangur/server/knowledge-graph/retrieval.ts` | 1649 |
+| `src/features/kangur/admin/AdminKangurTestSuitesManagerPage.tsx` | 1572 |
+| `src/features/kangur/ui/components/ClockTrainingGame.tsx` | 1466 |
+| `src/features/kangur/admin/KangurLessonDocumentEditor.tsx` | 1442 |
+| `src/features/kangur/server/context-registry.ts` | 1433 |
+| `src/features/kangur/cms-builder/project-defaults.ts` | 1422 |
+| `src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts` | 1415 |
+| `src/shared/contracts/kangur-ai-tutor-native-guide-entries.ts` | 1414 |
+| `src/features/kangur/observability/summary.ts` | 1401 |
+| `src/features/kangur/ui/components/LessonAnimations.tsx` | 1374 |
 
 ## Top API Route Hotspots (Reference)
 
 | Route | LOC |
 | --- | ---: |
+| `src/app/api/agent/leases/route.ts` | 119 |
 | `src/app/api/chatbot/agent/[runId]/[action]/route.ts` | 83 |
+| `src/app/api/agent/resources/route.ts` | 59 |
+| `src/app/api/agent/approval-gates/route.ts` | 50 |
+| `src/app/api/v2/products/[id]/route.ts` | 42 |
 | `src/app/api/v2/products/[id]/studio/[action]/route.ts` | 40 |
-| `src/app/api/marketplace/[resource]/route.ts` | 37 |
-| `src/app/api/v2/products/[id]/route.ts` | 36 |
-| `src/app/api/v2/products/sync/profiles/[id]/route.ts` | 28 |
-| `src/app/api/v2/products/categories/[id]/route.ts` | 25 |
-| `src/app/api/v2/products/categories/route.ts` | 24 |
-| `src/app/api/v2/products/parameters/route.ts` | 24 |
-| `src/app/api/auth/users/[id]/route.ts` | 23 |
-| `src/app/api/v2/products/sync/profiles/route.ts` | 23 |
+| `src/app/api/marketplace/[resource]/route.ts` | 38 |
+| `src/app/api/v2/products/metadata/[type]/[id]/route.ts` | 35 |
+| `src/app/api/v2/products/metadata/[type]/route.ts` | 32 |
+| `src/app/api/v2/products/sync/profiles/[id]/route.ts` | 30 |
 
 ## Notes
 

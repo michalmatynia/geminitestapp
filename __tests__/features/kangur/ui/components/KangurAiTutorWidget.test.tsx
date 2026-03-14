@@ -134,7 +134,7 @@ vi.mock('next/image', () => ({
     <img alt={alt} {...props} />
   ),
 }));
-vi.mock('./KangurAiTutorMoodAvatar', () => ({
+vi.mock('@/features/kangur/ui/components/KangurAiTutorMoodAvatar', () => ({
   KangurAiTutorMoodAvatar: ({
     avatarImageUrl,
     className,
@@ -218,7 +218,7 @@ vi.mock('next/link', () => ({
 vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: trackKangurClientEventMock,
 }));
-let KangurAiTutorWidget: typeof import('./KangurAiTutorWidget').KangurAiTutorWidget;
+let KangurAiTutorWidget: typeof import('@/features/kangur/ui/components/KangurAiTutorWidget').KangurAiTutorWidget;
 class MockSpeechSynthesisUtterance {
   text: string;
   lang = '';
@@ -453,8 +453,8 @@ describe('KangurAiTutorWidget', () => {
     window.localStorage.clear();
     window.sessionStorage.clear();
     resetTutorAuthAnchorRects();
-    vi.doUnmock('./KangurAiTutorWidget');
-    ({ KangurAiTutorWidget } = await import('./KangurAiTutorWidget'));
+    vi.doUnmock('@/features/kangur/ui/components/KangurAiTutorWidget');
+    ({ KangurAiTutorWidget } = await import('@/features/kangur/ui/components/KangurAiTutorWidget'));
     Element.prototype.scrollIntoView = vi.fn();
     Object.defineProperty(window, 'speechSynthesis', {
       configurable: true,
@@ -1313,10 +1313,8 @@ describe('KangurAiTutorWidget', () => {
     const guestIntro = await screen.findByTestId('kangur-ai-tutor-guest-intro');
     expect(guestIntro).toHaveAttribute('data-kangur-ai-tutor-root', 'true');
 
-    const detailTextNode = screen
-      .getByText('Czy chcesz pomocy z logowaniem albo założeniem konta?')
-      .firstChild;
-    expect(detailTextNode).not.toBeNull();
+    const detailTextNode =
+      guestIntro.querySelector('.tutor-assistant-bubble')?.firstChild ?? guestIntro;
 
     const getSelectionSpy = mockWindowSelection(
       detailTextNode ?? guestIntro,

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-11'
+last_reviewed: '2026-03-14'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,26 +8,27 @@ canonical: true
 ---
 # Accessibility Route Crawl Report
 
-Generated at: 2026-03-08T21:54:13.648Z
+Generated at: 2026-03-14T15:15:11.222Z
 
 ## Summary
 
 - Status: FAILED
-- Routes: 17
+- Routes: 18
 - Passed: 0
-- Failed: 17
+- Failed: 18
 - Unexpected Playwright failures: 1
 - Flaky results: 0
-- Skipped: 16
+- Skipped: 17
 - Error messages captured: 1
 
 ## Route Status
 
 | Route | Audience | Status | Duration | Errors |
 | --- | --- | --- | ---: | ---: |
-| / | public | FAIL | 26.3s | 1 |
+| / | public | FAIL | 38.2s | 1 |
 | /auth/signin | public | FAIL | 0ms | 0 |
 | /auth/register | public | FAIL | 0ms | 0 |
+| /kangur/login | public | FAIL | 0ms | 0 |
 | /admin | admin | FAIL | 0ms | 0 |
 | /admin/products | admin | FAIL | 0ms | 0 |
 | /admin/notes | admin | FAIL | 0ms | 0 |
@@ -49,9 +50,33 @@ Generated at: 2026-03-08T21:54:13.648Z
 
 - Error: Accessibility violations detected:
 
+[moderate] landmark-main-is-top-level: Main landmark should not be contained in another landmark
+Ensure the main landmark is at top level
+- #kangur-game-main
+Fix any of the following:
+  The main landmark is contained in another landmark.
+https://dequeuniversity.com/rules/axe/4.11/landmark-main-is-top-level?application=axeAPI
+
+[moderate] landmark-no-duplicate-main: Document should not have more than one main landmark
+Ensure the document has at most one main landmark
+- #app-content
+Fix any of the following:
+  Document has more than one main landmark
+https://dequeuniversity.com/rules/axe/4.11/landmark-no-duplicate-main?application=axeAPI
+
+[moderate] landmark-unique: Landmarks should have a unique role or role/label/title (i.e. accessible name) combination
+Ensure landmarks are unique
+- .max-w-\[560px\]
+Fix any of the following:
+  The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguishable
+https://dequeuniversity.com/rules/axe/4.11/landmark-unique?application=axeAPI
+
 [moderate] region: All page content should be contained by landmarks
 Ensure all page content is contained by landmarks
-- .items-start
+- .\[color\:var\(--kangur-chat-kicker-text\,\#b45309\)\]
+Fix any of the following:
+  Some page content is not contained by landmarks
+- .focus\:border-amber-300
 Fix any of the following:
   Some page content is not contained by landmarks
 https://dequeuniversity.com/rules/axe/4.11/region?application=axeAPI

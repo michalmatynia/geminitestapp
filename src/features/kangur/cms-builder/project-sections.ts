@@ -1,10 +1,5 @@
-import type {
-  BlockInstance,
-  PageComponentInput,
-  SectionInstance,
-} from '@/shared/contracts/cms';
+import type { BlockInstance, PageComponentInput } from '@/shared/contracts/cms';
 import {
-  makeBlockSection,
   makeContainerBlock,
   makeHeadingBlock,
   makeTextBlock,
@@ -12,7 +7,7 @@ import {
 
 export const makeGridSection = (input: {
   id: string;
-  rows: SectionInstance[];
+  rows: BlockInstance[];
   paddingTop?: number;
   paddingBottom?: number;
   paddingLeft?: number;
@@ -38,24 +33,22 @@ export const makeGridSection = (input: {
       customCss: '',
       ...(input.settings ?? {}),
     },
-    blocks: [],
+    blocks: input.rows,
   },
-  sections: input.rows,
 });
 
 export const makeGridRow = (input: {
   id: string;
-  columns: SectionInstance[];
+  columns: BlockInstance[];
   settings?: Record<string, unknown>;
-}): SectionInstance => ({
+}): BlockInstance => ({
   id: input.id,
-  type: 'GridRow',
+  type: 'Row',
   settings: {
     rowGap: 24,
     ...(input.settings ?? {}),
   },
-  blocks: [],
-  sections: input.columns,
+  blocks: input.columns,
 });
 
 export const makeGridColumn = (input: {
@@ -63,16 +56,15 @@ export const makeGridColumn = (input: {
   blocks: BlockInstance[];
   span?: number;
   settings?: Record<string, unknown>;
-}): SectionInstance => ({
+}): BlockInstance => ({
   id: input.id,
-  type: 'GridColumn',
+  type: 'Column',
   settings: {
     columnSpan: input.span ?? 12,
     columnGap: 16,
     ...(input.settings ?? {}),
   },
   blocks: input.blocks,
-  sections: [],
 });
 
 export const makeRuntimeVisibilitySettings = (input: {

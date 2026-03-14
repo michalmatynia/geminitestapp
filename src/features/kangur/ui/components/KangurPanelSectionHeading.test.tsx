@@ -28,7 +28,7 @@ describe('KangurPanelSectionHeading', () => {
       'mb-3',
       'text-xs',
       'tracking-wide',
-      'text-slate-500'
+      '[color:var(--kangur-page-muted-text)]'
     );
   });
 });

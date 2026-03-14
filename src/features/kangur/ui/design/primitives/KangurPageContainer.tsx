@@ -19,12 +19,16 @@ export const KangurPageContainer = ({
 }: KangurPageContainerProps): React.JSX.Element => {
   const routing = useOptionalKangurRouting();
   const ResolvedComp = routing?.embedded && Comp === 'main' ? 'div' : Comp;
-  const resolvedRole = role ?? (Comp === 'main' && ResolvedComp !== 'main' ? 'main' : undefined);
+  const explicitRouteMain =
+    props['data-kangur-route-main'] === 'true' || props['data-kangur-route-main'] === true;
+  const shouldMarkMain = Comp === 'main' || explicitRouteMain;
+  const resolvedRole =
+    role ?? (shouldMarkMain && ResolvedComp !== 'main' ? 'main' : undefined);
 
   return (
     <ResolvedComp
       className={cn(KANGUR_PAGE_CONTAINER_CLASSNAME, className)}
-      data-kangur-route-main={Comp === 'main' ? 'true' : undefined}
+      data-kangur-route-main={shouldMarkMain ? 'true' : undefined}
       tabIndex={tabIndex ?? -1}
       role={resolvedRole}
       {...props}

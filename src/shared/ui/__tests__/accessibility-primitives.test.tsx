@@ -364,6 +364,19 @@ describe('shared accessibility primitives', () => {
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });
 
+  it('uses tooltip content as aria-label for icon-only triggers', () => {
+    render(
+      <Tooltip content='Open settings'>
+        <button type='button'>
+          <svg aria-hidden='true' />
+        </button>
+      </Tooltip>
+    );
+
+    const trigger = screen.getByRole('button', { name: 'Open settings' });
+    expect(trigger).toHaveAttribute('aria-label', 'Open settings');
+  });
+
   it('marks loading buttons as busy without exposing spinner icons', () => {
     render(
       <Button loading loadingText='Saving changes'>

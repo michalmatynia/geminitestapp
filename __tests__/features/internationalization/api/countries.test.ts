@@ -41,7 +41,11 @@ describe('Countries API', () => {
           return {
             find: vi.fn(() => ({
               sort: vi.fn(() => ({
-                toArray: countriesToArray,
+                skip: vi.fn(() => ({
+                  limit: vi.fn(() => ({
+                    toArray: countriesToArray,
+                  })),
+                })),
               })),
             })),
           };

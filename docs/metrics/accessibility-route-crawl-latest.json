@@ -1,21 +1,21 @@
 {
-  "generatedAt": "2026-03-08T21:54:13.648Z",
+  "generatedAt": "2026-03-14T15:15:11.222Z",
   "status": "failed",
   "runtime": {
     "source": "broker",
     "reused": false,
-    "baseUrl": "http://127.0.0.1:54676",
-    "agentId": "michalmatynia-route-crawl",
-    "leaseKey": "web-dev-michalmatynia-route-crawl-ed58ad7e"
+    "baseUrl": "http://127.0.0.1:59292",
+    "agentId": "019cec79-a30d-74b0-970c-6d79f2f125cb-route-crawl",
+    "leaseKey": "web-dev-019cec79-a30d-74b0-970c-6d79f2f125cb-route-crawl-ed58ad7e"
   },
   "summary": {
-    "total": 17,
+    "total": 18,
     "passed": 0,
-    "failed": 17,
-    "durationMs": 30982.072,
+    "failed": 18,
+    "durationMs": 41340.005000000005,
     "unexpected": 1,
     "flaky": 0,
-    "skipped": 16,
+    "skipped": 17,
     "errorCount": 1
   },
   "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/accessibility-route-crawl.spec.ts --reporter=json",
@@ -30,9 +30,9 @@
       "contextSelector": null,
       "title": "[public-home] / passes the route-crawl accessibility scan",
       "status": "fail",
-      "durationMs": 26288,
+      "durationMs": 38203,
       "errors": [
-        "Error: Accessibility violations detected:\n\n[moderate] region: All page content should be contained by landmarks\nEnsure all page content is contained by landmarks\n- .items-start\nFix any of the following:\n  Some page content is not contained by landmarks\nhttps://dequeuniversity.com/rules/axe/4.11/region?application=axeAPI\n\n   at support/accessibility.ts:100\n\n   98 |   if (violations.length === 0) return;\n   99 |\n> 100 |   throw new Error(`Accessibility violations detected:\\n\\n${formatViolations(violations)}`);\n      |         ^\n  101 | }\n  102 |\n    at expectPageToHaveNoAxeViolations (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/accessibility.ts:100:9)\n    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/accessibility-route-crawl.spec.ts:50:5"
+        "Error: Accessibility violations detected:\n\n[moderate] landmark-main-is-top-level: Main landmark should not be contained in another landmark\nEnsure the main landmark is at top level\n- #kangur-game-main\nFix any of the following:\n  The main landmark is contained in another landmark.\nhttps://dequeuniversity.com/rules/axe/4.11/landmark-main-is-top-level?application=axeAPI\n\n[moderate] landmark-no-duplicate-main: Document should not have more than one main landmark\nEnsure the document has at most one main landmark\n- #app-content\nFix any of the following:\n  Document has more than one main landmark\nhttps://dequeuniversity.com/rules/axe/4.11/landmark-no-duplicate-main?application=axeAPI\n\n[moderate] landmark-unique: Landmarks should have a unique role or role/label/title (i.e. accessible name) combination\nEnsure landmarks are unique\n- .max-w-\\[560px\\]\nFix any of the following:\n  The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguishable\nhttps://dequeuniversity.com/rules/axe/4.11/landmark-unique?application=axeAPI\n\n[moderate] region: All page content should be contained by landmarks\nEnsure all page content is contained by landmarks\n- .\\[color\\:var\\(--kangur-chat-kicker-text\\,\\#b45309\\)\\]\nFix any of the following:\n  Some page content is not contained by landmarks\n- .focus\\:border-amber-300\nFix any of the following:\n  Some page content is not contained by landmarks\nhttps://dequeuniversity.com/rules/axe/4.11/region?application=axeAPI\n\n   at support/accessibility.ts:100\n\n   98 |   if (violations.length === 0) return;\n   99 |\n> 100 |   throw new Error(`Accessibility violations detected:\\n\\n${formatViolations(violations)}`);\n      |         ^\n  101 | }\n  102 |\n    at expectPageToHaveNoAxeViolations (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/accessibility.ts:100:9)\n    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/accessibility-route-crawl.spec.ts:50:5"
       ]
     },
     {
@@ -55,6 +55,18 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[auth-register] /auth/register passes the route-crawl accessibility scan",
+      "status": "fail",
+      "durationMs": 0,
+      "errors": []
+    },
+    {
+      "id": "kangur-login",
+      "name": "Kangur Login",
+      "route": "/kangur/login",
+      "audience": "public",
+      "readySelector": null,
+      "contextSelector": null,
+      "title": "[kangur-login] /kangur/login passes the route-crawl accessibility scan",
       "status": "fail",
       "durationMs": 0,
       "errors": []
@@ -229,6 +241,6 @@
     }
   ],
   "stderr": "",
-  "durationMs": 57913,
+  "durationMs": 60998,
   "exitCode": 1
 }

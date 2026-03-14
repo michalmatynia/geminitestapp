@@ -102,16 +102,35 @@ export const KANGUR_SLOT_ASSIGNMENTS_KEY = 'kangur_slot_assignments';
 
 export type SlotAssignments = Record<AppearanceSlot, { id: string; name: string } | null>;
 
+const parseSlotAssignmentEntry = (
+  value: unknown
+): { id: string; name: string } | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  const id = typeof record['id'] === 'string' ? record['id'] : null;
+  const name = typeof record['name'] === 'string' ? record['name'] : null;
+  if (!id || !name) {
+    return null;
+  }
+  return { id, name };
+};
+
 export const parseSlotAssignments = (raw: string | null | undefined): SlotAssignments => {
   const fallback: SlotAssignments = { daily: null, dawn: null, sunset: null, nightly: null };
   if (!raw?.trim()) return fallback;
   try {
-    const parsed = JSON.parse(raw);
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return fallback;
+    }
+    const record = parsed as Record<string, unknown>;
     return {
-      daily: parsed.daily || null,
-      dawn: parsed.dawn || null,
-      sunset: parsed.sunset || null,
-      nightly: parsed.nightly || null,
+      daily: parseSlotAssignmentEntry(record['daily']),
+      dawn: parseSlotAssignmentEntry(record['dawn']),
+      sunset: parseSlotAssignmentEntry(record['sunset']),
+      nightly: parseSlotAssignmentEntry(record['nightly']),
     };
   } catch {
     return fallback;

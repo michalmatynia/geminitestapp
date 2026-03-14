@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { ProductPublicPage } from '@/features/products/pages/ProductPublicPage';
+import { ProductPublicPage } from './ProductPublicPage';
 
 export const revalidate = 3600; // Hourly revalidation for product details
 

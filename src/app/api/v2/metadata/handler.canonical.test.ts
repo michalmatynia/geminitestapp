@@ -173,7 +173,11 @@ describe('v2 metadata handler canonical contract', () => {
           return {
             find: vi.fn(() => ({
               sort: vi.fn(() => ({
-                toArray: languagesToArrayMock,
+                skip: vi.fn(() => ({
+                  limit: vi.fn(() => ({
+                    toArray: languagesToArrayMock,
+                  })),
+                })),
               })),
             })),
           };

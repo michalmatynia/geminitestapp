@@ -170,6 +170,7 @@ export default function GeometryPerimeterDrawingGame({
   const [feedback, setFeedback] = useState<FeedbackState>(null);
   const [strokes, setStrokes] = useState<Point2d[][]>([]);
   const [selected, setSelected] = useState<number | null>(null);
+  const [drawingValidated, setDrawingValidated] = useState(false);
   const [keyboardCursor, setKeyboardCursor] = useState<Point2d>(KEYBOARD_CURSOR_START);
   const [keyboardDrawing, setKeyboardDrawing] = useState(false);
   const [keyboardStatus, setKeyboardStatus] = useState(
@@ -177,16 +178,20 @@ export default function GeometryPerimeterDrawingGame({
   );
   const sessionStartedAtRef = useRef(Date.now());
 
-  const currentRound = ROUNDS[roundIndex];
-  const perimeter =
-    currentRound?.shape === 'square'
+  const currentRound = ROUNDS[roundIndex] ?? null;
+  const perimeter = currentRound
+    ? currentRound.shape === 'square'
       ? currentRound.a * 4
-      : (currentRound.a + (currentRound.b ?? 0)) * 2;
+      : (currentRound.a + (currentRound.b ?? 0)) * 2
+    : 0;
   const choices = useMemo(
     () => buildChoices(perimeter, roundIndex),
     [perimeter, roundIndex]
   );
   const points = useMemo(() => flattenPoints(strokes), [strokes]);
+  const isDrawingReady = points.length >= 14;
+  const isLocked = feedback?.kind === 'success' || feedback?.kind === 'error';
+  const revealAnswers = feedback?.kind === 'success' || feedback?.kind === 'error';
 
   useEffect(
     () => () => {
@@ -209,13 +214,13 @@ export default function GeometryPerimeterDrawingGame({
 
     ctx.strokeStyle = '#e2e8f0';
     ctx.lineWidth = 1;
-    for (let x = 40; x < CANVAS_WIDTH; x += 40) {
+    for (let x = GRID_STEP; x < CANVAS_WIDTH; x += GRID_STEP) {
       ctx.beginPath();
       ctx.moveTo(x, 0);
       ctx.lineTo(x, CANVAS_HEIGHT);
       ctx.stroke();
     }
-    for (let y = 40; y < CANVAS_HEIGHT; y += 40) {
+    for (let y = GRID_STEP; y < CANVAS_HEIGHT; y += GRID_STEP) {
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(CANVAS_WIDTH, y);
@@ -241,6 +246,10 @@ export default function GeometryPerimeterDrawingGame({
     }
   }, []);
 
+  useEffect(() => {
+    redrawCanvas(strokes);
+  }, [redrawCanvas, strokes]);
+
   const updateStrokes = useCallback(
     (updater: (current: Point2d[][]) => Point2d[][]): void => {
       setStrokes((current) => {
@@ -257,6 +266,8 @@ export default function GeometryPerimeterDrawingGame({
       redrawCanvas([]);
       return [];
     });
+    setSelected(null);
+    setDrawingValidated(false);
     setKeyboardDrawing(false);
     setKeyboardStatus('Wyczyszczono planszę.');
   }, [redrawCanvas]);
@@ -266,9 +277,11 @@ export default function GeometryPerimeterDrawingGame({
       const canvas = canvasRef.current;
       if (!canvas) return { x: 0, y: 0 };
       const rect = canvas.getBoundingClientRect();
+      const scaleX = rect.width ? canvas.width / rect.width : 1;
+      const scaleY = rect.height ? canvas.height / rect.height : 1;
       return {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top,
+        x: (event.clientX - rect.left) * scaleX,
+        y: (event.clientY - rect.top) * scaleY,
       };
     },
     []
@@ -433,6 +446,7 @@ export default function GeometryPerimeterDrawingGame({
         setFeedback(null);
         clearDrawing();
         setSelected(null);
+        setDrawingValidated(false);
         if (isLastRound) {
           finishGame(nextScore);
           return;
@@ -444,7 +458,10 @@ export default function GeometryPerimeterDrawingGame({
   );
 
   const handleSelect = (value: number): void => {
-    if (feedback) return;
+    if (isLocked) return;
+    if (feedback?.kind === 'info') {
+      setFeedback(null);
+    }
     setSelected(value);
   };
 
@@ -501,16 +518,20 @@ export default function GeometryPerimeterDrawingGame({
   };
 
   const handleCheck = (): void => {
-    if (done || feedback || !currentRound) return;
-    if (selected === null) {
-      setFeedback({ kind: 'info', text: 'Wybierz wynik obwodu.' });
+    if (done || isLocked || !currentRound) return;
+    if (!drawingValidated) {
+      const drawingResult = evaluateDrawing();
+      if (!drawingResult.accepted) {
+        setFeedback({ kind: 'error', text: drawingResult.message });
+        moveToNextRound(false);
+        return;
+      }
+      setDrawingValidated(true);
+      setFeedback({ kind: 'info', text: 'Rysunek jest poprawny! Wybierz wynik obwodu.' });
       return;
     }
-
-    const drawingResult = evaluateDrawing();
-    if (!drawingResult.accepted) {
-      setFeedback({ kind: 'error', text: drawingResult.message });
-      moveToNextRound(false);
+    if (selected === null) {
+      setFeedback({ kind: 'info', text: 'Wybierz wynik obwodu.' });
       return;
     }
 
@@ -518,12 +539,12 @@ export default function GeometryPerimeterDrawingGame({
     if (correct) {
       setFeedback({
         kind: 'success',
-        text: `Brawo! Obwód to ${perimeter}.`,
+        text: `Brawo! Obwód to ${perimeter} cm.`,
       });
     } else {
       setFeedback({
         kind: 'error',
-        text: `Sprawdź obwód jeszcze raz. Poprawny wynik to ${perimeter}.`,
+        text: `Sprawdź obwód jeszcze raz. Poprawny wynik to ${perimeter} cm.`,
       });
     }
     moveToNextRound(correct);
@@ -537,6 +558,7 @@ export default function GeometryPerimeterDrawingGame({
     setXpBreakdown([]);
     setFeedback(null);
     setSelected(null);
+    setDrawingValidated(false);
     setKeyboardCursor(KEYBOARD_CURSOR_START);
     setKeyboardDrawing(false);
     setKeyboardStatus('Rozpoczęto nową rundę obwodów.');
@@ -699,54 +721,56 @@ export default function GeometryPerimeterDrawingGame({
           kreskę, strzałki przesuwają kursor, Escape czyści planszę.
         </p>
 
-        <div className='grid w-full grid-cols-2 gap-2'>
-          {choices.map((choice, index) => {
-            let accent: KangurAccent = 'amber';
-            let emphasis: 'neutral' | 'accent' = 'neutral';
-            let state: 'default' | 'muted' = 'default';
-            let className = '[color:var(--kangur-page-text)]';
-            if (feedback) {
-              if (choice === perimeter) {
-                accent = 'emerald';
-                emphasis = 'accent';
-                className = KANGUR_ACCENT_STYLES.emerald.activeText;
+        {drawingValidated ? (
+          <div className='grid w-full grid-cols-2 gap-2'>
+            {choices.map((choice, index) => {
+              let accent: KangurAccent = 'amber';
+              let emphasis: 'neutral' | 'accent' = 'neutral';
+              let state: 'default' | 'muted' = 'default';
+              let className = '[color:var(--kangur-page-text)]';
+              if (revealAnswers) {
+                if (choice === perimeter) {
+                  accent = 'emerald';
+                  emphasis = 'accent';
+                  className = KANGUR_ACCENT_STYLES.emerald.activeText;
+                } else if (choice === selected) {
+                  accent = 'rose';
+                  emphasis = 'accent';
+                  className = KANGUR_ACCENT_STYLES.rose.activeText;
+                } else {
+                  accent = 'slate';
+                  state = 'muted';
+                  className = '';
+                }
               } else if (choice === selected) {
-                accent = 'rose';
+                accent = 'amber';
                 emphasis = 'accent';
-                className = KANGUR_ACCENT_STYLES.rose.activeText;
-              } else {
-                accent = 'slate';
-                state = 'muted';
-                className = '';
+                className = KANGUR_ACCENT_STYLES.amber.activeText;
               }
-            } else if (choice === selected) {
-              accent = 'amber';
-              emphasis = 'accent';
-              className = KANGUR_ACCENT_STYLES.amber.activeText;
-            }
 
-            return (
-              <KangurAnswerChoiceCard
-                accent={accent}
-                buttonClassName={cn(
-                  'flex items-center justify-center px-4 py-3 text-center text-lg font-extrabold',
-                  className,
-                  feedback ? 'cursor-default' : 'cursor-pointer'
-                )}
-                data-testid={`geometry-perimeter-choice-${index}`}
-                emphasis={emphasis}
-                interactive={!feedback}
+              return (
+                <KangurAnswerChoiceCard
+                  accent={accent}
+                  buttonClassName={cn(
+                    'flex items-center justify-center px-4 py-3 text-center text-lg font-extrabold',
+                    className,
+                    feedback ? 'cursor-default' : 'cursor-pointer'
+                  )}
+                  data-testid={`geometry-perimeter-choice-${index}`}
+                  emphasis={emphasis}
+                interactive={!isLocked}
                 key={`${currentRound?.id}-${choice}`}
                 onClick={() => handleSelect(choice)}
                 state={state}
-                tapScale={0.96}
-                type='button'
-              >
-                {choice} cm
-              </KangurAnswerChoiceCard>
-            );
-          })}
-        </div>
+                  tapScale={0.96}
+                  type='button'
+                >
+                  {choice} cm
+                </KangurAnswerChoiceCard>
+              );
+            })}
+          </div>
+        ) : null}
 
         {feedback && (
           <p
@@ -786,13 +810,17 @@ export default function GeometryPerimeterDrawingGame({
                     : 'bg-amber-500 border-amber-500 text-white'
                 : '[background:var(--kangur-soft-card-background)] [border-color:var(--kangur-soft-card-border)] [color:var(--kangur-page-text)]'
             )}
-            disabled={feedback !== null}
+            disabled={
+              isLocked ||
+              (!drawingValidated && !isDrawingReady) ||
+              (drawingValidated && selected === null)
+            }
             onClick={handleCheck}
             type='button'
             size='lg'
             variant='primary'
           >
-            Sprawdź obwód
+            {drawingValidated ? 'Sprawdź obwód' : 'Sprawdź rysunek'}
           </KangurButton>
         </div>
       </KangurGlassPanel>

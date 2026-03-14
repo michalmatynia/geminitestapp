@@ -66,7 +66,13 @@ vi.mock('./KangurAiTutorPanelBody.context', () => ({
     },
     panelEmptyStateMessage: 'Brak wiadomości.',
     showSources: false,
-    tutorNarrationScript: [],
+    tutorNarrationScript: {
+      lessonId: 'guest-intro',
+      title: 'Guest intro',
+      description: '',
+      locale: 'pl-PL',
+      segments: [{ id: 'segment-1', text: 'Witaj w Kangurze.' }],
+    },
     tutorNarratorContextRegistry: null,
     tutorSessionKey: 'session-test',
   }),
@@ -95,9 +101,9 @@ describe('KangurAiTutorGuestIntroPanel', () => {
     expect(backdrop.className).toContain('bg-transparent');
     expect(backdrop.className).not.toContain('backdrop-blur');
     expect(screen.getByText('Janek')).toBeInTheDocument();
-    expect(screen.getByText('Pomoc logowania')).toBeInTheDocument();
+    expect(screen.getByText(/Pomoc logowania/)).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-guest-intro-drawing')).toBeVisible();
-    expect(screen.getByText('Minimal tutor modal')).toHaveClass(
+    expect(screen.getByText(/Minimal tutor modal/)).toHaveClass(
       '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
     );
     expect(screen.getByTestId('kangur-ai-tutor-guest-intro-close')).toHaveClass(

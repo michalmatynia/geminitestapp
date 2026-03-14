@@ -40,7 +40,6 @@ import {
   parseSlotAssignments,
   resolveFactoryTheme,
   SLOT_CONFIG,
-  SLOT_ORDER,
   ThemeSelectionId,
 } from './AppearancePage.constants';
 
@@ -73,7 +72,8 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
-  const settingsReady = settingsStore.isReady;
+  const settingsReady =
+    !settingsStore.isLoading && !settingsStore.isFetching && !settingsStore.error;
 
   const [catalogOverrideRaw, setCatalogOverrideRaw] = useState<string | null>(null);
   const catalogFreshFetchedRef = useRef(false);
@@ -113,7 +113,7 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
     const getLabel = (slot: AppearanceSlot, key: string) => {
       const raw = settingsStore.get(key);
       if (!raw?.trim() || !slotAssignments[slot]) return SLOT_FACTORY_LABELS[slot];
-      return slotAssignments[slot]!.name;
+      return slotAssignments[slot].name;
     };
     return {
       daily: getLabel('daily', KANGUR_DAILY_THEME_SETTINGS_KEY),
@@ -163,13 +163,29 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
         return resolveFactoryTheme(id);
       }
       const slotMap: Record<string, { key: string; default: ThemeSettings }> = {
-        [BUILTIN_DAILY_ID]: { key: KANGUR_DAILY_THEME_SETTINGS_KEY, default: SLOT_CONFIG.daily.defaultTheme },
-        [BUILTIN_DAWN_ID]: { key: KANGUR_DAWN_THEME_SETTINGS_KEY, default: SLOT_CONFIG.dawn.defaultTheme },
-        [BUILTIN_SUNSET_ID]: { key: KANGUR_SUNSET_THEME_SETTINGS_KEY, default: SLOT_CONFIG.sunset.defaultTheme },
-        [BUILTIN_NIGHTLY_ID]: { key: KANGUR_NIGHTLY_THEME_SETTINGS_KEY, default: SLOT_CONFIG.nightly.defaultTheme },
+        [BUILTIN_DAILY_ID]: {
+          key: KANGUR_DAILY_THEME_SETTINGS_KEY,
+          default: SLOT_CONFIG.daily.defaultTheme,
+        },
+        [BUILTIN_DAWN_ID]: {
+          key: KANGUR_DAWN_THEME_SETTINGS_KEY,
+          default: SLOT_CONFIG.dawn.defaultTheme,
+        },
+        [BUILTIN_SUNSET_ID]: {
+          key: KANGUR_SUNSET_THEME_SETTINGS_KEY,
+          default: SLOT_CONFIG.sunset.defaultTheme,
+        },
+        [BUILTIN_NIGHTLY_ID]: {
+          key: KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
+          default: SLOT_CONFIG.nightly.defaultTheme,
+        },
       };
-      if (slotMap[id]) {
-        return parseKangurThemeSettings(settingsStore.get(slotMap[id]!.key), slotMap[id]!.default) ?? slotMap[id]!.default;
+      const slotEntry = slotMap[id];
+      if (slotEntry) {
+        return (
+          parseKangurThemeSettings(settingsStore.get(slotEntry.key), slotEntry.default) ??
+          slotEntry.default
+        );
       }
       const entry = catalog.find((e) => e.id === id);
       return entry

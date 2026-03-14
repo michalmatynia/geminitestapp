@@ -4,12 +4,12 @@ import { ArrowLeftRight, Eye, EyeOff, Undo2 } from 'lucide-react';
 import React from 'react';
 
 import { useProductStudioContext } from '@/features/products/context/ProductStudioContext';
-import { SplitVariantPreview } from '@/shared/lib/image-studio-adapter';
 import {
+  SplitVariantPreview,
   CenterPreviewProvider,
   useCenterPreviewContext,
-} from '@/shared/lib/image-studio-adapter';
-import { Button, FormSection } from '@/shared/ui';
+} from '@/features/ai';
+import { Button, FormSection } from '@/features/products/ui';
 
 function StudioPreviewCanvasInner(): React.JSX.Element {
   const { variantImageSrc, sourceImageSrc, canCompareWithSource } = useProductStudioContext();

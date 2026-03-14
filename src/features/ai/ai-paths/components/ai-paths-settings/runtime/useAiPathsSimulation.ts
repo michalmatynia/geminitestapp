@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
-import { getProductDetailQueryKey } from '@/features/products';
+import { getProductDetailQueryKey } from '@/shared/lib/product-query-keys';
 import type {
   AiNode,
   AiPathsValidationConfig,

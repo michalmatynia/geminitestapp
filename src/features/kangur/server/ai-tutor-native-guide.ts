@@ -35,14 +35,14 @@ const ALWAYS_NATIVE_EXPLAIN_FOCUS_KINDS = new Set([
 const PAGE_HELP_PATTERNS = [
   /co to jest/u,
   /co robi/u,
-  /do czego sluzy/u,
-  /jak dziala/u,
+  /do czego s[łl]u[żz]y/u,
+  /jak dzia[łl]a/u,
   /na czym polega/u,
-  /co moge tutaj zrobic/u,
-  /jak korzystac/u,
-  /gdzie znajde/u,
+  /co mog[ęe] tutaj zrobi[ćc]/u,
+  /jak korzysta[ćc]/u,
+  /gdzie znajd[ęe]/u,
   /opisz/u,
-  /wyjasnij(?: mi)?(?: te| ten| ta)?(?: sekcj| ekran| panel| widok| test| gra| lekcj| pytan| zadani| podsumowani| omowieni)/u,
+  /wyja[śs]nij(?: mi)?(?: t[eę]| ten| ta)?(?: sekcj| ekran| panel| widok| test| gra| lekcj| pytan| zadani| podsumowani| omowieni)/u,
   /powiedz o/u,
 ];
 
@@ -50,8 +50,8 @@ const NON_NATIVE_PATTERNS = [
   /zaznaczon/u,
   /fragment/u,
   /krok po kroku/u,
-  /rozwiaz/u,
-  /odpowiedz/u,
+  /rozwi[ąa][żz]/u,
+  /odpowied[źz]/u,
   /wynik/u,
 ];
 

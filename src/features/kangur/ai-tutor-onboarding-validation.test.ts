@@ -27,7 +27,7 @@ describe('validateKangurAiTutorOnboardingStore', () => {
 
   it('flags placeholder onboarding copy as a blocking issue', () => {
     const store = cloneDefaultStore();
-    store.entries[0].shortDescription = 'TODO uzupelnic opis tej sekcji.';
+    store.entries[0].shortDescription = 'TODO uzupełnić opis tej sekcji.';
 
     const result = validateKangurAiTutorOnboardingStore({
       store,
@@ -69,7 +69,7 @@ describe('validateKangurAiTutorOnboardingStore', () => {
 describe('validateKangurAiTutorOnboardingContent', () => {
   it('flags placeholder onboarding copy inside the guest intro content pack', () => {
     const content = JSON.parse(JSON.stringify(DEFAULT_KANGUR_AI_TUTOR_CONTENT));
-    content.guestIntro.initial.headline = 'TODO uzupelnic nagłówek';
+    content.guestIntro.initial.headline = 'TODO uzupełnić nagłówek';
 
     const result = validateKangurAiTutorOnboardingContent({
       content,

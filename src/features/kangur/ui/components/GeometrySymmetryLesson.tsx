@@ -1,9 +1,11 @@
 import { useState } from 'react';
 
+import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
+import GeometrySymmetryGame from '@/features/kangur/ui/components/GeometrySymmetryGame';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 import {
   GeometrySymmetryAxesAnimation,
@@ -19,84 +21,10 @@ import {
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 
-type SectionId = 'intro' | 'os' | 'figury' | 'animacje' | 'podsumowanie';
+type SectionId = 'intro' | 'os' | 'figury' | 'podsumowanie' | 'game';
+type SlideSectionId = Exclude<SectionId, 'game'>;
 
-const SYMMETRY_ANIMATION_SLIDES: LessonSlide[] = [
-  {
-    title: 'Oś symetrii w ruchu',
-    content: (
-      <div className='flex flex-col gap-4 text-center'>
-        <p className='[color:var(--kangur-page-text)]'>
-          Oś symetrii dzieli figurę na dwie pasujące połówki.
-        </p>
-        <KangurLessonCallout accent='slate' className='border-emerald-200/85'>
-          <div className='mx-auto h-28 w-40'>
-            <GeometrySymmetryFoldAnimation />
-          </div>
-          <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
-            Jedna strona odbija się w drugiej.
-          </p>
-        </KangurLessonCallout>
-      </div>
-    ),
-  },
-  {
-    title: 'Wiele osi symetrii',
-    content: (
-      <div className='flex flex-col gap-4 text-center'>
-        <p className='[color:var(--kangur-page-text)]'>
-          Niektóre figury mają więcej niż jedną oś.
-        </p>
-        <KangurLessonCallout accent='emerald'>
-          <div className='mx-auto h-28 w-40'>
-            <GeometrySymmetryAxesAnimation />
-          </div>
-          <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
-            Koło ma osi nieskończenie wiele.
-          </p>
-        </KangurLessonCallout>
-      </div>
-    ),
-  },
-  {
-    title: 'Odbicie lustrzane',
-    content: (
-      <div className='flex flex-col gap-4 text-center'>
-        <p className='[color:var(--kangur-page-text)]'>
-          Gdy złożysz figurę na osi, obie strony pokrywają się.
-        </p>
-        <KangurLessonCallout accent='emerald'>
-          <div className='mx-auto h-28 w-40'>
-            <GeometrySymmetryMirrorAnimation />
-          </div>
-          <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
-            To właśnie odbicie lustrzane.
-          </p>
-        </KangurLessonCallout>
-      </div>
-    ),
-  },
-  {
-    title: 'Symetria obrotowa',
-    content: (
-      <div className='flex flex-col gap-4 text-center'>
-        <p className='[color:var(--kangur-page-text)]'>
-          Niektóre figury wyglądają tak samo po obrocie.
-        </p>
-        <KangurLessonCallout accent='emerald'>
-          <div className='mx-auto h-28 w-28'>
-            <GeometrySymmetryRotationAnimation />
-          </div>
-          <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
-            Kwadrat ma symetrię obrotową.
-          </p>
-        </KangurLessonCallout>
-      </div>
-    ),
-  },
-];
-
-export const SLIDES: Record<SectionId, LessonSlide[]> = {
+export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   intro: [
     {
       title: 'Co to jest symetria?',
@@ -238,7 +166,6 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
   ],
-  animacje: SYMMETRY_ANIMATION_SLIDES,
   podsumowanie: [
     {
       title: 'Podsumowanie',
@@ -263,9 +190,9 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Podsumowanie w ruchu',
+      title: 'Podsumowanie: oś symetrii',
       content: (
-        <div className='grid gap-3 text-center sm:grid-cols-2'>
+        <div className='flex flex-col gap-3 text-center'>
           <KangurLessonCallout accent='emerald' padding='sm'>
             <div className='mx-auto h-28 w-40'>
               <GeometrySymmetryFoldAnimation />
@@ -274,6 +201,13 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               Złóż figurę wzdłuż osi.
             </p>
           </KangurLessonCallout>
+        </div>
+      ),
+    },
+    {
+      title: 'Podsumowanie: wiele osi',
+      content: (
+        <div className='flex flex-col gap-3 text-center'>
           <KangurLessonCallout accent='emerald' padding='sm'>
             <div className='mx-auto h-28 w-40'>
               <GeometrySymmetryAxesAnimation />
@@ -282,6 +216,13 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               Symetria to zgodność po obu stronach osi.
             </p>
           </KangurLessonCallout>
+        </div>
+      ),
+    },
+    {
+      title: 'Podsumowanie: odbicie lustrzane',
+      content: (
+        <div className='flex flex-col gap-3 text-center'>
           <KangurLessonCallout accent='emerald' padding='sm'>
             <div className='mx-auto h-28 w-40'>
               <GeometrySymmetryMirrorAnimation />
@@ -290,6 +231,13 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               Odbicie lustrzane po osi.
             </p>
           </KangurLessonCallout>
+        </div>
+      ),
+    },
+    {
+      title: 'Podsumowanie: symetria obrotowa',
+      content: (
+        <div className='flex flex-col gap-3 text-center'>
           <KangurLessonCallout accent='emerald' padding='sm'>
             <div className='mx-auto h-28 w-28'>
               <GeometrySymmetryRotationAnimation />
@@ -313,13 +261,14 @@ export const HUB_SECTIONS = [
     title: 'Figury symetryczne',
     description: 'Które figury maja symetrię?',
   },
-  {
-    id: 'animacje',
-    emoji: '🎞️',
-    title: 'Animacje',
-    description: 'Symetria w ruchu',
-  },
   { id: 'podsumowanie', emoji: '📋', title: 'Podsumowanie', description: 'Wszystko razem' },
+  {
+    id: 'game',
+    emoji: '🎯',
+    title: 'Lustra symetrii',
+    description: 'Narysuj oś i dorysuj odbicie',
+    isGame: true,
+  },
 ];
 
 export default function GeometrySymmetryLesson(): React.JSX.Element {
@@ -333,14 +282,33 @@ export default function GeometrySymmetryLesson(): React.JSX.Element {
     addXp(reward.xp, reward.progressUpdates);
   };
 
+  if (activeSection === 'game') {
+    const gameSection = HUB_SECTIONS.find((section) => section.id === activeSection) ?? null;
+    return (
+      <LessonActivityStage
+        accent='emerald'
+        icon='🪞'
+        maxWidthClassName='max-w-2xl'
+        onBack={() => setActiveSection(null)}
+        sectionHeader={gameSection}
+        shellTestId='geometry-symmetry-game-shell'
+        title='Lustra symetrii'
+      >
+        <GeometrySymmetryGame onFinish={() => setActiveSection(null)} />
+      </LessonActivityStage>
+    );
+  }
+
   if (activeSection) {
     return (
       <LessonSlideSection
-        slides={SLIDES[activeSection]}
+        slides={SLIDES[activeSection as SlideSectionId]}
         sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
         onBack={() => setActiveSection(null)}
         onComplete={activeSection === 'podsumowanie' ? handleComplete : undefined}
-        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
+        onProgressChange={(viewedCount) =>
+          markSectionViewedCount(activeSection as SlideSectionId, viewedCount)
+        }
         dotActiveClass='bg-emerald-500'
         dotDoneClass='bg-emerald-300'
         gradientClass='kangur-gradient-accent-emerald'
@@ -354,12 +322,18 @@ export default function GeometrySymmetryLesson(): React.JSX.Element {
       lessonTitle='Symetria'
       gradientClass='kangur-gradient-accent-emerald'
       progressDotClassName='bg-emerald-300'
-      sections={HUB_SECTIONS.map((section) => ({
-        ...section,
-        progress: sectionProgress[section.id as SectionId],
-      }))}
+      sections={HUB_SECTIONS.map((section) =>
+        section.isGame
+          ? section
+          : {
+            ...section,
+            progress: sectionProgress[section.id as SlideSectionId],
+          }
+      )}
       onSelect={(id) => {
-        markSectionOpened(id as SectionId);
+        if (id !== 'game') {
+          markSectionOpened(id as SlideSectionId);
+        }
         setActiveSection(id as SectionId);
       }}
     />

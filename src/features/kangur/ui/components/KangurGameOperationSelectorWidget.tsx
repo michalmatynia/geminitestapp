@@ -49,9 +49,9 @@ const QUICK_PRACTICE_OPTIONS = [
   },
   {
     accent: 'violet',
-    description: 'Sprawdź tabliczke w krótkim quizie z mnozenia.',
+    description: 'Sprawdź tabliczkę w krótkim quizie z mnożenia.',
     emoji: '✖️',
-    label: 'Quiz mnozenia',
+    label: 'Quiz mnożenia',
     onSelectScreen: 'multiplication_quiz',
   },
   {

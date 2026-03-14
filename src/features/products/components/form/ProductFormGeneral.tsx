@@ -37,7 +37,7 @@ import {
   FormField,
   Alert,
   Skeleton,
-} from '@/shared/ui';
+} from '@/features/products/ui';
 import { cn } from '@/shared/utils';
 
 import { ValidatedField } from './ValidatedField';

@@ -158,7 +158,7 @@ function SubtractingNumberLineAnimation(): React.JSX.Element {
 function SubtractingTenFrameAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja ramki dziesiatki: odejmowanie 13 minus 5.'
+      aria-label='Animacja ramki dziesiątki: odejmowanie 13 minus 5.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 420 140'
@@ -338,7 +338,7 @@ function SubtractingDifferenceBarAnimation(): React.JSX.Element {
 function SubtractingAbacusAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja liczydla: odejmowanie dziesiatek i jednosci osobno.'
+      aria-label='Animacja liczydła: odejmowanie dziesiątek i jedności osobno.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 440 190'
@@ -457,7 +457,7 @@ function SubtractingAbacusAnimation(): React.JSX.Element {
 export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
   podstawy: [
     {
-      title: 'Co to znaczy odejmowac?',
+      title: 'Co to znaczy odejmować?',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
@@ -622,11 +622,11 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Ramka dziesiatki',
+      title: 'Ramka dziesiątki',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Zabierz najpierw nadwyzke ponad 10, potem reszte z ramki.
+            Zabierz najpierw nadwyżkę ponad 10, potem resztę z ramki.
           </KangurLessonLead>
           <KangurLessonCallout accent='rose' className='text-center'>
             <div className='mx-auto w-full max-w-sm'>
@@ -647,20 +647,20 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Odejmuj osobno dziesiatki i jednosci!
+            Odejmuj osobno dziesiątki i jedności!
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' className='max-w-xs text-center'>
             <KangurEquationDisplay accent='amber'>47 − 23 = ?</KangurEquationDisplay>
             <div className='mt-3 grid gap-2 text-left text-sm [color:var(--kangur-page-text)]'>
               <div className='flex items-center justify-between rounded-lg border border-amber-200/70 bg-amber-50/70 px-3 py-2'>
                 <span className='text-xs font-semibold uppercase tracking-wide text-amber-700'>
-                  Dziesiatki
+                  Dziesiątki
                 </span>
                 <span className='font-semibold'>40 − 20 = 20</span>
               </div>
               <div className='flex items-center justify-between rounded-lg border border-amber-200/70 bg-amber-50/70 px-3 py-2'>
                 <span className='text-xs font-semibold uppercase tracking-wide text-amber-700'>
-                  Jednosci
+                  Jedności
                 </span>
                 <span className='font-semibold'>7 − 3 = 4</span>
               </div>
@@ -673,11 +673,11 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Liczydlo',
+      title: 'Liczydło',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Liczydlo pokazuje odejmowanie dziesiatek i jednosci osobno.
+            Liczydło pokazuje odejmowanie dziesiątek i jedności osobno.
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' className='text-center'>
             <div className='mx-auto w-full max-w-sm'>
@@ -697,7 +697,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <div className='flex flex-wrap justify-center gap-2 text-xs font-semibold'>
-            <KangurLessonChip accent='rose'>Kolejnosc ma znaczenie: 7 − 3 ≠ 3 − 7</KangurLessonChip>
+            <KangurLessonChip accent='rose'>Kolejność ma znaczenie: 7 − 3 ≠ 3 − 7</KangurLessonChip>
             <KangurLessonChip accent='sky'>Odejmowanie 0: 8 − 0 = 8</KangurLessonChip>
             <KangurLessonChip accent='emerald'>Sprawdź dodawaniem: 5 + 3 = 8</KangurLessonChip>
             <KangurLessonChip accent='amber'>Rozbij na kroki: 13 − 5 = 10 − 2</KangurLessonChip>
@@ -708,7 +708,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
                 Cofaj się krokami
               </p>
               <p className='mt-1'>
-                Startuj od wiekszej liczby: <b>9 − 4</b>
+                Startuj od większej liczby: <b>9 − 4</b>
               </p>
               <p className='mt-2'>
                 9 {'->'} 8 {'->'} 7 {'->'} 6 {'->'} <b>5</b>
@@ -727,7 +727,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
             </KangurLessonCallout>
             <KangurLessonCallout accent='slate' className='text-sm' padding='sm'>
               <p className='text-xs font-semibold uppercase tracking-wide text-slate-600'>
-                Kolejnosc ma znaczenie
+                Kolejność ma znaczenie
               </p>
               <p className='mt-1'>
                 <b>7 − 3</b> to nie to samo co <b>3 − 7</b>.
@@ -749,7 +749,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
                 <SubtractingSvgAnimation />
               </div>
               <KangurLessonCaption className='mt-2'>
-                Dwie kropki "odchodza", zostaja trzy.
+                Dwie kropki "odchodzą", zostają trzy.
               </KangurLessonCaption>
             </KangurLessonInset>
             <div className='w-full max-w-md rounded-2xl border border-slate-200/70 bg-white px-4 py-3 text-left text-sm'>
@@ -760,11 +760,11 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
                   <p className='text-xs text-slate-500'>5 = 3 + 2</p>
                 </div>
                 <div>
-                  <p className='font-semibold text-slate-700'>Zejdz do 10</p>
+                  <p className='font-semibold text-slate-700'>Zejdź do 10</p>
                   <p className='text-xs text-slate-500'>13 − 3 = 10</p>
                 </div>
                 <div>
-                  <p className='font-semibold text-slate-700'>Odejmij reszte</p>
+                  <p className='font-semibold text-slate-700'>Odejmij resztę</p>
                   <p className='text-xs text-slate-500'>10 − 2 = 8</p>
                 </div>
                 <div>
@@ -789,7 +789,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               <span>Skoki na osi</span>
             </div>
             <p className='mt-2 text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
-              Cofaj się w dwoch krokach: do 10, potem dalej.
+              Cofaj się w dwóch krokach: do 10, potem dalej.
             </p>
             <div className='mt-2'>
               <SubtractingNumberLineAnimation />
@@ -800,7 +800,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Ramka dziesiatki',
+      title: 'Ramka dziesiątki',
       content: (
         <KangurLessonStack>
           <KangurLessonInset accent='amber' className='text-center'>
@@ -808,10 +808,10 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               <KangurIconBadge accent='amber' size='sm'>
                 10
               </KangurIconBadge>
-              <span>Ramka dziesiatki</span>
+              <span>Ramka dziesiątki</span>
             </div>
             <p className='mt-2 text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
-              Najpierw zdejmij nadwyzke, potem reszte z ramki.
+              Najpierw zdejmij nadwyżkę, potem resztę z ramki.
             </p>
             <div className='mt-2'>
               <SubtractingTenFrameAnimation />
@@ -862,7 +862,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               <span>Roznica</span>
             </div>
             <p className='mt-2 text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
-              Porównaj dwie liczby i zobacz, ile brakuje do wiekszej.
+              Porównaj dwie liczby i zobacz, ile brakuje do większej.
             </p>
             <div className='mt-2'>
               <SubtractingDifferenceBarAnimation />
@@ -897,7 +897,7 @@ export const HUB_SECTIONS = [
     id: 'dwucyfrowe',
     emoji: '💡',
     title: 'Odejmowanie dwucyfrowe',
-    description: 'Dziesiatki i jednosci osobno',
+    description: 'Dziesiątki i jedności osobno',
   },
   { id: 'zapamietaj', emoji: '🧠', title: 'Zapamiętaj!', description: 'Zasady odejmowania' },
   {

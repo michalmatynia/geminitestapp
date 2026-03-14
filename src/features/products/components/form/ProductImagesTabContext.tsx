@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 
-import type { ProductImageManagerController } from '@/features/products/components/ProductImageManager';
+import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 
 export type ProductImagesTabContextValue = {

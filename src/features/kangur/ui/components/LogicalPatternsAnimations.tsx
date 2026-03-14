@@ -452,7 +452,7 @@ export function PatternCycleAnimation(): React.JSX.Element {
 export function RuleChecklistAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja: sprawdź listę kroków i odhacz regule.'
+      aria-label='Animacja: sprawdź listę kroków i odhacz regułę.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 320 140'

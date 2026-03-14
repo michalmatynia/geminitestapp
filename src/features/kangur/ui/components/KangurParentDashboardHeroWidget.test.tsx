@@ -199,11 +199,23 @@ describe('KangurParentDashboardHeroWidget', () => {
     expect(screen.getByTestId('kangur-parent-dashboard-track-quest')).toHaveTextContent(
       '1/4 odznak'
     );
-    expect(screen.getByTestId('kangur-parent-dashboard-track-mastery')).toHaveTextContent(
-      'Mistrzostwo'
+    expect(screen.getByTestId('kangur-parent-dashboard-track-onboarding')).toHaveTextContent(
+      'Start'
     );
-    expect(screen.getByTestId('kangur-parent-dashboard-track-mastery')).toHaveTextContent(
-      'Budowniczy mistrzostwa · 1/3 lekcje'
+    expect(screen.getByTestId('kangur-parent-dashboard-track-onboarding')).toHaveTextContent(
+      '2/2 odznak'
+    );
+    expect(screen.getByTestId('kangur-parent-dashboard-track-onboarding')).toHaveTextContent(
+      'Wszystkie odznaki odblokowane'
+    );
+    expect(screen.getByTestId('kangur-parent-dashboard-track-challenge')).toHaveTextContent(
+      'Wyzwania'
+    );
+    expect(screen.getByTestId('kangur-parent-dashboard-track-challenge')).toHaveTextContent(
+      '1/2 odznak'
+    );
+    expect(screen.getByTestId('kangur-parent-dashboard-track-challenge')).toHaveTextContent(
+      'Celny umysł · 80% / 85%'
     );
     expect(screen.getByRole('link', { name: 'Uruchom trening' })).toHaveAttribute(
       'href',

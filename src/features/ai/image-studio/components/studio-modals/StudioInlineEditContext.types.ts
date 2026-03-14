@@ -1,6 +1,6 @@
 import type { ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
 import type { ImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
-import type { ProductImageManagerController } from '@/features/products';
+import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { PromptValidationIssue } from '@/shared/contracts/prompt-engine';
 import type { ListQuery } from '@/shared/contracts/ui';

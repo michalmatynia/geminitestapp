@@ -10,7 +10,7 @@ import {
   type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
 import { ProductFormData } from '@/shared/contracts/products';
-import { Button, Hint } from '@/shared/ui';
+import { Button, Hint } from '@/features/products/ui';
 import { cn } from '@/shared/utils';
 
 const buildIssueSnippet = (

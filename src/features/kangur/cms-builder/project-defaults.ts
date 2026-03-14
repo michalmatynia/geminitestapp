@@ -1,10 +1,7 @@
 import type { BlockInstance, PageComponentInput } from '@/shared/contracts/cms';
 import {
   KANGUR_CMS_SCREEN_LABELS,
-  type KangurCmsScreenKey,
-  type KangurCmsScreen,
   type KangurCmsProject,
-  type KangurWidgetId,
 } from './project-contracts';
 import {
   makeBlockSection,
@@ -19,14 +16,14 @@ import {
   withOrders,
 } from './project-factories';
 import {
+  makeGridColumn,
+  makeGridRow,
+  makeGridSection,
   makeGameMetricCard,
   makeGameUserVisibilitySettings,
   makeRuntimeVisibilitySettings,
 } from './project-sections';
 import { makeLeaderboardSection } from './project-leaderboard';
-
-const KANGUR_SEGMENTED_CONTROL_CLASSNAME =
-  'flex items-center gap-1 rounded-[20px] border p-1 [border-color:var(--kangur-soft-card-border)] [background:var(--kangur-soft-card-background)]';
 
 export const makeGameScreenVisibilitySettings = (
   screen:
@@ -697,7 +694,7 @@ export const createDefaultGameScreenComponents = (): PageComponentInput[] =>
                     }),
                     makeTextBlock(
                       'kangur-game-home-progress-summary',
-                      'Poziom 1 · 0 XP lacznie',
+                      'Poziom 1 · 0 XP łącznie',
                       {
                         fontSize: 14,
                         textColor: '#7a86b0',
@@ -705,7 +702,7 @@ export const createDefaultGameScreenComponents = (): PageComponentInput[] =>
                           enabled: true,
                           source: 'kangur',
                           path: 'progress.levelSummary',
-                          fallback: 'Poziom 1 · 0 XP lacznie',
+                          fallback: 'Poziom 1 · 0 XP łącznie',
                         },
                       }
                     ),

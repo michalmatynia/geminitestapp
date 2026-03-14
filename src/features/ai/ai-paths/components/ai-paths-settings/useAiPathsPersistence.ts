@@ -25,6 +25,7 @@ import {
   fetchAiPathsSettingsByKeysCached,
   updateAiPathsSettingsBulk,
 } from '@/shared/lib/ai-paths/settings-store-client';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
@@ -338,7 +339,7 @@ export function useAiPathsPersistence(
 
         const totalDurationMs = Date.now() - loadStartedAt;
         if (totalDurationMs >= 300) {
-          logSystemEvent({
+          void logSystemEvent({
             source: 'ai.paths.persistence',
             message: 'Hydrated active canvas path',
             level: 'info',
@@ -350,7 +351,8 @@ export function useAiPathsPersistence(
               activePathId: resolvedActivePathId,
             },
           });
-        }        setUiStateLoaded(true);
+        }
+        setUiStateLoaded(true);
       } catch (error) {
         const errorDetail = error instanceof Error && error.message ? `: ${error.message}` : '';
         reportAiPathsError(
@@ -532,7 +534,7 @@ export function useAiPathsPersistence(
       }
       const durationMs = Date.now() - startedAt;
       if (durationMs >= 200) {
-        logSystemEvent({
+        void logSystemEvent({
           source: 'ai.paths.persistence',
           message: 'Prefetched non-active path configs',
           level: 'info',
@@ -541,7 +543,8 @@ export function useAiPathsPersistence(
             pathCount: pendingPathIds.length,
           },
         });
-      }    };
+      }
+    };
 
     if (typeof window !== 'undefined') {
       const idleWindow = window as Window & {

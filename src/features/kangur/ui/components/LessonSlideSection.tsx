@@ -24,6 +24,7 @@ import { cn } from '@/shared/utils';
 export type LessonSlide = {
   title: string;
   content: React.JSX.Element;
+  panelClassName?: string;
 };
 
 type LessonSlideSectionProps = {
@@ -136,7 +137,7 @@ export default function LessonSlideSection({
         accent='slate'
         align='center'
         data-testid='lesson-slide-empty'
-        description='Dodaj przynajmniej jeden slajd, aby uruchomić te sekcję lekcji.'
+        description='Dodaj przynajmniej jeden slajd, aby uruchomić tę sekcję lekcji.'
         padding='lg'
         title='Brak slajdu.'
       />
@@ -227,7 +228,7 @@ export default function LessonSlideSection({
                 key={i}
                 type='button'
                 onClick={() => setSlide(i)}
-                aria-label={`Przejdz do slajdu ${i + 1} z ${totalSlides}: ${slideItem.title}`}
+                aria-label={`Przejdź do slajdu ${i + 1} z ${totalSlides}: ${slideItem.title}`}
                 aria-current={i === slide ? 'step' : undefined}
                 aria-controls={slidePanelId}
                 aria-posinset={i + 1}
@@ -285,7 +286,7 @@ export default function LessonSlideSection({
             aria-roledescription='slajd'
             aria-labelledby={slideTitleId}
             aria-describedby={slideStatusId}
-            className='flex min-h-[260px] flex-col gap-4'
+            className={cn('flex min-h-[260px] flex-col gap-4', activeSlide.panelClassName)}
             data-testid='lesson-slide-shell'
             padding='xl'
             surface='solid'

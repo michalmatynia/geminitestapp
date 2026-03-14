@@ -32,8 +32,13 @@ vi.mock('@/features/products/validations/middleware', () => ({
 
 vi.mock('@/features/products/server', () => ({
   parseJsonBody: parseJsonBodyMock,
+  formDataToObject: vi.fn(() => ({})),
   CachedProductService: {
     invalidateProduct: invalidateProductMock,
+  },
+  productService: {
+    updateProduct: updateProductMock,
+    deleteProduct: deleteProductMock,
   },
 }));
 

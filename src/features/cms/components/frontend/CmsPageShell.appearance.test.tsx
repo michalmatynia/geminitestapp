@@ -53,7 +53,7 @@ describe('CmsPageShell appearance', () => {
 
     await waitFor(() => {
       expect(shell).toHaveAttribute('data-appearance-mode', 'dark');
-      expect(shell?.style.getPropertyValue('--cms-appearance-page-background')).toContain(
+      expect(shell?.style.getPropertyValue('--cms-appearance-bg')).toContain(
         'color-mix'
       );
     });

@@ -520,7 +520,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
         dispatchMs,
       })
     ) {
-      logSystemEvent({
+      void logSystemEvent({
         source: 'ai.paths.enqueue',
         message: 'Path run enqueue timing',
         level: 'info',

@@ -241,6 +241,37 @@ export function ClockMinuteByMinuteAnimation(): React.JSX.Element {
   );
 }
 
+export function ClockFullHourStepAnimation(): React.JSX.Element {
+  return (
+    <ClockFrame ariaLabel='Animacja: krótka wskazówka zatrzymuje się na pełnych godzinach.'>
+      <style>{`
+        .hour-hand { stroke: #dc2626; stroke-width: 7; stroke-linecap: round; }
+        .minute-hand { stroke: #4f46e5; stroke-width: 4; stroke-linecap: round; }
+        .hour-step {
+          transform-origin: 100px 100px;
+          animation: hourStep 8s ease-in-out infinite;
+        }
+        @keyframes hourStep {
+          0%, 10% { transform: rotate(30deg); }
+          18%, 28% { transform: rotate(90deg); }
+          36%, 46% { transform: rotate(150deg); }
+          54%, 64% { transform: rotate(210deg); }
+          72%, 82% { transform: rotate(270deg); }
+          90%, 96% { transform: rotate(330deg); }
+          100% { transform: rotate(390deg); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .hour-step { animation: none; transform: rotate(150deg); }
+        }
+      `}</style>
+      <line className='minute-hand' x1='100' y1='100' x2='100' y2='34' />
+      <g className='hour-step'>
+        <line className='hour-hand' x1='100' y1='100' x2='100' y2='64' />
+      </g>
+    </ClockFrame>
+  );
+}
+
 export function ClockSecondHandAnimation(): React.JSX.Element {
   return (
     <ClockFrame ariaLabel='Animacja: wskazówka sekundowa obraca się szybko.'>

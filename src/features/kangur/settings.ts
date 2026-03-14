@@ -12,7 +12,7 @@ import {
   type KangurLessonComponentId,
   type KangurLessonContentMode,
 } from '@/shared/contracts/kangur';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
+import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 
 export { KANGUR_LESSONS_SETTING_KEY, KANGUR_LESSON_DOCUMENTS_SETTING_KEY };
 export * from './help-settings';

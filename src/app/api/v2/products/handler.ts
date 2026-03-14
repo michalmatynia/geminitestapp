@@ -18,7 +18,6 @@ import {
   productFilterSchema,
   type ProductFiltersParsed,
 } from '@/features/products/server';
-
 const freshQuerySchema = z.preprocess(
   (value: unknown) => {
     if (typeof value === 'boolean') return value;
@@ -89,7 +88,7 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   const forceFresh = fresh === true;
 
   try {
-    // Use CachedProductService for better performance, unless fresh data is explicitly requested.
+    // Use CachedProductService to improve performance unless fresh data is requested.
     let provider: Awaited<ReturnType<typeof getProductDataProvider>> | null = null;
     const products = forceFresh
       ? await (async () => {

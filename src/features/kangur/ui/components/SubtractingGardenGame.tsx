@@ -57,6 +57,7 @@ const TOKEN_STYLES = [
   'bg-gradient-to-br from-rose-200 via-pink-300 to-fuchsia-300 shadow-[0_10px_26px_-12px_rgba(244,63,94,0.5)]',
   'bg-gradient-to-br from-emerald-200 via-teal-300 to-sky-300 shadow-[0_10px_26px_-12px_rgba(16,185,129,0.5)]',
 ];
+const DEFAULT_TOKEN_STYLE = TOKEN_STYLES[0] ?? 'bg-slate-200';
 
 const TOKEN_EMOJIS = ['✨', '⭐', '🌟', '💫', '🟡'];
 
@@ -67,7 +68,7 @@ const createTokens = (count: number, seed: number): TokenItem[] =>
   Array.from({ length: count }, (_, index) => ({
     id: `token-${seed}-${index}`,
     emoji: TOKEN_EMOJIS[index % TOKEN_EMOJIS.length] ?? '⭐',
-    style: TOKEN_STYLES[index % TOKEN_STYLES.length] ?? TOKEN_STYLES[0],
+    style: TOKEN_STYLES[index % TOKEN_STYLES.length] ?? DEFAULT_TOKEN_STYLE,
   }));
 
 const createRound = (roundIndex: number): Round => {
@@ -323,12 +324,12 @@ export default function SubtractingGardenGame({
 
   const feedbackMessage =
     status === 'correct'
-      ? `Brawo! Zostalo ${round.a - round.b}.`
+      ? `Brawo! Zostało ${round.a - round.b}.`
       : status === 'wrong'
         ? missing > 0
-          ? `Za malo. Zabierz jeszcze ${missing}.`
-          : `Za duzo. Oddaj ${Math.abs(missing)}.`
-        : 'Przeciagnij lub kliknij obiekty, aby odejmowac.';
+          ? `Za mało. Zabierz jeszcze ${missing}.`
+          : `Za dużo. Oddaj ${Math.abs(missing)}.`
+        : 'Przeciągnij lub kliknij obiekty, aby odejmować.';
 
   return (
     <KangurPracticeGameStage className='w-full max-w-none gap-6'>

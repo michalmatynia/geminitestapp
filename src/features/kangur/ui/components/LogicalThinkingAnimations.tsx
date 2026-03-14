@@ -1,7 +1,7 @@
 export function LogicalThinkingIntroAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja: kroki logicznego myślenia polaczone strzalkami.'
+      aria-label='Animacja: kroki logicznego myślenia połączone strzałkami.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 360 120'
@@ -31,7 +31,7 @@ export function LogicalThinkingIntroAnimation(): React.JSX.Element {
 export function LogicalThinkingStepsAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja: trzy kroki logiki podswietlane po kolei.'
+      aria-label='Animacja: trzy kroki logiki podświetlane po kolei.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 360 120'
@@ -64,7 +64,7 @@ export function LogicalThinkingStepsAnimation(): React.JSX.Element {
       <line className='arrow' x1='120' y1='59' x2='135' y2='59' />
       <line className='arrow' x1='225' y1='59' x2='240' y2='59' />
       <text className='label' x='46' y='63'>OBSERWUJ</text>
-      <text className='label' x='155' y='63'>LACZ</text>
+      <text className='label' x='155' y='63'>ŁĄCZ</text>
       <text className='label' x='258' y='63'>WNIOSEK</text>
     </svg>
   );
@@ -138,7 +138,7 @@ export function LogicalPatternGrowthAnimation(): React.JSX.Element {
 export function LogicalClassificationAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja: elementy trafiaja do dwoch grup.'
+      aria-label='Animacja: elementy trafiają do dwóch grup.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 360 140'

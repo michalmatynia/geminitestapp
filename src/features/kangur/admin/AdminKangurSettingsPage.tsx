@@ -383,7 +383,7 @@ export function AdminKangurSettingsPage(): ReactElement {
     () => [
       {
         value: DEFAULT_AGENT_PERSONA_OPTION,
-        label: 'Domyslna persona',
+        label: 'Domyślna persona',
         description: 'Use the default Kangur tutor voice and identity.',
       },
       ...agentPersonas.map((persona) => ({
@@ -821,7 +821,7 @@ export function AdminKangurSettingsPage(): ReactElement {
                     />
                     <div className='min-w-0'>
                       <div className='text-sm font-semibold text-foreground'>
-                        {selectedAgentPersona?.name ?? 'Domyslna persona'}
+                        {selectedAgentPersona?.name ?? 'Domyślna persona'}
                       </div>
                       <div className='mt-0.5 text-xs leading-relaxed text-muted-foreground'>
                         {selectedAgentPersona

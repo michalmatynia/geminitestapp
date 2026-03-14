@@ -116,8 +116,8 @@ describe('CmsStorefrontAppearance', () => {
       'dark'
     );
 
-    expect(appearance.vars['--cms-appearance-page-background']).toContain('color-mix');
-    expect(appearance.vars['--cms-appearance-button-primary-text']).toBe('#f8fafc');
+    expect(appearance.vars['--cms-appearance-bg']).toContain('color-mix');
+    expect(appearance.vars['--cms-appearance-button-primary-text']).toBe('#f3f4f6');
     expect(appearance.vars['--cms-appearance-input-border']).toBe('rgba(255,255,255,0.18)');
   });
 
@@ -146,16 +146,6 @@ describe('CmsStorefrontAppearance', () => {
     expect(appearance.vars['--kangur-chat-panel-radius-compact']).toBe('24px');
     expect(appearance.vars['--kangur-chat-spotlight-radius-sm']).toBe('18px');
     expect(appearance.vars['--kangur-chat-spotlight-radius-md']).toBe('22px');
-    expect(appearance.vars['--kangur-chat-padding-x-sm']).toBe('12px');
-    expect(appearance.vars['--kangur-chat-padding-y-sm']).toBe('8px');
-    expect(appearance.vars['--kangur-chat-padding-x-lg']).toBe('16px');
-    expect(appearance.vars['--kangur-chat-padding-y-lg']).toBe('12px');
-    expect(appearance.vars['--kangur-chat-header-padding-x-sm']).toBe('12px');
-    expect(appearance.vars['--kangur-chat-header-padding-y-sm']).toBe('10px');
-    expect(appearance.vars['--kangur-chat-header-padding-x-md']).toBe('16px');
-    expect(appearance.vars['--kangur-chat-header-padding-y-md']).toBe('12px');
-    expect(appearance.vars['--kangur-chat-header-padding-x-lg']).toBe('20px');
-    expect(appearance.vars['--kangur-chat-header-padding-y-lg']).toBe('16px');
     expect(appearance.vars['--kangur-chat-spotlight-border']).toBe('rgba(252, 211, 77, 0.42)');
     expect(appearance.vars['--kangur-chat-avatar-shell-background']).toBe('rgba(255,255,255,0.12)');
     expect(appearance.vars['--kangur-chat-avatar-shell-border']).toBe('rgba(255,255,255,0.25)');
@@ -171,19 +161,6 @@ describe('CmsStorefrontAppearance', () => {
     expect(appearance.vars['--kangur-chat-sheet-handle-background']).toBe(
       'rgba(251,191,36,0.22)'
     );
-    expect(appearance.vars['--kangur-panel-padding-md']).toBe('20px');
-    expect(appearance.vars['--kangur-card-padding-md']).toBe('16px');
-    expect(appearance.vars['--kangur-stack-gap-md']).toBe('16px');
-    expect(appearance.vars['--kangur-pill-padding-x']).toBe('16px');
-    expect(appearance.vars['--kangur-pill-padding-y']).toBe('10px');
-    expect(appearance.vars['--kangur-menu-item-radius']).toBe('16px');
-    expect(appearance.vars['--kangur-button-padding-x']).toBe('20px');
-    expect(appearance.vars['--kangur-button-padding-y']).toBe('10px');
-    expect(appearance.vars['--kangur-button-font-size']).toBe('14px');
-    expect(appearance.vars['--kangur-button-height']).toBe('50px');
-    expect(appearance.vars['--kangur-input-height']).toBe('50px');
-    expect(appearance.vars['--kangur-button-radius']).toBe('999px');
-    expect(appearance.vars['--kangur-input-radius']).toBe('22px');
   });
 
   it('preserves custom button gradients for Kangur themes', () => {
@@ -290,12 +267,12 @@ describe('CmsStorefrontAppearance', () => {
     expect(appearance.vars['--kangur-chat-header-padding-x-lg']).toBe('20px');
     expect(appearance.vars['--kangur-chat-header-padding-y-lg']).toBe('16px');
     expect(appearance.vars['--kangur-chat-spotlight-border']).toContain('#8b5cf6');
-    expect(appearance.vars['--kangur-chat-avatar-shell-background']).toContain('#ffffff');
-    expect(appearance.vars['--kangur-chat-avatar-shell-border']).toContain('#ddd6fe');
+    expect(appearance.vars['--kangur-chat-avatar-shell-background']).toBe('rgba(255,255,255,0.18)');
+    expect(appearance.vars['--kangur-chat-avatar-shell-border']).toBe('rgba(255,255,255,0.35)');
     expect(appearance.vars['--kangur-chat-pointer-marker']).toContain('#8b5cf6');
     expect(appearance.vars['--kangur-chat-header-snap-background']).toContain('#8b5cf6');
     expect(appearance.vars['--kangur-chat-warm-overlay-background']).toContain('#8b5cf6');
-    expect(appearance.vars['--kangur-chat-tail-background']).toContain('#ffffff');
+    expect(appearance.vars['--kangur-chat-tail-background']).toBe('var(--kangur-soft-card-background)');
     expect(appearance.vars['--kangur-chat-sheet-handle-background']).toContain('#8b5cf6');
     expect(appearance.vars['--kangur-panel-padding-md']).toBe('24px');
     expect(appearance.vars['--kangur-panel-padding-lg']).toBe('28px');

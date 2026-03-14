@@ -53,7 +53,7 @@ describe('OperationSelector', () => {
     );
     expect(screen.getByRole('heading', { name: 'Wybierz swoje wyzwanie' })).toHaveClass(
       'text-2xl',
-      'text-indigo-700'
+      '[color:var(--kangur-accent-indigo-start,#a855f7)]'
     );
 
     const divisionCard = screen.getByTestId('operation-card-division');

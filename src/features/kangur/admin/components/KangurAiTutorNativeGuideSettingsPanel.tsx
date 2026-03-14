@@ -47,7 +47,7 @@ const createEmptyEntry = (sortOrder: number): KangurAiTutorNativeGuideEntry => (
   contentIdPrefixes: [],
   title: 'Nowy wpis',
   shortDescription: 'Krótki opis nowej sekcji Kangur.',
-  fullDescription: 'Pełny opis nowej sekcji Kangur do uzupelnienia przez administratora.',
+  fullDescription: 'Pełny opis nowej sekcji Kangur do uzupełnienia przez administratora.',
   hints: [],
   relatedGames: [],
   relatedTests: [],

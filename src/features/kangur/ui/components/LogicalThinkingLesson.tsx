@@ -16,9 +16,12 @@ import {
   LogicalThinkingIntroAnimation,
   LogicalThinkingStepsAnimation,
 } from '@/features/kangur/ui/components/LogicalThinkingAnimations';
+import LogicalThinkingLabGame from '@/features/kangur/ui/components/LogicalThinkingLabGame';
+import LogicalIfThenStepsGame from '@/features/kangur/ui/components/LogicalIfThenStepsGame';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
+  KangurLessonInset,
   KangurLessonLead,
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
@@ -29,6 +32,7 @@ type SectionId =
   | 'wzorce'
   | 'klasyfikacja'
   | 'wnioskowanie'
+  | 'wnioskowanie_gra'
   | 'analogie'
   | 'zapamietaj';
 
@@ -269,6 +273,23 @@ const REASONING_SLIDES: LessonSlide[] = [
   },
 ];
 
+const REASONING_GAME_SLIDES: LessonSlide[] = [
+  {
+    title: 'Gra: Jeśli… to… krok po kroku',
+    panelClassName: 'w-full mx-auto lg:w-[min(760px,90vw)]',
+    content: (
+      <KangurLessonStack>
+        <KangurLessonLead>
+          Ułóż fakt, regułę i wniosek w odpowiedniej kolejności.
+        </KangurLessonLead>
+        <KangurLessonInset accent='indigo' className='w-full' padding='sm'>
+          <LogicalIfThenStepsGame />
+        </KangurLessonInset>
+      </KangurLessonStack>
+    ),
+  },
+];
+
 const ANALOGIES_SLIDES: LessonSlide[] = [
   {
     title: 'Analogie – co pasuje? 🔗',
@@ -335,6 +356,20 @@ const ANALOGIES_SLIDES: LessonSlide[] = [
 
 const SUMMARY_SLIDES: LessonSlide[] = [
   {
+    title: 'Gra: Logiczne Laboratorium 🧪',
+    panelClassName: 'w-full mx-auto lg:w-[min(760px,90vw)]',
+    content: (
+      <KangurLessonStack>
+        <KangurLessonLead>
+          Wykonaj trzy misje: wzorzec, klasyfikacja i analogia. Przeciągaj i klikaj!
+        </KangurLessonLead>
+        <KangurLessonCallout accent='violet' className='w-full' padding='sm'>
+          <LogicalThinkingLabGame />
+        </KangurLessonCallout>
+      </KangurLessonStack>
+    ),
+  },
+  {
     title: 'Zapamiętaj! 🌟',
     content: (
       <KangurLessonStack>
@@ -378,6 +413,7 @@ export const SECTION_SLIDES: Record<SectionId, LessonSlide[]> = {
   wzorce: PATTERN_SLIDES,
   klasyfikacja: CLASSIFICATION_SLIDES,
   wnioskowanie: REASONING_SLIDES,
+  wnioskowanie_gra: REASONING_GAME_SLIDES,
   analogie: ANALOGIES_SLIDES,
   zapamietaj: SUMMARY_SLIDES,
 };
@@ -387,6 +423,7 @@ export const SLIDES: LessonSlide[] = [
   ...PATTERN_SLIDES,
   ...CLASSIFICATION_SLIDES,
   ...REASONING_SLIDES,
+  ...REASONING_GAME_SLIDES,
   ...ANALOGIES_SLIDES,
   ...SUMMARY_SLIDES,
 ];
@@ -415,6 +452,12 @@ export const HUB_SECTIONS = [
     emoji: '💡',
     title: 'Wnioskowanie',
     description: 'Myślenie krok po kroku: jeśli... to...',
+  },
+  {
+    id: 'wnioskowanie_gra',
+    emoji: '🎮',
+    title: 'Gra: Jeśli… to…',
+    description: 'Układanie faktów, reguły i wniosku',
   },
   {
     id: 'analogie',

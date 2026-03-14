@@ -201,16 +201,14 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     const gamesToggle = screen.getByRole('checkbox', { name: /pokazuj tutora w grach/i });
     expect(lessonsToggle.nextElementSibling).toHaveClass(
       'bg-gradient-to-r',
-      'kangur-gradient-accent-amber',
-      'to-orange-400'
+      'kangur-gradient-accent-amber'
     );
     expect(lessonsToggle.parentElement?.parentElement).toHaveClass('border-amber-200', 'bg-amber-50/65');
 
     const enabledToggle = screen.getByRole('checkbox', { name: /ai tutor włączony/i });
     expect(enabledToggle.nextElementSibling).toHaveClass(
       'bg-gradient-to-r',
-      'kangur-gradient-accent-amber',
-      'to-orange-400'
+      'kangur-gradient-accent-amber'
     );
 
     expect(uiModeSelect).toHaveClass(

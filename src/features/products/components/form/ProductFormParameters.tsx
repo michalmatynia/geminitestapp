@@ -23,7 +23,7 @@ import {
   ToggleRow,
   EmptyState,
   LoadingState,
-} from '@/shared/ui';
+} from '@/features/products/ui';
 
 const getParameterLabel = (
   parameter: { name_en: string; name_pl?: string | null; name_de?: string | null },

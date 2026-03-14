@@ -148,7 +148,7 @@ describe('kangur ai tutor content handler', () => {
         ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.guestIntro,
         initial: {
           ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.guestIntro.initial,
-          headline: 'TODO uzupelnic nagłówek',
+          headline: 'TODO uzupełnić nagłówek',
         },
       },
     };

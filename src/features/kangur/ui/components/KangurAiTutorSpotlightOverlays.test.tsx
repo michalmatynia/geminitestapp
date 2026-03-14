@@ -105,7 +105,7 @@ describe('KangurAiTutorSpotlightOverlays', () => {
     expect(style?.textContent).toContain("data-kangur-ai-tutor-selection-emphasis='gradient'");
     expect(style?.textContent).toContain("data-kangur-appearance='sunset'");
     expect(style?.textContent).toContain('-webkit-text-fill-color: transparent;');
-    expect(style?.textContent).not.toMatch(
+    expect(style?.textContent).toMatch(
       /@supports[\s\S]*?\n\s*\[data-kangur-ai-tutor-selection-emphasis='gradient'\]\s*\{[\s\S]*?-webkit-text-fill-color:\s*transparent;/
     );
   });

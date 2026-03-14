@@ -168,8 +168,7 @@ describe('KangurAssignmentManager', () => {
     );
     expect(screen.getByTestId('assignment-manager-track-quest')).toHaveTextContent('Misje');
     expect(screen.getByTestId('assignment-manager-track-quest')).toHaveTextContent('1/4 odznak');
-    expect(screen.getByTestId('assignment-manager-track-mastery')).toHaveTextContent(
-      'Mistrzostwo'
-    );
+    expect(screen.getByTestId('assignment-manager-track-onboarding')).toHaveTextContent('Start');
+    expect(screen.getByTestId('assignment-manager-track-challenge')).toHaveTextContent('Wyzwania');
   });
 });

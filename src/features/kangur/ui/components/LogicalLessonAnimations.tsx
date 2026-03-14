@@ -1,7 +1,7 @@
 export function ClassificationSortByColorAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja klasyfikacji według koloru: czerwone elementy ida do lewej grupy, niebieskie do prawej.'
+      aria-label='Animacja klasyfikacji według koloru: czerwone elementy idą do lewej grupy, niebieskie do prawej.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 420 140'
@@ -52,7 +52,7 @@ export function ClassificationSortByColorAnimation(): React.JSX.Element {
 export function ClassificationSortBySizeAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja klasyfikacji według rozmiaru: duze elementy ida na górę, małe na dol.'
+      aria-label='Animacja klasyfikacji według rozmiaru: duże elementy idą na górę, małe na dół.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 420 140'
@@ -84,7 +84,7 @@ export function ClassificationSortBySizeAnimation(): React.JSX.Element {
       `}</style>
       <rect className='bin' height='46' rx='14' width='300' x='60' y='20' />
       <rect className='bin' height='46' rx='14' width='300' x='60' y='78' />
-      <text className='label' x='70' y='16'>Duze</text>
+      <text className='label' x='70' y='16'>Duże</text>
       <text className='label' x='70' y='74'>Małe</text>
       <g className='group-top'>
         <circle className='dot-big' cx='140' cy='42' r='12' />
@@ -103,7 +103,7 @@ export function ClassificationSortBySizeAnimation(): React.JSX.Element {
 export function ClassificationSortByShapeAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja klasyfikacji według ksztaltu: kola trafiaja do lewej grupy, kwadraty do prawej.'
+      aria-label='Animacja klasyfikacji według kształtu: koła trafiają do lewej grupy, kwadraty do prawej.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 420 140'
@@ -135,7 +135,7 @@ export function ClassificationSortByShapeAnimation(): React.JSX.Element {
       `}</style>
       <rect className='bin' height='80' rx='16' width='150' x='35' y='30' />
       <rect className='bin' height='80' rx='16' width='150' x='235' y='30' />
-      <text className='label' x='72' y='26'>Kola</text>
+      <text className='label' x='72' y='26'>Koła</text>
       <text className='label' x='270' y='26'>Kwadraty</text>
       <g className='group-left'>
         <circle className='shape-circle' cx='95' cy='64' r='12' />
@@ -154,7 +154,7 @@ export function ClassificationSortByShapeAnimation(): React.JSX.Element {
 export function ClassificationCategoryBinsAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja kategoryzacji: elementy trafiaja do koszykow owocow, warzyw i zabawek.'
+      aria-label='Animacja kategoryzacji: elementy trafiają do koszyków owoców, warzyw i zabawek.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 420 150'
@@ -264,7 +264,7 @@ export function ClassificationParityAnimation(): React.JSX.Element {
 export function ClassificationTwoCriteriaGridAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja klasyfikacji według dwoch cech: elementy trafiaja do czterech pol siatki.'
+      aria-label='Animacja klasyfikacji według dwóch cech: elementy trafiają do czterech pól siatki.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 420 150'
@@ -299,7 +299,7 @@ export function ClassificationTwoCriteriaGridAnimation(): React.JSX.Element {
 export function ClassificationVennOverlapAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja diagramu Venna: elementy przechodza do lewej, prawej i wspolnej części.'
+      aria-label='Animacja diagramu Venna: elementy przechodzą do lewej, prawej i wspólnej części.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 420 150'
@@ -417,7 +417,7 @@ export function ClassificationOddOneOutPatternAnimation(): React.JSX.Element {
 export function ClassificationHiddenRuleAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja ukrytej reguly: elementy pasujace do reguly podswietlaja się.'
+      aria-label='Animacja ukrytej reguły: elementy pasujące do reguły podświetlają się.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 420 130'
@@ -491,7 +491,7 @@ export function ClassificationRecapSequenceAnimation(): React.JSX.Element {
       </g>
       <g className='step step-4'>
         <rect className='pill' height='26' rx='12' width='160' x='130' y='66' />
-        <text className='label' x='150' y='83'>Intruz i regula</text>
+        <text className='label' x='150' y='83'>Intruz i reguła</text>
       </g>
     </svg>
   );
@@ -500,7 +500,7 @@ export function ClassificationRecapSequenceAnimation(): React.JSX.Element {
 export function ClassificationCriteriaAxesAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja dwoch kryteriow: os pozioma to kolor, os pionowa to rozmiar.'
+      aria-label='Animacja dwóch kryteriów: oś pozioma to kolor, oś pionowa to rozmiar.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 420 150'
@@ -536,7 +536,7 @@ export function ClassificationCriteriaAxesAnimation(): React.JSX.Element {
 export function ClassificationCriteriaSwitchAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja zmiany kryterium: te same elementy sortujemy najpierw według koloru, potem według ksztaltu.'
+      aria-label='Animacja zmiany kryterium: te same elementy sortujemy najpierw według koloru, potem według kształtu.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 420 150'
@@ -571,10 +571,10 @@ export function ClassificationCriteriaSwitchAnimation(): React.JSX.Element {
           .state-color, .state-shape, .badge-color, .badge-shape { animation: none; opacity: 1; transform: none; }
         }
       `}</style>
-      <rect className='badge badge-color' height='24' rx='12' width='120' x='80' y='18' />
-      <rect className='badge badge-alt badge-shape' height='24' rx='12' width='120' x='220' y='18' />
-      <text className='badge-text badge-color' x='112' y='34'>Kryterium: kolor</text>
-      <text className='badge-text badge-text-alt badge-shape' x='242' y='34'>Kryterium: ksztalt</text>
+      <rect className='badge badge-color' height='24' rx='12' width='140' x='60' y='18' />
+      <rect className='badge badge-alt badge-shape' height='24' rx='12' width='140' x='220' y='18' />
+      <text className='badge-text badge-color' textAnchor='middle' x='130' y='34'>Kryterium: kolor</text>
+      <text className='badge-text badge-text-alt badge-shape' textAnchor='middle' x='290' y='34'>Kryterium: kształt</text>
       <g className='state-color'>
         <circle cx='120' cy='80' r='11' fill='#38bdf8' />
         <circle cx='160' cy='80' r='11' fill='#38bdf8' />
@@ -594,7 +594,7 @@ export function ClassificationCriteriaSwitchAnimation(): React.JSX.Element {
 export function ClassificationVennUnionAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja zbioru unii: oba kola podswietlaja się jako calosc.'
+      aria-label='Animacja zbioru unii: oba koła podświetlają się jako całość.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 420 150'

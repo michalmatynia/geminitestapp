@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { JSX } from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn, getTextContent } from '@/shared/utils';
 
 type TooltipProps = {
   content: React.ReactNode;
@@ -88,13 +88,26 @@ export function Tooltip({
     React.isValidElement(children) && typeof children.props === 'object' && children.props !== null
       ? (children.props as { 'aria-describedby'?: string })['aria-describedby']
       : undefined;
+  const childProps =
+    React.isValidElement(children) && typeof children.props === 'object' && children.props !== null
+      ? (children.props as {
+          'aria-label'?: string;
+          'aria-labelledby'?: string;
+        })
+      : null;
+  const hasChildLabel = Boolean(childProps?.['aria-label'] || childProps?.['aria-labelledby']);
+  const childText = getTextContent(children).trim();
+  const tooltipLabel =
+    typeof content === 'string' || typeof content === 'number' ? String(content) : undefined;
+  const shouldSetAriaLabel = Boolean(tooltipLabel && !hasChildLabel && childText.length === 0);
   const mergedDescribedBy = isVisible
     ? [describedBy, tooltipId].filter(Boolean).join(' ') || tooltipId
     : describedBy;
   const trigger = React.isValidElement(children)
     ? React.cloneElement(children, {
-      'aria-describedby': mergedDescribedBy || undefined,
-    } as Record<string, unknown>)
+        'aria-describedby': mergedDescribedBy || undefined,
+        'aria-label': childProps?.['aria-label'] ?? (shouldSetAriaLabel ? tooltipLabel : undefined),
+      } as Record<string, unknown>)
     : children;
 
   const sideStyles = {

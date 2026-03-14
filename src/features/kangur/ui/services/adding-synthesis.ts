@@ -7,8 +7,8 @@ export const ADDING_SYNTHESIS_STAGES = [
     id: 'warmup',
     icon: '🌱',
     title: 'Rozgrzewka',
-    description: 'Sumy do 10. Najpierw znajdz wieksza liczbę i dolicz reszte.',
-    coachingTip: 'Policz od wiekszej liczby i patrz, jak dzialanie spada do linii.',
+    description: 'Sumy do 10. Najpierw znajdź większą liczbę i dolicz resztę.',
+    coachingTip: 'Policz od większej liczby i patrz, jak działanie spada do linii.',
     accent: 'amber',
     noteCount: 4,
   },
@@ -16,7 +16,7 @@ export const ADDING_SYNTHESIS_STAGES = [
     id: 'bridge_ten',
     icon: '🌉',
     title: 'Most do 10',
-    description: 'Przekraczaj 10, rozbijajac druga liczbę na kawalek do 10 i reszte.',
+    description: 'Przekraczaj 10, rozbijając drugą liczbę na kawałek do 10 i resztę.',
     coachingTip: 'Zobacz, ile brakuje do 10, a potem dodaj to, co zostało.',
     accent: 'sky',
     noteCount: 4,
@@ -26,9 +26,9 @@ export const ADDING_SYNTHESIS_STAGES = [
     icon: '🚀',
     title: 'Dwie cyfry',
     description:
-      'Dodawaj dziesiatki i jednosci osobno, a przy przeniesieniu zamieniaj 10 jednosci na nowa dziesiatke.',
+      'Dodawaj dziesiątki i jedności osobno, a przy przeniesieniu zamieniaj 10 jedności na nową dziesiątkę.',
     coachingTip:
-      'Najpierw dziesiatki, potem jednosci. Gdy wyjdzie 10 lub więcej, przenies jedna dziesiatke.',
+      'Najpierw dziesiątki, potem jedności. Gdy wyjdzie 10 lub więcej, przenieś jedną dziesiątkę.',
     accent: 'emerald',
     noteCount: 4,
   },
@@ -86,10 +86,10 @@ const buildDoubleDigitHint = (left: number, right: number): string => {
   const ones = (left % 10) + (right % 10);
 
   if (ones >= 10) {
-    return `Dziesiatki daja ${tens}. Jednosci daja ${ones}, czyli ${ones - 10} i jedna nowa dziesiatka. Razem wychodzi ${left + right}.`;
+    return `Dziesiątki dają ${tens}. Jedności dają ${ones}, czyli ${ones - 10} i jedna nowa dziesiątka. Razem wychodzi ${left + right}.`;
   }
 
-  return `Dziesiatki daja ${tens}, jednosci daja ${ones}. Razem ${left + right}.`;
+  return `Dziesiątki dają ${tens}, jedności dają ${ones}. Razem ${left + right}.`;
 };
 
 const buildChoices = (
@@ -157,7 +157,7 @@ const createWarmupNote = (index: number, random: RandomSource): AddingSynthesisN
     answer,
     choices: buildChoices(answer, 'warmup', random),
     hint: buildCountUpHint(left, right),
-    focus: 'Zacznij od wiekszej liczby i dolicz małe kroki.',
+    focus: 'Zacznij od większej liczby i dolicz małe kroki.',
   };
 };
 
@@ -175,7 +175,7 @@ const createBridgeTenNote = (index: number, random: RandomSource): AddingSynthes
     answer,
     choices: buildChoices(answer, 'bridge_ten', random),
     hint: buildBridgeTenHint(left, right),
-    focus: 'Najpierw dopelnij do 10, potem dodaj to, co zostało.',
+    focus: 'Najpierw dopełnij do 10, potem dodaj to, co zostało.',
   };
 };
 
@@ -207,8 +207,8 @@ const createDoubleDigitNote = (index: number, random: RandomSource): AddingSynth
     choices: buildChoices(answer, 'double_digits', random),
     hint: buildDoubleDigitHint(left, right),
     focus: carry
-      ? 'Pilnuj jednosci. Gdy uzbierasz 10, przenies jedna dziesiatke.'
-      : 'Rozdziel dziesiatki i jednosci, a potem połącz oba wyniki.',
+      ? 'Pilnuj jedności. Gdy uzbierasz 10, przenieś jedną dziesiątkę.'
+      : 'Rozdziel dziesiątki i jedności, a potem połącz oba wyniki.',
   };
 };
 

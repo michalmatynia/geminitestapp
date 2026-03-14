@@ -12,16 +12,16 @@ import {
   clampNumber,
   extractGradientStops,
   isGradientValue,
-  isDarkStorefrontAppearanceMode,
   isNonEmptyString,
+  isDarkStorefrontAppearanceMode,
   mixCssColor,
   resolveBackgroundValue,
   resolveSolidColor,
   toCssPx,
   toCssPxSigned,
-  toRgbTupleString,
   toShadowColor,
 } from './CmsStorefrontAppearance.utils';
+import { resolveHomeActionVars } from './CmsStorefrontAppearance.home-actions';
 
 export const withFallbackTone = (tone?: CmsAppearanceTone): Required<CmsAppearanceTone> => ({
   background: tone?.background || DEFAULT_TONE.background,
@@ -266,12 +266,15 @@ export const resolveCmsStorefrontAppearance = (
   const chatPanelRadius = resolveChatPanelRadius(theme);
   const chatPaddingSet = resolveChatPadding(theme);
   const chatHeaderPaddingSet = resolveChatHeaderPadding(theme);
+  const buttonShadowBase = isDarkStorefrontAppearanceMode(mode)
+    ? mixCssColor(theme.backgroundColor, '#000000', 42)
+    : mixCssColor(primaryButtonTone.background, '#000000', 18);
 
   const dropShadow = buildShadow({
     x: theme.btnShadowX,
     y: theme.btnShadowY,
     blur: theme.btnShadowBlur,
-    color: theme.btnShadowColor,
+    color: buttonShadowBase,
     opacity: theme.btnShadowOpacity,
   });
 
@@ -425,109 +428,6 @@ const resolveKangurRuntimeThemeVars = (theme: ThemeSettings): Record<string, str
     '--kangur-input-radius': toCssPx(theme.inputRadius),
     '--kangur-input-font-size': toCssPx(theme.inputFontSize),
   };
-};
-
-const HOME_ACTION_THEME_CONFIG = [
-  { id: 'lessons', prefix: 'homeActionLessons' },
-  { id: 'play', prefix: 'homeActionPlay' },
-  { id: 'training', prefix: 'homeActionTraining' },
-  { id: 'kangur', prefix: 'homeActionKangur' },
-] as const;
-
-const resolveHomeActionVars = (theme: ThemeSettings): Record<string, string> => {
-  const vars: Record<string, string> = {};
-  const setVar = (name: string, value: unknown): void => {
-    if (isNonEmptyString(value)) {
-      vars[name] = value.trim();
-    }
-  };
-  const setMidVar = (
-    name: string,
-    start: string | undefined,
-    mid: string | undefined,
-    end: string | undefined
-  ): void => {
-    if (isNonEmptyString(mid)) {
-      vars[name] = mid.trim();
-      return;
-    }
-    if (isNonEmptyString(start) && isNonEmptyString(end)) {
-      vars[name] = mixCssColor(start.trim(), end.trim(), 50);
-    }
-  };
-  const setRgbVar = (name: string, value: string | undefined): void => {
-    if (!isNonEmptyString(value)) return;
-    const tuple = toRgbTupleString(value);
-    if (tuple) vars[name] = tuple;
-  };
-
-  HOME_ACTION_THEME_CONFIG.forEach(({ id, prefix }) => {
-    const get = (suffix: string): string | undefined =>
-      (theme as Record<string, string>)[`${prefix}${suffix}`];
-
-    const text = get('TextColor');
-    const textActive = get('TextActiveColor');
-    setVar(`--kangur-home-action-${id}-text`, text);
-    setVar(`--kangur-home-action-${id}-text-active`, textActive);
-
-    const labelStart = get('LabelStart');
-    const labelMid = get('LabelMid');
-    const labelEnd = get('LabelEnd');
-    setVar(`--kangur-home-action-${id}-label-start`, labelStart);
-    setVar(`--kangur-home-action-${id}-label-end`, labelEnd);
-    setMidVar(`--kangur-home-action-${id}-label-mid`, labelStart, labelMid, labelEnd);
-
-    const labelStartActive = get('LabelStartActive');
-    const labelMidActive = get('LabelMidActive');
-    const labelEndActive = get('LabelEndActive');
-    setVar(`--kangur-home-action-${id}-label-start-active`, labelStartActive);
-    setVar(`--kangur-home-action-${id}-label-end-active`, labelEndActive);
-    setMidVar(
-      `--kangur-home-action-${id}-label-mid-active`,
-      labelStartActive,
-      labelMidActive,
-      labelEndActive
-    );
-
-    const accentStart = get('AccentStart');
-    const accentMid = get('AccentMid');
-    const accentEnd = get('AccentEnd');
-    setVar(`--kangur-home-action-${id}-accent-start`, accentStart);
-    setVar(`--kangur-home-action-${id}-accent-end`, accentEnd);
-    setMidVar(`--kangur-home-action-${id}-accent-mid`, accentStart, accentMid, accentEnd);
-
-    const underlayStart = get('UnderlayStart');
-    const underlayMid = get('UnderlayMid');
-    const underlayEnd = get('UnderlayEnd');
-    setVar(`--kangur-home-action-${id}-underlay-start`, underlayStart);
-    setVar(`--kangur-home-action-${id}-underlay-end`, underlayEnd);
-    setMidVar(`--kangur-home-action-${id}-underlay-mid`, underlayStart, underlayMid, underlayEnd);
-
-    const underlayTintStart = get('UnderlayTintStart');
-    const underlayTintMid = get('UnderlayTintMid');
-    const underlayTintEnd = get('UnderlayTintEnd');
-    setVar(`--kangur-home-action-${id}-underlay-tint-start`, underlayTintStart);
-    setVar(`--kangur-home-action-${id}-underlay-tint-end`, underlayTintEnd);
-    setMidVar(
-      `--kangur-home-action-${id}-underlay-tint-mid`,
-      underlayTintStart,
-      underlayTintMid,
-      underlayTintEnd
-    );
-
-    const accentShadowSource =
-      get('AccentShadowColor') || accentMid || accentStart || accentEnd;
-    const underlayShadowSource =
-      get('UnderlayShadowColor') || underlayTintMid || underlayMid || underlayTintStart || underlayStart;
-    const surfaceShadowSource =
-      get('SurfaceShadowColor') || underlayTintEnd || underlayEnd || underlayTintMid || underlayMid;
-
-    setRgbVar(`--kangur-home-action-${id}-accent-shadow-rgb`, accentShadowSource);
-    setRgbVar(`--kangur-home-action-${id}-underlay-shadow-rgb`, underlayShadowSource);
-    setRgbVar(`--kangur-home-action-${id}-surface-shadow-rgb`, surfaceShadowSource);
-  });
-
-  return vars;
 };
 
 const resolveDefaultKangurStorefrontAppearance = (
@@ -780,7 +680,6 @@ const resolveThemedKangurStorefrontAppearance = (
   const secondaryButtonBase = resolveSolidColor(theme.btnSecondaryBg, surfaceBackground);
   const warningBackground = theme.accentColor || accent;
   const successBackground = theme.successColor || '#22c55e';
-  const dangerBackground = theme.errorColor || '#ef4444';
   const chatBackground = theme.containerBg || surfaceBackground;
   const runtimeThemeVars = resolveKangurRuntimeThemeVars(theme);
   const homeActionVars = resolveHomeActionVars(theme);
@@ -923,112 +822,6 @@ const resolveThemedKangurStorefrontAppearance = (
   const backdropBase = '#0f172a';
   const backdrop = `color-mix(in srgb, ${backdropBase} ${isDarkStorefrontAppearanceMode(mode) ? 28 : 18}%, transparent)`;
   const backdropStrong = `color-mix(in srgb, ${backdropBase} ${isDarkStorefrontAppearanceMode(mode) ? 44 : 32}%, transparent)`;
-  const accentBorder = isDarkStorefrontAppearanceMode(mode)
-    ? mixCssColor(warningBackground, '#ffffff', 68)
-    : darkenCssColor(warningBackground, 6);
-  const userBubbleBackground = `linear-gradient(135deg, ${mixCssColor(
-    warningBackground,
-    '#ffffff',
-    isDarkStorefrontAppearanceMode(mode) ? 70 : 82
-  )} 0%, ${mixCssColor(warningBackground, '#000000', isDarkStorefrontAppearanceMode(mode) ? 18 : 10)} 100%)`;
-  const userBubbleShadow = `0 14px 28px -18px ${mixCssColor(
-    warningBackground,
-    '#000000',
-    isDarkStorefrontAppearanceMode(mode) ? 60 : 36
-  )}, 0 1px 0 ${mixCssColor('#ffffff', '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 10 : 18)} inset`;
-  const userBubbleBorder = mixCssColor(
-    warningBackground,
-    '#ffffff',
-    isDarkStorefrontAppearanceMode(mode) ? 32 : 58
-  );
-  const userBubbleText = theme.btnPrimaryText || '#ffffff';
-  const userDrawingBorder = `color-mix(in srgb, ${warningBackground} ${
-    isDarkStorefrontAppearanceMode(mode) ? 30 : 40
-  }%, transparent)`;
-  const userDrawingShadow = `0 8px 20px -12px ${mixCssColor(
-    warningBackground,
-    '#000000',
-    isDarkStorefrontAppearanceMode(mode) ? 58 : 32
-  )}`;
-  const typingDot = isDarkStorefrontAppearanceMode(mode)
-    ? mixCssColor(warningBackground, '#000000', 38)
-    : darkenCssColor(warningBackground, 28);
-  const floatingAvatarBackground = `linear-gradient(135deg, ${mixCssColor(
-    warningBackground,
-    '#ffffff',
-    isDarkStorefrontAppearanceMode(mode) ? 64 : 72
-  )} 0%, ${mixCssColor(warningBackground, '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 44 : 56)} 55%, ${mixCssColor(
-    warningBackground,
-    '#000000',
-    isDarkStorefrontAppearanceMode(mode) ? 22 : 12
-  )} 100%)`;
-  const floatingAvatarBorder = mixCssColor(
-    warningBackground,
-    '#000000',
-    isDarkStorefrontAppearanceMode(mode) ? 62 : 72
-  );
-  const floatingAvatarShadow = `0 14px 28px -16px ${mixCssColor(
-    warningBackground,
-    '#000000',
-    isDarkStorefrontAppearanceMode(mode) ? 62 : 32
-  )}`;
-  const floatingAvatarFocusRing = mixCssColor(
-    warningBackground,
-    '#ffffff',
-    isDarkStorefrontAppearanceMode(mode) ? 42 : 34
-  );
-  const noticeBadgeBackground =
-    isDarkStorefrontAppearanceMode(mode) ? mixCssColor(dangerBackground, '#000000', 12) : dangerBackground;
-  const noticeBadgeRing = '#ffffff';
-  const noticeBadgeDot = '#ffffff';
-  const infoText = isDarkStorefrontAppearanceMode(mode)
-    ? mixCssColor(infoBackground, '#ffffff', 72)
-    : darkenCssColor(infoBackground, 22);
-  const infoPillBackground = `color-mix(in srgb, ${infoBackground} ${
-    isDarkStorefrontAppearanceMode(mode) ? 24 : 18
-  }%, ${surfaceTone.background})`;
-  const feedbackPositiveBackground = `color-mix(in srgb, ${successBackground} ${
-    isDarkStorefrontAppearanceMode(mode) ? 20 : 12
-  }%, ${surfaceTone.background})`;
-  const feedbackPositiveBorder = mixCssColor(
-    successBackground,
-    '#ffffff',
-    isDarkStorefrontAppearanceMode(mode) ? 32 : 62
-  );
-  const feedbackPositiveText = isDarkStorefrontAppearanceMode(mode)
-    ? mixCssColor(successBackground, '#ffffff', 78)
-    : darkenCssColor(successBackground, 30);
-  const feedbackNegativeBackground = `color-mix(in srgb, ${dangerBackground} ${
-    isDarkStorefrontAppearanceMode(mode) ? 18 : 12
-  }%, ${surfaceTone.background})`;
-  const feedbackNegativeBorder = mixCssColor(
-    dangerBackground,
-    '#ffffff',
-    isDarkStorefrontAppearanceMode(mode) ? 30 : 62
-  );
-  const feedbackNegativeText = isDarkStorefrontAppearanceMode(mode)
-    ? mixCssColor(dangerBackground, '#ffffff', 78)
-    : darkenCssColor(dangerBackground, 18);
-  const dangerHoverBackground = `color-mix(in srgb, ${dangerBackground} ${
-    isDarkStorefrontAppearanceMode(mode) ? 22 : 10
-  }%, ${surfaceTone.background})`;
-  const dangerText = isDarkStorefrontAppearanceMode(mode)
-    ? mixCssColor(dangerBackground, '#ffffff', 82)
-    : darkenCssColor(dangerBackground, 6);
-  const selectionActionShadow = `0 12px 28px -14px ${mixCssColor(
-    warningBackground,
-    '#000000',
-    isDarkStorefrontAppearanceMode(mode) ? 54 : 32
-  )}, 0 4px 10px -6px ${mixCssColor(
-    theme.backgroundColor,
-    '#000000',
-    isDarkStorefrontAppearanceMode(mode) ? 60 : 24
-  )}`;
-  const sendShadow = `0 8px 20px -10px ${mixCssColor(
-    warningBackground,
-    '#000000',
-    isDarkStorefrontAppearanceMode(mode) ? 52 : 30
-  )}`;
   const panelSnapRing = mixCssColor(
     warningBackground,
     '#ffffff',
@@ -1174,13 +967,14 @@ const resolveThemedKangurStorefrontAppearance = (
     ? extractGradientStops(theme.btnPrimaryBg)
     : [];
   const hasPrimaryGradientStops = primaryGradientStops.length >= 2;
-  const primaryGradientStopStart = hasPrimaryGradientStops ? primaryGradientStops[0] : null;
+  const primaryGradientStopBase = primaryGradientStops[0] ?? primaryButtonBase;
+  const primaryGradientStopStart = hasPrimaryGradientStops ? primaryGradientStopBase : null;
   const primaryGradientStopEnd = hasPrimaryGradientStops
-    ? primaryGradientStops[primaryGradientStops.length - 1]
+    ? primaryGradientStops[primaryGradientStops.length - 1] ?? primaryGradientStopBase
     : null;
   const primaryGradientStopMid = hasPrimaryGradientStops
     ? primaryGradientStops[1] ??
-      mixCssColor(primaryGradientStops[0], primaryGradientStopEnd ?? primaryGradientStops[0], 50)
+      mixCssColor(primaryGradientStopBase, primaryGradientStopEnd ?? primaryGradientStopBase, 50)
     : null;
   const primaryGradientStart =
     primaryGradientStopStart ??

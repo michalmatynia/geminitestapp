@@ -114,26 +114,6 @@ export function KangurLessonLibraryCardFooter({
   );
 }
 
-export function KangurLessonLibraryCardIcon({
-  lesson,
-  iconTestId,
-}: {
-  lesson: KangurLesson;
-  iconTestId?: string;
-}): React.JSX.Element {
-  return (
-    <KangurGradientIconTile
-      data-testid={iconTestId}
-      gradientClass={lesson.color}
-      size='lg'
-      role='presentation'
-      aria-hidden='true'
-    >
-      {lesson.emoji}
-    </KangurGradientIconTile>
-  );
-}
-
 // ── Main Card Component ──────────────────────────────────────────────────────
 
 type KangurLessonLibraryCardProps = {
@@ -203,7 +183,17 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
           />
         }
         headerClassName='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'
-        icon={<KangurLessonLibraryCardIcon iconTestId={iconTestId} lesson={lesson} />}
+        icon={
+          <KangurGradientIconTile
+            data-testid={iconTestId}
+            gradientClass={lesson.color}
+            size='lg'
+            role='presentation'
+            aria-hidden='true'
+          >
+            {lesson.emoji}
+          </KangurGradientIconTile>
+        }
         title={lesson.title}
         titleAs='h3'
         titleClassName='text-lg sm:text-xl'

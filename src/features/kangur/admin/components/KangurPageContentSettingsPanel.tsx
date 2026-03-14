@@ -154,7 +154,7 @@ const createEmptyEntry = (sortOrder: number): KangurPageContentEntry => ({
   sourcePath: 'src/features/kangur/ui/pages/Game.tsx',
   title: 'Nowa sekcja',
   summary: 'Krótki opis nowej sekcji Kangur.',
-  body: 'Pełny opis nowej sekcji Kangur do uzupelnienia przez administratora.',
+  body: 'Pełny opis nowej sekcji Kangur do uzupełnienia przez administratora.',
   anchorIdPrefix: null,
   focusKind: 'screen',
   contentIdPrefixes: [],

@@ -28,7 +28,7 @@ type SectionId = 'intro' | 'odwrotnosc' | 'reszta' | 'zapamietaj' | 'game';
 export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
   intro: [
     {
-      title: 'Co to znaczy dzielic?',
+      title: 'Co to znaczy dzielić?',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
@@ -72,11 +72,11 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
   ],
   odwrotnosc: [
     {
-      title: 'Dzielenie i mnozenie',
+      title: 'Dzielenie i mnożenie',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Każde mnozenie ma swoje dzielenie!
+            Każde mnożenie ma swoje dzielenie!
           </KangurLessonLead>
           <KangurLessonCallout accent='sky' className='max-w-xs'>
             <div className='flex flex-col gap-2 text-center'>
@@ -94,7 +94,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
             </div>
           </KangurLessonCallout>
           <KangurLessonCaption>
-            Znajac tabliczkę mnozenia, znasz tez tabliczkę dzielenia!
+            Znając tabliczkę mnożenia, znasz też tabliczkę dzielenia!
           </KangurLessonCaption>
         </KangurLessonStack>
       ),
@@ -182,32 +182,63 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               <li>✅ Sprawdź: wynik × dzielnik + reszta = liczba</li>
             </ul>
           </KangurLessonCallout>
-          <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
-            <KangurLessonCallout accent='sky' className='text-center' padding='sm'>
-              <div className='mx-auto w-full max-w-[180px]'>
-                <DivisionEqualGroupsAnimation />
-              </div>
-              <KangurLessonCaption className='mt-2'>
-                Dziel równo na grupy – każda grupa ma tyle samo.
-              </KangurLessonCaption>
-            </KangurLessonCallout>
-            <KangurLessonCallout accent='indigo' className='text-center' padding='sm'>
-              <div className='mx-auto w-full max-w-[180px]'>
-                <DivisionInverseAnimation />
-              </div>
-              <KangurLessonCaption className='mt-2'>
-                Dzielenie i mnożenie to działania odwrotne.
-              </KangurLessonCaption>
-            </KangurLessonCallout>
-            <KangurLessonCallout accent='teal' className='text-center' padding='sm'>
-              <div className='mx-auto w-full max-w-[180px]'>
-                <DivisionRemainderAnimation />
-              </div>
-              <KangurLessonCaption className='mt-2'>
-                Reszta pokazuje, co zostaje poza pełnymi grupami.
-              </KangurLessonCaption>
-            </KangurLessonCallout>
-          </div>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Równe grupy',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonCallout
+            accent='sky'
+            className='w-full max-w-md text-center'
+            padding='sm'
+          >
+            <div className='mx-auto w-full max-w-[320px]'>
+              <DivisionEqualGroupsAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Dziel równo na grupy – każda grupa ma tyle samo.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Odwrotność',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonCallout
+            accent='indigo'
+            className='w-full max-w-md text-center'
+            padding='sm'
+          >
+            <div className='mx-auto w-full max-w-[320px]'>
+              <DivisionInverseAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Dzielenie i mnożenie to działania odwrotne.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Reszta',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonCallout
+            accent='teal'
+            className='w-full max-w-md text-center'
+            padding='sm'
+          >
+            <div className='mx-auto w-full max-w-[320px]'>
+              <DivisionRemainderAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Reszta pokazuje, co zostaje poza pełnymi grupami.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
@@ -219,7 +250,7 @@ export const HUB_SECTIONS = [
   {
     id: 'odwrotnosc',
     emoji: '🔄',
-    title: 'Dzielenie i mnozenie',
+    title: 'Dzielenie i mnożenie',
     description: 'Odwrotne działania',
   },
   { id: 'reszta', emoji: '🍫', title: 'Reszta z dzielenia', description: 'Gdy nie wychodzi równo' },

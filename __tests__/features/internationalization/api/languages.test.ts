@@ -53,7 +53,11 @@ describe('Languages API', () => {
           return {
             find: vi.fn(() => ({
               sort: vi.fn(() => ({
-                toArray: languageToArray,
+                skip: vi.fn(() => ({
+                  limit: vi.fn(() => ({
+                    toArray: languageToArray,
+                  })),
+                })),
               })),
             })),
           };

@@ -55,7 +55,7 @@ describe('kangur progress mastery helpers', () => {
 
     expect(updated['clock']).toEqual({
       attempts: 1,
-      completions: 1,
+      completions: 0,
       masteryPercent: 60,
       bestScorePercent: 60,
       lastScorePercent: 60,
@@ -68,16 +68,16 @@ describe('kangur progress mastery helpers', () => {
 
     const reward = createLessonPracticeReward(progress, 'adding', 4, 6);
 
-    expect(reward.xp).toBe(27);
+    expect(reward.xp).toBe(18);
     expect(reward.scorePercent).toBe(67);
     expect(reward.progressUpdates.gamesPlayed).toBe(1);
-    expect(reward.progressUpdates.perfectGames).toBe(0);
-    expect(reward.progressUpdates.operationsPlayed).toEqual(['addition']);
+    expect(reward.progressUpdates.perfectGames).toBeUndefined();
+    expect(reward.progressUpdates.operationsPlayed).toEqual([]);
     expect(reward.progressUpdates.lessonsCompleted).toBeUndefined();
     expect(reward.progressUpdates.totalCorrectAnswers).toBe(4);
     expect(reward.progressUpdates.totalQuestionsAnswered).toBe(6);
-    expect(reward.progressUpdates.currentWinStreak).toBe(1);
-    expect(reward.progressUpdates.bestWinStreak).toBe(1);
+    expect(reward.progressUpdates.currentWinStreak).toBe(0);
+    expect(reward.progressUpdates.bestWinStreak).toBe(0);
     expect(reward.progressUpdates.currentActivityRepeatStreak).toBe(1);
     expect(reward.progressUpdates.lastRewardedActivityKey).toBe('lesson_practice:adding');
     expect(reward.progressUpdates.activityStats?.['lesson_practice:adding']).toEqual({
@@ -85,16 +85,16 @@ describe('kangur progress mastery helpers', () => {
       perfectSessions: 0,
       totalCorrectAnswers: 4,
       totalQuestionsAnswered: 6,
-      totalXpEarned: 27,
+      totalXpEarned: 18,
       bestScorePercent: 67,
       lastScorePercent: 67,
-      currentStreak: 1,
-      bestStreak: 1,
+      currentStreak: 0,
+      bestStreak: 0,
       lastPlayedAt: expect.any(String),
     });
     expect(reward.progressUpdates.lessonMastery?.['adding']).toEqual({
       attempts: 1,
-      completions: 1,
+      completions: 0,
       masteryPercent: 67,
       bestScorePercent: 67,
       lastScorePercent: 67,
@@ -104,9 +104,6 @@ describe('kangur progress mastery helpers', () => {
       expect.arrayContaining([
         expect.objectContaining({ kind: 'base', xp: 12 }),
         expect.objectContaining({ kind: 'accuracy', xp: 6 }),
-        expect.objectContaining({ kind: 'first_activity', xp: 4 }),
-        expect.objectContaining({ kind: 'mastery', xp: 2 }),
-        expect.objectContaining({ kind: 'variety', xp: 3 }),
       ])
     );
   });
@@ -166,7 +163,7 @@ describe('kangur progress mastery helpers', () => {
     expect(reward.xp).toBe(44);
     expect(reward.scorePercent).toBe(90);
     expect(reward.progressUpdates.gamesPlayed).toBe(1);
-    expect(reward.progressUpdates.perfectGames).toBe(0);
+    expect(reward.progressUpdates.perfectGames).toBeUndefined();
     expect(reward.progressUpdates.operationsPlayed).toEqual(['addition']);
     expect(reward.progressUpdates.currentWinStreak).toBe(1);
     expect(reward.progressUpdates.bestWinStreak).toBe(1);
@@ -351,7 +348,7 @@ describe('kangur progress mastery helpers', () => {
     expect(projection.projected).toEqual({
       completedSessions: 3,
       progressPercent: 100,
-      summary: '3/3 rundy',
+      summary: 'Wszystkie cele osiągnięte!',
       nextBadgeName: null,
     });
   });
@@ -507,16 +504,14 @@ describe('kangur progress mastery helpers', () => {
 
     expect(tracks.map((track) => track.key)).toEqual([
       'onboarding',
-      'quest',
-      'mastery',
       'xp',
+      'consistency',
+      'variety',
     ]);
-    expect(tracks.find((track) => track.key === 'quest')).toMatchObject({
-      unlockedCount: 1,
-      totalCount: 4,
+    expect(tracks.find((track) => track.key === 'consistency')).toMatchObject({
       nextBadge: expect.objectContaining({
-        id: 'quest_keeper',
-        summary: '1/3 misje',
+        id: 'streak_3',
+        summary: '2/3 w serii',
       }),
     });
     expect(tracks.find((track) => track.key === 'xp')).toMatchObject({

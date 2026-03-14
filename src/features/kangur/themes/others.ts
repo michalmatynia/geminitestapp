@@ -1,6 +1,5 @@
 import { DEFAULT_THEME, normalizeThemeSettings, type ThemeSettings } from '@/shared/contracts/cms-theme';
 import { KANGUR_DAILY_THEME } from './daily';
-import { KANGUR_NIGHTLY_AURORA_THEME } from './nightly';
 
 export const KANGUR_LOGO_GLOW_THEME: ThemeSettings = normalizeThemeSettings({
   ...KANGUR_DAILY_THEME,
@@ -154,8 +153,8 @@ export const KANGUR_LOGO_GLOW_THEME: ThemeSettings = normalizeThemeSettings({
     },
   ],
   activeColorSchemeId: 'kangur-logo-indigo',
-  headingFont: "'Space Grotesk', sans-serif",
-  bodyFont: "'DM Sans', sans-serif",
+  headingFont: '\'Space Grotesk\', sans-serif',
+  bodyFont: '\'DM Sans\', sans-serif',
   headingSizeScale: 1.06,
   lineHeight: 1.62,
   headingLineHeight: 1.18,
@@ -414,8 +413,8 @@ export const KANGUR_DAILY_CRYSTAL_THEME: ThemeSettings = normalizeThemeSettings(
   activeColorSchemeId: 'kangur-crystal-sapphire',
 
   // ── Typography ────────────────────────────────────────────
-  headingFont: "'Space Grotesk', sans-serif",
-  bodyFont: "'DM Sans', sans-serif",
+  headingFont: '\'Space Grotesk\', sans-serif',
+  bodyFont: '\'DM Sans\', sans-serif',
   baseSize: 16,
   headingWeight: '700',
   bodyWeight: '400',
@@ -823,8 +822,8 @@ export const KANGUR_NIGHTLY_CRYSTAL_THEME: ThemeSettings = normalizeThemeSetting
   activeColorSchemeId: 'kangur-ncrystal-sapphire',
 
   // ── Typography ────────────────────────────────────────────
-  headingFont: "'Space Grotesk', sans-serif",
-  bodyFont: "'DM Sans', sans-serif",
+  headingFont: '\'Space Grotesk\', sans-serif',
+  bodyFont: '\'DM Sans\', sans-serif',
   baseSize: 16,
   headingWeight: '700',
   bodyWeight: '400',

@@ -8,35 +8,84 @@ export function GeometryPointSegmentAnimation(): React.JSX.Element {
     >
       <style>{`
         .dot { fill: #22d3ee; }
+        .dotA { animation: dotPop 4.2s ease-in-out infinite; }
+        .dotB { animation: dotPop 4.2s ease-in-out infinite 0.5s; }
+        .label {
+          fill: #0891b2;
+          font-size: 12px;
+          font-weight: 700;
+          opacity: 0;
+          animation: labelFade 4.2s ease-in-out infinite 0.9s;
+        }
+        .segment-label {
+          fill: #0e7490;
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.02em;
+          opacity: 0;
+          animation: labelSegment 4.8s ease-in-out infinite 1.9s;
+        }
+        .segment-pill {
+          fill: #cffafe;
+          opacity: 0;
+          animation: labelSegment 4.8s ease-in-out infinite 1.9s;
+        }
         .line {
           stroke: #06b6d4;
           stroke-width: 5;
           stroke-linecap: round;
-          stroke-dasharray: 160;
-          stroke-dashoffset: 160;
-          animation: draw 3.6s ease-in-out infinite;
+          stroke-dasharray: 180;
+          stroke-dashoffset: 180;
+          animation: draw 4.8s ease-in-out infinite 0.9s;
         }
-        .pulse { animation: pulse 3.6s ease-in-out infinite; }
+        .glow {
+          stroke: #67e8f9;
+          stroke-width: 10;
+          stroke-linecap: round;
+          opacity: 0;
+          animation: glow 4.8s ease-in-out infinite 1.8s;
+        }
         @keyframes draw {
-          0%, 20% { stroke-dashoffset: 160; }
+          0%, 32% { stroke-dashoffset: 180; }
           60%, 100% { stroke-dashoffset: 0; }
         }
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); opacity: 0.7; }
-          50% { transform: scale(1.15); opacity: 1; }
+        @keyframes dotPop {
+          0%, 10% { transform: scale(0.2); opacity: 0; }
+          22%, 100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes labelFade {
+          0%, 28% { opacity: 0; }
+          40%, 100% { opacity: 1; }
+        }
+        @keyframes labelSegment {
+          0%, 46% { opacity: 0; }
+          62%, 100% { opacity: 1; }
+        }
+        @keyframes glow {
+          0%, 38% { opacity: 0; }
+          56% { opacity: 0.45; }
+          100% { opacity: 0; }
         }
         @media (prefers-reduced-motion: reduce) {
           .line { animation: none; stroke-dashoffset: 0; }
-          .pulse { animation: none; }
+          .glow { animation: none; opacity: 0.2; }
+          .dotA, .dotB { animation: none; opacity: 1; transform: scale(1); }
+          .label { animation: none; opacity: 1; }
+          .segment-label, .segment-pill { animation: none; opacity: 1; }
         }
       `}</style>
+      <line className='glow' x1='70' x2='250' y1='60' y2='60' />
       <line className='line' x1='70' x2='250' y1='60' y2='60' />
-      <circle className='dot pulse' cx='70' cy='60' r='8' />
-      <circle className='dot pulse' cx='250' cy='60' r='8' />
-      <text fill='#0891b2' fontSize='12' fontWeight='700' x='50' y='85'>
+      <circle className='dot dotA' cx='70' cy='60' r='8' />
+      <circle className='dot dotB' cx='250' cy='60' r='8' />
+      <rect className='segment-pill' x='114' y='28' width='92' height='20' rx='10' />
+      <text className='segment-label' x='160' y='42' textAnchor='middle'>
+        Odcinek AB
+      </text>
+      <text className='label' x='50' y='85'>
         A
       </text>
-      <text fill='#0891b2' fontSize='12' fontWeight='700' x='255' y='85'>
+      <text className='label' x='255' y='85'>
         B
       </text>
     </svg>
@@ -102,6 +151,49 @@ export function GeometryAngleAnimation(): React.JSX.Element {
       <line className='ray' x1='120' x2='40' y1='90' y2='90' />
       <line className='ray moving' x1='120' x2='120' y1='90' y2='20' />
       <circle cx='120' cy='90' r='6' fill='#0ea5e9' />
+    </svg>
+  );
+}
+
+export function GeometryRightAngleAnimation(): React.JSX.Element {
+  return (
+    <svg
+      aria-label='Animacja: kąt prosty.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 240 160'
+    >
+      <style>{`
+        .ray { stroke: #0ea5e9; stroke-width: 6; stroke-linecap: round; }
+        .marker {
+          fill: none;
+          stroke: #0ea5e9;
+          stroke-width: 4;
+          opacity: 0.6;
+          animation: markerPulse 2.8s ease-in-out infinite;
+        }
+        .dot {
+          fill: #0ea5e9;
+          opacity: 0.7;
+          animation: dotPulse 2.8s ease-in-out infinite;
+        }
+        @keyframes markerPulse {
+          0%, 100% { opacity: 0.55; }
+          50% { opacity: 1; }
+        }
+        @keyframes dotPulse {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .marker,
+          .dot { animation: none; opacity: 1; }
+        }
+      `}</style>
+      <line className='ray' x1='120' x2='40' y1='90' y2='90' />
+      <line className='ray' x1='120' x2='120' y1='90' y2='20' />
+      <rect className='marker' height='20' width='20' x='100' y='70' />
+      <circle className='dot' cx='120' cy='90' r='6' />
     </svg>
   );
 }
@@ -243,7 +335,7 @@ export function GeometryPerimeterTraceAnimation(): React.JSX.Element {
 export function GeometryPerimeterOppositeSidesAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja: przeciwlegle boki maja te sama dlugosc.'
+      aria-label='Animacja: przeciwległe boki mają tę samą długość.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 260 160'
@@ -291,7 +383,7 @@ export function GeometryPerimeterOppositeSidesAnimation(): React.JSX.Element {
 export function GeometryPerimeterSumAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja: obwod to suma wszystkich bokow.'
+      aria-label='Animacja: obwód to suma wszystkich boków.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 260 170'

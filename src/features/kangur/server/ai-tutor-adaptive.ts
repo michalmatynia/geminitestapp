@@ -192,7 +192,7 @@ const parseCompletedFollowUp = (
       : normalizedLabel === 'uruchom trening' ||
           normalizedLabel === 'zagraj teraz' ||
           normalizedLabel === 'zagraj dziś' ||
-          normalizedLabel === 'kontynuuj gre'
+          normalizedLabel === 'kontynuuj grę'
         ? 'Game'
         : null);
 

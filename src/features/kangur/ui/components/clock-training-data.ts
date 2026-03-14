@@ -2,7 +2,7 @@ import type {
   ClockTask,
   ClockTrainingSectionContent,
   ClockTrainingTaskPoolId,
-} from './ClockTrainingGame';
+} from './clock-training-utils';
 
 export const CLOCK_TRAINING_TASKS: Record<ClockTrainingTaskPoolId, ClockTask[]> = {
   mixed: [

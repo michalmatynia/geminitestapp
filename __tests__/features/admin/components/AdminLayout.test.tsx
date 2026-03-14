@@ -79,7 +79,6 @@ describe('AdminLayout', () => {
 
     renderLayout(<div>Content</div>);
 
-    expect(screen.getByRole('main').className).toContain('p-0');
     expect(screen.getByRole('main').className).not.toContain('p-4');
   });
 

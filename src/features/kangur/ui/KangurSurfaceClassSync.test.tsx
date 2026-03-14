@@ -74,14 +74,14 @@ describe('KangurSurfaceClassSync', () => {
     );
 
     await waitFor(() => {
-      expect(document.body.style.getPropertyValue('background')).toContain('rgb(27, 35, 51)');
+      expect(document.body.style.getPropertyValue('background')).toContain('color-mix');
     });
     expect(document.body).toHaveAttribute('data-kangur-appearance-mode', 'dark');
     expect(document.body.style.getPropertyValue('--kangur-soft-card-background')).toContain(
-      '30,41,59'
+      'color-mix'
     );
     expect(document.body.style.getPropertyValue('--kangur-button-surface-hover-background')).toContain(
-      '51,65,85'
+      'linear-gradient'
     );
   });
 
@@ -253,16 +253,16 @@ describe('KangurSurfaceClassSync', () => {
       '#f97316'
     );
     expect(document.body.style.getPropertyValue('--kangur-chat-avatar-shell-background')).toContain(
-      '#ffffff'
+      'rgba(255,255,255,0.18)'
     );
     expect(document.body.style.getPropertyValue('--kangur-chat-avatar-shell-border')).toContain(
-      '#fed7aa'
+      'rgba(255,255,255,0.35)'
     );
     expect(document.body.style.getPropertyValue('--kangur-chat-pointer-marker')).toContain(
       '#f97316'
     );
     expect(document.body.style.getPropertyValue('--kangur-chat-tail-background')).toContain(
-      '#ffffff'
+      'var(--kangur-soft-card-background)'
     );
     expect(document.body.style.getPropertyValue('--kangur-chat-sheet-handle-background')).toContain(
       '#f97316'

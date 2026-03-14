@@ -380,17 +380,17 @@ export const HUB_SECTIONS = [
     description: 'Dwa ważne typy analogii relacyjnych',
   },
   {
+    id: 'podsumowanie',
+    emoji: '📋',
+    title: 'Podsumowanie',
+    description: 'Wszystkie typy analogii razem',
+  },
+  {
     id: 'game_relacje',
     emoji: '🎯',
     title: 'Most relacji',
     description: 'Przeciągnij lub kliknij relacje do par',
     isGame: true,
-  },
-  {
-    id: 'podsumowanie',
-    emoji: '📋',
-    title: 'Podsumowanie',
-    description: 'Wszystkie typy analogii razem',
   },
 ];
 

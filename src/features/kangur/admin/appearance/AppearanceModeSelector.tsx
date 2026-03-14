@@ -2,7 +2,10 @@
 
 import React from 'react';
 import { FormSection, SelectSimple } from '@/shared/ui';
-import { KANGUR_STOREFRONT_THEME_OPTIONS } from '@/features/kangur/storefront-appearance-settings';
+import {
+  KANGUR_STOREFRONT_THEME_OPTIONS,
+  type KangurStorefrontAppearanceMode,
+} from '@/features/kangur/storefront-appearance-settings';
 import { useAppearancePage } from './AppearancePage.context';
 
 export function AppearanceModeSelector(): React.JSX.Element {
@@ -17,7 +20,7 @@ export function AppearanceModeSelector(): React.JSX.Element {
         <SelectSimple
           value={defaultModeDraft}
           options={KANGUR_STOREFRONT_THEME_OPTIONS}
-          onChange={(val) => void handleDefaultModeChange(val as any)}
+          onValueChange={(val) => void handleDefaultModeChange(val as KangurStorefrontAppearanceMode)}
           disabled={isDefaultModeSaving}
         />
       </div>

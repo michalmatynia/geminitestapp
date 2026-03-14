@@ -59,13 +59,7 @@ vi.mock('@/shared/ui', async () => {
     Label: mocks.MockLabel,
     LoadingState: mocks.MockLoadingState,
     TabsContent: mocks.MockTabsContent,
-  };
-});
-
-vi.mock('@/features/products', async () => {
-  const mocks = await import('./studioInlineEditRuntimeMockComponents');
-  return {
-    default: mocks.MockProductImageManager,
+    ProductImageManager: mocks.MockProductImageManager,
     ProductImageManagerControllerProvider: mocks.MockProductImageManagerControllerProvider,
   };
 });

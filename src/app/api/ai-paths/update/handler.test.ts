@@ -57,6 +57,11 @@ vi.mock('@/features/products/server', () => ({
   productUpdateSchema: {
     safeParse: productUpdateSafeParseMock,
   },
+  getProductDataProvider: getProductDataProviderMock,
+  productService: {
+    getProductById: productGetByIdMock,
+    updateProduct: productUpdateMock,
+  },
   getProductRepository: getProductRepositoryMock,
 }));
 

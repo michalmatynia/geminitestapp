@@ -26,7 +26,7 @@ describe('parseKangurThemeSettings', () => {
     );
 
     expect(parsed).toMatchObject({
-      ...KANGUR_DEFAULT_THEME,
+      ...KANGUR_DEFAULT_DAILY_THEME,
       backgroundColor: '#faf5ff',
       primaryColor: '#7c3aed',
     });

@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-
 import {
   canAccessGlobalAiPathRuns,
   enforceAiPathsActionRateLimit,
@@ -13,7 +11,7 @@ import {
   resolveAiPathsStaleRunningMaxAgeMs,
 } from '@/features/ai/ai-paths/server';
 import { deletePathRunsWithRepository } from '@/features/ai/ai-paths/server';
-import type { AiPathRunListOptions, AiPathRunRepository, AiPathRunStatus } from '@/shared/contracts/ai-paths';
+import type { AiPathRunListOptions, AiPathRunRepository } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
 import {
@@ -22,10 +20,11 @@ import {
   resolvePathRunRepository,
 } from '@/shared/lib/ai-paths/services/path-run-repository';
 import {
-  normalizeOptionalQueryString,
-  optionalIntegerQuerySchema,
-  optionalTrimmedQueryString,
-} from '@/shared/lib/api/query-schema';
+  deleteQuerySchema,
+  listQuerySchema,
+  resolveAiPathRunsQueryInput,
+  TERMINAL_STATUSES,
+} from './query-schemas';
 
 let lastStaleRunningCleanupAt = 0;
 let staleRunningCleanupPromise: Promise<void> | null = null;
@@ -97,73 +96,6 @@ const scheduleStaleRunningCleanup = (
 
   staleRunningCleanupPromise = runCleanup();
 };
-
-const RUN_STATUSES: AiPathRunStatus[] = [
-  'queued',
-  'running',
-  'blocked_on_lease',
-  'handoff_ready',
-  'paused',
-  'completed',
-  'failed',
-  'canceled',
-  'dead_lettered',
-];
-
-const TERMINAL_STATUSES: AiPathRunStatus[] = ['completed', 'failed', 'canceled', 'dead_lettered'];
-
-const listStatusSchema = z.preprocess((value) => {
-  const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
-  return normalized && RUN_STATUSES.includes(normalized as AiPathRunStatus) ? normalized : undefined;
-}, z.enum(['queued', 'running', 'blocked_on_lease', 'handoff_ready', 'paused', 'completed', 'failed', 'canceled', 'dead_lettered']).optional());
-
-export const listQuerySchema = z.object({
-  visibility: z.preprocess((value) => {
-    const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
-    return normalized === 'global' ? 'global' : 'scoped';
-  }, z.enum(['scoped', 'global'])).default('scoped'),
-  pathId: optionalTrimmedQueryString(),
-  nodeId: optionalTrimmedQueryString(),
-  requestId: optionalTrimmedQueryString(),
-  query: optionalTrimmedQueryString(),
-  source: optionalTrimmedQueryString(),
-  sourceMode: z.preprocess((value) => {
-    const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
-    return normalized === 'exclude' ? 'exclude' : 'include';
-  }, z.enum(['include', 'exclude'])).default('include'),
-  status: listStatusSchema,
-  limit: optionalIntegerQuerySchema(z.number().int().min(1).max(500)),
-  offset: optionalIntegerQuerySchema(z.number().int().min(0)),
-  includeTotal: z.preprocess((value) => {
-    const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
-    return !(normalized === '0' || normalized === 'false' || normalized === 'no');
-  }, z.boolean()).default(true),
-  fresh: z.preprocess((value) => {
-    const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
-    return normalized === '1' || normalized === 'true' || normalized === 'yes';
-  }, z.boolean()).default(false),
-});
-
-export const deleteQuerySchema = z.object({
-  scope: z.preprocess((value) => {
-    const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
-    return normalized === 'all' ? 'all' : 'terminal';
-  }, z.enum(['terminal', 'all'])).default('terminal'),
-  pathId: optionalTrimmedQueryString(),
-  source: optionalTrimmedQueryString(),
-  sourceMode: z.preprocess((value) => {
-    const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
-    return normalized === 'exclude' ? 'exclude' : 'include';
-  }, z.enum(['include', 'exclude'])).default('include'),
-});
-
-const resolveAiPathRunsQueryInput = (
-  req: Request,
-  ctx: ApiHandlerContext
-): Record<string, unknown> => ({
-  ...Object.fromEntries(new URL(req.url).searchParams.entries()),
-  ...((ctx.query ?? {}) as Record<string, unknown>),
-});
 
 const buildRunRepositoryHeaders = (
   runs: unknown[],

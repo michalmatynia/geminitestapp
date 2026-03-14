@@ -26,8 +26,6 @@ import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { cn } from '@/shared/utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
-
-
 import {
   KANGUR_TEST_QUESTIONS_SETTING_KEY,
   deleteKangurTestSuiteQuestions,
@@ -60,9 +58,9 @@ import {
   type TestSuiteFormData,
 } from '../test-suites';
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
-import { KangurAdminMetricCard } from './components/KangurAdminMetricCard';
 import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
 import { KangurAdminWorkspaceIntroCard } from './components/KangurAdminWorkspaceIntroCard';
+import { renderKangurTestSuiteMetricsGrid } from './components/KangurTestSuiteMetricsGrid';
 import { TestSuiteMetadataForm } from './components/TestSuiteMetadataForm';
 import { TestSuiteTreeRow } from './components/TestSuiteTreeRow';
 import { KangurQuestionsManagerRuntimeProvider } from './context/KangurQuestionsManagerRuntimeContext';
@@ -78,13 +76,11 @@ import {
   getKangurTestLibraryHealthSummary,
 } from './test-suite-health';
 import { importLegacyKangurQuestions } from '../test-suites/import-legacy';
-
 import type { KangurQuestionsManagerInitialView } from './question-manager-view';
 
 const ORDERED_TREE_INSTANCE = 'kangur_test_suites_manager';
 const CATALOG_TREE_INSTANCE = 'kangur_test_suites_manager_catalog';
 const TREE_MODE_STORAGE_KEY = 'kangur_test_suites_manager_tree_mode_v1';
-
 type TreeMode = 'ordered' | 'catalog';
 
 const readPersistedTreeMode = (): TreeMode => {
@@ -1026,7 +1022,6 @@ export function AdminKangurTestSuitesManagerPage({
         </FormModal>
       </div>
     );
-
     if (!standalone) {
       return questionsContent;
     }
@@ -1058,78 +1053,10 @@ export function AdminKangurTestSuitesManagerPage({
         badge='Shared triage'
       />
 
-      <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-5 2xl:grid-cols-9'>
-        <KangurAdminMetricCard
-          label='Suites'
-          value={libraryHealthSummary.suiteCount}
-          detail='Tracked test suites in the Kangur question bank'
-          Icon={ClipboardList}
-          tone='info'
-        />
-        <KangurAdminMetricCard
-          label='Groups'
-          value={resolvedGroups.length}
-          detail='Persisted test groups organizing suites in the library'
-          Icon={Folders}
-          tone='info'
-        />
-        <KangurAdminMetricCard
-          label='Clean suites'
-          value={libraryHealthSummary.readySuiteCount}
-          detail='Suites whose current questions are structurally clean'
-          Icon={WandSparkles}
-          tone='success'
-        />
-        <KangurAdminMetricCard
-          label='Needs review'
-          value={libraryHealthSummary.suitesNeedingReviewCount}
-          detail='Suites with questions that still need editorial review'
-          Icon={AlertTriangle}
-          tone='warning'
-        />
-        <KangurAdminMetricCard
-          label='Needs fixes'
-          value={libraryHealthSummary.suitesNeedingFixCount}
-          detail='Suites containing blocked or inconsistent questions'
-          Icon={AlertTriangle}
-          tone='warning'
-        />
-        <KangurAdminMetricCard
-          label='Question queue'
-          value={libraryHealthSummary.reviewQueueQuestionCount}
-          detail={`${libraryHealthSummary.totalQuestionCount} total questions, ${libraryHealthSummary.richQuestionCount} with rich UI`}
-          Icon={Sparkles}
-          tone='info'
-        />
-        <KangurAdminMetricCard
-          label='Draft questions'
-          value={libraryHealthSummary.draftQuestionCount}
-          detail='Questions still being authored and not yet cleared for publish'
-          Icon={ListOrdered}
-          tone='neutral'
-        />
-        <KangurAdminMetricCard
-          label='Ready to publish'
-          value={libraryHealthSummary.readyToPublishQuestionCount}
-          detail={`${libraryHealthSummary.publishableQuestionCount} structurally ready now, ${libraryHealthSummary.readyToPublishQuestionCount - libraryHealthSummary.publishableQuestionCount} still need review cleanup`}
-          Icon={WandSparkles}
-          tone='info'
-        />
-        <KangurAdminMetricCard
-          label='Live suites'
-          value={libraryHealthSummary.liveSuiteCount}
-          detail={`${libraryHealthSummary.unstableLiveSuiteCount} live suites currently need attention`}
-          Icon={Folders}
-          tone='success'
-        />
-        <KangurAdminMetricCard
-          label='Ready for live'
-          value={libraryHealthSummary.liveReadySuiteCount}
-          detail={`${libraryHealthSummary.partiallyPublishedSuiteCount} suites still have only a partial published set`}
-          Icon={Folders}
-          tone='warning'
-        />
-      </div>
+      {renderKangurTestSuiteMetricsGrid({
+        libraryHealthSummary,
+        groupCount: resolvedGroups.length,
+      })}
 
       {editingGroupOriginalTitle ? (
         <div className='rounded-[28px] border border-border/60 bg-card/20 p-5 sm:p-6'>

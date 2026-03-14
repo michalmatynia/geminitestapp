@@ -1,4 +1,4 @@
-import { parseJsonSetting } from '@/shared/utils/settings-json';
+import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 
 export const KANGUR_HELP_SETTINGS_KEY = 'kangur_help_settings_v1';
 

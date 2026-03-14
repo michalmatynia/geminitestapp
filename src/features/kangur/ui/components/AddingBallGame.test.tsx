@@ -45,13 +45,16 @@ vi.mock('@hello-pangea/dnd', () => ({
       innerRef: (element: HTMLElement | null) => void;
       draggableProps: Record<string, never>;
       dragHandleProps: Record<string, never>;
-    }) => React.ReactNode;
+    }, snapshot: { isDragging: boolean }) => React.ReactNode;
   }) =>
-    children({
-      innerRef: () => undefined,
-      draggableProps: {},
-      dragHandleProps: {},
-    }),
+    children(
+      {
+        innerRef: () => undefined,
+        draggableProps: {},
+        dragHandleProps: {},
+      },
+      { isDragging: false }
+    ),
 }));
 
 vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {

@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+import GeometryBasicsWorkshopGame from '@/features/kangur/ui/components/GeometryBasicsWorkshopGame';
+import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
@@ -9,6 +11,7 @@ import {
   GeometryAngleTypesAnimation,
   GeometryMovingPointAnimation,
   GeometryPointSegmentAnimation,
+  GeometryRightAngleAnimation,
   GeometrySideHighlightAnimation,
   GeometryVerticesAnimation,
 } from '@/features/kangur/ui/components/GeometryLessonAnimations';
@@ -26,56 +29,9 @@ import {
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 
-type SectionId = 'punkt' | 'bok' | 'kat' | 'animacje' | 'podsumowanie';
+type SectionId = 'punkt' | 'bok' | 'kat' | 'podsumowanie' | 'game';
 
-const GEOMETRY_BASICS_ANIMATION_SLIDES: LessonSlide[] = [
-  {
-    title: 'Punkt i odcinek w ruchu',
-    content: (
-      <KangurLessonStack className='text-center'>
-        <KangurLessonLead>Odcinek łączy dwa punkty.</KangurLessonLead>
-        <KangurLessonCallout accent='sky'>
-          <div className='mx-auto w-full max-w-xs'>
-            <GeometryPointSegmentAnimation />
-          </div>
-          <KangurLessonCaption className='mt-2'>
-            Dwa punkty wyznaczają odcinek.
-          </KangurLessonCaption>
-        </KangurLessonCallout>
-      </KangurLessonStack>
-    ),
-  },
-  {
-    title: 'Boki i wierzchołki',
-    content: (
-      <KangurLessonStack className='text-center'>
-        <KangurLessonLead>Wierzchołki to miejsca, gdzie spotykają się boki.</KangurLessonLead>
-        <KangurLessonCallout accent='slate' className='border-cyan-200/85'>
-          <div className='mx-auto h-28 w-28'>
-            <GeometryVerticesAnimation />
-          </div>
-          <KangurLessonCaption className='mt-2'>Zaznaczone punkty to wierzchołki.</KangurLessonCaption>
-        </KangurLessonCallout>
-      </KangurLessonStack>
-    ),
-  },
-  {
-    title: 'Kąt się otwiera',
-    content: (
-      <KangurLessonStack className='text-center'>
-        <KangurLessonLead>Im większy kąt, tym szerzej otwarta „bramka”.</KangurLessonLead>
-        <KangurLessonCallout accent='sky'>
-          <div className='mx-auto h-28 w-28'>
-            <GeometryAngleAnimation />
-          </div>
-          <KangurLessonCaption className='mt-2'>Kąt zmienia swoje rozwarcie.</KangurLessonCaption>
-        </KangurLessonCallout>
-      </KangurLessonStack>
-    ),
-  },
-];
-
-export const SLIDES: Record<SectionId, LessonSlide[]> = {
+export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
   punkt: [
     {
       title: 'Punkt i odcinek',
@@ -164,7 +120,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           </KangurLessonLead>
           <KangurLessonCallout accent='sky'>
             <div className='mx-auto h-28 w-28'>
-              <GeometryAngleAnimation />
+              <GeometryRightAngleAnimation />
             </div>
             <p className='mt-2 text-sm text-cyan-700'>To kąt prosty (90°).</p>
           </KangurLessonCallout>
@@ -193,7 +149,6 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
   ],
-  animacje: GEOMETRY_BASICS_ANIMATION_SLIDES,
   podsumowanie: [
     {
       title: 'Podsumowanie',
@@ -221,34 +176,69 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Podsumowanie w ruchu',
+      title: 'Punkt i odcinek',
       content: (
-        <div className='grid gap-3 text-center sm:grid-cols-2 lg:grid-cols-3'>
+        <KangurLessonStack className='text-center'>
           <KangurLessonCallout accent='sky' padding='sm'>
             <GeometryPointSegmentAnimation />
             <KangurLessonCaption className='mt-2'>Punkt i odcinek.</KangurLessonCaption>
           </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Punkt na odcinku',
+      content: (
+        <KangurLessonStack className='text-center'>
           <KangurLessonCallout accent='sky' padding='sm'>
             <GeometryMovingPointAnimation />
             <KangurLessonCaption className='mt-2'>Punkt na odcinku.</KangurLessonCaption>
           </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Boki i wierzchołki',
+      content: (
+        <KangurLessonStack className='text-center'>
           <KangurLessonCallout accent='slate' padding='sm' className='border-cyan-200/85'>
             <GeometryVerticesAnimation />
             <KangurLessonCaption className='mt-2'>Boki i wierzchołki.</KangurLessonCaption>
           </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Policz boki',
+      content: (
+        <KangurLessonStack className='text-center'>
           <KangurLessonCallout accent='slate' padding='sm' className='border-cyan-200/85'>
             <GeometrySideHighlightAnimation />
             <KangurLessonCaption className='mt-2'>Policz boki.</KangurLessonCaption>
           </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Rodzaje kątów',
+      content: (
+        <KangurLessonStack className='text-center'>
           <KangurLessonCallout accent='sky' padding='sm'>
             <GeometryAngleAnimation />
             <KangurLessonCaption className='mt-2'>Rodzaje kątów.</KangurLessonCaption>
           </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Ostry, prosty, rozwarty',
+      content: (
+        <KangurLessonStack className='text-center'>
           <KangurLessonCallout accent='sky' padding='sm'>
             <GeometryAngleTypesAnimation />
             <KangurLessonCaption className='mt-2'>Ostry, prosty, rozwarty.</KangurLessonCaption>
           </KangurLessonCallout>
-        </div>
+        </KangurLessonStack>
       ),
     },
   ],
@@ -263,13 +253,14 @@ export const HUB_SECTIONS = [
   },
   { id: 'bok', emoji: '🔷', title: 'Bok i wierzchołek', description: 'Części figur wielokątnych' },
   { id: 'kat', emoji: '∟', title: 'Kąt', description: 'Ostry, prosty i rozwarty' },
-  {
-    id: 'animacje',
-    emoji: '🎞️',
-    title: 'Animacje',
-    description: 'Punkt, bok i kąt w ruchu',
-  },
   { id: 'podsumowanie', emoji: '📋', title: 'Podsumowanie', description: 'Wszystko razem' },
+  {
+    id: 'game',
+    emoji: '🎯',
+    title: 'Gra: Geo-misja',
+    description: 'Punkt, odcinek, bok i kąt w praktyce',
+    isGame: true,
+  },
 ];
 
 export default function GeometryBasicsLesson(): React.JSX.Element {
@@ -283,14 +274,32 @@ export default function GeometryBasicsLesson(): React.JSX.Element {
     addXp(reward.xp, reward.progressUpdates);
   };
 
+  if (activeSection === 'game') {
+    return (
+      <LessonActivityStage
+        accent='sky'
+        icon='🎯'
+        maxWidthClassName='max-w-3xl'
+        onBack={() => setActiveSection(null)}
+        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        shellTestId='geometry-basics-game-shell'
+        title='Geo-misja'
+      >
+        <GeometryBasicsWorkshopGame onFinish={() => setActiveSection(null)} />
+      </LessonActivityStage>
+    );
+  }
+
   if (activeSection) {
     return (
       <LessonSlideSection
-        slides={SLIDES[activeSection]}
+        slides={SLIDES[activeSection as Exclude<SectionId, 'game'>]}
         sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
         onBack={() => setActiveSection(null)}
         onComplete={activeSection === 'podsumowanie' ? handleComplete : undefined}
-        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
+        onProgressChange={(viewedCount) =>
+          markSectionViewedCount(activeSection as Exclude<SectionId, 'game'>, viewedCount)
+        }
         dotActiveClass='bg-cyan-500'
         dotDoneClass='bg-cyan-300'
         gradientClass='kangur-gradient-accent-sky'
@@ -304,12 +313,18 @@ export default function GeometryBasicsLesson(): React.JSX.Element {
       lessonTitle='Podstawy geometrii'
       gradientClass='kangur-gradient-accent-sky'
       progressDotClassName='bg-cyan-300'
-      sections={HUB_SECTIONS.map((section) => ({
-        ...section,
-        progress: sectionProgress[section.id as SectionId],
-      }))}
+      sections={HUB_SECTIONS.map((section) =>
+        section.isGame
+          ? section
+          : {
+              ...section,
+              progress: sectionProgress[section.id as Exclude<SectionId, 'game'>],
+            }
+      )}
       onSelect={(id) => {
-        markSectionOpened(id as SectionId);
+        if (id !== 'game') {
+          markSectionOpened(id as Exclude<SectionId, 'game'>);
+        }
         setActiveSection(id as SectionId);
       }}
     />

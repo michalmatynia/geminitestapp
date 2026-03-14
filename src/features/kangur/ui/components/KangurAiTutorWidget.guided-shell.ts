@@ -18,6 +18,7 @@ import { AVATAR_SIZE, EDGE_GAP, type TutorMotionPosition, type TutorMotionProfil
 type GuidedMode = 'home_onboarding' | 'selection' | 'section' | 'auth' | null;
 type GuidedPlacement = 'top' | 'bottom' | 'left' | 'right';
 const GUIDED_CALLOUT_FOCUS_PROTECTED_AREA_RATIO_LIMIT = 18;
+const GUIDED_SELECTION_CALLOUT_EDGE_BUFFER = EDGE_GAP * 2;
 
 type GuidedShellState = {
   guidedArrowheadTransition: string | undefined;
@@ -247,6 +248,11 @@ export function useKangurAiTutorGuidedShellState(input: {
     guidedAvatarArrowheadDisplayAngle !== null
       ? guidedAvatarArrowheadDisplayAngle.toFixed(2)
       : undefined;
+  const shouldSuppressSelectionGuidanceCallout =
+    shouldUseSelectionGuidanceLayout &&
+    guidedFocusRect &&
+    (guidedFocusRect.top <= GUIDED_SELECTION_CALLOUT_EDGE_BUFFER ||
+      guidedFocusRect.right >= viewport.width - GUIDED_SELECTION_CALLOUT_EDGE_BUFFER);
   const shouldRenderGuidedCallout =
     !isTutorHidden &&
     (!isOpen || panelShellMode === 'minimal' || suppressPanelSurface) &&
@@ -258,7 +264,11 @@ export function useKangurAiTutorGuidedShellState(input: {
       guidedMode === 'section' ||
       showSectionGuidanceCallout ||
       showSelectionGuidanceCallout ||
-      isAnonymousVisitor);
+      isAnonymousVisitor) &&
+    !(
+      shouldSuppressSelectionGuidanceCallout &&
+      (guidedMode === 'selection' || showSelectionGuidanceCallout)
+    );
   const guidedCalloutTransitionDuration = Math.max(
     0.34,
     motionProfile.guidedAvatarTransition.duration * 0.78

@@ -18,7 +18,7 @@ describe('kangur ai tutor native guide contract', () => {
             surface: 'game',
             focusKind: 'question',
             title: 'Pytanie w grze',
-            shortDescription: 'Własny skrot opisu pytania.',
+            shortDescription: 'Własny skrót opisu pytania.',
             fullDescription: 'Własny, dłuższy opis pytania w grze zapisany w MongoDB.',
             hints: ['Czytaj spokojnie i nie zgaduj.'],
             relatedGames: [],
@@ -34,7 +34,7 @@ describe('kangur ai tutor native guide contract', () => {
             focusKind: null,
             title: 'Dodatkowa sekcja',
             shortDescription: 'Opis dodatkowej sekcji zapisanej poza seedem.',
-            fullDescription: 'Pełny opis dodatkowej sekcji, która została dopisana recznie.',
+            fullDescription: 'Pełny opis dodatkowej sekcji, która została dopisana ręcznie.',
             hints: [],
             relatedGames: [],
             relatedTests: [],
@@ -53,7 +53,7 @@ describe('kangur ai tutor native guide contract', () => {
     );
 
     expect(merged.version).toBe(DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE.version);
-    expect(mergedGameQuestion?.shortDescription).toBe('Własny skrot opisu pytania.');
+    expect(mergedGameQuestion?.shortDescription).toBe('Własny skrót opisu pytania.');
     expect(mergedGameQuestion?.fullDescription).toBe(
       'Własny, dłuższy opis pytania w grze zapisany w MongoDB.'
     );

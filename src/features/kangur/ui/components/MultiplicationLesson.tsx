@@ -8,12 +8,20 @@ import LessonSlideSection, {
 import {
   MultiplicationArrayAnimation,
   MultiplicationCommutativeAnimation,
+  MultiplicationDoubleDoubleAnimation,
+  MultiplicationFiveRhythmAnimation,
+  MultiplicationGamePreviewAnimation,
   MultiplicationGroupsAnimation,
+  MultiplicationIntroPatternAnimation,
+  MultiplicationSkipCountAnimation,
+  MultiplicationTenShiftAnimation,
 } from '@/features/kangur/ui/components/LessonAnimations';
 import MultiplicationArrayGame from '@/features/kangur/ui/components/MultiplicationArrayGame';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
+  KangurLessonChip,
+  KangurLessonInset,
   KangurLessonLead,
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
@@ -34,19 +42,22 @@ type SectionId =
 const MULTIPLICATION_GROUPS_SLIDE: LessonSlide = {
   title: 'Mnożenie jako grupy',
   content: (
-    <KangurLessonStack>
-      <KangurLessonLead>
-        Mnożenie to powtarzane dodawanie równych grup.
+    <KangurLessonStack align='start'>
+      <KangurLessonLead align='left'>
+        Gdy masz równe grupy, liczysz grupy i liczbę elementów w każdej.
       </KangurLessonLead>
-      <KangurLessonCallout accent='violet' className='text-center'>
+      <KangurLessonInset accent='emerald' className='text-center'>
+        <KangurLessonChip accent='emerald' className='mb-2'>
+          Równe grupy
+        </KangurLessonChip>
         <div className='mx-auto w-full max-w-sm'>
           <MultiplicationGroupsAnimation />
         </div>
-        <KangurEquationDisplay accent='violet' className='mt-2' size='sm'>
+        <KangurEquationDisplay accent='emerald' className='mt-2' size='sm'>
           3 × 4 = 12
         </KangurEquationDisplay>
-        <KangurLessonCaption className='mt-1'>3 grupy po 4.</KangurLessonCaption>
-      </KangurLessonCallout>
+        <KangurLessonCaption className='mt-1'>3 grupy, po 4 elementy.</KangurLessonCaption>
+      </KangurLessonInset>
     </KangurLessonStack>
   ),
 };
@@ -55,17 +66,20 @@ const MULTIPLICATION_ARRAY_SLIDE: LessonSlide = {
   title: 'Rzędy w tablicy',
   content: (
     <KangurLessonStack>
-      <KangurLessonLead>
-        Każdy rząd ma tyle samo elementów, więc łatwo liczyć skokami.
+      <KangurLessonLead align='left'>
+        Tablica pokazuje rzędy i kolumny, które liczymy raz i mnożymy.
       </KangurLessonLead>
-      <KangurLessonCallout accent='indigo' className='text-center'>
+      <KangurLessonCallout accent='teal' className='text-center'>
+        <KangurLessonChip accent='teal' className='mb-2'>
+          Tablica
+        </KangurLessonChip>
         <div className='mx-auto w-full max-w-sm'>
           <MultiplicationArrayAnimation />
         </div>
-        <KangurEquationDisplay accent='indigo' className='mt-2' size='sm'>
+        <KangurEquationDisplay accent='teal' className='mt-2' size='sm'>
           4 + 4 + 4 = 12
         </KangurEquationDisplay>
-        <KangurLessonCaption className='mt-1'>Skoki co 4: 4, 8, 12.</KangurLessonCaption>
+        <KangurLessonCaption className='mt-1'>Trzy rzędy po cztery.</KangurLessonCaption>
       </KangurLessonCallout>
     </KangurLessonStack>
   ),
@@ -74,15 +88,23 @@ const MULTIPLICATION_ARRAY_SLIDE: LessonSlide = {
 export const SLIDES: Record<Exclude<SectionId, 'game_array'>, LessonSlide[]> = {
   intro: [
     {
-      title: 'Co to znaczy mnozyc?',
+      title: 'Co to znaczy mnożyć?',
       content: (
-        <KangurLessonStack>
-          <KangurLessonLead>
-            Mnozenie to skrócone dodawanie tej samej liczby kilka razy.
+        <KangurLessonStack align='start'>
+          <KangurLessonLead align='left'>
+            Mnozenie zbiera powtarzane grupy w jedno krótkie działanie.
           </KangurLessonLead>
-          <KangurLessonStack gap='sm'>
-            <KangurDisplayEmoji size='xs'>🍬🍬🍬 🍬🍬🍬 🍬🍬🍬</KangurDisplayEmoji>
-            <KangurLessonCaption>3 grupy po 3 cukierki</KangurLessonCaption>
+          <KangurLessonCallout accent='rose' className='text-center'>
+            <div className='flex items-center justify-center gap-2'>
+              <KangurDisplayEmoji size='xs'>🍬</KangurDisplayEmoji>
+              <KangurLessonChip accent='rose'>Powtarzamy</KangurLessonChip>
+            </div>
+            <div className='mx-auto w-full max-w-sm'>
+              <MultiplicationIntroPatternAnimation />
+            </div>
+            <KangurLessonCaption className='mt-1'>Trzy takie same porcje.</KangurLessonCaption>
+          </KangurLessonCallout>
+          <KangurLessonInset accent='violet' className='text-center'>
             <KangurEquationDisplay
               accent='violet'
               data-testid='multiplication-lesson-intro-equation'
@@ -90,8 +112,8 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array'>, LessonSlide[]> = {
             >
               3 × 3 = 9
             </KangurEquationDisplay>
-            <KangurLessonCaption>(to samo co 3+3+3=9)</KangurLessonCaption>
-          </KangurLessonStack>
+            <KangurLessonCaption>To samo co 3 + 3 + 3.</KangurLessonCaption>
+          </KangurLessonInset>
         </KangurLessonStack>
       ),
     },
@@ -101,12 +123,20 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array'>, LessonSlide[]> = {
     {
       title: 'Tabliczka mnożenia × 2 i × 3',
       content: (
-        <div className='flex flex-col gap-2 w-full'>
-          <div className='grid grid-cols-1 gap-2 min-[360px]:grid-cols-2'>
+        <KangurLessonStack align='start'>
+          <KangurLessonLead align='left'>
+            Dwójki i trójki mają rytm: liczymy skokami po osi.
+          </KangurLessonLead>
+          <div className='grid w-full grid-cols-1 gap-2 min-[360px]:grid-cols-2'>
             {[2, 3].map((base) => (
-              <KangurLessonCallout key={base} accent='violet' className='rounded-xl' padding='sm'>
+              <KangurLessonCallout
+                key={base}
+                accent={base === 2 ? 'sky' : 'violet'}
+                className='w-full rounded-xl'
+                padding='sm'
+              >
                 <KangurStatusChip
-                  accent='violet'
+                  accent={base === 2 ? 'sky' : 'violet'}
                   className='mb-2 flex w-full justify-center text-[11px] font-extrabold'
                   size='sm'
                 >
@@ -120,7 +150,18 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array'>, LessonSlide[]> = {
               </KangurLessonCallout>
             ))}
           </div>
-        </div>
+          <KangurLessonInset accent='sky' className='text-center'>
+            <KangurLessonChip accent='sky' className='mb-2'>
+              Skoki na osi
+            </KangurLessonChip>
+            <div className='mx-auto w-full max-w-sm'>
+              <MultiplicationSkipCountAnimation />
+            </div>
+            <KangurLessonCaption className='mt-1'>
+              0 → 2 → 4 → 6 i 0 → 3 → 6 → 9.
+            </KangurLessonCaption>
+          </KangurLessonInset>
+        </KangurLessonStack>
       ),
     },
   ],
@@ -128,10 +169,18 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array'>, LessonSlide[]> = {
     {
       title: 'Tabliczka mnożenia × 4 i × 5',
       content: (
-        <div className='flex flex-col gap-2 w-full'>
-          <div className='grid grid-cols-1 gap-2 min-[360px]:grid-cols-2'>
+        <KangurLessonStack align='start'>
+          <KangurLessonLead align='left'>
+            Czwórki to podwójne dwójki, a piątki mają rytm co pięć.
+          </KangurLessonLead>
+          <div className='grid w-full grid-cols-1 gap-2 min-[360px]:grid-cols-2'>
             {[4, 5].map((base) => (
-              <KangurLessonCallout key={base} accent='indigo' className='rounded-xl' padding='sm'>
+              <KangurLessonCallout
+                key={base}
+                accent='indigo'
+                className='w-full rounded-xl'
+                padding='sm'
+              >
                 <KangurStatusChip
                   accent='indigo'
                   className='mb-2 flex w-full justify-center text-[11px] font-extrabold'
@@ -147,7 +196,27 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array'>, LessonSlide[]> = {
               </KangurLessonCallout>
             ))}
           </div>
-        </div>
+          <div className='grid grid-cols-1 gap-2 min-[420px]:grid-cols-2'>
+            <KangurLessonInset accent='rose' className='text-center'>
+              <KangurLessonChip accent='rose' className='mb-2'>
+                ×4 = podwójnie
+              </KangurLessonChip>
+              <div className='mx-auto w-full max-w-xs'>
+                <MultiplicationDoubleDoubleAnimation />
+              </div>
+              <KangurLessonCaption className='mt-1'>Podwój, potem jeszcze raz.</KangurLessonCaption>
+            </KangurLessonInset>
+            <KangurLessonInset accent='amber' className='text-center'>
+              <KangurLessonChip accent='amber' className='mb-2'>
+                ×5 = rytm
+              </KangurLessonChip>
+              <div className='mx-auto w-full max-w-xs'>
+                <MultiplicationFiveRhythmAnimation />
+              </div>
+              <KangurLessonCaption className='mt-1'>Wynik kończy się na 0 lub 5.</KangurLessonCaption>
+            </KangurLessonInset>
+          </div>
+        </KangurLessonStack>
       ),
     },
     MULTIPLICATION_ARRAY_SLIDE,
@@ -156,26 +225,42 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array'>, LessonSlide[]> = {
     {
       title: 'Triki do zapamiętania',
       content: (
-        <KangurLessonStack className='gap-3'>
-          <KangurLessonCallout accent='amber' className='max-w-xs'>
-            <ul className='space-y-2 text-sm [color:var(--kangur-page-text)]'>
-              <li>
-                ✖️ × 1 = ta sama liczba: <b>7×1=7</b>
-              </li>
-              <li>
-                ✖️ × 2 = podwojnie: <b>6×2=12</b>
-              </li>
-              <li>
-                ✖️ × 5 = konczy się na 0 lub 5: <b>7×5=35</b>
-              </li>
-              <li>
-                ✖️ × 10 = dodaj zero: <b>8×10=80</b>
-              </li>
-              <li>
-                ✅ Kolejnosc nie ma znaczenia: <b>3×4=4×3</b>
-              </li>
-            </ul>
-          </KangurLessonCallout>
+        <KangurLessonStack align='start' className='gap-3'>
+          <KangurLessonLead align='left'>
+            Zapamiętaj kilka skrótów, które przyspieszają liczenie.
+          </KangurLessonLead>
+          <div className='grid grid-cols-1 gap-3 min-[420px]:grid-cols-[1.2fr_1fr]'>
+            <KangurLessonCallout accent='amber' className='w-full'>
+              <ul className='space-y-2 text-sm [color:var(--kangur-page-text)]'>
+                <li>
+                  ✖️ × 1 = ta sama liczba: <b>7×1=7</b>
+                </li>
+                <li>
+                  ✖️ × 2 = podwójnie: <b>6×2=12</b>
+                </li>
+                <li>
+                  ✖️ × 5 = kończy się na 0 lub 5: <b>7×5=35</b>
+                </li>
+                <li>
+                  ✖️ × 10 = dodaj zero: <b>8×10=80</b>
+                </li>
+                <li>
+                  ✅ Kolejność nie ma znaczenia: <b>3×4=4×3</b>
+                </li>
+              </ul>
+            </KangurLessonCallout>
+            <KangurLessonInset accent='teal' className='text-center'>
+              <KangurLessonChip accent='teal' className='mb-2'>
+                ×10 w sekundę
+              </KangurLessonChip>
+              <div className='mx-auto w-full max-w-xs'>
+                <MultiplicationTenShiftAnimation />
+              </div>
+              <KangurLessonCaption className='mt-1'>
+                Dopisz 0 i gotowe.
+              </KangurLessonCaption>
+            </KangurLessonInset>
+          </div>
         </KangurLessonStack>
       ),
     },
@@ -183,15 +268,18 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array'>, LessonSlide[]> = {
       title: 'Kolejność czynników',
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>3 × 4 to to samo co 4 × 3.</KangurLessonLead>
-          <KangurLessonCallout accent='amber' className='max-w-sm text-center'>
+          <KangurLessonLead align='left'>3 × 4 to to samo co 4 × 3.</KangurLessonLead>
+          <KangurLessonInset accent='sky' className='max-w-sm text-center'>
+            <KangurLessonChip accent='sky' className='mb-2'>
+              Zamiana miejsc
+            </KangurLessonChip>
             <div className='mx-auto w-full max-w-xs'>
               <MultiplicationCommutativeAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
               Zamiana czynników nie zmienia wyniku.
             </KangurLessonCaption>
-          </KangurLessonCallout>
+          </KangurLessonInset>
         </KangurLessonStack>
       ),
     },
@@ -249,10 +337,23 @@ export default function MultiplicationLesson(): React.JSX.Element {
         shellTestId='multiplication-lesson-game-array-shell'
         title='Gra z grupami!'
       >
-        <MultiplicationArrayGame
-          finishLabel='Wróć do tematów'
-          onFinish={() => setActiveSection(null)}
-        />
+        <KangurLessonStack>
+          <KangurLessonCallout accent='violet' className='text-center'>
+            <KangurLessonChip accent='violet' className='mb-2'>
+              Zobacz grupy
+            </KangurLessonChip>
+            <div className='mx-auto w-full max-w-xs'>
+              <MultiplicationGamePreviewAnimation />
+            </div>
+            <KangurLessonCaption className='mt-1'>
+              Łącz równe grupy kropek, aby zobaczyć mnożenie.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+          <MultiplicationArrayGame
+            finishLabel='Wróć do tematów'
+            onFinish={() => setActiveSection(null)}
+          />
+        </KangurLessonStack>
       </LessonActivityStage>
     );
   }

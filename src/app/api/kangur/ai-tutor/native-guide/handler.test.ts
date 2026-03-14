@@ -150,7 +150,7 @@ describe('kangur ai tutor native guide handler', () => {
     const payload = cloneDefaultStore();
     payload.entries[0] = {
       ...payload.entries[0]!,
-      shortDescription: 'TODO uzupelnic opis sekcji.',
+      shortDescription: 'TODO uzupełnić opis sekcji.',
     };
 
     await expect(

@@ -31,7 +31,7 @@ import {
   StandardDataTablePanel,
   StatusBadge,
   Alert,
-} from '@/shared/ui';
+} from '@/features/products/ui';
 
 import { ValidatedField } from './ValidatedField';
 import { ValidatorIssueHint } from './ValidatorIssueHint';

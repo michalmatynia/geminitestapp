@@ -1,5 +1,6 @@
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import {
   KangurPracticeGameProgress,
@@ -66,7 +67,7 @@ const buildRoundState = (round: LogicalPatternRound): RoundState => {
   const pool = shuffle(
     round.pool
       .map((tileId) => LOGICAL_PATTERNS_WORKSHOP_TILES[tileId])
-      .filter(Boolean)
+      .filter((tile): tile is LogicalPatternTile => Boolean(tile))
   );
   const slots = round.sequence
     .filter((cell): cell is BlankCell => cell.type === 'blank')
@@ -104,6 +105,8 @@ const ringClasses: Record<KangurAccent, string> = {
   teal: 'ring-teal-400/70',
   slate: 'ring-slate-400/70',
 };
+
+const dragPortal = typeof document === 'undefined' ? null : document.body;
 
 const buildTileClassName = ({
   accent,
@@ -542,43 +545,59 @@ export default function LogicalPatternsWorkshopGame({
                             }
                           }}
                         >
-                          {assigned ? (
-                            <Draggable draggableId={assigned.id} index={0} key={assigned.id}>
-                              {(tokenProvided, tokenSnapshot) => (
-                                <button
-                                  type='button'
-                                  ref={tokenProvided.innerRef}
-                                  {...tokenProvided.draggableProps}
-                                  {...tokenProvided.dragHandleProps}
-                                  className={buildTileClassName({
-                                    accent: assigned.accent ?? 'violet',
-                                    isSelected: false,
-                                    isDragging: tokenSnapshot.isDragging,
-                                    isCompact: true,
-                                    isDisabled: checked,
-                                    isMuted: checked,
-                                  })}
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    if (checked) return;
-                                    setRoundState((prev) => ({
-                                      pool: [...prev.pool, assigned],
-                                      slots: {
-                                        ...prev.slots,
-                                        [cell.id]: [],
-                                      },
-                                    }));
-                                  }}
-                                >
-                                  <span
-                                    className={
-                                      assigned.kind === 'number' ? 'text-sm font-bold' : 'text-base'
-                                    }
+                            {assigned ? (
+                              <Draggable
+                                draggableId={assigned.id}
+                                index={0}
+                                key={assigned.id}
+                                isDragDisabled={checked}
+                                disableInteractiveElementBlocking
+                              >
+                              {(tokenProvided, tokenSnapshot) => {
+                                const content = (
+                                  <button
+                                    type='button'
+                                    ref={tokenProvided.innerRef}
+                                    {...tokenProvided.draggableProps}
+                                    {...tokenProvided.dragHandleProps}
+                                    className={buildTileClassName({
+                                      accent: assigned.accent ?? 'violet',
+                                      isSelected: false,
+                                      isDragging: tokenSnapshot.isDragging,
+                                      isCompact: true,
+                                      isDisabled: checked,
+                                      isMuted: checked,
+                                    })}
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      if (checked) return;
+                                      setRoundState((prev) => ({
+                                        pool: [...prev.pool, assigned],
+                                        slots: {
+                                          ...prev.slots,
+                                          [cell.id]: [],
+                                        },
+                                      }));
+                                    }}
                                   >
-                                    {assigned.label}
-                                  </span>
-                                </button>
-                              )}
+                                    <span
+                                      className={
+                                        assigned.kind === 'number'
+                                          ? 'text-sm font-bold'
+                                          : 'text-base'
+                                      }
+                                    >
+                                      {assigned.label}
+                                    </span>
+                                  </button>
+                                );
+
+                                if (tokenSnapshot.isDragging && dragPortal) {
+                                  return createPortal(content, dragPortal);
+                                }
+
+                                return content;
+                              }}
                             </Draggable>
                           ) : (
                             <span>Upuść</span>
@@ -688,35 +707,51 @@ export default function LogicalPatternsWorkshopGame({
               >
                 {roundState.pool.length === 0 ? <span>Wszystkie kafelki użyte!</span> : null}
                 {roundState.pool.map((token, index) => (
-                  <Draggable key={token.id} draggableId={token.id} index={index}>
-                    {(draggableProvided, snapshot) => (
-                      <button
-                        type='button'
-                        ref={draggableProvided.innerRef}
-                        {...draggableProvided.draggableProps}
-                        {...draggableProvided.dragHandleProps}
-                        className={buildTileClassName({
-                          accent: token.accent ?? 'violet',
-                          isSelected: selectedTokenId === token.id,
-                          isDragging: snapshot.isDragging,
-                          isCompact: false,
-                          isDisabled: checked,
-                          isMuted: checked,
-                        })}
-                        aria-pressed={selectedTokenId === token.id}
-                        onClick={(event) => {
-                          event.preventDefault();
-                          if (snapshot.isDragging || checked) return;
-                          setSelectedTokenId((current) =>
-                            current === token.id ? null : token.id
-                          );
-                        }}
-                      >
-                        <span className={token.kind === 'number' ? 'text-lg font-bold' : 'text-xl'}>
-                          {token.label}
-                        </span>
-                      </button>
-                    )}
+                  <Draggable
+                    key={token.id}
+                    draggableId={token.id}
+                    index={index}
+                    isDragDisabled={checked}
+                    disableInteractiveElementBlocking
+                  >
+                    {(draggableProvided, snapshot) => {
+                      const content = (
+                        <button
+                          type='button'
+                          ref={draggableProvided.innerRef}
+                          {...draggableProvided.draggableProps}
+                          {...draggableProvided.dragHandleProps}
+                          className={buildTileClassName({
+                            accent: token.accent ?? 'violet',
+                            isSelected: selectedTokenId === token.id,
+                            isDragging: snapshot.isDragging,
+                            isCompact: false,
+                            isDisabled: checked,
+                            isMuted: checked,
+                          })}
+                          aria-pressed={selectedTokenId === token.id}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            if (snapshot.isDragging || checked) return;
+                            setSelectedTokenId((current) =>
+                              current === token.id ? null : token.id
+                            );
+                          }}
+                        >
+                          <span
+                            className={token.kind === 'number' ? 'text-lg font-bold' : 'text-xl'}
+                          >
+                            {token.label}
+                          </span>
+                        </button>
+                      );
+
+                      if (snapshot.isDragging && dragPortal) {
+                        return createPortal(content, dragPortal);
+                      }
+
+                      return content;
+                    }}
                   </Draggable>
                 ))}
                 {provided.placeholder}

@@ -248,7 +248,7 @@ describe('KangurAiTutorWidget - Interaction', () => {
       messages: [
         {
           role: 'assistant',
-          content: 'Spróbuj najpierw policzyc dziesiatke.',
+          content: 'Spróbuj najpierw policzyć dziesiątkę.',
           coachingFrame: { mode: 'hint_ladder', label: 'Jeden trop', description: 'Daj tylko jeden mały krok.' },
         },
       ],

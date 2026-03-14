@@ -81,8 +81,8 @@ const getSetupFocus = (
       accent: 'violet',
       description:
         streak <= 0
-          ? 'Jedna dobra sesja dzisiaj uruchomi nowa serie i podbije tempo nauki.'
-          : `Masz serie ${streak}. Jeszcze jedna mocna runda utrwali rytm dnia.`,
+          ? 'Jedna dobra sesja dzisiaj uruchomi nową serię i podbije tempo nauki.'
+          : `Masz serię ${streak}. Jeszcze jedna mocna runda utrwali rytm dnia.`,
       label: 'Seria',
       title: streak <= 0 ? 'Zbuduj rytm od nowa' : 'Domknij kolejny krok serii',
     };
@@ -91,9 +91,9 @@ const getSetupFocus = (
   if (averageXpPerSession > 0) {
     return {
       accent: 'amber',
-      description: `Twoje aktualne tempo to ${averageXpPerSession} XP na gre. Ta sesja pomoze utrzymac dobra passe.`,
+      description: `Twoje aktualne tempo to ${averageXpPerSession} XP na grę. Ta sesja pomoże utrzymać dobrą passę.`,
       label: 'Tempo',
-      title: mode === 'kangur' ? 'Wejdz z dobrym tempem' : 'Utrzymaj mocne tempo',
+      title: mode === 'kangur' ? 'Wejdź z dobrym tempem' : 'Utrzymaj mocne tempo',
     };
   }
 
@@ -132,7 +132,7 @@ export default function KangurGameSetupMomentumCard({
           ) : null}
           {averageXpPerSession > 0 ? (
             <KangurStatusChip accent='amber' size='sm'>
-              Tempo: {averageXpPerSession} XP / gre
+              Tempo: {averageXpPerSession} XP / grę
             </KangurStatusChip>
           ) : null}
         </>

@@ -1,9 +1,4 @@
-import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import {
-  DEFAULT_TONE,
-  CmsStorefrontAppearanceMode,
-  CmsAppearanceTone,
-} from './CmsStorefrontAppearance.contracts';
+import { CmsStorefrontAppearanceMode } from './CmsStorefrontAppearance.contracts';
 
 export const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0;

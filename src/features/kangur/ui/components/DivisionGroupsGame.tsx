@@ -60,6 +60,7 @@ const TOKEN_STYLES = [
   'bg-gradient-to-br from-amber-200 via-orange-300 to-rose-300 shadow-[0_10px_26px_-12px_rgba(251,146,60,0.5)]',
   'bg-gradient-to-br from-violet-200 via-fuchsia-300 to-pink-300 shadow-[0_10px_26px_-12px_rgba(217,70,239,0.45)]',
 ];
+const DEFAULT_TOKEN_STYLE = TOKEN_STYLES[0] ?? 'bg-slate-200';
 
 const TOKEN_EMOJIS = ['🫧', '🐟', '🐠', '⭐', '🔷'];
 
@@ -70,7 +71,7 @@ const createTokens = (count: number, seed: number): TokenItem[] =>
   Array.from({ length: count }, (_, index) => ({
     id: `division-token-${seed}-${index}`,
     emoji: TOKEN_EMOJIS[index % TOKEN_EMOJIS.length] ?? '⭐',
-    style: TOKEN_STYLES[index % TOKEN_STYLES.length] ?? TOKEN_STYLES[0],
+    style: TOKEN_STYLES[index % TOKEN_STYLES.length] ?? DEFAULT_TOKEN_STYLE,
   }));
 
 const buildGroups = (count: number): TokenItem[][] =>
@@ -257,13 +258,14 @@ export default function DivisionGroupsGame({
 
     const sourceId = result.source.droppableId;
     const destinationId = result.destination.droppableId;
+    const destinationIndex = result.destination.index;
 
     if (!isZoneId(sourceId) || !isZoneId(destinationId)) {
       return;
     }
     if (
       sourceId === destinationId &&
-      result.source.index === result.destination.index
+      result.source.index === destinationIndex
     ) {
       return;
     }
@@ -272,11 +274,11 @@ export default function DivisionGroupsGame({
 
     if (sourceId === destinationId) {
       if (sourceId === 'pool') {
-        setPool(reorderWithinList(pool, result.source.index, result.destination.index));
+        setPool(reorderWithinList(pool, result.source.index, destinationIndex));
         return;
       }
       if (sourceId === 'remainder') {
-        setRemainder(reorderWithinList(remainder, result.source.index, result.destination.index));
+        setRemainder(reorderWithinList(remainder, result.source.index, destinationIndex));
         return;
       }
       if (isGroupZoneId(sourceId)) {
@@ -289,7 +291,7 @@ export default function DivisionGroupsGame({
           next[groupIndex] = reorderWithinList(
             current[groupIndex] ?? [],
             result.source.index,
-            result.destination.index
+            destinationIndex
           );
           return next;
         });
@@ -312,7 +314,7 @@ export default function DivisionGroupsGame({
         groups[sourceIndex] ?? [],
         groups[destIndex] ?? [],
         result.source.index,
-        result.destination.index
+        destinationIndex
       );
       setGroups((current) => {
         const next = [...current];
@@ -333,7 +335,7 @@ export default function DivisionGroupsGame({
         groups[sourceIndex] ?? [],
         destinationList,
         result.source.index,
-        result.destination.index
+        destinationIndex
       );
       setGroups((current) => {
         const next = [...current];
@@ -358,7 +360,7 @@ export default function DivisionGroupsGame({
         sourceList,
         groups[destIndex] ?? [],
         result.source.index,
-        result.destination.index
+        destinationIndex
       );
       if (sourceId === 'pool') {
         setPool(moved.source);
@@ -374,11 +376,11 @@ export default function DivisionGroupsGame({
     }
 
     if (sourceId === 'pool') {
-      const moved = moveBetweenLists(pool, remainder, result.source.index, result.destination.index);
+      const moved = moveBetweenLists(pool, remainder, result.source.index, destinationIndex);
       setPool(moved.source);
       setRemainder(moved.destination);
     } else {
-      const moved = moveBetweenLists(remainder, pool, result.source.index, result.destination.index);
+      const moved = moveBetweenLists(remainder, pool, result.source.index, destinationIndex);
       setRemainder(moved.source);
       setPool(moved.destination);
     }

@@ -20,3 +20,4 @@ export {
   markAuthUserEmailVerified,
   setAuthUserPassword,
 } from '@/features/auth/services/auth-user-write-service';
+export { assignAuthUserRole } from '@/features/auth/services/auth-access';

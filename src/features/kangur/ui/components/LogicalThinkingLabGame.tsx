@@ -124,7 +124,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
   const [completed, setCompleted] = useState(false);
 
   const stage = STAGES[stageIndex] ?? 'pattern';
-  const analogyRound = ANALOGY_ROUNDS[analogyIndex] ?? ANALOGY_ROUNDS[0];
+  const analogyRound = ANALOGY_ROUNDS[analogyIndex] ?? ANALOGY_ROUNDS[0]!;
 
   const patternSolutionIds = useMemo(() => {
     const slot1 = patternState['pattern-slot-1'][0]?.kind ?? null;
@@ -154,16 +154,18 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
     if (patternChecked) return;
     const { source, destination } = result;
     if (!destination) return;
-    if (!isPatternZone(source.droppableId) || !isPatternZone(destination.droppableId)) return;
-    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
+    const sourceId = source.droppableId;
+    const destinationId = destination.droppableId;
+    if (!isPatternZone(sourceId) || !isPatternZone(destinationId)) return;
+    if (sourceId === destinationId && source.index === destination.index) return;
 
     setPatternState((prev) => {
-      const sourceList = prev[source.droppableId];
-      const destinationList = prev[destination.droppableId];
+      const sourceList = prev[sourceId];
+      const destinationList = prev[destinationId];
       let nextSource = sourceList;
       let nextDestination = destinationList;
 
-      if (destination.droppableId !== 'pattern-pool' && destinationList.length > 0) {
+      if (destinationId !== 'pattern-pool' && destinationList.length > 0) {
         const [existing] = destinationList;
         const pool = [...prev['pattern-pool'], ...(existing ? [existing] : [])];
         nextDestination = [];
@@ -171,16 +173,16 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
         return {
           ...prev,
           'pattern-pool': pool,
-          [destination.droppableId]: nextDestination,
-          [source.droppableId]: nextSource,
+          [destinationId]: nextDestination,
+          [sourceId]: nextSource,
         };
       }
 
       const moved = moveItem(sourceList, destinationList, source.index, destination.index);
       return {
         ...prev,
-        [source.droppableId]: moved.source,
-        [destination.droppableId]: moved.destination,
+        [sourceId]: moved.source,
+        [destinationId]: moved.destination,
       };
     });
     setFeedback(null);
@@ -190,20 +192,22 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
     if (classifyChecked) return;
     const { source, destination } = result;
     if (!destination) return;
-    if (!isClassifyZone(source.droppableId) || !isClassifyZone(destination.droppableId)) return;
-    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
+    const sourceId = source.droppableId;
+    const destinationId = destination.droppableId;
+    if (!isClassifyZone(sourceId) || !isClassifyZone(destinationId)) return;
+    if (sourceId === destinationId && source.index === destination.index) return;
 
     setClassifyState((prev) => {
       const moved = moveItem(
-        prev[source.droppableId],
-        prev[destination.droppableId],
+        prev[sourceId],
+        prev[destinationId],
         source.index,
         destination.index
       );
       return {
         ...prev,
-        [source.droppableId]: moved.source,
-        [destination.droppableId]: moved.destination,
+        [sourceId]: moved.source,
+        [destinationId]: moved.destination,
       };
     });
     setFeedback(null);
@@ -318,7 +322,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                   {token}
                 </span>
               ))}
-              {(['pattern-slot-1', 'pattern-slot-2'] as PatternZoneId[]).map((slotId, index) => (
+              {(['pattern-slot-1', 'pattern-slot-2'] as PatternZoneId[]).map((slotId) => (
                 <Droppable key={slotId} droppableId={slotId} direction='horizontal'>
                   {(provided, snapshot) => (
                     <div

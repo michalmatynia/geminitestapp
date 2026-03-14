@@ -32,6 +32,7 @@ import {
 } from '@/features/kangur/settings-ai-tutor';
 import type { AgentPersonaMoodId } from '@/shared/contracts/agents';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
+import type { ContextRuntimeDocument } from '@/shared/contracts/ai-context-registry';
 import {
   kangurAiTutorChatRequestSchema,
   type KangurAiTutorChatResponse,

@@ -83,8 +83,8 @@ export default function LogicalIfThenStepsGame(): React.JSX.Element {
   const [feedback, setFeedback] = useState<FeedbackKind>(null);
   const [completed, setCompleted] = useState(false);
 
-  const round = ROUNDS[roundIndex] ?? ROUNDS[0];
-  const cards = useMemo(() => buildCards(round), [round.id]);
+  const round = ROUNDS[roundIndex] ?? ROUNDS[0]!;
+  const cards = useMemo(() => buildCards(round), [round]);
   const cardMap = useMemo(() => new Map(cards.map((card) => [card.id, card])), [cards]);
 
   const allFilled = SLOT_ORDER.every((slot) => slots[slot]);

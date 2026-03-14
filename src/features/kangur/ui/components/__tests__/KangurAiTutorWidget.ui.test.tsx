@@ -246,6 +246,9 @@ describe('KangurAiTutorWidget - UI', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.localStorage.clear();
+    settingsStoreMock.get.mockImplementation((key: string) =>
+      key === 'kangur_narrator_settings_v1' ? JSON.stringify({ engine: 'client' }) : undefined
+    );
     useOptionalKangurAuthMock.mockReturnValue({
       isAuthenticated: true,
       isLoadingAuth: false,

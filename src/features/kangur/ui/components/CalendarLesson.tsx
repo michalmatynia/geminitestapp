@@ -164,7 +164,7 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack className='text-center'>
           <KangurLessonCallout accent='emerald' className='max-w-xs'>
-            <div className='mx-auto h-40 w-40 sm:h-44 sm:w-44'>
+            <div className='mx-auto h-48 w-48 sm:h-56 sm:w-56'>
               <CalendarMonthsLoopAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -180,7 +180,7 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack className='text-center'>
           <KangurLessonCallout accent='emerald' className='max-w-xs'>
-            <div className='mx-auto h-40 w-40 sm:h-44 sm:w-44'>
+            <div className='mx-auto h-48 w-48 sm:h-56 sm:w-56'>
               <CalendarSeasonsCycleAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>

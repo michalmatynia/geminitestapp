@@ -7,6 +7,7 @@ import { KANGUR_PAGE_CONTAINER_CLASSNAME } from '../tokens';
 
 export type KangurPageContainerProps = React.HTMLAttributes<HTMLElement> & {
   as?: 'div' | 'main' | 'section';
+  'data-kangur-route-main'?: boolean | 'true' | 'false';
 };
 
 export const KangurPageContainer = ({

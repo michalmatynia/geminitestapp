@@ -74,6 +74,24 @@ to the canonical repo references.
   sections instead of flattening them: `summary`, `details`, `paths`,
   `filters`, and `notes` each have a distinct role.
 
+## Locked Build Configuration — DO NOT MODIFY
+
+The following files contain the production/Vercel build configuration and must
+**NOT** be modified by AI agents without explicit user approval:
+
+- `next.config.mjs` — Next.js build config (standalone output, cpus, memory, optimizePackageImports, serverExternalPackages)
+- `package.json` `"build"` script — heap size (`--max-old-space-size=3584`) tuned for Vercel free-tier 8GB limit
+- `tsconfig.json` — TypeScript compiler config and `include`/`exclude` paths
+- `vercel.json` — Vercel deployment settings (if present)
+
+**Key build constraints that must be preserved:**
+- `--max-old-space-size=3584` in the build script (Vercel: 1 main + 2 workers × 3.5GB = fits 8GB)
+- `experimental.cpus: 2` — limits worker processes to fit Vercel memory
+- Conditional `output: 'standalone'` — enabled only for non-Vercel deploys (Docker/self-hosted); disabled on Vercel to avoid expensive file-tracing
+- `typescript.ignoreBuildErrors: true` — type-checking is enforced in CI, not during `next build`
+
+If you need to change any of these files, **stop and ask the user for permission first**.
+
 ## Sensitive / Avoid-By-Default Areas
 
 - Do not scan `AIPrompts/` unless the task explicitly requires it.

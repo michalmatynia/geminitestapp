@@ -40,6 +40,11 @@ export const DEFAULT_AUTH_PERMISSIONS: AuthPermission[] = [
     name: 'Manage settings',
     description: 'Change platform configuration and integrations.',
   },
+  {
+    id: 'studiq.parent.access',
+    name: 'StudiQ parent access',
+    description: 'Access StudiQ app as a parent account.',
+  },
 ];
 
 export const DEFAULT_AUTH_ROLES: AuthRole[] = [
@@ -88,6 +93,14 @@ export const DEFAULT_AUTH_ROLES: AuthRole[] = [
     permissions: ['auth.users.read'],
     deniedPermissions: [],
     level: 10,
+  },
+  {
+    id: 'studiq_parent',
+    name: 'StudiQ Parent',
+    description: 'Parent account created via StudiQ app registration.',
+    permissions: ['studiq.parent.access'],
+    deniedPermissions: [],
+    level: 5,
   },
 ];
 

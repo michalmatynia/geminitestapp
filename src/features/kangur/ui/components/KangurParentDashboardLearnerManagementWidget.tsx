@@ -58,10 +58,12 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
           {learners.map((learner) => {
             const isActiveLearner = learner.id === activeLearner?.id;
             const initial = learner.displayName.trim().charAt(0).toUpperCase() || '?';
+            const learnerStatusLabel = learner.status === 'active' ? 'aktywny' : 'wyłączony';
             return (
               <KangurIconSummaryOptionCard
                 accent='indigo'
                 aria-pressed={isActiveLearner}
+                aria-label={`Profil ucznia: ${learner.displayName} (${learnerStatusLabel})`}
                 buttonClassName='rounded-[30px] px-5 py-4 text-left'
                 data-doc-id='parent_learner_profile_card'
                 data-testid={`parent-dashboard-learner-card-${learner.id}`}

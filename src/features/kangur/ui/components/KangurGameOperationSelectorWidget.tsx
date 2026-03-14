@@ -550,6 +550,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
                 data-doc-id='home_quick_practice_action'
                 data-testid={`kangur-quick-practice-card-${option.onSelectScreen}`}
                 emphasis='accent'
+                aria-label={`Szybkie ćwiczenie: ${option.label}`}
                 onClick={() => setScreen(option.onSelectScreen)}
               >
                 <KangurIconSummaryCardContent

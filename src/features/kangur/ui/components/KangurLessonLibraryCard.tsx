@@ -154,6 +154,7 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
     <KangurIconSummaryOptionCard
       accent='indigo'
       buttonClassName={cn('w-full text-left max-sm:pr-16 max-sm:pb-16', buttonClassName)}
+      aria-label={`Lekcja: ${lesson.title}`}
       aria-current={ariaCurrent}
       data-doc-id={dataDocId}
       data-testid={itemTestId}

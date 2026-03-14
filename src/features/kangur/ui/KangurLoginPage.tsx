@@ -340,7 +340,7 @@ function KangurLoginPageContent(): JSX.Element {
   const [resendCountdownNowMs, setResendCountdownNowMs] = useState(() => Date.now());
   const processedVerificationTokenRef = useRef<string | null>(null);
   const loginKind = resolveKangurLoginKind(identifier);
-  const isParentFlowVisible = loginKind !== 'student';
+  const isParentFlowVisible = true;
   const audienceLabel =
     parentAuthMode === 'create-account'
       ? 'Nowe konto rodzica'

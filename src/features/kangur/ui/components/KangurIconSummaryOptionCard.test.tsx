@@ -15,6 +15,7 @@ describe('KangurIconSummaryOptionCard', () => {
     render(
       <KangurIconSummaryOptionCard
         accent='indigo'
+        aria-label='Nagłówek'
         buttonClassName='rounded-[28px]'
         data-testid='summary-option-card'
         emphasis='accent'

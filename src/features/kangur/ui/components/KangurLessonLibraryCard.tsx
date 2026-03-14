@@ -1,10 +1,11 @@
 'use client';
 
-import type { ComponentProps } from 'react';
+import React, { type ComponentProps } from 'react';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
+import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
 import type { LessonMasteryPresentation } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext.shared';
 import {
   KangurGradientIconTile,
@@ -12,6 +13,124 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurLesson } from '@/shared/contracts/kangur';
 import { cn } from '@/shared/utils';
+
+// ── Lesson Library Card Sub-components ───────────────────────────────────────
+
+export function KangurLessonLibraryCardAside({
+  masteryPresentation,
+  lessonAssignment,
+  completedLessonAssignment,
+  className,
+}: {
+  masteryPresentation: LessonMasteryPresentation;
+  lessonAssignment: KangurAssignmentSnapshot | null;
+  completedLessonAssignment: KangurAssignmentSnapshot | null;
+  className?: string;
+}): React.JSX.Element {
+  return (
+    <div className={cn('flex flex-wrap items-center gap-2 sm:flex-col sm:items-end', className)}>
+      <KangurStatusChip
+        accent={masteryPresentation.badgeAccent}
+        className='uppercase tracking-[0.14em]'
+        size='sm'
+      >
+        {masteryPresentation.statusLabel}
+      </KangurStatusChip>
+      {lessonAssignment ? (
+        <KangurAssignmentPriorityChip
+          accent='rose'
+          className='uppercase tracking-[0.14em]'
+          priority={lessonAssignment.priority}
+          size='sm'
+        />
+      ) : completedLessonAssignment ? (
+        <KangurStatusChip accent='emerald' className='uppercase tracking-[0.14em]' size='sm'>
+          Zadanie zamknięte
+        </KangurStatusChip>
+      ) : null}
+    </div>
+  );
+}
+
+export function KangurLessonLibraryCardFooter({
+  lesson,
+  hasDocumentContent,
+  lessonAssignment,
+  completedLessonAssignment,
+  masteryPresentation,
+}: {
+  lesson: KangurLesson;
+  hasDocumentContent: boolean;
+  lessonAssignment: KangurAssignmentSnapshot | null;
+  completedLessonAssignment: KangurAssignmentSnapshot | null;
+  masteryPresentation: LessonMasteryPresentation;
+}): React.JSX.Element {
+  const footerChips = [
+    lesson.contentMode === 'document' && hasDocumentContent ? (
+      <KangurStatusChip
+        key='document-content'
+        accent='sky'
+        className='uppercase tracking-[0.14em]'
+        size='sm'
+      >
+        Wlasna zawartosc
+      </KangurStatusChip>
+    ) : null,
+    lessonAssignment ? (
+      <KangurStatusChip
+        key='lesson-assignment'
+        accent='rose'
+        className='uppercase tracking-[0.14em]'
+        size='sm'
+      >
+        Priorytet rodzica
+      </KangurStatusChip>
+    ) : completedLessonAssignment ? (
+      <KangurStatusChip
+        key='completed-assignment'
+        accent='emerald'
+        className='uppercase tracking-[0.14em]'
+        size='sm'
+      >
+        Ukończone dla rodzica
+      </KangurStatusChip>
+    ) : null,
+  ].filter(Boolean);
+
+  return (
+    <>
+      {footerChips.length > 0 ? <div className='flex flex-wrap gap-2'>{footerChips}</div> : null}
+      <div className='mt-3 text-xs font-medium [color:var(--kangur-page-muted-text)]'>
+        {masteryPresentation.summaryLabel}
+      </div>
+      {lessonAssignment ? (
+        <div className='mt-2 text-xs font-semibold text-rose-600'>
+          {lessonAssignment.description}
+        </div>
+      ) : completedLessonAssignment ? (
+        <div className='mt-2 text-xs font-semibold text-emerald-600'>
+          Zadanie od rodzica zostało już wykonane. {completedLessonAssignment.progress.summary}
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+export function KangurLessonLibraryCardIcon({
+  lesson,
+  iconTestId,
+}: {
+  lesson: KangurLesson;
+  iconTestId?: string;
+}): React.JSX.Element {
+  return (
+    <KangurGradientIconTile data-testid={iconTestId} gradientClass={lesson.color} size='lg'>
+      {lesson.emoji}
+    </KangurGradientIconTile>
+  );
+}
+
+// ── Main Card Component ──────────────────────────────────────────────────────
 
 type KangurLessonLibraryCardProps = {
   buttonClassName?: string;
@@ -28,113 +147,59 @@ type KangurLessonLibraryCardProps = {
   statusGroupClassName?: string;
 } & Pick<ComponentProps<typeof KangurIconSummaryOptionCard>, 'emphasis'>;
 
-export function KangurLessonLibraryCard({
-  buttonClassName,
-  completedLessonAssignment,
-  contentClassName,
-  dataDocId,
-  emphasis = 'neutral',
-  hasDocumentContent = false,
-  iconTestId,
-  itemTestId,
-  lesson,
-  lessonAssignment,
-  masteryPresentation,
-  onSelect,
-  statusGroupClassName,
-}: KangurLessonLibraryCardProps): React.JSX.Element {
-  const footerChips = [
-    lesson.contentMode === 'document' && hasDocumentContent ? (
-      <KangurStatusChip key='document-content' accent='sky' className='uppercase tracking-[0.14em]' size='sm'>
-        Wlasna zawartosc
-      </KangurStatusChip>
-    ) : null,
-    lessonAssignment ? (
-      <KangurStatusChip key='lesson-assignment' accent='rose' className='uppercase tracking-[0.14em]' size='sm'>
-        Priorytet rodzica
-      </KangurStatusChip>
-    ) : completedLessonAssignment ? (
-      <KangurStatusChip
-        key='completed-assignment'
-        accent='emerald'
-        className='uppercase tracking-[0.14em]'
-        size='sm'
-      >
-        Ukończone dla rodzica
-      </KangurStatusChip>
-    ) : null,
-  ].filter(Boolean);
+export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): React.JSX.Element {
+  const {
+    buttonClassName,
+    completedLessonAssignment,
+    contentClassName,
+    dataDocId,
+    emphasis = 'neutral',
+    hasDocumentContent = false,
+    iconTestId,
+    itemTestId,
+    lesson,
+    lessonAssignment,
+    masteryPresentation,
+    onSelect,
+    statusGroupClassName,
+  } = props;
 
   return (
     <KangurIconSummaryOptionCard
       accent='indigo'
-      aside={
-        <>
-          <KangurStatusChip
-            accent={masteryPresentation.badgeAccent}
-            className='uppercase tracking-[0.14em]'
-            size='sm'
-          >
-            {masteryPresentation.statusLabel}
-          </KangurStatusChip>
-          {lessonAssignment ? (
-            <KangurAssignmentPriorityChip
-              accent='rose'
-              className='uppercase tracking-[0.14em]'
-              priority={lessonAssignment.priority}
-              size='sm'
-            />
-          ) : completedLessonAssignment ? (
-            <KangurStatusChip
-              accent='emerald'
-              className='uppercase tracking-[0.14em]'
-              size='sm'
-            >
-              Zadanie zamknięte
-            </KangurStatusChip>
-          ) : null}
-        </>
-      }
-      asideClassName={cn(
-        'flex flex-wrap items-center gap-2 sm:flex-col sm:items-end',
-        statusGroupClassName
-      )}
-      buttonClassName={cn(
-        'w-full text-left max-sm:pr-16 max-sm:pb-16',
-        buttonClassName
-      )}
-      contentClassName={contentClassName}
+      buttonClassName={cn('w-full text-left max-sm:pr-16 max-sm:pb-16', buttonClassName)}
       data-doc-id={dataDocId}
       data-testid={itemTestId}
-      description={lesson.description}
       emphasis={emphasis}
-      footer={
-        <>
-          {footerChips.length > 0 ? <div className='flex flex-wrap gap-2'>{footerChips}</div> : null}
-          <div className='mt-3 text-xs font-medium [color:var(--kangur-page-muted-text)]'>
-            {masteryPresentation.summaryLabel}
-          </div>
-          {lessonAssignment ? (
-            <div className='mt-2 text-xs font-semibold text-rose-600'>
-              {lessonAssignment.description}
-            </div>
-          ) : completedLessonAssignment ? (
-            <div className='mt-2 text-xs font-semibold text-emerald-600'>
-              Zadanie od rodzica zostało już wykonane. {completedLessonAssignment.progress.summary}
-            </div>
-          ) : null}
-        </>
-      }
-      headerClassName='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'
-      icon={
-        <KangurGradientIconTile data-testid={iconTestId} gradientClass={lesson.color} size='lg'>
-          {lesson.emoji}
-        </KangurGradientIconTile>
-      }
-      layoutClassName='w-full'
       onClick={onSelect}
-      title={lesson.title}
-      titleClassName='text-lg sm:text-xl'
-    />
+    >
+      <KangurIconSummaryCardContent
+        aside={
+          <KangurLessonLibraryCardAside
+            className={statusGroupClassName}
+            completedLessonAssignment={completedLessonAssignment}
+            lessonAssignment={lessonAssignment}
+            masteryPresentation={masteryPresentation}
+          />
+        }
+        asideClassName='ml-auto flex shrink-0 flex-col items-end gap-2 self-start'
+        className='w-full'
+        contentClassName={contentClassName}
+        description={lesson.description}
+        footer={
+          <KangurLessonLibraryCardFooter
+            completedLessonAssignment={completedLessonAssignment}
+            hasDocumentContent={hasDocumentContent}
+            lesson={lesson}
+            lessonAssignment={lessonAssignment}
+            masteryPresentation={masteryPresentation}
+          />
+        }
+        headerClassName='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'
+        icon={<KangurLessonLibraryCardIcon iconTestId={iconTestId} lesson={lesson} />}
+        title={lesson.title}
+        titleClassName='text-lg sm:text-xl'
+      />
+    </KangurIconSummaryOptionCard>
   );
 }

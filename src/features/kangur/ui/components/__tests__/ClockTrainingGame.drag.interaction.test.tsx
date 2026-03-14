@@ -245,12 +245,7 @@ describe('ClockTrainingGame drag interactions', () => {
     expect(screen.queryByTestId('clock-training-guidance-title')).toBeNull();
     expect(screen.getByText('Ustaw pełną godzinę')).toBeInTheDocument();
     expect(screen.queryByTestId('clock-snap-mode-switch')).toBeNull();
-    expect(screen.getByTestId('clock-interaction-hint')).toHaveTextContent(
-      'Długa wskazówka jest zablokowana na 12.'
-    );
-    expect(screen.getByTestId('clock-interaction-hint')).toHaveClass(
-      '[color:var(--kangur-page-muted-text)]'
-    );
+    expect(screen.queryByTestId('clock-interaction-hint')).toBeNull();
     expect(
       container.querySelector('circle[fill=\'var(--kangur-soft-card-background)\']')
     ).not.toBeNull();
@@ -279,9 +274,7 @@ describe('ClockTrainingGame drag interactions', () => {
       'Krótka wskazówka zostaje na 12'
     );
     expect(screen.getByTestId('clock-snap-mode-switch')).toBeInTheDocument();
-    expect(screen.getByTestId('clock-interaction-hint')).toHaveTextContent(
-      'Krótka wskazówka jest zablokowana na 12.'
-    );
+    expect(screen.queryByTestId('clock-interaction-hint')).toBeNull();
 
     dragHandToAngle(hourHand, 90);
     await waitFor(() => {

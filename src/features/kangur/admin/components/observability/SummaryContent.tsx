@@ -1,12 +1,24 @@
 'use client';
 
-import { AudioLinesIcon, LogInIcon, ShieldAlertIcon, RefreshCwIcon, ArrowUpRightIcon, BotIcon, Repeat2Icon, GaugeIcon } from 'lucide-react';
+import {
+  ArrowUpRightIcon,
+  AudioLinesIcon,
+  BotIcon,
+  GaugeIcon,
+  LogInIcon,
+  RefreshCwIcon,
+  Repeat2Icon,
+  ShieldAlertIcon,
+} from 'lucide-react';
 import Link from 'next/link';
 import { type JSX } from 'react';
 
 import { Button, Card, EmptyState, FormSection, MetadataItem, StatusBadge } from '@/shared/ui';
 
-import { useObservabilitySummaryContext, buildSystemLogsHref } from '../../AdminKangurObservabilityPage';
+import {
+  buildSystemLogsHref,
+  useObservabilitySummaryContext,
+} from '../../AdminKangurObservabilityPage';
 import { useKnowledgeGraphObservability } from './KnowledgeGraphObservabilityContext';
 import { formatDateTime, formatNumber, formatPercent } from './utils';
 import { MetricCard } from './MetricCards';
@@ -62,7 +74,7 @@ export function SummaryContent(): JSX.Element {
   const { range, summary } = useObservabilitySummaryContext();
   const alertById = new Map(summary.alerts.map((alert) => [alert.id, alert]));
   const { clearKnowledgeGraphPreviewContext } = useKnowledgeGraphObservability();
-  
+
   const allKangurLogsHref = buildSystemLogsHref({
     query: 'kangur.',
     from: summary.window.from,
@@ -99,7 +111,11 @@ export function SummaryContent(): JSX.Element {
             </div>
 
             <div className='grid gap-3 sm:grid-cols-2'>
-              <MetadataItem label='Generated' value={formatDateTime(summary.generatedAt)} variant='card' />
+              <MetadataItem
+                label='Generated'
+                value={formatDateTime(summary.generatedAt)}
+                variant='card'
+              />
               <MetadataItem label='Range' value={range} variant='card' />
               <MetadataItem
                 label='Analytics Events'
@@ -216,36 +232,38 @@ export function SummaryContent(): JSX.Element {
 
         <FormSection title='Quick Links' variant='subtle'>
           <div className='space-y-3' data-doc-id='admin_observability_quick_links'>
-            <Button asChild variant='outline' className='w-full justify-between' onClick={clearKnowledgeGraphPreviewContext}>
-              <span>
-                Clear Graph Preview Context
-              </span>
+            <Button
+              variant='outline'
+              className='w-full justify-between'
+              onClick={clearKnowledgeGraphPreviewContext}
+            >
+              Clear Graph Preview Context
             </Button>
-            <Button asChild variant='outline' className='w-full justify-between'>
+            <Button asChild variant='outline' className='w-full justify-between gap-2'>
               <Link href={allKangurLogsHref}>
                 All Kangur Logs
                 <ArrowUpRightIcon className='size-3.5' />
               </Link>
             </Button>
-            <Button asChild variant='outline' className='w-full justify-between'>
+            <Button asChild variant='outline' className='w-full justify-between gap-2'>
               <Link href={ttsGenerationFailureLogsHref}>
                 TTS Generation Failure Logs
                 <ArrowUpRightIcon className='size-3.5' />
               </Link>
             </Button>
-            <Button asChild variant='outline' className='w-full justify-between'>
+            <Button asChild variant='outline' className='w-full justify-between gap-2'>
               <Link href={ttsFallbackLogsHref}>
                 TTS Fallback Logs
                 <ArrowUpRightIcon className='size-3.5' />
               </Link>
             </Button>
-            <Button asChild variant='outline' className='w-full justify-between'>
+            <Button asChild variant='outline' className='w-full justify-between gap-2'>
               <Link href='/admin/analytics'>
                 Global Analytics
                 <ArrowUpRightIcon className='size-3.5' />
               </Link>
             </Button>
-            <Button asChild variant='outline' className='w-full justify-between'>
+            <Button asChild variant='outline' className='w-full justify-between gap-2'>
               <a
                 href='/api/kangur/knowledge-graph/status'
                 target='_blank'
@@ -255,7 +273,7 @@ export function SummaryContent(): JSX.Element {
                 <ArrowUpRightIcon className='size-3.5' />
               </a>
             </Button>
-            <Button asChild variant='outline' className='w-full justify-between'>
+            <Button asChild variant='outline' className='w-full justify-between gap-2'>
               <a
                 href={`/api/kangur/observability/summary?range=${range}`}
                 target='_blank'
@@ -268,7 +286,7 @@ export function SummaryContent(): JSX.Element {
           </div>
         </FormSection>
       </div>
-      
+
       {/* Keeping icons here for now to avoid multiple small files */}
       <div className='hidden'>
         <BotIcon />

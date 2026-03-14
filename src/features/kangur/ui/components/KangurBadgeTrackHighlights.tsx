@@ -1,5 +1,11 @@
 import KangurBadgeTrackPlaceholderCard from '@/features/kangur/ui/components/KangurBadgeTrackPlaceholderCard';
-import { KangurBadgeTrackSummaryCard } from '@/features/kangur/ui/components/KangurBadgeTrackSummaryCard';
+import {
+  KangurBadgeTrackSummaryCard,
+  KangurBadgeTrackCardHeader,
+  KangurBadgeTrackCardBody,
+  KangurBadgeTrackCardBar,
+  KANGUR_BADGE_TRACK_ACCENTS,
+} from '@/features/kangur/ui/components/KangurBadgeTrackSummaryCard';
 import {
   getBadgeTrackMeta,
   getProgressBadgeTrackSummaries,
@@ -73,7 +79,7 @@ const getPinnedTrackPlaceholder = (trackKey: KangurBadgeTrackKey): KangurBadgeTr
     id: trackKey,
     label: meta.label,
     title: 'Ta ścieżka czeka na start',
-    description: 'Pierwszy postęp w tym kierunku odsłoni pełny panel z odznakami.',
+    description: 'Pierwszy postęp in tym kierunku odsłoni pełny panel z odznakami.',
     trackEmoji: meta.emoji,
   };
 };
@@ -159,17 +165,29 @@ export default function KangurBadgeTrackHighlights({
       {items.map((item, index) => {
         if (item.kind === 'track') {
           const { track } = item;
+          const accent = KANGUR_BADGE_TRACK_ACCENTS[track.key] ?? 'indigo';
+          
           return (
             <KangurBadgeTrackSummaryCard
               cardClassName='h-full rounded-[24px] text-left'
               dataTestId={`${trackTestIdPrefix}-${track.key}`}
-              headerClassName='gap-2'
               key={track.key}
-              progressBarTestId={`${trackTestIdPrefix}-${track.key}-bar`}
-              statusChipClassName='text-[11px]'
-              track={track}
-              trackLabelClassName='tracking-[0.16em]'
-            />
+            >
+              <div className={cn('flex flex-col gap-3', 'gap-2')}>
+                <KangurBadgeTrackCardHeader
+                  accent={accent}
+                  labelClassName='tracking-[0.16em]'
+                  statusChipClassName='text-[11px]'
+                  track={track}
+                />
+                <KangurBadgeTrackCardBody track={track} />
+              </div>
+              <KangurBadgeTrackCardBar
+                accent={accent}
+                testId={`${trackTestIdPrefix}-${track.key}-bar`}
+                value={track.progressPercent}
+              />
+            </KangurBadgeTrackSummaryCard>
           );
         }
 

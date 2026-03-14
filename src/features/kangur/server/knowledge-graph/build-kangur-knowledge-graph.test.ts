@@ -1,6 +1,43 @@
 import { describe, expect, it } from 'vitest';
 
+import type { Page } from '@/shared/contracts/cms';
 import { buildKangurKnowledgeGraph } from '@/features/kangur/server/knowledge-graph/build-kangur-knowledge-graph';
+
+const makeCmsPage = (overrides: Partial<Page> = {}): Page => ({
+  id: 'page-1',
+  name: 'Test Page',
+  status: 'published',
+  themeId: null,
+  showMenu: true,
+  components: [
+    {
+      type: 'section',
+      order: 1,
+      content: {
+        zone: 'template',
+        settings: {},
+        blocks: [
+          {
+            id: 'b1',
+            type: 'Heading',
+            settings: { headingText: 'Welcome to Kangur' },
+          },
+          {
+            id: 'b2',
+            type: 'Text',
+            settings: { textContent: 'Learn math the fun way.' },
+          },
+        ],
+        sectionId: 'sec-1',
+        parentSectionId: null,
+      },
+    },
+  ],
+  slugs: [{ id: 'slug-1', slug: 'test-page', isDefault: true, createdAt: '', updatedAt: '' }],
+  createdAt: '',
+  updatedAt: '',
+  ...overrides,
+});
 
 describe('buildKangurKnowledgeGraph', () => {
   it('builds a Kangur website-help graph from context roots and tutor content', () => {
@@ -190,5 +227,73 @@ describe('buildKangurKnowledgeGraph', () => {
         }),
       ])
     );
+  });
+
+  it('creates cms-page nodes for published CMS pages with meaningful text', () => {
+    const snapshot = buildKangurKnowledgeGraph({
+      cmsPages: [
+        makeCmsPage({
+          id: 'cms-about',
+          name: 'O nas',
+          seoTitle: 'O Kangurze — Nauka matematyki',
+          seoDescription: 'Poznaj platformę Kangur do nauki matematyki.',
+          slugs: [{ id: 's1', slug: 'o-nas', isDefault: true, createdAt: '', updatedAt: '' }],
+        }),
+      ],
+    });
+
+    const cmsNode = snapshot.nodes.find((n) => n.id === 'cms-page:cms-about');
+    expect(cmsNode).toMatchObject({
+      kind: 'page',
+      title: 'O Kangurze — Nauka matematyki',
+      summary: 'Poznaj platformę Kangur do nauki matematyki.',
+      source: 'cms_pages',
+      sourceCollection: 'cms_pages',
+      sourceRecordId: 'cms-about',
+      route: '/o-nas',
+      tags: expect.arrayContaining(['cms', 'cms-page', 'website']),
+      triggerPhrases: expect.arrayContaining(['o nas', 'o nas']),
+    });
+    expect(cmsNode?.semanticText).toContain('Welcome to Kangur');
+    expect(cmsNode?.semanticText).toContain('Learn math the fun way.');
+
+    const cmsEdge = snapshot.edges.find((e) => e.to === 'cms-page:cms-about');
+    expect(cmsEdge).toMatchObject({
+      kind: 'RELATED_TO',
+      from: 'app:kangur',
+    });
+  });
+
+  it('skips draft CMS pages', () => {
+    const snapshot = buildKangurKnowledgeGraph({
+      cmsPages: [makeCmsPage({ id: 'cms-draft', status: 'draft' })],
+    });
+
+    expect(snapshot.nodes.find((n) => n.id === 'cms-page:cms-draft')).toBeUndefined();
+  });
+
+  it('skips CMS pages with insufficient text content', () => {
+    const snapshot = buildKangurKnowledgeGraph({
+      cmsPages: [
+        makeCmsPage({
+          id: 'cms-empty',
+          name: 'X',
+          seoTitle: undefined,
+          seoDescription: undefined,
+          components: [],
+        }),
+      ],
+    });
+
+    expect(snapshot.nodes.find((n) => n.id === 'cms-page:cms-empty')).toBeUndefined();
+  });
+
+  it('uses page name as title when seoTitle is missing', () => {
+    const snapshot = buildKangurKnowledgeGraph({
+      cmsPages: [makeCmsPage({ id: 'cms-notitle', seoTitle: undefined })],
+    });
+
+    const cmsNode = snapshot.nodes.find((n) => n.id === 'cms-page:cms-notitle');
+    expect(cmsNode?.title).toBe('Test Page');
   });
 });

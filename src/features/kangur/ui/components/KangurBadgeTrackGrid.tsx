@@ -1,4 +1,10 @@
-import { KangurBadgeTrackSummaryCard } from '@/features/kangur/ui/components/KangurBadgeTrackSummaryCard';
+import {
+  KangurBadgeTrackSummaryCard,
+  KangurBadgeTrackCardHeader,
+  KangurBadgeTrackCardBody,
+  KangurBadgeTrackCardBar,
+  KANGUR_BADGE_TRACK_ACCENTS,
+} from '@/features/kangur/ui/components/KangurBadgeTrackSummaryCard';
 import { KangurCardDescription } from '@/features/kangur/ui/design/primitives';
 import { getProgressBadgeTrackSummaries } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
@@ -31,13 +37,26 @@ export default function KangurBadgeTrackGrid({
   return (
     <div className={cn('grid gap-4 md:grid-cols-2', className)}>
       {tracks.map((track) => {
+        const accent = KANGUR_BADGE_TRACK_ACCENTS[track.key] ?? 'indigo';
+        
         return (
           <KangurBadgeTrackSummaryCard
             dataTestId={`${trackTestIdPrefix}-${track.key}`}
             key={track.key}
-            progressBarTestId={`${trackTestIdPrefix}-${track.key}-bar`}
-            track={track}
-          />
+          >
+            <div className='flex flex-col gap-3'>
+              <KangurBadgeTrackCardHeader
+                accent={accent}
+                track={track}
+              />
+              <KangurBadgeTrackCardBody track={track} />
+            </div>
+            <KangurBadgeTrackCardBar
+              accent={accent}
+              testId={`${trackTestIdPrefix}-${track.key}-bar`}
+              value={track.progressPercent}
+            />
+          </KangurBadgeTrackSummaryCard>
         );
       })}
     </div>

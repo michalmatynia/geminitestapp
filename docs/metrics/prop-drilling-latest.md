@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-13'
+last_reviewed: '2026-03-14'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,27 +8,27 @@ canonical: true
 ---
 # Prop Drilling Scan
 
-Generated at: 2026-03-13T22:20:14.005Z
+Generated at: 2026-03-14T00:15:56.172Z
 
 ## Snapshot
 
-- Scanned source files: 4712
-- JSX files scanned: 1742
-- Components detected: 2719
-- Components forwarding parent props (hotspot threshold): 70
-- Components forwarding parent props (any): 89
-- Resolved forwarded transitions: 409
-- Candidate chains (depth >= 2): 409
-- Candidate chains (depth >= 3): 108
+- Scanned source files: 4725
+- JSX files scanned: 1753
+- Components detected: 2752
+- Components forwarding parent props (hotspot threshold): 76
+- Components forwarding parent props (any): 98
+- Resolved forwarded transitions: 285
+- Candidate chains (depth >= 2): 285
+- Candidate chains (depth >= 3): 74
 - High-priority chains (depth >= 4): 26
-- Unknown spread forwarding edges: 18
-- Hotspot forwarding components backlog size: 70
+- Unknown spread forwarding edges: 19
+- Hotspot forwarding components backlog size: 76
 
 ## Hot Features
 
 | Feature Scope | Forwarding Components |
 | --- | ---: |
-| `feature:kangur` | 60 |
+| `feature:kangur` | 69 |
 | `shared-ui` | 25 |
 | `feature:integrations` | 1 |
 | `feature:cms` | 1 |
@@ -39,180 +39,189 @@ Generated at: 2026-03-13T22:20:14.005Z
 
 | Rank | Component | File | Forwarded Props | Outgoing Transitions | Unknown Spread Forwarding | Hotspot |
 | ---: | --- | --- | ---: | ---: | --- | --- |
-| 1 | `SummaryContent` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx` | 18 | 20 | no | yes |
-| 2 | `KangurPracticeGameSummary` | `src/features/kangur/ui/components/KangurPracticeGameChrome.tsx` | 18 | 18 | no | yes |
-| 3 | `KangurSessionHistoryRow` | `src/features/kangur/ui/components/KangurSessionHistoryRow.tsx` | 16 | 23 | no | yes |
-| 4 | `KangurIconSummaryOptionCard` | `src/features/kangur/ui/components/KangurIconSummaryOptionCard.tsx` | 15 | 15 | yes | yes |
-| 5 | `KangurRecommendationCard` | `src/features/kangur/ui/components/KangurRecommendationCard.tsx` | 14 | 15 | no | yes |
-| 6 | `KangurLessonLibraryCard` | `src/features/kangur/ui/components/KangurLessonLibraryCard.tsx` | 12 | 21 | no | yes |
-| 7 | `KangurAiTutorNativeGuideEntryEditor` | `src/features/kangur/admin/components/KangurAiTutorNativeGuideEntryEditor.tsx` | 11 | 15 | no | yes |
-| 8 | `KangurProgressHighlightCardContent` | `src/features/kangur/ui/components/KangurProgressHighlightCardContent.tsx` | 11 | 11 | no | yes |
-| 9 | `KangurTestChoiceCard` | `src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx` | 9 | 9 | no | yes |
-| 10 | `KnowledgeGraphQueryPreviewSection` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx` | 8 | 13 | no | yes |
-| 11 | `KangurDailyQuestHighlightCardContent` | `src/features/kangur/ui/components/KangurDailyQuestHighlightCardContent.tsx` | 8 | 8 | no | yes |
-| 12 | `KnowledgeGraphStatusSection` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx` | 7 | 14 | no | yes |
-| 13 | `KangurSetupChoiceCard` | `src/features/kangur/ui/components/KangurSetup.tsx` | 7 | 9 | no | yes |
-| 14 | `KangurAssignmentManagerPanel` | `src/features/kangur/ui/components/KangurAssignmentManager.tsx` | 7 | 7 | no | yes |
-| 15 | `KangurBadgeTrackSection` | `src/features/kangur/ui/components/KangurBadgeTrackSection.tsx` | 6 | 6 | no | yes |
-| 16 | `KangurBadgeTrackSummaryCard` | `src/features/kangur/ui/components/KangurBadgeTrackSummaryCard.tsx` | 6 | 6 | no | yes |
-| 17 | `KangurAiTutorPanelChrome` | `src/features/kangur/ui/components/KangurAiTutorPanelChrome.tsx` | 5 | 5 | no | yes |
-| 18 | `KangurAiTutorPanelContextCard` | `src/features/kangur/ui/components/KangurAiTutorPanelContextSummary.tsx` | 4 | 7 | no | yes |
-| 19 | `KangurAnswerChoiceCard` | `src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx` | 4 | 6 | yes | yes |
-| 20 | `KangurBadgeTrackPlaceholderCard` | `src/features/kangur/ui/components/KangurBadgeTrackPlaceholderCard.tsx` | 4 | 4 | no | yes |
-| 21 | `KangurHeroMilestoneSummary` | `src/features/kangur/ui/components/KangurHeroMilestoneSummary.tsx` | 4 | 4 | no | yes |
-| 22 | `KangurPracticeGameProgress` | `src/features/kangur/ui/components/KangurPracticeGameChrome.tsx` | 4 | 4 | no | yes |
-| 23 | `AdminSectionBreadcrumbs` | `src/shared/ui/admin-section-breadcrumbs.tsx` | 4 | 4 | no | yes |
-| 24 | `AllegroSubpageScaffold` | `src/features/integrations/pages/marketplaces/allegro/AllegroSubpageScaffold.tsx` | 3 | 5 | no | yes |
-| 25 | `KangurTestQuestionRenderer` | `src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx` | 3 | 5 | no | yes |
-| 26 | `AdminAgentCreatorPageLayout` | `src/shared/ui/admin-agent-creator-page-layout.tsx` | 3 | 5 | yes | yes |
-| 27 | `AdminChatbotPageLayout` | `src/shared/ui/admin-chatbot-page-layout.tsx` | 3 | 5 | yes | yes |
-| 28 | `AdminIntegrationsPageLayout` | `src/shared/ui/admin-integrations-page-layout.tsx` | 3 | 5 | yes | yes |
-| 29 | `CmsPageShellFrame` | `src/features/cms/components/frontend/CmsPageShell.tsx` | 3 | 3 | no | yes |
-| 30 | `CreateThemeDialog` | `src/features/kangur/admin/AdminKangurAppearancePage.tsx` | 3 | 3 | no | yes |
-| 31 | `KangurActivitySummaryCard` | `src/features/kangur/ui/components/KangurActivitySummaryCard.tsx` | 3 | 3 | no | yes |
-| 32 | `ResultView` | `src/features/kangur/ui/components/KangurGame.tsx` | 3 | 3 | no | yes |
-| 33 | `KangurLabeledValueSummary` | `src/features/kangur/ui/components/KangurLabeledValueSummary.tsx` | 3 | 3 | no | yes |
-| 34 | `KangurPanelSectionHeading` | `src/features/kangur/ui/components/KangurPanelSectionHeading.tsx` | 3 | 3 | yes | yes |
-| 35 | `KangurProfileMenu` | `src/features/kangur/ui/components/KangurProfileMenu.tsx` | 3 | 3 | no | yes |
-| 36 | `KangurSetup` | `src/features/kangur/ui/components/KangurSetup.tsx` | 3 | 3 | no | yes |
-| 37 | `TrainingSetup` | `src/features/kangur/ui/components/TrainingSetup.tsx` | 3 | 3 | no | yes |
-| 38 | `KangurFeatureHeader` | `src/features/kangur/ui/design/primitives/KangurFeatureHeader.tsx` | 3 | 3 | yes | yes |
-| 39 | `AdminAgentCreatorBreadcrumbs` | `src/shared/ui/admin-agent-creator-breadcrumbs.tsx` | 3 | 3 | no | yes |
-| 40 | `AdminAgentTeachingBreadcrumbs` | `src/shared/ui/admin-agent-teaching-breadcrumbs.tsx` | 3 | 3 | no | yes |
-| 41 | `AdminAiPathsBreadcrumbs` | `src/shared/ui/admin-ai-paths-breadcrumbs.tsx` | 3 | 3 | no | yes |
-| 42 | `AdminCaseResolverBreadcrumbs` | `src/shared/ui/admin-case-resolver-breadcrumbs.tsx` | 3 | 3 | no | yes |
-| 43 | `AdminChatbotBreadcrumbs` | `src/shared/ui/admin-chatbot-breadcrumbs.tsx` | 3 | 3 | no | yes |
-| 44 | `AdminCmsBreadcrumbs` | `src/shared/ui/admin-cms-breadcrumbs.tsx` | 3 | 3 | no | yes |
-| 45 | `AdminDatabaseBreadcrumbs` | `src/shared/ui/admin-database-breadcrumbs.tsx` | 3 | 3 | no | yes |
-| 46 | `AdminFilemakerBreadcrumbs` | `src/shared/ui/admin-filemaker-breadcrumbs.tsx` | 3 | 3 | no | yes |
-| 47 | `AdminIntegrationsBreadcrumbs` | `src/shared/ui/admin-integrations-breadcrumbs.tsx` | 3 | 3 | no | yes |
-| 48 | `AdminNotesBreadcrumbs` | `src/shared/ui/admin-notes-breadcrumbs.tsx` | 3 | 3 | no | yes |
-| 49 | `AdminProductsBreadcrumbs` | `src/shared/ui/admin-products-breadcrumbs.tsx` | 3 | 3 | no | yes |
-| 50 | `NavigationCard` | `src/shared/ui/navigation-card.tsx` | 3 | 3 | no | yes |
-| 51 | `AdminAgentTeachingPageLayout` | `src/shared/ui/admin-agent-teaching-page-layout.tsx` | 2 | 4 | yes | yes |
-| 52 | `AdminCaseResolverPageLayout` | `src/shared/ui/admin-case-resolver-page-layout.tsx` | 2 | 4 | yes | yes |
-| 53 | `AdminCmsPageLayout` | `src/shared/ui/admin-cms-page-layout.tsx` | 2 | 4 | yes | yes |
-| 54 | `AdminDatabasePageLayout` | `src/shared/ui/admin-database-page-layout.tsx` | 2 | 4 | yes | yes |
-| 55 | `AdminNotesPageLayout` | `src/shared/ui/admin-notes-page-layout.tsx` | 2 | 4 | yes | yes |
-| 56 | `AdminProductsPageLayout` | `src/shared/ui/admin-products-page-layout.tsx` | 2 | 4 | yes | yes |
-| 57 | `ClockTrainingGame` | `src/features/kangur/ui/components/ClockTrainingGame.tsx` | 2 | 2 | no | yes |
-| 58 | `KangurAiTutorWarmOverlayPanel` | `src/features/kangur/ui/components/KangurAiTutorChrome.tsx` | 2 | 2 | yes | yes |
-| 59 | `KangurAssignmentManagerItemCard` | `src/features/kangur/ui/components/KangurAssignmentManager.tsx` | 2 | 2 | no | yes |
-| 60 | `KangurAssignmentPriorityChip` | `src/features/kangur/ui/components/KangurAssignmentPriorityChip.tsx` | 2 | 2 | yes | yes |
-| 61 | `KangurAssignmentsList` | `src/features/kangur/ui/components/KangurAssignmentsList.tsx` | 2 | 2 | no | yes |
-| 62 | `KangurResultSectionCard` | `src/features/kangur/ui/components/KangurGameResultWidget.tsx` | 2 | 2 | no | yes |
-| 63 | `KangurLessonNavigationWidget` | `src/features/kangur/ui/components/KangurLessonNavigationWidget.tsx` | 2 | 2 | no | yes |
-| 64 | `KangurPanelIntro` | `src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx` | 2 | 2 | no | yes |
-| 65 | `AdminSettingsBreadcrumbs` | `src/shared/ui/admin-settings-breadcrumbs.tsx` | 2 | 2 | no | yes |
-| 66 | `KangurAssignmentManager` | `src/features/kangur/ui/components/KangurAssignmentManager.tsx` | 1 | 7 | no | yes |
-| 67 | `ProgressOverview` | `src/features/kangur/ui/components/ProgressOverview.tsx` | 1 | 3 | no | yes |
-| 68 | `AdminSettingsPageLayout` | `src/shared/ui/admin-settings-page-layout.tsx` | 1 | 2 | yes | yes |
-| 69 | `HomeFallbackContent` | `src/app/(frontend)/home-fallback-content.tsx` | 1 | 1 | no | no |
-| 70 | `ProviderBadge` | `src/features/database/components/ControlPanelColumns.tsx` | 1 | 1 | no | no |
-| 71 | `RecentAnalyticsEvents` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx` | 1 | 1 | no | no |
-| 72 | `KangurAiTutorNativeGuideEntryList` | `src/features/kangur/admin/components/KangurAiTutorNativeGuideEntryList.tsx` | 1 | 1 | no | no |
-| 73 | `AddingBallGame` | `src/features/kangur/ui/components/AddingBallGame.tsx` | 1 | 1 | no | no |
-| 74 | `CalendarInteractiveGame` | `src/features/kangur/ui/components/CalendarInteractiveGame.tsx` | 1 | 1 | no | no |
-| 75 | `DivisionGame` | `src/features/kangur/ui/components/DivisionGame.tsx` | 1 | 1 | no | no |
-| 76 | `KangurAiTutorDrawingCanvas` | `src/features/kangur/ui/components/KangurAiTutorDrawingCanvas.tsx` | 1 | 1 | no | no |
-| 77 | `KangurAiTutorGuidedCallout` | `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.tsx` | 1 | 1 | no | no |
-| 78 | `KangurAnimatedOptionCard` | `src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx` | 1 | 1 | yes | yes |
-| 79 | `KangurBadgeTrackGrid` | `src/features/kangur/ui/components/KangurBadgeTrackGrid.tsx` | 1 | 1 | no | no |
-| 80 | `ExamSummary` | `src/features/kangur/ui/components/KangurExam.tsx` | 1 | 1 | no | no |
-| 81 | `KangurGameSetupMomentumCard` | `src/features/kangur/ui/components/KangurGameSetupMomentumCard.tsx` | 1 | 1 | no | no |
-| 82 | `SkeletonChip` | `src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx` | 1 | 1 | no | no |
-| 83 | `SkeletonLine` | `src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx` | 1 | 1 | no | no |
-| 84 | `KangurSetupShell` | `src/features/kangur/ui/components/KangurSetup.tsx` | 1 | 1 | no | no |
-| 85 | `KangurTestSuitePlayer` | `src/features/kangur/ui/components/KangurTestSuitePlayer.tsx` | 1 | 1 | no | no |
-| 86 | `MultiplicationArrayGame` | `src/features/kangur/ui/components/MultiplicationArrayGame.tsx` | 1 | 1 | no | no |
-| 87 | `MultiplicationGame` | `src/features/kangur/ui/components/MultiplicationGame.tsx` | 1 | 1 | no | no |
-| 88 | `SubtractingGame` | `src/features/kangur/ui/components/SubtractingGame.tsx` | 1 | 1 | no | no |
-| 89 | `AdminWidePageLayout` | `src/shared/ui/admin-wide-page-layout.tsx` | 0 | 0 | yes | yes |
+| 1 | `KangurTestChoiceCard` | `src/features/kangur/ui/components/KangurTestChoiceCard.tsx` | 11 | 14 | no | yes |
+| 2 | `KangurBadgeTrackSection` | `src/features/kangur/ui/components/KangurBadgeTrackSection.tsx` | 7 | 7 | no | yes |
+| 3 | `KangurPracticeGameSummaryProgress` | `src/features/kangur/ui/components/KangurPracticeGameChrome.tsx` | 6 | 6 | no | yes |
+| 4 | `KangurAiTutorPanelChrome` | `src/features/kangur/ui/components/KangurAiTutorPanelChrome.tsx` | 5 | 5 | no | yes |
+| 5 | `KangurProgressHighlightHeader` | `src/features/kangur/ui/components/KangurProgressHighlightCardContent.tsx` | 5 | 5 | no | yes |
+| 6 | `KangurRecommendationCardHeader` | `src/features/kangur/ui/components/KangurRecommendationCard.tsx` | 5 | 5 | no | yes |
+| 7 | `KangurAiTutorPanelContextCard` | `src/features/kangur/ui/components/KangurAiTutorPanelContextSummary.tsx` | 4 | 7 | no | yes |
+| 8 | `KangurAnswerChoiceCard` | `src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx` | 4 | 6 | yes | yes |
+| 9 | `KangurBadgeTrackPlaceholderCard` | `src/features/kangur/ui/components/KangurBadgeTrackPlaceholderCard.tsx` | 4 | 4 | no | yes |
+| 10 | `KangurBadgeTrackCardBar` | `src/features/kangur/ui/components/KangurBadgeTrackSummaryCard.tsx` | 4 | 4 | no | yes |
+| 11 | `KangurDailyQuestHighlightChips` | `src/features/kangur/ui/components/KangurDailyQuestHighlightCardContent.tsx` | 4 | 4 | no | yes |
+| 12 | `KangurDailyQuestHighlightBody` | `src/features/kangur/ui/components/KangurDailyQuestHighlightCardContent.tsx` | 4 | 4 | no | yes |
+| 13 | `KangurHeroMilestoneSummary` | `src/features/kangur/ui/components/KangurHeroMilestoneSummary.tsx` | 4 | 4 | no | yes |
+| 14 | `KangurPracticeGameProgress` | `src/features/kangur/ui/components/KangurPracticeGameChrome.tsx` | 4 | 4 | no | yes |
+| 15 | `KangurPracticeGameSummaryActions` | `src/features/kangur/ui/components/KangurPracticeGameChrome.tsx` | 4 | 4 | no | yes |
+| 16 | `KangurProgressHighlightBar` | `src/features/kangur/ui/components/KangurProgressHighlightCardContent.tsx` | 4 | 4 | no | yes |
+| 17 | `AdminSectionBreadcrumbs` | `src/shared/ui/admin-section-breadcrumbs.tsx` | 4 | 4 | no | yes |
+| 18 | `AllegroSubpageScaffold` | `src/features/integrations/pages/marketplaces/allegro/AllegroSubpageScaffold.tsx` | 3 | 5 | no | yes |
+| 19 | `KangurTestQuestionRenderer` | `src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx` | 3 | 5 | no | yes |
+| 20 | `AdminAgentCreatorPageLayout` | `src/shared/ui/admin-agent-creator-page-layout.tsx` | 3 | 5 | yes | yes |
+| 21 | `AdminChatbotPageLayout` | `src/shared/ui/admin-chatbot-page-layout.tsx` | 3 | 5 | yes | yes |
+| 22 | `AdminIntegrationsPageLayout` | `src/shared/ui/admin-integrations-page-layout.tsx` | 3 | 5 | yes | yes |
+| 23 | `CmsPageShellFrame` | `src/features/cms/components/frontend/CmsPageShell.tsx` | 3 | 3 | no | yes |
+| 24 | `CreateThemeDialog` | `src/features/kangur/admin/AdminKangurAppearancePage.tsx` | 3 | 3 | no | yes |
+| 25 | `KangurActivitySummaryCard` | `src/features/kangur/ui/components/KangurActivitySummaryCard.tsx` | 3 | 3 | no | yes |
+| 26 | `KangurBadgeTrackCardHeader` | `src/features/kangur/ui/components/KangurBadgeTrackSummaryCard.tsx` | 3 | 3 | no | yes |
+| 27 | `ResultView` | `src/features/kangur/ui/components/KangurGame.tsx` | 3 | 3 | no | yes |
+| 28 | `KangurLabeledValueSummary` | `src/features/kangur/ui/components/KangurLabeledValueSummary.tsx` | 3 | 3 | no | yes |
+| 29 | `KangurPanelSectionHeading` | `src/features/kangur/ui/components/KangurPanelSectionHeading.tsx` | 3 | 3 | yes | yes |
+| 30 | `KangurPracticeGameSummaryBreakdown` | `src/features/kangur/ui/components/KangurPracticeGameChrome.tsx` | 3 | 3 | no | yes |
+| 31 | `KangurProfileMenu` | `src/features/kangur/ui/components/KangurProfileMenu.tsx` | 3 | 3 | no | yes |
+| 32 | `KangurSessionHistoryAside` | `src/features/kangur/ui/components/KangurSessionHistoryRow.tsx` | 3 | 3 | no | yes |
+| 33 | `KangurSetup` | `src/features/kangur/ui/components/KangurSetup.tsx` | 3 | 3 | no | yes |
+| 34 | `TrainingSetup` | `src/features/kangur/ui/components/TrainingSetup.tsx` | 3 | 3 | no | yes |
+| 35 | `KangurFeatureHeader` | `src/features/kangur/ui/design/primitives/KangurFeatureHeader.tsx` | 3 | 3 | yes | yes |
+| 36 | `AdminAgentCreatorBreadcrumbs` | `src/shared/ui/admin-agent-creator-breadcrumbs.tsx` | 3 | 3 | no | yes |
+| 37 | `AdminAgentTeachingBreadcrumbs` | `src/shared/ui/admin-agent-teaching-breadcrumbs.tsx` | 3 | 3 | no | yes |
+| 38 | `AdminAiPathsBreadcrumbs` | `src/shared/ui/admin-ai-paths-breadcrumbs.tsx` | 3 | 3 | no | yes |
+| 39 | `AdminCaseResolverBreadcrumbs` | `src/shared/ui/admin-case-resolver-breadcrumbs.tsx` | 3 | 3 | no | yes |
+| 40 | `AdminChatbotBreadcrumbs` | `src/shared/ui/admin-chatbot-breadcrumbs.tsx` | 3 | 3 | no | yes |
+| 41 | `AdminCmsBreadcrumbs` | `src/shared/ui/admin-cms-breadcrumbs.tsx` | 3 | 3 | no | yes |
+| 42 | `AdminDatabaseBreadcrumbs` | `src/shared/ui/admin-database-breadcrumbs.tsx` | 3 | 3 | no | yes |
+| 43 | `AdminFilemakerBreadcrumbs` | `src/shared/ui/admin-filemaker-breadcrumbs.tsx` | 3 | 3 | no | yes |
+| 44 | `AdminIntegrationsBreadcrumbs` | `src/shared/ui/admin-integrations-breadcrumbs.tsx` | 3 | 3 | no | yes |
+| 45 | `AdminNotesBreadcrumbs` | `src/shared/ui/admin-notes-breadcrumbs.tsx` | 3 | 3 | no | yes |
+| 46 | `AdminProductsBreadcrumbs` | `src/shared/ui/admin-products-breadcrumbs.tsx` | 3 | 3 | no | yes |
+| 47 | `NavigationCard` | `src/shared/ui/navigation-card.tsx` | 3 | 3 | no | yes |
+| 48 | `AdminAgentTeachingPageLayout` | `src/shared/ui/admin-agent-teaching-page-layout.tsx` | 2 | 4 | yes | yes |
+| 49 | `AdminCaseResolverPageLayout` | `src/shared/ui/admin-case-resolver-page-layout.tsx` | 2 | 4 | yes | yes |
+| 50 | `AdminCmsPageLayout` | `src/shared/ui/admin-cms-page-layout.tsx` | 2 | 4 | yes | yes |
+| 51 | `AdminDatabasePageLayout` | `src/shared/ui/admin-database-page-layout.tsx` | 2 | 4 | yes | yes |
+| 52 | `AdminNotesPageLayout` | `src/shared/ui/admin-notes-page-layout.tsx` | 2 | 4 | yes | yes |
+| 53 | `AdminProductsPageLayout` | `src/shared/ui/admin-products-page-layout.tsx` | 2 | 4 | yes | yes |
+| 54 | `ClockTrainingGame` | `src/features/kangur/ui/components/ClockTrainingGame.tsx` | 2 | 2 | no | yes |
+| 55 | `KangurAiTutorWarmOverlayPanel` | `src/features/kangur/ui/components/KangurAiTutorChrome.tsx` | 2 | 2 | yes | yes |
+| 56 | `KangurAssignmentManagerItemCard` | `src/features/kangur/ui/components/KangurAssignmentManager.tsx` | 2 | 2 | no | yes |
+| 57 | `KangurAssignmentPriorityChip` | `src/features/kangur/ui/components/KangurAssignmentPriorityChip.tsx` | 2 | 2 | yes | yes |
+| 58 | `KangurAssignmentsList` | `src/features/kangur/ui/components/KangurAssignmentsList.tsx` | 2 | 2 | no | yes |
+| 59 | `KangurBadgeTrackSectionHeader` | `src/features/kangur/ui/components/KangurBadgeTrackSection.tsx` | 2 | 2 | no | yes |
+| 60 | `KangurBadgeTrackSummaryCard` | `src/features/kangur/ui/components/KangurBadgeTrackSummaryCard.tsx` | 2 | 2 | no | yes |
+| 61 | `KangurResultSectionCard` | `src/features/kangur/ui/components/KangurGameResultWidget.tsx` | 2 | 2 | no | yes |
+| 62 | `KangurIconSummaryOptionCard` | `src/features/kangur/ui/components/KangurIconSummaryOptionCard.tsx` | 2 | 2 | yes | yes |
+| 63 | `KangurLessonLibraryCardAside` | `src/features/kangur/ui/components/KangurLessonLibraryCard.tsx` | 2 | 2 | no | yes |
+| 64 | `KangurLessonLibraryCardIcon` | `src/features/kangur/ui/components/KangurLessonLibraryCard.tsx` | 2 | 2 | no | yes |
+| 65 | `KangurLessonNavigationWidget` | `src/features/kangur/ui/components/KangurLessonNavigationWidget.tsx` | 2 | 2 | no | yes |
+| 66 | `KangurPracticeGameSummaryEmoji` | `src/features/kangur/ui/components/KangurPracticeGameChrome.tsx` | 2 | 2 | no | yes |
+| 67 | `KangurProgressHighlightChip` | `src/features/kangur/ui/components/KangurProgressHighlightCardContent.tsx` | 2 | 2 | no | yes |
+| 68 | `KangurSessionHistoryIcon` | `src/features/kangur/ui/components/KangurSessionHistoryRow.tsx` | 2 | 2 | no | yes |
+| 69 | `KangurPanelIntro` | `src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx` | 2 | 2 | no | yes |
+| 70 | `AdminSettingsBreadcrumbs` | `src/shared/ui/admin-settings-breadcrumbs.tsx` | 2 | 2 | no | yes |
+| 71 | `KangurAssignmentManager` | `src/features/kangur/ui/components/KangurAssignmentManager.tsx` | 1 | 7 | no | yes |
+| 72 | `ProgressOverview` | `src/features/kangur/ui/components/ProgressOverview.tsx` | 1 | 3 | no | yes |
+| 73 | `AdminSettingsPageLayout` | `src/shared/ui/admin-settings-page-layout.tsx` | 1 | 2 | yes | yes |
+| 74 | `HomeFallbackContent` | `src/app/(frontend)/home-fallback-content.tsx` | 1 | 1 | no | no |
+| 75 | `ProviderBadge` | `src/features/database/components/ControlPanelColumns.tsx` | 1 | 1 | no | no |
+| 76 | `KangurAiTutorNativeGuideEntryEditor` | `src/features/kangur/admin/components/KangurAiTutorNativeGuideEntryEditor.tsx` | 1 | 1 | no | no |
+| 77 | `KangurAiTutorNativeGuideEntryEditorContent` | `src/features/kangur/admin/components/KangurAiTutorNativeGuideEntryEditor.tsx` | 1 | 1 | no | no |
+| 78 | `KangurAiTutorNativeGuideEntryList` | `src/features/kangur/admin/components/KangurAiTutorNativeGuideEntryList.tsx` | 1 | 1 | no | no |
+| 79 | `AddingBallGame` | `src/features/kangur/ui/components/AddingBallGame.tsx` | 1 | 1 | no | no |
+| 80 | `CalendarInteractiveGame` | `src/features/kangur/ui/components/CalendarInteractiveGame.tsx` | 1 | 1 | no | no |
+| 81 | `DivisionGame` | `src/features/kangur/ui/components/DivisionGame.tsx` | 1 | 1 | no | no |
+| 82 | `KangurAiTutorDrawingCanvas` | `src/features/kangur/ui/components/KangurAiTutorDrawingCanvas.tsx` | 1 | 1 | no | no |
+| 83 | `KangurAiTutorGuidedCallout` | `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.tsx` | 1 | 1 | no | no |
+| 84 | `KangurAnimatedOptionCard` | `src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx` | 1 | 1 | yes | yes |
+| 85 | `KangurBadgeTrackGrid` | `src/features/kangur/ui/components/KangurBadgeTrackGrid.tsx` | 1 | 1 | no | no |
+| 86 | `ExamSummary` | `src/features/kangur/ui/components/KangurExam.tsx` | 1 | 1 | no | no |
+| 87 | `KangurGameSetupMomentumCard` | `src/features/kangur/ui/components/KangurGameSetupMomentumCard.tsx` | 1 | 1 | no | no |
+| 88 | `SkeletonChip` | `src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx` | 1 | 1 | no | no |
+| 89 | `SkeletonLine` | `src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx` | 1 | 1 | no | no |
+| 90 | `KangurPracticeGameSummaryXP` | `src/features/kangur/ui/components/KangurPracticeGameChrome.tsx` | 1 | 1 | no | no |
+| 91 | `KangurSetupShell` | `src/features/kangur/ui/components/KangurSetup.tsx` | 1 | 1 | no | no |
+| 92 | `KangurSetupChoiceCard` | `src/features/kangur/ui/components/KangurSetup.tsx` | 1 | 1 | yes | yes |
+| 93 | `KangurTestChoiceCardBadge` | `src/features/kangur/ui/components/KangurTestChoiceCard.tsx` | 1 | 1 | no | no |
+| 94 | `KangurTestSuitePlayer` | `src/features/kangur/ui/components/KangurTestSuitePlayer.tsx` | 1 | 1 | no | no |
+| 95 | `MultiplicationArrayGame` | `src/features/kangur/ui/components/MultiplicationArrayGame.tsx` | 1 | 1 | no | no |
+| 96 | `MultiplicationGame` | `src/features/kangur/ui/components/MultiplicationGame.tsx` | 1 | 1 | no | no |
+| 97 | `SubtractingGame` | `src/features/kangur/ui/components/SubtractingGame.tsx` | 1 | 1 | no | no |
+| 98 | `AdminWidePageLayout` | `src/shared/ui/admin-wide-page-layout.tsx` | 0 | 0 | yes | yes |
 
 ## Prioritized Transition Backlog (Depth = 2)
 
 | Rank | Score | From | To | Fanout | Features | Prop Mapping | Location |
 | ---: | ---: | --- | --- | ---: | ---: | --- | --- |
-| 1 | 112 | `KangurAssignmentManager` | `KangurDailyQuestHighlightCardContent` | 7 | 1 | `featuredDailyQuest -> action` | `src/features/kangur/ui/components/KangurAssignmentManager.tsx:477` |
-| 2 | 112 | `KangurAssignmentManager` | `KangurDailyQuestHighlightCardContent` | 7 | 1 | `featuredDailyQuest -> description` | `src/features/kangur/ui/components/KangurAssignmentManager.tsx:477` |
-| 3 | 112 | `KangurAssignmentManager` | `KangurDailyQuestHighlightCardContent` | 7 | 1 | `featuredDailyQuest -> footer` | `src/features/kangur/ui/components/KangurAssignmentManager.tsx:477` |
-| 4 | 112 | `KangurAssignmentManager` | `KangurDailyQuestHighlightCardContent` | 7 | 1 | `featuredDailyQuest -> progressLabel` | `src/features/kangur/ui/components/KangurAssignmentManager.tsx:477` |
-| 5 | 112 | `KangurAssignmentManager` | `KangurDailyQuestHighlightCardContent` | 7 | 1 | `featuredDailyQuest -> questLabel` | `src/features/kangur/ui/components/KangurAssignmentManager.tsx:477` |
-| 6 | 112 | `KangurAssignmentManager` | `KangurDailyQuestHighlightCardContent` | 7 | 1 | `featuredDailyQuest -> rewardLabel` | `src/features/kangur/ui/components/KangurAssignmentManager.tsx:477` |
-| 7 | 112 | `KangurAssignmentManager` | `KangurDailyQuestHighlightCardContent` | 7 | 1 | `featuredDailyQuest -> title` | `src/features/kangur/ui/components/KangurAssignmentManager.tsx:477` |
-| 8 | 82 | `KangurLessonLibraryCard` | `KangurIconSummaryOptionCard` | 4 | 1 | `lesson -> description` | `src/features/kangur/ui/components/KangurLessonLibraryCard.tsx:69` |
-| 9 | 82 | `KangurLessonLibraryCard` | `KangurIconSummaryOptionCard` | 4 | 1 | `lesson -> icon` | `src/features/kangur/ui/components/KangurLessonLibraryCard.tsx:69` |
-| 10 | 82 | `KangurLessonLibraryCard` | `KangurIconSummaryOptionCard` | 4 | 1 | `lesson -> title` | `src/features/kangur/ui/components/KangurLessonLibraryCard.tsx:69` |
-| 11 | 82 | `KangurLessonLibraryCard` | `KangurGradientIconTile` | 4 | 1 | `lesson -> gradientClass` | `src/features/kangur/ui/components/KangurLessonLibraryCard.tsx:130` |
-| 12 | 78 | `KnowledgeGraphQueryPreviewSection` | `Textarea` | 3 | 2 | `draft -> value` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:886` |
-| 13 | 78 | `KnowledgeGraphQueryPreviewSection` | `Textarea` | 3 | 2 | `onDraftChange -> onChange` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:886` |
-| 14 | 78 | `KnowledgeGraphQueryPreviewSection` | `Input` | 3 | 2 | `draft -> value` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:997` |
-| 15 | 78 | `KnowledgeGraphQueryPreviewSection` | `Input` | 3 | 2 | `onDraftChange -> onChange` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:997` |
-| 16 | 78 | `KnowledgeGraphStatusSection` | `EmptyState` | 3 | 2 | `knowledgeGraphStatus -> description` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:1989` |
-| 17 | 78 | `KnowledgeGraphStatusSection` | `StatusBadge` | 3 | 2 | `knowledgeGraphStatus -> status` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:2017` |
-| 18 | 78 | `KnowledgeGraphStatusSection` | `MetadataItem` | 3 | 2 | `knowledgeGraphStatus -> value` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:2045` |
-| 19 | 78 | `KnowledgeGraphStatusSection` | `Alert` | 3 | 2 | `freshnessAlert -> variant` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:2054` |
-| 20 | 78 | `KnowledgeGraphStatusSection` | `StatusBadge` | 3 | 2 | `freshnessAlert -> status` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:2062` |
-| 21 | 78 | `KnowledgeGraphStatusSection` | `MetadataItem` | 3 | 2 | `freshnessAlert -> value` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:2092` |
-| 22 | 78 | `KangurAiTutorNativeGuideEntryEditor` | `Input` | 3 | 2 | `selectedEntry -> value` | `src/features/kangur/admin/components/KangurAiTutorNativeGuideEntryEditor.tsx:156` |
-| 23 | 78 | `KangurAiTutorNativeGuideEntryEditor` | `Input` | 3 | 2 | `updateSelectedEntry -> onChange` | `src/features/kangur/admin/components/KangurAiTutorNativeGuideEntryEditor.tsx:156` |
-| 24 | 78 | `KangurAiTutorNativeGuideEntryEditor` | `Button` | 3 | 2 | `selectedEntry -> variant` | `src/features/kangur/admin/components/KangurAiTutorNativeGuideEntryEditor.tsx:250` |
-| 25 | 78 | `KangurAiTutorNativeGuideEntryEditor` | `Button` | 3 | 2 | `updateSelectedEntry -> onClick` | `src/features/kangur/admin/components/KangurAiTutorNativeGuideEntryEditor.tsx:250` |
-| 26 | 78 | `KangurAiTutorNativeGuideEntryEditor` | `Textarea` | 3 | 2 | `selectedEntry -> value` | `src/features/kangur/admin/components/KangurAiTutorNativeGuideEntryEditor.tsx:269` |
-| 27 | 78 | `KangurAiTutorNativeGuideEntryEditor` | `Textarea` | 3 | 2 | `updateSelectedEntry -> onChange` | `src/features/kangur/admin/components/KangurAiTutorNativeGuideEntryEditor.tsx:269` |
-| 28 | 72 | `KnowledgeGraphQueryPreviewSection` | `KnowledgeGraphPreviewSelect` | 3 | 1 | `draft -> value` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:903` |
-| 29 | 72 | `KnowledgeGraphQueryPreviewSection` | `KnowledgeGraphPreviewSelect` | 3 | 1 | `onDraftChange -> onChange` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:937` |
-| 30 | 72 | `KangurAnswerChoiceCard` | `KangurAnimatedOptionCard` | 3 | 1 | `interactive -> buttonClassName` | `src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx:28` |
-| 31 | 72 | `KangurAnswerChoiceCard` | `KangurAnimatedOptionCard` | 3 | 1 | `interactive -> whileHover` | `src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx:28` |
-| 32 | 72 | `KangurAnswerChoiceCard` | `KangurAnimatedOptionCard` | 3 | 1 | `interactive -> whileTap` | `src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx:28` |
-| 33 | 72 | `KangurLessonLibraryCard` | `KangurIconSummaryOptionCard` | 3 | 1 | `masteryPresentation -> aside` | `src/features/kangur/ui/components/KangurLessonLibraryCard.tsx:69` |
-| 34 | 72 | `KangurLessonLibraryCard` | `KangurIconSummaryOptionCard` | 3 | 1 | `lessonAssignment -> aside` | `src/features/kangur/ui/components/KangurLessonLibraryCard.tsx:69` |
-| 35 | 72 | `KangurLessonLibraryCard` | `KangurIconSummaryOptionCard` | 3 | 1 | `masteryPresentation -> footer` | `src/features/kangur/ui/components/KangurLessonLibraryCard.tsx:69` |
-| 36 | 72 | `KangurLessonLibraryCard` | `KangurIconSummaryOptionCard` | 3 | 1 | `lessonAssignment -> footer` | `src/features/kangur/ui/components/KangurLessonLibraryCard.tsx:69` |
-| 37 | 72 | `KangurLessonLibraryCard` | `KangurStatusChip` | 3 | 1 | `masteryPresentation -> accent` | `src/features/kangur/ui/components/KangurLessonLibraryCard.tsx:73` |
-| 38 | 72 | `KangurLessonLibraryCard` | `KangurAssignmentPriorityChip` | 3 | 1 | `lessonAssignment -> priority` | `src/features/kangur/ui/components/KangurLessonLibraryCard.tsx:81` |
-| 39 | 72 | `KangurSessionHistoryRow` | `KangurIconSummaryCardContent` | 3 | 1 | `accent -> aside` | `src/features/kangur/ui/components/KangurSessionHistoryRow.tsx:59` |
-| 40 | 72 | `KangurSessionHistoryRow` | `KangurIconSummaryCardContent` | 3 | 1 | `accent -> icon` | `src/features/kangur/ui/components/KangurSessionHistoryRow.tsx:59` |
-| 41 | 72 | `KangurSetupChoiceCard` | `KangurAnimatedOptionCard` | 3 | 1 | `disabled -> whileHover` | `src/features/kangur/ui/components/KangurSetup.tsx:98` |
-| 42 | 72 | `KangurSetupChoiceCard` | `KangurAnimatedOptionCard` | 3 | 1 | `disabled -> whileTap` | `src/features/kangur/ui/components/KangurSetup.tsx:98` |
-| 43 | 72 | `KangurTestQuestionRenderer` | `KangurPanelIntro` | 3 | 1 | `showAnswer -> description` | `src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx:244` |
-| 44 | 72 | `KangurTestQuestionRenderer` | `KangurPanelIntro` | 3 | 1 | `showAnswer -> title` | `src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx:244` |
-| 45 | 72 | `ProgressOverview` | `KangurProgressHighlightCardContent` | 3 | 1 | `dailyQuest -> chipLabel` | `src/features/kangur/ui/components/ProgressOverview.tsx:129` |
-| 46 | 72 | `ProgressOverview` | `KangurProgressHighlightCardContent` | 3 | 1 | `dailyQuest -> description` | `src/features/kangur/ui/components/ProgressOverview.tsx:129` |
-| 47 | 72 | `ProgressOverview` | `KangurProgressHighlightCardContent` | 3 | 1 | `dailyQuest -> title` | `src/features/kangur/ui/components/ProgressOverview.tsx:129` |
-| 48 | 68 | `AllegroSubpageScaffold` | `AdminIntegrationsPageLayout` | 2 | 2 | `title -> current` | `src/features/integrations/pages/marketplaces/allegro/AllegroSubpageScaffold.tsx:22` |
-| 49 | 68 | `AllegroSubpageScaffold` | `EmptyState` | 2 | 2 | `emptyState -> title` | `src/features/integrations/pages/marketplaces/allegro/AllegroSubpageScaffold.tsx:30` |
-| 50 | 68 | `AllegroSubpageScaffold` | `EmptyState` | 2 | 2 | `emptyState -> description` | `src/features/integrations/pages/marketplaces/allegro/AllegroSubpageScaffold.tsx:30` |
-| 51 | 68 | `KnowledgeGraphQueryPreviewSection` | `MetadataItem` | 2 | 2 | `result -> value` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:1272` |
-| 52 | 68 | `KnowledgeGraphStatusSection` | `EmptyState` | 2 | 2 | `onRefresh -> action` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:1989` |
-| 53 | 68 | `KnowledgeGraphStatusSection` | `EmptyState` | 2 | 2 | `isRefreshing -> action` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:1989` |
-| 54 | 68 | `KnowledgeGraphStatusSection` | `Button` | 2 | 2 | `onRefresh -> onClick` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:1994` |
-| 55 | 68 | `KnowledgeGraphStatusSection` | `Button` | 2 | 2 | `isRefreshing -> disabled` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:1994` |
-| 56 | 68 | `KnowledgeGraphStatusSection` | `Alert` | 2 | 2 | `syncFeedback -> variant` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:2082` |
-| 57 | 68 | `KnowledgeGraphStatusSection` | `Alert` | 2 | 2 | `syncFeedback -> title` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:2082` |
-| 58 | 64 | `KangurSessionHistoryRow` | `KangurInfoCard` | 3 | 1 | `accent -> accent` | `src/features/kangur/ui/components/KangurSessionHistoryRow.tsx:52` |
-| 59 | 64 | `KangurSetupChoiceCard` | `KangurAnimatedOptionCard` | 3 | 1 | `disabled -> disabled` | `src/features/kangur/ui/components/KangurSetup.tsx:98` |
-| 60 | 64 | `KangurTestQuestionRenderer` | `KangurTestChoiceCard` | 3 | 1 | `showAnswer -> showAnswer` | `src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx:311` |
-| 61 | 62 | `KnowledgeGraphQueryPreviewSection` | `KnowledgeGraphPreviewValueBlock` | 2 | 1 | `result -> value` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:1280` |
-| 62 | 62 | `SummaryContent` | `KnowledgeGraphQueryPreviewSection` | 2 | 1 | `knowledgeGraphPreviewDraft -> draft` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:2366` |
-| 63 | 62 | `SummaryContent` | `KnowledgeGraphQueryPreviewSection` | 2 | 1 | `knowledgeGraphPreviewReplayCandidates -> replayCandidates` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:2366` |
-| 64 | 62 | `SummaryContent` | `RecentAnalyticsEvents` | 2 | 1 | `knowledgeGraphPreviewReplayCandidates -> replayCandidates` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:2409` |
-| 65 | 62 | `SummaryContent` | `RecentAnalyticsEvents` | 2 | 1 | `knowledgeGraphPreviewDraft -> activeReplayEventId` | `src/features/kangur/admin/AdminKangurObservabilityPage.tsx:2409` |
-| 66 | 62 | `KangurAiTutorPanelContextCard` | `KangurButton` | 2 | 1 | `primaryAction -> data-testid` | `src/features/kangur/ui/components/KangurAiTutorPanelContextSummary.tsx:80` |
-| 67 | 62 | `KangurAiTutorPanelContextCard` | `KangurButton` | 2 | 1 | `primaryAction -> onClick` | `src/features/kangur/ui/components/KangurAiTutorPanelContextSummary.tsx:80` |
-| 68 | 62 | `KangurAiTutorPanelContextCard` | `KangurButton` | 2 | 1 | `secondaryAction -> data-testid` | `src/features/kangur/ui/components/KangurAiTutorPanelContextSummary.tsx:91` |
-| 69 | 62 | `KangurAiTutorPanelContextCard` | `KangurButton` | 2 | 1 | `secondaryAction -> onClick` | `src/features/kangur/ui/components/KangurAiTutorPanelContextSummary.tsx:91` |
-| 70 | 62 | `KangurAiTutorPanelContextCard` | `KangurAiTutorWarmInsetCard` | 2 | 1 | `status -> data-testid` | `src/features/kangur/ui/components/KangurAiTutorPanelContextSummary.tsx:107` |
-| 71 | 62 | `KangurAiTutorPanelContextCard` | `KangurAiTutorWarmInsetCard` | 2 | 1 | `status -> tone` | `src/features/kangur/ui/components/KangurAiTutorPanelContextSummary.tsx:107` |
-| 72 | 62 | `KangurLessonLibraryCard` | `KangurIconSummaryOptionCard` | 2 | 1 | `completedLessonAssignment -> aside` | `src/features/kangur/ui/components/KangurLessonLibraryCard.tsx:69` |
-| 73 | 62 | `KangurLessonLibraryCard` | `KangurIconSummaryOptionCard` | 2 | 1 | `completedLessonAssignment -> footer` | `src/features/kangur/ui/components/KangurLessonLibraryCard.tsx:69` |
-| 74 | 62 | `KangurLessonLibraryCard` | `KangurIconSummaryOptionCard` | 2 | 1 | `iconTestId -> icon` | `src/features/kangur/ui/components/KangurLessonLibraryCard.tsx:69` |
-| 75 | 62 | `KangurLessonLibraryCard` | `KangurGradientIconTile` | 2 | 1 | `iconTestId -> data-testid` | `src/features/kangur/ui/components/KangurLessonLibraryCard.tsx:130` |
-| 76 | 62 | `KangurSessionHistoryRow` | `KangurIconSummaryCardContent` | 2 | 1 | `scoreAccent -> aside` | `src/features/kangur/ui/components/KangurSessionHistoryRow.tsx:59` |
-| 77 | 62 | `KangurSessionHistoryRow` | `KangurIconSummaryCardContent` | 2 | 1 | `scoreTestId -> aside` | `src/features/kangur/ui/components/KangurSessionHistoryRow.tsx:59` |
-| 78 | 62 | `KangurSessionHistoryRow` | `KangurIconSummaryCardContent` | 2 | 1 | `xpTestId -> aside` | `src/features/kangur/ui/components/KangurSessionHistoryRow.tsx:59` |
-| 79 | 62 | `KangurSessionHistoryRow` | `KangurIconSummaryCardContent` | 2 | 1 | `iconAccent -> icon` | `src/features/kangur/ui/components/KangurSessionHistoryRow.tsx:59` |
-| 80 | 62 | `KangurSessionHistoryRow` | `KangurIconSummaryCardContent` | 2 | 1 | `iconTestId -> icon` | `src/features/kangur/ui/components/KangurSessionHistoryRow.tsx:59` |
+| 1 | 112 | `KangurAssignmentManager` | `KangurDailyQuestHighlightCardContent` | 7 | 1 | `featuredDailyQuest -> action` | `src/features/kangur/ui/components/KangurAssignmentManager.tsx:441` |
+| 2 | 112 | `KangurAssignmentManager` | `KangurDailyQuestHighlightCardContent` | 7 | 1 | `featuredDailyQuest -> description` | `src/features/kangur/ui/components/KangurAssignmentManager.tsx:441` |
+| 3 | 112 | `KangurAssignmentManager` | `KangurDailyQuestHighlightCardContent` | 7 | 1 | `featuredDailyQuest -> footer` | `src/features/kangur/ui/components/KangurAssignmentManager.tsx:441` |
+| 4 | 112 | `KangurAssignmentManager` | `KangurDailyQuestHighlightCardContent` | 7 | 1 | `featuredDailyQuest -> progressLabel` | `src/features/kangur/ui/components/KangurAssignmentManager.tsx:441` |
+| 5 | 112 | `KangurAssignmentManager` | `KangurDailyQuestHighlightCardContent` | 7 | 1 | `featuredDailyQuest -> questLabel` | `src/features/kangur/ui/components/KangurAssignmentManager.tsx:441` |
+| 6 | 112 | `KangurAssignmentManager` | `KangurDailyQuestHighlightCardContent` | 7 | 1 | `featuredDailyQuest -> rewardLabel` | `src/features/kangur/ui/components/KangurAssignmentManager.tsx:441` |
+| 7 | 112 | `KangurAssignmentManager` | `KangurDailyQuestHighlightCardContent` | 7 | 1 | `featuredDailyQuest -> title` | `src/features/kangur/ui/components/KangurAssignmentManager.tsx:441` |
+| 8 | 72 | `KangurAnswerChoiceCard` | `KangurAnimatedOptionCard` | 3 | 1 | `interactive -> buttonClassName` | `src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx:28` |
+| 9 | 72 | `KangurAnswerChoiceCard` | `KangurAnimatedOptionCard` | 3 | 1 | `interactive -> whileHover` | `src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx:28` |
+| 10 | 72 | `KangurAnswerChoiceCard` | `KangurAnimatedOptionCard` | 3 | 1 | `interactive -> whileTap` | `src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx:28` |
+| 11 | 72 | `KangurTestChoiceCard` | `KangurAnswerChoiceCard` | 3 | 1 | `choice -> onClick` | `src/features/kangur/ui/components/KangurTestChoiceCard.tsx:127` |
+| 12 | 72 | `KangurTestChoiceCard` | `KangurTestChoiceCardBadge` | 3 | 1 | `choice -> label` | `src/features/kangur/ui/components/KangurTestChoiceCard.tsx:140` |
+| 13 | 72 | `KangurTestQuestionRenderer` | `KangurPanelIntro` | 3 | 1 | `showAnswer -> description` | `src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx:150` |
+| 14 | 72 | `KangurTestQuestionRenderer` | `KangurPanelIntro` | 3 | 1 | `showAnswer -> title` | `src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx:150` |
+| 15 | 72 | `ProgressOverview` | `KangurProgressHighlightHeader` | 3 | 1 | `dailyQuest -> description` | `src/features/kangur/ui/components/ProgressOverview.tsx:136` |
+| 16 | 72 | `ProgressOverview` | `KangurProgressHighlightHeader` | 3 | 1 | `dailyQuest -> title` | `src/features/kangur/ui/components/ProgressOverview.tsx:136` |
+| 17 | 72 | `ProgressOverview` | `KangurProgressHighlightChip` | 3 | 1 | `dailyQuest -> label` | `src/features/kangur/ui/components/ProgressOverview.tsx:142` |
+| 18 | 68 | `AllegroSubpageScaffold` | `AdminIntegrationsPageLayout` | 2 | 2 | `title -> current` | `src/features/integrations/pages/marketplaces/allegro/AllegroSubpageScaffold.tsx:22` |
+| 19 | 68 | `AllegroSubpageScaffold` | `EmptyState` | 2 | 2 | `emptyState -> title` | `src/features/integrations/pages/marketplaces/allegro/AllegroSubpageScaffold.tsx:30` |
+| 20 | 68 | `AllegroSubpageScaffold` | `EmptyState` | 2 | 2 | `emptyState -> description` | `src/features/integrations/pages/marketplaces/allegro/AllegroSubpageScaffold.tsx:30` |
+| 21 | 64 | `KangurTestChoiceCard` | `KangurTestChoiceCardContent` | 3 | 1 | `choice -> choice` | `src/features/kangur/ui/components/KangurTestChoiceCard.tsx:141` |
+| 22 | 64 | `KangurTestQuestionRenderer` | `KangurTestChoiceCard` | 3 | 1 | `showAnswer -> showAnswer` | `src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx:217` |
+| 23 | 62 | `KangurAiTutorPanelContextCard` | `KangurButton` | 2 | 1 | `primaryAction -> data-testid` | `src/features/kangur/ui/components/KangurAiTutorPanelContextSummary.tsx:80` |
+| 24 | 62 | `KangurAiTutorPanelContextCard` | `KangurButton` | 2 | 1 | `primaryAction -> onClick` | `src/features/kangur/ui/components/KangurAiTutorPanelContextSummary.tsx:80` |
+| 25 | 62 | `KangurAiTutorPanelContextCard` | `KangurButton` | 2 | 1 | `secondaryAction -> data-testid` | `src/features/kangur/ui/components/KangurAiTutorPanelContextSummary.tsx:91` |
+| 26 | 62 | `KangurAiTutorPanelContextCard` | `KangurButton` | 2 | 1 | `secondaryAction -> onClick` | `src/features/kangur/ui/components/KangurAiTutorPanelContextSummary.tsx:91` |
+| 27 | 62 | `KangurAiTutorPanelContextCard` | `KangurAiTutorWarmInsetCard` | 2 | 1 | `status -> data-testid` | `src/features/kangur/ui/components/KangurAiTutorPanelContextSummary.tsx:107` |
+| 28 | 62 | `KangurAiTutorPanelContextCard` | `KangurAiTutorWarmInsetCard` | 2 | 1 | `status -> tone` | `src/features/kangur/ui/components/KangurAiTutorPanelContextSummary.tsx:107` |
+| 29 | 62 | `KangurTestChoiceCard` | `KangurAnswerChoiceCard` | 2 | 1 | `showAnswer -> interactive` | `src/features/kangur/ui/components/KangurTestChoiceCard.tsx:127` |
+| 30 | 62 | `AdminAgentCreatorPageLayout` | `PageLayout` | 2 | 1 | `current -> eyebrow` | `src/shared/ui/admin-agent-creator-page-layout.tsx:23` |
+| 31 | 62 | `AdminAgentCreatorPageLayout` | `PageLayout` | 2 | 1 | `parent -> eyebrow` | `src/shared/ui/admin-agent-creator-page-layout.tsx:23` |
+| 32 | 62 | `AdminAgentTeachingPageLayout` | `PageLayout` | 2 | 1 | `current -> eyebrow` | `src/shared/ui/admin-agent-teaching-page-layout.tsx:22` |
+| 33 | 62 | `AdminAgentTeachingPageLayout` | `PageLayout` | 2 | 1 | `parent -> eyebrow` | `src/shared/ui/admin-agent-teaching-page-layout.tsx:22` |
+| 34 | 62 | `AdminCaseResolverPageLayout` | `PageLayout` | 2 | 1 | `current -> eyebrow` | `src/shared/ui/admin-case-resolver-page-layout.tsx:22` |
+| 35 | 62 | `AdminCaseResolverPageLayout` | `PageLayout` | 2 | 1 | `parent -> eyebrow` | `src/shared/ui/admin-case-resolver-page-layout.tsx:22` |
+| 36 | 62 | `AdminChatbotPageLayout` | `PageLayout` | 2 | 1 | `current -> eyebrow` | `src/shared/ui/admin-chatbot-page-layout.tsx:23` |
+| 37 | 62 | `AdminChatbotPageLayout` | `PageLayout` | 2 | 1 | `parent -> eyebrow` | `src/shared/ui/admin-chatbot-page-layout.tsx:23` |
+| 38 | 62 | `AdminCmsPageLayout` | `AdminWidePageLayout` | 2 | 1 | `current -> eyebrow` | `src/shared/ui/admin-cms-page-layout.tsx:22` |
+| 39 | 62 | `AdminCmsPageLayout` | `AdminWidePageLayout` | 2 | 1 | `parent -> eyebrow` | `src/shared/ui/admin-cms-page-layout.tsx:22` |
+| 40 | 62 | `AdminDatabasePageLayout` | `PageLayout` | 2 | 1 | `current -> eyebrow` | `src/shared/ui/admin-database-page-layout.tsx:22` |
+| 41 | 62 | `AdminDatabasePageLayout` | `PageLayout` | 2 | 1 | `parent -> eyebrow` | `src/shared/ui/admin-database-page-layout.tsx:22` |
+| 42 | 62 | `AdminIntegrationsPageLayout` | `PageLayout` | 2 | 1 | `current -> eyebrow` | `src/shared/ui/admin-integrations-page-layout.tsx:23` |
+| 43 | 62 | `AdminIntegrationsPageLayout` | `PageLayout` | 2 | 1 | `parent -> eyebrow` | `src/shared/ui/admin-integrations-page-layout.tsx:23` |
+| 44 | 62 | `AdminNotesPageLayout` | `PageLayout` | 2 | 1 | `current -> eyebrow` | `src/shared/ui/admin-notes-page-layout.tsx:22` |
+| 45 | 62 | `AdminNotesPageLayout` | `PageLayout` | 2 | 1 | `parent -> eyebrow` | `src/shared/ui/admin-notes-page-layout.tsx:22` |
+| 46 | 62 | `AdminProductsPageLayout` | `PageLayout` | 2 | 1 | `current -> eyebrow` | `src/shared/ui/admin-products-page-layout.tsx:22` |
+| 47 | 62 | `AdminProductsPageLayout` | `PageLayout` | 2 | 1 | `parent -> eyebrow` | `src/shared/ui/admin-products-page-layout.tsx:22` |
+| 48 | 62 | `AdminSettingsPageLayout` | `PageLayout` | 2 | 1 | `current -> eyebrow` | `src/shared/ui/admin-settings-page-layout.tsx:14` |
+| 49 | 60 | `AllegroSubpageScaffold` | `AdminIntegrationsPageLayout` | 2 | 2 | `title -> title` | `src/features/integrations/pages/marketplaces/allegro/AllegroSubpageScaffold.tsx:22` |
+| 50 | 58 | `HomeFallbackContent` | `CmsStorefrontAppearanceButtons` | 1 | 2 | `appearanceTone -> tone` | `src/app/(frontend)/home-fallback-content.tsx:158` |
+| 51 | 58 | `ProviderBadge` | `StatusBadge` | 1 | 2 | `count -> status` | `src/features/database/components/ControlPanelColumns.tsx:22` |
+| 52 | 54 | `KangurTestChoiceCard` | `KangurTestChoiceCardFeedback` | 2 | 1 | `showAnswer -> showAnswer` | `src/features/kangur/ui/components/KangurTestChoiceCard.tsx:142` |
+| 53 | 54 | `AdminAgentCreatorPageLayout` | `AdminAgentCreatorBreadcrumbs` | 2 | 1 | `current -> current` | `src/shared/ui/admin-agent-creator-page-layout.tsx:24` |
+| 54 | 54 | `AdminAgentCreatorPageLayout` | `AdminAgentCreatorBreadcrumbs` | 2 | 1 | `parent -> parent` | `src/shared/ui/admin-agent-creator-page-layout.tsx:24` |
+| 55 | 54 | `AdminAgentTeachingPageLayout` | `AdminAgentTeachingBreadcrumbs` | 2 | 1 | `current -> current` | `src/shared/ui/admin-agent-teaching-page-layout.tsx:24` |
+| 56 | 54 | `AdminAgentTeachingPageLayout` | `AdminAgentTeachingBreadcrumbs` | 2 | 1 | `parent -> parent` | `src/shared/ui/admin-agent-teaching-page-layout.tsx:24` |
+| 57 | 54 | `AdminCaseResolverPageLayout` | `AdminCaseResolverBreadcrumbs` | 2 | 1 | `current -> current` | `src/shared/ui/admin-case-resolver-page-layout.tsx:24` |
+| 58 | 54 | `AdminCaseResolverPageLayout` | `AdminCaseResolverBreadcrumbs` | 2 | 1 | `parent -> parent` | `src/shared/ui/admin-case-resolver-page-layout.tsx:24` |
+| 59 | 54 | `AdminChatbotPageLayout` | `AdminChatbotBreadcrumbs` | 2 | 1 | `current -> current` | `src/shared/ui/admin-chatbot-page-layout.tsx:24` |
+| 60 | 54 | `AdminChatbotPageLayout` | `AdminChatbotBreadcrumbs` | 2 | 1 | `parent -> parent` | `src/shared/ui/admin-chatbot-page-layout.tsx:24` |
+| 61 | 54 | `AdminCmsPageLayout` | `AdminCmsBreadcrumbs` | 2 | 1 | `current -> current` | `src/shared/ui/admin-cms-page-layout.tsx:23` |
+| 62 | 54 | `AdminCmsPageLayout` | `AdminCmsBreadcrumbs` | 2 | 1 | `parent -> parent` | `src/shared/ui/admin-cms-page-layout.tsx:23` |
+| 63 | 54 | `AdminDatabasePageLayout` | `AdminDatabaseBreadcrumbs` | 2 | 1 | `current -> current` | `src/shared/ui/admin-database-page-layout.tsx:23` |
+| 64 | 54 | `AdminDatabasePageLayout` | `AdminDatabaseBreadcrumbs` | 2 | 1 | `parent -> parent` | `src/shared/ui/admin-database-page-layout.tsx:23` |
+| 65 | 54 | `AdminIntegrationsPageLayout` | `AdminIntegrationsBreadcrumbs` | 2 | 1 | `current -> current` | `src/shared/ui/admin-integrations-page-layout.tsx:24` |
+| 66 | 54 | `AdminIntegrationsPageLayout` | `AdminIntegrationsBreadcrumbs` | 2 | 1 | `parent -> parent` | `src/shared/ui/admin-integrations-page-layout.tsx:24` |
+| 67 | 54 | `AdminNotesPageLayout` | `AdminNotesBreadcrumbs` | 2 | 1 | `current -> current` | `src/shared/ui/admin-notes-page-layout.tsx:23` |
+| 68 | 54 | `AdminNotesPageLayout` | `AdminNotesBreadcrumbs` | 2 | 1 | `parent -> parent` | `src/shared/ui/admin-notes-page-layout.tsx:23` |
+| 69 | 54 | `AdminProductsPageLayout` | `AdminProductsBreadcrumbs` | 2 | 1 | `current -> current` | `src/shared/ui/admin-products-page-layout.tsx:23` |
+| 70 | 54 | `AdminProductsPageLayout` | `AdminProductsBreadcrumbs` | 2 | 1 | `parent -> parent` | `src/shared/ui/admin-products-page-layout.tsx:23` |
+| 71 | 54 | `AdminSettingsPageLayout` | `AdminSettingsBreadcrumbs` | 2 | 1 | `current -> current` | `src/shared/ui/admin-settings-page-layout.tsx:14` |
+| 72 | 52 | `CalendarInteractiveGame` | `KangurPracticeGameSummary` | 1 | 1 | `section -> message` | `src/features/kangur/ui/components/CalendarInteractiveGame.tsx:417` |
+| 73 | 52 | `ClockTrainingGame` | `KangurPracticeGameSummary` | 1 | 1 | `completionPrimaryActionLabel -> finishLabel` | `src/features/kangur/ui/components/ClockTrainingGame.tsx:1312` |
+| 74 | 52 | `ClockTrainingGame` | `KangurPracticeGameSummary` | 1 | 1 | `section -> message` | `src/features/kangur/ui/components/ClockTrainingGame.tsx:1312` |
+| 75 | 52 | `KangurActivitySummaryCard` | `KangurInfoCard` | 1 | 1 | `dataTestId -> data-testid` | `src/features/kangur/ui/components/KangurActivitySummaryCard.tsx:31` |
+| 76 | 52 | `KangurActivitySummaryCard` | `KangurSectionEyebrow` | 1 | 1 | `eyebrowClassName -> className` | `src/features/kangur/ui/components/KangurActivitySummaryCard.tsx:38` |
+| 77 | 52 | `KangurActivitySummaryCard` | `KangurCardDescription` | 1 | 1 | `descriptionClassName -> className` | `src/features/kangur/ui/components/KangurActivitySummaryCard.tsx:43` |
+| 78 | 52 | `KangurAiTutorWarmOverlayPanel` | `KangurGlassPanel` | 1 | 1 | `tone -> className` | `src/features/kangur/ui/components/KangurAiTutorChrome.tsx:145` |
+| 79 | 52 | `KangurAiTutorDrawingCanvas` | `KangurButton` | 1 | 1 | `onCancel -> onClick` | `src/features/kangur/ui/components/KangurAiTutorDrawingCanvas.tsx:306` |
+| 80 | 52 | `KangurAiTutorGuidedCallout` | `KangurAiTutorWarmInsetCard` | 1 | 1 | `avatarPlacement -> data-avatar-avoid-edge` | `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.tsx:345` |
 
 ## Ranked Chain Backlog (Depth >= 3)
 
@@ -244,60 +253,54 @@ Generated at: 2026-03-13T22:20:14.005Z
 | 24 | 156 | 4 | `AdminSettingsPageLayout` | `Breadcrumbs` | 2 | 1 | `current -> current -> current -> items` |
 | 25 | 146 | 4 | `KangurTestChoiceCard` | `KangurOptionCardButton` | 1 | 1 | `buttonClassName -> buttonClassName -> buttonClassName -> className` |
 | 26 | 146 | 4 | `KangurTestChoiceCard` | `KangurOptionCardButton` | 1 | 1 | `choiceGrid -> buttonClassName -> buttonClassName -> className` |
-| 27 | 113 | 3 | `KangurLessonLibraryCard` | `KangurIconSummaryCardContent` | 4 | 1 | `lesson -> title -> title` |
-| 28 | 113 | 3 | `KangurLessonLibraryCard` | `KangurIconSummaryCardContent` | 4 | 1 | `lesson -> icon -> icon` |
-| 29 | 113 | 3 | `KangurLessonLibraryCard` | `KangurIconSummaryCardContent` | 4 | 1 | `lesson -> description -> description` |
-| 30 | 103 | 3 | `KangurLessonLibraryCard` | `KangurIconSummaryCardContent` | 3 | 1 | `masteryPresentation -> footer -> footer` |
-| 31 | 103 | 3 | `KangurLessonLibraryCard` | `KangurIconSummaryCardContent` | 3 | 1 | `masteryPresentation -> aside -> aside` |
-| 32 | 103 | 3 | `KangurLessonLibraryCard` | `KangurStatusChip` | 3 | 1 | `lessonAssignment -> priority -> accent` |
-| 33 | 103 | 3 | `KangurLessonLibraryCard` | `KangurIconSummaryCardContent` | 3 | 1 | `lessonAssignment -> footer -> footer` |
-| 34 | 103 | 3 | `KangurLessonLibraryCard` | `KangurIconSummaryCardContent` | 3 | 1 | `lessonAssignment -> aside -> aside` |
-| 35 | 103 | 3 | `KangurTestQuestionRenderer` | `KangurAnswerChoiceCard` | 3 | 1 | `showAnswer -> showAnswer -> interactive` |
-| 36 | 99 | 3 | `AllegroSubpageScaffold` | `PageLayout` | 2 | 2 | `title -> current -> eyebrow` |
-| 37 | 99 | 3 | `AllegroSubpageScaffold` | `AdminIntegrationsBreadcrumbs` | 2 | 2 | `title -> current -> current` |
-| 38 | 99 | 3 | `SummaryContent` | `Textarea` | 2 | 2 | `knowledgeGraphPreviewDraft -> draft -> value` |
-| 39 | 99 | 3 | `SummaryContent` | `Input` | 2 | 2 | `knowledgeGraphPreviewDraft -> draft -> value` |
-| 40 | 93 | 3 | `SummaryContent` | `KnowledgeGraphPreviewSelect` | 2 | 1 | `knowledgeGraphPreviewDraft -> draft -> value` |
-| 41 | 93 | 3 | `KangurLessonLibraryCard` | `KangurIconSummaryCardContent` | 2 | 1 | `completedLessonAssignment -> footer -> footer` |
-| 42 | 93 | 3 | `KangurLessonLibraryCard` | `KangurIconSummaryCardContent` | 2 | 1 | `completedLessonAssignment -> aside -> aside` |
-| 43 | 93 | 3 | `KangurLessonLibraryCard` | `KangurIconSummaryCardContent` | 2 | 1 | `iconTestId -> icon -> icon` |
-| 44 | 93 | 3 | `AdminAgentCreatorPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `current -> current -> current` |
-| 45 | 93 | 3 | `AdminAgentCreatorPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `parent -> parent -> parent` |
-| 46 | 93 | 3 | `AdminAgentTeachingPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `current -> current -> current` |
-| 47 | 93 | 3 | `AdminAgentTeachingPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `parent -> parent -> parent` |
-| 48 | 93 | 3 | `AdminCaseResolverPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `current -> current -> current` |
-| 49 | 93 | 3 | `AdminCaseResolverPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `parent -> parent -> parent` |
-| 50 | 93 | 3 | `AdminChatbotPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `current -> current -> current` |
-| 51 | 93 | 3 | `AdminChatbotPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `parent -> parent -> parent` |
-| 52 | 93 | 3 | `AdminCmsPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `current -> current -> current` |
-| 53 | 93 | 3 | `AdminCmsPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `parent -> parent -> parent` |
-| 54 | 93 | 3 | `AdminDatabasePageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `current -> current -> current` |
-| 55 | 93 | 3 | `AdminDatabasePageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `parent -> parent -> parent` |
-| 56 | 93 | 3 | `AdminIntegrationsPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `parent -> parent -> parent` |
-| 57 | 93 | 3 | `AdminNotesPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `current -> current -> current` |
-| 58 | 93 | 3 | `AdminNotesPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `parent -> parent -> parent` |
-| 59 | 93 | 3 | `AdminProductsPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `current -> current -> current` |
-| 60 | 93 | 3 | `AdminProductsPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `parent -> parent -> parent` |
-| 61 | 93 | 3 | `AdminSettingsPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `current -> current -> current` |
-| 62 | 89 | 3 | `SummaryContent` | `EmptyState` | 1 | 2 | `knowledgeGraphStatus -> knowledgeGraphStatus -> description` |
-| 63 | 89 | 3 | `SummaryContent` | `StatusBadge` | 1 | 2 | `knowledgeGraphStatus -> knowledgeGraphStatus -> status` |
-| 64 | 89 | 3 | `SummaryContent` | `MetadataItem` | 1 | 2 | `knowledgeGraphStatus -> knowledgeGraphStatus -> value` |
-| 65 | 89 | 3 | `SummaryContent` | `EmptyState` | 1 | 2 | `knowledgeGraphStatusIsRefreshing -> isRefreshing -> action` |
-| 66 | 89 | 3 | `SummaryContent` | `Button` | 1 | 2 | `knowledgeGraphStatusIsRefreshing -> isRefreshing -> disabled` |
-| 67 | 89 | 3 | `SummaryContent` | `Button` | 1 | 2 | `knowledgeGraphIsSyncing -> isSyncing -> disabled` |
-| 68 | 89 | 3 | `SummaryContent` | `Alert` | 1 | 2 | `knowledgeGraphSyncFeedback -> syncFeedback -> variant` |
-| 69 | 89 | 3 | `SummaryContent` | `Alert` | 1 | 2 | `knowledgeGraphSyncFeedback -> syncFeedback -> title` |
-| 70 | 89 | 3 | `SummaryContent` | `EmptyState` | 1 | 2 | `refreshKnowledgeGraphStatus -> onRefresh -> action` |
-| 71 | 89 | 3 | `SummaryContent` | `Button` | 1 | 2 | `refreshKnowledgeGraphStatus -> onRefresh -> onClick` |
-| 72 | 89 | 3 | `SummaryContent` | `Button` | 1 | 2 | `syncKnowledgeGraph -> onSync -> onClick` |
-| 73 | 89 | 3 | `SummaryContent` | `MetadataItem` | 1 | 2 | `knowledgeGraphPreviewResult -> result -> value` |
-| 74 | 89 | 3 | `SummaryContent` | `Button` | 1 | 2 | `knowledgeGraphPreviewIsRunning -> isRunning -> disabled` |
-| 75 | 89 | 3 | `SummaryContent` | `Textarea` | 1 | 2 | `updateKnowledgeGraphPreviewDraft -> onDraftChange -> onChange` |
-| 76 | 89 | 3 | `SummaryContent` | `Input` | 1 | 2 | `updateKnowledgeGraphPreviewDraft -> onDraftChange -> onChange` |
-| 77 | 89 | 3 | `SummaryContent` | `Button` | 1 | 2 | `clearKnowledgeGraphPreviewContext -> onClearContext -> onClick` |
-| 78 | 89 | 3 | `SummaryContent` | `Button` | 1 | 2 | `runKnowledgeGraphPreview -> onRun -> onClick` |
-| 79 | 89 | 3 | `SummaryContent` | `Button` | 1 | 2 | `replayAnalyticsEventInKnowledgeGraphPreview -> onReplayEvent -> onClick` |
-| 80 | 83 | 3 | `SummaryContent` | `KnowledgeGraphPreviewValueBlock` | 1 | 1 | `knowledgeGraphPreviewResult -> result -> value` |
+| 27 | 103 | 3 | `KangurTestQuestionRenderer` | `KangurAnswerChoiceCard` | 3 | 1 | `showAnswer -> showAnswer -> interactive` |
+| 28 | 103 | 3 | `KangurTestQuestionRenderer` | `KangurTestChoiceCardFeedback` | 3 | 1 | `showAnswer -> showAnswer -> showAnswer` |
+| 29 | 99 | 3 | `AllegroSubpageScaffold` | `PageLayout` | 2 | 2 | `title -> current -> eyebrow` |
+| 30 | 99 | 3 | `AllegroSubpageScaffold` | `AdminIntegrationsBreadcrumbs` | 2 | 2 | `title -> current -> current` |
+| 31 | 93 | 3 | `AdminAgentCreatorPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `current -> current -> current` |
+| 32 | 93 | 3 | `AdminAgentCreatorPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `parent -> parent -> parent` |
+| 33 | 93 | 3 | `AdminAgentTeachingPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `current -> current -> current` |
+| 34 | 93 | 3 | `AdminAgentTeachingPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `parent -> parent -> parent` |
+| 35 | 93 | 3 | `AdminCaseResolverPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `current -> current -> current` |
+| 36 | 93 | 3 | `AdminCaseResolverPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `parent -> parent -> parent` |
+| 37 | 93 | 3 | `AdminChatbotPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `current -> current -> current` |
+| 38 | 93 | 3 | `AdminChatbotPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `parent -> parent -> parent` |
+| 39 | 93 | 3 | `AdminCmsPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `current -> current -> current` |
+| 40 | 93 | 3 | `AdminCmsPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `parent -> parent -> parent` |
+| 41 | 93 | 3 | `AdminDatabasePageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `current -> current -> current` |
+| 42 | 93 | 3 | `AdminDatabasePageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `parent -> parent -> parent` |
+| 43 | 93 | 3 | `AdminIntegrationsPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `parent -> parent -> parent` |
+| 44 | 93 | 3 | `AdminNotesPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `current -> current -> current` |
+| 45 | 93 | 3 | `AdminNotesPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `parent -> parent -> parent` |
+| 46 | 93 | 3 | `AdminProductsPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `current -> current -> current` |
+| 47 | 93 | 3 | `AdminProductsPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `parent -> parent -> parent` |
+| 48 | 93 | 3 | `AdminSettingsPageLayout` | `AdminSectionBreadcrumbs` | 2 | 1 | `current -> current -> current` |
+| 49 | 89 | 3 | `KangurAiTutorNativeGuideEntryEditor` | `Card` | 1 | 2 | `className -> className -> className` |
+| 50 | 83 | 3 | `KangurBadgeTrackSection` | `KangurSectionEyebrow` | 1 | 1 | `headingClassName -> className -> className` |
+| 51 | 83 | 3 | `KangurBadgeTrackSection` | `KangurSectionEyebrow` | 1 | 1 | `headingAs -> headingAs -> as` |
+| 52 | 83 | 3 | `KangurBadgeTrackSection` | `KangurCardDescription` | 1 | 1 | `emptyTestId -> emptyTestId -> data-testid` |
+| 53 | 83 | 3 | `KangurLessonLibraryCardAside` | `KangurStatusChip` | 1 | 1 | `lessonAssignment -> priority -> accent` |
+| 54 | 83 | 3 | `KangurSetupChoiceCard` | `KangurOptionCardButton` | 1 | 1 | `buttonClassName -> buttonClassName -> className` |
+| 55 | 83 | 3 | `KangurTestChoiceCard` | `KangurAnimatedOptionCard` | 1 | 1 | `buttonClassName -> buttonClassName -> buttonClassName` |
+| 56 | 83 | 3 | `KangurTestChoiceCard` | `KangurAnimatedOptionCard` | 1 | 1 | `choiceGrid -> buttonClassName -> buttonClassName` |
+| 57 | 83 | 3 | `KangurTestChoiceCard` | `KangurAnswerChoiceBadge` | 1 | 1 | `badgeClassName -> className -> className` |
+| 58 | 83 | 3 | `KangurTestSuitePlayer` | `KangurTestChoiceCard` | 1 | 1 | `suite -> contentId -> contentId` |
+| 59 | 83 | 3 | `AdminAgentCreatorBreadcrumbs` | `Breadcrumbs` | 1 | 1 | `className -> className -> className` |
+| 60 | 83 | 3 | `AdminAgentTeachingBreadcrumbs` | `Breadcrumbs` | 1 | 1 | `className -> className -> className` |
+| 61 | 83 | 3 | `AdminAiPathsBreadcrumbs` | `Breadcrumbs` | 1 | 1 | `parent -> parent -> items` |
+| 62 | 83 | 3 | `AdminAiPathsBreadcrumbs` | `Breadcrumbs` | 1 | 1 | `current -> current -> items` |
+| 63 | 83 | 3 | `AdminAiPathsBreadcrumbs` | `Breadcrumbs` | 1 | 1 | `className -> className -> className` |
+| 64 | 83 | 3 | `AdminCaseResolverBreadcrumbs` | `Breadcrumbs` | 1 | 1 | `className -> className -> className` |
+| 65 | 83 | 3 | `AdminChatbotBreadcrumbs` | `Breadcrumbs` | 1 | 1 | `className -> className -> className` |
+| 66 | 83 | 3 | `AdminCmsBreadcrumbs` | `Breadcrumbs` | 1 | 1 | `className -> className -> className` |
+| 67 | 83 | 3 | `AdminDatabaseBreadcrumbs` | `Breadcrumbs` | 1 | 1 | `className -> className -> className` |
+| 68 | 83 | 3 | `AdminFilemakerBreadcrumbs` | `Breadcrumbs` | 1 | 1 | `parent -> parent -> items` |
+| 69 | 83 | 3 | `AdminFilemakerBreadcrumbs` | `Breadcrumbs` | 1 | 1 | `current -> current -> items` |
+| 70 | 83 | 3 | `AdminFilemakerBreadcrumbs` | `Breadcrumbs` | 1 | 1 | `className -> className -> className` |
+| 71 | 83 | 3 | `AdminIntegrationsBreadcrumbs` | `Breadcrumbs` | 1 | 1 | `className -> className -> className` |
+| 72 | 83 | 3 | `AdminNotesBreadcrumbs` | `Breadcrumbs` | 1 | 1 | `className -> className -> className` |
+| 73 | 83 | 3 | `AdminProductsBreadcrumbs` | `Breadcrumbs` | 1 | 1 | `className -> className -> className` |
+| 74 | 83 | 3 | `AdminSettingsBreadcrumbs` | `Breadcrumbs` | 1 | 1 | `className -> className -> className` |
 
 ## Top Chain Details (Depth >= 3)
 
@@ -309,13 +312,13 @@ Generated at: 2026-03-13T22:20:14.005Z
 - Prop path: showAnswer -> showAnswer -> interactive -> buttonClassName -> className
 - Component path:
   - `KangurTestQuestionRenderer` (src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx)
-  - `KangurTestChoiceCard` (src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx)
+  - `KangurTestChoiceCard` (src/features/kangur/ui/components/KangurTestChoiceCard.tsx)
   - `KangurAnswerChoiceCard` (src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx)
   - `KangurAnimatedOptionCard` (src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx)
   - `KangurOptionCardButton` (src/features/kangur/ui/design/primitives/KangurOptionCardButton.tsx)
 - Transition lines:
-  - `KangurTestQuestionRenderer` -> `KangurTestChoiceCard`: `showAnswer` -> `showAnswer` at src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx:311
-  - `KangurTestChoiceCard` -> `KangurAnswerChoiceCard`: `showAnswer` -> `interactive` at src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx:92
+  - `KangurTestQuestionRenderer` -> `KangurTestChoiceCard`: `showAnswer` -> `showAnswer` at src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx:217
+  - `KangurTestChoiceCard` -> `KangurAnswerChoiceCard`: `showAnswer` -> `interactive` at src/features/kangur/ui/components/KangurTestChoiceCard.tsx:127
   - `KangurAnswerChoiceCard` -> `KangurAnimatedOptionCard`: `interactive` -> `buttonClassName` at src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx:28
   - `KangurAnimatedOptionCard` -> `KangurOptionCardButton`: `buttonClassName` -> `className` at src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx:41
 
@@ -345,12 +348,12 @@ Generated at: 2026-03-13T22:20:14.005Z
 - Prop path: showAnswer -> showAnswer -> interactive -> buttonClassName
 - Component path:
   - `KangurTestQuestionRenderer` (src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx)
-  - `KangurTestChoiceCard` (src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx)
+  - `KangurTestChoiceCard` (src/features/kangur/ui/components/KangurTestChoiceCard.tsx)
   - `KangurAnswerChoiceCard` (src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx)
   - `KangurAnimatedOptionCard` (src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx)
 - Transition lines:
-  - `KangurTestQuestionRenderer` -> `KangurTestChoiceCard`: `showAnswer` -> `showAnswer` at src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx:311
-  - `KangurTestChoiceCard` -> `KangurAnswerChoiceCard`: `showAnswer` -> `interactive` at src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx:92
+  - `KangurTestQuestionRenderer` -> `KangurTestChoiceCard`: `showAnswer` -> `showAnswer` at src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx:217
+  - `KangurTestChoiceCard` -> `KangurAnswerChoiceCard`: `showAnswer` -> `interactive` at src/features/kangur/ui/components/KangurTestChoiceCard.tsx:127
   - `KangurAnswerChoiceCard` -> `KangurAnimatedOptionCard`: `interactive` -> `buttonClassName` at src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx:28
 
 ### 4. KangurTestQuestionRenderer -> KangurAnimatedOptionCard
@@ -361,12 +364,12 @@ Generated at: 2026-03-13T22:20:14.005Z
 - Prop path: showAnswer -> showAnswer -> interactive -> whileHover
 - Component path:
   - `KangurTestQuestionRenderer` (src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx)
-  - `KangurTestChoiceCard` (src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx)
+  - `KangurTestChoiceCard` (src/features/kangur/ui/components/KangurTestChoiceCard.tsx)
   - `KangurAnswerChoiceCard` (src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx)
   - `KangurAnimatedOptionCard` (src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx)
 - Transition lines:
-  - `KangurTestQuestionRenderer` -> `KangurTestChoiceCard`: `showAnswer` -> `showAnswer` at src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx:311
-  - `KangurTestChoiceCard` -> `KangurAnswerChoiceCard`: `showAnswer` -> `interactive` at src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx:92
+  - `KangurTestQuestionRenderer` -> `KangurTestChoiceCard`: `showAnswer` -> `showAnswer` at src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx:217
+  - `KangurTestChoiceCard` -> `KangurAnswerChoiceCard`: `showAnswer` -> `interactive` at src/features/kangur/ui/components/KangurTestChoiceCard.tsx:127
   - `KangurAnswerChoiceCard` -> `KangurAnimatedOptionCard`: `interactive` -> `whileHover` at src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx:28
 
 ### 5. KangurTestQuestionRenderer -> KangurAnimatedOptionCard
@@ -377,12 +380,12 @@ Generated at: 2026-03-13T22:20:14.005Z
 - Prop path: showAnswer -> showAnswer -> interactive -> whileTap
 - Component path:
   - `KangurTestQuestionRenderer` (src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx)
-  - `KangurTestChoiceCard` (src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx)
+  - `KangurTestChoiceCard` (src/features/kangur/ui/components/KangurTestChoiceCard.tsx)
   - `KangurAnswerChoiceCard` (src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx)
   - `KangurAnimatedOptionCard` (src/features/kangur/ui/components/KangurAnimatedOptionCard.tsx)
 - Transition lines:
-  - `KangurTestQuestionRenderer` -> `KangurTestChoiceCard`: `showAnswer` -> `showAnswer` at src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx:311
-  - `KangurTestChoiceCard` -> `KangurAnswerChoiceCard`: `showAnswer` -> `interactive` at src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx:92
+  - `KangurTestQuestionRenderer` -> `KangurTestChoiceCard`: `showAnswer` -> `showAnswer` at src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx:217
+  - `KangurTestChoiceCard` -> `KangurAnswerChoiceCard`: `showAnswer` -> `interactive` at src/features/kangur/ui/components/KangurTestChoiceCard.tsx:127
   - `KangurAnswerChoiceCard` -> `KangurAnimatedOptionCard`: `interactive` -> `whileTap` at src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx:28
 
 ### 6. AllegroSubpageScaffold -> AdminSectionBreadcrumbs
@@ -552,105 +555,105 @@ Generated at: 2026-03-13T22:20:14.005Z
 - Score: 112
 - Root fanout: 7
 - Prop mapping: featuredDailyQuest -> action
-- Location: src/features/kangur/ui/components/KangurAssignmentManager.tsx:477
+- Location: src/features/kangur/ui/components/KangurAssignmentManager.tsx:441
 
 ### 2. KangurAssignmentManager -> KangurDailyQuestHighlightCardContent
 
 - Score: 112
 - Root fanout: 7
 - Prop mapping: featuredDailyQuest -> description
-- Location: src/features/kangur/ui/components/KangurAssignmentManager.tsx:477
+- Location: src/features/kangur/ui/components/KangurAssignmentManager.tsx:441
 
 ### 3. KangurAssignmentManager -> KangurDailyQuestHighlightCardContent
 
 - Score: 112
 - Root fanout: 7
 - Prop mapping: featuredDailyQuest -> footer
-- Location: src/features/kangur/ui/components/KangurAssignmentManager.tsx:477
+- Location: src/features/kangur/ui/components/KangurAssignmentManager.tsx:441
 
 ### 4. KangurAssignmentManager -> KangurDailyQuestHighlightCardContent
 
 - Score: 112
 - Root fanout: 7
 - Prop mapping: featuredDailyQuest -> progressLabel
-- Location: src/features/kangur/ui/components/KangurAssignmentManager.tsx:477
+- Location: src/features/kangur/ui/components/KangurAssignmentManager.tsx:441
 
 ### 5. KangurAssignmentManager -> KangurDailyQuestHighlightCardContent
 
 - Score: 112
 - Root fanout: 7
 - Prop mapping: featuredDailyQuest -> questLabel
-- Location: src/features/kangur/ui/components/KangurAssignmentManager.tsx:477
+- Location: src/features/kangur/ui/components/KangurAssignmentManager.tsx:441
 
 ### 6. KangurAssignmentManager -> KangurDailyQuestHighlightCardContent
 
 - Score: 112
 - Root fanout: 7
 - Prop mapping: featuredDailyQuest -> rewardLabel
-- Location: src/features/kangur/ui/components/KangurAssignmentManager.tsx:477
+- Location: src/features/kangur/ui/components/KangurAssignmentManager.tsx:441
 
 ### 7. KangurAssignmentManager -> KangurDailyQuestHighlightCardContent
 
 - Score: 112
 - Root fanout: 7
 - Prop mapping: featuredDailyQuest -> title
-- Location: src/features/kangur/ui/components/KangurAssignmentManager.tsx:477
+- Location: src/features/kangur/ui/components/KangurAssignmentManager.tsx:441
 
-### 8. KangurLessonLibraryCard -> KangurIconSummaryOptionCard
+### 8. KangurAnswerChoiceCard -> KangurAnimatedOptionCard
 
-- Score: 82
-- Root fanout: 4
-- Prop mapping: lesson -> description
-- Location: src/features/kangur/ui/components/KangurLessonLibraryCard.tsx:69
-
-### 9. KangurLessonLibraryCard -> KangurIconSummaryOptionCard
-
-- Score: 82
-- Root fanout: 4
-- Prop mapping: lesson -> icon
-- Location: src/features/kangur/ui/components/KangurLessonLibraryCard.tsx:69
-
-### 10. KangurLessonLibraryCard -> KangurIconSummaryOptionCard
-
-- Score: 82
-- Root fanout: 4
-- Prop mapping: lesson -> title
-- Location: src/features/kangur/ui/components/KangurLessonLibraryCard.tsx:69
-
-### 11. KangurLessonLibraryCard -> KangurGradientIconTile
-
-- Score: 82
-- Root fanout: 4
-- Prop mapping: lesson -> gradientClass
-- Location: src/features/kangur/ui/components/KangurLessonLibraryCard.tsx:130
-
-### 12. KnowledgeGraphQueryPreviewSection -> Textarea
-
-- Score: 78
+- Score: 72
 - Root fanout: 3
-- Prop mapping: draft -> value
-- Location: src/features/kangur/admin/AdminKangurObservabilityPage.tsx:886
+- Prop mapping: interactive -> buttonClassName
+- Location: src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx:28
 
-### 13. KnowledgeGraphQueryPreviewSection -> Textarea
+### 9. KangurAnswerChoiceCard -> KangurAnimatedOptionCard
 
-- Score: 78
+- Score: 72
 - Root fanout: 3
-- Prop mapping: onDraftChange -> onChange
-- Location: src/features/kangur/admin/AdminKangurObservabilityPage.tsx:886
+- Prop mapping: interactive -> whileHover
+- Location: src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx:28
 
-### 14. KnowledgeGraphQueryPreviewSection -> Input
+### 10. KangurAnswerChoiceCard -> KangurAnimatedOptionCard
 
-- Score: 78
+- Score: 72
 - Root fanout: 3
-- Prop mapping: draft -> value
-- Location: src/features/kangur/admin/AdminKangurObservabilityPage.tsx:997
+- Prop mapping: interactive -> whileTap
+- Location: src/features/kangur/ui/components/KangurAnswerChoiceCard.tsx:28
 
-### 15. KnowledgeGraphQueryPreviewSection -> Input
+### 11. KangurTestChoiceCard -> KangurAnswerChoiceCard
 
-- Score: 78
+- Score: 72
 - Root fanout: 3
-- Prop mapping: onDraftChange -> onChange
-- Location: src/features/kangur/admin/AdminKangurObservabilityPage.tsx:997
+- Prop mapping: choice -> onClick
+- Location: src/features/kangur/ui/components/KangurTestChoiceCard.tsx:127
+
+### 12. KangurTestChoiceCard -> KangurTestChoiceCardBadge
+
+- Score: 72
+- Root fanout: 3
+- Prop mapping: choice -> label
+- Location: src/features/kangur/ui/components/KangurTestChoiceCard.tsx:140
+
+### 13. KangurTestQuestionRenderer -> KangurPanelIntro
+
+- Score: 72
+- Root fanout: 3
+- Prop mapping: showAnswer -> description
+- Location: src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx:150
+
+### 14. KangurTestQuestionRenderer -> KangurPanelIntro
+
+- Score: 72
+- Root fanout: 3
+- Prop mapping: showAnswer -> title
+- Location: src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx:150
+
+### 15. ProgressOverview -> KangurProgressHighlightHeader
+
+- Score: 72
+- Root fanout: 3
+- Prop mapping: dailyQuest -> description
+- Location: src/features/kangur/ui/components/ProgressOverview.tsx:136
 
 ## Execution Notes
 

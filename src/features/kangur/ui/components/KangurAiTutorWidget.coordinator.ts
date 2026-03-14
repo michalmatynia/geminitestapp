@@ -30,7 +30,6 @@ import {
   useKangurAiTutorSelectionGuidanceHandoffEffect,
   useKangurAiTutorSelectionGuidanceDockOpenEffect,
 } from './KangurAiTutorWidget.guided';
-import { isAuthGuidedTutorTarget } from './KangurAiTutorWidget.helpers';
 import { useKangurAiTutorPanelInteractions } from './KangurAiTutorWidget.interactions';
 import { useKangurAiTutorLifecycleEffects } from './KangurAiTutorWidget.lifecycle';
 import { useKangurAiTutorPanelActions } from './KangurAiTutorWidget.panel-actions';
@@ -107,7 +106,7 @@ export function useKangurAiTutorWidgetCoordinator({
     remainingMessages,
     resolveGuestLoginGuidanceIntentForContent,
     routing,
-    selectionGlowSupported,
+    selectionGlowSupported: _selectionGlowSupported,
     shouldRepeatGuestIntroOnEntry,
     shouldRepeatHomeOnboardingOnEntry,
     telemetryContext,
@@ -190,7 +189,7 @@ export function useKangurAiTutorWidgetCoordinator({
     inputPlaceholder,
     isAskModalMode,
     isCompactDockedTutorPanel,
-    isContextualPanelAnchor,
+    isContextualPanelAnchor: _isContextualPanelAnchor,
     isEligibleForHomeOnboarding,
     isGuidedTutorMode,
     isPanelDraggable,
@@ -232,8 +231,6 @@ export function useKangurAiTutorWidgetCoordinator({
     visibleProactiveNudge,
     visibleQuickActions,
   } = displayState;
-  const isMinimalPanelMode = displayState.isMinimalPanelMode ?? false;
-
   const suppressPanelSurface =
     tutorRuntime.isOpen &&
     (tutorSurfaceMode === 'onboarding' ||
@@ -546,7 +543,6 @@ export function useKangurAiTutorWidgetCoordinator({
     setSelectionGuidanceCalloutVisibleText: widgetState.setSelectionGuidanceCalloutVisibleText,
     handleAvatarTap: avatarShellActions.handleAvatarClick,
     startGuidedSectionExplanation: guidedFlow.startGuidedSectionExplanation,
-    startGuidedSelectionExplanation: guidedFlow.startGuidedSelectionExplanation,
     suppressAvatarClickRef: widgetState.suppressAvatarClickRef,
     tutorAnchorContext,
     viewport,
@@ -765,7 +761,6 @@ export function useKangurAiTutorWidgetCoordinator({
     selectionGlowStyles,
     selectionContextSpotlightStyle,
     selectionSpotlightStyle,
-    selectionResponseComplete: widgetState.selectionResponseComplete,
     sessionSurfaceLabel,
     shouldRenderAuxiliaryPanelControls,
     shouldRenderGuidedCallout,
@@ -777,6 +772,7 @@ export function useKangurAiTutorWidgetCoordinator({
     showSectionGuidanceCallout,
     showSelectionExplainCompleteState,
     showSelectionGuidanceCallout,
+    shouldRenderContextlessTutorUi,
     showSources,
     suppressPanelSurface,
     tutorContent,
@@ -789,7 +785,6 @@ export function useKangurAiTutorWidgetCoordinator({
     viewport,
     visibleProactiveNudge,
     visibleQuickActions,
-    isMinimalPanelMode,
   });
 
   const shouldRender =

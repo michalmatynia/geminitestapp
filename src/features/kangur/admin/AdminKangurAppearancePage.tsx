@@ -23,6 +23,12 @@ import {
   parseKangurThemeSettings,
   type KangurThemeCatalogEntry,
 } from '@/features/kangur/theme-settings';
+import {
+  KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
+  KANGUR_STOREFRONT_THEME_OPTIONS,
+  parseKangurStorefrontAppearanceMode,
+  type KangurStorefrontAppearanceMode,
+} from '@/features/kangur/storefront-appearance-settings';
 import { fetchSettingValue } from '@/shared/api/settings-client';
 import { normalizeThemeSettings, type ThemeSettings } from '@/shared/contracts/cms-theme';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -82,6 +88,42 @@ const DRAWER_POSITION_OPTIONS = [
   { value: 'right', label: 'Right' },
 ];
 
+const HOME_ACTION_FIELD_GROUPS = [
+  { prefix: 'homeActionLessons', label: 'Lessons' },
+  { prefix: 'homeActionPlay', label: 'Play' },
+  { prefix: 'homeActionTraining', label: 'Training' },
+  { prefix: 'homeActionKangur', label: 'Kangur' },
+] as const;
+
+const HOME_ACTION_FIELD_TOKENS = [
+  { suffix: 'TextColor', label: 'Text Color' },
+  { suffix: 'TextActiveColor', label: 'Active Text Color' },
+  { suffix: 'LabelStart', label: 'Label Gradient Start' },
+  { suffix: 'LabelMid', label: 'Label Gradient Mid' },
+  { suffix: 'LabelEnd', label: 'Label Gradient End' },
+  { suffix: 'AccentStart', label: 'Accent Gradient Start' },
+  { suffix: 'AccentMid', label: 'Accent Gradient Mid' },
+  { suffix: 'AccentEnd', label: 'Accent Gradient End' },
+  { suffix: 'UnderlayStart', label: 'Underlay Gradient Start' },
+  { suffix: 'UnderlayMid', label: 'Underlay Gradient Mid' },
+  { suffix: 'UnderlayEnd', label: 'Underlay Gradient End' },
+  { suffix: 'UnderlayTintStart', label: 'Underlay Tint Start' },
+  { suffix: 'UnderlayTintMid', label: 'Underlay Tint Mid' },
+  { suffix: 'UnderlayTintEnd', label: 'Underlay Tint End' },
+  { suffix: 'AccentShadowColor', label: 'Accent Shadow' },
+  { suffix: 'UnderlayShadowColor', label: 'Underlay Shadow' },
+  { suffix: 'SurfaceShadowColor', label: 'Surface Shadow' },
+] as const;
+
+const HOME_ACTION_FIELDS: SettingsField<ThemeSettings>[] = HOME_ACTION_FIELD_GROUPS.flatMap(
+  (group) =>
+    HOME_ACTION_FIELD_TOKENS.map((token) => ({
+      key: `${group.prefix}${token.suffix}` as keyof ThemeSettings,
+      label: `${group.label} ${token.label}`,
+      type: 'color',
+    }))
+);
+
 const THEME_SECTIONS: Array<{
   title: string;
   subtitle: string;
@@ -99,6 +141,54 @@ const THEME_SECTIONS: Array<{
       { key: 'errorColor', label: 'Error / Destructive', type: 'color' },
       { key: 'textColor', label: 'Primary Text', type: 'color' },
       { key: 'mutedTextColor', label: 'Muted Text', type: 'color' },
+    ],
+  },
+  {
+    title: 'Text Overrides',
+    subtitle: 'Optional overrides for page, cards, and navigation text colors.',
+    fields: [
+      {
+        key: 'pageTextColor',
+        label: 'Page Text Override',
+        type: 'background',
+        placeholder: 'Auto',
+        helperText: 'Leave empty to use the Primary Text color.',
+      },
+      {
+        key: 'pageMutedTextColor',
+        label: 'Page Muted Text Override',
+        type: 'background',
+        placeholder: 'Auto',
+        helperText: 'Leave empty to use the Muted Text color.',
+      },
+      {
+        key: 'cardTextColor',
+        label: 'Card Text Override',
+        type: 'background',
+        placeholder: 'Auto',
+        helperText: 'Controls text color inside soft cards.',
+      },
+      {
+        key: 'navTextColor',
+        label: 'Navigation Text Override',
+        type: 'background',
+        placeholder: 'Auto',
+        helperText: 'Overrides the top navigation text color.',
+      },
+      {
+        key: 'navActiveTextColor',
+        label: 'Navigation Active Text Override',
+        type: 'background',
+        placeholder: 'Auto',
+        helperText: 'Overrides the active navigation text color.',
+      },
+      {
+        key: 'navHoverTextColor',
+        label: 'Navigation Hover Text Override',
+        type: 'background',
+        placeholder: 'Auto',
+        helperText: 'Overrides the hover navigation text color.',
+      },
     ],
   },
   {
@@ -208,6 +298,12 @@ const THEME_SECTIONS: Array<{
       { key: 'pillShadowX', label: 'Shadow Offset X', type: 'number', min: -20, max: 20, suffix: 'px' },
       { key: 'pillShadowY', label: 'Shadow Offset Y', type: 'number', min: -20, max: 20, suffix: 'px' },
     ],
+  },
+  {
+    title: 'Home Actions',
+    subtitle:
+      'Theme the four main home buttons (icons stay untouched). Leave a field empty to keep the default tone.',
+    fields: HOME_ACTION_FIELDS,
   },
   {
     title: 'Inputs',
@@ -711,20 +807,34 @@ const SLOT_CONFIG: Record<
 const PREVIEW_TARGET_ORDER: PreviewTarget[] = ['current', ...SLOT_ORDER];
 
 function KangurThemePreviewPanel({
-  previewTheme,
-  previewMode,
-  previewTarget,
-  onTargetChange,
+  draft,
+  selectedId,
+  slotAssignments,
+  slotThemes,
 }: {
-  previewTheme: ThemeSettings;
-  previewMode: PreviewMode;
-  previewTarget: PreviewTarget;
-  onTargetChange: (target: PreviewTarget) => void;
+  draft: ThemeSettings;
+  selectedId: ThemeSelectionId;
+  slotAssignments: SlotAssignments;
+  slotThemes: Record<ThemeSlotKey, ThemeSettings>;
 }): React.JSX.Element {
+  const [previewTarget, setPreviewTarget] = useState<PreviewTarget>('current');
+  const previewSelection = useMemo(() => {
+    if (previewTarget === 'current') {
+      return {
+        theme: draft,
+        mode: resolvePreviewModeForSelection(selectedId, slotAssignments),
+      };
+    }
+    return {
+      theme: slotThemes[previewTarget],
+      mode: SLOT_CONFIG[previewTarget].mode,
+    };
+  }, [draft, previewTarget, selectedId, slotAssignments, slotThemes]);
   const appearance = useMemo(
-    () => resolveKangurStorefrontAppearance(previewMode, previewTheme),
-    [previewMode, previewTheme]
+    () => resolveKangurStorefrontAppearance(previewSelection.mode, previewSelection.theme),
+    [previewSelection.mode, previewSelection.theme]
   );
+  const previewTheme = previewSelection.theme;
 
   const sceneStyle: React.CSSProperties = {
     ...(appearance.vars as React.CSSProperties),
@@ -824,7 +934,7 @@ function KangurThemePreviewPanel({
             <button
               key={target}
               type='button'
-              onClick={() => onTargetChange(target)}
+              onClick={() => setPreviewTarget(target)}
               className={[
                 'rounded-full px-3 py-0.5 text-xs font-medium transition-colors',
                 previewTarget === target
@@ -1023,8 +1133,8 @@ function SlotStatusBadge({
 type StartFrom = 'daily' | 'dawn' | 'sunset' | 'nightly' | 'current';
 
 const START_FROM_OPTIONS: Array<{ value: StartFrom; label: string }> = [
-  { value: 'current', label: 'Current draft settings' },
   { value: 'daily', label: 'Daily factory default' },
+  { value: 'current', label: 'Current draft settings' },
   { value: 'dawn', label: 'Dawn factory default' },
   { value: 'sunset', label: 'Sunset factory default' },
   { value: 'nightly', label: 'Nightly factory default' },
@@ -1044,13 +1154,13 @@ function CreateThemeDialog({
   onCreate: (name: string, baseSettings: ThemeSettings) => void;
 }): React.JSX.Element {
   const [name, setName] = useState('');
-  const [startFrom, setStartFrom] = useState<StartFrom>('current');
+  const [startFrom, setStartFrom] = useState<StartFrom>('daily');
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
       setName('');
-      setStartFrom('current');
+      setStartFrom('daily');
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [open]);
@@ -1184,6 +1294,46 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
     [dailySlotLabel, dawnSlotLabel, sunsetSlotLabel, nightlySlotLabel]
   );
 
+  // ── default appearance mode ──────────────────────────────────────────────
+  const storedDefaultMode = useMemo(
+    () =>
+      parseKangurStorefrontAppearanceMode(
+        settingsStore.get(KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY)
+      ),
+    [settingsStore.get(KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY)]
+  );
+  const [defaultModeDraft, setDefaultModeDraft] =
+    useState<KangurStorefrontAppearanceMode>(storedDefaultMode);
+  const [isDefaultModeSaving, setIsDefaultModeSaving] = useState(false);
+
+  useEffect(() => {
+    setDefaultModeDraft(storedDefaultMode);
+  }, [storedDefaultMode]);
+
+  const handleDefaultModeChange = useCallback(
+    async (next: KangurStorefrontAppearanceMode): Promise<void> => {
+      if (next === defaultModeDraft) return;
+      setDefaultModeDraft(next);
+      setIsDefaultModeSaving(true);
+      try {
+        await updateSetting.mutateAsync({
+          key: KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
+          value: next,
+        });
+        toast('Domyślny motyw startowy zaktualizowany.', { variant: 'success' });
+      } catch (error) {
+        toast(
+          error instanceof Error ? error.message : 'Nie udało się zapisać domyślnego motywu.',
+          { variant: 'error' }
+        );
+        setDefaultModeDraft(storedDefaultMode);
+      } finally {
+        setIsDefaultModeSaving(false);
+      }
+    },
+    [defaultModeDraft, storedDefaultMode, toast, updateSetting]
+  );
+
   // ── selected theme ────────────────────────────────────────────────────────
   const [selectedId, setSelectedId] = useState<ThemeSelectionId>(BUILTIN_DAILY_ID);
   const resolvedInitialSelection = useMemo(() => {
@@ -1287,20 +1437,6 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
   );
 
   // ── preview target ───────────────────────────────────────────────────────
-  const [previewTarget, setPreviewTarget] = useState<PreviewTarget>('current');
-  const previewSelection = useMemo(() => {
-    if (previewTarget === 'current') {
-      return {
-        theme: draft,
-        mode: resolvePreviewModeForSelection(selectedId, slotAssignments),
-      };
-    }
-    return {
-      theme: slotThemes[previewTarget],
-      mode: SLOT_CONFIG[previewTarget].mode,
-    };
-  }, [draft, previewTarget, selectedId, slotAssignments, slotThemes]);
-
   // Reload draft when selection changes (and confirm unsaved changes if dirty)
   const switchSelection = useCallback(
     (nextId: ThemeSelectionId): void => {
@@ -1669,6 +1805,30 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
           )}
 
           {/* ── Theme field sections ── */}
+          <Card variant='subtle' padding='md' className={SECTION_CARD_CLASS}>
+            <FormField
+              controlId='kangur-default-mode'
+              label='Domyślny motyw startowy'
+              description='Wybierz, który motyw ma być aktywny przy pierwszym wejściu na stronę.'
+            >
+              <SelectSimple
+                id='kangur-default-mode'
+                value={defaultModeDraft}
+                onValueChange={(value) =>
+                  void handleDefaultModeChange(
+                    value as KangurStorefrontAppearanceMode
+                  )
+                }
+                options={KANGUR_STOREFRONT_THEME_OPTIONS.map((option) => ({
+                  label: option.label,
+                  value: option.value,
+                }))}
+                disabled={isDefaultModeSaving}
+                ariaLabel='Domyślny motyw startowy'
+              />
+            </FormField>
+          </Card>
+
           {THEME_SECTIONS.map((section) => (
             <FormSection
               key={section.title}
@@ -1710,10 +1870,10 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
           {/* ── Right column: live preview ── */}
           <div className='hidden xl:sticky xl:top-4 xl:block xl:self-start'>
             <KangurThemePreviewPanel
-              previewTheme={previewSelection.theme}
-              previewMode={previewSelection.mode}
-              previewTarget={previewTarget}
-              onTargetChange={setPreviewTarget}
+              draft={draft}
+              selectedId={selectedId}
+              slotAssignments={slotAssignments}
+              slotThemes={slotThemes}
             />
           </div>
         </div>

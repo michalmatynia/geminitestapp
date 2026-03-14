@@ -1,6 +1,7 @@
 'use client';
 
 import type { ComponentProps, ReactNode } from 'react';
+import React from 'react';
 
 import {
   KangurCardDescription,
@@ -9,6 +10,64 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { cn } from '@/shared/utils';
+
+// ── Recommendation Card Sub-components ───────────────────────────────────────
+
+export function KangurRecommendationCardHeader({
+  accent,
+  labelContent,
+  label,
+  labelClassName,
+  labelTestId,
+  labelStyle,
+  labelSize,
+  headerExtras,
+  className,
+}: {
+  accent: ComponentProps<typeof KangurInfoCard>['accent'];
+  labelContent?: ReactNode;
+  label?: ReactNode;
+  labelClassName?: string;
+  labelTestId?: string;
+  labelStyle?: ComponentProps<typeof KangurStatusChip>['labelStyle'];
+  labelSize?: ComponentProps<typeof KangurStatusChip>['size'];
+  headerExtras?: ReactNode;
+  className?: string;
+}): React.JSX.Element {
+  return (
+    <div className={cn('flex flex-wrap items-center gap-2', className)}>
+      {labelContent ??
+        (label ? (
+          <KangurStatusChip
+            accent={accent}
+            className={cn('w-fit text-[11px] uppercase tracking-[0.16em]', labelClassName)}
+            data-testid={labelTestId}
+            labelStyle={labelStyle}
+            size={labelSize}
+          >
+            {label}
+          </KangurStatusChip>
+        ) : null)}
+      {headerExtras}
+    </div>
+  );
+}
+
+export function KangurRecommendationCardBody({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}): React.JSX.Element {
+  return (
+    <div className={cn('flex flex-col', className)}>
+      {children}
+    </div>
+  );
+}
+
+// ── Main Component ───────────────────────────────────────────────────────────
 
 type KangurRecommendationCardProps = {
   action?: ReactNode;
@@ -36,31 +95,35 @@ type KangurRecommendationCardProps = {
   titleTestId: string;
 };
 
-export default function KangurRecommendationCard({
-  action,
-  accent,
-  bodyClassName,
-  className,
-  contentClassName,
-  dataTestId,
-  description,
-  descriptionClassName,
-  descriptionRelaxed,
-  descriptionSize,
-  descriptionTestId,
-  headerClassName,
-  headerExtras,
-  label,
-  labelClassName,
-  labelContent,
-  labelSize,
-  labelStyle,
-  labelTestId,
-  title,
-  titleClassName,
-  titleSize,
-  titleTestId,
-}: KangurRecommendationCardProps): React.JSX.Element {
+export default function KangurRecommendationCard(
+  props: KangurRecommendationCardProps
+): React.JSX.Element {
+  const {
+    action,
+    accent,
+    bodyClassName,
+    className,
+    contentClassName,
+    dataTestId,
+    description,
+    descriptionClassName,
+    descriptionRelaxed,
+    descriptionSize,
+    descriptionTestId,
+    headerClassName,
+    headerExtras,
+    label,
+    labelClassName,
+    labelContent,
+    labelSize,
+    labelStyle,
+    labelTestId,
+    title,
+    titleClassName,
+    titleSize,
+    titleTestId,
+  } = props;
+
   return (
     <KangurInfoCard
       accent={accent}
@@ -70,22 +133,18 @@ export default function KangurRecommendationCard({
       tone='accent'
     >
       <div className={cn('flex flex-col gap-2 text-left', contentClassName)}>
-        <div className={cn('flex flex-wrap items-center gap-2', headerClassName)}>
-          {labelContent ??
-            (label ? (
-              <KangurStatusChip
-                accent={accent}
-                className={cn('w-fit text-[11px] uppercase tracking-[0.16em]', labelClassName)}
-                data-testid={labelTestId}
-                labelStyle={labelStyle}
-                size={labelSize}
-              >
-                {label}
-              </KangurStatusChip>
-            ) : null)}
-          {headerExtras}
-        </div>
-        <div className={cn('flex flex-col', bodyClassName)}>
+        <KangurRecommendationCardHeader
+          accent={accent}
+          className={headerClassName}
+          headerExtras={headerExtras}
+          label={label}
+          labelClassName={labelClassName}
+          labelContent={labelContent}
+          labelSize={labelSize}
+          labelStyle={labelStyle}
+          labelTestId={labelTestId}
+        />
+        <KangurRecommendationCardBody className={bodyClassName}>
           <KangurCardTitle
             as='p'
             className={titleClassName}
@@ -105,7 +164,7 @@ export default function KangurRecommendationCard({
               {description}
             </KangurCardDescription>
           ) : null}
-        </div>
+        </KangurRecommendationCardBody>
         {action}
       </div>
     </KangurInfoCard>

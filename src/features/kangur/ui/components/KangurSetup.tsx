@@ -73,40 +73,23 @@ function KangurSetupShell({ children, testId }: KangurSetupShellProps): React.JS
   );
 }
 
-type KangurSetupChoiceCardProps = {
-  ariaDescribedBy: string;
-  ariaLabel: string;
-  children: ReactNode;
-  className: string;
-  dataTestId: string;
-  disabled: boolean;
-  emphasis: 'accent' | 'neutral';
-  onClick: () => void;
+type KangurSetupChoiceCardProps = ComponentProps<typeof KangurAnimatedOptionCard> & {
+  buttonClassName: string;
 };
 
 function KangurSetupChoiceCard({
-  ariaDescribedBy,
-  ariaLabel,
   children,
-  className,
-  dataTestId,
-  disabled,
-  emphasis,
-  onClick,
+  buttonClassName,
+  ...props
 }: KangurSetupChoiceCardProps): React.JSX.Element {
   return (
     <KangurAnimatedOptionCard
       accent='amber'
-      aria-describedby={ariaDescribedBy}
-      aria-label={ariaLabel}
-      buttonClassName={className}
-      data-testid={dataTestId}
-      disabled={disabled}
-      emphasis={emphasis}
-      onClick={onClick}
-      whileHover={!disabled ? { scale: 1.03 } : {}}
-      whileTap={!disabled ? { scale: 0.97 } : {}}
+      buttonClassName={buttonClassName}
+      whileHover={!props.disabled ? { scale: 1.03 } : {}}
+      whileTap={!props.disabled ? { scale: 0.97 } : {}}
       wrapperRole='listitem'
+      {...props}
     >
       {children}
     </KangurAnimatedOptionCard>
@@ -192,10 +175,10 @@ export default function KangurSetup({
           <div aria-labelledby={editionsHeadingId} className='flex w-full flex-col gap-3' role='list'>
             {EDITIONS.map((edition) => (
               <KangurSetupChoiceCard
-                ariaDescribedBy={`kangur-setup-edition-status-${edition.year}`}
-                ariaLabel={`${edition.label}. ${edition.available ? 'Dostępna.' : 'Niedostępna, wkrótce dostępna.'}`}
-                className='flex w-full flex-col items-start gap-3 rounded-[28px] px-5 py-4 text-left sm:flex-row sm:items-center sm:gap-4'
-                dataTestId={`kangur-setup-edition-${edition.year}`}
+                aria-describedby={`kangur-setup-edition-status-${edition.year}`}
+                aria-label={`${edition.label}. ${edition.available ? 'Dostępna.' : 'Niedostępna, wkrótce dostępna.'}`}
+                buttonClassName='flex w-full flex-col items-start gap-3 rounded-[28px] px-5 py-4 text-left sm:flex-row sm:items-center sm:gap-4'
+                data-testid={`kangur-setup-edition-${edition.year}`}
                 disabled={!edition.available}
                 emphasis={edition.available ? 'accent' : 'neutral'}
                 key={edition.year}
@@ -310,10 +293,10 @@ export default function KangurSetup({
 
             return (
               <KangurSetupChoiceCard
-                ariaDescribedBy={`kangur-setup-set-description-${setItem.id}`}
-                ariaLabel={`${setItem.label}. ${setItem.isExam ? 'Tryb konkursowy.' : 'Tryb treningowy.'} ${setItem.available ? 'Dostępny.' : 'Niedostępny, wkrótce dostępny.'}`}
-                className='flex w-full flex-col items-start gap-2 rounded-[28px] px-5 py-4'
-                dataTestId={`kangur-setup-set-${setItem.id}`}
+                aria-describedby={`kangur-setup-set-description-${setItem.id}`}
+                aria-label={`${setItem.label}. ${setItem.isExam ? 'Tryb konkursowy.' : 'Tryb treningowy.'} ${setItem.available ? 'Dostępny.' : 'Niedostępny, wkrótce dostępny.'}`}
+                buttonClassName='flex w-full flex-col items-start gap-2 rounded-[28px] px-5 py-4'
+                data-testid={`kangur-setup-set-${setItem.id}`}
                 disabled={!setItem.available}
                 emphasis={setCardEmphasis}
                 key={setItem.id}

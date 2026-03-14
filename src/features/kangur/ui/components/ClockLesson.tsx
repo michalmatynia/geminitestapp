@@ -595,7 +595,25 @@ export default function ClockLesson(): React.JSX.Element {
           ),
         },
       ],
-      combined: COMBINED_SLIDES,
+      combined: [
+        ...COMBINED_SLIDES,
+        {
+          title: 'Ćwiczenie: Pełny czas',
+          tts: 'Teraz przechodzisz do praktyki pełnego czasu. Ustawiaj obie wskazówki tak jak w pierwszym panelu ćwiczenia pełnego czasu.',
+          content: (
+            <ClockTrainingGame
+              completionPrimaryActionLabel='Wróć do tematów'
+              enableAdaptiveRetry={false}
+              hideModeSwitch
+              onFinish={handleReturnToHub}
+              practiceTasks={TRAINING_PANEL_TASKS.combined.learn}
+              section='combined'
+              showTaskTitle
+              showTimeDisplay
+            />
+          ),
+        },
+      ],
     };
   }
   const { markSectionOpened, markSectionViewedCount, sectionProgress } =
@@ -647,9 +665,9 @@ export default function ClockLesson(): React.JSX.Element {
   const [activeTrainingPanelBySection, setActiveTrainingPanelBySection] = useState<
     Record<ClockTrainingSectionId, ClockTrainingPanelId>
   >({
-    hours: 'learn',
-    minutes: 'learn',
-    combined: 'learn',
+    hours: 'pick_one',
+    minutes: 'pick_one',
+    combined: 'pick_one',
   });
   const [completedTrainingPanelsBySection, setCompletedTrainingPanelsBySection] = useState<
     Record<
@@ -682,12 +700,8 @@ export default function ClockLesson(): React.JSX.Element {
     if (!currentTrainingSection) {
       return <></>;
     }
-    const currentTrainingPanel = activeTrainingPanelBySection[view.sectionId] ?? 'learn';
+    const currentTrainingPanel = activeTrainingPanelBySection[view.sectionId] ?? 'pick_one';
     const completedTrainingPanels = completedTrainingPanelsBySection[view.sectionId] ?? {};
-    const isChallengeUnlocked =
-      completedTrainingPanels.learn === true &&
-      completedTrainingPanels.pick_one === true &&
-      completedTrainingPanels.pick_two === true;
     const isChallengePanelCompleted = completedTrainingPanels.challenge === true;
     const currentChallengeMedal = challengeMedalBySection[view.sectionId] ?? null;
 
@@ -709,18 +723,6 @@ export default function ClockLesson(): React.JSX.Element {
             [view.sectionId]: panel,
           }
       );
-    };
-
-    const getNextTrainingPanelAfterPractice = (
-      panel: Exclude<ClockTrainingPanelId, 'challenge'>
-    ): ClockTrainingPanelId => {
-      if (panel === 'learn') {
-        return 'pick_one';
-      }
-      if (panel === 'pick_one') {
-        return 'pick_two';
-      }
-      return 'challenge';
     };
 
     const markTrainingPanelCompleted = (panel: ClockTrainingPanelId): void => {
@@ -776,35 +778,14 @@ export default function ClockLesson(): React.JSX.Element {
       setPendingTrainingExitAction(action);
     };
 
+    // Single-panel games use the middle practice set.
     const trainingPanels = [
       {
         activeClassName: 'bg-indigo-500',
         completedClassName: 'bg-indigo-300',
-        id: 'learn' as const,
-        label: 'zadanie 1',
-      },
-      {
-        activeClassName: 'bg-indigo-500',
-        completedClassName: 'bg-indigo-300',
         id: 'pick_one' as const,
-        label: 'zadanie 2',
+        label: 'zadanie',
       },
-      {
-        activeClassName: 'bg-indigo-500',
-        completedClassName: 'bg-indigo-300',
-        id: 'pick_two' as const,
-        label: 'zadanie 3',
-      },
-      ...(isChallengeUnlocked
-        ? [
-          {
-            activeClassName: 'bg-amber-500',
-            completedClassName: challengeCompletedClassName,
-            id: 'challenge' as const,
-            label: 'wyzwanie',
-          },
-        ]
-        : []),
     ];
     const currentTrainingPanelIndex = trainingPanels.findIndex(
       (panel) => panel.id === currentTrainingPanel
@@ -852,53 +833,55 @@ export default function ClockLesson(): React.JSX.Element {
       </div>
     );
 
-    const trainingFooterNavigation = (
-      <div className='flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-        {currentTrainingPanelIndex > 0 ? (
-          <KangurButton
-            onClick={() =>
-              requestTrainingExitAction({
-                kind: 'panel',
-                panel: trainingPanels[currentTrainingPanelIndex - 1]!.id,
-              })
-            }
-            aria-label='Poprzedni panel'
-            className='w-full justify-center px-5 shadow-sm [border-color:var(--kangur-soft-card-border)] sm:min-w-[72px] sm:w-auto'
-            data-testid='clock-lesson-training-prev-button'
-            size='sm'
-            type='button'
-            title='Poprzedni panel'
-            variant='surface'
-          >
-            <ChevronLeft className='h-4 w-4 flex-shrink-0' />
-          </KangurButton>
-        ) : (
-          <div className='hidden sm:block sm:min-w-[72px]' />
-        )}
+    const trainingFooterNavigation =
+      trainingPanels.length > 1 ? (
+        <div className='flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+          {currentTrainingPanelIndex > 0 ? (
+            <KangurButton
+              onClick={() =>
+                requestTrainingExitAction({
+                  kind: 'panel',
+                  panel: trainingPanels[currentTrainingPanelIndex - 1]!.id,
+                })
+              }
+              aria-label='Poprzedni panel'
+              className='w-full justify-center px-5 shadow-sm [border-color:var(--kangur-soft-card-border)] sm:min-w-[72px] sm:w-auto'
+              data-testid='clock-lesson-training-prev-button'
+              size='sm'
+              type='button'
+              title='Poprzedni panel'
+              variant='surface'
+            >
+              <ChevronLeft className='h-4 w-4 flex-shrink-0' />
+            </KangurButton>
+          ) : (
+            <div className='hidden sm:block sm:min-w-[72px]' />
+          )}
 
-        {currentTrainingPanelIndex >= 0 && currentTrainingPanelIndex < trainingPanels.length - 1 ? (
-          <KangurButton
-            onClick={() =>
-              requestTrainingExitAction({
-                kind: 'panel',
-                panel: trainingPanels[currentTrainingPanelIndex + 1]!.id,
-              })
-            }
-            aria-label='Nastepny panel'
-            className='w-full justify-center px-5 shadow-sm [border-color:var(--kangur-soft-card-border)] sm:min-w-[72px] sm:w-auto'
-            data-testid='clock-lesson-training-next-button'
-            size='sm'
-            type='button'
-            title='Nastepny panel'
-            variant='surface'
-          >
-            <ChevronRight className='h-4 w-4 flex-shrink-0' />
-          </KangurButton>
-        ) : (
-          <div className='hidden sm:block sm:min-w-[72px]' />
-        )}
-      </div>
-    );
+          {currentTrainingPanelIndex >= 0 &&
+          currentTrainingPanelIndex < trainingPanels.length - 1 ? (
+            <KangurButton
+              onClick={() =>
+                requestTrainingExitAction({
+                  kind: 'panel',
+                  panel: trainingPanels[currentTrainingPanelIndex + 1]!.id,
+                })
+              }
+              aria-label='Nastepny panel'
+              className='w-full justify-center px-5 shadow-sm [border-color:var(--kangur-soft-card-border)] sm:min-w-[72px] sm:w-auto'
+              data-testid='clock-lesson-training-next-button'
+              size='sm'
+              type='button'
+              title='Nastepny panel'
+              variant='surface'
+            >
+              <ChevronRight className='h-4 w-4 flex-shrink-0' />
+            </KangurButton>
+          ) : (
+            <div className='hidden sm:block sm:min-w-[72px]' />
+          )}
+        </div>
+      ) : null;
     const nextTrainingPanel =
       currentTrainingPanelIndex >= 0 && currentTrainingPanelIndex < trainingPanels.length - 1
         ? trainingPanels[currentTrainingPanelIndex + 1]!.id
@@ -920,6 +903,21 @@ export default function ClockLesson(): React.JSX.Element {
         title: currentTrainingSection.title,
       };
 
+    const handlePracticeCompleted = (): void => {
+      if (currentTrainingPanel === 'challenge') {
+        return;
+      }
+
+      markTrainingPanelCompleted(currentTrainingPanel);
+
+      if (nextTrainingPanel) {
+        setTrainingPanel(nextTrainingPanel);
+        return;
+      }
+
+      setView({ kind: 'hub' });
+    };
+
     const trainingBody = (
       <ClockTrainingGame
         key={`${view.sectionId}-${currentTrainingPanel}`}
@@ -928,7 +926,9 @@ export default function ClockLesson(): React.JSX.Element {
             ? 'Zakończ lekcję ✅'
             : nextTrainingPanel === 'challenge'
               ? 'Otwórz wyzwanie'
-              : 'Następne zadanie'
+              : nextTrainingPanel
+                ? 'Następne zadanie'
+                : 'Wróć do tematów'
         }
         enableAdaptiveRetry={false}
         hideModeSwitch
@@ -942,12 +942,7 @@ export default function ClockLesson(): React.JSX.Element {
           setView({ kind: 'hub' });
         }}
         onFinish={() => setView({ kind: 'hub' })}
-        onPracticeCompleted={() => {
-          if (currentTrainingPanel !== 'challenge') {
-            markTrainingPanelCompleted(currentTrainingPanel);
-            setTrainingPanel(getNextTrainingPanelAfterPractice(currentTrainingPanel));
-          }
-        }}
+        onPracticeCompleted={handlePracticeCompleted}
         onChallengeSuccess={(result) => {
           markTrainingPanelCompleted('challenge');
           setChallengeMedalBySection((currentMedals) => ({
@@ -961,8 +956,8 @@ export default function ClockLesson(): React.JSX.Element {
             : TRAINING_PANEL_TASKS[view.sectionId][currentTrainingPanel]
         }
         section={view.sectionId}
-        showTaskTitle={currentTrainingPanel === 'learn'}
-        showTimeDisplay={currentTrainingPanel === 'learn'}
+        showTaskTitle={trainingPanels.length === 1 || currentTrainingPanel === 'learn'}
+        showTimeDisplay={false}
       />
     );
 
@@ -1037,16 +1032,12 @@ export default function ClockLesson(): React.JSX.Element {
     }
 
     const completedPanels = completedTrainingPanelsBySection[trainingSectionId] ?? {};
-    const viewedCount = [
-      completedPanels.learn,
-      completedPanels.pick_one,
-      completedPanels.pick_two,
-    ].filter((value) => value === true).length;
+    const viewedCount = completedPanels.pick_one ? 1 : 0;
 
     return {
       ...section,
       progress: {
-        totalCount: 3,
+        totalCount: 1,
         viewedCount,
       },
     };

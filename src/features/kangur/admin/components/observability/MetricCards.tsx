@@ -80,7 +80,7 @@ export function RouteMetricCard({
         </div>
         <div className='flex items-center gap-2'>
           <StatusBadge status={status} />
-          <Button asChild variant='ghost' size='sm'>
+          <Button asChild variant='ghost' size='sm' className='gap-2'>
             <Link href={route.investigation.href}>
               Logs
               <ArrowUpRightIcon className='size-3.5' />
@@ -179,7 +179,12 @@ export function AlertsGrid(): JSX.Element {
             />
           </div>
           {alert.investigation ? (
-            <Button asChild variant='ghost' size='sm' className='mt-4 w-full justify-between'>
+            <Button
+              asChild
+              variant='ghost'
+              size='sm'
+              className='mt-4 w-full justify-between gap-2'
+            >
               <Link href={alert.investigation.href}>
                 {alert.investigation.label}
                 <ArrowUpRightIcon className='size-3.5' />

@@ -22,6 +22,8 @@ import type { Page } from '@/shared/contracts/cms';
 import {
   extractCmsPageTextContent,
   buildCmsPageCanonicalText,
+  buildCmsPageSemanticText,
+  hasMeaningfulTextContent,
 } from '@/features/cms/utils/cms-text-extractor';
 import { KANGUR_KNOWLEDGE_GRAPH_VECTOR_INDEX } from '@/features/kangur/server/knowledge-graph/neo4j-repository';
 import { isNeo4jEnabled } from '@/shared/lib/neo4j/config';
@@ -222,6 +224,15 @@ const WEBSITE_HELP_PATTERNS = [
   /gdzie jest/u,
   /jak otworzyc/u,
   /jak przejsc/u,
+  /stron/u,
+  /witryn/u,
+  /podstron/u,
+  /informacj/u,
+  /o nas/u,
+  /kontakt/u,
+  /regulamin/u,
+  /cennik/u,
+  /ofert/u,
 ];
 
 const SEMANTIC_HELP_PATTERNS = [
@@ -1164,6 +1175,79 @@ const hydrateKnowledgeGraphHits = async (
   });
 };
 
+const resolveCmsPagesFallback = async (
+  _normalizedQuery: string,
+  tokens: string[],
+  _locale: string
+): Promise<HydratedKnowledgeGraphHit[]> => {
+  if (tokens.length === 0) {
+    return [];
+  }
+
+  const pages = await cmsService.getPages().catch(() => [] as Page[]);
+  const hits: HydratedKnowledgeGraphHit[] = [];
+
+  for (const page of pages) {
+    if (page.status !== 'published') {
+      continue;
+    }
+
+    const textContent = extractCmsPageTextContent(page);
+    if (!hasMeaningfulTextContent(textContent)) {
+      continue;
+    }
+
+    const semanticText = buildCmsPageSemanticText(textContent);
+    const searchable = normalizeText(
+      [page.name, page.seoTitle, page.seoDescription, semanticText].filter(Boolean).join(' ')
+    );
+
+    const tokenHits = tokens.filter((token) => searchable.includes(token)).length;
+    if (tokenHits === 0) {
+      continue;
+    }
+
+    const defaultSlug = page.slugs?.[0]?.slug;
+    const route = defaultSlug ? `/${defaultSlug}` : null;
+    const title = page.seoTitle ?? page.name;
+
+    hits.push({
+      id: `cms-page:${page.id}`,
+      kind: 'page',
+      title,
+      summary: page.seoDescription ?? null,
+      surface: null,
+      focusKind: null,
+      route,
+      anchorId: null,
+      semanticText,
+      embedding: [],
+      embeddingModel: null,
+      embeddingDimensions: null,
+      focusIdPrefixes: [],
+      contentIdPrefixes: [],
+      triggerPhrases: [],
+      sourceCollection: 'cms_pages',
+      sourceRecordId: page.id,
+      sourcePath: `cms-page:${page.id}`,
+      tags: ['cms', 'cms-page', 'website'],
+      semanticScore: tokenHits * 18,
+      tokenHits,
+      relations: [],
+      canonicalTitle: title,
+      canonicalSummary: page.seoDescription ?? null,
+      canonicalText: buildCmsPageCanonicalText(textContent),
+      canonicalTags: ['cms', 'cms-page', 'mongo-canonical'],
+      canonicalSourceCollection: 'cms_pages',
+      hydrationSource: 'cms_pages',
+    });
+  }
+
+  return hits
+    .sort((a, b) => b.semanticScore - a.semanticScore || b.tokenHits - a.tokenHits)
+    .slice(0, 4);
+};
+
 const rerankKnowledgeGraphHits = (input: {
   hits: HydratedKnowledgeGraphHit[];
   queryEmbedding: number[] | null;
@@ -1224,6 +1308,12 @@ const rerankKnowledgeGraphHits = (input: {
       }
       if (isGenericFocusedGuide) {
         intentScore -= 28;
+      }
+      if (hit.sourceCollection === 'cms_pages' && hit.tokenHits > 0) {
+        intentScore += 20;
+        if (input.intent.isLocationLookup) {
+          intentScore += 16;
+        }
       }
 
       return {
@@ -1353,6 +1443,29 @@ async function resolveKangurAiTutorSemanticGraphContextInternal(input: {
   const normalizedQuerySeed = buildNormalizedSemanticQuerySeed(input);
 
   if (!isNeo4jEnabled()) {
+    const fallbackTokens = tokenizeQuery(normalizedQuerySeed);
+    if (fallbackTokens.length > 0) {
+      const cmsFallbackHits = await resolveCmsPagesFallback(
+        normalizedQuerySeed,
+        fallbackTokens,
+        input.locale?.trim() || 'pl'
+      );
+      if (cmsFallbackHits.length > 0) {
+        return finalizeResolvedGraphContext(
+          cmsFallbackHits,
+          querySeed,
+          normalizedQuerySeed,
+          fallbackTokens,
+          'semantic',
+          {
+            lexicalHitCount: cmsFallbackHits.length,
+            vectorHitCount: 0,
+            vectorRecallAttempted: false,
+          }
+        );
+      }
+    }
+
     return {
       status: 'disabled',
       queryMode: null,

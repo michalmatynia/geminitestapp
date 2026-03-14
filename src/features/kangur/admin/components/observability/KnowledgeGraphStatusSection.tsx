@@ -2,10 +2,23 @@
 
 import * as React from 'react';
 
-import { Alert, Button, EmptyState, FormSection, StatusBadge, MetadataItem } from '@/shared/ui';
+import {
+  Alert,
+  Button,
+  EmptyState,
+  FormSection,
+  MetadataItem,
+  StatusBadge,
+} from '@/shared/ui';
 
 import { useKnowledgeGraphObservability } from './KnowledgeGraphObservabilityContext';
-import { describeKnowledgeGraphStatus, formatDateTime, formatNumber, resolveKnowledgeGraphBadgeStatus, formatKnowledgeGraphReadiness } from './utils';
+import {
+  describeKnowledgeGraphStatus,
+  formatDateTime,
+  formatKnowledgeGraphReadiness,
+  formatNumber,
+  resolveKnowledgeGraphBadgeStatus,
+} from './utils';
 
 export function KnowledgeGraphStatusSection(): React.JSX.Element {
   const {
@@ -70,7 +83,7 @@ export function KnowledgeGraphStatusSection(): React.JSX.Element {
             {error.message}
           </Alert>
         ) : null}
-        
+
         <div className='space-y-4'>
           <div className='flex flex-wrap items-start justify-between gap-4'>
             <div className='space-y-1.5'>
@@ -79,9 +92,7 @@ export function KnowledgeGraphStatusSection(): React.JSX.Element {
                   status={resolveKnowledgeGraphBadgeStatus(status)}
                   label={formatKnowledgeGraphReadiness(status.semanticReadiness)}
                 />
-                <div className='text-sm font-semibold text-white'>
-                  {status.graphKey}
-                </div>
+                <div className='text-sm font-semibold text-white'>{status.graphKey}</div>
               </div>
               <p className='max-w-2xl text-xs leading-relaxed text-gray-400'>
                 {describeKnowledgeGraphStatus(status)}

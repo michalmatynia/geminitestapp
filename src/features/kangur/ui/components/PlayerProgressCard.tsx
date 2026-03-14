@@ -2,7 +2,12 @@ import { motion } from 'framer-motion';
 
 import { KangurActivitySummaryCard } from '@/features/kangur/ui/components/KangurActivitySummaryCard';
 import { KangurBadgeTrackSection } from '@/features/kangur/ui/components/KangurBadgeTrackSection';
-import { KangurProgressHighlightCardContent } from '@/features/kangur/ui/components/KangurProgressHighlightCardContent';
+import {
+  KangurProgressHighlightCardContent,
+  KangurProgressHighlightHeader,
+  KangurProgressHighlightChip,
+  KangurProgressHighlightBar,
+} from '@/features/kangur/ui/components/KangurProgressHighlightCardContent';
 import {
   KangurCardDescription,
   KangurCardTitle,
@@ -155,21 +160,26 @@ export default function PlayerProgressCard({
                 'color-mix(in srgb, var(--kangur-soft-card-background) 82%, #fde68a)',
             }}
           >
-            <KangurProgressHighlightCardContent
-              chipAccent='amber'
-              chipLabel={nextBadge.summary}
-              description={nextBadge.desc}
-              eyebrow='Następna odznaka'
-              eyebrowClassName='text-amber-700/80'
-              progressAccent='amber'
-              progressBarTestId='player-progress-next-badge-bar'
-              progressValue={nextBadge.progressPercent}
-              title={
-                <>
-                  {nextBadge.emoji} {nextBadge.name}
-                </>
-              }
-            />
+            <KangurProgressHighlightCardContent>
+              <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
+                <KangurProgressHighlightHeader
+                  description={nextBadge.desc}
+                  eyebrow='Następna odznaka'
+                  eyebrowClassName='text-amber-700/80'
+                  title={
+                    <>
+                      {nextBadge.emoji} {nextBadge.name}
+                    </>
+                  }
+                />
+                <KangurProgressHighlightChip accent='amber' label={nextBadge.summary} />
+              </div>
+              <KangurProgressHighlightBar
+                accent='amber'
+                testId='player-progress-next-badge-bar'
+                value={nextBadge.progressPercent}
+              />
+            </KangurProgressHighlightCardContent>
           </div>
         ) : null}
 
@@ -182,21 +192,26 @@ export default function PlayerProgressCard({
                 'color-mix(in srgb, var(--kangur-soft-card-background) 82%, #dbeafe)',
             }}
           >
-            <KangurProgressHighlightCardContent
-              chipAccent='sky'
-              chipLabel={guidedMomentum.summary}
-              description={
-                guidedMomentum.nextBadgeName
-                  ? `Do odznaki ${guidedMomentum.nextBadgeName}: ${guidedMomentum.summary}`
-                  : 'Wszystkie odznaki polecanego kierunku odblokowane.'
-              }
-              eyebrow='Polecony kierunek'
-              eyebrowClassName='text-sky-700/80'
-              progressAccent='sky'
-              progressBarTestId='player-progress-guided-momentum-bar'
-              progressValue={guidedMomentum.progressPercent}
-              title={`${guidedMomentum.completedSessions} polecone rundy`}
-            />
+            <KangurProgressHighlightCardContent>
+              <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
+                <KangurProgressHighlightHeader
+                  description={
+                    guidedMomentum.nextBadgeName
+                      ? `Do odznaki ${guidedMomentum.nextBadgeName}: ${guidedMomentum.summary}`
+                      : 'Wszystkie odznaki polecanego kierunku odblokowane.'
+                  }
+                  eyebrow='Polecony kierunek'
+                  eyebrowClassName='text-sky-700/80'
+                  title={`${guidedMomentum.completedSessions} polecone rundy`}
+                />
+                <KangurProgressHighlightChip accent='sky' label={guidedMomentum.summary} />
+              </div>
+              <KangurProgressHighlightBar
+                accent='sky'
+                testId='player-progress-guided-momentum-bar'
+                value={guidedMomentum.progressPercent}
+              />
+            </KangurProgressHighlightCardContent>
           </div>
         ) : null}
 

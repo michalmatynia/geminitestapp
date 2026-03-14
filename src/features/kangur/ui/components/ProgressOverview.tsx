@@ -1,7 +1,12 @@
 import { KangurActivitySummaryCard } from '@/features/kangur/ui/components/KangurActivitySummaryCard';
 import { KangurBadgeTrackSection } from '@/features/kangur/ui/components/KangurBadgeTrackSection';
 import { KangurPanelSectionHeading } from '@/features/kangur/ui/components/KangurPanelSectionHeading';
-import { KangurProgressHighlightCardContent } from '@/features/kangur/ui/components/KangurProgressHighlightCardContent';
+import {
+  KangurProgressHighlightCardContent,
+  KangurProgressHighlightHeader,
+  KangurProgressHighlightChip,
+  KangurProgressHighlightBar,
+} from '@/features/kangur/ui/components/KangurProgressHighlightCardContent';
 import LessonMasteryInsights from '@/features/kangur/ui/components/LessonMasteryInsights';
 import {
   KangurDisplayEmoji,
@@ -126,19 +131,26 @@ export default function ProgressOverview({
           surface='solid'
           variant='subtle'
         >
-          <KangurProgressHighlightCardContent
-            chipAccent={dailyQuestAccent}
-            chipClassName='shrink-0'
-            chipLabel={`${dailyQuest.progress.percent}%`}
-            description={`${dailyQuest.progress.summary} · ${dailyQuest.reward.label}`}
-            descriptionClassName='text-xs leading-5'
-            eyebrow='Misja dnia'
-            headerClassName='sm:items-start'
-            progressAccent={dailyQuestProgressAccent}
-            progressBarTestId='progress-overview-daily-quest-bar'
-            progressValue={dailyQuestProgressPercent}
-            title={dailyQuest.assignment.title}
-          />
+          <KangurProgressHighlightCardContent>
+            <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
+              <KangurProgressHighlightHeader
+                description={`${dailyQuest.progress.summary} · ${dailyQuest.reward.label}`}
+                descriptionClassName='text-xs leading-5'
+                eyebrow='Misja dnia'
+                title={dailyQuest.assignment.title}
+              />
+              <KangurProgressHighlightChip
+                accent={dailyQuestAccent}
+                className='shrink-0'
+                label={`${dailyQuest.progress.percent}%`}
+              />
+            </div>
+            <KangurProgressHighlightBar
+              accent={dailyQuestProgressAccent}
+              testId='progress-overview-daily-quest-bar'
+              value={dailyQuestProgressPercent}
+            />
+          </KangurProgressHighlightCardContent>
         </KangurGlassPanel>
       ) : null}
 
@@ -149,23 +161,30 @@ export default function ProgressOverview({
           surface='solid'
           variant='subtle'
         >
-          <KangurProgressHighlightCardContent
-            chipAccent='sky'
-            chipClassName='shrink-0'
-            chipLabel={guidedMomentum.summary}
-            description={
-              guidedMomentum.nextBadgeName
-                ? `Do odznaki ${guidedMomentum.nextBadgeName}: ${guidedMomentum.summary}`
-                : 'Wszystkie odznaki polecanego kierunku odblokowane.'
-            }
-            descriptionClassName='text-xs leading-5'
-            eyebrow='Polecony kierunek'
-            headerClassName='sm:items-start'
-            progressAccent='sky'
-            progressBarTestId='progress-overview-guided-momentum-bar'
-            progressValue={guidedMomentum.progressPercent}
-            title={`${guidedMomentum.completedSessions} polecone rundy`}
-          />
+          <KangurProgressHighlightCardContent>
+            <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
+              <KangurProgressHighlightHeader
+                description={
+                  guidedMomentum.nextBadgeName
+                    ? `Do odznaki ${guidedMomentum.nextBadgeName}: ${guidedMomentum.summary}`
+                    : 'Wszystkie odznaki polecanego kierunku odblokowane.'
+                }
+                descriptionClassName='text-xs leading-5'
+                eyebrow='Polecony kierunek'
+                title={`${guidedMomentum.completedSessions} polecone rundy`}
+              />
+              <KangurProgressHighlightChip
+                accent='sky'
+                className='shrink-0'
+                label={guidedMomentum.summary}
+              />
+            </div>
+            <KangurProgressHighlightBar
+              accent='sky'
+              testId='progress-overview-guided-momentum-bar'
+              value={guidedMomentum.progressPercent}
+            />
+          </KangurProgressHighlightCardContent>
         </KangurGlassPanel>
       ) : null}
 

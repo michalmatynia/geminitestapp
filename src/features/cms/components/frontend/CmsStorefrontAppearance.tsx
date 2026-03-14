@@ -789,6 +789,13 @@ const resolveHomeActionVars = (theme: ThemeSettings): Record<string, string> => 
     setVar(`--kangur-home-action-${id}-text`, text);
     setVar(`--kangur-home-action-${id}-text-active`, textActive);
 
+    const labelStart = get('LabelStart');
+    const labelMid = get('LabelMid');
+    const labelEnd = get('LabelEnd');
+    setVar(`--kangur-home-action-${id}-label-start`, labelStart);
+    setVar(`--kangur-home-action-${id}-label-end`, labelEnd);
+    setMidVar(`--kangur-home-action-${id}-label-mid`, labelStart, labelMid, labelEnd);
+
     const accentStart = get('AccentStart');
     const accentMid = get('AccentMid');
     const accentEnd = get('AccentEnd');
@@ -1068,11 +1075,24 @@ const resolveThemedKangurStorefrontAppearance = (
   const chatBackground = theme.containerBg || surfaceBackground;
   const runtimeThemeVars = resolveKangurRuntimeThemeVars(theme);
   const homeActionVars = resolveHomeActionVars(theme);
-  const toneText = isDarkStorefrontAppearanceMode(mode) ? '#f8fafc' : theme.textColor;
-  const pageMutedText =
-    isDarkStorefrontAppearanceMode(mode)
-      ? mixCssColor(theme.mutedTextColor, '#ffffff', 72)
-      : theme.mutedTextColor;
+  const baseToneText = isDarkStorefrontAppearanceMode(mode) ? '#f8fafc' : theme.textColor;
+  const baseMutedText = isDarkStorefrontAppearanceMode(mode)
+    ? mixCssColor(theme.mutedTextColor, '#ffffff', 72)
+    : theme.mutedTextColor;
+  const resolveTextOverride = (value: string | undefined, fallback: string): string =>
+    isNonEmptyString(value) ? value.trim() : fallback;
+  const toneText = resolveTextOverride(theme.pageTextColor, baseToneText);
+  const pageMutedText = resolveTextOverride(theme.pageMutedTextColor, baseMutedText);
+  const cardText = resolveTextOverride(theme.cardTextColor, toneText);
+  const navTextOverride = isNonEmptyString(theme.navTextColor)
+    ? theme.navTextColor.trim()
+    : null;
+  const navActiveTextOverride = isNonEmptyString(theme.navActiveTextColor)
+    ? theme.navActiveTextColor.trim()
+    : null;
+  const navHoverTextOverride = isNonEmptyString(theme.navHoverTextColor)
+    ? theme.navHoverTextColor.trim()
+    : null;
   const pageTone =
     isDarkStorefrontAppearanceMode(mode)
       ? resolveStorefrontAppearanceTone(
@@ -1574,16 +1594,17 @@ const resolveThemedKangurStorefrontAppearance = (
           ? mixCssColor(borderColor, '#ffffff', 28)
           : darkenCssColor(borderColor, 4),
       '--kangur-soft-card-shadow': softCardShadow,
-      '--kangur-soft-card-text': toneText,
+      '--kangur-soft-card-text': cardText,
       '--kangur-nav-group-background': `linear-gradient(180deg, ${navGradientStartWithAlpha} 0%, ${navGradientEndWithAlpha} 100%)`,
       '--kangur-nav-group-border':
         isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(borderColor, '#ffffff', 34)
           : mixCssColor(borderColor, '#ffffff', 72),
       '--kangur-nav-item-text':
-        isDarkStorefrontAppearanceMode(mode)
+        navTextOverride ??
+        (isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(navText, '#ffffff', 84)
-          : navText,
+          : navText),
       '--kangur-nav-item-hover-background':
         isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(navBackground, pageTone.background, 76)
@@ -1592,7 +1613,7 @@ const resolveThemedKangurStorefrontAppearance = (
         isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(borderColor, '#ffffff', 40)
           : mixCssColor(borderColor, '#ffffff', 76),
-      '--kangur-nav-item-hover-text': toneText,
+      '--kangur-nav-item-hover-text': navHoverTextOverride ?? toneText,
       '--kangur-nav-item-active-background':
         `linear-gradient(180deg, ${mixCssColor(navActiveBackground, isDarkStorefrontAppearanceMode(mode) ? '#000000' : '#ffffff', isDarkStorefrontAppearanceMode(mode) ? 88 : 72)} 0%, ${darkenCssColor(navActiveBackground, isDarkStorefrontAppearanceMode(mode) ? 22 : 8)} 100%)`,
       '--kangur-nav-item-active-border':
@@ -1600,9 +1621,10 @@ const resolveThemedKangurStorefrontAppearance = (
           ? mixCssColor(navActiveBackground, '#ffffff', 38)
           : mixCssColor(navActiveBackground, '#ffffff', 56),
       '--kangur-nav-item-active-text':
-        isDarkStorefrontAppearanceMode(mode)
+        navActiveTextOverride ??
+        (isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(navActiveText, '#ffffff', 92)
-          : darkenCssColor(navActiveBackground, 24),
+          : darkenCssColor(navActiveBackground, 24)),
       '--kangur-text-field-background': inputTone.background,
       '--kangur-text-field-border':
         isDarkStorefrontAppearanceMode(mode)
@@ -1938,8 +1960,9 @@ export function CmsStorefrontAppearanceButtons({
   const currentIndex = orderedModes.indexOf(mode);
   const safeIndex = currentIndex >= 0 ? currentIndex : 0;
   const nextMode = orderedModes[(safeIndex + 1) % orderedModes.length];
+  const currentLabel = modeLabels?.[mode] ?? DEFAULT_MODE_LABELS[mode] ?? mode;
   const nextLabel = modeLabels?.[nextMode] ?? DEFAULT_MODE_LABELS[nextMode] ?? nextMode;
-  const buttonAriaLabel = `Switch to ${nextLabel} theme`;
+  const buttonAriaLabel = `Current theme: ${currentLabel}. Switch to ${nextLabel}`;
   const isTogglePair = orderedModes.length === 2;
   const resolvedTone = withFallbackTone(tone);
   const isDarkMode = isDarkStorefrontAppearanceMode(mode);
@@ -1947,7 +1970,7 @@ export function CmsStorefrontAppearanceButtons({
   const wrapperClassName = ['inline-flex flex-wrap items-center gap-2', className]
     .filter(Boolean)
     .join(' ');
-  const NextIcon = MODE_ICON_MAP[nextMode] ?? Sun;
+  const CurrentIcon = MODE_ICON_MAP[mode] ?? Sun;
 
   return (
     <div className={wrapperClassName} role='group' aria-label={label} data-testid={testId}>
@@ -1956,8 +1979,8 @@ export function CmsStorefrontAppearanceButtons({
         aria-label={buttonAriaLabel}
         aria-pressed={isTogglePair ? isDarkMode : undefined}
         onClick={() => setMode(nextMode)}
-        title={buttonAriaLabel}
-        className='relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-[background-color,border-color,color,box-shadow,transform] duration-300 ease-out hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0'
+        title={`Current theme: ${currentLabel}. Switch to ${nextLabel}`}
+        className='group relative inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full transition-[background-color,border-color,color,box-shadow] duration-300 ease-out motion-reduce:transition-none'
         style={{
           border: `1px solid ${resolvedTone.border}`,
           backgroundColor: `color-mix(in srgb, ${resolvedTone.accent} ${buttonAccentWeight}, ${resolvedTone.background})`,
@@ -1965,8 +1988,11 @@ export function CmsStorefrontAppearanceButtons({
           boxShadow: `0 14px 24px -20px ${isDarkMode ? 'rgba(15,23,42,0.45)' : resolvedTone.accent}`,
         }}
       >
-        <NextIcon aria-hidden='true' className='h-4 w-4' />
-        <span className='sr-only'>{nextLabel}</span>
+        <CurrentIcon
+          aria-hidden='true'
+          className='h-4 w-4 transition-transform duration-300 ease-out group-hover:scale-110 motion-reduce:transition-none'
+        />
+        <span className='sr-only'>{`Current theme: ${currentLabel}`}</span>
       </button>
     </div>
   );

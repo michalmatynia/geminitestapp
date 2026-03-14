@@ -1,6 +1,7 @@
 'use client';
 
 import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
+import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
 import { useKangurParentDashboardRuntime } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import {
   KangurButton,
@@ -63,54 +64,58 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
               <KangurIconSummaryOptionCard
                 accent='indigo'
                 aria-pressed={isActiveLearner}
-                aside={
-                  <KangurStatusChip
-                    accent={learner.status === 'active' ? 'emerald' : 'slate'}
-                    className='uppercase tracking-wide'
-                    size='sm'
-                  >
-                    {learner.status === 'active' ? 'Aktywny' : 'Wyłączony'}
-                  </KangurStatusChip>
-                }
                 buttonClassName='rounded-[30px] px-5 py-4 text-left'
-                contentClassName='min-w-0 flex-1'
                 data-doc-id='parent_learner_profile_card'
                 data-testid={`parent-dashboard-learner-card-${learner.id}`}
-                description={`Login: ${learner.loginName}`}
-                descriptionClassName='text-xs'
                 emphasis={isActiveLearner ? 'accent' : 'neutral'}
-                footer={
-                  <div
-                    className={cn(
-                      'text-xs font-semibold',
-                      isActiveLearner
-                        ? 'text-indigo-600'
-                        : '[color:var(--kangur-page-muted-text)]'
-                    )}
-                  >
-                    {isActiveLearner
-                      ? 'Aktualnie wybrany profil'
-                      : 'Kliknij, aby przełączyć profil'}
-                  </div>
-                }
-                footerClassName='mt-2'
-                headerClassName='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'
-                icon={
-                  <KangurIconBadge
-                    accent={isActiveLearner ? 'indigo' : 'slate'}
-                    className='shrink-0 text-lg font-extrabold'
-                    data-testid={`parent-dashboard-learner-icon-${learner.id}`}
-                    size='md'
-                  >
-                    {initial}
-                  </KangurIconBadge>
-                }
                 key={learner.id}
-                layoutClassName='w-full'
                 onClick={() => void selectLearner(learner.id)}
-                title={learner.displayName}
-                titleClassName='font-bold leading-normal'
-              />
+              >
+                <KangurIconSummaryCardContent
+                  aside={
+                    <KangurStatusChip
+                      accent={learner.status === 'active' ? 'emerald' : 'slate'}
+                      className='uppercase tracking-wide'
+                      size='sm'
+                    >
+                      {learner.status === 'active' ? 'Aktywny' : 'Wyłączony'}
+                    </KangurStatusChip>
+                  }
+                  asideClassName='ml-auto flex shrink-0 flex-col items-end gap-2 self-start'
+                  className='w-full items-center'
+                  contentClassName='min-w-0 flex-1'
+                  description={`Login: ${learner.loginName}`}
+                  descriptionClassName='text-xs'
+                  footer={
+                    <div
+                      className={cn(
+                        'text-xs font-semibold',
+                        isActiveLearner
+                          ? 'text-indigo-600'
+                          : '[color:var(--kangur-page-muted-text)]'
+                      )}
+                    >
+                      {isActiveLearner
+                        ? 'Aktualnie wybrany profil'
+                        : 'Kliknij, aby przełączyć profil'}
+                    </div>
+                  }
+                  footerClassName='mt-2'
+                  headerClassName='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'
+                  icon={
+                    <KangurIconBadge
+                      accent={isActiveLearner ? 'indigo' : 'slate'}
+                      className='shrink-0 text-lg font-extrabold'
+                      data-testid={`parent-dashboard-learner-icon-${learner.id}`}
+                      size='md'
+                    >
+                      {initial}
+                    </KangurIconBadge>
+                  }
+                  title={learner.displayName}
+                  titleClassName='font-bold leading-normal'
+                />
+              </KangurIconSummaryOptionCard>
             );
           })}
         </div>

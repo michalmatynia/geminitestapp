@@ -1,6 +1,13 @@
 'use client';
 
-import { BotIcon, ShieldAlertIcon, Repeat2Icon, ArrowUpRightIcon, GaugeIcon, RefreshCwIcon } from 'lucide-react';
+import {
+  ArrowUpRightIcon,
+  BotIcon,
+  GaugeIcon,
+  RefreshCwIcon,
+  Repeat2Icon,
+  ShieldAlertIcon,
+} from 'lucide-react';
 import { type JSX } from 'react';
 
 import { FormSection } from '@/shared/ui';

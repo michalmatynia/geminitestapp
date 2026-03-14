@@ -1,5 +1,3 @@
-'use client';
-
 import KangurGame from '@/features/kangur/ui/components/KangurGame';
 import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
 import { KangurGameProvider } from '@/features/kangur/ui/context/KangurGameContext';

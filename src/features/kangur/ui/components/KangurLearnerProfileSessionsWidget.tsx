@@ -1,5 +1,3 @@
-'use client';
-
 import { KangurBadgeTrackSection } from '@/features/kangur/ui/components/KangurBadgeTrackSection';
 import { KangurPanelSectionHeading } from '@/features/kangur/ui/components/KangurPanelSectionHeading';
 import { KangurSessionHistoryRow } from '@/features/kangur/ui/components/KangurSessionHistoryRow';

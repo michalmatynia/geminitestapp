@@ -1,5 +1,3 @@
-'use client';
-
 import { User } from 'lucide-react';
 
 import { KANGUR_BASE_PATH, getKangurPageHref } from '@/features/kangur/config/routing';

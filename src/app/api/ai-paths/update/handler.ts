@@ -8,8 +8,12 @@ import {
 } from '@/features/ai/ai-paths/server';
 import { noteUpdateSchema } from '@/features/notesapp';
 import { noteService } from '@/features/notesapp/server';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import { productUpdateSchema } from '@/features/products/server';
+import {
+  parseJsonBody,
+  productUpdateSchema,
+  getProductDataProvider,
+  productService,
+} from '@/features/products/server';
 import { NoteUpdateInput } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
@@ -19,8 +23,6 @@ import {
   validationError,
 } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
-import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
-import { productService } from '@/shared/lib/products/services/productService';
 import { removeUndefined } from '@/shared/utils';
 
 const updateSchema = z.object({

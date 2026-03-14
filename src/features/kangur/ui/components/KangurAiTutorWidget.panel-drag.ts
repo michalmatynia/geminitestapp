@@ -1,5 +1,3 @@
-'use client';
-
 import { useCallback, useEffect, type Dispatch, type MutableRefObject, type PointerEvent as ReactPointerEvent, type SetStateAction } from 'react';
 
 import { clampTutorPanelPoint, snapTutorPanelPoint } from './KangurAiTutorWidget.shared';

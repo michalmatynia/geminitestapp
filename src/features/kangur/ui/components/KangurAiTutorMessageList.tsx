@@ -53,7 +53,13 @@ const getMessageArtifacts = (
   return artifacts;
 };
 
-export function KangurAiTutorMessageList(): JSX.Element {
+type KangurAiTutorMessageListProps = {
+  introMessage?: string | null;
+};
+
+export function KangurAiTutorMessageList({
+  introMessage,
+}: KangurAiTutorMessageListProps): JSX.Element {
   const tutorContent = useKangurAiTutorContent();
   const tutor = useOptionalKangurAiTutor();
   const drawingContent = (tutorContent as { drawing?: TutorDrawingContent }).drawing;
@@ -80,13 +86,15 @@ export function KangurAiTutorMessageList(): JSX.Element {
   const shouldSuppressConversationHistory =
     isSelectionExplainPendingMode || isSectionExplainPendingMode;
   const visibleMessages = shouldSuppressConversationHistory ? [] : messages;
+  const introCopy = typeof introMessage === 'string' ? introMessage.trim() : '';
+  const hasIntroMessage = introCopy.length > 0;
   const emptyStateCopy =
     isSelectionExplainPendingMode || isSectionExplainPendingMode
       ? panelEmptyStateMessage
       : isAskModalMode
         ? askModalHelperText
         : emptyStateMessage;
-  const shouldRenderEmptyState = Boolean(emptyStateCopy?.trim());
+  const shouldRenderEmptyState = Boolean(emptyStateCopy?.trim()) && !hasIntroMessage;
   const chatTitleSuffix = tutorContent.narrator?.chatTitleSuffix ?? '';
   const tutorName = tutor?.tutorName ?? tutorContent.common.defaultTutorName;
   const conversationLabel = `${tutorName} ${chatTitleSuffix}`.trim();
@@ -101,6 +109,15 @@ export function KangurAiTutorMessageList(): JSX.Element {
       aria-busy={isLoading ? 'true' : undefined}
       aria-label={conversationLabel}
     >
+      {hasIntroMessage ? (
+        <div className='flex justify-start'>
+          <div className='w-full max-w-full space-y-2 sm:max-w-[90%]'>
+            <div className='tutor-assistant-bubble kangur-chat-padding-sm text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] whitespace-pre-line'>
+              {introCopy}
+            </div>
+          </div>
+        </div>
+      ) : null}
       {visibleMessages.length === 0 ? (
         shouldRenderEmptyState ? (
         <div className='flex flex-col items-center justify-center py-6'>
@@ -216,7 +233,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
                     </div>
                   </div>
                 ))}
-                <div className='tutor-assistant-bubble kangur-chat-bubble kangur-chat-padding-sm border [border-color:var(--kangur-soft-card-border)] text-sm leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
+                <div className='tutor-assistant-bubble kangur-chat-padding-sm text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
                   {msg.content}
                 </div>
                 {msg.answerResolutionMode === 'page_content' ? (
@@ -402,7 +419,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
       )}
       {isLoading ? (
         <div className='flex justify-start'>
-          <div className='tutor-assistant-bubble kangur-chat-bubble kangur-chat-padding-md border [border-color:var(--kangur-soft-card-border)]'>
+          <div className='tutor-assistant-bubble kangur-chat-padding-md'>
             <div
               className='flex items-center gap-1.5'
               role='status'

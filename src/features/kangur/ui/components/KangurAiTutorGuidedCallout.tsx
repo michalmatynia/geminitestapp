@@ -1,5 +1,3 @@
-'use client';
-
 import { useId, useMemo } from 'react';
 import { AnimatePresence, motion, type Transition } from 'framer-motion';
 

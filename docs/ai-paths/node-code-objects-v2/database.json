@@ -113,7 +113,7 @@
       },
       {
         "path": "database.query.provider",
-        "description": "Database provider (mongodb only).",
+        "description": "Database provider (mongodb; auto resolves to MongoDB).",
         "defaultValue": "mongodb"
       },
       {
@@ -192,7 +192,7 @@
       },
       {
         "path": "database.action",
-        "description": "Provider action command aligned to MongoDB action labels."
+        "description": "Provider action command (MongoDB action labels)."
       },
       {
         "path": "database.distinctField",
@@ -260,6 +260,11 @@
         "path": "database.parameterInferenceGuard.definitionsPath",
         "description": "Optional JSON path inside definitionsPort payload to locate definition rows.",
         "defaultValue": "\"\""
+      },
+      {
+        "path": "database.parameterInferenceGuard.languageCode",
+        "description": "Language code mirrored into valuesByLanguage for inferred parameter writes.",
+        "defaultValue": "en"
       },
       {
         "path": "database.parameterInferenceGuard.enforceOptionLabels",
@@ -388,6 +393,7 @@
             "targetPath": "parameters",
             "definitionsPort": "result",
             "definitionsPath": "",
+            "languageCode": "en",
             "enforceOptionLabels": true,
             "allowUnknownParameterIds": false
           }
@@ -467,6 +473,7 @@
                 "targetPath": "parameters",
                 "definitionsPort": "result",
                 "definitionsPath": "",
+                "languageCode": "en",
                 "enforceOptionLabels": true,
                 "allowUnknownParameterIds": false
               }
@@ -488,8 +495,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/database.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "eadd4fae4b6fd18c8374000db6b359b5cc64ea57a4ded245991a360e13e1eb73"
+    "semanticNodeHash": "a17f4531e80e4fb9fdafed92034945f869cc67156426639bbe62733c49e6a6c4"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "caed2b853455909bffa191e4aa5bb49b3b756a9660d2c73ee08311b5bab68d79"
+  "objectHash": "5e2dcdc5def3c89c06c7db91c8deea4a1acfe9fa4f2a60f3f85b58d53d7af1f4"
 }

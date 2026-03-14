@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { parseJsonBody } from '@/features/products/server';
-import { CachedProductService } from '@/features/products/server';
+import {
+  parseJsonBody,
+  CachedProductService,
+  formDataToObject,
+  productService,
+} from '@/features/products/server';
 import { validateProductUpdateMiddleware } from '@/features/products/validations/middleware';
 import {
   type ProductPatchInput,
@@ -16,8 +20,6 @@ import { badRequestError, notFoundError, payloadTooLargeError } from '@/shared/e
 import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 import { env } from '@/shared/lib/env';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { formDataToObject } from '@/shared/lib/products/services/product-service-form-utils';
-import { productService } from '@/shared/lib/products/services/productService'; // Direct import
 
 export const getQuerySchema = z.object({
   fresh: optionalBooleanQuerySchema().default(false),

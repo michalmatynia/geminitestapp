@@ -1,5 +1,3 @@
-'use client';
-
 import { readClientCookie, setClientCookie } from '@/shared/lib/browser/client-cookies';
 import {
   logClientError,

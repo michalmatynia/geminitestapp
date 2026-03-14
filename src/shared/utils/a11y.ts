@@ -4,7 +4,7 @@ export const getTextContent = (node: React.ReactNode): string => {
   if (node === null || node === undefined || typeof node === 'boolean') return '';
   if (typeof node === 'string' || typeof node === 'number') return String(node);
   if (Array.isArray(node)) return node.map(getTextContent).join(' ');
-  if (React.isValidElement(node)) {
+  if (React.isValidElement<{ children?: React.ReactNode }>(node)) {
     return getTextContent(node.props.children);
   }
   return '';
@@ -52,7 +52,6 @@ export const warnMissingAccessibleLabel = ({
 }): void => {
   if (process.env['NODE_ENV'] === 'production') return;
   if (hasAccessibleLabel) return;
-  // eslint-disable-next-line no-console
   console.warn(
     `[${componentName}] Missing accessible label. Provide visible text, aria-label, or aria-labelledby.`
   );

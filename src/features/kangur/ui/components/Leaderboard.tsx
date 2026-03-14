@@ -1,5 +1,3 @@
-'use client';
-
 import { Trophy, User, Ghost } from 'lucide-react';
 
 import {

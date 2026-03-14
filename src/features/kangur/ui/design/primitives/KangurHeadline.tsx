@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/utils/cn';
 
 import { type KangurAccent } from '../tokens';
 
@@ -23,13 +23,13 @@ export const kangurHeadlineVariants = cva(
 );
 
 export const KANGUR_HEADLINE_CLASSNAMES: Record<KangurAccent, string> = {
-  indigo: 'text-indigo-700',
-  violet: 'text-violet-700',
-  emerald: 'text-green-700',
-  sky: 'text-sky-700',
-  amber: 'text-amber-700',
-  rose: 'text-rose-700',
-  teal: 'text-teal-700',
+  indigo: '[color:var(--kangur-accent-indigo-start,#a855f7)]',
+  violet: '[color:var(--kangur-accent-violet-start,#8b5cf6)]',
+  emerald: '[color:var(--kangur-accent-emerald-start,#10b981)]',
+  sky: '[color:var(--kangur-accent-sky-start,#0ea5e9)]',
+  amber: '[color:var(--kangur-accent-amber-start,#f59e0b)]',
+  rose: '[color:var(--kangur-accent-rose-start,#f43f5e)]',
+  teal: '[color:var(--kangur-accent-teal-start,#14b8a6)]',
   slate: '[color:var(--kangur-page-text)]',
 };
 
@@ -48,11 +48,7 @@ export function KangurHeadline({
 }: KangurHeadlineProps): React.JSX.Element {
   return (
     <Comp
-      className={cn(
-        kangurHeadlineVariants({ size }),
-        KANGUR_HEADLINE_CLASSNAMES[accent],
-        className
-      )}
+      className={cn(kangurHeadlineVariants({ size }), KANGUR_HEADLINE_CLASSNAMES[accent], className)}
       {...props}
     />
   );

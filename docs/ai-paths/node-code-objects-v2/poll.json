@@ -105,7 +105,7 @@
       },
       {
         "path": "poll.dbQuery.provider",
-        "description": "Database provider (mongodb only).",
+        "description": "Database provider (mongodb; auto resolves to MongoDB).",
         "defaultValue": "mongodb"
       },
       {
@@ -355,8 +355,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/poll.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "86f5979ebe33fa966505a2c2bdb7ab279df0696faf94fb4605a561b7e196cdb2"
+    "semanticNodeHash": "bb7015cd076699cef0d1a540842e8e22fed2734a68d76cbe89d2dec030485389"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "96f7eb9628b3d69b261032d582f9e954fcc554dfe8aca3a03e5b2880be207bfb"
+  "objectHash": "132a30ce7acfefc877e05daf612f8309b057c8c82293fabacec331221f58bd69"
 }

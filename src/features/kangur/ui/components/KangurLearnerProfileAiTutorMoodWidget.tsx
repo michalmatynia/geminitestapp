@@ -1,5 +1,3 @@
-'use client';
-
 import { BrainCircuit } from 'lucide-react';
 
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';

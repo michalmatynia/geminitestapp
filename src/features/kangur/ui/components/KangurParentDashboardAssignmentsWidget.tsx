@@ -1,5 +1,3 @@
-'use client';
-
 import { useMemo } from 'react';
 
 import KangurAssignmentManager from '@/features/kangur/ui/components/KangurAssignmentManager';

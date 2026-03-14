@@ -1,5 +1,3 @@
-'use client';
-
 import ProgressOverview from '@/features/kangur/ui/components/ProgressOverview';
 import {
   type KangurParentDashboardPanelDisplayMode,

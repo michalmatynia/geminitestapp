@@ -1,5 +1,3 @@
-'use client';
-
 import { useReducedMotion } from 'framer-motion';
 import { createPortal } from 'react-dom';
 

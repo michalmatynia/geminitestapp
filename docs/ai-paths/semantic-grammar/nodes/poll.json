@@ -36,7 +36,7 @@
     },
     {
       "path": "poll.dbQuery.provider",
-      "description": "Database provider (mongodb only).",
+      "description": "Database provider (mongodb; auto resolves to MongoDB).",
       "defaultValue": "mongodb"
     },
     {
@@ -156,5 +156,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "86f5979ebe33fa966505a2c2bdb7ab279df0696faf94fb4605a561b7e196cdb2"
+  "nodeHash": "bb7015cd076699cef0d1a540842e8e22fed2734a68d76cbe89d2dec030485389"
 }

@@ -1,5 +1,3 @@
-'use client';
-
 import { Eraser, Pen, RotateCcw, Trash2, X, Check } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 

@@ -44,7 +44,7 @@
     },
     {
       "path": "database.query.provider",
-      "description": "Database provider (mongodb only).",
+      "description": "Database provider (mongodb; auto resolves to MongoDB).",
       "defaultValue": "mongodb"
     },
     {
@@ -123,7 +123,7 @@
     },
     {
       "path": "database.action",
-      "description": "Provider action command aligned to MongoDB action labels."
+      "description": "Provider action command (MongoDB action labels)."
     },
     {
       "path": "database.distinctField",
@@ -193,6 +193,11 @@
       "defaultValue": "\"\""
     },
     {
+      "path": "database.parameterInferenceGuard.languageCode",
+      "description": "Language code mirrored into valuesByLanguage for inferred parameter writes.",
+      "defaultValue": "en"
+    },
+    {
       "path": "database.parameterInferenceGuard.enforceOptionLabels",
       "description": "When true, radio/select/dropdown values must match optionLabels from definitions.",
       "defaultValue": "true"
@@ -255,5 +260,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "eadd4fae4b6fd18c8374000db6b359b5cc64ea57a4ded245991a360e13e1eb73"
+  "nodeHash": "a17f4531e80e4fb9fdafed92034945f869cc67156426639bbe62733c49e6a6c4"
 }

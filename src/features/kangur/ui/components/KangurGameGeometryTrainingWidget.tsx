@@ -1,5 +1,3 @@
-'use client';
-
 import GeometryDrawingGame from '@/features/kangur/ui/components/GeometryDrawingGame';
 import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';

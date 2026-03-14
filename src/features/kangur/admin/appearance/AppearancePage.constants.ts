@@ -1,0 +1,412 @@
+import {
+  KANGUR_DEFAULT_DAILY_THEME,
+  KANGUR_DEFAULT_DAWN_THEME,
+  KANGUR_DEFAULT_SUNSET_THEME,
+  KANGUR_DEFAULT_THEME,
+  KANGUR_FACTORY_DAILY_THEME,
+  KANGUR_FACTORY_DAWN_THEME,
+  KANGUR_FACTORY_SUNSET_THEME,
+  KANGUR_FACTORY_NIGHTLY_THEME,
+} from '@/features/kangur/theme-settings';
+import type { ThemeSettings } from '@/shared/contracts/cms-theme';
+import type { SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+
+export type AppearanceSlot = 'daily' | 'dawn' | 'sunset' | 'nightly';
+
+export const SLOT_ORDER: AppearanceSlot[] = ['daily', 'dawn', 'sunset', 'nightly'];
+
+export const FACTORY_DAILY_ID = 'factory_daily';
+export const FACTORY_DAWN_ID = 'factory_dawn';
+export const FACTORY_SUNSET_ID = 'factory_sunset';
+export const FACTORY_NIGHTLY_ID = 'factory_nightly';
+
+export const BUILTIN_DAILY_ID = 'builtin_daily';
+export const BUILTIN_DAWN_ID = 'builtin_dawn';
+export const BUILTIN_SUNSET_ID = 'builtin_sunset';
+export const BUILTIN_NIGHTLY_ID = 'builtin_nightly';
+
+export type ThemeSelectionId =
+  | string
+  | typeof FACTORY_DAILY_ID
+  | typeof FACTORY_DAWN_ID
+  | typeof FACTORY_SUNSET_ID
+  | typeof FACTORY_NIGHTLY_ID
+  | typeof BUILTIN_DAILY_ID
+  | typeof BUILTIN_DAWN_ID
+  | typeof BUILTIN_SUNSET_ID
+  | typeof BUILTIN_NIGHTLY_ID;
+
+export const SLOT_CONFIG: Record<
+  AppearanceSlot,
+  {
+    label: string;
+    factoryId: string;
+    builtinId: string;
+    defaultTheme: ThemeSettings;
+    factoryTheme: ThemeSettings;
+  }
+> = {
+  daily: {
+    label: 'Dzień',
+    factoryId: FACTORY_DAILY_ID,
+    builtinId: BUILTIN_DAILY_ID,
+    defaultTheme: KANGUR_DEFAULT_DAILY_THEME,
+    factoryTheme: KANGUR_FACTORY_DAILY_THEME,
+  },
+  dawn: {
+    label: 'Świt',
+    factoryId: FACTORY_DAWN_ID,
+    builtinId: BUILTIN_DAWN_ID,
+    defaultTheme: KANGUR_DEFAULT_DAWN_THEME,
+    factoryTheme: KANGUR_FACTORY_DAWN_THEME,
+  },
+  sunset: {
+    label: 'Zmierzch',
+    factoryId: FACTORY_SUNSET_ID,
+    builtinId: BUILTIN_SUNSET_ID,
+    defaultTheme: KANGUR_DEFAULT_SUNSET_THEME,
+    factoryTheme: KANGUR_FACTORY_SUNSET_THEME,
+  },
+  nightly: {
+    label: 'Noc',
+    factoryId: FACTORY_NIGHTLY_ID,
+    builtinId: BUILTIN_NIGHTLY_ID,
+    defaultTheme: KANGUR_DEFAULT_THEME,
+    factoryTheme: KANGUR_FACTORY_NIGHTLY_THEME,
+  },
+};
+
+export const resolveFactoryTheme = (id: ThemeSelectionId): ThemeSettings => {
+  switch (id) {
+    case FACTORY_DAWN_ID:
+      return KANGUR_FACTORY_DAWN_THEME;
+    case FACTORY_SUNSET_ID:
+      return KANGUR_FACTORY_SUNSET_THEME;
+    case FACTORY_NIGHTLY_ID:
+      return KANGUR_FACTORY_NIGHTLY_THEME;
+    default:
+      return KANGUR_FACTORY_DAILY_THEME;
+  }
+};
+
+export const KANGUR_SLOT_ASSIGNMENTS_KEY = 'kangur_slot_assignments';
+
+export type SlotAssignments = Record<AppearanceSlot, { id: string; name: string } | null>;
+
+export const parseSlotAssignments = (raw: string | null | undefined): SlotAssignments => {
+  const fallback: SlotAssignments = { daily: null, dawn: null, sunset: null, nightly: null };
+  if (!raw?.trim()) return fallback;
+  try {
+    const parsed = JSON.parse(raw);
+    return {
+      daily: parsed.daily || null,
+      dawn: parsed.dawn || null,
+      sunset: parsed.sunset || null,
+      nightly: parsed.nightly || null,
+    };
+  } catch {
+    return fallback;
+  }
+};
+
+export const FONT_WEIGHT_OPTIONS = [
+  { value: '300', label: 'Light (300)' },
+  { value: '400', label: 'Regular (400)' },
+  { value: '500', label: 'Medium (500)' },
+  { value: '600', label: 'Semibold (600)' },
+  { value: '700', label: 'Bold (700)' },
+  { value: '800', label: 'Extrabold (800)' },
+];
+
+export const SHADOW_SIZE_OPTIONS = [
+  { value: 'none', label: 'None' },
+  { value: 'small', label: 'Small' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'large', label: 'Large' },
+];
+
+export const HOVER_EFFECT_OPTIONS = [
+  { value: 'none', label: 'None' },
+  { value: 'vertical-lift', label: 'Vertical lift' },
+  { value: 'scale', label: 'Scale up' },
+  { value: 'glow', label: 'Glow' },
+  { value: 'border', label: 'Border highlight' },
+];
+
+export const ANIMATION_EASING_OPTIONS = [
+  { value: 'ease', label: 'Ease' },
+  { value: 'ease-in', label: 'Ease In' },
+  { value: 'ease-out', label: 'Ease Out' },
+  { value: 'ease-in-out', label: 'Ease In Out' },
+  { value: 'linear', label: 'Linear' },
+];
+
+export const DRAWER_POSITION_OPTIONS = [
+  { value: 'left', label: 'Left' },
+  { value: 'right', label: 'Right' },
+];
+
+export const HOME_ACTION_FIELD_GROUPS = [
+  { prefix: 'homeActionLessons', label: 'Lessons' },
+  { prefix: 'homeActionPlay', label: 'Play' },
+  { prefix: 'homeActionTraining', label: 'Training' },
+  { prefix: 'homeActionKangur', label: 'Kangur' },
+] as const;
+
+export const HOME_ACTION_FIELD_TOKENS = [
+  { suffix: 'TextColor', label: 'Text Color' },
+  { suffix: 'TextActiveColor', label: 'Active Text Color' },
+  { suffix: 'LabelStart', label: 'Label Gradient Start' },
+  { suffix: 'LabelMid', label: 'Label Gradient Mid' },
+  { suffix: 'LabelEnd', label: 'Label Gradient End' },
+  { suffix: 'AccentStart', label: 'Accent Gradient Start' },
+  { suffix: 'AccentMid', label: 'Accent Gradient Mid' },
+  { suffix: 'AccentEnd', label: 'Accent Gradient End' },
+  { suffix: 'UnderlayStart', label: 'Underlay Gradient Start' },
+  { suffix: 'UnderlayMid', label: 'Underlay Gradient Mid' },
+  { suffix: 'UnderlayEnd', label: 'Underlay Gradient End' },
+  { suffix: 'UnderlayTintStart', label: 'Underlay Tint Start' },
+  { suffix: 'UnderlayTintMid', label: 'Underlay Tint Mid' },
+  { suffix: 'UnderlayTintEnd', label: 'Underlay Tint End' },
+  { suffix: 'AccentShadowColor', label: 'Accent Shadow' },
+  { suffix: 'UnderlayShadowColor', label: 'Underlay Shadow' },
+  { suffix: 'SurfaceShadowColor', label: 'Surface Shadow' },
+] as const;
+
+export const HOME_ACTION_FIELDS: SettingsField<ThemeSettings>[] = HOME_ACTION_FIELD_GROUPS.flatMap(
+  (group) =>
+    HOME_ACTION_FIELD_TOKENS.map((token) => ({
+      key: `${group.prefix}${token.suffix}` as keyof ThemeSettings,
+      label: `${group.label} ${token.label}`,
+      type: 'color',
+    }))
+);
+
+export const THEME_SECTIONS: Array<{
+  title: string;
+  subtitle: string;
+  fields: SettingsField<ThemeSettings>[];
+}> = [
+  // ── Colors ──────────────────────────────────────────────────────────────────
+  {
+    title: 'Core Palette',
+    subtitle: 'Brand colors, text tones, and feedback states across Kangur.',
+    fields: [
+      { key: 'primaryColor', label: 'Primary Accent', type: 'color' },
+      { key: 'secondaryColor', label: 'Secondary Accent', type: 'color' },
+      { key: 'accentColor', label: 'Warning Accent', type: 'color' },
+      { key: 'successColor', label: 'Success', type: 'color' },
+      { key: 'errorColor', label: 'Error / Destructive', type: 'color' },
+      { key: 'textColor', label: 'Primary Text', type: 'color' },
+      { key: 'mutedTextColor', label: 'Muted Text', type: 'color' },
+    ],
+  },
+  {
+    title: 'Text Overrides',
+    subtitle: 'Optional overrides for page, cards, and navigation text colors.',
+    fields: [
+      {
+        key: 'pageTextColor',
+        label: 'Page Text Override',
+        type: 'background',
+        placeholder: 'Auto',
+        helperText: 'Leave empty to use the Primary Text color.',
+      },
+      {
+        key: 'pageMutedTextColor',
+        label: 'Page Muted Text Override',
+        type: 'background',
+        placeholder: 'Auto',
+        helperText: 'Leave empty to use the Muted Text color.',
+      },
+      {
+        key: 'cardTextColor',
+        label: 'Card Text Override',
+        type: 'background',
+        placeholder: 'Auto',
+        helperText: 'Controls text color inside soft cards.',
+      },
+      {
+        key: 'navTextColor',
+        label: 'Navigation Text Override',
+        type: 'background',
+        placeholder: 'Auto',
+        helperText: 'Overrides the top navigation text color.',
+      },
+      {
+        key: 'navActiveTextColor',
+        label: 'Navigation Active Text Override',
+        type: 'background',
+        placeholder: 'Auto',
+        helperText: 'Overrides the active navigation text color.',
+      },
+      {
+        key: 'navHoverTextColor',
+        label: 'Navigation Hover Text Override',
+        type: 'background',
+        placeholder: 'Auto',
+        helperText: 'Overrides the hover navigation text color.',
+      },
+    ],
+  },
+  {
+    title: 'Logo & Loader',
+    subtitle: 'Fine-tune the Kangur logo gradients used on the loader and navigation.',
+    fields: [
+      { key: 'logoWordStart', label: 'Wordmark Start', type: 'color' },
+      { key: 'logoWordMid', label: 'Wordmark Mid', type: 'color' },
+      { key: 'logoWordEnd', label: 'Wordmark End', type: 'color' },
+      { key: 'logoRingStart', label: 'Ring Start', type: 'color' },
+      { key: 'logoRingEnd', label: 'Ring End', type: 'color' },
+      { key: 'logoAccentStart', label: 'Accent Start', type: 'color' },
+      { key: 'logoAccentEnd', label: 'Accent End', type: 'color' },
+      { key: 'logoInnerStart', label: 'Logo Inner Start', type: 'color' },
+      { key: 'logoInnerEnd', label: 'Logo Inner End', type: 'color' },
+      { key: 'logoShadow', label: 'Logo Shadow', type: 'color' },
+      { key: 'logoGlint', label: 'Logo Glint', type: 'color' },
+    ],
+  },
+  // ── Layout & Surfaces ───────────────────────────────────────────────────────
+  {
+    title: 'Layout & Radii',
+    subtitle: 'Page spacing, corner rounding, and panel alignment.',
+    fields: [
+      { key: 'pagePadding', label: 'Default Page Padding', type: 'number', step: 4 },
+      { key: 'pagePaddingTop', label: 'Page Padding Top', type: 'number', step: 4, placeholder: 'Auto' },
+      { key: 'pagePaddingBottom', label: 'Page Padding Bottom', type: 'number', step: 4, placeholder: 'Auto' },
+      { key: 'gridGutter', label: 'Grid Gutter', type: 'number', step: 4 },
+      { key: 'cardRadius', label: 'Card Corner Radius', type: 'number', step: 2 },
+      { key: 'containerPaddingInner', label: 'Inner Container Padding', type: 'number', step: 4 },
+    ],
+  },
+  {
+    title: 'Gradients & Transparency',
+    subtitle: 'Fine-tune panel backgrounds and navigation transparency.',
+    fields: [
+      {
+        key: 'panelGradientStart',
+        label: 'Panel Gradient Start',
+        type: 'background',
+        placeholder: 'Auto',
+      },
+      {
+        key: 'panelGradientEnd',
+        label: 'Panel Gradient End',
+        type: 'background',
+        placeholder: 'Auto',
+      },
+      {
+        key: 'panelTransparency',
+        label: 'Panel Opacity (0-1)',
+        type: 'number',
+        step: 0.05,
+        min: 0,
+        max: 1,
+      },
+      {
+        key: 'navGradientStart',
+        label: 'Nav Gradient Start',
+        type: 'background',
+        placeholder: 'Auto',
+      },
+      {
+        key: 'navGradientEnd',
+        label: 'Nav Gradient End',
+        type: 'background',
+        placeholder: 'Auto',
+      },
+      {
+        key: 'navTransparency',
+        label: 'Nav Opacity (0-1)',
+        type: 'number',
+        step: 0.05,
+        min: 0,
+        max: 1,
+      },
+    ],
+  },
+  // ── Typography ─────────────────────────────────────────────────────────────
+  {
+    title: 'Typography',
+    subtitle: 'Fonts used for headings and body text.',
+    fields: [
+      {
+        key: 'fontHeading',
+        label: 'Heading Font',
+        type: 'select',
+        options: [
+          { value: 'inherit', label: 'Inherit' },
+          { value: 'Geist', label: 'Geist (Sans)' },
+          { value: 'GeistMono', label: 'Geist Mono' },
+          { value: 'Inter', label: 'Inter' },
+          { value: 'system-ui', label: 'System UI' },
+        ],
+      },
+      {
+        key: 'fontBody',
+        label: 'Body Font',
+        type: 'select',
+        options: [
+          { value: 'inherit', label: 'Inherit' },
+          { value: 'Geist', label: 'Geist (Sans)' },
+          { value: 'GeistMono', label: 'Geist Mono' },
+          { value: 'Inter', label: 'Inter' },
+          { value: 'system-ui', label: 'System UI' },
+        ],
+      },
+      {
+        key: 'fontHeadingWeight',
+        label: 'Heading Weight',
+        type: 'select',
+        options: FONT_WEIGHT_OPTIONS,
+      },
+      {
+        key: 'fontBodyWeight',
+        label: 'Body Weight',
+        type: 'select',
+        options: FONT_WEIGHT_OPTIONS,
+      },
+    ],
+  },
+  // ── Components ─────────────────────────────────────────────────────────────
+  {
+    title: 'Buttons (Global)',
+    subtitle: 'Shared settings for primary and secondary buttons.',
+    fields: [
+      { key: 'btnRadius', label: 'Button Corner Radius', type: 'number', step: 2 },
+      { key: 'btnFontSize', label: 'Button Font Size', type: 'number' },
+      { key: 'btnPaddingX', label: 'Button Padding X', type: 'number' },
+      { key: 'btnPaddingY', label: 'Button Padding Y', type: 'number' },
+    ],
+  },
+  {
+    title: 'Gel & Glass Effects',
+    subtitle: 'Settings for modern glass and gel styles.',
+    fields: [
+      { key: 'btnInsetHighlightOpacity', label: 'Inset Highlight Opacity', type: 'number', step: 0.05 },
+      { key: 'btnInsetShadowOpacity', label: 'Inset Shadow Opacity', type: 'number', step: 0.05 },
+      { key: 'btnGlowOpacity', label: 'Button Glow Opacity', type: 'number', step: 0.05 },
+      { key: 'btnGlowSpread', label: 'Button Glow Spread', type: 'number' },
+    ],
+  },
+  {
+    title: 'Home Action Buttons',
+    subtitle: 'Highly specialized overrides for the main game-home action cards.',
+    fields: HOME_ACTION_FIELDS,
+  },
+  // ── Shadows ────────────────────────────────────────────────────────────────
+  {
+    title: 'Drop Shadows',
+    subtitle: 'Shared shadow configurations for containers and cards.',
+    fields: [
+      { key: 'containerShadowX', label: 'Panel Shadow X', type: 'number' },
+      { key: 'containerShadowY', label: 'Panel Shadow Y', type: 'number' },
+      { key: 'containerShadowBlur', label: 'Panel Shadow Blur', type: 'number' },
+      { key: 'containerShadowOpacity', label: 'Panel Shadow Opacity', type: 'number', step: 0.05 },
+      { key: 'cardShadowX', label: 'Card Shadow X', type: 'number' },
+      { key: 'cardShadowY', label: 'Card Shadow Y', type: 'number' },
+      { key: 'cardShadowBlur', label: 'Card Shadow Blur', type: 'number' },
+      { key: 'cardShadowOpacity', label: 'Card Shadow Opacity', type: 'number', step: 0.05 },
+    ],
+  },
+];

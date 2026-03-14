@@ -50,6 +50,7 @@ import { cn } from '@/shared/utils';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
+import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
 import { KangurAiTutorContentSettingsPanel } from './components/KangurAiTutorContentSettingsPanel';
 import { KangurAiTutorNativeGuideSettingsPanel } from './components/KangurAiTutorNativeGuideSettingsPanel';
 import { KangurClassOverridesSettingsPanel } from './components/KangurClassOverridesSettingsPanel';
@@ -505,189 +506,201 @@ export function AdminKangurSettingsPage(): ReactElement {
         </>
       }
     >
-      <div id='kangur-admin-settings-page' className='space-y-6'>
-        <FormSection
-          title='Storefront Theme'
-          description='Edit daily and nightly Kangur themes. Changes auto-save to Mongo and apply immediately to the live app.'
-          className={SETTINGS_SECTION_CLASS_NAME}
-        >
-          <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
-            <div className='flex items-center justify-between gap-4'>
-              <div>
-                <div className='text-sm font-semibold text-foreground'>Daily &amp; nightly themes</div>
-                <p className='mt-1 text-sm text-muted-foreground'>
-                  Customise colours, typography, and spacing for both the day and night variants of
-                  the Kangur storefront. Includes a reset-to-default option per theme.
-                </p>
+      <div id='kangur-admin-settings-page' className='space-y-8'>
+        <div className='grid gap-6 xl:grid-cols-2'>
+          <FormSection
+            title='Storefront Theme'
+            description='Edit daily and nightly Kangur themes. Changes auto-save to Mongo and apply immediately to the live app.'
+            className={SETTINGS_SECTION_CLASS_NAME}
+          >
+            <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+              <div className='flex items-center justify-between gap-4'>
+                <div>
+                  <div className='text-sm font-semibold text-foreground'>
+                    Daily &amp; nightly themes
+                  </div>
+                  <p className='mt-1 text-sm text-muted-foreground'>
+                    Customise colours, typography, and spacing for both the day and night variants of
+                    the Kangur storefront. Includes a reset-to-default option per theme.
+                  </p>
+                </div>
+                <Button asChild variant='outline' size='sm' className='shrink-0'>
+                  <Link href='/admin/kangur/appearance'>Open theme editor</Link>
+                </Button>
               </div>
-              <Button asChild variant='outline' size='sm' className='shrink-0'>
-                <Link href='/admin/kangur/appearance'>Open theme editor</Link>
-              </Button>
-            </div>
-          </Card>
-        </FormSection>
+            </Card>
+          </FormSection>
 
-        <FormSection
-          title='Class Overrides'
-          description='Attach extra Tailwind classes to Kangur shells and root surfaces through Mongo.'
-          className={SETTINGS_SECTION_CLASS_NAME}
-        >
-          <KangurClassOverridesSettingsPanel />
-        </FormSection>
+          <FormSection
+            title='Class Overrides'
+            description='Attach extra Tailwind classes to Kangur shells and root surfaces through Mongo.'
+            className={SETTINGS_SECTION_CLASS_NAME}
+          >
+            <KangurClassOverridesSettingsPanel />
+          </FormSection>
+        </div>
 
         <FormSection
           title='Narrator Engine'
           description='This applies globally to every learner-facing Kangur lesson and exercise.'
           className={SETTINGS_SECTION_CLASS_NAME}
         >
-          <div className='grid gap-4 md:grid-cols-2'>
-            {KANGUR_NARRATOR_ENGINE_OPTIONS.map((option) => {
-              const checked = engine === option.value;
-              const optionId = `kangur-narrator-engine-${option.value}`;
+          <div className='grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.9fr)]'>
+            <div className='space-y-6'>
+              <div className='grid gap-4 md:grid-cols-2'>
+                {KANGUR_NARRATOR_ENGINE_OPTIONS.map((option) => {
+                  const checked = engine === option.value;
+                  const optionId = `kangur-narrator-engine-${option.value}`;
 
-              return (
-                <SettingsChoiceCard
-                  key={option.value}
-                  htmlFor={optionId}
-                  checked={checked}
-                  title={option.label}
-                  description={option.description}
-                >
-                  <input
-                    id={optionId}
-                    type='radio'
-                    name='kangur-narrator-engine'
-                    value={option.value}
-                    checked={checked}
-                    onChange={() => setEngine(option.value)}
-                    className='h-4 w-4'
-                    data-doc-id='settings_narrator_engine'
-                    aria-label={option.label}
-                  />
-                </SettingsChoiceCard>
-              );
-            })}
-          </div>
-
-          <div className='mt-8 space-y-4'>
-            <div>
-              <div className='text-sm font-semibold text-foreground'>Server narrator voice</div>
-              <p className='text-xs text-muted-foreground'>
-                Choose which cached neural voice should speak lessons when the server narrator is
-                active.
-              </p>
-            </div>
-            <div className='grid gap-3 md:grid-cols-4'>
-              {KANGUR_TTS_VOICE_OPTIONS.map((option) => {
-                const checked = voice === option.value;
-                const optionId = `kangur-narrator-voice-${option.value}`;
-
-                return (
-                  <SettingsChoiceCard
-                    key={option.value}
-                    htmlFor={optionId}
-                    checked={checked}
-                    title={option.label}
-                    description='Used when the Server narrator engine is active.'
-                    hint='Switch to Client narrator to use browser speech instead.'
-                    className='p-3'
-                  >
-                    <input
-                      id={optionId}
-                      type='radio'
-                      name='kangur-narrator-voice'
-                      value={option.value}
+                  return (
+                    <SettingsChoiceCard
+                      key={option.value}
+                      htmlFor={optionId}
                       checked={checked}
-                      onChange={() => setVoice(option.value)}
-                      className='h-4 w-4'
-                      data-doc-id='settings_narrator_voice'
-                      aria-label={option.label}
-                    />
-                  </SettingsChoiceCard>
-                );
-              })}
+                      title={option.label}
+                      description={option.description}
+                    >
+                      <input
+                        id={optionId}
+                        type='radio'
+                        name='kangur-narrator-engine'
+                        value={option.value}
+                        checked={checked}
+                        onChange={() => setEngine(option.value)}
+                        className='h-4 w-4'
+                        data-doc-id='settings_narrator_engine'
+                        aria-label={option.label}
+                      />
+                    </SettingsChoiceCard>
+                  );
+                })}
+              </div>
+
+              <div className='space-y-4'>
+                <div>
+                  <div className='text-sm font-semibold text-foreground'>Server narrator voice</div>
+                  <p className='text-xs text-muted-foreground'>
+                    Choose which cached neural voice should speak lessons when the server narrator is
+                    active.
+                  </p>
+                </div>
+                <div className='grid gap-3 md:grid-cols-4'>
+                  {KANGUR_TTS_VOICE_OPTIONS.map((option) => {
+                    const checked = voice === option.value;
+                    const optionId = `kangur-narrator-voice-${option.value}`;
+
+                    return (
+                      <SettingsChoiceCard
+                        key={option.value}
+                        htmlFor={optionId}
+                        checked={checked}
+                        title={option.label}
+                        description='Used when the Server narrator engine is active.'
+                        hint='Switch to Client narrator to use browser speech instead.'
+                        className='p-3'
+                      >
+                        <input
+                          id={optionId}
+                          type='radio'
+                          name='kangur-narrator-voice'
+                          value={option.value}
+                          checked={checked}
+                          onChange={() => setVoice(option.value)}
+                          className='h-4 w-4'
+                          data-doc-id='settings_narrator_voice'
+                          aria-label={option.label}
+                        />
+                      </SettingsChoiceCard>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className='space-y-4'>
+              <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+                <div className='flex items-start justify-between gap-3'>
+                  <div>
+                    <div className='flex items-center gap-2'>
+                      <div className='text-sm font-semibold text-foreground'>
+                        Short narrator template
+                      </div>
+                      <Badge variant='outline'>Shared surface</Badge>
+                    </div>
+                    <p className='text-xs text-muted-foreground'>
+                      Paste this sample into a lesson or narration override to quickly hear the selected
+                      voice.
+                    </p>
+                    <p className='mt-2 text-xs text-muted-foreground'>
+                      A silent health check also runs automatically when this page opens or the server
+                      narrator voice changes.
+                    </p>
+                  </div>
+                  <div className='flex flex-wrap gap-2'>
+                    <Button
+                      size='sm'
+                      variant='ghost'
+                      onClick={() => {
+                        void handleCopyTemplateText();
+                      }}
+                      data-doc-id='settings_narrator_sample_copy'
+                    >
+                      {copyStatus}
+                    </Button>
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      onClick={() => {
+                        void handleProbeNarrator({ notify: true });
+                      }}
+                      disabled={isProbingNarrator}
+                    >
+                      {isProbingNarrator ? 'Testing...' : 'Test server narrator'}
+                    </Button>
+                  </div>
+                </div>
+
+                <Card
+                  variant='subtle'
+                  padding='sm'
+                  className={cn('mt-3 border-border/60 bg-background/70', 'text-sm text-foreground')}
+                >
+                  {TEST_NARRATOR_TEMPLATE_TEXT}
+                </Card>
+
+                {narratorProbe ? (
+                  <Alert
+                    variant={narratorProbe.ok ? 'success' : 'warning'}
+                    title={narratorProbe.ok ? 'Server narrator ready' : 'Server narrator unavailable'}
+                    className='mt-4'
+                  >
+                    <p>{narratorProbe.message}</p>
+                    <div className='mt-2 text-xs opacity-80'>
+                      Voice: {narratorProbe.voice} · Model: {narratorProbe.model} · Checked:{' '}
+                      {formatProbeTimestamp(narratorProbe.checkedAt)}
+                    </div>
+                    {!narratorProbe.ok && narratorProbe.errorStatus ? (
+                      <div className='mt-2 text-xs opacity-80'>
+                        Status: {narratorProbe.errorStatus}
+                        {narratorProbe.errorCode ? ` · Code: ${narratorProbe.errorCode}` : ''}
+                      </div>
+                    ) : null}
+                    {!narratorProbe.ok && narratorProbe.errorCode === 'billing_not_active' ? (
+                      <div className='mt-2 text-xs font-medium'>
+                        The configured OpenAI account exists, but billing is inactive. Keep Client
+                        narrator enabled until billing is restored.
+                      </div>
+                    ) : null}
+                  </Alert>
+                ) : null}
+              </Card>
+
+              <Alert variant='default' title='Global behavior'>
+                Lessons and exercises keep the play and pause controls, but the engine choice is no
+                longer shown there. Change it here once and the whole Kangur app follows it.
+              </Alert>
             </div>
           </div>
-
-          <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
-            <div className='flex items-start justify-between gap-3'>
-              <div>
-                <div className='flex items-center gap-2'>
-                  <div className='text-sm font-semibold text-foreground'>Short narrator template</div>
-                  <Badge variant='outline'>Shared surface</Badge>
-                </div>
-                <p className='text-xs text-muted-foreground'>
-                  Paste this sample into a lesson or narration override to quickly hear the selected
-                  voice.
-                </p>
-                <p className='mt-2 text-xs text-muted-foreground'>
-                  A silent health check also runs automatically when this page opens or the server
-                  narrator voice changes.
-                </p>
-              </div>
-              <div className='flex flex-wrap gap-2'>
-                <Button
-                  size='sm'
-                  variant='ghost'
-                  onClick={() => {
-                    void handleCopyTemplateText();
-                  }}
-                  data-doc-id='settings_narrator_sample_copy'
-                >
-                  {copyStatus}
-                </Button>
-                <Button
-                  size='sm'
-                  variant='outline'
-                  onClick={() => {
-                    void handleProbeNarrator({ notify: true });
-                  }}
-                  disabled={isProbingNarrator}
-                >
-                  {isProbingNarrator ? 'Testing...' : 'Test server narrator'}
-                </Button>
-              </div>
-            </div>
-
-            <Card
-              variant='subtle'
-              padding='sm'
-              className={cn('mt-3 border-border/60 bg-background/70', 'text-sm text-foreground')}
-            >
-              {TEST_NARRATOR_TEMPLATE_TEXT}
-            </Card>
-
-            {narratorProbe ? (
-              <Alert
-                variant={narratorProbe.ok ? 'success' : 'warning'}
-                title={narratorProbe.ok ? 'Server narrator ready' : 'Server narrator unavailable'}
-                className='mt-4'
-              >
-                <p>{narratorProbe.message}</p>
-                <div className='mt-2 text-xs opacity-80'>
-                  Voice: {narratorProbe.voice} · Model: {narratorProbe.model} · Checked:{' '}
-                  {formatProbeTimestamp(narratorProbe.checkedAt)}
-                </div>
-                {!narratorProbe.ok && narratorProbe.errorStatus ? (
-                  <div className='mt-2 text-xs opacity-80'>
-                    Status: {narratorProbe.errorStatus}
-                    {narratorProbe.errorCode ? ` · Code: ${narratorProbe.errorCode}` : ''}
-                  </div>
-                ) : null}
-                {!narratorProbe.ok && narratorProbe.errorCode === 'billing_not_active' ? (
-                  <div className='mt-2 text-xs font-medium'>
-                    The configured OpenAI account exists, but billing is inactive. Keep Client
-                    narrator enabled until billing is restored.
-                  </div>
-                ) : null}
-              </Alert>
-            ) : null}
-          </Card>
-
-          <Alert variant='default' title='Global behavior' className='mt-6'>
-            Lessons and exercises keep the play and pause controls, but the engine choice is no
-            longer shown there. Change it here once and the whole Kangur app follows it.
-          </Alert>
         </FormSection>
 
         <FormSection
@@ -695,142 +708,148 @@ export function AdminKangurSettingsPage(): ReactElement {
           description='These settings apply to the whole Kangur app. Parent profiles only manage learner-specific access and guardrails, while model routing stays in AI Brain.'
           className={SETTINGS_SECTION_CLASS_NAME}
         >
-          <div className='grid gap-4 lg:grid-cols-2'>
-            <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
-              <div className='flex items-center gap-2'>
-                <Badge variant='secondary'>AI Brain Routing</Badge>
-              </div>
-              <div className='mt-3 space-y-2 text-sm text-muted-foreground'>
-                <p>
-                  Kangur AI Tutor runs through Brain with the dedicated{' '}
-                  <span className='font-semibold text-foreground'>Kangur AI Tutor Chat</span>{' '}
-                  capability.
-                </p>
-                <p>
-                  Agent Personas shape tutor identity and instructions. Learner Agents remain part
-                  of the separate Agent Teaching feature and are not used by Kangur AI Tutor.
-                </p>
-              </div>
-              <div className='mt-4'>
-                <Button asChild variant='outline' size='sm'>
-                  <Link href='/admin/brain?tab=routing'>Open AI Brain routing</Link>
-                </Button>
-              </div>
-            </Card>
-
-            <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
-              <FormField
-                label='Dzienny limit wiadomości'
-                description='Kazda wyslana wiadomosc do tutora zuzywa 1 punkt limitu. Puste pole oznacza brak limitu.'
-              >
-                <Input
-                  type='number'
-                  min={1}
-                  max={200}
-                  inputMode='numeric'
-                  value={dailyMessageLimitInput}
-                  onChange={(event) => setDailyMessageLimitInput(event.target.value)}
-                  placeholder='Puste = bez limitu'
-                  aria-label='Dzienny limit wiadomości'
-                />
-              </FormField>
-
-              <FormField
-                label='Anonimowy onboarding AI Tutora'
-                description='Control how the first AI Tutor helper appears before the user logs in.'
-                className='mt-4'
-              >
-                <SelectSimple
-                  value={guestIntroMode || DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS.guestIntroMode}
-                  onValueChange={(value) => setGuestIntroMode(value as KangurAiTutorGuestIntroMode)}
-                  options={AI_TUTOR_GUEST_INTRO_MODE_OPTIONS}
-                  ariaLabel='Anonimowy onboarding AI Tutora'
-                  variant='subtle'
-                />
-              </FormField>
-
-              <FormField
-                label='Onboarding pierwszej strony'
-                description='Control how the AI Tutor explains the Game home screen after the learner signs in.'
-                className='mt-4'
-              >
-                <SelectSimple
-                  value={
-                    homeOnboardingMode ||
-                    DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS.homeOnboardingMode
-                  }
-                  onValueChange={(value) =>
-                    setHomeOnboardingMode(value as KangurAiTutorHomeOnboardingMode)
-                  }
-                  options={AI_TUTOR_HOME_ONBOARDING_MODE_OPTIONS}
-                  ariaLabel='Onboarding pierwszej strony'
-                  variant='subtle'
-                />
-              </FormField>
-            </Card>
-
-            <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
-              <FormField
-                label='Persona (charakter tutora)'
-                description='Choose the default tutor identity and voice used across Kangur.'
-              >
-                <SelectSimple
-                  value={agentPersonaId || DEFAULT_AGENT_PERSONA_OPTION}
-                  onValueChange={(value) =>
-                    setAgentPersonaId(value === DEFAULT_AGENT_PERSONA_OPTION ? '' : value)
-                  }
-                  options={agentPersonaOptions}
-                  ariaLabel='Persona (charakter tutora)'
-                  variant='subtle'
-                />
-              </FormField>
-
-              <Card
-                variant='subtle'
-                padding='sm'
-                className={cn('mt-4', SETTINGS_INSET_CARD_CLASS_NAME)}
-              >
+          <div className='grid gap-4 xl:grid-cols-2'>
+            <div className='space-y-4'>
+              <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
                 <div className='flex items-center gap-2'>
-                  <Badge variant='outline'>Current persona</Badge>
+                  <Badge variant='secondary'>AI Brain Routing</Badge>
                 </div>
-                <div className='mt-3 flex items-center gap-3'>
-                  <AgentPersonaMoodAvatar
-                    svgContent={selectedAgentPersonaMood.svgContent}
-                    avatarImageUrl={selectedAgentPersonaMood.avatarImageUrl}
-                    label={`AI Tutor persona preview for ${selectedAgentPersona?.name ?? 'the default persona'}`}
-                    className='h-12 w-12 border border-border/60 bg-muted/40'
-                    fallbackIconClassName='text-muted-foreground'
-                  />
-                  <div className='min-w-0'>
-                    <div className='text-sm font-semibold text-foreground'>
-                      {selectedAgentPersona?.name ?? 'Domyslna persona'}
-                    </div>
-                    <div className='mt-0.5 text-xs leading-relaxed text-muted-foreground'>
-                      {selectedAgentPersona
-                        ? `${selectedAgentPersona.role ? `${selectedAgentPersona.role} - ` : ''}This persona defines the tutor voice and avatar while Brain handles the model route. Avatar uploads and embedded Kangur thumbnails are managed in Agent Personas.`
-                        : 'Tutor uses the default helper persona when no custom persona is selected. Avatar uploads are managed in Agent Personas.'}
-                    </div>
-                  </div>
+                <div className='mt-3 space-y-2 text-sm text-muted-foreground'>
+                  <p>
+                    Kangur AI Tutor runs through Brain with the dedicated{' '}
+                    <span className='font-semibold text-foreground'>Kangur AI Tutor Chat</span>{' '}
+                    capability.
+                  </p>
+                  <p>
+                    Agent Personas shape tutor identity and instructions. Learner Agents remain part
+                    of the separate Agent Teaching feature and are not used by Kangur AI Tutor.
+                  </p>
+                </div>
+                <div className='mt-4'>
+                  <Button asChild variant='outline' size='sm'>
+                    <Link href='/admin/brain?tab=routing'>Open AI Brain routing</Link>
+                  </Button>
                 </div>
               </Card>
-            </Card>
 
-            <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
-              <FormField
-                label='Preset ruchu tutora'
-                description='Select a local motion profile for the tutor avatar and bubble.'
-              >
-                <SelectSimple
-                  value={motionPresetId || DEFAULT_MOTION_PRESET_OPTION}
-                  onValueChange={(value) =>
-                    setMotionPresetId(value === DEFAULT_MOTION_PRESET_OPTION ? '' : value)
-                  }
-                  options={motionPresetOptions}
-                  ariaLabel='Preset ruchu tutora'
+              <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+                <FormField
+                  label='Dzienny limit wiadomości'
+                  description='Kazda wyslana wiadomosc do tutora zuzywa 1 punkt limitu. Puste pole oznacza brak limitu.'
+                >
+                  <Input
+                    type='number'
+                    min={1}
+                    max={200}
+                    inputMode='numeric'
+                    value={dailyMessageLimitInput}
+                    onChange={(event) => setDailyMessageLimitInput(event.target.value)}
+                    placeholder='Puste = bez limitu'
+                    aria-label='Dzienny limit wiadomości'
+                  />
+                </FormField>
+
+                <FormField
+                  label='Anonimowy onboarding AI Tutora'
+                  description='Control how the first AI Tutor helper appears before the user logs in.'
+                  className='mt-4'
+                >
+                  <SelectSimple
+                    value={guestIntroMode || DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS.guestIntroMode}
+                    onValueChange={(value) =>
+                      setGuestIntroMode(value as KangurAiTutorGuestIntroMode)
+                    }
+                    options={AI_TUTOR_GUEST_INTRO_MODE_OPTIONS}
+                    ariaLabel='Anonimowy onboarding AI Tutora'
+                    variant='subtle'
+                  />
+                </FormField>
+
+                <FormField
+                  label='Onboarding pierwszej strony'
+                  description='Control how the AI Tutor explains the Game home screen after the learner signs in.'
+                  className='mt-4'
+                >
+                  <SelectSimple
+                    value={
+                      homeOnboardingMode ||
+                      DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS.homeOnboardingMode
+                    }
+                    onValueChange={(value) =>
+                      setHomeOnboardingMode(value as KangurAiTutorHomeOnboardingMode)
+                    }
+                    options={AI_TUTOR_HOME_ONBOARDING_MODE_OPTIONS}
+                    ariaLabel='Onboarding pierwszej strony'
+                    variant='subtle'
+                  />
+                </FormField>
+              </Card>
+            </div>
+
+            <div className='space-y-4'>
+              <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+                <FormField
+                  label='Persona (charakter tutora)'
+                  description='Choose the default tutor identity and voice used across Kangur.'
+                >
+                  <SelectSimple
+                    value={agentPersonaId || DEFAULT_AGENT_PERSONA_OPTION}
+                    onValueChange={(value) =>
+                      setAgentPersonaId(value === DEFAULT_AGENT_PERSONA_OPTION ? '' : value)
+                    }
+                    options={agentPersonaOptions}
+                    ariaLabel='Persona (charakter tutora)'
+                    variant='subtle'
+                  />
+                </FormField>
+
+                <Card
                   variant='subtle'
-                />
-              </FormField>
-            </Card>
+                  padding='sm'
+                  className={cn('mt-4', SETTINGS_INSET_CARD_CLASS_NAME)}
+                >
+                  <div className='flex items-center gap-2'>
+                    <Badge variant='outline'>Current persona</Badge>
+                  </div>
+                  <div className='mt-3 flex items-center gap-3'>
+                    <AgentPersonaMoodAvatar
+                      svgContent={selectedAgentPersonaMood.svgContent}
+                      avatarImageUrl={selectedAgentPersonaMood.avatarImageUrl}
+                      label={`AI Tutor persona preview for ${selectedAgentPersona?.name ?? 'the default persona'}`}
+                      className='h-12 w-12 border border-border/60 bg-muted/40'
+                      fallbackIconClassName='text-muted-foreground'
+                    />
+                    <div className='min-w-0'>
+                      <div className='text-sm font-semibold text-foreground'>
+                        {selectedAgentPersona?.name ?? 'Domyslna persona'}
+                      </div>
+                      <div className='mt-0.5 text-xs leading-relaxed text-muted-foreground'>
+                        {selectedAgentPersona
+                          ? `${selectedAgentPersona.role ? `${selectedAgentPersona.role} - ` : ''}This persona defines the tutor voice and avatar while Brain handles the model route. Avatar uploads and embedded Kangur thumbnails are managed in Agent Personas.`
+                          : 'Tutor uses the default helper persona when no custom persona is selected. Avatar uploads are managed in Agent Personas.'}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </Card>
+
+              <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+                <FormField
+                  label='Preset ruchu tutora'
+                  description='Select a local motion profile for the tutor avatar and bubble.'
+                >
+                  <SelectSimple
+                    value={motionPresetId || DEFAULT_MOTION_PRESET_OPTION}
+                    onValueChange={(value) =>
+                      setMotionPresetId(value === DEFAULT_MOTION_PRESET_OPTION ? '' : value)
+                    }
+                    options={motionPresetOptions}
+                    ariaLabel='Preset ruchu tutora'
+                    variant='subtle'
+                  />
+                </FormField>
+              </Card>
+            </div>
           </div>
 
           <Alert variant='default' title='Scope' className='mt-4'>
@@ -843,6 +862,7 @@ export function AdminKangurSettingsPage(): ReactElement {
           title='Parent verification email'
           description='Configure resend throttling for parent account verification emails.'
           className={SETTINGS_SECTION_CLASS_NAME}
+          gridClassName='gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]'
         >
           <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
             <FormField
@@ -865,84 +885,99 @@ export function AdminKangurSettingsPage(): ReactElement {
               {KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MAX} s.
             </p>
           </Card>
-          <Alert variant='default' title='Scope' className='mt-4'>
-            Applies to parent create-account and resend-verification actions across login pages and public
-            enrollment flow.
-          </Alert>
-          <Alert variant='default' className='mt-2' title='Security'>
-            Shorter values increase retry attempts and email traffic. Longer values reduce request spam but
-            also slow account confirmation.
-          </Alert>
-        </FormSection>
-
-        <KangurAiTutorContentSettingsPanel />
-
-        <KangurPageContentSettingsPanel />
-
-        <KangurAiTutorNativeGuideSettingsPanel />
-
-        <FormSection
-          title='Operations & Observability'
-          description='Quick access to Kangur telemetry, summary health, and log triage surfaces.'
-          className={SETTINGS_SECTION_CLASS_NAME}
-        >
-          <div className='grid gap-4 lg:grid-cols-3'>
-            <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
-              <div className='text-sm font-semibold text-foreground'>Observability dashboard</div>
-              <p className='mt-1 text-sm text-muted-foreground'>
-                Open the dedicated Kangur dashboard with alerts, route health, client telemetry,
-                recent server logs, and the latest performance baseline.
-              </p>
-              <Button asChild variant='outline' size='sm' className='mt-4'>
-                <Link href='/admin/kangur/observability'>Open observability dashboard</Link>
-              </Button>
-            </Card>
-
-            <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
-              <div className='text-sm font-semibold text-foreground'>Kangur system logs</div>
-              <p className='mt-1 text-sm text-muted-foreground'>
-                Jump into System Logs scoped to Kangur events. Saved presets available there:
-                Kangur, Kangur Auth, Kangur Progress, and Kangur TTS.
-              </p>
-              <div className='mt-4 flex flex-wrap gap-2'>
-                <Button asChild variant='outline' size='sm'>
-                  <Link href='/admin/system/logs?query=kangur.'>Open Kangur logs</Link>
-                </Button>
-                <Button asChild variant='ghost' size='sm'>
-                  <Link href='/admin/system/logs?source=kangur.tts.fallback'>TTS fallbacks</Link>
-                </Button>
-              </div>
-            </Card>
-
-            <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
-              <div className='text-sm font-semibold text-foreground'>Raw summary and runbook</div>
-              <p className='mt-1 text-sm text-muted-foreground'>
-                Use the summary API for direct payload inspection. Operational steps live in{' '}
-                <span className='font-mono text-xs text-foreground'>
-                  docs/kangur/observability-and-operations.md
-                </span>
-                .
-              </p>
-              <div className='mt-4 flex flex-wrap gap-2'>
-                <Button asChild variant='outline' size='sm'>
-                  <Link href='/api/kangur/observability/summary?range=24h'>
-                    Open 24h summary JSON
-                  </Link>
-                </Button>
-                <Button asChild variant='ghost' size='sm'>
-                  <Link href='/api/kangur/observability/summary?range=7d'>Open 7d summary JSON</Link>
-                </Button>
-              </div>
-            </Card>
+          <div className='space-y-3'>
+            <Alert variant='default' title='Scope'>
+              Applies to parent create-account and resend-verification actions across login pages and public
+              enrollment flow.
+            </Alert>
+            <Alert variant='default' title='Security'>
+              Shorter values increase retry attempts and email traffic. Longer values reduce request spam but
+              also slow account confirmation.
+            </Alert>
           </div>
         </FormSection>
 
-        <Card
-          variant='subtle-compact'
-          padding='sm'
-          className='border-border/60 bg-card/30 shadow-sm'
-        >
-          <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+        <div className='space-y-6'>
+          <div>
+            <div className='text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground'>
+              Content &amp; Guidance
+            </div>
+            <p className='mt-1 text-sm text-muted-foreground'>
+              Refine onboarding copy, page content, and native guide instructions used across Kangur.
+            </p>
+          </div>
+          <KangurAiTutorContentSettingsPanel />
+          <KangurPageContentSettingsPanel />
+          <KangurAiTutorNativeGuideSettingsPanel />
+        </div>
+
+        <div className='grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]'>
+          <FormSection
+            title='Operations & Observability'
+            description='Quick access to Kangur telemetry, summary health, and log triage surfaces.'
+            className={SETTINGS_SECTION_CLASS_NAME}
+          >
+            <div className='grid gap-4 lg:grid-cols-3'>
+              <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+                <div className='text-sm font-semibold text-foreground'>Observability dashboard</div>
+                <p className='mt-1 text-sm text-muted-foreground'>
+                  Open the dedicated Kangur dashboard with alerts, route health, client telemetry,
+                  recent server logs, and the latest performance baseline.
+                </p>
+                <Button asChild variant='outline' size='sm' className='mt-4'>
+                  <Link href='/admin/kangur/observability'>Open observability dashboard</Link>
+                </Button>
+              </Card>
+
+              <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+                <div className='text-sm font-semibold text-foreground'>Kangur system logs</div>
+                <p className='mt-1 text-sm text-muted-foreground'>
+                  Jump into System Logs scoped to Kangur events. Saved presets available there:
+                  Kangur, Kangur Auth, Kangur Progress, and Kangur TTS.
+                </p>
+                <div className='mt-4 flex flex-wrap gap-2'>
+                  <Button asChild variant='outline' size='sm'>
+                    <Link href='/admin/system/logs?query=kangur.'>Open Kangur logs</Link>
+                  </Button>
+                  <Button asChild variant='ghost' size='sm'>
+                    <Link href='/admin/system/logs?source=kangur.tts.fallback'>TTS fallbacks</Link>
+                  </Button>
+                </div>
+              </Card>
+
+              <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+                <div className='text-sm font-semibold text-foreground'>Raw summary and runbook</div>
+                <p className='mt-1 text-sm text-muted-foreground'>
+                  Use the summary API for direct payload inspection. Operational steps live in{' '}
+                  <span className='font-mono text-xs text-foreground'>
+                    docs/kangur/observability-and-operations.md
+                  </span>
+                  .
+                </p>
+                <div className='mt-4 flex flex-wrap gap-2'>
+                  <Button asChild variant='outline' size='sm'>
+                    <Link href='/api/kangur/observability/summary?range=24h'>
+                      Open 24h summary JSON
+                    </Link>
+                  </Button>
+                  <Button asChild variant='ghost' size='sm'>
+                    <Link href='/api/kangur/observability/summary?range=7d'>
+                      Open 7d summary JSON
+                    </Link>
+                  </Button>
+                </div>
+              </Card>
+            </div>
+          </FormSection>
+
+          <KangurAdminStatusCard
+            title='Status'
+            statusBadge={
+              <Badge variant={isDirty ? 'warning' : 'secondary'}>
+                {isDirty ? 'Unsaved changes' : 'All settings in sync'}
+              </Badge>
+            }
+          >
             <div className='flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
               <span>Saved state</span>
               <Badge variant='outline'>{persistedNarratorSettings.engine}</Badge>
@@ -950,11 +985,8 @@ export function AdminKangurSettingsPage(): ReactElement {
                 Parent email cooldown {persistedParentVerificationEmailSettings.resendCooldownSeconds}s
               </Badge>
             </div>
-            <Badge variant={isDirty ? 'warning' : 'secondary'}>
-              {isDirty ? 'Unsaved changes' : 'All settings in sync'}
-            </Badge>
-          </div>
-        </Card>
+          </KangurAdminStatusCard>
+        </div>
       </div>
     </KangurAdminContentShell>
   );

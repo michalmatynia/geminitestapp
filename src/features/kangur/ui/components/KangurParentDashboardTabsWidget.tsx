@@ -1,5 +1,3 @@
-'use client';
-
 import { BarChart2, BookOpen, BrainCircuit, ClipboardList } from 'lucide-react';
 import { useCallback } from 'react';
 

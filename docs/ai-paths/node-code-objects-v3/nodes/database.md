@@ -25,7 +25,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 ## Node Contract Files
 
 - Semantic node contract: `docs/ai-paths/semantic-grammar/nodes/database.json`
-- Semantic hash: `eadd4fae4b6fd18c8374000db6b359b5cc64ea57a4ded245991a360e13e1eb73`
+- Semantic hash: `a17f4531e80e4fb9fdafed92034945f869cc67156426639bbe62733c49e6a6c4`
 - v2 code object: `docs/ai-paths/node-code-objects-v2/database.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/database.scaffold.json`
 - v3 object id: `node_obj_database_portable_v3`

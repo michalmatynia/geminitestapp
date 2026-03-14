@@ -288,7 +288,7 @@ const dedupeOrdered = (values: readonly string[]): string[] => {
 
 const LESSON_LIBRARY_COMPONENT_ORDER = KANGUR_LESSON_COMPONENT_OPTIONS.map(
   (option) => option.value
-) as KangurLessonComponentId[];
+);
 
 const buildLessonLibraryFragments = (): KangurPageContentFragment[] =>
   LESSON_LIBRARY_COMPONENT_ORDER.map((componentId, index) => {

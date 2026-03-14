@@ -5,11 +5,24 @@ import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
+import {
+  AddingAbacusAnimation,
+  AddingColumnAnimation,
+  AddingCommutativeAnimation,
+  AddingCrossTenSvgAnimation,
+  AddingMakeTenPairsAnimation,
+  AddingNumberLineAnimation,
+  AddingSvgAnimation,
+  AddingTenFrameAnimation,
+  AddingTwoDigitAnimation,
+  AddingZeroAnimation,
+} from '@/features/kangur/ui/components/LessonAnimations';
 import MultiplicationArrayGame from '@/features/kangur/ui/components/MultiplicationArrayGame';
 import MultiplicationGame from '@/features/kangur/ui/components/MultiplicationGame';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
+  KangurLessonInset,
   KangurLessonLead,
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
@@ -20,7 +33,191 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 
-type SectionId = 'intro' | 'tabela23' | 'tabela45' | 'triki' | 'game_array' | 'game_quiz';
+type SectionId =
+  | 'intro'
+  | 'animacje'
+  | 'tabela23'
+  | 'tabela45'
+  | 'triki'
+  | 'game_array'
+  | 'game_quiz';
+
+const ANIMATION_SLIDES: LessonSlide[] = [
+  {
+    title: 'Dodawanie w ruchu (SVG)',
+    content: (
+      <KangurLessonStack>
+        <KangurLessonLead>
+          Animacja pokazuje, jak dwie grupy przesuwają się i łączą w jedną sumę.
+        </KangurLessonLead>
+        <KangurLessonCallout accent='teal' className='max-w-md text-center'>
+          <div className='mx-auto w-full max-w-sm'>
+            <AddingSvgAnimation />
+          </div>
+          <KangurEquationDisplay accent='teal' className='mt-2' size='sm'>
+            2 + 3 = 5
+          </KangurEquationDisplay>
+          <KangurLessonCaption className='mt-1'>
+            Kropki łączą się w jedną grupę i tworzą sumę.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
+      </KangurLessonStack>
+    ),
+  },
+  {
+    title: 'Dodawanie z przekroczeniem 10',
+    content: (
+      <KangurLessonStack>
+        <KangurLessonLead>
+          Gdy suma przekracza 10, mozesz uzupełnic do 10 i dodac reszte.
+        </KangurLessonLead>
+        <KangurLessonCallout accent='sky' className='text-center'>
+          <div className='mx-auto w-full max-w-sm'>
+            <AddingCrossTenSvgAnimation />
+          </div>
+          <KangurEquationDisplay accent='sky'>7 + 5 = ?</KangurEquationDisplay>
+          <KangurLessonCaption className='mt-2'>
+            7 + <b>3</b> = 10, zostaje jeszcze <b>2</b>, więc 10 + 2 = <b>12</b> ✓
+          </KangurLessonCaption>
+        </KangurLessonCallout>
+      </KangurLessonStack>
+    ),
+  },
+  {
+    title: 'Skoki na osi liczbowej',
+    content: (
+      <KangurLessonStack>
+        <KangurLessonLead>Skocz do 10, a potem dodaj resztę.</KangurLessonLead>
+        <KangurLessonCallout accent='sky' className='text-center'>
+          <div className='mx-auto w-full max-w-sm'>
+            <AddingNumberLineAnimation />
+          </div>
+          <KangurEquationDisplay accent='sky'>8 + 5 = 13</KangurEquationDisplay>
+          <KangurLessonCaption className='mt-2'>
+            8 + <b>2</b> = 10, zostaje <b>3</b>, więc 10 + 3 = <b>13</b>.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
+      </KangurLessonStack>
+    ),
+  },
+  {
+    title: 'Ramka dziesiątki',
+    content: (
+      <KangurLessonStack>
+        <KangurLessonLead>
+          Wypełnij brakujące pola do 10, a resztę dodaj obok.
+        </KangurLessonLead>
+        <KangurLessonCallout accent='sky' className='text-center'>
+          <div className='mx-auto w-full max-w-sm'>
+            <AddingTenFrameAnimation />
+          </div>
+          <KangurEquationDisplay accent='sky'>7 + 5 = 12</KangurEquationDisplay>
+          <KangurLessonCaption className='mt-2'>
+            Najpierw <b>+3</b> do 10, potem jeszcze <b>+2</b>.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
+      </KangurLessonStack>
+    ),
+  },
+  {
+    title: 'Dodawanie dwucyfrowe w ruchu',
+    content: (
+      <KangurLessonStack>
+        <KangurLessonLead>
+          Najpierw zsumuj dziesiatki, potem jednosci. Animacja pokazuje, jak grupy
+          łączą się w wynik.
+        </KangurLessonLead>
+        <KangurLessonCallout accent='emerald' className='text-center'>
+          <div className='mx-auto w-full max-w-sm'>
+            <AddingTwoDigitAnimation />
+          </div>
+          <KangurEquationDisplay accent='emerald' className='mt-2' size='sm'>
+            24 + 13 = 37
+          </KangurEquationDisplay>
+          <KangurLessonCaption className='mt-1'>
+            Dziesiatki: 20 + 10, jednosci: 4 + 3.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
+      </KangurLessonStack>
+    ),
+  },
+  {
+    title: 'Kolumny dziesiatek i jednosci',
+    content: (
+      <KangurLessonStack>
+        <KangurLessonLead>
+          Uloz liczby w kolumnach: dziesiatki pod dziesiatkami, jednosci pod
+          jednosciami. Potem dodaj osobno.
+        </KangurLessonLead>
+        <KangurLessonCallout accent='emerald' className='text-center'>
+          <div className='mx-auto w-full max-w-sm'>
+            <AddingColumnAnimation />
+          </div>
+          <KangurLessonCaption className='mt-1'>
+            Najpierw dziesiatki, potem jednosci. Wynik sklada sie z obu kolumn.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
+      </KangurLessonStack>
+    ),
+  },
+  {
+    title: 'Liczydlo',
+    content: (
+      <KangurLessonStack>
+        <KangurLessonLead>
+          Liczydlo pomaga przesuwac koraliki: osobno dziesiatki i jednosci, a potem
+          odczytac sume.
+        </KangurLessonLead>
+        <KangurLessonCallout accent='emerald' className='text-center'>
+          <div className='mx-auto w-full max-w-sm'>
+            <AddingAbacusAnimation />
+          </div>
+          <KangurLessonCaption className='mt-1'>
+            Koraliki przesuwaja sie do wspolnej sumy.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
+      </KangurLessonStack>
+    ),
+  },
+  {
+    title: 'Zapamiętaj!',
+    content: (
+      <KangurLessonStack>
+        <KangurLessonCallout accent='amber' className='max-w-xs'>
+          <ul className='space-y-2 text-sm [color:var(--kangur-page-text)]'>
+            <li>
+              ✅ Kolejnosc nie ma znaczenia: <b>3+5 = 5+3</b>
+            </li>
+            <li>
+              ✅ Dodawanie 0 nic nie zmienia: <b>7+0 = 7</b>
+            </li>
+            <li>✅ Zacznij od wiekszej liczby, zeby liczyc szybciej!</li>
+            <li>✅ Grupuj do 10 przy przekroczeniu</li>
+            <li>✅ Szukaj par do 10 (np. 6 + 4 = 10)</li>
+          </ul>
+        </KangurLessonCallout>
+        <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
+          <KangurLessonInset accent='slate' className='text-center'>
+            <AddingCommutativeAnimation />
+            <KangurLessonCaption className='mt-2'>
+              Kolejność składników nie zmienia wyniku.
+            </KangurLessonCaption>
+          </KangurLessonInset>
+          <KangurLessonInset accent='slate' className='text-center'>
+            <AddingZeroAnimation />
+            <KangurLessonCaption className='mt-2'>Dodanie zera nic nie zmienia.</KangurLessonCaption>
+          </KangurLessonInset>
+          <KangurLessonInset accent='slate' className='text-center'>
+            <AddingMakeTenPairsAnimation />
+            <KangurLessonCaption className='mt-2'>
+              Szukaj par do 10 (np. 6 + 4).
+            </KangurLessonCaption>
+          </KangurLessonInset>
+        </div>
+      </KangurLessonStack>
+    ),
+  },
+];
 
 export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, LessonSlide[]> = {
   intro: [
@@ -47,6 +244,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, Less
       ),
     },
   ],
+  animacje: ANIMATION_SLIDES,
   tabela23: [
     {
       title: 'Tabliczka mnożenia × 2 i × 3',
@@ -137,6 +335,12 @@ export const HUB_SECTIONS = [
     emoji: '🍬',
     title: 'Co to mnożenie?',
     description: 'Mnozenie jako powtarzane dodawanie',
+  },
+  {
+    id: 'animacje',
+    emoji: '🎞️',
+    title: 'Animacje dodawania',
+    description: 'Te same animacje co w lekcji dodawania',
   },
   {
     id: 'tabela23',

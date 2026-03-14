@@ -1,5 +1,3 @@
-'use client';
-
 import { normalizeKangurLessonNarrationText } from '@/features/kangur/tts/script';
 
 const KANGUR_NARRATOR_IGNORED_SELECTOR = [

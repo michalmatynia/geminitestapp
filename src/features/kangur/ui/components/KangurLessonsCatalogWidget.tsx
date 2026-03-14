@@ -1,5 +1,3 @@
-'use client';
-
 import { hasKangurLessonDocumentContent } from '@/features/kangur/lesson-documents';
 import { KangurLessonLibraryCard } from '@/features/kangur/ui/components/KangurLessonLibraryCard';
 import {
@@ -52,7 +50,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
 
         return (
           <KangurLessonLibraryCard
-            buttonClassName='flex flex-col items-start gap-4 rounded-[30px] p-5 max-sm:pr-5 max-sm:pb-5 sm:flex-row'
+            buttonClassName='kangur-lessons-panel flex flex-col items-start gap-4 rounded-[30px] p-5 max-sm:pr-5 max-sm:pb-5 sm:flex-row'
             completedLessonAssignment={completedLessonAssignment}
             contentClassName='w-full'
             emphasis={isActive ? 'accent' : 'neutral'}

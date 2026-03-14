@@ -1,5 +1,3 @@
-'use client';
-
 import CalendarTrainingGame from '@/features/kangur/ui/components/CalendarTrainingGame';
 import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';

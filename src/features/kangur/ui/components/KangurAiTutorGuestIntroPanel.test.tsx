@@ -14,10 +14,20 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
       acceptLabel: 'Tak',
     },
     common: {
+      defaultTutorName: 'Tutor',
       questionInputAria: 'Napisz pytanie',
       sendAria: 'Wyślij',
     },
+    narrator: {
+      pauseLabel: 'Pauza',
+      readLabel: 'Czytaj',
+      resumeLabel: 'Wznów',
+    },
   }),
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
+  useOptionalKangurAiTutor: () => null,
 }));
 
 vi.mock('./KangurAiTutorWidget.state', () => ({
@@ -50,8 +60,14 @@ vi.mock('./KangurAiTutorPanelBody.context', () => ({
     isSectionExplainPendingMode: false,
     isSelectionExplainPendingMode: false,
     messages: [],
+    narratorSettings: {
+      engine: 'client',
+      voice: 'coral',
+    },
     panelEmptyStateMessage: 'Brak wiadomości.',
     showSources: false,
+    tutorNarrationScript: [],
+    tutorNarratorContextRegistry: null,
     tutorSessionKey: 'session-test',
   }),
 }));
@@ -63,7 +79,7 @@ describe('KangurAiTutorGuestIntroPanel', () => {
     render(
       <KangurAiTutorGuestIntroPanel
         guestIntroDescription='Minimal tutor modal'
-        guestIntroHeadline='Janek'
+        guestIntroHeadline='Pomoc logowania'
         guestTutorLabel='Janek'
         isAnonymousVisitor={false}
         onAccept={vi.fn()}
@@ -78,11 +94,8 @@ describe('KangurAiTutorGuestIntroPanel', () => {
 
     expect(backdrop.className).toContain('bg-transparent');
     expect(backdrop.className).not.toContain('backdrop-blur');
-    const janekLabels = screen.getAllByText('Janek');
-
-    expect(janekLabels.at(-1)).toHaveClass(
-      '[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
-    );
+    expect(screen.getByText('Janek')).toBeInTheDocument();
+    expect(screen.getByText('Pomoc logowania')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-guest-intro-drawing')).toBeVisible();
     expect(screen.getByText('Minimal tutor modal')).toHaveClass(
       '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'

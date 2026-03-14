@@ -1,5 +1,3 @@
-'use client';
-
 import { Pen } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { createContext, useCallback, useContext, useState } from 'react';
@@ -33,8 +31,6 @@ type Props = {
 };
 
 type KangurAiTutorGuestIntroPanelContextValue = {
-  guestIntroDescription: string;
-  guestIntroHeadline: string;
   guestTutorLabel: string;
   isAnonymousVisitor: boolean;
   onAccept: () => void;
@@ -71,47 +67,36 @@ function KangurAiTutorGuestIntroHeader(): JSX.Element {
   } = useKangurAiTutorPanelBodyContext();
   const {
     closeAria,
-    guestIntroDescription,
-    guestIntroHeadline,
     guestTutorLabel,
     onClose,
   } = useKangurAiTutorGuestIntroPanelContext();
 
   return (
-    <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
-      <div className='min-w-0'>
-        <div className='flex items-center gap-2'>
-          <KangurAiTutorChromeKicker>
-            {guestTutorLabel}
-          </KangurAiTutorChromeKicker>
-          <KangurNarratorControl
-            className='w-auto'
-            contextRegistry={tutorNarratorContextRegistry}
-            displayMode='icon'
-            docId='kangur_ai_tutor_narrator'
-            engine={narratorSettings.engine}
-            pauseLabel={tutorContent.narrator.pauseLabel}
-            readLabel={tutorContent.narrator.readLabel}
-            renderWhenEmpty
-            resumeLabel={tutorContent.narrator.resumeLabel}
-            script={tutorNarrationScript}
-            shellTestId='kangur-ai-tutor-narrator-guest-intro'
-            showFeedback={false}
-            voice={narratorSettings.voice}
-          />
-        </div>
-        <div className='mt-1.5 text-sm font-semibold leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
-          {guestIntroHeadline}
-        </div>
-        <div className='mt-2 text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
-          {guestIntroDescription}
-        </div>
+    <div className='flex items-center justify-between gap-3'>
+      <div className='flex min-w-0 items-center gap-2'>
+        <KangurAiTutorChromeKicker>
+          {guestTutorLabel}
+        </KangurAiTutorChromeKicker>
+        <KangurNarratorControl
+          className='w-auto'
+          contextRegistry={tutorNarratorContextRegistry}
+          displayMode='icon'
+          docId='kangur_ai_tutor_narrator'
+          engine={narratorSettings.engine}
+          pauseLabel={tutorContent.narrator.pauseLabel}
+          readLabel={tutorContent.narrator.readLabel}
+          renderWhenEmpty
+          resumeLabel={tutorContent.narrator.resumeLabel}
+          script={tutorNarrationScript}
+          shellTestId='kangur-ai-tutor-narrator-guest-intro'
+          showFeedback={false}
+          voice={narratorSettings.voice}
+        />
       </div>
       <KangurAiTutorChromeCloseButton
         data-testid='kangur-ai-tutor-guest-intro-close'
         onClick={onClose}
         aria-label={closeAria}
-        className='self-start sm:self-auto'
       />
     </div>
   );
@@ -213,7 +198,12 @@ export function KangurAiTutorGuestIntroPanel({
   const { guestAuthFormVisible, setDrawingImageData, guestIntroNarrationRootRef } =
     useKangurAiTutorWidgetStateContext();
   const { messages } = useKangurAiTutorPanelBodyContext();
-  const shouldShowMessageList = messages.length > 0 || guestAuthFormVisible;
+  const introMessage = [guestIntroHeadline, guestIntroDescription]
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value))
+    .join('\n\n');
+  const shouldShowMessageList =
+    messages.length > 0 || guestAuthFormVisible || introMessage.length > 0;
   const [isDrawingOpen, setIsDrawingOpen] = useState(false);
   const handleDrawOpen = () => setIsDrawingOpen(true);
   const handleDrawClose = () => setIsDrawingOpen(false);
@@ -226,8 +216,6 @@ export function KangurAiTutorGuestIntroPanel({
     <KangurAiTutorGuestIntroPanelContext.Provider
       value={{
         closeAria: tutorContent.guestIntro.closeAria,
-        guestIntroDescription,
-        guestIntroHeadline,
         guestTutorLabel,
         isAnonymousVisitor,
         onAccept,
@@ -276,7 +264,7 @@ export function KangurAiTutorGuestIntroPanel({
               <KangurAiTutorGuestIntroHeader />
               {shouldShowMessageList ? (
                 <div className='mt-3 flex min-h-0 flex-1 flex-col'>
-                  <KangurAiTutorMessageList />
+                  <KangurAiTutorMessageList introMessage={introMessage} />
                 </div>
               ) : null}
               <div className='mt-2 flex justify-start'>

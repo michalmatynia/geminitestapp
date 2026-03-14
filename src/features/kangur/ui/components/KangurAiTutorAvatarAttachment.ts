@@ -1,5 +1,3 @@
-'use client';
-
 import {
   ATTACHED_AVATAR_EDGE_INSET,
   ATTACHED_AVATAR_OVERLAP,

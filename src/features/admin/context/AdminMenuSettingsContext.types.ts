@@ -1,5 +1,3 @@
-'use client';
-
 import type { AdminMenuLayoutNodeSemantic } from '@/features/admin/pages/admin-menu-layout-master-tree';
 import type { AdminMenuLayoutNodeEntry as AdminMenuLayoutNodeState } from '@/features/admin/pages/admin-menu-layout-types';
 import type {

@@ -6,6 +6,7 @@ import {
   getCurrencyRepository,
   getInternationalizationProvider,
 } from '@/features/internationalization/server';
+import { paginationQuerySchema, type PaginationQuery } from '@/shared/contracts/base';
 import { type CurrencyCreateInput } from '@/shared/contracts/internationalization';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
@@ -132,15 +133,18 @@ const mapMongoLanguage = (
 
 export async function GET_intl_handler(
   _req: NextRequest,
-  _ctx: ApiHandlerContext,
+  ctx: ApiHandlerContext,
   params: { type: string }
 ): Promise<Response> {
   const { type } = params;
   const provider = await getInternationalizationProvider();
+  const query = (ctx.query ?? paginationQuerySchema.parse({})) as PaginationQuery;
+  const { page, pageSize } = query;
+  const skip = (page - 1) * pageSize;
 
   if (type === 'currencies') {
     const repo = await getCurrencyRepository(provider);
-    return NextResponse.json(await repo.listCurrencies());
+    return NextResponse.json(await repo.listCurrencies({ skip, limit: pageSize }));
   }
 
   if (type === 'countries') {
@@ -149,6 +153,8 @@ export async function GET_intl_handler(
       .collection<MongoCountryDoc>('countries')
       .find({})
       .sort({ code: 1 })
+      .skip(skip)
+      .limit(pageSize)
       .toArray()) as MongoCountryDoc[];
     return NextResponse.json(countries.map(mapMongoCountry));
   }
@@ -157,7 +163,13 @@ export async function GET_intl_handler(
     const mongo = await getMongoDb();
     const [countryDocs, languageDocs] = (await Promise.all([
       mongo.collection<MongoCountryDoc>('countries').find({}).toArray(),
-      mongo.collection<MongoLanguageDoc>('languages').find({}).sort({ code: 1 }).toArray(),
+      mongo
+        .collection<MongoLanguageDoc>('languages')
+        .find({})
+        .sort({ code: 1 })
+        .skip(skip)
+        .limit(pageSize)
+        .toArray(),
     ])) as [MongoCountryDoc[], MongoLanguageDoc[]];
     const countriesById = new Map(
       countryDocs.map((country: MongoCountryDoc) => {

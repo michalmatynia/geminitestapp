@@ -1,14 +1,64 @@
 {
   "kind": "general-improvement-report",
-  "generatedAt": "2026-03-11T13:35:40.387Z",
+  "generatedAt": "2026-03-14T08:13:11.213Z",
   "phase": "dry-run",
   "executionMode": "executed",
   "allowWrite": false,
   "selectedTrackIds": [
-    "products-category-schema-normalization"
+    "products-parameter-integrity",
+    "products-category-schema-normalization",
+    "repo-quality-baseline"
   ],
   "reportPath": "artifacts/improvements/dry-run-report.json",
   "steps": [
+    {
+      "id": "products-parameter-recovery-classification",
+      "title": "Classify product parameter recovery state",
+      "trackId": "products-parameter-integrity",
+      "phase": "dry-run",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-recovery-classification-*.json",
+        "/tmp/product-parameter-recovery-classification-latest.json"
+      ],
+      "instructions": [],
+      "script": "products:classify:parameter-recovery",
+      "durationMs": 3244
+    },
+    {
+      "id": "products-parameter-source-report",
+      "title": "Refresh source-recovery report for unresolved products",
+      "trackId": "products-parameter-integrity",
+      "phase": "dry-run",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-source-recovery-*.json",
+        "/tmp/product-parameter-source-recovery-latest.json"
+      ],
+      "instructions": [],
+      "script": "products:report:parameter-source-recovery",
+      "durationMs": 6593
+    },
+    {
+      "id": "products-parameter-source-summary",
+      "title": "Summarize unresolved source-recovery products",
+      "trackId": "products-parameter-integrity",
+      "phase": "dry-run",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-source-recovery-summary-*.json",
+        "/tmp/product-parameter-source-recovery-summary-latest.json"
+      ],
+      "instructions": [],
+      "script": "products:summarize:parameter-source-recovery",
+      "durationMs": 263
+    },
     {
       "id": "products-category-schema-curate-family-mappings",
       "title": "Fill final parameter ids in the latest family mapping packs",
@@ -37,7 +87,7 @@
       ],
       "instructions": [],
       "script": "products:build:ready-parameter-curated-overrides",
-      "durationMs": 1183
+      "durationMs": 256
     },
     {
       "id": "products-category-schema-preview-ready-curated-overrides",
@@ -52,7 +102,36 @@
       ],
       "instructions": [],
       "script": "products:apply:parameter-curated-overrides",
-      "durationMs": 2586
+      "durationMs": 546
+    },
+    {
+      "id": "repo-quality-api-error-sources",
+      "title": "Check API error source coverage",
+      "trackId": "repo-quality-baseline",
+      "phase": "dry-run",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "docs/metrics/api-error-sources-latest.json",
+        "docs/metrics/api-error-sources-latest.md"
+      ],
+      "instructions": [],
+      "script": "check:api-error-sources",
+      "durationMs": 211
+    },
+    {
+      "id": "repo-quality-canonical-sitewide",
+      "title": "Check canonical sitewide coverage",
+      "trackId": "repo-quality-baseline",
+      "phase": "dry-run",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [],
+      "instructions": [],
+      "script": "canonical:check:sitewide",
+      "durationMs": 1087
     }
   ]
 }

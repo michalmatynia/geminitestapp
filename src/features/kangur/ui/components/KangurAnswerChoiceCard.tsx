@@ -1,9 +1,7 @@
-'use client';
-
 import type { ComponentProps, ReactNode } from 'react';
 
 import KangurAnimatedOptionCard from '@/features/kangur/ui/components/KangurAnimatedOptionCard';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/utils/cn';
 
 type KangurAnswerChoiceCardProps = Omit<
   ComponentProps<typeof KangurAnimatedOptionCard>,

@@ -1,5 +1,3 @@
-'use client';
-
 import { XpToast } from '@/features/kangur/ui/components/progress';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 

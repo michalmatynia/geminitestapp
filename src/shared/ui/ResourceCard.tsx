@@ -52,7 +52,7 @@ export function ResourceCard(props: ResourceCardProps): React.JSX.Element {
       {/* Header */}
       <div className='flex items-start justify-between gap-2 p-3 pb-0'>
         <div className='min-w-0 flex-1'>
-          <h3 className='text-sm font-medium truncate text-white' title={title}>
+          <h3 className='text-sm font-medium truncate text-card-foreground' title={title}>
             {title}
           </h3>
           {description && (
@@ -78,7 +78,7 @@ export function ResourceCard(props: ResourceCardProps): React.JSX.Element {
         <div className='flex-1 mt-3'>{children}</div>
 
         {/* Footer Area */}
-        {footer && <div className='mt-3 border-t border-white/5 pt-3'>{footer}</div>}
+        {footer && <div className='mt-3 border-t border-border/40 pt-3'>{footer}</div>}
       </div>
     </Card>
   );

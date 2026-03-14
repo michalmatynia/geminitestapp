@@ -1,6 +1,4 @@
-'use client';
-
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/utils/cn';
 
 type KangurHomeLogoProps = {
   className?: string;

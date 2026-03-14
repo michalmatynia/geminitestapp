@@ -1,5 +1,3 @@
-'use client';
-
 import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kangur';
 
 const LESSON_CONTENT_EDITOR_DRAFT_STORAGE_PREFIX = 'kangur-lesson-editor-draft:v1:';

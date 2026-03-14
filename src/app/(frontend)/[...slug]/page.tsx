@@ -1,9 +1,11 @@
 import { notFound } from 'next/navigation';
 import { JSX } from 'react';
 
-import { CmsPageRenderer } from '@/features/cms/components/frontend/CmsPageRenderer';
-import { CmsPageShell } from '@/features/cms/components/frontend/CmsPageShell';
-import { ThemeProvider } from '@/features/cms/components/frontend/ThemeProvider';
+import {
+  CmsPageShell,
+  CmsRuntimePageRenderer as CmsPageRenderer,
+  ThemeProvider,
+} from '@/features/cms/public';
 import { KangurPublicApp } from '@/features/kangur/ui/KangurPublicApp';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 

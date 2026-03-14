@@ -1,5 +1,3 @@
-'use client';
-
 import { z } from 'zod';
 
 import { sortScores } from '@/features/kangur/services/kangur-score-repository/shared';

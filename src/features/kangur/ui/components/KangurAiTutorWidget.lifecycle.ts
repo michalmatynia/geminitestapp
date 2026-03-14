@@ -1,5 +1,3 @@
-'use client';
-
 import { useEffect, useLayoutEffect } from 'react';
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';

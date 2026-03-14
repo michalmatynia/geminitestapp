@@ -1,7 +1,4 @@
-'use client';
-
 import type { ComponentProps, ReactNode } from 'react';
-import React from 'react';
 
 import {
   KangurCardDescription,
@@ -9,7 +6,7 @@ import {
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/utils/cn';
 
 // ── Recommendation Card Sub-components ───────────────────────────────────────
 

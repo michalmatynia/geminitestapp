@@ -1,1104 +1,42 @@
 'use client';
 
 import Link from 'next/link';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React from 'react';
 
-import { FONT_OPTIONS, resolveKangurStorefrontAppearance } from '@/features/cms/public';
+import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
 import {
-  getKangurThemeSettingsKeyForAppearanceMode,
-  KANGUR_FACTORY_DAILY_THEME,
-  KANGUR_FACTORY_DAWN_THEME,
-  KANGUR_FACTORY_NIGHTLY_THEME,
-  KANGUR_FACTORY_SUNSET_THEME,
-  KANGUR_DEFAULT_DAILY_THEME,
-  KANGUR_DEFAULT_DAWN_THEME,
-  KANGUR_DEFAULT_SUNSET_THEME,
-  KANGUR_DEFAULT_THEME,
-  KANGUR_DAILY_THEME_SETTINGS_KEY,
-  KANGUR_DAWN_THEME_SETTINGS_KEY,
-  KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
-  KANGUR_SUNSET_THEME_SETTINGS_KEY,
-  KANGUR_THEME_CATALOG_KEY,
-  parseKangurThemeCatalog,
-  parseKangurThemeSettings,
-  type KangurThemeCatalogEntry,
-} from '@/features/kangur/theme-settings';
-import {
-  KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
-  KANGUR_STOREFRONT_THEME_OPTIONS,
-  parseKangurStorefrontAppearanceMode,
-  type KangurStorefrontAppearanceMode,
-} from '@/features/kangur/storefront-appearance-settings';
-import { fetchSettingValue } from '@/shared/api/settings-client';
-import { normalizeThemeSettings, type ThemeSettings } from '@/shared/contracts/cms-theme';
-import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import {
-  Alert,
+  Badge,
   Button,
   Card,
-  FormField,
-  FormModal,
   FormSection,
-  Input,
   SelectSimple,
-  useToast,
+  Alert,
 } from '@/shared/ui';
-import { SettingsFieldsRenderer, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
-import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
+import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
 
-// ─── Section config (fields rendered via SettingsFieldsRenderer) ───────────
-
-const FONT_WEIGHT_OPTIONS = [
-  { value: '300', label: 'Light (300)' },
-  { value: '400', label: 'Regular (400)' },
-  { value: '500', label: 'Medium (500)' },
-  { value: '600', label: 'Semibold (600)' },
-  { value: '700', label: 'Bold (700)' },
-  { value: '800', label: 'Extrabold (800)' },
-];
-
-const SHADOW_SIZE_OPTIONS = [
-  { value: 'none', label: 'None' },
-  { value: 'small', label: 'Small' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'large', label: 'Large' },
-];
-
-const HOVER_EFFECT_OPTIONS = [
-  { value: 'none', label: 'None' },
-  { value: 'vertical-lift', label: 'Vertical lift' },
-  { value: 'scale', label: 'Scale up' },
-  { value: 'glow', label: 'Glow' },
-  { value: 'border', label: 'Border highlight' },
-];
-
-const ANIMATION_EASING_OPTIONS = [
-  { value: 'ease', label: 'Ease' },
-  { value: 'ease-in', label: 'Ease In' },
-  { value: 'ease-out', label: 'Ease Out' },
-  { value: 'ease-in-out', label: 'Ease In Out' },
-  { value: 'linear', label: 'Linear' },
-];
-
-const DRAWER_POSITION_OPTIONS = [
-  { value: 'left', label: 'Left' },
-  { value: 'right', label: 'Right' },
-];
-
-const HOME_ACTION_FIELD_GROUPS = [
-  { prefix: 'homeActionLessons', label: 'Lessons' },
-  { prefix: 'homeActionPlay', label: 'Play' },
-  { prefix: 'homeActionTraining', label: 'Training' },
-  { prefix: 'homeActionKangur', label: 'Kangur' },
-] as const;
-
-const HOME_ACTION_FIELD_TOKENS = [
-  { suffix: 'TextColor', label: 'Text Color' },
-  { suffix: 'TextActiveColor', label: 'Active Text Color' },
-  { suffix: 'LabelStart', label: 'Label Gradient Start' },
-  { suffix: 'LabelMid', label: 'Label Gradient Mid' },
-  { suffix: 'LabelEnd', label: 'Label Gradient End' },
-  { suffix: 'AccentStart', label: 'Accent Gradient Start' },
-  { suffix: 'AccentMid', label: 'Accent Gradient Mid' },
-  { suffix: 'AccentEnd', label: 'Accent Gradient End' },
-  { suffix: 'UnderlayStart', label: 'Underlay Gradient Start' },
-  { suffix: 'UnderlayMid', label: 'Underlay Gradient Mid' },
-  { suffix: 'UnderlayEnd', label: 'Underlay Gradient End' },
-  { suffix: 'UnderlayTintStart', label: 'Underlay Tint Start' },
-  { suffix: 'UnderlayTintMid', label: 'Underlay Tint Mid' },
-  { suffix: 'UnderlayTintEnd', label: 'Underlay Tint End' },
-  { suffix: 'AccentShadowColor', label: 'Accent Shadow' },
-  { suffix: 'UnderlayShadowColor', label: 'Underlay Shadow' },
-  { suffix: 'SurfaceShadowColor', label: 'Surface Shadow' },
-] as const;
-
-const HOME_ACTION_FIELDS: SettingsField<ThemeSettings>[] = HOME_ACTION_FIELD_GROUPS.flatMap(
-  (group) =>
-    HOME_ACTION_FIELD_TOKENS.map((token) => ({
-      key: `${group.prefix}${token.suffix}` as keyof ThemeSettings,
-      label: `${group.label} ${token.label}`,
-      type: 'color',
-    }))
-);
-
-const THEME_SECTIONS: Array<{
-  title: string;
-  subtitle: string;
-  fields: SettingsField<ThemeSettings>[];
-}> = [
-  // ── Colors ──────────────────────────────────────────────────────────────────
-  {
-    title: 'Core Palette',
-    subtitle: 'Brand colors, text tones, and feedback states across Kangur.',
-    fields: [
-      { key: 'primaryColor', label: 'Primary Accent', type: 'color' },
-      { key: 'secondaryColor', label: 'Secondary Accent', type: 'color' },
-      { key: 'accentColor', label: 'Warning Accent', type: 'color' },
-      { key: 'successColor', label: 'Success', type: 'color' },
-      { key: 'errorColor', label: 'Error / Destructive', type: 'color' },
-      { key: 'textColor', label: 'Primary Text', type: 'color' },
-      { key: 'mutedTextColor', label: 'Muted Text', type: 'color' },
-    ],
-  },
-  {
-    title: 'Text Overrides',
-    subtitle: 'Optional overrides for page, cards, and navigation text colors.',
-    fields: [
-      {
-        key: 'pageTextColor',
-        label: 'Page Text Override',
-        type: 'background',
-        placeholder: 'Auto',
-        helperText: 'Leave empty to use the Primary Text color.',
-      },
-      {
-        key: 'pageMutedTextColor',
-        label: 'Page Muted Text Override',
-        type: 'background',
-        placeholder: 'Auto',
-        helperText: 'Leave empty to use the Muted Text color.',
-      },
-      {
-        key: 'cardTextColor',
-        label: 'Card Text Override',
-        type: 'background',
-        placeholder: 'Auto',
-        helperText: 'Controls text color inside soft cards.',
-      },
-      {
-        key: 'navTextColor',
-        label: 'Navigation Text Override',
-        type: 'background',
-        placeholder: 'Auto',
-        helperText: 'Overrides the top navigation text color.',
-      },
-      {
-        key: 'navActiveTextColor',
-        label: 'Navigation Active Text Override',
-        type: 'background',
-        placeholder: 'Auto',
-        helperText: 'Overrides the active navigation text color.',
-      },
-      {
-        key: 'navHoverTextColor',
-        label: 'Navigation Hover Text Override',
-        type: 'background',
-        placeholder: 'Auto',
-        helperText: 'Overrides the hover navigation text color.',
-      },
-    ],
-  },
-  {
-    title: 'Logo & Loader',
-    subtitle: 'Fine-tune the Kangur logo gradients used on the loader and navigation.',
-    fields: [
-      {
-        key: 'logoWordStart',
-        label: 'Wordmark Start',
-        type: 'background',
-        placeholder: 'Auto',
-        helperText: 'Leave empty to derive from the active theme palette.',
-      },
-      { key: 'logoWordMid', label: 'Wordmark Mid', type: 'background', placeholder: 'Auto' },
-      { key: 'logoWordEnd', label: 'Wordmark End', type: 'background', placeholder: 'Auto' },
-      { key: 'logoRingStart', label: 'Ring Start', type: 'background', placeholder: 'Auto' },
-      { key: 'logoRingEnd', label: 'Ring End', type: 'background', placeholder: 'Auto' },
-      { key: 'logoAccentStart', label: 'Accent Start', type: 'background', placeholder: 'Auto' },
-      { key: 'logoAccentEnd', label: 'Accent End', type: 'background', placeholder: 'Auto' },
-      { key: 'logoInnerStart', label: 'Inner Glow Start', type: 'background', placeholder: 'Auto' },
-      { key: 'logoInnerEnd', label: 'Inner Glow End', type: 'background', placeholder: 'Auto' },
-      { key: 'logoShadow', label: 'Logo Shadow', type: 'background', placeholder: 'Auto' },
-      { key: 'logoGlint', label: 'Logo Glint', type: 'background', placeholder: 'Auto' },
-    ],
-  },
-  {
-    title: 'Backgrounds and Surfaces',
-    subtitle: 'Base page, panel, card, and chat shell colors.',
-    fields: [
-      { key: 'backgroundColor', label: 'Page Background', type: 'color' },
-      { key: 'surfaceColor', label: 'Surface Background', type: 'color' },
-      { key: 'cardBg', label: 'Card Background', type: 'color' },
-      { key: 'containerBg', label: 'Container Background', type: 'color' },
-      { key: 'panelGradientStart', label: 'Panel Gradient Start', type: 'color' },
-      { key: 'panelGradientEnd', label: 'Panel Gradient End', type: 'color' },
-      {
-        key: 'panelTransparency',
-        label: 'Panel Transparency',
-        type: 'range',
-        min: 0,
-        max: 1,
-        step: 0.05,
-      },
-      { key: 'borderColor', label: 'Base Border', type: 'color' },
-      { key: 'containerBorderColor', label: 'Surface Border', type: 'color' },
-      { key: 'imagePlaceholderBg', label: 'Image Placeholder', type: 'color' },
-    ],
-  },
-  // ── Component tokens ────────────────────────────────────────────────────────
-  {
-    title: 'Buttons',
-    subtitle: 'Primary and secondary CTA colors, sizing, weight, border, and shadow.',
-    fields: [
-      {
-        key: 'btnPrimaryBg',
-        label: 'Primary Background',
-        type: 'background',
-        helperText: 'CSS color or gradient (e.g. #ff8a3d or linear-gradient(...)).',
-      },
-      { key: 'btnPrimaryText', label: 'Primary Text', type: 'color' },
-      {
-        key: 'btnSecondaryBg',
-        label: 'Secondary Background',
-        type: 'background',
-        helperText: 'CSS color or gradient (e.g. #ffffff or linear-gradient(...)).',
-      },
-      { key: 'btnSecondaryText', label: 'Secondary Text', type: 'color' },
-      { key: 'btnOutlineBorder', label: 'Outline Border Color', type: 'color' },
-      { key: 'btnPaddingX', label: 'Padding X', type: 'number', min: 8, max: 40, suffix: 'px' },
-      { key: 'btnPaddingY', label: 'Padding Y', type: 'number', min: 6, max: 24, suffix: 'px' },
-      { key: 'btnFontSize', label: 'Font Size', type: 'number', min: 12, max: 20, suffix: 'px' },
-      { key: 'btnFontWeight', label: 'Font Weight', type: 'select', options: FONT_WEIGHT_OPTIONS },
-      { key: 'btnBorderWidth', label: 'Border Width', type: 'number', min: 0, max: 4, suffix: 'px' },
-      { key: 'btnBorderOpacity', label: 'Border Opacity', type: 'range', min: 0, max: 100, step: 5 },
-      { key: 'btnShadowOpacity', label: 'Shadow Opacity', type: 'range', min: 0, max: 1, step: 0.05 },
-      { key: 'btnShadowBlur', label: 'Shadow Blur', type: 'number', min: 0, max: 60, suffix: 'px' },
-      { key: 'btnShadowX', label: 'Shadow Offset X', type: 'number', min: -20, max: 20, suffix: 'px' },
-      { key: 'btnShadowY', label: 'Shadow Offset Y', type: 'number', min: -20, max: 40, suffix: 'px' },
-    ],
-  },
-  {
-    title: 'Navigation Pills',
-    subtitle: 'Sidebar and tab pill styling for default, hover, and active states.',
-    fields: [
-      { key: 'navGradientStart', label: 'Navbar Gradient Start', type: 'color' },
-      { key: 'navGradientEnd', label: 'Navbar Gradient End', type: 'color' },
-      {
-        key: 'navTransparency',
-        label: 'Navbar Transparency',
-        type: 'range',
-        min: 0,
-        max: 1,
-        step: 0.05,
-      },
-      { key: 'pillBg', label: 'Background', type: 'color' },
-      { key: 'pillText', label: 'Text', type: 'color' },
-      { key: 'pillActiveBg', label: 'Active Background', type: 'color' },
-      { key: 'pillActiveText', label: 'Active Text', type: 'color' },
-      { key: 'pillBorderColor', label: 'Border Color', type: 'color' },
-      { key: 'pillPaddingX', label: 'Padding X', type: 'number', min: 6, max: 32, suffix: 'px' },
-      { key: 'pillPaddingY', label: 'Padding Y', type: 'number', min: 4, max: 24, suffix: 'px' },
-      { key: 'pillFontSize', label: 'Font Size', type: 'number', min: 11, max: 18, suffix: 'px' },
-      { key: 'pillBorderWidth', label: 'Border Width', type: 'number', min: 0, max: 4, suffix: 'px' },
-      { key: 'pillBorderOpacity', label: 'Border Opacity', type: 'range', min: 0, max: 100, step: 5 },
-      { key: 'pillShadowOpacity', label: 'Shadow Opacity', type: 'range', min: 0, max: 1, step: 0.05 },
-      { key: 'pillShadowBlur', label: 'Shadow Blur', type: 'number', min: 0, max: 40, suffix: 'px' },
-      { key: 'pillShadowX', label: 'Shadow Offset X', type: 'number', min: -20, max: 20, suffix: 'px' },
-      { key: 'pillShadowY', label: 'Shadow Offset Y', type: 'number', min: -20, max: 20, suffix: 'px' },
-    ],
-  },
-  {
-    title: 'Home Actions',
-    subtitle:
-      'Theme the four main home buttons (icons stay untouched). Leave a field empty to keep the default tone.',
-    fields: HOME_ACTION_FIELDS,
-  },
-  {
-    title: 'Inputs',
-    subtitle: 'Search, answer, and tutor prompt field colors, dimensions, and shadow.',
-    fields: [
-      { key: 'inputBg', label: 'Background', type: 'color' },
-      { key: 'inputText', label: 'Text', type: 'color' },
-      { key: 'inputBorderColor', label: 'Border', type: 'color' },
-      { key: 'inputFocusBorder', label: 'Focus Ring', type: 'color' },
-      { key: 'inputPlaceholder', label: 'Placeholder', type: 'color' },
-      { key: 'inputHeight', label: 'Height', type: 'number', min: 36, max: 72, suffix: 'px' },
-      { key: 'inputFontSize', label: 'Font Size', type: 'number', min: 12, max: 20, suffix: 'px' },
-      { key: 'inputBorderWidth', label: 'Border Width', type: 'number', min: 0, max: 4, suffix: 'px' },
-      { key: 'inputBorderOpacity', label: 'Border Opacity', type: 'range', min: 0, max: 100, step: 5 },
-      { key: 'inputShadowOpacity', label: 'Shadow Opacity', type: 'range', min: 0, max: 1, step: 0.05 },
-      { key: 'inputShadowBlur', label: 'Shadow Blur', type: 'number', min: 0, max: 40, suffix: 'px' },
-      { key: 'inputShadowX', label: 'Shadow Offset X', type: 'number', min: -20, max: 20, suffix: 'px' },
-      { key: 'inputShadowY', label: 'Shadow Offset Y', type: 'number', min: -20, max: 20, suffix: 'px' },
-    ],
-  },
-  {
-    title: 'Cards and Panels',
-    subtitle: 'Card surface, border, shadow depth, and hover shadow for content panels.',
-    fields: [
-      { key: 'cardShadow', label: 'Resting Shadow', type: 'select', options: SHADOW_SIZE_OPTIONS },
-      { key: 'cardHoverShadow', label: 'Hover Shadow', type: 'select', options: SHADOW_SIZE_OPTIONS },
-      { key: 'cardBorderWidth', label: 'Card Border Width', type: 'number', min: 0, max: 4, suffix: 'px' },
-      { key: 'cardBorderOpacity', label: 'Card Border Opacity', type: 'range', min: 0, max: 100, step: 5 },
-      { key: 'cardShadowOpacity', label: 'Card Shadow Opacity', type: 'range', min: 0, max: 1, step: 0.05 },
-      { key: 'cardShadowBlur', label: 'Card Shadow Blur', type: 'number', min: 0, max: 80, suffix: 'px' },
-      { key: 'cardShadowX', label: 'Card Shadow X', type: 'number', min: -20, max: 20, suffix: 'px' },
-      { key: 'cardShadowY', label: 'Card Shadow Y', type: 'number', min: -20, max: 60, suffix: 'px' },
-      { key: 'containerBorderWidth', label: 'Container Border Width', type: 'number', min: 0, max: 4, suffix: 'px' },
-      { key: 'containerBorderOpacity', label: 'Container Border Opacity', type: 'range', min: 0, max: 100, step: 5 },
-      { key: 'containerShadowOpacity', label: 'Container Shadow Opacity', type: 'range', min: 0, max: 1, step: 0.05 },
-      { key: 'containerShadowBlur', label: 'Container Shadow Blur', type: 'number', min: 0, max: 80, suffix: 'px' },
-      { key: 'containerShadowX', label: 'Container Shadow X', type: 'number', min: -20, max: 20, suffix: 'px' },
-      { key: 'containerShadowY', label: 'Container Shadow Y', type: 'number', min: -20, max: 60, suffix: 'px' },
-    ],
-  },
-  {
-    title: 'Images and Media',
-    subtitle: 'Image border, shadow, and placeholder background.',
-    fields: [
-      { key: 'imageBorderColor', label: 'Border Color', type: 'color' },
-      { key: 'imageBorderWidth', label: 'Border Width', type: 'number', min: 0, max: 8, suffix: 'px' },
-      { key: 'imageBorderOpacity', label: 'Border Opacity', type: 'range', min: 0, max: 100, step: 5 },
-      { key: 'imageShadowOpacity', label: 'Shadow Opacity', type: 'range', min: 0, max: 1, step: 0.05 },
-      { key: 'imageShadowBlur', label: 'Shadow Blur', type: 'number', min: 0, max: 60, suffix: 'px' },
-      { key: 'imageShadowX', label: 'Shadow Offset X', type: 'number', min: -20, max: 20, suffix: 'px' },
-      { key: 'imageShadowY', label: 'Shadow Offset Y', type: 'number', min: -20, max: 40, suffix: 'px' },
-    ],
-  },
-  {
-    title: 'Badges',
-    subtitle: 'Label badges for notifications, scores, and status indicators.',
-    fields: [
-      { key: 'badgeDefaultBg', label: 'Default Background', type: 'color' },
-      { key: 'badgeDefaultText', label: 'Default Text', type: 'color' },
-      { key: 'badgeSaleBg', label: 'Highlight Background', type: 'color' },
-      { key: 'badgeSaleText', label: 'Highlight Text', type: 'color' },
-      { key: 'badgeFontSize', label: 'Font Size', type: 'number', min: 9, max: 14, suffix: 'px' },
-      { key: 'badgeRadius', label: 'Radius', type: 'number', min: 0, max: 999, suffix: 'px' },
-      { key: 'badgePaddingX', label: 'Padding X', type: 'number', min: 4, max: 20, suffix: 'px' },
-      { key: 'badgePaddingY', label: 'Padding Y', type: 'number', min: 1, max: 10, suffix: 'px' },
-    ],
-  },
-  // ── Typography & Layout ──────────────────────────────────────────────────────
-  {
-    title: 'Typography',
-    subtitle: 'Fonts, weights, text rhythm, and size scale.',
-    fields: [
-      { key: 'headingFont', label: 'Heading Font', type: 'select', options: FONT_OPTIONS },
-      { key: 'bodyFont', label: 'Body Font', type: 'select', options: FONT_OPTIONS },
-      { key: 'headingWeight', label: 'Heading Weight', type: 'select', options: FONT_WEIGHT_OPTIONS },
-      { key: 'bodyWeight', label: 'Body Weight', type: 'select', options: FONT_WEIGHT_OPTIONS },
-      { key: 'baseSize', label: 'Base Font Size', type: 'number', min: 14, max: 20, suffix: 'px' },
-      { key: 'lineHeight', label: 'Body Line Height', type: 'range', min: 1.2, max: 2, step: 0.05 },
-      { key: 'headingLineHeight', label: 'Heading Line Height', type: 'range', min: 1.0, max: 1.8, step: 0.05 },
-      {
-        key: 'headingSizeScale',
-        label: 'Heading Size Scale',
-        type: 'range',
-        min: 1.1,
-        max: 1.8,
-        step: 0.05,
-        helperText: 'Multiplier per heading level (h1→h6).',
-      },
-      {
-        key: 'bodySizeScale',
-        label: 'Body Size Scale',
-        type: 'range',
-        min: 0.85,
-        max: 1.2,
-        step: 0.05,
-        helperText: 'Global multiplier for body text sizes.',
-      },
-    ],
-  },
-  {
-    title: 'Layout',
-    subtitle: 'Page width, padding, margins, grid gutter, and section spacing.',
-    fields: [
-      { key: 'maxContentWidth', label: 'Max Page Width', type: 'range', min: 960, max: 1680, step: 10, suffix: 'px' },
-      { key: 'fullWidth', label: 'Full Width Layout', type: 'switch', helperText: 'Stretches content to the full viewport width.' },
-      { key: 'gridGutter', label: 'Grid Gutter', type: 'number', min: 8, max: 48, suffix: 'px' },
-      { key: 'sectionSpacing', label: 'Section Spacing', type: 'number', min: 16, max: 120, suffix: 'px' },
-      { key: 'containerPadding', label: 'Outer Container Padding', type: 'number', min: 0, max: 64, suffix: 'px' },
-      { key: 'pagePaddingTop', label: 'Page Padding Top', type: 'number', min: 0, max: 160, suffix: 'px' },
-      { key: 'pagePaddingRight', label: 'Page Padding Right', type: 'number', min: 0, max: 120, suffix: 'px' },
-      { key: 'pagePaddingBottom', label: 'Page Padding Bottom', type: 'number', min: 0, max: 200, suffix: 'px' },
-      { key: 'pagePaddingLeft', label: 'Page Padding Left', type: 'number', min: 0, max: 120, suffix: 'px' },
-      { key: 'pageMarginTop', label: 'Page Margin Top', type: 'number', min: 0, max: 120, suffix: 'px' },
-      { key: 'pageMarginRight', label: 'Page Margin Right', type: 'number', min: 0, max: 80, suffix: 'px' },
-      { key: 'pageMarginBottom', label: 'Page Margin Bottom', type: 'number', min: 0, max: 120, suffix: 'px' },
-      { key: 'pageMarginLeft', label: 'Page Margin Left', type: 'number', min: 0, max: 80, suffix: 'px' },
-    ],
-  },
-  // ── Shape ────────────────────────────────────────────────────────────────────
-  {
-    title: 'Shape and Radii',
-    subtitle: 'Border radii for panels, cards, navigation, buttons, inputs, images, and dropdowns.',
-    fields: [
-      { key: 'containerRadius', label: 'Panel Radius', type: 'number', min: 0, max: 48, suffix: 'px' },
-      { key: 'cardRadius', label: 'Card Radius', type: 'number', min: 0, max: 48, suffix: 'px' },
-      { key: 'containerPaddingInner', label: 'Panel Inner Padding', type: 'number', min: 8, max: 48, suffix: 'px' },
-      { key: 'pillRadius', label: 'Navigation Pill Radius', type: 'number', min: 0, max: 999, suffix: 'px' },
-      { key: 'btnRadius', label: 'Button Radius', type: 'number', min: 0, max: 999, suffix: 'px' },
-      { key: 'inputRadius', label: 'Input Radius', type: 'number', min: 0, max: 999, suffix: 'px' },
-      { key: 'imageRadius', label: 'Image Radius', type: 'number', min: 0, max: 48, suffix: 'px' },
-      { key: 'dropdownRadius', label: 'Dropdown Radius', type: 'number', min: 0, max: 32, suffix: 'px' },
-      { key: 'drawerRadius', label: 'Drawer Radius', type: 'number', min: 0, max: 32, suffix: 'px' },
-      { key: 'borderRadius', label: 'Global Border Radius', type: 'number', min: 0, max: 32, suffix: 'px', helperText: 'Fallback radius for components without a specific override.' },
-    ],
-  },
-  // ── Overlays ────────────────────────────────────────────────────────────────
-  {
-    title: 'Overlays, Drawers & Dropdowns',
-    subtitle: 'Sidebar drawer, dropdown menus, modal overlays, shadows, and position.',
-    fields: [
-      { key: 'dropdownBg', label: 'Dropdown Background', type: 'color' },
-      { key: 'dropdownBorder', label: 'Dropdown Border Color', type: 'color' },
-      { key: 'dropdownBorderWidth', label: 'Dropdown Border Width', type: 'number', min: 0, max: 4, suffix: 'px' },
-      { key: 'dropdownShadowOpacity', label: 'Dropdown Shadow Opacity', type: 'range', min: 0, max: 100, step: 5 },
-      { key: 'dropdownShadowBlur', label: 'Dropdown Shadow Blur', type: 'number', min: 0, max: 60, suffix: 'px' },
-      { key: 'dropdownShadowY', label: 'Dropdown Shadow Y', type: 'number', min: 0, max: 40, suffix: 'px' },
-      { key: 'drawerBg', label: 'Drawer Background', type: 'color' },
-      { key: 'drawerBorderColor', label: 'Drawer Border Color', type: 'color' },
-      { key: 'drawerBorderWidth', label: 'Drawer Border Width', type: 'number', min: 0, max: 4, suffix: 'px' },
-      { key: 'drawerOverlayColor', label: 'Drawer Overlay', type: 'color' },
-      { key: 'drawerWidth', label: 'Drawer Width', type: 'number', min: 240, max: 600, suffix: 'px' },
-      { key: 'drawerPosition', label: 'Drawer Position', type: 'select', options: DRAWER_POSITION_OPTIONS },
-      { key: 'drawerShadowOpacity', label: 'Drawer Shadow Opacity', type: 'range', min: 0, max: 1, step: 0.05 },
-      { key: 'drawerShadowBlur', label: 'Drawer Shadow Blur', type: 'number', min: 0, max: 60, suffix: 'px' },
-      { key: 'popupOverlayColor', label: 'Modal Overlay', type: 'color' },
-      { key: 'popupRadius', label: 'Popup Radius', type: 'number', min: 0, max: 32, suffix: 'px' },
-    ],
-  },
-  // ── Motion ──────────────────────────────────────────────────────────────────
-  {
-    title: 'Motion and Hover',
-    subtitle: 'Transition speed, easing, scroll reveal, and hover interaction style.',
-    fields: [
-      { key: 'enableAnimations', label: 'Enable Animations', type: 'switch', helperText: 'Disabling removes all CSS transitions and motion effects.' },
-      { key: 'animationDuration', label: 'Transition Duration', type: 'range', min: 80, max: 600, step: 20, suffix: 'ms' },
-      { key: 'animationEasing', label: 'Easing Curve', type: 'select', options: ANIMATION_EASING_OPTIONS },
-      { key: 'scrollReveal', label: 'Scroll Reveal', type: 'switch', helperText: 'Animate elements into view as the user scrolls down.' },
-      { key: 'hoverEffect', label: 'Hover Effect', type: 'select', options: HOVER_EFFECT_OPTIONS },
-      { key: 'hoverScale', label: 'Hover Scale', type: 'range', min: 1.0, max: 1.08, step: 0.005, helperText: 'Scale factor applied on hover (only when Hover Effect = Scale up).' },
-    ],
-  },
-  // ── Content cards ────────────────────────────────────────────────────────────
-  {
-    title: 'Card Layout',
-    subtitle: 'Content card style presets, image ratio, text alignment, and visibility toggles.',
-    fields: [
-      {
-        key: 'cardStyle',
-        label: 'Card Style',
-        type: 'select',
-        options: [
-          { value: 'standard', label: 'Standard' },
-          { value: 'clean', label: 'Clean (no border)' },
-          { value: 'elevated', label: 'Elevated (shadow)' },
-          { value: 'outlined', label: 'Outlined' },
-          { value: 'ghost', label: 'Ghost (transparent)' },
-        ],
-      },
-      {
-        key: 'cardTextAlignment',
-        label: 'Text Alignment',
-        type: 'select',
-        options: [
-          { value: 'left', label: 'Left' },
-          { value: 'center', label: 'Center' },
-          { value: 'right', label: 'Right' },
-        ],
-      },
-      {
-        key: 'cardImageRatio',
-        label: 'Image Ratio',
-        type: 'select',
-        options: [
-          { value: '1:1', label: '1:1 Square' },
-          { value: '4:3', label: '4:3 Classic' },
-          { value: '16:9', label: '16:9 Wide' },
-          { value: '3:4', label: '3:4 Portrait' },
-          { value: '2:3', label: '2:3 Tall portrait' },
-        ],
-      },
-      { key: 'cardImagePadding', label: 'Image Padding', type: 'number', min: 0, max: 32, suffix: 'px' },
-      { key: 'showBadge', label: 'Show Badges', type: 'switch', helperText: 'Display status/score badges on cards.' },
-      { key: 'showQuickAdd', label: 'Show Quick-Add Button', type: 'switch', helperText: 'Show a quick-enroll or quick-add button on hover.' },
-    ],
-  },
-  {
-    title: 'Collection Cards',
-    subtitle: 'Appearance of collection/category grid tiles.',
-    fields: [
-      {
-        key: 'collectionStyle',
-        label: 'Collection Style',
-        type: 'select',
-        options: [
-          { value: 'standard', label: 'Standard' },
-          { value: 'overlay', label: 'Overlay text' },
-          { value: 'minimal', label: 'Minimal' },
-        ],
-      },
-      {
-        key: 'collectionRatio',
-        label: 'Image Ratio',
-        type: 'select',
-        options: [
-          { value: '1:1', label: '1:1 Square' },
-          { value: '4:3', label: '4:3 Classic' },
-          { value: '16:9', label: '16:9 Wide' },
-          { value: '3:4', label: '3:4 Portrait' },
-        ],
-      },
-      {
-        key: 'collectionTextAlign',
-        label: 'Text Alignment',
-        type: 'select',
-        options: [
-          { value: 'left', label: 'Left' },
-          { value: 'center', label: 'Center' },
-          { value: 'right', label: 'Right' },
-        ],
-      },
-      { key: 'collectionImagePadding', label: 'Image Padding', type: 'number', min: 0, max: 32, suffix: 'px' },
-      { key: 'collectionOverlay', label: 'Image Overlay', type: 'switch', helperText: 'Apply a colour overlay on top of collection images.' },
-      { key: 'collectionOverlayColor', label: 'Overlay Colour', type: 'color' },
-      { key: 'collectionRadius', label: 'Corner Radius', type: 'number', min: 0, max: 48, suffix: 'px' },
-      { key: 'collectionBorderWidth', label: 'Border Width', type: 'number', min: 0, max: 4, suffix: 'px' },
-      { key: 'collectionShadowOpacity', label: 'Shadow Opacity', type: 'range', min: 0, max: 1, step: 0.05 },
-      { key: 'collectionShadowBlur', label: 'Shadow Blur', type: 'number', min: 0, max: 60, suffix: 'px' },
-    ],
-  },
-  {
-    title: 'Blog / News Cards',
-    subtitle: 'Style settings for blog posts and news article cards.',
-    fields: [
-      {
-        key: 'blogStyle',
-        label: 'Card Style',
-        type: 'select',
-        options: [
-          { value: 'standard', label: 'Standard' },
-          { value: 'horizontal', label: 'Horizontal' },
-          { value: 'minimal', label: 'Minimal' },
-        ],
-      },
-      {
-        key: 'blogRatio',
-        label: 'Image Ratio',
-        type: 'select',
-        options: [
-          { value: '16:9', label: '16:9 Wide' },
-          { value: '4:3', label: '4:3 Classic' },
-          { value: '1:1', label: '1:1 Square' },
-          { value: '3:2', label: '3:2 Photo' },
-        ],
-      },
-      {
-        key: 'blogTextAlignment',
-        label: 'Text Alignment',
-        type: 'select',
-        options: [
-          { value: 'left', label: 'Left' },
-          { value: 'center', label: 'Center' },
-        ],
-      },
-      { key: 'blogRadius', label: 'Corner Radius', type: 'number', min: 0, max: 48, suffix: 'px' },
-      { key: 'blogShowDate', label: 'Show Date', type: 'switch' },
-      { key: 'blogShowExcerpt', label: 'Show Excerpt', type: 'switch' },
-      { key: 'blogExcerptLines', label: 'Excerpt Lines', type: 'number', min: 1, max: 6 },
-      { key: 'blogImagePadding', label: 'Image Padding', type: 'number', min: 0, max: 32, suffix: 'px' },
-      { key: 'blogBorderWidth', label: 'Border Width', type: 'number', min: 0, max: 4, suffix: 'px' },
-      { key: 'blogShadowOpacity', label: 'Shadow Opacity', type: 'range', min: 0, max: 1, step: 0.05 },
-      { key: 'blogShadowBlur', label: 'Shadow Blur', type: 'number', min: 0, max: 60, suffix: 'px' },
-    ],
-  },
-  // ── Media ────────────────────────────────────────────────────────────────────
-  {
-    title: 'Video',
-    subtitle: 'Default aspect ratio for embedded video players.',
-    fields: [
-      {
-        key: 'videoRatio',
-        label: 'Video Aspect Ratio',
-        type: 'select',
-        options: [
-          { value: '16:9', label: '16:9 Widescreen' },
-          { value: '4:3', label: '4:3 Classic' },
-          { value: '1:1', label: '1:1 Square' },
-          { value: '9:16', label: '9:16 Vertical (mobile)' },
-          { value: '21:9', label: '21:9 Cinematic' },
-        ],
-      },
-    ],
-  },
-  // ── Search ───────────────────────────────────────────────────────────────────
-  {
-    title: 'Search',
-    subtitle: 'Search input behaviour — placeholder text, trigger mode, and result limits.',
-    fields: [
-      { key: 'searchPlaceholder', label: 'Placeholder Text', type: 'text', placeholder: 'Search...' },
-      {
-        key: 'searchType',
-        label: 'Trigger Mode',
-        type: 'select',
-        options: [
-          { value: 'instant', label: 'Instant (as you type)' },
-          { value: 'submit', label: 'On submit' },
-        ],
-      },
-      { key: 'searchMinChars', label: 'Min Characters', type: 'number', min: 1, max: 5, helperText: 'Minimum characters before search fires.' },
-      { key: 'searchMaxResults', label: 'Max Results', type: 'number', min: 3, max: 20 },
-      { key: 'searchShowSuggestions', label: 'Show Suggestions', type: 'switch' },
-      { key: 'searchShowVendor', label: 'Show Author / Vendor', type: 'switch' },
-      { key: 'searchShowPrice', label: 'Show Price', type: 'switch' },
-    ],
-  },
-  // ── Brand ────────────────────────────────────────────────────────────────────
-  {
-    title: 'Brand Identity',
-    subtitle: 'Brand name and tagline displayed in the storefront shell.',
-    fields: [
-      { key: 'brandName', label: 'Brand Name', type: 'text', placeholder: 'Kangur' },
-      { key: 'brandTagline', label: 'Tagline', type: 'text', placeholder: 'Learn smarter.' },
-      { key: 'brandEmail', label: 'Contact Email', type: 'email', placeholder: 'hello@kangur.app' },
-      { key: 'brandFooterHeadline', label: 'Footer Headline', type: 'text' },
-      { key: 'brandFooterDescription', label: 'Footer Description', type: 'textarea', placeholder: 'Short footer blurb shown to learners.' },
-    ],
-  },
-  // ── Custom ──────────────────────────────────────────────────────────────────
-  {
-    title: 'Custom CSS',
-    subtitle: 'Inject scoped CSS that applies only within the Kangur storefront shell.',
-    fields: [
-      {
-        key: 'customCss',
-        label: 'Custom CSS',
-        type: 'textarea',
-        placeholder: '/* e.g. .kangur-page { ... } */',
-        helperText: 'Use standard CSS selectors. Changes apply after Save.',
-      },
-    ],
-  },
-];
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const BUILTIN_DAILY_ID = '__daily__';
-const BUILTIN_DAWN_ID = '__dawn__';
-const BUILTIN_SUNSET_ID = '__sunset__';
-const BUILTIN_NIGHTLY_ID = '__nightly__';
-const FACTORY_DAILY_ID = '__factory_daily__';
-const FACTORY_DAWN_ID = '__factory_dawn__';
-const FACTORY_SUNSET_ID = '__factory_sunset__';
-const FACTORY_NIGHTLY_ID = '__factory_nightly__';
-
-const SECTION_CARD_CLASS = 'rounded-2xl border-border/60 bg-card/40 shadow-sm';
-
-type ThemeSelectionId = string; // '__daily__' | '__nightly__' | '__factory_*' | catalog-entry-id
-
-// ─── Slot assignment tracking ────────────────────────────────────────────────
-// Stores which named catalog theme is currently assigned to each slot.
-// Null / missing means the slot is using the factory/builtin settings.
-
-const KANGUR_SLOT_ASSIGNMENTS_KEY = 'kangur_cms_slot_assignments_v1';
-
-type SlotAssignment = { id: string; name: string };
-type ThemeSlotKey = 'daily' | 'dawn' | 'sunset' | 'nightly';
-type SlotAssignments = Partial<Record<ThemeSlotKey, SlotAssignment | null>>;
-
-const parseSlotAssignments = (raw: string | null | undefined): SlotAssignments => {
-  if (!raw) return {};
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      return parsed as SlotAssignments;
-    }
-  } catch {
-    // ignore malformed
-  }
-  return {};
-};
-
-// ─── Live preview panel ───────────────────────────────────────────────────────
-
-type PreviewMode = 'default' | 'dawn' | 'sunset' | 'dark';
-
-type PreviewTarget = 'current' | 'daily' | 'dawn' | 'sunset' | 'nightly';
-
-const PREVIEW_TARGET_LABELS: Record<PreviewTarget, string> = {
-  current: 'Current',
-  daily: 'Daily',
-  dawn: 'Dawn',
-  sunset: 'Sunset',
-  nightly: 'Nightly',
-};
-
-const SLOT_ORDER: ThemeSlotKey[] = ['daily', 'dawn', 'sunset', 'nightly'];
-
-const SLOT_CONFIG: Record<
-  ThemeSlotKey,
-  {
-    label: string;
-    mode: PreviewMode;
-    builtinId: ThemeSelectionId;
-    factoryId: ThemeSelectionId;
-    settingsKey: string;
-    defaultTheme: ThemeSettings;
-    factoryTheme: ThemeSettings;
-    assignButtonLabel: string;
-    assignToast: string;
-    saveToast: string;
-    builtinInfo: string;
-  }
-> = {
-  daily: {
-    label: 'Dzienny',
-    mode: 'default',
-    builtinId: BUILTIN_DAILY_ID,
-    factoryId: FACTORY_DAILY_ID,
-    settingsKey: KANGUR_DAILY_THEME_SETTINGS_KEY,
-    defaultTheme: KANGUR_DEFAULT_DAILY_THEME,
-    factoryTheme: KANGUR_FACTORY_DAILY_THEME,
-    assignButtonLabel: 'Ustaw dzienny',
-    assignToast: 'Motyw ustawiony jako dzienny.',
-    saveToast: 'Motyw dzienny zapisany.',
-    builtinInfo:
-      'Edytujesz motyw dzienny — jest on aktywny dla użytkowników w trybie dziennym. Kliknij „Zapisz motyw" aby zapisać zmiany.',
-  },
-  dawn: {
-    label: 'Świt',
-    mode: 'dawn',
-    builtinId: BUILTIN_DAWN_ID,
-    factoryId: FACTORY_DAWN_ID,
-    settingsKey: KANGUR_DAWN_THEME_SETTINGS_KEY,
-    defaultTheme: KANGUR_DEFAULT_DAWN_THEME,
-    factoryTheme: KANGUR_FACTORY_DAWN_THEME,
-    assignButtonLabel: 'Ustaw świt',
-    assignToast: 'Motyw ustawiony jako świt.',
-    saveToast: 'Motyw świtu zapisany.',
-    builtinInfo:
-      'Edytujesz motyw świtu — jest on aktywny dla użytkowników w trybie świtu. Kliknij „Zapisz motyw" aby zapisać zmiany.',
-  },
-  sunset: {
-    label: 'Zachód',
-    mode: 'sunset',
-    builtinId: BUILTIN_SUNSET_ID,
-    factoryId: FACTORY_SUNSET_ID,
-    settingsKey: KANGUR_SUNSET_THEME_SETTINGS_KEY,
-    defaultTheme: KANGUR_DEFAULT_SUNSET_THEME,
-    factoryTheme: KANGUR_FACTORY_SUNSET_THEME,
-    assignButtonLabel: 'Ustaw zachód',
-    assignToast: 'Motyw ustawiony jako zachód.',
-    saveToast: 'Motyw zachodu zapisany.',
-    builtinInfo:
-      'Edytujesz motyw zachodu — jest on aktywny dla użytkowników w trybie zachodu. Kliknij „Zapisz motyw" aby zapisać zmiany.',
-  },
-  nightly: {
-    label: 'Nocny',
-    mode: 'dark',
-    builtinId: BUILTIN_NIGHTLY_ID,
-    factoryId: FACTORY_NIGHTLY_ID,
-    settingsKey: KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
-    defaultTheme: KANGUR_DEFAULT_THEME,
-    factoryTheme: KANGUR_FACTORY_NIGHTLY_THEME,
-    assignButtonLabel: 'Ustaw nocny',
-    assignToast: 'Motyw ustawiony jako nocny.',
-    saveToast: 'Motyw nocny zapisany.',
-    builtinInfo:
-      'Edytujesz motyw nocny — jest on aktywny dla użytkowników w trybie nocnym. Kliknij „Zapisz motyw" aby zapisać zmiany.',
-  },
-};
-
-const PREVIEW_TARGET_ORDER: PreviewTarget[] = ['current', ...SLOT_ORDER];
-
-function KangurThemePreviewPanel({
-  draft,
-  selectedId,
-  slotAssignments,
-  slotThemes,
-}: {
-  draft: ThemeSettings;
-  selectedId: ThemeSelectionId;
-  slotAssignments: SlotAssignments;
-  slotThemes: Record<ThemeSlotKey, ThemeSettings>;
-}): React.JSX.Element {
-  const [previewTarget, setPreviewTarget] = useState<PreviewTarget>('current');
-  const previewSelection = useMemo(() => {
-    if (previewTarget === 'current') {
-      return {
-        theme: draft,
-        mode: resolvePreviewModeForSelection(selectedId, slotAssignments),
-      };
-    }
-    return {
-      theme: slotThemes[previewTarget],
-      mode: SLOT_CONFIG[previewTarget].mode,
-    };
-  }, [draft, previewTarget, selectedId, slotAssignments, slotThemes]);
-  const appearance = useMemo(
-    () => resolveKangurStorefrontAppearance(previewSelection.mode, previewSelection.theme),
-    [previewSelection.mode, previewSelection.theme]
-  );
-  const previewTheme = previewSelection.theme;
-
-  const sceneStyle: React.CSSProperties = {
-    ...(appearance.vars as React.CSSProperties),
-    background: appearance.background,
-  };
-
-  const navStyle: React.CSSProperties = {
-    background: 'var(--kangur-nav-group-background)',
-    border: '1px solid var(--kangur-nav-group-border)',
-    borderRadius: 'var(--kangur-nav-group-radius)',
-    padding: '6px 10px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
-  };
-
-  const pillBase: React.CSSProperties = {
-    borderRadius: 'var(--kangur-nav-item-radius)',
-    paddingTop: 'var(--kangur-pill-padding-y)',
-    paddingBottom: 'var(--kangur-pill-padding-y)',
-    paddingLeft: 'var(--kangur-pill-padding-x)',
-    paddingRight: 'var(--kangur-pill-padding-x)',
-    fontSize: 'var(--kangur-pill-font-size)',
-    cursor: 'default',
-    whiteSpace: 'nowrap' as const,
-  };
-
-  const pillActive: React.CSSProperties = {
-    ...pillBase,
-    background: 'var(--kangur-nav-item-active-background)',
-    color: 'var(--kangur-nav-item-active-text)',
-  };
-
-  const pillInactive: React.CSSProperties = {
-    ...pillBase,
-    background: 'transparent',
-    color: 'var(--kangur-nav-item-text)',
-  };
-
-  const cardStyle: React.CSSProperties = {
-    background: 'var(--kangur-soft-card-background)',
-    border: '1px solid var(--kangur-soft-card-border)',
-    borderRadius: 'var(--kangur-card-radius)',
-    padding: 'var(--kangur-card-padding-md)',
-    boxShadow: 'var(--kangur-soft-card-shadow)',
-  };
-
-  const btnPrimary: React.CSSProperties = {
-    background: 'var(--kangur-button-primary-background)',
-    color: previewTheme.btnPrimaryText,
-    borderRadius: 'var(--kangur-button-radius)',
-    paddingTop: 'var(--kangur-button-padding-y)',
-    paddingBottom: 'var(--kangur-button-padding-y)',
-    paddingLeft: 'var(--kangur-button-padding-x)',
-    paddingRight: 'var(--kangur-button-padding-x)',
-    fontSize: 'var(--kangur-button-font-size)',
-    border: 'none',
-    cursor: 'default',
-    display: 'inline-block',
-    whiteSpace: 'nowrap' as const,
-  };
-
-  const btnSecondary: React.CSSProperties = {
-    background: 'var(--kangur-button-secondary-background)',
-    color: 'var(--kangur-button-secondary-text)',
-    borderRadius: 'var(--kangur-button-radius)',
-    paddingTop: 'var(--kangur-button-padding-y)',
-    paddingBottom: 'var(--kangur-button-padding-y)',
-    paddingLeft: 'var(--kangur-button-padding-x)',
-    paddingRight: 'var(--kangur-button-padding-x)',
-    fontSize: 'var(--kangur-button-font-size)',
-    border: 'none',
-    cursor: 'default',
-    display: 'inline-block',
-    whiteSpace: 'nowrap' as const,
-  };
-
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    background: 'var(--kangur-text-field-background)',
-    border: '1px solid var(--kangur-text-field-border)',
-    borderRadius: 'var(--kangur-input-radius)',
-    height: 'var(--kangur-input-height)',
-    fontSize: 'var(--kangur-input-font-size)',
-    color: 'var(--kangur-text-field-placeholder)',
-    padding: '0 16px',
-    outline: 'none',
-    boxSizing: 'border-box' as const,
-  };
-
-  return (
-    <div className='overflow-hidden rounded-2xl border border-border/60 shadow-md'>
-      {/* mode toggle header */}
-      <div className='flex items-center justify-between gap-2 border-b border-border/60 bg-muted/40 px-3 py-2'>
-        <div className='flex rounded-full border border-border/60 bg-background/60 p-0.5'>
-          {PREVIEW_TARGET_ORDER.map((target) => (
-            <button
-              key={target}
-              type='button'
-              onClick={() => setPreviewTarget(target)}
-              className={[
-                'rounded-full px-3 py-0.5 text-xs font-medium transition-colors',
-                previewTarget === target
-                  ? 'bg-foreground text-background'
-                  : 'text-muted-foreground hover:text-foreground',
-              ].join(' ')}
-            >
-              {PREVIEW_TARGET_LABELS[target]}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* preview scene */}
-      <div style={sceneStyle} className='space-y-3 p-4' role='img' aria-label='Theme preview'>
-        {/* nav bar */}
-        <div style={navStyle}>
-          <span
-            style={{
-              color: 'var(--kangur-page-text)',
-              fontWeight: 700,
-              fontSize: 14,
-              marginRight: 6,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Kangur
-          </span>
-          {['Kursy', 'Testy', 'Wyniki'].map((label, i) => (
-            <span key={label} style={i === 0 ? pillActive : pillInactive}>
-              {label}
-            </span>
-          ))}
-        </div>
-
-        {/* card */}
-        <div style={cardStyle}>
-          <h3
-            style={{
-              color: 'var(--kangur-soft-card-text)',
-              fontWeight: 600,
-              fontSize: 15,
-              marginBottom: 6,
-            }}
-          >
-            Matematyka — klasa 4
-          </h3>
-          <p
-            style={{
-              color: 'var(--kangur-page-muted-text)',
-              fontSize: 13,
-              marginBottom: 14,
-              lineHeight: 1.5,
-            }}
-          >
-            Ułamki i działania na ułamkach.
-          </p>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <span style={btnPrimary}>Zacznij naukę</span>
-            <span style={btnSecondary}>Wyniki</span>
-          </div>
-        </div>
-
-        {/* input */}
-        <input
-          readOnly
-          tabIndex={-1}
-          placeholder='Wyszukaj ćwiczenie…'
-          style={inputStyle}
-          aria-label='preview input'
-        />
-
-        {/* second card – lighter content card */}
-        <div
-          style={{
-            ...cardStyle,
-            padding: '10px 14px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-          }}
-        >
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: '50%',
-              background: 'var(--kangur-button-primary-background)',
-              flexShrink: 0,
-            }}
-          />
-          <div>
-            <p
-              style={{
-                color: 'var(--kangur-soft-card-text)',
-                fontSize: 13,
-                fontWeight: 600,
-                margin: 0,
-              }}
-            >
-              Anna Kowalska
-            </p>
-            <p
-              style={{
-                color: 'var(--kangur-page-muted-text)',
-                fontSize: 11,
-                margin: 0,
-              }}
-            >
-              Postęp: 74%
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-const resolveDefaultForBuiltin = (id: ThemeSelectionId): ThemeSettings => {
-  switch (id) {
-    case BUILTIN_DAWN_ID:
-      return KANGUR_DEFAULT_DAWN_THEME;
-    case BUILTIN_SUNSET_ID:
-      return KANGUR_DEFAULT_SUNSET_THEME;
-    case BUILTIN_NIGHTLY_ID:
-      return KANGUR_DEFAULT_THEME;
-    case BUILTIN_DAILY_ID:
-    default:
-      return KANGUR_DEFAULT_DAILY_THEME;
-  }
-};
-
-const resolveFactoryTheme = (id: ThemeSelectionId): ThemeSettings => {
-  switch (id) {
-    case FACTORY_DAWN_ID:
-      return KANGUR_FACTORY_DAWN_THEME;
-    case FACTORY_SUNSET_ID:
-      return KANGUR_FACTORY_SUNSET_THEME;
-    case FACTORY_NIGHTLY_ID:
-      return KANGUR_FACTORY_NIGHTLY_THEME;
-    case FACTORY_DAILY_ID:
-    default:
-      return KANGUR_FACTORY_DAILY_THEME;
-  }
-};
-
-const resolvePreviewModeForSelection = (
-  id: ThemeSelectionId,
-  assignments?: SlotAssignments
-): PreviewMode => {
-  const directSlot = SLOT_ORDER.find(
-    (slot) =>
-      SLOT_CONFIG[slot].builtinId === id || SLOT_CONFIG[slot].factoryId === id
-  );
-  if (directSlot) {
-    return SLOT_CONFIG[directSlot].mode;
-  }
-  const assignedSlot = assignments
-    ? SLOT_ORDER.find((slot) => assignments[slot]?.id === id)
-    : null;
-  return assignedSlot ? SLOT_CONFIG[assignedSlot].mode : 'default';
-};
-
-// ─── Slot status badge ────────────────────────────────────────────────────────
+import {
+  AppearancePageProvider,
+  useAppearancePage,
+} from './appearance/AppearancePage.context';
+import {
+  BUILTIN_DAILY_ID,
+  BUILTIN_DAWN_ID,
+  BUILTIN_SUNSET_ID,
+  BUILTIN_NIGHTLY_ID,
+  FACTORY_DAILY_ID,
+  FACTORY_DAWN_ID,
+  FACTORY_SUNSET_ID,
+  FACTORY_NIGHTLY_ID,
+  SLOT_CONFIG,
+  SLOT_ORDER,
+  THEME_SECTIONS,
+} from './appearance/AppearancePage.constants';
+import { ThemeCatalogModal } from './appearance/ThemeCatalogModal';
+import { AppearanceModeSelector } from './appearance/AppearanceModeSelector';
+import { ThemeImportExport } from './appearance/ThemeImportExport';
+import { ThemePreviewPanel } from './appearance/ThemePreviewPanel';
 
 function SlotStatusBadge({
   slotLabel,
@@ -1128,222 +66,21 @@ function SlotStatusBadge({
   );
 }
 
-// ─── Create Theme Dialog ─────────────────────────────────────────────────────
-
-type StartFrom = 'daily' | 'dawn' | 'sunset' | 'nightly' | 'current';
-
-const START_FROM_OPTIONS: Array<{ value: StartFrom; label: string }> = [
-  { value: 'daily', label: 'Daily factory default' },
-  { value: 'current', label: 'Current draft settings' },
-  { value: 'dawn', label: 'Dawn factory default' },
-  { value: 'sunset', label: 'Sunset factory default' },
-  { value: 'nightly', label: 'Nightly factory default' },
-];
-
-function CreateThemeDialog({
-  open,
-  currentDraft,
-  isSaving,
-  onClose,
-  onCreate,
-}: {
-  open: boolean;
-  currentDraft: ThemeSettings;
-  isSaving: boolean;
-  onClose: () => void;
-  onCreate: (name: string, baseSettings: ThemeSettings) => void;
-}): React.JSX.Element {
-  const [name, setName] = useState('');
-  const [startFrom, setStartFrom] = useState<StartFrom>('daily');
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (open) {
-      setName('');
-      setStartFrom('daily');
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
-  }, [open]);
-
-  const handleCreate = (): void => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    const base =
-      startFrom === 'daily'
-        ? KANGUR_DEFAULT_DAILY_THEME
-        : startFrom === 'dawn'
-          ? KANGUR_DEFAULT_DAWN_THEME
-          : startFrom === 'sunset'
-            ? KANGUR_DEFAULT_SUNSET_THEME
-            : startFrom === 'nightly'
-              ? KANGUR_DEFAULT_THEME
-              : currentDraft;
-    onCreate(trimmed, base);
-  };
-
-  return (
-    <FormModal
-      open={open}
-      onClose={onClose}
-      title='New theme'
-      subtitle='Create a named theme you can apply as daily, dawn, sunset, or nightly.'
-      onSave={handleCreate}
-      isSaving={isSaving}
-      isSaveDisabled={!name.trim()}
-      saveText='Create theme'
-      size='sm'
-    >
-      <div className='space-y-4'>
-        <FormField label='Theme name' description='A short, recognisable label for this theme.'>
-          <Input
-            ref={inputRef}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder='e.g. Summer campaign'
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && name.trim()) handleCreate();
-            }}
-          />
-        </FormField>
-        <FormField label='Start from' description='Choose which base theme to copy settings from.'>
-          <SelectSimple
-            value={startFrom}
-            onValueChange={(v) => setStartFrom(v as StartFrom)}
-            options={START_FROM_OPTIONS}
-            ariaLabel='Start theme from'
-            variant='subtle'
-          />
-        </FormField>
-      </div>
-    </FormModal>
-  );
-}
-
-// ─── Main page ───────────────────────────────────────────────────────────────
-
-export function AdminKangurAppearancePage(): React.JSX.Element {
-  const settingsStore = useSettingsStore();
-  const updateSetting = useUpdateSetting();
-  const { toast } = useToast();
-  const settingsReady = !settingsStore.isLoading && !settingsStore.error;
-  const [catalogOverrideRaw, setCatalogOverrideRaw] = useState<string | null>(null);
-  const catalogFreshFetchedRef = useRef(false);
-
-  // ── catalog ──────────────────────────────────────────────────────────────
-  const catalogRaw = catalogOverrideRaw ?? settingsStore.get(KANGUR_THEME_CATALOG_KEY);
-  const catalog = useMemo(
-    () => parseKangurThemeCatalog(catalogRaw),
-    [catalogRaw]
-  );
-
-  useEffect(() => {
-    if (!settingsReady || catalogFreshFetchedRef.current) return;
-    catalogFreshFetchedRef.current = true;
-    void fetchSettingValue({
-      key: KANGUR_THEME_CATALOG_KEY,
-      bypassCache: true,
-      scope: 'light',
-    })
-      .then((raw) => {
-        if (raw && raw !== catalogRaw) {
-          setCatalogOverrideRaw(raw);
-        }
-      })
-      .catch(() => {
-        // Ignore refresh failures; fall back to cached settings store data.
-      });
-  }, [catalogRaw, settingsReady]);
-
-  // ── slot assignments ──────────────────────────────────────────────────────
-  const slotAssignments = useMemo(
-    () => parseSlotAssignments(settingsStore.get(KANGUR_SLOT_ASSIGNMENTS_KEY)),
-    [settingsStore.get(KANGUR_SLOT_ASSIGNMENTS_KEY)]
-  );
-
-  const dailySlotLabel = useMemo(() => {
-    const raw = settingsStore.get(KANGUR_DAILY_THEME_SETTINGS_KEY);
-    if (!raw?.trim() || !slotAssignments.daily) return 'Fabryczny';
-    return slotAssignments.daily.name;
-  }, [slotAssignments, settingsStore.get(KANGUR_DAILY_THEME_SETTINGS_KEY)]);
-
-  const dawnSlotLabel = useMemo(() => {
-    const raw = settingsStore.get(KANGUR_DAWN_THEME_SETTINGS_KEY);
-    if (!raw?.trim() || !slotAssignments.dawn) return 'Fabryczny';
-    return slotAssignments.dawn.name;
-  }, [slotAssignments, settingsStore.get(KANGUR_DAWN_THEME_SETTINGS_KEY)]);
-
-  const sunsetSlotLabel = useMemo(() => {
-    const raw = settingsStore.get(KANGUR_SUNSET_THEME_SETTINGS_KEY);
-    if (!raw?.trim() || !slotAssignments.sunset) return 'Fabryczny';
-    return slotAssignments.sunset.name;
-  }, [slotAssignments, settingsStore.get(KANGUR_SUNSET_THEME_SETTINGS_KEY)]);
-
-  const nightlySlotLabel = useMemo(() => {
-    const raw = settingsStore.get(KANGUR_NIGHTLY_THEME_SETTINGS_KEY);
-    if (!raw?.trim() || !slotAssignments.nightly) return 'Fabryczny';
-    return slotAssignments.nightly.name;
-  }, [slotAssignments, settingsStore.get(KANGUR_NIGHTLY_THEME_SETTINGS_KEY)]);
-
-  const slotLabelsByKey = useMemo(
-    () => ({
-      daily: dailySlotLabel,
-      dawn: dawnSlotLabel,
-      sunset: sunsetSlotLabel,
-      nightly: nightlySlotLabel,
-    }),
-    [dailySlotLabel, dawnSlotLabel, sunsetSlotLabel, nightlySlotLabel]
-  );
-
-  // ── default appearance mode ──────────────────────────────────────────────
-  const storedDefaultMode = useMemo(
-    () =>
-      parseKangurStorefrontAppearanceMode(
-        settingsStore.get(KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY)
-      ),
-    [settingsStore.get(KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY)]
-  );
-  const [defaultModeDraft, setDefaultModeDraft] =
-    useState<KangurStorefrontAppearanceMode>(storedDefaultMode);
-  const [isDefaultModeSaving, setIsDefaultModeSaving] = useState(false);
-
-  useEffect(() => {
-    setDefaultModeDraft(storedDefaultMode);
-  }, [storedDefaultMode]);
-
-  const handleDefaultModeChange = useCallback(
-    async (next: KangurStorefrontAppearanceMode): Promise<void> => {
-      if (next === defaultModeDraft) return;
-      setDefaultModeDraft(next);
-      setIsDefaultModeSaving(true);
-      try {
-        await updateSetting.mutateAsync({
-          key: KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
-          value: next,
-        });
-        toast('Domyślny motyw startowy zaktualizowany.', { variant: 'success' });
-      } catch (error) {
-        toast(
-          error instanceof Error ? error.message : 'Nie udało się zapisać domyślnego motywu.',
-          { variant: 'error' }
-        );
-        setDefaultModeDraft(storedDefaultMode);
-      } finally {
-        setIsDefaultModeSaving(false);
-      }
-    },
-    [defaultModeDraft, storedDefaultMode, toast, updateSetting]
-  );
-
-  // ── selected theme ────────────────────────────────────────────────────────
-  const [selectedId, setSelectedId] = useState<ThemeSelectionId>(BUILTIN_DAILY_ID);
-  const resolvedInitialSelection = useMemo(() => {
-    for (const slot of SLOT_ORDER) {
-      const assignedId = slotAssignments[slot]?.id;
-      if (assignedId) return assignedId;
-    }
-    return BUILTIN_DAILY_ID;
-  }, [slotAssignments]);
-  const initialSelectionSyncedRef = useRef(false);
+function AdminKangurAppearancePageContent(): React.JSX.Element {
+  const {
+    catalog,
+    draft,
+    isDirty,
+    isSaving,
+    selectedId,
+    slotAssignments,
+    slotLabelsByKey,
+    slotThemes,
+    handleSave,
+    handleSelect,
+    handleResetToFactory,
+    setDraft,
+  } = useAppearancePage();
 
   const isFactory = [
     FACTORY_DAILY_ID,
@@ -1357,307 +94,7 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
     BUILTIN_SUNSET_ID,
     BUILTIN_NIGHTLY_ID,
   ].includes(selectedId);
-  const builtinSlot =
-    SLOT_ORDER.find((slot) => SLOT_CONFIG[slot].builtinId === selectedId) ?? null;
 
-  const loadTheme = useCallback(
-    (id: ThemeSelectionId): ThemeSettings => {
-      if (
-        id === FACTORY_DAILY_ID ||
-        id === FACTORY_DAWN_ID ||
-        id === FACTORY_SUNSET_ID ||
-        id === FACTORY_NIGHTLY_ID
-      ) {
-        return resolveFactoryTheme(id);
-      }
-      if (id === BUILTIN_DAILY_ID) {
-        return (
-          parseKangurThemeSettings(settingsStore.get(KANGUR_DAILY_THEME_SETTINGS_KEY)) ??
-          KANGUR_DEFAULT_DAILY_THEME
-        );
-      }
-      if (id === BUILTIN_DAWN_ID) {
-        return (
-          parseKangurThemeSettings(settingsStore.get(KANGUR_DAWN_THEME_SETTINGS_KEY)) ??
-          KANGUR_DEFAULT_DAWN_THEME
-        );
-      }
-      if (id === BUILTIN_SUNSET_ID) {
-        return (
-          parseKangurThemeSettings(settingsStore.get(KANGUR_SUNSET_THEME_SETTINGS_KEY)) ??
-          KANGUR_DEFAULT_SUNSET_THEME
-        );
-      }
-      if (id === BUILTIN_NIGHTLY_ID) {
-        return (
-          parseKangurThemeSettings(settingsStore.get(KANGUR_NIGHTLY_THEME_SETTINGS_KEY)) ??
-          KANGUR_DEFAULT_THEME
-        );
-      }
-      const entry = catalog.find((e) => e.id === id);
-      return entry
-        ? normalizeThemeSettings(entry.settings, KANGUR_DEFAULT_DAILY_THEME)
-        : KANGUR_DEFAULT_DAILY_THEME;
-    },
-    [
-      catalog,
-      settingsStore.get(KANGUR_DAILY_THEME_SETTINGS_KEY),
-      settingsStore.get(KANGUR_DAWN_THEME_SETTINGS_KEY),
-      settingsStore.get(KANGUR_SUNSET_THEME_SETTINGS_KEY),
-      settingsStore.get(KANGUR_NIGHTLY_THEME_SETTINGS_KEY),
-    ]
-  );
-
-  // ── draft state ───────────────────────────────────────────────────────────
-  const [draft, setDraft] = useState<ThemeSettings>(() => loadTheme(BUILTIN_DAILY_ID));
-  const [isDirty, setIsDirty] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-
-  const slotThemes = useMemo(
-    () => ({
-      daily:
-        parseKangurThemeSettings(settingsStore.get(KANGUR_DAILY_THEME_SETTINGS_KEY)) ??
-        KANGUR_DEFAULT_DAILY_THEME,
-      dawn:
-        parseKangurThemeSettings(settingsStore.get(KANGUR_DAWN_THEME_SETTINGS_KEY)) ??
-        KANGUR_DEFAULT_DAWN_THEME,
-      sunset:
-        parseKangurThemeSettings(settingsStore.get(KANGUR_SUNSET_THEME_SETTINGS_KEY)) ??
-        KANGUR_DEFAULT_SUNSET_THEME,
-      nightly:
-        parseKangurThemeSettings(settingsStore.get(KANGUR_NIGHTLY_THEME_SETTINGS_KEY)) ??
-        KANGUR_DEFAULT_THEME,
-    }),
-    [
-      settingsStore.get(KANGUR_DAILY_THEME_SETTINGS_KEY),
-      settingsStore.get(KANGUR_DAWN_THEME_SETTINGS_KEY),
-      settingsStore.get(KANGUR_SUNSET_THEME_SETTINGS_KEY),
-      settingsStore.get(KANGUR_NIGHTLY_THEME_SETTINGS_KEY),
-    ]
-  );
-
-  // ── preview target ───────────────────────────────────────────────────────
-  // Reload draft when selection changes (and confirm unsaved changes if dirty)
-  const switchSelection = useCallback(
-    (nextId: ThemeSelectionId): void => {
-      setSelectedId(nextId);
-      setDraft(loadTheme(nextId));
-      setIsDirty(false);
-    },
-    [loadTheme]
-  );
-
-  useEffect(() => {
-    if (!settingsReady || initialSelectionSyncedRef.current) return;
-    if (selectedId !== BUILTIN_DAILY_ID) {
-      initialSelectionSyncedRef.current = true;
-      return;
-    }
-    if (resolvedInitialSelection !== BUILTIN_DAILY_ID) {
-      switchSelection(resolvedInitialSelection);
-    }
-    initialSelectionSyncedRef.current = true;
-  }, [
-    resolvedInitialSelection,
-    selectedId,
-    settingsReady,
-    slotAssignments,
-    switchSelection,
-  ]);
-
-  // ── field update ──────────────────────────────────────────────────────────
-  const handleFieldChange = useCallback((values: Partial<ThemeSettings>): void => {
-    setDraft((prev) => ({ ...prev, ...values }));
-    setIsDirty(true);
-  }, []);
-
-  // ── save ──────────────────────────────────────────────────────────────────
-  const handleSave = useCallback(async (): Promise<void> => {
-    if (isFactory) {
-      toast('Motyw fabryczny jest tylko do odczytu.', { variant: 'info' });
-      return;
-    }
-    setIsSaving(true);
-    try {
-      if (selectedId === BUILTIN_DAILY_ID) {
-        await updateSetting.mutateAsync({
-          key: KANGUR_DAILY_THEME_SETTINGS_KEY,
-          value: serializeSetting(draft),
-        });
-        // Clear daily slot assignment — the slot is now the directly-edited builtin theme
-        if (slotAssignments.daily) {
-          await updateSetting.mutateAsync({
-            key: KANGUR_SLOT_ASSIGNMENTS_KEY,
-            value: serializeSetting({ ...slotAssignments, daily: null }),
-          });
-        }
-        toast(SLOT_CONFIG.daily.saveToast, { variant: 'success' });
-      } else if (selectedId === BUILTIN_DAWN_ID) {
-        await updateSetting.mutateAsync({
-          key: KANGUR_DAWN_THEME_SETTINGS_KEY,
-          value: serializeSetting(draft),
-        });
-        if (slotAssignments.dawn) {
-          await updateSetting.mutateAsync({
-            key: KANGUR_SLOT_ASSIGNMENTS_KEY,
-            value: serializeSetting({ ...slotAssignments, dawn: null }),
-          });
-        }
-        toast(SLOT_CONFIG.dawn.saveToast, { variant: 'success' });
-      } else if (selectedId === BUILTIN_SUNSET_ID) {
-        await updateSetting.mutateAsync({
-          key: KANGUR_SUNSET_THEME_SETTINGS_KEY,
-          value: serializeSetting(draft),
-        });
-        if (slotAssignments.sunset) {
-          await updateSetting.mutateAsync({
-            key: KANGUR_SLOT_ASSIGNMENTS_KEY,
-            value: serializeSetting({ ...slotAssignments, sunset: null }),
-          });
-        }
-        toast(SLOT_CONFIG.sunset.saveToast, { variant: 'success' });
-      } else if (selectedId === BUILTIN_NIGHTLY_ID) {
-        await updateSetting.mutateAsync({
-          key: KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
-          value: serializeSetting(draft),
-        });
-        // Clear nightly slot assignment
-        if (slotAssignments.nightly) {
-          await updateSetting.mutateAsync({
-            key: KANGUR_SLOT_ASSIGNMENTS_KEY,
-            value: serializeSetting({ ...slotAssignments, nightly: null }),
-          });
-        }
-        toast(SLOT_CONFIG.nightly.saveToast, { variant: 'success' });
-      } else {
-        // Catalog theme: update the entry in the array
-        const updatedCatalog = catalog.map((e) =>
-          e.id === selectedId
-            ? { ...e, settings: draft, updatedAt: new Date().toISOString() }
-            : e
-        );
-        await updateSetting.mutateAsync({
-          key: KANGUR_THEME_CATALOG_KEY,
-          value: serializeSetting(updatedCatalog),
-        });
-        setCatalogOverrideRaw(serializeSetting(updatedCatalog));
-        toast('Motyw zapisany.', { variant: 'success' });
-      }
-      setIsDirty(false);
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'Nie udało się zapisać motywu.', {
-        variant: 'error',
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  }, [catalog, draft, isFactory, selectedId, slotAssignments, toast, updateSetting]);
-
-  // ── assign as daily/nightly ───────────────────────────────────────────────
-  const handleAssign = useCallback(
-    async (slot: ThemeSlotKey): Promise<void> => {
-      setIsSaving(true);
-      try {
-        const config = SLOT_CONFIG[slot];
-        await updateSetting.mutateAsync({
-          key: getKangurThemeSettingsKeyForAppearanceMode(config.mode),
-          value: serializeSetting(draft),
-        });
-        // Record which named theme is now assigned to this slot
-        const assignedEntry = catalog.find((e) => e.id === selectedId);
-        const assignmentName = assignedEntry?.name ?? selectedId;
-        await updateSetting.mutateAsync({
-          key: KANGUR_SLOT_ASSIGNMENTS_KEY,
-          value: serializeSetting({
-            ...slotAssignments,
-            [slot]: { id: selectedId, name: assignmentName },
-          }),
-        });
-        toast(config.assignToast, { variant: 'success' });
-      } catch (error) {
-        toast(error instanceof Error ? error.message : 'Nie udało się przypisać motywu.', {
-          variant: 'error',
-        });
-      } finally {
-        setIsSaving(false);
-      }
-    },
-    [catalog, draft, selectedId, slotAssignments, toast, updateSetting]
-  );
-
-  // ── reset to defaults ─────────────────────────────────────────────────────
-  const handleReset = useCallback((): void => {
-    if (isFactory) {
-      setDraft(resolveFactoryTheme(selectedId));
-      setIsDirty(false);
-      return;
-    }
-    const defaults = isBuiltin
-      ? resolveDefaultForBuiltin(selectedId)
-      : KANGUR_DEFAULT_DAILY_THEME;
-    setDraft(defaults);
-    setIsDirty(true);
-  }, [isBuiltin, isFactory, selectedId]);
-
-  // ── create new theme ──────────────────────────────────────────────────────
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
-
-  const handleCreate = useCallback(
-    async (name: string, baseSettings: ThemeSettings): Promise<void> => {
-      setIsCreating(true);
-      try {
-        const now = new Date().toISOString();
-        const newEntry: KangurThemeCatalogEntry = {
-          id: crypto.randomUUID(),
-          name,
-          settings: baseSettings,
-          createdAt: now,
-          updatedAt: now,
-        };
-        const updatedCatalog = [...catalog, newEntry];
-        await updateSetting.mutateAsync({
-          key: KANGUR_THEME_CATALOG_KEY,
-          value: serializeSetting(updatedCatalog),
-        });
-        setCatalogOverrideRaw(serializeSetting(updatedCatalog));
-        setCreateDialogOpen(false);
-        switchSelection(newEntry.id);
-        toast(`Motyw "${name}" utworzony.`, { variant: 'success' });
-      } catch (error) {
-        toast(error instanceof Error ? error.message : 'Nie udało się utworzyć motywu.', {
-          variant: 'error',
-        });
-      } finally {
-        setIsCreating(false);
-      }
-    },
-    [catalog, switchSelection, toast, updateSetting]
-  );
-
-  // ── delete catalog theme ──────────────────────────────────────────────────
-  const handleDelete = useCallback(async (): Promise<void> => {
-    if (isBuiltin || isFactory) return;
-    setIsSaving(true);
-    try {
-      const updatedCatalog = catalog.filter((e) => e.id !== selectedId);
-      await updateSetting.mutateAsync({
-        key: KANGUR_THEME_CATALOG_KEY,
-        value: serializeSetting(updatedCatalog),
-      });
-      setCatalogOverrideRaw(serializeSetting(updatedCatalog));
-      switchSelection(BUILTIN_DAILY_ID);
-      toast('Motyw usunięty.', { variant: 'success' });
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'Nie udało się usunąć motywu.', {
-        variant: 'error',
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  }, [catalog, isBuiltin, isFactory, selectedId, switchSelection, toast, updateSetting]);
-
-  // ── selector options ──────────────────────────────────────────────────────
   const selectorOptions = useMemo(() => {
     const opts: Array<{ value: string; label: string }> = [
       { value: FACTORY_DAILY_ID, label: 'Motyw dzienny (fabryczny)' },
@@ -1669,47 +106,50 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
       { value: BUILTIN_SUNSET_ID, label: 'Motyw zachodu (wbudowany)' },
       { value: BUILTIN_NIGHTLY_ID, label: 'Motyw nocny (wbudowany)' },
     ];
-    if (catalog.length > 0) {
-      catalog.forEach((e) => opts.push({ value: e.id, label: e.name }));
-    }
+    catalog.forEach((e) => opts.push({ value: e.id, label: e.name }));
     return opts;
   }, [catalog]);
 
   const selectedLabel = selectorOptions.find((o) => o.value === selectedId)?.label ?? '';
+  const selectedThemeType = isFactory ? 'Factory' : isBuiltin ? 'Built-in' : 'Custom';
+  const assignedSlotLabels = SLOT_ORDER.filter(
+    (slot) => slotAssignments[slot]?.id === selectedId
+  ).map((slot) => SLOT_CONFIG[slot].label);
+  const assignedSlotsSummary =
+    assignedSlotLabels.length > 0 ? assignedSlotLabels.join(', ') : 'Not assigned';
 
-  // ── render ────────────────────────────────────────────────────────────────
   return (
-    <>
-      <KangurAdminContentShell
-        title='Kangur Appearance'
-        description='Theme editor and catalog for daily, dawn, sunset, and nightly defaults.'
-        headerLayout='stacked'
-        breadcrumbs={[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Kangur', href: '/admin/kangur' },
-          { label: 'Settings', href: '/admin/kangur/settings' },
-          { label: 'Appearance' },
-        ]}
-        headerActions={
-          <>
-            <Button asChild variant='outline' size='sm'>
-              <Link href='/admin/kangur/settings'>Back to Settings</Link>
-            </Button>
-            <Button
-              onClick={() => void handleSave()}
-              disabled={!isDirty || isSaving || isFactory}
-              size='sm'
-            >
-              {isSaving ? 'Zapisuję...' : 'Zapisz motyw'}
-            </Button>
-          </>
-        }
-      >
-        <div className='xl:grid xl:grid-cols-[1fr_340px] xl:gap-6'>
-          {/* ── Left column: editor ── */}
-          <div className='space-y-6'>
-          {/* ── Theme selector bar ── */}
-          <Card variant='subtle' padding='md' className={SECTION_CARD_CLASS}>
+    <KangurAdminContentShell
+      title='Kangur Appearance'
+      description='Theme editor and catalog for daily, dawn, sunset, and nightly defaults.'
+      headerLayout='stacked'
+      className='mx-0 max-w-none px-0 py-0'
+      panelVariant='flat'
+      panelClassName='rounded-none'
+      breadcrumbs={[
+        { label: 'Admin', href: '/admin' },
+        { label: 'Kangur', href: '/admin/kangur' },
+        { label: 'Settings', href: '/admin/kangur/settings' },
+        { label: 'Appearance' },
+      ]}
+      headerActions={
+        <>
+          <Button asChild variant='outline' size='sm'>
+            <Link href='/admin/kangur/settings'>Back to Settings</Link>
+          </Button>
+          <Button
+            onClick={() => void handleSave()}
+            disabled={!isDirty || isSaving || isFactory}
+            size='sm'
+          >
+            {isSaving ? 'Zapisuję...' : 'Zapisz motyw'}
+          </Button>
+        </>
+      }
+    >
+      <div className='xl:grid xl:grid-cols-[1fr_340px] xl:gap-8'>
+        <div className='space-y-8'>
+          <Card variant='subtle' padding='md' className='border border-border/60 bg-card/20'>
             <div className='flex flex-wrap items-end gap-3'>
               <div className='flex-1 min-w-[220px]'>
                 <div className='mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
@@ -1717,23 +157,14 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
                 </div>
                 <SelectSimple
                   value={selectedId}
-                  onValueChange={(v) => {
-                    if (v !== selectedId) switchSelection(v);
-                  }}
+                  onValueChange={(v) => handleSelect(v as any)}
                   options={selectorOptions}
                   ariaLabel='Wybrany motyw'
                   variant='subtle'
                   className='w-full'
                 />
               </div>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => setCreateDialogOpen(true)}
-                disabled={isSaving}
-              >
-                + Nowy motyw
-              </Button>
+              <ThemeCatalogModal />
               {isDirty && (
                 <span className='rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-400'>
                   Niezapisane zmiany
@@ -1742,17 +173,12 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
             </div>
           </Card>
 
-          {/* ── Assign bar (shown for catalog themes) ── */}
-          {!isBuiltin && (
-            <Card variant='subtle' padding='md' className={SECTION_CARD_CLASS}>
+          {!isBuiltin && !isFactory && (
+            <Card variant='subtle' padding='md' className='border border-border/60 bg-card/20'>
               <div className='flex flex-col gap-4 lg:flex-row lg:items-start'>
                 <div className='w-full min-w-0 lg:flex-1 lg:min-w-[320px]'>
                   <p className='text-sm font-medium text-foreground'>
-                    Przypisz motyw <span className='text-muted-foreground'>„{selectedLabel}"</span>
-                  </p>
-                  <p className='text-xs text-muted-foreground'>
-                    Zastosuj bieżące ustawienia tego motywu jako domyślny motyw dzienny, świtowy,
-                    zachodu lub nocny.
+                    Przypisz motyw <span className='text-muted-foreground'>„{selectedLabel}”</span>
                   </p>
                   <div className='mt-2.5 flex flex-wrap gap-3'>
                     {SLOT_ORDER.map((slot) => (
@@ -1765,69 +191,17 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
                     ))}
                   </div>
                 </div>
-                <div className='flex flex-wrap gap-2 lg:ml-auto lg:justify-end'>
-                  {SLOT_ORDER.map((slot) => (
-                    <Button
-                      key={slot}
-                      variant='outline'
-                      size='sm'
-                      disabled={isSaving}
-                      onClick={() => void handleAssign(slot)}
-                    >
-                      {SLOT_CONFIG[slot].assignButtonLabel}
-                    </Button>
-                  ))}
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    disabled={isSaving}
-                    onClick={() => void handleDelete()}
-                    className='text-destructive hover:text-destructive'
-                  >
-                    Usuń
-                  </Button>
-                </div>
               </div>
             </Card>
           )}
 
-          {/* ── Info for built-in themes ── */}
-          {isBuiltin && (
-            <Alert variant='info'>
-              {builtinSlot ? SLOT_CONFIG[builtinSlot].builtinInfo : null}
-            </Alert>
-          )}
           {isFactory && (
             <Alert variant='info'>
-              To fabryczny motyw Kangura (commit d932510...). Jest tylko do odczytu — użyj „Nowy motyw”
-              aby skopiować ustawienia lub przypisz go jako dzienny, świtowy, zachodu lub nocny.
+              To fabryczny motyw Kangura. Jest tylko do odczytu.
             </Alert>
           )}
 
-          {/* ── Theme field sections ── */}
-          <Card variant='subtle' padding='md' className={SECTION_CARD_CLASS}>
-            <FormField
-              controlId='kangur-default-mode'
-              label='Domyślny motyw startowy'
-              description='Wybierz, który motyw ma być aktywny przy pierwszym wejściu na stronę.'
-            >
-              <SelectSimple
-                id='kangur-default-mode'
-                value={defaultModeDraft}
-                onValueChange={(value) =>
-                  void handleDefaultModeChange(
-                    value as KangurStorefrontAppearanceMode
-                  )
-                }
-                options={KANGUR_STOREFRONT_THEME_OPTIONS.map((option) => ({
-                  label: option.label,
-                  value: option.value,
-                }))}
-                disabled={isDefaultModeSaving}
-                ariaLabel='Domyślny motyw startowy'
-              />
-            </FormField>
-          </Card>
+          <AppearanceModeSelector />
 
           {THEME_SECTIONS.map((section) => (
             <FormSection
@@ -1840,20 +214,23 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
               <SettingsFieldsRenderer
                 fields={section.fields}
                 values={draft}
-                onChange={handleFieldChange}
+                onChange={(vals) => {
+                  setDraft((prev) => ({ ...prev, ...vals }));
+                }}
                 disabled={isSaving || isFactory}
               />
             </FormSection>
           ))}
 
-          {/* ── Bottom action bar ── */}
-          <Card variant='subtle' padding='md' className={SECTION_CARD_CLASS}>
+          <ThemeImportExport />
+
+          <Card variant='subtle' padding='md' className='border border-border/60 bg-card/20'>
             <div className='flex flex-wrap items-center justify-between gap-3'>
               <Button
                 variant='ghost'
                 size='sm'
                 disabled={isSaving || isFactory}
-                onClick={handleReset}
+                onClick={handleResetToFactory}
               >
                 Przywróć domyślne
               </Button>
@@ -1865,11 +242,34 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
               </Button>
             </div>
           </Card>
-          </div>{/* end left column */}
+        </div>
 
-          {/* ── Right column: live preview ── */}
-          <div className='hidden xl:sticky xl:top-4 xl:block xl:self-start'>
-            <KangurThemePreviewPanel
+        <div className='hidden xl:block xl:self-start'>
+          <div className='space-y-4 xl:sticky xl:top-24'>
+            <KangurAdminStatusCard
+              title='Status'
+              sticky={false}
+              statusBadge={
+                <Badge variant={isFactory ? 'outline' : isDirty ? 'warning' : 'secondary'}>
+                  {isFactory ? 'Read only' : isDirty ? 'Unsaved changes' : 'Saved'}
+                </Badge>
+              }
+              items={[
+                {
+                  label: 'Theme',
+                  value: <Badge variant='outline'>{selectedLabel || '—'}</Badge>,
+                },
+                {
+                  label: 'Type',
+                  value: <Badge variant='outline'>{selectedThemeType}</Badge>,
+                },
+                {
+                  label: 'Assigned slots',
+                  value: <span className='text-foreground'>{assignedSlotsSummary}</span>,
+                },
+              ]}
+            />
+            <ThemePreviewPanel
               draft={draft}
               selectedId={selectedId}
               slotAssignments={slotAssignments}
@@ -1877,16 +277,19 @@ export function AdminKangurAppearancePage(): React.JSX.Element {
             />
           </div>
         </div>
-      </KangurAdminContentShell>
-
-      {/* ── Create theme dialog ── */}
-      <CreateThemeDialog
-        open={createDialogOpen}
-        currentDraft={draft}
-        isSaving={isCreating}
-        onClose={() => setCreateDialogOpen(false)}
-        onCreate={(name, base) => void handleCreate(name, base)}
-      />
-    </>
+      </div>
+    </KangurAdminContentShell>
   );
 }
+
+import { useMemo } from 'react';
+
+export function AdminKangurAppearancePage(): React.JSX.Element {
+  return (
+    <AppearancePageProvider>
+      <AdminKangurAppearancePageContent />
+    </AppearancePageProvider>
+  );
+}
+
+export default AdminKangurAppearancePage;

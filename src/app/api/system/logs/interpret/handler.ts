@@ -7,7 +7,6 @@ import {
 import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import { generateLogInterpretation } from '@/features/ai/insights/server';
 import { startAiInsightsQueue } from '@/features/jobs/server';
-import { resolveObservabilityContextRegistryEnvelope } from '@/features/observability/context-registry/server';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { AiInsightResponse } from '@/shared/contracts/ai-insights';
 import { systemLogsInterpretRequestSchema } from '@/shared/contracts/observability';
@@ -15,6 +14,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
+import { resolveObservabilityContextRegistryEnvelope } from '@/shared/lib/observability/runtime-context/server';
 import { hydrateSystemLogRecordRuntimeContext } from '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context';
 import { getSystemLogById } from '@/shared/lib/observability/system-logger';
 

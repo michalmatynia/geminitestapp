@@ -1,5 +1,3 @@
-'use client';
-
 import { Award, BarChart2, Compass, Flame, Sparkles, Target } from 'lucide-react';
 import { useEffect, useState } from 'react';
 

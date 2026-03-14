@@ -26,10 +26,12 @@ import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/shared/contracts/kangur-knowledge-
 import { api } from '@/shared/lib/api-client';
 import {
   Alert,
+  Badge,
   Button,
   EmptyState,
   LoadingState,
   SegmentedControl,
+  StatusBadge,
 } from '@/shared/ui';
 
 import {
@@ -46,6 +48,8 @@ import {
   clearKnowledgeGraphPreviewDraftContext,
 } from './components/observability/utils';
 import { SummaryContent } from './components/observability/SummaryContent';
+import { formatDateTime, formatNumber } from './components/observability/utils';
+import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
 
 const RANGE_OPTIONS: Array<{ value: KangurObservabilityRange; label: string }> = [
   { value: '24h', label: '24h' },
@@ -212,7 +216,9 @@ export function AdminKangurObservabilityPage(): JSX.Element {
     [applyKnowledgeGraphPreviewReplayEvent]
   );
   const applyKnowledgeGraphPreviewPreset = useCallback((entryId: string): void => {
-    const entry = KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO.find((e: any) => e.id === entryId);
+    const entry = KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO.find(
+      (candidate) => candidate.id === entryId
+    );
     if (!entry) {
       return;
     }
@@ -225,51 +231,53 @@ export function AdminKangurObservabilityPage(): JSX.Element {
   const refreshKnowledgeGraphStatus = useCallback((): void => {
     void knowledgeGraphStatusQuery.refetch();
   }, [knowledgeGraphStatusQuery]);
-  const syncKnowledgeGraph = useCallback(async (): Promise<void> => {
-    if (knowledgeGraphStatus?.mode !== 'status') {
-      return;
-    }
-
-    setIsKnowledgeGraphSyncing(true);
-    setKnowledgeGraphSyncFeedback(null);
-
-    try {
-      const withEmbeddings =
-        knowledgeGraphStatus.embeddingNodeCount > 0 || knowledgeGraphStatus.vectorIndexPresent;
-      const response = await api.post(
-        '/api/kangur/knowledge-graph/sync',
-        {
-          locale: knowledgeGraphStatus.locale ?? summaryKnowledgeGraphLocale ?? 'pl',
-          withEmbeddings,
-        },
-        { timeout: 120000 }
-      );
-      const parsed = kangurKnowledgeGraphSyncResponseSchema.safeParse(response);
-
-      if (!parsed.success) {
-        throw new Error('Invalid Kangur knowledge graph sync response');
+  const syncKnowledgeGraph = useCallback((): void => {
+    void (async () => {
+      if (knowledgeGraphStatus?.mode !== 'status') {
+        return;
       }
 
-      setKnowledgeGraphSyncFeedback({
-        tone: 'success',
-        message: `Synced ${new Intl.NumberFormat().format(parsed.data.sync.nodeCount)} nodes and ${new Intl.NumberFormat().format(parsed.data.sync.edgeCount)} edges${parsed.data.sync.withEmbeddings ? ' with embeddings preserved.' : '.'}`,
-      });
-      void summaryQuery.refetch();
-      void knowledgeGraphStatusQuery.refetch();
-    } catch (error) {
-      setKnowledgeGraphSyncFeedback({
-        tone: 'error',
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Failed to sync the Kangur knowledge graph.',
-      });
-    } finally {
-      setIsKnowledgeGraphSyncing(false);
-    }
+      setIsKnowledgeGraphSyncing(true);
+      setKnowledgeGraphSyncFeedback(null);
+
+      try {
+        const withEmbeddings =
+          knowledgeGraphStatus.embeddingNodeCount > 0 || knowledgeGraphStatus.vectorIndexPresent;
+        const response = await api.post(
+          '/api/kangur/knowledge-graph/sync',
+          {
+            locale: knowledgeGraphStatus.locale ?? summaryKnowledgeGraphLocale ?? 'pl',
+            withEmbeddings,
+          },
+          { timeout: 120000 }
+        );
+        const parsed = kangurKnowledgeGraphSyncResponseSchema.safeParse(response);
+
+        if (!parsed.success) {
+          throw new Error('Invalid Kangur knowledge graph sync response');
+        }
+
+        setKnowledgeGraphSyncFeedback({
+          tone: 'success',
+          message: `Synced ${new Intl.NumberFormat().format(parsed.data.sync.nodeCount)} nodes and ${new Intl.NumberFormat().format(parsed.data.sync.edgeCount)} edges${parsed.data.sync.withEmbeddings ? ' with embeddings preserved.' : '.'}`,
+        });
+        void summaryQuery.refetch();
+        void knowledgeGraphStatusQuery.refetch();
+      } catch (error) {
+        setKnowledgeGraphSyncFeedback({
+          tone: 'error',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Failed to sync the Kangur knowledge graph.',
+        });
+      } finally {
+        setIsKnowledgeGraphSyncing(false);
+      }
+    })();
   }, [knowledgeGraphStatus, knowledgeGraphStatusQuery, summaryKnowledgeGraphLocale, summaryQuery]);
-  const runKnowledgeGraphPreview = useCallback(async (): Promise<void> => {
-    await runKnowledgeGraphPreviewForDraft(knowledgeGraphPreviewDraft);
+  const runKnowledgeGraphPreview = useCallback((): void => {
+    void runKnowledgeGraphPreviewForDraft(knowledgeGraphPreviewDraft);
   }, [knowledgeGraphPreviewDraft, runKnowledgeGraphPreviewForDraft]);
   const handleRangeChange = useCallback(
     (nextRange: KangurObservabilityRange): void => {
@@ -321,7 +329,7 @@ export function AdminKangurObservabilityPage(): JSX.Element {
         </div>
       }
     >
-      <div id='kangur-admin-observability-page' className='space-y-6'>
+      <div id='kangur-admin-observability-page' className='space-y-8'>
         <KangurDocsTooltipEnhancer
           enabled={adminDocsEnabled}
           rootId='kangur-admin-observability-page'
@@ -365,7 +373,54 @@ export function AdminKangurObservabilityPage(): JSX.Element {
                 syncKnowledgeGraph,
               }}
             >
-              <SummaryContent />
+              <div className='grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]'>
+                <SummaryContent />
+                <KangurAdminStatusCard
+                  title='Status'
+                  statusBadge={<StatusBadge status={summary.overallStatus} size='sm' />}
+                  items={[
+                    {
+                      label: 'Range',
+                      value: <Badge variant='outline'>{range}</Badge>,
+                    },
+                    {
+                      label: 'Window',
+                      value: (
+                        <div className='text-right text-foreground'>
+                          <div>{formatDateTime(summary.window.from)}</div>
+                          <div className='text-xs text-muted-foreground/80'>
+                            {formatDateTime(summary.window.to)}
+                          </div>
+                        </div>
+                      ),
+                    },
+                    {
+                      label: 'Generated',
+                      value: (
+                        <span className='text-foreground font-semibold'>
+                          {formatDateTime(summary.generatedAt)}
+                        </span>
+                      ),
+                    },
+                    {
+                      label: 'Events',
+                      value: (
+                        <span className='text-foreground font-semibold'>
+                          {formatNumber(summary.analytics.totals.events)}
+                        </span>
+                      ),
+                    },
+                    {
+                      label: 'Server logs',
+                      value: (
+                        <span className='text-foreground font-semibold'>
+                          {formatNumber(summary.serverLogs.metrics?.total ?? 0)}
+                        </span>
+                      ),
+                    },
+                  ]}
+                />
+              </div>
             </KnowledgeGraphObservabilityProvider>
           </ObservabilitySummaryContext.Provider>
         )}

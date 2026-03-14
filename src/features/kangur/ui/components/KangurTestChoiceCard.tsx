@@ -1,11 +1,8 @@
-'use client';
-
 import React, { type ReactNode } from 'react';
 
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
-import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
-import { cn, sanitizeSvg } from '@/shared/utils';
+import { sanitizeSvg } from '@/shared/utils';
 import { CheckCircle, XCircle } from 'lucide-react';
 import { KangurAnswerChoiceBadge } from '@/features/kangur/ui/components/KangurAnswerChoiceBadge';
 

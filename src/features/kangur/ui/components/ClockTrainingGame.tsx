@@ -24,6 +24,8 @@ import { persistKangurSessionScore } from '@/features/kangur/ui/services/session
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 
+import { CLOCK_TRAINING_TASKS, getClockTrainingSectionContent } from './clock-training-data';
+
 import type { MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
 
 type ClockTrainingGameProps = {
@@ -43,7 +45,7 @@ type ClockTrainingGameProps = {
   showTimeDisplay?: boolean;
 };
 
-type ClockTask = {
+export type ClockTask = {
   hours: number;
   minutes: number;
 };
@@ -83,62 +85,12 @@ type DraggableClockProps = {
   submitLocked?: boolean;
 };
 
-type ClockTrainingSectionContent = {
+export type ClockTrainingSectionContent = {
   accent: 'amber' | 'emerald' | 'indigo' | 'rose';
   guidance?: string;
   guidanceTitle?: string;
   legend?: string;
   promptLabel: string;
-};
-
-export const CLOCK_TRAINING_TASKS: Record<ClockTrainingTaskPoolId, ClockTask[]> = {
-  mixed: [
-    { hours: 3, minutes: 0 },
-    { hours: 7, minutes: 30 },
-    { hours: 1, minutes: 15 },
-    { hours: 10, minutes: 45 },
-    { hours: 6, minutes: 0 },
-    { hours: 4, minutes: 20 },
-    { hours: 9, minutes: 35 },
-    { hours: 12, minutes: 0 },
-    { hours: 2, minutes: 50 },
-    { hours: 11, minutes: 25 },
-  ],
-  hours: [
-    { hours: 1, minutes: 0 },
-    { hours: 3, minutes: 0 },
-    { hours: 4, minutes: 0 },
-    { hours: 6, minutes: 0 },
-    { hours: 7, minutes: 0 },
-    { hours: 9, minutes: 0 },
-    { hours: 11, minutes: 0 },
-    { hours: 12, minutes: 0 },
-  ],
-  minutes: [
-    { hours: 12, minutes: 5 },
-    { hours: 12, minutes: 10 },
-    { hours: 12, minutes: 15 },
-    { hours: 12, minutes: 20 },
-    { hours: 12, minutes: 25 },
-    { hours: 12, minutes: 30 },
-    { hours: 12, minutes: 35 },
-    { hours: 12, minutes: 40 },
-    { hours: 12, minutes: 45 },
-    { hours: 12, minutes: 50 },
-    { hours: 12, minutes: 55 },
-  ],
-  combined: [
-    { hours: 1, minutes: 15 },
-    { hours: 2, minutes: 50 },
-    { hours: 4, minutes: 20 },
-    { hours: 5, minutes: 45 },
-    { hours: 7, minutes: 30 },
-    { hours: 8, minutes: 10 },
-    { hours: 9, minutes: 35 },
-    { hours: 10, minutes: 25 },
-    { hours: 11, minutes: 40 },
-    { hours: 12, minutes: 5 },
-  ],
 };
 
 function shuffle<T>(items: T[]): T[] {
@@ -155,39 +107,6 @@ export function getClockTrainingSectionLabel(section: ClockTrainingTaskPoolId): 
       return 'Pełny czas';
     default:
       return 'Mieszane';
-  }
-}
-
-export function getClockTrainingSectionContent(
-  section: ClockTrainingTaskPoolId
-): ClockTrainingSectionContent {
-  switch (section) {
-    case 'hours':
-      return {
-        accent: 'rose',
-        promptLabel: 'Ustaw pełną godzinę',
-      };
-    case 'minutes':
-      return {
-        accent: 'emerald',
-        promptLabel: 'Ustaw minuty na tarczy',
-      };
-    case 'combined':
-      return {
-        accent: 'indigo',
-        guidance: 'Najpierw ustaw godzinę krótką wskazówką, potem dopracuj minuty długą wskazówką.',
-        guidanceTitle: 'Pełny odczyt czasu',
-        legend: 'Ćwiczysz oba ruchy naraz: godziny i minuty.',
-        promptLabel: 'Ustaw pełny czas',
-      };
-    default:
-      return {
-        accent: 'amber',
-        guidance: 'Raz ćwiczysz pełne godziny, raz minuty, a raz cały odczyt czasu. Korzystaj z obu wskazówek.',
-        guidanceTitle: 'Mieszany trening zegara',
-        legend: 'Łącz krótką i długą wskazówkę zależnie od zadania.',
-        promptLabel: 'Ustaw zegar na godzinę',
-      };
   }
 }
 

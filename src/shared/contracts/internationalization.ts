@@ -85,7 +85,7 @@ export type CurrencyCreateInput = z.infer<typeof createCurrencySchema>;
 export type CurrencyUpdateInput = Partial<CurrencyCreateInput>;
 
 export type CurrencyRepository = {
-  listCurrencies(): Promise<CurrencyRecord[]>;
+  listCurrencies(filters?: { skip?: number; limit?: number }): Promise<CurrencyRecord[]>;
   getCurrencyById(id: string): Promise<CurrencyRecord | null>;
   getCurrencyByCode(code: string): Promise<CurrencyRecord | null>;
   createCurrency(data: CurrencyCreateInput): Promise<CurrencyRecord>;

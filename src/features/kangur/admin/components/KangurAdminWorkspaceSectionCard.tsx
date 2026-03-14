@@ -1,8 +1,5 @@
-'use client';
-
-
+import { cn } from '@/features/kangur/utils/cn';
 import { Badge, Card } from '@/shared/ui';
-import { cn } from '@/shared/utils';
 
 import type { ReactNode } from 'react';
 

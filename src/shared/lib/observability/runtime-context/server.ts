@@ -1,9 +1,15 @@
 import type {
   ContextNode,
+  ContextRegistryConsumerEnvelope,
+  ContextRegistryRef,
   ContextRegistryResolutionBundle,
   ContextRuntimeDocument,
   ContextRuntimeDocumentSection,
 } from '@/shared/contracts/ai-context-registry';
+import {
+  buildContextRegistryConsumerEnvelope,
+  mergeContextRegistryResolutionBundles,
+} from '@/shared/lib/ai-context-registry/page-context-shared';
 
 const summarizeNode = (node: ContextNode): Record<string, unknown> => ({
   id: node.id,
@@ -36,6 +42,9 @@ const summarizeDocument = (document: ContextRuntimeDocument): Record<string, unk
   sections: (document.sections ?? []).slice(0, 5).map(summarizeSection),
 });
 
+/**
+ * Builds a system prompt fragment from a Context Registry bundle for system logs.
+ */
 export const buildSystemLogsContextRegistrySystemPrompt = (
   registryBundle: ContextRegistryResolutionBundle | null | undefined
 ): string => {
@@ -54,4 +63,39 @@ export const buildSystemLogsContextRegistrySystemPrompt = (
     'Treat this registry bundle as operator page state, not as independent production evidence.',
     JSON.stringify(payload, null, 2),
   ].join('\n\n');
+};
+
+type ContextRegistryResolveRefs = (args: {
+  refs: ContextRegistryRef[];
+  maxNodes?: number;
+  depth?: number;
+}) => Promise<ContextRegistryResolutionBundle>;
+
+/**
+ * Resolves observability context registry envelope by merging provided and runtime state.
+ */
+export const resolveObservabilityContextRegistryEnvelope = async (
+  contextRegistry: ContextRegistryConsumerEnvelope | null | undefined,
+  resolveRefs: ContextRegistryResolveRefs
+): Promise<ContextRegistryConsumerEnvelope | null> => {
+  if (!contextRegistry) {
+    return null;
+  }
+
+  const resolvedRegistryBundle =
+    contextRegistry.refs.length > 0
+      ? await resolveRefs({
+        refs: contextRegistry.refs,
+        maxNodes: 24,
+        depth: 1,
+      })
+      : null;
+
+  return buildContextRegistryConsumerEnvelope({
+    refs: contextRegistry.refs,
+    resolved: mergeContextRegistryResolutionBundles(
+      resolvedRegistryBundle,
+      contextRegistry.resolved ?? null
+    ),
+  });
 };

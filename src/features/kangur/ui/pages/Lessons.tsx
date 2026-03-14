@@ -679,6 +679,20 @@ export default function Lessons() {
     () => createKangurPageTransitionMotionProps(prefersReducedMotion),
     [prefersReducedMotion]
   );
+  const resolveMotionOpacity = useCallback((value: unknown, fallback: number): number => {
+    if (!value || typeof value !== 'object') return fallback;
+    const opacity = (value as { opacity?: unknown }).opacity;
+    return typeof opacity === 'number' ? opacity : fallback;
+  }, []);
+  const lessonActiveMotionProps = useMemo(() => {
+    if (activeLesson?.componentId !== 'adding') return lessonPageMotionProps;
+    return {
+      ...lessonPageMotionProps,
+      initial: { opacity: resolveMotionOpacity(lessonPageMotionProps.initial, 1) },
+      animate: { opacity: resolveMotionOpacity(lessonPageMotionProps.animate, 1) },
+      exit: { opacity: resolveMotionOpacity(lessonPageMotionProps.exit, 1) },
+    };
+  }, [activeLesson?.componentId, lessonPageMotionProps, resolveMotionOpacity]);
   const lessonContentReadyMotionProps = lessonPageMotionProps;
   const lessonCardMotionProps = useMemo(
     () => ({
@@ -767,7 +781,7 @@ export default function Lessons() {
                             data-testid={`lesson-library-motion-${lesson.id}`}
                           >
                             <KangurLessonLibraryCard
-                              buttonClassName='flex flex-col items-start gap-4 rounded-[28px] p-4 max-sm:pr-4 max-sm:pb-4 sm:rounded-[30px] sm:p-5'
+                              buttonClassName='kangur-lessons-panel flex flex-col items-start gap-4 rounded-[28px] p-4 max-sm:pr-4 max-sm:pb-4 sm:rounded-[30px] sm:p-5'
                               completedLessonAssignment={completedLessonAssignment}
                               dataDocId='lessons_library_entry'
                               emphasis='neutral'
@@ -788,7 +802,7 @@ export default function Lessons() {
             ) : (
               <motion.div
                 key={activeLesson.id}
-                {...lessonPageMotionProps}
+                {...lessonActiveMotionProps}
                 className='w-full flex flex-col items-center gap-4'
                 data-testid='lessons-active-transition'
               >

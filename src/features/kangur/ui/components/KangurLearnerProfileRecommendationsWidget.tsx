@@ -1,5 +1,3 @@
-'use client';
-
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';

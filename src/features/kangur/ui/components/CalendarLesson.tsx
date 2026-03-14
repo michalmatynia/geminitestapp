@@ -155,12 +155,12 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
       title: 'Dni tygodnia',
       tts: 'Tydzień ma 7 dni: Poniedziałek, Wtorek, Środa, Czwartek, Piątek, Sobota, Niedziela.',
       content: (
-        <div className='flex w-full max-w-xs flex-col gap-2 text-center'>
+        <div className='mx-auto flex w-full max-w-xs flex-col gap-2 text-center'>
           {['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek'].map((dayLabel, index) => (
             <KangurLessonCallout
               key={dayLabel}
               accent='indigo'
-              className='flex items-center gap-3'
+              className='flex w-full items-center gap-3'
               padding='sm'
             >
               <span className='w-5 font-bold text-indigo-500'>{index + 1}.</span>
@@ -172,7 +172,7 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
             <KangurLessonCallout
               key={dayLabel}
               accent='rose'
-              className='flex items-center gap-3'
+              className='flex w-full items-center gap-3'
               padding='sm'
             >
               <span className='w-5 font-bold text-pink-500'>{index + 6}.</span>

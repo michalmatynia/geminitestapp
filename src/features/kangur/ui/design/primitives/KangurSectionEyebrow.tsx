@@ -1,10 +1,10 @@
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/utils/cn';
 
 export const KANGUR_SECTION_EYEBROW_CLASSNAMES = {
   muted: '[color:var(--kangur-page-muted-text)]',
-  slate: 'text-slate-500',
+  slate: '[color:var(--kangur-page-muted-text)]',
 } as const;
 
 export type KangurSectionEyebrowProps = React.HTMLAttributes<HTMLElement> & {

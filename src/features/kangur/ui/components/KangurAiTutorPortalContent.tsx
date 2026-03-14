@@ -1,5 +1,3 @@
-'use client';
-
 import { AnimatePresence } from 'framer-motion';
 
 import { KangurAiTutorComposer } from './KangurAiTutorComposer';

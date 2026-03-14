@@ -1,5 +1,3 @@
-'use client';
-
 import type { ComponentProps, ReactNode } from 'react';
 
 import { KangurOptionCardButton } from '@/features/kangur/ui/design/primitives';

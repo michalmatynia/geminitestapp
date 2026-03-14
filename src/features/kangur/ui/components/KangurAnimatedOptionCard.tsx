@@ -1,5 +1,3 @@
-'use client';
-
 import type { ComponentProps, ReactNode } from 'react';
 
 import { motion, type MotionProps } from 'framer-motion';

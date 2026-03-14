@@ -48,6 +48,7 @@ export function CmsMenu({
   const allowHideOnScroll = menu.hideOnScroll && (isSide || isStickyMode);
   const showOnScrollUpAfterPx = Math.max(0, menu.showOnScrollUpAfterPx ?? 0);
   const [isHiddenOnScroll, setIsHiddenOnScroll] = useState<boolean>(false);
+  const [isShrunk, setIsShrunk] = useState<boolean>(false);
 
   useEffect(() => {
     setCollapsed(menu.collapsible ? menu.collapsedByDefault : false);
@@ -56,6 +57,22 @@ export function CmsMenu({
   useEffect(() => {
     setIsHiddenOnScroll(false);
   }, [menu.menuPlacement, menu.hideOnScroll, positionMode]);
+
+  useEffect(() => {
+    if (!menu.shrinkOnScroll || isSide || !isStickyMode) {
+      setIsShrunk(false);
+      return;
+    }
+    const threshold = 32;
+    const handleScroll = (): void => {
+      setIsShrunk(window.scrollY > threshold);
+    };
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return (): void => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [menu.shrinkOnScroll, isSide, isStickyMode]);
 
   useEffect(() => {
     setHydrated(true);
@@ -241,6 +258,7 @@ export function CmsMenu({
     .filter(Boolean)
     .join(', ');
 
+  const shrinkFactor = isShrunk ? 0.72 : 1;
   const navStyle: React.CSSProperties = {
     backgroundColor: displayColors.background,
     color: displayColors.text,
@@ -254,10 +272,10 @@ export function CmsMenu({
       menu.menuPlacement === 'right' && displayColors.border
         ? `1px solid ${displayColors.border}`
         : undefined,
-    paddingTop: menu.paddingTop,
-    paddingBottom: menu.paddingBottom,
-    paddingLeft: menu.paddingLeft,
-    paddingRight: menu.paddingRight,
+    paddingTop: Math.max(8, menu.paddingTop * shrinkFactor),
+    paddingBottom: Math.max(8, menu.paddingBottom * shrinkFactor),
+    paddingLeft: Math.max(12, menu.paddingLeft * shrinkFactor),
+    paddingRight: Math.max(12, menu.paddingRight * shrinkFactor),
     fontFamily: menu.fontFamily,
     fontSize: `${menu.fontSize}px`,
     fontWeight: menu.fontWeight as React.CSSProperties['fontWeight'],
@@ -274,6 +292,10 @@ export function CmsMenu({
     transform: allowHideOnScroll && isHiddenOnScroll ? hideTransform : undefined,
     opacity: allowHideOnScroll && isHiddenOnScroll ? 0 : 1,
     pointerEvents: allowHideOnScroll && isHiddenOnScroll ? 'none' : undefined,
+    ...({
+      '--cms-menu-hover-bg': `color-mix(in srgb, ${displayColors.accent} 14%, ${displayColors.background})`,
+      '--cms-menu-active-bg': `color-mix(in srgb, ${displayColors.accent} 22%, ${displayColors.background})`,
+    } as React.CSSProperties),
   };
 
   const containerStyle: React.CSSProperties = {
@@ -283,6 +305,7 @@ export function CmsMenu({
     display: 'flex',
     flexDirection: menu.layoutStyle === 'vertical' || isSide ? 'column' : 'row',
     alignItems: menu.layoutStyle === 'vertical' || isSide ? 'flex-start' : 'center',
+    flexWrap: !isSide && menu.layoutStyle !== 'vertical' ? 'wrap' : undefined,
     justifyContent:
       menu.alignment === 'center'
         ? 'center'
@@ -306,6 +329,10 @@ export function CmsMenu({
     <nav
       aria-label='Site navigation'
       style={navStyle}
+      data-cms-menu='true'
+      data-menu-placement={menu.menuPlacement}
+      data-menu-position={positionMode}
+      data-active-style={menu.activeStyle || 'none'}
       data-appearance-mode={appearance?.mode ?? 'default'}
       onFocusCapture={() => {
         if (isHiddenOnScroll) {

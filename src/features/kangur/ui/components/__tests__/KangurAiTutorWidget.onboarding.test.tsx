@@ -263,6 +263,10 @@ describe('KangurAiTutorWidget - Onboarding', () => {
     
     mocks.useKangurAiTutorMock.mockReturnValue({
       enabled: true,
+      appSettings: {
+        guestIntroMode: 'first_visit',
+        homeOnboardingMode: 'every_visit',
+      },
       tutorSettings: {
         enabled: true,
         agentPersonaId: null,
@@ -373,7 +377,7 @@ describe('KangurAiTutorWidget - Onboarding', () => {
     expect(mocks.closeChatMock).toHaveBeenCalledTimes(1);
   });
 
-  it('shows the guest intro prompt for a first anonymous visit and stores a local marker', async () => {
+  it('does not auto-show the guest intro prompt for a first anonymous visit', async () => {
     mocks.useOptionalKangurAuthMock.mockReturnValue({
       isAuthenticated: false,
       isLoadingAuth: false,
@@ -387,9 +391,10 @@ describe('KangurAiTutorWidget - Onboarding', () => {
     vi.stubGlobal('fetch', fetchMock);
     
     render(<KangurAiTutorWidget />);
-    
-    expect(await screen.findByTestId('kangur-ai-tutor-guest-intro')).toBeInTheDocument();
-    expect(screen.getByText('Czy chcesz pomocy z logowaniem albo założeniem konta?')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Tak' })).toBeVisible();
+
+    await waitFor(() => {
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+    expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
   });
 });

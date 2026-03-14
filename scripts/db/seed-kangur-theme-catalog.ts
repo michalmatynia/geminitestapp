@@ -7,6 +7,7 @@ import { decodeSettingValue, encodeSettingValue } from '@/shared/lib/settings/se
 import { serializeSetting } from '@/shared/utils/settings-json';
 import {
   KANGUR_DAILY_BLOOM_THEME,
+  KANGUR_DAILY_CRYSTAL_THEME,
   KANGUR_LOGO_GLOW_THEME,
   KANGUR_NIGHTLY_AURORA_THEME,
   KANGUR_SUNSET_HORIZON_THEME,
@@ -23,6 +24,7 @@ type SettingDoc = MongoPersistedStringSettingRecord<string, Date>;
 
 const SETTINGS_COLLECTION = 'settings';
 const DAILY_BLOOM_ID = 'kangur-daily-bloom';
+const DAILY_CRYSTAL_ID = 'kangur-daily-crystal';
 const LOGO_GLOW_ID = 'kangur-logo-glow';
 const NIGHTLY_AURORA_ID = 'kangur-nightly-aurora';
 const SUNSET_HORIZON_ID = 'kangur-sunset-horizon';
@@ -89,6 +91,17 @@ const buildNightlyAuroraEntry = (
   updatedAt,
 });
 
+const buildDailyCrystalEntry = (
+  createdAt: string,
+  updatedAt: string
+): KangurThemeCatalogEntry => ({
+  id: DAILY_CRYSTAL_ID,
+  name: 'Daily Crystal',
+  settings: KANGUR_DAILY_CRYSTAL_THEME as ThemeSettings,
+  createdAt,
+  updatedAt,
+});
+
 const buildLogoGlowEntry = (
   createdAt: string,
   updatedAt: string
@@ -132,6 +145,7 @@ async function main(): Promise<void> {
       : null;
     const catalog = parseCatalog(currentValue);
     const existingDaily = catalog.find((entry) => entry.id === DAILY_BLOOM_ID);
+    const existingDailyCrystal = catalog.find((entry) => entry.id === DAILY_CRYSTAL_ID);
     const existingLogoGlow = catalog.find((entry) => entry.id === LOGO_GLOW_ID);
     const existingNightly = catalog.find((entry) => entry.id === NIGHTLY_AURORA_ID);
     const existingSunset = catalog.find((entry) => entry.id === SUNSET_HORIZON_ID);
@@ -161,6 +175,7 @@ async function main(): Promise<void> {
       };
 
       upsert(DAILY_BLOOM_ID, buildDailyBloomEntry, existingDaily);
+      upsert(DAILY_CRYSTAL_ID, buildDailyCrystalEntry, existingDailyCrystal);
       upsert(LOGO_GLOW_ID, buildLogoGlowEntry, existingLogoGlow);
       upsert(NIGHTLY_AURORA_ID, buildNightlyAuroraEntry, existingNightly);
       upsert(SUNSET_HORIZON_ID, buildSunsetHorizonEntry, existingSunset);
@@ -196,6 +211,7 @@ async function main(): Promise<void> {
           status: hasChanges ? 'update' : 'unchanged',
           entryPresent: {
             [DAILY_BLOOM_ID]: Boolean(existingDaily),
+            [DAILY_CRYSTAL_ID]: Boolean(existingDailyCrystal),
             [LOGO_GLOW_ID]: Boolean(existingLogoGlow),
             [NIGHTLY_AURORA_ID]: Boolean(existingNightly),
             [SUNSET_HORIZON_ID]: Boolean(existingSunset),

@@ -779,11 +779,16 @@ export default function ClockLesson(): React.JSX.Element {
     };
 
     // Single-panel games use the middle practice set.
-    const trainingPanels = [
+    const trainingPanels: Array<{
+      activeClassName: string;
+      completedClassName: string;
+      id: ClockTrainingPanelId;
+      label: string;
+    }> = [
       {
         activeClassName: 'bg-indigo-500',
         completedClassName: 'bg-indigo-300',
-        id: 'pick_one' as const,
+        id: 'pick_one',
         label: 'zadanie',
       },
     ];

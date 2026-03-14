@@ -17,7 +17,7 @@ export const kangurButtonVariants = cva(
     variants: {
       variant: {
         primary:
-          'kangur-button-shell kangur-cta-pill border-transparent primary-cta text-white hover:brightness-[1.02] focus-visible:ring-amber-300/70',
+          'kangur-button-shell kangur-cta-pill border-transparent primary-cta hover:brightness-[1.02] focus-visible:ring-amber-300/70',
         secondary:
           'kangur-button-shell kangur-cta-pill border-transparent soft-cta text-[var(--kangur-button-secondary-text,#2f467e)] hover:text-[var(--kangur-button-secondary-hover-text,#24386e)] focus-visible:ring-indigo-300/70',
         surface:

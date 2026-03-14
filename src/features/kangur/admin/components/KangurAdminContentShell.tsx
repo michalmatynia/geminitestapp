@@ -23,6 +23,7 @@ type KangurAdminContentShellProps = {
   className?: string;
   panelClassName?: string;
   contentClassName?: string;
+  panelVariant?: 'default' | 'flat';
   showMenuToggle?: boolean;
 };
 
@@ -102,6 +103,7 @@ export function KangurAdminContentShell({
   className,
   panelClassName,
   contentClassName,
+  panelVariant = 'default',
   showMenuToggle = false,
 }: KangurAdminContentShellProps): React.JSX.Element {
   const contextValue = {
@@ -113,7 +115,9 @@ export function KangurAdminContentShell({
     refresh,
   };
   const panelSurfaceClassName = cn(
-    'border-border/70 bg-[linear-gradient(180deg,rgba(15,23,42,0.78),rgba(15,23,42,0.62))] shadow-[0_36px_110px_-72px_rgba(15,23,42,0.95)] backdrop-blur-md',
+    panelVariant === 'flat'
+      ? 'bg-transparent shadow-none'
+      : 'border-border/70 bg-[linear-gradient(180deg,rgba(15,23,42,0.78),rgba(15,23,42,0.62))] shadow-[0_36px_110px_-72px_rgba(15,23,42,0.95)] backdrop-blur-md',
     panelClassName
   );
   const panelContentClassName = cn('min-h-0 space-y-6', contentClassName);
@@ -134,6 +138,7 @@ export function KangurAdminContentShell({
             className={panelSurfaceClassName}
             headerClassName='mb-6'
             contentClassName={panelContentClassName}
+            variant={panelVariant}
           >
             {children}
           </ListPanel>

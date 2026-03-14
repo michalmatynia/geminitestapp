@@ -9,7 +9,6 @@ import {
   buildAnalyticsInsightContextRegistrySystemPrompt,
   buildRuntimeAnalyticsInsightContextRegistrySystemPrompt,
 } from '@/features/ai/insights/context-registry/system-prompt';
-import { buildSystemLogsContextRegistrySystemPrompt } from '@/features/observability/server';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type {
   AiInsightRecord,
@@ -21,6 +20,7 @@ import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
 import { type AiBrainCapabilityKey } from '@/shared/lib/ai-brain/settings';
 import { listAnalyticsEvents, getAnalyticsSummary } from '@/shared/lib/analytics/server';
+import { buildSystemLogsContextRegistrySystemPrompt } from '@/shared/lib/observability/runtime-context/server';
 import { sanitizeSystemLogForAi } from '@/shared/lib/observability/runtime-context/sanitize-system-log-for-ai';
 import { listSystemLogs, getSystemLogMetrics } from '@/shared/lib/observability/system-logger';
 

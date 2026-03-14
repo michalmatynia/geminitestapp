@@ -52,6 +52,7 @@ export * from './file-upload';
 export * from './multi-select';
 export * from './integration-selector';
 export * from './image-retry-dropdown';
+export * from './image-slot-manager';
 export * from './filters-container';
 export * from './vector-canvas';
 export * from './tree';

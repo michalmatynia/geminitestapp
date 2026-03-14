@@ -71,6 +71,15 @@ export function KangurFeaturePageShell(): JSX.Element {
     >
       {customCss ? <style data-kangur-custom-css>{customCss}</style> : null}
       <KangurFeatureApp />
+      <footer className='w-full border-t border-white/10 px-4 py-6 text-center text-xs [color:var(--kangur-page-muted-text)] sm:px-6'>
+        <span>Creator credentials: Michał Matynia · created 2026 · </span>
+        <a
+          className='font-semibold [color:var(--kangur-page-text)] hover:underline'
+          href='mailto:mmatynia@gmail.com'
+        >
+          contact: mmatynia@gmail.com
+        </a>
+      </footer>
     </div>
   );
 }

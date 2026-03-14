@@ -14,6 +14,7 @@ import {
   parseKangurParentVerificationEmailSettings,
 } from '@/features/kangur/settings';
 import {
+  assignAuthUserRole,
   consumeEmailVerificationChallenge,
   createAuthUserWithEmail,
   createEmailVerificationChallenge,
@@ -427,6 +428,12 @@ export const verifyKangurParentEmail = async (tokenId: string): Promise<{
       displayName: user?.name ?? buildParentDisplayName(email),
       preferredLoginName: email.split('@')[0] ?? ownerUserId.slice(0, 12),
       legacyUserKey: email,
+    });
+
+    await assignAuthUserRole({
+      userId: ownerUserId,
+      roleId: 'studiq_parent',
+      source: 'studiq.parent_registration',
     });
   }
 

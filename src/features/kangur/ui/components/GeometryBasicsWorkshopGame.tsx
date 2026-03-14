@@ -269,10 +269,10 @@ export default function GeometryBasicsWorkshopGame({
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const sessionStartedAtRef = useRef(Date.now());
 
-  const round = ROUNDS[roundIndex] ?? ROUNDS[0];
+  const round = ROUNDS[roundIndex] ?? ROUNDS[0]!;
   const correctTile = useMemo(
-    () => LABEL_TILES.find((tile) => tile.id === round.correct) ?? LABEL_TILES[0],
-    [round.correct]
+    () => LABEL_TILES.find((tile) => tile.id === round.correct) ?? LABEL_TILES[0]!,
+    [round]
   );
 
   const assignTile = (tileId: TileId): void => {

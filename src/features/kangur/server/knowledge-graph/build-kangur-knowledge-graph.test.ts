@@ -75,7 +75,7 @@ describe('buildKangurKnowledgeGraph', () => {
           kind: 'page',
           title: 'Testy',
           route: '/tests',
-          triggerPhrases: expect.arrayContaining(['gdzie są testy', 'wróć do testow']),
+          triggerPhrases: expect.arrayContaining(['gdzie są testy', 'wróć do testów']),
         }),
         expect.objectContaining({
           id: 'guide:native:lesson-overview',

@@ -586,6 +586,19 @@ SCRAPER_GUARD_PAGE_MAX=
 SCRAPER_GUARD_API_MAX=
 ```
 
+## Locked Build Configuration — DO NOT MODIFY
+
+The following files are locked and must NOT be modified by AI agents without explicit user approval:
+
+- `next.config.mjs` — Next.js build config
+- `package.json` `"build"` script — heap size tuned for Vercel
+- `tsconfig.json` — TypeScript compiler config
+- `vercel.json` — Vercel deployment settings (if present)
+
+Key constraints: `--max-old-space-size=3584`, `experimental.cpus: 2`, conditional `output: 'standalone'` (disabled on Vercel), `typescript.ignoreBuildErrors: true`.
+
+If you need to change any of these files, stop and ask the user for permission first.
+
 ## Working Rules For Agents
 
 - Use current paths under `src/app`, `src/features`, and `src/shared`.

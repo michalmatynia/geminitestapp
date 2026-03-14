@@ -13,6 +13,7 @@ import {
 import type { AuthUserAccessDetail as AuthUserAccess } from '@/shared/contracts/auth';
 import { MongoSettingRecord } from '@/shared/contracts/base';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
@@ -131,4 +132,42 @@ export const getAuthAccessForUser = async (userId: string): Promise<AuthUserAcce
   } finally {
     accessInflight.delete(userId);
   }
+};
+
+export const assignAuthUserRole = async (input: {
+  userId: string;
+  roleId: string;
+  source: string;
+}): Promise<void> => {
+  if (!process.env['MONGODB_URI']) return;
+
+  const currentMap = await getAuthUserRoles();
+  if (currentMap[input.userId] === input.roleId) return;
+
+  currentMap[input.userId] = input.roleId;
+
+  const mongo = await getMongoDb();
+  const now = new Date();
+  await mongo.collection<MongoSettingRecord>('settings').updateOne(
+    { key: AUTH_SETTINGS_KEYS.userRoles },
+    {
+      $set: { value: JSON.stringify(currentMap), updatedAt: now },
+      $setOnInsert: { createdAt: now },
+    },
+    { upsert: true }
+  );
+
+  invalidateAuthAccessCache(input.userId);
+
+  await logSystemEvent({
+    level: 'info',
+    message: `Role "${input.roleId}" assigned to user ${input.userId}.`,
+    source: input.source,
+    service: 'auth',
+    context: {
+      userId: input.userId,
+      roleId: input.roleId,
+      source: input.source,
+    },
+  });
 };

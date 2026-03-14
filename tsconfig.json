@@ -90,9 +90,7 @@
     "src/shared/contracts/ambient.d.ts",
     ".next/dev/types/**/*.ts",
     ".next-dev/types/**/*.ts",
-    ".next-dev/dev/types/**/*.ts",
-    ".next-dev-playwright-broker-web-dev-019cec79-a30d-74b0-970c-6d79f2f125cb-route-crawl/types/**/*.ts",
-    ".next-dev-playwright-broker-web-dev-019cec79-a30d-74b0-970c-6d79f2f125cb-route-crawl/dev/types/**/*.ts"
+    ".next-dev/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

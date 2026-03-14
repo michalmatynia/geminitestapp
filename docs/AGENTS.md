@@ -32,6 +32,19 @@ code-backed, and shorter than `GEMINI.md`. Other overlay docs should defer to it
 - AI stack: AI Paths, chatbot, agent runtime, AI Brain routing, image studio,
   AI insights, product AI flows
 
+## Locked Build Configuration — DO NOT MODIFY
+
+The following files are locked and must NOT be modified by AI agents without explicit user approval:
+
+- `next.config.mjs` — Next.js build config
+- `package.json` `"build"` script — heap size tuned for Vercel
+- `tsconfig.json` — TypeScript compiler config
+- `vercel.json` — Vercel deployment settings (if present)
+
+Key constraints: `--max-old-space-size=3584`, `experimental.cpus: 2`, conditional `output: 'standalone'` (disabled on Vercel), `typescript.ignoreBuildErrors: true`.
+
+If you need to change any of these files, stop and ask the user for permission first.
+
 ## Canonical Repo Lanes
 
 Use these as the primary cross-cutting execution lanes before reaching for

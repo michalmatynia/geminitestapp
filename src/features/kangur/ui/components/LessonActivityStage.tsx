@@ -16,7 +16,7 @@ import {
 import { cn } from '@/shared/utils';
 
 type LessonActivityStageProps = {
-  accent: 'amber' | 'emerald' | 'indigo' | 'rose' | 'sky' | 'violet';
+  accent: 'amber' | 'emerald' | 'indigo' | 'rose' | 'sky' | 'teal' | 'violet';
   backButtonLabel?: string;
   children: React.ReactNode;
   description?: React.ReactNode;

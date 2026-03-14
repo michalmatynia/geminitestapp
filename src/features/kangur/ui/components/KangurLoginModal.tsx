@@ -34,7 +34,7 @@ export function KangurLoginModal(): JSX.Element {
         <DialogPrimitive.Content
           className={cn(
             'fixed left-1/2 top-1/2 z-50 w-[min(calc(100vw-2rem),42rem)]',
-            'max-h-[calc(100vh-2rem)] -translate-x-1/2 -translate-y-1/2',
+            'max-h-[calc(100vh-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto',
             'outline-none'
           )}
           data-testid='kangur-login-modal'

@@ -54,6 +54,11 @@ vi.mock('@/features/products/server', async (importOriginal) => {
     parseJsonBody: mocks.parseJsonBody,
     productService: {
       getProductById: mocks.getPublicProductById,
+      getProducts: mocks.getProducts,
+      createProduct: mocks.createProduct,
+      updateProduct: mocks.updateProduct,
+      deleteProduct: mocks.deleteProduct,
+      duplicateProduct: mocks.duplicateProduct,
     },
   };
 });

@@ -9,7 +9,6 @@ import LessonSlideSection, {
 import { KangurLessonSubsectionSummarySync } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 import {
-  GeometryAngleTypesAnimation,
   GeometryMovingPointAnimation,
   GeometryPolygonSidesAnimation,
   GeometryPerimeterTraceAnimation,
@@ -18,8 +17,6 @@ import {
   GeometryShapeFillAnimation,
   GeometryShapesOrbitAnimation,
   GeometrySideHighlightAnimation,
-  GeometrySymmetryAxesAnimation,
-  GeometrySymmetryFoldAnimation,
   GeometryVerticesAnimation,
 } from '@/features/kangur/ui/components/GeometryLessonAnimations';
 import {
@@ -33,75 +30,7 @@ import {
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 
-type SectionId = 'podstawowe' | 'ile_bokow' | 'animacje' | 'podsumowanie' | 'game';
-
-const SHAPES_ANIMATION_SLIDES: LessonSlide[] = [
-  {
-    title: 'Figury w ruchu',
-    content: (
-      <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-        <div className='mx-auto h-32 w-32'>
-          <GeometryShapesOrbitAnimation />
-        </div>
-        <div className='text-xs text-fuchsia-600'>
-          Obrót nie zmienia kształtu figury.
-        </div>
-      </KangurLessonCallout>
-    ),
-  },
-  {
-    title: 'Wnetrze figury',
-    content: (
-      <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-        <div className='mx-auto h-28 w-36'>
-          <GeometryShapeFillAnimation />
-        </div>
-        <div className='text-xs text-fuchsia-600'>
-          Wnetrze figury to obszar zamkniety przez boki.
-        </div>
-      </KangurLessonCallout>
-    ),
-  },
-  {
-    title: 'Symetria',
-    content: (
-      <KangurLessonCallout accent='emerald' className='text-center' padding='sm'>
-        <div className='mx-auto h-28 w-36'>
-          <GeometrySymmetryFoldAnimation />
-        </div>
-        <div className='text-xs text-emerald-600'>
-          Po złożeniu po osi dwie połowy są takie same.
-        </div>
-      </KangurLessonCallout>
-    ),
-  },
-  {
-    title: 'Osie symetrii',
-    content: (
-      <KangurLessonCallout accent='emerald' className='text-center' padding='sm'>
-        <div className='mx-auto h-28 w-32'>
-          <GeometrySymmetryAxesAnimation />
-        </div>
-        <div className='text-xs text-emerald-600'>
-          Koło ma wiele osi symetrii.
-        </div>
-      </KangurLessonCallout>
-    ),
-  },
-  {
-    title: 'Katy',
-    content: (
-      <KangurLessonCallout accent='sky' className='text-center' padding='sm'>
-        <div className='mx-auto h-28 w-40'>
-          <GeometryAngleTypesAnimation />
-        </div>
-        <div className='text-xs text-sky-600'>
-          Figury maja kąty: ostre, proste i rozwarte.
-        </div>
-      </KangurLessonCallout>
-    ),
-  },
-];
+type SectionId = 'podstawowe' | 'ile_bokow' | 'podsumowanie' | 'game';
 
 const SHAPE_CARDS = [
   { emoji: '⚪', name: 'Koło', details: '0 boków i 0 rogów' },
@@ -249,37 +178,49 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       ),
     },
   ],
-  animacje: SHAPES_ANIMATION_SLIDES,
   podsumowanie: [
     {
-      title: 'Podsumowanie w ruchu',
+      title: 'Podsumowanie w ruchu: obrót',
       content: (
-        <div className='grid gap-3 text-center sm:grid-cols-2'>
-          <KangurLessonCallout accent='violet' padding='sm'>
-            <div className='mx-auto h-28 w-36'>
-              <GeometryShapesOrbitAnimation />
-            </div>
-            <div className='text-xs text-fuchsia-600'>Obrót nie zmienia figury.</div>
-          </KangurLessonCallout>
-          <KangurLessonCallout accent='violet' padding='sm'>
-            <div className='mx-auto h-28 w-36'>
-              <GeometryPolygonSidesAnimation />
-            </div>
-            <div className='text-xs text-fuchsia-600'>Boki i rogi opisują kształt.</div>
-          </KangurLessonCallout>
-          <KangurLessonCallout accent='violet' padding='sm'>
-            <div className='mx-auto h-28 w-36'>
-              <GeometryShapeFillAnimation />
-            </div>
-            <div className='text-xs text-fuchsia-600'>Wnętrze figury to jej pole.</div>
-          </KangurLessonCallout>
-          <KangurLessonCallout accent='violet' padding='sm'>
-            <div className='mx-auto h-28 w-36'>
-              <GeometryShapeBuildAnimation />
-            </div>
-            <div className='text-xs text-fuchsia-600'>Łącz odcinki, aż figura się domknie.</div>
-          </KangurLessonCallout>
-        </div>
+        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
+          <div className='mx-auto h-32 w-40'>
+            <GeometryShapesOrbitAnimation />
+          </div>
+          <div className='text-xs text-fuchsia-600'>Obrót nie zmienia figury.</div>
+        </KangurLessonCallout>
+      ),
+    },
+    {
+      title: 'Podsumowanie w ruchu: boki',
+      content: (
+        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
+          <div className='mx-auto h-32 w-40'>
+            <GeometryPolygonSidesAnimation />
+          </div>
+          <div className='text-xs text-fuchsia-600'>Boki i rogi opisują kształt.</div>
+        </KangurLessonCallout>
+      ),
+    },
+    {
+      title: 'Podsumowanie w ruchu: wnętrze',
+      content: (
+        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
+          <div className='mx-auto h-32 w-40'>
+            <GeometryShapeFillAnimation />
+          </div>
+          <div className='text-xs text-fuchsia-600'>Wnętrze figury to jej pole.</div>
+        </KangurLessonCallout>
+      ),
+    },
+    {
+      title: 'Podsumowanie w ruchu: budowa',
+      content: (
+        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
+          <div className='mx-auto h-32 w-40'>
+            <GeometryShapeBuildAnimation />
+          </div>
+          <div className='text-xs text-fuchsia-600'>Łącz odcinki, aż figura się domknie.</div>
+        </KangurLessonCallout>
       ),
     },
   ],
@@ -293,7 +234,6 @@ export const HUB_SECTIONS = [
     description: 'Koło, trójkąt, kwadrat, prostokąt',
   },
   { id: 'ile_bokow', emoji: '🔢', title: 'Boki i rogi', description: 'Każda figura pod lupą' },
-  { id: 'animacje', emoji: '🎞️', title: 'Animacje', description: 'Figury w ruchu' },
   { id: 'podsumowanie', emoji: '📋', title: 'Podsumowanie', description: 'Najważniejsze informacje' },
   {
     id: 'game',

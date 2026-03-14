@@ -11,7 +11,7 @@ import {
   ContextRegistryPageProvider,
   useRegisterContextRegistryPageSource,
 } from '@/shared/lib/ai-context-registry/page-context';
-import { FormSection } from '@/shared/ui';
+import { FormSection } from '@/features/products/ui';
 
 import { StudioActionsBar } from './studio/StudioActionsBar';
 import { StudioAuditHistory } from './studio/StudioAuditHistory';

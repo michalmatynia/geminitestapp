@@ -14,21 +14,16 @@ import {
   ClientOnly,
   Tabs,
   TabsContent,
-  TabsList,
-  TabsTrigger,
-  Tooltip,
-  CopyButton,
-  Button,
 } from '@/shared/ui';
 
 import { AdminImageStudioPromptsPage } from './AdminImageStudioPromptsPage';
 import { AdminImageStudioSettingsPage } from './AdminImageStudioSettingsPage';
 import { ImageStudioDocsContent } from '../components/ImageStudioDocsContent';
 import { ImageStudioPageSkeleton } from '../components/ImageStudioPageSkeleton';
+import { ImageStudioWorkspaceHeader } from '../components/ImageStudioWorkspaceHeader';
 import { StudioMainContent } from '../components/StudioMainContent';
 import { StudioModals } from '../components/StudioModals';
 import { StudioProjectsList } from '../components/StudioProjectsList';
-import { ToggleButtonGroup } from '../components/ToggleButtonGroup';
 import { useGenerationState } from '../context/GenerationContext';
 import { ImageStudioProvider } from '../context/ImageStudioProvider';
 import { useMaskingState } from '../context/MaskingContext';
@@ -36,7 +31,7 @@ import { useProjectsActions, useProjectsState } from '../context/ProjectsContext
 import { usePromptState } from '../context/PromptContext';
 import { useSettingsActions, useSettingsState } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
-import { useUiActions, useUiState, type PreviewCanvasSize } from '../context/UiContext';
+import { useUiActions, useUiState } from '../context/UiContext';
 import {
   buildImageStudioWorkspaceContextBundle,
   IMAGE_STUDIO_CONTEXT_ROOT_IDS,
@@ -44,11 +39,6 @@ import {
 
 
 type StudioTab = 'studio' | 'projects' | 'settings' | 'prompts' | 'docs';
-const PREVIEW_CANVAS_SIZE_OPTIONS: Array<{ value: PreviewCanvasSize; label: string }> = [
-  { value: 'regular', label: 'Regular' },
-  { value: 'large', label: 'Large' },
-  { value: 'xlarge', label: 'XLarge' },
-];
 
 const normalizeReturnToPath = (value: string | null | undefined): string | null => {
   if (typeof value !== 'string') return null;
@@ -256,16 +246,6 @@ function AdminImageStudioPageContent(): React.JSX.Element {
     router.push(`${target.pathname}${target.search}`);
   }, [projectId, returnToPath, router, selectedSlot?.id]);
 
-  const tabsList = (
-    <TabsList className='bg-card' aria-label='Image studio workspace tabs'>
-      <TabsTrigger value='studio'>Studio</TabsTrigger>
-      <TabsTrigger value='projects'>Projects</TabsTrigger>
-      <TabsTrigger value='settings'>Settings</TabsTrigger>
-      <TabsTrigger value='prompts'>Prompts</TabsTrigger>
-      <TabsTrigger value='docs'>Docs</TabsTrigger>
-    </TabsList>
-  );
-
   return (
     <div className='mx-auto box-border flex h-[calc((100dvh-4rem)*1.035)] w-full min-h-0 min-w-0 max-w-none flex-col gap-2 overflow-hidden px-0.5 pb-0 pt-2'>
       <h1 className='sr-only'>Image Studio</h1>
@@ -286,81 +266,17 @@ function AdminImageStudioPageContent(): React.JSX.Element {
               : 'flex min-h-0 min-w-0 flex-1 flex-col gap-3'
           }
         >
-          {!hideTopBar ? (
-            <div className='border-b bg-muted/40 px-1 py-2'>
-              <div className='flex items-center gap-3'>
-                {tabsList}
-                {activeTab === 'studio' && returnToPath ? (
-                  <Button
-                    type='button'
-                    size='xs'
-                    variant='outline'
-                    className='h-7'
-                    onClick={handleReturnToProductStudio}
-                  >
-                    Back To Product Studio
-                  </Button>
-                ) : null}
-                <div className='ml-auto flex min-w-0 flex-col items-end gap-1 text-right'>
-                  <div className='flex min-w-0 items-center justify-end gap-2'>
-                    {activeTab === 'studio' ? (
-                      <>
-                        <div className='flex items-center gap-2'>
-                          <span className='text-[10px] uppercase tracking-wide text-muted-foreground'>
-                            Canvas
-                          </span>
-                          <ToggleButtonGroup
-                            value={previewCanvasSize}
-                            onChange={setPreviewCanvasSize}
-                            options={PREVIEW_CANVAS_SIZE_OPTIONS}
-                            className='text-[11px] text-muted-foreground'
-                            size='xs'
-                          />
-                        </div>
-                      </>
-                    ) : null}
-                    <span
-                      className='size-7 shrink-0 opacity-0 pointer-events-none'
-                      aria-hidden='true'
-                    />
-                  </div>
-                  <div className='flex min-w-0 items-center justify-end gap-2'>
-                    <span className='w-[280px] shrink-0 truncate text-left text-xs text-muted-foreground'>
-                      {selectedSlot
-                        ? selectedSlot.name || selectedSlot.id
-                        : 'No active card selected. Pick a card from the tree.'}
-                    </span>
-                    <Tooltip content={selectedSlot ? copyCardNameTooltip : selectCardFirstTooltip}>
-                      <CopyButton
-                        value={selectedSlot?.name?.trim() || selectedSlot?.id || ''}
-                        variant='ghost'
-                        size='sm'
-                        className='size-7 shrink-0'
-                        disabled={!selectedSlot?.id}
-                      />
-                    </Tooltip>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className='border-b bg-muted/40 px-1 py-1.5'>
-              <div className='flex items-center gap-2'>
-                {tabsList}
-                {activeTab === 'studio' && returnToPath ? (
-                  <Button
-                    type='button'
-                    size='xs'
-                    variant='outline'
-                    className='h-7'
-                    onClick={handleReturnToProductStudio}
-                  >
-                    Back To Product Studio
-                  </Button>
-                ) : null}
-              </div>
-            </div>
-          )}
+          <ImageStudioWorkspaceHeader
+            activeTab={activeTab}
+            hideTopBar={hideTopBar}
+            returnToPath={returnToPath}
+            onReturnToProductStudio={handleReturnToProductStudio}
+            previewCanvasSize={previewCanvasSize}
+            onPreviewCanvasSizeChange={setPreviewCanvasSize}
+            selectedSlot={selectedSlot}
+            copyCardNameTooltip={copyCardNameTooltip}
+            selectCardFirstTooltip={selectCardFirstTooltip}
+          />
           <div className='flex-1 min-w-0 overflow-hidden'>
             <TabsContent value='studio' className='h-full m-0 p-0 flex flex-col'>
               <StudioMainContent />

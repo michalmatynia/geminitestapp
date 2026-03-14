@@ -2,11 +2,15 @@
 
 import dynamic from 'next/dynamic';
 
-import ProductImageManager from '@/features/products/components/ProductImageManager';
-import { ProductImageManagerControllerProvider } from '@/features/products/components/ProductImageManagerControllerContext';
 import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
+import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import { internalError } from '@/shared/errors/app-error';
-import { Button, FormSection } from '@/shared/ui';
+import {
+  Button,
+  FormSection,
+  ProductImageManager,
+  ProductImageManagerControllerProvider,
+} from '@/features/products/ui';
 
 import {
   useOptionalProductImagesTabActionsContext,
@@ -19,6 +23,7 @@ const FileManager = dynamic(() => import('@/shared/ui/files'), {
 
 export function ProductImagesTabContent(): React.JSX.Element {
   const formImages = useProductFormImages();
+  const { imageExternalBaseUrl } = useProductSettings();
   const imagesTabStateContext = useOptionalProductImagesTabStateContext();
   const imagesTabActionsContext = useOptionalProductImagesTabActionsContext();
   const showFileManager =
@@ -72,10 +77,16 @@ export function ProductImagesTabContent(): React.JSX.Element {
       </FormSection>
       {resolvedImageManagerController ? (
         <ProductImageManagerControllerProvider value={resolvedImageManagerController}>
-          <ProductImageManager />
+          <ProductImageManager
+            externalBaseUrl={imageExternalBaseUrl}
+            productId={formImages?.productId}
+          />
         </ProductImageManagerControllerProvider>
       ) : (
-        <ProductImageManager />
+        <ProductImageManager
+          externalBaseUrl={imageExternalBaseUrl}
+          productId={formImages?.productId}
+        />
       )}
     </div>
   );

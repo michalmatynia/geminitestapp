@@ -326,7 +326,7 @@ export function AddingTenFrameAnimation(): React.JSX.Element {
 export function AddingTwoDigitAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja dodawania dwucyfrowego: dziesiatki i jednosci łączą się w sumę.'
+      aria-label='Animacja dodawania dwucyfrowego: dziesiątki i jedności łączą się w sumę.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 460 180'
@@ -603,7 +603,7 @@ export function AddingMakeTenPairsAnimation(): React.JSX.Element {
 export function AddingColumnAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja dodawania w kolumnach: dziesiatki i jednosci sumuja się osobno.'
+      aria-label='Animacja dodawania w kolumnach: dziesiątki i jedności sumują się osobno.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 440 190'
@@ -650,8 +650,8 @@ export function AddingColumnAnimation(): React.JSX.Element {
       <rect className='col-stroke' fill='none' height='150' rx='18' width='120' x='300' y='20' />
       <line className='col-stroke' strokeWidth='2' x1='160' x2='160' y1='32' y2='158' />
       <line className='col-stroke' strokeWidth='2' x1='300' x2='420' y1='108' y2='108' />
-      <text fill='#475569' fontSize='12' fontWeight='600' x='84' y='44'>Dziesiatki</text>
-      <text fill='#475569' fontSize='12' fontWeight='600' x='188' y='44'>Jednosci</text>
+      <text fill='#475569' fontSize='12' fontWeight='600' x='84' y='44'>Dziesiątki</text>
+      <text fill='#475569' fontSize='12' fontWeight='600' x='188' y='44'>Jedności</text>
       <text fill='#475569' fontSize='12' fontWeight='600' x='326' y='44'>Suma</text>
 
       <g className='move-a'>
@@ -679,7 +679,7 @@ export function AddingColumnAnimation(): React.JSX.Element {
 export function AddingAbacusAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja liczydla: przesuwanie koralikow dla dziesiatek i jednosci.'
+      aria-label='Animacja liczydła: przesuwanie koralików dla dziesiątek i jedności.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 440 190'
@@ -729,8 +729,8 @@ export function AddingAbacusAnimation(): React.JSX.Element {
           y2={60 + row * 40}
         />
       ))}
-      <text fill='#475569' fontSize='12' fontWeight='600' x='36' y='44'>Dziesiatki</text>
-      <text fill='#475569' fontSize='12' fontWeight='600' x='36' y='84'>Jednosci</text>
+      <text fill='#475569' fontSize='12' fontWeight='600' x='36' y='44'>Dziesiątki</text>
+      <text fill='#475569' fontSize='12' fontWeight='600' x='36' y='84'>Jedności</text>
       <text fill='#475569' fontSize='12' fontWeight='600' x='36' y='124'>Suma</text>
 
       <g className='row-a'>
@@ -1368,6 +1368,422 @@ export function MultiplicationCommutativeAnimation(): React.JSX.Element {
       <text fill='#0f172a' fontSize='14' fontWeight='700' x='170' y='64'>
         3×4 = 4×3
       </text>
+    </svg>
+  );
+}
+
+export function MultiplicationIntroPatternAnimation(): React.JSX.Element {
+  return (
+    <svg
+      aria-label='Animacja mnożenia: powtarzane grupy zamieniają się w tablicę.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 360 140'
+    >
+      <style>{`
+        .card {
+          fill: #fff7ed;
+          stroke: #fdba74;
+          stroke-width: 2;
+        }
+        .dot-a { fill: #fb7185; }
+        .dot-b { fill: #f97316; }
+        .dot-c { fill: #60a5fa; }
+        .group-card {
+          transform-box: fill-box;
+          transform-origin: center;
+          animation: groupPulse 6s ease-in-out infinite;
+        }
+        .group-2 { animation-delay: 0.4s; }
+        .group-3 { animation-delay: 0.8s; }
+        .groups { animation: groupsFade 6s ease-in-out infinite; }
+        .arrow { animation: arrowPulse 6s ease-in-out infinite; }
+        .grid {
+          transform-box: fill-box;
+          transform-origin: center;
+          animation: gridReveal 6s ease-in-out infinite;
+        }
+        .grid-dot { fill: #a855f7; }
+        @keyframes groupPulse {
+          0%, 35% { transform: translateY(0); opacity: 0.95; }
+          50% { transform: translateY(-4px); opacity: 1; }
+          70%, 100% { transform: translateY(0); opacity: 0.35; }
+        }
+        @keyframes groupsFade {
+          0%, 45% { opacity: 1; }
+          65%, 100% { opacity: 0.25; }
+        }
+        @keyframes arrowPulse {
+          0%, 45% { opacity: 0.25; }
+          60%, 100% { opacity: 1; }
+        }
+        @keyframes gridReveal {
+          0%, 45% { opacity: 0; transform: scale(0.95); }
+          60%, 100% { opacity: 1; transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .group-card, .groups, .arrow, .grid { animation: none; opacity: 1; }
+        }
+      `}</style>
+      <g className='groups'>
+        {[0, 1, 2].map((group) => (
+          <g key={`group-${group}`} className={`group-card group-${group + 1}`}>
+            <rect
+              className='card'
+              height='86'
+              rx='14'
+              width='64'
+              x={18 + group * 74}
+              y='24'
+            />
+            {[0, 1, 2].map((dot) => (
+              <circle
+                key={`group-${group}-dot-${dot}`}
+                className={group === 0 ? 'dot-a' : group === 1 ? 'dot-b' : 'dot-c'}
+                cx={50 + group * 74}
+                cy={48 + dot * 20}
+                r='7'
+              />
+            ))}
+          </g>
+        ))}
+      </g>
+      <g className='arrow' fill='none' stroke='#94a3b8' strokeLinecap='round' strokeWidth='4'>
+        <line x1='235' x2='255' y1='70' y2='70' />
+        <polyline points='248,62 258,70 248,78' />
+      </g>
+      <g className='grid'>
+        <rect
+          fill='none'
+          height='96'
+          rx='14'
+          stroke='#e2e8f0'
+          strokeDasharray='6 6'
+          width='90'
+          x='258'
+          y='22'
+        />
+        {[0, 1, 2].map((row) =>
+          [0, 1, 2].map((col) => (
+            <circle
+              key={`grid-${row}-${col}`}
+              className='grid-dot'
+              cx={276 + col * 24}
+              cy={44 + row * 24}
+              r='6'
+            />
+          ))
+        )}
+      </g>
+    </svg>
+  );
+}
+
+export function MultiplicationSkipCountAnimation(): React.JSX.Element {
+  const doubles = [0, 2, 4, 6, 8, 10];
+  const triples = [0, 3, 6, 9, 12];
+  const doubleStart = 44;
+  const doubleStep = 45;
+  const tripleStart = 44;
+  const tripleStep = 55;
+
+  return (
+    <svg
+      aria-label='Animacja mnożenia: skoki co 2 i co 3 na osi liczbowej.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 360 160'
+    >
+      <style>{`
+        .line { stroke: #cbd5f5; stroke-width: 4; stroke-linecap: round; }
+        .tick { stroke: #94a3b8; stroke-width: 2; }
+        .label { fill: #0f172a; font-size: 12px; font-weight: 700; }
+        .value { fill: #64748b; font-size: 11px; font-weight: 600; }
+        .hop {
+          transform-box: fill-box;
+          transform-origin: center;
+          animation: hopPulse 3.6s ease-in-out infinite;
+          opacity: 0.35;
+        }
+        .hop-two { fill: #60a5fa; }
+        .hop-three { fill: #f59e0b; }
+        @keyframes hopPulse {
+          0%, 100% { transform: translateY(0); opacity: 0.35; }
+          40% { transform: translateY(-6px); opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .hop { animation: none; opacity: 1; }
+        }
+      `}</style>
+      <text className='label' x='18' y='46'>
+        ×2
+      </text>
+      <line className='line' x1={doubleStart} x2={doubleStart + doubleStep * (doubles.length - 1)} y1='40' y2='40' />
+      {doubles.map((value, index) => {
+        const x = doubleStart + doubleStep * index;
+        return (
+          <g key={`double-${value}`}>
+            <line className='tick' x1={x} x2={x} y1='34' y2='46' />
+            <circle
+              className='hop hop-two'
+              cx={x}
+              cy='40'
+              r='6'
+              style={{ animationDelay: `${index * 0.35}s` }}
+            />
+            <text className='value' x={x - 6} y='60'>
+              {value}
+            </text>
+          </g>
+        );
+      })}
+
+      <text className='label' x='18' y='120'>
+        ×3
+      </text>
+      <line className='line' x1={tripleStart} x2={tripleStart + tripleStep * (triples.length - 1)} y1='114' y2='114' />
+      {triples.map((value, index) => {
+        const x = tripleStart + tripleStep * index;
+        return (
+          <g key={`triple-${value}`}>
+            <line className='tick' x1={x} x2={x} y1='108' y2='120' />
+            <circle
+              className='hop hop-three'
+              cx={x}
+              cy='114'
+              r='6'
+              style={{ animationDelay: `${index * 0.45}s` }}
+            />
+            <text className='value' x={x - 6} y='134'>
+              {value}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+export function MultiplicationDoubleDoubleAnimation(): React.JSX.Element {
+  return (
+    <svg
+      aria-label='Animacja mnożenia: razy 4 to podwójnie i jeszcze raz podwójnie.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 360 140'
+    >
+      <style>{`
+        .frame {
+          fill: #ffffff;
+          stroke: #e2e8f0;
+          stroke-width: 2;
+        }
+        .frame-a { animation: frameGlow 6s ease-in-out infinite; }
+        .frame-b { animation-delay: 2s; }
+        .frame-c { animation-delay: 4s; }
+        .dot-a { fill: #fb7185; }
+        .dot-b { fill: #38bdf8; }
+        .dot-c { fill: #22c55e; }
+        @keyframes frameGlow {
+          0%, 60%, 100% { stroke: #e2e8f0; }
+          20%, 40% { stroke: #f97316; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .frame-a, .frame-b, .frame-c { animation: none; }
+        }
+      `}</style>
+      <rect className='frame frame-a' height='90' rx='14' width='90' x='20' y='25' />
+      <rect className='frame frame-b' height='90' rx='14' width='90' x='135' y='25' />
+      <rect className='frame frame-c' height='90' rx='14' width='90' x='250' y='25' />
+
+      {[0, 1, 2].map((index) => (
+        <circle key={`a-${index}`} className='dot-a' cx={45 + index * 22} cy='70' r='6' />
+      ))}
+
+      {[0, 1].map((row) =>
+        [0, 1, 2].map((col) => (
+          <circle
+            key={`b-${row}-${col}`}
+            className='dot-b'
+            cx={160 + col * 22}
+            cy={55 + row * 20}
+            r='5.5'
+          />
+        ))
+      )}
+
+      {[0, 1, 2].map((row) =>
+        [0, 1, 2, 3].map((col) => (
+          <circle
+            key={`c-${row}-${col}`}
+            className='dot-c'
+            cx={266 + col * 16}
+            cy={48 + row * 20}
+            r='5'
+          />
+        ))
+      )}
+
+      <g fill='none' stroke='#94a3b8' strokeLinecap='round' strokeWidth='4'>
+        <line x1='112' x2='132' y1='70' y2='70' />
+        <polyline points='124,62 134,70 124,78' />
+        <line x1='227' x2='247' y1='70' y2='70' />
+        <polyline points='239,62 249,70 239,78' />
+      </g>
+    </svg>
+  );
+}
+
+export function MultiplicationFiveRhythmAnimation(): React.JSX.Element {
+  const values = [5, 10, 15, 20, 25];
+  const startX = 50;
+  const step = 55;
+
+  return (
+    <svg
+      aria-label='Animacja mnożenia: piątki rosną w rytmie 5, 10, 15, 20, 25.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 360 140'
+    >
+      <style>{`
+        .star { fill: #fbbf24; }
+        .pulse {
+          fill: none;
+          stroke: #f59e0b;
+          stroke-width: 2;
+          opacity: 0.2;
+          animation: pulseRing 3.6s ease-in-out infinite;
+        }
+        .label { fill: #0f172a; font-size: 12px; font-weight: 700; }
+        .value { fill: #64748b; font-size: 11px; font-weight: 600; }
+        @keyframes pulseRing {
+          0%, 100% { opacity: 0.2; transform: scale(0.9); }
+          50% { opacity: 0.9; transform: scale(1.05); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .pulse { animation: none; opacity: 0.6; }
+        }
+      `}</style>
+      <text className='label' x='16' y='34'>
+        ×5
+      </text>
+      {values.map((value, index) => {
+        const x = startX + step * index;
+        return (
+          <g key={`five-${value}`}>
+            <circle
+              className='pulse'
+              cx={x}
+              cy='60'
+              r='16'
+              style={{ animationDelay: `${index * 0.5}s` }}
+            />
+            <polygon
+              className='star'
+              points={`${x},44 ${x + 4},56 ${x + 16},56 ${x + 6},64 ${x + 10},76 ${x},68 ${x - 10},76 ${x - 6},64 ${x - 16},56 ${x - 4},56`}
+            />
+            <text className='value' x={x - 8} y='100'>
+              {value}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+export function MultiplicationTenShiftAnimation(): React.JSX.Element {
+  return (
+    <svg
+      aria-label='Animacja mnożenia: razy 10 dodaje zero na końcu.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 360 140'
+    >
+      <style>{`
+        .base { fill: #0f172a; font-size: 34px; font-weight: 800; }
+        .result { fill: #0f172a; font-size: 34px; font-weight: 800; }
+        .zero {
+          fill: #f97316;
+          font-size: 34px;
+          font-weight: 800;
+          animation: zeroSlide 4.5s ease-in-out infinite;
+        }
+        .arrow { animation: arrowGlow 4.5s ease-in-out infinite; }
+        @keyframes zeroSlide {
+          0%, 35% { opacity: 0.2; transform: translateX(-18px); }
+          55%, 100% { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes arrowGlow {
+          0%, 35% { opacity: 0.3; }
+          55%, 100% { opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .zero, .arrow { animation: none; opacity: 1; }
+        }
+      `}</style>
+      <text className='base' x='60' y='80'>
+        8
+      </text>
+      <text className='result' x='230' y='80'>
+        8
+      </text>
+      <text className='zero' x='250' y='80'>
+        0
+      </text>
+      <g className='arrow' fill='none' stroke='#94a3b8' strokeLinecap='round' strokeWidth='4'>
+        <line x1='95' x2='190' y1='70' y2='70' />
+        <polyline points='178,62 192,70 178,78' />
+      </g>
+      <text fill='#64748b' fontSize='12' fontWeight='600' x='50' y='32'>
+        ×10
+      </text>
+      <text fill='#64748b' fontSize='12' fontWeight='600' x='210' y='32'>
+        dopisz 0
+      </text>
+    </svg>
+  );
+}
+
+export function MultiplicationGamePreviewAnimation(): React.JSX.Element {
+  return (
+    <svg
+      aria-label='Animacja gry: zaznaczaj grupy kropek, aby zobaczyć mnożenie.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 360 140'
+    >
+      <style>{`
+        .dot { fill: #a855f7; }
+        .focus {
+          fill: rgba(167,139,250,0.18);
+          stroke: #8b5cf6;
+          stroke-width: 2;
+          animation: focusMove 4.8s ease-in-out infinite;
+        }
+        @keyframes focusMove {
+          0%, 25% { transform: translate(0, 0); }
+          45%, 70% { transform: translate(0, 28px); }
+          85%, 100% { transform: translate(0, 56px); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .focus { animation: none; }
+        }
+      `}</style>
+      <rect fill='none' height='96' rx='14' stroke='#e2e8f0' strokeDasharray='6 6' width='200' x='70' y='22' />
+      <rect className='focus' height='24' rx='10' width='160' x='90' y='36' />
+      {[0, 1, 2].map((row) =>
+        [0, 1, 2, 3].map((col) => (
+          <circle
+            key={`game-${row}-${col}`}
+            className='dot'
+            cx={110 + col * 40}
+            cy={48 + row * 28}
+            r='7'
+          />
+        ))
+      )}
     </svg>
   );
 }

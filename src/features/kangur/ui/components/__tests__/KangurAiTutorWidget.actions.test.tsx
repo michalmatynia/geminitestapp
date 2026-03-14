@@ -161,6 +161,7 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useKangurAiTutor: useKangurAiTutorMock,
+  useOptionalKangurAiTutor: useKangurAiTutorMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({

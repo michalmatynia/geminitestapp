@@ -16,6 +16,7 @@ export interface ProductFormImageContextType {
   imageSlots: (ProductImageSlot | null)[];
   imageLinks: string[];
   imageBase64s: string[];
+  productId?: string | null;
   uploading: boolean;
   uploadError: string | null;
   uploadSuccess: boolean;
@@ -38,6 +39,7 @@ export type ProductFormImageStateContextType = Pick<
   | 'imageSlots'
   | 'imageLinks'
   | 'imageBase64s'
+  | 'productId'
   | 'uploading'
   | 'uploadError'
   | 'uploadSuccess'
@@ -83,6 +85,7 @@ export function ProductFormImageProvider({
   const value = useMemo(
     () => ({
       ...images,
+      productId: product?.id ?? null,
       uploading,
       uploadError,
       uploadSuccess,
@@ -120,7 +123,7 @@ export function ProductFormImageProvider({
         images.setImageBase64At(index, value);
       },
     }),
-    [images, uploading, uploadError, uploadSuccess, onInteraction]
+    [images, product?.id, uploading, uploadError, uploadSuccess, onInteraction]
   );
 
   return (
@@ -141,6 +144,7 @@ export const useProductFormImageState = (): ProductFormImageStateContextType => 
     imageSlots,
     imageLinks,
     imageBase64s,
+    productId,
     uploading,
     uploadError,
     uploadSuccess,
@@ -150,6 +154,7 @@ export const useProductFormImageState = (): ProductFormImageStateContextType => 
     imageSlots,
     imageLinks,
     imageBase64s,
+    productId,
     uploading,
     uploadError,
     uploadSuccess,

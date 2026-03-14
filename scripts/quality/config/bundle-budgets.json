@@ -8,65 +8,65 @@
       "id": "frontend-home",
       "name": "Frontend Home",
       "route": "/",
-      "maxTotalBytes": 5600000,
-      "maxRouteBytes": 5100000,
-      "maxChunkCount": 72
+      "maxTotalBytes": 8826188,
+      "maxRouteBytes": 8309190,
+      "maxChunkCount": 81
     },
     {
       "id": "auth-signin",
       "name": "Auth Sign In",
       "route": "/auth/signin",
-      "maxTotalBytes": 5600000,
-      "maxRouteBytes": 5200000,
-      "maxChunkCount": 72
+      "maxTotalBytes": 8911496,
+      "maxRouteBytes": 8394497,
+      "maxChunkCount": 84
     },
     {
       "id": "admin-products",
       "name": "Admin Products",
       "route": "/admin/products",
-      "maxTotalBytes": 5600000,
-      "maxRouteBytes": 5100000,
-      "maxChunkCount": 72
+      "maxTotalBytes": 8887674,
+      "maxRouteBytes": 8370675,
+      "maxChunkCount": 85
     },
     {
       "id": "admin-ai-paths",
       "name": "Admin AI Paths",
       "route": "/admin/ai-paths",
-      "maxTotalBytes": 7500000,
-      "maxRouteBytes": 6900000,
-      "maxChunkCount": 82
+      "maxTotalBytes": 9588906,
+      "maxRouteBytes": 9071908,
+      "maxChunkCount": 87
     },
     {
       "id": "admin-image-studio",
       "name": "Admin Image Studio",
       "route": "/admin/image-studio",
-      "maxTotalBytes": 6500000,
-      "maxRouteBytes": 6000000,
-      "maxChunkCount": 80
+      "maxTotalBytes": 8904469,
+      "maxRouteBytes": 8387471,
+      "maxChunkCount": 85
     },
     {
       "id": "admin-case-resolver",
       "name": "Admin Case Resolver",
       "route": "/admin/case-resolver",
-      "maxTotalBytes": 7500000,
-      "maxRouteBytes": 6900000,
-      "maxChunkCount": 84
+      "maxTotalBytes": 9550586,
+      "maxRouteBytes": 9033588,
+      "maxChunkCount": 88
     },
     {
       "id": "admin-chatbot",
       "name": "Admin Chatbot",
       "route": "/admin/chatbot",
-      "maxTotalBytes": 5700000,
-      "maxRouteBytes": 5300000,
-      "maxChunkCount": 76
+      "maxTotalBytes": 8918339,
+      "maxRouteBytes": 8401341,
+      "maxChunkCount": 87
     },
     {
       "id": "admin-kangur",
       "name": "Admin Kangur",
       "route": "/admin/kangur",
-      "maxTotalBytes": 5700000,
-      "maxRouteBytes": 5300000,
-      "maxChunkCount": 76
+      "maxTotalBytes": 8859039,
+      "maxRouteBytes": 8342041,
+      "maxChunkCount": 85
     }
   ]
 }

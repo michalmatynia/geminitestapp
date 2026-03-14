@@ -371,7 +371,9 @@ describe('Lessons', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
 
-    const bottomNavigationButton = screen.getByRole('button', { name: 'Nauka kalendarza' });
+    const bottomNavigationButton = screen.getByRole('button', {
+      name: /nastepna lekcja: nauka kalendarza/i,
+    });
 
     expect(screen.queryByText('Nawigacja lekcji')).not.toBeInTheDocument();
     expect(

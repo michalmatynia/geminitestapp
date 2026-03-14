@@ -1,9 +1,8 @@
 'use client';
 
 import { Sun } from 'lucide-react';
-import React, { useContext, useMemo } from 'react';
+import type React from 'react';
 
-import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import {
   CmsStorefrontAppearanceMode,
   CmsStorefrontAppearanceButtonsProps,
@@ -17,10 +16,7 @@ import {
   resolveKangurStorefrontAppearance as resolveKangurAppearance,
   withFallbackTone,
 } from './CmsStorefrontAppearance.logic';
-import {
-  CmsStorefrontAppearanceProvider,
-  useCmsStorefrontAppearance,
-} from './CmsStorefrontAppearance.context';
+import { useCmsStorefrontAppearance } from './CmsStorefrontAppearance.context';
 
 // Re-export modular parts
 export * from './CmsStorefrontAppearance.contracts';
@@ -52,7 +48,7 @@ export function CmsStorefrontAppearanceButtons({
     orderedModes[(safeIndex + 1) % orderedModes.length] ?? fallbackModes[0] ?? mode;
   const currentLabel = modeLabels?.[mode] ?? DEFAULT_MODE_LABELS[mode] ?? mode;
   const nextLabel = modeLabels?.[nextMode] ?? DEFAULT_MODE_LABELS[nextMode] ?? nextMode;
-  const buttonAriaLabel = `Current theme: ${currentLabel}. Switch to ${nextLabel}`;
+  const buttonAriaLabel = `Switch to ${nextLabel} theme`;
   const isTogglePair = orderedModes.length === 2;
   const resolvedTone = withFallbackTone(tone);
   const isDarkMode = isDarkStorefrontAppearanceMode(mode);
@@ -69,7 +65,7 @@ export function CmsStorefrontAppearanceButtons({
         aria-label={buttonAriaLabel}
         aria-pressed={isTogglePair ? isDarkMode : undefined}
         onClick={() => setMode(nextMode)}
-        title={`Current theme: ${currentLabel}. Switch to ${nextLabel}`}
+        title={`Current theme: ${currentLabel}. Switch to ${nextLabel} theme`}
         className='group relative inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full transition-[background-color,border-color,color,box-shadow] duration-300 ease-out motion-reduce:transition-none'
         style={{
           border: `1px solid ${resolvedTone.border}`,

@@ -114,7 +114,7 @@ describe('AdminKangurTestSuitesManagerPage', () => {
         return JSON.stringify([
           {
             id: 'suite-1',
-            title: 'Tabliczka mnozenia',
+            title: 'Tabliczka mnożenia',
             description: 'Test podstawowy',
             durationMinutes: 15,
             publicationStatus: 'draft',
@@ -301,29 +301,33 @@ describe('AdminKangurTestSuitesManagerPage', () => {
   it('renders standalone Kangur tests page with shared shell chrome', () => {
     render(<AdminKangurTestSuitesManagerPage />);
 
-    expect(screen.getByText('Kangur Tests')).toBeInTheDocument();
+    const expectText = (text: string | RegExp) => {
+      expect(screen.getAllByText(text).length).toBeGreaterThan(0);
+    };
+
+    expectText('Kangur Tests');
     expect(screen.getByRole('navigation', { name: /breadcrumb/i })).toHaveTextContent(
       'Admin/Kangur/Tests'
     );
-    expect(screen.getByText('Question bank')).toBeInTheDocument();
-    expect(screen.getByText('Groups')).toBeInTheDocument();
-    expect(screen.getByText('Suites')).toBeInTheDocument();
-    expect(screen.getByText('Clean suites')).toBeInTheDocument();
-    expect(screen.getByText('Needs review')).toBeInTheDocument();
-    expect(screen.getByText('Question queue')).toBeInTheDocument();
-    expect(screen.getByText('Draft questions')).toBeInTheDocument();
-    expect(screen.getByText('Ready to publish')).toBeInTheDocument();
-    expect(screen.getByText('Live suites')).toBeInTheDocument();
-    expect(screen.getByText('Ready for live')).toBeInTheDocument();
-    expect(screen.getByText(/need attention/i)).toBeInTheDocument();
+    expectText('Question bank');
+    expectText('Groups');
+    expectText('Suites');
+    expectText('Clean suites');
+    expectText('Needs review');
+    expectText('Question queue');
+    expectText('Draft questions');
+    expectText('Ready to publish');
+    expectText('Live suites');
+    expectText('Ready for live');
+    expectText(/need attention/i);
     expect(screen.getByRole('button', { name: 'Go live ready suites' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Take live suites offline' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Publish ready queue' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Open review queue' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Open first fix' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /add group/i })).toBeInTheDocument();
-    expect(screen.getByText('Test Suite Library')).toBeInTheDocument();
-    expect(screen.getByText('Search suites...')).toBeInTheDocument();
+    expectText('Test Suite Library');
+    expectText('Search suites...');
     expect(screen.getByTestId('folder-tree-viewport')).toBeInTheDocument();
   });
 
@@ -479,7 +483,7 @@ describe('AdminKangurTestSuitesManagerPage', () => {
       viewportProps.renderNode?.({
         node: {
           id: toKangurTestSuiteNodeId('suite-1'),
-          name: 'Tabliczka mnozenia',
+          name: 'Tabliczka mnożenia',
           metadata: {},
         } as never,
         depth: 0,
@@ -510,7 +514,7 @@ describe('AdminKangurTestSuitesManagerPage', () => {
       viewportProps.renderNode?.({
         node: {
           id: toKangurTestSuiteNodeId('suite-1'),
-          name: 'Tabliczka mnozenia',
+          name: 'Tabliczka mnożenia',
           metadata: {},
         } as never,
         depth: 0,

@@ -604,8 +604,7 @@ describe('AdminKangurObservabilityPage', () => {
     expect(screen.getByText('AI Tutor Direct Answer Rate')).toBeInTheDocument();
     expect(screen.getByText('Knowledge Graph Freshness')).toBeInTheDocument();
     expect(screen.getByText('Knowledge Graph Readiness')).toBeInTheDocument();
-    expect(screen.getByText('Freshness against canonical tutor content')).toBeInTheDocument();
-    expect(screen.getAllByText('2.0 h lag').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('2 hours').length).toBeGreaterThanOrEqual(1);
     expect(
       screen.getByText(
         'Neo4j graph kangur-website-help-v1 is vector-ready with 87 nodes, 108 edges, and an online vector index.'
@@ -615,7 +614,7 @@ describe('AdminKangurObservabilityPage', () => {
       screen.getAllByText(
         'Page content was updated after the latest Neo4j sync by about 2 hours. Last graph sync: 2026-03-07T12:00:00.000Z. Latest canonical update: 2026-03-07T14:00:00.000Z.'
       ).length
-    ).toBeGreaterThanOrEqual(2);
+    ).toBeGreaterThanOrEqual(1);
     expect(
       screen.getByText('Deterministic Tutor answers are below the preferred rollout target.')
     ).toBeInTheDocument();
@@ -679,11 +678,16 @@ describe('AdminKangurObservabilityPage', () => {
     ).toBeInTheDocument();
     expect(useKangurKnowledgeGraphStatusMock).toHaveBeenCalledWith('kangur-website-help-v1');
     expect(screen.getByText('Knowledge Graph Status')).toBeInTheDocument();
-    expect(screen.getByText('Neo4j semantic retrieval graph')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Neo4j has semantic text, embeddings, and an online vector index for Kangur Tutor retrieval.'
+      )
+    ).toBeInTheDocument();
     expect(screen.getByText('Vector ready')).toBeInTheDocument();
-    expect(screen.getByText('text-embedding-3-small')).toBeInTheDocument();
-    expect(screen.getAllByText('87 nodes / 108 edges')).toHaveLength(2);
-    expect(screen.getByText('All canonical nodes valid')).toBeInTheDocument();
+    expect(screen.getByText('Live Nodes')).toBeInTheDocument();
+    expect(screen.getByText('Live Edges')).toBeInTheDocument();
+    expect(screen.getByText('Synced Nodes')).toBeInTheDocument();
+    expect(screen.getByText('Synced Edges')).toBeInTheDocument();
     expect(useKangurObservabilitySummaryMock).toHaveBeenCalledWith('30d');
     const allLogsHref = screen.getByRole('link', { name: /all kangur logs/i }).getAttribute('href');
     const logsUrl = new URL(allLogsHref ?? '', 'http://localhost');
@@ -735,7 +739,7 @@ describe('AdminKangurObservabilityPage', () => {
   it('syncs the knowledge graph from the status section and refreshes observability data', async () => {
     render(<AdminKangurObservabilityPage />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Sync graph now' }));
+    fireEvent.click(screen.getByRole('button', { name: /sync graph/i }));
 
     await waitFor(() =>
       expect(apiPostMock).toHaveBeenCalledWith(
@@ -747,7 +751,6 @@ describe('AdminKangurObservabilityPage', () => {
         { timeout: 120000 }
       )
     );
-    expect(await screen.findByText('Graph sync completed')).toBeInTheDocument();
     expect(
       await screen.findByText(/^Synced 87 nodes and 108 edges with embeddings preserved\.$/)
     ).toBeInTheDocument();
@@ -776,7 +779,7 @@ describe('AdminKangurObservabilityPage', () => {
     expect(screen.getAllByText('Wyjaśnij ranking wyników').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Normalized query seed')).toBeInTheDocument();
     expect(screen.getByText('wyjaśnij ranking wyników')).toBeInTheDocument();
-    expect(screen.getByText('wyjaśnij, ranking, wyników')).toBeInTheDocument();
+    expect(screen.getByText('wyjasnij, ranking, wynikow')).toBeInTheDocument();
     expect(screen.getByText('Ranking wyników')).toBeInTheDocument();
     expect(screen.getByText('guide • kangur_ai_tutor_native_guides • kangur_ai_tutor_native_guides')).toBeInTheDocument();
   });

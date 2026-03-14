@@ -51,7 +51,11 @@ describe('v2 products metadata handler canonical contract', () => {
         price_groups: {
           find: vi.fn(() => ({
             sort: vi.fn(() => ({
-              toArray: priceGroupsToArrayMock,
+              skip: vi.fn(() => ({
+                limit: vi.fn(() => ({
+                  toArray: priceGroupsToArrayMock,
+                })),
+              })),
             })),
           })),
         },
@@ -212,7 +216,11 @@ describe('v2 products metadata handler canonical contract', () => {
         price_groups: {
           find: vi.fn(() => ({
             sort: vi.fn(() => ({
-              toArray: priceGroupsToArrayMock,
+              skip: vi.fn(() => ({
+                limit: vi.fn(() => ({
+                  toArray: priceGroupsToArrayMock,
+                })),
+              })),
             })),
           })),
         },

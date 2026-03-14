@@ -30,15 +30,29 @@ export function KangurDailyQuestHighlightChips({
   chipLabelStyle?: 'caps' | 'compact';
   className?: string;
 }): React.JSX.Element {
+  const containerClassName = cn('flex flex-wrap items-center gap-2', className);
+  const questChipProps = {
+    accent: questLabelAccent,
+    labelStyle: chipLabelStyle,
+  };
+  const progressChipProps = {
+    accent: progressAccent,
+    labelStyle: chipLabelStyle,
+  };
+  const rewardChipProps = {
+    accent: rewardAccent,
+    labelStyle: chipLabelStyle,
+  };
+
   return (
-    <div className={cn('flex flex-wrap items-center gap-2', className)}>
-      <KangurStatusChip accent={questLabelAccent} labelStyle={chipLabelStyle}>
+    <div className={containerClassName}>
+      <KangurStatusChip {...questChipProps}>
         {questLabel}
       </KangurStatusChip>
-      <KangurStatusChip accent={progressAccent} labelStyle={chipLabelStyle}>
+      <KangurStatusChip {...progressChipProps}>
         {progressLabel}
       </KangurStatusChip>
-      <KangurStatusChip accent={rewardAccent} labelStyle={chipLabelStyle}>
+      <KangurStatusChip {...rewardChipProps}>
         {rewardLabel}
       </KangurStatusChip>
     </div>
@@ -64,17 +78,24 @@ export function KangurDailyQuestHighlightBody({
   footer?: ReactNode;
   className?: string;
 }): React.JSX.Element {
+  const containerClassName = cn('space-y-3', className);
+  const titleProps = {
+    as: 'p' as const,
+    className: titleClassName,
+  };
+  const descriptionProps = {
+    as: 'p' as const,
+    className: cn('leading-5', descriptionClassName),
+    relaxed: descriptionRelaxed,
+    size: descriptionSize,
+  };
+
   return (
-    <div className={cn('space-y-3', className)}>
-      <KangurCardTitle as='p' className={titleClassName}>
+    <div className={containerClassName}>
+      <KangurCardTitle {...titleProps}>
         {title}
       </KangurCardTitle>
-      <KangurCardDescription
-        as='p'
-        className={cn('leading-5', descriptionClassName)}
-        relaxed={descriptionRelaxed}
-        size={descriptionSize}
-      >
+      <KangurCardDescription {...descriptionProps}>
         {description}
       </KangurCardDescription>
       {footer}

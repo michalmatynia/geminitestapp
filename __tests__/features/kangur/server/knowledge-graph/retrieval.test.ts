@@ -894,7 +894,7 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
     expect(result.sourceCollections).toEqual(['kangur_ai_tutor_content']);
     expect(result.hydrationSources).toEqual(['kangur_ai_tutor_content']);
     expect(result.querySeed).toBe('Jak się zalogować do Kangura?');
-    expect(result.normalizedQuerySeed).toBe('jak się zalogować do kangura?');
+    expect(result.normalizedQuerySeed).toBe('jak sie zalogowac do kangura?');
     expect(result.tokens).toEqual(
       expect.arrayContaining(['jak', 'sie', 'zalogowac', 'kangura'])
     );
@@ -993,7 +993,7 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
           focusKind: 'leaderboard',
           focusId: 'kangur-game-result-leaderboard',
           contentId: 'game:practice:addition',
-          focusLabel: 'ranking wyników',
+          focusLabel: 'ranking wynikow',
           title: 'podsumowanie gry',
         }),
       }),
@@ -1099,9 +1099,9 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
     });
 
     expect(result.querySeed).toBe('Wyjaśnij ten fragment Ranking wyników');
-    expect(result.normalizedQuerySeed).toBe('wyjaśnij ten fragment ranking wyników');
+    expect(result.normalizedQuerySeed).toBe('wyjasnij ten fragment ranking wynikow');
     expect(generateKangurKnowledgeGraphQueryEmbeddingMock).toHaveBeenCalledWith(
-      expect.stringContaining('ranking wyników')
+      expect.stringContaining('ranking wynikow')
     );
     expect(runNeo4jStatementsMock).toHaveBeenCalledWith([
       expect.objectContaining({

@@ -2,9 +2,6 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 
-import { ProductFormCoreStateContext } from '@/features/products/context/ProductFormCoreContext';
-import { ProductFormImageContext } from '@/features/products/context/ProductFormImageContext';
-import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import { ImageFileSelection } from '@/shared/contracts/files';
 import { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import { DebugInfo } from '@/shared/contracts/products';
@@ -35,26 +32,27 @@ const ProductImageManagerUIActionsContext =
 export function ProductImageManagerUIProvider({
   children,
   explicitController,
+  externalBaseUrl,
+  productId,
   minimalUi = false,
   showDragHandle = true,
   minimalSingleSlotAlign = 'center',
 }: {
   children: React.ReactNode;
   explicitController?: ProductImageManagerController;
+  externalBaseUrl: string;
+  productId?: string | null;
   minimalUi?: boolean;
   showDragHandle?: boolean;
   minimalSingleSlotAlign?: 'left' | 'center';
 }) {
-  const formImagesContext = useContext(ProductFormImageContext);
-  const formImagesController = formImagesContext as ProductImageManagerController | null;
-  const formCore = useContext(ProductFormCoreStateContext);
   const controllerContext = useOptionalProductImageManagerController();
   const controller: ProductImageManagerController | null =
-    explicitController ?? controllerContext ?? formImagesController ?? null;
+    explicitController ?? controllerContext ?? null;
 
   if (!controller) {
     throw internalError(
-      'ProductImageManagerUIProvider requires ProductFormImageContext or an explicit controller.'
+      'ProductImageManagerUIProvider requires a controller via explicitController prop or ProductImageManagerControllerProvider.'
     );
   }
 
@@ -75,8 +73,6 @@ export function ProductImageManagerUIProvider({
   const setShowFileManagerForSlot = controller.setShowFileManagerForSlot;
   const isSlotImageLocked = controller.isSlotImageLocked;
   const slotImageLockedReason = controller.slotImageLockedReason || 'Image is locked.';
-
-  const { getImageExternalBaseUrl } = useProductSettings();
 
   // UI State
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
@@ -243,7 +239,6 @@ export function ProductImageManagerUIProvider({
 
       try {
         setLinkToFileLoadingSlots((prev) => ({ ...prev, [index]: true }));
-        const productId = formCore?.product?.id ?? null;
 
         if (productId && handleSlotFileSelect && !linkValue.toLowerCase().startsWith('data:')) {
           const result = await api.post<{ status: 'ok'; imageFile: ImageFileSelection }>(
@@ -272,7 +267,7 @@ export function ProductImageManagerUIProvider({
     },
     [
       imageLinks,
-      formCore?.product?.id,
+      productId,
       handleSlotFileSelect,
       handleSlotImageChange,
       setImageLinkAt,
@@ -377,7 +372,7 @@ export function ProductImageManagerUIProvider({
       isReordering,
       debugInfo,
       showDebug,
-      externalBaseUrl: getImageExternalBaseUrl(),
+      externalBaseUrl,
       minimalUi,
       showDragHandle,
       minimalSingleSlotAlign,
@@ -392,6 +387,7 @@ export function ProductImageManagerUIProvider({
       isReordering,
       debugInfo,
       showDebug,
+      externalBaseUrl,
       minimalUi,
       showDragHandle,
       minimalSingleSlotAlign,

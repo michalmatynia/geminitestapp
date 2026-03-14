@@ -1,7 +1,7 @@
 export function DeductionFlowAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja dedukcji: od ogolnej reguly do konkretnego wniosku.'
+      aria-label='Animacja dedukcji: od ogólnej reguły do konkretnego wniosku.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 320 150'
@@ -34,7 +34,7 @@ export function DeductionFlowAnimation(): React.JSX.Element {
 export function InductionGatherAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja indukcji: wiele obserwacji prowadzi do reguly.'
+      aria-label='Animacja indukcji: wiele obserwacji prowadzi do reguły.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 320 150'
@@ -117,7 +117,7 @@ export function IfThenArrowAnimation(): React.JSX.Element {
 export function QuantifierScopeAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja kwantyfikatorow: wszyscy, niektorzy, zaden.'
+      aria-label='Animacja kwantyfikatorów: wszyscy, niektórzy, żaden.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 320 120'
@@ -158,7 +158,7 @@ export function QuantifierScopeAnimation(): React.JSX.Element {
 export function EliminationGridAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja eliminacji: odrzucaj niemozliwe opcje.'
+      aria-label='Animacja eliminacji: odrzucaj niemożliwe opcje.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 320 140'

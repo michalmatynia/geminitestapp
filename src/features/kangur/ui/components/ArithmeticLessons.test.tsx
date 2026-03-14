@@ -94,8 +94,8 @@ describe('Arithmetic lessons shared surfaces', () => {
       'text-3xl',
       'text-orange-500'
     );
-    expect(getParagraphByTextContent('Zacznij od 4')).toHaveClass(
-      '[color:var(--kangur-page-muted-text)]'
+    expect(getParagraphByTextContent('Zacznij od większej liczby')).toHaveClass(
+      '[color:var(--kangur-page-text)]'
     );
 
     unmount();
@@ -128,8 +128,8 @@ describe('Arithmetic lessons shared surfaces', () => {
       'text-3xl',
       'text-red-500'
     );
-    expect(getParagraphByTextContent('Zacznij od 9')).toHaveClass(
-      '[color:var(--kangur-page-muted-text)]'
+    expect(getParagraphByTextContent('Cofaj się na osi liczbowej')).toHaveClass(
+      '[color:var(--kangur-page-text)]'
     );
 
     unmount();
@@ -194,7 +194,7 @@ describe('Arithmetic lessons shared surfaces', () => {
       'text-2xl',
       'text-purple-600'
     );
-    expect(screen.getByText(/3 grupy po 3 cukierki/i)).toHaveClass(
+    expect(screen.getByText(/Trzy takie same porcje/i)).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
 

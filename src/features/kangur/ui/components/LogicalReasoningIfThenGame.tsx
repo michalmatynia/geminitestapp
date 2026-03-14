@@ -73,15 +73,9 @@ const zoneTitles: Record<ZoneId, string> = {
 };
 
 const zoneHints: Record<ZoneId, string> = {
-  pool: 'Przeciagnij karte do odpowiedniego pola.',
-  valid: 'Wniosek wynika z reguly i faktu.',
-  invalid: 'Wniosek nie wynika z reguly.',
-};
-
-const zoneHints: Record<ZoneId, string> = {
-  pool: 'Przeciagnij karte do odpowiedniego pola.',
-  valid: 'Wniosek wynika z reguly i faktu.',
-  invalid: 'Wniosek nie wynika z reguly.',
+  pool: 'Przeciągnij kartę do odpowiedniego pola.',
+  valid: 'Wniosek wynika z reguły i faktu.',
+  invalid: 'Wniosek nie wynika z reguły.',
 };
 
 const zoneAccents: Record<ZoneId, KangurAccent> = {
@@ -105,7 +99,7 @@ const statusAccent: Record<CardStatus, KangurAccent> = {
 const statusChip: Record<CardStatus, string> = {
   neutral: '',
   correct: 'Dobrze',
-  wrong: 'Zle',
+  wrong: 'Źle',
 };
 
 function getCardStatus(item: IfThenCase, zoneId: ZoneId, checked: boolean): CardStatus {
@@ -285,7 +279,7 @@ export default function LogicalReasoningIfThenGame({
                 Jesli... to... czy wniosek wynika?
               </p>
               <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
-                Przeciagnij kazda karte do pola, gdzie wniosek <b>wynika</b> lub <b>nie wynika</b> z reguly.
+                Przeciągnij każdą kartę do pola, gdzie wniosek <b>wynika</b> lub <b>nie wynika</b> z reguły.
               </p>
             </div>
             <KangurStatusChip accent='indigo' className='px-3 py-1 text-xs font-bold' size='sm'>

@@ -11,7 +11,7 @@ export function KangurGameDivisionQuizWidget(): React.JSX.Element | null {
 
   return (
     <LessonActivityStage
-      accent='teal'
+      accent='emerald'
       backButtonLabel='Wróć do poprzedniej strony'
       description='Sprawdź dzielenie w szybkim quizie.'
       icon='➗'

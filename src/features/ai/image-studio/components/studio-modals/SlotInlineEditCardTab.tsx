@@ -1,10 +1,21 @@
 import {} from 'lucide-react';
 import React from 'react';
 
-import ProductImageManager from '@/features/products';
-import { ProductImageManagerControllerProvider } from '@/features/products';
-import { Button, Input, Label, TabsContent, LoadingState } from '@/shared/ui';
-import { Hint } from '@/shared/ui';
+import {
+  ProductImageManager,
+  ProductImageManagerControllerProvider,
+  Button,
+  Input,
+  Label,
+  TabsContent,
+  LoadingState,
+  Hint,
+} from '@/shared/ui';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import {
+  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
+  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
+} from '@/shared/lib/products/constants';
 
 import { InlineImagePreviewCanvas } from './InlineImagePreviewCanvas';
 import {
@@ -14,6 +25,7 @@ import {
   formatLinkedVariantTimestamp,
 } from './slot-inline-edit-utils';
 import { useStudioInlineEdit } from './StudioInlineEditContext';
+import type { StudioInlineEditContextValue } from './StudioInlineEditContext.types';
 
 export function SlotInlineEditCardTab(): React.JSX.Element {
   const {
@@ -39,7 +51,12 @@ export function SlotInlineEditCardTab(): React.JSX.Element {
     slotUpdateBusy,
     uploadPending,
     onRefreshLinkedRuns,
-  } = useStudioInlineEdit();
+  }: StudioInlineEditContextValue = useStudioInlineEdit();
+
+  const settingsStore = useSettingsStore();
+  const externalBaseUrl =
+    settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
+    DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
 
   const linkedRunsErrorMessage =
     linkedRunsQuery.error instanceof Error
@@ -160,7 +177,7 @@ export function SlotInlineEditCardTab(): React.JSX.Element {
           Image Slot
         </Hint>
         <ProductImageManagerControllerProvider value={inlineCardImageManagerController}>
-          <ProductImageManager showDragHandle={false} />
+          <ProductImageManager externalBaseUrl={externalBaseUrl} showDragHandle={false} />
         </ProductImageManagerControllerProvider>
       </div>
 

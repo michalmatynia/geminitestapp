@@ -13,7 +13,7 @@ import {
   type KangurTestQuestionStore,
 } from '@/shared/contracts/kangur-tests';
 import { sanitizeSvg } from '@/shared/utils';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
+import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 
 import {
   canonicalizeKangurLessonDocument,

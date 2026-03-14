@@ -43,11 +43,11 @@ type SectionId = 'podstawy' | 'przekroczenie' | 'dwucyfrowe' | 'zapamietaj' | 's
 export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlide[]> = {
   podstawy: [
     {
-      title: 'Co to znaczy dodawac?',
+      title: 'Co to znaczy dodawać?',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Dodawanie to łączenie dwóch grup razem, żeby policzyc, ile ich jest łacznie.
+            Dodawanie to łączenie dwóch grup razem, żeby policzyć, ile ich jest łącznie.
           </KangurLessonLead>
           <div className='flex items-center gap-4'>
             <KangurDisplayEmoji size='md'>🍎🍎</KangurDisplayEmoji>
@@ -93,13 +93,13 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               <span className='text-xl font-bold text-slate-400'>=</span>
               <div className='rounded-2xl border border-emerald-200/60 bg-emerald-50/80 px-4 py-2'>
                 <p className='text-[11px] font-semibold uppercase tracking-wide text-emerald-700'>
-                  Calosc
+                  Całość
                 </p>
                 <p className='text-2xl font-bold text-emerald-700'>5</p>
               </div>
             </div>
             <KangurLessonCaption className='mt-2'>
-              Część + część daje calosc.
+              Część + część daje całość.
             </KangurLessonCaption>
           </KangurLessonCallout>
           <div className='grid w-full max-w-md grid-cols-1 gap-3 min-[360px]:grid-cols-3'>
@@ -124,7 +124,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Możesz liczyc na palcach lub w myslach. Zacznij od wiekszej liczby!
+            Możesz liczyć na palcach lub w myślach. Zacznij od większej liczby!
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' className='text-center'>
             <KangurEquationDisplay accent='amber' data-testid='adding-lesson-single-digit-equation'>
@@ -136,7 +136,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
                   1
                 </KangurIconBadge>
                 <span>
-                  Startuj od wiekszej liczby: <b>4</b>
+                  Startuj od większej liczby: <b>4</b>
                 </span>
               </div>
               <div className='flex items-start gap-2'>
@@ -171,7 +171,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
             </KangurLessonCaption>
           </KangurLessonInset>
           <div className='flex flex-wrap items-center justify-center gap-2 text-xs font-semibold'>
-            <KangurLessonChip accent='amber'>Start od wiekszej</KangurLessonChip>
+            <KangurLessonChip accent='amber'>Start od większej</KangurLessonChip>
             <KangurLessonChip accent='sky'>Liczenie w górę</KangurLessonChip>
             <KangurLessonChip accent='emerald'>Szybki wynik</KangurLessonChip>
           </div>
@@ -186,7 +186,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
       ),
     },
     {
-      title: 'Dodawanie w ruchu (SVG)',
+      title: 'Dodawanie w ruchu',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
@@ -227,7 +227,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Gdy suma przekracza 10, możesz uzupełnic do 10 i dodac reszte.
+            Gdy suma przekracza 10, możesz uzupełnić do 10 i dodać resztę.
           </KangurLessonLead>
           <KangurLessonCallout accent='sky' className='text-center'>
             <div className='mx-auto w-full max-w-sm'>
@@ -252,7 +252,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
                 Krok 2
               </p>
               <p className='mt-1'>
-                Dodaj reszte: <b>+2</b>
+                Dodaj resztę: <b>+2</b>
               </p>
             </KangurLessonCallout>
           </div>
@@ -340,7 +340,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Dodawaj osobno dziesiatki i jednosci!
+            Dodawaj osobno dziesiątki i jedności!
           </KangurLessonLead>
           <KangurLessonCallout accent='emerald' className='max-w-xs text-center'>
             <KangurEquationDisplay accent='emerald'>24 + 13 = ?</KangurEquationDisplay>
@@ -368,7 +368,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
                 <span className='text-xs font-semibold uppercase tracking-wide text-emerald-700'>
                   Schemat
                 </span>
-                <span className='text-xs text-emerald-600'>dziesiatki + jednosci</span>
+                <span className='text-xs text-emerald-600'>dziesiątki + jedności</span>
               </div>
               <div className='flex items-center justify-between rounded-md bg-emerald-50/60 px-2 py-1'>
                 <span>20 + 10</span>
@@ -392,7 +392,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Najpierw zsumuj dziesiatki, potem jednosci. Animacja pokazuje, jak grupy
+            Najpierw zsumuj dziesiątki, potem jedności. Animacja pokazuje, jak grupy
             łączą się w wynik.
           </KangurLessonLead>
           <KangurLessonCallout accent='emerald' className='text-center'>
@@ -403,7 +403,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               24 + 13 = 37
             </KangurEquationDisplay>
             <KangurLessonCaption className='mt-1'>
-              Dziesiatki: 20 + 10, jednosci: 4 + 3.
+              Dziesiątki: 20 + 10, jedności: 4 + 3.
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -414,7 +414,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Kolorowe bloki pokazują, że dziesiatki i jednosci łączą się osobno.
+            Kolorowe bloki pokazują, że dziesiątki i jedności łączą się osobno.
           </KangurLessonLead>
           <KangurLessonCallout accent='teal' className='text-center'>
             <div className='mx-auto w-full max-w-sm'>
@@ -445,19 +445,19 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
       ),
     },
     {
-      title: 'Kolumny dziesiatek i jednosci',
+      title: 'Kolumny dziesiątek i jedności',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Uloz liczby w kolumnach: dziesiatki pod dziesiatkami, jednosci pod
-            jednosciami. Potem dodaj osobno.
+            Ułóż liczby w kolumnach: dziesiątki pod dziesiątkami, jedności pod
+            jednościami. Potem dodaj osobno.
           </KangurLessonLead>
           <KangurLessonCallout accent='emerald' className='text-center'>
             <div className='mx-auto w-full max-w-sm'>
               <AddingColumnAnimation />
             </div>
             <KangurLessonCaption className='mt-1'>
-              Najpierw dziesiatki, potem jednosci. Wynik sklada się z obu kolumn.
+              Najpierw dziesiątki, potem jedności. Wynik składa się z obu kolumn.
             </KangurLessonCaption>
           </KangurLessonCallout>
           <KangurLessonInset accent='slate' className='max-w-md text-left' padding='sm'>
@@ -492,7 +492,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Liczydlo pomaga przesuwac koraliki: osobno dziesiatki i jednosci, a potem
+            Liczydło pomaga przesuwać koraliki: osobno dziesiątki i jedności, a potem
             odczytać sume.
           </KangurLessonLead>
           <KangurLessonCallout accent='emerald' className='text-center'>
@@ -500,7 +500,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               <AddingAbacusAnimation />
             </div>
             <KangurLessonCaption className='mt-1'>
-              Koraliki przesuwaja się do wspolnej sumy.
+              Koraliki przesuwają się do wspólnej sumy.
             </KangurLessonCaption>
           </KangurLessonCallout>
           <div className='flex flex-wrap items-center justify-center gap-2 text-xs font-semibold'>
@@ -518,9 +518,9 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
       content: (
         <KangurLessonStack>
           <div className='flex flex-wrap justify-center gap-2 text-xs font-semibold'>
-            <KangurLessonChip accent='amber'>Kolejnosc: 3 + 5 = 5 + 3</KangurLessonChip>
+            <KangurLessonChip accent='amber'>Kolejność: 3 + 5 = 5 + 3</KangurLessonChip>
             <KangurLessonChip accent='sky'>Dodawanie 0: 7 + 0 = 7</KangurLessonChip>
-            <KangurLessonChip accent='emerald'>Startuj od wiekszej liczby</KangurLessonChip>
+            <KangurLessonChip accent='emerald'>Startuj od większej liczby</KangurLessonChip>
             <KangurLessonChip accent='slate'>Grupuj do 10</KangurLessonChip>
           </div>
           <div className='grid w-full gap-3 sm:grid-cols-2'>
@@ -553,7 +553,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
                 <p className='text-xs text-slate-500'>6 + 4, 7 + 3, 8 + 2</p>
               </div>
               <div>
-                <p className='font-semibold text-slate-700'>Użyj podwojen</p>
+                <p className='font-semibold text-slate-700'>Użyj podwojeń</p>
                 <p className='text-xs text-slate-500'>5 + 5, 6 + 6</p>
               </div>
               <div>
@@ -699,7 +699,7 @@ export const HUB_SECTIONS = [
     id: 'dwucyfrowe',
     emoji: '💡',
     title: 'Dodawanie dwucyfrowe',
-    description: 'Dziesiatki i jednosci osobno',
+    description: 'Dziesiątki i jedności osobno',
   },
   { id: 'zapamietaj', emoji: '🧠', title: 'Zapamiętaj!', description: 'Zasady dodawania' },
   {
@@ -713,7 +713,7 @@ export const HUB_SECTIONS = [
     id: 'game',
     emoji: '⚽',
     title: 'Gra z piłkami',
-    description: 'Cwicz dodawanie przesuwajac piłki',
+    description: 'Ćwicz dodawanie przesuwając piłki',
     isGame: true,
   },
 ];
@@ -747,7 +747,7 @@ export default function AddingLesson(): React.JSX.Element {
         accent='amber'
         headerTestId='adding-lesson-game-header'
         icon='🎮'
-        maxWidthClassName='max-w-sm'
+        maxWidthClassName='max-w-none'
         onBack={() => setActiveSection(null)}
         sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
         shellTestId='adding-lesson-game-shell'

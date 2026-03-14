@@ -1,5 +1,6 @@
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import {
   KangurPracticeGameProgress,
@@ -60,6 +61,7 @@ const EMPTY_POOL_MESSAGE = 'Wszystkie relacje są już użyte.';
 const RUSH_TIME_MIN = 24;
 const RUSH_TIME_BASE = 8;
 const RUSH_TIME_PER_TARGET = 10;
+const dragPortal = typeof document === 'undefined' ? null : document.body;
 
 const shuffle = <T,>(items: T[]): T[] => [...items].sort(() => Math.random() - 0.5);
 
@@ -133,6 +135,10 @@ export default function LogicalAnalogiesRelationGame({
   const [xpEarned, setXpEarned] = useState(0);
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const sessionStartedAtRef = useRef(Date.now());
+  const idPrefix = useId();
+  const instructionsId = `${idPrefix}-instructions`;
+  const hintId = `${idPrefix}-hint`;
+  const timerId = `${idPrefix}-timer`;
 
   const round = LOGICAL_ANALOGIES_RELATION_ROUNDS[roundIndex] ?? FIRST_ROUND;
 
@@ -405,6 +411,7 @@ export default function LogicalAnalogiesRelationGame({
                 type='button'
                 variant={isRushMode ? 'surface' : 'primary'}
                 onClick={() => handleModeToggle(false)}
+                aria-pressed={!isRushMode}
               >
                 Tryb spokojny
               </KangurButton>
@@ -413,17 +420,24 @@ export default function LogicalAnalogiesRelationGame({
                 type='button'
                 variant={isRushMode ? 'primary' : 'surface'}
                 onClick={() => handleModeToggle(true)}
+                aria-pressed={isRushMode}
               >
                 Bridge Rush
               </KangurButton>
             </div>
             {isRushMode ? (
-              <KangurStatusChip
-                accent={timeLeft !== null && timeLeft <= 10 ? 'rose' : 'amber'}
-                size='sm'
+              <div
+                aria-atomic='true'
+                aria-live={timeLeft !== null && timeLeft <= 10 ? 'polite' : 'off'}
+                id={timerId}
               >
-                ⏱ {timeLeft ?? timeLimit ?? 0}s
-              </KangurStatusChip>
+                <KangurStatusChip
+                  accent={timeLeft !== null && timeLeft <= 10 ? 'rose' : 'amber'}
+                  size='sm'
+                >
+                  ⏱ {timeLeft ?? timeLimit ?? 0}s
+                </KangurStatusChip>
+              </div>
             ) : null}
           </div>
           <p className='text-[11px] [color:var(--kangur-page-muted-text)]'>
@@ -444,13 +458,18 @@ export default function LogicalAnalogiesRelationGame({
                 Runda {roundIndex + 1}/{TOTAL_ROUNDS}
               </KangurStatusChip>
               {timeExpired ? (
-                <KangurStatusChip accent='rose' size='sm'>
-                  Czas minął
-                </KangurStatusChip>
+                <div aria-live='polite' role='status'>
+                  <KangurStatusChip accent='rose' size='sm'>
+                    Czas minął
+                  </KangurStatusChip>
+                </div>
               ) : null}
             </div>
           </div>
-          <p className='mt-2 text-[11px] [color:var(--kangur-page-muted-text)]'>
+          <p
+            className='mt-2 text-[11px] [color:var(--kangur-page-muted-text)]'
+            id={instructionsId}
+          >
             Przeciągnij relację na kartę pary albo kliknij relację i potem kliknij parę. Ikony
             relacji podpowiadają typy zależności.
           </p>
@@ -474,6 +493,7 @@ export default function LogicalAnalogiesRelationGame({
                     )}
                     aria-pressed={activeRelationId === token.id}
                     aria-label={token.label}
+                    aria-describedby={`${hintId} ${instructionsId}`}
                     onClick={() =>
                       setHoveredRelationId((current) => (current === token.id ? null : token.id))
                     }
@@ -487,7 +507,12 @@ export default function LogicalAnalogiesRelationGame({
                 );
               })}
             </div>
-            <p className='text-[11px] text-rose-600/80'>
+            <p
+              className='text-[11px] text-rose-600/80'
+              id={hintId}
+              role='status'
+              aria-live='polite'
+            >
               {activeRelationHint
                 ? `Podpowiedź: ${activeRelationHint.hint}`
                 : 'Najedź lub dotknij ikonę, aby zobaczyć podpowiedź.'}
@@ -510,6 +535,9 @@ export default function LogicalAnalogiesRelationGame({
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
+                  aria-describedby={`${instructionsId} ${hintId}`}
+                  aria-label='Pula relacji do przeciągania'
+                  role='list'
                   className={cn(
                     'flex min-h-[72px] flex-wrap items-center justify-center gap-2 rounded-[22px] border border-dashed px-3 py-3 text-center text-xs',
                     roundState.pool.length === 0
@@ -521,36 +549,53 @@ export default function LogicalAnalogiesRelationGame({
                     <span>{EMPTY_POOL_MESSAGE}</span>
                   ) : null}
                   {roundState.pool.map((token, index) => (
-                    <Draggable key={token.id} draggableId={token.id} index={index}>
-                      {(draggableProvided, snapshot) => (
-                        <button
-                          type='button'
-                          ref={draggableProvided.innerRef}
-                          {...draggableProvided.draggableProps}
-                          {...draggableProvided.dragHandleProps}
-                          className={buildTokenClassName({
-                            isSelected: selectedTokenId === token.id,
-                            isDragging: snapshot.isDragging,
-                            isCompact: false,
-                            isDisabled: false,
-                          })}
-                          aria-pressed={selectedTokenId === token.id}
-                          onMouseEnter={() => setHoveredRelationId(token.id)}
-                          onMouseLeave={() => setHoveredRelationId(null)}
-                          onFocus={() => setHoveredRelationId(token.id)}
-                          onBlur={() => setHoveredRelationId(null)}
-                          onClick={(event) => {
-                            event.preventDefault();
-                            if (snapshot.isDragging) return;
-                            setSelectedTokenId((current) =>
-                              current === token.id ? null : token.id
-                            );
-                          }}
-                        >
-                          <span className='text-lg'>{token.emoji}</span>
-                          <span>{token.label}</span>
-                        </button>
-                      )}
+                    <Draggable
+                      key={token.id}
+                      draggableId={token.id}
+                      index={index}
+                      isDragDisabled={checked}
+                      disableInteractiveElementBlocking
+                    >
+                      {(draggableProvided, snapshot) => {
+                        const content = (
+                          <button
+                            type='button'
+                            ref={draggableProvided.innerRef}
+                            {...draggableProvided.draggableProps}
+                            {...draggableProvided.dragHandleProps}
+                            className={buildTokenClassName({
+                              isSelected: selectedTokenId === token.id,
+                              isDragging: snapshot.isDragging,
+                              isCompact: false,
+                              isDisabled: checked,
+                            })}
+                            disabled={checked}
+                            aria-pressed={selectedTokenId === token.id}
+                            aria-describedby={`${instructionsId} ${hintId}`}
+                            role='listitem'
+                            onMouseEnter={() => setHoveredRelationId(token.id)}
+                            onMouseLeave={() => setHoveredRelationId(null)}
+                            onFocus={() => setHoveredRelationId(token.id)}
+                            onBlur={() => setHoveredRelationId(null)}
+                            onClick={(event) => {
+                              event.preventDefault();
+                              if (snapshot.isDragging) return;
+                              setSelectedTokenId((current) =>
+                                current === token.id ? null : token.id
+                              );
+                            }}
+                          >
+                            <span className='text-lg'>{token.emoji}</span>
+                            <span>{token.label}</span>
+                          </button>
+                        );
+
+                        if (snapshot.isDragging && dragPortal) {
+                          return createPortal(content, dragPortal);
+                        }
+
+                        return content;
+                      }}
                     </Draggable>
                   ))}
                   {provided.placeholder}
@@ -589,6 +634,8 @@ export default function LogicalAnalogiesRelationGame({
                 const assigned = roundState.slots[target.id]?.[0] ?? null;
                 const isCorrect = assigned?.id === target.relationId;
                 const relationLabel = LOGICAL_ANALOGY_RELATION_TOKENS[target.relationId]?.label;
+                const targetLabelId = `${idPrefix}-${target.id}-label`;
+                const slotHintId = `${idPrefix}-${target.id}-slot-hint`;
                 return (
                   <Droppable key={target.id} droppableId={slotIdForTarget(target.id)}>
                     {(provided, snapshot) => {
@@ -611,11 +658,17 @@ export default function LogicalAnalogiesRelationGame({
                             showFeedback && !isCorrect && KANGUR_ACCENT_STYLES.rose.activeText
                           )}
                           interactive={!checked}
+                          disabled={checked}
+                          aria-disabled={checked}
+                          aria-labelledby={targetLabelId}
+                          aria-describedby={`${slotHintId} ${instructionsId}`}
                           onClick={() => handleAssignToken(target.id)}
                           type='button'
                         >
                           <div className='flex items-center justify-between gap-2'>
-                            <p className='text-sm font-bold'>{target.pair}</p>
+                            <p className='text-sm font-bold' id={targetLabelId}>
+                              {target.pair}
+                            </p>
                             <span className='text-[11px] uppercase tracking-[0.18em] text-rose-600/80'>
                               relacja
                             </span>
@@ -623,31 +676,49 @@ export default function LogicalAnalogiesRelationGame({
                           <div
                             ref={provided.innerRef}
                             {...provided.droppableProps}
+                            aria-describedby={slotHintId}
                             className={cn(
                               'min-h-[44px] rounded-full border border-dashed px-3 py-2 text-xs',
                               snapshot.isDraggingOver && 'border-amber-400 bg-amber-50'
                             )}
                           >
+                            <span className='sr-only' id={slotHintId}>
+                              Użyj tego miejsca, aby dopasować relację do pary.
+                            </span>
                             {assigned ? (
-                              <Draggable draggableId={assigned.id} index={0} key={assigned.id}>
-                                {(tokenProvided, tokenSnapshot) => (
-                                  <div
-                                    ref={tokenProvided.innerRef}
-                                    {...tokenProvided.draggableProps}
-                                    {...tokenProvided.dragHandleProps}
-                                    className={buildTokenClassName({
-                                      isSelected: false,
-                                      isDragging: tokenSnapshot.isDragging,
-                                      isCompact: true,
-                                      isDisabled: checked,
-                                    })}
-                                    onMouseEnter={() => setHoveredRelationId(assigned.id)}
-                                    onMouseLeave={() => setHoveredRelationId(null)}
-                                  >
-                                    <span>{assigned.emoji}</span>
-                                    <span>{assigned.label}</span>
-                                  </div>
-                                )}
+                              <Draggable
+                                draggableId={assigned.id}
+                                index={0}
+                                key={assigned.id}
+                                isDragDisabled={checked}
+                                disableInteractiveElementBlocking
+                              >
+                                {(tokenProvided, tokenSnapshot) => {
+                                  const content = (
+                                    <div
+                                      ref={tokenProvided.innerRef}
+                                      {...tokenProvided.draggableProps}
+                                      {...tokenProvided.dragHandleProps}
+                                      className={buildTokenClassName({
+                                        isSelected: false,
+                                        isDragging: tokenSnapshot.isDragging,
+                                        isCompact: true,
+                                        isDisabled: checked,
+                                      })}
+                                      onMouseEnter={() => setHoveredRelationId(assigned.id)}
+                                      onMouseLeave={() => setHoveredRelationId(null)}
+                                    >
+                                      <span>{assigned.emoji}</span>
+                                      <span>{assigned.label}</span>
+                                    </div>
+                                  );
+
+                                  if (tokenSnapshot.isDragging && dragPortal) {
+                                    return createPortal(content, dragPortal);
+                                  }
+
+                                  return content;
+                                }}
                               </Draggable>
                             ) : (
                               <div className='flex h-full items-center justify-center text-[11px] font-semibold text-rose-600/70'>

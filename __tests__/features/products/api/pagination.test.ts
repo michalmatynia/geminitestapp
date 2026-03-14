@@ -24,9 +24,13 @@ vi.mock('@/shared/lib/products/services/productService', () => ({
   },
 }));
 
-vi.mock('@/features/products/server', () => ({
-  getProductDataProvider: mocks.getProductDataProvider,
-}));
+vi.mock('@/features/products/server', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/products/server')>();
+  return {
+    ...actual,
+    getProductDataProvider: mocks.getProductDataProvider,
+  };
+});
 
 import { GET as GET_COUNT } from '@/app/api/v2/products/count/route';
 import { GET as GET_LIST } from '@/app/api/v2/products/route';

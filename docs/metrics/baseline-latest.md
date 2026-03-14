@@ -8,24 +8,24 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-14T10:31:40.499Z
+Generated at: 2026-03-14T15:20:23.501Z
 
 ## Snapshot
 
-- Source files: 5989
-- Source lines: 979963
-- use client files: 1451
-- Files >= 1000 LOC: 28
-- Files >= 1500 LOC: 7
-- Largest file: `src/app/api/kangur/ai-tutor/chat/handler.test.ts` (3373 LOC)
+- Source files: 6011
+- Source lines: 984899
+- use client files: 1452
+- Files >= 1000 LOC: 27
+- Files >= 1500 LOC: 2
+- Largest file: `src/features/kangur/server/knowledge-graph/retrieval.ts` (1649 LOC)
 - API routes: 350
 - API delegated server routes: 12
 - API routes without apiHandler/delegation: 0
 - API explicit cache policy coverage: 350/350 (100.0%)
-- Cross-feature dependency pairs: 27
-- Shared -> features imports: 76
+- Cross-feature dependency pairs: 24
+- Shared -> features imports: 72
 - setInterval occurrences: 24
-- Prop-drilling chains (depth >= 3): 67
+- Prop-drilling chains (depth >= 3): 64
 - Prop-drilling chains (depth >= 4): 21
 
 ## Top API Hotspots (by LOC)
@@ -57,33 +57,31 @@ Generated at: 2026-03-14T10:31:40.499Z
 | `case-resolver -> case-resolver-capture` | 18 |
 | `case-resolver -> foldertree` | 15 |
 | `case-resolver -> filemaker` | 13 |
-| `drafter -> products` | 13 |
 | `case-resolver -> document-editor` | 12 |
+| `drafter -> products` | 11 |
 | `kangur -> foldertree` | 11 |
 | `case-resolver -> ai` | 9 |
-| `ai -> products` | 8 |
 | `cms -> viewer3d` | 8 |
 | `products -> internationalization` | 8 |
 | `products -> foldertree` | 7 |
 | `prompt-exploder -> foldertree` | 7 |
 | `admin -> foldertree` | 5 |
+| `cms -> foldertree` | 5 |
 
 ## Top File Hotspots (by LOC)
 
 | File | LOC |
 | --- | ---: |
-| `src/app/api/kangur/ai-tutor/chat/handler.test.ts` | 3373 |
-| `src/features/kangur/ui/components/KangurAiTutorWidget.test.tsx` | 2797 |
-| `src/features/kangur/ui/context/KangurAiTutorContext.test.tsx` | 2196 |
-| `src/shared/contracts/kangur-ai-tutor-native-guide.ts` | 1671 |
 | `src/features/kangur/server/knowledge-graph/retrieval.ts` | 1649 |
 | `src/features/kangur/admin/AdminKangurTestSuitesManagerPage.tsx` | 1572 |
-| `src/app/api/kangur/ai-tutor/chat/handler.ts` | 1568 |
 | `src/features/kangur/ui/components/ClockTrainingGame.tsx` | 1466 |
 | `src/features/kangur/admin/KangurLessonDocumentEditor.tsx` | 1442 |
 | `src/features/kangur/server/context-registry.ts` | 1433 |
-| `src/features/kangur/cms-builder/project-defaults.ts` | 1424 |
+| `src/features/kangur/cms-builder/project-defaults.ts` | 1422 |
+| `src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts` | 1414 |
+| `src/shared/contracts/kangur-ai-tutor-native-guide-entries.ts` | 1414 |
 | `src/features/kangur/observability/summary.ts` | 1401 |
+| `src/features/kangur/ui/components/LessonAnimations.tsx` | 1374 |
 | `src/features/kangur/admin/KangurQuestionsManagerPanel.tsx` | 1370 |
 | `src/features/kangur/server/knowledge-graph/retrieval.test.ts` | 1340 |
 | `src/features/kangur/ui/pages/Lessons.test.tsx` | 1322 |
@@ -92,3 +90,5 @@ Generated at: 2026-03-14T10:31:40.499Z
 | `src/features/kangur/ui/KangurLoginPage.test.tsx` | 1222 |
 | `src/features/kangur/ui/KangurLoginPage.tsx` | 1219 |
 | `src/shared/contracts/kangur-ai-tutor-content.ts` | 1181 |
+| `src/shared/contracts/image-studio.ts` | 1162 |
+| `src/features/kangur/ui/components/ClockLesson.tsx` | 1159 |

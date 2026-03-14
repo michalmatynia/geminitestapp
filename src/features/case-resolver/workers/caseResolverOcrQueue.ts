@@ -267,7 +267,7 @@ export const enqueueCaseResolverOcrJob = async (
       try {
         await processOcrJob(data);
       } catch (error) {
-        logSystemEvent({
+        void logSystemEvent({
           source: LOG_SOURCE,
           message: 'Inline OCR processing failed',
           level: 'error',

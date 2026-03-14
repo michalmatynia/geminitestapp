@@ -91,7 +91,7 @@ describe('GeometryDrawingGame', () => {
 
     expect(clearButton).toHaveClass('kangur-cta-pill', 'surface-cta');
     expect(clearButton).toBeDisabled();
-    expect(screen.getByText(/klawiature/i)).toBeInTheDocument();
+    expect(screen.getByText(/klawiaturę/i)).toBeInTheDocument();
 
     canvas.focus();
     fireEvent.keyDown(canvas, { key: 'Enter' });
@@ -107,7 +107,9 @@ describe('GeometryDrawingGame', () => {
 
     fireEvent.click(checkButton);
 
-    expect(screen.queryByTestId('geometry-drawing-feedback')).not.toBeInTheDocument();
+    expect(screen.getByTestId('geometry-drawing-feedback')).toHaveTextContent(
+      'Niepoprawna figura.'
+    );
     expect(checkButton).toHaveClass('bg-rose-500');
     expect(evaluateSpy).toHaveBeenCalledTimes(1);
   });

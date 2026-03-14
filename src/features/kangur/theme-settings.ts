@@ -10,7 +10,7 @@ import {
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
   KANGUR_THEME_SETTINGS_KEY,
 } from '@/shared/contracts/kangur';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
+import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 
 import { KANGUR_DEFAULT_DAILY_THEME } from './themes/daily';
 import { KANGUR_DEFAULT_DAWN_THEME } from './themes/dawn';
@@ -120,18 +120,23 @@ const isDailyCrystalTheme = (theme: ThemeSettings): boolean =>
 
 const applyKangurLegacyThemeBaseline = (theme: ThemeSettings): ThemeSettings => {
   const updates: Partial<ThemeSettings> = {};
+  const setUpdate = (key: keyof ThemeSettings, value: ThemeSettings[keyof ThemeSettings]): void => {
+    (updates as Record<string, ThemeSettings[keyof ThemeSettings]>)[key] = value;
+  };
+
   LEGACY_BASELINE_KEYS.forEach((key) => {
     const currentValue = theme[key];
     const legacyValue = DEFAULT_THEME[key];
     const replacementValue = KANGUR_DEFAULT_THEME[key];
+    if (replacementValue === undefined) return;
     if (typeof currentValue === 'number' && typeof legacyValue === 'number') {
       if (matchesLegacyNumber(currentValue, legacyValue)) {
-        updates[key] = replacementValue as ThemeSettings[typeof key];
+        setUpdate(key, replacementValue);
       }
       return;
     }
     if (currentValue === legacyValue) {
-      updates[key] = replacementValue as ThemeSettings[typeof key];
+      setUpdate(key, replacementValue);
     }
   });
 
@@ -144,6 +149,9 @@ const applyDailyCrystalButtonUpgrade = (theme: ThemeSettings): ThemeSettings => 
   }
 
   const updates: Partial<ThemeSettings> = {};
+  const setUpdate = (key: keyof ThemeSettings, value: ThemeSettings[keyof ThemeSettings]): void => {
+    (updates as Record<string, ThemeSettings[keyof ThemeSettings]>)[key] = value;
+  };
 
   const shouldUpgradePrimaryText = matchesLegacyColor(
     theme.btnPrimaryText,
@@ -199,7 +207,10 @@ const applyDailyCrystalButtonUpgrade = (theme: ThemeSettings): ThemeSettings => 
     const legacyValue = DEFAULT_THEME[key];
     if (typeof currentValue === 'number' && typeof legacyValue === 'number') {
       if (matchesLegacyNumber(currentValue, legacyValue)) {
-        updates[key] = DAILY_CRYSTAL_BUTTON_DEFAULTS[key] as ThemeSettings[typeof key];
+        const replacementValue = DAILY_CRYSTAL_BUTTON_DEFAULTS[key];
+        if (replacementValue !== undefined) {
+          setUpdate(key, replacementValue);
+        }
       }
     }
   });

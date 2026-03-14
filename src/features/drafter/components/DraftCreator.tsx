@@ -8,7 +8,7 @@ import {
   useUpdateDraftMutation,
 } from '@/features/drafter/hooks/useDraftQueries';
 import { draftSubmitSchema } from '@/features/drafter/validations/draft-form';
-import type { ProductImageManagerController } from '@/features/products';
+import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import { getCategoriesFlat, getParameters, getTags } from '@/features/products';
 import { ProductImagesTabContent } from '@/features/products';
 import { ProductImagesTabProvider } from '@/features/products';

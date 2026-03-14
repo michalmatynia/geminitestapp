@@ -23,10 +23,10 @@ describe('resolveKangurAiTutorMoodFromSignals', () => {
       messages: [
         {
           role: 'user',
-          content: 'Pomoz mi z tym pytaniem.',
+          content: 'Pomóż mi z tym pytaniem.',
         },
       ],
-      latestUserMessage: 'Pomoz mi z tym pytaniem.',
+      latestUserMessage: 'Pomóż mi z tym pytaniem.',
       personaSuggestedMoodId: 'encouraging',
       previousMood: null,
       computedAt: '2026-03-08T12:00:00.000Z',
@@ -60,10 +60,10 @@ describe('resolveKangurAiTutorMoodFromSignals', () => {
       messages: [
         {
           role: 'user',
-          content: 'Chce zrozumieć, gdzie zrobilem blad.',
+          content: 'Chcę zrozumieć, gdzie zrobiłem błąd.',
         },
       ],
-      latestUserMessage: 'Chce zrozumieć, gdzie zrobilem blad.',
+      latestUserMessage: 'Chcę zrozumieć, gdzie zrobiłem błąd.',
       personaSuggestedMoodId: 'thinking',
       previousMood: null,
       computedAt: '2026-03-08T12:00:00.000Z',

@@ -20,7 +20,9 @@ describe('Kangur CTA hover styles', () => {
     expect(primaryCtaBlock).not.toContain('#ff7a45');
     expect(primaryHoverBlock).toBeTruthy();
     expect(primaryHoverBlock).toContain('--kangur-cta-primary-hover-start');
-    expect(primaryHoverBlock).toContain('background: var(--kangur-button-primary-hover-background');
+    expect(primaryHoverBlock).toMatch(
+      /background:\s*var\(\s*--kangur-button-primary-hover-background/
+    );
     expect(primaryHoverBlock).not.toContain('#ffc670');
     expect(primaryHoverBlock).not.toContain('#ff985f');
   });

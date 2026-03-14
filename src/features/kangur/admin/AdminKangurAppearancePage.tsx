@@ -40,34 +40,6 @@ import { AppearanceModeSelector } from './appearance/AppearanceModeSelector';
 import { ThemeImportExport } from './appearance/ThemeImportExport';
 import { ThemePreviewPanel } from './appearance/ThemePreviewPanel';
 
-function SlotStatusBadge({
-  slotLabel,
-  themeLabel,
-  isActive,
-}: {
-  slotLabel: string;
-  themeLabel: string;
-  isActive: boolean;
-}): React.JSX.Element {
-  return (
-    <span className='flex items-center gap-1.5 text-xs'>
-      <span className='text-muted-foreground'>{slotLabel}:</span>
-      <span
-        className={[
-          'rounded-full px-2 py-0.5 font-medium',
-          isActive
-            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-            : themeLabel === 'Fabryczny'
-              ? 'bg-muted/60 text-muted-foreground'
-              : 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-        ].join(' ')}
-      >
-        {themeLabel}{isActive ? ' \u2713' : ''}
-      </span>
-    </span>
-  );
-}
-
 function AdminKangurAppearancePageContent(): React.JSX.Element {
   const {
     catalog,
@@ -168,7 +140,7 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
                 </div>
                 <SelectSimple
                   value={selectedId}
-                  onValueChange={(v) => handleSelect(v as any)}
+                  onValueChange={handleSelect}
                   options={selectorOptions}
                   ariaLabel='Wybrany motyw'
                   variant='subtle'

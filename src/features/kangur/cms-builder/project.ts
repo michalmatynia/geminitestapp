@@ -6,7 +6,7 @@ import {
   type PageSummary,
   type SectionInstance,
 } from '@/shared/contracts/cms';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
+import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 
 import {
   createDefaultKangurCmsProject,
@@ -16,7 +16,6 @@ import {
   createDefaultParentDashboardScreenComponents,
 } from './project-defaults';
 import {
-  KANGUR_CMS_SCREEN_LABELS,
   KANGUR_CMS_SCREEN_KEYS,
   type KangurCmsScreenKey,
   type KangurCmsScreen,

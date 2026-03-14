@@ -23,7 +23,7 @@ describe('KangurIconSummaryCardContent', () => {
     );
 
     expect(screen.getByTestId('icon-summary-icon')).toBeInTheDocument();
-    expect(screen.getByText('Naglowek')).toHaveClass(
+    expect(screen.getByText('Nagłówek')).toHaveClass(
       'text-base',
       'font-extrabold',
       '[color:var(--kangur-page-text)]'

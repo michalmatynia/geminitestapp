@@ -15,7 +15,7 @@ type KangurIconSummaryCardContentProps = {
   icon: ReactNode;
   title: ReactNode;
   titleClassName?: string;
-  titleAs?: keyof React.JSX.IntrinsicElements;
+  titleAs?: 'div' | 'h1' | 'h2' | 'h3' | 'p' | 'span';
   titleId?: string;
   titleWrapperClassName?: string;
 };

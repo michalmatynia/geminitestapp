@@ -4,9 +4,6 @@ import {
   kangurAiTutorFocusKindSchema,
   kangurAiTutorFollowUpActionSchema,
   kangurAiTutorSurfaceSchema,
-  type KangurAiTutorFocusKind,
-  type KangurAiTutorFollowUpAction,
-  type KangurAiTutorSurface,
 } from './kangur-ai-tutor';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 import { KANGUR_NATIVE_GUIDE_ENTRIES } from './kangur-ai-tutor-native-guide-entries';

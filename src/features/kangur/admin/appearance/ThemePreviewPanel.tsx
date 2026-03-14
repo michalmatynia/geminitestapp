@@ -33,7 +33,8 @@ const resolvePreviewModeForSelection = (
   if (directSlot) {
     if (directSlot === 'daily') return 'default';
     if (directSlot === 'nightly') return 'dark';
-    return directSlot as 'dawn' | 'sunset';
+    if (directSlot === 'dawn') return 'dawn';
+    return 'sunset';
   }
   const assignedSlot = assignments
     ? SLOT_ORDER.find((slot) => assignments[slot]?.id === id)
@@ -41,7 +42,8 @@ const resolvePreviewModeForSelection = (
   if (assignedSlot) {
     if (assignedSlot === 'daily') return 'default';
     if (assignedSlot === 'nightly') return 'dark';
-    return assignedSlot as 'dawn' | 'sunset';
+    if (assignedSlot === 'dawn') return 'dawn';
+    return 'sunset';
   }
   return 'default';
 };
@@ -165,8 +167,13 @@ export function ThemePreviewPanel({
       const mode = resolvePreviewModeForSelection(selectedId, slotAssignments);
       return { theme: draft, mode };
     }
-    const mode = previewTarget === 'daily' ? 'default' : previewTarget === 'nightly' ? 'dark' : previewTarget;
-    return { theme: slotThemes[previewTarget], mode: mode as any };
+    const mode: 'default' | 'dark' | 'dawn' | 'sunset' =
+      previewTarget === 'daily'
+        ? 'default'
+        : previewTarget === 'nightly'
+          ? 'dark'
+          : previewTarget;
+    return { theme: slotThemes[previewTarget], mode };
   }, [draft, previewTarget, selectedId, slotAssignments, slotThemes]);
 
   const appearance = useMemo(
@@ -370,8 +377,8 @@ export function ThemePreviewPanel({
                   width: 20,
                   height: 20,
                   borderRadius: '50%',
-                  background: `linear-gradient(135deg, var(--kangur-logo-ring-start) 0%, var(--kangur-logo-ring-end) 100%)`,
-                  boxShadow: `0 2px 6px var(--kangur-logo-shadow, rgba(0,0,0,.12))`,
+                  background: 'linear-gradient(135deg, var(--kangur-logo-ring-start) 0%, var(--kangur-logo-ring-end) 100%)',
+                  boxShadow: '0 2px 6px var(--kangur-logo-shadow, rgba(0,0,0,.12))',
                   flexShrink: 0,
                   position: 'relative',
                 }}
@@ -381,7 +388,7 @@ export function ThemePreviewPanel({
                   position: 'absolute',
                   inset: 3,
                   borderRadius: '50%',
-                  background: `linear-gradient(180deg, var(--kangur-logo-inner-start) 0%, var(--kangur-logo-inner-end) 100%)`,
+                  background: 'linear-gradient(180deg, var(--kangur-logo-inner-start) 0%, var(--kangur-logo-inner-end) 100%)',
                 }} />
               </div>
               <span
@@ -389,7 +396,7 @@ export function ThemePreviewPanel({
                   fontFamily: 'var(--kangur-font-heading, sans-serif)',
                   fontWeight: 800,
                   fontSize: 15,
-                  background: `linear-gradient(90deg, var(--kangur-logo-word-start) 0%, var(--kangur-logo-word-mid) 50%, var(--kangur-logo-word-end) 100%)`,
+                  background: 'linear-gradient(90deg, var(--kangur-logo-word-start) 0%, var(--kangur-logo-word-mid) 50%, var(--kangur-logo-word-end) 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                 }}
@@ -402,7 +409,7 @@ export function ThemePreviewPanel({
                 width: 8,
                 height: 8,
                 borderRadius: '50%',
-                background: `linear-gradient(135deg, var(--kangur-logo-accent-start), var(--kangur-logo-accent-end))`,
+                background: 'linear-gradient(135deg, var(--kangur-logo-accent-start), var(--kangur-logo-accent-end))',
               }} />
             </div>
 
@@ -476,7 +483,7 @@ export function ThemePreviewPanel({
                   width: 28,
                   height: 28,
                   borderRadius: 'var(--kangur-gradient-icon-tile-radius-md, 8px)',
-                  background: `linear-gradient(135deg, var(--kangur-accent-indigo-start) 0%, var(--kangur-accent-indigo-end) 100%)`,
+                  background: 'linear-gradient(135deg, var(--kangur-accent-indigo-start) 0%, var(--kangur-accent-indigo-end) 100%)',
                   flexShrink: 0,
                 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -486,7 +493,7 @@ export function ThemePreviewPanel({
               </div>
               {/* progress bar */}
               <div style={{ height: 4, borderRadius: 99, background: 'var(--kangur-progress-track, rgba(128,128,128,.15))', marginBottom: 6 }}>
-                <div style={{ width: '68%', height: '100%', borderRadius: 99, background: `linear-gradient(90deg, var(--kangur-accent-indigo-start) 0%, var(--kangur-accent-violet-end) 100%)` }} />
+                <div style={{ width: '68%', height: '100%', borderRadius: 99, background: 'linear-gradient(90deg, var(--kangur-accent-indigo-start) 0%, var(--kangur-accent-violet-end) 100%)' }} />
               </div>
               <div style={{ display: 'flex', gap: 5 }}>
                 <span style={{ ...btnPrimary, fontSize: 10, padding: '4px 10px' }}>
@@ -508,7 +515,7 @@ export function ThemePreviewPanel({
                   width: 26,
                   height: 26,
                   borderRadius: '50%',
-                  background: `linear-gradient(135deg, var(--kangur-accent-emerald-start) 0%, var(--kangur-accent-emerald-end) 100%)`,
+                  background: 'linear-gradient(135deg, var(--kangur-accent-emerald-start) 0%, var(--kangur-accent-emerald-end) 100%)',
                   flexShrink: 0,
                 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -524,7 +531,7 @@ export function ThemePreviewPanel({
                 width: 28,
                 height: 28,
                 borderRadius: '50%',
-                background: `linear-gradient(135deg, var(--kangur-accent-violet-start) 0%, var(--kangur-accent-violet-end) 100%)`,
+                background: 'linear-gradient(135deg, var(--kangur-accent-violet-start) 0%, var(--kangur-accent-violet-end) 100%)',
                 flexShrink: 0,
               }} />
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -813,7 +820,7 @@ export function ThemePreviewPanel({
               }}>
                 <div style={{ ...sectionLabelStyle, marginBottom: 3 }}>Elevated</div>
                 <div style={{ height: 4, borderRadius: 99, background: 'var(--kangur-progress-track)', marginBottom: 4 }}>
-                  <div style={{ width: '45%', height: '100%', borderRadius: 99, background: `linear-gradient(90deg, var(--kangur-accent-emerald-start), var(--kangur-accent-emerald-end))` }} />
+                  <div style={{ width: '45%', height: '100%', borderRadius: 99, background: 'linear-gradient(90deg, var(--kangur-accent-emerald-start), var(--kangur-accent-emerald-end))' }} />
                 </div>
                 <span style={{ fontSize: 8, color: 'var(--kangur-page-muted-text)' }}>45%</span>
               </div>
@@ -826,7 +833,7 @@ export function ThemePreviewPanel({
               }}>
                 <div style={{ ...sectionLabelStyle, marginBottom: 3 }}>Subtle</div>
                 <div style={{ height: 4, borderRadius: 99, background: 'var(--kangur-progress-track)', marginBottom: 4 }}>
-                  <div style={{ width: '82%', height: '100%', borderRadius: 99, background: `linear-gradient(90deg, var(--kangur-accent-sky-start), var(--kangur-accent-sky-end))` }} />
+                  <div style={{ width: '82%', height: '100%', borderRadius: 99, background: 'linear-gradient(90deg, var(--kangur-accent-sky-start), var(--kangur-accent-sky-end))' }} />
                 </div>
                 <span style={{ fontSize: 8, color: 'var(--kangur-page-muted-text)' }}>82%</span>
               </div>
@@ -882,7 +889,7 @@ export function ThemePreviewPanel({
                 <div
                   key={variant}
                   style={{
-                    background: `var(--kangur-chat-control-background)`,
+                    background: 'var(--kangur-chat-control-background)',
                     border: '1px solid var(--kangur-chat-control-border)',
                     color: 'var(--kangur-chat-control-text)',
                     borderRadius: 6,

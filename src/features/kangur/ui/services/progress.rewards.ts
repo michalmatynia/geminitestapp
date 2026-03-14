@@ -4,7 +4,6 @@ import type {
 } from '@/features/kangur/ui/types';
 import {
   type KangurActivityStatsEntry,
-  type KangurLessonMasteryEntry,
 } from '@/shared/contracts/kangur';
 import {
   KangurLessonPracticeReward,

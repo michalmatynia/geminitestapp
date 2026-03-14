@@ -6,7 +6,7 @@ import {
   useProductValidationActions,
   useProductValidationState,
 } from '@/features/products/context/ProductValidationSettingsContext';
-import { SelectSimple, ValidatorFormatterToggle } from '@/shared/ui';
+import { SelectSimple, ValidatorFormatterToggle } from '@/features/products/ui';
 
 export function ProductFormValidationTab(): React.JSX.Element {
   const { validatorEnabled, formatterEnabled, validationDenyBehavior, validationInstanceScope } =

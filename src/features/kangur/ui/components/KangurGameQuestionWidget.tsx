@@ -37,7 +37,7 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
   const currentQuest = getCurrentKangurDailyQuest(progress);
   const nextBadge = getNextLockedBadge(progress);
   const guidedProjection = activeSessionRecommendation
-    ? getRecommendedSessionProjection(progress, 1)
+    ? getRecommendedSessionProjection(progress, true)
     : null;
 
   const tutorContentId = activePracticeAssignment?.id

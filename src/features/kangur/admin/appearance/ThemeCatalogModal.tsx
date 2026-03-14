@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import {
+  AppModal,
   Badge,
   Button,
   Card,
-  FormModal,
   Input,
   useToast,
 } from '@/shared/ui';
@@ -19,7 +19,6 @@ import {
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { serializeSetting } from '@/shared/utils/settings-json';
 import { useAppearancePage } from './AppearancePage.context';
-import { SLOT_ORDER, SLOT_CONFIG } from './AppearancePage.constants';
 
 export function ThemeCatalogModal(): React.JSX.Element {
   const { toast } = useToast();
@@ -41,10 +40,13 @@ export function ThemeCatalogModal(): React.JSX.Element {
     setIsSavingNew(true);
     try {
       const activeTheme = slotThemes.daily;
+      const now = new Date().toISOString();
       const newEntry: KangurThemeCatalogEntry = {
         id: `theme_${Math.random().toString(36).slice(2, 11)}`,
         name: newThemeName.trim(),
         settings: activeTheme,
+        createdAt: now,
+        updatedAt: now,
       };
       const nextCatalog = [...catalog, newEntry];
       const serialized = serializeSetting(nextCatalog);
@@ -79,32 +81,36 @@ export function ThemeCatalogModal(): React.JSX.Element {
   };
 
   return (
-    <FormModal
-      trigger={
-        <Button variant='outline' size='sm' onClick={() => setIsCatalogOpen(true)}>
-          Katalog motywów ({catalog.length})
-        </Button>
-      }
-      title='Katalog zapisanych motywów'
-      isOpen={isCatalogOpen}
-      onOpenChange={setIsCatalogOpen}
-    >
-      <div className='space-y-6'>
-        <div className='flex items-end gap-3 rounded-xl border border-dashed p-4'>
-          <div className='flex-1'>
-            <p className='mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground'>
-              Zapisz aktualny dzień jako nowy motyw
-            </p>
-            <Input
-              placeholder='Nazwa motywu...'
-              value={newThemeName}
-              onChange={(e) => setNewThemeName(e.target.value)}
-            />
+    <>
+      <Button variant='outline' size='sm' onClick={() => setIsCatalogOpen(true)}>
+        Katalog motywów ({catalog.length})
+      </Button>
+      <AppModal
+        title='Katalog zapisanych motywów'
+        isOpen={isCatalogOpen}
+        onOpenChange={setIsCatalogOpen}
+        onClose={() => setIsCatalogOpen(false)}
+        size='lg'
+      >
+        <div className='space-y-6'>
+          <div className='flex items-end gap-3 rounded-xl border border-dashed p-4'>
+            <div className='flex-1'>
+              <p className='mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground'>
+                Zapisz aktualny dzień jako nowy motyw
+              </p>
+              <Input
+                placeholder='Nazwa motywu...'
+                value={newThemeName}
+                onChange={(e) => setNewThemeName(e.target.value)}
+              />
+            </div>
+            <Button
+              onClick={() => void handleCreateTheme()}
+              disabled={isCreating || !newThemeName.trim()}
+            >
+              Zapisz
+            </Button>
           </div>
-          <Button onClick={handleCreateTheme} disabled={isCreating || !newThemeName.trim()}>
-            Zapisz
-          </Button>
-        </div>
 
         <div className='grid gap-3 sm:grid-cols-2'>
           {catalog.map((entry) => {
@@ -163,7 +169,8 @@ export function ThemeCatalogModal(): React.JSX.Element {
             Brak zapisanych motywów w katalogu.
           </div>
         )}
-      </div>
-    </FormModal>
+        </div>
+      </AppModal>
+    </>
   );
 }

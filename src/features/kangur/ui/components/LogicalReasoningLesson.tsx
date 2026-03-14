@@ -21,7 +21,7 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 
-type SectionId = 'wnioskowanie' | 'kwantyfikatory' | 'zagadki' | 'podsumowanie';
+type SectionId = 'wnioskowanie' | 'kwantyfikatory' | 'zagadki' | 'podsumowanie' | 'gra';
 
 const IF_THEN_GAME_CASES = [
   {
@@ -193,19 +193,6 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
         </KangurLessonStack>
       ),
     },
-    {
-      title: 'Gra: Czy wniosek wynika?',
-      content: (
-        <KangurLessonStack>
-          <KangurLessonLead>
-            Przeciągnij karty do pola „Wynika” lub „Nie wynika” i sprawdź poprawność.
-          </KangurLessonLead>
-          <KangurLessonInset accent='indigo' className='w-full' padding='sm'>
-            <LogicalReasoningIfThenGame cases={IF_THEN_GAME_CASES} />
-          </KangurLessonInset>
-        </KangurLessonStack>
-      ),
-    },
   ],
   kwantyfikatory: [
     {
@@ -335,14 +322,14 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Rozwiązywanie krok po kroku',
-      content: (
-        <KangurLessonStack>
-          <KangurLessonInset accent='indigo' className='w-full' padding='md'>
-            <ol className='list-decimal list-inside space-y-3 text-sm [color:var(--kangur-page-text)]'>
-              <li>
-                <b>Przeczytaj wszystkie wskazówki</b> — nie spiesz się.
-              </li>
+          title: 'Rozwiązywanie krok po kroku',
+          content: (
+            <KangurLessonStack>
+              <KangurLessonInset accent='indigo' className='w-full' padding='md'>
+            <ol className='w-full list-decimal list-inside space-y-3 text-sm text-left break-words [color:var(--kangur-page-text)]'>
+                <li>
+                  <b>Przeczytaj wszystkie wskazówki</b> — nie spiesz się.
+                </li>
               <li>
                 <b>Wypisz, co jest pewne</b> — zacznij od faktów bezpośrednich.
               </li>
@@ -375,7 +362,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             Skreślaj opcje, które nie pasują do wskazówek, aż zostanie właściwa odpowiedź.
           </KangurLessonLead>
           <KangurLessonInset accent='rose' className='w-full text-center' padding='sm'>
-            <div className='mx-auto h-24 w-72'>
+            <div className='mx-auto w-full max-w-sm'>
               <EliminationGridAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -420,6 +407,22 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
   ],
+  gra: [
+    {
+      title: 'Gra: Czy wniosek wynika?',
+      panelClassName: 'w-full mx-auto lg:w-[min(760px,90vw)]',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Przeciągnij karty do pola „Wynika” lub „Nie wynika” i sprawdź poprawność.
+          </KangurLessonLead>
+          <KangurLessonInset accent='indigo' className='w-full' padding='sm'>
+            <LogicalReasoningIfThenGame cases={IF_THEN_GAME_CASES} />
+          </KangurLessonInset>
+        </KangurLessonStack>
+      ),
+    },
+  ],
 };
 
 export const HUB_SECTIONS = [
@@ -442,6 +445,12 @@ export const HUB_SECTIONS = [
     description: 'Rozwiązywanie zagadek krok po kroku',
   },
   { id: 'podsumowanie', emoji: '📋', title: 'Podsumowanie', description: 'Wszystkie zasady razem' },
+  {
+    id: 'gra',
+    emoji: '🎮',
+    title: 'Gra: Wniosek',
+    description: 'Oceń, czy wniosek wynika',
+  },
 ];
 
 export default function LogicalReasoningLesson(): React.JSX.Element {

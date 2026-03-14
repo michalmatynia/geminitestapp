@@ -10,12 +10,12 @@ import LessonSlideSection, {
 import {
   ClockCombinedHandsAnimation,
   ClockFiveMinuteStepsAnimation,
+  ClockFullHourStepAnimation,
   ClockHalfPastAnimation,
   ClockHourHandSweepAnimation,
   ClockMinuteByMinuteAnimation,
   ClockMinuteHandSweepAnimation,
   ClockQuarterAnimation,
-  ClockSecondHandAnimation,
 } from '@/features/kangur/ui/components/ClockLessonAnimations';
 import {
   KangurLessonCallout,
@@ -255,7 +255,7 @@ const HOURS_SLIDES: LessonSlide[] = [
         </div>
         <KangurLessonCallout accent='rose' className='mx-auto max-w-xs' padding='sm'>
           <div className='mx-auto h-24 w-32'>
-            <ClockSecondHandAnimation />
+            <ClockFullHourStepAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>
             Pełna godzina jest wtedy, gdy długa wskazówka stoi na 12.
@@ -902,7 +902,7 @@ export default function ClockLesson(): React.JSX.Element {
 
                 requestTrainingExitAction({ kind: 'panel', panel: panel.id });
               }}
-              aria-label={`Przejdz do panelu ${panel.label}`}
+              aria-label={`Przejdź do panelu ${panel.label}`}
               aria-current={isActive ? 'step' : undefined}
               className={cn(
                 KANGUR_STEP_PILL_CLASSNAME,

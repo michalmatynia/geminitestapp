@@ -27,6 +27,7 @@ import {
   patchImageStudioSlotsCache,
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
@@ -458,7 +459,7 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
 
       cleanup();
       void invalidateImageStudioSlots(qc, normalizedProjectId);
-      logSystemEvent({
+      void logSystemEvent({
         source: 'ai.image-studio',
         message: 'Delete verification timed out; slot still present after polling',
         level: 'warn',
@@ -467,7 +468,8 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
           slotId: normalizedDeletedSlotId,
         },
       });
-      } catch (error) {      cleanup();
+    } catch (error) {
+      cleanup();
       void invalidateImageStudioSlots(qc, normalizedProjectId);
       logClientError(error, {
         context: {
@@ -508,7 +510,7 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
         if (isDeleteTimeoutError(error)) {
           timeoutFallbackIdsRef.current.add(slotId);
           deletedIdsByRequestRef.current.set(slotId, []);
-          logSystemEvent({
+          void logSystemEvent({
             source: 'ai.image-studio',
             message: 'Delete request timed out; keeping optimistic state and polling',
             level: 'info',
@@ -517,7 +519,8 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
               slotId,
             },
           });
-          return;        }
+          return;
+        }
         throw error;
       }
     },
@@ -584,7 +587,7 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
       }
       pendingDeleteCandidatesRef.current.set(normalizedDeletedSlotId, deletedSlotCandidates);
       if (timings) {
-        logSystemEvent({
+        void logSystemEvent({
           source: 'ai.image-studio',
           message: 'Delete card cascade timings',
           level: 'info',
@@ -594,7 +597,8 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
             timingsMs: timings,
           },
         });
-      }      if (!isTimeoutFallback) {
+      }
+      if (!isTimeoutFallback) {
         deletedIdsByRequestRef.current.delete(normalizedDeletedSlotId);
         deleteTimingsByRequestRef.current.delete(normalizedDeletedSlotId);
         pendingDeleteCandidatesRef.current.delete(normalizedDeletedSlotId);

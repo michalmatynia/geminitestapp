@@ -21,7 +21,7 @@ describe('TrainingSetup', () => {
     expect(countGroup).toHaveClass('kangur-segmented-control', 'rounded-[28px]', 'border');
     expect(within(heading).getByRole('heading', { name: 'Dobierz trening' })).toHaveClass(
       'text-2xl',
-      'text-indigo-700'
+      '[color:var(--kangur-accent-indigo-start,#a855f7)]'
     );
     expect(screen.queryByRole('heading', { name: 'Wybierz poziom trudności' })).not.toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Poziom trudności' })).toBeInTheDocument();

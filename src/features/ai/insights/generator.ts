@@ -22,7 +22,7 @@ import { type AiBrainCapabilityKey } from '@/shared/lib/ai-brain/settings';
 import { listAnalyticsEvents, getAnalyticsSummary } from '@/shared/lib/analytics/server';
 import { buildSystemLogsContextRegistrySystemPrompt } from '@/shared/lib/observability/runtime-context/server';
 import { sanitizeSystemLogForAi } from '@/shared/lib/observability/runtime-context/sanitize-system-log-for-ai';
-import { listSystemLogs, getSystemLogMetrics } from '@/shared/lib/observability/system-logger';
+import { getSystemLogMetrics, listSystemLogs, logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 import { callInsightChatModel } from './generator/chat-runtime';
 import {
@@ -377,7 +377,7 @@ export async function runInsightsAutoGeneration(): Promise<void> {
   );
   if (analyticsEnabled) {
     await generateAnalyticsInsight({ source: 'scheduled_job' }).catch((err) => {
-      logSystemEvent({
+      void logSystemEvent({
         source: 'ai.insights.auto-generation',
         message: 'Failed to auto-generate analytics insight',
         level: 'error',
@@ -392,7 +392,7 @@ export async function runInsightsAutoGeneration(): Promise<void> {
   );
   if (logsEnabled) {
     await generateLogsInsight({ source: 'scheduled_job' }).catch((err) => {
-      logSystemEvent({
+      void logSystemEvent({
         source: 'ai.insights.auto-generation',
         message: 'Failed to auto-generate logs insight',
         level: 'error',
@@ -407,7 +407,7 @@ export async function runInsightsAutoGeneration(): Promise<void> {
   );
   if (runtimeEnabled) {
     await generateRuntimeAnalyticsInsight({ source: 'scheduled_job' }).catch((err) => {
-      logSystemEvent({
+      void logSystemEvent({
         source: 'ai.insights.auto-generation',
         message: 'Failed to auto-generate runtime analytics insight',
         level: 'error',

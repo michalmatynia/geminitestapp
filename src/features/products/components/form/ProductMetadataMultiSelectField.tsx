@@ -5,7 +5,7 @@ import { useContext, useMemo } from 'react';
 import { ProductFormMetadataContext } from '@/features/products/context/ProductFormMetadataContext';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { MultiSelect } from '@/shared/ui';
+import { MultiSelect } from '@/features/products/ui';
 
 import {
   useOptionalProductMetadataFieldActionsContext,

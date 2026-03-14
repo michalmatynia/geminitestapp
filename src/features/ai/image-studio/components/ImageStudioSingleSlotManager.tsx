@@ -12,9 +12,16 @@ import {
 } from 'react';
 
 import { isLikelyImageStudioErrorText } from '@/features/ai/image-studio/utils/image-src';
-import ProductImageManager from '@/features/products';
-import { ProductImageManagerControllerProvider } from '@/features/products';
+import {
+  ProductImageManager,
+  ProductImageManagerControllerProvider,
+} from '@/shared/ui';
 import { api } from '@/shared/lib/api-client';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import {
+  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
+  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
+} from '@/shared/lib/products/constants';
 
 import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
@@ -303,10 +310,16 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
       ]
     );
 
+    const settingsStore = useSettingsStore();
+    const externalBaseUrl =
+      settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
+      DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
+
     return (
       <ProductImageManagerControllerProvider value={controller}>
         <ProductImageManager
           key={`obj:${objectSlot?.id ?? temporaryObjectUpload?.id ?? 'none'}`}
+          externalBaseUrl={externalBaseUrl}
           minimalUi
           showDragHandle={false}
           minimalSingleSlotAlign='left'

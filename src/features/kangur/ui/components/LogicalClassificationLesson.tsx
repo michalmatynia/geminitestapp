@@ -1,9 +1,11 @@
 import { useState } from 'react';
 
+import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
+import LogicalClassificationGame from '@/features/kangur/ui/components/LogicalClassificationGame';
 import {
   ClassificationCategoryBinsAnimation,
   ClassificationCriteriaAxesAnimation,
@@ -29,9 +31,10 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 
-type SectionId = 'intro' | 'diagram' | 'intruz' | 'podsumowanie';
+type SectionId = 'intro' | 'diagram' | 'intruz' | 'podsumowanie' | 'game';
+type SlideSectionId = Exclude<SectionId, 'game'>;
 
-export const SLIDES: Record<SectionId, LessonSlide[]> = {
+export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   intro: [
     {
       title: 'Co to jest klasyfikacja?',
@@ -197,7 +200,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonInset accent='teal' className='w-full' padding='sm'>
             <ClassificationCriteriaAxesAnimation />
             <KangurLessonCaption className='mt-2'>
-              Najpierw wybierz osie kryteriow, a potem przypisz elementy do pola.
+              Najpierw wybierz osie kryteriów, a potem przypisz elementy do pola.
             </KangurLessonCaption>
           </KangurLessonInset>
           <KangurLessonCallout accent='teal' className='w-full'>
@@ -425,50 +428,80 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Podsumowanie w animacjach',
+      title: 'Kolor',
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Najważniejsze sposoby klasyfikacji w jednym zestawie animacji.
-          </KangurLessonLead>
-          <div className='grid w-full grid-cols-1 gap-3 min-[360px]:grid-cols-2'>
-            <KangurLessonInset accent='teal' className='w-full' padding='sm'>
-              <ClassificationSortByColorAnimation />
-              <KangurLessonCaption className='mt-2 text-center'>
-                Kolor
-              </KangurLessonCaption>
-            </KangurLessonInset>
-            <KangurLessonInset accent='sky' className='w-full' padding='sm'>
-              <ClassificationSortByShapeAnimation />
-              <KangurLessonCaption className='mt-2 text-center'>
-                Kształt
-              </KangurLessonCaption>
-            </KangurLessonInset>
-            <KangurLessonInset accent='amber' className='w-full' padding='sm'>
-              <ClassificationParityAnimation />
-              <KangurLessonCaption className='mt-2 text-center'>
-                Parzyste i nieparzyste
-              </KangurLessonCaption>
-            </KangurLessonInset>
-            <KangurLessonInset accent='emerald' className='w-full' padding='sm'>
-              <ClassificationTwoCriteriaGridAnimation />
-              <KangurLessonCaption className='mt-2 text-center'>
-                Dwie cechy naraz
-              </KangurLessonCaption>
-            </KangurLessonInset>
-            <KangurLessonInset accent='slate' className='w-full' padding='sm'>
-              <ClassificationVennOverlapAnimation />
-              <KangurLessonCaption className='mt-2 text-center'>
-                Przecięcie zbiorów
-              </KangurLessonCaption>
-            </KangurLessonInset>
-            <KangurLessonInset accent='rose' className='w-full' padding='sm'>
-              <ClassificationOddOneOutPatternAnimation />
-              <KangurLessonCaption className='mt-2 text-center'>
-                Intruz
-              </KangurLessonCaption>
-            </KangurLessonInset>
-          </div>
+          <KangurLessonInset accent='teal' className='w-full text-center' padding='sm'>
+            <ClassificationSortByColorAnimation />
+            <KangurLessonCaption className='mt-2 text-center'>
+              Kolor
+            </KangurLessonCaption>
+          </KangurLessonInset>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Kształt',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonInset accent='sky' className='w-full text-center' padding='sm'>
+            <ClassificationSortByShapeAnimation />
+            <KangurLessonCaption className='mt-2 text-center'>
+              Kształt
+            </KangurLessonCaption>
+          </KangurLessonInset>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Parzyste i nieparzyste',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonInset accent='amber' className='w-full text-center' padding='sm'>
+            <ClassificationParityAnimation />
+            <KangurLessonCaption className='mt-2 text-center'>
+              Parzyste i nieparzyste
+            </KangurLessonCaption>
+          </KangurLessonInset>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Dwie cechy naraz',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonInset accent='emerald' className='w-full text-center' padding='sm'>
+            <ClassificationTwoCriteriaGridAnimation />
+            <KangurLessonCaption className='mt-2 text-center'>
+              Dwie cechy naraz
+            </KangurLessonCaption>
+          </KangurLessonInset>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Przecięcie zbiorów',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonInset accent='slate' className='w-full text-center' padding='sm'>
+            <ClassificationVennOverlapAnimation />
+            <KangurLessonCaption className='mt-2 text-center'>
+              Przecięcie zbiorów
+            </KangurLessonCaption>
+          </KangurLessonInset>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Intruz',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonInset accent='rose' className='w-full text-center' padding='sm'>
+            <ClassificationOddOneOutPatternAnimation />
+            <KangurLessonCaption className='mt-2 text-center'>
+              Intruz
+            </KangurLessonCaption>
+          </KangurLessonInset>
         </KangurLessonStack>
       ),
     },
@@ -495,6 +528,13 @@ export const HUB_SECTIONS = [
     description: 'Poziom 1, 2 i 3 — co nie pasuje?',
   },
   { id: 'podsumowanie', emoji: '📋', title: 'Podsumowanie', description: 'Wszystkie zasady razem' },
+  {
+    id: 'game',
+    emoji: '🎯',
+    title: 'Laboratorium klasyfikacji',
+    description: 'Sortuj i znajdź intruza',
+    isGame: true,
+  },
 ];
 
 export default function LogicalClassificationLesson(): React.JSX.Element {
@@ -502,13 +542,32 @@ export default function LogicalClassificationLesson(): React.JSX.Element {
   const { markSectionOpened, markSectionViewedCount, sectionProgress } =
     useLessonHubProgress(SLIDES);
 
+  if (activeSection === 'game') {
+    const gameSection = HUB_SECTIONS.find((section) => section.id === activeSection) ?? null;
+    return (
+      <LessonActivityStage
+        accent='teal'
+        icon='🎯'
+        maxWidthClassName='max-w-3xl'
+        onBack={() => setActiveSection(null)}
+        sectionHeader={gameSection}
+        shellTestId='logical-classification-game-shell'
+        title='Laboratorium klasyfikacji'
+      >
+        <LogicalClassificationGame onFinish={() => setActiveSection(null)} />
+      </LessonActivityStage>
+    );
+  }
+
   if (activeSection) {
     return (
       <LessonSlideSection
-        slides={SLIDES[activeSection]}
+        slides={SLIDES[activeSection as SlideSectionId]}
         sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
         onBack={() => setActiveSection(null)}
-        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
+        onProgressChange={(viewedCount) =>
+          markSectionViewedCount(activeSection as SlideSectionId, viewedCount)
+        }
         dotActiveClass='bg-teal-500'
         dotDoneClass='bg-teal-300'
         gradientClass='kangur-gradient-accent-teal'
@@ -522,12 +581,18 @@ export default function LogicalClassificationLesson(): React.JSX.Element {
       lessonTitle='Klasyfikacja'
       gradientClass='kangur-gradient-accent-teal'
       progressDotClassName='bg-teal-300'
-      sections={HUB_SECTIONS.map((section) => ({
-        ...section,
-        progress: sectionProgress[section.id as SectionId],
-      }))}
+      sections={HUB_SECTIONS.map((section) =>
+        section.isGame
+          ? section
+          : {
+            ...section,
+            progress: sectionProgress[section.id as SlideSectionId],
+          }
+      )}
       onSelect={(id) => {
-        markSectionOpened(id as SectionId);
+        if (id !== 'game') {
+          markSectionOpened(id as SlideSectionId);
+        }
         setActiveSection(id as SectionId);
       }}
     />

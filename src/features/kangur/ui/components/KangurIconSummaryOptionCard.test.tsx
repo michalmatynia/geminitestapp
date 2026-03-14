@@ -34,7 +34,7 @@ describe('KangurIconSummaryOptionCard', () => {
 
     expect(card).toHaveClass('soft-card', 'rounded-[28px]');
     expect(screen.getByTestId('summary-option-icon')).toBeInTheDocument();
-    expect(screen.getByText('Naglowek')).toBeInTheDocument();
+    expect(screen.getByText('Nagłówek')).toBeInTheDocument();
     expect(screen.getByText('Opis')).toBeInTheDocument();
     expect(screen.getByTestId('summary-option-aside')).toBeInTheDocument();
     expect(screen.getByTestId('summary-option-footer')).toBeInTheDocument();

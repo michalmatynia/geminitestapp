@@ -179,6 +179,7 @@ describe('kangur knowledge graph sync handler', () => {
     expect(getKangurAiTutorNativeGuideStoreMock).toHaveBeenCalledWith('pl');
     expect(getKangurPageContentStoreMock).toHaveBeenCalledWith('pl');
     expect(buildKangurKnowledgeGraphMock).toHaveBeenCalledWith({
+      cmsPages: [],
       locale: 'pl',
       tutorContent: { sections: [] },
       nativeGuideStore: { locale: 'pl', version: 1, entries: [] },

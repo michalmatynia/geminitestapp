@@ -431,7 +431,7 @@ describe('AdminKangurSettingsPage', () => {
     const saveButton = screen.getByRole('button', { name: /save mongo content/i });
 
     fireEvent.change(headlineInput, {
-      target: { value: 'TODO uzupelnic nagłówek' },
+      target: { value: 'TODO uzupełnić nagłówek' },
     });
 
     expect(

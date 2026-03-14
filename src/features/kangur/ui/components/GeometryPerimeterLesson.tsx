@@ -11,7 +11,6 @@ import {
   GeometryPerimeterSumAnimation,
   GeometryPerimeterSidesAnimation,
   GeometryPerimeterTraceAnimation,
-  GeometrySideHighlightAnimation,
 } from '@/features/kangur/ui/components/GeometryLessonAnimations';
 import {
   KangurLessonCallout,
@@ -26,81 +25,8 @@ import {
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 
-type SectionId = 'intro' | 'kwadrat' | 'prostokan' | 'animacje' | 'podsumowanie' | 'game_draw';
+type SectionId = 'intro' | 'kwadrat' | 'prostokan' | 'podsumowanie' | 'game_draw';
 type SlideSectionId = Exclude<SectionId, 'game_draw'>;
-
-const PERIMETER_ANIMATION_SLIDES: LessonSlide[] = [
-  {
-    title: 'Obwód krok po kroku',
-    content: (
-      <KangurLessonStack className='text-center'>
-        <KangurLessonLead>Obwód to droga dookoła figury.</KangurLessonLead>
-        <KangurLessonCallout accent='amber'>
-          <div className='mx-auto h-20 w-32'>
-            <GeometryPerimeterTraceAnimation />
-          </div>
-          <KangurLessonCaption className='mt-2'>Liczymy wszystkie boki.</KangurLessonCaption>
-        </KangurLessonCallout>
-      </KangurLessonStack>
-    ),
-  },
-  {
-    title: 'Kolejne boki',
-    content: (
-      <KangurLessonStack className='text-center'>
-        <KangurLessonLead>Idziemy po kolei i nie pomijamy żadnej krawędzi.</KangurLessonLead>
-        <KangurLessonCallout accent='amber'>
-          <div className='mx-auto h-20 w-32'>
-            <GeometrySideHighlightAnimation />
-          </div>
-          <KangurLessonCaption className='mt-2'>Każdy bok liczymy raz.</KangurLessonCaption>
-        </KangurLessonCallout>
-      </KangurLessonStack>
-    ),
-  },
-  {
-    title: 'Obwód prostokąta',
-    content: (
-      <KangurLessonStack className='text-center'>
-        <KangurLessonLead>Najpierw a + b, potem razy 2.</KangurLessonLead>
-        <KangurLessonCallout accent='amber'>
-          <div className='mx-auto h-20 w-32'>
-            <GeometryPerimeterTraceAnimation />
-          </div>
-          <KangurLessonCaption className='mt-2'>O = 2 × (a + b)</KangurLessonCaption>
-        </KangurLessonCallout>
-      </KangurLessonStack>
-    ),
-  },
-  {
-    title: 'Przeciwległe boki',
-    content: (
-      <KangurLessonStack className='text-center'>
-        <KangurLessonLead>W prostokącie przeciwległe boki są równe.</KangurLessonLead>
-        <KangurLessonCallout accent='amber'>
-          <div className='mx-auto h-20 w-32'>
-            <GeometryPerimeterOppositeSidesAnimation />
-          </div>
-          <KangurLessonCaption className='mt-2'>To ułatwia szybkie liczenie.</KangurLessonCaption>
-        </KangurLessonCallout>
-      </KangurLessonStack>
-    ),
-  },
-  {
-    title: 'Suma boków',
-    content: (
-      <KangurLessonStack className='text-center'>
-        <KangurLessonLead>Dodaj wszystkie długości i otrzymasz obwód.</KangurLessonLead>
-        <KangurLessonCallout accent='amber'>
-          <div className='mx-auto h-20 w-36'>
-            <GeometryPerimeterSumAnimation />
-          </div>
-          <KangurLessonCaption className='mt-2'>O = 6 + 4 + 6 + 4 = 20</KangurLessonCaption>
-        </KangurLessonCallout>
-      </KangurLessonStack>
-    ),
-  },
-];
 
 export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   intro: [
@@ -180,11 +106,26 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           <KangurLessonCaption>
             Przykład: a=6, b=4 → O = 2 × (6+4) = 20 cm
           </KangurLessonCaption>
+          <KangurLessonCallout accent='amber'>
+            <div className='mx-auto h-20 w-32'>
+              <GeometryPerimeterOppositeSidesAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Przeciwległe boki są równe — dodaj pary.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+          <KangurLessonCallout accent='amber'>
+            <div className='mx-auto h-20 w-36'>
+              <GeometryPerimeterSumAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Dodaj wszystkie długości: O = 6 + 4 + 6 + 4 = 20
+            </KangurLessonCaption>
+          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
   ],
-  animacje: PERIMETER_ANIMATION_SLIDES,
   podsumowanie: [
     {
       title: 'Podsumowanie',
@@ -212,7 +153,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
     {
       title: 'Podsumowanie w ruchu',
       content: (
-        <div className='grid gap-3 text-center sm:grid-cols-2'>
+        <div className='flex flex-col gap-3 text-center'>
           <KangurLessonCallout accent='amber' padding='sm'>
             <div className='mx-auto h-24 w-36'>
               <GeometryPerimeterTraceAnimation />
@@ -221,11 +162,20 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
               Obwód to pełne okrążenie figury.
             </KangurLessonCaption>
           </KangurLessonCallout>
+        </div>
+      ),
+    },
+    {
+      title: 'Podsumowanie: pary boków',
+      content: (
+        <div className='flex flex-col gap-3 text-center'>
           <KangurLessonCallout accent='amber' padding='sm'>
             <div className='mx-auto h-24 w-36'>
               <GeometryPerimeterSidesAnimation />
             </div>
-            <KangurLessonCaption className='mt-2'>Dodaj pary boków: a + a, b + b.</KangurLessonCaption>
+            <KangurLessonCaption className='mt-2'>
+              Dodaj pary boków: a + a, b + b.
+            </KangurLessonCaption>
           </KangurLessonCallout>
         </div>
       ),
@@ -237,12 +187,7 @@ export const HUB_SECTIONS = [
   { id: 'intro', emoji: '📏', title: 'Co to obwód?', description: 'Definicja i zasada liczenia' },
   { id: 'kwadrat', emoji: '🟥', title: 'Obwód kwadratu', description: 'Wzór: 4 × a' },
   { id: 'prostokan', emoji: '▭', title: 'Obwód prostokata', description: 'Wzór: 2 × (a + b)' },
-  {
-    id: 'animacje',
-    emoji: '🎞️',
-    title: 'Animacje',
-    description: 'Obwód krok po kroku',
-  },
+  { id: 'podsumowanie', emoji: '📋', title: 'Podsumowanie', description: 'Wszystkie wzory razem' },
   {
     id: 'game_draw',
     emoji: '✍️',
@@ -250,7 +195,6 @@ export const HUB_SECTIONS = [
     description: 'Rysuj po kratkach i wybieraj obwód',
     isGame: true,
   },
-  { id: 'podsumowanie', emoji: '📋', title: 'Podsumowanie', description: 'Wszystkie wzory razem' },
 ];
 
 export default function GeometryPerimeterLesson(): React.JSX.Element {

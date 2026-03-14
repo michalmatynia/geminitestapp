@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
-import { getProductDetailQueryKey } from '@/features/products';
+import { getProductDetailQueryKey } from '@/shared/lib/product-query-keys';
 import type { ParserSampleState, UpdaterSampleState } from '@/shared/lib/ai-paths';
 import { dbApi, entityApi } from '@/shared/lib/ai-paths';
 import { createMutationV2, fetchQueryV2 } from '@/shared/lib/query-factories-v2';

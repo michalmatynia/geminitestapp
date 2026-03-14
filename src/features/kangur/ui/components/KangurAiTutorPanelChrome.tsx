@@ -9,6 +9,7 @@ import {
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { useKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
+import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 import { cn } from '@/shared/utils';
 
 import {
@@ -220,7 +221,9 @@ export function KangurAiTutorPanelChrome({
   const dialogLabel = `${tutorDisplayName} ${chatTitleSuffix}`.trim();
   const tutorMoodId = tutor?.tutorMoodId ?? 'default';
   const tutorBehaviorMoodId = tutor?.tutorBehaviorMoodId ?? tutorMoodId;
-  const tutorBehaviorMoodLabel = tutor?.tutorBehaviorMoodLabel ?? tutorBehaviorMoodId;
+  const tutorBehaviorMoodLabel = repairKangurPolishCopy(
+    tutor?.tutorBehaviorMoodLabel ?? tutorBehaviorMoodId
+  );
   const isGenericEmptyStateMessage =
     panelEmptyStateMessage === tutorContent.emptyStates.lesson ||
     panelEmptyStateMessage === tutorContent.emptyStates.game;

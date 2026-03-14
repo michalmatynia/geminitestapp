@@ -45,19 +45,22 @@ export function KangurBadgeTrackSection({
   headingClassName,
   progress,
 }: KangurBadgeTrackSectionProps): React.JSX.Element {
+  const headerProps = {
+    className: headingClassName,
+    heading,
+    headingAs,
+  };
+  const gridProps = {
+    className: gridClassName,
+    dataTestIdPrefix,
+    emptyTestId,
+    progress,
+  };
+
   return (
     <div className={cn('flex flex-col gap-4', className)}>
-      <KangurBadgeTrackSectionHeader
-        className={headingClassName}
-        heading={heading}
-        headingAs={headingAs}
-      />
-      <KangurBadgeTrackGrid
-        className={gridClassName}
-        dataTestIdPrefix={dataTestIdPrefix}
-        emptyTestId={emptyTestId}
-        progress={progress}
-      />
+      <KangurBadgeTrackSectionHeader {...headerProps} />
+      <KangurBadgeTrackGrid {...gridProps} />
     </div>
   );
 }

@@ -33,3 +33,4 @@ export * from './KangurSectionEyebrow';
 export * from './KangurPanelIntro';
 export * from './KangurSectionHeading';
 export * from './KangurGradientHeading';
+export * from './KangurFeatureHeader';

@@ -14,7 +14,7 @@ import {
   createContextRegistryBundle,
   createPostRequest,
   createRequestContext,
-} from './handler.test-support';
+} from '@/app/api/kangur/ai-tutor/chat/handler.test-support';
 const {
   resolveKangurActorMock,
   buildKangurAiTutorLearnerMoodMock,
@@ -92,7 +92,7 @@ vi.mock('@/features/kangur/server/ai-tutor-adaptive', () => ({
 vi.mock('@/features/kangur/server/ai-tutor-native-guide', () => ({
   resolveKangurAiTutorNativeGuideResolution: resolveKangurAiTutorNativeGuideResolutionMock,
 }));
-vi.mock('./section-knowledge', () => ({
+vi.mock('@/app/api/kangur/ai-tutor/chat/section-knowledge', () => ({
   resolveKangurAiTutorSectionKnowledgeBundle: resolveKangurAiTutorSectionKnowledgeBundleMock,
 }));
 vi.mock('@/features/kangur/server/knowledge-graph/retrieval', () => ({
@@ -100,7 +100,7 @@ vi.mock('@/features/kangur/server/knowledge-graph/retrieval', () => ({
   resolveKangurWebsiteHelpGraphContext: resolveKangurWebsiteHelpGraphContextMock,
 }));
 vi.unmock('@/features/kangur/settings-ai-tutor');
-import { postKangurAiTutorChatHandler } from './handler';
+import { postKangurAiTutorChatHandler } from '@/app/api/kangur/ai-tutor/chat/handler';
 const KANGUR_AI_TUTOR_BRAIN_CAPABILITY = 'kangur_ai_tutor.chat';
 const expectTutorSource = (input: {
   documentId: string;
@@ -744,9 +744,9 @@ describe('kangur ai tutor chat handler', () => {
   it('logs a coverage-gap warning when a section-specific explain request falls back to an overview guide entry', async () => {
     resolveKangurAiTutorNativeGuideResolutionMock.mockResolvedValue({
       status: 'hit',
-      message: 'Ekran lekcji.
+      message: `Ekran lekcji.
 
-To tutaj uczeń przechodzi przez temat krok po kroku.',
+To tutaj uczeń przechodzi przez temat krok po kroku.`,
       followUpActions: [],
       entryId: 'lesson-overview',
       matchedSignals: ['surface'],
@@ -1590,12 +1590,12 @@ To tutaj uczeń przechodzi przez temat krok po kroku.',
     expect(response.status).toBe(200);
     const body = await response.json();
 
-    expect(body.message).toContain('Ostatnia sesja: Zegar (83% skuteczności, 5/6, +28 XP).');
+    expect(body.message).toContain('Ostatnia sesja: Zegar (83% skutecznosci, 5/6, +28 XP).');
     expect(body.message).toContain(
       'Najmocniejsza operacja teraz: Dodawanie ze srednia skutecznoscia 91%.'
     );
     expect(body.message).toContain(
-      'Najwięcej pracy wymaga: Zegar ze srednia skutecznoscia 68% po 2 próbach.'
+      'Najwiecej pracy wymaga: Zegar ze srednia skutecznoscia 68% po 2 probach.'
     );
     expect(body.sources).toEqual(
       expect.arrayContaining([
@@ -1711,7 +1711,7 @@ To tutaj uczeń przechodzi przez temat krok po kroku.',
     const body = await response.json();
 
     expect(body.message).toContain(
-      'Ostatnia sesja: Dodawanie (90% skuteczności, 9/10, +18 XP).'
+      'Ostatnia sesja: Dodawanie (90% skutecznosci, 9/10, +18 XP).'
     );
     expect(body.answerResolutionMode).toBe('page_content');
     expect(body.sources).toEqual(
@@ -2068,8 +2068,8 @@ To tutaj uczeń przechodzi przez temat krok po kroku.',
         {
           documentId: 'lesson-navigation',
           collectionId: 'kangur_page_content',
-          text: 'Nawigacja lekcji
-Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy tematów.',
+          text: `Nawigacja lekcji
+Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy tematów.`,
           score: 0.99,
           metadata: {
             source: 'manual-text',
@@ -3270,10 +3270,9 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
       lexicalHitCount: 2,
       vectorHitCount: 3,
       vectorRecallAttempted: true,
-      instructions:
-        'Kangur semantic graph context:
+      instructions: `Kangur semantic graph context:
 - Ranking wyników [guide]
-  Tutaj widać porownanie ostatnich wyników i pozycje ucznia.',
+  Tutaj widać porownanie ostatnich wyników i pozycje ucznia.`,
       nodeIds: ['guide:native:game-leaderboard'],
       sourceCollections: ['kangur_ai_tutor_native_guides'],
       hydrationSources: ['kangur_ai_tutor_native_guides'],
@@ -3281,8 +3280,8 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
         {
           documentId: 'guide:native:game-leaderboard',
           collectionId: 'kangur_ai_tutor_native_guides',
-          text: 'Ranking wyników (guide)
-Sekcja rankingu pokazuje wyniki i pozycje ucznia.',
+          text: `Ranking wyników (guide)
+Sekcja rankingu pokazuje wyniki i pozycje ucznia.`,
           score: 0.94,
           metadata: {
             source: 'manual-text',

@@ -13,7 +13,6 @@ import {
   LEVELS,
   FALLBACK_LEVEL,
   BADGE_TRACK_META,
-  type KangurBadge,
   type KangurProgressLevel,
   type KangurRewardCounterKey,
   type KangurLessonPracticeReward,
@@ -25,16 +24,13 @@ import {
 } from './progress.contracts';
 import {
   BADGES,
-  clampPercent,
   getAverageAccuracyPercent,
   getBadgeProgress,
-  getMasteredLessonCount,
   getProgressBadges,
 } from './progress.badges';
 import {
   clampCounter,
   createRewardOutcome,
-  getActivityStatsEntry,
 } from './progress.rewards';
 import {
   loadProgress,

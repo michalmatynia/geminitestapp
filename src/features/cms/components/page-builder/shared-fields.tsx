@@ -2,14 +2,26 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 
-import ProductImageManager from '@/features/products';
 import { Viewer3D } from '@/features/viewer3d';
 import { Asset3DPreviewModal } from '@/features/viewer3d';
 import { useAsset3DById } from '@/features/viewer3d';
 import type { ManagedImageSlot } from '@/shared/contracts/image-slots';
 import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
-import { Input, SelectSimple, Checkbox, Button, useToast, FormField } from '@/shared/ui';
+import {
+  Input,
+  SelectSimple,
+  Checkbox,
+  Button,
+  useToast,
+  FormField,
+  ProductImageManager,
+} from '@/shared/ui';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import {
+  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
+  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
+} from '@/shared/lib/products/constants';
 import { cn } from '@/shared/utils';
 
 import { Asset3DPickerModal } from './Asset3DPickerModal';
@@ -123,11 +135,17 @@ export function ImagePickerField(props: FieldProps<string>): React.JSX.Element {
     ]
   );
 
+  const settingsStore = useSettingsStore();
+  const externalBaseUrl =
+    settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
+    DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
+
   return (
     <FormField label={label}>
       <div className='space-y-2 mt-1'>
         <ProductImageManager
           controller={controller}
+          externalBaseUrl={externalBaseUrl}
           minimalUi
           showDragHandle={false}
           minimalSingleSlotAlign='left'

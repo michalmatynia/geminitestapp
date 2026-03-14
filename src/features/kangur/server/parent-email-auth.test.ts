@@ -213,18 +213,22 @@ describe('parent email auth service', () => {
         expiresAt: new Date('2026-03-15T21:00:00.000Z'),
       });
 
-      await expect(
-        createKangurParentAccount({
+      try {
+        await createKangurParentAccount({
           email: 'parent@example.com',
           password: 'Strong123!',
           callbackUrl: '/tests',
-        })
-      ).rejects.toMatchObject({
-        httpStatus: 429,
-        message:
-          'Email potwierdzający został już wyslany. Poczekaj 15 s i spróbuj ponownie.',
-        retryAfterMs: 15_000,
-      });
+        });
+        throw new Error('Expected rate limiting error');
+      } catch (error) {
+        expect(error).toMatchObject({
+          httpStatus: 429,
+          retryAfterMs: 15_000,
+        });
+        expect((error as Error).message).toBe(
+          'Email potwierdzajacy zostal juz wyslany. Poczekaj 15 s i sprobuj ponownie.'
+        );
+      }
 
       expect(createEmailVerificationChallengeMock).not.toHaveBeenCalled();
       expect(sendAuthEmailMock).not.toHaveBeenCalled();
@@ -510,17 +514,22 @@ describe('parent email auth service', () => {
         expiresAt: new Date('2026-03-15T21:00:00.000Z'),
       });
 
-      await expect(
-        createKangurParentAccount({
+      try {
+        await createKangurParentAccount({
           email: 'parent@example.com',
           password: 'Strong123!',
           callbackUrl: '/tests',
-        })
-      ).rejects.toMatchObject({
-        httpStatus: 429,
-        message: 'Email potwierdzający został już wyslany. Poczekaj 30 s i spróbuj ponownie.',
-        retryAfterMs: 30_000,
-      });
+        });
+        throw new Error('Expected rate limiting error');
+      } catch (error) {
+        expect(error).toMatchObject({
+          httpStatus: 429,
+          retryAfterMs: 30_000,
+        });
+        expect((error as Error).message).toBe(
+          'Email potwierdzajacy zostal juz wyslany. Poczekaj 30 s i sprobuj ponownie.'
+        );
+      }
 
       expect(createEmailVerificationChallengeMock).not.toHaveBeenCalled();
       expect(sendAuthEmailMock).not.toHaveBeenCalled();
@@ -549,16 +558,21 @@ describe('parent email auth service', () => {
         expiresAt: new Date('2026-03-15T21:00:00.000Z'),
       });
 
-      await expect(
-        resendKangurParentVerificationEmail({
+      try {
+        await resendKangurParentVerificationEmail({
           email: 'parent@example.com',
           callbackUrl: '/tests',
-        })
-      ).rejects.toMatchObject({
-        httpStatus: 429,
-        message: 'Email potwierdzający został już wyslany. Poczekaj 45 s i spróbuj ponownie.',
-        retryAfterMs: 45_000,
-      });
+        });
+        throw new Error('Expected rate limiting error');
+      } catch (error) {
+        expect(error).toMatchObject({
+          httpStatus: 429,
+          retryAfterMs: 45_000,
+        });
+        expect((error as Error).message).toBe(
+          'Email potwierdzajacy zostal juz wyslany. Poczekaj 45 s i sprobuj ponownie.'
+        );
+      }
 
       expect(createEmailVerificationChallengeMock).not.toHaveBeenCalled();
       expect(sendAuthEmailMock).not.toHaveBeenCalled();

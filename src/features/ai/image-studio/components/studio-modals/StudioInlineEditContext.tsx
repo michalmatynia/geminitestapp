@@ -3,7 +3,7 @@
 import React, { createContext, useCallback, useContext, useMemo } from 'react';
 
 import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
-import type { ProductImageManagerController } from '@/features/products';
+import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import type { ManagedImageSlot } from '@/shared/contracts/image-slots';
 import { internalError } from '@/shared/errors/app-error';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';

@@ -64,7 +64,7 @@ import {
   KangurAiTutorProvider,
   KangurAiTutorSessionSync,
   useKangurAiTutor,
-} from './KangurAiTutorContext';
+} from '@/features/kangur/ui/context/KangurAiTutorContext';
 
 function Harness(): React.JSX.Element {
   const {

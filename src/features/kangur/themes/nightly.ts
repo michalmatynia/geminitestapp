@@ -147,7 +147,7 @@ export const KANGUR_NIGHTLY_AURORA_THEME: ThemeSettings = normalizeThemeSettings
     },
   ],
   activeColorSchemeId: 'kangur-aurora-teal',
-  headingFont: "'Space Grotesk', sans-serif",
+  headingFont: '\'Space Grotesk\', sans-serif',
   bodyFont: 'Manrope, sans-serif',
   headingSizeScale: 1.08,
   lineHeight: 1.62,

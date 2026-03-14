@@ -1,4 +1,4 @@
-import { Skeleton, Alert } from '@/shared/ui';
+import { Skeleton, Alert } from '@/features/products/ui';
 
 export function ProductFormGeneralSkeleton(): React.JSX.Element {
   return (

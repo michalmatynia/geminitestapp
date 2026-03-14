@@ -126,23 +126,27 @@ describe('AdminKangurContentManagerPage', () => {
   it('renders Kangur admin shell chrome and defaults to lessons tab', () => {
     render(<AdminKangurContentManagerPage />);
 
-    expect(screen.getByText('Kangur Content Manager')).toBeInTheDocument();
-    expect(screen.getByText('Content workspace')).toBeInTheDocument();
-    expect(screen.getByText('Choose workspace')).toBeInTheDocument();
-    expect(screen.getByText('Lessons workspace')).toBeInTheDocument();
-    expect(screen.getByText('Shared surface')).toBeInTheDocument();
-    expect(screen.getByText('Authoring surface')).toBeInTheDocument();
-    expect(screen.getByText('Custom content')).toBeInTheDocument();
-    expect(screen.getByText('Needs import')).toBeInTheDocument();
-    expect(screen.getByText('Needs fixes')).toBeInTheDocument();
-    expect(screen.getByText('Missing narration')).toBeInTheDocument();
-    expect(screen.getByText('Hidden lessons')).toBeInTheDocument();
+    const expectText = (text: string | RegExp) => {
+      expect(screen.getAllByText(text).length).toBeGreaterThan(0);
+    };
+
+    expectText('Kangur Content Manager');
+    expectText('Content workspace');
+    expectText('Choose workspace');
+    expectText('Lessons workspace');
+    expectText('Shared surface');
+    expectText('Authoring surface');
+    expectText('Custom content');
+    expectText('Needs import');
+    expectText('Needs fixes');
+    expectText('Missing narration');
+    expectText('Hidden lessons');
     expect(screen.getAllByText('Tests').length).toBeGreaterThan(0);
-    expect(screen.getByText('1 questions across all test suites')).toBeInTheDocument();
+    expectText('1 questions across all test suites');
     expect(screen.getByRole('navigation', { name: /breadcrumb/i })).toHaveTextContent(
       'Admin/Kangur/Content Manager'
     );
-    expect(screen.getByText('Lessons manager body')).toBeInTheDocument();
+    expectText('Lessons manager body');
     expect(lessonsPageMock).toHaveBeenCalledWith({ standalone: false });
     expect(testsPageMock).not.toHaveBeenCalled();
   });

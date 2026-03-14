@@ -283,12 +283,12 @@ describe('KangurAiTutorMessageList', () => {
     render(
       <MessageListHarness
         bodyValue={createPanelBodyContextValue({
-          messages: [{ role: 'user', content: 'Jak mam to policzyc?' }],
+          messages: [{ role: 'user', content: 'Jak mam to policzyć?' }],
         })}
       />
     );
 
-    expect(screen.getByText('Jak mam to policzyc?')).toHaveClass(
+    expect(screen.getByText('Jak mam to policzyć?')).toHaveClass(
       'tutor-user-bubble',
       'kangur-chat-bubble',
       'kangur-chat-padding-sm'

@@ -283,7 +283,7 @@ export function KangurPracticeGameSummary(props: KangurPracticeGameSummaryProps)
   return (
     <motion.div
       animate={{ opacity: 1, scale: 1 }}
-      className={cn('w-full max-w-sm', wrapperClassName)}
+      className={cn('mx-auto w-full max-w-sm', wrapperClassName)}
       initial={{ opacity: 0, scale: 0.9 }}
     >
       <KangurGlassPanel

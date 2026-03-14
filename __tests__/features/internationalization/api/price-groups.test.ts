@@ -65,10 +65,14 @@ describe('Price Groups API', () => {
           return {
             find: () => ({
               sort: () => ({
-                toArray: async () =>
-                  [...priceGroups].sort((left, right) =>
-                    String(left.name ?? '').localeCompare(String(right.name ?? ''))
-                  ),
+                skip: () => ({
+                  limit: () => ({
+                    toArray: async () =>
+                      [...priceGroups].sort((left, right) =>
+                        String(left.name ?? '').localeCompare(String(right.name ?? ''))
+                      ),
+                  }),
+                }),
               }),
             }),
             findOne: async (query: Record<string, unknown>) => {

@@ -859,6 +859,7 @@ export default function AddingBallGame({
         title={`Wynik: ${score}/${TOTAL_ROUNDS}`}
         xpAccent='indigo'
         xpEarned={xpEarned}
+        wrapperClassName='w-full max-w-none'
       />
     );
   }
@@ -871,7 +872,7 @@ export default function AddingBallGame({
   const modeLabel = modeLabelByMode[round.mode];
 
   return (
-    <KangurPracticeGameStage>
+    <KangurPracticeGameStage className='w-full max-w-none'>
       <KangurPracticeGameProgress
         accent='amber'
         currentRound={roundIdx}

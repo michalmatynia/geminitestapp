@@ -699,27 +699,23 @@ function DraggableClock({
       ) : null}
       {(() => {
         const interactionHint =
-          activeHand === 'hour'
-            ? 'Przestawiasz krótką wskazówkę (godziny).'
-            : activeHand === 'minute'
-              ? 'Przestawiasz długą wskazówkę (minuty).'
-              : submitFeedback === 'correct'
-                ? submitNextStep === 'summary'
-                  ? 'Dobra odpowiedź. Za chwilę podsumowanie.'
-                  : submitNextStep === 'next-stage'
-                    ? 'Dobra odpowiedź. Za chwilę kolejny etap.'
-                    : 'Dobra odpowiedź. Za chwilę następne zadanie.'
-                : submitFeedback === 'wrong'
-                  ? submitNextStep === 'summary'
-                    ? 'Sprawdziliśmy odpowiedź. Za chwilę podsumowanie.'
-                    : submitNextStep === 'next-stage'
-                      ? 'Sprawdziliśmy odpowiedź. Za chwilę kolejny etap.'
-                      : 'Sprawdziliśmy odpowiedź. Za chwilę następne zadanie.'
-                  : section === 'minutes'
-                    ? null
-                    : section === 'hours'
-                      ? null
-                      : 'Wskazówka godzin przesuwa się płynnie razem z minutami.';
+          submitFeedback === 'correct'
+            ? submitNextStep === 'summary'
+              ? 'Dobra odpowiedź. Za chwilę podsumowanie.'
+              : submitNextStep === 'next-stage'
+                ? 'Dobra odpowiedź. Za chwilę kolejny etap.'
+                : 'Dobra odpowiedź. Za chwilę następne zadanie.'
+            : submitFeedback === 'wrong'
+              ? submitNextStep === 'summary'
+                ? 'Sprawdziliśmy odpowiedź. Za chwilę podsumowanie.'
+                : submitNextStep === 'next-stage'
+                  ? 'Sprawdziliśmy odpowiedź. Za chwilę kolejny etap.'
+                  : 'Sprawdziliśmy odpowiedź. Za chwilę następne zadanie.'
+              : section === 'minutes'
+                ? null
+                : section === 'hours'
+                  ? null
+                  : 'Wskazówka godzin przesuwa się płynnie razem z minutami.';
 
         if (!interactionHint) {
           return null;

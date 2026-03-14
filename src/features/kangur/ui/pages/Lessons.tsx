@@ -788,9 +788,9 @@ export default function Lessons() {
                             data-testid={`lesson-library-motion-${lesson.id}`}
                             role='listitem'
                           >
-                            <KangurLessonLibraryCard
-                              ariaCurrent={
-                                activeLesson?.id === lesson.id ? 'page' : undefined
+                              <KangurLessonLibraryCard
+                                ariaCurrent={
+                                activeLessonId === lesson.id ? 'page' : undefined
                               }
                               buttonClassName='kangur-lessons-panel flex flex-col items-start gap-4 rounded-[28px] p-4 max-sm:pr-4 max-sm:pb-4 sm:rounded-[30px] sm:p-5'
                               completedLessonAssignment={completedLessonAssignment}

@@ -34,7 +34,7 @@ const assignment: KangurAssignmentSnapshot & { target: { type: 'practice' } } = 
   id: 'assignment-practice-division',
   learnerKey: 'jan@example.com',
   title: 'Praktyka: Dzielenie',
-  description: 'Wykonaj jedna sesje dzielenia i osiagnij co najmniej 80% skuteczności.',
+  description: 'Wykonaj jedną sesję dzielenia i osiągnij co najmniej 80% skuteczności.',
   priority: 'high',
   archived: false,
   target: {
@@ -87,9 +87,11 @@ describe('KangurPracticeAssignmentBanner', () => {
       'font-extrabold',
       '[color:var(--kangur-page-text)]'
     );
-    expect(
-      screen.getByText(/Wykonaj jedna sesje dzielenia i osiagnij co najmniej 80% skutecznosci/i)
-    ).toHaveClass('text-sm', 'leading-6', '[color:var(--kangur-page-muted-text)]');
+    expect(screen.getByText(assignment.description)).toHaveClass(
+      'text-sm',
+      'leading-6',
+      '[color:var(--kangur-page-muted-text)]'
+    );
     expect(screen.getByTestId('kangur-practice-assignment-progress-bar')).toHaveAttribute(
       'aria-valuenow',
       '40'

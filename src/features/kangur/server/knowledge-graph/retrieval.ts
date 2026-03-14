@@ -6,10 +6,6 @@ import type {
   KangurAiTutorConversationContext,
   KangurAiTutorWebsiteHelpTarget,
 } from '@/shared/contracts/kangur-ai-tutor';
-import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
-import type {
-  KangurAiTutorNativeGuideEntry,
-} from '@/shared/contracts/kangur-ai-tutor-native-guide';
 import {
   KANGUR_KNOWLEDGE_GRAPH_KEY,
   type KangurKnowledgeCanonicalSourceCollection,
@@ -33,6 +29,14 @@ import {
   cosineSimilarity,
   generateKangurKnowledgeGraphQueryEmbedding,
 } from './semantic';
+import {
+  buildRuntimeDocumentCanonicalText,
+  buildSourceText,
+  formatNativeGuideText,
+  formatRelatedLine,
+  resolveRuntimeDocumentForGraphHit,
+  resolveTutorContentCanonicalSection,
+} from './retrieval-helpers';
 
 export type GraphFollowUpAction = {
   id: string;
@@ -207,12 +211,12 @@ type KangurKnowledgeGraphQueryIntent = {
 const WEBSITE_HELP_PATTERNS = [
   /co to jest/u,
   /co robi/u,
-  /jak dziala/u,
-  /jak korzystac/u,
-  /gdzie znajde/u,
-  /jak wejsc/u,
-  /jak sie zalogowac/u,
-  /jak zalozyc konto/u,
+  /jak dzia[łl]a/u,
+  /jak korzysta[ćc]/u,
+  /gdzie znajd[ęe]/u,
+  /jak wej[śs]c/u,
+  /jak si[eę] zalogowa[ćc]/u,
+  /jak za[łl]o[żz]y[ćc] konto/u,
   /zaloguj/u,
   /login/u,
   /konto/u,
@@ -222,8 +226,8 @@ const WEBSITE_HELP_PATTERNS = [
   /profil/u,
   /panel rodzica/u,
   /gdzie jest/u,
-  /jak otworzyc/u,
-  /jak przejsc/u,
+  /jak otw[oó]rzy[ćc]/u,
+  /jak przej[śs]c/u,
   /stron/u,
   /witryn/u,
   /podstron/u,
@@ -237,7 +241,7 @@ const WEBSITE_HELP_PATTERNS = [
 
 const SEMANTIC_HELP_PATTERNS = [
   ...WEBSITE_HELP_PATTERNS,
-  /wyjasnij/u,
+  /wyja[śs]nij/u,
   /opisz/u,
   /sekcj/u,
   /panel/u,
@@ -278,7 +282,7 @@ const buildKnowledgeGraphQueryIntent = (value: string): KangurKnowledgeGraphQuer
   const preferredRoutes = new Set<string>();
   const preferredFocusKinds = new Set<string>();
 
-  if (/(zalog|login|konto|uczen|rodzic)/u.test(normalized)) {
+  if (/(zalog|login|konto|ucz[ęe]n|rodzic)/u.test(normalized)) {
     preferredSurfaces.add('auth');
     preferredRoutes.add('/');
     preferredFocusKinds.add('login_action');
@@ -294,16 +298,16 @@ const buildKnowledgeGraphQueryIntent = (value: string): KangurKnowledgeGraphQuer
   if (/(test)/u.test(normalized)) {
     preferredSurfaces.add('test');
     preferredRoutes.add('/tests');
-    if (/(pytan|pytanie|zadanie testowe)/u.test(normalized)) {
+    if (/(pytan|pyta[ńn]|pytanie|zadanie testowe)/u.test(normalized)) {
       preferredFocusKinds.add('question');
     }
-    if (/(omow|omowienie|bled|błąd|po tescie)/u.test(normalized)) {
+    if (/(om[oó]w|om[oó]wienie|b[łl][ea]d|po te[śs]cie)/u.test(normalized)) {
       preferredFocusKinds.add('review');
     }
     if (/(podsumow|wynik|rezultat|rezultaty)/u.test(normalized)) {
       preferredFocusKinds.add('summary');
     }
-    if (/(pusty zestaw|brak pytan|brak pytań|empty)/u.test(normalized)) {
+    if (/(pusty zestaw|brak pytan|brak pyta[ńn]|empty)/u.test(normalized)) {
       preferredFocusKinds.add('empty_state');
     }
   }
@@ -624,40 +628,6 @@ const VECTOR_GRAPH_QUERY = `
   ORDER BY semanticScore DESC, node.title ASC
 `;
 
-const formatRelatedLine = (relation: KangurKnowledgeGraphHit['relations'][number]): string | null => {
-  if (!relation.targetId || !relation.targetTitle) {
-    return null;
-  }
-
-  const extras = [relation.targetRoute, relation.targetAnchorId].filter(Boolean).join(' · ');
-  return extras
-    ? `${relation.kind}: ${relation.targetTitle} (${extras})`
-    : `${relation.kind}: ${relation.targetTitle}`;
-};
-
-const buildSourceText = (hit: HydratedKnowledgeGraphHit): string => {
-  const lines = [`${hit.canonicalTitle} (${hit.kind})`];
-  if (hit.canonicalSummary) {
-    lines.push(hit.canonicalSummary);
-  }
-  if (hit.route || hit.anchorId) {
-    lines.push(
-      ['Website target:', hit.route, hit.anchorId ? `anchor=${hit.anchorId}` : null]
-        .filter(Boolean)
-        .join(' ')
-    );
-  }
-
-  const related = hit.relations.map(formatRelatedLine).filter(Boolean);
-  if (related.length > 0) {
-    lines.push(`Related: ${related.join(' | ')}`);
-  }
-
-  lines.push(hit.canonicalText);
-
-  return lines.join('\n');
-};
-
 const normalizeKnowledgeGraphHit = (hit: Partial<KangurKnowledgeGraphHit>): KangurKnowledgeGraphHit => ({
   id: typeof hit.id === 'string' ? hit.id : '',
   kind: typeof hit.kind === 'string' ? hit.kind : 'unknown',
@@ -893,146 +863,6 @@ const resolveGraphFollowUpActions = (
   return actions.slice(0, 3);
 };
 
-const readRuntimeStringFact = (
-  document: ContextRuntimeDocument,
-  key: string
-): string | null => {
-  const value = document.facts?.[key];
-  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
-};
-
-const buildRuntimeDocumentCanonicalText = (document: ContextRuntimeDocument): string => {
-  const sectionText =
-    document.sections
-      ?.map((section) => (typeof section.text === 'string' ? section.text.trim() : ''))
-      .find(Boolean) ?? null;
-  const parts = [
-    document.summary.trim(),
-    sectionText,
-    readRuntimeStringFact(document, 'learnerSummary'),
-    readRuntimeStringFact(document, 'recentLoginActivitySummary'),
-    readRuntimeStringFact(document, 'currentQuestion'),
-    readRuntimeStringFact(document, 'assignmentSummary'),
-    readRuntimeStringFact(document, 'masterySummary'),
-    readRuntimeStringFact(document, 'description'),
-    readRuntimeStringFact(document, 'documentSummary'),
-  ].filter((value, index, all): value is string => Boolean(value) && all.indexOf(value) === index);
-
-  return parts.join('\n');
-};
-
-const resolveRuntimeDocumentForGraphHit = (
-  hit: KangurKnowledgeGraphHit,
-  runtimeDocuments: ContextRuntimeDocument[]
-): ContextRuntimeDocument | null => {
-  const targetIds = new Set<string>([
-    hit.id,
-    ...hit.relations.map((relation) => relation.targetId).filter((value): value is string => Boolean(value)),
-  ]);
-
-  let bestDocument: ContextRuntimeDocument | null = null;
-  let bestScore = -1;
-
-  for (const document of runtimeDocuments) {
-    let score = 0;
-    if (document.relatedNodeIds.includes(hit.id)) {
-      score += 100;
-    }
-
-    const relatedMatches = document.relatedNodeIds.filter((nodeId) => targetIds.has(nodeId)).length;
-    score += relatedMatches * 30;
-
-    if (ROOT_ENTITY_TYPE_BY_NODE_ID[hit.id] === document.entityType) {
-      score += 80;
-    }
-
-    if (score > bestScore) {
-      bestScore = score;
-      bestDocument = document;
-    }
-  }
-
-  return bestScore > 0 ? bestDocument : null;
-};
-
-const formatNativeGuideText = (entry: KangurAiTutorNativeGuideEntry): string => {
-  const lines = [entry.fullDescription];
-  if (entry.hints.length > 0) {
-    lines.push(`Hints: ${entry.hints.join(' | ')}`);
-  }
-  if (entry.followUpActions.length > 0) {
-    lines.push(
-      `Suggested actions: ${entry.followUpActions.map((action) => `${action.label} -> ${action.page}`).join(' | ')}`
-    );
-  }
-  return lines.join('\n');
-};
-
-const resolveTutorContentCanonicalSection = (
-  content: KangurAiTutorContent,
-  hit: KangurKnowledgeGraphHit
-): { title: string; summary: string | null; text: string; tags: string[] } | null => {
-  switch (hit.sourcePath) {
-    case 'common.signInLabel':
-      return {
-        title: content.common.signInLabel,
-        summary: hit.summary,
-        text: [
-          content.guestIntro.help.headline,
-          content.guestIntro.help.description,
-          `Primary action label: ${content.common.signInLabel}`,
-        ].join('\n'),
-        tags: [...hit.tags, 'mongo-canonical'],
-      };
-    case 'common.createAccountLabel':
-      return {
-        title: content.common.createAccountLabel,
-        summary: hit.summary,
-        text: [
-          content.guestIntro.help.headline,
-          content.guestIntro.help.description,
-          `Primary action label: ${content.common.createAccountLabel}`,
-        ].join('\n'),
-        tags: [...hit.tags, 'mongo-canonical'],
-      };
-    case 'guidedCallout.auth.signInNav':
-      return {
-        title: content.guidedCallout.authTitles.signInNav,
-        summary: content.guidedCallout.authDetails.signInNav,
-        text: [
-          content.guidedCallout.authTitles.signInNav,
-          content.guidedCallout.authDetails.signInNav,
-          `Use the navigation action labeled "${content.common.signInLabel}".`,
-        ].join('\n'),
-        tags: [...hit.tags, 'mongo-canonical'],
-      };
-    case 'guidedCallout.auth.createAccountNav':
-      return {
-        title: content.guidedCallout.authTitles.createAccountNav,
-        summary: content.guidedCallout.authDetails.createAccountNav,
-        text: [
-          content.guidedCallout.authTitles.createAccountNav,
-          content.guidedCallout.authDetails.createAccountNav,
-          `Use the navigation action labeled "${content.common.createAccountLabel}".`,
-        ].join('\n'),
-        tags: [...hit.tags, 'mongo-canonical'],
-      };
-    case 'guestIntro.initial':
-      return {
-        title: content.guestIntro.initial.headline,
-        summary: content.guestIntro.initial.description,
-        text: [
-          content.guestIntro.initial.headline,
-          content.guestIntro.initial.description,
-          `Available actions: ${content.guestIntro.acceptLabel}, ${content.guestIntro.dismissLabel}, ${content.guestIntro.showLoginLabel}, ${content.guestIntro.showCreateAccountLabel}.`,
-        ].join('\n'),
-        tags: [...hit.tags, 'mongo-canonical'],
-      };
-    default:
-      return null;
-  }
-};
-
 const hydrateKnowledgeGraphHits = async (
   hits: KangurKnowledgeGraphHit[],
   locale: string,
@@ -1149,7 +979,11 @@ const hydrateKnowledgeGraphHits = async (
     }
 
     if (hit.sourceCollection === 'kangur_context_registry') {
-      const runtimeDocument = resolveRuntimeDocumentForGraphHit(hit, runtimeDocuments);
+      const runtimeDocument = resolveRuntimeDocumentForGraphHit(
+        hit,
+        runtimeDocuments,
+        ROOT_ENTITY_TYPE_BY_NODE_ID
+      );
       if (runtimeDocument) {
         return {
           ...hit,

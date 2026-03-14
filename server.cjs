@@ -121,7 +121,7 @@ const SCRAPER_GUARD = createScraperGuard({
 
 app.prepare().then(async () => {
   const { ErrorSystem, logSystemEvent } = await getLoggingTools();
-  const server = createServer((req, res) => {
+  const server = createServer(async (req, res) => {
     const debugResponseHeaders = process.env.DEBUG_RESPONSE_HEADERS === 'true';
     const debugUrlNormalize = process.env.DEBUG_URL_NORMALIZE === 'true';
     const originalSetHeader = res.setHeader.bind(res);
@@ -292,7 +292,7 @@ app.prepare().then(async () => {
         req.headers['x-real-ip'] = remoteAddress;
       }
     }
-    const guardResult = SCRAPER_GUARD.check(req, parsedUrl.pathname || '/');
+    const guardResult = await SCRAPER_GUARD.check(req, parsedUrl.pathname || '/');
     if (!guardResult.allowed) {
       res.statusCode = guardResult.statusCode;
       if (guardResult.retryAfterSec) {
@@ -471,11 +471,83 @@ function parseEnvList(key) {
 }
 
 function createScraperGuard(config) {
-  const state = {
+  const isRedisAvailable = Boolean(process.env.REDIS_URL);
+  let redis = null;
+
+  if (isRedisAvailable && config.enabled) {
+    try {
+      const Redis = require('ioredis');
+      redis = new Redis(process.env.REDIS_URL, {
+        maxRetriesPerRequest: 1,
+        enableReadyCheck: true,
+        connectTimeout: 500,
+      });
+      redis.on('error', (err) => {
+        // Silent error, will fallback to memory if redis fails during operation
+      });
+    } catch (err) {
+      console.warn('[SCRAPER_GUARD] Redis client initialization failed, falling back to memory.');
+    }
+  }
+
+  const memoryState = {
     buckets: new Map(),
     blocked: new Map(),
     lastCleanupAt: 0,
   };
+
+  const REDIS_PREFIX = 'scraper_guard:';
+
+  async function getFromStorage(key) {
+    if (redis) {
+      try {
+        const [bucketJson, blockedUntil] = await Promise.all([
+          redis.get(`${REDIS_PREFIX}bucket:${key}`),
+          redis.get(`${REDIS_PREFIX}blocked:${key}`),
+        ]);
+        return {
+          bucket: bucketJson ? JSON.parse(bucketJson) : null,
+          blockedUntil: blockedUntil ? parseInt(blockedUntil, 10) : null,
+        };
+      } catch {
+        // fallback
+      }
+    }
+    return {
+      bucket: memoryState.buckets.get(key),
+      blockedUntil: memoryState.blocked.get(key),
+    };
+  }
+
+  async function saveToStorage(key, bucket, blockedUntil, windowMs, blockMs) {
+    if (redis) {
+      try {
+        const pipeline = redis.pipeline();
+        if (bucket) {
+          pipeline.set(
+            `${REDIS_PREFIX}bucket:${key}`,
+            JSON.stringify(bucket),
+            'PX',
+            Math.max(1, bucket.resetAt - Date.now())
+          );
+        }
+        if (blockedUntil) {
+          pipeline.set(
+            `${REDIS_PREFIX}blocked:${key}`,
+            String(blockedUntil),
+            'PX',
+            Math.max(1, blockedUntil - Date.now())
+          );
+        }
+        await pipeline.exec();
+        return;
+      } catch {
+        // fallback
+      }
+    }
+    if (bucket) memoryState.buckets.set(key, bucket);
+    if (blockedUntil) memoryState.blocked.set(key, blockedUntil);
+  }
 
   const staticPrefixes = [
     '/_next/',
@@ -593,18 +665,19 @@ function createScraperGuard(config) {
   }
 
   function cleanup(now) {
-    if (now - state.lastCleanupAt < 30 * 1000) return;
-    state.lastCleanupAt = now;
+    if (redis) return; // Redis handles expiry
+    if (now - memoryState.lastCleanupAt < 30 * 1000) return;
+    memoryState.lastCleanupAt = now;
 
-    for (const [key, bucket] of state.buckets.entries()) {
-      if (bucket.resetAt <= now) state.buckets.delete(key);
+    for (const [key, bucket] of memoryState.buckets.entries()) {
+      if (bucket.resetAt <= now) memoryState.buckets.delete(key);
     }
-    for (const [key, until] of state.blocked.entries()) {
-      if (until <= now) state.blocked.delete(key);
+    for (const [key, until] of memoryState.blocked.entries()) {
+      if (until <= now) memoryState.blocked.delete(key);
     }
   }
 
-  function check(req, pathname) {
+  async function check(req, pathname) {
     if (!config.enabled) return { allowed: true };
 
     const method = (req.method || 'GET').toUpperCase();
@@ -656,17 +729,18 @@ function createScraperGuard(config) {
     cleanup(now);
 
     const key = buildKey(scope, ip, userAgent);
-    const blockedUntil = state.blocked.get(key);
-    if (blockedUntil && blockedUntil > now) {
+    const storage = await getFromStorage(key);
+
+    if (storage.blockedUntil && storage.blockedUntil > now) {
       if (config.logBlocked) {
         logSystemEvent({
           level: 'warn',
           message: '[SCRAPER_GUARD] blocked request',
           source: 'scraper-guard',
-          context: { ip, path, scope, blockedUntil: new Date(blockedUntil).toISOString() },
+          context: { ip, path, scope, blockedUntil: new Date(storage.blockedUntil).toISOString() },
         });
       }
-      const retryAfterSec = Math.ceil((blockedUntil - now) / 1000);
+      const retryAfterSec = Math.ceil((storage.blockedUntil - now) / 1000);
       return {
         allowed: false,
         statusCode: 429,
@@ -675,16 +749,15 @@ function createScraperGuard(config) {
       };
     }
 
-    let bucket = state.buckets.get(key);
+    let bucket = storage.bucket;
     if (!bucket || bucket.resetAt <= now) {
       bucket = { count: 0, resetAt: now + config.windowMs };
     }
     bucket.count += 1;
-    state.buckets.set(key, bucket);
 
     if (bucket.count > limit) {
       const until = now + blockMs;
-      state.blocked.set(key, until);
+      await saveToStorage(key, bucket, until, config.windowMs, blockMs);
       if (config.logBlocked) {
         logSystemEvent({
           level: 'warn',
@@ -708,6 +781,7 @@ function createScraperGuard(config) {
       };
     }
 
+    await saveToStorage(key, bucket, null, config.windowMs, blockMs);
     return { allowed: true };
   }
 

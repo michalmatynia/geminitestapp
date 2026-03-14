@@ -120,7 +120,7 @@ describe('KangurPageContentSettingsPanel', () => {
     await screen.findByText('50 / 50 tracked sections covered');
 
     fireEvent.click(screen.getByRole('button', { name: /game-home-leaderboard/i }));
-    fireEvent.click(screen.getByRole('button', { name: /liczba punktow/i }));
+    fireEvent.click(screen.getByRole('button', { name: /liczba punktów/i }));
     fireEvent.change(screen.getByLabelText('Page content fragment text'), {
       target: { value: 'Liczba punktów w rankingu' },
     });

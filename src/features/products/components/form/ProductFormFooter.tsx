@@ -3,7 +3,7 @@
 import { Copy } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { Button, useToast } from '@/shared/ui';
+import { Button, useToast } from '@/features/products/ui';
 
 export interface ProductFormFooterProps {
   entityId: string | null;

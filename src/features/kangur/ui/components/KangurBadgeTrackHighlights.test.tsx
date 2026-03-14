@@ -39,7 +39,7 @@ describe('KangurBadgeTrackHighlights', () => {
     );
 
     expect(screen.getByTestId('badge-track-quest')).toHaveTextContent('Misje');
-    expect(screen.getByTestId('badge-track-mastery')).toHaveTextContent('Mistrzostwo');
+    expect(screen.getByTestId('badge-track-placeholder-mastery')).toHaveTextContent('Mistrzostwo');
     expect(screen.getByTestId('badge-track-placeholder-1')).toHaveTextContent('Kolejna ścieżka');
     expect(screen.getByTestId('badge-track-placeholder-1')).toHaveTextContent(
       'Miejsce na następny panel'
@@ -71,7 +71,7 @@ describe('KangurBadgeTrackHighlights', () => {
     expect(screen.getByTestId('badge-track-placeholder-quest')).toHaveTextContent(
       'Odblokuj pierwszą misję'
     );
-    expect(screen.getByTestId('badge-track-mastery')).toHaveTextContent('Mistrzostwo');
+    expect(screen.getByTestId('badge-track-placeholder-mastery')).toHaveTextContent('Mistrzostwo');
     expect(screen.getByTestId('badge-track-onboarding')).toHaveTextContent('Start');
     expect(screen.queryByTestId('badge-track-quest')).not.toBeInTheDocument();
   });

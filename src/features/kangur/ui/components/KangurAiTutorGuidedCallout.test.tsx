@@ -254,9 +254,7 @@ describe('KangurAiTutorGuidedCallout', () => {
       />
     );
 
-    expect(
-      screen.queryByText('Wyjaśniam ten fragment.')
-    ).not.toBeInTheDocument();
+    expect(screen.getByText('Wyjaśniam ten fragment.')).toHaveClass('sr-only');
     expect(screen.getByTestId('kangur-ai-tutor-selection-preview')).toHaveTextContent(
       '🏗️ MISTRZOSTWO 67% 2/4 odznak'
     );

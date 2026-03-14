@@ -3,9 +3,6 @@ import type {
   KangurProgressState,
   KangurXpRewards,
 } from '@/features/kangur/ui/types';
-import {
-  type KangurActivityStatsEntry,
-} from '@/shared/contracts/kangur';
 
 export type KangurProgressLevel = {
   level: number;

@@ -58,20 +58,23 @@ describe('CmsMenu accessibility', () => {
     });
   });
 
-  it('announces site navigation, current page state, and external link behavior', () => {
+  const renderMenu = (menu: typeof DEFAULT_MENU_SETTINGS) =>
     render(
-      <CmsMenu
-        menu={{
-          ...DEFAULT_MENU_SETTINGS,
-          items: [
-            { id: 'home', label: 'Home', url: '/', imageUrl: '' },
-            { id: 'about', label: 'About', url: '/about/', imageUrl: '/about.png' },
-            { id: 'docs', label: 'Docs', url: 'https://example.com/docs', imageUrl: '' },
-          ],
-          showItemImages: true,
-        }}
-      />
+      <CmsStorefrontAppearanceProvider initialMode='default'>
+        <CmsMenu menu={menu} />
+      </CmsStorefrontAppearanceProvider>
     );
+
+  it('announces site navigation, current page state, and external link behavior', () => {
+    renderMenu({
+      ...DEFAULT_MENU_SETTINGS,
+      items: [
+        { id: 'home', label: 'Home', url: '/', imageUrl: '' },
+        { id: 'about', label: 'About', url: '/about/', imageUrl: '/about.png' },
+        { id: 'docs', label: 'Docs', url: 'https://example.com/docs', imageUrl: '' },
+      ],
+      showItemImages: true,
+    });
 
     expect(screen.getByRole('navigation', { name: 'Site navigation' })).toBeInTheDocument();
     expect(screen.getByRole('list')).toBeInTheDocument();
@@ -83,19 +86,15 @@ describe('CmsMenu accessibility', () => {
   });
 
   it('exposes the collapsible navigation state to assistive tech', () => {
-    render(
-      <CmsMenu
-        menu={{
-          ...DEFAULT_MENU_SETTINGS,
-          collapsible: true,
-          collapsedByDefault: false,
-          items: [
-            { id: 'home', label: 'Home', url: '/', imageUrl: '' },
-            { id: 'about', label: 'About', url: '/about', imageUrl: '' },
-          ],
-        }}
-      />
-    );
+    renderMenu({
+      ...DEFAULT_MENU_SETTINGS,
+      collapsible: true,
+      collapsedByDefault: false,
+      items: [
+        { id: 'home', label: 'Home', url: '/', imageUrl: '' },
+        { id: 'about', label: 'About', url: '/about', imageUrl: '' },
+      ],
+    });
 
     const toggle = screen.getByRole('button', { name: 'Collapse navigation' });
     const list = screen.getByRole('list');

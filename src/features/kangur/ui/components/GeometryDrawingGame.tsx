@@ -690,9 +690,27 @@ export default function GeometryDrawingGame({
                 id='geometry-drawing-input-help'
                 className='text-xs text-center [color:var(--kangur-page-muted-text)]'
               >
-                Pole rysowania obsluguje mysz, dotyk lub klawiature. Enter albo spacja zaczyna i
-                konczy kreske, strzalki przesuwaja kursor, Escape czysci plansze.
+                Pole rysowania obsługuje mysz, dotyk lub klawiaturę. Enter albo spacja zaczyna i
+                kończy kreskę, strzałki przesuwają kursor, Escape czyści planszę.
               </p>
+
+              {feedback && (
+                <p
+                  aria-live='polite'
+                  className={cn(
+                    'text-sm font-semibold text-center',
+                    feedback.kind === 'success'
+                      ? 'text-emerald-600'
+                      : feedback.kind === 'error'
+                        ? 'text-rose-600'
+                        : 'text-amber-600'
+                  )}
+                  data-testid='geometry-drawing-feedback'
+                  role='status'
+                >
+                  {feedback.text}
+                </p>
+              )}
 
               <div className='flex w-full flex-col gap-3 sm:flex-row'>
                 <KangurButton

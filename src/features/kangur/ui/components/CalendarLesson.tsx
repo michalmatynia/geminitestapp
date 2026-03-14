@@ -554,7 +554,7 @@ export default function CalendarLesson(): React.JSX.Element {
           return;
         }
         if (sectionId === 'game_months') {
-          handleStartTraining('miesiące');
+          handleStartTraining('miesiace');
           return;
         }
         if (sectionId === 'game_dates') {

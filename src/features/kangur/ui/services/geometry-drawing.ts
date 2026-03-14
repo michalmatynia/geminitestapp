@@ -420,7 +420,7 @@ export const evaluateGeometryDrawing = (
   const lengthRatio = pathLength / perimeter;
   const minLengthRatio = rule.minLengthRatio ?? 0.6;
   const maxLengthRatio = rule.maxLengthRatio ?? 2.8;
-  const corners = countCorners(smoothPath(sampled, 1));
+  const corners = countCorners(target === 'hexagon' ? sampled : smoothPath(sampled, 1));
   const aspectRatio =
     Math.max(box.width, box.height) / Math.max(1, Math.min(box.width, box.height));
 

@@ -4,6 +4,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { buildObservabilityExpectedByCollection } from '@/shared/lib/observability/observability-index-manifest';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 import type { IndexSpecification } from 'mongodb';
 
@@ -88,14 +89,15 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): 
         await db.collection(collectionName).createIndex(index.key);
         created.push({ collection: collectionName, key: index.key });
       } catch (error) {
-        logSystemEvent({
+        void logSystemEvent({
           source: 'system.diagnostics.mongo-indexes',
           message: 'Failed to create database index during diagnostic run',
           level: 'warn',
           error,
           context: { collectionName, indexKey: index.key },
         });
-      }    }
+      }
+    }
   }
 
   const collections = await buildDiagnostics(db);

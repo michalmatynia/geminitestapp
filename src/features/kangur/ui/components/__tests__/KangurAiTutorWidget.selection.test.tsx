@@ -402,7 +402,7 @@ describe('KangurAiTutorWidget - Selection', () => {
       'Wyjaśniam ten fragment.'
     );
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
-      '„2 + 2”'
+      '2 + 2'
     );
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveAttribute(
       'data-entry-direction',
@@ -513,7 +513,7 @@ describe('KangurAiTutorWidget - Selection', () => {
 
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
-      '„2 + 2”'
+      '2 + 2'
     );
     expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
     expect(scrollToMock).toHaveBeenCalledWith(

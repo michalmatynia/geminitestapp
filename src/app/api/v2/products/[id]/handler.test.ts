@@ -32,11 +32,13 @@ vi.mock('@/features/products/validations/middleware', () => ({
 
 vi.mock('@/shared/lib/api/parse-json', () => ({
   parseJsonBody: parseJsonBodyMock,
-}));
-
-vi.mock('@/features/products/server', () => ({
+  formDataToObject: vi.fn(() => ({})),
   CachedProductService: {
     invalidateProduct: invalidateProductMock,
+  },
+  productService: {
+    updateProduct: updateProductMock,
+    deleteProduct: deleteProductMock,
   },
 }));
 

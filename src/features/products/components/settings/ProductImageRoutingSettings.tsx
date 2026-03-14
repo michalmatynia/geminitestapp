@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import { type ProductStudioSequenceGenerationMode } from '@/shared/contracts/products';
 import { useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { useStudioProjects } from '@/shared/lib/image-studio-adapter';
+import { useStudioProjects } from '@/features/ai';
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,

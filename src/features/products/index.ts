@@ -1,10 +1,9 @@
-export { default } from './components/ProductImageManager';
-export { default as ProductCard } from './components/ProductCard';
 export {
-  default as ProductImageManager,
+  ProductImageManager,
   type ProductImageManagerController,
-} from './components/ProductImageManager';
-export * from './components/ProductImageManagerControllerContext';
+  ProductImageManagerControllerProvider,
+} from '@/shared/ui';
+export { default as ProductCard } from './components/ProductCard';
 export * from './components/form/CatalogMultiSelectField';
 export * from './components/form/CategorySingleSelectField';
 export * from './components/form/ProducerMultiSelectField';

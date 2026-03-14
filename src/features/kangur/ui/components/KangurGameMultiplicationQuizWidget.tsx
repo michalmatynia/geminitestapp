@@ -13,12 +13,12 @@ export function KangurGameMultiplicationQuizWidget(): React.JSX.Element | null {
     <LessonActivityStage
       accent='violet'
       backButtonLabel='Wróć do poprzedniej strony'
-      description='Sprawdź tabliczke mnozenia w szybkim quizie.'
+      description='Sprawdź tabliczkę mnożenia w szybkim quizie.'
       icon='✖️'
       onBack={() => setScreen('operation')}
       shellClassName='items-center'
       shellTestId='kangur-multiplication-quiz-top-section'
-      title='Quiz mnozenia'
+      title='Quiz mnożenia'
     >
       <MultiplicationGame finishLabel='Wróć do Grajmy' onFinish={handleHome} />
     </LessonActivityStage>

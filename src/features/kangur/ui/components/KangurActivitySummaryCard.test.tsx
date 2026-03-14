@@ -27,14 +27,14 @@ describe('KangurActivitySummaryCard', () => {
       <KangurActivitySummaryCard
         activity={activity}
         dataTestId='activity-card'
-        description='4 sesji · 28 XP / gre'
-        eyebrow='Najczęściej cwiczysz'
+        description='4 sesji · 28 XP / grę'
+        eyebrow='Najczęściej ćwiczysz'
       />
     );
 
-    expect(screen.getByTestId('activity-card')).toHaveTextContent('Najczęściej cwiczysz');
+    expect(screen.getByTestId('activity-card')).toHaveTextContent('Najczęściej ćwiczysz');
     expect(screen.getByTestId('activity-card')).toHaveTextContent('Trening zegara: Godziny');
-    expect(screen.getByTestId('activity-card')).toHaveTextContent('4 sesji · 28 XP / gre');
+    expect(screen.getByTestId('activity-card')).toHaveTextContent('4 sesji · 28 XP / grę');
     expect(screen.getByTestId('activity-card')).toHaveTextContent('112 XP');
     expect(screen.getByTestId('activity-card')).toHaveClass(
       'soft-card',
@@ -49,13 +49,13 @@ describe('KangurActivitySummaryCard', () => {
       <KangurActivitySummaryCard
         activity={activity}
         dataTestId='activity-card'
-        description='4 sesji · 28 XP / gre · srednio 90% · najlepszy wynik 100%'
+        description='4 sesji · 28 XP / grę · średnio 90% · najlepszy wynik 100%'
         descriptionClassName='text-xs [color:var(--kangur-page-muted-text)]'
       />
     );
 
-    expect(screen.queryByText('Najczęściej cwiczysz')).toBeNull();
-    expect(screen.getByText('4 sesji · 28 XP / gre · srednio 90% · najlepszy wynik 100%')).toHaveClass(
+    expect(screen.queryByText('Najczęściej ćwiczysz')).toBeNull();
+    expect(screen.getByText('4 sesji · 28 XP / grę · średnio 90% · najlepszy wynik 100%')).toHaveClass(
       'text-xs',
       '[color:var(--kangur-page-muted-text)]'
     );

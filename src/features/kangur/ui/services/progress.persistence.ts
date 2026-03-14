@@ -188,19 +188,21 @@ export function mergeProgressStates(
       continue;
     }
 
-    const leftTimestamp = leftEntry.lastPlayedAt ? Date.parse(leftEntry.lastPlayedAt) : 0;
-    const rightTimestamp = rightEntry.lastPlayedAt ? Date.parse(rightEntry.lastPlayedAt) : 0;
+    const leftTimestamp = leftEntry.lastCompletedAt ? Date.parse(leftEntry.lastCompletedAt) : 0;
+    const rightTimestamp = rightEntry.lastCompletedAt ? Date.parse(rightEntry.lastCompletedAt) : 0;
     const latestEntry = rightTimestamp >= leftTimestamp ? rightEntry : leftEntry;
     const fallbackTimestamp = latestEntry === rightEntry ? leftTimestamp : rightTimestamp;
     const fallbackEntry = latestEntry === rightEntry ? leftEntry : rightEntry;
 
     lessonMastery[key] = {
       attempts: Math.max(leftEntry.attempts, rightEntry.attempts),
+      completions: Math.max(leftEntry.completions, rightEntry.completions),
       bestScorePercent: Math.max(leftEntry.bestScorePercent, rightEntry.bestScorePercent),
+      lastScorePercent: latestEntry.lastScorePercent,
       masteryPercent: Math.max(leftEntry.masteryPercent, rightEntry.masteryPercent),
-      lastPlayedAt:
-        latestEntry.lastPlayedAt ??
-        (fallbackTimestamp > 0 ? fallbackEntry.lastPlayedAt : null) ??
+      lastCompletedAt:
+        latestEntry.lastCompletedAt ??
+        (fallbackTimestamp > 0 ? fallbackEntry.lastCompletedAt : null) ??
         null,
     };
   }

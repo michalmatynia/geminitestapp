@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type KeyboardEventHandler } from 'react';
 
 import {
   useKangurLessonBackAction,
@@ -52,18 +52,82 @@ export default function LessonSlideSection({
   const secretLessonPill = useKangurLessonSecretPill();
   const registerSubsectionNavigation = useKangurRegisterLessonSubsectionNavigation();
   useKangurSyncLessonSubsectionSummary(sectionHeader);
+  const slideInstanceId = useId();
+  const slideTitleRef = useRef<HTMLHeadingElement | null>(null);
   const [slide, setSlide] = useState(0);
   const completionReportedRef = useRef(false);
   const totalSlides = slides.length;
   const isLast = slide === totalSlides - 1;
   const isFirst = slide === 0;
   const activeSlide = slides[slide];
+  const slidePanelId = `lesson-slide-panel-${slideInstanceId}`;
+  const slideTitleId = `lesson-slide-title-${slideInstanceId}`;
+  const slideStatusId = `lesson-slide-status-${slideInstanceId}`;
+  const slideKeyboardHintId = `lesson-slide-keyboard-${slideInstanceId}`;
   const shouldRenderNavigationPills = totalSlides > 1 || Boolean(secretLessonPill?.isUnlocked);
   const handlePreviousSlide = (): void => {
     setSlide((currentSlide) => Math.max(0, currentSlide - 1));
   };
   const handleNextSlide = (): void => {
     setSlide((currentSlide) => Math.min(totalSlides - 1, currentSlide + 1));
+  };
+  const handleKeyDownCapture: KeyboardEventHandler<HTMLDivElement> = (event) => {
+    if (event.defaultPrevented) {
+      return;
+    }
+
+    if (event.metaKey || event.altKey || event.ctrlKey) {
+      return;
+    }
+
+    const target = event.target as HTMLElement | null;
+    if (target) {
+      const tagName = target.tagName.toLowerCase();
+      if (
+        tagName === 'input' ||
+        tagName === 'textarea' ||
+        tagName === 'select' ||
+        target.isContentEditable ||
+        target.closest('[contenteditable="true"]')
+      ) {
+        return;
+      }
+    }
+
+    switch (event.key) {
+      case 'ArrowLeft':
+      case 'PageUp': {
+        if (!isFirst) {
+          event.preventDefault();
+          handlePreviousSlide();
+        }
+        break;
+      }
+      case 'ArrowRight':
+      case 'PageDown': {
+        if (!isLast) {
+          event.preventDefault();
+          handleNextSlide();
+        }
+        break;
+      }
+      case 'Home': {
+        if (!isFirst) {
+          event.preventDefault();
+          setSlide(0);
+        }
+        break;
+      }
+      case 'End': {
+        if (!isLast) {
+          event.preventDefault();
+          setSlide(totalSlides - 1);
+        }
+        break;
+      }
+      default:
+        break;
+    }
   };
 
   if (!activeSlide) {
@@ -97,22 +161,31 @@ export default function LessonSlideSection({
     return unregister;
   }, [registerSubsectionNavigation]);
 
+  useEffect(() => {
+    slideTitleRef.current?.focus({ preventScroll: true });
+  }, [slide]);
+
   const shouldRenderPanelNavigation = totalSlides > 1;
 
   return (
-    <div className='flex w-full max-w-md flex-col items-center gap-4'>
+    <div
+      className='flex w-full max-w-md flex-col items-center gap-4'
+      onKeyDownCapture={handleKeyDownCapture}
+    >
       <div className='flex w-full flex-wrap items-center gap-3'>
         <KangurButton onClick={handleBack} size='sm' variant='surface'>
-          <ChevronLeft className='w-4 h-4' />
+          <ChevronLeft className='w-4 h-4' aria-hidden='true' />
           Wróć do tematów
         </KangurButton>
 
         {shouldRenderPanelNavigation ? (
-          <div className='flex items-center gap-2'>
+          <div className='flex items-center gap-2' role='group' aria-label='Nawigacja paneli'>
             {isFirst ? null : (
               <KangurButton
                 onClick={handlePreviousSlide}
                 aria-label='Poprzedni panel'
+                aria-keyshortcuts='ArrowLeft PageUp'
+                aria-controls={slidePanelId}
                 className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)]'
                 data-testid='lesson-slide-prev-button'
                 size='sm'
@@ -120,7 +193,7 @@ export default function LessonSlideSection({
                 title='Poprzedni panel'
                 variant='surface'
               >
-                <ChevronLeft className='h-4 w-4 flex-shrink-0' />
+                <ChevronLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
               </KangurButton>
             )}
 
@@ -128,6 +201,8 @@ export default function LessonSlideSection({
               <KangurButton
                 onClick={handleNextSlide}
                 aria-label='Nastepny panel'
+                aria-keyshortcuts='ArrowRight PageDown'
+                aria-controls={slidePanelId}
                 className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)]'
                 data-testid='lesson-slide-next-button'
                 size='sm'
@@ -135,21 +210,28 @@ export default function LessonSlideSection({
                 title='Nastepny panel'
                 variant='surface'
               >
-                <ChevronRight className='h-4 w-4 flex-shrink-0' />
+                <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
               </KangurButton>
             )}
           </div>
         ) : null}
 
         {shouldRenderNavigationPills ? (
-          <div className='ml-auto flex flex-wrap items-center gap-2'>
-            {slides.map((_, i) => (
+          <nav
+            className='ml-auto flex flex-wrap items-center gap-2'
+            aria-label='Nawigacja slajdów'
+            aria-describedby={slideKeyboardHintId}
+          >
+            {slides.map((slideItem, i) => (
               <button
                 key={i}
                 type='button'
                 onClick={() => setSlide(i)}
-                aria-label={`Przejdz do slajdu ${i + 1}`}
+                aria-label={`Przejdz do slajdu ${i + 1} z ${totalSlides}: ${slideItem.title}`}
                 aria-current={i === slide ? 'step' : undefined}
+                aria-controls={slidePanelId}
+                aria-posinset={i + 1}
+                aria-setsize={totalSlides}
                 className={cn(
                   KANGUR_STEP_PILL_CLASSNAME,
                   'h-[14px] min-w-[14px] cursor-pointer',
@@ -181,12 +263,15 @@ export default function LessonSlideSection({
                 data-testid='lesson-slide-secret-indicator'
                 title='Sekretny panel'
               >
-                ★
+                <span aria-hidden='true'>★</span>
               </button>
             ) : null}
-          </div>
+          </nav>
         ) : null}
       </div>
+      <p id={slideKeyboardHintId} className='sr-only'>
+        Użyj strzałek w lewo i prawo lub Page Up i Page Down, aby zmieniać slajdy.
+      </p>
 
       <AnimatePresence mode='wait'>
         <motion.div
@@ -195,12 +280,31 @@ export default function LessonSlideSection({
           className='w-full'
         >
           <KangurGlassPanel
+            id={slidePanelId}
+            role='region'
+            aria-roledescription='slajd'
+            aria-labelledby={slideTitleId}
+            aria-describedby={slideStatusId}
             className='flex min-h-[260px] flex-col gap-4'
             data-testid='lesson-slide-shell'
             padding='xl'
             surface='solid'
           >
-            <h2 className='text-xl font-extrabold [color:var(--kangur-page-text)]'>
+            <p
+              id={slideStatusId}
+              className='sr-only'
+              role='status'
+              aria-live='polite'
+              aria-atomic='true'
+            >
+              Slajd {slide + 1} z {totalSlides}: {activeSlide.title}
+            </p>
+            <h2
+              id={slideTitleId}
+              ref={slideTitleRef}
+              tabIndex={-1}
+              className='text-xl font-extrabold [color:var(--kangur-page-text)]'
+            >
               {activeSlide.title}
             </h2>
             <div className='flex-1'>{activeSlide.content}</div>

@@ -13,6 +13,8 @@ import { resolveKangurStorefrontAppearance } from '@/features/cms/public';
 import {
   KANGUR_THEME_CATALOG_KEY,
   type KangurThemeCatalogEntry,
+  KANGUR_DEFAULT_DAILY_THEME,
+  normalizeKangurThemeSettings,
 } from '@/features/kangur/theme-settings';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -106,7 +108,8 @@ export function ThemeCatalogModal(): React.JSX.Element {
 
         <div className='grid gap-3 sm:grid-cols-2'>
           {catalog.map((entry) => {
-            const preview = resolveKangurStorefrontAppearance('default', entry.settings);
+            const previewTheme = normalizeKangurThemeSettings(entry.settings, KANGUR_DEFAULT_DAILY_THEME);
+            const preview = resolveKangurStorefrontAppearance('default', previewTheme);
             const isSelected = selectedId === entry.id;
 
             return (

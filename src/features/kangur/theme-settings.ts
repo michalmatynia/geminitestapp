@@ -1,4 +1,8 @@
-import { normalizeThemeSettings, type ThemeSettings } from '@/shared/contracts/cms-theme';
+import {
+  DEFAULT_THEME,
+  normalizeThemeSettings,
+  type ThemeSettings,
+} from '@/shared/contracts/cms-theme';
 import {
   KANGUR_DAILY_THEME_SETTINGS_KEY,
   KANGUR_DAWN_THEME_SETTINGS_KEY,
@@ -12,6 +16,7 @@ import { KANGUR_DEFAULT_DAILY_THEME } from './themes/daily';
 import { KANGUR_DEFAULT_DAWN_THEME } from './themes/dawn';
 import { KANGUR_DEFAULT_SUNSET_THEME } from './themes/sunset';
 import { KANGUR_NIGHTLY_THEME } from './themes/nightly';
+import { KANGUR_DAILY_CRYSTAL_THEME } from './themes/others';
 
 export const KANGUR_DEFAULT_THEME = KANGUR_NIGHTLY_THEME;
 
@@ -31,10 +36,179 @@ export * from './themes/sunset';
 export * from './themes/nightly';
 export * from './themes/others';
 
+const DAILY_CRYSTAL_PRESET_ID = 'kangur-daily-crystal';
+const DAILY_CRYSTAL_BUTTON_DEFAULTS = {
+  btnPrimaryBg: KANGUR_DAILY_CRYSTAL_THEME.btnPrimaryBg,
+  btnPrimaryText: KANGUR_DAILY_CRYSTAL_THEME.btnPrimaryText,
+  btnSecondaryBg: KANGUR_DAILY_CRYSTAL_THEME.btnSecondaryBg,
+  btnSecondaryText: KANGUR_DAILY_CRYSTAL_THEME.btnSecondaryText,
+  btnOutlineBorder: KANGUR_DAILY_CRYSTAL_THEME.btnOutlineBorder,
+  btnShadowOpacity: KANGUR_DAILY_CRYSTAL_THEME.btnShadowOpacity,
+  btnShadowX: KANGUR_DAILY_CRYSTAL_THEME.btnShadowX,
+  btnShadowY: KANGUR_DAILY_CRYSTAL_THEME.btnShadowY,
+  btnShadowBlur: KANGUR_DAILY_CRYSTAL_THEME.btnShadowBlur,
+  btnGlossOpacity: KANGUR_DAILY_CRYSTAL_THEME.btnGlossOpacity,
+  btnGlossHeight: KANGUR_DAILY_CRYSTAL_THEME.btnGlossHeight,
+  btnGlossAngle: KANGUR_DAILY_CRYSTAL_THEME.btnGlossAngle,
+  btnInsetHighlightOpacity: KANGUR_DAILY_CRYSTAL_THEME.btnInsetHighlightOpacity,
+  btnInsetShadowOpacity: KANGUR_DAILY_CRYSTAL_THEME.btnInsetShadowOpacity,
+  btnInsetShadowBlur: KANGUR_DAILY_CRYSTAL_THEME.btnInsetShadowBlur,
+  btnInsetShadowY: KANGUR_DAILY_CRYSTAL_THEME.btnInsetShadowY,
+  btnTextShadowOpacity: KANGUR_DAILY_CRYSTAL_THEME.btnTextShadowOpacity,
+  btnTextShadowY: KANGUR_DAILY_CRYSTAL_THEME.btnTextShadowY,
+  btnTextShadowBlur: KANGUR_DAILY_CRYSTAL_THEME.btnTextShadowBlur,
+  btnGlowOpacity: KANGUR_DAILY_CRYSTAL_THEME.btnGlowOpacity,
+  btnGlowSpread: KANGUR_DAILY_CRYSTAL_THEME.btnGlowSpread,
+};
+
+const LEGACY_BASELINE_KEYS: Array<keyof ThemeSettings> = [
+  'headingFont',
+  'bodyFont',
+  'maxContentWidth',
+  'gridGutter',
+  'pagePadding',
+  'pagePaddingTop',
+  'pagePaddingRight',
+  'pagePaddingBottom',
+  'pagePaddingLeft',
+  'containerRadius',
+  'containerPaddingInner',
+  'cardRadius',
+  'btnPaddingX',
+  'btnPaddingY',
+  'btnFontSize',
+  'btnRadius',
+  'pillRadius',
+  'pillPaddingX',
+  'pillPaddingY',
+  'pillFontSize',
+  'inputHeight',
+  'inputRadius',
+];
+
+const normalizeThemePreset = (value: string | null | undefined): string =>
+  typeof value === 'string' ? value.trim().toLowerCase() : '';
+
+const normalizeCssComparisonValue = (value: string | null | undefined): string =>
+  typeof value === 'string' ? value.replace(/\s+/g, '').toLowerCase() : '';
+
+const normalizeColorValue = (value: string | null | undefined): string => {
+  const normalized = normalizeCssComparisonValue(value);
+  const hexMatch = normalized.match(/^#([0-9a-f]{3})$/);
+  if (hexMatch) {
+    const channels = hexMatch[1]!.split('');
+    return `#${channels.map((channel) => channel + channel).join('')}`;
+  }
+  return normalized;
+};
+
+const matchesLegacyNumber = (value: number, target: number, epsilon = 1e-3): boolean =>
+  Math.abs(value - target) <= epsilon;
+
+const matchesLegacyCss = (value: string, target: string): boolean =>
+  normalizeCssComparisonValue(value) === normalizeCssComparisonValue(target);
+
+const matchesLegacyColor = (value: string, target: string): boolean =>
+  normalizeColorValue(value) === normalizeColorValue(target);
+
+const isDailyCrystalTheme = (theme: ThemeSettings): boolean =>
+  normalizeThemePreset(theme.themePreset) === DAILY_CRYSTAL_PRESET_ID;
+
+const applyKangurLegacyThemeBaseline = (theme: ThemeSettings): ThemeSettings => {
+  const updates: Partial<ThemeSettings> = {};
+  LEGACY_BASELINE_KEYS.forEach((key) => {
+    const currentValue = theme[key];
+    const legacyValue = DEFAULT_THEME[key];
+    const replacementValue = KANGUR_DEFAULT_THEME[key];
+    if (typeof currentValue === 'number' && typeof legacyValue === 'number') {
+      if (matchesLegacyNumber(currentValue, legacyValue)) {
+        updates[key] = replacementValue as ThemeSettings[typeof key];
+      }
+      return;
+    }
+    if (currentValue === legacyValue) {
+      updates[key] = replacementValue as ThemeSettings[typeof key];
+    }
+  });
+
+  return Object.keys(updates).length > 0 ? { ...theme, ...updates } : theme;
+};
+
+const applyDailyCrystalButtonUpgrade = (theme: ThemeSettings): ThemeSettings => {
+  if (!isDailyCrystalTheme(theme)) {
+    return theme;
+  }
+
+  const updates: Partial<ThemeSettings> = {};
+
+  const shouldUpgradePrimaryText = matchesLegacyColor(
+    theme.btnPrimaryText,
+    DEFAULT_THEME.btnPrimaryText
+  );
+  const shouldUpgradeSecondaryText = matchesLegacyColor(
+    theme.btnSecondaryText,
+    DEFAULT_THEME.btnSecondaryText
+  );
+  const shouldUpgradePrimaryBg =
+    matchesLegacyCss(theme.btnPrimaryBg, DEFAULT_THEME.btnPrimaryBg) ||
+    matchesLegacyCss(theme.btnPrimaryBg, KANGUR_DEFAULT_DAILY_THEME.btnPrimaryBg);
+  const shouldUpgradeSecondaryBg =
+    matchesLegacyCss(theme.btnSecondaryBg, DEFAULT_THEME.btnSecondaryBg) ||
+    matchesLegacyCss(theme.btnSecondaryBg, KANGUR_DEFAULT_DAILY_THEME.btnSecondaryBg);
+  const shouldUpgradeOutline =
+    matchesLegacyColor(theme.btnOutlineBorder, DEFAULT_THEME.btnOutlineBorder) ||
+    matchesLegacyColor(theme.btnOutlineBorder, KANGUR_DEFAULT_DAILY_THEME.btnOutlineBorder);
+
+  if (shouldUpgradePrimaryText) updates.btnPrimaryText = DAILY_CRYSTAL_BUTTON_DEFAULTS.btnPrimaryText;
+  if (shouldUpgradeSecondaryText || matchesLegacyColor(theme.btnSecondaryText, DEFAULT_THEME.btnPrimaryText))
+    updates.btnSecondaryText = DAILY_CRYSTAL_BUTTON_DEFAULTS.btnSecondaryText;
+  if (shouldUpgradePrimaryBg) updates.btnPrimaryBg = DAILY_CRYSTAL_BUTTON_DEFAULTS.btnPrimaryBg;
+  if (shouldUpgradeSecondaryBg)
+    updates.btnSecondaryBg = DAILY_CRYSTAL_BUTTON_DEFAULTS.btnSecondaryBg;
+  if (shouldUpgradeOutline)
+    updates.btnOutlineBorder = DAILY_CRYSTAL_BUTTON_DEFAULTS.btnOutlineBorder;
+
+  const numericUpgrades: Array<keyof typeof DAILY_CRYSTAL_BUTTON_DEFAULTS> = [
+    'btnShadowOpacity',
+    'btnShadowX',
+    'btnShadowY',
+    'btnShadowBlur',
+    'btnGlossOpacity',
+    'btnGlossHeight',
+    'btnGlossAngle',
+    'btnInsetHighlightOpacity',
+    'btnInsetShadowOpacity',
+    'btnInsetShadowBlur',
+    'btnInsetShadowY',
+    'btnTextShadowOpacity',
+    'btnTextShadowY',
+    'btnTextShadowBlur',
+    'btnGlowOpacity',
+    'btnGlowSpread',
+  ];
+
+  numericUpgrades.forEach((key) => {
+    const currentValue = theme[key];
+    const legacyValue = DEFAULT_THEME[key];
+    if (typeof currentValue === 'number' && typeof legacyValue === 'number') {
+      if (matchesLegacyNumber(currentValue, legacyValue)) {
+        updates[key] = DAILY_CRYSTAL_BUTTON_DEFAULTS[key] as ThemeSettings[typeof key];
+      }
+    }
+  });
+
+  return Object.keys(updates).length > 0 ? { ...theme, ...updates } : theme;
+};
+
 export const normalizeKangurThemeSettings = (
   raw: Partial<ThemeSettings> | null | undefined,
   baseline: ThemeSettings = KANGUR_DEFAULT_DAILY_THEME
-): ThemeSettings => normalizeThemeSettings(raw ?? {}, baseline);
+): ThemeSettings => {
+  const preset = normalizeThemePreset(raw?.themePreset);
+  const resolvedBaseline = preset === DAILY_CRYSTAL_PRESET_ID ? KANGUR_DAILY_CRYSTAL_THEME : baseline;
+  const normalized = normalizeThemeSettings(raw ?? {}, resolvedBaseline);
+  return applyDailyCrystalButtonUpgrade(applyKangurLegacyThemeBaseline(normalized));
+};
 
 export const parseKangurThemeSettings = (
   raw: string | null | undefined,

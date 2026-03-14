@@ -32,20 +32,23 @@ type LessonHubProps = {
 
 export default function LessonHub({
   progressDotClassName = 'bg-slate-300',
+  lessonTitle,
   sections,
   onSelect,
 }: LessonHubProps): React.JSX.Element {
   const activeProgressDotClassName = progressDotClassName;
+  const hubLabel = lessonTitle ? `Tematy lekcji ${lessonTitle}` : 'Tematy lekcji';
   const handleSectionSelect = (id: string): void => {
     onSelect(id);
   };
 
   return (
-    <div className='flex w-full max-w-md flex-col items-center'>
+    <div className='flex w-full max-w-md flex-col items-center' role='region' aria-label={hubLabel}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className='flex w-full flex-col gap-3'
+        role='list'
       >
         {sections.map((section, i) => {
           const accent = section.isGame ? 'indigo' : 'slate';
@@ -61,6 +64,7 @@ export default function LessonHub({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className='w-full'
+              role='listitem'
             >
               <KangurIconSummaryOptionCard
                 accent={accent}
@@ -107,6 +111,7 @@ export default function LessonHub({
                       accent={accent}
                       className='shrink-0'
                       data-testid={`lesson-hub-icon-${section.id}`}
+                      decorative
                       size='xl'
                     >
                       {section.emoji}

@@ -18,6 +18,7 @@ import {
   FilterPanel,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -40,10 +41,15 @@ export default function ThemesPage(): React.ReactNode {
     try {
       await deleteMutation.mutateAsync(id);
       setThemeToDelete(null);
-    } catch (_err) {
-      // Error handled by mutation or global logger
-    }
-  };
+    } catch (error) {
+      logClientError(error, {
+        context: {
+          service: 'cms',
+          action: 'deleteTheme',
+          themeId: id,
+        },
+      });
+    }  };
 
   const columns = useMemo<ColumnDef<CmsTheme>[]>(
     () => [

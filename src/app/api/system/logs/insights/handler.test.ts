@@ -17,7 +17,7 @@ vi.mock('@/features/jobs/server', () => ({
   startAiInsightsQueue: startAiInsightsQueueMock,
 }));
 
-vi.mock('@/features/observability/context-registry/server', () => ({
+vi.mock('@/shared/lib/observability/runtime-context/server', () => ({
   resolveObservabilityContextRegistryEnvelope: resolveObservabilityContextRegistryEnvelopeMock,
 }));
 

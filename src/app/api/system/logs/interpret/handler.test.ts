@@ -29,7 +29,7 @@ vi.mock('@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-c
   hydrateSystemLogRecordRuntimeContext: hydrateSystemLogRecordRuntimeContextMock,
 }));
 
-vi.mock('@/features/observability/context-registry/server', () => ({
+vi.mock('@/shared/lib/observability/runtime-context/server', () => ({
   resolveObservabilityContextRegistryEnvelope: resolveObservabilityContextRegistryEnvelopeMock,
 }));
 

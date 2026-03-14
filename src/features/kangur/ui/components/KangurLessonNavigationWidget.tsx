@@ -33,7 +33,10 @@ export function KangurLessonNavigationWidget({
   }
 
   return (
-    <div className='mx-auto mt-2 flex w-full max-w-[44rem] flex-col gap-3'>
+    <nav
+      className='mx-auto mt-2 flex w-full max-w-[44rem] flex-col gap-3'
+      aria-label='Nawigacja między lekcjami'
+    >
       {sectionTitle || sectionSummary ? (
         <KangurPanelIntro
           description={sectionSummary}
@@ -50,8 +53,9 @@ export function KangurLessonNavigationWidget({
             size='lg'
             variant='surface'
             data-doc-id='lessons_prev_next'
+            aria-label={`Poprzednia lekcja: ${prevLesson.title}`}
           >
-            <ChevronLeft className='h-4 w-4 flex-shrink-0' />
+            <ChevronLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
             <span className='min-w-0 truncate'>{prevLesson.title}</span>
           </KangurButton>
         ) : null}
@@ -63,12 +67,13 @@ export function KangurLessonNavigationWidget({
             size='lg'
             variant='surface'
             data-doc-id='lessons_prev_next'
+            aria-label={`Nastepna lekcja: ${nextLesson.title}`}
           >
             <span className='min-w-0 truncate'>{nextLesson.title}</span>
-            <ChevronRight className='h-4 w-4 flex-shrink-0' />
+            <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
           </KangurButton>
         ) : null}
       </div>
-    </div>
+    </nav>
   );
 }

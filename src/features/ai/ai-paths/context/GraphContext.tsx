@@ -28,6 +28,7 @@ import {
   normalizeNodes,
   sanitizeEdges,
 } from '@/shared/lib/ai-paths';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
   DEFAULT_AI_PATHS_VALIDATION,
@@ -162,18 +163,18 @@ export function GraphProvider({
           normalized.length < prev.length &&
           mutationMeta?.allowNodeCountDecrease !== true
         ) {
-          console.warn(
-            '[ai-paths] Rejected non-destructive node mutation that would decrease node count.',
-            {
+          logClientError(new Error('Rejected node mutation that would decrease node count'), {
+            context: {
+              service: 'ai-paths',
+              action: 'nodeMutation',
               reason,
-              source: mutationMeta?.source ?? null,
+              mutationSource: mutationMeta?.source ?? null,
               previousCount: prev.length,
               nextCount: normalized.length,
               revision: graphRevisionRef.current,
-            }
-          );
-          pendingMutationMetaRef.current = null;
-          return prev;
+            },
+          });
+          pendingMutationMetaRef.current = null;          return prev;
         }
         changedNodes =
           normalized.length !== prev.length ||

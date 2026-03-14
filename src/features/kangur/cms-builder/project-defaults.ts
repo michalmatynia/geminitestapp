@@ -3,6 +3,7 @@ import {
   KANGUR_CMS_SCREEN_LABELS,
   type KangurCmsScreenKey,
   type KangurCmsScreen,
+  type KangurCmsProject,
   type KangurWidgetId,
 } from './project-contracts';
 import {

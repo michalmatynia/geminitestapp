@@ -197,7 +197,12 @@ function LearnerProfileContent(): React.JSX.Element {
       />
       <KangurTopNavigationController navigation={navigation} />
 
-      <KangurPageContainer id='kangur-learner-profile-main' className='flex flex-col gap-6'>
+      <KangurPageContainer
+        as='section'
+        data-kangur-route-main='true'
+        id='kangur-learner-profile-main'
+        className='flex flex-col gap-6'
+      >
         <h2 className='sr-only'>Statystyki ucznia</h2>
         <div ref={heroAnchorRef}>
           <KangurLearnerProfileHeroWidget />

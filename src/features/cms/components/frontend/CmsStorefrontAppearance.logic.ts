@@ -750,6 +750,10 @@ const resolveThemedKangurStorefrontAppearance = (
   const primaryButtonText = isDark
     ? mixCssColor(theme.btnPrimaryText || '#ffffff', '#ffffff', 92)
     : theme.btnPrimaryText || '#ffffff';
+  const buttonTextShadow = resolveButtonTextShadow(theme, isDark);
+  const buttonGlossOpacity = clampNumber(theme.btnGlossOpacity, 0, 1) * (isDark ? 0.65 : 1);
+  const buttonGlossHeight = `${clampNumber(theme.btnGlossHeight, 0, 100)}%`;
+  const buttonGlossAngle = `${clampNumber(theme.btnGlossAngle, 0, 360)}deg`;
   const primaryButtonBase = resolveSolidColor(theme.btnPrimaryBg, primary);
   const secondaryButtonBase = resolveSolidColor(theme.btnSecondaryBg, surfaceBackground);
   const warningBackground = theme.accentColor || accent;
@@ -1385,6 +1389,10 @@ const resolveThemedKangurStorefrontAppearance = (
       '--kangur-cta-success-end': successGradientEnd,
       '--kangur-page-text': toneText,
       '--kangur-page-muted-text': pageMutedText,
+      '--kangur-button-text-shadow': buttonTextShadow,
+      '--kangur-button-gloss-opacity': String(buttonGlossOpacity),
+      '--kangur-button-gloss-height': buttonGlossHeight,
+      '--kangur-button-gloss-angle': buttonGlossAngle,
       '--kangur-button-primary-background': primaryButtonBackground,
       '--kangur-button-primary-text': primaryButtonText,
       '--kangur-button-primary-hover-background': primaryButtonHoverBackground,

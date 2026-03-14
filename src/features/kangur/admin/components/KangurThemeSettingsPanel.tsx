@@ -25,6 +25,15 @@ import { serializeSetting } from '@/shared/utils/settings-json';
 
 type ThemeMode = 'daily' | 'dawn' | 'sunset' | 'nightly';
 
+const FONT_WEIGHT_OPTIONS = [
+  { value: '300', label: 'Light (300)' },
+  { value: '400', label: 'Regular (400)' },
+  { value: '500', label: 'Medium (500)' },
+  { value: '600', label: 'Semibold (600)' },
+  { value: '700', label: 'Bold (700)' },
+  { value: '800', label: 'Extrabold (800)' },
+];
+
 const HOME_ACTION_FIELD_GROUPS = [
   { prefix: 'homeActionLessons', label: 'Lessons' },
   { prefix: 'homeActionPlay', label: 'Play' },
@@ -192,9 +201,42 @@ const KANGUR_THEME_SECTIONS: Array<{
         helperText: 'CSS color or gradient (e.g. #ffffff or linear-gradient(...)).',
       },
       { key: 'btnSecondaryText', label: 'Secondary Button Text', type: 'color' },
+      { key: 'btnOutlineBorder', label: 'Outline Border', type: 'color' },
       { key: 'btnPaddingX', label: 'Button Padding X', type: 'number', min: 8, max: 40, suffix: 'px' },
       { key: 'btnPaddingY', label: 'Button Padding Y', type: 'number', min: 6, max: 24, suffix: 'px' },
       { key: 'btnFontSize', label: 'Button Font Size', type: 'number', min: 12, max: 20, suffix: 'px' },
+      {
+        key: 'btnFontWeight',
+        label: 'Button Font Weight',
+        type: 'select',
+        options: FONT_WEIGHT_OPTIONS,
+      },
+      { key: 'btnBorderWidth', label: 'Button Border Width', type: 'number', min: 0, max: 4, suffix: 'px' },
+      {
+        key: 'btnBorderOpacity',
+        label: 'Button Border Opacity',
+        type: 'range',
+        min: 0,
+        max: 100,
+        step: 5,
+      },
+    ],
+  },
+  {
+    title: 'Button Shadows',
+    subtitle: 'Drop shadows for the primary and secondary button shell.',
+    fields: [
+      {
+        key: 'btnShadowOpacity',
+        label: 'Shadow Opacity',
+        type: 'range',
+        min: 0,
+        max: 1,
+        step: 0.05,
+      },
+      { key: 'btnShadowX', label: 'Shadow X', type: 'number', min: -20, max: 20, suffix: 'px' },
+      { key: 'btnShadowY', label: 'Shadow Y', type: 'number', min: -20, max: 30, suffix: 'px' },
+      { key: 'btnShadowBlur', label: 'Shadow Blur', type: 'number', min: 0, max: 60, suffix: 'px' },
     ],
   },
   {
@@ -494,6 +536,14 @@ const KANGUR_THEME_SECTIONS: Array<{
       {
         key: 'btnRadius',
         label: 'Button Radius',
+        type: 'number',
+        min: 0,
+        max: 999,
+        suffix: 'px',
+      },
+      {
+        key: 'btnBorderRadius',
+        label: 'Button Border Radius',
         type: 'number',
         min: 0,
         max: 999,

@@ -428,6 +428,8 @@ function GameContent(): React.JSX.Element {
         </div>
 
         <KangurPageContainer
+          as='section'
+          data-kangur-route-main='true'
           id={GAME_MAIN_ID}
           aria-labelledby={`${GAME_TITLE_ID} ${GAME_SCREEN_TITLE_ID}`}
           className='flex flex-col items-center gap-8 pt-3 sm:gap-10'

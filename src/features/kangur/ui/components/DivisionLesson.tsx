@@ -7,6 +7,11 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
+  DivisionEqualGroupsAnimation,
+  DivisionInverseAnimation,
+  DivisionRemainderAnimation,
+} from '@/features/kangur/ui/components/LessonAnimations';
+import {
   KangurLessonCallout,
   KangurLessonCaption,
   KangurLessonLead,
@@ -45,6 +50,25 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
         </KangurLessonStack>
       ),
     },
+    {
+      title: 'Dzielenie w ruchu (SVG)',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Dzielimy równo: każda grupa dostaje tyle samo elementów.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='sky' className='text-center'>
+            <div className='mx-auto w-full max-w-sm'>
+              <DivisionEqualGroupsAnimation />
+            </div>
+            <KangurEquationDisplay accent='sky' className='mt-2' size='sm'>
+              12 ÷ 3 = 4
+            </KangurEquationDisplay>
+            <KangurLessonCaption className='mt-1'>3 grupy po 4.</KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
   ],
   odwrotnosc: [
     {
@@ -75,6 +99,22 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
         </KangurLessonStack>
       ),
     },
+    {
+      title: 'Odwrotność w animacji',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>Dzielenie i mnożenie to odwrotne działania.</KangurLessonLead>
+          <KangurLessonCallout accent='sky' className='text-center'>
+            <div className='mx-auto w-full max-w-sm'>
+              <DivisionInverseAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Jeśli 4 × 3 = 12, to 12 ÷ 3 = 4.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
   ],
   reszta: [
     {
@@ -99,6 +139,25 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
           <KangurLessonCaption>
             7 czekolad → 3 dla każdego, 1 zostaje
           </KangurLessonCaption>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Reszta w ruchu',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>Gdy nie da się podzielić równo, coś zostaje.</KangurLessonLead>
+          <KangurLessonCallout accent='teal' className='text-center'>
+            <div className='mx-auto w-full max-w-sm'>
+              <DivisionRemainderAnimation />
+            </div>
+            <KangurEquationDisplay accent='teal' className='mt-2' size='sm'>
+              7 ÷ 2 = 3 r 1
+            </KangurEquationDisplay>
+            <KangurLessonCaption className='mt-1'>
+              3 pełne pary i 1 zostaje.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },

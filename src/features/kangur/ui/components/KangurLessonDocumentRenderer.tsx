@@ -148,6 +148,11 @@ function renderSvgBlock(
   key: string,
   options?: { fillHeight?: boolean }
 ): React.JSX.Element {
+  const svgLabel =
+    block.ttsDescription?.trim() ||
+    block.title.trim() ||
+    'Ilustracja do tej sekcji lekcji.';
+
   return (
     <KangurSurfacePanel
       accent='sky'
@@ -184,6 +189,8 @@ function renderSvgBlock(
           mediaType='svg'
           padding='md'
           style={{ maxWidth: `${block.maxWidth}px` }}
+          role='img'
+          aria-label={svgLabel}
           dangerouslySetInnerHTML={{
             __html: sanitizeSvg(block.markup, { viewBox: block.viewBox }),
           }}

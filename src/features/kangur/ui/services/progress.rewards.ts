@@ -299,14 +299,17 @@ export const buildLessonMasteryUpdate = (
   const attempts = (current?.attempts ?? 0) + 1;
   const bestScore = Math.max(current?.bestScorePercent ?? 0, scorePercent);
   const masteryPercent = clampPercent(bestScore);
+  const completions = (current?.completions ?? 0) + (scorePercent >= 100 ? 1 : 0);
 
   return {
     ...progress.lessonMastery,
     [normalizedKey]: {
       attempts,
+      completions,
       bestScorePercent: bestScore,
+      lastScorePercent: scorePercent,
       masteryPercent,
-      lastPlayedAt: playedAt,
+      lastCompletedAt: playedAt,
     },
   };
 };

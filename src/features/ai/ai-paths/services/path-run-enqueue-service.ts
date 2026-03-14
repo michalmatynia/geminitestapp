@@ -42,6 +42,7 @@ import {
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 import { buildAiPathErrorReport } from '@/shared/lib/ai-paths/error-reporting';
 import { resolvePathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export type EnqueueRunInput = {
@@ -519,16 +520,20 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
         dispatchMs,
       })
     ) {
-      console.info('[ai-paths-service] enqueuePathRun timing', {
-        pathId: input.pathId,
-        runId: run.id,
-        persistRunMs: Math.round(persistRunMs),
-        persistNodesMs: Math.round(persistNodesMs),
-        dispatchMs: Math.round(dispatchMs),
-        enqueueTotalMs: Math.round(enqueueTotalMs),
+      logSystemEvent({
+        source: 'ai.paths.enqueue',
+        message: 'Path run enqueue timing',
+        level: 'info',
+        context: {
+          pathId: input.pathId,
+          runId: run.id,
+          persistRunMs: Math.round(persistRunMs),
+          persistNodesMs: Math.round(persistNodesMs),
+          dispatchMs: Math.round(dispatchMs),
+          enqueueTotalMs: Math.round(enqueueTotalMs),
+        },
       });
     }
-
     return run;
   };
 

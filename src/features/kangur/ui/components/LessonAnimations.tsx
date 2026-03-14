@@ -1036,3 +1036,338 @@ export function AddingTensOnesAnimation(): React.JSX.Element {
     </svg>
   );
 }
+
+export function DivisionEqualGroupsAnimation(): React.JSX.Element {
+  return (
+    <svg
+      aria-label='Animacja dzielenia: 12 kropek podzielone na 3 równe grupy.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 420 140'
+    >
+      <style>{`
+        .dot { fill: #38bdf8; }
+        .box {
+          fill: none;
+          stroke: #e2e8f0;
+          stroke-dasharray: 6 6;
+        }
+        .group {
+          animation: groupPulse 4.8s ease-in-out infinite;
+        }
+        .group-2 { animation-delay: 1.6s; }
+        .group-3 { animation-delay: 3.2s; }
+        @keyframes groupPulse {
+          0%, 100% { opacity: 0.35; }
+          45% { opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .group { animation: none; opacity: 1; }
+        }
+      `}</style>
+      <rect className='box' height='86' rx='12' width='110' x='30' y='26' />
+      <rect className='box' height='86' rx='12' width='110' x='155' y='26' />
+      <rect className='box' height='86' rx='12' width='110' x='280' y='26' />
+      {[0, 1, 2].map((group) => (
+        <g key={`group-${group}`} className={`group group-${group + 1}`}>
+          {[0, 1, 2, 3].map((index) => (
+            <circle
+              key={`dot-${group}-${index}`}
+              className='dot'
+              cx={55 + group * 125 + (index % 2) * 30}
+              cy={50 + Math.floor(index / 2) * 30}
+              r='8'
+            />
+          ))}
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+export function DivisionInverseAnimation(): React.JSX.Element {
+  return (
+    <svg
+      aria-label='Animacja: mnożenie i dzielenie są odwrotne.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 360 140'
+    >
+      <style>{`
+        .dot { fill: #22c55e; }
+        .row { animation: rowPulse 3.8s ease-in-out infinite; }
+        .row-2 { animation-delay: 1.2s; }
+        .row-3 { animation-delay: 2.4s; }
+        @keyframes rowPulse {
+          0%, 100% { opacity: 0.35; }
+          45% { opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .row { animation: none; opacity: 1; }
+        }
+      `}</style>
+      <rect
+        fill='none'
+        height='86'
+        rx='12'
+        stroke='#e2e8f0'
+        strokeDasharray='6 6'
+        width='170'
+        x='30'
+        y='26'
+      />
+      {[0, 1, 2].map((row) => (
+        <g key={`row-${row}`} className={`row row-${row + 1}`}>
+          {[0, 1, 2, 3].map((col) => (
+            <circle
+              key={`row-${row}-col-${col}`}
+              className='dot'
+              cx={55 + col * 30}
+              cy={45 + row * 24}
+              r='7'
+            />
+          ))}
+        </g>
+      ))}
+      <g fill='#64748b' fontSize='12' fontWeight='600'>
+        <text x='220' y='55'>12 ÷ 3 = 4</text>
+        <text x='220' y='80'>4 × 3 = 12</text>
+      </g>
+    </svg>
+  );
+}
+
+export function DivisionRemainderAnimation(): React.JSX.Element {
+  return (
+    <svg
+      aria-label='Animacja dzielenia z resztą: 7 podzielone na 2 daje 3 reszta 1.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 360 120'
+    >
+      <style>{`
+        .dot { fill: #14b8a6; }
+        .leftover {
+          fill: #f97316;
+          animation: leftoverPulse 3.6s ease-in-out infinite;
+        }
+        @keyframes leftoverPulse {
+          0%, 100% { opacity: 0.4; transform: scale(0.95); }
+          50% { opacity: 1; transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .leftover { animation: none; opacity: 1; }
+        }
+      `}</style>
+      <rect
+        fill='none'
+        height='70'
+        rx='12'
+        stroke='#e2e8f0'
+        strokeDasharray='6 6'
+        width='200'
+        x='20'
+        y='20'
+      />
+      {[0, 1, 2].map((group) => (
+        <g key={`pair-${group}`}>
+          <circle className='dot' cx={45 + group * 55} cy='45' r='7' />
+          <circle className='dot' cx={45 + group * 55} cy='70' r='7' />
+        </g>
+      ))}
+      <circle className='leftover' cx='190' cy='45' r='7' />
+      <text fill='#64748b' fontSize='12' fontWeight='600' x='235' y='55'>
+        reszta 1
+      </text>
+    </svg>
+  );
+}
+
+export function MultiplicationGroupsAnimation(): React.JSX.Element {
+  return (
+    <svg
+      aria-label='Animacja mnożenia: 3 grupy po 4 tworzą 12.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 420 140'
+    >
+      <style>{`
+        .group-a { fill: #f59e0b; }
+        .group-b { fill: #60a5fa; }
+        .group-c { fill: #34d399; }
+        .array-dot { fill: #a855f7; }
+        .left-groups { animation: groupsFade 6s ease-in-out infinite; }
+        .array { animation: arrayReveal 6s ease-in-out infinite; }
+        @keyframes groupsFade {
+          0%, 45% { opacity: 1; }
+          65%, 100% { opacity: 0.35; }
+        }
+        @keyframes arrayReveal {
+          0%, 45% { opacity: 0; transform: scale(0.98); }
+          65%, 100% { opacity: 1; transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .left-groups, .array { animation: none; opacity: 1; }
+        }
+      `}</style>
+      <g className='left-groups'>
+        {[0, 1, 2, 3].map((index) => (
+          <circle key={`a-${index}`} className='group-a' cx={40 + index * 18} cy='30' r='7' />
+        ))}
+        {[0, 1, 2, 3].map((index) => (
+          <circle key={`b-${index}`} className='group-b' cx={40 + index * 18} cy='70' r='7' />
+        ))}
+        {[0, 1, 2, 3].map((index) => (
+          <circle key={`c-${index}`} className='group-c' cx={40 + index * 18} cy='110' r='7' />
+        ))}
+      </g>
+      <g fill='none' stroke='#94a3b8' strokeLinecap='round' strokeWidth='4'>
+        <line x1='140' x2='190' y1='70' y2='70' />
+        <polyline points='178,58 192,70 178,82' />
+      </g>
+      <rect
+        fill='none'
+        height='96'
+        rx='12'
+        stroke='#e2e8f0'
+        strokeDasharray='6 6'
+        width='150'
+        x='230'
+        y='22'
+      />
+      <g className='array'>
+        {[0, 1, 2].map((row) =>
+          [0, 1, 2, 3].map((col) => (
+            <circle
+              key={`array-${row}-${col}`}
+              className='array-dot'
+              cx={250 + col * 30}
+              cy={40 + row * 30}
+              r='7'
+            />
+          ))
+        )}
+      </g>
+    </svg>
+  );
+}
+
+export function MultiplicationArrayAnimation(): React.JSX.Element {
+  return (
+    <svg
+      aria-label='Animacja mnożenia: rzędy w tablicy pokazują kolejne sumy.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 360 140'
+    >
+      <style>{`
+        .row {
+          animation: rowPulse 3.6s ease-in-out infinite;
+        }
+        .row-2 { animation-delay: 1.2s; }
+        .row-3 { animation-delay: 2.4s; }
+        .dot { fill: #a855f7; }
+        @keyframes rowPulse {
+          0%, 100% { opacity: 0.35; }
+          45% { opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .row { animation: none; opacity: 1; }
+        }
+      `}</style>
+      <rect
+        fill='none'
+        height='86'
+        rx='12'
+        stroke='#e2e8f0'
+        strokeDasharray='6 6'
+        width='190'
+        x='40'
+        y='26'
+      />
+      {[0, 1, 2].map((row) => (
+        <g key={`row-${row}`} className={`row row-${row + 1}`}>
+          {[0, 1, 2, 3].map((col) => (
+            <circle
+              key={`row-${row}-col-${col}`}
+              className='dot'
+              cx={70 + col * 40}
+              cy={45 + row * 25}
+              r='7'
+            />
+          ))}
+          <text
+            fill='#64748b'
+            fontSize='12'
+            fontWeight='600'
+            x='245'
+            y={49 + row * 25}
+          >
+            {(row + 1) * 4}
+          </text>
+        </g>
+      ))}
+      <text fill='#64748b' fontSize='12' fontWeight='600' x='245' y='34'>
+        suma
+      </text>
+    </svg>
+  );
+}
+
+export function MultiplicationCommutativeAnimation(): React.JSX.Element {
+  return (
+    <svg
+      aria-label='Animacja: 3×4 to to samo co 4×3.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 320 140'
+    >
+      <style>{`
+        .array-a { animation: arrayA 6s ease-in-out infinite; }
+        .array-b { animation: arrayB 6s ease-in-out infinite; }
+        .dot-a { fill: #60a5fa; }
+        .dot-b { fill: #f59e0b; }
+        @keyframes arrayA {
+          0%, 45% { opacity: 1; }
+          60%, 100% { opacity: 0; }
+        }
+        @keyframes arrayB {
+          0%, 45% { opacity: 0; }
+          60%, 100% { opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .array-a, .array-b { animation: none; opacity: 1; }
+        }
+      `}</style>
+      <g className='array-a'>
+        {[0, 1, 2].map((row) =>
+          [0, 1, 2, 3].map((col) => (
+            <circle
+              key={`a-${row}-${col}`}
+              className='dot-a'
+              cx={70 + col * 24}
+              cy={35 + row * 24}
+              r='6'
+            />
+          ))
+        )}
+      </g>
+      <g className='array-b'>
+        {[0, 1, 2, 3].map((row) =>
+          [0, 1, 2].map((col) => (
+            <circle
+              key={`b-${row}-${col}`}
+              className='dot-b'
+              cx={70 + col * 24}
+              cy={35 + row * 24}
+              r='6'
+            />
+          ))
+        )}
+      </g>
+      <text fill='#0f172a' fontSize='14' fontWeight='700' x='170' y='64'>
+        3×4 = 4×3
+      </text>
+    </svg>
+  );
+}

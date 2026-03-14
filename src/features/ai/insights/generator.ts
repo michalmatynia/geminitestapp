@@ -377,7 +377,12 @@ export async function runInsightsAutoGeneration(): Promise<void> {
   );
   if (analyticsEnabled) {
     await generateAnalyticsInsight({ source: 'scheduled_job' }).catch((err) => {
-      console.error('Failed to auto-generate analytics insight:', err);
+      logSystemEvent({
+        source: 'ai.insights.auto-generation',
+        message: 'Failed to auto-generate analytics insight',
+        level: 'error',
+        error: err,
+      });
     });
   }
 
@@ -387,7 +392,12 @@ export async function runInsightsAutoGeneration(): Promise<void> {
   );
   if (logsEnabled) {
     await generateLogsInsight({ source: 'scheduled_job' }).catch((err) => {
-      console.error('Failed to auto-generate logs insight:', err);
+      logSystemEvent({
+        source: 'ai.insights.auto-generation',
+        message: 'Failed to auto-generate logs insight',
+        level: 'error',
+        error: err,
+      });
     });
   }
 
@@ -397,7 +407,12 @@ export async function runInsightsAutoGeneration(): Promise<void> {
   );
   if (runtimeEnabled) {
     await generateRuntimeAnalyticsInsight({ source: 'scheduled_job' }).catch((err) => {
-      console.error('Failed to auto-generate runtime analytics insight:', err);
+      logSystemEvent({
+        source: 'ai.insights.auto-generation',
+        message: 'Failed to auto-generate runtime analytics insight',
+        level: 'error',
+        error: err,
+      });
     });
   }
 }

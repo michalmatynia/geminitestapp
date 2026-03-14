@@ -11,7 +11,7 @@ import {
 import {
   buildSystemLogsWorkspaceContextBundle,
   SYSTEM_LOGS_CONTEXT_ROOT_IDS,
-} from '@/features/observability/context-registry/workspace';
+} from '@/shared/lib/observability/runtime-context/system-logs-workspace';
 import {
   ContextRegistryPageProvider,
   useRegisterContextRegistryPageSource,

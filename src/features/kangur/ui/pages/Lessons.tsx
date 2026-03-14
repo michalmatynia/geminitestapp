@@ -715,7 +715,12 @@ export default function Lessons() {
         <KangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId='kangur-lessons-page' />
         <KangurTopNavigationController navigation={navigation} />
 
-        <KangurPageContainer id='kangur-lessons-main' className='flex flex-col items-center'>
+        <KangurPageContainer
+          as='section'
+          data-kangur-route-main='true'
+          id='kangur-lessons-main'
+          className='flex flex-col items-center'
+        >
           <AnimatePresence mode='wait'>
             {!activeLesson ? (
               <motion.div
@@ -747,6 +752,8 @@ export default function Lessons() {
                     key='list-content'
                     {...lessonContentReadyMotionProps}
                     className='flex w-full flex-col gap-4'
+                    role='list'
+                    aria-label='Lista lekcji'
                   >
                     {orderedLessons.length === 0 ? (
                       <div ref={lessonListEmptyStateRef}>
@@ -779,6 +786,7 @@ export default function Lessons() {
                               delay: prefersReducedMotion ? 0 : index * LESSONS_CARD_STAGGER_DELAY,
                             }}
                             data-testid={`lesson-library-motion-${lesson.id}`}
+                            role='listitem'
                           >
                             <KangurLessonLibraryCard
                               buttonClassName='kangur-lessons-panel flex flex-col items-start gap-4 rounded-[28px] p-4 max-sm:pr-4 max-sm:pb-4 sm:rounded-[30px] sm:p-5'

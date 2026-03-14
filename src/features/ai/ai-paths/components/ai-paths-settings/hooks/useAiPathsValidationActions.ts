@@ -31,29 +31,32 @@ export function useAiPathsValidationActions(args: {
           }
         }
       } catch (err) {
-        console.error('[ai-paths] Failed to persist last error', err);
+        logClientError(err, {
+          context: {
+            service: 'ai-paths',
+            action: 'persistLastError',
+          },
+        });
       }
-    },
-    [setLastError]
-  );
+      },
+      [setLastError]
+      );
 
-  const reportAiPathsError = useCallback(
-    (error: unknown, context: Record<string, unknown>, fallbackMessage?: string): void => {
+      const reportAiPathsError = useCallback(
+      (error: unknown, context: Record<string, unknown>, fallbackMessage?: string): void => {
       const message = error instanceof Error ? error.message : String(error);
       const fullMessage = `[ai-paths] ${fallbackMessage ? fallbackMessage + ' ' : ''}${message}`;
-      console.error(fullMessage, context, error);
       toast(fallbackMessage || message, { variant: 'error' });
       void persistLastError(fallbackMessage || message);
 
-      const errorToLog = error instanceof Error ? error : new Error(message);
+      const errorToLog = error instanceof Error ? error : new Error(fullMessage);
       logClientError(errorToLog, {
         context: {
           service: 'ai-paths',
           ...context,
         },
       });
-    },
-    [toast, persistLastError]
+      },    [toast, persistLastError]
   );
 
   return {

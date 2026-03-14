@@ -338,15 +338,19 @@ export function useAiPathsPersistence(
 
         const totalDurationMs = Date.now() - loadStartedAt;
         if (totalDurationMs >= 300) {
-          console.info('[ai-paths-load] hydrated active canvas path', {
-            durationMs: totalDurationMs,
-            stageA: stageADurationMs,
-            stageB: stageBDurationMs,
-            pathCount: loadedPaths.length,
-            activePathId: resolvedActivePathId,
+          logSystemEvent({
+            source: 'ai.paths.persistence',
+            message: 'Hydrated active canvas path',
+            level: 'info',
+            context: {
+              durationMs: totalDurationMs,
+              stageA: stageADurationMs,
+              stageB: stageBDurationMs,
+              pathCount: loadedPaths.length,
+              activePathId: resolvedActivePathId,
+            },
           });
-        }
-        setUiStateLoaded(true);
+        }        setUiStateLoaded(true);
       } catch (error) {
         const errorDetail = error instanceof Error && error.message ? `: ${error.message}` : '';
         reportAiPathsError(
@@ -528,12 +532,16 @@ export function useAiPathsPersistence(
       }
       const durationMs = Date.now() - startedAt;
       if (durationMs >= 200) {
-        console.info('[ai-paths-load] prefetched non-active path configs', {
-          durationMs,
-          pathCount: pendingPathIds.length,
+        logSystemEvent({
+          source: 'ai.paths.persistence',
+          message: 'Prefetched non-active path configs',
+          level: 'info',
+          context: {
+            durationMs,
+            pathCount: pendingPathIds.length,
+          },
         });
-      }
-    };
+      }    };
 
     if (typeof window !== 'undefined') {
       const idleWindow = window as Window & {

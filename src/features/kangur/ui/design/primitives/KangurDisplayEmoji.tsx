@@ -18,12 +18,33 @@ export const kangurDisplayEmojiVariants = cva('inline-flex items-center justify-
 });
 
 export type KangurDisplayEmojiProps = React.HTMLAttributes<HTMLSpanElement> &
-  VariantProps<typeof kangurDisplayEmojiVariants>;
+  VariantProps<typeof kangurDisplayEmojiVariants> & {
+    decorative?: boolean;
+    label?: string;
+  };
 
 export function KangurDisplayEmoji({
   className,
+  decorative,
+  label,
   size,
+  'aria-label': ariaLabelProp,
+  'aria-labelledby': ariaLabelledBy,
+  'aria-describedby': ariaDescribedBy,
   ...props
 }: KangurDisplayEmojiProps): React.JSX.Element {
-  return <span className={cn(kangurDisplayEmojiVariants({ size }), className)} {...props} />;
+  const resolvedLabel = ariaLabelProp ?? label;
+  const shouldHide = decorative ?? !(resolvedLabel || ariaLabelledBy || ariaDescribedBy);
+
+  return (
+    <span
+      className={cn(kangurDisplayEmojiVariants({ size }), className)}
+      role={shouldHide ? 'presentation' : 'img'}
+      aria-hidden={shouldHide ? 'true' : undefined}
+      aria-label={shouldHide ? undefined : resolvedLabel}
+      aria-labelledby={ariaLabelledBy}
+      aria-describedby={ariaDescribedBy}
+      {...props}
+    />
+  );
 }

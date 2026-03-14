@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { imageStudioCropResponseSchema } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
   type GenerationToolbarState,
@@ -92,10 +93,15 @@ export function useCropHandlers(state: GenerationToolbarState, helpers: Generati
       frame
     );
     if (!rect) {
-      console.error('[GenerationToolbar] Crop rect resolution failed', diagnostics);
+      logClientError(new Error('Crop rect resolution failed'), {
+        context: {
+          service: 'ai.image-studio',
+          action: 'resolveCropRect',
+          diagnostics,
+        },
+      });
       throw new Error('No valid crop area defined by selection.');
-    }
-    return { rect, context };
+    }    return { rect, context };
   }, [
     cropMode,
     maskShapesForExport,

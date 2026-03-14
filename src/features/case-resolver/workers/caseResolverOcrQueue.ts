@@ -267,7 +267,13 @@ export const enqueueCaseResolverOcrJob = async (
       try {
         await processOcrJob(data);
       } catch (error) {
-        console.error('[CaseResolverOcr] Inline processing failed:', error);
+        logSystemEvent({
+          source: LOG_SOURCE,
+          message: 'Inline OCR processing failed',
+          level: 'error',
+          error,
+          context: { jobId: data.jobId, filepath: data.filepath },
+        });
       }
     })();
     return 'inline';

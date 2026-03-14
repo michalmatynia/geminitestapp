@@ -39,7 +39,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
   }
 
   return (
-    <div className='flex flex-col gap-4'>
+    <div className='flex flex-col gap-4' role='list' aria-label='Lista lekcji'>
       {orderedLessons.map((lesson) => {
         const masteryPresentation = getLessonMasteryPresentation(lesson, progress);
         const lessonAssignment = lessonAssignmentsByComponent.get(lesson.componentId) ?? null;
@@ -49,21 +49,23 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
         const isActive = activeLessonId === lesson.id;
 
         return (
-          <KangurLessonLibraryCard
-            buttonClassName='kangur-lessons-panel flex flex-col items-start gap-4 rounded-[30px] p-5 max-sm:pr-5 max-sm:pb-5 sm:flex-row'
-            completedLessonAssignment={completedLessonAssignment}
-            contentClassName='w-full'
-            emphasis={isActive ? 'accent' : 'neutral'}
-            hasDocumentContent={hasKangurLessonDocumentContent(lessonDocuments[lesson.id])}
-            iconTestId={`lessons-catalog-icon-${lesson.id}`}
-            itemTestId={`lessons-catalog-item-${lesson.id}`}
-            key={lesson.id}
-            lesson={lesson}
-            lessonAssignment={lessonAssignment}
-            masteryPresentation={masteryPresentation}
-            onSelect={() => selectLesson(lesson.id)}
-            statusGroupClassName='w-full flex-row items-start sm:w-auto sm:flex-col sm:items-end'
-          />
+          <div key={lesson.id} role='listitem' className='w-full'>
+            <KangurLessonLibraryCard
+              ariaCurrent={isActive ? 'page' : undefined}
+              buttonClassName='kangur-lessons-panel flex flex-col items-start gap-4 rounded-[30px] p-5 max-sm:pr-5 max-sm:pb-5 sm:flex-row'
+              completedLessonAssignment={completedLessonAssignment}
+              contentClassName='w-full'
+              emphasis={isActive ? 'accent' : 'neutral'}
+              hasDocumentContent={hasKangurLessonDocumentContent(lessonDocuments[lesson.id])}
+              iconTestId={`lessons-catalog-icon-${lesson.id}`}
+              itemTestId={`lessons-catalog-item-${lesson.id}`}
+              lesson={lesson}
+              lessonAssignment={lessonAssignment}
+              masteryPresentation={masteryPresentation}
+              onSelect={() => selectLesson(lesson.id)}
+              statusGroupClassName='w-full flex-row items-start sm:w-auto sm:flex-col sm:items-end'
+            />
+          </div>
         );
       })}
     </div>

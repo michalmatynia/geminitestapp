@@ -435,10 +435,12 @@ export function KangurPageTransitionSkeleton({
         {reason === 'boot' ? 'Loading Kangur app' : 'Loading Kangur page'}
       </div>
       <KangurPageShell
+        aria-hidden='true'
         className='pointer-events-none'
         tone={SKELETON_TONE_BY_PAGE[resolvedPageKey]}
       >
         <KangurPageContainer
+          as='div'
           className={cn(
             'flex flex-col items-center gap-6',
             resolvedPageKey === 'Lessons'

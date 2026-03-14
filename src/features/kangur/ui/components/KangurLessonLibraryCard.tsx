@@ -1,4 +1,4 @@
-import React, { type ComponentProps } from 'react';
+import React, { type AriaAttributes, type ComponentProps } from 'react';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
@@ -122,7 +122,13 @@ export function KangurLessonLibraryCardIcon({
   iconTestId?: string;
 }): React.JSX.Element {
   return (
-    <KangurGradientIconTile data-testid={iconTestId} gradientClass={lesson.color} size='lg'>
+    <KangurGradientIconTile
+      data-testid={iconTestId}
+      gradientClass={lesson.color}
+      size='lg'
+      role='presentation'
+      aria-hidden='true'
+    >
       {lesson.emoji}
     </KangurGradientIconTile>
   );
@@ -131,6 +137,7 @@ export function KangurLessonLibraryCardIcon({
 // ── Main Card Component ──────────────────────────────────────────────────────
 
 type KangurLessonLibraryCardProps = {
+  ariaCurrent?: AriaAttributes['aria-current'];
   buttonClassName?: string;
   completedLessonAssignment: KangurAssignmentSnapshot | null;
   contentClassName?: string;
@@ -147,6 +154,7 @@ type KangurLessonLibraryCardProps = {
 
 export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): React.JSX.Element {
   const {
+    ariaCurrent,
     buttonClassName,
     completedLessonAssignment,
     contentClassName,
@@ -166,6 +174,7 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
     <KangurIconSummaryOptionCard
       accent='indigo'
       buttonClassName={cn('w-full text-left max-sm:pr-16 max-sm:pb-16', buttonClassName)}
+      aria-current={ariaCurrent}
       data-doc-id={dataDocId}
       data-testid={itemTestId}
       emphasis={emphasis}

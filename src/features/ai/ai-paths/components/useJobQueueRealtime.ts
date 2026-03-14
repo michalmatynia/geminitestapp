@@ -12,6 +12,7 @@ import {
   getRecentAiPathRunEnqueue,
   rememberRecentAiPathRunEnqueue,
 } from '@/shared/lib/query-invalidation';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
   getLatestEventTimestamp,
@@ -273,9 +274,14 @@ export function useJobQueueRealtime({
             };
           });
         } catch (error) {
-          console.error('[JobQueueContext] Failed to parse run stream payload:', error);
-        }
-      });
+          logClientError(error, {
+            context: {
+              service: 'ai-paths',
+              action: 'parseRunStreamPayload',
+              runId,
+            },
+          });
+        }      });
 
       source.addEventListener('nodes', (event: Event) => {
         try {
@@ -293,9 +299,14 @@ export function useJobQueueRealtime({
             };
           });
         } catch (error) {
-          console.error('[JobQueueContext] Failed to parse nodes stream payload:', error);
-        }
-      });
+          logClientError(error, {
+            context: {
+              service: 'ai-paths',
+              action: 'parseNodesStreamPayload',
+              runId,
+            },
+          });
+        }      });
 
       source.addEventListener('events', (event: Event) => {
         try {
@@ -327,9 +338,14 @@ export function useJobQueueRealtime({
             };
           });
         } catch (error) {
-          console.error('[JobQueueContext] Failed to parse events stream payload:', error);
-        }
-      });
+          logClientError(error, {
+            context: {
+              service: 'ai-paths',
+              action: 'parseEventsStreamPayload',
+              runId,
+            },
+          });
+        }      });
 
       const cleanup = () => {
         setStreamStatuses((prev) => ({ ...prev, [runId]: 'stopped' }));

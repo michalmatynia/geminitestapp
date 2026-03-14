@@ -27,14 +27,24 @@ export const kangurIconBadgeVariants = cva(
 export type KangurIconBadgeProps = React.HTMLAttributes<HTMLSpanElement> &
   VariantProps<typeof kangurIconBadgeVariants> & {
     accent?: KangurAccent;
+    decorative?: boolean;
+    label?: string;
   };
 
 export function KangurIconBadge({
   accent = 'slate',
   className,
+  decorative,
+  label,
   size,
+  'aria-label': ariaLabelProp,
+  'aria-labelledby': ariaLabelledBy,
+  'aria-describedby': ariaDescribedBy,
   ...props
 }: KangurIconBadgeProps): React.JSX.Element {
+  const resolvedLabel = ariaLabelProp ?? label;
+  const shouldHide = decorative ?? !(resolvedLabel || ariaLabelledBy || ariaDescribedBy);
+
   return (
     <span
       className={cn(
@@ -42,6 +52,11 @@ export function KangurIconBadge({
         KANGUR_ACCENT_STYLES[accent].icon,
         className
       )}
+      role={shouldHide ? 'presentation' : 'img'}
+      aria-hidden={shouldHide ? 'true' : undefined}
+      aria-label={shouldHide ? undefined : resolvedLabel}
+      aria-labelledby={ariaLabelledBy}
+      aria-describedby={ariaDescribedBy}
       {...props}
     />
   );

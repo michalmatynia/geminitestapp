@@ -5,12 +5,12 @@ import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server'
 import { generateLogsInsight } from '@/features/ai/insights/server';
 import { listAiInsights } from '@/features/ai/insights/server';
 import { startAiInsightsQueue } from '@/features/jobs/server';
-import { resolveObservabilityContextRegistryEnvelope } from '@/features/observability/context-registry/server';
 import type { AiInsightResponse, AiInsightsResponse } from '@/shared/contracts/ai-insights';
 import { systemLogsInsightRequestSchema } from '@/shared/contracts/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
+import { resolveObservabilityContextRegistryEnvelope } from '@/shared/lib/observability/runtime-context/server';
 
 const listSchema = z.object({
   limit: z.coerce.number().int().positive().max(50).optional(),

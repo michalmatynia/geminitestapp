@@ -364,6 +364,8 @@ function ParentDashboardContent(): React.JSX.Element {
       <KangurTopNavigationController navigation={navigation} />
 
       <KangurPageContainer
+        as='section'
+        data-kangur-route-main='true'
         id='kangur-parent-dashboard-main'
         className='max-w-2xl flex flex-col gap-6'
       >

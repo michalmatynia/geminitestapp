@@ -5,7 +5,7 @@ import { useToast } from '@/shared/ui';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { fetchSettingValue } from '@/shared/api/settings-client';
-import { normalizeThemeSettings, type ThemeSettings } from '@/shared/contracts/cms-theme';
+import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { serializeSetting } from '@/shared/utils/settings-json';
 import {
   KANGUR_DAILY_THEME_SETTINGS_KEY,
@@ -15,6 +15,7 @@ import {
   KANGUR_THEME_CATALOG_KEY,
   parseKangurThemeCatalog,
   parseKangurThemeSettings,
+  normalizeKangurThemeSettings,
   type KangurThemeCatalogEntry,
 } from '@/features/kangur/theme-settings';
 import {
@@ -160,7 +161,9 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
         return parseKangurThemeSettings(settingsStore.get(slotMap[id]!.key), slotMap[id]!.default) ?? slotMap[id]!.default;
       }
       const entry = catalog.find((e) => e.id === id);
-      return entry ? normalizeThemeSettings(entry.settings, SLOT_CONFIG.daily.defaultTheme) : SLOT_CONFIG.daily.defaultTheme;
+      return entry
+        ? normalizeKangurThemeSettings(entry.settings, SLOT_CONFIG.daily.defaultTheme)
+        : SLOT_CONFIG.daily.defaultTheme;
     },
     [catalog, settingsStore]
   );

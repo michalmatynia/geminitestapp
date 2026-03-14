@@ -16,6 +16,9 @@ import {
   AddingTenFrameAnimation,
   AddingTwoDigitAnimation,
   AddingZeroAnimation,
+  MultiplicationArrayAnimation,
+  MultiplicationCommutativeAnimation,
+  MultiplicationGroupsAnimation,
 } from '@/features/kangur/ui/components/LessonAnimations';
 import MultiplicationArrayGame from '@/features/kangur/ui/components/MultiplicationArrayGame';
 import MultiplicationGame from '@/features/kangur/ui/components/MultiplicationGame';
@@ -42,7 +45,48 @@ type SectionId =
   | 'game_array'
   | 'game_quiz';
 
-const ANIMATION_SLIDES: LessonSlide[] = [
+const MULTIPLICATION_ANIMATION_SLIDES: LessonSlide[] = [
+  {
+    title: 'Mnożenie jako grupy',
+    content: (
+      <KangurLessonStack>
+        <KangurLessonLead>
+          Mnożenie to powtarzane dodawanie równych grup.
+        </KangurLessonLead>
+        <KangurLessonCallout accent='violet' className='text-center'>
+          <div className='mx-auto w-full max-w-sm'>
+            <MultiplicationGroupsAnimation />
+          </div>
+          <KangurEquationDisplay accent='violet' className='mt-2' size='sm'>
+            3 × 4 = 12
+          </KangurEquationDisplay>
+          <KangurLessonCaption className='mt-1'>3 grupy po 4.</KangurLessonCaption>
+        </KangurLessonCallout>
+      </KangurLessonStack>
+    ),
+  },
+  {
+    title: 'Rzędy w tablicy',
+    content: (
+      <KangurLessonStack>
+        <KangurLessonLead>
+          Każdy rząd ma tyle samo elementów, więc łatwo liczyć skokami.
+        </KangurLessonLead>
+        <KangurLessonCallout accent='indigo' className='text-center'>
+          <div className='mx-auto w-full max-w-sm'>
+            <MultiplicationArrayAnimation />
+          </div>
+          <KangurEquationDisplay accent='indigo' className='mt-2' size='sm'>
+            4 + 4 + 4 = 12
+          </KangurEquationDisplay>
+          <KangurLessonCaption className='mt-1'>Skoki co 4: 4, 8, 12.</KangurLessonCaption>
+        </KangurLessonCallout>
+      </KangurLessonStack>
+    ),
+  },
+];
+
+const ADDITION_ANIMATION_SLIDES: LessonSlide[] = [
   {
     title: 'Dodawanie w ruchu (SVG)',
     content: (
@@ -219,6 +263,11 @@ const ANIMATION_SLIDES: LessonSlide[] = [
   },
 ];
 
+const ALL_ANIMATION_SLIDES: LessonSlide[] = [
+  ...MULTIPLICATION_ANIMATION_SLIDES,
+  ...ADDITION_ANIMATION_SLIDES,
+];
+
 export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, LessonSlide[]> = {
   intro: [
     {
@@ -243,8 +292,10 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, Less
         </KangurLessonStack>
       ),
     },
+    ...MULTIPLICATION_ANIMATION_SLIDES,
+    ...ADDITION_ANIMATION_SLIDES,
   ],
-  animacje: ANIMATION_SLIDES,
+  animacje: ALL_ANIMATION_SLIDES,
   tabela23: [
     {
       title: 'Tabliczka mnożenia × 2 i × 3',
@@ -326,6 +377,22 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, Less
         </KangurLessonStack>
       ),
     },
+    {
+      title: 'Kolejność czynników',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>3 × 4 to to samo co 4 × 3.</KangurLessonLead>
+          <KangurLessonCallout accent='amber' className='max-w-sm text-center'>
+            <div className='mx-auto w-full max-w-xs'>
+              <MultiplicationCommutativeAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Zamiana czynników nie zmienia wyniku.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
   ],
 };
 
@@ -339,8 +406,8 @@ export const HUB_SECTIONS = [
   {
     id: 'animacje',
     emoji: '🎞️',
-    title: 'Animacje dodawania',
-    description: 'Te same animacje co w lekcji dodawania',
+    title: 'Animacje',
+    description: 'Mnozenie + animacje z dodawania',
   },
   {
     id: 'tabela23',

@@ -10,6 +10,7 @@ import {
   useAsset3DTags,
   useReindexAssets3DMutation,
 } from '../hooks/useAsset3dQueries';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type { ViewMode } from './view-mode';
 
@@ -67,11 +68,15 @@ export function useAsset3DListState(): UseAsset3DListStateReturn {
   const handleReindex = async () => {
     try {
       await reindexMutation.mutateAsync();
-    } catch (_e) {
-      // handled by mutation error
+    } catch (error) {
+      logClientError(error, {
+        context: {
+          service: 'viewer3d',
+          action: 'reindexAssets',
+        },
+      });
     }
   };
-
   return {
     previewAsset,
     setPreviewAsset,

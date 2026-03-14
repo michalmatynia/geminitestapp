@@ -28,9 +28,18 @@ export function KangurLessonProgressDots({
   }
 
   const normalizedViewedCount = Math.min(Math.max(Math.floor(viewedCount), 0), totalCount);
+  const resolvedLabel =
+    srLabel ?? `Obejrzano ${normalizedViewedCount} z ${totalCount} ekranow tej sekcji.`;
 
   return (
-    <div className={cn('flex items-center gap-1.5', className)} data-testid={testId}>
+    <div
+      className={cn('flex items-center gap-1.5', className)}
+      data-testid={testId}
+      role='img'
+      aria-label={resolvedLabel}
+      aria-live='polite'
+      aria-atomic='true'
+    >
       {Array.from({ length: totalCount }).map((_, index) => (
         <span
           key={index}
@@ -43,7 +52,7 @@ export function KangurLessonProgressDots({
           )}
         />
       ))}
-      {srLabel ? <span className='sr-only'>{srLabel}</span> : null}
+      <span className='sr-only'>{resolvedLabel}</span>
     </div>
   );
 }

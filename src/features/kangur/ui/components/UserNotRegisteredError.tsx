@@ -13,6 +13,8 @@ export default function UserNotRegisteredError(): React.JSX.Element {
   return (
     <KangurPageShell tone='learn' skipLinkTargetId='kangur-user-not-registered-main'>
       <KangurPageContainer
+        as='section'
+        data-kangur-route-main='true'
         id='kangur-user-not-registered-main'
         className='flex flex-1 items-center justify-center py-12'
       >

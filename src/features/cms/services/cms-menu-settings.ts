@@ -21,11 +21,15 @@ const toMongoId = (id: string): string | ObjectId => {
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
-  const mongo = await getMongoDb();
-  const doc = await mongo
-    .collection<MongoStringSettingRecord<string | ObjectId>>('settings')
-    .findOne({ $or: [{ _id: toMongoId(key) }, { key }] });
-  return typeof doc?.value === 'string' ? doc.value : null;
+  try {
+    const mongo = await getMongoDb();
+    const doc = await mongo
+      .collection<MongoStringSettingRecord<string | ObjectId>>('settings')
+      .findOne({ $or: [{ _id: toMongoId(key) }, { key }] });
+    return typeof doc?.value === 'string' ? doc.value : null;
+  } catch {
+    return null;
+  }
 };
 
 const readSettingValue = async (key: string): Promise<string | null> => readMongoSetting(key);

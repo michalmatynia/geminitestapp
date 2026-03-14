@@ -383,10 +383,9 @@ export function useAdminCaseResolverDocumentActions({
             message?: string;
           };
           message = payload.error?.message ?? payload.message ?? message;
-        } catch (_error: unknown) {
-          // keep fallback message
-        }
-        throw new Error(message);
+        } catch {
+          // Intentionally ignore parsing error; keep fallback 'message' for the throw below.
+        }        throw new Error(message);
       }
       const pdfBlob = await response.blob();
       if (typeof window === 'undefined' || typeof document === 'undefined') return;

@@ -87,10 +87,15 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): 
       try {
         await db.collection(collectionName).createIndex(index.key);
         created.push({ collection: collectionName, key: index.key });
-      } catch (_error) {
-        // Ignore errors to allow remaining indexes to be created.
-      }
-    }
+      } catch (error) {
+        logSystemEvent({
+          source: 'system.diagnostics.mongo-indexes',
+          message: 'Failed to create database index during diagnostic run',
+          level: 'warn',
+          error,
+          context: { collectionName, indexKey: index.key },
+        });
+      }    }
   }
 
   const collections = await buildDiagnostics(db);

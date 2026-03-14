@@ -1,5 +1,5 @@
 import { ArrowLeft } from 'lucide-react';
-import { createContext, useContext, useEffect } from 'react';
+import { createContext, useContext, useEffect, useId } from 'react';
 
 import {
   type KangurLessonSubsectionSummary,
@@ -36,11 +36,13 @@ type LessonActivityStageContextValue = {
   accent: LessonActivityStageProps['accent'];
   backButtonLabel: string;
   description?: React.ReactNode;
+  descriptionId?: string;
   headerTestId?: string;
   icon: string;
   navigationPills?: React.ReactNode;
   onBack: () => void;
   title: string;
+  titleId?: string;
   secretLessonPill: ReturnType<typeof useKangurLessonSecretPill>;
 };
 
@@ -58,9 +60,9 @@ function LessonActivityStageTopBar(): React.JSX.Element {
   const { backButtonLabel, navigationPills, onBack, secretLessonPill } = useLessonActivityStageContext();
 
   return (
-    <div className='flex w-full flex-wrap items-center justify-between gap-3'>
+    <nav className='flex w-full flex-wrap items-center justify-between gap-3' aria-label='Nawigacja lekcji'>
       <KangurButton onClick={onBack} size='sm' type='button' variant='surface'>
-        <ArrowLeft className='w-4 h-4' /> {backButtonLabel}
+        <ArrowLeft className='w-4 h-4' aria-hidden='true' /> {backButtonLabel}
       </KangurButton>
       {navigationPills || secretLessonPill?.isUnlocked ? (
         <div className='flex shrink-0 items-center gap-2'>
@@ -74,17 +76,18 @@ function LessonActivityStageTopBar(): React.JSX.Element {
               data-testid='lesson-activity-secret-indicator'
               title='Sekretny panel'
             >
-              ★
+              <span aria-hidden='true'>★</span>
             </button>
           ) : null}
         </div>
       ) : null}
-    </div>
+    </nav>
   );
 }
 
 function LessonActivityStageHeader(): React.JSX.Element {
-  const { accent, description, headerTestId, icon, title } = useLessonActivityStageContext();
+  const { accent, description, descriptionId, headerTestId, icon, title, titleId } =
+    useLessonActivityStageContext();
 
   return (
     <div
@@ -92,15 +95,20 @@ function LessonActivityStageHeader(): React.JSX.Element {
       data-testid={headerTestId}
     >
       <div className='min-w-0 flex-1'>
-        <KangurHeadline accent={accent} as='h2' size='sm'>
+        <KangurHeadline accent={accent} as='h2' id={titleId} size='sm'>
           {title}
         </KangurHeadline>
         {description ? (
-          <p className='mt-1 text-sm [color:var(--kangur-page-muted-text)]'>{description}</p>
+          <p
+            className='mt-1 text-sm [color:var(--kangur-page-muted-text)]'
+            id={descriptionId}
+          >
+            {description}
+          </p>
         ) : null}
       </div>
       <div className='ml-auto flex shrink-0 justify-end'>
-        <KangurIconBadge accent={accent} size='md'>
+        <KangurIconBadge accent={accent} decorative size='md'>
           {icon}
         </KangurIconBadge>
       </div>
@@ -126,18 +134,25 @@ export default function LessonActivityStage({
 }: LessonActivityStageProps): React.JSX.Element {
   const registerSubsectionNavigation = useKangurRegisterLessonSubsectionNavigation();
   const secretLessonPill = useKangurLessonSecretPill();
+  const titleId = useId();
+  const descriptionId = useId();
   const shellPanelClassName = cn('flex w-full flex-col gap-5', shellClassName);
   const shellPanelTestId = shellTestId;
   const shouldRenderStageHeader = sectionHeader === null;
+  const panelLabelledBy = shouldRenderStageHeader ? titleId : undefined;
+  const panelDescribedBy = shouldRenderStageHeader && description ? descriptionId : undefined;
+  const panelAriaLabel = shouldRenderStageHeader ? undefined : title;
   const contextValue: LessonActivityStageContextValue = {
     accent,
     backButtonLabel,
     description,
+    descriptionId: shouldRenderStageHeader ? descriptionId : undefined,
     headerTestId,
     icon,
     navigationPills,
     onBack,
     title,
+    titleId: shouldRenderStageHeader ? titleId : undefined,
     secretLessonPill,
   };
   useKangurSyncLessonSubsectionSummary(sectionHeader);
@@ -154,6 +169,10 @@ export default function LessonActivityStage({
         <KangurGlassPanel
           className={shellPanelClassName}
           data-testid={shellPanelTestId}
+          role='region'
+          aria-label={panelAriaLabel}
+          aria-labelledby={panelLabelledBy}
+          aria-describedby={panelDescribedBy}
           padding='xl'
           surface='solid'
         >

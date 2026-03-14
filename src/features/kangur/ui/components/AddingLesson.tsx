@@ -73,6 +73,49 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
           <KangurEquationDisplay accent='amber' size='sm'>
             2 + 3 = 5
           </KangurEquationDisplay>
+          <KangurLessonCallout accent='slate' className='max-w-md text-center'>
+            <div className='grid grid-cols-[1fr_auto_1fr] items-center gap-3'>
+              <div className='rounded-xl border border-amber-200/60 bg-amber-50/80 px-3 py-2'>
+                <p className='text-[11px] font-semibold uppercase tracking-wide text-amber-700'>
+                  Czesc
+                </p>
+                <p className='text-2xl font-bold text-amber-700'>2</p>
+              </div>
+              <span className='text-xl font-bold text-slate-400'>+</span>
+              <div className='rounded-xl border border-sky-200/60 bg-sky-50/80 px-3 py-2'>
+                <p className='text-[11px] font-semibold uppercase tracking-wide text-sky-700'>
+                  Czesc
+                </p>
+                <p className='text-2xl font-bold text-sky-700'>3</p>
+              </div>
+            </div>
+            <div className='mt-3 flex items-center justify-center gap-2'>
+              <span className='text-xl font-bold text-slate-400'>=</span>
+              <div className='rounded-2xl border border-emerald-200/60 bg-emerald-50/80 px-4 py-2'>
+                <p className='text-[11px] font-semibold uppercase tracking-wide text-emerald-700'>
+                  Calosc
+                </p>
+                <p className='text-2xl font-bold text-emerald-700'>5</p>
+              </div>
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Czesc + czesc daje calosc.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+          <div className='grid w-full max-w-md grid-cols-1 gap-3 min-[360px]:grid-cols-3'>
+            <div className='rounded-2xl border border-amber-200/70 bg-amber-50/80 px-3 py-2 text-center text-xs font-semibold text-amber-700'>
+              <div className='text-xl'>🍎🍎</div>
+              <p className='mt-1'>Start</p>
+            </div>
+            <div className='rounded-2xl border border-slate-200/70 bg-white px-3 py-2 text-center text-xs font-semibold text-slate-600'>
+              <div className='text-xl'>➕</div>
+              <p className='mt-1'>Polacz</p>
+            </div>
+            <div className='rounded-2xl border border-emerald-200/70 bg-emerald-50/80 px-3 py-2 text-center text-xs font-semibold text-emerald-700'>
+              <div className='text-xl'>🍎🍎🍎🍎🍎</div>
+              <p className='mt-1'>Wynik</p>
+            </div>
+          </div>
         </KangurLessonStack>
       ),
     },
@@ -127,6 +170,11 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               Startuj od 4 i zrób trzy kroki: 5, 6, 7.
             </KangurLessonCaption>
           </KangurLessonInset>
+          <div className='flex flex-wrap items-center justify-center gap-2 text-xs font-semibold'>
+            <KangurLessonChip accent='amber'>Start od wiekszej</KangurLessonChip>
+            <KangurLessonChip accent='sky'>Liczenie w gore</KangurLessonChip>
+            <KangurLessonChip accent='emerald'>Szybki wynik</KangurLessonChip>
+          </div>
           <div className='flex gap-1 flex-wrap justify-center'>
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
               <KangurIconBadge key={n} accent='indigo' size='sm'>
@@ -154,6 +202,20 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
             <KangurLessonCaption className='mt-1'>
               Kropki łączą się w jedną grupę i tworzą sumę.
             </KangurLessonCaption>
+            <div className='mt-3 flex flex-wrap items-center justify-center gap-3 text-xs font-semibold'>
+              <div className='flex items-center gap-2'>
+                <span className='h-2.5 w-2.5 rounded-full bg-amber-400' />
+                <span>Grupa A</span>
+              </div>
+              <div className='flex items-center gap-2'>
+                <span className='h-2.5 w-2.5 rounded-full bg-sky-400' />
+                <span>Grupa B</span>
+              </div>
+              <div className='flex items-center gap-2'>
+                <span className='h-2.5 w-2.5 rounded-full bg-emerald-400' />
+                <span>Suma</span>
+              </div>
+            </div>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
@@ -194,6 +256,27 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               </p>
             </KangurLessonCallout>
           </div>
+          <div className='w-full max-w-md rounded-2xl border border-sky-200/70 bg-sky-50/70 px-4 py-3 text-left text-sm'>
+            <p className='text-xs font-semibold uppercase tracking-wide text-sky-700'>
+              Cel: 10
+            </p>
+            <div className='mt-2 h-3 w-full overflow-hidden rounded-full border border-sky-200 bg-white/80'>
+              <div className='flex h-full'>
+                <div className='bg-amber-400' style={{ width: '70%' }} />
+                <div className='bg-sky-400' style={{ width: '30%' }} />
+              </div>
+            </div>
+            <div className='mt-2 flex items-center justify-between text-xs font-semibold text-slate-600'>
+              <span>7</span>
+              <span>+3</span>
+              <span>=10</span>
+            </div>
+            <div className='mt-2 flex items-center gap-2'>
+              <div className='rounded-full border border-emerald-200/70 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700'>
+                Zostaje +2
+              </div>
+            </div>
+          </div>
         </KangurLessonStack>
       ),
     },
@@ -211,6 +294,15 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               8 + <b>2</b> = 10, zostaje <b>3</b>, więc 10 + 3 = <b>13</b>.
             </KangurLessonCaption>
           </KangurLessonCallout>
+          <div className='flex flex-wrap items-center justify-center gap-2 text-xs font-semibold'>
+            <KangurLessonChip accent='sky'>Start 8</KangurLessonChip>
+            <span className='text-slate-400'>→</span>
+            <KangurLessonChip accent='amber'>+2</KangurLessonChip>
+            <KangurLessonChip accent='emerald'>10</KangurLessonChip>
+            <span className='text-slate-400'>→</span>
+            <KangurLessonChip accent='amber'>+3</KangurLessonChip>
+            <KangurLessonChip accent='emerald'>13</KangurLessonChip>
+          </div>
         </KangurLessonStack>
       ),
     },
@@ -230,6 +322,14 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               Najpierw <b>+3</b> do 10, potem jeszcze <b>+2</b>.
             </KangurLessonCaption>
           </KangurLessonCallout>
+          <div className='w-full max-w-md rounded-2xl border border-sky-200/70 bg-sky-50/70 px-4 py-3 text-left text-sm'>
+            <p className='text-xs font-semibold uppercase tracking-wide text-sky-700'>Mini plan</p>
+            <div className='mt-2 space-y-1'>
+              <p>• Uzupełnij ramkę do 10</p>
+              <p>• Dodaj resztę obok</p>
+              <p>• Połącz obie części w wynik</p>
+            </div>
+          </div>
         </KangurLessonStack>
       ),
     },
@@ -262,6 +362,28 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               30 + 7 = 37 ✓
             </KangurEquationDisplay>
           </KangurLessonCallout>
+          <KangurLessonInset accent='emerald' className='max-w-md text-left' padding='sm'>
+            <div className='grid gap-2 text-sm'>
+              <div className='flex items-center justify-between'>
+                <span className='text-xs font-semibold uppercase tracking-wide text-emerald-700'>
+                  Schemat
+                </span>
+                <span className='text-xs text-emerald-600'>dziesiatki + jednosci</span>
+              </div>
+              <div className='flex items-center justify-between rounded-md bg-emerald-50/60 px-2 py-1'>
+                <span>20 + 10</span>
+                <span className='font-semibold'>30</span>
+              </div>
+              <div className='flex items-center justify-between rounded-md bg-emerald-50/60 px-2 py-1'>
+                <span>4 + 3</span>
+                <span className='font-semibold'>7</span>
+              </div>
+              <div className='flex items-center justify-between border-t border-emerald-200/70 pt-2 font-semibold text-emerald-700'>
+                <span>30 + 7</span>
+                <span>37</span>
+              </div>
+            </div>
+          </KangurLessonInset>
         </KangurLessonStack>
       ),
     },
@@ -305,6 +427,20 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               Najpierw 20 + 10, potem 4 + 3. Suma składa się z obu części.
             </KangurLessonCaption>
           </KangurLessonCallout>
+          <div className='flex flex-wrap items-center justify-center gap-3 text-xs font-semibold'>
+            <div className='flex items-center gap-2'>
+              <span className='h-2.5 w-2.5 rounded-sm bg-emerald-400' />
+              <span>Dziesiatki</span>
+            </div>
+            <div className='flex items-center gap-2'>
+              <span className='h-2.5 w-2.5 rounded-sm bg-sky-400' />
+              <span>Jednosci</span>
+            </div>
+            <div className='flex items-center gap-2'>
+              <span className='h-2.5 w-2.5 rounded-sm bg-amber-400' />
+              <span>Suma</span>
+            </div>
+          </div>
         </KangurLessonStack>
       ),
     },
@@ -324,6 +460,30 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               Najpierw dziesiatki, potem jednosci. Wynik sklada sie z obu kolumn.
             </KangurLessonCaption>
           </KangurLessonCallout>
+          <KangurLessonInset accent='slate' className='max-w-md text-left' padding='sm'>
+            <div className='grid gap-2 text-sm'>
+              <div className='grid grid-cols-[1fr_auto_1fr] items-center gap-2 font-semibold'>
+                <span>Dziesiatki</span>
+                <span className='text-slate-400'>+</span>
+                <span>Jednosci</span>
+              </div>
+              <div className='grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-md bg-slate-50 px-2 py-1'>
+                <span>20 + 10</span>
+                <span className='text-slate-400'>→</span>
+                <span>30</span>
+              </div>
+              <div className='grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-md bg-slate-50 px-2 py-1'>
+                <span>4 + 3</span>
+                <span className='text-slate-400'>→</span>
+                <span>7</span>
+              </div>
+              <div className='grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-t border-slate-200 pt-2 font-semibold'>
+                <span>30 + 7</span>
+                <span className='text-slate-400'>=</span>
+                <span>37</span>
+              </div>
+            </div>
+          </KangurLessonInset>
         </KangurLessonStack>
       ),
     },
@@ -343,6 +503,11 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               Koraliki przesuwaja sie do wspolnej sumy.
             </KangurLessonCaption>
           </KangurLessonCallout>
+          <div className='flex flex-wrap items-center justify-center gap-2 text-xs font-semibold'>
+            <KangurLessonChip accent='amber'>Dziesiatki</KangurLessonChip>
+            <KangurLessonChip accent='sky'>Jednosci</KangurLessonChip>
+            <KangurLessonChip accent='emerald'>Suma</KangurLessonChip>
+          </div>
         </KangurLessonStack>
       ),
     },
@@ -353,18 +518,10 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
       content: (
         <KangurLessonStack>
           <div className='flex flex-wrap justify-center gap-2 text-xs font-semibold'>
-            <span className='rounded-full border border-amber-200/70 bg-amber-50 px-3 py-1 text-amber-700'>
-              Kolejnosc: 3 + 5 = 5 + 3
-            </span>
-            <span className='rounded-full border border-sky-200/70 bg-sky-50 px-3 py-1 text-sky-700'>
-              Dodawanie 0: 7 + 0 = 7
-            </span>
-            <span className='rounded-full border border-emerald-200/70 bg-emerald-50 px-3 py-1 text-emerald-700'>
-              Startuj od wiekszej liczby
-            </span>
-            <span className='rounded-full border border-slate-200/70 bg-slate-50 px-3 py-1 text-slate-700'>
-              Grupuj do 10
-            </span>
+            <KangurLessonChip accent='amber'>Kolejnosc: 3 + 5 = 5 + 3</KangurLessonChip>
+            <KangurLessonChip accent='sky'>Dodawanie 0: 7 + 0 = 7</KangurLessonChip>
+            <KangurLessonChip accent='emerald'>Startuj od wiekszej liczby</KangurLessonChip>
+            <KangurLessonChip accent='slate'>Grupuj do 10</KangurLessonChip>
           </div>
           <div className='grid w-full gap-3 sm:grid-cols-2'>
             <KangurLessonCallout accent='amber' className='text-sm' padding='sm'>
@@ -388,7 +545,24 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               </p>
             </KangurLessonCallout>
           </div>
-          <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
+          <div className='w-full max-w-md rounded-2xl border border-slate-200/70 bg-white px-4 py-3 text-left text-sm'>
+            <p className='text-xs font-semibold uppercase tracking-wide text-slate-500'>Sciezka</p>
+            <div className='mt-2 space-y-2 border-l-2 border-slate-200 pl-3'>
+              <div>
+                <p className='font-semibold text-slate-700'>Znajdz pary do 10</p>
+                <p className='text-xs text-slate-500'>6 + 4, 7 + 3, 8 + 2</p>
+              </div>
+              <div>
+                <p className='font-semibold text-slate-700'>Uzyj podwojen</p>
+                <p className='text-xs text-slate-500'>5 + 5, 6 + 6</p>
+              </div>
+              <div>
+                <p className='font-semibold text-slate-700'>Grupuj liczby</p>
+                <p className='text-xs text-slate-500'>Najpierw latwiejsza suma</p>
+              </div>
+            </div>
+          </div>
+          <div className='flex w-full flex-col gap-3'>
             <KangurLessonInset accent='rose' className='text-center'>
               <div className='flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide text-rose-700'>
                 <KangurIconBadge accent='rose' size='sm'>

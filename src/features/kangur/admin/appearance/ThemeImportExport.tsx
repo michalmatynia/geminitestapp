@@ -6,8 +6,7 @@ import {
   FormSection,
   useToast,
 } from '@/shared/ui';
-import { normalizeThemeSettings } from '@/shared/contracts/cms-theme';
-import { KANGUR_DEFAULT_DAILY_THEME } from '@/features/kangur/theme-settings';
+import { KANGUR_DEFAULT_DAILY_THEME, normalizeKangurThemeSettings } from '@/features/kangur/theme-settings';
 import { useAppearancePage } from './AppearancePage.context';
 
 export function ThemeImportExport(): React.JSX.Element {
@@ -32,7 +31,7 @@ export function ThemeImportExport(): React.JSX.Element {
     try {
       const text = await navigator.clipboard.readText();
       const parsed = JSON.parse(text);
-      const normalized = normalizeThemeSettings(parsed, KANGUR_DEFAULT_DAILY_THEME);
+      const normalized = normalizeKangurThemeSettings(parsed, KANGUR_DEFAULT_DAILY_THEME);
       setDraft(normalized);
       toast('Motyw wczytany ze schowka. Pamiętaj o zapisaniu zmian.', { variant: 'success' });
     } catch {

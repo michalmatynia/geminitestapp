@@ -142,12 +142,16 @@ export function useAiPathsSettingsPathActions({
         if (!shouldRetryWithEmptyRuntime) {
           throw error;
         }
-        console.warn('[AI Paths] Recovering selected path from invalid runtime state.', {
-          pathId,
-          error: message,
+        logSystemEvent({
+          source: 'ai.paths.settings',
+          message: 'Recovering selected path from invalid runtime state',
+          level: 'warn',
+          context: {
+            pathId,
+            error: message,
+          },
         });
-        return sanitizePathConfig({
-          ...config,
+        return sanitizePathConfig({          ...config,
           runtimeState: '',
         });
       }
@@ -248,12 +252,16 @@ export function useAiPathsSettingsPathActions({
         return resolved;
       }
 
-      console.warn('[AI Paths] Recovering selected path from invalid runtime state.', {
-        pathId,
-        error: resolved.error,
+      logSystemEvent({
+        source: 'ai.paths.settings',
+        message: 'Recovering selected path from invalid runtime state',
+        level: 'warn',
+        context: {
+          pathId,
+          error: resolved.error,
+        },
       });
-      resolved = recovered;
-      return resolved;
+      resolved = recovered;      return resolved;
     },
     []
   );
@@ -645,13 +653,17 @@ export function useAiPathsSettingsPathActions({
         setIsPathSwitching(false);
         const durationMs = Date.now() - switchStartedAt;
         if (durationMs >= 150) {
-          console.info('[ai-paths-switch] applied path config', {
-            pathId: value,
-            phase,
-            durationMs,
+          logSystemEvent({
+            source: 'ai.paths.settings',
+            message: 'Applied path config switch',
+            level: 'info',
+            context: {
+              pathId: value,
+              phase,
+              durationMs,
+            },
           });
-        }
-        void persistActivePathPreference(value);
+        }        void persistActivePathPreference(value);
       };
 
       const cachedConfig = pathConfigs[value];

@@ -431,7 +431,7 @@ const collectConsoleLogViolations = (root, srcDir) => {
   const srcRoot = path.join(root, srcDir);
   const CONSOLE_ALLOWLIST = new Set([
     'src/shared/utils/logger.ts',
-    'src/shared/lib/observability/log-system-event.ts',
+    'src/shared/lib/observability/system-logger.ts',
   ]);
   const files = listFiles(
     srcRoot,

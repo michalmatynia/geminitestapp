@@ -47,7 +47,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Dodawanie to łączenie dwóch grup razem, zeby policzyc, ile ich jest łacznie.
+            Dodawanie to łączenie dwóch grup razem, żeby policzyc, ile ich jest łacznie.
           </KangurLessonLead>
           <div className='flex items-center gap-4'>
             <KangurDisplayEmoji size='md'>🍎🍎</KangurDisplayEmoji>
@@ -77,14 +77,14 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
             <div className='grid grid-cols-[1fr_auto_1fr] items-center gap-3'>
               <div className='rounded-xl border border-amber-200/60 bg-amber-50/80 px-3 py-2'>
                 <p className='text-[11px] font-semibold uppercase tracking-wide text-amber-700'>
-                  Czesc
+                  Część
                 </p>
                 <p className='text-2xl font-bold text-amber-700'>2</p>
               </div>
               <span className='text-xl font-bold text-slate-400'>+</span>
               <div className='rounded-xl border border-sky-200/60 bg-sky-50/80 px-3 py-2'>
                 <p className='text-[11px] font-semibold uppercase tracking-wide text-sky-700'>
-                  Czesc
+                  Część
                 </p>
                 <p className='text-2xl font-bold text-sky-700'>3</p>
               </div>
@@ -99,7 +99,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               </div>
             </div>
             <KangurLessonCaption className='mt-2'>
-              Czesc + czesc daje calosc.
+              Część + część daje calosc.
             </KangurLessonCaption>
           </KangurLessonCallout>
           <div className='grid w-full max-w-md grid-cols-1 gap-3 min-[360px]:grid-cols-3'>
@@ -109,7 +109,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
             </div>
             <div className='rounded-2xl border border-slate-200/70 bg-white px-3 py-2 text-center text-xs font-semibold text-slate-600'>
               <div className='text-xl'>➕</div>
-              <p className='mt-1'>Polacz</p>
+              <p className='mt-1'>Połącz</p>
             </div>
             <div className='rounded-2xl border border-emerald-200/70 bg-emerald-50/80 px-3 py-2 text-center text-xs font-semibold text-emerald-700'>
               <div className='text-xl'>🍎🍎🍎🍎🍎</div>
@@ -124,7 +124,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Mozesz liczyc na palcach lub w myslach. Zacznij od wiekszej liczby!
+            Możesz liczyc na palcach lub w myslach. Zacznij od wiekszej liczby!
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' className='text-center'>
             <KangurEquationDisplay accent='amber' data-testid='adding-lesson-single-digit-equation'>
@@ -144,7 +144,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
                   2
                 </KangurIconBadge>
                 <span>
-                  Dolicz trzy kroki w gore: 5, 6, <b>7</b>
+                  Dolicz trzy kroki w górę: 5, 6, <b>7</b>
                 </span>
               </div>
               <div className='flex items-start gap-2'>
@@ -172,7 +172,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
           </KangurLessonInset>
           <div className='flex flex-wrap items-center justify-center gap-2 text-xs font-semibold'>
             <KangurLessonChip accent='amber'>Start od wiekszej</KangurLessonChip>
-            <KangurLessonChip accent='sky'>Liczenie w gore</KangurLessonChip>
+            <KangurLessonChip accent='sky'>Liczenie w górę</KangurLessonChip>
             <KangurLessonChip accent='emerald'>Szybki wynik</KangurLessonChip>
           </div>
           <div className='flex gap-1 flex-wrap justify-center'>
@@ -227,7 +227,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Gdy suma przekracza 10, mozesz uzupełnic do 10 i dodac reszte.
+            Gdy suma przekracza 10, możesz uzupełnic do 10 i dodac reszte.
           </KangurLessonLead>
           <KangurLessonCallout accent='sky' className='text-center'>
             <div className='mx-auto w-full max-w-sm'>
@@ -457,7 +457,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               <AddingColumnAnimation />
             </div>
             <KangurLessonCaption className='mt-1'>
-              Najpierw dziesiatki, potem jednosci. Wynik sklada sie z obu kolumn.
+              Najpierw dziesiatki, potem jednosci. Wynik sklada się z obu kolumn.
             </KangurLessonCaption>
           </KangurLessonCallout>
           <KangurLessonInset accent='slate' className='max-w-md text-left' padding='sm'>
@@ -493,14 +493,14 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
         <KangurLessonStack>
           <KangurLessonLead>
             Liczydlo pomaga przesuwac koraliki: osobno dziesiatki i jednosci, a potem
-            odczytac sume.
+            odczytać sume.
           </KangurLessonLead>
           <KangurLessonCallout accent='emerald' className='text-center'>
             <div className='mx-auto w-full max-w-sm'>
               <AddingAbacusAnimation />
             </div>
             <KangurLessonCaption className='mt-1'>
-              Koraliki przesuwaja sie do wspolnej sumy.
+              Koraliki przesuwaja się do wspolnej sumy.
             </KangurLessonCaption>
           </KangurLessonCallout>
           <div className='flex flex-wrap items-center justify-center gap-2 text-xs font-semibold'>
@@ -514,7 +514,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
   ],
   zapamietaj: [
     {
-      title: 'Zapamiętaj!',
+      title: 'Zasady dodawania',
       content: (
         <KangurLessonStack>
           <div className='flex flex-wrap justify-center gap-2 text-xs font-semibold'>
@@ -546,88 +546,136 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
             </KangurLessonCallout>
           </div>
           <div className='w-full max-w-md rounded-2xl border border-slate-200/70 bg-white px-4 py-3 text-left text-sm'>
-            <p className='text-xs font-semibold uppercase tracking-wide text-slate-500'>Sciezka</p>
+            <p className='text-xs font-semibold uppercase tracking-wide text-slate-500'>Ścieżka</p>
             <div className='mt-2 space-y-2 border-l-2 border-slate-200 pl-3'>
               <div>
                 <p className='font-semibold text-slate-700'>Znajdz pary do 10</p>
                 <p className='text-xs text-slate-500'>6 + 4, 7 + 3, 8 + 2</p>
               </div>
               <div>
-                <p className='font-semibold text-slate-700'>Uzyj podwojen</p>
+                <p className='font-semibold text-slate-700'>Użyj podwojen</p>
                 <p className='text-xs text-slate-500'>5 + 5, 6 + 6</p>
               </div>
               <div>
                 <p className='font-semibold text-slate-700'>Grupuj liczby</p>
-                <p className='text-xs text-slate-500'>Najpierw latwiejsza suma</p>
+                <p className='text-xs text-slate-500'>Najpierw łatwiejsza suma</p>
               </div>
             </div>
           </div>
-          <div className='flex w-full flex-col gap-3'>
-            <KangurLessonInset accent='rose' className='text-center'>
-              <div className='flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide text-rose-700'>
-                <KangurIconBadge accent='rose' size='sm'>
-                  ↔
-                </KangurIconBadge>
-                <span>Zamiana skladnikow</span>
-              </div>
-              <div className='mt-2'>
-                <AddingCommutativeAnimation />
-              </div>
-              <KangurLessonCaption className='mt-2'>
-                Zamień kolejność, a wynik zostaje taki sam.
-              </KangurLessonCaption>
-            </KangurLessonInset>
-            <KangurLessonInset accent='teal' className='text-center'>
-              <div className='flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide text-teal-700'>
-                <span>Nawiasy</span>
-                <span className='text-teal-400'>•</span>
-                <span>grupowanie</span>
-              </div>
-              <div className='mt-2'>
-                <AddingAssociativeAnimation />
-              </div>
-              <KangurLessonCaption className='mt-2'>
-                Grupuj liczby tak, by łatwiej je zsumować.
-              </KangurLessonCaption>
-            </KangurLessonInset>
-            <KangurLessonInset accent='sky' className='text-center'>
-              <div className='flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide text-sky-700'>
-                <span>Zero</span>
-                <span className='text-sky-400'>=</span>
-                <span>bez zmian</span>
-              </div>
-              <div className='mt-2'>
-                <AddingZeroAnimation />
-              </div>
-              <KangurLessonCaption className='mt-2'>Dodanie 0 nie zmienia wyniku.</KangurLessonCaption>
-            </KangurLessonInset>
-            <KangurLessonInset accent='amber' className='text-center'>
-              <div className='flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide text-amber-700'>
-                <KangurIconBadge accent='amber' size='sm'>
-                  10
-                </KangurIconBadge>
-                <span>Dopełnij do 10</span>
-              </div>
-              <div className='mt-2'>
-                <AddingMakeTenPairsAnimation />
-              </div>
-              <KangurLessonCaption className='mt-2'>Szukaj par, które razem dają 10.</KangurLessonCaption>
-            </KangurLessonInset>
-            <KangurLessonInset accent='emerald' className='text-center'>
-              <div className='flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide text-emerald-700'>
-                <span>Podwojenia</span>
-              </div>
-              <div className='mt-2'>
-                <AddingDoublesAnimation />
-              </div>
-              <KangurEquationDisplay accent='emerald' className='mt-2' size='sm'>
-                5 + 5 = 10
-              </KangurEquationDisplay>
-              <KangurLessonCaption className='mt-1'>
-                Powtórz tę samą liczbę, a wynik jest szybki.
-              </KangurLessonCaption>
-            </KangurLessonInset>
-          </div>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Zamiana skladnikow',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonInset accent='rose' className='text-center'>
+            <div className='flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide text-rose-700'>
+              <KangurIconBadge accent='rose' size='sm'>
+                ↔
+              </KangurIconBadge>
+              <span>Zamiana skladnikow</span>
+            </div>
+            <p className='mt-2 text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
+              Zamień kolejność i porównaj wynik.
+            </p>
+            <div className='mt-2'>
+              <AddingCommutativeAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Zamień kolejność, a wynik zostaje taki sam.
+            </KangurLessonCaption>
+          </KangurLessonInset>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Nawiasy i grupowanie',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonInset accent='teal' className='text-center'>
+            <div className='flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide text-teal-700'>
+              <span>Nawiasy</span>
+              <span className='text-teal-400'>•</span>
+              <span>grupowanie</span>
+            </div>
+            <p className='mt-2 text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
+              Sprawdź, że różne grupowanie daje ten sam wynik.
+            </p>
+            <div className='mt-2'>
+              <AddingAssociativeAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Grupuj liczby tak, by łatwiej je zsumować.
+            </KangurLessonCaption>
+          </KangurLessonInset>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Zero = bez zmian',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonInset accent='sky' className='text-center'>
+            <div className='flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide text-sky-700'>
+              <span>Zero</span>
+              <span className='text-sky-400'>=</span>
+              <span>bez zmian</span>
+            </div>
+            <p className='mt-2 text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
+              Dodaj zero i zobacz, co się stanie.
+            </p>
+            <div className='mt-2'>
+              <AddingZeroAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>Dodanie 0 nie zmienia wyniku.</KangurLessonCaption>
+          </KangurLessonInset>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Dopełnij do 10',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonInset accent='amber' className='text-center'>
+            <div className='flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide text-amber-700'>
+              <KangurIconBadge accent='amber' size='sm'>
+                10
+              </KangurIconBadge>
+              <span>Dopełnij do 10</span>
+            </div>
+            <p className='mt-2 text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
+              Szukaj par, które razem dają 10.
+            </p>
+            <div className='mt-2'>
+              <AddingMakeTenPairsAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>Szukaj par, które razem dają 10.</KangurLessonCaption>
+          </KangurLessonInset>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Podwojenia',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonInset accent='emerald' className='text-center'>
+            <div className='flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide text-emerald-700'>
+              <span>Podwojenia</span>
+            </div>
+            <p className='mt-2 text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
+              Powtórz tę samą liczbę i policz szybciej.
+            </p>
+            <div className='mt-2'>
+              <AddingDoublesAnimation />
+            </div>
+            <KangurEquationDisplay accent='emerald' className='mt-2' size='sm'>
+              5 + 5 = 10
+            </KangurEquationDisplay>
+            <KangurLessonCaption className='mt-1'>
+              Powtórz tę samą liczbę, a wynik jest szybki.
+            </KangurLessonCaption>
+          </KangurLessonInset>
         </KangurLessonStack>
       ),
     },

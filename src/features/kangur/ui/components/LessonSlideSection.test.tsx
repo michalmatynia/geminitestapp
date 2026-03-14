@@ -107,7 +107,7 @@ describe('LessonSlideSection', () => {
     expect(screen.queryByTestId('lesson-slide-prev-button')).not.toBeInTheDocument();
     expect(screen.getByTestId('lesson-slide-next-button')).toHaveAttribute(
       'aria-label',
-      'Nastepny panel'
+      'Następny panel'
     );
     expect(secondIndicator).toHaveClass(
       'kangur-cta-pill',

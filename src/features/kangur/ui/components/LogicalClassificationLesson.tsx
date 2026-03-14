@@ -5,6 +5,22 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
+  ClassificationCategoryBinsAnimation,
+  ClassificationCriteriaAxesAnimation,
+  ClassificationCriteriaSwitchAnimation,
+  ClassificationHiddenRuleAnimation,
+  ClassificationOddOneOutAnimation,
+  ClassificationOddOneOutPatternAnimation,
+  ClassificationParityAnimation,
+  ClassificationRecapSequenceAnimation,
+  ClassificationSortByColorAnimation,
+  ClassificationSortByShapeAnimation,
+  ClassificationSortBySizeAnimation,
+  ClassificationTwoCriteriaGridAnimation,
+  ClassificationVennUnionAnimation,
+  ClassificationVennOverlapAnimation,
+} from '@/features/kangur/ui/components/LogicalLessonAnimations';
+import {
   KangurLessonCallout,
   KangurLessonCaption,
   KangurLessonInset,
@@ -25,6 +41,12 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             Klasyfikacja to układanie rzeczy w grupy według wspólnej cechy. To podstawa porządku w
             myśleniu i w życiu!
           </KangurLessonLead>
+          <KangurLessonInset accent='teal' className='w-full' padding='sm'>
+            <ClassificationSortByColorAnimation />
+            <KangurLessonCaption className='mt-2'>
+              Najpierw zauważ cechę — potem przyporządkuj do właściwej grupy.
+            </KangurLessonCaption>
+          </KangurLessonInset>
           <KangurLessonCallout
             accent='teal'
             className='w-full text-sm [color:var(--kangur-page-muted-text)]'
@@ -58,6 +80,12 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonLead>
             Patrz na wszystkie cechy i wybierz te, która jest wspólna dla całej grupy.
           </KangurLessonLead>
+          <KangurLessonInset accent='emerald' className='w-full' padding='sm'>
+            <ClassificationSortBySizeAnimation />
+            <KangurLessonCaption className='mt-2'>
+              Rozmiar to prosta cecha — duże i małe elementy tworzą różne zbiory.
+            </KangurLessonCaption>
+          </KangurLessonInset>
           <div className='grid w-full grid-cols-1 gap-3 min-[360px]:grid-cols-2'>
             <KangurLessonCallout accent='emerald' className='text-center' padding='sm'>
               <p className='font-bold text-green-700 text-xs mb-1'>Zwierzęta latające</p>
@@ -91,6 +119,65 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
         </KangurLessonStack>
       ),
     },
+    {
+      title: 'Sortowanie według kształtu',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Kształt to cecha, którą łatwo rozpoznać — wystarczy spojrzeć na krawędzie i kąty.
+          </KangurLessonLead>
+          <KangurLessonInset accent='sky' className='w-full' padding='sm'>
+            <ClassificationSortByShapeAnimation />
+            <KangurLessonCaption className='mt-2'>
+              Koła i kwadraty trafiają do różnych pojemników.
+            </KangurLessonCaption>
+          </KangurLessonInset>
+          <div className='grid w-full grid-cols-1 gap-3 min-[360px]:grid-cols-2'>
+            <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
+              <p className='font-bold text-violet-700 text-xs mb-1'>Koła</p>
+              <p className='text-2xl'>⚪ ⚪ ⚪</p>
+              <KangurLessonCaption className='mt-1'>
+                Cecha: brak kątów
+              </KangurLessonCaption>
+            </KangurLessonCallout>
+            <KangurLessonCallout accent='sky' className='text-center' padding='sm'>
+              <p className='font-bold text-blue-700 text-xs mb-1'>Kwadraty</p>
+              <p className='text-2xl'>⬜ ⬜ ⬜</p>
+              <KangurLessonCaption className='mt-1'>
+                Cecha: cztery równe boki
+              </KangurLessonCaption>
+            </KangurLessonCallout>
+          </div>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Kategorie i sortowanie',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Kategorie to większe „pudełka” na rzeczy. Dzięki nim łatwo utrzymasz porządek.
+          </KangurLessonLead>
+          <KangurLessonInset accent='amber' className='w-full' padding='sm'>
+            <ClassificationCategoryBinsAnimation />
+            <KangurLessonCaption className='mt-2'>
+              Każdy element ląduje w odpowiednim koszyku.
+            </KangurLessonCaption>
+          </KangurLessonInset>
+          <KangurLessonCallout
+            accent='amber'
+            className='w-full text-sm [color:var(--kangur-page-muted-text)]'
+          >
+            <p className='font-semibold text-amber-700 mb-2'>Przykłady kategorii:</p>
+            <ul className='space-y-1'>
+              <li>🍎 Owoce</li>
+              <li>🥕 Warzywa</li>
+              <li>🧸 Zabawki</li>
+            </ul>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
   ],
   diagram: [
     {
@@ -101,6 +188,18 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             Czasem trzeba wziąć pod uwagę dwie cechy jednocześnie. To trudniejsze, ale daje
             precyzyjniejszy podział.
           </KangurLessonLead>
+          <KangurLessonInset accent='teal' className='w-full' padding='sm'>
+            <ClassificationTwoCriteriaGridAnimation />
+            <KangurLessonCaption className='mt-2'>
+              Dwie cechy tworzą siatkę 2×2 — każda kratka to osobna grupa.
+            </KangurLessonCaption>
+          </KangurLessonInset>
+          <KangurLessonInset accent='teal' className='w-full' padding='sm'>
+            <ClassificationCriteriaAxesAnimation />
+            <KangurLessonCaption className='mt-2'>
+              Najpierw wybierz osie kryteriow, a potem przypisz elementy do pola.
+            </KangurLessonCaption>
+          </KangurLessonInset>
           <KangurLessonCallout accent='teal' className='w-full'>
             <p className='text-sm font-semibold text-teal-700 mb-3 text-center'>
               Figury: duże/małe × czerwone/niebieskie
@@ -133,6 +232,18 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             Diagram Venna pokazuje, co należy do jednej grupy, do drugiej, lub do obu jednocześnie —
             to część wspólna (przecięcie).
           </KangurLessonLead>
+          <KangurLessonInset accent='sky' className='w-full' padding='sm'>
+            <ClassificationVennOverlapAnimation />
+            <KangurLessonCaption className='mt-2'>
+              Środek diagramu to część wspólna — elementy należące do obu grup.
+            </KangurLessonCaption>
+          </KangurLessonInset>
+          <KangurLessonInset accent='sky' className='w-full' padding='sm'>
+            <ClassificationVennUnionAnimation />
+            <KangurLessonCaption className='mt-2'>
+              Unia to wszystko, co jest w zbiorze A lub w zbiorze B.
+            </KangurLessonCaption>
+          </KangurLessonInset>
           <KangurLessonCallout accent='sky' className='w-full'>
             <KangurLessonCaption className='mb-3'>
               Kocha sport vs. kocha muzykę
@@ -155,6 +266,33 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
         </KangurLessonStack>
       ),
     },
+    {
+      title: 'Zmiana kryterium',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Te same elementy można posortować na różne sposoby — zależy od tego, jakie kryterium
+            wybierzesz.
+          </KangurLessonLead>
+          <KangurLessonInset accent='teal' className='w-full' padding='sm'>
+            <ClassificationCriteriaSwitchAnimation />
+            <KangurLessonCaption className='mt-2'>
+              Najpierw kolor, potem kształt — układ grup się zmienia.
+            </KangurLessonCaption>
+          </KangurLessonInset>
+          <KangurLessonCallout
+            accent='teal'
+            className='w-full text-sm [color:var(--kangur-page-muted-text)]'
+          >
+            <p className='font-semibold text-teal-700 mb-2'>Wybierz kryterium:</p>
+            <ul className='space-y-1'>
+              <li>Najpierw najprostsza cecha (np. kolor).</li>
+              <li>Potem dokładniejsza (np. kształt).</li>
+            </ul>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
   ],
   intruz: [
     {
@@ -164,6 +302,12 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonLead>
             Jeden element nie pasuje do grupy. Znajdź go i wyjaśnij, dlaczego wyłamuje się z reguły.
           </KangurLessonLead>
+          <KangurLessonInset accent='rose' className='w-full' padding='sm'>
+            <ClassificationOddOneOutAnimation />
+            <KangurLessonCaption className='mt-2'>
+              Intruz łamie regułę — dlatego wyróżnia się na tle grupy.
+            </KangurLessonCaption>
+          </KangurLessonInset>
           <div className='flex flex-col gap-3 w-full'>
             {[
               { items: '🍎 🍌 🥕 🍇 🍓', answer: '🥕 — to warzywo, reszta to owoce' },
@@ -186,6 +330,12 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonLead>
             Trudniejsze zagadki — intruz może być ukryty pod nieoczywistą cechą.
           </KangurLessonLead>
+          <KangurLessonInset accent='amber' className='w-full' padding='sm'>
+            <ClassificationHiddenRuleAnimation />
+            <KangurLessonCaption className='mt-2'>
+              Najpierw znajdź regułę, a potem element, który jej nie spełnia.
+            </KangurLessonCaption>
+          </KangurLessonInset>
           <div className='flex flex-col gap-3 w-full'>
             {[
               { items: '3, 6, 9, 12, 16', answer: '16 — nie jest wielokrotnością 3' },
@@ -207,12 +357,45 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
         </KangurLessonStack>
       ),
     },
+    {
+      title: 'Znajdź intruza — poziom 3',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Intruz może zaburzać wzór lub kolejność. Sprawdź, co się powtarza.
+          </KangurLessonLead>
+          <KangurLessonInset accent='rose' className='w-full' padding='sm'>
+            <ClassificationOddOneOutPatternAnimation />
+            <KangurLessonCaption className='mt-2'>
+              Wzór się powtarza, ale jeden element go psuje.
+            </KangurLessonCaption>
+          </KangurLessonInset>
+          <div className='flex flex-col gap-3 w-full'>
+            {[
+              { items: '⚪ ⬜ ⚪ 🔺 ⚪ ⬜', answer: '🔺 — inny kształt niż reszta' },
+              { items: '🔴 🔵 🔴 🔵 🟢 🔴', answer: '🟢 — inny kolor w środku wzoru' },
+            ].map(({ items, answer }) => (
+              <KangurLessonCallout key={items} accent='rose' className='text-center' padding='sm'>
+                <p className='text-2xl mb-1'>{items}</p>
+                <p className='text-rose-600 font-bold text-sm mt-1'>{answer}</p>
+              </KangurLessonCallout>
+            ))}
+          </div>
+        </KangurLessonStack>
+      ),
+    },
   ],
   podsumowanie: [
     {
       title: 'Podsumowanie',
       content: (
         <KangurLessonStack>
+          <KangurLessonInset accent='teal' className='w-full' padding='sm'>
+            <ClassificationRecapSequenceAnimation />
+            <KangurLessonCaption className='mt-2'>
+              Pamiętaj: cecha, grupowanie, przecięcie i intruz.
+            </KangurLessonCaption>
+          </KangurLessonInset>
           <KangurLessonCallout accent='amber' className='w-full'>
             <ul className='space-y-2 text-sm [color:var(--kangur-page-text)]'>
               <li>
@@ -230,11 +413,62 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               <li>
                 🧩 <b>Intruz poz. 2</b> — nieoczywiste cechy ukryte głębiej
               </li>
+              <li>
+                🎯 <b>Intruz poz. 3</b> — zaburzony wzór lub sekwencja
+              </li>
             </ul>
-        </KangurLessonCallout>
-        <p className='text-teal-600 font-bold text-center'>
-          Klasyfikacja to klucz do porządku w świecie i w głowie!
-        </p>
+          </KangurLessonCallout>
+          <p className='text-teal-600 font-bold text-center'>
+            Klasyfikacja to klucz do porządku w świecie i w głowie!
+          </p>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Podsumowanie w animacjach',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Najważniejsze sposoby klasyfikacji w jednym zestawie animacji.
+          </KangurLessonLead>
+          <div className='grid w-full grid-cols-1 gap-3 min-[360px]:grid-cols-2'>
+            <KangurLessonInset accent='teal' className='w-full' padding='sm'>
+              <ClassificationSortByColorAnimation />
+              <KangurLessonCaption className='mt-2 text-center'>
+                Kolor
+              </KangurLessonCaption>
+            </KangurLessonInset>
+            <KangurLessonInset accent='sky' className='w-full' padding='sm'>
+              <ClassificationSortByShapeAnimation />
+              <KangurLessonCaption className='mt-2 text-center'>
+                Kształt
+              </KangurLessonCaption>
+            </KangurLessonInset>
+            <KangurLessonInset accent='amber' className='w-full' padding='sm'>
+              <ClassificationParityAnimation />
+              <KangurLessonCaption className='mt-2 text-center'>
+                Parzyste i nieparzyste
+              </KangurLessonCaption>
+            </KangurLessonInset>
+            <KangurLessonInset accent='emerald' className='w-full' padding='sm'>
+              <ClassificationTwoCriteriaGridAnimation />
+              <KangurLessonCaption className='mt-2 text-center'>
+                Dwie cechy naraz
+              </KangurLessonCaption>
+            </KangurLessonInset>
+            <KangurLessonInset accent='slate' className='w-full' padding='sm'>
+              <ClassificationVennOverlapAnimation />
+              <KangurLessonCaption className='mt-2 text-center'>
+                Przecięcie zbiorów
+              </KangurLessonCaption>
+            </KangurLessonInset>
+            <KangurLessonInset accent='rose' className='w-full' padding='sm'>
+              <ClassificationOddOneOutPatternAnimation />
+              <KangurLessonCaption className='mt-2 text-center'>
+                Intruz
+              </KangurLessonCaption>
+            </KangurLessonInset>
+          </div>
         </KangurLessonStack>
       ),
     },
@@ -258,7 +492,7 @@ export const HUB_SECTIONS = [
     id: 'intruz',
     emoji: '🔎',
     title: 'Znajdź intruza',
-    description: 'Poziom 1 i poziom 2 — co nie pasuje?',
+    description: 'Poziom 1, 2 i 3 — co nie pasuje?',
   },
   { id: 'podsumowanie', emoji: '📋', title: 'Podsumowanie', description: 'Wszystkie zasady razem' },
 ];

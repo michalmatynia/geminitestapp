@@ -158,6 +158,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
                   className={`transition-transform duration-300 ${
                     isMenuCollapsed ? 'rotate-180' : ''
                   }`}
+                  aria-hidden='true'
                 />
               </Button>
             </div>

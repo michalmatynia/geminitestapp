@@ -52,7 +52,7 @@ describe('KangurActiveLessonPanelWidget', () => {
       activeLessonAssignment: {
         id: 'assignment-1',
         title: 'Powtórz dodawanie',
-        description: 'Skup sie na prostych sumach.',
+        description: 'Skup się na prostych sumach.',
         priority: 'high',
         archived: false,
         target: {
@@ -105,7 +105,7 @@ describe('KangurActiveLessonPanelWidget', () => {
       'Priorytet Rodzica'
     );
     expect(screen.queryByText('Powtórz dodawanie')).toBeNull();
-    expect(screen.queryByText('Skup sie na prostych sumach.')).toBeNull();
+    expect(screen.queryByText('Skup się na prostych sumach.')).toBeNull();
     expect(screen.getByRole('button', { name: 'Wróć do listy lekcji' })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'

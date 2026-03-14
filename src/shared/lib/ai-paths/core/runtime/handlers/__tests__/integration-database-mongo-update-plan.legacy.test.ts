@@ -565,7 +565,7 @@ describe('buildMongoUpdatePlan', () => {
         entityId: 'product-1',
         entityType: 'product',
         result: {
-          parameters: [{ parameterId: 'unknown', value: 'Nowa wartosc' }],
+          parameters: [{ parameterId: 'unknown', value: 'Nowa wartość' }],
         },
       },
       nodeInputPorts: ['entityId', 'value', 'result'],
@@ -607,7 +607,7 @@ describe('buildMongoUpdatePlan', () => {
         entityId: 'product-1',
         entityType: 'product',
         result: {
-          parameters: [{ parameterId: 'unknown', value: 'Nowa wartosc' }],
+          parameters: [{ parameterId: 'unknown', value: 'Nowa wartość' }],
         },
         context: {
           entity: {

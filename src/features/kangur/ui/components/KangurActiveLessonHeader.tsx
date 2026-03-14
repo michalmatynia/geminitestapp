@@ -88,7 +88,7 @@ function KangurActiveLessonHeaderActions(): React.JSX.Element {
         loadingLabel='Przygotowywanie...'
         pauseLabel='Pauza'
         readLabel='Czytaj'
-        resumeLabel='Wznow'
+        resumeLabel='Wznów'
       />
       <KangurActiveLessonHeaderBody />
       <KangurActiveLessonHeaderIcon />
@@ -192,7 +192,13 @@ function KangurActiveLessonHeaderIcon(): React.JSX.Element {
 
   return (
     <div className='ml-auto flex shrink-0 justify-end'>
-      <KangurGradientIconTile data-testid={iconTestId} gradientClass={lesson.color} size='lg'>
+      <KangurGradientIconTile
+        data-testid={iconTestId}
+        gradientClass={lesson.color}
+        size='lg'
+        role='presentation'
+        aria-hidden='true'
+      >
         {lesson.emoji}
       </KangurGradientIconTile>
     </div>

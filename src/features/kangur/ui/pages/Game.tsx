@@ -5,16 +5,19 @@ import { useEffect, useMemo, useRef, type RefObject } from 'react';
 
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurGameCalendarTrainingWidget } from '@/features/kangur/ui/components/KangurGameCalendarTrainingWidget';
+import { KangurGameDivisionQuizWidget } from '@/features/kangur/ui/components/KangurGameDivisionQuizWidget';
 import { KangurGameGeometryTrainingWidget } from '@/features/kangur/ui/components/KangurGameGeometryTrainingWidget';
 import { KangurGameHomeActionsWidget } from '@/features/kangur/ui/components/KangurGameHomeActionsWidget';
 import { KangurGameHomeHeroWidget } from '@/features/kangur/ui/components/KangurGameHomeHeroWidget';
 import { KangurGameHomeQuestWidget } from '@/features/kangur/ui/components/KangurGameHomeQuestWidget';
 import { KangurGameKangurSessionWidget } from '@/features/kangur/ui/components/KangurGameKangurSessionWidget';
 import { KangurGameKangurSetupWidget } from '@/features/kangur/ui/components/KangurGameKangurSetupWidget';
+import { KangurGameMultiplicationQuizWidget } from '@/features/kangur/ui/components/KangurGameMultiplicationQuizWidget';
 import { KangurGameNavigationWidget } from '@/features/kangur/ui/components/KangurGameNavigationWidget';
 import { KangurGameOperationSelectorWidget } from '@/features/kangur/ui/components/KangurGameOperationSelectorWidget';
 import { KangurGameQuestionWidget } from '@/features/kangur/ui/components/KangurGameQuestionWidget';
 import { KangurGameResultWidget } from '@/features/kangur/ui/components/KangurGameResultWidget';
+import { KangurGameSubtractionQuizWidget } from '@/features/kangur/ui/components/KangurGameSubtractionQuizWidget';
 import { KangurGameTrainingSetupWidget } from '@/features/kangur/ui/components/KangurGameTrainingSetupWidget';
 import { KangurAssignmentSpotlight } from '@/features/kangur/ui/components/KangurAssignmentSpotlight';
 import { KangurPriorityAssignments } from '@/features/kangur/ui/components/KangurPriorityAssignments';
@@ -43,6 +46,9 @@ const GAME_TOP_RESET_SCREENS = new Set<KangurGameScreen>([
   'operation',
   'calendar_quiz',
   'geometry_quiz',
+  'subtraction_quiz',
+  'division_quiz',
+  'multiplication_quiz',
 ]);
 
 const GAME_SCREEN_LABELS: Record<KangurGameScreen, string> = {
@@ -52,6 +58,9 @@ const GAME_SCREEN_LABELS: Record<KangurGameScreen, string> = {
   kangur: 'Sesja Kangura Matematycznego',
   calendar_quiz: 'Ćwiczenia z kalendarzem',
   geometry_quiz: 'Ćwiczenia z figurami',
+  subtraction_quiz: 'Quiz odejmowania',
+  division_quiz: 'Quiz dzielenia',
+  multiplication_quiz: 'Quiz mnożenia',
   operation: 'Wybór rodzaju gry',
   playing: 'Pytanie do rozwiązania',
   result: 'Wynik gry',
@@ -64,6 +73,9 @@ const GAME_SCREEN_DESCRIPTIONS: Record<KangurGameScreen, string> = {
   kangur: 'Rozwiązuj zadania Kangura Matematycznego krok po kroku.',
   calendar_quiz: 'Ćwicz odczytywanie dat i zależności w kalendarzu.',
   geometry_quiz: 'Ćwicz figury, kształty i zależności przestrzenne.',
+  subtraction_quiz: 'Szybki quiz z odejmowania.',
+  division_quiz: 'Szybki quiz z dzielenia.',
+  multiplication_quiz: 'Szybki quiz z tabliczki mnożenia.',
   operation: 'Wybierz rodzaj matematycznej gry i poziom trudności.',
   playing: 'Rozwiąż aktualne pytanie bez podpowiedzi z gotową odpowiedzią.',
   result: 'Sprawdź wynik gry i zdecyduj, co ćwiczyć dalej.',
@@ -101,6 +113,9 @@ function GameContent(): React.JSX.Element {
   const kangurSessionRef = useRef<HTMLDivElement | null>(null);
   const calendarQuizRef = useRef<HTMLDivElement | null>(null);
   const geometryQuizRef = useRef<HTMLDivElement | null>(null);
+  const subtractionQuizRef = useRef<HTMLDivElement | null>(null);
+  const divisionQuizRef = useRef<HTMLDivElement | null>(null);
+  const multiplicationQuizRef = useRef<HTMLDivElement | null>(null);
   const operationSelectorRef = useRef<HTMLDivElement | null>(null);
   const resultSummaryRef = useRef<HTMLDivElement | null>(null);
   const resultLeaderboardRef = useRef<HTMLDivElement | null>(null);
@@ -116,7 +131,13 @@ function GameContent(): React.JSX.Element {
       return `game:practice:${runtime.operation}:${runtime.difficulty}`;
     }
 
-    if (screen === 'calendar_quiz' || screen === 'geometry_quiz') {
+    if (
+      screen === 'calendar_quiz' ||
+      screen === 'geometry_quiz' ||
+      screen === 'subtraction_quiz' ||
+      screen === 'division_quiz' ||
+      screen === 'multiplication_quiz'
+    ) {
       return `game:${screen}`;
     }
 
@@ -330,6 +351,42 @@ function GameContent(): React.JSX.Element {
     metadata: {
       contentId: screen === 'geometry_quiz' ? tutorActivityContentId : null,
       label: 'Ćwiczenia z figurami',
+    },
+  });
+  useKangurTutorAnchor({
+    id: 'kangur-game-subtraction-quiz',
+    kind: 'screen',
+    ref: subtractionQuizRef,
+    surface: 'game',
+    enabled: screen === 'subtraction_quiz',
+    priority: 120,
+    metadata: {
+      contentId: screen === 'subtraction_quiz' ? tutorActivityContentId : null,
+      label: 'Quiz odejmowania',
+    },
+  });
+  useKangurTutorAnchor({
+    id: 'kangur-game-division-quiz',
+    kind: 'screen',
+    ref: divisionQuizRef,
+    surface: 'game',
+    enabled: screen === 'division_quiz',
+    priority: 120,
+    metadata: {
+      contentId: screen === 'division_quiz' ? tutorActivityContentId : null,
+      label: 'Quiz dzielenia',
+    },
+  });
+  useKangurTutorAnchor({
+    id: 'kangur-game-multiplication-quiz',
+    kind: 'screen',
+    ref: multiplicationQuizRef,
+    surface: 'game',
+    enabled: screen === 'multiplication_quiz',
+    priority: 120,
+    metadata: {
+      contentId: screen === 'multiplication_quiz' ? tutorActivityContentId : null,
+      label: 'Quiz mnożenia',
     },
   });
   useKangurTutorAnchor({
@@ -575,6 +632,33 @@ function GameContent(): React.JSX.Element {
                 'w-full flex flex-col items-center',
                 <KangurGameGeometryTrainingWidget />,
                 geometryQuizRef
+              )
+            ) : null}
+
+            {screen === 'subtraction_quiz' ? (
+              renderScreen(
+                'subtraction_quiz',
+                'w-full flex flex-col items-center',
+                <KangurGameSubtractionQuizWidget />,
+                subtractionQuizRef
+              )
+            ) : null}
+
+            {screen === 'division_quiz' ? (
+              renderScreen(
+                'division_quiz',
+                'w-full flex flex-col items-center',
+                <KangurGameDivisionQuizWidget />,
+                divisionQuizRef
+              )
+            ) : null}
+
+            {screen === 'multiplication_quiz' ? (
+              renderScreen(
+                'multiplication_quiz',
+                'w-full flex flex-col items-center',
+                <KangurGameMultiplicationQuizWidget />,
+                multiplicationQuizRef
               )
             ) : null}
 

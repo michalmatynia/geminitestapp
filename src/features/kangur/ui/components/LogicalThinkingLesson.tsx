@@ -5,6 +5,18 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
+  LogicalAnalogyMapAnimation,
+  LogicalAnalogiesAnimation,
+  LogicalClassificationAnimation,
+  LogicalClassificationKeyAnimation,
+  LogicalPatternAnimation,
+  LogicalPatternGrowthAnimation,
+  LogicalReasoningAnimation,
+  LogicalSummaryAnimation,
+  LogicalThinkingIntroAnimation,
+  LogicalThinkingStepsAnimation,
+} from '@/features/kangur/ui/components/LogicalThinkingAnimations';
+import {
   KangurLessonCallout,
   KangurLessonCaption,
   KangurLessonLead,
@@ -29,6 +41,14 @@ const INTRO_SLIDES: LessonSlide[] = [
           Myślenie logiczne to umiejętność zauważania zasad, porządkowania informacji i wyciągania
           wniosków krok po kroku.
         </KangurLessonLead>
+        <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
+          <div className='mx-auto h-20 w-40'>
+            <LogicalThinkingIntroAnimation />
+          </div>
+          <KangurLessonCaption className='mt-2'>
+            Najpierw obserwujesz, potem łączysz fakty i wyciągasz wniosek.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
         <KangurLessonCallout accent='violet' className='w-full text-sm [color:var(--kangur-page-text)]'>
           <p className='mb-2 font-semibold text-violet-700'>Logiczne myślenie pomaga:</p>
           <ul className='space-y-1'>
@@ -37,6 +57,31 @@ const INTRO_SLIDES: LessonSlide[] = [
             <li>💡 Rozwiązywać zagadki i łamigłówki</li>
             <li>✅ Sprawdzać, czy coś ma sens</li>
           </ul>
+        </KangurLessonCallout>
+      </KangurLessonStack>
+    ),
+  },
+  {
+    title: 'Trzy kroki logiki 🧩',
+    content: (
+      <KangurLessonStack>
+        <KangurLessonLead>
+          Najpierw obserwujesz, potem łączysz fakty, a na końcu sprawdzasz wniosek.
+        </KangurLessonLead>
+        <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
+          <div className='mx-auto h-20 w-40'>
+            <LogicalThinkingStepsAnimation />
+          </div>
+          <KangurLessonCaption className='mt-2'>
+            Obserwuj → łącz → wniosek.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
+        <KangurLessonCallout accent='violet' className='w-full text-center'>
+          <KangurLessonCaption className='mb-2'>Spróbuj znaleźć regułę:</KangurLessonCaption>
+          <p className='text-2xl font-extrabold text-violet-700'>🔺 🔺 🔵 🔺 🔺 🔵 ❓</p>
+          <p className='mt-2 font-bold text-violet-600'>
+            Odpowiedź: 🔺 🔺 🔵 (powtarza się układ).
+          </p>
         </KangurLessonCallout>
       </KangurLessonStack>
     ),
@@ -51,6 +96,14 @@ const PATTERN_SLIDES: LessonSlide[] = [
         <KangurLessonLead>
           Wzorzec to powtarzający się układ. Gdy go znajdziesz, możesz przewidzieć, co będzie dalej!
         </KangurLessonLead>
+        <KangurLessonCallout accent='sky' className='w-full text-center' padding='sm'>
+          <div className='mx-auto h-20 w-40'>
+            <LogicalPatternAnimation />
+          </div>
+          <KangurLessonCaption className='mt-2'>
+            Wzorzec powtarza się w stałym rytmie.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
         <KangurLessonCallout accent='sky' className='w-full text-center'>
           <KangurLessonCaption className='mb-2'>Co jest dalej?</KangurLessonCaption>
           <p className='text-3xl tracking-widest'>🔴 🔵 🔴 🔵 🔴 ❓</p>
@@ -66,6 +119,29 @@ const PATTERN_SLIDES: LessonSlide[] = [
       </KangurLessonStack>
     ),
   },
+  {
+    title: 'Wzorzec rośnie 📈',
+    content: (
+      <KangurLessonStack>
+        <KangurLessonLead>
+          Wzorzec może się powtarzać i jednocześnie rosnąć. To też jest reguła!
+        </KangurLessonLead>
+        <KangurLessonCallout accent='sky' className='w-full text-center' padding='sm'>
+          <div className='mx-auto h-20 w-40'>
+            <LogicalPatternGrowthAnimation />
+          </div>
+          <KangurLessonCaption className='mt-2'>
+            Każdy kolejny element jest większy.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
+        <KangurLessonCallout accent='sky' className='w-full text-center'>
+          <KangurLessonCaption className='mb-2'>Ciąg rosnący – co dalej?</KangurLessonCaption>
+          <p className='text-2xl font-extrabold text-sky-700'>1, 2, 4, 8, ❓</p>
+          <p className='mt-2 font-bold text-sky-600'>Odpowiedź: 16 (×2)</p>
+        </KangurLessonCallout>
+      </KangurLessonStack>
+    ),
+  },
 ];
 
 const CLASSIFICATION_SLIDES: LessonSlide[] = [
@@ -76,6 +152,14 @@ const CLASSIFICATION_SLIDES: LessonSlide[] = [
         <KangurLessonLead>
           Klasyfikacja to układanie rzeczy w grupy według wspólnej cechy.
         </KangurLessonLead>
+        <KangurLessonCallout accent='emerald' className='w-full text-center' padding='sm'>
+          <div className='mx-auto h-20 w-40'>
+            <LogicalClassificationAnimation />
+          </div>
+          <KangurLessonCaption className='mt-2'>
+            Ta sama cecha prowadzi do tej samej grupy.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
         <div className='grid w-full grid-cols-1 gap-3 min-[360px]:grid-cols-2'>
           <KangurLessonCallout accent='emerald' className='text-center' padding='sm'>
             <p className='mb-1 text-sm font-bold text-green-700'>Owoce</p>
@@ -97,6 +181,29 @@ const CLASSIFICATION_SLIDES: LessonSlide[] = [
         <p className='text-center text-sm font-semibold text-violet-600'>
           Cecha wspólna to klucz do grupowania!
         </p>
+      </KangurLessonStack>
+    ),
+  },
+  {
+    title: 'Klucz klasyfikacji 🗝️',
+    content: (
+      <KangurLessonStack>
+        <KangurLessonLead>
+          Najpierw wybierasz cechę, a potem elementy trafiają do właściwej grupy.
+        </KangurLessonLead>
+        <KangurLessonCallout accent='emerald' className='w-full text-center' padding='sm'>
+          <div className='mx-auto h-20 w-40'>
+            <LogicalClassificationKeyAnimation />
+          </div>
+          <KangurLessonCaption className='mt-2'>
+            Jedna cecha = jedna decyzja.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
+        <KangurLessonCallout accent='emerald' className='w-full text-center'>
+          <KangurLessonCaption className='mb-2'>Cecha: ma skrzydła</KangurLessonCaption>
+          <p className='text-2xl'>🕊️ 🐝 🐟 🐶</p>
+          <p className='mt-2 font-bold text-emerald-600'>Grupa "tak": 🕊️ 🐝</p>
+        </KangurLessonCallout>
       </KangurLessonStack>
     ),
   },
@@ -130,6 +237,14 @@ const REASONING_SLIDES: LessonSlide[] = [
         <KangurLessonLead>
           Wnioskowanie to wyciąganie wniosków z tego, co wiemy. Używamy schematu: jeśli... to...
         </KangurLessonLead>
+        <KangurLessonCallout accent='indigo' className='w-full text-center' padding='sm'>
+          <div className='mx-auto h-20 w-40'>
+            <LogicalReasoningAnimation />
+          </div>
+          <KangurLessonCaption className='mt-2'>
+            Jeśli spełniony jest warunek, to pojawia się wniosek.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
         <div className='flex w-full flex-col gap-3'>
           <KangurLessonCallout accent='indigo' padding='sm'>
             <p className='text-sm text-indigo-800'>
@@ -162,6 +277,14 @@ const ANALOGIES_SLIDES: LessonSlide[] = [
         <KangurLessonLead>
           Analogia to podobna relacja między różnymi parami. Uzupełnij brakujące ogniwo!
         </KangurLessonLead>
+        <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
+          <div className='mx-auto h-20 w-40'>
+            <LogicalAnalogiesAnimation />
+          </div>
+          <KangurLessonCaption className='mt-2'>
+            Szukamy tej samej relacji w dwóch parach.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
         <div className='flex w-full flex-col gap-3'>
           <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
             <p className='text-sm [color:var(--kangur-page-text)]'>
@@ -184,6 +307,30 @@ const ANALOGIES_SLIDES: LessonSlide[] = [
       </KangurLessonStack>
     ),
   },
+  {
+    title: 'Mapa analogii 🧭',
+    content: (
+      <KangurLessonStack>
+        <KangurLessonLead>
+          Sprawdź relację w pierwszej parze i przenieś ją na drugą.
+        </KangurLessonLead>
+        <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
+          <div className='mx-auto h-20 w-40'>
+            <LogicalAnalogyMapAnimation />
+          </div>
+          <KangurLessonCaption className='mt-2'>
+            Relacja A → B powtarza się w C → D.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
+        <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
+          <p className='text-sm [color:var(--kangur-page-text)]'>
+            Nóż : kroi = pędzel :{' '}
+            <span className='font-bold text-purple-700'>maluje 🎨</span>
+          </p>
+        </KangurLessonCallout>
+      </KangurLessonStack>
+    ),
+  },
 ];
 
 const SUMMARY_SLIDES: LessonSlide[] = [
@@ -191,6 +338,14 @@ const SUMMARY_SLIDES: LessonSlide[] = [
     title: 'Zapamiętaj! 🌟',
     content: (
       <KangurLessonStack>
+        <KangurLessonCallout accent='amber' className='w-full text-center' padding='sm'>
+          <div className='mx-auto h-20 w-40'>
+            <LogicalSummaryAnimation />
+          </div>
+          <KangurLessonCaption className='mt-2'>
+            Zapamiętaj najważniejsze pojęcia i wracaj do nich często.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
         <KangurLessonCallout accent='amber' className='w-full'>
           <ul className='space-y-2 text-sm [color:var(--kangur-page-text)]'>
             <li>

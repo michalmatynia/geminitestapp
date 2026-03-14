@@ -5,6 +5,14 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
+  GeometryAngleAnimation,
+  GeometryAngleTypesAnimation,
+  GeometryMovingPointAnimation,
+  GeometryPointSegmentAnimation,
+  GeometrySideHighlightAnimation,
+  GeometryVerticesAnimation,
+} from '@/features/kangur/ui/components/GeometryLessonAnimations';
+import {
   KangurLessonCallout,
   KangurLessonCaption,
   KangurLessonChip,
@@ -18,7 +26,54 @@ import {
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 
-type SectionId = 'punkt' | 'bok' | 'kat' | 'podsumowanie';
+type SectionId = 'punkt' | 'bok' | 'kat' | 'animacje' | 'podsumowanie';
+
+const GEOMETRY_BASICS_ANIMATION_SLIDES: LessonSlide[] = [
+  {
+    title: 'Punkt i odcinek w ruchu',
+    content: (
+      <KangurLessonStack className='text-center'>
+        <KangurLessonLead>Odcinek łączy dwa punkty.</KangurLessonLead>
+        <KangurLessonCallout accent='sky'>
+          <div className='mx-auto w-full max-w-xs'>
+            <GeometryPointSegmentAnimation />
+          </div>
+          <KangurLessonCaption className='mt-2'>
+            Dwa punkty wyznaczają odcinek.
+          </KangurLessonCaption>
+        </KangurLessonCallout>
+      </KangurLessonStack>
+    ),
+  },
+  {
+    title: 'Boki i wierzchołki',
+    content: (
+      <KangurLessonStack className='text-center'>
+        <KangurLessonLead>Wierzchołki to miejsca, gdzie spotykają się boki.</KangurLessonLead>
+        <KangurLessonCallout accent='slate' className='border-cyan-200/85'>
+          <div className='mx-auto h-28 w-28'>
+            <GeometryVerticesAnimation />
+          </div>
+          <KangurLessonCaption className='mt-2'>Zaznaczone punkty to wierzchołki.</KangurLessonCaption>
+        </KangurLessonCallout>
+      </KangurLessonStack>
+    ),
+  },
+  {
+    title: 'Kąt się otwiera',
+    content: (
+      <KangurLessonStack className='text-center'>
+        <KangurLessonLead>Im większy kąt, tym szerzej otwarta „bramka”.</KangurLessonLead>
+        <KangurLessonCallout accent='sky'>
+          <div className='mx-auto h-28 w-28'>
+            <GeometryAngleAnimation />
+          </div>
+          <KangurLessonCaption className='mt-2'>Kąt zmienia swoje rozwarcie.</KangurLessonCaption>
+        </KangurLessonCallout>
+      </KangurLessonStack>
+    ),
+  },
+];
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   punkt: [
@@ -31,16 +86,30 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             punkty.
           </KangurLessonLead>
           <KangurLessonCallout accent='sky'>
-            <div className='mx-auto flex max-w-xs items-center justify-between'>
-              <span className='text-xl'>● A</span>
-              <span className='h-1 flex-1 rounded bg-cyan-500 mx-2' />
-              <span className='text-xl'>B ●</span>
+            <div className='mx-auto w-full max-w-xs'>
+              <GeometryPointSegmentAnimation />
             </div>
             <p className='mt-2 text-sm text-cyan-700'>Odcinek AB</p>
           </KangurLessonCallout>
           <KangurLessonCaption>
             Odcinek ma początek i koniec — to dwa punkty.
           </KangurLessonCaption>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Punkt na odcinku',
+      content: (
+        <KangurLessonStack className='text-center'>
+          <KangurLessonLead>Punkt może leżeć gdziekolwiek na odcinku.</KangurLessonLead>
+          <KangurLessonCallout accent='sky'>
+            <div className='mx-auto w-full max-w-xs'>
+              <GeometryMovingPointAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              To wciąż ten sam odcinek, tylko punkt się przesuwa.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
@@ -55,7 +124,9 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             (rogi).
           </KangurLessonLead>
           <KangurLessonCallout accent='slate' className='border-cyan-200/85'>
-            <div className='mx-auto h-28 w-28 rotate-45 rounded-sm border-[6px] border-cyan-500' />
+            <div className='mx-auto h-28 w-28'>
+              <GeometryVerticesAnimation />
+            </div>
             <KangurLessonCaption className='mt-2'>
               Kwadrat ma 4 boki i 4 wierzchołki.
             </KangurLessonCaption>
@@ -63,6 +134,22 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonCaption>
             Boki to odcinki. Wierzchołki to punkty, w których boki się spotykają.
           </KangurLessonCaption>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Policz boki',
+      content: (
+        <KangurLessonStack className='text-center'>
+          <KangurLessonLead>Obwiedź figurę i policz każdy bok.</KangurLessonLead>
+          <KangurLessonCallout accent='slate' className='border-cyan-200/85'>
+            <div className='mx-auto h-28 w-28'>
+              <GeometrySideHighlightAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Każde podświetlenie to jeden bok.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
@@ -76,12 +163,8 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             <strong>Kąt</strong> powstaje tam, gdzie spotykają się dwa odcinki.
           </KangurLessonLead>
           <KangurLessonCallout accent='sky'>
-            <div className='relative mx-auto h-28 w-28'>
-              <div className='absolute left-1/2 top-1/2 h-1 w-20 -translate-y-1/2 rounded bg-cyan-600' />
-              <div className='absolute left-1/2 top-1/2 h-20 w-1 -translate-x-1/2 rounded bg-cyan-600' />
-              <div className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-cyan-700'>
-                ∟
-              </div>
+            <div className='mx-auto h-28 w-28'>
+              <GeometryAngleAnimation />
             </div>
             <p className='mt-2 text-sm text-cyan-700'>To kąt prosty (90°).</p>
           </KangurLessonCallout>
@@ -93,7 +176,24 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
         </KangurLessonStack>
       ),
     },
+    {
+      title: 'Rodzaje kątów',
+      content: (
+        <KangurLessonStack className='text-center'>
+          <KangurLessonLead>Mały, prosty i rozwarty kąt wyglądają inaczej.</KangurLessonLead>
+          <KangurLessonCallout accent='sky'>
+            <div className='mx-auto w-full max-w-xs'>
+              <GeometryAngleTypesAnimation />
+            </div>
+            <KangurLessonCaption className='mt-2'>
+              Porównuj szerokość ramion kąta.
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
   ],
+  animacje: GEOMETRY_BASICS_ANIMATION_SLIDES,
   podsumowanie: [
     {
       title: 'Podsumowanie',
@@ -120,6 +220,37 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
         </div>
       ),
     },
+    {
+      title: 'Podsumowanie w ruchu',
+      content: (
+        <div className='grid gap-3 text-center sm:grid-cols-2 lg:grid-cols-3'>
+          <KangurLessonCallout accent='sky' padding='sm'>
+            <GeometryPointSegmentAnimation />
+            <KangurLessonCaption className='mt-2'>Punkt i odcinek.</KangurLessonCaption>
+          </KangurLessonCallout>
+          <KangurLessonCallout accent='sky' padding='sm'>
+            <GeometryMovingPointAnimation />
+            <KangurLessonCaption className='mt-2'>Punkt na odcinku.</KangurLessonCaption>
+          </KangurLessonCallout>
+          <KangurLessonCallout accent='slate' padding='sm' className='border-cyan-200/85'>
+            <GeometryVerticesAnimation />
+            <KangurLessonCaption className='mt-2'>Boki i wierzchołki.</KangurLessonCaption>
+          </KangurLessonCallout>
+          <KangurLessonCallout accent='slate' padding='sm' className='border-cyan-200/85'>
+            <GeometrySideHighlightAnimation />
+            <KangurLessonCaption className='mt-2'>Policz boki.</KangurLessonCaption>
+          </KangurLessonCallout>
+          <KangurLessonCallout accent='sky' padding='sm'>
+            <GeometryAngleAnimation />
+            <KangurLessonCaption className='mt-2'>Rodzaje kątów.</KangurLessonCaption>
+          </KangurLessonCallout>
+          <KangurLessonCallout accent='sky' padding='sm'>
+            <GeometryAngleTypesAnimation />
+            <KangurLessonCaption className='mt-2'>Ostry, prosty, rozwarty.</KangurLessonCaption>
+          </KangurLessonCallout>
+        </div>
+      ),
+    },
   ],
 };
 
@@ -132,6 +263,12 @@ export const HUB_SECTIONS = [
   },
   { id: 'bok', emoji: '🔷', title: 'Bok i wierzchołek', description: 'Części figur wielokątnych' },
   { id: 'kat', emoji: '∟', title: 'Kąt', description: 'Ostry, prosty i rozwarty' },
+  {
+    id: 'animacje',
+    emoji: '🎞️',
+    title: 'Animacje',
+    description: 'Punkt, bok i kąt w ruchu',
+  },
   { id: 'podsumowanie', emoji: '📋', title: 'Podsumowanie', description: 'Wszystko razem' },
 ];
 

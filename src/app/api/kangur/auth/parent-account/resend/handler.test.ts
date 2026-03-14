@@ -73,7 +73,7 @@ describe('kangur parent account resend handler', () => {
       hasPassword: true,
       retryAfterMs: 60000,
       message:
-        'Wyslalismy nowy email potwierdzajacy. Konto rodzica uaktywni sie po weryfikacji adresu.',
+        'Wysłaliśmy nowy email potwierdzający. Konto rodzica uaktywni się po weryfikacji adresu.',
       debug: {
         verificationUrl: 'https://example.com/kangur/login?verifyEmailToken=verify-2',
       },
@@ -116,7 +116,7 @@ describe('kangur parent account resend handler', () => {
       hasPassword: true,
       retryAfterMs: 8_000,
       message:
-        'Wyslalismy nowy email potwierdzajacy. Konto rodzica uaktywni sie po weryfikacji adresu.',
+        'Wysłaliśmy nowy email potwierdzający. Konto rodzica uaktywni się po weryfikacji adresu.',
       debug: {
         verificationUrl: 'https://example.com/kangur/login?verifyEmailToken=verify-custom',
       },

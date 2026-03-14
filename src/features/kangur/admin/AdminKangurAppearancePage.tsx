@@ -29,6 +29,8 @@ import {
   FACTORY_DAWN_ID,
   FACTORY_SUNSET_ID,
   FACTORY_NIGHTLY_ID,
+  PRESET_DAILY_CRYSTAL_ID,
+  PRESET_NIGHTLY_CRYSTAL_ID,
   SLOT_CONFIG,
   SLOT_ORDER,
   THEME_SECTIONS,
@@ -76,9 +78,11 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
     slotAssignments,
     slotLabelsByKey,
     slotThemes,
+    handleAssignToSlot,
     handleSave,
     handleSelect,
     handleResetToFactory,
+    handleUnassignFromSlot,
     setDraft,
   } = useAppearancePage();
 
@@ -88,6 +92,11 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
     FACTORY_SUNSET_ID,
     FACTORY_NIGHTLY_ID,
   ].includes(selectedId);
+  const isPreset = [
+    PRESET_DAILY_CRYSTAL_ID,
+    PRESET_NIGHTLY_CRYSTAL_ID,
+  ].includes(selectedId);
+  const isReadOnly = isFactory || isPreset;
   const isBuiltin = [
     BUILTIN_DAILY_ID,
     BUILTIN_DAWN_ID,
@@ -105,13 +114,15 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
       { value: BUILTIN_DAWN_ID, label: 'Motyw świtowy (wbudowany)' },
       { value: BUILTIN_SUNSET_ID, label: 'Motyw zachodu (wbudowany)' },
       { value: BUILTIN_NIGHTLY_ID, label: 'Motyw nocny (wbudowany)' },
+      { value: PRESET_DAILY_CRYSTAL_ID, label: 'Daily Crystal (preset)' },
+      { value: PRESET_NIGHTLY_CRYSTAL_ID, label: 'Nightly Crystal (preset)' },
     ];
     catalog.forEach((e) => opts.push({ value: e.id, label: e.name }));
     return opts;
   }, [catalog]);
 
   const selectedLabel = selectorOptions.find((o) => o.value === selectedId)?.label ?? '';
-  const selectedThemeType = isFactory ? 'Factory' : isBuiltin ? 'Built-in' : 'Custom';
+  const selectedThemeType = isFactory ? 'Factory' : isPreset ? 'Preset' : isBuiltin ? 'Built-in' : 'Custom';
   const assignedSlotLabels = SLOT_ORDER.filter(
     (slot) => slotAssignments[slot]?.id === selectedId
   ).map((slot) => SLOT_CONFIG[slot].label);
@@ -139,7 +150,7 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
           </Button>
           <Button
             onClick={() => void handleSave()}
-            disabled={!isDirty || isSaving || isFactory}
+            disabled={!isDirty || isSaving || isReadOnly}
             size='sm'
           >
             {isSaving ? 'Zapisuję...' : 'Zapisz motyw'}
@@ -147,7 +158,7 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
         </>
       }
     >
-      <div className='xl:grid xl:grid-cols-[1fr_340px] xl:gap-8'>
+      <div className='lg:grid lg:grid-cols-[1fr_380px] lg:gap-8'>
         <div className='space-y-8'>
           <Card variant='subtle' padding='md' className='border border-border/60 bg-card/20'>
             <div className='flex flex-wrap items-end gap-3'>
@@ -173,31 +184,37 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
             </div>
           </Card>
 
-          {!isBuiltin && !isFactory && (
-            <Card variant='subtle' padding='md' className='border border-border/60 bg-card/20'>
-              <div className='flex flex-col gap-4 lg:flex-row lg:items-start'>
-                <div className='w-full min-w-0 lg:flex-1 lg:min-w-[320px]'>
-                  <p className='text-sm font-medium text-foreground'>
-                    Przypisz motyw <span className='text-muted-foreground'>„{selectedLabel}”</span>
-                  </p>
-                  <div className='mt-2.5 flex flex-wrap gap-3'>
-                    {SLOT_ORDER.map((slot) => (
-                      <SlotStatusBadge
-                        key={slot}
-                        slotLabel={SLOT_CONFIG[slot].label}
-                        themeLabel={slotLabelsByKey[slot]}
-                        isActive={slotAssignments[slot]?.id === selectedId}
-                      />
-                    ))}
-                  </div>
-                </div>
+          <Card variant='subtle' padding='md' className='border border-border/60 bg-card/20'>
+            <div className='flex flex-col gap-4'>
+              <p className='text-sm font-medium text-foreground'>
+                Przypisz motyw <span className='text-muted-foreground'>„{selectedLabel}”</span> do slotu
+              </p>
+              <div className='flex flex-wrap gap-2'>
+                {SLOT_ORDER.map((slot) => {
+                  const isAssigned = slotAssignments[slot]?.id === selectedId;
+                  const currentTheme = slotLabelsByKey[slot];
+                  return (
+                    <Button
+                      key={slot}
+                      size='sm'
+                      variant={isAssigned ? 'default' : 'outline'}
+                      className='flex flex-col items-center gap-0.5 h-auto py-2'
+                      onClick={() => void (isAssigned ? handleUnassignFromSlot(slot) : handleAssignToSlot(slot))}
+                    >
+                      <span>{SLOT_CONFIG[slot].label} {isAssigned ? '\u2713' : ''}</span>
+                      <span className='text-[10px] font-normal opacity-70'>{currentTheme}</span>
+                    </Button>
+                  );
+                })}
               </div>
-            </Card>
-          )}
+            </div>
+          </Card>
 
-          {isFactory && (
+          {isReadOnly && (
             <Alert variant='info'>
-              To fabryczny motyw Kangura. Jest tylko do odczytu.
+              {isPreset
+                ? 'To preset Crystal. Jest tylko do odczytu, ale możesz go przypisać do slotu powyżej.'
+                : 'To fabryczny motyw Kangura. Jest tylko do odczytu.'}
             </Alert>
           )}
 
@@ -217,7 +234,7 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
                 onChange={(vals) => {
                   setDraft((prev) => ({ ...prev, ...vals }));
                 }}
-                disabled={isSaving || isFactory}
+                disabled={isSaving || isReadOnly}
               />
             </FormSection>
           ))}
@@ -229,14 +246,14 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
               <Button
                 variant='ghost'
                 size='sm'
-                disabled={isSaving || isFactory}
+                disabled={isSaving || isReadOnly}
                 onClick={handleResetToFactory}
               >
                 Przywróć domyślne
               </Button>
               <Button
                 onClick={() => void handleSave()}
-                disabled={!isDirty || isSaving || isFactory}
+                disabled={!isDirty || isSaving || isReadOnly}
               >
                 {isSaving ? 'Zapisuję...' : 'Zapisz motyw'}
               </Button>
@@ -244,14 +261,14 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
           </Card>
         </div>
 
-        <div className='hidden xl:block xl:self-start'>
-          <div className='space-y-4 xl:sticky xl:top-24'>
+        <div className='hidden lg:block lg:self-start'>
+          <div className='space-y-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:scrollbar-thin'>
             <KangurAdminStatusCard
               title='Status'
               sticky={false}
               statusBadge={
-                <Badge variant={isFactory ? 'outline' : isDirty ? 'warning' : 'secondary'}>
-                  {isFactory ? 'Read only' : isDirty ? 'Unsaved changes' : 'Saved'}
+                <Badge variant={isReadOnly ? 'outline' : isDirty ? 'warning' : 'secondary'}>
+                  {isReadOnly ? 'Read only' : isDirty ? 'Unsaved changes' : 'Saved'}
                 </Badge>
               }
               items={[

@@ -133,7 +133,7 @@ export const analyzeLearnerDrawingWithBrain = async (input: {
       defaultTemperature: 0.1,
       defaultMaxTokens: 220,
       defaultSystemPrompt:
-        'You analyze learner sketches for the Kangur AI tutor. Return only a short Polish summary of what is visually present and mathematically relevant.',
+        'You analyze learner sketches for the Kangur AI Tutor. Return only a short Polish summary of what is visually present and mathematically relevant.',
       runtimeKind: 'vision',
     }
   );

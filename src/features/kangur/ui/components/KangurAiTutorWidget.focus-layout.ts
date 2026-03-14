@@ -483,6 +483,9 @@ const getAnchorKindsForSurface = (
       contentId === 'game:operation-selector' ||
       contentId === 'game:calendar_quiz' ||
       contentId === 'game:geometry_quiz' ||
+      contentId === 'game:subtraction_quiz' ||
+      contentId === 'game:division_quiz' ||
+      contentId === 'game:multiplication_quiz' ||
       contentId?.startsWith('game:kangur:')
     ) {
       return ['screen'];

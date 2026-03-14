@@ -41,7 +41,7 @@ describe('GeometryDrawingGame', () => {
     const board = screen.getByTestId('geometry-drawing-board');
     const difficultyShell = screen.getByTestId('geometry-difficulty-shell');
 
-    expect(screen.getByRole('group', { name: 'Poziom trudnosci figur' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Poziom trudności figur' })).toBeInTheDocument();
     expect(screen.getByTestId('geometry-drawing-progress-label')).toHaveTextContent('1/4');
     expect(screen.getByTestId('geometry-drawing-progress-bar')).toHaveAttribute('aria-valuenow', '0');
     expect(screen.getByTestId('geometry-drawing-progress-bar')).toHaveAttribute(
@@ -79,6 +79,7 @@ describe('GeometryDrawingGame', () => {
       corners: 2,
       closureRatio: 0.33,
       aspectRatio: 1,
+      lengthRatio: 0.4,
       message: 'Niepoprawna figura.',
     });
 

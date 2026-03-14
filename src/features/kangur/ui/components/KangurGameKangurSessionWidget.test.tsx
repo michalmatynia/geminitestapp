@@ -33,10 +33,10 @@ describe('KangurGameKangurSessionWidget', () => {
   it('renders the active recommendation above the Kangur session', () => {
     useKangurGameRuntimeMock.mockReturnValue({
       activeSessionRecommendation: {
-        description: 'Ten zestaw najlepiej pasuje do obecnej skutecznosci i serii.',
+        description: 'Ten zestaw najlepiej pasuje do obecnej skuteczności i serii.',
         label: 'Gotowosc konkursowa',
         source: 'kangur_setup',
-        title: 'Polecamy pelny test konkursowy',
+        title: 'Polecamy pełny test konkursowy',
       },
       kangurMode: 'full_test_2024',
       screen: 'kangur',
@@ -53,14 +53,14 @@ describe('KangurGameKangurSessionWidget', () => {
       'Gotowosc konkursowa'
     );
     expect(screen.getByTestId('kangur-kangur-session-recommendation-title')).toHaveTextContent(
-      'Polecamy pelny test konkursowy'
+      'Polecamy pełny test konkursowy'
     );
     expect(screen.getByTestId('kangur-kangur-session-recommendation-title')).toHaveClass(
       '[color:var(--kangur-page-text)]'
     );
     expect(
       screen.getByTestId('kangur-kangur-session-recommendation-description')
-    ).toHaveTextContent('Ten zestaw najlepiej pasuje do obecnej skutecznosci i serii.');
+    ).toHaveTextContent('Ten zestaw najlepiej pasuje do obecnej skuteczności i serii.');
     expect(screen.getByTestId('kangur-kangur-session-recommendation-description')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );

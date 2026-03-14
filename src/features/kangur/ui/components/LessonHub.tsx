@@ -118,6 +118,7 @@ export default function LessonHub({
                     </KangurIconBadge>
                   }
                   title={section.title}
+                  titleAs='h3'
                   titleClassName='text-slate-800'
                 />
               </KangurIconSummaryOptionCard>

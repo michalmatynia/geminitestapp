@@ -18,12 +18,12 @@ describe('useKangurAiTutorSelectionGuidanceDockOpenEffect', () => {
 
     renderHook(() =>
       useKangurAiTutorSelectionGuidanceDockOpenEffect({
-        activeSelectedText: 'Ranking wynikow',
+        activeSelectedText: 'Ranking wyników',
         handleOpenChat: handleOpenChatMock,
         hasSelectionPanelReady: false,
         isLoading: false,
-        selectionConversationSelectedText: 'Ranking wynikow',
-        selectionGuidanceHandoffText: 'Ranking wynikow',
+        selectionConversationSelectedText: 'Ranking wyników',
+        selectionGuidanceHandoffText: 'Ranking wyników',
       })
     );
 
@@ -43,8 +43,8 @@ describe('useKangurAiTutorSelectionGuidanceDockOpenEffect', () => {
         handleOpenChat: handleOpenChatMock,
         hasSelectionPanelReady: false,
         isLoading: false,
-        selectionConversationSelectedText: 'Ranking wynikow',
-        selectionGuidanceHandoffText: 'Ranking wynikow',
+        selectionConversationSelectedText: 'Ranking wyników',
+        selectionGuidanceHandoffText: 'Ranking wyników',
       })
     );
 
@@ -81,12 +81,12 @@ describe('useKangurAiTutorSelectionGuidanceDockOpenEffect', () => {
 
     renderHook(() =>
       useKangurAiTutorSelectionGuidanceDockOpenEffect({
-        activeSelectedText: 'Ranking wynikow',
+        activeSelectedText: 'Ranking wyników',
         handleOpenChat: handleOpenChatMock,
         hasSelectionPanelReady: true,
         isLoading: false,
-        selectionConversationSelectedText: 'Ranking wynikow',
-        selectionGuidanceHandoffText: 'Ranking wynikow',
+        selectionConversationSelectedText: 'Ranking wyników',
+        selectionGuidanceHandoffText: 'Ranking wyników',
       })
     );
 
@@ -105,14 +105,14 @@ describe('useKangurAiTutorSelectionGuidanceHandoffEffect', () => {
 
     renderHook(() =>
       useKangurAiTutorSelectionGuidanceHandoffEffect({
-        activeSelectedText: 'Ranking wynikow',
+        activeSelectedText: 'Ranking wyników',
         handleOpenChat: handleOpenChatMock,
         hasSelectionPanelReady: true,
         isLoading: false,
         isOpen: true,
         panelMotionState: 'settled',
-        selectionConversationSelectedText: 'Ranking wynikow',
-        selectionGuidanceHandoffText: 'Ranking wynikow',
+        selectionConversationSelectedText: 'Ranking wyników',
+        selectionGuidanceHandoffText: 'Ranking wyników',
         setSelectionGuidanceHandoffText: setSelectionGuidanceHandoffTextMock,
         setSelectionResponseComplete: setSelectionResponseCompleteMock,
         setSelectionResponsePending: setSelectionResponsePendingMock,
@@ -126,7 +126,7 @@ describe('useKangurAiTutorSelectionGuidanceHandoffEffect', () => {
 
     await waitFor(() =>
       expect(setSelectionResponseCompleteMock).toHaveBeenCalledWith({
-        selectedText: 'Ranking wynikow',
+        selectedText: 'Ranking wyników',
       })
     );
     expect(handleOpenChatMock).toHaveBeenCalledWith('selection_explain', {
@@ -137,7 +137,7 @@ describe('useKangurAiTutorSelectionGuidanceHandoffEffect', () => {
 
     const pendingUpdater = setSelectionResponsePendingMock.mock.calls[0]?.[0];
     expect(typeof pendingUpdater).toBe('function');
-    expect(pendingUpdater({ selectedText: 'Ranking wynikow' })).toBeNull();
+    expect(pendingUpdater({ selectedText: 'Ranking wyników' })).toBeNull();
     expect(pendingUpdater({ selectedText: 'Inny fragment' })).toEqual({
       selectedText: 'Inny fragment',
     });
@@ -502,14 +502,14 @@ describe('useKangurAiTutorGuidedFlow', () => {
     );
 
     act(() => {
-      result.current.startGuidedSelectionExplanation('Ranking wynikow');
+      result.current.startGuidedSelectionExplanation('Ranking wyników');
     });
 
     expect(sendMessageMock).toHaveBeenCalledWith(
       'Wyjaśnij zaznaczony fragment krok po kroku.',
       expect.objectContaining({
         promptMode: 'selected_text',
-        selectedText: 'Ranking wynikow',
+        selectedText: 'Ranking wyników',
         contentId: 'game:home',
         focusKind: 'leaderboard',
         focusId: 'kangur-game-leaderboard',
@@ -531,7 +531,7 @@ describe('useKangurAiTutorGuidedFlow', () => {
         sourcePath: 'entry:game-home-leaderboard',
       },
       messageStartIndex: 2,
-      selectedText: 'Ranking wynikow',
+      selectedText: 'Ranking wyników',
     });
 
     vi.useRealTimers();

@@ -222,7 +222,7 @@ describe('parent email auth service', () => {
       ).rejects.toMatchObject({
         httpStatus: 429,
         message:
-          'Email potwierdzajacy zostal juz wyslany. Poczekaj 15 s i sprobuj ponownie.',
+          'Email potwierdzający został już wyslany. Poczekaj 15 s i spróbuj ponownie.',
         retryAfterMs: 15_000,
       });
 
@@ -518,7 +518,7 @@ describe('parent email auth service', () => {
         })
       ).rejects.toMatchObject({
         httpStatus: 429,
-        message: 'Email potwierdzajacy zostal juz wyslany. Poczekaj 30 s i sprobuj ponownie.',
+        message: 'Email potwierdzający został już wyslany. Poczekaj 30 s i spróbuj ponownie.',
         retryAfterMs: 30_000,
       });
 
@@ -556,7 +556,7 @@ describe('parent email auth service', () => {
         })
       ).rejects.toMatchObject({
         httpStatus: 429,
-        message: 'Email potwierdzajacy zostal juz wyslany. Poczekaj 45 s i sprobuj ponownie.',
+        message: 'Email potwierdzający został już wyslany. Poczekaj 45 s i spróbuj ponownie.',
         retryAfterMs: 45_000,
       });
 
@@ -582,7 +582,7 @@ describe('parent email auth service', () => {
         callbackUrl: '/kangur',
       })
     ).rejects.toMatchObject({
-      message: 'Konto z tym emailem juz istnieje. Zaloguj sie emailem i haslem.',
+      message: 'Konto z tym emailem już istnieje. Zaloguj się emailem i hasłem.',
     });
     expect(createEmailVerificationChallengeMock).not.toHaveBeenCalled();
     expect(sendAuthEmailMock).not.toHaveBeenCalled();

@@ -1306,7 +1306,7 @@ describe('KangurAiTutorWidget', () => {
       setHighlightedText: setHighlightedTextMock,
       tutorBehaviorMoodId: 'neutral',
       tutorBehaviorMoodLabel: 'Neutralny',
-      tutorBehaviorMoodDescription: 'Neutralny nastroj.',
+      tutorBehaviorMoodDescription: 'Neutralny nastrój.',
     });
     const view = render(<KangurAiTutorWidget />);
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-avatar'));
@@ -2333,7 +2333,7 @@ describe('KangurAiTutorWidget', () => {
       setHighlightedText: setHighlightedTextMock,
       tutorBehaviorMoodId: 'neutral',
       tutorBehaviorMoodLabel: 'Neutralny',
-      tutorBehaviorMoodDescription: 'Neutralny nastroj.',
+      tutorBehaviorMoodDescription: 'Neutralny nastrój.',
     });
     render(<KangurAiTutorWidget />);
     expect(screen.getByRole('button', { name: 'Po lekcji: trening' })).toBeInTheDocument();
@@ -2506,7 +2506,7 @@ describe('KangurAiTutorWidget', () => {
       sessionContext: {
         surface: 'game',
         contentId: 'game',
-        title: 'Pytanie do rozwiazania',
+        title: 'Pytanie do rozwiązania',
         currentQuestion: 'Ile to 8 + 5?',
         questionProgressLabel: 'Pytanie 2/10',
       },
@@ -2544,7 +2544,7 @@ describe('KangurAiTutorWidget', () => {
       'kangur_ai_tutor_quick_action_clicked',
       expect.objectContaining({
         surface: 'game',
-        title: 'Pytanie do rozwiazania',
+        title: 'Pytanie do rozwiązania',
         action: 'hint',
         promptMode: 'hint',
       })
@@ -2569,7 +2569,7 @@ describe('KangurAiTutorWidget', () => {
       sessionContext: {
         surface: 'game',
         contentId: 'game',
-        title: 'Pytanie do rozwiazania',
+        title: 'Pytanie do rozwiązania',
         currentQuestion: 'Ile to 8 + 5?',
         questionProgressLabel: 'Pytanie 2/10',
       },
@@ -2577,11 +2577,11 @@ describe('KangurAiTutorWidget', () => {
       messages: [
         {
           role: 'assistant',
-          content: 'Najpierw rozbij liczbe 5 na mniejsze kroki.',
+          content: 'Najpierw rozbij liczbę 5 na mniejsze kroki.',
           coachingFrame: {
             mode: 'hint_ladder',
             label: 'Jeden trop',
-            description: 'Daj tylko jeden maly krok.',
+            description: 'Daj tylko jeden mały krok.',
           },
         },
       ],
@@ -2616,7 +2616,7 @@ describe('KangurAiTutorWidget', () => {
       'kangur_ai_tutor_quick_action_clicked',
       expect.objectContaining({
         surface: 'game',
-        title: 'Pytanie do rozwiazania',
+        title: 'Pytanie do rozwiązania',
         action: 'how-think',
         promptMode: 'explain',
       })

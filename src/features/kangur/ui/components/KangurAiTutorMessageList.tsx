@@ -241,7 +241,7 @@ export function KangurAiTutorMessageList({
                     data-testid='kangur-ai-tutor-page-content-answer-badge'
                     className='inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] kangur-chat-surface-soft [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
                   >
-                    Zapisana tresc strony
+                    Zapisana treść strony
                   </div>
                 ) : null}
                 {msg.followUpActions?.length ? (

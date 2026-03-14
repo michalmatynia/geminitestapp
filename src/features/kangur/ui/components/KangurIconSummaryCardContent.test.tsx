@@ -18,7 +18,7 @@ describe('KangurIconSummaryCardContent', () => {
         footer={<div data-testid='icon-summary-footer'>footer</div>}
         footerClassName='text-xs'
         icon={<div data-testid='icon-summary-icon'>icon</div>}
-        title='Naglowek'
+        title='Nagłówek'
       />
     );
 

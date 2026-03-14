@@ -603,7 +603,7 @@ export function AddingMakeTenPairsAnimation(): React.JSX.Element {
 export function AddingColumnAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja dodawania w kolumnach: dziesiatki i jednosci sumuja sie osobno.'
+      aria-label='Animacja dodawania w kolumnach: dziesiatki i jednosci sumuja się osobno.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 440 190'

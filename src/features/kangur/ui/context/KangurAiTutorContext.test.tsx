@@ -193,7 +193,7 @@ function DrawingHarness(): React.JSX.Element {
       <button
         type='button'
         onClick={() =>
-          void sendMessage('Wyjasnij to rysunkiem.', {
+          void sendMessage('Wyjaśnij to rysunkiem.', {
             promptMode: 'explain',
             drawingImageData: 'data:image/png;base64,AAA',
           })
@@ -666,7 +666,7 @@ describe('KangurAiTutorContext', () => {
       messages: [
         {
           role: 'user',
-          content: 'Wyjasnij to rysunkiem.',
+          content: 'Wyjaśnij to rysunkiem.',
           artifacts: [
             {
               type: 'user_drawing',
@@ -705,7 +705,7 @@ describe('KangurAiTutorContext', () => {
     );
     await waitFor(() =>
       expect(screen.getByTestId('drawing-messages')).toHaveTextContent(
-        'Wyjasnij to rysunkiem. | Najpierw policz lewa strone, potem prawa.'
+        'Wyjaśnij to rysunkiem. | Najpierw policz lewa strone, potem prawa.'
       )
     );
     expect(screen.getByTestId('drawing-artifacts')).toHaveTextContent('user_drawing');
@@ -713,7 +713,7 @@ describe('KangurAiTutorContext', () => {
     expect(screen.getByTestId('drawing-artifacts')).toHaveTextContent('Dwie pary');
   });
 
-  it('reads global AI tutor app settings from the settings store', () => {
+  it('reads global AI Tutor app settings from the settings store', () => {
     settingsStoreMock.get.mockImplementation((key: string) => {
       if (key === KANGUR_AI_TUTOR_APP_SETTINGS_KEY) {
         return JSON.stringify({
@@ -843,7 +843,7 @@ describe('KangurAiTutorContext', () => {
 
   it('tracks repeated tutor questions within the same session before sending again', async () => {
     apiPostMock.mockResolvedValue({
-      message: 'Sprobuj jeszcze raz od pierwszego kroku.',
+      message: 'Spróbuj jeszcze raz od pierwszego kroku.',
       sources: [],
       followUpActions: [],
       usage: {
@@ -871,7 +871,7 @@ describe('KangurAiTutorContext', () => {
     await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(1));
     await waitFor(() =>
       expect(screen.getByTestId('messages')).toHaveTextContent(
-        'Pomóż mi z tym zadaniem. | Sprobuj jeszcze raz od pierwszego kroku.'
+        'Pomóż mi z tym zadaniem. | Spróbuj jeszcze raz od pierwszego kroku.'
       )
     );
 
@@ -1237,7 +1237,7 @@ describe('KangurAiTutorContext', () => {
 
   it('tracks failed tutor sends and logs the client error', async () => {
     apiPostMock.mockRejectedValue(
-      new ApiError('Daily AI tutor message limit reached for this learner. Try again tomorrow.', 429)
+      new ApiError('Daily AI Tutor message limit reached for this learner. Try again tomorrow.', 429)
     );
 
     render(
@@ -1277,7 +1277,7 @@ describe('KangurAiTutorContext', () => {
     );
     await waitFor(() =>
       expect(screen.getByTestId('messages')).toHaveTextContent(
-        'Pomóż mi z tym zadaniem. | Daily AI tutor message limit reached for this learner. Try again tomorrow.'
+        'Pomóż mi z tym zadaniem. | Daily AI Tutor message limit reached for this learner. Try again tomorrow.'
       )
     );
   });

@@ -193,7 +193,7 @@ describe('KangurTestQuestionRenderer', () => {
     );
 
     expect(
-      screen.queryByText(repairKangurPolishCopy('Omowienie odpowiedzi'))
+      screen.queryByText(repairKangurPolishCopy('Omówienie odpowiedzi'))
     ).not.toBeInTheDocument();
   });
 });

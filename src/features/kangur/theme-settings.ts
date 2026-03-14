@@ -16,7 +16,7 @@ import { KANGUR_DEFAULT_DAILY_THEME } from './themes/daily';
 import { KANGUR_DEFAULT_DAWN_THEME } from './themes/dawn';
 import { KANGUR_DEFAULT_SUNSET_THEME } from './themes/sunset';
 import { KANGUR_NIGHTLY_THEME } from './themes/nightly';
-import { KANGUR_DAILY_CRYSTAL_THEME } from './themes/others';
+import { KANGUR_DAILY_CRYSTAL_THEME, KANGUR_NIGHTLY_CRYSTAL_THEME } from './themes/others';
 
 export const KANGUR_DEFAULT_THEME = KANGUR_NIGHTLY_THEME;
 
@@ -37,12 +37,16 @@ export * from './themes/nightly';
 export * from './themes/others';
 
 const DAILY_CRYSTAL_PRESET_ID = 'kangur-daily-crystal';
+const NIGHTLY_CRYSTAL_PRESET_ID = 'kangur-nightly-crystal';
 const DAILY_CRYSTAL_BUTTON_DEFAULTS = {
   btnPrimaryBg: KANGUR_DAILY_CRYSTAL_THEME.btnPrimaryBg,
   btnPrimaryText: KANGUR_DAILY_CRYSTAL_THEME.btnPrimaryText,
   btnSecondaryBg: KANGUR_DAILY_CRYSTAL_THEME.btnSecondaryBg,
   btnSecondaryText: KANGUR_DAILY_CRYSTAL_THEME.btnSecondaryText,
   btnOutlineBorder: KANGUR_DAILY_CRYSTAL_THEME.btnOutlineBorder,
+  btnBorderWidth: KANGUR_DAILY_CRYSTAL_THEME.btnBorderWidth,
+  btnBorderOpacity: KANGUR_DAILY_CRYSTAL_THEME.btnBorderOpacity,
+  btnBorderRadius: KANGUR_DAILY_CRYSTAL_THEME.btnBorderRadius,
   btnShadowOpacity: KANGUR_DAILY_CRYSTAL_THEME.btnShadowOpacity,
   btnShadowX: KANGUR_DAILY_CRYSTAL_THEME.btnShadowX,
   btnShadowY: KANGUR_DAILY_CRYSTAL_THEME.btnShadowY,
@@ -169,6 +173,9 @@ const applyDailyCrystalButtonUpgrade = (theme: ThemeSettings): ThemeSettings => 
     updates.btnOutlineBorder = DAILY_CRYSTAL_BUTTON_DEFAULTS.btnOutlineBorder;
 
   const numericUpgrades: Array<keyof typeof DAILY_CRYSTAL_BUTTON_DEFAULTS> = [
+    'btnBorderWidth',
+    'btnBorderOpacity',
+    'btnBorderRadius',
     'btnShadowOpacity',
     'btnShadowX',
     'btnShadowY',
@@ -205,7 +212,10 @@ export const normalizeKangurThemeSettings = (
   baseline: ThemeSettings = KANGUR_DEFAULT_DAILY_THEME
 ): ThemeSettings => {
   const preset = normalizeThemePreset(raw?.themePreset);
-  const resolvedBaseline = preset === DAILY_CRYSTAL_PRESET_ID ? KANGUR_DAILY_CRYSTAL_THEME : baseline;
+  const resolvedBaseline =
+    preset === DAILY_CRYSTAL_PRESET_ID ? KANGUR_DAILY_CRYSTAL_THEME
+    : preset === NIGHTLY_CRYSTAL_PRESET_ID ? KANGUR_NIGHTLY_CRYSTAL_THEME
+    : baseline;
   const normalized = normalizeThemeSettings(raw ?? {}, resolvedBaseline);
   return applyDailyCrystalButtonUpgrade(applyKangurLegacyThemeBaseline(normalized));
 };

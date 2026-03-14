@@ -26,7 +26,7 @@ function AppErrorFallbackTryAgainButton(): React.JSX.Element {
   const resetErrorBoundary = useAppErrorFallbackReset();
   return (
     <Button onClick={resetErrorBoundary} variant='default' className='flex items-center gap-2'>
-      <RefreshCcw className='h-4 w-4' />
+      <RefreshCcw className='h-4 w-4' aria-hidden='true' />
       Try again
     </Button>
   );
@@ -42,9 +42,14 @@ export function AppErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
 
   return (
     <div className='flex min-h-[400px] w-full items-center justify-center p-6'>
-      <div className='flex max-w-2xl flex-col items-center rounded-lg border border-border/40 bg-muted/10 p-12 text-center'>
+      <div
+        className='flex max-w-2xl flex-col items-center rounded-lg border border-border/40 bg-muted/10 p-12 text-center'
+        role='alert'
+        aria-live='assertive'
+        aria-atomic='true'
+      >
         <div className='mb-4 rounded-full bg-red-500/10 p-3 text-red-500'>
-          <AlertCircle className='h-10 w-10' />
+          <AlertCircle className='h-10 w-10' aria-hidden='true' />
         </div>
         <h2 className='mb-2 text-2xl font-bold tracking-tight text-white'>Something went wrong</h2>
         <p className='mb-6 max-w-md text-gray-400'>{errorMessage}</p>
@@ -52,7 +57,7 @@ export function AppErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
         {actions.length > 0 && (
           <div className='mb-8 w-full max-w-lg rounded-lg border border-white/10 bg-white/5 p-4 text-left'>
             <div className='mb-2 flex items-center gap-2 font-semibold text-white'>
-              <Info className='h-4 w-4 text-blue-400' />
+              <Info className='h-4 w-4 text-blue-400' aria-hidden='true' />
               Suggested Actions
             </div>
             <ul className='space-y-3'>

@@ -147,7 +147,7 @@ export const ensureKangurAiTutorDailyUsageAvailable = async ({
 
   if (dailyMessageLimit !== null && currentUsage.messageCount >= dailyMessageLimit) {
     throw quotaExceededError(
-      'Daily AI tutor message limit reached for this learner. Try again tomorrow.',
+      'Daily AI Tutor message limit reached for this learner. Try again tomorrow.',
       {
         learnerId,
         dateKey: currentUsage.dateKey,
@@ -197,7 +197,7 @@ export const consumeKangurAiTutorDailyUsage = async ({
     serializeSetting(nextStore)
   );
   if (!persisted) {
-    throw new Error('Failed to persist Kangur AI tutor usage.');
+    throw new Error('Failed to persist Kangur AI Tutor usage.');
   }
   invalidateUsageCache();
 

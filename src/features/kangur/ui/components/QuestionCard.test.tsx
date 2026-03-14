@@ -43,7 +43,7 @@ describe('QuestionCard', () => {
     expect(screen.getByTestId('question-card-timer-bar')).toHaveAttribute('aria-valuenow', '100');
     expect(screen.getByTestId('question-card-timer-bar')).toHaveAttribute(
       'aria-valuetext',
-      '30 sekund pozostalo'
+      '30 sekund pozostało'
     );
     expect(screen.getByTestId('question-card-shell')).toHaveClass(
       'glass-panel',

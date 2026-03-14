@@ -439,7 +439,7 @@ export const pageNodes: ContextNode[] = [
     name: 'Kangur Parent Dashboard',
     description:
       'Parent-facing Kangur dashboard for learner selection, progress review, assignments, ' +
-      'and AI tutor controls.',
+      'and AI Tutor controls.',
     tags: ['kangur', 'parent', 'dashboard', 'education'],
     relationships: [
       { type: 'reads', targetId: 'collection:kangur-progress' },

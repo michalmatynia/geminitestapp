@@ -13,6 +13,7 @@ const OPERATION_LABELS: Record<string, { label: string; emoji: string }> = {
   clock: { label: 'Zegar', emoji: '🕐' },
   calendar: { label: 'Kalendarz', emoji: '📅' },
   geometry: { label: 'Geometria', emoji: '🔷' },
+  logical: { label: 'Logika', emoji: '🧩' },
   mixed: { label: 'Mieszane', emoji: '🎲' },
 };
 

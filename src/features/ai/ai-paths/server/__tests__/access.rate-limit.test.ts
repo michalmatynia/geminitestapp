@@ -134,7 +134,7 @@ describe('enforceAiPathsRunRateLimit', () => {
     ).rejects.toThrow('Too many active runs. Wait for one to finish before starting another.');
   });
 
-  it('rechecks active slots before rejecting when initial probe hits the limit', async () => {
+  it('rechecks active slots before rejecting when initial próbę hits the limit', async () => {
     listRunsMock
       .mockResolvedValueOnce({ runs: [], total: 0 }) // recent
       .mockResolvedValueOnce({

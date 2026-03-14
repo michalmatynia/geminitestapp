@@ -39,11 +39,11 @@ const createPanelBodyContextValue = (
     },
     id: 'selection',
     kind: 'selection',
-    label: 'Ranking wynikow',
+    label: 'Ranking wyników',
     rect: null,
   },
   activeSectionRect: null,
-  activeSelectedText: 'Ranking wynikow',
+  activeSelectedText: 'Ranking wyników',
   activeSelectionPageRect: null,
   askModalHelperText: 'Napisz pytanie do tutora',
   basePath: '/kangur',
@@ -121,7 +121,7 @@ describe('KangurAiTutorPanelContextSummary', () => {
     render(<PanelContextSummaryHarness bodyValue={createPanelBodyContextValue()} />);
 
     expect(screen.getByTestId('kangur-ai-tutor-selected-text-source')).toHaveTextContent(
-      'Zapisane zrodlo'
+      'Zapisane źródło'
     );
     expect(screen.getByTestId('kangur-ai-tutor-selected-text-source')).toHaveTextContent(
       'Ranking'

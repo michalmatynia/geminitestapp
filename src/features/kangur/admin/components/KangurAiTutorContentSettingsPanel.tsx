@@ -159,7 +159,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
       const nextValue = stringifyAiTutorContent(parseKangurAiTutorContent(content));
       setAiTutorContentEditorValue(nextValue);
       setPersistedAiTutorContentEditorValue(nextValue);
-      toast('Kangur AI tutor content reloaded.', { variant: 'success' });
+      toast('Kangur AI Tutor content reloaded.', { variant: 'success' });
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to reload AI Tutor content.', {
         variant: 'error',
@@ -194,7 +194,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
       const nextValue = stringifyAiTutorContent(parseKangurAiTutorContent(saved));
       setAiTutorContentEditorValue(nextValue);
       setPersistedAiTutorContentEditorValue(nextValue);
-      toast('Kangur AI tutor content saved.', { variant: 'success' });
+      toast('Kangur AI Tutor content saved.', { variant: 'success' });
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to save AI Tutor content.', {
         variant: 'error',

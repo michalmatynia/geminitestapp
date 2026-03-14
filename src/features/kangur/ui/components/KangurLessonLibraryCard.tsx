@@ -205,6 +205,7 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
         headerClassName='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'
         icon={<KangurLessonLibraryCardIcon iconTestId={iconTestId} lesson={lesson} />}
         title={lesson.title}
+        titleAs='h3'
         titleClassName='text-lg sm:text-xl'
       />
     </KangurIconSummaryOptionCard>

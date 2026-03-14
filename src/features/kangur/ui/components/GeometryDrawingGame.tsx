@@ -570,7 +570,7 @@ export default function GeometryDrawingGame({
               </KangurStatusChip>
             </div>
             <div
-              aria-label='Poziom trudnosci figur'
+              aria-label='Poziom trudności figur'
               className='grid grid-cols-1 gap-2 min-[360px]:grid-cols-2'
               role='group'
             >

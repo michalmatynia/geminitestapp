@@ -42,7 +42,7 @@ const getSetupFocus = (
         ? 'Misja dnia czeka na odbior'
         : mode === 'training'
           ? 'Ta sesja przybliza misje dnia'
-          : 'Ta runda moze domknac misje dnia';
+          : 'Ta runda może domknąć misje dnia';
 
     return {
       accent: 'emerald',
@@ -71,7 +71,7 @@ const getSetupFocus = (
         mode === 'kangur'
           ? `Mocny wynik w tej rundzie przybliza odznake ${nextBadge.name}. ${nextBadge.summary}.`
           : `Ta sesja pcha odznake ${nextBadge.name}. ${nextBadge.summary}.`,
-      label: 'Nastepna odznaka',
+      label: 'Następna odznaka',
       title: mode === 'kangur' ? 'Zagraj o kolejny prog' : 'Rozpedz kolejna nagrode',
     };
   }

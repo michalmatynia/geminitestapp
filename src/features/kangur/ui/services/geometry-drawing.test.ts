@@ -124,4 +124,11 @@ describe('geometry drawing evaluator', () => {
     expect(result.accepted).toBe(false);
     expect(result.closureRatio).toBeGreaterThan(0.2);
   });
+
+  it('rejects open square drawings even when corners look right', () => {
+    const openSquare = EXPECT_ACCEPTED.square.slice(0, -24);
+    const result = evaluateGeometryDrawing('square', openSquare);
+    expect(result.accepted).toBe(false);
+    expect(result.closureRatio).toBeGreaterThan(0.2);
+  });
 });

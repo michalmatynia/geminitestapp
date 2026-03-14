@@ -87,50 +87,60 @@ export default function MultiplicationArrayGame({
   const [xpEarned, setXpEarned] = useState(0);
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const sessionStartedAtRef = useRef(Date.now());
+  const advanceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const total = a * b;
   const collectedCount = collected.size * b;
   const allCollected = collected.size === a;
 
   useEffect(() => {
-    if (allCollected && !celebrating && !done) {
-      setCelebrating(true);
-      const timer = setTimeout(() => {
-        const newScore = score + 1;
-        if (roundIndex + 1 >= TOTAL_ROUNDS) {
-          const progress = loadProgress();
-          const reward = createLessonPracticeReward(
-            progress,
-            'multiplication',
-            newScore,
-            TOTAL_ROUNDS
-          );
-          addXp(reward.xp, reward.progressUpdates);
-          void persistKangurSessionScore({
-            operation: 'multiplication',
-            score: newScore,
-            totalQuestions: TOTAL_ROUNDS,
-            correctAnswers: newScore,
-            timeTakenSeconds: Math.round((Date.now() - sessionStartedAtRef.current) / 1000),
-            xpEarned: reward.xp,
-          });
-          setXpEarned(reward.xp);
-          setXpBreakdown(reward.breakdown ?? []);
-          setScore(newScore);
-          setDone(true);
-        } else {
-          setScore(newScore);
-          setRoundIndex((r) => r + 1);
-          const next = pickProblem([a, b]);
-          setProblem(next);
-          setCollected(new Set());
-          setCelebrating(false);
-        }
-      }, 1400);
-      return () => clearTimeout(timer);
+    if (!allCollected || done || advanceTimeoutRef.current) {
+      return undefined;
     }
-    return undefined;
-  }, [allCollected, celebrating, done, score, roundIndex, a, b]);
+
+    setCelebrating(true);
+    advanceTimeoutRef.current = setTimeout(() => {
+      advanceTimeoutRef.current = null;
+      const newScore = score + 1;
+      if (roundIndex + 1 >= TOTAL_ROUNDS) {
+        const progress = loadProgress();
+        const reward = createLessonPracticeReward(
+          progress,
+          'multiplication',
+          newScore,
+          TOTAL_ROUNDS
+        );
+        addXp(reward.xp, reward.progressUpdates);
+        void persistKangurSessionScore({
+          operation: 'multiplication',
+          score: newScore,
+          totalQuestions: TOTAL_ROUNDS,
+          correctAnswers: newScore,
+          timeTakenSeconds: Math.round((Date.now() - sessionStartedAtRef.current) / 1000),
+          xpEarned: reward.xp,
+        });
+        setXpEarned(reward.xp);
+        setXpBreakdown(reward.breakdown ?? []);
+        setScore(newScore);
+        setCelebrating(false);
+        setDone(true);
+      } else {
+        setScore(newScore);
+        setRoundIndex((r) => r + 1);
+        const next = pickProblem([a, b]);
+        setProblem(next);
+        setCollected(new Set());
+        setCelebrating(false);
+      }
+    }, 1400);
+
+    return () => {
+      if (advanceTimeoutRef.current) {
+        clearTimeout(advanceTimeoutRef.current);
+        advanceTimeoutRef.current = null;
+      }
+    };
+  }, [allCollected, done, score, roundIndex, a, b]);
 
   const handleTapGroup = (groupIndex: number): void => {
     if (collected.has(groupIndex) || celebrating) return;

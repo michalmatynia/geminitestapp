@@ -167,7 +167,7 @@ const assertValidParentPassword = async (password: string): Promise<void> => {
   const passwordCheck = validatePasswordStrength(password, policy);
   if (!passwordCheck.ok) {
     throw validationError(
-      passwordCheck.errors[0] ?? 'Haslo nie spelnia wymagan bezpieczenstwa.',
+      passwordCheck.errors[0] ?? 'Hasło nie spelnia wymagan bezpieczeństwa.',
       {
         issues: passwordCheck.errors,
       }
@@ -273,7 +273,7 @@ export const createKangurParentAccount = async (input: {
   } else {
     await assertUserLoginAllowed(existingUser.id);
     if (existingUser.emailVerified) {
-      throw conflictError('Konto z tym emailem juz istnieje. Zaloguj sie emailem i haslem.');
+      throw conflictError('Konto z tym emailem już istnieje. Zaloguj się emailem i hasłem.');
     }
     const activeVerification = await findActiveEmailVerificationChallengeByEmail(email);
     assertKangurParentVerificationSendAllowed(activeVerification, resendCooldownMs);
@@ -335,7 +335,7 @@ export const resendKangurParentVerificationEmail = async (input: {
   if (existingUser) {
     await assertUserLoginAllowed(existingUser.id);
     if (existingUser.emailVerified) {
-      throw conflictError('Konto z tym emailem juz istnieje. Zaloguj sie emailem i haslem.');
+      throw conflictError('Konto z tym emailem już istnieje. Zaloguj się emailem i hasłem.');
     }
     const activeVerification = await findActiveEmailVerificationChallengeByEmail(email);
     assertKangurParentVerificationSendAllowed(activeVerification, resendCooldownMs);
@@ -451,7 +451,7 @@ export const setKangurParentPassword = async (input: {
 
   if (typeof user.passwordHash === 'string' && user.passwordHash.trim().length > 0) {
     throw conflictError(
-      'Haslo dla tego konta jest juz ustawione. Mozesz logowac sie emailem i haslem.'
+      'Hasło dla tego konta jest już ustawione. Możesz logowac się emailem i hasłem.'
     );
   }
 
@@ -459,7 +459,7 @@ export const setKangurParentPassword = async (input: {
   const passwordCheck = validatePasswordStrength(input.password, policy);
   if (!passwordCheck.ok) {
     throw validationError(
-      passwordCheck.errors[0] ?? 'Haslo nie spelnia wymagan bezpieczenstwa.',
+      passwordCheck.errors[0] ?? 'Hasło nie spelnia wymagan bezpieczeństwa.',
       {
         issues: passwordCheck.errors,
       }

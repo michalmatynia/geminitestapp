@@ -1,13 +1,7 @@
 import 'dotenv/config';
 import type { Document, Filter } from 'mongodb';
 
-import { getKangurPageContentStore } from '@/features/kangur/server/page-content-repository';
-import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
-import { getKangurAiTutorNativeGuideStore } from '@/features/kangur/server/ai-tutor-native-guide-repository';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
-import type { KangurAiTutorNativeGuideStore } from '@/shared/contracts/kangur-ai-tutor-native-guide';
-import type { KangurPageContentStore } from '@/shared/contracts/kangur-page-content';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 
 type KangurAiTutorContentDoc = {
@@ -62,6 +56,18 @@ const parseArgs = (argv: string[]): CliOptions => ({
 });
 
 const shouldSkipCollection = (name: string) => name.startsWith('system.');
+
+const extractContentVersion = (doc: KangurAiTutorContentDoc | null | undefined): string | null => {
+  if (!doc?.content || typeof doc.content !== 'object') return null;
+  const maybeVersion = (doc.content as { version?: unknown }).version;
+  return typeof maybeVersion === 'string' ? maybeVersion : null;
+};
+
+const extractGuideEntryCount = (doc: KangurAiTutorNativeGuideDoc | null | undefined): number | null => {
+  if (!doc?.store || typeof doc.store !== 'object') return null;
+  const maybeEntries = (doc.store as { entries?: unknown }).entries;
+  return Array.isArray(maybeEntries) ? maybeEntries.length : null;
+};
 
 const collectPendingPolishRepairAudit = async (db: Awaited<ReturnType<typeof getMongoDb>>) => {
   const collections = await db.listCollections({}, { nameOnly: true }).toArray();
@@ -203,18 +209,6 @@ async function main(): Promise<void> {
     ? serialize(guidesBefore.store) !== serialize(repairKangurPolishCopy(guidesBefore.store))
     : true;
 
-  let content: KangurAiTutorContent | null = null;
-  let guideStore: KangurAiTutorNativeGuideStore | null = null;
-  let pageContentStore: KangurPageContentStore | null = null;
-
-  if (!options.dryRun) {
-    [content, guideStore, pageContentStore] = await Promise.all([
-      getKangurAiTutorContent(locale),
-      getKangurAiTutorNativeGuideStore(locale),
-      getKangurPageContentStore(locale),
-    ]);
-  }
-
   const repairAll = await repairAllPolishCollections(db, options);
 
   const [contentAfter, guidesAfter, pageContentAfter] = await Promise.all([
@@ -225,14 +219,10 @@ async function main(): Promise<void> {
   const audit = await collectPendingPolishRepairAudit(db);
 
   const contentVersion =
-    content?.version ??
-    (contentBefore?.content as Partial<KangurAiTutorContent> | undefined)?.version ??
-    null;
+    extractContentVersion(contentAfter) ?? extractContentVersion(contentBefore);
   const guideEntryCount =
-    guideStore?.entries?.length ??
-    (guidesBefore?.store as Partial<KangurAiTutorNativeGuideStore> | undefined)?.entries?.length ??
-    null;
-  const pageContentEntryCount = pageContentStore?.entries?.length ?? pageContentBefore;
+    extractGuideEntryCount(guidesAfter) ?? extractGuideEntryCount(guidesBefore);
+  const pageContentEntryCount = pageContentAfter;
 
   console.log(
     JSON.stringify(

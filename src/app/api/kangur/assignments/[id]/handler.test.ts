@@ -53,7 +53,7 @@ const assignment: KangurAssignment = {
   id: 'assignment-1',
   learnerKey: 'ada@example.com',
   title: 'Praktyka: Dzielenie',
-  description: 'Zrob jedna sesje dzielenia i celuj w 80%.',
+  description: 'Zrób jedna sesje dzielenia i celuj w 80%.',
   priority: 'high',
   archived: true,
   target: {

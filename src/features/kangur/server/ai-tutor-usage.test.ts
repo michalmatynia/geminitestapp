@@ -114,7 +114,7 @@ describe('ensureKangurAiTutorDailyUsageAvailable', () => {
         dailyMessageLimit: 10,
         now: mockNow,
       })
-    ).rejects.toThrow('Daily AI tutor message limit reached');
+    ).rejects.toThrow('Daily AI Tutor message limit reached');
   });
 
   it('does not throw when under the limit', async () => {

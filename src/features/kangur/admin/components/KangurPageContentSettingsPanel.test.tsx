@@ -100,9 +100,9 @@ describe('KangurPageContentSettingsPanel', () => {
                 fragments: [
                   {
                     id: 'leaderboard-points',
-                    text: 'Liczba punktow',
+                    text: 'Liczba punktów',
                     aliases: ['punkty'],
-                    explanation: 'Poczatkowe wyjasnienie fragmentu.',
+                    explanation: 'Poczatkowe wyjaśnienie fragmentu.',
                     nativeGuideIds: ['shared-leaderboard-points'],
                     triggerPhrases: ['punkty'],
                     enabled: true,
@@ -122,7 +122,7 @@ describe('KangurPageContentSettingsPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: /game-home-leaderboard/i }));
     fireEvent.click(screen.getByRole('button', { name: /liczba punktow/i }));
     fireEvent.change(screen.getByLabelText('Page content fragment text'), {
-      target: { value: 'Liczba punktow w rankingu' },
+      target: { value: 'Liczba punktów w rankingu' },
     });
     fireEvent.change(screen.getByLabelText('Page content fragment explanation'), {
       target: { value: 'Aktualny wynik ucznia uzywany do wyliczenia miejsca w rankingu.' },
@@ -142,7 +142,7 @@ describe('KangurPageContentSettingsPanel', () => {
     expect(updatedEntry?.fragments).toEqual([
       expect.objectContaining({
         id: 'leaderboard-points',
-        text: 'Liczba punktow w rankingu',
+        text: 'Liczba punktów w rankingu',
         aliases: ['punkty', 'wynik rankingowy'],
         explanation: 'Aktualny wynik ucznia uzywany do wyliczenia miejsca w rankingu.',
       }),

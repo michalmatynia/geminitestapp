@@ -12,6 +12,9 @@ export type KangurGameScreen =
   | 'kangur'
   | 'calendar_quiz'
   | 'geometry_quiz'
+  | 'subtraction_quiz'
+  | 'multiplication_quiz'
+  | 'division_quiz'
   | 'operation'
   | 'playing'
   | 'result';

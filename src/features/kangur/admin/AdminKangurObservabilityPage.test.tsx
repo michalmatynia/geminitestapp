@@ -483,7 +483,7 @@ const createKnowledgeGraphPreviewResponse = () => ({
     vectorHitCount: 1,
     vectorRecallAttempted: true,
     tokenCount: 3,
-    normalizedQuerySeed: 'wyjasnij ranking wynikow',
+    normalizedQuerySeed: 'wyjaśnij ranking wyników',
     websiteHelpTargetNodeId: 'guide:native:game-leaderboard',
   },
   retrieval: {
@@ -494,7 +494,7 @@ const createKnowledgeGraphPreviewResponse = () => ({
     vectorHitCount: 1,
     vectorRecallAttempted: true,
     querySeed: 'Wyjaśnij ranking wyników',
-    normalizedQuerySeed: 'wyjasnij ranking wynikow',
+    normalizedQuerySeed: 'wyjaśnij ranking wyników',
     tokens: ['wyjasnij', 'ranking', 'wynikow'],
     instructions: 'Kangur semantic graph context:\n- Ranking wyników',
     sources: [
@@ -775,8 +775,8 @@ describe('AdminKangurObservabilityPage', () => {
     expect(screen.getByText('Raw query seed')).toBeInTheDocument();
     expect(screen.getAllByText('Wyjaśnij ranking wyników').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Normalized query seed')).toBeInTheDocument();
-    expect(screen.getByText('wyjasnij ranking wynikow')).toBeInTheDocument();
-    expect(screen.getByText('wyjasnij, ranking, wynikow')).toBeInTheDocument();
+    expect(screen.getByText('wyjaśnij ranking wyników')).toBeInTheDocument();
+    expect(screen.getByText('wyjaśnij, ranking, wyników')).toBeInTheDocument();
     expect(screen.getByText('Ranking wyników')).toBeInTheDocument();
     expect(screen.getByText('guide • kangur_ai_tutor_native_guides • kangur_ai_tutor_native_guides')).toBeInTheDocument();
   });

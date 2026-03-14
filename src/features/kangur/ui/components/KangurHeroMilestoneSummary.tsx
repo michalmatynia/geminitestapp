@@ -72,7 +72,7 @@ export default function KangurHeroMilestoneSummary({
                   color:
                     'color-mix(in srgb, var(--kangur-page-text) 74%, var(--kangur-page-muted-text) 26%)',
                 }}
-                eyebrow='Nastepny kamien milowy'
+                eyebrow='Następny kamień milowy'
                 eyebrowStyle={{
                   color: 'color-mix(in srgb, var(--kangur-page-text) 70%, #92400e 30%)',
                 }}

@@ -137,7 +137,7 @@ export function Breadcrumbs({
             onClick={() => handleScroll('left')}
             className='absolute left-1 top-1/2 z-10 -translate-y-1/2 rounded-full size-6 bg-black/40 p-1 text-gray-300 hover:bg-black/60'
           >
-            <ChevronLeft size={12} />
+            <ChevronLeft size={12} aria-hidden='true' />
           </Button>
         )}
         {canScrollRight && (
@@ -149,7 +149,7 @@ export function Breadcrumbs({
             onClick={() => handleScroll('right')}
             className='absolute right-1 top-1/2 z-10 -translate-y-1/2 rounded-full size-6 bg-black/40 p-1 text-gray-300 hover:bg-black/60'
           >
-            <ChevronRight size={12} />
+            <ChevronRight size={12} aria-hidden='true' />
           </Button>
         )}
         {content}

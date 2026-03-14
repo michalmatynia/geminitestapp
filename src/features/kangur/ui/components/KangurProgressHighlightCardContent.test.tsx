@@ -15,7 +15,7 @@ describe('KangurProgressHighlightCardContent', () => {
           chipAccent='amber'
           chipLabel='2/4 zadania'
           description='Jeszcze chwila do kolejnego progu.'
-          eyebrow='Nastepna odznaka'
+          eyebrow='Następna odznaka'
           progressAccent='amber'
           progressBarTestId='highlight-bar'
           progressValue={50}
@@ -24,7 +24,7 @@ describe('KangurProgressHighlightCardContent', () => {
       </div>
     );
 
-    expect(screen.getByTestId('wrapper')).toHaveTextContent('Nastepna odznaka');
+    expect(screen.getByTestId('wrapper')).toHaveTextContent('Następna odznaka');
     expect(screen.getByTestId('wrapper')).toHaveTextContent('⭐ Start wyzwan');
     expect(screen.getByTestId('wrapper')).toHaveTextContent('Jeszcze chwila do kolejnego progu.');
     expect(screen.getByText('2/4 zadania')).toHaveClass('rounded-full', 'border');

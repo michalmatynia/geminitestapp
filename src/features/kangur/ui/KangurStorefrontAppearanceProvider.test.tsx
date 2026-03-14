@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { settingsStoreGetMock } = vi.hoisted(() => ({
@@ -47,7 +47,7 @@ describe('KangurStorefrontAppearanceProvider', () => {
     expect(screen.getByTestId('mode-probe')).toHaveTextContent('default');
   });
 
-  it('uses the stored Kangur default appearance mode', () => {
+  it('uses the stored Kangur default appearance mode', async () => {
     settingsStoreGetMock.mockImplementation((key: string) => {
       if (key === KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY) {
         return 'sunset';
@@ -61,7 +61,9 @@ describe('KangurStorefrontAppearanceProvider', () => {
       </KangurStorefrontAppearanceProvider>
     );
 
-    expect(screen.getByTestId('mode-probe')).toHaveTextContent('sunset');
+    await waitFor(() => {
+      expect(screen.getByTestId('mode-probe')).toHaveTextContent('sunset');
+    });
   });
 
   it('ignores any local override and stays on the daily mode', () => {

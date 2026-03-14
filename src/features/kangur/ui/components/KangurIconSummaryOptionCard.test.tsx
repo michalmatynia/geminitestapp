@@ -25,7 +25,7 @@ describe('KangurIconSummaryOptionCard', () => {
           description='Opis'
           footer={<span data-testid='summary-option-footer'>footer</span>}
           icon={<span data-testid='summary-option-icon'>icon</span>}
-          title='Naglowek'
+          title='Nagłówek'
         />
       </KangurIconSummaryOptionCard>
     );

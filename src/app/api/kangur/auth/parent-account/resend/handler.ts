@@ -33,7 +33,7 @@ export async function postKangurParentAccountResendHandler(
     hasPassword: result.hasPassword,
     retryAfterMs: result.retryAfterMs,
     message:
-      'Wyslalismy nowy email potwierdzajacy. Konto rodzica uaktywni sie po weryfikacji adresu.',
+      'Wysłaliśmy nowy email potwierdzający. Konto rodzica uaktywni się po weryfikacji adresu.',
     debug: buildKangurParentAccountCreateDebugPayload(result),
   });
 }

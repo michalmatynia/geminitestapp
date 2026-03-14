@@ -142,7 +142,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
               type='password'
               value={createForm.password}
               onChange={(event) => updateCreateField('password', event.target.value)}
-              placeholder='Haslo ucznia'
+              placeholder='Hasło ucznia'
             />
           </div>
 

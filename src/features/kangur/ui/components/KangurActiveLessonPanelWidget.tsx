@@ -34,7 +34,7 @@ export function KangurActiveLessonPanelWidget(): JSX.Element {
       <KangurEmptyState
         accent='indigo'
         className='w-full'
-        description='Wybierz lekcje z katalogu, aby zobaczyc szczegoly i uruchomic praktyke.'
+        description='Wybierz lekcje z katalogu, aby zobaczyć szczegóły i uruchomić praktykę.'
         padding='xl'
         title='Wybierz lekcje'
       />

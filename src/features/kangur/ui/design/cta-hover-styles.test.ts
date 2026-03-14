@@ -6,19 +6,23 @@ import { describe, expect, it } from 'vitest';
 const globalStylesheetPath = path.join(process.cwd(), 'src/app/globals.css');
 
 describe('Kangur CTA hover styles', () => {
-  it('keeps the primary cta on the orange base and hover treatment', () => {
+  it('keeps the primary cta driven by theme variables', () => {
     const source = readFileSync(globalStylesheetPath, 'utf8');
+    const primaryCtaBlock = source.match(/\.primary-cta\s*\{[\s\S]*?will-change:\s*transform;/)?.[0];
+    const primaryHoverBlock = source.match(
+      /\.primary-cta:hover,\s*\.primary-cta:focus-visible\s*\{[\s\S]*?transform:\s*translateY\(-1px\)\s*scale\(1\.014\)/
+    )?.[0];
 
-    expect(source).toMatch(/\.primary-cta\s*\{[\s\S]*#ffb347[\s\S]*#ff7a45/);
-    expect(source).toMatch(
-      /\.primary-cta:hover,\s*\.primary-cta:focus-visible\s*\{[\s\S]*#ffc670[\s\S]*#ff985f[\s\S]*#ff7a45/
-    );
-    expect(source).toMatch(
-      /\.primary-cta:hover,\s*\.primary-cta:focus-visible\s*\{[\s\S]*rgba\(255,\s*154,\s*95,\s*0\.2\)/
-    );
-    expect(source).toMatch(
-      /\.primary-cta:hover,\s*\.primary-cta:focus-visible\s*\{[\s\S]*transform:\s*translateY\(-1px\)\s*scale\(1\.014\)/
-    );
+    expect(primaryCtaBlock).toBeTruthy();
+    expect(primaryCtaBlock).toContain('--kangur-cta-primary-start');
+    expect(primaryCtaBlock).toContain('background: var(--kangur-button-primary-background)');
+    expect(primaryCtaBlock).not.toContain('#ffb347');
+    expect(primaryCtaBlock).not.toContain('#ff7a45');
+    expect(primaryHoverBlock).toBeTruthy();
+    expect(primaryHoverBlock).toContain('--kangur-cta-primary-hover-start');
+    expect(primaryHoverBlock).toContain('background: var(--kangur-button-primary-hover-background');
+    expect(primaryHoverBlock).not.toContain('#ffc670');
+    expect(primaryHoverBlock).not.toContain('#ff985f');
   });
 
   it('keeps warning ctas on the same warm hover direction instead of introducing purple', () => {
@@ -52,7 +56,7 @@ describe('Kangur CTA hover styles', () => {
     const primaryCtaBlock = source.match(/\.primary-cta\s*\{[\s\S]*?will-change:\s*transform;/)?.[0];
     const warningCtaBlock = source.match(/\.warning-cta\s*\{[\s\S]*?will-change:\s*transform;/)?.[0];
     const sharedButtonGradientMotionBlock = source.match(
-      /\.primary-cta,[\s\S]*?background-image:\s*linear-gradient\([\s\S]*?animation-name:\s*kangur-button-gradient-color-shift;[\s\S]*?animation-duration:\s*18s !important;[\s\S]*?animation-timing-function:\s*cubic-bezier\(0\.37, 0, 0\.23, 1\) !important;[\s\S]*?animation-iteration-count:\s*infinite !important;/
+      /\.warning-cta,[\s\S]*?background-image:\s*linear-gradient\([\s\S]*?animation-name:\s*kangur-button-gradient-color-shift;[\s\S]*?animation-duration:\s*18s !important;[\s\S]*?animation-timing-function:\s*cubic-bezier\(0\.37, 0, 0\.23, 1\) !important;[\s\S]*?animation-iteration-count:\s*infinite !important;/
     )?.[0];
     const progressGradientMotionBlock = source.match(
       /\.kangur-progress-fill\s*\{[\s\S]*?--kangur-progress-primary:\s*var\(--tw-gradient-from,\s*transparent\);[\s\S]*?background-image:\s*linear-gradient\([\s\S]*?animation-name:\s*kangur-progress-gradient-color-shift;[\s\S]*?animation-duration:\s*10s !important;[\s\S]*?animation-timing-function:\s*ease-in-out !important;[\s\S]*?animation-iteration-count:\s*infinite !important;/
@@ -77,6 +81,7 @@ describe('Kangur CTA hover styles', () => {
     expect(warningCtaBlock).not.toContain('background-position 420ms ease');
     expect(warningCtaBlock).not.toContain('background 220ms ease');
     expect(sharedButtonGradientMotionBlock).toBeTruthy();
+    expect(sharedButtonGradientMotionBlock).not.toContain('.primary-cta');
     expect(sharedButtonGradientMotionBlock).not.toContain('.home-action-featured');
     expect(progressGradientMotionBlock).toBeTruthy();
   });

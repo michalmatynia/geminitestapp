@@ -271,14 +271,14 @@ describe('handleDatabaseUpdateOperation', () => {
       entityId: 'product-1',
       entityType: 'product',
       result: {
-        parameters: [{ parameterId: 'unknown', value: 'Nowa wartosc' }],
+        parameters: [{ parameterId: 'unknown', value: 'Nowa wartość' }],
       },
     };
     args.templateInputs = {
       entityId: 'product-1',
       entityType: 'product',
       result: {
-        parameters: [{ parameterId: 'unknown', value: 'Nowa wartosc' }],
+        parameters: [{ parameterId: 'unknown', value: 'Nowa wartość' }],
       },
       context: {
         entity: {

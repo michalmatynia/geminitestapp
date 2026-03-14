@@ -229,9 +229,9 @@ describe('KangurAiTutorGuidedCallout', () => {
         avatarPlacement='left'
         calloutKey='selection'
         calloutTestId='kangur-ai-tutor-selection-guided-callout'
-        detail='Za chwilę otworzę wyjaśnienie dokładnie dla zaznaczonego tekstu.'
+        detail={null}
         entryDirection='left'
-        headerLabel='Janek · wyjaśnienie'
+        headerLabel='Janek'
         mode='selection'
         onAction={vi.fn()}
         placement='right'
@@ -274,7 +274,7 @@ describe('KangurAiTutorGuidedCallout', () => {
     ).not.toBeInTheDocument();
     expect(
       screen.getByTestId('kangur-ai-tutor-selection-guided-page-content-badge')
-    ).toHaveTextContent('Zapisana tresc strony');
+    ).toHaveTextContent('Zapisana treść strony');
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-answer')).toHaveTextContent(
       'To ścieżka mistrzostwa pokazuje Twój postęp w odznakach i lekcjach.'
     );
@@ -315,9 +315,9 @@ describe('KangurAiTutorGuidedCallout', () => {
         avatarPlacement='bottom'
         calloutKey='selection-generic-resolved'
         calloutTestId='kangur-ai-tutor-selection-guided-callout'
-        detail='Za chwilę otworzę wyjaśnienie dokładnie dla zaznaczonego tekstu.'
+        detail={null}
         entryDirection='left'
-        headerLabel='Janek · wyjaśnienie'
+        headerLabel='Janek'
         mode='selection'
         onAction={vi.fn()}
         placement='top'
@@ -401,9 +401,9 @@ describe('KangurAiTutorGuidedCallout', () => {
         avatarPlacement='left'
         calloutKey='selection-pending'
         calloutTestId='kangur-ai-tutor-selection-guided-callout'
-        detail='Za chwilę otworzę wyjaśnienie dokładnie dla zaznaczonego tekstu.'
+        detail={null}
         entryDirection='left'
-        headerLabel='Janek · wyjaśnienie'
+        headerLabel='Janek'
         mode='selection'
         onAction={vi.fn()}
         placement='right'
@@ -442,6 +442,8 @@ describe('KangurAiTutorGuidedCallout', () => {
       screen.queryByText('entry:game-home-progress#fragment:badge-track-mastery')
     ).not.toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-selection-guided-answer')).not.toBeInTheDocument();
-    expect(screen.getByText('Za chwilę otworzę wyjaśnienie dokładnie dla zaznaczonego tekstu.')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Za chwilę otworzę wyjaśnienie dokładnie dla zaznaczonego tekstu.')
+    ).not.toBeInTheDocument();
   });
 });

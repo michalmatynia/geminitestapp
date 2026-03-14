@@ -69,7 +69,7 @@ describe('validateKangurAiTutorOnboardingStore', () => {
 describe('validateKangurAiTutorOnboardingContent', () => {
   it('flags placeholder onboarding copy inside the guest intro content pack', () => {
     const content = JSON.parse(JSON.stringify(DEFAULT_KANGUR_AI_TUTOR_CONTENT));
-    content.guestIntro.initial.headline = 'TODO uzupelnic naglowek';
+    content.guestIntro.initial.headline = 'TODO uzupelnic nagłówek';
 
     const result = validateKangurAiTutorOnboardingContent({
       content,

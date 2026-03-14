@@ -73,9 +73,9 @@ describe('resolveKangurAiTutorSectionKnowledgeBundle', () => {
           focusIdPrefixes: ['kangur-lessons-library'],
           contentIdPrefixes: ['lesson:list'],
           title: 'Biblioteka lekcji',
-          shortDescription: 'Pomaga wybrac najlepszy temat do dalszej nauki.',
+          shortDescription: 'Pomaga wybrać najlepszy temat do dalszej nauki.',
           fullDescription: 'To miejsce pokazuje aktywne tematy, priorytety i dalsze kroki dla ucznia.',
-          hints: ['Zacznij od tematu z najwyzszym priorytetem.'],
+          hints: ['Zacznij od tematu z najwyższym priorytetem.'],
           relatedGames: [],
           relatedTests: [],
           followUpActions: [

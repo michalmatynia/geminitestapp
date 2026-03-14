@@ -40,7 +40,7 @@ const createPostRequest = (body: string): NextRequest =>
     body,
   });
 
-describe('kangur tts probe handler', () => {
+describe('kangur tts próbę handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -78,7 +78,7 @@ describe('kangur tts probe handler', () => {
     });
   });
 
-  it('returns narrator probe diagnostics for a parent actor', async () => {
+  it('returns narrator próbę diagnostics for a parent actor', async () => {
     const response = await postKangurTtsProbeHandler(
       createPostRequest(
         JSON.stringify({
@@ -154,6 +154,6 @@ describe('kangur tts probe handler', () => {
         ),
         createRequestContext()
       )
-    ).rejects.toThrow('Only parents or admins can probe Kangur server narration.');
+    ).rejects.toThrow('Only parents or admins can próbę Kangur server narration.');
   });
 });

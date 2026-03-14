@@ -346,6 +346,20 @@
     @apply bg-background text-foreground;
     font-family: var(--app-font-body);
   }
+  @media (prefers-reduced-motion: reduce) {
+    html:focus-within {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      animation-delay: 0ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
   [data-admin-menu] a,
   [data-admin-menu] button {
     cursor: pointer;
@@ -1359,8 +1373,8 @@
     border-radius: inherit;
     background: linear-gradient(
       var(--kangur-button-gloss-angle, 180deg),
-      rgba(255, 255, 255, var(--kangur-button-gloss-opacity, 0)),
-      rgba(255, 255, 255, 0)
+      color-mix(in srgb, var(--kangur-button-gloss-color, #fff) calc(var(--kangur-button-gloss-opacity, 0) * 100%), transparent),
+      transparent
     );
     pointer-events: none;
     z-index: 1;
@@ -1447,6 +1461,7 @@
   [data-kangur-appearance] h5,
   [data-kangur-appearance] h6 {
     font-family: var(--kangur-font-heading, var(--app-font-heading));
+    line-height: var(--kangur-font-heading-line-height, 1.2);
   }
 
   [data-kangur-appearance] :is(.text-slate-900, .text-slate-800, .text-slate-700) {
@@ -1802,7 +1817,7 @@
 
   .home-action-featured {
     @apply relative flex w-full items-center justify-center overflow-hidden rounded-full px-8 sm:px-12;
-    height: 64px;
+    min-height: 64px;
     isolation: isolate;
     color: var(--home-action-rest-text-color);
     transform: translateY(var(--home-action-face-offset));
@@ -1814,6 +1829,7 @@
   }
 
   .home-action-featured-label {
+    line-height: var(--kangur-font-heading-line-height, 1.2);
     background-image: linear-gradient(
       90deg,
       var(--home-action-label-start) 0%,
@@ -2618,37 +2634,31 @@
 
   .primary-cta {
     --kangur-gradient-angle: 90deg;
-    --kangur-gradient-start: var(--kangur-cta-primary-start, #ffb347);
+    --kangur-gradient-start: var(--kangur-cta-primary-start);
     --kangur-gradient-mid: var(
       --kangur-cta-primary-mid,
       color-mix(in srgb, var(--kangur-gradient-start) 46%, var(--kangur-gradient-end) 54%)
     );
-    --kangur-gradient-end: var(--kangur-cta-primary-end, #ff7a45);
+    --kangur-gradient-end: var(--kangur-cta-primary-end);
     --kangur-gradient-start-shifted: color-mix(
       in srgb,
-      var(--kangur-gradient-start) 68%,
-      var(--kangur-gradient-end) 32%
+      var(--kangur-gradient-start) 88%,
+      #ffffff 12%
     );
     --kangur-gradient-mid-shifted: color-mix(
       in srgb,
-      var(--kangur-gradient-start) 30%,
-      var(--kangur-gradient-end) 70%
+      var(--kangur-gradient-mid) 90%,
+      #ffffff 10%
     );
     --kangur-gradient-end-shifted: color-mix(
       in srgb,
-      var(--kangur-gradient-end) 82%,
-      var(--kangur-gradient-start) 18%
+      var(--kangur-gradient-end) 88%,
+      #ffffff 12%
     );
-    background: var(
-      --kangur-button-primary-background,
-      linear-gradient(90deg, #ffb347 0%, #ff7a45 100%)
-    );
+    background: var(--kangur-button-primary-background);
     color: var(--kangur-button-primary-text, #ffffff);
-    box-shadow: var(
-      --kangur-button-primary-shadow,
-      0 12px 24px rgba(255, 137, 77, 0.28),
-      inset 0 1px 0 rgba(255, 255, 255, 0.35)
-    );
+    isolation: isolate;
+    box-shadow: var(--kangur-button-primary-shadow);
     transition:
       transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
       box-shadow 220ms ease,
@@ -2656,38 +2666,64 @@
     will-change: transform;
   }
 
+  .primary-cta::after {
+    content: '';
+    position: absolute;
+    inset: 2px 2px auto;
+    height: calc(var(--kangur-button-gloss-height, 48%) + 8%);
+    border-radius: inherit;
+    background:
+      radial-gradient(
+        120% 140% at 50% -20%,
+        color-mix(in srgb, #ffffff 78%, var(--kangur-gradient-start) 22%) 0%,
+        rgba(255, 255, 255, 0) 58%
+      ),
+      linear-gradient(
+        var(--kangur-button-gloss-angle, 180deg),
+        rgba(255, 255, 255, 0.72) 0%,
+        rgba(255, 255, 255, 0) 70%
+      );
+    opacity: calc(var(--kangur-button-gloss-opacity, 0.3) + 0.18);
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(0.2px);
+  }
+
   .primary-cta:hover,
   .primary-cta:focus-visible {
-    --kangur-gradient-start: var(--kangur-cta-primary-hover-start, #ffc670);
-    --kangur-gradient-mid: var(--kangur-cta-primary-hover-mid, #ff985f);
-    --kangur-gradient-end: var(--kangur-cta-primary-hover-end, #ff7a45);
+    --kangur-gradient-start: var(--kangur-cta-primary-hover-start, var(--kangur-cta-primary-start));
+    --kangur-gradient-mid: var(--kangur-cta-primary-hover-mid, var(--kangur-gradient-mid));
+    --kangur-gradient-end: var(--kangur-cta-primary-hover-end, var(--kangur-cta-primary-end));
     --kangur-gradient-start-shifted: color-mix(
       in srgb,
-      var(--kangur-gradient-start) 72%,
-      var(--kangur-gradient-mid) 28%
+      var(--kangur-gradient-start) 84%,
+      #ffffff 16%
     );
     --kangur-gradient-mid-shifted: color-mix(
       in srgb,
-      var(--kangur-gradient-start) 28%,
-      var(--kangur-gradient-end) 72%
+      var(--kangur-gradient-mid) 86%,
+      #ffffff 14%
     );
     --kangur-gradient-end-shifted: color-mix(
       in srgb,
       var(--kangur-gradient-end) 84%,
-      var(--kangur-gradient-mid) 16%
+      #ffffff 16%
     );
     background: var(
       --kangur-button-primary-hover-background,
-      linear-gradient(90deg, #ffc670 0%, #ff985f 56%, #ff7a45 100%)
+      var(--kangur-button-primary-background)
     );
     box-shadow: var(
       --kangur-button-primary-hover-shadow,
-      0 22px 34px -18px rgba(255, 137, 77, 0.36),
-      0 14px 24px -18px rgba(255, 154, 95, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.4)
+      var(--kangur-button-primary-shadow)
     );
     filter: saturate(1.03) brightness(1.01);
     transform: translateY(-1px) scale(1.014);
+  }
+
+  .primary-cta:hover::after,
+  .primary-cta:focus-visible::after {
+    opacity: calc(var(--kangur-button-gloss-opacity, 0.3) + 0.28);
   }
 
   .primary-cta:active {
@@ -2696,20 +2732,23 @@
     --kangur-gradient-end: var(--kangur-cta-primary-active-end, var(--kangur-gradient-end));
     --kangur-gradient-start-shifted: color-mix(
       in srgb,
-      var(--kangur-gradient-start) 72%,
-      var(--kangur-gradient-end) 28%
+      var(--kangur-gradient-start) 92%,
+      #000000 8%
     );
     --kangur-gradient-mid-shifted: color-mix(
       in srgb,
-      var(--kangur-gradient-start) 28%,
-      var(--kangur-gradient-end) 72%
+      var(--kangur-gradient-mid) 92%,
+      #000000 8%
     );
     --kangur-gradient-end-shifted: color-mix(
       in srgb,
-      var(--kangur-gradient-end) 84%,
-      var(--kangur-gradient-mid) 16%
+      var(--kangur-gradient-end) 92%,
+      #000000 8%
     );
-    box-shadow: var(--kangur-button-primary-active-shadow, var(--kangur-button-primary-shadow));
+    box-shadow: var(
+      --kangur-button-primary-active-shadow,
+      var(--kangur-button-primary-shadow)
+    );
     filter: saturate(1.02) brightness(0.99);
     transform: translateY(0) scale(0.995);
   }
@@ -2717,7 +2756,8 @@
   .kangur-cta-pill {
     position: relative;
     overflow: hidden;
-    border-radius: var(--kangur-button-radius, 9999px);
+    border-radius: var(--kangur-button-border-radius, var(--kangur-button-radius, 9999px));
+    border: var(--kangur-button-border-width, 0px) solid var(--kangur-button-border-color, transparent);
     box-shadow:
       0 18px 34px -24px rgba(49, 63, 129, 0.28),
       0 10px 18px -18px rgba(49, 63, 129, 0.22);
@@ -3000,7 +3040,6 @@
     --kangur-gradient-end-shifted: color-mix(in srgb, var(--tw-gradient-to, transparent) 74%, var(--tw-gradient-from, transparent) 26%);
   }
 
-  .primary-cta,
   .warning-cta,
   .success-cta,
   button[class*='bg-gradient-to-'],

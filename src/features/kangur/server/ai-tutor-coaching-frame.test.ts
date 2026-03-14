@@ -134,12 +134,12 @@ describe('appendCoachingFrameInstructions', () => {
       mode: 'hint_ladder',
       label: 'Jeden trop',
       description: 'Daj jeden krok.',
-      rationale: 'Niska skutecznosc.',
+      rationale: 'Niska skuteczność.',
     });
     expect(lines).toHaveLength(2);
     expect(lines[0]).toContain('hint_ladder');
     expect(lines[0]).toContain(COACHING_MODE_INSTRUCTIONS.hint_ladder);
-    expect(lines[1]).toContain('Niska skutecznosc.');
+    expect(lines[1]).toContain('Niska skuteczność.');
   });
 
   it('skips rationale line when rationale is absent', () => {

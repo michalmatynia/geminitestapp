@@ -75,9 +75,9 @@ export function CopyButton(props: CopyButtonProps): React.JSX.Element {
       {children ?? (
         <>
           {isCopied ? (
-            <Check className={showText ? 'mr-2 h-4 w-4' : 'h-4 w-4'} />
+            <Check className={showText ? 'mr-2 h-4 w-4' : 'h-4 w-4'} aria-hidden='true' />
           ) : (
-            <Copy className={showText ? 'mr-2 h-4 w-4' : 'h-4 w-4'} />
+            <Copy className={showText ? 'mr-2 h-4 w-4' : 'h-4 w-4'} aria-hidden='true' />
           )}
           {showText && (isCopied ? 'Copied' : 'Copy')}
         </>

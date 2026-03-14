@@ -105,7 +105,7 @@ describe('KangurGameSetupMomentumCard', () => {
     render(<KangurGameSetupMomentumCard mode='kangur' progress={buildProgress()} />);
 
     expect(screen.getByTestId('kangur-game-setup-momentum-label-kangur')).toHaveTextContent(
-      'Nastepna odznaka'
+      'Następna odznaka'
     );
     expect(screen.getByTestId('kangur-game-setup-momentum-title-kangur')).toHaveTextContent(
       'Zagraj o kolejny prog'

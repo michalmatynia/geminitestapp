@@ -11,7 +11,7 @@ import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
 const readBodyJson = async (request: NextRequest): Promise<unknown> => {
   const rawBody = await request.text();
   if (!rawBody) {
-    throw badRequestError('Kangur TTS probe payload is required.');
+    throw badRequestError('Kangur TTS próbę payload is required.');
   }
 
   try {
@@ -37,7 +37,7 @@ export async function postKangurTtsProbeHandler(
 ): Promise<Response> {
   const actor = await resolveKangurActor(req);
   if (!actor.canManageLearners) {
-    throw forbiddenError('Only parents or admins can probe Kangur server narration.');
+    throw forbiddenError('Only parents or admins can próbę Kangur server narration.');
   }
 
   const payload = kangurLessonTtsProbeRequestSchema.parse(await resolveBodyJson(req, ctx));
@@ -46,8 +46,8 @@ export async function postKangurTtsProbeHandler(
   void logKangurServerEvent({
     source: response.ok ? 'kangur.tts.probe.ready' : 'kangur.tts.probe.failed',
     message: response.ok
-      ? 'Kangur server narrator probe succeeded'
-      : 'Kangur server narrator probe failed',
+      ? 'Kangur server narrator próbę succeeded'
+      : 'Kangur server narrator próbę failed',
     level: response.ok ? 'info' : 'warn',
     service: 'kangur.tts',
     request: req,

@@ -28,7 +28,7 @@ const PERSONA_TO_TUTOR_MOOD: Record<AgentPersonaMoodId, KangurTutorMoodId> = {
 
 const FRUSTRATION_KEYWORDS = [
   'nie umiem',
-  'nie moge',
+  'nie mogę',
   'to trudne',
   'trudne',
   'boje',
@@ -69,7 +69,7 @@ const PLAYFUL_KEYWORDS = [
   'gra',
   'smieszne',
   'fajne',
-  'co jesli',
+  'co jeśli',
   'dlaczego',
   'czemu',
 ];

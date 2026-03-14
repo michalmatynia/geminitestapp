@@ -55,20 +55,20 @@ vi.mock('@/features/kangur/ui/components/AddingSynthesisGame', () => ({
   default: () => <div>Mock Adding Synthesis Game</div>,
 }));
 
-vi.mock('@/features/kangur/ui/components/SubtractingGame', () => ({
-  default: () => <div>Mock Subtracting Game</div>,
+vi.mock('@/features/kangur/ui/components/SubtractingGardenGame', () => ({
+  default: () => <div>Mock Subtracting Garden Game</div>,
 }));
 
 vi.mock('@/features/kangur/ui/components/DivisionGame', () => ({
   default: () => <div>Mock Division Game</div>,
 }));
 
-vi.mock('@/features/kangur/ui/components/MultiplicationArrayGame', () => ({
-  default: () => <div>Mock Multiplication Array Game</div>,
+vi.mock('@/features/kangur/ui/components/DivisionGroupsGame', () => ({
+  default: () => <div>Mock Division Groups Game</div>,
 }));
 
-vi.mock('@/features/kangur/ui/components/MultiplicationGame', () => ({
-  default: () => <div>Mock Multiplication Game</div>,
+vi.mock('@/features/kangur/ui/components/MultiplicationArrayGame', () => ({
+  default: () => <div>Mock Multiplication Array Game</div>,
 }));
 
 import AddingLesson from '@/features/kangur/ui/components/AddingLesson';
@@ -146,7 +146,7 @@ describe('Arithmetic lessons shared surfaces', () => {
       'kangur-cta-pill',
       'surface-cta'
     );
-    expect(screen.getByText('Mock Subtracting Game')).toBeInTheDocument();
+    expect(screen.getByText('Mock Subtracting Garden Game')).toBeInTheDocument();
     expect(
       within(screen.getByTestId('subtracting-lesson-game-shell')).queryByText(
         'Gra z odejmowaniem!'
@@ -179,7 +179,7 @@ describe('Arithmetic lessons shared surfaces', () => {
       'kangur-cta-pill',
       'surface-cta'
     );
-    expect(screen.getByText('Mock Division Game')).toBeInTheDocument();
+    expect(screen.getByText('Mock Division Groups Game')).toBeInTheDocument();
     expect(
       within(screen.getByTestId('division-lesson-game-shell')).queryByText('Gra z dzieleniem!')
     ).toBeNull();
@@ -224,21 +224,5 @@ describe('Arithmetic lessons shared surfaces', () => {
       )
     ).toBeNull();
 
-    unmount();
-
-    renderLesson(<MultiplicationLesson />);
-    fireEvent.click(screen.getByTestId('lesson-hub-section-game_quiz'));
-
-    expect(screen.getByTestId('multiplication-lesson-game-quiz-shell')).toHaveClass(
-      'glass-panel',
-      'border-white/88',
-      'bg-white/94'
-    );
-    expect(screen.getByText('Mock Multiplication Game')).toBeInTheDocument();
-    expect(
-      within(screen.getByTestId('multiplication-lesson-game-quiz-shell')).queryByText(
-        'Quiz mnozenia!'
-      )
-    ).toBeNull();
   });
 });

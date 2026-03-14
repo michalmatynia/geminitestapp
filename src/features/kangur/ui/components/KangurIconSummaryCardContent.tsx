@@ -15,6 +15,8 @@ type KangurIconSummaryCardContentProps = {
   icon: ReactNode;
   title: ReactNode;
   titleClassName?: string;
+  titleAs?: keyof React.JSX.IntrinsicElements;
+  titleId?: string;
   titleWrapperClassName?: string;
 };
 
@@ -31,6 +33,8 @@ export function KangurIconSummaryCardContent({
   icon,
   title,
   titleClassName,
+  titleAs: TitleTag = 'div',
+  titleId,
   titleWrapperClassName,
 }: KangurIconSummaryCardContentProps): React.JSX.Element {
   return (
@@ -39,14 +43,15 @@ export function KangurIconSummaryCardContent({
       <div className={cn('min-w-0 flex-1', contentClassName)}>
         <div className={cn('flex items-start justify-between gap-3', headerClassName)}>
           <div className={cn('min-w-0 flex-1', titleWrapperClassName)}>
-            <div
+            <TitleTag
+              id={titleId}
               className={cn(
                 'text-base font-extrabold leading-tight [color:var(--kangur-page-text)]',
                 titleClassName
               )}
             >
               {title}
-            </div>
+            </TitleTag>
             {description ? (
               <div
                 className={cn(

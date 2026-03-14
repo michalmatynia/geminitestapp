@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
   CmsStorefrontAppearanceMode,
   CmsStorefrontAppearanceContextValue,
@@ -42,16 +42,35 @@ export function CmsStorefrontAppearanceProvider({
   initialMode = 'default',
   storageKey = 'cms_appearance_mode',
 }: CmsStorefrontAppearanceProviderProps): React.JSX.Element {
-  const [mode, setMode] = useState<CmsStorefrontAppearanceMode>(() => {
-    const persisted = readPersistedMode(storageKey);
-    return persisted || initialMode;
-  });
+  const [mode, setMode] = useState<CmsStorefrontAppearanceMode>(initialMode);
+  const [hydrated, setHydrated] = useState(false);
+  const persistedModeRef = useRef<CmsStorefrontAppearanceMode | null>(null);
+  const lastInitialModeRef = useRef<CmsStorefrontAppearanceMode>(initialMode);
 
   useEffect(() => {
-    writePersistedMode(storageKey, mode);
-  }, [mode, storageKey]);
+    const persisted = readPersistedMode(storageKey);
+    persistedModeRef.current = persisted;
+    if (persisted) {
+      setMode(persisted);
+    }
+    setHydrated(true);
+  }, [storageKey]);
 
-  const value = React.useMemo(() => ({ mode, setMode }), [mode]);
+  useEffect(() => {
+    if (!hydrated) return;
+    writePersistedMode(storageKey, mode);
+  }, [hydrated, mode, storageKey]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    if (persistedModeRef.current) return;
+    if (mode === lastInitialModeRef.current && mode !== initialMode) {
+      setMode(initialMode);
+    }
+    lastInitialModeRef.current = initialMode;
+  }, [hydrated, initialMode, mode]);
+
+  const value = useMemo(() => ({ mode, setMode }), [mode]);
 
   return (
     <CmsStorefrontAppearanceContext.Provider value={value}>

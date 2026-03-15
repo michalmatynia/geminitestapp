@@ -14,7 +14,7 @@ import type {
   SegmentEditorPatternsState,
   SegmentEditorTemplateCandidate,
 } from '../SegmentEditorContext.types';
-import type { SettingsState } from '../SettingsContext';
+import type { PromptExploderSettingsState } from '../SettingsContext';
 
 type SegmentEditorPatternState = Omit<SegmentEditorPatternsState, 'approvalDraft'>;
 
@@ -26,10 +26,10 @@ export const useSegmentEditorPatterns = ({
   templateMergeThreshold,
 }: {
   approvalDraft: ApprovalDraft;
-  effectiveRules: SettingsState['effectiveRules'];
-  effectiveLearnedTemplates: SettingsState['effectiveLearnedTemplates'];
+  effectiveRules: PromptExploderSettingsState['effectiveRules'];
+  effectiveLearnedTemplates: PromptExploderSettingsState['effectiveLearnedTemplates'];
   selectedSegment: DocumentState['selectedSegment'];
-  templateMergeThreshold: SettingsState['templateMergeThreshold'];
+  templateMergeThreshold: PromptExploderSettingsState['templateMergeThreshold'];
 }): SegmentEditorPatternState => {
   const matchedRuleDetails = useMemo<SegmentEditorMatchedRuleDetail[]>(() => {
     if (!selectedSegment) return [];

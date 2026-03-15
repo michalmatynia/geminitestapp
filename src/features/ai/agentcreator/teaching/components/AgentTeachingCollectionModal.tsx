@@ -6,7 +6,7 @@ import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/
 import { Input } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useAgentTeachingCollectionsContext } from '../context/AgentTeachingCollectionsContext';
@@ -23,7 +23,7 @@ export function AgentTeachingCollectionModal(): React.JSX.Element | null {
     handleSave,
   } = useAgentTeachingCollectionsContext();
 
-  const fields: SettingsField<Partial<AgentTeachingEmbeddingCollectionRecord>>[] = useMemo(
+  const fields: SettingsPanelField<Partial<AgentTeachingEmbeddingCollectionRecord>>[] = useMemo(
     () => [
       {
         key: 'name',

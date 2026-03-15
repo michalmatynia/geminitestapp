@@ -42,7 +42,7 @@ export default function Leaderboard(): React.JSX.Element {
     >
       <div className='mb-4 flex items-center gap-2'>
         <Trophy className='text-amber-400 w-6 h-6 flex-shrink-0' aria-hidden='true' />
-        <h3 className='text-lg font-extrabold [color:var(--kangur-page-text)] sm:text-xl'>
+        <h3 className='break-words text-lg font-extrabold [color:var(--kangur-page-text)] sm:text-xl'>
           {leaderboardContent?.title ?? 'Najlepsze wyniki'}
         </h3>
       </div>
@@ -129,7 +129,7 @@ export default function Leaderboard(): React.JSX.Element {
                   {item.isMedal ? (
                     item.rankLabel
                   ) : (
-                    <span className='text-sm font-bold [color:var(--kangur-page-muted-text)]'>
+                    <span className='break-words text-sm font-bold [color:var(--kangur-page-muted-text)]'>
                       {item.rankLabel}
                     </span>
                   )}
@@ -169,19 +169,21 @@ export default function Leaderboard(): React.JSX.Element {
                       </KangurStatusChip>
                     )}
                   </div>
-                  <div className='text-xs [color:var(--kangur-page-muted-text)]'>
+                  <div className='break-words text-xs [color:var(--kangur-page-muted-text)]'>
                     {item.operationEmoji} {item.operationLabel}
                   </div>
                 </div>
 
                 <div className='w-full flex-shrink-0 text-left sm:w-auto sm:text-right'>
-                  <div className='text-sm font-extrabold text-indigo-700 sm:text-base'>
+                  <div className='break-words text-sm font-extrabold text-indigo-700 sm:text-base'>
                     {item.scoreLabel}
                   </div>
-                  <div className='text-xs [color:var(--kangur-page-muted-text)]'>{item.timeLabel}</div>
+                  <div className='break-words text-xs [color:var(--kangur-page-muted-text)]'>
+                    {item.timeLabel}
+                  </div>
                   {item.xpLabel ? (
                     <div
-                      className='text-[11px] font-semibold text-violet-600'
+                      className='break-words text-[11px] font-semibold text-violet-600'
                       data-testid={`leaderboard-xp-${item.id}`}
                     >
                       {item.xpLabel}

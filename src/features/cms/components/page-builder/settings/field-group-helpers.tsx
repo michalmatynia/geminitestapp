@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { SettingsField } from '@/features/cms/types/page-builder';
+import type { CmsSettingsField } from '@/features/cms/types/page-builder';
 import { Input, Label } from '@/shared/ui';
 
 import { SettingsFieldRenderer } from '../SettingsFieldRenderer';
@@ -10,11 +10,11 @@ import { SettingsFieldRenderer } from '../SettingsFieldRenderer';
 
 const PADDING_KEYS = new Set(['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft']);
 const MARGIN_KEYS = new Set(['marginTop', 'marginRight', 'marginBottom', 'marginLeft']);
-const MANAGEMENT_FIELDS: SettingsField[] = [
+const MANAGEMENT_FIELDS: CmsSettingsField[] = [
   { key: 'label', label: 'Label', type: 'text', defaultValue: '' },
   { key: 'notes', label: 'Internal notes', type: 'text', defaultValue: '' },
 ];
-const RUNTIME_VISIBILITY_FIELDS: SettingsField[] = [
+const RUNTIME_VISIBILITY_FIELDS: CmsSettingsField[] = [
   {
     key: 'runtimeVisibilityMode',
     label: 'Runtime visibility',
@@ -48,30 +48,30 @@ const RUNTIME_VISIBILITY_FIELDS: SettingsField[] = [
   },
 ];
 
-function prependManagementFields(schema: SettingsField[]): SettingsField[] {
-  const existing = new Set(schema.map((field: SettingsField) => field.key));
-  const extra = MANAGEMENT_FIELDS.filter((field: SettingsField) => !existing.has(field.key));
+function prependManagementFields(schema: CmsSettingsField[]): CmsSettingsField[] {
+  const existing = new Set(schema.map((field: CmsSettingsField) => field.key));
+  const extra = MANAGEMENT_FIELDS.filter((field: CmsSettingsField) => !existing.has(field.key));
   return extra.length ? [...extra, ...schema] : schema;
 }
 
-function appendRuntimeVisibilityFields(schema: SettingsField[]): SettingsField[] {
-  const existing = new Set(schema.map((field: SettingsField) => field.key));
+function appendRuntimeVisibilityFields(schema: CmsSettingsField[]): CmsSettingsField[] {
+  const existing = new Set(schema.map((field: CmsSettingsField) => field.key));
   const extra = RUNTIME_VISIBILITY_FIELDS.filter(
-    (field: SettingsField) => !existing.has(field.key)
+    (field: CmsSettingsField) => !existing.has(field.key)
   );
   return extra.length ? [...schema, ...extra] : schema;
 }
 
 interface FieldGroup {
   kind: 'single' | 'padding' | 'margin';
-  fields: SettingsField[];
+  fields: CmsSettingsField[];
 }
 
 /** Groups consecutive padding / margin number fields so they render compactly. */
-function groupSettingsFields(schema: SettingsField[]): FieldGroup[] {
+function groupSettingsFields(schema: CmsSettingsField[]): FieldGroup[] {
   const groups: FieldGroup[] = [];
-  let paddingBuf: SettingsField[] = [];
-  let marginBuf: SettingsField[] = [];
+  let paddingBuf: CmsSettingsField[] = [];
+  let marginBuf: CmsSettingsField[] = [];
 
   const flushPadding = (): void => {
     if (paddingBuf.length) {
@@ -108,7 +108,7 @@ function renderFieldGroups(
   groups: FieldGroup[],
   settings?: Record<string, unknown>,
   onChange?: (key: string, value: unknown) => void,
-  resolveField?: (field: SettingsField) => SettingsField
+  resolveField?: (field: CmsSettingsField) => CmsSettingsField
 ): React.ReactNode[] {
   const effectiveSettings = settings ?? {};
   const effectiveOnChange = onChange;
@@ -131,7 +131,7 @@ function renderFieldGroups(
       <div key={group.kind} className='space-y-1.5'>
         <Label className='text-xs text-gray-400'>{label}</Label>
         <div className='grid grid-cols-2 gap-2'>
-          {group.fields.map((field: SettingsField) => {
+          {group.fields.map((field: CmsSettingsField) => {
             const side = field.key.replace(/^(padding|margin)/, '');
             return (
               <div key={field.key} className='space-y-0.5'>

@@ -15,6 +15,7 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
 
 vi.mock('@/shared/utils/observability/error-system', () => ({
   ErrorSystem: {
+    captureException: vi.fn().mockResolvedValue(undefined),
     logWarning: mocks.logWarning,
   },
 }));

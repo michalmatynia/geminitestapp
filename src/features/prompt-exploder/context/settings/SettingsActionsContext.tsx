@@ -11,7 +11,7 @@ import type { LearningDraft } from './SettingsDraftsContext';
 import type { PromptExploderLearnedTemplate } from '../../types';
 
 
-export interface SettingsActions {
+export interface PromptExploderSettingsActions {
   setLearningDraft: React.Dispatch<React.SetStateAction<LearningDraft>>;
   setParserTuningDrafts: React.Dispatch<
     React.SetStateAction<PromptExploderParserTuningRuleDraft[]>
@@ -42,9 +42,9 @@ export interface SettingsActions {
   updateSettingsBulk: ReturnType<typeof useUpdateSettingsBulk>;
 }
 
-export const SettingsActionsContext = createContext<SettingsActions | null>(null);
+export const SettingsActionsContext = createContext<PromptExploderSettingsActions | null>(null);
 
-export function useSettingsActions(): SettingsActions {
+export function useSettingsActions(): PromptExploderSettingsActions {
   const context = useContext(SettingsActionsContext);
   if (!context) throw internalError('useSettingsActions must be used within SettingsProvider');
   return context;

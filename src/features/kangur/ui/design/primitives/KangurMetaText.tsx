@@ -3,7 +3,9 @@ import * as React from 'react';
 
 import { cn } from '@/shared/utils';
 
-export const kangurMetaTextVariants = cva('[color:var(--kangur-page-muted-text)]', {
+export const kangurMetaTextVariants = cva(
+  'break-words [color:var(--kangur-page-muted-text)]',
+  {
   variants: {
     size: {
       xs: 'text-[11px]',

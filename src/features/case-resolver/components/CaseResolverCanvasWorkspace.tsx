@@ -10,7 +10,7 @@ import {
   useSelectionActions,
   useSelectionState,
 } from '@/features/ai';
-import type { AiNode, Edge as CaseResolverEdge } from '@/shared/contracts/case-resolver';
+import type { AiNode, CaseResolverEdge } from '@/shared/contracts/case-resolver';
 import {
   type CaseResolverNodeMeta,
   type CaseResolverEdgeMeta,

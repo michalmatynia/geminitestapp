@@ -3,7 +3,7 @@ import {
   TRANSIENT_RECOVERY_KEYS,
 } from '@/shared/lib/observability/transient-recovery/constants';
 
-import type { TransientRecoverySettings } from './transient-recovery-settings-form';
+import type { TransientRecoverySettings } from '@/shared/contracts/observability';
 
 export type TransientRecoveryConstants = {
   DEFAULT_TRANSIENT_RECOVERY_SETTINGS: TransientRecoverySettings;

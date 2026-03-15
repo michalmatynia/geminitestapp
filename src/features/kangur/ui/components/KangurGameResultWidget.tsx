@@ -132,7 +132,7 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
 
           {xpToast.nextBadge ? (
             <div
-              className='text-xs leading-6 [color:var(--kangur-page-text)]'
+              className='break-words text-xs leading-6 [color:var(--kangur-page-text)]'
               data-testid='kangur-result-reward-next-badge'
             >
               Następna odznaka: {xpToast.nextBadge.emoji} {xpToast.nextBadge.name} ·{' '}
@@ -141,7 +141,7 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
           ) : null}
           {xpToast.recommendation ? (
             <div
-              className='text-xs leading-6 text-violet-700'
+              className='break-words text-xs leading-6 text-violet-700'
               data-testid='kangur-result-reward-recommendation'
             >
               Polecony kierunek: {xpToast.recommendation.title} · {xpToast.recommendation.summary}

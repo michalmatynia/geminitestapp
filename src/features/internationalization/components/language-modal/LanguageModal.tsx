@@ -9,7 +9,7 @@ import {
 } from '@/features/internationalization/context/InternationalizationContext';
 import {
   SettingsPanelBuilder,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useLanguageForm } from './hooks/useLanguageForm';
@@ -36,7 +36,7 @@ export function LanguageModal(): React.JSX.Element | null {
     handleCloseLanguageModal();
   };
 
-  const fields: SettingsField<LanguageFormState>[] = [
+  const fields: SettingsPanelField<LanguageFormState>[] = [
     {
       key: 'code',
       label: 'Code',

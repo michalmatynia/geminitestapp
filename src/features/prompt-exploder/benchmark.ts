@@ -7,7 +7,6 @@ import type {
   PromptExploderSegmentType,
   PromptExploderSegment,
   PromptExploderBenchmarkSuggestion,
-  PromptExploderBenchmarkSuite,
   PromptExploderRuntimeValidationScope,
 } from '@/shared/contracts/prompt-exploder';
 
@@ -22,6 +21,8 @@ export type {
   PromptExploderBenchmarkReport,
   PromptExploderBenchmarkCaseReport,
 };
+
+type PromptExploderBenchmarkSuiteKey = Exclude<PromptExploderBenchmarkReport['suite'], 'custom'>;
 
 export const EXTENDED_PROMPT_EXPLODER_BENCHMARK_CASES: PromptExploderBenchmarkCase[] = [
   {
@@ -395,7 +396,7 @@ export function runPromptExploderBenchmark(args: {
   learnedTemplates?: PromptExploderLearnedTemplate[] | null;
   similarityThreshold?: number;
   validationScope?: PromptExploderRuntimeValidationScope;
-  suite?: PromptExploderBenchmarkSuite;
+  suite?: PromptExploderBenchmarkSuiteKey;
   lowConfidenceThreshold?: number;
   suggestionLimit?: number;
   cases?: PromptExploderBenchmarkCase[] | null;

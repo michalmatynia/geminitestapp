@@ -1,4 +1,4 @@
-import type { ErrorCategory, SuggestedAction } from '@/shared/contracts/observability';
+import type { ErrorCategory } from '@/shared/contracts/observability';
 import type {
   ProductApiError,
   ProductApiErrorCode,

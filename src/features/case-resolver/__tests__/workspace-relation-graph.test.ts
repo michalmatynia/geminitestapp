@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { parseCaseResolverWorkspace } from '@/features/case-resolver/settings';
-import { type AiNode, type Edge } from '@/shared/contracts/case-resolver';
+import { type AiNode, type CaseResolverEdge } from '@/shared/contracts/case-resolver';
 
 describe('case-resolver workspace relation graph normalization', () => {
   it('drops legacy relation graph edge keys during workspace parse', () => {
@@ -61,7 +61,7 @@ describe('case-resolver workspace relation graph normalization', () => {
 
     const workspace = parseCaseResolverWorkspace(raw);
     expect(
-      workspace.relationGraph.edges.some((edge: Edge): boolean => edge.id === 'legacy-edge')
+      workspace.relationGraph.edges.some((edge: CaseResolverEdge): boolean => edge.id === 'legacy-edge')
     ).toBe(false);
   });
 
@@ -183,7 +183,7 @@ describe('case-resolver workspace relation graph normalization', () => {
 
     expect(
       relationGraph.edges.some(
-        (edge: Edge): boolean =>
+        (edge: CaseResolverEdge): boolean =>
           edge.source === 'case:case-a' &&
           edge.target === 'case:case-b' &&
           relationGraph.edgeMeta?.[edge.id]?.relationType === 'parent_case'
@@ -191,14 +191,14 @@ describe('case-resolver workspace relation graph normalization', () => {
     ).toBe(true);
     expect(
       relationGraph.edges.some(
-        (edge: Edge): boolean =>
+        (edge: CaseResolverEdge): boolean =>
           edge.source === 'case:case-a' &&
           edge.target === 'case:case-b' &&
           relationGraph.edgeMeta?.[edge.id]?.relationType === 'references'
       )
     ).toBe(true);
 
-    expect(relationGraph.edges.some((edge: Edge): boolean => edge.id === 'custom-edge')).toBe(true);
+    expect(relationGraph.edges.some((edge: CaseResolverEdge): boolean => edge.id === 'custom-edge')).toBe(true);
     expect(relationGraph.edgeMeta?.['custom-edge']?.relationType).toBe('custom');
 
     expect(relationGraph.edgeMeta!['custom-edge']?.isStructural).toBe(false);
@@ -355,7 +355,7 @@ describe('case-resolver workspace relation graph normalization', () => {
 
     const workspace = parseCaseResolverWorkspace(raw);
     const relationGraph = workspace.relationGraph;
-    const edgeIds = relationGraph.edges.map((edge: Edge) => edge.id);
+    const edgeIds = relationGraph.edges.map((edge: CaseResolverEdge) => edge.id);
 
     expect(edgeIds.includes('stale-edge')).toBe(false);
     expect(edgeIds.includes('custom-edge-keep')).toBe(true);

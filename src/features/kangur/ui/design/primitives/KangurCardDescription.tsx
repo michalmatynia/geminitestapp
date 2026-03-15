@@ -3,7 +3,9 @@ import * as React from 'react';
 
 import { cn } from '@/shared/utils';
 
-export const kangurCardDescriptionVariants = cva('[color:var(--kangur-page-muted-text)]', {
+export const kangurCardDescriptionVariants = cva(
+  'break-words [color:var(--kangur-page-muted-text)]',
+  {
   variants: {
     size: {
       xs: 'text-xs',

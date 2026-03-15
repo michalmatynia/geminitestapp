@@ -64,7 +64,7 @@ export const caseResolverEdgeSchema = z.object({
   updatedAt: z.string().nullable().optional(),
 });
 
-export type Edge = z.infer<typeof caseResolverEdgeSchema>;
+export type CaseResolverEdge = z.infer<typeof caseResolverEdgeSchema>;
 
 export const caseResolverGraphSchema = z.object({
   nodes: z.array(aiNodeSchema),
@@ -80,7 +80,7 @@ export const caseResolverGraphSchema = z.object({
 
 export interface CaseResolverGraph {
   nodes: AiNode[];
-  edges: Edge[];
+  edges: CaseResolverEdge[];
   nodeMeta?: Record<string, CaseResolverNodeMeta> | undefined;
   edgeMeta?: Record<string, CaseResolverEdgeMeta> | undefined;
   pdfExtractionPresetId?: CaseResolverPdfExtractionPresetId | undefined;
@@ -147,7 +147,7 @@ export interface CaseResolverNodeFileSnapshot {
   kind: 'case_resolver_node_file_snapshot_v2';
   source?: 'manual' | 'auto' | undefined;
   nodes: AiNode[];
-  edges: Edge[];
+  edges: CaseResolverEdge[];
   nodeMeta?: Record<string, CaseResolverNodeMeta> | undefined;
   edgeMeta?: Record<string, CaseResolverEdgeMeta> | undefined;
   nodeFileMeta: Record<string, CaseResolverSnapshotNodeMeta>;

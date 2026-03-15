@@ -18,7 +18,7 @@ import {
 import type { PromptExploderCaseResolverContext } from '../../bridge';
 import type { DocumentCoreState } from '../document/DocumentCoreContext';
 import type { DocumentPromptState } from '../document/DocumentPromptContext';
-import type { SettingsState } from '../SettingsContext';
+import type { PromptExploderSettingsState } from '../SettingsContext';
 
 export const useDocumentApplyAction = ({
   documentState,
@@ -34,11 +34,11 @@ export const useDocumentApplyAction = ({
   documentState: DocumentCoreState['documentState'];
   incomingCaseResolverContext: PromptExploderCaseResolverContext | null;
   promptText: DocumentPromptState['promptText'];
-  promptExploderSettings: SettingsState['promptExploderSettings'];
+  promptExploderSettings: PromptExploderSettingsState['promptExploderSettings'];
   returnTarget: DocumentPromptState['returnTarget'];
   returnTo: string;
   router: { push: (href: string) => void };
-  runtimeSelection: SettingsState['runtimeSelection'];
+  runtimeSelection: PromptExploderSettingsState['runtimeSelection'];
   toast: Toast;
 }) =>
   useCallback(async () => {

@@ -152,6 +152,7 @@ export function KangurParentDashboardTabsWidget({
         {TABS.map((tab, index) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
+          const isLastOdd = index === TABS.length - 1 && TABS.length % 2 === 1;
           const { tabId, panelId } = getParentDashboardTabIds(tab.id);
           return (
             <KangurButton
@@ -172,7 +173,10 @@ export function KangurParentDashboardTabsWidget({
               aria-selected={isActive}
               aria-controls={panelId}
               tabIndex={isActive ? 0 : -1}
-              className='min-w-0 flex-1 justify-center gap-1.5 px-2 text-center sm:px-4'
+              className={cn(
+                'min-w-0 flex-1 justify-center gap-1.5 px-2 text-center sm:px-4',
+                isLastOdd && 'col-span-2 sm:col-span-1'
+              )}
               size='sm'
               type='button'
               variant={isActive ? 'segmentActive' : 'segment'}

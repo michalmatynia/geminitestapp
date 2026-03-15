@@ -4,7 +4,7 @@ import type {
 } from '@/shared/contracts/case-resolver';
 import {
   type AiNode,
-  type Edge,
+  type CaseResolverEdge,
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
   CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT,
   DEFAULT_CASE_RESOLVER_EDGE_META,
@@ -164,8 +164,8 @@ const appendWithJoin = (current: string, value: string, joinMode: CaseResolverJo
   return `${current}${JOIN_VALUE_MAP[joinMode]}${value}`;
 };
 
-const sortEdgesBySourcePosition = (edges: Edge[], nodeById: Map<string, AiNode>): Edge[] => {
-  return [...edges].sort((left: Edge, right: Edge) => {
+const sortEdgesBySourcePosition = (edges: CaseResolverEdge[], nodeById: Map<string, AiNode>): CaseResolverEdge[] => {
+  return [...edges].sort((left: CaseResolverEdge, right: CaseResolverEdge) => {
     const leftNode = left.source ? nodeById.get(left.source) : undefined;
     const rightNode = right.source ? nodeById.get(right.source) : undefined;
     if (leftNode && rightNode) {
@@ -243,8 +243,8 @@ export const compileCaseResolverPrompt = (
     const nodeById = new Map<string, AiNode>(
       graphNodes.map((node: AiNode): [string, AiNode] => [node.id, node])
     );
-    const outgoingByNode = new Map<string, Edge[]>();
-    const incomingByNode = new Map<string, Edge[]>();
+    const outgoingByNode = new Map<string, CaseResolverEdge[]>();
+    const incomingByNode = new Map<string, CaseResolverEdge[]>();
     const incomingCount = new Map<string, number>();
 
     graphNodes.forEach((node: AiNode) => {
@@ -253,7 +253,7 @@ export const compileCaseResolverPrompt = (
       incomingByNode.set(node.id, []);
     });
 
-    graphEdges.forEach((edge: Edge) => {
+    graphEdges.forEach((edge: CaseResolverEdge) => {
       if (!edge.source || !edge.target) return;
       if (!nodeById.has(edge.source) || !nodeById.has(edge.target)) return;
       const outgoing = outgoingByNode.get(edge.source) ?? [];
@@ -285,7 +285,7 @@ export const compileCaseResolverPrompt = (
       visited.add(nodeId);
       visitOrder.push({ nodeId, incomingEdgeId });
 
-      const outgoing = [...(outgoingByNode.get(nodeId) ?? [])].sort((left: Edge, right: Edge) => {
+      const outgoing = [...(outgoingByNode.get(nodeId) ?? [])].sort((left: CaseResolverEdge, right: CaseResolverEdge) => {
         const leftNode = left.target ? nodeById.get(left.target) : undefined;
         const rightNode = right.target ? nodeById.get(right.target) : undefined;
         if (!leftNode || !rightNode) return left.id.localeCompare(right.id);
@@ -298,7 +298,7 @@ export const compileCaseResolverPrompt = (
         return left.id.localeCompare(right.id);
       });
 
-      outgoing.forEach((edge: Edge) => {
+      outgoing.forEach((edge: CaseResolverEdge) => {
         if (!edge.target) return;
         visit(edge.target, edge.id);
       });
@@ -335,7 +335,7 @@ export const compileCaseResolverPrompt = (
         let value = '';
         let firstJoinMode: CaseResolverJoinMode | null = null;
 
-        incomingEdges.forEach((edge: Edge): void => {
+        incomingEdges.forEach((edge: CaseResolverEdge): void => {
           const acceptsEdge =
             type === 'wysiwygText'
               ? isWysiwygTextInputPort(edge.targetHandle)
@@ -479,7 +479,7 @@ export const compileCaseResolverPrompt = (
         .map((entry): string => entry.nodeId)
         .filter((nodeId: string): boolean => {
           const outgoing = outgoingByNode.get(nodeId) ?? [];
-          return !outgoing.some((edge: Edge): boolean => {
+          return !outgoing.some((edge: CaseResolverEdge): boolean => {
             const targetNodeId = edge.target;
             return typeof targetNodeId === 'string' && visitedNodeIds.has(targetNodeId);
           });

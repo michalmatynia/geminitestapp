@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getCategoryMappingRepository } from '@/features/integrations/server';
+import { getCategoryMappingRepository } from '@/features/integrations/services/category-mapping-repository';
 import {
   categoryMappingCreateInputSchema,
 } from '@/shared/contracts/integrations';
@@ -39,7 +39,7 @@ export async function GET_handler(
     throw badRequestError('connectionId is required');
   }
 
-  const repo = await getCategoryMappingRepository();
+  const repo = getCategoryMappingRepository();
   const mappings = await repo.listByConnection(connectionId, catalogId);
 
   return NextResponse.json(mappings);
@@ -67,14 +67,21 @@ export async function POST_handler(
     );
   }
 
-  const repo = await getCategoryMappingRepository();
+  const repo = getCategoryMappingRepository();
 
   // Check if mapping already exists
-  const existing = await repo.getByExternalCategory(connectionId, externalCategoryId, catalogId);
+  const existing = await repo.getByExternalCategory(
+    connectionId,
+    externalCategoryId,
+    catalogId
+  );
 
   if (existing) {
     // Update existing mapping
-    const updated = await repo.update(existing.id, { internalCategoryId, isActive: true });
+    const updated = await repo.update(existing.id, {
+      internalCategoryId,
+      isActive: true,
+    });
     return NextResponse.json(updated);
   }
 

@@ -1,4 +1,4 @@
-import { caseResolverEdgeSchema, type Edge } from '@/shared/contracts/case-resolver/graph';
+import { caseResolverEdgeSchema, type CaseResolverEdge } from '@/shared/contracts/case-resolver/graph';
 import { validationError } from '@/shared/errors/app-error';
 
 const CANONICAL_CASE_RESOLVER_EDGE_KEYS = new Set([
@@ -26,7 +26,7 @@ const buildInvalidCaseResolverEdgeError = (
     ...(meta ?? {}),
   });
 
-export const parseCanonicalCaseResolverEdge = (input: unknown, context: string): Edge => {
+export const parseCanonicalCaseResolverEdge = (input: unknown, context: string): CaseResolverEdge => {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     throw buildInvalidCaseResolverEdgeError('Invalid Case Resolver edge payload.', context, {
       reason: 'edge_not_object',

@@ -46,8 +46,14 @@ export function KangurActivitySummaryCard({
             {eyebrow}
           </KangurSectionEyebrow>
         ) : null}
-        <KangurCardTitle as='p'>{activity.label}</KangurCardTitle>
-        <KangurCardDescription as='p' className={summaryDescriptionClassName} size='xs'>
+        <KangurCardTitle as='p' className='break-words'>
+          {activity.label}
+        </KangurCardTitle>
+        <KangurCardDescription
+          as='p'
+          className={cn('break-words', summaryDescriptionClassName)}
+          size='xs'
+        >
           {description}
         </KangurCardDescription>
       </div>

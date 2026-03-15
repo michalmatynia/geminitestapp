@@ -88,11 +88,11 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
           />
         </div>
       ) : null}
-      <div className='mb-4 flex w-full max-w-md items-center justify-between px-2'>
-        <span className='font-semibold [color:var(--kangur-page-muted-text)]'>
+      <div className='mb-4 flex w-full max-w-md flex-wrap items-center justify-between gap-2 px-2'>
+        <span className='break-words font-semibold [color:var(--kangur-page-muted-text)]'>
           ⭐ Wynik: <span className='font-bold text-indigo-600'>{score}</span>
         </span>
-        <span className='font-semibold [color:var(--kangur-page-muted-text)]'>
+        <span className='break-words font-semibold [color:var(--kangur-page-muted-text)]'>
           {DIFFICULTY_CONFIG[difficulty]?.emoji} {DIFFICULTY_CONFIG[difficulty]?.label}
         </span>
       </div>

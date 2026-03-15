@@ -57,7 +57,7 @@ export function KangurSummaryPanel({
       {title ? (
         <div
           className={cn(
-            'text-2xl font-extrabold leading-tight',
+            'break-words text-2xl font-extrabold leading-tight',
             tone === 'accent'
               ? KANGUR_ACCENT_STYLES[accent].activeText
               : '[color:var(--kangur-page-text)]'
@@ -69,7 +69,7 @@ export function KangurSummaryPanel({
       {description ? (
         <p
           className={cn(
-            'text-sm leading-6',
+            'break-words text-sm leading-6',
             tone === 'accent'
               ? KANGUR_ACCENT_STYLES[accent].mutedText
               : '[color:var(--kangur-page-muted-text)]',

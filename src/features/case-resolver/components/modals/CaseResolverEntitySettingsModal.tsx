@@ -5,7 +5,7 @@ import React from 'react';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import {
   SettingsPanelBuilder,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 export interface CaseResolverEntitySettingsModalRuntimeValue<TItem, TForm extends object> {
@@ -14,7 +14,7 @@ export interface CaseResolverEntitySettingsModalRuntimeValue<TItem, TForm extend
   item: TItem | null | undefined;
   formData: TForm;
   setFormData: React.Dispatch<React.SetStateAction<TForm>>;
-  fields: SettingsField<TForm>[];
+  fields: SettingsPanelField<TForm>[];
   isSaving: boolean;
   onSave: () => void;
   createTitle: string;

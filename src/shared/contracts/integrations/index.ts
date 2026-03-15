@@ -27,6 +27,7 @@ import {
   type ImportParameterCacheResponse,
   type ExportToBaseVariables,
   type ExportResponse,
+  type CategoryMappingAssignment,
 } from './base-com';
 import type {
   IntegrationConnection,
@@ -38,10 +39,17 @@ import type {
 } from './connections';
 import {
   productListingSchema,
+  type BaseCategory,
+  type CategoryMapping,
+  type CategoryMappingCreateInput,
+  type CategoryMappingUpdateInput,
+  type CategoryMappingWithDetails,
   type ProductListing,
   type ProductListingExportEvent,
   type CreateProductListing,
   type ProductListingWithDetails,
+  type ExternalCategory,
+  type ExternalCategoryWithChildren,
 } from './listings';
 import type { ImportTemplateParameterImport } from './templates';
 

@@ -5,13 +5,13 @@ import React from 'react';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import {
   SettingsFieldsRenderer,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useThemeSettingsActions, useThemeSettingsValue } from '../ThemeSettingsContext';
 
 interface ThemeSettingsFieldsSectionProps {
-  fields: SettingsField<ThemeSettings>[];
+  fields: SettingsPanelField<ThemeSettings>[];
 }
 
 export function ThemeSettingsFieldsSection({

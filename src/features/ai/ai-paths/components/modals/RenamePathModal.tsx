@@ -5,7 +5,7 @@ import React from 'react';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import {
   SettingsPanelBuilder,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 interface RenamePathModalProps extends EntityModalProps<{ name: string }> {
@@ -17,7 +17,7 @@ type RenameFormState = {
   name: string;
 };
 
-const FIELDS: SettingsField<RenameFormState>[] = [
+const FIELDS: SettingsPanelField<RenameFormState>[] = [
   {
     key: 'name',
     label: 'Path Name',

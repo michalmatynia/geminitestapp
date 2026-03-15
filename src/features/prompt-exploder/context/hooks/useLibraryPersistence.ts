@@ -11,15 +11,15 @@ import {
 } from '../../prompt-library';
 import { PROMPT_EXPLODER_SEGMENTATION_LIBRARY_KEY } from '../../segmentation-library';
 
-import type { SettingsActions } from '../settings/SettingsActionsContext';
-import type { SettingsState } from '../SettingsContext';
+import type { PromptExploderSettingsActions } from '../settings/SettingsActionsContext';
+import type { PromptExploderSettingsState } from '../SettingsContext';
 
 export const useLibraryPersistence = ({
   settingsMap,
   updateSetting,
 }: {
-  settingsMap: SettingsState['settingsMap'];
-  updateSetting: SettingsActions['updateSetting'];
+  settingsMap: PromptExploderSettingsState['settingsMap'];
+  updateSetting: PromptExploderSettingsActions['updateSetting'];
 }) => {
   const persistPromptLibraryItems = useCallback(
     async (items: PromptExploderLibraryItem[]): Promise<boolean> => {

@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { ColorScheme, ThemeSettings } from '@/shared/contracts/cms-theme';
-import type { SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { ThemeSettingsFieldsSection } from './ThemeSettingsFieldsSection';
 import { useThemeSettingsValue } from '../ThemeSettingsContext';
@@ -11,7 +11,7 @@ import { useThemeSettingsValue } from '../ThemeSettingsContext';
 export function ThemeProductCardsSection(): React.JSX.Element {
   const theme = useThemeSettingsValue();
 
-  const fields: SettingsField<ThemeSettings>[] = [
+  const fields: SettingsPanelField<ThemeSettings>[] = [
     {
       key: 'cardStyle',
       label: 'Style',
@@ -142,7 +142,7 @@ export function ThemeProductCardsSection(): React.JSX.Element {
 export function ThemeCollectionCardsSection(): React.JSX.Element {
   const theme = useThemeSettingsValue();
 
-  const fields: SettingsField<ThemeSettings>[] = [
+  const fields: SettingsPanelField<ThemeSettings>[] = [
     {
       key: 'collectionStyle',
       label: 'Style',
@@ -197,7 +197,7 @@ export function ThemeCollectionCardsSection(): React.JSX.Element {
             key: 'collectionOverlayColor',
             label: 'Overlay color',
             type: 'color',
-          } as SettingsField<ThemeSettings>,
+          } as SettingsPanelField<ThemeSettings>,
       ]
       : []),
     {
@@ -264,7 +264,7 @@ export function ThemeCollectionCardsSection(): React.JSX.Element {
 export function ThemeBlogCardsSection(): React.JSX.Element {
   const theme = useThemeSettingsValue();
 
-  const fields: SettingsField<ThemeSettings>[] = [
+  const fields: SettingsPanelField<ThemeSettings>[] = [
     {
       key: 'blogStyle',
       label: 'Style',
@@ -323,7 +323,7 @@ export function ThemeBlogCardsSection(): React.JSX.Element {
             type: 'number',
             min: 1,
             max: 5,
-          } as SettingsField<ThemeSettings>,
+          } as SettingsPanelField<ThemeSettings>,
       ]
       : []),
     {

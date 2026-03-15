@@ -12,7 +12,7 @@ import {
   useSelectionActions,
   useSelectionState,
 } from '@/features/ai';
-import type { AiNode, Edge } from '@/shared/contracts/case-resolver';
+import type { AiNode, CaseResolverEdge } from '@/shared/contracts/case-resolver';
 import type {
   CaseResolverAssetFile,
   CaseResolverFile,
@@ -164,9 +164,9 @@ const toRuntimeNodes = (nodes: CaseResolverRelationGraph['nodes']): AiNode[] =>
     })
     .filter((node): node is AiNode => node !== null);
 
-const toStrictEdges = (inputEdges: Edge[]): CaseResolverRelationGraph['edges'] => {
+const toStrictEdges = (inputEdges: CaseResolverEdge[]): CaseResolverRelationGraph['edges'] => {
   return inputEdges
-    .map((edge: Edge): CaseResolverRelationGraph['edges'][number] => {
+    .map((edge: CaseResolverEdge): CaseResolverRelationGraph['edges'][number] => {
       const canonicalEdge = parseCanonicalCaseResolverEdge(
         edge,
         'case_resolver.relations_workspace'
@@ -308,7 +308,7 @@ function CaseResolverRelationsWorkspaceInner(): React.JSX.Element {
     [relationGraph.edges]
   );
   const incomingEdges = React.useMemo(
-    (): Edge[] => incomingStrictEdges,
+    (): CaseResolverEdge[] => incomingStrictEdges,
     [incomingStrictEdges]
   );
   const strictEdges = React.useMemo(

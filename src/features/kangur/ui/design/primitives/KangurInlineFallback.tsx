@@ -46,9 +46,13 @@ export function KangurInlineFallback({
           {icon}
         </div>
       ) : null}
-      <div className='text-base font-bold [color:var(--kangur-page-text)]'>{title}</div>
+      <div className='break-words text-base font-bold [color:var(--kangur-page-text)]'>
+        {title}
+      </div>
       {description ? (
-        <p className='text-sm leading-6 [color:var(--kangur-page-muted-text)]'>{description}</p>
+        <p className='break-words text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
+          {description}
+        </p>
       ) : null}
       {children}
     </div>

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { DEFAULT_KANGUR_PAGE_CONTENT_STORE } from '@/features/kangur/page-content-catalog';
 import {
@@ -146,6 +146,10 @@ export function useKangurPageContentMutations() {
       setIsLoading(false);
     }
   }, [toast]);
+
+  useEffect(() => {
+    void loadStore();
+  }, [loadStore]);
 
   const applyStore = useCallback((nextStore: KangurPageContentStore): void => {
     setEditorValue(stringifyPageContentStore(parseKangurPageContentStore(nextStore)));

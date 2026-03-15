@@ -99,7 +99,7 @@ describe('KangurLearnerAssignmentsPanel', () => {
 
     render(<KangurLearnerAssignmentsPanel basePath='/kangur' enabled />);
 
-    expect(screen.getByText('Przebieg przydzielonych zadań')).toBeInTheDocument();
+    expect(screen.getByText('Sugestie od Rodzica')).toBeInTheDocument();
     expect(screen.getByText('Skuteczność')).toBeInTheDocument();
     expect(screen.getByText('50%')).toBeInTheDocument();
     expect(screen.getByTestId('learner-assignments-completion-rate')).toHaveClass(
@@ -112,8 +112,8 @@ describe('KangurLearnerAssignmentsPanel', () => {
     );
     expect(screen.getByText('Ostatni sukces')).toBeInTheDocument();
     expect(screen.getAllByText('Powtórka: Zegar').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Aktywne zadania od rodzica')).toBeInTheDocument();
-    expect(screen.getByText('Historia ukończonych zadań')).toBeInTheDocument();
+    expect(screen.getByText('Aktualne sugestie od rodzica')).toBeInTheDocument();
+    expect(screen.getByText('Historia wykonanych sugestii')).toBeInTheDocument();
     expect(screen.getByText('Praktyka: Dzielenie')).toBeInTheDocument();
   });
 
@@ -129,15 +129,13 @@ describe('KangurLearnerAssignmentsPanel', () => {
 
     render(<KangurLearnerAssignmentsPanel basePath='/kangur' enabled={false} />);
 
-    expect(screen.getByText('Przebieg przydzielonych zadań')).toBeInTheDocument();
+    expect(screen.getByText('Sugestie od Rodzica')).toBeInTheDocument();
     expect(screen.getByTestId('learner-assignments-disabled')).toHaveClass(
       'soft-card',
       'border'
     );
     expect(
-      screen.getByText(
-        'Po zalogowaniu zobaczysz zadania przypisane przez rodzica oraz historię ich wykonania.'
-      )
+      screen.getByText('Po zalogowaniu zobaczysz sugestie od rodzica oraz historię ich wykonania.')
     ).toBeInTheDocument();
   });
 

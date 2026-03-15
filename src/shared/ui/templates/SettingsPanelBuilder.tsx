@@ -28,7 +28,7 @@ export type FieldType =
   | 'range'
   | 'custom';
 
-export interface SettingsField<T extends object> {
+export interface SettingsPanelField<T extends object> {
   /** Field key in the form data */
   key: keyof T;
 
@@ -71,7 +71,7 @@ export interface SettingsFieldRenderProps {
 }
 
 export interface SettingsFieldsRendererProps<T extends object> {
-  fields: SettingsField<T>[];
+  fields: SettingsPanelField<T>[];
   values: T;
   errors?: Partial<Record<keyof T, string>>;
   onChange: (values: Partial<T>) => void;
@@ -557,7 +557,7 @@ type SettingsPanelBuilderRuntimeValue = {
   cancelText: string;
   showSaveButton: boolean;
   showCancelButton: boolean;
-  fields: SettingsField<SettingsPanelBuilderShape>[];
+  fields: SettingsPanelField<SettingsPanelBuilderShape>[];
   values: SettingsPanelBuilderShape;
   errors: Partial<Record<string, string>>;
   onChange: (values: Partial<SettingsPanelBuilderShape>) => void;
@@ -639,7 +639,7 @@ export function SettingsPanelBuilder<T extends object>(props: SettingsPanelBuild
       cancelText: cancelText ?? 'Cancel',
       showSaveButton,
       showCancelButton,
-      fields: fields as SettingsField<SettingsPanelBuilderShape>[],
+      fields: fields as SettingsPanelField<SettingsPanelBuilderShape>[],
       values: values as SettingsPanelBuilderShape,
       errors: errors as Partial<Record<string, string>>,
       onChange: (nextValues: Partial<SettingsPanelBuilderShape>) => {

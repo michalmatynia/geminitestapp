@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import type { AiPathRunRecord } from '@/shared/lib/ai-paths';
 import { formatDurationMs } from '@/shared/lib/ai-paths';
 import {
@@ -23,6 +23,8 @@ interface RunComparisonToolProps {
   displayedComparisonRows: RunTraceComparisonRow[];
   compareResumeChangesOnly: boolean;
   onToggleResumeChangesOnly: () => void;
+  compareInspectorRowKey: string | null;
+  onSetCompareInspectorRowKey: (rowKey: string | null) => void;
 }
 
 export function RunComparisonTool({
@@ -32,8 +34,9 @@ export function RunComparisonTool({
   displayedComparisonRows,
   compareResumeChangesOnly,
   onToggleResumeChangesOnly,
+  compareInspectorRowKey,
+  onSetCompareInspectorRowKey,
 }: RunComparisonToolProps): React.JSX.Element {
-  const [compareInspectorRowKey, setCompareInspectorRowKey] = useState<string | null>(null);
 
   const getRuntimeSummary = (run: AiPathRunRecord | null) => {
     return readRuntimeTraceSummary(run?.meta ?? null);
@@ -420,8 +423,8 @@ export function RunComparisonTool({
                             variant='outline'
                             className='h-6 px-2 text-[10px]'
                             onClick={(): void =>
-                              setCompareInspectorRowKey((current) =>
-                                current === row.key ? null : row.key
+                              onSetCompareInspectorRowKey(
+                                compareInspectorRowKey === row.key ? null : row.key
                               )
                             }
                           >

@@ -37,6 +37,13 @@ const originalWindow = typeof window !== 'undefined' ? window : undefined;
 const originalLocalStorage = originalWindow?.localStorage;
 const originalSessionStorage = originalWindow?.sessionStorage;
 
+if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon !== 'function') {
+  Object.defineProperty(navigator, 'sendBeacon', {
+    configurable: true,
+    value: vi.fn(() => true),
+  });
+}
+
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 

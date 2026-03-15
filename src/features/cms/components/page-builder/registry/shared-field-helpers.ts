@@ -1,4 +1,4 @@
-import type { SettingsField } from '@/features/cms/types/page-builder';
+import type { CmsSettingsField } from '@/features/cms/types/page-builder';
 
 // ---------------------------------------------------------------------------
 // Shared field helpers
@@ -45,7 +45,7 @@ export function colorSchemeField(
   key: string,
   label: string,
   defaultValue: string = 'scheme-1'
-): SettingsField {
+): CmsSettingsField {
   return { key, label, type: 'color-scheme', options: COLOR_SCHEME_OPTIONS, defaultValue };
 }
 
@@ -53,7 +53,7 @@ export function colorSchemeFieldWithNone(
   key: string,
   label: string,
   defaultValue: string = 'none'
-): SettingsField {
+): CmsSettingsField {
   return {
     key,
     label,
@@ -63,7 +63,7 @@ export function colorSchemeFieldWithNone(
   };
 }
 
-export function paddingFields(): SettingsField[] {
+export function paddingFields(): CmsSettingsField[] {
   return [
     { key: 'paddingTop', label: 'Top padding', type: 'number', defaultValue: 36 },
     { key: 'paddingRight', label: 'Right padding', type: 'number', defaultValue: 24 },
@@ -72,7 +72,7 @@ export function paddingFields(): SettingsField[] {
   ];
 }
 
-export function marginFields(): SettingsField[] {
+export function marginFields(): CmsSettingsField[] {
   return [
     { key: 'marginTop', label: 'Top margin', type: 'number', defaultValue: 0 },
     { key: 'marginRight', label: 'Right margin', type: 'number', defaultValue: 0 },
@@ -81,7 +81,7 @@ export function marginFields(): SettingsField[] {
   ];
 }
 
-export function layoutFields(): SettingsField[] {
+export function layoutFields(): CmsSettingsField[] {
   return [
     { key: 'minHeight', label: 'Min height (px)', type: 'number', defaultValue: 0 },
     { key: 'maxWidth', label: 'Max width (px)', type: 'number', defaultValue: 0 },
@@ -97,7 +97,7 @@ export function layoutFields(): SettingsField[] {
   ];
 }
 
-export function sectionStyleFields(): SettingsField[] {
+export function sectionStyleFields(): CmsSettingsField[] {
   return [
     { key: 'background', label: 'Background', type: 'background', defaultValue: { type: 'none' } },
     {

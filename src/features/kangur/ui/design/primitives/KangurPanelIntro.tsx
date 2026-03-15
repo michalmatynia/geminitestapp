@@ -40,12 +40,22 @@ export function KangurPanelIntro(props: KangurPanelIntroProps): React.JSX.Elemen
         </KangurSectionEyebrow>
       ) : null}
       {title ? (
-        <TitleComp className={cn('font-semibold [color:var(--kangur-page-text)]', titleClassName)}>
+        <TitleComp
+          className={cn(
+            'break-words font-semibold [color:var(--kangur-page-text)]',
+            titleClassName
+          )}
+        >
           {title}
         </TitleComp>
       ) : null}
       {description ? (
-        <div className={cn('text-sm [color:var(--kangur-page-muted-text)]', descriptionClassName)}>
+        <div
+          className={cn(
+            'break-words text-sm [color:var(--kangur-page-muted-text)]',
+            descriptionClassName
+          )}
+        >
           {description}
         </div>
       ) : null}

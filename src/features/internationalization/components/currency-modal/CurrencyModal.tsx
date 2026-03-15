@@ -8,7 +8,7 @@ import {
 } from '@/features/internationalization/context/InternationalizationContext';
 import {
   SettingsPanelBuilder,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useCurrencyForm } from './hooks/useCurrencyForm';
@@ -19,7 +19,7 @@ type CurrencyFormState = {
   symbol: string;
 };
 
-const FIELDS: SettingsField<CurrencyFormState>[] = [
+const FIELDS: SettingsPanelField<CurrencyFormState>[] = [
   {
     key: 'code',
     label: 'Code',

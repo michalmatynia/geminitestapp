@@ -55,7 +55,7 @@ export function KangurPracticeGameProgress({
         size='sm'
         value={progressValue}
       />
-      <span className='text-xs font-bold [color:var(--kangur-page-muted-text)]'>
+      <span className='break-words text-xs font-bold [color:var(--kangur-page-muted-text)]'>
         {currentRound + 1}/{totalRounds}
       </span>
     </div>
@@ -101,7 +101,7 @@ export function KangurPracticeGameSummaryTitle({
   return (
     <div
       className={cn(
-        'text-2xl font-extrabold [color:var(--kangur-page-text)]',
+        'break-words text-2xl font-extrabold [color:var(--kangur-page-text)]',
         accent === 'violet' ? 'tracking-tight' : undefined
       )}
       data-testid={dataTestId}
@@ -212,9 +212,9 @@ export function KangurPracticeGameSummaryActions({
   const wrapperClassName = className;
 
   return (
-    <div className={cn('flex gap-3 w-full', wrapperClassName)}>
+    <div className={cn('flex w-full flex-col gap-3 sm:flex-row', wrapperClassName)}>
       <KangurButton
-        className={cn('flex-1', restartClassName)}
+        className={cn('w-full sm:flex-1', restartClassName)}
         onClick={handleRestart}
         size='lg'
         variant='surface'
@@ -222,7 +222,7 @@ export function KangurPracticeGameSummaryActions({
         <RefreshCw className='w-4 h-4' /> {restartLabel}
       </KangurButton>
       <KangurButton
-        className={cn('flex-1', finishClassName)}
+        className={cn('w-full sm:flex-1', finishClassName)}
         onClick={handleFinish}
         size='lg'
         variant='primary'
@@ -243,7 +243,7 @@ export function KangurPracticeGameSummaryMessage({
   if (!children) return null;
   return (
     <p
-      className={cn('[color:var(--kangur-page-muted-text)]', className)}
+      className={cn('break-words [color:var(--kangur-page-muted-text)]', className)}
       role='status'
       aria-live='polite'
       aria-atomic='true'

@@ -16,7 +16,7 @@ export {
   type CanvasRefs,
   type ViewState,
   type PanState,
-  type DragState,
+  type CanvasDragState,
   type ConnectingState,
 } from './useCanvas';
 

@@ -464,10 +464,18 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
           canPublishAndGoLive={canPublishAndGoLiveCurrentSuite}
           canPublishReady={canPublishReadyForCurrentSuite}
           isSaving={isSaving}
-          onPublishAndGoLive={handlePublishAndGoLiveCurrentSuite}
-          onPublishReady={handlePublishReadyForCurrentSuite}
-          onGoLive={handleGoLiveCurrentSuite}
-          onTakeOffline={handleTakeCurrentSuiteOffline}
+          onPublishAndGoLive={(): void => {
+            void handlePublishAndGoLiveCurrentSuite();
+          }}
+          onPublishReady={(): void => {
+            void handlePublishReadyForCurrentSuite();
+          }}
+          onGoLive={(): void => {
+            void handleGoLiveCurrentSuite();
+          }}
+          onTakeOffline={(): void => {
+            void handleTakeCurrentSuiteOffline();
+          }}
           onAddQuestion={openCreate}
           onBack={onClose}
         />
@@ -515,6 +523,7 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
                 const absoluteIndex = questions.findIndex((question) => question.id === q.id);
                 const canReorder = listFilter === 'all' && sortMode === 'manual';
                 const questionSummary = questionSummaries.get(q.id);
+                const queuePosition = sortMode === 'review-queue' ? index + 1 : null;
 
                 return (
                   <KangurQuestionListItem
@@ -524,7 +533,8 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
                     absoluteIndex={absoluteIndex}
                     canReorder={canReorder}
                     isSaving={isSaving}
-                    questionSummary={questionSummary}
+                    questionSummary={questionSummary ?? null}
+                    queuePosition={queuePosition}
                     onMoveUp={(): void => {
                       if (canReorder) {
                         void handleMove(absoluteIndex, absoluteIndex - 1);
@@ -600,7 +610,9 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
       <ConfirmModal
         isOpen={Boolean(questionToDelete)}
         onClose={(): void => setQuestionToDelete(null)}
-        onConfirm={handleDelete}
+        onConfirm={(): void => {
+          void handleDelete();
+        }}
         title='Delete Question'
         message={`Delete question "${questionToDelete?.prompt.slice(0, 60) ?? ''}"? This cannot be undone.`}
         confirmText='Delete'

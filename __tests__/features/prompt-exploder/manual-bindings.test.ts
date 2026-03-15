@@ -96,8 +96,8 @@ describe('prompt exploder manual bindings', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.variant).toBe('info');
-    expect(result.message).toContain('exact same endpoint');
+    expect(result.details?.variant).toBe('info');
+    expect(result.error).toContain('exact same endpoint');
   });
 
   it('builds valid binding with default labels and manual origin', () => {
@@ -119,7 +119,7 @@ describe('prompt exploder manual bindings', () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.binding).toEqual({
+    expect(result.bindings?.[0]).toEqual({
       id: 'manual_id',
       type: 'references',
       fromSegmentId: 'from',

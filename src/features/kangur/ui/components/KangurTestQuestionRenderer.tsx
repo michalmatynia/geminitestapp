@@ -202,6 +202,14 @@ export function KangurTestQuestionRenderer({
         {question.choices.map((choice, index) => {
           const isSelected = selectedLabel === choice.label;
           const isChoiceCorrect = choice.label === question.correctChoiceLabel;
+          const choiceLabel = choice.label;
+          const choiceText = choice.text?.trim();
+          const choiceDescription = choice.description?.trim();
+          const accessibleChoiceLabel = choiceText
+            ? `Odpowiedź ${choiceLabel}: ${choiceText}`
+            : choiceDescription
+              ? `Odpowiedź ${choiceLabel}: ${choiceDescription}`
+              : `Odpowiedź ${choiceLabel}`;
 
           let accent: KangurAccent = 'slate';
           let emphasis: 'neutral' | 'accent' = 'neutral';
@@ -233,6 +241,7 @@ export function KangurTestQuestionRenderer({
             >
               <KangurAnswerChoiceCard
                 accent={accent}
+                aria-label={accessibleChoiceLabel}
                 buttonClassName={cn(
                   'flex items-start gap-3 px-4 py-3 text-left text-sm font-semibold',
                   cardClassName,

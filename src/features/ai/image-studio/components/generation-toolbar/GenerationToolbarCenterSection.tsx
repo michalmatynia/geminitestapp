@@ -3,7 +3,8 @@ import React from 'react';
 import { ImageStudioAnalysisSummaryChip } from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
 import { Button, SelectSimple, Tooltip } from '@/shared/ui';
 
-import { useGenerationToolbarContext, type CenterMode } from './GenerationToolbarContext';
+import { useGenerationToolbarContext } from './GenerationToolbarContext';
+import type { CenterMode } from './GenerationToolbarImageUtils';
 import { useGenerationToolbarCenterSectionRuntime } from './GenerationToolbarSectionContexts';
 
 import type {

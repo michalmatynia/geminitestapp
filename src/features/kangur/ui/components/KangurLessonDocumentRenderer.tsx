@@ -289,7 +289,7 @@ function renderImageBlock(
         </KangurMediaFrame>
       </div>
       {block.caption?.trim() ? (
-        <div className='mt-3 text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
+        <div className='mt-3 break-words text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
           {block.caption.trim()}
         </div>
       ) : null}
@@ -367,7 +367,10 @@ function renderCalloutBlock(block: KangurLessonCalloutBlock, key: string): React
         borderColor: `color-mix(in srgb, var(--kangur-soft-card-border) 72%, ${style.accentSurface})`,
       }}
     >
-      <div className='mb-1 flex items-center gap-2 text-sm font-semibold' style={{ color: style.text }}>
+      <div
+        className='mb-1 flex items-center gap-2 break-words text-sm font-semibold'
+        style={{ color: style.text }}
+      >
         <span aria-hidden>{style.icon}</span>
         {block.title?.trim() || style.label}
       </div>
@@ -404,7 +407,7 @@ function KangurLessonQuizBlockView({ block }: { block: KangurLessonQuizBlock }):
           const isSelected = state.selectedId === choice.id;
           const isCorrect = choice.id === block.correctChoiceId;
           let choiceClass =
-            'rounded-lg border px-4 py-2 text-left text-sm w-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white';
+            'rounded-lg border px-4 py-2 text-left text-sm w-full break-words transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white';
           if (!state.revealed) {
             choiceClass +=
               ' soft-card [color:var(--kangur-page-text)]';
@@ -487,7 +490,7 @@ function renderQuizBlock(
             <li
               key={choice.id}
               className={cn(
-                'kangur-lesson-inset px-3 py-1.5 text-sm',
+                'kangur-lesson-inset break-words px-3 py-1.5 text-sm',
                 choice.id === block.correctChoiceId
                   ? 'font-semibold'
                   : '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,#cbd5e1)] [color:var(--kangur-page-muted-text)]'

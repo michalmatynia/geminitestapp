@@ -21,7 +21,7 @@ import {
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { Alert, Button, FormSection, Input, useToast } from '@/shared/ui';
-import type { SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/shared/utils/settings-json';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -68,7 +68,7 @@ const HOME_ACTION_FIELD_TOKENS = [
   { suffix: 'SurfaceShadowColor', label: 'Surface Shadow' },
 ] as const;
 
-const HOME_ACTION_FIELDS: SettingsField<ThemeSettings>[] = HOME_ACTION_FIELD_GROUPS.flatMap(
+const HOME_ACTION_FIELDS: SettingsPanelField<ThemeSettings>[] = HOME_ACTION_FIELD_GROUPS.flatMap(
   (group) =>
     HOME_ACTION_FIELD_TOKENS.map((token) => ({
       key: `${group.prefix}${token.suffix}` as keyof ThemeSettings,
@@ -80,7 +80,7 @@ const HOME_ACTION_FIELDS: SettingsField<ThemeSettings>[] = HOME_ACTION_FIELD_GRO
 const KANGUR_THEME_SECTIONS: Array<{
   title: string;
   subtitle: string;
-  fields: SettingsField<ThemeSettings>[];
+  fields: SettingsPanelField<ThemeSettings>[];
 }> = [
   {
     title: 'Core Palette',

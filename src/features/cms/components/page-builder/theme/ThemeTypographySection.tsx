@@ -3,13 +3,13 @@
 import React from 'react';
 
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import type { SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { FONT_OPTIONS, WEIGHT_OPTIONS } from './theme-constants';
 import { ThemeSettingsFieldsSection } from './ThemeSettingsFieldsSection';
 
 export function ThemeTypographySection(): React.JSX.Element {
-  const fields: SettingsField<ThemeSettings>[] = [
+  const fields: SettingsPanelField<ThemeSettings>[] = [
     { key: 'baseSize', label: 'Base size', type: 'number', min: 12, max: 24, suffix: 'px' },
     { key: 'headingFont', label: 'Heading font', type: 'select', options: FONT_OPTIONS },
     {

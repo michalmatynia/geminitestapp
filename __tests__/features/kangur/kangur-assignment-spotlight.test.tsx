@@ -114,7 +114,7 @@ describe('KangurAssignmentSpotlight', () => {
 
     render(<KangurAssignmentSpotlight basePath='/kangur' enabled />);
 
-    expect(screen.getByText('Zadanie od rodzica')).toBeInTheDocument();
+    expect(screen.getByText('Sugestie od Rodzica')).toBeInTheDocument();
     expect(screen.getByText('Powtórka dzielenia')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-assignment-spotlight-shell')).toHaveClass(
       'glass-panel',

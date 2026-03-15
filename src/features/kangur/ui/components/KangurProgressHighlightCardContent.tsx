@@ -50,12 +50,12 @@ export function KangurProgressHighlightHeader({
       >
         {eyebrow}
       </KangurSectionEyebrow>
-      <KangurCardTitle as='p' className={cn('mt-1', titleClass)}>
+      <KangurCardTitle as='p' className={cn('mt-1 break-words', titleClass)}>
         {title}
       </KangurCardTitle>
       <KangurCardDescription
         as='p'
-        className={cn('mt-1 leading-5', descriptionClass)}
+        className={cn('mt-1 break-words leading-5', descriptionClass)}
         size='xs'
         style={descriptionStyles}
       >

@@ -21,7 +21,10 @@ import { PROMPT_EXPLODER_SETTINGS_KEY } from '../../settings';
 
 import type { PromptExploderBenchmarkSuggestion } from '../../types';
 import type { DocumentActions, DocumentState } from '../DocumentContext';
-import type { SettingsActions, SettingsState } from '../SettingsContext';
+import type {
+  PromptExploderSettingsActions,
+  PromptExploderSettingsState,
+} from '../SettingsContext';
 import type { Dispatch, SetStateAction } from 'react';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -32,7 +35,7 @@ type ToastFn = (
 ) => void;
 
 type BenchmarkSuggestionActionDependencies = Pick<
-  SettingsState,
+  PromptExploderSettingsState,
   | 'activeValidationScope'
   | 'effectiveLearnedTemplates'
   | 'learningDraft'
@@ -44,7 +47,7 @@ type BenchmarkSuggestionActionDependencies = Pick<
   | 'templateMergeThreshold'
 > &
   Pick<
-    SettingsActions,
+    PromptExploderSettingsActions,
     'setSessionLearnedRules' | 'setSessionLearnedTemplates' | 'updateSetting' | 'updateSettingsBulk'
   > &
   Pick<DocumentState, 'documentState' | 'promptText'> &

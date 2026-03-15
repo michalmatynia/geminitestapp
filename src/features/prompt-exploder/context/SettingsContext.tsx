@@ -14,7 +14,10 @@ import {
   PROMPT_EXPLODER_SEGMENTATION_LIBRARY_KEY,
   sortPromptExploderSegmentationRecordsByCapturedAt,
 } from '../segmentation-library';
-import { SettingsActionsContext, type SettingsActions } from './settings/SettingsActionsContext';
+import {
+  SettingsActionsContext,
+  type PromptExploderSettingsActions,
+} from './settings/SettingsActionsContext';
 import { SettingsCoreContext, type SettingsCoreState } from './settings/SettingsCoreContext';
 import {
   SettingsDraftsContext,
@@ -34,10 +37,10 @@ import { useSettingsDataImpl } from './settings/useSettingsDataImpl';
 
 import type { PromptValidationOrchestrationResult } from '../prompt-validation-orchestrator';
 
-export type { LearningDraft, SettingsActions };
+export type { LearningDraft, PromptExploderSettingsActions };
 export { SettingsActionsContext };
 
-export interface SettingsState
+export interface PromptExploderSettingsState
   extends SettingsCoreState, SettingsRuntimeState, SettingsDraftsState, SettingsSnapshotsState {
   isBusy: boolean;
   templateMergeThreshold: number;
@@ -47,7 +50,7 @@ export interface SettingsState
   setApplyToDrafts: (value: boolean) => void;
 }
 
-export const SettingsStateContext = createContext<SettingsState | null>(null);
+export const SettingsStateContext = createContext<PromptExploderSettingsState | null>(null);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const settingsQuery = useSettingsMap({ scope: 'all' });
@@ -173,7 +176,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     [data]
   );
 
-  const actionsValue = useMemo<SettingsActions>(
+  const actionsValue = useMemo<PromptExploderSettingsActions>(
     () => ({
       setLearningDraft: data.setLearningDraftState,
       setParserTuningDrafts: data.setParserTuningDraftsState,
@@ -199,7 +202,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     [actions, data, updateSetting, updateSettingsBulk]
   );
 
-  const aggregatedValue = useMemo<SettingsState>(
+  const aggregatedValue = useMemo<PromptExploderSettingsState>(
     () => ({
       ...coreValue,
       ...runtimeValue,

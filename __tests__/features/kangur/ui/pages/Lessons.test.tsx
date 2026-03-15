@@ -381,7 +381,7 @@ describe('Lessons', () => {
         'Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy.'
       )
     ).not.toBeInTheDocument();
-    expect(bottomNavigationButton).toHaveClass('surface-cta', 'sm:max-w-[21rem]');
+    expect(bottomNavigationButton).toHaveClass('surface-cta');
   });
 
   it('keeps the secret lesson trigger hidden until every lesson has recorded mastery', () => {

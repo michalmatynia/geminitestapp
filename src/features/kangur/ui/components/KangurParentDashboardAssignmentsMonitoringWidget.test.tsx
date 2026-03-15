@@ -192,4 +192,143 @@ describe('KangurParentDashboardAssignmentsMonitoringWidget', () => {
       screen.getByTestId('parent-monitoring-interaction-activity-3')
     ).toBeInTheDocument();
   });
+
+  it('filters interactions by type', async () => {
+    learnerInteractionsListMock.mockResolvedValue({
+      items: [
+        {
+          id: 'activity-opened',
+          type: ActivityTypes.KANGUR.OPENED_TASK,
+          description: 'Otwarte zadanie: Powtórka',
+          userId: 'parent-1',
+          entityId: 'learner-1',
+          entityType: 'kangur_learner',
+          metadata: {
+            kind: 'lesson',
+            title: 'Powtórka',
+            openedAt: '2026-03-15T09:00:00.000Z',
+          },
+          createdAt: '2026-03-15T09:00:00.000Z',
+          updatedAt: '2026-03-15T09:00:00.000Z',
+        },
+        {
+          id: 'activity-panel',
+          type: ActivityTypes.KANGUR.LESSON_PANEL_ACTIVITY,
+          description: 'Aktywność w panelach lekcji',
+          userId: 'parent-1',
+          entityId: 'learner-1',
+          entityType: 'kangur_learner',
+          metadata: {
+            lessonKey: 'clock',
+            sectionId: 'section-1',
+            sessionUpdatedAt: '2026-03-15T10:00:00.000Z',
+            totalSeconds: 120,
+          },
+          createdAt: '2026-03-15T10:00:00.000Z',
+          updatedAt: '2026-03-15T10:00:00.000Z',
+        },
+        {
+          id: 'activity-session',
+          type: ActivityTypes.KANGUR.LEARNER_SESSION,
+          description: 'Sesja logowania ucznia.',
+          userId: 'parent-1',
+          entityId: 'learner-1',
+          entityType: 'kangur_learner',
+          metadata: {
+            startedAt: '2026-03-15T11:00:00.000Z',
+            endedAt: '2026-03-15T11:30:00.000Z',
+            durationSeconds: 1800,
+          },
+          createdAt: '2026-03-15T11:30:00.000Z',
+          updatedAt: '2026-03-15T11:30:00.000Z',
+        },
+      ],
+      total: 3,
+      limit: 20,
+      offset: 0,
+    });
+
+    render(<KangurParentDashboardAssignmentsMonitoringWidget />);
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId('parent-monitoring-interaction-activity-opened')
+      ).toBeInTheDocument()
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Zadania' }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId('parent-monitoring-interaction-activity-opened')
+      ).toBeInTheDocument()
+    );
+    expect(
+      screen.queryByTestId('parent-monitoring-interaction-activity-panel')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('parent-monitoring-interaction-activity-session')
+    ).not.toBeInTheDocument();
+  });
+
+  it('filters interactions by date range', async () => {
+    learnerInteractionsListMock.mockResolvedValue({
+      items: [
+        {
+          id: 'activity-early',
+          type: ActivityTypes.KANGUR.OPENED_TASK,
+          description: 'Otwarte zadanie: Powtórka',
+          userId: 'parent-1',
+          entityId: 'learner-1',
+          entityType: 'kangur_learner',
+          metadata: {
+            kind: 'lesson',
+            title: 'Powtórka',
+            openedAt: '2026-03-13T09:00:00.000Z',
+          },
+          createdAt: '2026-03-13T09:00:00.000Z',
+          updatedAt: '2026-03-13T09:00:00.000Z',
+        },
+        {
+          id: 'activity-late',
+          type: ActivityTypes.KANGUR.OPENED_TASK,
+          description: 'Otwarte zadanie: Kolejne',
+          userId: 'parent-1',
+          entityId: 'learner-1',
+          entityType: 'kangur_learner',
+          metadata: {
+            kind: 'lesson',
+            title: 'Kolejne',
+            openedAt: '2026-03-16T09:00:00.000Z',
+          },
+          createdAt: '2026-03-16T09:00:00.000Z',
+          updatedAt: '2026-03-16T09:00:00.000Z',
+        },
+      ],
+      total: 2,
+      limit: 20,
+      offset: 0,
+    });
+
+    render(<KangurParentDashboardAssignmentsMonitoringWidget />);
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId('parent-monitoring-interaction-activity-early')
+      ).toBeInTheDocument()
+    );
+
+    fireEvent.change(screen.getByLabelText('Data od'), {
+      target: { value: '2026-03-15' },
+    });
+
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId('parent-monitoring-interaction-activity-early')
+      ).not.toBeInTheDocument()
+    );
+    expect(
+      screen.getByTestId('parent-monitoring-interaction-activity-late')
+    ).toBeInTheDocument();
+  });
 });

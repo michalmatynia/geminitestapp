@@ -113,7 +113,9 @@ function KangurPageIntroDescription(): React.JSX.Element | null {
   }
 
   return (
-    <p className='mt-3 text-sm [color:var(--kangur-page-muted-text)]'>{description}</p>
+    <p className='mt-3 break-words text-sm [color:var(--kangur-page-muted-text)]'>
+      {description}
+    </p>
   );
 }
 

@@ -172,8 +172,10 @@ describe('CalendarTrainingGame', () => {
       'bg-white/94'
     );
     expect(screen.getByTestId('calendar-training-summary-title')).toHaveClass(
+      'break-words',
       'text-2xl',
-      '[color:var(--kangur-accent-emerald-start,#10b981)]'
+      'font-extrabold',
+      '[color:var(--kangur-page-text)]'
     );
     expect(
       screen.getByText('Idealnie! Świetnie znasz kalendarz!')

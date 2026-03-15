@@ -7,7 +7,7 @@ import type { PriceGroup } from '@/shared/contracts/products';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import {
   SettingsPanelBuilder,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { usePriceGroupForm } from './hooks/usePriceGroupForm';
@@ -37,7 +37,7 @@ export function PriceGroupModal(props: PriceGroupModalProps): React.JSX.Element 
     onSuccess?.();
   };
 
-  const fields: SettingsField<PriceGroupFormState>[] = useMemo(
+  const fields: SettingsPanelField<PriceGroupFormState>[] = useMemo(
     () => [
       {
         key: 'name',

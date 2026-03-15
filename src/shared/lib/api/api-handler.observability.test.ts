@@ -10,6 +10,9 @@ vi.mock('@/shared/lib/observability/otel-context', () => ({
 
 const loadApiHandler = async () => {
   vi.unmock('@/shared/lib/api/api-handler');
+  vi.doMock('@/features/auth/auth', () => ({
+    auth: vi.fn().mockResolvedValue(null),
+  }));
   vi.doMock('@/shared/lib/observability/system-logger', () => ({
     logSystemEvent: mockedLogSystemEvent,
     getErrorFingerprint: vi.fn(() => 'test-fingerprint'),

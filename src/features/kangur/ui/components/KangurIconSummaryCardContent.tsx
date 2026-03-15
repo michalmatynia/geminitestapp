@@ -46,7 +46,7 @@ export function KangurIconSummaryCardContent({
             <TitleTag
               id={titleId}
               className={cn(
-                'text-base font-extrabold leading-tight [color:var(--kangur-page-text)]',
+                'break-words text-base font-extrabold leading-tight [color:var(--kangur-page-text)]',
                 titleClassName
               )}
             >
@@ -55,7 +55,7 @@ export function KangurIconSummaryCardContent({
             {description ? (
               <div
                 className={cn(
-                  'mt-0.5 text-sm [color:var(--kangur-page-muted-text)]',
+                  'mt-0.5 break-words text-sm [color:var(--kangur-page-muted-text)]',
                   descriptionClassName
                 )}
               >

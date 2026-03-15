@@ -8,7 +8,7 @@ import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { Button, Input, Alert, Tag, MetadataItem } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { formatFileSize } from '@/shared/utils';
 
@@ -68,7 +68,7 @@ export function Asset3DEditModal(props: Asset3DEditModalProps): React.JSX.Elemen
     if (vals.isPublic !== undefined) setIsPublic(vals.isPublic);
   };
 
-  const fields: SettingsField<AssetFormState>[] = [
+  const fields: SettingsPanelField<AssetFormState>[] = [
     {
       key: 'name',
       label: 'File Details',

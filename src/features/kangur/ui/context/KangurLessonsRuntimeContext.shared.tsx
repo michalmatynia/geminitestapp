@@ -1,9 +1,6 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-
-
-import { parseKangurLessonDocumentStore } from '@/features/kangur/lesson-documents';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import type {

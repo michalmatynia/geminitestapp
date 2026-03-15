@@ -14,7 +14,7 @@ import {
 import { Button, FormSection, Input, Label, useToast } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useBrain } from '../context/BrainContext';
@@ -36,7 +36,7 @@ const EMPTY_EDITOR_STATE: CatalogEntryEditorState = {
   pool: 'modelPresets',
 };
 
-const CATALOG_ENTRY_EDITOR_FIELDS: SettingsField<CatalogEntryEditorState>[] = [
+const CATALOG_ENTRY_EDITOR_FIELDS: SettingsPanelField<CatalogEntryEditorState>[] = [
   {
     key: 'value',
     label: 'Item ID',

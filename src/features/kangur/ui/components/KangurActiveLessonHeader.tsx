@@ -2,8 +2,10 @@ import { createContext, useContext, useEffect, useRef, type RefObject } from 're
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import { KangurLessonNarrator } from '@/features/kangur/ui/components/KangurLessonNarrator';
-import { useKangurLessonSubsectionSummary } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
-import type { KangurLessonDocument } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext.shared';
+import {
+  useKangurLessonSubsectionSummary,
+  type KangurLessonSubsectionSummary,
+} from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import {
   KangurButton,
   KangurGlassPanel,
@@ -11,11 +13,11 @@ import {
   KangurHeadline,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import type { KangurLesson } from '@/shared/contracts/kangur';
+import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kangur';
 
 type KangurActiveLessonHeaderProps = {
   lesson: KangurLesson;
-  lessonDocument: KangurLessonDocument;
+  lessonDocument: KangurLessonDocument | null;
   lessonContentRef: RefObject<HTMLElement | null>;
   activeLessonAssignment?: KangurAssignmentSnapshot | null;
   completedActiveLessonAssignment?: KangurAssignmentSnapshot | null;
@@ -35,7 +37,7 @@ type KangurActiveLessonHeaderProps = {
 
 type KangurActiveLessonHeaderContextValue = {
   lesson: KangurLesson;
-  lessonDocument: KangurLessonDocument;
+  lessonDocument: KangurLessonDocument | null;
   lessonContentRef: RefObject<HTMLElement | null>;
   activeLessonAssignment?: KangurAssignmentSnapshot | null;
   completedActiveLessonAssignment?: KangurAssignmentSnapshot | null;
@@ -50,13 +52,13 @@ type KangurActiveLessonHeaderContextValue = {
   backButtonLabel: string;
   displayTitle: string;
   displayDescription: string;
-  subsectionSummary: ReturnType<typeof useKangurLessonSubsectionSummary>;
+  subsectionSummary: KangurLessonSubsectionSummary | null;
   subsectionTypeLabel: string;
 };
 
 const KangurActiveLessonHeaderContext = createContext<KangurActiveLessonHeaderContextValue | null>(null);
 
-const useKangurActiveLessonHeaderContext = () => {
+const useKangurActiveLessonHeaderContext = (): KangurActiveLessonHeaderContextValue => {
   const value = useContext(KangurActiveLessonHeaderContext);
   if (!value) {
     throw new Error('KangurActiveLessonHeader context is unavailable.');
@@ -161,7 +163,7 @@ function KangurActiveLessonHeaderBody(): React.JSX.Element {
                 {displayTitle}
               </KangurHeadline>
             </div>
-            <p className='mt-0.5 text-xs [color:var(--kangur-page-muted-text)]'>
+            <p className='mt-0.5 break-words text-xs [color:var(--kangur-page-muted-text)]'>
               {displayDescription}
             </p>
           </div>
@@ -171,7 +173,7 @@ function KangurActiveLessonHeaderBody(): React.JSX.Element {
           <KangurHeadline accent='slate' as='h2' size='md'>
             {displayTitle}
           </KangurHeadline>
-          <p className='mt-1 text-sm [color:var(--kangur-page-muted-text)]'>
+          <p className='mt-1 break-words text-sm [color:var(--kangur-page-muted-text)]'>
             {displayDescription}
           </p>
         </>
@@ -179,13 +181,13 @@ function KangurActiveLessonHeaderBody(): React.JSX.Element {
       {assignmentStateChip ? (
         <div ref={assignmentRef} className='mt-3 flex max-w-xl flex-col items-start gap-1.5'>
           {assignmentSectionTitle ? (
-            <div className='text-[11px] font-bold uppercase tracking-[0.14em] [color:var(--kangur-page-muted-text)]'>
+            <div className='break-words text-[11px] font-bold uppercase tracking-[0.14em] [color:var(--kangur-page-muted-text)]'>
               {assignmentSectionTitle}
             </div>
           ) : null}
           {assignmentStateChip}
           {assignmentSectionSummary ? (
-            <p className='text-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
+            <p className='break-words text-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
               {assignmentSectionSummary}
             </p>
           ) : null}
@@ -232,7 +234,7 @@ export function KangurActiveLessonHeader({
   backButtonLabel = 'Wróć do listy lekcji',
   titleOverride,
 }: KangurActiveLessonHeaderProps): React.JSX.Element {
-  const subsectionSummary = useKangurLessonSubsectionSummary();
+  const subsectionSummary: KangurLessonSubsectionSummary | null = useKangurLessonSubsectionSummary();
   const lessonHeaderTestId = headerTestId;
   const displayTitle =
     resolveHeaderCopy(subsectionSummary?.title) ??

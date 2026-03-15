@@ -15,7 +15,9 @@ import {
   KangurMetaText,
   KangurPanelIntro,
   KangurSummaryPanel,
+  KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { ActivityTypes } from '@/shared/constants/observability';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -25,6 +27,16 @@ import type { KangurLessonComponentId } from '@/shared/contracts/kangur';
 
 const kangurPlatform = getKangurPlatform();
 const INTERACTIONS_PAGE_LIMIT = 20;
+const INTERACTION_FILTER_OPTIONS = [
+  { value: 'all', label: 'Wszystkie' },
+  { value: 'opened_task', label: 'Zadania' },
+  { value: 'lesson_panel', label: 'Panele lekcji' },
+  { value: 'session', label: 'Sesje' },
+] as const;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+type InteractionFilter = (typeof INTERACTION_FILTER_OPTIONS)[number]['value'];
 
 const formatDuration = (seconds: number): string => {
   const normalized = Math.max(0, Math.round(seconds));
@@ -73,6 +85,25 @@ const parseTimestamp = (value: string | null | undefined): number => {
   }
   const parsed = Date.parse(value);
   return Number.isNaN(parsed) ? 0 : parsed;
+};
+
+const parseTimestampStrict = (value: string | null | undefined): number | null => {
+  if (!value) {
+    return null;
+  }
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? null : parsed;
+};
+
+const parseDateFilterValue = (value: string): number | null => {
+  if (!value) {
+    return null;
+  }
+  const parsed = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+  return parsed.getTime();
 };
 
 const asRecord = (value: unknown): Record<string, unknown> | null => {
@@ -134,6 +165,9 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
   const [interactionsError, setInteractionsError] = useState<string | null>(null);
   const [isLoadingMoreInteractions, setIsLoadingMoreInteractions] = useState(false);
   const [interactionsLoadMoreError, setInteractionsLoadMoreError] = useState<string | null>(null);
+  const [interactionFilter, setInteractionFilter] = useState<InteractionFilter>('all');
+  const [interactionDateFrom, setInteractionDateFrom] = useState('');
+  const [interactionDateTo, setInteractionDateTo] = useState('');
   const lessonPanelTimeCards = useMemo(
     () =>
       lessons
@@ -221,6 +255,8 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
           readString(entry.updatedAt) ??
           null;
 
+        const timestampMs = parseTimestampStrict(timestamp);
+
         if (entry.type === ActivityTypes.KANGUR.OPENED_TASK) {
           const title =
             readString(metadata?.['title']) ??
@@ -230,9 +266,11 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
           const kindLabel = kindRaw ? TASK_KIND_LABELS[kindRaw] ?? 'Zadanie' : 'Zadanie';
           return {
             id: entry.id,
+            kind: 'opened_task' as const,
             label: `Otwarte ${kindLabel.toLowerCase()}`,
             description: title,
             timestamp,
+            timestampMs,
           };
         }
 
@@ -248,9 +286,11 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
           const timeLabel = totalSeconds ? ` · ${formatDuration(totalSeconds)}` : '';
           return {
             id: entry.id,
+            kind: 'lesson_panel' as const,
             label: 'Aktywność w panelach',
             description: `${detail}${timeLabel}`,
             timestamp,
+            timestampMs,
           };
         }
 
@@ -268,21 +308,60 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
 
           return {
             id: entry.id,
+            kind: 'session' as const,
             label: 'Sesja logowania',
             description,
             timestamp,
+            timestampMs,
           };
         }
 
         return {
           id: entry.id,
+          kind: 'other' as const,
           label: 'Aktywność ucznia',
           description: entry.description ?? 'Aktywność ucznia.',
           timestamp,
+          timestampMs,
         };
       }),
     [interactions, lessonsById]
   );
+  const { rangeStartMs, rangeEndMs } = useMemo(() => {
+    const startMs = parseDateFilterValue(interactionDateFrom);
+    const rawEndMs = parseDateFilterValue(interactionDateTo);
+    const endMs = rawEndMs !== null ? rawEndMs + DAY_MS - 1 : null;
+    if (startMs !== null && endMs !== null && startMs > endMs) {
+      return { rangeStartMs: endMs, rangeEndMs: startMs };
+    }
+    return { rangeStartMs: startMs, rangeEndMs: endMs };
+  }, [interactionDateFrom, interactionDateTo]);
+  const filteredInteractions = useMemo(() => {
+    const typeFilter = interactionFilter;
+    const startMs = rangeStartMs;
+    const endMs = rangeEndMs;
+    const hasDateFilter = startMs !== null || endMs !== null;
+    return interactionViews.filter((entry) => {
+      if (typeFilter !== 'all' && entry.kind !== typeFilter) {
+        return false;
+      }
+      if (!hasDateFilter) {
+        return true;
+      }
+      if (entry.timestampMs === null) {
+        return false;
+      }
+      if (startMs !== null && entry.timestampMs < startMs) {
+        return false;
+      }
+      if (endMs !== null && entry.timestampMs > endMs) {
+        return false;
+      }
+      return true;
+    });
+  }, [interactionFilter, interactionViews, rangeEndMs, rangeStartMs]);
+  const filtersActive =
+    interactionFilter !== 'all' || Boolean(interactionDateFrom) || Boolean(interactionDateTo);
 
   const handleLoadMoreInteractions = async (): Promise<void> => {
     if (!activeLearnerId || !interactionHistory || isLoadingMoreInteractions) {
@@ -400,10 +479,10 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
                 <div className='flex flex-col gap-3'>
                   <div className='flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between'>
                     <div>
-                      <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+                      <div className='break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
                         {entry.lesson.title}
                       </div>
-                      <KangurMetaText tone='slate'>
+                      <KangurMetaText className='break-words' tone='slate'>
                         Ostatnia sesja: {formatProgressTimestamp(entry.sessionUpdatedAt)}
                       </KangurMetaText>
                     </div>
@@ -417,7 +496,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
                         key={`${entry.lesson.componentId}-${section.id}`}
                         className='rounded-[18px] border border-sky-200/70 bg-white/80 px-3 py-2'
                       >
-                        <div className='text-xs font-semibold [color:var(--kangur-page-text)]'>
+                        <div className='break-words text-xs font-semibold [color:var(--kangur-page-text)]'>
                           {section.label}
                         </div>
                         <KangurMetaText tone='slate'>
@@ -458,6 +537,72 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
         description='Ostatnie interakcje ucznia: otwarte zadania, aktywność w panelach oraz sesje logowania.'
         label='Historia interakcji'
       >
+        <div className='mt-3 rounded-[18px] border border-indigo-100/80 bg-white/70 p-4'>
+          <div className='flex flex-col gap-3'>
+            <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+              <KangurMetaText tone='slate'>Filtry</KangurMetaText>
+              <div
+                className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} flex-wrap justify-start`}
+                role='tablist'
+                aria-label='Filtrowanie interakcji'
+              >
+                {INTERACTION_FILTER_OPTIONS.map((option) => (
+                  <KangurButton
+                    key={option.value}
+                    type='button'
+                    onClick={() => setInteractionFilter(option.value)}
+                    aria-pressed={interactionFilter === option.value}
+                    aria-selected={interactionFilter === option.value}
+                    role='tab'
+                    className='min-w-0 px-3 text-xs'
+                    size='sm'
+                    variant={interactionFilter === option.value ? 'segmentActive' : 'segment'}
+                  >
+                    {option.label}
+                  </KangurButton>
+                ))}
+              </div>
+            </div>
+            <div className='grid gap-3 sm:grid-cols-3'>
+              <div className='flex flex-col gap-2'>
+                <KangurMetaText tone='slate'>Data od</KangurMetaText>
+                <KangurTextField
+                  type='date'
+                  value={interactionDateFrom}
+                  onChange={(event) => setInteractionDateFrom(event.target.value)}
+                  aria-label='Data od'
+                  size='sm'
+                />
+              </div>
+              <div className='flex flex-col gap-2'>
+                <KangurMetaText tone='slate'>Data do</KangurMetaText>
+                <KangurTextField
+                  type='date'
+                  value={interactionDateTo}
+                  onChange={(event) => setInteractionDateTo(event.target.value)}
+                  aria-label='Data do'
+                  size='sm'
+                />
+              </div>
+              <div className='flex items-end justify-start sm:justify-end'>
+                {filtersActive ? (
+                  <KangurButton
+                    type='button'
+                    size='sm'
+                    variant='ghost'
+                    onClick={() => {
+                      setInteractionFilter('all');
+                      setInteractionDateFrom('');
+                      setInteractionDateTo('');
+                    }}
+                  >
+                    Wyczyść filtry
+                  </KangurButton>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
         {isLoadingInteractions ? (
           <KangurEmptyState
             accent='slate'
@@ -474,31 +619,35 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
             description='Spróbuj ponownie za chwilę.'
             title={interactionsError}
           />
-        ) : interactionViews.length === 0 ? (
+        ) : filteredInteractions.length === 0 ? (
           <KangurEmptyState
             accent='slate'
             align='center'
             data-testid='parent-monitoring-interactions-empty'
-            description='Brak interakcji do pokazania.'
-            title='Brak aktywności.'
+            description={
+              filtersActive
+                ? 'Zmień filtry, aby zobaczyć więcej aktywności.'
+                : 'Brak interakcji do pokazania.'
+            }
+            title={filtersActive ? 'Brak wyników.' : 'Brak aktywności.'}
           />
         ) : (
           <div className='mt-3 flex flex-col gap-3'>
-            {interactionViews.map((entry) => (
+            {filteredInteractions.map((entry) => (
               <div
                 key={entry.id}
                 className='rounded-[18px] border border-indigo-200/70 bg-white/80 px-4 py-3'
                 data-testid={`parent-monitoring-interaction-${entry.id}`}
               >
                 <div className='flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between'>
-                  <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+                  <div className='break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
                     {entry.label}
                   </div>
-                  <KangurMetaText tone='slate'>
+                  <KangurMetaText className='break-words' tone='slate'>
                     {formatProgressTimestamp(entry.timestamp)}
                   </KangurMetaText>
                 </div>
-                <div className='mt-1 text-sm [color:var(--kangur-page-text)]'>
+                <div className='mt-1 break-words text-sm [color:var(--kangur-page-text)]'>
                   {entry.description}
                 </div>
               </div>

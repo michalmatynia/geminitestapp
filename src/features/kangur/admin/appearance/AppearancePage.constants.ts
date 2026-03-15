@@ -11,7 +11,7 @@ import {
   KANGUR_NIGHTLY_CRYSTAL_THEME,
 } from '@/features/kangur/theme-settings';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import type { SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -207,7 +207,7 @@ export const HOME_ACTION_FIELD_TOKENS = [
   { suffix: 'SurfaceShadowColor', label: 'Surface Shadow' },
 ] as const;
 
-export const HOME_ACTION_FIELDS: SettingsField<ThemeSettings>[] = HOME_ACTION_FIELD_GROUPS.flatMap(
+export const HOME_ACTION_FIELDS: SettingsPanelField<ThemeSettings>[] = HOME_ACTION_FIELD_GROUPS.flatMap(
   (group) =>
     HOME_ACTION_FIELD_TOKENS.map((token) => ({
       key: `${group.prefix}${token.suffix}` as keyof ThemeSettings,
@@ -219,7 +219,7 @@ export const HOME_ACTION_FIELDS: SettingsField<ThemeSettings>[] = HOME_ACTION_FI
 export const THEME_SECTIONS: Array<{
   title: string;
   subtitle: string;
-  fields: SettingsField<ThemeSettings>[];
+  fields: SettingsPanelField<ThemeSettings>[];
 }> = [
   // ── Colors ──────────────────────────────────────────────────────────────────
   {

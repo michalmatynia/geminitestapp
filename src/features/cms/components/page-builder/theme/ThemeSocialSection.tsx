@@ -3,12 +3,12 @@
 import React from 'react';
 
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import type { SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { ThemeSettingsFieldsSection } from './ThemeSettingsFieldsSection';
 
 export function ThemeSocialSection(): React.JSX.Element {
-  const fields: SettingsField<ThemeSettings>[] = [
+  const fields: SettingsPanelField<ThemeSettings>[] = [
     {
       key: 'socialFacebook',
       label: 'Facebook',

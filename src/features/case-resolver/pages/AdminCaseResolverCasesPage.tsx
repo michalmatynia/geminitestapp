@@ -6,7 +6,7 @@ import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import { ConfirmModal, Input, MultiSelect } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { CaseListPanel } from '../components/CaseListPanel';
@@ -40,7 +40,7 @@ function AdminCaseResolverCasesInner(): React.JSX.Element {
   } = useAdminCaseResolverCasesActionsContext();
 
   const createCaseFields = useMemo(
-    (): SettingsField<Partial<CaseResolverFile>>[] => [
+    (): SettingsPanelField<Partial<CaseResolverFile>>[] => [
       {
         key: 'name',
         label: 'Case Name',

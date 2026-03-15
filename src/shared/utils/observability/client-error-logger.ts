@@ -60,12 +60,15 @@ const buildPayload = (
   }
 ): ClientErrorPayload => {
   const category = classifyError(error);
+  const url =
+    typeof window !== 'undefined' && window.location?.href ? window.location.href : undefined;
+  const userAgent =
+    typeof navigator !== 'undefined' && navigator.userAgent ? navigator.userAgent : undefined;
+
   const payload: ClientErrorPayload = {
     message: 'Unknown client error',
     timestamp: new Date().toISOString(),
-    ...(typeof window !== 'undefined'
-      ? { url: window.location.href, userAgent: navigator.userAgent }
-      : {}),
+    ...(url || userAgent ? { url, userAgent } : {}),
     ...(extra?.digest ? { digest: extra.digest } : {}),
     ...(extra?.componentStack ? { componentStack: extra.componentStack } : {}),
   };
@@ -187,25 +190,27 @@ export const logClientError = (
   }
 
   try {
-    if (navigator.sendBeacon) {
+    if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
       const blob = new Blob([body], { type: 'application/json' });
       navigator.sendBeacon('/api/client-errors', blob);
       return;
     }
   } catch (error) {
     logClientError(error);
-  
+
     // fall back to fetch
   }
 
-  void fetch('/api/client-errors', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body,
-    keepalive: true,
-  }).catch(() => {
-    // Swallow network failures for non-blocking client diagnostics.
-  });
+  if (typeof fetch === 'function') {
+    void fetch('/api/client-errors', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+      keepalive: true,
+    }).catch(() => {
+      // Swallow network failures for non-blocking client diagnostics.
+    });
+  }
 };
 
 let handlerAttached = false;

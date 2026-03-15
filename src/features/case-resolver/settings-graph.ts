@@ -7,7 +7,7 @@ import {
   DEFAULT_CASE_RESOLVER_NODE_META,
   DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID,
   type AiNode,
-  type Edge,
+  type CaseResolverEdge,
   type CaseResolverEdgeMeta,
   type CaseResolverGraph,
   type CaseResolverNodeMeta,
@@ -212,12 +212,12 @@ const enforceCanonicalDocumentPromptNodes = (
   });
 
 const validateTextNodeEdgePorts = (
-  edges: Edge[],
+  edges: CaseResolverEdge[],
   textNodeIds: Set<string>,
   explanatoryNodeIds: Set<string>
-): Edge[] => {
+): CaseResolverEdge[] => {
   if (edges.length === 0 || textNodeIds.size === 0) return edges;
-  return edges.filter((edge: Edge): boolean => {
+  return edges.filter((edge: CaseResolverEdge): boolean => {
     const sourceNodeId = edge.source?.trim() ?? '';
     const targetNodeId = edge.target?.trim() ?? '';
     const validatePort = (
@@ -250,7 +250,7 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
   const validNodeIds = new Set<string>(
     rawNodes.map((node: AiNode) => (typeof node?.id === 'string' ? node.id : '')).filter(Boolean)
   );
-  const parsedEdges: Edge[] = [];
+  const parsedEdges: CaseResolverEdge[] = [];
   rawEdges.forEach((edge: unknown, index: number): void => {
     try {
       parsedEdges.push(parseCanonicalCaseResolverEdge(edge, `case_resolver.graph.edges[${index}]`));
@@ -261,7 +261,7 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
     }
   });
   const edgesByNodeId = parsedEdges.filter(
-    (edge: Edge): boolean =>
+    (edge: CaseResolverEdge): boolean =>
       validNodeIds.has(edge.source?.trim() ?? '') && validNodeIds.has(edge.target?.trim() ?? '')
   );
 

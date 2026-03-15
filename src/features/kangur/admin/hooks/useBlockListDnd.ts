@@ -8,7 +8,7 @@ import {
 
 const DND_KEY = 'application/x-kangur-block-id';
 
-export type BlockDragState = {
+export type KangurBlockDragState = {
   draggedBlockId: string | null;
   targetBlockId: string | null;
   position: 'before' | 'after' | null;
@@ -23,7 +23,7 @@ export type BlockDragHandlers = {
   onDragEnd: (e: React.DragEvent) => void;
 };
 
-const INITIAL_STATE: BlockDragState = {
+const INITIAL_STATE: KangurBlockDragState = {
   draggedBlockId: null,
   targetBlockId: null,
   position: null,
@@ -32,11 +32,11 @@ const INITIAL_STATE: BlockDragState = {
 export function useBlockListDnd(options: {
   onReorder: (draggedId: string, targetId: string, position: 'before' | 'after') => void;
 }): {
-  dragState: BlockDragState;
+  dragState: KangurBlockDragState;
   getHandlers: (blockId: string) => BlockDragHandlers;
 } {
   const { onReorder } = options;
-  const [dragState, setDragState] = useState<BlockDragState>(INITIAL_STATE);
+  const [dragState, setDragState] = useState<KangurBlockDragState>(INITIAL_STATE);
   // Ref tracks the dragged ID so onDragOver can read it without capturing stale state.
   // (dataTransfer.getData is blocked by browsers during dragover for security.)
   const draggedIdRef = useRef<string | null>(null);

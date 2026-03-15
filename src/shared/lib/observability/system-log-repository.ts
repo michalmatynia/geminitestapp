@@ -28,6 +28,13 @@ const toMongoId = (id: string): ObjectId | string => {
   return id;
 };
 
+const toIsoString = (value?: string | Date | null): string => {
+  if (!value) return new Date().toISOString();
+  if (value instanceof Date) return value.toISOString();
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+};
+
 const SYSTEM_LOGS_COLLECTION = 'system_logs';
 
 const insertMongoSystemLog = async (payload: SystemLogRecord): Promise<void> => {
@@ -84,7 +91,7 @@ const toSystemLogRecord = (doc: MongoSystemLogDoc): SystemLogRecord => ({
       ? doc.parentSpanId
       : (doc.context?.['parentSpanId'] as string | undefined)) ?? null,
   userId: doc.userId ?? null,
-  createdAt: (doc.createdAt ?? new Date()).toISOString(),
+  createdAt: toIsoString(doc.createdAt),
   updatedAt: null,
 });
 

@@ -67,11 +67,8 @@ const nextConfig = {
     // Default proxy body clone limit (~10MB) is too low for multi-image product forms.
     // Raise it so multipart requests don't fail before route handlers read formData().
     proxyClientMaxBodySize: '50mb',
-    // Limit worker processes to 1 — each worker inherits NODE_OPTIONS heap size.
+    // Limit worker processes to 1 to stay within Vercel 8GB RAM limit.
     cpus: 1,
-    // Run webpack in the main process instead of a separate worker.
-    // Avoids spawning a second Node process that doubles heap usage on Vercel (8GB limit).
-    webpackBuildWorker: false,
     optimizePackageImports: [
       'lucide-react',
       '@radix-ui/react-alert-dialog',

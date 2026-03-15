@@ -2,6 +2,8 @@ import type {
   PortablePathEnvelopeVerificationAuditEvent,
   PortablePathEnvelopeVerificationObservabilitySnapshot,
 } from './portable-engine-envelope-observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type PortablePathEnvelopeVerificationAuditSink = {
   id: string;
@@ -141,6 +143,7 @@ export const dispatchPortablePathEnvelopeVerificationAuditSinks = (
           markPortablePathEnvelopeVerificationAuditSinkFailure(sinkId, error);
         });
     } catch (error: unknown) {
+      logClientError(error);
       markPortablePathEnvelopeVerificationAuditSinkFailure(sinkId, error);
     }
   }

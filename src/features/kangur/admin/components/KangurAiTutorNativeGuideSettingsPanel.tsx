@@ -23,6 +23,8 @@ import { Badge, Button, Card, FormField, FormSection, Textarea, useToast } from 
 import { KangurAiTutorNativeGuideEntryEditor } from './KangurAiTutorNativeGuideEntryEditor';
 import { KangurAiTutorNativeGuideEntryList } from './KangurAiTutorNativeGuideEntryList';
 import { KangurAiTutorNativeGuideValidationSummary } from './KangurAiTutorNativeGuideValidationSummary';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const AI_TUTOR_NATIVE_GUIDE_EDITOR_LOCALE = 'pl';
 const SETTINGS_SECTION_CLASS_NAME = 'border-border/60 bg-card/35 shadow-sm';
@@ -103,6 +105,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
         error: null,
       };
     } catch (error) {
+      logClientError(error);
       return {
         store: null,
         error: error instanceof Error ? error.message : 'Invalid native guide JSON.',
@@ -224,6 +227,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
       setPersistedEditorValue(serialized);
       setSelectedEntryId(parsed.entries[0]?.id ?? null);
     } catch (error) {
+      logClientError(error);
       toast(
         error instanceof Error
           ? error.message
@@ -364,6 +368,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
         variant: 'success',
       });
     } catch (error) {
+      logClientError(error);
       toast(
         error instanceof Error
           ? error.message
@@ -405,6 +410,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
         variant: 'success',
       });
     } catch (error) {
+      logClientError(error);
       toast(
         error instanceof Error
           ? error.message

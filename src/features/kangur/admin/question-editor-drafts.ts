@@ -1,6 +1,8 @@
 import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
 
 import type { QuestionFormData } from '../test-questions';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const QUESTION_EDITOR_DRAFT_STORAGE_PREFIX = 'kangur-question-editor-draft:v1:';
 
@@ -41,7 +43,8 @@ export const readQuestionEditorDraft = (
       return null;
     }
     return parsed;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -77,7 +80,8 @@ export const writeQuestionEditorDraft = ({
       } satisfies QuestionEditorLocalDraft)
     );
     return savedAt;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -87,7 +91,9 @@ export const clearQuestionEditorDraft = (suiteId: string, questionId: string): v
 
   try {
     window.localStorage.removeItem(getQuestionEditorDraftStorageKey(suiteId, questionId));
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Ignore storage failures.
   }
 };

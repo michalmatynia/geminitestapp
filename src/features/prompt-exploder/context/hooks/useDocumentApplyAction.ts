@@ -133,6 +133,7 @@ export const useDocumentApplyAction = ({
 
       router.push(returnTo);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'DocumentProvider',

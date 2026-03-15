@@ -10,6 +10,8 @@ import {
   optionalCsvQueryStringArray,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export const querySchema = z.object({
   filename: optionalTrimmedQueryString(),
@@ -37,6 +39,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
       query.productName ? { search: query.productName } : {}
     );
   } catch (_error) {
+    void ErrorSystem.captureException(_error);
     productRepoAvailable = false;
   }
   const filteredProducts = query.productId

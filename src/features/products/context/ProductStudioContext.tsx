@@ -38,6 +38,8 @@ import type {
   ProductStudioStateContextValue,
   ProductStudioVariantsResponse,
 } from './ProductStudioContext.types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type {
   ProductImageSlotPreview,
@@ -197,6 +199,7 @@ export function ProductStudioProvider({
       });
       return response;
     } catch (error) {
+      logClientError(error);
       setStudioActionError(
         error instanceof Error ? error.message : 'Failed to load Studio variants.'
       );
@@ -228,6 +231,7 @@ export function ProductStudioProvider({
       );
       setAuditEntries(Array.isArray(response.entries) ? response.entries : []);
     } catch (error) {
+      logClientError(error);
       setAuditError(error instanceof Error ? error.message : 'Failed to load history.');
     } finally {
       setAuditLoading(false);
@@ -259,6 +263,7 @@ export function ProductStudioProvider({
       await refreshVariants();
       await refreshAudit();
     } catch (error) {
+      logClientError(error);
       setStudioActionError(error instanceof Error ? error.message : 'Failed to send.');
     }
   };
@@ -277,6 +282,7 @@ export function ProductStudioProvider({
       if (!sourceSlotId) throw internalError('Source slot not found.');
       window.location.href = `/admin/image-studio?projectId=${response.projectId}&slotId=${sourceSlotId}`;
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to open.', { variant: 'error' });
     } finally {
       setOpeningInImageStudio(false);
@@ -297,6 +303,7 @@ export function ProductStudioProvider({
       await refreshVariants();
       await refreshAudit();
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to accept.', { variant: 'error' });
     }
   };
@@ -315,6 +322,7 @@ export function ProductStudioProvider({
       toast('Variant deleted.', { variant: 'success' });
       await refreshVariants();
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to delete.', { variant: 'error' });
     } finally {
       setDeletingVariantId(null);
@@ -333,6 +341,7 @@ export function ProductStudioProvider({
       await refreshVariants();
       toast('Image rotated.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to rotate.', { variant: 'error' });
     }
   };

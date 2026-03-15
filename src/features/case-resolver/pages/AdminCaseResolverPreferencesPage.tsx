@@ -18,6 +18,8 @@ import {
   LoadingState,
   FormActions,
 } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type CaseResolverCaseListViewMode = 'hierarchy' | 'list';
 type CaseResolverCaseListSortBy =
@@ -115,6 +117,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
       toast('Case Resolver preferences saved.', { variant: 'success' });
       router.push('/admin/case-resolver/cases');
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save Case Resolver preferences.', {
         variant: 'error',
       });
@@ -128,6 +131,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
       setLoadedFrom(JSON.stringify(DEFAULT_CASE_RESOLVER_CASE_LIST_PREFERENCES));
       toast('Case Resolver preferences reset to defaults.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to reset Case Resolver preferences.', {
         variant: 'error',
       });

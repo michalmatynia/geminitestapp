@@ -49,6 +49,7 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
       await savePersonas({ personas: next });
       toast(existing ? 'Persona updated.' : 'Persona created.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'PlaywrightPersonasPage', action: 'savePersona', personaId: draft.id },
       });
@@ -63,6 +64,7 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
       await savePersonas({ personas: next });
       toast('Persona deleted.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'PlaywrightPersonasPage',

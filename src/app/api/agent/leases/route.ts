@@ -14,6 +14,8 @@ import {
   optionalBooleanQuerySchema,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export const querySchema = z.object({
   resourceId: optionalTrimmedQueryString(),
@@ -90,6 +92,7 @@ const POST_handler = async (_request: Request, ctx: { body?: unknown }) => {
       status: statusForLeaseMutation(result.code),
     });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     if (error instanceof ZodError) {
       return NextResponse.json(
         {

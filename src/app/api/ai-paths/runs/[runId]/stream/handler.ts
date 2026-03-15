@@ -11,6 +11,8 @@ import {
 } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { getRedisSubscriber, isSubscriberConnected } from '@/shared/lib/redis-pubsub';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 const normalizeLimit = (value: number, fallback: number): number => {
@@ -176,7 +178,9 @@ async function streamWithPubSub(
       if (msg.type === 'done' || msg.type === 'error') {
         done = true;
       }
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // Malformed message — ignore
     }
   };
@@ -215,7 +219,9 @@ async function streamWithPubSub(
         try {
           sub.off('message', messageHandler);
           await sub.unsubscribe(channel);
-        } catch {
+        } catch (error) {
+          void ErrorSystem.captureException(error);
+        
           // Already disconnected
         }
         await streamWithPolling(repo, runId, send, cursors, isCancelled);
@@ -260,7 +266,9 @@ async function streamWithPubSub(
       sub.off('end', disconnectHandler);
       sub.off('close', disconnectHandler);
       await sub.unsubscribe(channel);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // Subscriber may already be disconnected
     }
   }

@@ -139,7 +139,7 @@ export function KangurAiTutorMessageList({
       {hasIntroMessage ? (
         <div className='flex justify-start'>
           <div className='w-full max-w-full space-y-2 sm:max-w-[90%]'>
-            <div className='tutor-assistant-bubble kangur-chat-padding-sm text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] whitespace-pre-line'>
+            <div className='tutor-assistant-bubble kangur-chat-padding-sm text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] whitespace-pre-line break-words'>
               {introCopy}
             </div>
           </div>
@@ -188,7 +188,7 @@ export function KangurAiTutorMessageList({
                       </div>
                     </div>
                   ))}
-                  <div className='kangur-chat-bubble kangur-chat-padding-sm border tutor-user-bubble text-sm leading-relaxed'>
+                  <div className='kangur-chat-bubble kangur-chat-padding-sm border tutor-user-bubble text-sm leading-relaxed break-words'>
                     {msg.content}
                   </div>
                 </div>
@@ -266,7 +266,7 @@ export function KangurAiTutorMessageList({
                     </div>
                   </div>
                 ))}
-                <div className='tutor-assistant-bubble kangur-chat-padding-sm text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
+                <div className='tutor-assistant-bubble kangur-chat-padding-sm text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] break-words'>
                   {msg.content}
                 </div>
                 {shouldShowHintFollowUp ? (

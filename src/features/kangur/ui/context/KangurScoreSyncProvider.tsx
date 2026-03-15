@@ -10,6 +10,8 @@ import { syncGuestKangurScores } from '@/features/kangur/services/guest-kangur-s
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const kangurPlatform = getKangurPlatform();
 
@@ -59,6 +61,7 @@ export function KangurScoreSyncProvider({
           remainingCount: result.remainingCount,
         });
       } catch (error: unknown) {
+        logClientError(error);
         if (cancelled || isKangurAuthStatusError(error)) {
           return;
         }

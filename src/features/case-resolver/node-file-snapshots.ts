@@ -7,6 +7,8 @@ import {
 import { validationError } from '@/shared/errors/app-error';
 
 import { parseCanonicalCaseResolverEdge } from './settings.edge-validation';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const caseResolverNodeFileSnapshotEnvelopeSchema = caseResolverNodeFileSnapshotSchema.extend({
   edges: z.array(z.unknown()),
@@ -32,6 +34,7 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
   try {
     parsed = JSON.parse(trimmedTextContent) as unknown;
   } catch (error: unknown) {
+    logClientError(error);
     throw validationError('Invalid Case Resolver node-file snapshot payload.', {
       source: 'case_resolver.node_file_snapshot',
       reason: 'invalid_json',

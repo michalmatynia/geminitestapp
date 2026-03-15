@@ -7,6 +7,8 @@ import type {
 } from '@/shared/contracts/ai-context-registry';
 import type { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 import { isObjectRecord } from '@/shared/utils/object-utils';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const asRecord = (value: unknown): Record<string, unknown> | null =>
   isObjectRecord(value) ? value : null;
@@ -126,7 +128,8 @@ const resolveContextRegistryEnvelope = async (
         resolved,
       },
     };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return {
       ...value,
       contextRegistry: {

@@ -1196,6 +1196,7 @@ export async function buildKangurAiTutorAdaptiveGuidance({
       coachingFrame,
     };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await ErrorSystem.captureException(error, {
       service: 'kangur.ai-tutor',
       action: 'buildAdaptiveGuidance',

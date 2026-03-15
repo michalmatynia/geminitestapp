@@ -104,6 +104,7 @@ export function useServerRunStream(
               : 'Server run failed.'),
         });
       } catch (err) {
+        logClientError(err);
         logClientError(err, {
           context: {
             source: 'useAiPathsServerExecution',
@@ -236,6 +237,7 @@ export function useServerRunStream(
           });
         });
       } catch (err) {
+        logClientError(err);
         logClientError(err, {
           context: {
             source: 'useAiPathsServerExecution',
@@ -298,6 +300,7 @@ export function useServerRunStream(
           args.setRuntimeEvents((prev) => [...prev, ...streamedEvents]);
         }
       } catch (err) {
+        logClientError(err);
         logClientError(err, {
           context: {
             source: 'useAiPathsServerExecution',
@@ -328,6 +331,7 @@ export function useServerRunStream(
               : 'Server run failed.',
         });
       } catch (err) {
+        logClientError(err);
         logClientError(err, {
           context: {
             source: 'useAiPathsServerExecution',
@@ -349,6 +353,7 @@ export function useServerRunStream(
           message: errorMessage ? `Server run failed: ${errorMessage}` : 'Server run failed.',
         });
       } catch (err) {
+        logClientError(err);
         logClientError(err, {
           context: {
             source: 'useAiPathsServerExecution',

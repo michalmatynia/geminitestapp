@@ -5,14 +5,15 @@ import type {
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
 import type { CollectionSchema } from '@/shared/contracts/database';
-import { dbApi, type ApiResponse } from '@/shared/lib/ai-paths/api';
+import type { HttpResult } from '@/shared/contracts/http';
+import { dbApi } from '@/shared/lib/ai-paths/api';
 import type { SchemaResponse } from '@/shared/lib/ai-paths/api/client';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 
 // Module-scoped schema cache to avoid redundant API calls across database nodes
 // within the same run. TTL ensures freshness across separate runs.
-let schemaCacheResult: ApiResponse<unknown> | null = null;
+let schemaCacheResult: HttpResult<unknown> | null = null;
 let schemaCacheTs = 0;
 const SCHEMA_CACHE_TTL_MS = 30_000;
 
@@ -31,7 +32,7 @@ const resolveCollectionList = (value: unknown): CollectionSchema[] => {
   return [];
 };
 
-export const getCachedSchema = async (): Promise<ApiResponse<unknown>> => {
+export const getCachedSchema = async (): Promise<HttpResult<unknown>> => {
   const now = Date.now();
   if (schemaCacheResult && schemaCacheResult.ok && now - schemaCacheTs < SCHEMA_CACHE_TTL_MS) {
     return schemaCacheResult;

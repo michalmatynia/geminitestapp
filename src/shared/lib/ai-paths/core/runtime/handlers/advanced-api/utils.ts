@@ -3,6 +3,8 @@ import { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { JsonRecord } from './config';
 import { getValueAtMappingPath, safeStringify } from '../../utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const toObject = (value: unknown): JsonRecord => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
@@ -54,6 +56,7 @@ export const parseJsonWithTemplates = <T>(
   try {
     return JSON.parse(renderedWithValue) as T;
   } catch (error) {
+    logClientError(error);
     reportAiPathsError(error, meta, 'Invalid advanced API JSON config:');
     return fallback;
   }

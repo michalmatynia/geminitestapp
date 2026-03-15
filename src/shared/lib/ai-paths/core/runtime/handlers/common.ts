@@ -11,6 +11,8 @@ import type {
 
 import { DELAY_OUTPUT_PORTS, ROUTER_OUTPUT_PORTS } from '../../constants';
 import { coerceInput, coerceInputArray, safeStringify } from '../../utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const handleConstant: NodeHandler = ({ node }: NodeHandlerContext): RuntimePortValues => {
   const constantConfig = node.config?.['constant'] ?? {
@@ -27,7 +29,8 @@ export const handleConstant: NodeHandler = ({ node }: NodeHandlerContext): Runti
     // using a simple parse here as safeParseJson is in utils and we can't easily import everything
     try {
       value = JSON.parse(String(config['value'] ?? '')) as unknown;
-    } catch {
+    } catch (error) {
+      logClientError(error);
       value = null;
     }
   }

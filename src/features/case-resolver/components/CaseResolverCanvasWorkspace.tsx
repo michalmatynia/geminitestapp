@@ -186,6 +186,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       await updateAiPathsSetting(AI_PATHS_UI_STATE_KEY, JSON.stringify(nextUiState));
       invalidateAiPathsSettingsCache();
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'CaseResolverCanvasWorkspace', action: 'persistUiState' },
       });

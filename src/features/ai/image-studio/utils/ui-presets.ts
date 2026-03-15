@@ -4,6 +4,8 @@ import { paramSpecSchema } from '@/shared/contracts/prompt-engine';
 import type { ParamSpec } from '@/shared/contracts/prompt-engine';
 
 import type { ParamUiControl } from './param-ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const IMAGE_STUDIO_UI_PRESETS_KEY = 'image_studio_ui_presets';
 export const IMAGE_STUDIO_UI_ACTIVE_KEY = 'image_studio_ui_active_preset';
@@ -52,7 +54,8 @@ export function parseImageStudioUiPresets(raw: string | null | undefined): Image
     const json = JSON.parse(raw) as unknown;
     const parsed = uiPresetListSchema.safeParse(json);
     return parsed.success ? parsed.data : [];
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return [];
   }
 }

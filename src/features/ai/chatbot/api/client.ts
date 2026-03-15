@@ -1,3 +1,4 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 const defaultErrorMessage = 'Request failed.';
 
 export const readErrorResponse = async (
@@ -9,11 +10,13 @@ export const readErrorResponse = async (
       message: data.error || defaultErrorMessage,
       ...(typeof data.errorId === 'string' ? { errorId: data.errorId } : {}),
     };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     try {
       const text = await res.text();
       return { message: text || defaultErrorMessage };
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return { message: defaultErrorMessage };
     }
   }

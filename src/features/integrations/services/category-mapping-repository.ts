@@ -4,31 +4,10 @@ import type {
   CategoryMappingWithDetails,
   CategoryMappingCreateInput,
   CategoryMappingUpdateInput,
+  CategoryMappingRepository,
 } from '@/shared/contracts/integrations';
 
 import { mongoCategoryMappingImpl } from './category-mapping/mongo-impl';
-
-export type CategoryMappingRepository = {
-  create: (input: CategoryMappingCreateInput) => Promise<CategoryMapping>;
-  update: (id: string, input: CategoryMappingUpdateInput) => Promise<CategoryMapping>;
-  delete: (id: string) => Promise<void>;
-  getById: (id: string) => Promise<CategoryMapping | null>;
-  listByConnection: (
-    connectionId: string,
-    catalogId?: string
-  ) => Promise<CategoryMappingWithDetails[]>;
-  getByExternalCategory: (
-    connectionId: string,
-    externalCategoryId: string,
-    catalogId: string
-  ) => Promise<CategoryMapping | null>;
-  bulkUpsert: (
-    connectionId: string,
-    catalogId: string,
-    mappings: CategoryMappingAssignment[]
-  ) => Promise<number>;
-  deleteByConnection: (connectionId: string) => Promise<number>;
-};
 
 export const categoryMappingRepository: CategoryMappingRepository = {
   async create(input: CategoryMappingCreateInput): Promise<CategoryMapping> {

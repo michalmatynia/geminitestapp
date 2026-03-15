@@ -23,6 +23,8 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { Alert, Button, FormSection, Input, useToast } from '@/shared/ui';
 import type { SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/shared/utils/settings-json';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type ThemeMode = 'daily' | 'dawn' | 'sunset' | 'nightly';
 export type KangurThemeMode = ThemeMode;
@@ -798,6 +800,7 @@ function KangurThemeSettingsEditor({
       });
       toast(MODE_CONFIG[mode].toastMessage, { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Nie udało się przywrócić motywu.', {
         variant: 'error',
       });

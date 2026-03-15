@@ -11,6 +11,8 @@ import {
   useDeleteEmbeddingCollectionMutation,
   useUpsertEmbeddingCollectionMutation,
 } from '../hooks/useAgentTeachingQueries';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 interface AgentTeachingCollectionsContextValue {
   collections: AgentTeachingEmbeddingCollectionRecord[];
@@ -123,6 +125,7 @@ export function AgentTeachingCollectionsProvider({
       toast(editingItem ? 'Collection updated.' : 'Collection created.', { variant: 'success' });
       closeModal();
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save collection.', {
         variant: 'error',
       });
@@ -135,6 +138,7 @@ export function AgentTeachingCollectionsProvider({
       await remove({ id: itemToDelete.id });
       toast('Collection deleted.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to delete collection.', {
         variant: 'error',
       });

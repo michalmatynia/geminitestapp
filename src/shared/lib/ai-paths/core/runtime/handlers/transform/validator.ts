@@ -20,6 +20,8 @@ import {
   validateProgrammaticPromptWithRuntime,
 } from '@/shared/lib/prompt-engine';
 import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const handleValidator: NodeHandler = ({
   node,
@@ -292,6 +294,7 @@ export const handleValidationPattern: NodeHandler = ({
       },
     };
   } catch (error) {
+    logClientError(error);
     reportAiPathsError(
       error,
       {

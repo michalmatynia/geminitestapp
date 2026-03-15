@@ -109,12 +109,50 @@ export function FormField(props: FormFieldProps): React.JSX.Element {
     descriptionId ?? (description && fieldId ? `${fieldId}-description` : undefined);
   const resolvedErrorId = errorId ?? (error && fieldId ? `${fieldId}-error` : undefined);
 
+  const mergeIds = (existing?: string, next?: string): string | undefined => {
+    if (!next) return existing;
+    if (!existing) return next;
+    const merged = new Set(
+      `${existing} ${next}`
+        .split(' ')
+        .map((value) => value.trim())
+        .filter(Boolean)
+    );
+    return Array.from(merged).join(' ');
+  };
+
+  const describedBy = mergeIds(resolvedDescriptionId, resolvedErrorId);
+
   const linkedChildren =
-    !controlId &&
-    fieldId &&
-    isValidElement<{ id?: string }>(children) &&
-    (children.props.id === undefined || children.props.id === '')
-      ? cloneElement(children, { id: fieldId })
+    isValidElement(children)
+      ? cloneElement(children, {
+          ...(fieldId &&
+          !controlId &&
+          (children.props.id === undefined || children.props.id === '')
+            ? { id: fieldId }
+            : {}),
+          ...(describedBy
+            ? {
+                'aria-describedby': mergeIds(children.props['aria-describedby'], describedBy),
+              }
+            : {}),
+          ...(resolvedErrorId
+            ? {
+                'aria-errormessage': mergeIds(
+                  children.props['aria-errormessage'],
+                  resolvedErrorId
+                ),
+              }
+            : {}),
+          ...(error
+            ? {
+                'aria-invalid':
+                  children.props['aria-invalid'] !== undefined
+                    ? children.props['aria-invalid']
+                    : true,
+              }
+            : {}),
+        })
       : children;
 
   return (

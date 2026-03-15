@@ -1,3 +1,4 @@
+import type { AgentCapabilityManifest } from '../contracts/agent-capabilities';
 import { AgentCapabilityManifestSchema } from '../contracts/agent-capabilities';
 
 export const agentCapabilityManifest = AgentCapabilityManifestSchema.parse({
@@ -320,4 +321,4 @@ export const agentCapabilityManifest = AgentCapabilityManifestSchema.parse({
   },
 });
 
-export type AgentCapabilityManifest = typeof agentCapabilityManifest;
+export type { AgentCapabilityManifest };

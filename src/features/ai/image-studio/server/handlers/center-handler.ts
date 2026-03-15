@@ -20,6 +20,8 @@ import {
 import { badRequestError } from '@/shared/errors/app-error';
 
 import { createImageRecord, parseDataUrl, resolveCenterOutputFormat } from '../run-executor-utils';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export async function executeCenterOperation(params: {
   request: ImageStudioRunRequest;
@@ -106,6 +108,7 @@ export async function executeCenterOperation(params: {
       try {
         centered = await centerAndScaleObjectByLayout(sourceBuffer, params.request.center?.layout);
       } catch (error) {
+        void ErrorSystem.captureException(error);
         if (
           error instanceof Error &&
           /No visible object pixels were detected to center/i.test(error.message)
@@ -145,6 +148,7 @@ export async function executeCenterOperation(params: {
       try {
         centered = await centerObjectByAlpha(sourceBuffer);
       } catch (error) {
+        void ErrorSystem.captureException(error);
         if (
           error instanceof Error &&
           /No visible object pixels were detected to center/i.test(error.message)

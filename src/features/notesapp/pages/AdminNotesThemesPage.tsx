@@ -90,6 +90,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
       setForm(defaultTheme);
       toast('Theme created', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'AdminNotesThemesPage',
@@ -108,6 +109,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
       toast('Theme deleted', { variant: 'success' });
       setThemeToDelete(null);
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'AdminNotesThemesPage',
@@ -143,6 +145,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
       toast('Theme updated', { variant: 'success' });
       handleEditCancel();
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'AdminNotesThemesPage',

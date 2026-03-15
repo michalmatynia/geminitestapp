@@ -1,3 +1,4 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 type UserAction = {
   type: string;
   target: string;
@@ -63,7 +64,9 @@ export const initUserActionTracker = (): void => {
       if (actionHistory.length > MAX_ACTIONS_HISTORY) {
         actionHistory.pop();
       }
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // safe fail
     }
   };

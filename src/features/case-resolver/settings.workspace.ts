@@ -27,6 +27,8 @@ import {
   normalizeWorkspaceRevision,
   sanitizeOptionalId,
 } from './settings.helpers';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY: CaseResolverWorkspaceNormalizationDiagnostics =
   {
@@ -169,7 +171,8 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
           createdAt: normalizedCreatedAt,
           updatedAt: normalizedUpdatedAt,
         });
-      } catch {
+      } catch (error) {
+        logClientError(error);
         return null;
       }
     })
@@ -290,7 +293,8 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
       files: normalizedFilesWithRelatedLinks,
       assets,
     });
-  } catch {
+  } catch (error) {
+    logClientError(error);
     relationGraph = caseResolverRelationGraph.buildCaseResolverRelationGraph({
       source: null,
       folders,

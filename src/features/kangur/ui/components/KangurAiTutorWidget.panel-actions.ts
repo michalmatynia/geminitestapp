@@ -19,6 +19,8 @@ import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/shar
 import type { ActiveTutorFocus, TutorQuickAction } from './KangurAiTutorWidget.shared';
 import type { KangurAiTutorWidgetState } from './KangurAiTutorWidget.state';
 import type { SectionExplainContext, TutorMessageFeedback } from './KangurAiTutorWidget.types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type TelemetryContext = {
   contentId: string | null;
@@ -260,7 +262,8 @@ export function useKangurAiTutorPanelActions({
         const parsed = new URL(href, window.location.origin);
         targetPathname = parsed.pathname;
         targetHash = parsed.hash;
-      } catch {
+      } catch (error) {
+        logClientError(error);
         targetPathname = href.split('#')[0] ?? href;
         targetHash = href.includes('#') ? `#${href.split('#')[1]}` : '';
       }

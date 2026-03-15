@@ -15,6 +15,8 @@ import {
   normalizeOptionalQueryString,
   optionalIntegerQuerySchema,
 } from '@/shared/lib/api/query-schema';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const DEFAULT_MAX_SKEW_SECONDS = 300;
 const MAX_MAX_SKEW_SECONDS = 3600;
@@ -45,7 +47,8 @@ const toParsedJsonPayload = (rawBody: string): unknown => {
   if (rawBody.trim().length === 0) return null;
   try {
     return JSON.parse(rawBody);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };

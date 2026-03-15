@@ -19,6 +19,9 @@ import {
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { ActivityTypes } from '@/shared/constants/observability';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import type { KangurLessonComponentId } from '@/shared/contracts/kangur';
+
 
 const kangurPlatform = getKangurPlatform();
 const INTERACTIONS_PAGE_LIMIT = 20;
@@ -99,6 +102,11 @@ const TASK_KIND_LABELS: Record<string, string> = {
   lesson: 'Lekcja',
   test: 'Test',
 };
+
+const isLessonComponentId = (
+  value: string,
+  lessonsMap: Map<KangurLessonComponentId, unknown>
+): value is KangurLessonComponentId => lessonsMap.has(value as KangurLessonComponentId);
 
 export function KangurParentDashboardAssignmentsMonitoringWidget({
   displayMode = 'always',
@@ -205,8 +213,10 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
       interactions.map((entry) => {
         const metadata = asRecord(entry.metadata);
         const timestamp =
+          readString(metadata?.['endedAt']) ??
           readString(metadata?.['openedAt']) ??
           readString(metadata?.['sessionUpdatedAt']) ??
+          readString(metadata?.['startedAt']) ??
           readString(entry.createdAt) ??
           readString(entry.updatedAt) ??
           null;
@@ -230,9 +240,9 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
           const lessonKey = readString(metadata?.['lessonKey']);
           const sectionLabel =
             readString(metadata?.['label']) ?? readString(metadata?.['sectionId']);
-          const lessonTitle = lessonKey
-            ? lessonsById.get(lessonKey)?.title ?? 'Lekcja'
-            : 'Lekcja';
+          const lessonId =
+            lessonKey && isLessonComponentId(lessonKey, lessonsById) ? lessonKey : null;
+          const lessonTitle = lessonId ? lessonsById.get(lessonId)?.title ?? 'Lekcja' : 'Lekcja';
           const detail = sectionLabel ? `${lessonTitle} · ${sectionLabel}` : lessonTitle;
           const totalSeconds = readNumber(metadata?.['totalSeconds']);
           const timeLabel = totalSeconds ? ` · ${formatDuration(totalSeconds)}` : '';
@@ -244,20 +254,22 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
           };
         }
 
-        if (entry.type === ActivityTypes.KANGUR.LEARNER_SIGNIN) {
-          return {
-            id: entry.id,
-            label: 'Logowanie ucznia',
-            description: 'Uczeń zalogował się do aplikacji.',
-            timestamp,
-          };
-        }
+        if (entry.type === ActivityTypes.KANGUR.LEARNER_SESSION) {
+          const durationSeconds = readNumber(metadata?.['durationSeconds']);
+          const durationLabel = durationSeconds ? formatDuration(durationSeconds) : null;
+          const endedAt = readString(metadata?.['endedAt']);
+          const description = endedAt
+            ? durationLabel
+              ? `Czas trwania: ${durationLabel}`
+              : 'Sesja zakończona.'
+            : durationLabel
+              ? `Sesja w toku · ${durationLabel}`
+              : 'Sesja w toku.';
 
-        if (entry.type === ActivityTypes.KANGUR.LEARNER_SIGNOUT) {
           return {
             id: entry.id,
-            label: 'Wylogowanie ucznia',
-            description: 'Uczeń zakończył sesję.',
+            label: 'Sesja logowania',
+            description,
             timestamp,
           };
         }
@@ -302,7 +314,8 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
           limit: current.limit,
         };
       });
-    } catch {
+    } catch (error) {
+      logClientError(error);
       setInteractionsLoadMoreError('Nie udało się wczytać starszych interakcji.');
     } finally {
       setIsLoadingMoreInteractions(false);
@@ -442,7 +455,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
       <KangurSummaryPanel
         accent='indigo'
         className='mt-1'
-        description='Ostatnie interakcje ucznia: otwarte zadania, aktywność w panelach oraz logowania.'
+        description='Ostatnie interakcje ucznia: otwarte zadania, aktywność w panelach oraz sesje logowania.'
         label='Historia interakcji'
       >
         {isLoadingInteractions ? (
@@ -477,7 +490,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
                 className='rounded-[18px] border border-indigo-200/70 bg-white/80 px-4 py-3'
                 data-testid={`parent-monitoring-interaction-${entry.id}`}
               >
-                <div className='flex flex-wrap items-center justify-between gap-2'>
+                <div className='flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between'>
                   <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
                     {entry.label}
                   </div>

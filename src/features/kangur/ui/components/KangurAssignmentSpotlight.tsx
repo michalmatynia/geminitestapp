@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { Clock } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
@@ -6,12 +7,14 @@ import {
   KangurButton,
   KangurDivider,
   KangurGlassPanel,
+  KangurMetaText,
   KangurResultBadge,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import {
   buildKangurAssignmentHref,
   getKangurAssignmentActionLabel,
+  resolveKangurAssignmentCountdownLabel,
   selectKangurPriorityAssignments,
 } from '@/features/kangur/ui/services/delegated-assignments';
 
@@ -35,6 +38,24 @@ export function KangurAssignmentSpotlight({
     () => selectKangurPriorityAssignments(assignments, 1)[0] ?? null,
     [assignments]
   );
+  const shouldTick =
+    Boolean(assignment?.timeLimitMinutes) && assignment?.progress.status !== 'completed';
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!shouldTick) {
+      return;
+    }
+
+    setNow(Date.now());
+    const timerId = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(timerId);
+    };
+  }, [shouldTick]);
 
   if (!enabled || isLoading || error || !assignment) {
     return null;
@@ -42,6 +63,13 @@ export function KangurAssignmentSpotlight({
 
   const assignmentHref = buildKangurAssignmentHref(basePath, assignment);
   const transitionSourceId = `assignment-spotlight:${assignment.id}`;
+  const countdownLabel = resolveKangurAssignmentCountdownLabel({
+    timeLimitMinutes: assignment.timeLimitMinutes,
+    timeLimitStartsAt: assignment.timeLimitStartsAt,
+    createdAt: assignment.createdAt,
+    status: assignment.progress.status,
+    now,
+  });
 
   return (
     <KangurGlassPanel
@@ -52,7 +80,7 @@ export function KangurAssignmentSpotlight({
       variant='elevated'
     >
       <div className='px-3 pt-2 sm:px-4'>
-        <div className='text-[1.9rem] font-extrabold tracking-tight [color:var(--kangur-page-text)] sm:text-[2rem]'>
+        <div className='text-[1.6rem] font-extrabold tracking-tight [color:var(--kangur-page-text)] sm:text-[2rem]'>
           Sugestie od Rodzica
         </div>
       </div>
@@ -65,14 +93,14 @@ export function KangurAssignmentSpotlight({
         variant='subtle'
       >
         <KangurResultBadge
-          className='absolute right-5 top-5 text-lg font-extrabold'
+          className='mb-3 w-fit text-lg font-extrabold sm:absolute sm:right-5 sm:top-5 sm:mb-0'
           data-testid='kangur-assignment-spotlight-progress'
           tone='warning'
         >
           {assignment.progress.percent}%
         </KangurResultBadge>
 
-        <div className='pr-24'>
+        <div className='sm:pr-24'>
           <KangurAssignmentPriorityChip
             accent='amber'
             className='text-[11px] uppercase tracking-[0.18em]'
@@ -102,6 +130,12 @@ export function KangurAssignmentSpotlight({
             size='sm'
           />
           <div>{assignment.progress.summary}</div>
+          {countdownLabel ? (
+            <KangurMetaText className='flex items-center gap-2'>
+              <Clock className='h-4 w-4 text-slate-400' aria-hidden='true' />
+              {countdownLabel}
+            </KangurMetaText>
+          ) : null}
         </div>
 
         <KangurButton

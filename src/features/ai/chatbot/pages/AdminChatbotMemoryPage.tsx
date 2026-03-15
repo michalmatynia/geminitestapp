@@ -4,7 +4,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useMemo } from 'react';
 
 import {
-  AdminChatbotBreadcrumbs,
+  AdminChatbotPageLayout,
   Button,
   Input,
   FormField,
@@ -12,7 +12,6 @@ import {
   Tag,
   Card,
   Hint,
-  PageLayout,
 } from '@/shared/ui';
 
 import { useChatbotMemoryState, type ExtendedMemoryItem } from '../hooks/useChatbotMemoryState';
@@ -115,16 +114,15 @@ export default function AgentMemoryPage(): React.JSX.Element {
   );
 
   return (
-    <PageLayout
+    <AdminChatbotPageLayout
       title='Agent Long-Term Memory'
-      eyebrow={<AdminChatbotBreadcrumbs current='Memory' />}
+      current='Memory'
       description='Knowledge preserved by agents across conversations and runs.'
       headerActions={
         <Button variant='outline' size='xs' onClick={refetch} loading={isFetching}>
           Refresh
         </Button>
       }
-      containerClassName='mx-auto w-full max-w-none py-10'
     >
       <StandardDataTablePanel
         variant='flat'
@@ -241,6 +239,6 @@ export default function AgentMemoryPage(): React.JSX.Element {
         )}
         expanded={expanded}
       />
-    </PageLayout>
+    </AdminChatbotPageLayout>
   );
 }

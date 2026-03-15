@@ -86,7 +86,8 @@ export function useQueryAnalytics(config: AnalyticsConfig = {}): {
   const getDataSize = useCallback((data: unknown): number => {
     try {
       return new Blob([JSON.stringify(data)]).size;
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return 0;
     }
   }, []);

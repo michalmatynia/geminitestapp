@@ -3,6 +3,8 @@ import 'server-only';
 import { Redis } from 'ioredis';
 
 import { getRedisClient, isRedisEnabled } from '@/shared/lib/redis';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 let subscriber: Redis | null = null;
 
@@ -19,7 +21,9 @@ const logWarning = async (
   try {
     const mod = await import('@/shared/lib/observability/system-logger');
     await mod.ErrorSystem.logWarning(message, context);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+  
     // ignore
   }
 };
@@ -34,7 +38,9 @@ const captureException = async (
       service: context.source,
       ...context.context,
     });
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+  
     // ignore
   }
 };
@@ -114,6 +120,7 @@ export function getRedisSubscriber(): Redis | null {
       });
     });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void captureException(error, {
       source: 'redis-pubsub',
       context: { action: 'create_subscriber_failed' },
@@ -136,7 +143,9 @@ export async function closeSubscriber(): Promise<void> {
   if (subscriber) {
     try {
       await subscriber.quit();
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // Already disconnected
     }
     subscriber = null;
@@ -166,6 +175,7 @@ export function publishRunEvent(channel: string, data: unknown): void {
       }
     );
   } catch (err) {
+    void ErrorSystem.captureException(err);
     recordPublishFailure(err);
   }
 }

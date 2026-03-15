@@ -4,11 +4,8 @@ import { randomUUID } from 'crypto';
 
 import { z } from 'zod';
 
-import {
-  ERROR_CATEGORY,
-  type ErrorCategory,
-  type SuggestedAction,
-} from '@/shared/contracts/observability';
+import { ERROR_CATEGORY } from '@/shared/contracts/observability';
+import type { ResolvedError } from '@/shared/contracts/base';
 import {
   AppErrorCodes,
   internalError,
@@ -17,21 +14,6 @@ import {
 } from '@/shared/errors/app-error';
 import { classifyError, getSuggestedActions } from '@/shared/errors/error-classifier';
 import { mapErrorToAppError } from '@/shared/errors/error-mapper';
-
-export type ResolvedError = {
-  errorId: string;
-  message: string;
-  code: AppErrorCode;
-  httpStatus: number;
-  expected: boolean;
-  critical: boolean;
-  retryable: boolean;
-  category: ErrorCategory;
-  suggestedActions: SuggestedAction[];
-  retryAfterMs?: number;
-  meta?: Record<string, unknown>;
-  cause?: unknown;
-};
 
 type ResolveOptions = {
   fallbackMessage?: string;

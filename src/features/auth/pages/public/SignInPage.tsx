@@ -36,7 +36,8 @@ export const resolveSignInCallbackNavigation = (
     if (parsed.origin === currentOrigin) {
       return { kind: 'router', href: `${parsed.pathname}${parsed.search}${parsed.hash}` };
     }
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return { kind: 'location', href: trimmed };
   }
 
@@ -84,6 +85,7 @@ function SignInPageLoader(): React.JSX.Element {
         }
       }
     } catch (err) {
+      logClientError(err);
       logClientError(err, { context: { source: 'SignInPage', action: 'handleSubmit', email } });
       setError('An unexpected error occurred. Please try again.');
     } finally {

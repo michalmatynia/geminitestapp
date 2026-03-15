@@ -46,7 +46,7 @@ export function KangurLearnerProfileRecommendationsWidget(): React.JSX.Element {
                 action={
                   <KangurButton
                     asChild
-                    className='mt-0'
+                    className='mt-0 w-full sm:w-auto'
                     size='sm'
                     variant='primary'
                     data-doc-id='learner_recommendation_action'

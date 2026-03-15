@@ -34,6 +34,7 @@ export function useWebSocketSync({ url, queryKeys, enabled = true }: WebSocketSy
           });
         }
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error instanceof Error ? error : new Error(String(error)), {
           context: { source: 'useWebSocketSync', action: 'messageParsingFailed', level: 'warn' },
         });

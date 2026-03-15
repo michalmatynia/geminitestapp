@@ -8,6 +8,8 @@ import { KANGUR_AI_TUTOR_UI_ROOT_SELECTOR } from './KangurAiTutorUiBoundary.shar
 
 import type { ActiveTutorFocus } from './KangurAiTutorWidget.shared';
 import type { TutorSurface } from './KangurAiTutorWidget.types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const HOME_ONBOARDING_ELIGIBLE_CONTENT_ID = 'game:home';
 const getTutorUiElement = (value: EventTarget | Node | null): Element | null => {
@@ -85,7 +87,8 @@ export const resolveTutorFollowUpLocation = (
       pathname: resolved.pathname,
       search: resolved.search,
     };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -204,7 +207,9 @@ export const isSelectionWithinTutorUi = (): boolean => {
   for (let index = 0; index < selection.rangeCount; index += 1) {
     try {
       nodes.push(selection.getRangeAt(index).commonAncestorContainer);
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Ignore stale browser ranges and fall back to anchor/focus nodes.
     }
   }

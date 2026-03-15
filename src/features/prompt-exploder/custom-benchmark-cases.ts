@@ -3,6 +3,8 @@ import type {
   PromptExploderSegmentType,
   ParseCustomBenchmarkCasesResult,
 } from '@/shared/contracts/prompt-exploder';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const clampNumber = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
@@ -47,6 +49,7 @@ export const parseCustomBenchmarkCasesDraft = (
   try {
     parsed = JSON.parse(trimmed);
   } catch (error) {
+    logClientError(error);
     return {
       ok: false,
       error: error instanceof Error ? error.message : 'Invalid JSON.',

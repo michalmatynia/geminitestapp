@@ -14,11 +14,16 @@ import {
   loadKangurScoresForLearner,
   resolveAssignmentActor,
 } from '../../shared';
+import type {
+  KangurAssignmentCreateTarget,
+  KangurAssignmentTarget,
+} from '@/shared/contracts/kangur';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const resolveReassignCreateTarget = (
-  target: { type: 'lesson'; lessonComponentId: string; requiredCompletions: number } |
-  { type: 'practice'; operation: string; requiredAttempts: number; minAccuracyPercent: number | null }
-) => {
+  target: KangurAssignmentTarget
+): KangurAssignmentCreateTarget => {
   if (target.type === 'lesson') {
     return {
       type: 'lesson' as const,
@@ -120,6 +125,7 @@ export async function postKangurAssignmentReassignHandler(
 
     return NextResponse.json(reassignedSnapshot, { status: 201 });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await assignmentRepository
       .updateAssignment(assignmentLearnerKey, assignment.id, { archived: false })
       .catch(() => {});

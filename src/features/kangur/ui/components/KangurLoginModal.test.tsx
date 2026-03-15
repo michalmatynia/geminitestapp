@@ -3,8 +3,11 @@
  */
 
 import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { createTestQueryClient } from '@/__tests__/test-utils';
 
 const { useKangurLoginModalMock } = vi.hoisted(() => ({
   useKangurLoginModalMock: vi.fn(),
@@ -28,6 +31,12 @@ vi.mock('@radix-ui/react-dialog', () => ({
   Portal: ({ children }: { children: React.ReactNode }) => (
     <div data-testid='dialog-portal'>{children}</div>
   ),
+  Trigger: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid='dialog-trigger'>{children}</div>
+  ),
+  Close: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid='dialog-close'>{children}</div>
+  ),
   Overlay: (props: React.HTMLAttributes<HTMLDivElement>) => (
     <div data-testid='dialog-overlay' {...props} />
   ),
@@ -50,8 +59,11 @@ vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
 import { KangurLoginModal } from '@/features/kangur/ui/components/KangurLoginModal';
 
 describe('KangurLoginModal', () => {
+  let queryClient: QueryClient;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    queryClient = createTestQueryClient();
   });
 
   it('ignores immediate close signals when the modal is route-driven', () => {
@@ -68,7 +80,11 @@ describe('KangurLoginModal', () => {
       openLoginModal: vi.fn(),
     });
 
-    render(<KangurLoginModal />);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <KangurLoginModal />
+      </QueryClientProvider>
+    );
 
     expect(closeLoginModal).not.toHaveBeenCalled();
   });
@@ -87,7 +103,11 @@ describe('KangurLoginModal', () => {
       openLoginModal: vi.fn(),
     });
 
-    render(<KangurLoginModal />);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <KangurLoginModal />
+      </QueryClientProvider>
+    );
 
     expect(closeLoginModal).toHaveBeenCalledTimes(1);
   });

@@ -11,6 +11,7 @@ import type {
   NodeRuntimeResolutionStrategy,
   RuntimeProfileNodeStats,
   RuntimeProfileSummary,
+  RuntimeProfileOptions,
   RuntimeSideEffectDecision,
   RuntimeSideEffectPolicy,
   RuntimeTraceResume,
@@ -24,11 +25,6 @@ import type { Toast } from '@/shared/contracts/ui';
 
 export type RuntimeProfileEvent = AiPathRuntimeProfileEvent;
 export type { RuntimeProfileNodeStats, RuntimeProfileSummary };
-
-export type RuntimeProfileOptions = {
-  onEvent?: (event: RuntimeProfileEvent) => void;
-  onSummary?: (summary: RuntimeProfileSummary) => void;
-};
 
 export type RuntimeNodeResolutionTelemetry = {
   runtimeStrategy: NodeRuntimeResolutionStrategy;

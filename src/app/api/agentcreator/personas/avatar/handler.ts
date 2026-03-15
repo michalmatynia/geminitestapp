@@ -11,6 +11,8 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { logger } from '@/shared/utils/logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const MAX_AVATAR_UPLOAD_BYTES = 4 * 1024 * 1024;
 export const deleteQuerySchema = z.object({
@@ -38,6 +40,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   try {
     formData = await req.formData();
   } catch (error) {
+    void ErrorSystem.captureException(error);
     throw badRequestError('Invalid form data', { error });
   }
 
@@ -71,6 +74,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
         buffer: sourceBuffer,
       });
     } catch (error) {
+      void ErrorSystem.captureException(error);
       logger.warn(
         '[agentcreator.personas.avatar] thumbnail generation failed; continuing without embedded thumbnail',
         {

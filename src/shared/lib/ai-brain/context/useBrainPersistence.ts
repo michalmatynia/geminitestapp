@@ -139,6 +139,7 @@ export function useBrainPersistence({
       try {
         parsedBrain = parseBrainSettings(rawBrainSettings);
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'BrainContext',
@@ -162,6 +163,7 @@ export function useBrainPersistence({
       try {
         parsedCatalog = parseBrainProviderCatalog(rawProviderCatalog);
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'BrainContext',
@@ -399,6 +401,7 @@ export function useBrainPersistence({
 
       toast('Brain settings saved.', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, { context: { source: 'AdminBrainPage', action: 'save' } });
       toast('Failed to save Brain settings.', { variant: 'error' });
     }

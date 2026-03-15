@@ -4,6 +4,8 @@ import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 
 import type { EnvironmentReferenceDraftViewModel } from './slot-inline-edit-tab-types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type Toast = (
   message: string,
@@ -198,6 +200,7 @@ export const createUploadHandlers = (deps: CreateUploadHandlersDeps): UploadHand
         deps.toast('Created card from import.', { variant: 'success' });
       }
     } catch (error: unknown) {
+      logClientError(error);
       deps.toast(error instanceof Error ? error.message : 'Import failed', { variant: 'error' });
     } finally {
       deps.setDriveImportMode('create');
@@ -215,6 +218,7 @@ export const createUploadHandlers = (deps: CreateUploadHandlersDeps): UploadHand
       ]);
       if (created[0]) deps.setSelectedSlotId(created[0].id);
     } catch (error: unknown) {
+      logClientError(error);
       deps.toast(error instanceof Error ? error.message : 'Failed to create card', {
         variant: 'error',
       });
@@ -307,6 +311,7 @@ export const createUploadHandlers = (deps: CreateUploadHandlersDeps): UploadHand
         deps.toast('Uploaded and created card.', { variant: 'success' });
       }
     } catch (error: unknown) {
+      logClientError(error);
       deps.toast(error instanceof Error ? error.message : 'Upload failed', { variant: 'error' });
     } finally {
       deps.setLocalUploadTargetId(null);

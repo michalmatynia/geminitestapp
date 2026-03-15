@@ -1,3 +1,4 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 type OutboundHostRule = {
   raw: string;
   suffix: boolean;
@@ -55,7 +56,9 @@ const resolveAppSelfOriginHosts = (): Set<string> => {
       // Store host (hostname:port) for precise matching — avoids allowing every port on localhost.
       const host = parsed.host.toLowerCase();
       if (host) hosts.add(host);
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Unparseable env value — skip.
     }
   }
@@ -138,7 +141,8 @@ export const evaluateOutboundUrlPolicy = (rawUrl: string): OutboundUrlPolicyDeci
   let parsed: URL;
   try {
     parsed = new URL(trimmedUrl);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return {
       allowed: false,
       reason: 'invalid_url',

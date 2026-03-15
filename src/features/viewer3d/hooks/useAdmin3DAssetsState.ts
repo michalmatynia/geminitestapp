@@ -71,6 +71,7 @@ export function useAdmin3DAssetsState() {
             await deleteMutation.mutateAsync(asset.id);
             toast(`Asset "${asset.name || asset.filename}" deleted.`, { variant: 'success' });
           } catch (err) {
+            logClientError(err);
             logClientError(err, {
               context: {
                 source: 'useAdmin3DAssetsState',
@@ -93,6 +94,7 @@ export function useAdmin3DAssetsState() {
       await reindexMutation.mutateAsync();
       toast('Assets reindexed successfully.', { variant: 'success' });
     } catch (err) {
+      logClientError(err);
       logClientError(err, {
         context: { source: 'useAdmin3DAssetsState', action: 'reindexAssets' },
       });

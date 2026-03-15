@@ -6,6 +6,8 @@ import type {
 import { coerceInput, getValueAtMappingPath } from '@/shared/lib/ai-paths/core/utils';
 
 import { extractImageUrls } from '../../utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const handleParser: NodeHandler = async ({
   node,
@@ -64,6 +66,7 @@ export const handleParser: NodeHandler = async ({
             source = hydrated;
           }
         } catch (error) {
+          logClientError(error);
           reportAiPathsError(
             error,
             {
@@ -182,6 +185,7 @@ export const handleParser: NodeHandler = async ({
       return parsed;
     }
   } catch (error) {
+    logClientError(error);
     reportAiPathsError(
       error,
       {

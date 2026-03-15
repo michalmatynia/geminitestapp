@@ -1,4 +1,6 @@
 import type { AiNode } from '@/shared/contracts/ai-paths';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const parseTimeout = (value: string | undefined, fallback: number, min: number): number => {
   const parsed = Number.parseInt(value ?? '', 10);
@@ -84,6 +86,7 @@ export const withRetries = async <T>(
     try {
       return await task();
     } catch (error) {
+      logClientError(error);
       lastError = error;
       // Bail immediately on non-retryable errors (validation, auth, config)
       if (

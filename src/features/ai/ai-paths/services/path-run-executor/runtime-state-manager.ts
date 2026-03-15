@@ -11,6 +11,8 @@ import type {
 } from '@/shared/contracts/ai-paths';
 
 import { sanitizeRuntimeState } from '../path-run-executor.logic';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export class PathRunRuntimeStateManager {
   private latestSnapshot: RuntimeState | null = null;
@@ -43,7 +45,8 @@ export class PathRunRuntimeStateManager {
   private async loadRunNodesForRuntimeRepair(): Promise<AiPathRunNodeRecord[]> {
     try {
       return await this.repo.listRunNodes(this.run.id);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       return [];
     }
   }

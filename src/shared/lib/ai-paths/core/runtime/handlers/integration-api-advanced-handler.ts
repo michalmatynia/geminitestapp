@@ -24,6 +24,8 @@ import {
   buildMappedOutputs,
   createSignalControl,
 } from './advanced-api/utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const handleAdvancedApi: NodeHandler = async ({
   node,
@@ -245,7 +247,8 @@ export const handleAdvancedApi: NodeHandler = async ({
       } else {
         try {
           responseData = responseText.trim().length > 0 ? JSON.parse(responseText) : null;
-        } catch {
+        } catch (error) {
+          logClientError(error);
           responseData = responseText;
         }
       }
@@ -285,6 +288,7 @@ export const handleAdvancedApi: NodeHandler = async ({
         responseData,
       };
     } catch (error) {
+      logClientError(error);
       if (error instanceof OutboundUrlPolicyError) {
         return {
           envelope: {
@@ -482,6 +486,7 @@ function parseJsonWithTemplates<T>(
   try {
     return JSON.parse(renderedWithValue) as T;
   } catch (error) {
+    logClientError(error);
     reportAiPathsError(error, meta, 'Invalid advanced API JSON config:');
     return fallback;
   }

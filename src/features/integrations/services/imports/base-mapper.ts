@@ -3,6 +3,8 @@ import { randomUUID } from 'crypto';
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
 import type { IntegrationTemplateMapping as TemplateMapping } from '@/shared/contracts/integrations';
 import type { ProductCreateInput } from '@/shared/contracts/products';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const toTrimmedString = (value: unknown): string | null => {
   if (typeof value === 'string') {
@@ -349,7 +351,8 @@ const toStringValue = (value: unknown): string | null => {
   if (value && typeof value === 'object') {
     try {
       return JSON.stringify(value);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return null;
     }
   }

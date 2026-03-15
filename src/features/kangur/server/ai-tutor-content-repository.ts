@@ -7,6 +7,8 @@ import {
 } from '@/shared/contracts/kangur-ai-tutor-content';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type KangurAiTutorContentDoc = {
   locale: string;
@@ -93,7 +95,8 @@ export async function getKangurAiTutorContent(locale = 'pl'): Promise<KangurAiTu
     }
 
     return repaired;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     await collection.updateOne(
       { locale },
       {

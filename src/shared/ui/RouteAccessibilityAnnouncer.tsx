@@ -2,6 +2,8 @@
 
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const DEFAULT_PATH_LABEL = 'Home';
 const DEFAULT_ANNOUNCEMENT_LABEL = 'Current page';
@@ -29,7 +31,8 @@ const focusMainRegion = (): void => {
 
   try {
     mainRegion.focus({ preventScroll: true });
-  } catch {
+  } catch (error) {
+    logClientError(error);
     mainRegion.focus();
   }
 };

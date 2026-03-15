@@ -11,6 +11,8 @@ import {
   type ImportTemplateParameterImport,
 } from '@/shared/contracts/integrations';
 import type { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const UNSUPPORTED_EXPORT_PARAMETER_SOURCE_PREFIX = 'parameter:';
 
@@ -142,6 +144,7 @@ export function useImportExportTemplates({
       applyTemplate(duplicated, isImport ? 'import' : 'export');
       toast('Template duplicated.', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Template duplicate failed';
       toast(message, { variant: 'error' });
     }
@@ -197,6 +200,7 @@ export function useImportExportTemplates({
         variant: 'success',
       });
     } catch (error: unknown) {
+      logClientError(error);
       const message =
         error instanceof Error
           ? error.message
@@ -258,6 +262,7 @@ export function useImportExportTemplates({
       applyTemplate(res, isImport ? 'import' : 'export');
       toast('Template saved.', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Template save failed';
       toast(message, { variant: 'error' });
     }
@@ -274,6 +279,7 @@ export function useImportExportTemplates({
       handleNewTemplate(templateScope);
       toast('Template deleted.', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Template delete failed';
       toast(message, { variant: 'error' });
     }

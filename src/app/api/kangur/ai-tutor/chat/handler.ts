@@ -78,6 +78,8 @@ import {
   buildKnowledgeGraphResponseSummary,
   mergeFollowUpActions,
 } from './sources';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const AVAILABILITY_ERROR_MESSAGES: Record<KangurAiTutorAvailabilityReason, string> = {
   disabled: 'AI Tutor is not enabled for this learner.',
@@ -101,6 +103,7 @@ const persistTutorMoodState = async (input: {
   try {
     await setKangurLearnerAiTutorState(input.learnerId, input.tutorMood);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await logKangurServerEvent({
       source: 'kangur.ai-tutor.chat.mood-persist-failed',
       service: 'kangur.ai-tutor',
@@ -239,6 +242,7 @@ export async function postKangurAiTutorChatHandler(
           personaName: personaContext.persona.name ?? null,
         });
       } catch (error) {
+        void ErrorSystem.captureException(error);
         await logKangurServerEvent({
           source: 'kangur.ai-tutor.chat.persona-memory.failed',
           service: 'kangur.ai-tutor',
@@ -269,6 +273,7 @@ export async function postKangurAiTutorChatHandler(
         previousMood: activeLearner.aiTutor ?? null,
       });
     } catch (error) {
+      void ErrorSystem.captureException(error);
       await logKangurServerEvent({
         source: 'kangur.ai-tutor.chat.mood-build-failed',
         service: 'kangur.ai-tutor',
@@ -303,6 +308,7 @@ export async function postKangurAiTutorChatHandler(
           latestUserMessage,
         });
       } catch (error) {
+        void ErrorSystem.captureException(error);
         await logKangurServerEvent({
           source: 'kangur.ai-tutor.chat.drawing-analysis.failed',
           service: 'kangur.ai-tutor',
@@ -842,6 +848,7 @@ export async function postKangurAiTutorChatHandler(
           },
         });
       } catch (error) {
+        void ErrorSystem.captureException(error);
         await logKangurServerEvent({
           source: 'kangur.ai-tutor.chat.persona-memory.persist-failed',
           service: 'kangur.ai-tutor',
@@ -945,6 +952,7 @@ export async function postKangurAiTutorChatHandler(
       usage,
     } satisfies KangurAiTutorChatResponse);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await logKangurServerEvent({
       source: 'kangur.ai-tutor.chat.failed',
       service: 'kangur.ai-tutor',

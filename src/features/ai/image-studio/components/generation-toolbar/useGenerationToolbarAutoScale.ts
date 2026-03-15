@@ -26,6 +26,8 @@ import {
 } from '../../contracts/autoscaler';
 
 import type { QueryClient } from '@tanstack/react-query';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 interface UseGenerationToolbarAutoScaleProps {
   workingSlot: ImageStudioSlotRecord | null;
@@ -129,7 +131,8 @@ export function useGenerationToolbarAutoScale({
           let uploadBlob: Blob;
           try {
             uploadBlob = await dataUrlToUploadBlob(autoScaledDataUrl);
-          } catch {
+          } catch (error) {
+            logClientError(error);
             throw new Error('Failed to prepare client auto scaler output for upload.');
           }
 
@@ -158,6 +161,7 @@ export function useGenerationToolbarAutoScale({
               .then((raw) => imageStudioAutoScalerResponseSchema.parse(raw));
           }, abortController.signal);
         } catch (error) {
+          logClientError(error);
           const fallbackDueToCrossOrigin = isClientAutoScalerCrossOriginError(error);
           const fallbackDueToInvalidPayload = shouldFallbackToServerAutoScaler(error);
           if (!fallbackDueToCrossOrigin && !fallbackDueToInvalidPayload) {
@@ -275,6 +279,7 @@ export function useGenerationToolbarAutoScale({
         );
       }
     } catch (error) {
+      logClientError(error);
       if (isAutoScalerAbortError(error)) {
         toast('Auto scaler canceled.', { variant: 'info' });
         return;

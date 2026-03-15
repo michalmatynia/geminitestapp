@@ -5,6 +5,8 @@ import { noteService } from '@/features/notesapp/server';
 import type { NoteFileRecord } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_SLOT_INDEX = 9;
@@ -38,6 +40,7 @@ export async function POST_handler(
   try {
     formData = await req.formData();
   } catch (error) {
+    void ErrorSystem.captureException(error);
     throw badRequestError('Invalid form data', { error });
   }
 

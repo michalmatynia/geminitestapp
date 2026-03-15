@@ -30,6 +30,8 @@ import type {
   PortablePathEnvelopeVerificationAuditSinkProfile,
 } from './sinks-contracts.server';
 import type { PortablePathAuditSinkAutoRemediationStrategy } from './types';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export type { PortablePathAuditSinkAutoRemediationStrategy } from './types';
 
@@ -213,7 +215,8 @@ const parseOptionalUrlFromEnvironment = (value: string | undefined): string | nu
     const parsed = new URL(trimmed);
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
     return parsed.toString();
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };

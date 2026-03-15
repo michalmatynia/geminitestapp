@@ -2,6 +2,8 @@
 
 import type { AiTriggerButtonLocation } from '@/shared/contracts/ai-trigger-buttons';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const TRIGGER_BUTTON_RUN_FEEDBACK_STORAGE_KEY = 'ai-paths-trigger-button-run-feedback';
 const ACTIVE_FEEDBACK_TTL_MS = 60 * 60 * 1000;
@@ -150,7 +152,8 @@ const readPersistedFeedbackMap = (): PersistedTriggerButtonRunFeedbackMap => {
     const parsed = JSON.parse(raw) as unknown;
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
     return parsed as PersistedTriggerButtonRunFeedbackMap;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return {};
   }
 };
@@ -159,7 +162,9 @@ const writePersistedFeedbackMap = (value: PersistedTriggerButtonRunFeedbackMap):
   if (!canUseLocalStorage()) return;
   try {
     window.localStorage.setItem(TRIGGER_BUTTON_RUN_FEEDBACK_STORAGE_KEY, JSON.stringify(value));
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // best-effort persistence
   }
 };
@@ -377,7 +382,9 @@ export const __resetTriggerButtonRunFeedbackForTests = (): void => {
   if (!canUseLocalStorage()) return;
   try {
     window.localStorage.removeItem(TRIGGER_BUTTON_RUN_FEEDBACK_STORAGE_KEY);
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // ignore
   }
 };

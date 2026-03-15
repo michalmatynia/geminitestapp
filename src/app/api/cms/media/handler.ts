@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { uploadFile } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const isFileLike = (entry: FormDataEntryValue): entry is File => {
   return typeof entry === 'object' && entry !== null && 'arrayBuffer' in entry && 'size' in entry;
@@ -14,6 +16,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   try {
     formData = await req.formData();
   } catch (error) {
+    void ErrorSystem.captureException(error);
     throw badRequestError('Invalid form data', { error });
   }
 

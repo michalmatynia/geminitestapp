@@ -2,6 +2,8 @@ import {
   DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS,
   type DatabaseEngineOperationControls,
 } from './database-engine-constants';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const parseJsonObject = (raw: unknown): Record<string, unknown> | null => {
   if (!raw) return null;
@@ -12,7 +14,8 @@ const parseJsonObject = (raw: unknown): Record<string, unknown> | null => {
       return parsed as Record<string, unknown>;
     }
     return null;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

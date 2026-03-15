@@ -23,7 +23,7 @@ import {
   SEARCH_DEBOUNCE_MS,
   getLatestEventTimestamp,
   showRequeueResultToast,
-  type RunDetail,
+  type DeadLetterRunDetail,
 } from '../pages/dead-letter-utils';
 
 export interface UseDeadLetterRunsReturn {
@@ -47,7 +47,7 @@ export interface UseDeadLetterRunsReturn {
   detailOpen: boolean;
   setDetailOpen: (open: boolean) => void;
   detailLoading: boolean;
-  detail: RunDetail;
+  detail: DeadLetterRunDetail;
   handleOpenDetail: (runId: string) => Promise<void>;
   requeueSelected: () => void;
   requeueAll: () => void;
@@ -83,7 +83,7 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [detail, setDetail] = useState<RunDetail>(null);
+  const [detail, setDetail] = useState<DeadLetterRunDetail>(null);
   const [retryFailedPending, setRetryFailedPending] = useState(false);
   const [showRetryFailedConfirm, setShowRetryFailedConfirm] = useState(false);
   const [expandedNodeIds, setExpandedNodeIds] = useState<Set<string>>(new Set());
@@ -201,7 +201,7 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
     setStreamStatus('connecting');
 
     const mergeEvents = (incoming: AiPathRunEventRecord[]): void => {
-      setDetail((prev: RunDetail): RunDetail => {
+      setDetail((prev: DeadLetterRunDetail): DeadLetterRunDetail => {
         if (!prev) return prev;
         const existingIds = new Set(prev.events.map((event: AiPathRunEventRecord) => event.id));
         const merged = [...prev.events];
@@ -236,16 +236,24 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
     const handleRunEvent = (event: MessageEvent): void => {
       try {
         const payload = JSON.parse(event.data as string) as AiPathRunRecord;
-        setDetail((prev: RunDetail): RunDetail => (prev ? { ...prev, run: payload } : prev));
-      } catch {
+        setDetail((prev: DeadLetterRunDetail): DeadLetterRunDetail =>
+          prev ? { ...prev, run: payload } : prev
+        );
+      } catch (error) {
+        logClientError(error);
+      
         // ignore parse errors
       }
     };
     const handleNodesEvent = (event: MessageEvent): void => {
       try {
         const payload = JSON.parse(event.data as string) as AiPathRunNodeRecord[];
-        setDetail((prev: RunDetail): RunDetail => (prev ? { ...prev, nodes: payload } : prev));
-      } catch {
+        setDetail((prev: DeadLetterRunDetail): DeadLetterRunDetail =>
+          prev ? { ...prev, nodes: payload } : prev
+        );
+      } catch (error) {
+        logClientError(error);
+      
         // ignore parse errors
       }
     };
@@ -270,7 +278,9 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
         } else {
           setEventsOverflow(false);
         }
-      } catch {
+      } catch (error) {
+        logClientError(error);
+      
         // ignore parse errors
       }
     };
@@ -444,6 +454,7 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
           }
         );
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error, {
           context: { source: 'useDeadLetterRuns', action: 'loadDetail', runId },
         });
@@ -558,6 +569,7 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
         void handleOpenDetail(detail.run.id);
       }
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'useDeadLetterRuns', action: 'retryFailedNodes', runId: detail.run.id },
       });

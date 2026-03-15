@@ -3,6 +3,8 @@ import { runtimeStateSchema } from '@/shared/contracts/ai-paths-runtime';
 import { isAppError, validationError } from '@/shared/errors/app-error';
 import { cloneJsonSafe } from '@/shared/lib/ai-paths';
 import { isObjectRecord } from '@/shared/utils/object-utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const EMPTY_RUNTIME_STATE: RuntimeState = {
   status: 'idle',
@@ -86,6 +88,7 @@ export const parseRuntimeState = (value: unknown): RuntimeState => {
         reason: 'invalid_shape',
       });
     } catch (error) {
+      logClientError(error);
       if (isAppError(error)) {
         throw error;
       }

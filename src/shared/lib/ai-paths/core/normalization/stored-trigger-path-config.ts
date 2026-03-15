@@ -9,6 +9,8 @@ import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factor
 import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine';
 
 import { normalizeLoadedPathName, sanitizeTriggerPathConfig } from './trigger-normalization';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const LEGACY_TRIGGER_PROVIDER_ALIASES = new Set(['all', 'mongodb']);
 
@@ -185,7 +187,8 @@ const resolveSeededStarterFallbackConfig = (args: {
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
       parsedConfig = parsed as Record<string, unknown>;
     }
-  } catch {
+  } catch (error) {
+    logClientError(error);
     parsedConfig = null;
   }
 
@@ -290,6 +293,7 @@ export const materializeStoredTriggerPathConfig = (args: {
     try {
       parsedConfig = JSON.parse(rawConfig) as unknown;
     } catch (error) {
+      logClientError(error);
       throw validationError('Invalid AI Path config payload.', {
         source: 'ai_paths.trigger_payload',
         reason: 'config_invalid_json',
@@ -382,6 +386,7 @@ export const materializeStoredTriggerPathConfig = (args: {
       changed: Boolean(rawStarterUpgrade?.changed || providerAliasRepair?.changed),
     };
   } catch (error) {
+    logClientError(error);
     const fallbackConfig = resolveSeededStarterFallbackConfig({
       pathId,
       rawConfig,

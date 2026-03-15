@@ -6,6 +6,8 @@ import {
   ConnectionDeleteOptions,
   ConnectionDependencyCounts,
 } from '@/shared/contracts/integrations';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type { ConnectionDeleteOptions, ConnectionDependencyCounts };
 
@@ -78,7 +80,8 @@ export const stripActiveTemplateScopesForConnection = (
   let parsed: unknown;
   try {
     parsed = JSON.parse(rawValue);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return rawValue;
   }
 
@@ -155,7 +158,8 @@ export const remapProductSyncProfilesSetting = (
       .filter(Boolean);
 
     return changed ? JSON.stringify(nextProfiles) : rawValue;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return rawValue;
   }
 };

@@ -1347,6 +1347,40 @@
     border-radius: var(--kangur-segmented-item-radius, 18px);
   }
 
+  @media (max-width: 639px) {
+    .kangur-surface-active {
+      --kangur-pill-font-size: 13px;
+      --kangur-pill-padding-y: 8px;
+      --kangur-pill-padding-x: 12px;
+      --kangur-nav-group-radius: 26px;
+      --kangur-segmented-control-radius: 24px;
+      --kangur-segmented-item-radius: 16px;
+    }
+
+    .kangur-chat-panel-surface {
+      --kangur-chat-padding-x-sm: 10px;
+      --kangur-chat-padding-y-sm: 8px;
+      --kangur-chat-padding-x-md: 12px;
+      --kangur-chat-padding-y-md: 10px;
+      --kangur-chat-padding-x-lg: 14px;
+      --kangur-chat-padding-y-lg: 10px;
+      --kangur-chat-header-padding-x-sm: 10px;
+      --kangur-chat-header-padding-y-sm: 8px;
+      --kangur-chat-header-padding-x-md: 12px;
+      --kangur-chat-header-padding-y-md: 10px;
+      --kangur-chat-header-padding-x-lg: 14px;
+      --kangur-chat-header-padding-y-lg: 12px;
+    }
+
+    .kangur-segmented-control {
+      flex-wrap: wrap;
+    }
+
+    .kangur-segmented-control-item {
+      flex: 1 1 calc(50% - 0.5rem);
+    }
+  }
+
   .kangur-menu-item {
     border-radius: var(--kangur-menu-item-radius, 16px);
     font-size: var(--kangur-pill-font-size, 14px);

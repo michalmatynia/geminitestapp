@@ -3,6 +3,8 @@ import { ApiError } from '@/shared/lib/api-client';
 import { mapCanvasRectToImageRect } from './GenerationToolbarImageUtils.geometry';
 import { loadImageElement, sleep } from './GenerationToolbarImageUtils.helpers';
 import { type CropCanvasContext, type CropRect } from './GenerationToolbarImageUtils.types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const isClientCropCrossOriginError = (error: unknown): boolean =>
   error instanceof Error && /cross-origin restrictions/i.test(error.message);
@@ -39,6 +41,7 @@ export const withCropRetry = async <T>(
     try {
       return await run();
     } catch (error) {
+      logClientError(error);
       if (attempt >= retries || !isRetryableCropError(error) || signal.aborted) {
         throw error;
       }
@@ -127,7 +130,8 @@ export const cropCanvasImage = async (
 
   try {
     return canvas.toDataURL('image/png');
-  } catch {
+  } catch (error) {
+    logClientError(error);
     throw new Error(
       'Client crop failed due to cross-origin restrictions. Use "Crop Server: Sharp".'
     );

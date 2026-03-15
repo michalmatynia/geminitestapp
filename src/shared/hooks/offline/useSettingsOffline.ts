@@ -5,6 +5,8 @@ import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export interface SettingsOfflineHookResult {
   settings: SettingRecord[] | undefined;
@@ -24,6 +26,7 @@ export function useSettingsOffline(): SettingsOfflineHookResult {
       try {
         return await fetchSettingsCached({ scope: 'light' });
       } catch (error) {
+        logClientError(error);
         throw error instanceof Error ? error : new Error('Failed to fetch settings');
       }
     },

@@ -3,6 +3,8 @@ import { ExtractParamsResult } from '@/shared/contracts/prompt-engine';
 import { normalizeParamsObject } from './normalization';
 import { findMatchingBrace, stripJsComments, removeTrailingCommas } from './scanner';
 import { isObjectRecord } from '../object-utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 
 export function extractParamsFromPrompt(prompt: string): ExtractParamsResult {
@@ -38,7 +40,8 @@ export function extractParamsFromPrompt(prompt: string): ExtractParamsResult {
       objectEnd: objectEndInclusive + 1,
       rawObjectText,
     };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     try {
       const normalized = normalizeParamsObject(withoutComments);
       const normalizedJson = removeTrailingCommas(normalized);
@@ -53,7 +56,8 @@ export function extractParamsFromPrompt(prompt: string): ExtractParamsResult {
         objectEnd: objectEndInclusive + 1,
         rawObjectText,
       };
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return {
         ok: false,
         error: 'Failed to parse params (expected JSON-like object with quoted keys/strings).',

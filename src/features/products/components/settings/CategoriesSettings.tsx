@@ -122,6 +122,7 @@ export function CategoriesSettings(): React.JSX.Element {
         toast('Category moved successfully', { variant: 'success' });
         onRefresh();
       } catch (error) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'CategoriesSettings',
@@ -209,6 +210,7 @@ export function CategoriesSettings(): React.JSX.Element {
       toast('Category deleted successfully', { variant: 'success' });
       onRefresh();
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'CategoriesSettings',
@@ -256,6 +258,7 @@ export function CategoriesSettings(): React.JSX.Element {
       setShowModal(false);
       onRefresh();
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'CategoriesSettings',

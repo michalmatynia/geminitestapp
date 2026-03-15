@@ -35,6 +35,8 @@ import {
 } from '@/shared/lib/products/services/product-ai-graph-model-payload';
 
 import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 // OpenAI-specific request body limits (~20 MB hard cap from the API).
 // These constants are only applied when the resolved model vendor is 'openai'.
@@ -64,7 +66,8 @@ const canParseJsonCandidate = (value: string): boolean => {
   try {
     JSON.parse(candidate);
     return true;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return false;
   }
 };
@@ -171,7 +174,8 @@ const buildImageParts = async (
           type: 'image_url' as const,
           image_url: { url: `data:${mimetype};base64,${base64Image}` },
         };
-      } catch {
+      } catch (error) {
+        void ErrorSystem.captureException(error);
         return null;
       }
     }
@@ -355,7 +359,9 @@ export async function processDatabaseBackup(job: Job): Promise<Record<string, un
 
   try {
     await markDatabaseBackupJobRunning(dbType, job.id);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+  
     // Backup execution should continue even if scheduler metadata persistence fails.
   }
 
@@ -363,15 +369,20 @@ export async function processDatabaseBackup(job: Job): Promise<Record<string, un
     const result = await createMongoBackup();
     try {
       await markDatabaseBackupJobSucceeded(dbType, job.id);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // Keep backup result successful if status persistence fails.
     }
     return { ...result, dbType };
   } catch (error: unknown) {
+    void ErrorSystem.captureException(error);
     const message = error instanceof Error ? error.message : String(error);
     try {
       await markDatabaseBackupJobFailed(dbType, job.id, message);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // Keep original backup failure as the primary error path.
     }
     throw error;
@@ -399,7 +410,8 @@ export async function processBase64ConvertAll(job: Job): Promise<Record<string, 
         const { imageBase64s, imageLinks } = await buildImageBase64Slots(product);
         await productRepo.updateProduct(product.id, { imageBase64s, imageLinks });
         succeeded += 1;
-      } catch {
+      } catch (error) {
+        void ErrorSystem.captureException(error);
         failed += 1;
       }
     }
@@ -435,7 +447,8 @@ export async function processBaseImageSyncAll(job: Job): Promise<Record<string, 
     try {
       await syncBaseImagesForListing(listing.id, listing.productId, listing.inventoryId ?? null);
       succeeded += 1;
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       failed += 1;
     }
   }

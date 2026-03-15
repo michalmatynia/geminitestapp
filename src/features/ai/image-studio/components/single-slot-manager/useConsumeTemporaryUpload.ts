@@ -27,6 +27,8 @@ import {
 import { studioKeys } from '../../hooks/useImageStudioQueries';
 
 import type { QueryClient, UseMutationResult } from '@tanstack/react-query';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 interface ConsumeTemporaryUploadProps {
   temporaryObjectUpload: ImageStudioUploadedAsset | null;
@@ -197,7 +199,8 @@ export function useConsumeTemporaryUpload({
               )
             );
             ensuredSlot = ensured.slot ?? null;
-          } catch {
+          } catch (error) {
+            logClientError(error);
             ensuredSlot = await resolveFallbackSlot();
           }
           if (!ensuredSlot?.id) {
@@ -224,7 +227,9 @@ export function useConsumeTemporaryUpload({
                   ),
                 },
               });
-            } catch {
+            } catch (error) {
+              logClientError(error);
+            
               // Non-blocking
             }
           }
@@ -269,6 +274,7 @@ export function useConsumeTemporaryUpload({
           void invalidateImageStudioSlots(queryClient, normalizedProjectId);
           return true;
         } catch (error) {
+          logClientError(error);
           setTemporaryObjectUpload(asset);
           setUploadError(
             error instanceof Error ? error.message : 'Failed to create card from temporary upload'

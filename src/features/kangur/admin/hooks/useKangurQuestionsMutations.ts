@@ -1,8 +1,7 @@
-import React, { useCallback, useState, useMemo } from 'react';
+import { useCallback, useState } from 'react';
 
 import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -13,29 +12,23 @@ import {
   createKangurTestQuestion,
   deleteKangurTestQuestion,
   formDataToQuestion,
-  hasIllustration,
-  hasRichChoiceContent,
   parseKangurTestQuestionStore,
   publishReadyQuestions,
   reorderQuestions,
   toQuestionFormData,
   upsertKangurTestQuestion,
-  usesRichQuestionPresentation,
   type QuestionFormData,
-} from '../test-questions';
+} from '../../test-questions';
 import {
   canonicalizeKangurTestSuites,
   KANGUR_TEST_SUITES_SETTING_KEY,
   demoteKangurTestSuitesToDraft,
-  demoteInvalidLiveKangurTestSuites,
   promoteKangurTestSuitesLive,
-} from '../test-suites';
-import { getQuestionAuthoringSummary } from '../question-authoring-insights';
+} from '../../test-suites';
 import {
   clearQuestionEditorDraft,
   QUESTION_EDITOR_NEW_DRAFT_SLOT,
 } from '../question-editor-drafts';
-import { moveItem } from '../utils';
 import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
 
 const buildQuestionEditorSnapshot = (
@@ -52,7 +45,6 @@ export function useKangurQuestionsMutations(
   suites: KangurTestSuite[],
   questionStore: Record<string, KangurTestQuestion>,
   questions: KangurTestQuestion[],
-  currentSuiteHealth: any,
   currentPublishableQuestionIds: string[]
 ) {
   const updateSetting = useUpdateSetting();
@@ -137,6 +129,7 @@ export function useKangurQuestionsMutations(
         { variant: 'success' }
       );
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'KangurQuestionsManagerPanel',
@@ -159,7 +152,7 @@ export function useKangurQuestionsMutations(
         value: serializeSetting(nextStore),
       });
 
-      const { suites: nextSuites, publishedSuiteIds } = promoteKangurTestSuitesLive(suites, {
+      const { suites: nextSuites } = promoteKangurTestSuitesLive(suites, {
         suiteIds: [suite.id],
       });
       await updateSetting.mutateAsync({
@@ -171,6 +164,7 @@ export function useKangurQuestionsMutations(
         { variant: 'success' }
       );
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'KangurQuestionsManagerPanel',
@@ -184,7 +178,7 @@ export function useKangurQuestionsMutations(
 
   const handleGoLiveCurrentSuite = useCallback(async (): Promise<void> => {
     try {
-      const { suites: nextSuites, publishedSuiteIds } = promoteKangurTestSuitesLive(suites, {
+      const { suites: nextSuites } = promoteKangurTestSuitesLive(suites, {
         suiteIds: [suite.id],
       });
       await updateSetting.mutateAsync({
@@ -196,6 +190,7 @@ export function useKangurQuestionsMutations(
         { variant: 'success' }
       );
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'KangurQuestionsManagerPanel',
@@ -209,7 +204,7 @@ export function useKangurQuestionsMutations(
 
   const handleTakeCurrentSuiteOffline = useCallback(async (): Promise<void> => {
     try {
-      const { suites: nextSuites, draftSuiteIds } = demoteKangurTestSuitesToDraft(suites, {
+      const { suites: nextSuites } = demoteKangurTestSuitesToDraft(suites, {
         suiteIds: [suite.id],
       });
       await updateSetting.mutateAsync({
@@ -221,6 +216,7 @@ export function useKangurQuestionsMutations(
         { variant: 'success' }
       );
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'KangurQuestionsManagerPanel',
@@ -256,6 +252,7 @@ export function useKangurQuestionsMutations(
       toast('Question saved.', { variant: 'success' });
       closeEditor();
     } catch (error) {
+      logClientError(error);
       logClientError(error, { context: { source: 'KangurQuestionsManagerPanel', action: 'save' } });
       toast('Failed to save question.', { variant: 'error' });
     }
@@ -274,6 +271,7 @@ export function useKangurQuestionsMutations(
       toast('Question deleted.', { variant: 'success' });
       setQuestionToDelete(null);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'KangurQuestionsManagerPanel', action: 'delete' },
       });
@@ -302,6 +300,7 @@ export function useKangurQuestionsMutations(
       await maybeTakeSuiteOfflineAfterQuestionMutation(nextStore);
       toast('Question duplicated.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'KangurQuestionsManagerPanel', action: 'duplicate' },
       });
@@ -321,6 +320,7 @@ export function useKangurQuestionsMutations(
         value: serializeSetting(nextStore),
       });
     } catch (error) {
+      logClientError(error);
       logClientError(error, { context: { source: 'KangurQuestionsManagerPanel', action: 'move' } });
       toast('Failed to reorder questions.', { variant: 'error' });
     }

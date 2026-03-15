@@ -14,6 +14,8 @@ import {
 } from '@/shared/lib/api/query-schema';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const MONGO_SCHEMA_CONCURRENCY = 8;
 
@@ -124,7 +126,9 @@ async function getMongoSchema(includeCounts = false): Promise<SchemaResponse> {
       if (includeCounts) {
         try {
           entry.documentCount = await coll.estimatedDocumentCount();
-        } catch {
+        } catch (error) {
+          void ErrorSystem.captureException(error);
+        
           // Best-effort count only.
         }
       }

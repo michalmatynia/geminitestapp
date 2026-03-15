@@ -5,6 +5,8 @@ import type {
   PromptExploderDocument,
 } from '@/shared/contracts/prompt-exploder';
 import { promptExploderDocumentSchema } from '@/shared/contracts/prompt-exploder';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const PROMPT_EXPLODER_LIBRARY_KEY = 'image_studio_prompt_exploder_library';
 
@@ -41,7 +43,8 @@ export const parsePromptExploderLibrary = (
     const result = promptExploderLibraryStateSchema.safeParse(parsed);
     if (!result.success) return defaultPromptExploderLibraryState;
     return result.data;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return defaultPromptExploderLibraryState;
   }
 };
@@ -70,7 +73,8 @@ export const clonePromptExploderDocument = (
   if (!document) return null;
   try {
     return JSON.parse(JSON.stringify(document)) as PromptExploderDocument;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

@@ -209,7 +209,8 @@ export function useJobQueueRealtime({
           }
           refreshQueueViews();
         };
-      } catch {
+      } catch (error) {
+        logClientError(error);
         channel = null;
       }
     }
@@ -274,6 +275,7 @@ export function useJobQueueRealtime({
             };
           });
         } catch (error) {
+          logClientError(error);
           logClientError(error, {
             context: {
               service: 'ai-paths',
@@ -299,6 +301,7 @@ export function useJobQueueRealtime({
             };
           });
         } catch (error) {
+          logClientError(error);
           logClientError(error, {
             context: {
               service: 'ai-paths',
@@ -338,6 +341,7 @@ export function useJobQueueRealtime({
             };
           });
         } catch (error) {
+          logClientError(error);
           logClientError(error, {
             context: {
               service: 'ai-paths',

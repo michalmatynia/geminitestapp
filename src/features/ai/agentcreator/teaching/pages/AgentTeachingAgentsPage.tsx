@@ -14,6 +14,8 @@ import {
   useDeleteTeachingAgentMutation,
   useUpsertTeachingAgentMutation,
 } from '../hooks/useAgentTeachingQueries';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function AgentTeachingAgentsPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -104,6 +106,7 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
       });
       toast(draft.id ? 'Learner agent updated.' : 'Learner agent created.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save learner agent.', {
         variant: 'error',
       });
@@ -116,6 +119,7 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
       await remove({ id: agent.id });
       toast('Learner agent deleted.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to delete learner agent.', {
         variant: 'error',
       });

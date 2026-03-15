@@ -185,6 +185,7 @@ export function useAdminCaseResolverCasesActions(args: UseAdminCaseResolverCases
           source: 'cases_page_rename',
         });
       } catch (error) {
+        logClientError(error);
         logClientError(error, {
           context: { source: 'AdminCaseResolverCasesPage', action: 'renameCase', caseId },
         });
@@ -237,6 +238,7 @@ export function useAdminCaseResolverCasesActions(args: UseAdminCaseResolverCases
           source: 'cases_page_toggle_status',
         });
       } catch (error) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'AdminCaseResolverCasesPage',

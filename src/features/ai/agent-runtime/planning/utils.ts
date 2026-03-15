@@ -9,6 +9,8 @@ import type {
   PlannerMeta,
   PlanHierarchy,
 } from '@/shared/contracts/agent-runtime';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type { PlanHierarchy };
 
@@ -23,7 +25,8 @@ export function parsePlanJson(content: string): unknown {
   try {
     const parsed: unknown = JSON.parse(jsonText);
     return parsed;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 }

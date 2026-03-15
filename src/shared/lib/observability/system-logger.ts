@@ -12,6 +12,8 @@ import {
 import { getActiveOtelContextAttributes } from './otel-context';
 import { emitOtelLogRecord } from './otel-log-bridge';
 import { forwardToCentralizedLogging } from './system-logger-central-forwarding';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const MAX_CONTEXT_SIZE = 12000;
 const MAX_VALUE_LENGTH = 4000;
@@ -99,7 +101,8 @@ const sanitizeValue = (value: unknown): Record<string, unknown> | null => {
       return parsed as Record<string, unknown>;
     }
     return { value: parsed };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return { error: 'Failed to serialize context.' };
   }
 };
@@ -306,7 +309,8 @@ const extractRequestInfo = (
       ...(headerTraceId ? { traceId: headerTraceId } : {}),
       ...(headerCorrelationId ? { correlationId: headerCorrelationId } : {}),
     };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return {};
   }
 };
@@ -413,7 +417,9 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
       try {
         const { classifyError } = await import('@/shared/errors/error-classifier');
         category = classifyError(input.error);
-      } catch {
+      } catch (error) {
+        logClientError(error);
+      
         // Fallback if import fails
       }
     }
@@ -551,6 +557,7 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
             hydratedContext = (await hydrationModule.hydrateLogRuntimeContext(context)) ?? context;
           }
         } catch (enrichmentError) {
+          logClientError(enrichmentError);
           console.error(
             '[system-logger] Failed to attach registry runtime context',
             enrichmentError
@@ -628,10 +635,12 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
           }
         }
       } catch (err) {
+        logClientError(err);
         console.error('[system-logger] Failed to persist log asynchronously', err);
       }
     })();
   } catch (error) {
+    logClientError(error);
     console.error('[system-logger] Failed to process system log', error);
   }
 }

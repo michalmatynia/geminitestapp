@@ -15,6 +15,8 @@ import {
   type PromptExploderBridgePayloadSnapshot,
   type PromptExploderBridgeSaveOptions,
 } from '@/shared/contracts/prompt-exploder';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const PROMPT_EXPLODER_DRAFT_PROMPT_KEY = 'prompt_exploder:draft_prompt';
 export const PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY = 'prompt_exploder:apply_to_studio_prompt';
@@ -155,12 +157,16 @@ const getBridgeStorages = (): BridgeStorage[] => {
   const storages: BridgeStorage[] = [];
   try {
     if (window.localStorage) storages.push(window.localStorage);
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Ignore blocked localStorage.
   }
   try {
     if (window.sessionStorage) storages.push(window.sessionStorage);
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Ignore blocked sessionStorage.
   }
   return storages;
@@ -358,7 +364,8 @@ const parseBridgePayload = (raw: string | null): PromptExploderBridgePayload | n
       status,
       appliedAt,
     };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -415,6 +422,7 @@ const writeBridgePayload = (storageKey: string, payload: PromptExploderBridgePay
         dispatchBridgeStorageEvent(storageKey);
         return;
       } catch (error: unknown) {
+        logClientError(error);
         lastError = error;
         if (!isQuotaExceededError(error)) {
           continue;
@@ -473,7 +481,9 @@ const readBridgePayload = (storageKey: string): PromptExploderBridgePayload | nu
     if (!expiryState.isExpired) return parsed;
     try {
       storage.removeItem(storageKey);
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Ignore blocked storage cleanup.
     }
   }

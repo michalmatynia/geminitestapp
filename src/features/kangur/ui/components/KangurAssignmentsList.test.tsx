@@ -132,6 +132,32 @@ describe('KangurAssignmentsList', () => {
     );
   });
 
+  it('shows countdown label when time limit is active', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-06T10:30:30.000Z'));
+
+    try {
+      const assignmentWithCountdown: KangurAssignmentSnapshot = {
+        ...regularAssignment,
+        timeLimitMinutes: 60,
+        timeLimitStartsAt: '2026-03-06T10:00:00.000Z',
+      };
+
+      render(
+        <KangurAssignmentsList
+          items={buildKangurAssignmentListItems('/kangur', [assignmentWithCountdown])}
+          emptyLabel='Brak'
+          showTimeCountdown
+          title='Aktywne zadania'
+        />
+      );
+
+      expect(screen.getByText('Pozostało: 29 min 30 s')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('uses shared info-card and CTA surfaces for compact assignment cards', () => {
     render(
       <KangurAssignmentsList

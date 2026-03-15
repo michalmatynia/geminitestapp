@@ -41,6 +41,7 @@ export async function getPriceGroups(): Promise<PriceGroup[]> {
   try {
     return await api.get<PriceGroup[]>(PRICE_GROUPS_ENDPOINT);
   } catch (error) {
+    logClientError(error);
     logClientError(error instanceof Error ? error : new Error('Failed to load price groups'), {
       context: { source: 'products-api-settings', action: 'getPriceGroups' },
     });
@@ -91,6 +92,7 @@ export async function getCategories(
       cache: 'no-store',
     });
   } catch (error) {
+    logClientError(error);
     logClientError(error instanceof Error ? error : new Error('Failed to load categories'), {
       context: { source: 'products-api-settings', action: 'getCategories', catalogId },
     });
@@ -105,6 +107,7 @@ export async function getCategoriesFlat(catalogId: string | null): Promise<Produ
       cache: 'no-store',
     });
   } catch (error) {
+    logClientError(error);
     logClientError(error instanceof Error ? error : new Error('Failed to load flat categories'), {
       context: { source: 'products-api-settings', action: 'getCategoriesFlat', catalogId },
     });

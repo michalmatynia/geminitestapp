@@ -15,10 +15,7 @@ import {
   unprocessableEntityError,
   databaseError,
 } from '@/shared/errors/app-error';
-
-export type MapStatusOptions = {
-  retryAfterMs?: number;
-};
+import type { MapStatusOptions } from '@/shared/contracts/base';
 
 const safeMessage = (message: string | null | undefined, fallback: string): string =>
   message?.trim() ? message : fallback;

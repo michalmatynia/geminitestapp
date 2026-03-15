@@ -14,6 +14,8 @@ import {
   renderTemplate,
   safeStringify,
 } from '../utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export {
   appendInputValue,
@@ -87,7 +89,8 @@ export function extractImageUrls(value: unknown, seen: Set<object> = new Set<obj
       try {
         const parsed = JSON.parse(trimmed) as unknown;
         return extractImageUrls(parsed, seen);
-      } catch {
+      } catch (error) {
+        logClientError(error);
         return /(\.png|\.jpe?g|\.webp|\.gif|\.svg|\/uploads\/|^https?:\/\/)/i.test(value)
           ? [value]
           : [];
@@ -403,6 +406,7 @@ export const pollGraphJob = async (
         await sleep(Math.max(0, intervalMs), signal);
       }
     } catch (error) {
+      logClientError(error);
       if (signal?.aborted) {
         throw createAbortError();
       }
@@ -457,7 +461,8 @@ export const buildDbQueryPayload = (
       try {
         const serialized = JSON.stringify(value);
         return parseRenderedQuery(serialized) ?? (value as Record<string, unknown>);
-      } catch {
+      } catch (error) {
+        logClientError(error);
         return value as Record<string, unknown>;
       }
     }

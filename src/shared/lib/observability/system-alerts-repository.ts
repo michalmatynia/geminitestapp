@@ -6,6 +6,8 @@ import type { Alert } from '@/shared/contracts/observability';
 import { alertSchema } from '@/shared/contracts/observability';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const SETTINGS_COLLECTION = 'settings';
 const SYSTEM_ALERTS_SETTINGS_KEY = 'system_alert_definitions_v1';
@@ -29,7 +31,8 @@ export const getSystemAlerts = async (): Promise<Alert[]> => {
   try {
     const parsed = JSON.parse(raw) as unknown;
     return alertArraySchema.parse(parsed);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return [];
   }
 };

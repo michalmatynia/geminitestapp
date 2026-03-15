@@ -4,6 +4,8 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { FRONT_PAGE_ALLOWED } from '@/shared/lib/front-page-app';
 
 import type { Session } from 'next-auth';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const FRONT_PAGE_SETTING_KEY = 'front_page_app';
 export { FRONT_PAGE_ALLOWED };
@@ -26,7 +28,8 @@ export const canPreviewDrafts = async (session: Session | null): Promise<boolean
   try {
     const prefs = await getUserPreferences(userId);
     return prefs.cmsPreviewEnabled === true;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return false;
   }
 };
@@ -44,7 +47,9 @@ const readMongoFrontPageSetting = async (): Promise<string | null> => {
       .collection<MongoStringSettingRecord<string>>('settings')
       .findOne({ _id: FRONT_PAGE_SETTING_KEY });
     if (doc?.value) return doc.value;
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Mongo unavailable — ignore.
   }
   return null;

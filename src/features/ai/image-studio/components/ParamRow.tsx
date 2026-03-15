@@ -14,11 +14,14 @@ import { Button, Checkbox, Input, Textarea, SelectSimple } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { usePromptState, usePromptActions } from '../context/PromptContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 function safeJsonStringify(value: unknown): string {
   try {
     return JSON.stringify(value, null, 2);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return String(value);
   }
 }
@@ -364,7 +367,8 @@ export const ParamRow = React.memo(function ParamRow({
                 const raw = e.target.value;
                 try {
                   onChange(JSON.parse(raw) as unknown);
-                } catch {
+                } catch (error) {
+                  logClientError(error);
                   onChange(raw);
                 }
               }}

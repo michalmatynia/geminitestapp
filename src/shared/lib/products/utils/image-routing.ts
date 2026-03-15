@@ -1,3 +1,4 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 export const normalizeProductImageExternalBaseUrl = (value: string | null | undefined): string => {
   const trimmed = value?.trim() ?? '';
   if (!trimmed) return '';
@@ -7,7 +8,8 @@ export const normalizeProductImageExternalBaseUrl = (value: string | null | unde
 
   try {
     return new URL(withProtocol).toString().replace(/\/+$/, '');
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return trimmed.replace(/\/+$/, '');
   }
 };
@@ -26,7 +28,8 @@ const isLoopbackBaseUrl = (baseUrl: string): boolean => {
   if (!baseUrl) return false;
   try {
     return isLoopbackHostname(new URL(baseUrl).hostname);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return false;
   }
 };
@@ -82,7 +85,8 @@ export const resolveProductImageUrl = (
       if (baseIsLoopback) return path || value;
 
       return joinPathToBase(path, normalizedBase) || value;
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return value;
     }
   }

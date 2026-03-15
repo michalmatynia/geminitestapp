@@ -5,7 +5,8 @@ import type {
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
-import { dbApi, ApiResponse } from '@/shared/lib/ai-paths/api';
+import type { HttpResult } from '@/shared/contracts/http';
+import { dbApi } from '@/shared/lib/ai-paths/api';
 
 import {
   createWriteTemplateGuardrailOutput,
@@ -147,7 +148,7 @@ export async function handleDatabaseMongoCreateAction({
     ...(action === 'insertOne' && payloadObject ? { document: payloadObject } : {}),
     ...(action === 'insertMany' ? { documents: Array.isArray(payload) ? payload : [payload] } : {}),
   };
-  const insertResult: ApiResponse<unknown> = await dbApi.action(insertActionPayload);
+  const insertResult: HttpResult<unknown> = await dbApi.action(insertActionPayload);
   executed.updater.add(node.id);
   if (!insertResult.ok) {
     reportAiPathsError(

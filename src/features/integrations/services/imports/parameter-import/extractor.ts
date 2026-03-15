@@ -2,6 +2,8 @@ import type { ImportTemplateParameterImport } from '@/shared/contracts/integrati
 import type { ExtractedBaseParameter } from '@/shared/contracts/integrations';
 
 import type { BaseProductRecord } from '../base-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const PARAMETER_VALUE_KEYS = ['value', 'values', 'value_id', 'label', 'text'] as const;
 
@@ -46,7 +48,8 @@ const normalizeScalarValue = (value: unknown): string | null => {
     try {
       const serialized = JSON.stringify(value);
       return serialized && serialized !== '{}' ? serialized : null;
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return null;
     }
   }

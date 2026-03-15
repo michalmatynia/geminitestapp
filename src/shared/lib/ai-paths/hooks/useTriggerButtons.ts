@@ -21,6 +21,8 @@ import { useToast } from '@/shared/ui';
 
 import { useAiPathsTriggerButtonsQuery } from './useAiPathQueries';
 import { useAiPathTriggerEvent } from './useAiPathTriggerEvent';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const TOGGLE_STORAGE_KEY = 'aiPathsTriggerButtonToggles';
 const SUCCESS_STORAGE_KEY = 'aiPathsTriggerButtonSuccess';
@@ -86,7 +88,8 @@ const readMapFromStorage = (key: string): Record<string, boolean> => {
     const parsed = JSON.parse(raw) as unknown;
     if (!parsed || typeof parsed !== 'object') return {};
     return parsed as Record<string, boolean>;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return {};
   }
 };
@@ -95,7 +98,9 @@ const writeMapToStorage = (key: string, value: Record<string, boolean>): void =>
   if (typeof window === 'undefined') return;
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // ignore
   }
 };
@@ -506,6 +511,7 @@ export function useTriggerButtons({
           },
         });
       } catch (error) {
+        logClientError(error);
         const message = error instanceof Error ? error.message : 'Unknown error';
         setLastRuns((prev) => {
           if (prev[button.id]?.status !== 'waiting') return prev;

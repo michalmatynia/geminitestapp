@@ -17,6 +17,8 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { markDatabaseBackupJobQueued } from '@/shared/lib/db/services/database-backup-scheduler';
 import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 import { logSystemError } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const resolveTargets = (
   dbType: DatabaseEngineBackupRunNowRequest['dbType']
@@ -66,7 +68,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
     try {
       await markDatabaseBackupJobQueued(dbType, job.id);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // Keep manual queue action resilient even if schedule metadata update fails.
     }
 
@@ -74,6 +78,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       const runtimeType = job.jobType ?? job.type ?? 'db_backup';
       await enqueueProductAiJobToQueue(job.id, job.productId, runtimeType, job.payload);
     } catch (enqueueError: unknown) {
+      void ErrorSystem.captureException(enqueueError);
       await logSystemError({
         message:
           '[databases.engine.backup-scheduler.run-now] Failed to enqueue db backup job to runtime queue, falling back to inline processing',

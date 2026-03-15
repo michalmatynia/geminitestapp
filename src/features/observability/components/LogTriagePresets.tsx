@@ -12,14 +12,14 @@ import {
   SYSTEM_LOG_TRIAGE_PRESETS,
   isSystemLogPresetActive,
   resolveSystemLogPresetFilters,
-  type LogTriagePreset,
+  type LogTriagePresetDefinition,
   type SystemLogFilterFormValues,
 } from '@/shared/lib/observability/log-triage-presets';
 import { Button, FormSection, StatusBadge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 const triagePresetIcons: Record<
-  LogTriagePreset['id'],
+  LogTriagePresetDefinition['id'],
   React.ComponentType<{ className?: string }>
 > = {
   'recent-errors-24h': AlertTriangle,
@@ -80,7 +80,7 @@ export function LogTriagePresets(): React.JSX.Element {
     );
   };
 
-  const onApplyPreset = (preset: LogTriagePreset): void => {
+  const onApplyPreset = (preset: LogTriagePresetDefinition): void => {
     const resolvedPresetValues = resolveSystemLogPresetFilters(preset);
     const nextValues: SystemLogFilterFormValues = {
       ...SYSTEM_LOG_FILTER_DEFAULTS,
@@ -90,7 +90,7 @@ export function LogTriagePresets(): React.JSX.Element {
   };
 
   const now = new Date();
-  const resolvedPresets = SYSTEM_LOG_TRIAGE_PRESETS.map((preset: LogTriagePreset) => ({
+  const resolvedPresets = SYSTEM_LOG_TRIAGE_PRESETS.map((preset: LogTriagePresetDefinition) => ({
     preset,
     filters: resolveSystemLogPresetFilters(preset, now),
   }));
@@ -115,7 +115,7 @@ export function LogTriagePresets(): React.JSX.Element {
       className='p-3'
     >
       <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-4'>
-        {resolvedPresets.map(({ preset }: { preset: LogTriagePreset }) => {
+        {resolvedPresets.map(({ preset }: { preset: LogTriagePresetDefinition }) => {
           const isActive = preset.id === activePresetId;
           const Icon = triagePresetIcons[preset.id] ?? AlertTriangle;
           return (

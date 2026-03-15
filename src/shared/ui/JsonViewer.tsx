@@ -5,6 +5,8 @@ import React, { useMemo } from 'react';
 import { cn } from '@/shared/utils';
 
 import { CopyButton } from './copy-button';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 interface JsonViewerProps {
   data: unknown;
@@ -42,6 +44,7 @@ export function JsonViewer({
     try {
       return JSON.stringify(data, circularReplacer, 2);
     } catch (err) {
+      logClientError(err);
       return `Error formatting JSON: ${err instanceof Error ? err.message : String(err)}`;
     }
   }, [data]);

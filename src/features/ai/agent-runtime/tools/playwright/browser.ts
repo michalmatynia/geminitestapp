@@ -11,6 +11,8 @@ import {
 import { toDataUrl } from '../utils';
 
 import type { Browser, BrowserContext, Page, Cookie } from 'playwright';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type PlaywrightModule = {
   chromium: { launch: (opts: { headless: boolean }) => Promise<Browser> };
@@ -134,6 +136,7 @@ export const captureSessionContext = async (
       });
     }
   } catch (error) {
+    void ErrorSystem.captureException(error);
     if (log) {
       await log('warning', 'Failed to capture session context.', {
         label,

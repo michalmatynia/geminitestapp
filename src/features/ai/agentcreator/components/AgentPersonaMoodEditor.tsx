@@ -136,6 +136,7 @@ export function AgentPersonaMoodEditor({
     try {
       await deletePersonaAvatar(normalizedFileId);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'AgentPersonaMoodEditor',
@@ -157,6 +158,7 @@ export function AgentPersonaMoodEditor({
     try {
       await deletePersonaAvatarThumbnail(normalizedRef);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'AgentPersonaMoodEditor',
@@ -264,6 +266,7 @@ export function AgentPersonaMoodEditor({
       await replaceMoodWithUpload(moodId, file);
       toast('Avatar uploaded.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AgentPersonaMoodEditor', action: 'uploadAvatar', moodId },
       });
@@ -295,6 +298,7 @@ export function AgentPersonaMoodEditor({
       setImportValues((current) => ({ ...current, [moodId]: '' }));
       toast('Avatar imported.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AgentPersonaMoodEditor', action: 'importAvatar', moodId },
       });

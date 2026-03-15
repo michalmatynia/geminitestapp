@@ -6,6 +6,8 @@ import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import type { TestConnectionResponse, TestLogEntry } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 /**
  * POST /api/v2/integrations/[id]/connections/[connectionId]/base/test
@@ -93,6 +95,7 @@ export async function POST_handler(
       });
       pushStep('Updating token metadata', 'ok', 'Token check timestamp updated');
     } catch (error) {
+      void ErrorSystem.captureException(error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       pushStep('Updating token metadata', 'failed', `Failed to update token metadata: ${message}`);
     }
@@ -110,6 +113,7 @@ export async function POST_handler(
           `Default inventory set to: ${inventories[0]!.name} (${inventories[0]!.id})`
         );
       } catch (error) {
+        void ErrorSystem.captureException(error);
         const message = error instanceof Error ? error.message : 'Unknown error';
         pushStep('Storing default inventory', 'failed', `Failed to set default: ${message}`);
       }
@@ -125,6 +129,7 @@ export async function POST_handler(
 
     return NextResponse.json(response);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return fail('Testing API connection', `Base.com API error: ${message}`);
   }

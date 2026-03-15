@@ -26,6 +26,8 @@ import {
   extractExternalListingId,
   captureTraderaListingDebugArtifacts,
 } from './utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 
 export const ensureLoggedIn = async (
@@ -204,6 +206,7 @@ export const runTraderaBrowserListing = async ({
       `Failed to resolve Tradera listing id after ${action} (source: ${source}).`
     );
   } catch (error) {
+    logClientError(error);
     const debugArtifacts = await captureTraderaListingDebugArtifacts(page, listing.id, action);
     if (debugArtifacts) {
       const message = error instanceof Error ? error.message : String(error);

@@ -9,6 +9,8 @@ import type {
   DbQueryConfig,
   RuntimeState,
 } from '@/shared/lib/ai-paths';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function useDatabaseQueryExecution(args: {
   selectedNodeId: string;
@@ -84,6 +86,7 @@ export function useDatabaseQueryExecution(args: {
       setTestQueryResult(JSON.stringify(res.data, null, 2));
       args.toast('Success', { variant: 'success' });
     } catch (e: unknown) {
+      logClientError(e);
       const message = e instanceof Error ? e.message : String(e);
       setTestQueryResult(JSON.stringify({ error: message }, null, 2));
       args.toast(message, { variant: 'error' });

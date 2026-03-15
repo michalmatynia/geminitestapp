@@ -31,6 +31,7 @@ const repoCall = async <K extends keyof CmsRepository>(
     const fn = repo[key] as (...args: Parameters<CmsRepository[K]>) => ReturnType<CmsRepository[K]>;
     return (await fn(...args)) as Promise<Awaited<ReturnType<CmsRepository[K]>>>;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await ErrorSystem.captureException(error, {
       service: 'cms-service',
       action: 'repoCall',

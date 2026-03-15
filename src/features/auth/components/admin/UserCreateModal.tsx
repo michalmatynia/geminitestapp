@@ -9,6 +9,8 @@ import {
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useUsersData, useUsersDialogs } from '../../context/UsersContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export interface UserCreateFormState {
   name: string;
@@ -65,6 +67,7 @@ export function UserCreateModal(): React.JSX.Element | null {
       toast('User provisioned successfully', { variant: 'success' });
       refetch();
     } catch (_e) {
+      logClientError(_e);
       toast('Provisioning failed', { variant: 'error' });
     }
   };

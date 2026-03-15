@@ -43,6 +43,8 @@ import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorA
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
 import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const GAME_BRAND_NAME = 'Sprycio';
 const GAME_MAIN_ID = 'kangur-game-main';
@@ -96,7 +98,8 @@ const focusGameScreenHeading = (heading: HTMLHeadingElement | null): void => {
 
   try {
     heading.focus({ preventScroll: true });
-  } catch {
+  } catch (error) {
+    logClientError(error);
     heading.focus();
   }
 };

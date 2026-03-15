@@ -17,6 +17,7 @@ export async function getSettingValue(key: string): Promise<string | null> {
   try {
     return await readMongoSettingValue(key);
   } catch (err) {
+    void ErrorSystem.captureException(err);
     void ErrorSystem.logWarning(`Mongo setting fetch failed for ${key}`, {
       service: 'ai-server-settings',
       key,

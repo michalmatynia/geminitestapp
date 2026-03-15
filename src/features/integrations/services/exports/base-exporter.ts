@@ -461,6 +461,7 @@ export async function exportProductToBase(
       ...(productId ? { productId } : {}),
     };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.captureException(error, {
       service: 'base-exporter',
       action: 'exportProductToBase',
@@ -517,6 +518,7 @@ export async function exportProductImagesToBase(
       productId,
     };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.captureException(error, {
       service: 'base-exporter',
       action: 'exportProductImagesToBase',

@@ -4,11 +4,14 @@ import React from 'react';
 
 import { AnalyticsStatCard } from './AnalyticsStatCard';
 import { useAnalyticsSummaryData } from '../context/AnalyticsContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const formatCount = (value: number): string => {
   try {
     return value.toLocaleString();
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return String(value);
   }
 };

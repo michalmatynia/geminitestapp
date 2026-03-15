@@ -146,6 +146,7 @@ export function useListProductForm(productId: string): UseListProductFormResult 
         onSuccess();
       }
     } catch (err: unknown) {
+      logClientError(err);
       logClientError(err, {
         context: {
           source: 'ListProductModal',
@@ -179,6 +180,7 @@ export function useListProductForm(productId: string): UseListProductFormResult 
       await exportToBase(selectedConnectionId || '', selectedInventoryId || '', exportOptions);
       onSuccess();
     } catch (err: unknown) {
+      logClientError(err);
       logClientError(err, {
         context: { source: 'ListProductModal', action: 'imageRetry', productId },
       });

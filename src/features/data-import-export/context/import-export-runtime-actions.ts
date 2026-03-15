@@ -8,6 +8,8 @@ import type {
 } from '@/shared/contracts/integrations';
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type ToastFn = (
   message: string,
@@ -261,6 +263,7 @@ export const createImportExportRuntimeActions = ({
         toast(preflightErrors[0] || res.summaryMessage || 'Import failed.', { variant: 'error' });
       }
     } catch (error: unknown) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Import failed';
       toast(message, { variant: 'error' });
     }
@@ -280,6 +283,7 @@ export const createImportExportRuntimeActions = ({
       setPollImportRun(true);
       toast('Import resume queued.', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Failed to resume import run.';
       toast(message, { variant: 'error' });
     }
@@ -297,6 +301,7 @@ export const createImportExportRuntimeActions = ({
       setPollImportRun(true);
       toast('Import cancel requested.', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Failed to request import cancel.';
       toast(message, { variant: 'error' });
     }
@@ -325,6 +330,7 @@ export const createImportExportRuntimeActions = ({
       });
       toast('Export settings saved', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Save failed';
       toast(message, { variant: 'error' });
     }
@@ -335,7 +341,8 @@ export const createImportExportRuntimeActions = ({
     try {
       await clearInventoryMutation.mutateAsync();
       toast('Inventory cleared.', { variant: 'success' });
-    } catch {
+    } catch (error) {
+      logClientError(error);
       toast('Failed to clear inventory.', { variant: 'error' });
     }
   };

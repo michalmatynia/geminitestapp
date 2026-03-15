@@ -3,6 +3,8 @@ import 'server-only';
 import { createHmac, timingSafeEqual } from 'crypto';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type KangurLearnerSessionPayload = {
   learnerId: string;
@@ -67,7 +69,8 @@ const parsePayload = (raw: string | undefined): KangurLearnerSessionPayload | nu
       ownerUserId: parsed.ownerUserId,
       exp: parsed.exp,
     };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };

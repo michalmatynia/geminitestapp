@@ -5,6 +5,8 @@ import { useCallback, useRef } from 'react';
 import { api } from '@/shared/lib/api-client';
 
 import type { SequenceRunStatus, SequenceRunDetailResponse } from './sequencing-types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const POLL_INTERVAL_MS = 1500;
 const ENABLE_SEQUENCE_SSE = process.env['NEXT_PUBLIC_IMAGE_STUDIO_SEQUENCE_SSE'] !== 'false';
@@ -47,6 +49,7 @@ export function useSequenceMonitor({
         if (!response.run) return null;
         return response;
       } catch (error) {
+        logClientError(error);
         onSetActiveSequenceStatus('failed');
         onSetSequenceError(error instanceof Error ? error.message : 'Sequence polling failed.');
         return null;
@@ -90,7 +93,8 @@ export function useSequenceMonitor({
       let source: EventSource;
       try {
         source = new EventSource(`/api/image-studio/sequences/${encodeURIComponent(runId)}/stream`);
-      } catch {
+      } catch (error) {
+        logClientError(error);
         pollRun(runId);
         return;
       }
@@ -121,7 +125,9 @@ export function useSequenceMonitor({
             fallbackToPolling();
             return;
           }
-        } catch {
+        } catch (error) {
+          logClientError(error);
+        
           // Signal refresh
         }
         refresh();

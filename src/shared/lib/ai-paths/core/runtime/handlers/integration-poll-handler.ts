@@ -4,6 +4,8 @@ import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-path
 import { DEFAULT_DB_QUERY } from '../../constants';
 import { coerceInput } from '../../utils';
 import { pollDatabaseQuery, pollGraphJob } from '../utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type PollFailureClassification = {
   status: 'failed' | 'timeout' | 'canceled';
@@ -143,6 +145,7 @@ export const handlePoll: NodeHandler = async ({
         },
       };
     } catch (error: unknown) {
+      logClientError(error);
       if (abortSignal?.aborted || (error instanceof Error && error.name === 'AbortError')) {
         throw error;
       }
@@ -182,6 +185,7 @@ export const handlePoll: NodeHandler = async ({
       bundle: { jobId, status: 'completed', result },
     };
   } catch (error: unknown) {
+    logClientError(error);
     if (abortSignal?.aborted || (error instanceof Error && error.name === 'AbortError')) {
       throw error;
     }

@@ -23,6 +23,8 @@ import {
   SCORE_INSIGHT_WINDOW_DAYS,
   buildKangurScoreInsights,
 } from '@/features/kangur/ui/services/score-insights';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type OperationLabel = {
   label: string;
@@ -171,6 +173,7 @@ export default function ScoreHistory({
         }
         setScores(loadedScores);
       } catch (error: unknown) {
+        logClientError(error);
         if (!isActive) {
           return;
         }

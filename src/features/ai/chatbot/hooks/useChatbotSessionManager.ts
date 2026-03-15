@@ -48,6 +48,7 @@ export function useChatbotSessionManager(): UseChatbotSessionManagerReturn {
         });
         setCurrentSessionId(data.sessionId);
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error, {
           context: { source: 'useChatbotSessionManager.createNewSession' },
         });
@@ -65,6 +66,7 @@ export function useChatbotSessionManager(): UseChatbotSessionManagerReturn {
           setCurrentSessionId(sessions.find((s) => s.id !== id)?.id || null);
         }
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'useChatbotSessionManager.deleteSession',

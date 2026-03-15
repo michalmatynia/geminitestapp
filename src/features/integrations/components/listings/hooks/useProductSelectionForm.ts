@@ -80,6 +80,7 @@ export function useProductSelectionForm(): UseProductSelectionFormResult {
       }
       onSuccess();
     } catch (err: unknown) {
+      logClientError(err);
       logClientError(err, {
         context: { source: 'SelectProductForListingModal', action: 'submit' },
       });

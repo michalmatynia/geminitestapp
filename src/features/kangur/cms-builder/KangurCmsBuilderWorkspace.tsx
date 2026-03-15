@@ -40,6 +40,8 @@ import {
 } from './project';
 import type { LeftPanelMode } from '@/features/cms/components/page-builder/CmsBuilderLeftPanel';
 import type { KangurThemeMode } from '@/features/kangur/admin/components/KangurThemeSettingsPanel';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 
 const commitScreenSections = (
@@ -68,7 +70,8 @@ function KangurCmsBuilderInner(): React.JSX.Element {
     try {
       const stored = window.localStorage.getItem('kangur_cms_builder_status_sidebar');
       return stored !== '0';
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return true;
     }
   });
@@ -96,7 +99,9 @@ function KangurCmsBuilderInner(): React.JSX.Element {
         'kangur_cms_builder_status_sidebar',
         statusSidebarOpen ? '1' : '0'
       );
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // ignore storage failures
     }
   }, [statusSidebarOpen]);
@@ -242,6 +247,7 @@ export function KangurCmsBuilderWorkspace(): React.JSX.Element {
         setSavedProject(nextDraftProject);
         toast('Kangur CMS project saved.', { variant: 'success' });
       } catch (error) {
+        logClientError(error);
         toast(error instanceof Error ? error.message : 'Failed to save Kangur CMS project.', {
           variant: 'error',
         });

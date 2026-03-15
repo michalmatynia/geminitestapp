@@ -107,6 +107,7 @@ export function useProductOperations(
         return;
       }
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'useProductOperations', action: 'validateSku', sku },
       });
@@ -125,6 +126,7 @@ export function useProductOperations(
         toast('Product duplicated.', { variant: 'success' });
         router.push(`/admin/products/${duplicated.id}/edit`);
       } catch (error) {
+        logClientError(error);
         setActionError(error instanceof Error ? error.message : 'Failed to duplicate product.');
       }
     } else {

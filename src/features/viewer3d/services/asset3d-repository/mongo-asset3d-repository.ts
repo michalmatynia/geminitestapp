@@ -12,6 +12,8 @@ import type {
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import { ObjectId, type Db, type Document, type Filter } from 'mongodb';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const PRIMARY_COLLECTION = 'Asset3D';
 const LEGACY_COLLECTION = 'asset3d';
@@ -179,7 +181,9 @@ const resolveCollectionName = async (db: Db): Promise<string> => {
       cachedCollectionName = LEGACY_COLLECTION;
       return cachedCollectionName;
     }
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+  
     // Fall back to the primary collection name if collection enumeration is unavailable.
   }
 

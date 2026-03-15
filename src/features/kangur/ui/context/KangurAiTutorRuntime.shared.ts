@@ -85,6 +85,8 @@ import {
   useKangurTutorPersonaVisuals,
   useKangurTutorSettingsState,
 } from './kangur-ai-tutor-runtime.sub-hooks';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 // ---------------------------------------------------------------------------
 // Re-export moved types (preserve public API of this module)
@@ -941,6 +943,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
           usageSummary: result.usage ?? currentState.usageSummary,
         }));
       } catch (error) {
+        logClientError(error);
         trackKangurClientEvent('kangur_ai_tutor_message_failed', telemetryContext);
         logKangurClientError(error, {
           source: 'KangurAiTutorContext',

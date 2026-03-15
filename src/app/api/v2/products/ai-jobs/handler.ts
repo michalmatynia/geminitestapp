@@ -15,6 +15,8 @@ import {
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const isLegacySchemaMismatchError = (
   error: unknown
@@ -83,6 +85,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
       }
     );
   } catch (error: unknown) {
+    void ErrorSystem.captureException(error);
     if (isLegacySchemaMismatchError(error)) {
       await logSystemEvent({
         level: 'warn',

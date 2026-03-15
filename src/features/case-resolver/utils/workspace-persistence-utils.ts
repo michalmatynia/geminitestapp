@@ -1,6 +1,8 @@
 import { type CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
 import { normalizeCaseResolverWorkspace } from '../settings.workspace';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const readPositiveIntegerEnv = (key: string, fallback: number): number => {
   const value = process.env[key];
@@ -103,7 +105,8 @@ export const stampCaseResolverWorkspaceMutation = (
 export const safeParseJson = <T>(value: string): T | null => {
   try {
     return JSON.parse(value) as T;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

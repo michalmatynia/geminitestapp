@@ -38,6 +38,8 @@ import type {
 } from '@/shared/contracts/kangur';
 import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
 import { internalError } from '@/shared/errors/app-error';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const KANGUR_LEARNER_PROFILE_DAILY_GOAL_GAMES = 3;
 
@@ -206,6 +208,7 @@ export function KangurLearnerProfileRuntimeProvider({
         }
         setScores(loadedScores);
       } catch (error: unknown) {
+        logClientError(error);
         if (!isActive) {
           return;
         }

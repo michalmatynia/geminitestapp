@@ -22,6 +22,8 @@ import {
   SimpleSettingsList,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type ParametersSettingsProps = {
   loading: boolean;
@@ -169,6 +171,7 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
       setShowModal(false);
       onRefresh();
     } catch (error) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Failed to save parameter.';
       toast(message, { variant: 'error' });
     }
@@ -188,6 +191,7 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
       toast('Parameter deleted.', { variant: 'success' });
       onRefresh();
     } catch (error) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Failed to delete parameter.';
       toast(message, { variant: 'error' });
     } finally {

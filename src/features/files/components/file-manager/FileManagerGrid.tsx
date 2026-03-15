@@ -14,6 +14,8 @@ import {
   useFileManagerData,
   useFileManagerUIState,
 } from '../../contexts/FileManagerContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function FileManagerGrid(): React.JSX.Element {
   const { filteredFiles } = useFileManagerData();
@@ -29,7 +31,8 @@ export function FileManagerGrid(): React.JSX.Element {
       try {
         const url = new URL(clean);
         if (url.pathname.includes('/uploads/')) return 'upload';
-      } catch {
+      } catch (error) {
+        logClientError(error);
         return 'link';
       }
       return 'link';
@@ -50,7 +53,8 @@ export function FileManagerGrid(): React.JSX.Element {
       if (kind === 'link') {
         try {
           return new URL(filepath).hostname || 'link';
-        } catch {
+        } catch (error) {
+          logClientError(error);
           return 'link';
         }
       }

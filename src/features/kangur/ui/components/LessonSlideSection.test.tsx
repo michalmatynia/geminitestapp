@@ -47,6 +47,13 @@ vi.mock('framer-motion', () => {
   };
 });
 
+vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
+  useKangurAuth: () => ({
+    isAuthenticated: true,
+    user: { actorType: 'learner', ownerUserId: 'parent-1' },
+  }),
+}));
+
 import LessonSlideSection from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 

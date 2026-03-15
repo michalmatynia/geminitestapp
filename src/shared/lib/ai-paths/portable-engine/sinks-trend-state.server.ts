@@ -21,6 +21,8 @@ import type {
 } from './portable-engine-resolution-types';
 import type { PortablePathSigningPolicyUsageSnapshot } from './portable-engine-signing-policy-observability';
 import type { PortablePathSigningPolicyAlertLevel } from './sinks-contracts.server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const PORTABLE_PATH_SIGNING_POLICY_SURFACES = ['canvas', 'product', 'api'] as const;
 const PORTABLE_PATH_SIGNING_POLICY_PROFILES = ['dev', 'staging', 'prod'] as const;
@@ -190,7 +192,8 @@ export const parsePortablePathSigningPolicyExpectedProfilesBySurfaceFromEnvironm
       override,
       environmentProfile
     );
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return createDefaultPortablePathSigningPolicyExpectedProfilesBySurface(environmentProfile);
   }
 };
@@ -287,7 +290,8 @@ const parsePortablePathSigningPolicyTrendSnapshotEnvelope = (
         isPortablePathSigningPolicyTrendPersistedSnapshot(item)
       )
       .slice(-maxSnapshots);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return [];
   }
 };
@@ -303,7 +307,8 @@ const stringifyPortablePathSigningPolicyTrendSnapshotEnvelope = (
       entries: snapshots.slice(-maxSnapshots),
     };
     return JSON.stringify(envelope);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };

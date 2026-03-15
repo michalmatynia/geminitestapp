@@ -5,6 +5,7 @@ import {
   requireActiveLearner,
   resolveKangurActor,
 } from '@/features/kangur/server';
+import { publishKangurLearnerActivityUpdate } from '@/features/kangur/services/learner-activity-stream-publisher';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
 import { parseKangurLearnerActivityUpdatePayload } from '@/shared/validations/kangur';
@@ -49,6 +50,10 @@ export async function postKangurLearnerActivityHandler(
   const payload = parseKangurLearnerActivityUpdatePayload(ctx.body ?? (await req.json()));
   const repository = await getKangurLearnerActivityRepository();
   const snapshot = await repository.saveActivity(activeLearner.id, payload);
+  publishKangurLearnerActivityUpdate(activeLearner.id, {
+    snapshot,
+    isOnline: isRecentActivity(snapshot?.updatedAt),
+  });
 
   return NextResponse.json(snapshot);
 }

@@ -68,6 +68,7 @@ const parsePayload = (value: string): ParsedPayloadResult => {
       payload: parsed as ImportValidationPatternsPayload,
     };
   } catch (error) {
+    logClientError(error);
     return {
       ok: false,
       error: error instanceof Error ? error.message : 'Invalid JSON payload.',
@@ -169,6 +170,7 @@ export function ValidatorPatternImportModal({
         variant: 'success',
       });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'ValidatorPatternImportModal',
@@ -210,6 +212,7 @@ export function ValidatorPatternImportModal({
         { variant: 'success' }
       );
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'ValidatorPatternImportModal',

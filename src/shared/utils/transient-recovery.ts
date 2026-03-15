@@ -1,6 +1,8 @@
 // Local implementations to avoid importing from features layer
 
-export type TransientRecoveryOptions = {
+import type { TransientRecoverySettings } from '@/shared/contracts/observability';
+
+export type TransientRecoveryStubOptions = {
   maxAttempts?: number;
   initialDelayMs?: number;
   maxDelayMs?: number;
@@ -8,18 +10,9 @@ export type TransientRecoveryOptions = {
   jitter?: boolean;
 };
 
-export type TransientRecoverySettings = {
-  enabled: boolean;
-  maxAttempts: number;
-  initialDelayMs: number;
-  maxDelayMs: number;
-  backoffMultiplier: number;
-  jitter: boolean;
-};
-
 export const withTransientRecovery = async <T>(
   operation: () => Promise<T>,
-  _options?: TransientRecoveryOptions
+  _options?: TransientRecoveryStubOptions
 ): Promise<T> => {
   // Stub implementation
   return operation();
@@ -33,10 +26,17 @@ export const isTransientError = (_error: unknown): boolean => {
 export const getTransientRecoverySettings = (): TransientRecoverySettings => {
   return {
     enabled: false,
-    maxAttempts: 3,
-    initialDelayMs: 1000,
-    maxDelayMs: 30000,
-    backoffMultiplier: 2,
-    jitter: true,
+    retry: {
+      enabled: false,
+      maxAttempts: 3,
+      initialDelayMs: 1000,
+      maxDelayMs: 30000,
+      timeoutMs: null,
+    },
+    circuit: {
+      enabled: false,
+      failureThreshold: 3,
+      resetTimeoutMs: 30_000,
+    },
   };
 };

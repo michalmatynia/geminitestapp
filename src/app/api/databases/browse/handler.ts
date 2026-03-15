@@ -14,6 +14,8 @@ import {
 } from '@/shared/lib/api/query-schema';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export const querySchema = z.object({
   collection: optionalTrimmedQueryString(),
@@ -34,7 +36,8 @@ async function browseMongoCollection(params: BrowseParams): Promise<BrowseRespon
   if (query) {
     try {
       filter = JSON.parse(query) as Record<string, unknown>;
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       // If not valid JSON, try text search on common fields
       filter = {
         $or: [

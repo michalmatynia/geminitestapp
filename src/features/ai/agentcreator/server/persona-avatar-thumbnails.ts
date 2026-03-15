@@ -7,6 +7,8 @@ import {
   readStoredSettingValue,
   upsertStoredSettingValue,
 } from '@/shared/lib/ai-brain/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type AgentPersonaAvatarThumbnailRecord = {
   ref: string;
@@ -95,7 +97,8 @@ export const readAgentPersonaAvatarThumbnailByRef = async (
   if (!raw?.trim()) return null;
   try {
     return normalizeThumbnailRecord(JSON.parse(raw));
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };

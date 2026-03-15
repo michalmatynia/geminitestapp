@@ -56,7 +56,7 @@ export function MetadataItem(props: MetadataItemProps): React.JSX.Element {
   if (variant === 'minimal' || variant === 'subtle') {
     const isSubtle = variant === 'subtle';
     return (
-      <div
+      <dl
         className={cn(
           'flex items-center gap-2 text-[11px]',
           isSubtle ? 'opacity-80' : '',
@@ -64,17 +64,19 @@ export function MetadataItem(props: MetadataItemProps): React.JSX.Element {
         )}
       >
         {icon && <div className='shrink-0 text-gray-500'>{icon}</div>}
-        <MetadataItemLabel
-          label={label}
-          labelClassName={labelClassName}
-          isStringLabel={isStringLabel}
-          className={cn(
-            'uppercase tracking-wider text-gray-500 shrink-0 leading-none',
-            isSubtle ? 'font-medium' : 'font-bold'
-          )}
-          withColon
-        />
-        <div
+        <dt>
+          <MetadataItemLabel
+            label={label}
+            labelClassName={labelClassName}
+            isStringLabel={isStringLabel}
+            className={cn(
+              'uppercase tracking-wider text-gray-500 shrink-0 leading-none',
+              isSubtle ? 'font-medium' : 'font-bold'
+            )}
+            withColon
+          />
+        </dt>
+        <dd
           className={cn(
             'text-gray-300 truncate',
             mono && 'font-mono text-gray-200',
@@ -82,23 +84,25 @@ export function MetadataItem(props: MetadataItemProps): React.JSX.Element {
           )}
         >
           {content}
-        </div>
-      </div>
+        </dd>
+      </dl>
     );
   }
 
   return (
-    <div className={cn('p-3 rounded-lg bg-card/40 border border-border/60', className)}>
+    <dl className={cn('p-3 rounded-lg bg-card/40 border border-border/60', className)}>
       <div className='flex items-center gap-1.5 mb-1'>
         {icon && <div className='shrink-0 text-gray-500'>{icon}</div>}
-        <MetadataItemLabel
-          label={label}
-          labelClassName={labelClassName}
-          isStringLabel={isStringLabel}
-          className='block text-gray-500 text-[10px] uppercase font-bold tracking-wider leading-none'
-        />
+        <dt>
+          <MetadataItemLabel
+            label={label}
+            labelClassName={labelClassName}
+            isStringLabel={isStringLabel}
+            className='block text-gray-500 text-[10px] uppercase font-bold tracking-wider leading-none'
+          />
+        </dt>
       </div>
-      <div
+      <dd
         className={cn(
           'text-gray-200 text-sm truncate',
           mono && 'font-mono text-gray-300',
@@ -106,12 +110,12 @@ export function MetadataItem(props: MetadataItemProps): React.JSX.Element {
         )}
       >
         {content}
-      </div>
+      </dd>
       {hint && (
         <div className='mt-1 text-[11px] text-gray-500 truncate' title={hint}>
           {hint}
         </div>
       )}
-    </div>
+    </dl>
   );
 }

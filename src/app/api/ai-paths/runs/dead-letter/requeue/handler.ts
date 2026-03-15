@@ -11,6 +11,8 @@ import { assertAiPathRunQueueReady } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const requeueSchema = z.object({
   runIds: z.array(z.string().trim().min(1)).optional(),
@@ -67,6 +69,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       try {
         assertAiPathRunAccess(access, run);
       } catch (error) {
+        void ErrorSystem.captureException(error);
         errors.push({
           runId,
           error: error instanceof Error ? error.message : 'Run access denied',
@@ -80,6 +83,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       await resumePathRun(runId, mode);
       requeuedRunIds.push(runId);
     } catch (error) {
+      void ErrorSystem.captureException(error);
       errors.push({
         runId,
         error: error instanceof Error ? error.message : 'Failed to requeue run',

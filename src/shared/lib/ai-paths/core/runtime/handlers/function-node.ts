@@ -6,6 +6,8 @@ import type {
 } from '@/shared/contracts/ai-paths-runtime';
 
 import { parseJsonSafe, safeStringify } from '../../utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const getAtPath = (value: unknown, path: string): unknown => {
   if (!path.trim()) return value;
@@ -51,7 +53,8 @@ const setAtPath = (target: unknown, path: string, nextValue: unknown): Record<st
 const cloneValue = <T>(value: T): T => {
   try {
     return JSON.parse(JSON.stringify(value)) as T;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return value;
   }
 };
@@ -155,6 +158,7 @@ export const handleFunctionNode: NodeHandler = ({
       context: Record<string, unknown>
     ) => unknown;
   } catch (error) {
+    logClientError(error);
     return {
       ...prevOutputs,
       status: 'failed',
@@ -230,6 +234,7 @@ export const handleFunctionNode: NodeHandler = ({
 
     return outputs;
   } catch (error) {
+    logClientError(error);
     const serializedError =
       error instanceof Error ? error.message : safeStringify(error ?? 'Unknown error');
     return {

@@ -28,6 +28,8 @@ import { cn } from '@/shared/utils';
 
 import { validateKangurLessonPageDraft } from './content-creator-insights';
 import { useLessonContentEditorContext } from './context/LessonContentEditorContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 type RequestStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 const KANGUR_LESSON_NARRATION_PANEL_CONTEXT_ROOT_IDS = [
@@ -43,7 +45,8 @@ const formatDateTime = (value: string | null): string | null => {
       dateStyle: 'medium',
       timeStyle: 'short',
     }).format(new Date(value));
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return value;
   }
 };
@@ -337,6 +340,7 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
       }
       setStatus('ready');
     } catch (error) {
+      logClientError(error);
       setStatus('error');
       setErrorMessage(
         error instanceof Error ? error.message : 'Failed to prepare lesson narration preview.'

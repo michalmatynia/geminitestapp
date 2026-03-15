@@ -27,6 +27,8 @@ import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/shared/contracts/kangur-knowledge-
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { getSystemLogMetrics, listSystemLogs } from '@/shared/lib/observability/system-logger';
 import { SYSTEM_LOG_SLOW_REQUEST_THRESHOLD_MS } from '@/shared/lib/observability/workers/system-log-alerts/config';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 type AnalyticsEventMongoDoc = {
   _id?: { toString(): string } | string;
   ts?: Date | string;
@@ -417,7 +419,8 @@ const loadKangurPerformanceBaseline = async (): Promise<KangurPerformanceBaselin
         ? parsed.bundleRisk?.totalLines ?? null
         : null,
     };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };

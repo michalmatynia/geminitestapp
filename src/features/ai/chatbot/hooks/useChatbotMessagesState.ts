@@ -66,6 +66,7 @@ export function useChatbotMessagesState(sessionId: string | null): UseChatbotMes
         setMessages((prev: ChatMessage[]): ChatMessage[] => [...prev, assistantMessage]);
       }
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'useChatbotMessagesState.sendMessage', sessionId },
       });

@@ -1,4 +1,6 @@
 import type { AiPathsCollectionMap as ExportWarehouseByInventoryMap } from '@/shared/lib/ai-paths/core/utils/collection-mapping';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const EXPORT_WAREHOUSE_SKIP_VALUE = '__skip__';
 
@@ -35,7 +37,8 @@ export const parseExportWarehouseByInventoryMap = (
       result[normalizedInventoryId] = normalizedWarehouse;
     });
     return result;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return {};
   }
 };

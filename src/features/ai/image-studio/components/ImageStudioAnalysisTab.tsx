@@ -69,6 +69,8 @@ import {
   resolveClientProcessingImageSrc,
 } from './generation-toolbar/GenerationToolbarImageUtils';
 import { useRightSidebarContext } from './RightSidebarContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 
 
@@ -555,6 +557,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
         fallbackApplied: nextResult.fallbackApplied,
       });
     } catch (error) {
+      logClientError(error);
       if (error instanceof DOMException && error.name === 'AbortError') {
         toast('Image analysis canceled.', { variant: 'info' });
         return;
@@ -638,6 +641,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
         setLayoutPresetDraftName(saved.savedPreset.name);
         toast(`Saved preset "${saved.savedPreset.name}".`, { variant: 'success' });
       } catch (error) {
+        logClientError(error);
         toast(error instanceof Error ? error.message : 'Failed to save custom preset.', {
           variant: 'error',
         });

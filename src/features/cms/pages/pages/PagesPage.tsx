@@ -81,6 +81,7 @@ export default function PagesPage(): React.ReactNode {
     try {
       await deletePage.mutateAsync(pageToDelete.id);
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'PagesPage.handleConfirmDelete', pageId: pageToDelete.id },
       });

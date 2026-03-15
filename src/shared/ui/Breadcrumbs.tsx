@@ -94,6 +94,7 @@ export function Breadcrumbs({
     >
       {items.map((item, index) => {
         const isLast = index === items.length - 1;
+        const ariaCurrent = isLast ? 'page' : undefined;
 
         return (
           <React.Fragment key={item.label + (item.href ?? '') + index}>
@@ -102,6 +103,7 @@ export function Breadcrumbs({
                 href={item.href}
                 className='transition-colors hover:text-gray-200 whitespace-nowrap text-gray-400'
                 onClick={item.onClick}
+                aria-current={ariaCurrent}
               >
                 {item.label}
               </Link>
@@ -110,16 +112,24 @@ export function Breadcrumbs({
                 type='button'
                 onClick={item.onClick}
                 aria-label={item.label}
+                aria-current={ariaCurrent}
                 className='transition-colors hover:text-gray-200 whitespace-nowrap text-gray-400'
               >
                 {item.label}
               </button>
             ) : (
-              <span className={cn('whitespace-nowrap', isLast ? 'text-gray-300' : 'text-gray-400')}>
+              <span
+                className={cn('whitespace-nowrap', isLast ? 'text-gray-300' : 'text-gray-400')}
+                aria-current={ariaCurrent}
+              >
                 {item.label}
               </span>
             )}
-            {!isLast && <span className='mx-0.5 text-gray-600 shrink-0'>/</span>}
+            {!isLast && (
+              <span className='mx-0.5 text-gray-600 shrink-0' aria-hidden='true'>
+                /
+              </span>
+            )}
           </React.Fragment>
         );
       })}

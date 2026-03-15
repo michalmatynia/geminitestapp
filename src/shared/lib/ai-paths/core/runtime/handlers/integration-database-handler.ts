@@ -20,6 +20,8 @@ import { handleDatabaseStandardOperation } from './integration-database-operatio
 import { prepareDatabaseTemplateContext } from './integration-database-template-context';
 import { getCachedSchema } from './integration-schema-handler';
 import { DEFAULT_DB_QUERY } from '../../constants';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 
 const WRITE_ACTION_CATEGORIES = new Set<string>(['create', 'update', 'delete']);
@@ -335,6 +337,7 @@ export const handleDatabase: NodeHandler = async ({
     }
     return operationResult;
   } catch (error) {
+    logClientError(error);
     if (error instanceof ParameterInferenceGateError) {
       throw error;
     }

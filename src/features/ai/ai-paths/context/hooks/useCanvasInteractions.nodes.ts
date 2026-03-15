@@ -23,6 +23,8 @@ import {
 } from './useCanvasInteractions.helpers';
 
 import type { GraphMutationMeta } from '../GraphContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 
 export interface UseCanvasInteractionsNodesValue {
@@ -647,6 +649,7 @@ export function useCanvasInteractionsNodes({
       try {
         payload = JSON.parse(raw) as NodeDefinition;
       } catch (_error) {
+        logClientError(_error);
         toast('Failed to add node. Invalid data.', { variant: 'error' });
         return;
       }

@@ -9,6 +9,8 @@ import {
   type AlertEvidenceDisplay,
   type AlertEvidenceSampleDisplay,
 } from '../types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const readContextString = (log: SystemLogRecord, key: string): string | null => {
   const value = log.context?.[key];
@@ -42,7 +44,8 @@ export const toDisplayValue = (value: unknown): string | null => {
   if (value && typeof value === 'object') {
     try {
       return JSON.stringify(value);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return null;
     }
   }

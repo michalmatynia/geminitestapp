@@ -5,7 +5,8 @@ import type {
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
-import { dbApi, ApiResponse } from '@/shared/lib/ai-paths/api';
+import type { HttpResult } from '@/shared/contracts/http';
+import { dbApi } from '@/shared/lib/ai-paths/api';
 
 import {
   createWriteTemplateGuardrailOutput,
@@ -96,7 +97,7 @@ export async function handleDatabaseMongoDeleteAction({
       aiPrompt,
     };
   }
-  const deleteResult: ApiResponse<unknown> = await dbApi.action({
+  const deleteResult: HttpResult<unknown> = await dbApi.action({
     ...(queryPayload['provider']
       ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' }
       : {}),

@@ -12,6 +12,8 @@ import {
 } from './product-ai-graph-model-payload';
 import { getProductAiJobRepository } from './product-ai-job-repository';
 import { productService } from './productService';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type ProductSummary = {
   name_en: string | null;
@@ -148,7 +150,8 @@ export async function enqueueProductAiJob(
         payloadSummary: type === 'graph_model' ? graphModelPrepared?.summary : undefined,
       },
     });
-  } catch {
+  } catch (error) {
+    logClientError(error);
     // Fallback to console if logging fails
     void logSystemEvent({
       level: 'info',
@@ -180,7 +183,8 @@ export async function enqueueProductAiJob(
           jobId: reusable.id,
           context: { type, cacheKey, payloadHash, status: reusable.status },
         });
-      } catch {
+      } catch (error) {
+        logClientError(error);
         void logSystemEvent({
           level: 'info',
           source: LOG_SOURCE,
@@ -201,7 +205,8 @@ export async function enqueueProductAiJob(
       jobId: jobRecord.id,
       context: { type },
     });
-  } catch {
+  } catch (error) {
+    logClientError(error);
     void logSystemEvent({
       level: 'info',
       source: LOG_SOURCE,
@@ -233,6 +238,7 @@ export async function getProductAiJobs(
           const product = await productService.getProductById(id);
           return { id, product: isObjectRecord(product) ? product : null };
         } catch (error: unknown) {
+          logClientError(error);
           try {
             await logSystemError({
               message: '[product-ai-service] Failed to fetch product in getProductAiJobs',
@@ -241,6 +247,7 @@ export async function getProductAiJobs(
               context: { action: 'getProductAiJobs', productId: id },
             });
           } catch (logError) {
+            logClientError(logError);
             void logSystemEvent({
               level: 'error',
               source: LOG_SOURCE,
@@ -286,6 +293,7 @@ export async function getProductAiJob(
       const result = await productService.getProductById(job.productId);
       product = isObjectRecord(result) ? result : null;
     } catch (error: unknown) {
+      logClientError(error);
       try {
         await logSystemError({
           message: '[product-ai-service] Failed to fetch product in getProductAiJob',
@@ -294,6 +302,7 @@ export async function getProductAiJob(
           context: { action: 'getProductAiJob', productId: job.productId, jobId: job.id },
         });
       } catch (logError) {
+        logClientError(logError);
         void logSystemEvent({
           level: 'error',
           source: LOG_SOURCE,

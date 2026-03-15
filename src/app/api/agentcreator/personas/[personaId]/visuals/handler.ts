@@ -7,6 +7,8 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { normalizeAgentPersonas } from '@/shared/lib/agent-personas';
 import { readStoredSettingValue, upsertStoredSettingValue } from '@/shared/lib/ai-brain/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type AgentPersonaMood = NonNullable<AgentPersona['moods']>[number];
 
@@ -88,7 +90,9 @@ export async function GET_handler(
 
     try {
       await upsertStoredSettingValue(AGENT_PERSONA_SETTINGS_KEY, JSON.stringify(nextPersonas));
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // Keep the visuals response available even if the lazy backfill write fails.
     }
   }

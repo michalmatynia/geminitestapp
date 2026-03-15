@@ -48,7 +48,7 @@ import { validateFormData } from '@/shared/validations/form-validation';
 
 import {
   TriggerButtonListManager,
-  type AiTriggerButtonRecord,
+  type AiTriggerButtonRow,
 } from '../components/TriggerButtonListManager';
 
 type TriggerButtonDraft = AiTriggerButtonCreatePayload & { id?: string };
@@ -94,10 +94,10 @@ const DISPLAY_OPTIONS: Array<{ value: string; label: string }> = [
 ];
 
 const toDisplayMode = (
-  record: Pick<AiTriggerButtonRecord, 'display'> | null | undefined
+  record: Pick<AiTriggerButtonRow, 'display'> | null | undefined
 ): 'icon' | 'icon_label' => (record?.display.showLabel === false ? 'icon' : 'icon_label');
 
-const normalizeDraft = (record?: AiTriggerButtonRecord | null): TriggerButtonDraft => ({
+const normalizeDraft = (record?: AiTriggerButtonRow | null): TriggerButtonDraft => ({
   ...(record?.id ? { id: record.id } : {}),
   name: record?.name ?? '',
   iconId: record?.iconId ?? null,
@@ -135,7 +135,9 @@ const extractTriggerButtonPathUsageMap = (
           indexNameById.set(id, name);
         });
       }
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Ignore malformed index; config scan below remains source of truth.
     }
   }
@@ -222,12 +224,12 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   const [editorOpen, setEditorOpen] = useState(false);
   const [iconLibraryOpen, setIconLibraryOpen] = useState(false);
   const [draft, setDraft] = useState<TriggerButtonDraft>(() => normalizeDraft(null));
-  const [buttonToDelete, setButtonToDelete] = useState<AiTriggerButtonRecord | null>(null);
+  const [buttonToDelete, setButtonToDelete] = useState<AiTriggerButtonRow | null>(null);
   const aiPathsSettingsQuery = useAiPathsSettingsQuery();
 
-  const triggerButtonsQuery = createListQueryV2<AiTriggerButtonRecord>({
+  const triggerButtonsQuery = createListQueryV2<AiTriggerButtonRow>({
     queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
-    queryFn: async (): Promise<AiTriggerButtonRecord[]> => {
+    queryFn: async (): Promise<AiTriggerButtonRow[]> => {
       const result = await triggerButtonsApi.list({ entityType: 'custom' });
       if (!result.ok) throw new Error(result.error);
       return Array.isArray(result.data) ? result.data : [];
@@ -260,11 +262,11 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   }, [triggerButtonsQuery.error, toast]);
 
   const createMutation = createCreateMutationV2<
-    AiTriggerButtonRecord,
+    AiTriggerButtonRow,
     AiTriggerButtonCreatePayload
   >({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('trigger-buttons.create'),
-    mutationFn: async (payload: AiTriggerButtonCreatePayload): Promise<AiTriggerButtonRecord> => {
+    mutationFn: async (payload: AiTriggerButtonCreatePayload): Promise<AiTriggerButtonRow> => {
       const result = await triggerButtonsApi.create(payload);
       if (!result.ok) throw new Error(result.error);
       return result.data;
@@ -292,7 +294,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   });
 
   const updateMutation = createUpdateMutationV2<
-    AiTriggerButtonRecord,
+    AiTriggerButtonRow,
     {
       id: string;
       input: AiTriggerButtonCreatePayload;
@@ -305,7 +307,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     }: {
       id: string;
       input: AiTriggerButtonCreatePayload;
-    }): Promise<AiTriggerButtonRecord> => {
+    }): Promise<AiTriggerButtonRow> => {
       const result = await triggerButtonsApi.update(id, {
         name: input.name,
         iconId: input.iconId,
@@ -368,9 +370,9 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     },
   });
 
-  const reorderMutation = createUpdateMutationV2<AiTriggerButtonRecord[], string[]>({
+  const reorderMutation = createUpdateMutationV2<AiTriggerButtonRow[], string[]>({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('trigger-buttons.reorder'),
-    mutationFn: async (orderedIds: string[]): Promise<AiTriggerButtonRecord[]> => {
+    mutationFn: async (orderedIds: string[]): Promise<AiTriggerButtonRow[]> => {
       const result = await triggerButtonsApi.reorder({ orderedIds });
       if (!result.ok) throw new Error(result.error);
       return Array.isArray(result.data) ? result.data : [];
@@ -440,7 +442,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     setEditorOpen(true);
   };
 
-  const handleEdit = useCallback((record: AiTriggerButtonRecord): void => {
+  const handleEdit = useCallback((record: AiTriggerButtonRow): void => {
     setDraft(normalizeDraft(record));
     setIconLibraryOpen(false);
     setEditorOpen(true);
@@ -455,7 +457,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   const handleDeleteRequest = useCallback(
     (id: string): void => {
       const list = triggerButtonsQuery.data ?? [];
-      const btn = list.find((b: AiTriggerButtonRecord) => b.id === id);
+      const btn = list.find((b: AiTriggerButtonRow) => b.id === id);
       if (btn) setButtonToDelete(btn);
     },
     [triggerButtonsQuery.data]
@@ -474,7 +476,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     [reorderMutation]
   );
   const handleToggleVisibility = useCallback(
-    (record: AiTriggerButtonRecord, enabled: boolean): void => {
+    (record: AiTriggerButtonRow, enabled: boolean): void => {
       updateMutation.mutate({
         id: record.id,
         input: {
@@ -736,10 +738,10 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   };
 
   const saving = createMutation.isPending || updateMutation.isPending;
-  const rows: AiTriggerButtonRecord[] = useMemo((): AiTriggerButtonRecord[] => {
+  const rows: AiTriggerButtonRow[] = useMemo((): AiTriggerButtonRow[] => {
     const list = triggerButtonsQuery.data ?? [];
     return list.map(
-      (btn: AiTriggerButtonRecord): AiTriggerButtonRecord =>
+      (btn: AiTriggerButtonRow): AiTriggerButtonRow =>
         ({
           ...btn,
           usedPaths: (triggerButtonPathUsageMap.get(btn.id) ?? []).map(
@@ -748,7 +750,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
               name: entry.name,
             })
           ),
-        }) as AiTriggerButtonRecord
+        }) as AiTriggerButtonRow
     );
   }, [triggerButtonsQuery.data, triggerButtonPathUsageMap]);
 
@@ -787,7 +789,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
 
       <TriggerButtonListManager
         data={rows}
-        onEdit={(record: AiTriggerButtonRecord): void => {
+        onEdit={(record: AiTriggerButtonRow): void => {
           handleEdit(record);
         }}
         onDelete={(id: string): void => {

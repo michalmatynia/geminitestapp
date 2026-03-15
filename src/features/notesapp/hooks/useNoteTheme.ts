@@ -96,6 +96,7 @@ export function useNoteTheme({
           await fetchFolderTree();
         }
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'useNoteTheme',
@@ -123,6 +124,7 @@ export function useNoteTheme({
           setNotebook(updated);
         }
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'useNoteTheme',

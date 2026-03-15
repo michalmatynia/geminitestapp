@@ -16,7 +16,8 @@ const successfulRepairShadowByPathId = new Map<
 const parseJsonSafe = (value: string): unknown | null => {
   try {
     return JSON.parse(value) as unknown;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

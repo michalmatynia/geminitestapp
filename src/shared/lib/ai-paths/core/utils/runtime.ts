@@ -1,3 +1,4 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 export const toNumber = (value: string, fallback: number): number => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -10,7 +11,8 @@ export function safeStringify(value: unknown): string {
   if (typeof value === 'object') {
     try {
       return JSON.stringify(value);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return '[Complex Object]';
     }
   }
@@ -44,7 +46,8 @@ const normalizeForJsonClone = (value: unknown): unknown => {
 export const cloneJsonSafe = <T>(value: T): T | null => {
   try {
     return normalizeForJsonClone(value) as T;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -52,7 +55,8 @@ export const cloneJsonSafe = <T>(value: T): T | null => {
 export const safeJsonStringify = (value: unknown): string => {
   try {
     return JSON.stringify(normalizeForJsonClone(value)) ?? '';
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return '';
   }
 };
@@ -114,7 +118,8 @@ export const stableStringify = (value: unknown): string => {
     const normalized = normalizeForHash(value, new WeakSet<object>());
     if (normalized === undefined) return '';
     return JSON.stringify(normalized) ?? '';
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return '';
   }
 };
@@ -138,7 +143,8 @@ export const formatRuntimeValue = (value: unknown): string => {
     const json = JSON.stringify(value, null, 2);
     if (json.length > 400) return `${json.slice(0, 400)}…`;
     return json;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return '[Complex Object]';
   }
 };
@@ -153,7 +159,8 @@ export const safeParseJson = <T = unknown>(value: string): { value: T; error: st
   if (!value.trim()) return { value: null as T, error: '' };
   try {
     return { value: JSON.parse(value) as T, error: '' };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return { value: null as T, error: 'Invalid JSON' };
   }
 };
@@ -164,7 +171,8 @@ export const cloneValue = <T>(value: T): T => {
   }
   try {
     return JSON.parse(JSON.stringify(value)) as T;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return value;
   }
 };
@@ -173,7 +181,8 @@ export const parseJsonSafe = (value: string): unknown => {
   if (!value.trim()) return undefined;
   try {
     return JSON.parse(value) as unknown;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return undefined;
   }
 };

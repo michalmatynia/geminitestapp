@@ -65,6 +65,7 @@ export function useCurrencyForm({ currency }: UseCurrencyFormProps): UseCurrency
 
       toast('Currency saved.', { variant: 'success' });
     } catch (err) {
+      logClientError(err);
       logClientError(err, {
         context: { source: 'CurrencyModal', action: 'saveCurrency', currencyId: currency?.id },
       });

@@ -53,6 +53,7 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
       log: logContent,
     };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await ErrorSystem.captureException(error, {
       service: 'database-backup-mongo',
       databaseName,

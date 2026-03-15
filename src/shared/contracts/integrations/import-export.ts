@@ -11,7 +11,6 @@ import {
 import {
   integrationTemplateMappingSchema as sharedIntegrationTemplateMappingSchema,
   importTemplateParameterImportSchema as sharedImportTemplateParameterImportSchema,
-  type ImportTemplateParameterImport as IntegrationTemplateParameterImport,
   type IntegrationTemplateMapping as SharedIntegrationTemplateMapping,
 } from './templates';
 
@@ -63,12 +62,8 @@ export const importExportTemplateMappingSchema = sharedIntegrationTemplateMappin
 
 export type ImportExportTemplateMappingDto = SharedIntegrationTemplateMapping;
 export type ImportExportTemplateMapping = ImportExportTemplateMappingDto;
-export type TemplateMapping = ImportExportTemplateMapping;
 
 export const importTemplateParameterImportSchema = sharedImportTemplateParameterImportSchema;
-
-export type ImportTemplateParameterImportDto = IntegrationTemplateParameterImport;
-export type ImportTemplateParameterImport = ImportTemplateParameterImportDto;
 
 export const importExportTemplateSchema = namedDtoSchema.extend({
   mappings: z.array(importExportTemplateMappingSchema),
@@ -78,7 +73,8 @@ export const importExportTemplateSchema = namedDtoSchema.extend({
 
 export type ImportExportTemplateDto = z.infer<typeof importExportTemplateSchema>;
 export type ImportExportTemplate = ImportExportTemplateDto;
-export type Template = ImportExportTemplate;
+
+export type { ImportTemplateParameterImport, Template, TemplateMapping } from './templates';
 
 export const createImportExportTemplateSchema = importExportTemplateSchema.omit({
   id: true,

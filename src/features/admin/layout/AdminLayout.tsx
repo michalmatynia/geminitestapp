@@ -43,14 +43,18 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
     if (typeof window === 'undefined') return;
     try {
       window.localStorage.setItem(ADMIN_MENU_COLLAPSED_STORAGE_KEY, String(collapsed));
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // ignore storage failures
     }
     try {
       setClientCookie(ADMIN_MENU_COLLAPSED_COOKIE_KEY, collapsed ? '1' : '0', {
         maxAgeSeconds: 31536000,
       });
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // ignore cookie failures
     }
   }, []);
@@ -61,6 +65,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
       try {
         await updatePreferencesMutation.mutateAsync({ adminMenuCollapsed: collapsed });
       } catch (error) {
+        logClientError(error);
         logClientError(error, {
           context: { source: 'AdminLayout', action: 'persistMenuCollapsed' },
         });
@@ -78,7 +83,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
       preferredMenuCollapsedRef.current = storedCollapsed;
       didUserToggleRef.current = true;
       setIsMenuCollapsed(storedCollapsed);
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // ignore storage failures
     }
   }, [setIsMenuCollapsed]);

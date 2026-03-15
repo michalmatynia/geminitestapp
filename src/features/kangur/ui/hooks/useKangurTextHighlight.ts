@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type KangurTextHighlightResult = {
   activateSelectionGlow: () => boolean;
@@ -87,14 +89,18 @@ const clearBrowserSelection = (
 
   try {
     selection.removeAllRanges();
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Some browsers can report a stale selection while tearing it down.
   }
 
   if (typeof selection.empty === 'function') {
     try {
       selection.empty();
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Safari may expose Selection.empty but reject it for transient selections.
     }
   }
@@ -102,7 +108,9 @@ const clearBrowserSelection = (
   if (selection.rangeCount > 0) {
     try {
       selection.removeAllRanges();
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Ignore follow-up cleanup failures when the selection is already detached.
     }
   }
@@ -112,7 +120,9 @@ const rangeIntersectsTextNode = (range: Range, node: Text): boolean => {
   if (typeof range.intersectsNode === 'function') {
     try {
       return range.intersectsNode(node);
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Fall through to the boundary-point fallback when the browser rejects the node.
     }
   }

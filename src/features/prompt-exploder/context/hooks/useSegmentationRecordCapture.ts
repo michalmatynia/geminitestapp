@@ -12,6 +12,8 @@ import {
 } from '../../segmentation-library';
 
 import type { DocumentState } from '../DocumentContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const useSegmentationRecordCapture = ({
   activeValidationRuleStackId,
@@ -91,6 +93,7 @@ export const useSegmentationRecordCapture = ({
         ...(persisted ? { recordId: nextRecord.id } : {}),
       };
     } catch (error) {
+      logClientError(error);
       toast(
         error instanceof Error
           ? `Failed to capture segmentation context: ${error.message}`

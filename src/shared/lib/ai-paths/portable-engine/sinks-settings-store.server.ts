@@ -2,6 +2,8 @@ import 'server-only';
 
 import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const readSettingsRawFromMongo = async (key: string): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
@@ -16,7 +18,8 @@ const readSettingsRawFromMongo = async (key: string): Promise<string | null> => 
         { projection: { value: 1 } }
       );
     return typeof record?.value === 'string' ? record.value : null;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };
@@ -44,7 +47,8 @@ const writeSettingsRawToMongo = async (key: string, raw: string): Promise<boolea
       { upsert: true }
     );
     return true;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return false;
   }
 };

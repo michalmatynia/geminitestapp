@@ -20,6 +20,8 @@ import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
 import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type ExecOutputishError = {
   stdout?: string;
@@ -110,6 +112,7 @@ export async function postDatabasesRestoreHandler(
     stdout = result.stdout;
     stderr = result.stderr;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const err = error as ExecOutputishError;
     stdout = err.stdout ?? err.cause?.stdout ?? '';
     stderr = err.stderr ?? err.cause?.stderr ?? '';
@@ -134,8 +137,9 @@ export async function postDatabasesRestoreHandler(
     const logFile = await fs.readFile(restoreLogPath, 'utf-8');
     logData = JSON.parse(logFile) as Record<string, { date: string; logFile: string }>;
   } catch (error) {
-    const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
-    void ErrorSystem.logWarning('Failed to load restore-log.json', { error, stage, backupName });
+    void ErrorSystem.captureException(error);
+    const { ErrorSystem: SystemLogger } = await import('@/shared/lib/observability/system-logger');
+    void SystemLogger.logWarning('Failed to load restore-log.json', { error, stage, backupName });
   }
 
   logData[backupName] = {

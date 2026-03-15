@@ -4,6 +4,8 @@ import type {
   CaseResolverTreeDragPayload,
 } from '@/shared/contracts/case-resolver';
 import { DRAG_KEYS, getFirstDragValue } from '@/shared/utils/drag-drop';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const CASE_RESOLVER_DROP_DOCUMENT_TO_CANVAS_EVENT = 'case_resolver:drop-document-to-canvas';
 export const CASE_RESOLVER_SHOW_DOCUMENT_IN_CANVAS_EVENT = 'case_resolver:show-document-in-canvas';
@@ -52,7 +54,8 @@ export const parseCaseResolverTreeDropPayload = (
     }
 
     return null;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

@@ -10,6 +10,8 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { getCmsDomainSettings } from './cms-domain-settings';
 
 import type { NextRequest } from 'next/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type CmsDomainRecord = {
   id: string;
@@ -45,7 +47,8 @@ const getFallbackDomain = (): string => {
     process.env['NEXT_PUBLIC_APP_URL'] || process.env['NEXTAUTH_URL'] || 'http://localhost';
   try {
     return new URL(url).hostname.toLowerCase();
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return 'default';
   }
 };
@@ -64,7 +67,8 @@ const normalizeHost = (hostHeader: string | null): string => {
   if (!raw) return getFallbackDomain();
   try {
     return new URL(`http://${raw}`).hostname.toLowerCase();
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return raw.toLowerCase();
   }
 };

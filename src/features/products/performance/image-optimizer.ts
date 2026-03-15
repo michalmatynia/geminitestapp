@@ -8,6 +8,8 @@ import type {
   OptimizedImageResult,
 } from '@/shared/contracts/files';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 
 export type { ImageFormat, ImageSize, ImageSizeConfig, OptimizationOptions, OptimizedImageResult };
@@ -127,6 +129,7 @@ export class ImageOptimizer {
             fileSize: buffer.length,
           });
         } catch (error) {
+          logClientError(error);
           void ErrorSystem.logWarning(`Failed to optimize image for ${format}/${sizeName}`, {
             service: 'image-optimizer',
             format,

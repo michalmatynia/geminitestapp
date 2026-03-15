@@ -111,6 +111,7 @@ const unregisterRepeatScheduler = async (): Promise<void> => {
       schedulerRepeatJobs.map((repeatJob) => bullQueue.removeRepeatableByKey(repeatJob.key))
     );
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await ErrorSystem.captureException(error, {
       service: 'tradera-relist-scheduler-queue',
       action: 'unregisterRepeat',
@@ -125,6 +126,7 @@ const stopWorkerIfRunning = async (): Promise<void> => {
   try {
     await queue.stopWorker();
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await ErrorSystem.captureException(error, {
       service: 'tradera-relist-scheduler-queue',
       action: 'stopWorker',
@@ -187,6 +189,7 @@ export const startTraderaRelistSchedulerQueue = (): void => {
       );
       queueState.repeatRegistered = true;
     } catch (error) {
+      void ErrorSystem.captureException(error);
       queueState.repeatRegistered = false;
       await ErrorSystem.captureException(error, {
         service: 'tradera-relist-scheduler-queue',

@@ -1,4 +1,6 @@
 import 'server-only';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export type PortablePathAuditSinkAutoRemediationNotificationChannel = 'webhook' | 'email';
 
@@ -145,7 +147,8 @@ const parsePortablePathAuditSinkAutoRemediationDeadLetterEnvelope = (
       envelope.entries,
       maxEntries
     );
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return [];
   }
 };
@@ -161,7 +164,8 @@ const stringifyPortablePathAuditSinkAutoRemediationDeadLetterEnvelope = (
       entries: normalizePortablePathAuditSinkAutoRemediationDeadLetterEntries(entries, maxEntries),
     };
     return JSON.stringify(envelope);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };

@@ -9,6 +9,8 @@ import type { ChatMessage } from '@/shared/contracts/chatbot';
 import type { CustomCssAiConfig } from '@/shared/contracts/cms';
 import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
 import { ApiError } from '@/shared/lib/api-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 
 interface InspectorAiToastOptions {
@@ -175,7 +177,9 @@ async function streamInspectorAiResponse({
   if (doneSignal) {
     try {
       await reader.cancel();
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // ignore
     }
   }
@@ -273,6 +277,7 @@ export function useInspectorAiGeneration({
         toast(`CSS generated from ${target.provider}.`, { variant: 'success' });
       }
     } catch (error) {
+      logClientError(error);
       if ((error as Error)?.name === 'AbortError') {
         setCssAiError('Generation cancelled.');
         toast('Generation cancelled.', { variant: 'info' });
@@ -383,6 +388,7 @@ export function useInspectorAiGeneration({
       setContentAiOutput(JSON.stringify(parsed, null, 2));
       toast(`AI output ready (${target.provider}).`, { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       if ((error as Error)?.name === 'AbortError') {
         setContentAiError('Generation cancelled.');
         toast('Generation cancelled.', { variant: 'info' });

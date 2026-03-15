@@ -15,6 +15,8 @@ import {
   type CaseResolverNodeMeta,
 } from '@/shared/contracts/case-resolver';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type CaseResolverPlainTextTransformInput = {
   nodeId: string;
@@ -73,7 +75,8 @@ const decodeHtmlEntity = (value: string): string => {
     const textarea = document.createElement('textarea');
     textarea.innerHTML = basicDecoded;
     return decodeBasicHtmlEntities(textarea.value);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return basicDecoded;
   }
 };
@@ -500,6 +503,7 @@ export const compileCaseResolverPrompt = (
       warnings: [],
     };
   } catch (error) {
+    logClientError(error);
     void logSystemEvent({
       level: 'error',
       message: 'Failed to compile Case Resolver prompt',

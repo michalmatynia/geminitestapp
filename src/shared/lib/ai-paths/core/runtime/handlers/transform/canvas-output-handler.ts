@@ -5,6 +5,8 @@ import type {
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
 import { coerceInput, getValueAtMappingPath } from '@/shared/lib/ai-paths/core/utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 // ---------------------------------------------------------------------------
 // Helpers (mirrors bounds-normalizer-handler utilities)
@@ -125,6 +127,7 @@ export const handleCanvasOutput: NodeHandler = ({
       [outputKey]: result,
     };
   } catch (error) {
+    logClientError(error);
     reportAiPathsError(
       error,
       { service: 'ai-paths-runtime', nodeId: node.id, nodeType: node.type },

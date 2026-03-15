@@ -20,6 +20,8 @@ import {
 } from './masking-context-utils';
 import { useProjectsState } from './ProjectsContext';
 import { useSlotsState } from './SlotsContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -305,6 +307,7 @@ export function MaskingProvider({ children }: { children: React.ReactNode }): Re
               { variant: 'success' }
             );
           } catch (err: unknown) {
+            logClientError(err);
             toast(err instanceof Error ? err.message : 'Mask generation failed.', {
               variant: 'error',
             });

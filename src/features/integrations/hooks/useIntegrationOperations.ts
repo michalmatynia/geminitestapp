@@ -12,6 +12,8 @@ import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateListingBadges } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const listingBadgesQueryKey = QUERY_KEYS.integrations.productListingsBadges();
 
@@ -75,7 +77,8 @@ export function useIntegrationOperations(productIds: readonly string[] = []): {
             cache: 'no-store',
           }
         );
-      } catch {
+      } catch (error) {
+        logClientError(error);
         return {};
       }
     },

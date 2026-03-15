@@ -3,6 +3,8 @@ import sharp from 'sharp';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { IMAGE_STUDIO_ANALYSIS_ERROR_CODES } from '@/features/ai/image-studio/contracts/analysis';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const {
   analyzeImageByAutoScalerLayoutMock,
@@ -362,6 +364,7 @@ describe('image-studio analysis handler', () => {
         { slotId: 'missing-slot' }
       );
     } catch (error) {
+      void ErrorSystem.captureException(error);
       thrown = error;
     }
 
@@ -388,6 +391,7 @@ describe('image-studio analysis handler', () => {
         { slotId: 'source-slot' }
       );
     } catch (error) {
+      void ErrorSystem.captureException(error);
       thrown = error;
     }
 

@@ -9,6 +9,8 @@ import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { normalizePlaywrightConfig } from '../../playwright/default-config';
 import { coerceInput, parseJsonSafe, renderTemplate } from '../../utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const parseObjectJson = (value: string | undefined, fieldName: string): Record<string, unknown> => {
   if (!value?.trim()) return {};
@@ -183,6 +185,7 @@ export const handlePlaywright: NodeHandler = async ({
     const completedRun = await pollPlaywrightRun(initialRun.runId);
     return mapRunToOutputs(completedRun);
   } catch (error) {
+    logClientError(error);
     reportAiPathsError(
       error,
       { action: 'playwrightRun', nodeId: node.id },

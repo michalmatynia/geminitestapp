@@ -69,6 +69,7 @@ export function useAiPathsTriggerButtonsQuery(): SingleQuery<AiTriggerButtonReco
           logError: false,
         });
       } catch (error) {
+        logClientError(error);
         if (isAbortLikeError(error)) {
           throw error;
         }

@@ -36,6 +36,8 @@ import {
   invalidateProductsAndCounts,
   invalidateProductsAndDetail,
 } from './productCache';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const PRODUCT_UPDATE_FORM_TIMEOUT_MS = 60_000;
 const PRODUCT_UPDATE_QUEUE_SOURCE = buildQueuedProductOfflineMutationSource('update');
@@ -94,7 +96,8 @@ const isValidAdvancedFilterPayload = (payload: string): boolean => {
   try {
     const parsed: unknown = JSON.parse(payload);
     return productAdvancedFilterGroupSchema.safeParse(parsed).success;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return false;
   }
 };
@@ -205,6 +208,7 @@ export function useUpdateProductMutation(): UseMutationResult<
               signal: controller.signal,
             });
           } catch (error) {
+            logClientError(error);
             if (controller.signal.aborted) {
               throw new Error(`Request timeout after ${PRODUCT_UPDATE_FORM_TIMEOUT_MS}ms`, {
                 cause: error,

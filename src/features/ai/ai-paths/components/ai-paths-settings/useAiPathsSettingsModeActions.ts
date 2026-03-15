@@ -23,6 +23,8 @@ import {
   STORAGE_VERSION,
   createDefaultPathConfig,
 } from '@/shared/lib/ai-paths';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type ToastFn = (
   message: string,
@@ -249,6 +251,7 @@ export function useAiPathsSettingsModeActions({
           },
         ]);
       } catch (error) {
+        logClientError(error);
         setHistoryRetentionPasses(previous);
         reportAiPathsError(
           error,
@@ -322,6 +325,7 @@ export function useAiPathsSettingsModeActions({
       try {
         await persistPathSettings(nextPaths, activePathId, nextConfig);
       } catch (error) {
+        logClientError(error);
         reportAiPathsError(
           error,
           { action: 'togglePathLock', pathId: activePathId },
@@ -416,6 +420,7 @@ export function useAiPathsSettingsModeActions({
       try {
         await persistPathSettings(nextPaths, activePathId, nextConfig);
       } catch (error) {
+        logClientError(error);
         reportAiPathsError(
           error,
           { action: 'togglePathActive', pathId: activePathId },

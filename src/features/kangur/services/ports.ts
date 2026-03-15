@@ -1,40 +1,43 @@
 import type {
-  KangurAssignmentCreateInput as SharedKangurAssignmentCreateInput,
-  KangurAssignmentListQuery as SharedKangurAssignmentListQuery,
-  KangurAssignmentSnapshot as SharedKangurAssignmentSnapshot,
-  KangurAssignmentUpdateInput as SharedKangurAssignmentUpdateInput,
-  KangurAuthUser as SharedKangurAuthUser,
-  KangurLearnerActivitySnapshot as SharedKangurLearnerActivitySnapshot,
-  KangurLearnerActivityStatus as SharedKangurLearnerActivityStatus,
-  KangurLearnerActivityUpdateInput as SharedKangurLearnerActivityUpdateInput,
-  KangurLearnerSessionHistory as SharedKangurLearnerSessionHistory,
-  KangurLearnerInteractionHistory as SharedKangurLearnerInteractionHistory,
-  KangurLearnerCreateInput as SharedKangurLearnerCreateInput,
-  KangurLearnerProfile as SharedKangurLearnerProfile,
-  KangurLearnerUpdateInput as SharedKangurLearnerUpdateInput,
+  KangurAssignmentCreateInput,
+  KangurAssignmentListQuery,
+  KangurAssignmentSnapshot,
+  KangurAssignmentUpdateInput,
+  KangurAuthUser,
+  KangurLearnerActivitySnapshot,
+  KangurLearnerActivityStatus,
+  KangurLearnerActivityUpdateInput,
+  KangurLearnerSessionHistory,
+  KangurLearnerInteractionHistory,
+  KangurLearnerCreateInput,
+  KangurLearnerProfile,
+  KangurLearnerUpdateInput,
   KangurProgressState,
-  KangurScore as SharedKangurScore,
-  KangurScoreCreateInput as SharedKangurScoreCreateInput,
+  KangurScore,
+  KangurScoreCreateInput,
 } from '@/shared/contracts/kangur';
 
 export type KangurRole = 'admin' | 'user';
 
-export type KangurLearnerProfile = SharedKangurLearnerProfile;
-export type KangurLearnerCreateInput = SharedKangurLearnerCreateInput;
-export type KangurLearnerUpdateInput = SharedKangurLearnerUpdateInput;
-export type KangurUser = SharedKangurAuthUser;
+export type {
+  KangurAssignmentCreateInput,
+  KangurAssignmentListQuery,
+  KangurAssignmentSnapshot,
+  KangurAssignmentUpdateInput,
+  KangurLearnerActivitySnapshot,
+  KangurLearnerActivityStatus,
+  KangurLearnerActivityUpdateInput,
+  KangurLearnerSessionHistory,
+  KangurLearnerInteractionHistory,
+  KangurLearnerCreateInput,
+  KangurLearnerProfile,
+  KangurLearnerUpdateInput,
+  KangurProgressState,
+  KangurScoreCreateInput,
+} from '@/shared/contracts/kangur';
 
-export type KangurScoreRecord = SharedKangurScore;
-export type KangurScoreCreateInput = SharedKangurScoreCreateInput;
-export type KangurAssignmentSnapshot = SharedKangurAssignmentSnapshot;
-export type KangurAssignmentCreateInput = SharedKangurAssignmentCreateInput;
-export type KangurAssignmentUpdateInput = SharedKangurAssignmentUpdateInput;
-export type KangurAssignmentListQuery = SharedKangurAssignmentListQuery;
-export type KangurLearnerActivitySnapshot = SharedKangurLearnerActivitySnapshot;
-export type KangurLearnerActivityUpdateInput = SharedKangurLearnerActivityUpdateInput;
-export type KangurLearnerActivityStatus = SharedKangurLearnerActivityStatus;
-export type KangurLearnerSessionHistory = SharedKangurLearnerSessionHistory;
-export type KangurLearnerInteractionHistory = SharedKangurLearnerInteractionHistory;
+export type KangurUser = KangurAuthUser;
+export type KangurScoreRecord = KangurScore;
 
 export interface KangurAuthPort {
   me: () => Promise<KangurUser>;

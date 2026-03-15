@@ -15,6 +15,8 @@ import {
   serializeAdvancedFilterPayload,
 } from './advanced-filter-utils';
 import { AdvancedFilterBuilder } from './AdvancedFilterBuilder';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 interface AdvancedFilterModalProps {
   open: boolean;
@@ -82,6 +84,7 @@ export function AdvancedFilterModal(props: AdvancedFilterModalProps): React.JSX.
       toast('Preset saved.', { variant: 'success' });
       setPresetName('');
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save preset.', {
         variant: 'error',
       });

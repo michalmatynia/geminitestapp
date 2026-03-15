@@ -12,6 +12,8 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { optionalCsvQueryStringArray } from '@/shared/lib/api/query-schema';
 import { env } from '@/shared/lib/env';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 type MarketplaceBadgeKey = keyof MarketplaceBadgeEntry;
@@ -77,7 +79,8 @@ export const querySchema = z.object({
 const safeDecode = (value: string): string => {
   try {
     return decodeURIComponent(value);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return value;
   }
 };

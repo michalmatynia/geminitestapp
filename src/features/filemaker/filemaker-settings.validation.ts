@@ -13,6 +13,8 @@ import {
   FILEMAKER_EMAIL_PARSER_RULE_PREFIX,
   FILEMAKER_PHONE_VALIDATION_RULE_PREFIX,
 } from './settings-constants';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const FILEMAKER_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -105,7 +107,8 @@ const compileFilemakerEmailParserRules = (
           regex: new RegExp(pattern, normalizeEmailParserFlags(rule.flags)),
           sequence: toParserRuleSequence(rule.sequence),
         };
-      } catch {
+      } catch (error) {
+        logClientError(error);
         return null;
       }
     })
@@ -127,7 +130,8 @@ const compileFilemakerPhoneValidationRules = (
           regex: new RegExp(pattern, normalizePhoneValidationFlags(rule.flags)),
           sequence: toParserRuleSequence(rule.sequence),
         };
-      } catch {
+      } catch (error) {
+        logClientError(error);
         return null;
       }
     })

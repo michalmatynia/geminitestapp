@@ -60,6 +60,7 @@ export async function uploadAsset3DFile(
 
     return result.data;
   } catch (error) {
+    logClientError(error);
     logClientError(error as Error, {
       context: { source: 'uploadAsset3DFile', filename: file.name },
     });

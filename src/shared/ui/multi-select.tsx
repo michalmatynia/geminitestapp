@@ -50,6 +50,9 @@ export function MultiSelect(props: MultiSelectProps) {
     single = false,
   } = props;
 
+  const fieldId = React.useId().replace(/:/g, '');
+  const labelId = label ? `multi-select-label-${fieldId}` : undefined;
+
   const [query, setQuery] = React.useState('');
 
   const filteredOptions = React.useMemo(() => {
@@ -93,13 +96,14 @@ export function MultiSelect(props: MultiSelectProps) {
 
   return (
     <div className={cn('space-y-2', className)}>
-      {label && <Label>{label}</Label>}
+      {label && <Label id={labelId}>{label}</Label>}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant='outline'
             className='w-full justify-between text-left font-normal'
             disabled={disabled || loading}
+            aria-labelledby={labelId}
           >
             <span className='truncate'>{loading ? 'Loading...' : displayValue}</span>
             <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />

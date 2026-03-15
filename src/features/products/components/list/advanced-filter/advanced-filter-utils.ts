@@ -7,6 +7,8 @@ import {
   type ProductAdvancedFilterOperator,
   type ProductAdvancedFilterPreset,
 } from '@/shared/contracts/products';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type AdvancedFieldKind = 'string' | 'number' | 'date' | 'boolean';
 
@@ -171,7 +173,8 @@ export const parseAdvancedFilterPayload = (
     const parsed: unknown = JSON.parse(payload);
     const validated = productAdvancedFilterGroupSchema.safeParse(parsed);
     return validated.success ? validated.data : null;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

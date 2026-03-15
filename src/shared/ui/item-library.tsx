@@ -11,6 +11,7 @@ import { EmptyState } from './empty-state';
 import { FormModal } from './FormModal';
 import { Input } from './input';
 import { Label } from './label';
+import { LoadingState } from './LoadingState';
 import { ResourceCard } from './ResourceCard';
 import { SectionHeader } from './section-header';
 import { Textarea } from './textarea';
@@ -157,16 +158,17 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
               Manage your collection of {entityName.toLowerCase()}s.
             </p>
           </div>
-          <div className='text-xs text-gray-500'>
+          <div className='text-xs text-gray-500' aria-live='polite'>
             {isLoading ? 'Loading...' : `${items.length} ${entityName.toLowerCase()}(s)`}
           </div>
         </div>
       </div>
 
       {isLoading ? (
-        <div className='rounded-md border border-dashed border-border p-12 text-center text-sm text-gray-400'>
-          Loading {entityName.toLowerCase()}s...
-        </div>
+        <LoadingState
+          message={`Loading ${entityName.toLowerCase()}s...`}
+          className='rounded-md border border-dashed border-border p-12 text-sm text-gray-400'
+        />
       ) : sortedItems.length === 0 ? (
         <EmptyState
           title={`No ${entityName.toLowerCase()}s yet`}
@@ -195,7 +197,7 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
                     onClick={() => openEdit(item)}
                     disabled={isSaving}
                     title='Edit'
-                    aria-label={'Edit'}>
+                    aria-label={`Edit ${item.name || entityName}`}>
                     <Pencil className='size-3.5' />
                   </Button>
                   <Button
@@ -206,7 +208,7 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
                     disabled={isSaving}
                     title='Delete'
                     className='text-destructive hover:text-destructive'
-                    aria-label={'Delete'}>
+                    aria-label={`Delete ${item.name || entityName}`}>
                     <Trash2 className='size-3.5' />
                   </Button>
                 </div>

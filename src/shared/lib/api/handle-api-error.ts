@@ -8,6 +8,8 @@ import type { SystemLogLevelDto } from '@/shared/contracts/observability';
 import { validationError } from '@/shared/errors/app-error';
 import { resolveError } from '@/shared/errors/resolve-error';
 import { logger } from '@/shared/utils/logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 // Local type definitions to avoid importing from features layer
 type LogSystemEventParams = {
@@ -43,6 +45,7 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
 
     await mod.logSystemEvent(params);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     logger.error('Failed to log system event via observability feature', error, {
       service: 'api.error-handler',
       context: params,
@@ -57,6 +60,7 @@ const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<stri
     };
     return mod.getErrorFingerprint(params);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     logger.error('Failed to get error fingerprint via observability feature', error, {
       service: 'api.error-handler',
       context: params,
@@ -117,7 +121,8 @@ const extractRequestDiagnostics = (
       method: request.method,
       ...(queryKeys.length > 0 ? { queryKeys } : {}),
     };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return {
       method: request.method,
     };

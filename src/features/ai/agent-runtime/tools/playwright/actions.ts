@@ -1,4 +1,6 @@
 import type { Page, Locator } from 'playwright';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type LoginCandidate = {
   tag: string;
@@ -64,7 +66,9 @@ export const dismissConsent = async (
         return;
       }
     }
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // ignore consent failures
   }
 };
@@ -193,6 +197,7 @@ export const inferLoginCandidates = async (
     }
     return candidates;
   } catch (error) {
+    logClientError(error);
     if (log) {
       await log('warning', 'Failed to infer login candidates.', {
         error: error instanceof Error ? error.message : String(error),
@@ -231,7 +236,8 @@ export const ensureLoginFormVisible = async (
     // Let's assume the caller handles context capture or we pass the browser context.
     try {
       await page.waitForSelector(passwordSelector, { timeout: 10000 });
-    } catch {
+    } catch (error) {
+      logClientError(error);
       if (log) await log('warning', 'Login form did not appear after clicking trigger.');
     }
     const postClickPassword = await findFirstVisible(page.locator(passwordSelector));
@@ -244,7 +250,8 @@ export const ensureLoginFormVisible = async (
     const loginUrl = `${target.origin}/login`;
     await page.goto(loginUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
     if (log) await log('info', 'Navigated to fallback login URL.', { loginUrl });
-  } catch {
+  } catch (error) {
+    logClientError(error);
     if (log) await log('warning', 'Failed to navigate to fallback login URL.');
   }
   const fallbackPassword = await findFirstVisible(page.locator(passwordSelector));

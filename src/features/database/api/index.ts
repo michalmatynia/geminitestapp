@@ -24,6 +24,8 @@ import type {
 import { type ApiPayloadResult } from '@/shared/contracts/http';
 import type { AppProviderDiagnostics as ProviderDiagnosticsResponse } from '@/shared/contracts/system';
 import { api, ApiError } from '@/shared/lib/api-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -45,6 +47,7 @@ const wrapInApiPayloadResult = async <T>(promise: Promise<T>): Promise<ApiPayloa
     const data = await promise;
     return { ok: true, payload: data };
   } catch (error) {
+    logClientError(error);
     if (error instanceof ApiError) {
       if (error.payload !== undefined && error.payload !== null) {
         return { ok: false, payload: error.payload as T };
@@ -166,6 +169,7 @@ export const getDatabasePreview = async (
 
     return { ok: true, payload };
   } catch (error) {
+    logClientError(error);
     if (error instanceof ApiError) {
       if (error.payload !== undefined && error.payload !== null) {
         return { ok: false, payload: error.payload as DatabasePreviewPayload };

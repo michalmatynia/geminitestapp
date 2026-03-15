@@ -7,6 +7,8 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { mapErrorToAppError } from '@/shared/errors/error-mapper';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const PROD_TOKEN_URL = process.env['ALLEGRO_TOKEN_URL'] ?? 'https://allegro.pl/auth/oauth/token';
 const SANDBOX_TOKEN_URL =
@@ -145,6 +147,7 @@ export async function GET_handler(
 
     return response;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const mapped = mapErrorToAppError(error, 'Allegro authorization failed.');
     const message = mapped?.message ?? 'Allegro OAuth callback failed';
     void logSystemEvent({

@@ -45,6 +45,7 @@ export function SelectionBar<T>(props: SelectionBarProps<T>): React.JSX.Element 
       <ActionMenu
         align='start'
         className='w-56'
+        ariaLabel={`${label} actions`}
         trigger={
           <div className='flex items-center gap-2'>
             <CheckSquare className='h-3.5 w-3.5' />
@@ -87,6 +88,7 @@ export function SelectionBar<T>(props: SelectionBarProps<T>): React.JSX.Element 
         <ActionMenu
           align='start'
           className='w-56'
+          ariaLabel='Batch actions'
           disabled={!hasSelection}
           trigger={
             <div className='flex items-center gap-2'>

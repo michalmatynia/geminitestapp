@@ -30,6 +30,8 @@ import {
 } from '../../contracts/upscale';
 
 import type { QueryClient } from '@tanstack/react-query';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type Toast = (
   message: string,
@@ -281,7 +283,8 @@ export const createGenerationToolbarActionHandlers = (
           let uploadBlob: Blob;
           try {
             uploadBlob = await dataUrlToUploadBlob(clientUpscale.dataUrl);
-          } catch {
+          } catch (error) {
+            logClientError(error);
             throw new Error('Failed to prepare client upscaled image for upload.');
           }
 
@@ -306,6 +309,7 @@ export const createGenerationToolbarActionHandlers = (
               .then((raw) => imageStudioUpscaleResponseSchema.parse(raw));
           }, abortController.signal);
         } catch (error) {
+          logClientError(error);
           if (!shouldFallbackToServerUpscale(error)) {
             throw error;
           }
@@ -393,6 +397,7 @@ export const createGenerationToolbarActionHandlers = (
       const createdLabel = response.slot?.name?.trim() || `Upscale ${upscaleLabel}`;
       deps.toast(`Created ${createdLabel} (${modeLabel} upscale).`, { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       if (isUpscaleAbortError(error)) {
         deps.toast('Upscale canceled.', { variant: 'info' });
         return;
@@ -465,7 +470,8 @@ export const createGenerationToolbarActionHandlers = (
           let uploadBlob: Blob;
           try {
             uploadBlob = await dataUrlToUploadBlob(croppedDataUrl);
-          } catch {
+          } catch (error) {
+            logClientError(error);
             throw new Error('Failed to prepare client crop image for upload.');
           }
 
@@ -495,6 +501,7 @@ export const createGenerationToolbarActionHandlers = (
               .then((raw) => imageStudioCropResponseSchema.parse(raw));
           }, abortController.signal);
         } catch (error) {
+          logClientError(error);
           if (!isClientCropCrossOriginError(error)) {
             throw error;
           }
@@ -578,6 +585,7 @@ export const createGenerationToolbarActionHandlers = (
       const modeLabel = effectiveMode === 'client_bbox' ? 'Client' : 'Server';
       deps.toast(`Created ${createdLabel} (${modeLabel} crop).`, { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       if (isCropAbortError(error)) {
         deps.toast('Crop canceled.', { variant: 'info' });
         return;

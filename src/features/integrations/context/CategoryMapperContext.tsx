@@ -266,6 +266,7 @@ export function CategoryMapperProvider({
       const result = await fetchMutation.mutateAsync({ connectionId });
       toast(result.message, { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'BaseCategoryMapper', action: 'fetchFromBase', connectionId },
       });
@@ -331,6 +332,7 @@ export function CategoryMapperProvider({
       toast(result.message, { variant: 'success' });
       setPendingMappings(new Map());
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'BaseCategoryMapper',

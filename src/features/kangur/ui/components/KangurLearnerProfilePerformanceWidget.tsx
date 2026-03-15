@@ -102,7 +102,7 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
                   </span>
                   <div className='flex flex-wrap items-center gap-2'>
                     <span>{item.averageAccuracy}%</span>
-                    <KangurButton asChild size='sm' variant='surface'>
+                    <KangurButton asChild className='w-full sm:w-auto' size='sm' variant='surface'>
                       <Link
                         href={buildKangurOperationPracticeHref(
                           basePath,

@@ -140,6 +140,7 @@ export function ValidatorPatternTree(): React.JSX.Element {
           try {
             await reorderPatternsMutationRef.current.mutateAsync({ updates });
           } catch (error: unknown) {
+            logClientError(error);
             logClientError(error, {
               context: {
                 source: 'ValidatorPatternTree',

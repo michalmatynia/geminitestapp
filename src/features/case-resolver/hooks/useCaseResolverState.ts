@@ -82,6 +82,8 @@ import { useCaseResolverStateViewState } from './useCaseResolverState.view-state
 import { useCaseResolverStateWorkspaceDiagnostics } from './useCaseResolverState.workspace-diagnostics';
 import { useCaseResolverStateWorkspaceHydration } from './useCaseResolverState.workspace-hydration';
 import { useCaseResolverStateWorkspaceMutations } from './useCaseResolverState.workspace-mutations';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const CASE_RESOLVER_TREE_SAVE_TOAST = 'Case Resolver tree changes saved.';
 
@@ -124,7 +126,8 @@ export function useCaseResolverState(): CaseResolverStateValue {
         const decodedResolved = resolveNodeIdReference(decodedCandidate);
         if (decodedResolved) return decodedResolved;
         normalizedRequestedFileId = decodedCandidate;
-      } catch {
+      } catch (error) {
+        logClientError(error);
         break;
       }
     }

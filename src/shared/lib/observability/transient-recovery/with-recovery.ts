@@ -9,6 +9,8 @@ import {
 import { getTransientRecoverySettings } from './settings';
 
 import type { TransientRecoverySettings } from './constants';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type TransientRecoveryOptions = {
   source?: string;
@@ -31,7 +33,9 @@ const logRecoveryFallbackExecuted = async (
       source: source ?? 'transient-recovery',
       context: { error: error instanceof Error ? error.message : String(error) },
     });
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // logging must never interrupt recovery fallback
   }
 };
@@ -103,6 +107,7 @@ export async function withTransientRecovery<T>(
     }
     return await execute();
   } catch (error) {
+    logClientError(error);
     if (options?.fallback && isTransientError(error)) {
       void logRecoveryFallbackExecuted(options?.source, error);
       return (await options.fallback()) as T;

@@ -3,8 +3,10 @@ import React from 'react';
 import { cn } from '@/shared/utils';
 
 import { StatusBadge } from './status-badge';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-export interface LogEntry {
+
+export interface LogListEntry {
   id: string;
   timestamp: string | number | Date;
   level: string;
@@ -14,7 +16,7 @@ export interface LogEntry {
 }
 
 interface LogListProps {
-  logs: LogEntry[];
+  logs: LogListEntry[];
   isLoading?: boolean;
   maxHeight?: string | number;
   className?: string;
@@ -46,14 +48,15 @@ export function LogList({
   const formatTimestamp = (ts: string | number | Date): string => {
     try {
       return new Date(ts).toLocaleTimeString();
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return String(ts);
     }
   };
 
   return (
     <div className={cn('space-y-2 overflow-y-auto pr-1', className)} style={{ maxHeight }}>
-      {logs.map((log) => (
+      {logs.map((log: LogListEntry) => (
         <div
           key={log.id}
           className='flex flex-col gap-1 rounded-md border border-border/30 bg-black/20 p-2 text-[11px] transition-colors hover:bg-black/30'

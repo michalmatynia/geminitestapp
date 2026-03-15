@@ -134,7 +134,8 @@ const toComparableString = (value: unknown): string => {
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   try {
     return JSON.stringify(value);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return String(value);
   }
 };
@@ -169,7 +170,8 @@ const evaluateRuntimeCondition = (
     case 'regex': {
       try {
         return new RegExp(compareText, flags ?? undefined).test(text);
-      } catch {
+      } catch (error) {
+        void ErrorSystem.captureException(error);
         return false;
       }
     }
@@ -324,7 +326,8 @@ const parseAiJson = (value: string): Record<string, unknown> | null => {
     const parsed = JSON.parse(stripped) as unknown;
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
     return parsed as Record<string, unknown>;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };
@@ -838,6 +841,7 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
         }
         issues[fieldName].push(issue);
       } catch (error) {
+        void ErrorSystem.captureException(error);
         void ErrorSystem.logWarning('Runtime validator evaluation failed.', {
           source: 'products.validator-runtime.evaluate',
           patternId: pattern.id,

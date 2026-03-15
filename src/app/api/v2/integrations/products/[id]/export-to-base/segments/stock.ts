@@ -95,6 +95,7 @@ export const resolveWarehouseAndStockMappings = async ({
         stockWarehouseAliases = warehouseAliases;
       }
     } catch (error) {
+      void ErrorSystem.captureException(error);
       logWarehouseWarning(
         '[export-to-base] Failed to fetch inventory warehouses; skipping warehouse validation.',
         {

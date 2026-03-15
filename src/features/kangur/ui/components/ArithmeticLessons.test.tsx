@@ -47,6 +47,13 @@ vi.mock('framer-motion', () => ({
   },
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
+  useKangurAuth: () => ({
+    isAuthenticated: true,
+    user: { actorType: 'learner', ownerUserId: 'parent-1' },
+  }),
+}));
+
 vi.mock('@/features/kangur/ui/components/AddingBallGame', () => ({
   default: () => <div>Mock Adding Ball Game</div>,
 }));

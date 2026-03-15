@@ -302,19 +302,6 @@ export const cmsSectionInstanceSchema: z.ZodType<SectionInstance> = z.object({
   blocks: z.array(cmsBlockInstanceSchema),
 });
 
-export interface BulkOperationResult {
-  ok: boolean;
-  count?: number;
-  message?: string;
-  error?: string;
-}
-
-export interface MasterTreePasteResult {
-  ok: boolean;
-  nextId?: string;
-  error?: string;
-}
-
 export interface SectionDragData {
   sectionId: string;
   zone: PageZone;

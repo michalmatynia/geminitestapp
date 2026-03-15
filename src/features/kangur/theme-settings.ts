@@ -17,6 +17,8 @@ import { KANGUR_DEFAULT_DAWN_THEME } from './themes/dawn';
 import { KANGUR_DEFAULT_SUNSET_THEME } from './themes/sunset';
 import { KANGUR_NIGHTLY_THEME } from './themes/nightly';
 import { KANGUR_DAILY_CRYSTAL_THEME, KANGUR_NIGHTLY_CRYSTAL_THEME } from './themes/others';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const KANGUR_DEFAULT_THEME = KANGUR_NIGHTLY_THEME;
 
@@ -337,7 +339,8 @@ export const parseKangurThemeCatalog = (
         typeof (e as Record<string, unknown>)['id'] === 'string' &&
         typeof (e as Record<string, unknown>)['name'] === 'string'
     );
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return [];
   }
 };

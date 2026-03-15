@@ -1,4 +1,6 @@
 import type { PortablePathInputSource } from './portable-engine-contract';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type PortablePathMigratorFailureReason = 'missing_migrator' | 'migrator_error';
 
@@ -97,7 +99,9 @@ const emitPortablePathMigratorObservabilityEvent = (
   for (const hook of portablePathMigratorObservabilityHooks) {
     try {
       hook(event, snapshot);
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Observability hooks must not break migration flow.
     }
   }

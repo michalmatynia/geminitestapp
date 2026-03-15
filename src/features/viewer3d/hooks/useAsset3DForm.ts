@@ -57,6 +57,7 @@ export function useAsset3DForm(
       onSave(updated);
       onClose();
     } catch (err) {
+      logClientError(err);
       logClientError(err, {
         context: { source: 'Asset3DEditModal', action: 'saveAsset', assetId: asset.id },
       });

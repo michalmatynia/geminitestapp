@@ -18,6 +18,8 @@ import {
   DocumentationList,
 } from '@/shared/ui';
 import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
   const { aiDrawerOpen: open } = useAdminLayoutState();
@@ -33,6 +35,7 @@ export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
       await clearMutation.mutateAsync();
       toast('AI notifications cleared.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to clear notifications.', {
         variant: 'error',
       });

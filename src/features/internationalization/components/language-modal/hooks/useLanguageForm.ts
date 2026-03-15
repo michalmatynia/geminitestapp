@@ -3,6 +3,8 @@ import React from 'react';
 import { useInternationalizationUi } from '@/features/internationalization/context/InternationalizationContext';
 import { useSaveLanguageMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
 import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type UseLanguageFormResult = {
   form: {
@@ -71,6 +73,7 @@ export function useLanguageForm(): UseLanguageFormResult {
 
       toast('Language saved.', { variant: 'success' });
     } catch (err) {
+      logClientError(err);
       toast('Failed to save language.', { variant: 'error' });
       throw err;
     }

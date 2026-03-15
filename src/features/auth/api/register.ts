@@ -1,11 +1,14 @@
 import type { RegisterResponse, Register } from '@/shared/contracts/auth';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type { RegisterResponse };
 
 const safeJson = async <T>(res: Response): Promise<T> => {
   try {
     return (await res.json()) as T;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return {} as T;
   }
 };

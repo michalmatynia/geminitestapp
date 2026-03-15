@@ -22,6 +22,8 @@ import {
   withCenterRetry,
   isCenterAbortError,
 } from '../GenerationToolbarImageUtils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function useCenterAndScaleHandlers(
   state: GenerationToolbarState,
@@ -158,6 +160,7 @@ export function useCenterAndScaleHandlers(
       setSelectedSlotId(response.slot.id);
       toast('Centering/Layouting completed.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       if (isCenterAbortError(error)) {
         toast('Centering canceled.', { variant: 'info' });
         return;

@@ -28,6 +28,8 @@ import { resolveBrainModelExecutionConfig } from '@/shared/lib/ai-brain/server';
 import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { logSystemError, logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
@@ -93,12 +95,16 @@ const cleanupChatbotTemp = async (): Promise<void> => {
           } else {
             await fs.unlink(fullPath);
           }
-        } catch {
+        } catch (error) {
+          void ErrorSystem.captureException(error);
+        
           // best-effort cleanup
         }
       })
     );
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+  
     // best-effort cleanup
   }
 };
@@ -150,7 +156,8 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       if (rawMessages && typeof rawMessages === 'string') {
         try {
           messages = JSON.parse(rawMessages) as IncomingChatMessage[];
-        } catch {
+        } catch (error) {
+          void ErrorSystem.captureException(error);
           throw badRequestError('Invalid messages payload.');
         }
       }
@@ -170,6 +177,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
         try {
           contextRegistry = parseContextRegistryPayload(JSON.parse(rawContextRegistry));
         } catch (error) {
+          void ErrorSystem.captureException(error);
           if (error instanceof Error && error.message === 'Invalid context registry payload.') {
             throw error;
           }
@@ -322,6 +330,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
         personaPrompt = personaContext.systemPrompt || null;
         suggestedPersonaMoodId = personaContext.suggestedMoodId ?? null;
       } catch (error) {
+        void ErrorSystem.captureException(error);
         await logSystemError({
           message: '[chatbot][chat] Failed to load persona memory context',
           error,
@@ -445,6 +454,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
           });
         }
       } catch (error) {
+        void ErrorSystem.captureException(error);
         await logSystemError({
           message: '[chatbot][chat] Failed to save session messages',
           error,
@@ -470,7 +480,9 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
         tempFiles.map(async (filepath: string) => {
           try {
             await fs.unlink(filepath);
-          } catch {
+          } catch (error) {
+            void ErrorSystem.captureException(error);
+          
             // best-effort cleanup
           }
         })
@@ -482,7 +494,9 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
         tempDirs.map(async (dirpath: string) => {
           try {
             await fs.rm(dirpath, { recursive: true, force: true });
-          } catch {
+          } catch (error) {
+            void ErrorSystem.captureException(error);
+          
             // best-effort cleanup
           }
         })

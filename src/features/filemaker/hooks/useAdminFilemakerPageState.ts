@@ -28,6 +28,8 @@ import type {
   FilemakerOrganization,
   FilemakerPerson,
 } from '../types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type PersonDraft = Partial<Omit<FilemakerPerson, 'phoneNumbers'>> & {
   phoneNumbers?: string;
@@ -99,6 +101,7 @@ export function useAdminFilemakerPageState() {
         });
         toast(message, { variant: 'success' });
       } catch (_error: unknown) {
+        logClientError(_error);
         toast('Failed to save database change.', { variant: 'error' });
       }
     },

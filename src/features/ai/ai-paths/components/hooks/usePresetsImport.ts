@@ -10,6 +10,8 @@ import { useToast } from '@/shared/ui';
 
 import { usePresetsActions, usePresetsState } from '../../context';
 import { useAiPathsErrorState } from '../ai-paths-settings/hooks/useAiPathsErrorState';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function usePresetsImport() {
   const { toast } = useToast();
@@ -23,6 +25,7 @@ export function usePresetsImport() {
       try {
         await updateAiPathsSetting(CLUSTER_PRESETS_KEY, JSON.stringify(nextPresets));
       } catch (error: unknown) {
+        logClientError(error);
         reportAiPathsError(error, { action: 'saveClusterPresets' }, 'Failed to save presets:');
         toast('Failed to save cluster presets.', { variant: 'error' });
       }
@@ -72,6 +75,7 @@ export function usePresetsImport() {
           await saveClusterPresets(nextPresets);
           toast('Presets imported.', { variant: 'success' });
         } catch (error: unknown) {
+          logClientError(error);
           reportAiPathsError(error, { action: 'importPresets' }, 'Failed to import presets:');
           toast('Failed to import presets. Check JSON format.', { variant: 'error' });
         }

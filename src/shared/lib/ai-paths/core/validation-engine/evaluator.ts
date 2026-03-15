@@ -15,6 +15,8 @@ import type {
 import { DB_COLLECTION_OPTIONS } from '../constants';
 import { AI_PATHS_VALIDATION_SCHEMA_VERSION, normalizeAiPathsValidationConfig } from './defaults';
 import { AI_PATHS_NODE_DOCS } from '../docs/node-docs';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type {
   AiPathsValidationFinding,
@@ -65,7 +67,8 @@ const toText = (value: unknown): string => {
   if (value === null || value === undefined) return '';
   try {
     return JSON.stringify(value);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return '';
   }
 };
@@ -279,7 +282,8 @@ const evaluateCondition = (args: {
         let regex: RegExp;
         try {
           regex = new RegExp(pattern, condition.flags);
-        } catch {
+        } catch (error) {
+          logClientError(error);
           return false;
         }
         const value =

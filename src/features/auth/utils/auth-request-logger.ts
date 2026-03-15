@@ -6,6 +6,8 @@ import {
   truncateString,
 } from '@/shared/lib/observability/log-redaction';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type AuthLogStage = 'start' | 'success' | 'failure';
 
@@ -111,7 +113,9 @@ export async function logAuthEvent(input: AuthLogInput): Promise<void> {
       ...(input.status !== undefined ? { statusCode: input.status } : {}),
       context,
     });
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+  
     // Best-effort logging only
   }
 }

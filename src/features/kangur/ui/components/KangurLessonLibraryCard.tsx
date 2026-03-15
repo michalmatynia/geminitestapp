@@ -29,7 +29,7 @@ export function KangurLessonLibraryCardAside({
   const assignmentPriority = lessonAssignment?.priority;
 
   return (
-    <div className={cn('flex flex-wrap items-center gap-2 sm:flex-col sm:items-end', className)}>
+    <div className={cn('flex flex-wrap items-start gap-2 sm:flex-col sm:items-end', className)}>
       <KangurStatusChip
         accent={masteryAccent}
         className='uppercase tracking-[0.14em]'
@@ -156,7 +156,7 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
   return (
     <KangurIconSummaryOptionCard
       accent='indigo'
-      buttonClassName={cn('w-full text-left max-sm:pr-16 max-sm:pb-16', buttonClassName)}
+      buttonClassName={cn('w-full text-left', buttonClassName)}
       aria-label={`Lekcja: ${lesson.title}`}
       aria-current={ariaCurrent}
       data-doc-id={dataDocId}
@@ -173,7 +173,7 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
             masteryPresentation={masteryPresentation}
           />
         }
-        asideClassName='ml-auto flex shrink-0 flex-col items-end gap-2 self-start'
+        asideClassName='w-full self-start sm:ml-auto sm:w-auto'
         className='w-full'
         contentClassName={contentClassName}
         description={lesson.description}

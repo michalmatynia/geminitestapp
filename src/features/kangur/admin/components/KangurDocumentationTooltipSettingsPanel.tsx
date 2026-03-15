@@ -13,6 +13,8 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Badge, Button, Card, FormSection, Switch, useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const DOCS_TOOLTIP_SURFACES: Array<{
   key: keyof KangurHelpSettings['docsTooltips'];
@@ -103,6 +105,7 @@ export function KangurDocumentationTooltipSettingsPanel(): React.JSX.Element {
         variant: 'success',
       });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save Kangur tooltip settings.', {
         variant: 'error',
       });

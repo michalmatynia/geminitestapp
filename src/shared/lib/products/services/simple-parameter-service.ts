@@ -10,6 +10,8 @@ import { PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY } from '@/shared/lib/products/con
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 
 import type { Filter } from 'mongodb';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type SimpleParameterCreateInput = {
   catalogId: string;
@@ -81,7 +83,8 @@ const parseSimpleParameters = (value: string | null): ProductSimpleParameter[] =
       });
       return acc;
     }, []);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return [];
   }
 };

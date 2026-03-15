@@ -1,4 +1,6 @@
 import { getActiveOtelContextAttributes } from '@/shared/lib/observability/otel-context';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 /**
  * Simple logger utility to provide a consistent interface for logging.
@@ -171,7 +173,9 @@ export const logger = {
           logClientError(err, {
             context: { source: 'shared-logger', message, ...combinedContext },
           });
-        } catch {
+        } catch (error) {
+          logClientError(error);
+        
           // Fallback if logClientError fails or import fails
         }
       })();

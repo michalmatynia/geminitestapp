@@ -32,13 +32,11 @@ import {
   type ProductStudioLinkResponse,
   type ProductStudioSendResponse,
   type ProductStudioSequenceGenerationMode,
+  type ProductStudioConfig,
   type ProductWithImages,
 } from '@/shared/contracts/products';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
-import {
-  setProductStudioSourceSlot,
-  type ProductStudioConfig,
-} from '@/shared/lib/products/services/product-studio-config';
+import { setProductStudioSourceSlot } from '@/shared/lib/products/services/product-studio-config';
 
 import {
   buildAuditSettingsContext,
@@ -71,6 +69,8 @@ import {
   validateProductStudioSequenceSteps,
 } from './product-studio-service.sequencing';
 import { resolveStudioSettingsBundle } from './product-studio-service.settings';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export type ProductStudioLinkResult = ProductStudioLinkResponse;
 export type ProductStudioSendResult = ProductStudioSendResponse;
@@ -325,6 +325,7 @@ export async function sendProductImageToStudio(params: {
     try {
       validateProductStudioSequenceSteps(stepsForSequenceRun);
     } catch (error) {
+      void ErrorSystem.captureException(error);
       const message =
         error instanceof Error
           ? error.message
@@ -389,6 +390,7 @@ export async function sendProductImageToStudio(params: {
       });
       dispatchMs = Date.now() - dispatchStartMs;
     } catch (error) {
+      void ErrorSystem.captureException(error);
       const message =
         error instanceof Error
           ? error.message
@@ -529,6 +531,7 @@ export async function sendProductImageToStudio(params: {
     dispatchMode = await enqueueImageStudioRunJob(run.id);
     dispatchMs = Date.now() - dispatchStartMs;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const errorMessage =
       error instanceof Error
         ? error.message

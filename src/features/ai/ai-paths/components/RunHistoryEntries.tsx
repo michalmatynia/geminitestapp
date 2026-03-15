@@ -6,6 +6,8 @@ import {
   resolveRunHistoryEntryAction,
   runHistoryEntryActionTitle,
 } from './run-history-entry-actions';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type RunHistoryEntriesProps = {
   entries: RuntimeHistoryEntry[];
@@ -20,7 +22,8 @@ const formatHistoryValue = (value: unknown): string => {
   if (typeof value === 'string') return value;
   try {
     return JSON.stringify(value, null, 2);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return formatRuntimeValue(value);
   }
 };

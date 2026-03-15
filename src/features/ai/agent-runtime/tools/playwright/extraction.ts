@@ -1,4 +1,6 @@
 import type { Page } from 'playwright';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const extractProductNames = async (page: Page): Promise<string[]> => {
   if (!page) return [];
@@ -59,7 +61,8 @@ export const extractProductNames = async (page: Page): Promise<string[]> => {
       try {
         const parsed: unknown = JSON.parse(value);
         return parsed;
-      } catch {
+      } catch (error) {
+        logClientError(error);
         return null;
       }
     };
@@ -251,14 +254,18 @@ export const waitForProductContent = async (page: Page): Promise<void> => {
   ];
   try {
     await page.waitForLoadState('networkidle', { timeout: 15000 });
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Ignore network idle timeouts.
   }
   try {
     await Promise.race(
       productSelectors.map((selector: string) => page.waitForSelector(selector, { timeout: 4000 }))
     );
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Ignore if no product selectors appear quickly.
   }
 };

@@ -34,6 +34,7 @@ export function useBrainAssignment({
     try {
       return parseBrainSettings(rawBrainSettings);
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'useBrainAssignment',

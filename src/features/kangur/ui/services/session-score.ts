@@ -2,6 +2,8 @@ import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurUser } from '@/features/kangur/services/ports';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const KANGUR_GUEST_PLAYER_STORAGE_KEY = 'kangur.guest-player-name';
 
@@ -23,7 +25,8 @@ const readStoredGuestPlayerName = (): string => {
 
   try {
     return window.sessionStorage.getItem(KANGUR_GUEST_PLAYER_STORAGE_KEY)?.trim() ?? '';
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return '';
   }
 };
@@ -47,6 +50,7 @@ export async function persistKangurSessionScore({
   try {
     user = await kangurPlatform.auth.me();
   } catch (error: unknown) {
+    logClientError(error);
     if (!isKangurAuthStatusError(error)) {
       logKangurClientError(error, {
         source: 'persistKangurSessionScore',
@@ -74,6 +78,7 @@ export async function persistKangurSessionScore({
           : undefined,
     });
   } catch (error: unknown) {
+    logClientError(error);
     logKangurClientError(error, {
       source: 'persistKangurSessionScore',
       action: 'createScore',

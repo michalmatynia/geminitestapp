@@ -6,6 +6,8 @@ import {
 } from '@/shared/contracts/jobs';
 import { badRequestError } from '@/shared/errors/app-error';
 import { buildGraphModelJobCacheMetadata } from '@/shared/lib/ai-paths/core/runtime/graph-model-job';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type GraphModelStringField = 'modelId' | 'nodeId' | 'nodeTitle' | 'requestedModelId' | 'runId';
 type GraphModelPayloadClassification = {
@@ -507,6 +509,7 @@ export const resolveGraphModelDispatchInspection = (
       error: null,
     };
   } catch (error) {
+    logClientError(error);
     return {
       normalizedPayload: null,
       error,
@@ -664,7 +667,8 @@ export const resolveAiPathsGraphModelNodeSnapshotFromExecutionContext = async (a
       requestedModelId: typeof recoveredModelId === 'string' ? recoveredModelId.trim() : '',
       nodeTitle: executionContext.nodeTitle ?? recoveredNodeTitle ?? null,
     };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return {
       requestedModelId: '',
       nodeTitle: executionContext.nodeTitle,

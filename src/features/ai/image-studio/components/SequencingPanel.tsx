@@ -54,6 +54,8 @@ import {
   type SequencingPanelContextValue,
 } from './sequencing/SequencingPanelContext';
 import { useSequenceMonitor } from './sequencing/useSequenceMonitor';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const SLOT_RESOLUTION_RETRY_MS = 220;
 const SLOT_RESOLUTION_ATTEMPTS = 10;
@@ -275,7 +277,8 @@ export function SequencingPanel(): React.JSX.Element {
                 description: 'Loads image studio slots.'},
             })();
             cachedSlots = Array.isArray(fresh?.slots) ? fresh.slots : [];
-          } catch {
+          } catch (error) {
+            logClientError(error);
             await invalidateImageStudioSlots(queryClient, normalizedProjectId);
             const cached = queryClient.getQueryData<StudioSlotsResponse>(
               studioKeys.slots(normalizedProjectId)
@@ -471,7 +474,9 @@ export function SequencingPanel(): React.JSX.Element {
         if (active.status === 'queued' || active.status === 'running') {
           monitorRun(active.id);
         }
-      } catch {
+      } catch (error) {
+        logClientError(error);
+      
         // Keep current UI state if hydration fails.
       }
     };
@@ -638,6 +643,7 @@ export function SequencingPanel(): React.JSX.Element {
       }
       monitorRun(result.runId);
     } catch (error) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Failed to start sequence.';
       setSequenceError(message);
       toast(message, { variant: 'error' });
@@ -671,6 +677,7 @@ export function SequencingPanel(): React.JSX.Element {
       );
       toast('Cancellation requested.', { variant: 'info' });
     } catch (error) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Failed to cancel sequence run.';
       toast(message, { variant: 'error' });
     }
@@ -704,7 +711,9 @@ export function SequencingPanel(): React.JSX.Element {
               tags: ['image-studio', 'slots', 'fetch', 'sync'],
               description: 'Loads image studio slots.'},
           })();
-        } catch {
+        } catch (error) {
+          logClientError(error);
+        
           // Best effort
         }
       }

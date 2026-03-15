@@ -2,6 +2,8 @@ import { parseAiTriggerButtonsRaw } from '@/features/ai/ai-paths/validations/tri
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 
 import { type ParsedPathMeta, type ParsedPathConfig } from './settings-store.constants';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export const parsePathMetas = (raw: string | null | undefined): ParsedPathMeta[] => {
   if (!raw) return [];
@@ -36,7 +38,8 @@ export const parsePathMetas = (raw: string | null | undefined): ParsedPathMeta[]
         };
       })
       .filter((item: ParsedPathMeta | null): item is ParsedPathMeta => Boolean(item));
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return [];
   }
 };
@@ -66,7 +69,8 @@ export const parsePathConfigMeta = (id: string, raw: string): ParsedPathMeta | n
           ? parsed.updatedAt
           : createdAt,
     };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };
@@ -87,7 +91,8 @@ export const parsePathConfigFlags = (
         ? { isLocked: parsedRecord['isLocked'] }
         : {}),
     };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return {};
   }
 };
@@ -112,7 +117,8 @@ export const preservePathConfigFlagsOnSeed = (
       ...(preservedFlags.isLocked !== undefined ? { isLocked: preservedFlags.isLocked } : {}),
     };
     return JSON.stringify(merged);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return seededRaw;
   }
 };

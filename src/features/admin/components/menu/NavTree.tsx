@@ -9,6 +9,8 @@ import { cn } from '@/shared/utils';
 
 import { type NavItem, isActiveHref } from './admin-menu-utils';
 import { ADMIN_MENU_COLOR_MAP } from '../Menu';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type AdminMenuTreeContextValue = {
   isMenuCollapsed: boolean;
@@ -36,7 +38,9 @@ const copyToClipboard = async (value: string): Promise<void> => {
       await navigator.clipboard.writeText(value);
       return;
     }
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // ignore
   }
 };

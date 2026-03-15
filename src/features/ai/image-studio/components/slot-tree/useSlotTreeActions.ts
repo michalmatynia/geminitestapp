@@ -19,6 +19,8 @@ import {
 } from '@/shared/utils';
 
 import { useSlotsActions } from '../../context/SlotsContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function useSlotTreeActions({
   controller,
@@ -135,6 +137,7 @@ export function useSlotTreeActions({
           try {
             await onDeleteFolderPath(folderPath);
           } catch (error: unknown) {
+            logClientError(error);
             toast(error instanceof Error ? error.message : 'Failed to delete folder.', {
               variant: 'error',
             });

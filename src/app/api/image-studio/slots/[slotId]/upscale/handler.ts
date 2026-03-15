@@ -40,6 +40,8 @@ import { getImageFileRepository } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { isAppError, notFoundError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'upscale');
 const UPSCALE_PIPELINE_VERSION =
@@ -389,6 +391,7 @@ export async function postUpscaleSlotHandler(
 
     return NextResponse.json(responseBody, { status: 201 });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const errorMeta =
       isAppError(error) &&
       error.meta &&

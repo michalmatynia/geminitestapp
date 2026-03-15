@@ -9,6 +9,8 @@ import { proposeActionRequestSchema } from '@/shared/contracts/ai-context-regist
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const rawBody = await req.text();
@@ -17,7 +19,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   if (rawBody) {
     try {
       body = JSON.parse(rawBody);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       throw badRequestError('Invalid JSON body.');
     }
   }

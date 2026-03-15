@@ -17,6 +17,7 @@ import {
 import type {
   IntegrationTemplate as Template,
   IntegrationTemplateMapping as TemplateMapping,
+  ImportParameterCacheResponse,
 } from '@/shared/contracts/integrations';
 import {
   normalizeBaseImportParameterImportSettings,
@@ -83,6 +84,7 @@ const parseTemplates = async (value: string | null): Promise<Template[]> => {
       parameterImport: normalizeBaseImportParameterImportSettings(template.parameterImport),
     })) as Template[];
   } catch (error: unknown) {
+    void ErrorSystem.captureException(error);
     try {
       const { logSystemError } = await import('@/shared/lib/observability/system-logger');
       await logSystemError({
@@ -92,6 +94,7 @@ const parseTemplates = async (value: string | null): Promise<Template[]> => {
         context: { action: 'parseTemplates' },
       });
     } catch (logError) {
+      void ErrorSystem.captureException(logError);
       const { logger } = await import('@/shared/utils/logger');
       logger.error(
         '[ImportTemplateRepository] Failed to parse templates (and logging failed):',
@@ -388,24 +391,18 @@ export const setExportWarehouseId = async (
   await writeExportWarehouseMapValue(stringifyExportWarehouseByInventoryMap(map));
 };
 
-export type ImportParameterCache = {
-  inventoryId: string | null;
-  productId: string | null;
-  keys: string[];
-  values: Record<string, string>;
-  updatedAt: string;
-};
-
-export const getImportParameterCache = async (): Promise<ImportParameterCache | null> => {
+export const getImportParameterCache =
+  async (): Promise<ImportParameterCacheResponse | null> => {
   const raw = await readParameterCacheValue();
   if (!raw) return null;
   try {
-    const parsed = JSON.parse(raw) as ImportParameterCache;
+    const parsed = JSON.parse(raw) as ImportParameterCacheResponse;
     if (!parsed || !Array.isArray(parsed.keys) || typeof parsed.values !== 'object') {
       return null;
     }
     return parsed;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };
@@ -416,7 +413,7 @@ export const setImportParameterCache = async (input: {
   keys: string[];
   values: Record<string, string>;
 }): Promise<void> => {
-  const payload: ImportParameterCache = {
+  const payload: ImportParameterCacheResponse = {
     inventoryId: input.inventoryId,
     productId: input.productId,
     keys: input.keys,

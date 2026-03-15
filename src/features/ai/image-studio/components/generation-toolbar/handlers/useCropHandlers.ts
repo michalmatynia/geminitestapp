@@ -180,6 +180,7 @@ export function useCropHandlers(state: GenerationToolbarState, helpers: Generati
       }
       toast('Crop completed.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to crop image.', { variant: 'error' });
     } finally {
       setCropBusy(false);

@@ -30,6 +30,8 @@ import {
 
 import type { AgentToolLog, AgentToolResult, ExtractionPlan } from './tool-types';
 import type { Page } from 'playwright';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type LLMContext = {
   model: string;
@@ -296,6 +298,7 @@ export async function runExtractionRequest({
             await page.waitForTimeout(1500);
             await captureSnapshot(page, runId, runDir, 'email-recovery-click', log, activeStepId);
           } catch (error) {
+            void ErrorSystem.captureException(error);
             await log('warning', 'Email recovery click failed.', {
               selector: recoveryPlan.clickSelector,
               error: error instanceof Error ? error.message : String(error),
@@ -347,6 +350,7 @@ export async function runExtractionRequest({
                 };
               }
             } catch (error) {
+              void ErrorSystem.captureException(error);
               await log('warning', 'Email recovery navigation failed.', {
                 url,
                 error: error instanceof Error ? error.message : String(error),
@@ -545,6 +549,7 @@ export async function runExtractionRequest({
           domText = clickSnapshot.domText;
           finalUrl = clickSnapshot.url;
         } catch (error) {
+          void ErrorSystem.captureException(error);
           await log('warning', 'Product recovery click failed.', {
             selector: recoveryPlan.clickSelector,
             error: error instanceof Error ? error.message : String(error),
@@ -585,6 +590,7 @@ export async function runExtractionRequest({
             extractedNames = cleanProductNames(await extractProductNames(page));
             if (extractedNames.length > 0) break;
           } catch (error) {
+            void ErrorSystem.captureException(error);
             await log('warning', 'Product recovery navigation failed.', {
               url,
               error: error instanceof Error ? error.message : String(error),

@@ -10,6 +10,8 @@ import {
   useOptionalPreviewEditorActions,
   useOptionalPreviewEditorState,
 } from './context/PreviewEditorContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const INSPECTOR_TOOLTIP_DELAY_MS = 500;
 const INSPECTOR_TOOLTIP_WIDTH = 260;
@@ -40,7 +42,8 @@ export const formatSettingValue = (value: unknown): string => {
     return (value as unknown[]).map((item: unknown) => formatSettingValue(item)).join(', ');
   try {
     return JSON.stringify(value);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return 'Object';
   }
 };

@@ -1,6 +1,5 @@
 import type { HttpResult } from '@/shared/contracts/http';
-
-export type ApiResponse<T> = HttpResult<T>;
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export const resolveApiUrl = (url: string): string => {
   if (url.startsWith('http://') || url.startsWith('https://')) {
@@ -19,7 +18,7 @@ export const resolveApiUrl = (url: string): string => {
 export async function apiFetch<T>(
   url: string,
   options?: RequestInit & { timeoutMs?: number | undefined }
-): Promise<ApiResponse<T>> {
+): Promise<HttpResult<T>> {
   const { timeoutMs = 15000, ...fetchOptions } = options ?? {};
   const callerSignal = fetchOptions.signal;
   const abortController = typeof AbortController !== 'undefined' ? new AbortController() : null;
@@ -64,6 +63,7 @@ export async function apiFetch<T>(
     const data = (await res.json()) as T;
     return { ok: true, data };
   } catch (error) {
+    logClientError(error);
     if (timedOut) {
       return {
         ok: false,
@@ -124,7 +124,7 @@ export async function apiPost<T>(
   url: string,
   body: unknown,
   options?: { timeoutMs?: number | undefined; signal?: AbortSignal | undefined }
-): Promise<ApiResponse<T>> {
+): Promise<HttpResult<T>> {
   const headers = await withApiCsrfHeaders({ 'Content-Type': 'application/json' });
   return apiFetch<T>(url, {
     method: 'POST',
@@ -139,7 +139,7 @@ export async function apiPatch<T>(
   url: string,
   body: unknown,
   options?: { timeoutMs?: number | undefined; signal?: AbortSignal | undefined }
-): Promise<ApiResponse<T>> {
+): Promise<HttpResult<T>> {
   const headers = await withApiCsrfHeaders({ 'Content-Type': 'application/json' });
   return apiFetch<T>(url, {
     method: 'PATCH',
@@ -153,7 +153,7 @@ export async function apiPatch<T>(
 export async function apiDelete<T>(
   url: string,
   options?: { timeoutMs?: number | undefined; signal?: AbortSignal | undefined }
-): Promise<ApiResponse<T>> {
+): Promise<HttpResult<T>> {
   const headers = await withApiCsrfHeaders();
   return apiFetch<T>(url, {
     method: 'DELETE',

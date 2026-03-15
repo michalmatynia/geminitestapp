@@ -47,6 +47,8 @@ import { invalidateAllSettings } from '@/shared/lib/query-invalidation';
 import { kangurKeys } from '@/shared/lib/query-key-exports';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { serializeSetting } from '@/shared/utils/settings-json';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const KANGUR_PARENT_TUTOR_MOOD_ACCENTS: Record<KangurTutorMoodId, 'slate' | 'indigo' | 'sky' | 'violet' | 'amber' | 'teal' | 'emerald' | 'rose'> = {
   neutral: 'slate',
@@ -301,7 +303,8 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
         });
       }
       setFeedback(tutorContent.parentDashboard.saveSuccess);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       setFeedback(tutorContent.parentDashboard.saveError);
     } finally {
       setIsSaving(false);
@@ -337,7 +340,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
       padding='lg'
       className='w-full flex flex-col gap-5'
     >
-      <div className='flex items-center gap-3'>
+      <div className='flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3'>
         <BrainCircuit className='h-5 w-5 text-orange-500' />
         <KangurPanelIntro
           className='min-w-0'
@@ -370,7 +373,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
           </div>
           <KangurStatusChip
             accent={currentMoodAccent}
-            className='w-fit'
+            className='w-fit self-start sm:self-auto'
             data-mood-id={learnerMood.currentMoodId}
             data-testid='parent-dashboard-ai-tutor-mood-current'
           >

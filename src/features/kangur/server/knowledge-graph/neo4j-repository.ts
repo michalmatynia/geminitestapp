@@ -2,6 +2,8 @@ import 'server-only';
 
 import { runNeo4jStatements, type Neo4jCypherStatement } from '@/shared/lib/neo4j/client';
 import type { KangurKnowledgeCanonicalSourceCollection, KangurKnowledgeGraphSnapshot } from '@/shared/contracts/kangur-knowledge-graph';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type Neo4jSyncPayload = {
   graphKey: string;
@@ -481,6 +483,7 @@ export async function syncKangurKnowledgeGraphToNeo4j(
     try {
       await runNeo4jStatements(statements);
     } catch (error) {
+      void ErrorSystem.captureException(error);
       const message = error instanceof Error ? error.message : String(error);
       throw new Error(`Kangur knowledge graph sync failed during ${label}: ${message}`);
     }

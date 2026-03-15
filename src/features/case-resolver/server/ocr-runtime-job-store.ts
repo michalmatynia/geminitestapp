@@ -9,6 +9,8 @@ import type {
   CaseResolverOcrJobRecord,
 } from '@/shared/contracts/case-resolver';
 import { getRedisConnection } from '@/shared/lib/queue';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 
 export type { CaseResolverOcrErrorCategory, CaseResolverOcrJobRecord };
@@ -176,7 +178,8 @@ const writeRedisJob = async (record: CaseResolverOcrJobRecord): Promise<boolean>
       OCR_RUNTIME_JOB_TTL_SECONDS
     );
     return true;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return false;
   }
 };
@@ -189,7 +192,8 @@ const readRedisJob = async (jobId: string): Promise<CaseResolverOcrJobRecord | n
     if (!raw) return null;
     const parsed = JSON.parse(raw) as unknown;
     return parseCaseResolverOcrJobRecord(parsed);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };
@@ -206,7 +210,8 @@ const persistRecentJobIdInRedis = async (jobId: string): Promise<boolean> => {
       .expire(OCR_RUNTIME_JOB_RECENT_IDS_KEY, OCR_RUNTIME_JOB_TTL_SECONDS)
       .exec();
     return true;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return false;
   }
 };
@@ -220,7 +225,8 @@ const readRecentJobIdsFromRedis = async (limit: number): Promise<string[] | null
       .map((entry): string => entry.trim())
       .filter((entry): entry is string => entry.length > 0);
     return normalized;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };

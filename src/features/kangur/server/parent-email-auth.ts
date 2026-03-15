@@ -38,6 +38,8 @@ import {
   validationError,
 } from '@/shared/errors/app-error';
 import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type KangurParentAccountCreateResult = {
   email: string;
@@ -125,7 +127,8 @@ const resolveAppOrigin = (request: Request | null | undefined): string => {
   if (request) {
     try {
       return new URL(request.url).origin;
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       return DEFAULT_PUBLIC_APP_URL;
     }
   }

@@ -74,6 +74,7 @@ export async function logAgentAudit(
       },
     });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     if (runId && isRunIdForeignKeyViolation(error)) {
       try {
         const fallbackMetadata = toInputJsonValue({
@@ -91,6 +92,7 @@ export async function logAgentAudit(
         });
         return;
       } catch (fallbackError) {
+        void ErrorSystem.captureException(fallbackError);
         // Report the fallback failure instead of the original FK violation
         // We re-use the reporting block below
         void reportError(fallbackError, runId, level, message);

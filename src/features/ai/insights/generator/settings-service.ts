@@ -1,5 +1,7 @@
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const readMongoSettingValue = async (key: string): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
@@ -13,7 +15,8 @@ const readMongoSettingValue = async (key: string): Promise<string | null> => {
 export const readInsightSettingValue = async (key: string): Promise<string | null> => {
   try {
     return await readMongoSettingValue(key);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

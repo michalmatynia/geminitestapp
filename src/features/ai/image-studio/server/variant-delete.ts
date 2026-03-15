@@ -17,6 +17,8 @@ import {
   listImageStudioSlots,
   type ImageStudioSlotRecord,
 } from './slot-repository';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type DeleteImageStudioVariantInput = {
   projectId: string;
@@ -66,7 +68,8 @@ const normalizePublicPath = (value: unknown): string | null => {
     try {
       const parsed = new URL(normalized);
       normalized = parsed.pathname;
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       return null;
     }
   }
@@ -333,6 +336,7 @@ const defaultDeps: DeleteImageStudioVariantDeps = {
       await fs.unlink(diskPath);
       return true;
     } catch (error: unknown) {
+      void ErrorSystem.captureException(error);
       if (error instanceof Error && (error as NodeJS.ErrnoException).code === 'ENOENT') {
         return false;
       }

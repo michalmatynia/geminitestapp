@@ -4,6 +4,8 @@ import { Button, DocumentationSection, useToast } from '@/shared/ui';
 
 import { VALIDATOR_FUNCTION_DOCS, VALIDATOR_UI_DOCS } from './validator-docs-catalog';
 import { buildFullValidatorDocumentationClipboardText } from './validator-documentation-clipboard';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function ValidatorDocumentationTab(): React.JSX.Element {
   const { toast } = useToast();
@@ -18,7 +20,8 @@ export function ValidatorDocumentationTab(): React.JSX.Element {
       toast('Full validator documentation copied (including JSON snippets).', {
         variant: 'success',
       });
-    } catch {
+    } catch (error) {
+      logClientError(error);
       toast('Failed to copy full validator documentation.', { variant: 'error' });
     }
   };

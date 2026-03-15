@@ -8,6 +8,8 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { normalizeSort } from './shared';
 
 import type { KangurScoreListInput, KangurScoreRepository } from './types';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const KANGUR_SCORES_COLLECTION = 'kangur_scores';
 const KANGUR_SCORES_CLIENT_MUTATION_INDEX = 'kangur_scores_client_mutation_id_unique';
@@ -137,6 +139,7 @@ export const mongoKangurScoreRepository: KangurScoreRepository = {
         ...payload,
       });
     } catch (error: unknown) {
+      void ErrorSystem.captureException(error);
       if (!clientMutationId || !isMongoDuplicateKeyError(error)) {
         throw error;
       }

@@ -8,6 +8,8 @@ import {
 } from '@/features/ai/ai-paths/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type MaintenanceActionId = (typeof AI_PATHS_MAINTENANCE_ACTION_IDS)[number];
 
@@ -58,7 +60,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   if (rawBody) {
     try {
       body = JSON.parse(rawBody);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       throw badRequestError('Invalid JSON body.');
     }
   }

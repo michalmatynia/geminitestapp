@@ -28,6 +28,7 @@ import { buildKangurLearnerLiveState } from '@/features/kangur/ui/services/learn
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 const PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS = 110;
+const LEARNER_ACTIVITY_REFRESH_MS = 10_000;
 
 export function KangurParentDashboardHeroWidget({
   showActions = true,
@@ -56,6 +57,7 @@ export function KangurParentDashboardHeroWidget({
     useKangurLearnerActivityStatus({
       enabled: canManageLearners && hasActiveLearner,
       learnerId: activeLearnerId,
+      refreshIntervalMs: LEARNER_ACTIVITY_REFRESH_MS,
     });
   const settingsStore = useSettingsStore();
   const rawLessons = settingsStore.get(KANGUR_LESSONS_SETTING_KEY);

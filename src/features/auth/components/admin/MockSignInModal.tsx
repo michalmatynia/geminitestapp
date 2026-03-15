@@ -9,6 +9,8 @@ import {
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useUsersData, useUsersDialogs } from '../../context/UsersContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type MockSignInFormState = {
   email: string;
@@ -44,6 +46,7 @@ export function MockSignInModal(): React.JSX.Element | null {
       if (res.ok) toast('Credentials valid', { variant: 'success' });
       else toast('Invalid credentials', { variant: 'error' });
     } catch (_e) {
+      logClientError(_e);
       toast('Verification failed', { variant: 'error' });
     }
   };

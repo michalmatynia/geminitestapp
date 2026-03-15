@@ -8,6 +8,8 @@ import { getNodeOtelRuntimeStatus } from '@/shared/lib/observability/otel-node';
 import { getCentralLoggingRuntimeStats } from '@/shared/lib/observability/system-logger';
 import { getSystemLogAlertsQueueStatus } from '@/shared/lib/observability/workers/systemLogAlertsQueue';
 import { getQueueHealth } from '@/shared/lib/queue/registry';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const pingMongo = async (uri: string): Promise<void> => {
   const client = new MongoClient(uri, { serverSelectionTimeoutMS: 5000 });
@@ -22,7 +24,8 @@ const pingMongo = async (uri: string): Promise<void> => {
 const resolveProvider = async (): Promise<AppDbProvider | 'unknown'> => {
   try {
     return await getAppDbProvider();
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     if (process.env['MONGODB_URI']) return 'mongodb';
     return 'unknown';
   }
@@ -49,6 +52,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     }
     db.ok = true;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     db.error = error instanceof Error ? error.message : 'Database ping failed';
   }
 
@@ -62,7 +66,8 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
       queueHealth['system-log-alerts'] && typeof queueHealth['system-log-alerts'] === 'object'
         ? (queueHealth['system-log-alerts'] as Record<string, unknown>)
         : null;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     alertQueueHealth = null;
   }
 

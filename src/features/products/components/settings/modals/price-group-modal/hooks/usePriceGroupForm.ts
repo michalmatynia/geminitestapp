@@ -62,6 +62,7 @@ export function usePriceGroupForm({ priceGroup }: UsePriceGroupFormProps): UsePr
 
       toast('Price group saved.', { variant: 'success' });
     } catch (err) {
+      logClientError(err);
       logClientError(err, {
         context: {
           source: 'PriceGroupModal',

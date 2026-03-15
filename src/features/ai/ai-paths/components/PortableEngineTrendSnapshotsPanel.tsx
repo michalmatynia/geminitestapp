@@ -4,6 +4,8 @@ import { RefreshCcwIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Badge, Button, Card, Skeleton } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type TrendSnapshot = {
   at: string;
@@ -109,6 +111,7 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
       const payload = (await response.json()) as TrendSnapshotsPayload;
       setData(payload);
     } catch (cause) {
+      logClientError(cause);
       setError(cause instanceof Error ? cause.message : 'Failed to load trend snapshots.');
     } finally {
       setIsLoading(false);

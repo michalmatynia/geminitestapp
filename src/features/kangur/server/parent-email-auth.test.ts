@@ -75,6 +75,8 @@ import {
   setKangurParentPassword,
   verifyKangurParentEmail,
 } from './parent-email-auth';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 describe('parent email auth service', () => {
   beforeEach(() => {
@@ -219,6 +221,7 @@ describe('parent email auth service', () => {
         });
         throw new Error('Expected rate limiting error');
       } catch (error) {
+        void ErrorSystem.captureException(error);
         expect(error).toMatchObject({
           httpStatus: 429,
           retryAfterMs: 15_000,
@@ -490,6 +493,7 @@ describe('parent email auth service', () => {
         });
         throw new Error('Expected rate limiting error');
       } catch (error) {
+        void ErrorSystem.captureException(error);
         expect(error).toMatchObject({
           httpStatus: 429,
           retryAfterMs: 30_000,
@@ -533,6 +537,7 @@ describe('parent email auth service', () => {
         });
         throw new Error('Expected rate limiting error');
       } catch (error) {
+        void ErrorSystem.captureException(error);
         expect(error).toMatchObject({
           httpStatus: 429,
           retryAfterMs: 45_000,

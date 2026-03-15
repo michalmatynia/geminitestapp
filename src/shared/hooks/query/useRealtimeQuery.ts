@@ -56,6 +56,7 @@ export function useRealtimeQuery<TData>(
           queryClient.setQueryData(queryKey as unknown[], data);
           config?.onUpdate?.(data);
         } catch (error) {
+          logClientError(error);
           logClientError(error instanceof Error ? error : new Error(String(error)), {
             context: { source: 'useRealtimeQuery', action: 'parseWebSocketData', level: 'warn' },
           });
@@ -65,7 +66,9 @@ export function useRealtimeQuery<TData>(
       wsRef.current.onerror = (): void => {
         // Fallback to polling if WebSocket fails
       };
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // WebSocket not available, use polling
     }
 
@@ -102,6 +105,7 @@ export function useServerSentEvents<TData>(
         queryClient.setQueryData(queryKey as unknown[], data);
         config?.onUpdate?.(data);
       } catch (error) {
+        logClientError(error);
         logClientError(error instanceof Error ? error : new Error(String(error)), {
           context: { source: 'useServerSentEvents', action: 'parseSSEData', level: 'warn' },
         });

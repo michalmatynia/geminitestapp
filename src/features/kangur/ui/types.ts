@@ -1,9 +1,10 @@
 import type {
   KangurQuestionChoice,
-  KangurLessonMasteryEntry as SharedKangurLessonMasteryEntry,
-  KangurProgressState as SharedKangurProgressState,
+  KangurLessonMasteryEntry,
+  KangurProgressState,
 } from '@/shared/contracts/kangur';
 export type { KangurExamQuestion, KangurQuestionChoice } from '@/shared/contracts/kangur';
+export type { KangurLessonMasteryEntry, KangurProgressState } from '@/shared/contracts/kangur';
 
 export type KangurGameScreen =
   | 'home'
@@ -56,9 +57,6 @@ export type KangurDifficultyConfigEntry = {
 };
 
 export type KangurDifficultyConfig = Record<KangurDifficulty, KangurDifficultyConfigEntry>;
-
-export type KangurLessonMasteryEntry = SharedKangurLessonMasteryEntry;
-export type KangurProgressState = SharedKangurProgressState;
 
 export type KangurXpRewards = {
   correct_answer: number;

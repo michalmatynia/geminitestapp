@@ -196,6 +196,7 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
       toast(editingTag ? 'Tag updated.' : 'Tag created.', { variant: 'success' });
       setShowModal(false);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminCaseResolverTagsPage', action: 'saveTag', tagId: editingTag?.id },
       });
@@ -225,6 +226,7 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
       });
       toast('Tag deleted.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'AdminCaseResolverTagsPage',

@@ -19,6 +19,8 @@ import {
 } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const isBaseIntegrationSlug = (value: string | null | undefined): boolean => {
   const normalized = (value ?? '').trim().toLowerCase();
@@ -137,6 +139,7 @@ export async function GET_handler(
 
     return NextResponse.json(listings);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'An unknown error occurred' },
       { status: 500 }
@@ -251,6 +254,7 @@ export async function POST_handler(
     const response: ProductListingCreateResponse = listing;
     return NextResponse.json(response, { status: 201 });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'An unknown error occurred' },
       { status: 500 }

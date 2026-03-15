@@ -31,6 +31,8 @@ import { useCrudPanelState, type UseCrudPanelStateReturn } from '../hooks/useCru
 import { DatabaseTableSelector } from './crud/DatabaseTableSelector';
 
 import type { ColumnDef } from '@tanstack/react-table';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 function formatCellValue(value: unknown): string {
   if (value === null || value === undefined) return '∅';
@@ -57,7 +59,8 @@ function parseInputValue(value: string, type: string): unknown {
   if (lowerType === 'json' || lowerType === 'jsonb') {
     try {
       return JSON.parse(value);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return value;
     }
   }

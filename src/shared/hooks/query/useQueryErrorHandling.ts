@@ -102,7 +102,8 @@ const getLoggableError = (error: unknown): unknown => {
 const toQueryKeySignature = (queryKey: unknown[]): string => {
   try {
     return JSON.stringify(queryKey);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return String(queryKey);
   }
 };
@@ -224,7 +225,9 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
           if (isLoggableObject(error)) {
             try {
               (error as LoggableWithErrorFlag).__logged = true;
-            } catch {
+            } catch (error) {
+              logClientError(error);
+            
               // ignore
             }
           }
@@ -404,6 +407,7 @@ export function useCircuitBreakerQuery<TData>(
         }
         return result;
       } catch (error) {
+        logClientError(error);
         const newFailures = circuit.failures + 1;
         const shouldOpen = newFailures >= failureThreshold;
 

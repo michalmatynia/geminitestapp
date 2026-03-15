@@ -167,7 +167,9 @@ export function AdminKangurLessonsManagerPage({
     if (typeof window === 'undefined') return;
     try {
       window.localStorage.setItem(TREE_MODE_STORAGE_KEY, treeMode);
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Ignore storage errors.
     }
   }, [treeMode]);
@@ -319,6 +321,7 @@ export function AdminKangurLessonsManagerPage({
       toast('SVG image saved.', { variant: 'success' });
       setSvgModalLesson(null);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminKangurLessonsManagerPage', action: 'saveLessonSvg' },
       });
@@ -364,6 +367,7 @@ export function AdminKangurLessonsManagerPage({
 
       setEditingLesson(null);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminKangurLessonsManagerPage', action: 'saveLesson' },
       });
@@ -394,6 +398,7 @@ export function AdminKangurLessonsManagerPage({
       toast('Lesson deleted.', { variant: 'success' });
       setLessonToDelete(null);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminKangurLessonsManagerPage', action: 'deleteLesson' },
       });
@@ -426,6 +431,7 @@ export function AdminKangurLessonsManagerPage({
       setShowContentModal(false);
       setEditingContentLesson(null);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminKangurLessonsManagerPage', action: 'saveContent' },
       });
@@ -454,6 +460,7 @@ export function AdminKangurLessonsManagerPage({
       toast('Custom content cleared.', { variant: 'success' });
       setContentDraft(createDefaultKangurLessonDocument());
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminKangurLessonsManagerPage', action: 'clearContent' },
       });
@@ -471,7 +478,8 @@ export function AdminKangurLessonsManagerPage({
       }
       setContentDraft(result.document);
       toast('Legacy lesson imported. Review and save to apply.', { variant: 'success' });
-      } catch (error) {      logClientError(error, {
+      } catch (error) {
+        logClientError(error);      logClientError(error, {
         context: { source: 'AdminKangurLessonsManagerPage', action: 'importLegacy' },
       });
       toast('Failed to import legacy lesson.', { variant: 'error' });
@@ -488,6 +496,7 @@ export function AdminKangurLessonsManagerPage({
       });
       toast('Geometry lesson pack added.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminKangurLessonsManagerPage', action: 'addGeometryPack' },
       });
@@ -505,6 +514,7 @@ export function AdminKangurLessonsManagerPage({
       });
       toast('Logical thinking lesson pack added.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminKangurLessonsManagerPage', action: 'addLogicPack' },
       });
@@ -537,6 +547,7 @@ export function AdminKangurLessonsManagerPage({
       });
       toast(`Imported ${updatedCount} lessons to modular editor.`, { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminKangurLessonsManagerPage', action: 'importAll' },
       });

@@ -48,7 +48,8 @@ const decodeHtmlEntity = (value: string): string => {
     const textarea = document.createElement('textarea');
     textarea.innerHTML = result;
     return textarea.value;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return result;
   }
 };
@@ -291,6 +292,7 @@ export const convertHtmlToMarkdown = async (
       warnings,
     };
   } catch (error) {
+    logClientError(error);
     warnings.push('Could not fully convert HTML to Markdown; fallback to plain text.');
     logClientError(error, {
       context: {

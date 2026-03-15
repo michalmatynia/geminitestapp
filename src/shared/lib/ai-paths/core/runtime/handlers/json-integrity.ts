@@ -1,3 +1,4 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 export type JsonIntegrityPolicy = 'strict' | 'repair';
 
 export type JsonIntegrityParseState = 'not_json_like' | 'parsed' | 'repaired' | 'unparseable';
@@ -75,6 +76,7 @@ const tryParseStructuredJson = (
     }
     return { ok: true, value: parsed };
   } catch (error) {
+    logClientError(error);
     return { ok: false, error: toParseError(error) };
   }
 };

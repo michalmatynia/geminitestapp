@@ -15,7 +15,7 @@ export function TableSkeleton(props: TableSkeletonProps): React.JSX.Element {
   return (
     <>
       {Array.from({ length: rows }).map((_, rowIndex) => (
-        <TableRow key={rowIndex} className={rowClassName}>
+        <TableRow key={rowIndex} className={rowClassName} aria-hidden='true'>
           {Array.from({ length: columns }).map((_, colIndex) => (
             <TableCell key={colIndex} className={cellClassName}>
               <Skeleton className='h-4 w-full' />

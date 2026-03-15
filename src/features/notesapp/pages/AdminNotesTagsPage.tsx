@@ -78,6 +78,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
       setName('');
       toast('Tag created', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'AdminNotesTagsPage',
@@ -96,6 +97,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
       await deleteTag.mutateAsync(toDelete.id);
       toast('Tag deleted', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'AdminNotesTagsPage',
@@ -135,6 +137,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
       toast('Tag updated', { variant: 'success' });
       handleEditCancel();
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminNotesTagsPage', action: 'updateTag', tagId },
       });

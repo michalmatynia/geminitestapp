@@ -3,15 +3,16 @@ import { useState, type ChangeEvent } from 'react';
 import { CLIENT_LOGGING_KEYS } from '@/shared/contracts/observability';
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {
-  AdminSettingsBreadcrumbs,
+  AdminSettingsPageLayout,
   Button,
   FormField,
   FormSection,
-  PageLayout,
   Textarea,
   useToast,
 } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function LoggingSettingsForm({
   initialTags,
@@ -48,6 +49,7 @@ export function LoggingSettingsForm({
       setDirty(false);
       toast('Logging settings saved.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save settings.', {
         variant: 'error',
       });
@@ -55,10 +57,10 @@ export function LoggingSettingsForm({
   };
 
   return (
-    <PageLayout
+    <AdminSettingsPageLayout
       title='Logging Settings'
+      current='Logging'
       description='Configure client logging context shared with error reports.'
-      eyebrow={<AdminSettingsBreadcrumbs current='Logging' />}
     >
       <FormSection
         title='Client logging context'
@@ -106,6 +108,6 @@ export function LoggingSettingsForm({
           </Button>
         </div>
       </FormSection>
-    </PageLayout>
+    </AdminSettingsPageLayout>
   );
 }

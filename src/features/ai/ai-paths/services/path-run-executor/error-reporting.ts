@@ -1,6 +1,8 @@
 import type { AiPathRunRecord, AiPathRunRepository } from '@/shared/contracts/ai-paths';
 import { buildAiPathErrorReport } from '@/shared/lib/ai-paths/error-reporting';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type ErrorReportingCtx = {
   run: AiPathRunRecord;
@@ -99,7 +101,9 @@ export const createErrorReporting = (ctx: ErrorReportingCtx) => {
           errorReport,
         },
       });
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // DB write failed — the error was already captured above; suppress to avoid crash.
     }
   };

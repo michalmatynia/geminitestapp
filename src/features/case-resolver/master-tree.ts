@@ -5,6 +5,8 @@ import type {
 } from '@/shared/contracts/case-resolver';
 import type { DecodedMasterTreeNode as SharedDecodedMasterTreeNode } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const FOLDER_NODE_PREFIX = 'folder:';
 const FILE_NODE_PREFIX = 'file:';
@@ -78,7 +80,8 @@ const decodeCaseContentNodePayload = (value: string, prefix: string): [string, s
     const decodedRight = decodeURIComponent(right).trim();
     if (!decodedLeft || !decodedRight) return null;
     return [decodedLeft, decodedRight];
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

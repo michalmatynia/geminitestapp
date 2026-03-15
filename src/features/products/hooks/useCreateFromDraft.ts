@@ -46,6 +46,7 @@ export function useCreateFromDraft({
         handleOpenCreateFromDraft(draft);
         toast(`Creating product from draft: ${draft.name}`, { variant: 'success' });
       } catch (error) {
+        logClientError(error);
         logClientError(error, {
           context: { source: 'useCreateFromDraft', action: 'createFromDraft', draftId },
         });

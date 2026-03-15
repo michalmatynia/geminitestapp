@@ -27,6 +27,8 @@ import {
   useAiPathRuntime,
   useAiPathSelection,
 } from '../AiPathConfigContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 function pruneLargeFields(value: unknown, seen: Set<object> = new Set<object>()): unknown {
   if (!value || typeof value !== 'object') return value;
@@ -79,7 +81,8 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
     if (typeof value === 'string') return value;
     try {
       return JSON.stringify(value, null, 2);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return safeStringify(value);
     }
   };

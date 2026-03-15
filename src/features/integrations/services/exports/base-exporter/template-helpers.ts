@@ -1,4 +1,6 @@
 import type { ParameterReference as ParsedParameterSourceKey } from '@/shared/contracts/integrations/parameter-reference';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const toStringValue = (value: unknown): string | null => {
   if (value === null || value === undefined) return null;
@@ -14,7 +16,8 @@ export const toStringValue = (value: unknown): string | null => {
   if (typeof value === 'object') {
     try {
       return JSON.stringify(value);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return null;
     }
   }

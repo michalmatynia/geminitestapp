@@ -23,6 +23,8 @@ import {
   parsePromptEngineSettings,
   parsePromptValidationRules,
 } from '@/shared/lib/prompt-engine/settings';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const ruleSignature = (rule: PromptValidationRule): string => {
   if (rule.kind === 'regex') {
@@ -135,7 +137,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const json = (() => {
     try {
       return JSON.parse(raw) as unknown;
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       throw internalError('Model did not return valid JSON.', { raw });
     }
   })();

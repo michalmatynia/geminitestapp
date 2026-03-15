@@ -3,6 +3,8 @@ import 'server-only';
 import { externalServiceError, timeoutError } from '@/shared/errors/app-error';
 
 import { getNeo4jConfig } from './config';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export interface Neo4jCypherStatement {
   statement: string;
@@ -106,6 +108,7 @@ export async function runNeo4jStatements(
 
       return normalizeResults(payload);
     } catch (error) {
+      void ErrorSystem.captureException(error);
       if (error instanceof Error && error.name === 'AbortError') {
         throw timeoutError('Neo4j request timed out.', {
           endpoint,
@@ -134,7 +137,8 @@ export async function pingNeo4j(): Promise<boolean> {
   try {
     const [result] = await runNeo4jStatements([{ statement: 'RETURN 1 AS ok' }]);
     return result?.records[0]?.['ok'] === 1;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return false;
   }
 }

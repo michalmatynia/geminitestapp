@@ -79,6 +79,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
         previousEditorModeRef.current = parsed.editorMode ?? 'markdown';
       }
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'NoteSettingsContext',
@@ -143,6 +144,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'NoteSettingsContext',

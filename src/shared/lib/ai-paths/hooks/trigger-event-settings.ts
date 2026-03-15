@@ -69,7 +69,9 @@ export const buildSelectiveTriggerSettingsData = async (
     if (typeof parsed?.name === 'string' && parsed.name.trim().length > 0) {
       preferredPathName = parsed.name.trim();
     }
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Keep fallback name when config is malformed.
   }
 
@@ -112,6 +114,7 @@ export const loadTriggerSettingsData = async (args: {
       settingsData: await buildSelectiveTriggerSettingsData(preferredPathId),
     };
   } catch (error) {
+    logClientError(error);
     if (isAppError(error)) {
       throw error;
     }
@@ -158,6 +161,7 @@ export const loadPathConfigsFromSettings = async (
   try {
     parsedIndex = JSON.parse(indexRaw) as unknown;
   } catch (error) {
+    logClientError(error);
     throw validationError('Invalid AI Paths index payload.', {
       source: 'ai_paths.trigger_payload',
       reason: 'index_invalid_json',

@@ -1,5 +1,7 @@
 import type { AiNode } from '@/shared/lib/ai-paths';
 import { isObjectRecord } from '@/shared/utils/object-utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type LocalExecutionSecurityIssue = {
   nodeId: string;
@@ -28,7 +30,8 @@ const hasInlineSecretLikeHttpHeaders = (rawHeaders: unknown): boolean => {
       }
       return normalizeText(value).length > 0;
     });
-  } catch {
+  } catch (error) {
+    logClientError(error);
     // If headers JSON is invalid we do not block here; existing config validation handles this path.
     return false;
   }
@@ -54,7 +57,8 @@ const parseJsonRecord = (value: unknown): Record<string, unknown> | null => {
   try {
     const parsed = JSON.parse(text) as unknown;
     return isObjectRecord(parsed) ? parsed : null;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

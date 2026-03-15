@@ -1,4 +1,6 @@
 import type { CountryOption } from '@/shared/contracts/internationalization';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const includeQuery = (values: string[], query: string): boolean => {
   if (!query) return true;
@@ -43,7 +45,8 @@ export const decodeRouteParam = (value: string | string[] | undefined): string =
   if (!raw) return '';
   try {
     return decodeURIComponent(raw);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return raw;
   }
 };

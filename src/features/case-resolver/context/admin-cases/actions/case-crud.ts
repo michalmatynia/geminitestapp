@@ -126,6 +126,7 @@ export const handleCreateCaseImpl = async (args: {
       options: { source: 'cases_page_create_sync' },
     });
   } catch (error) {
+    logClientError(error);
     logClientError(error, {
       context: { source: 'AdminCaseResolverCasesPage', action: 'createCase' },
     });
@@ -336,6 +337,7 @@ export const handleSaveCaseDraftImpl = async (args: {
     setEditingCaseId(null);
     toast('Case updated successfully.', { variant: 'success' });
   } catch (error) {
+    logClientError(error);
     logClientError(error, {
       context: { source: 'AdminCaseResolverCasesPage', action: 'saveCaseDraft' },
     });
@@ -419,6 +421,7 @@ export const handleUpdateCaseImpl = async (args: {
     setEditingCaseId(null);
     toast('Case updated successfully.', { variant: 'success' });
   } catch (error) {
+    logClientError(error);
     logClientError(error, {
       context: { source: 'AdminCaseResolverCasesPage', action: 'updateCase' },
     });
@@ -476,6 +479,7 @@ export const handleDeleteCaseImpl = async (args: {
     }
     toast('Case deleted successfully.', { variant: 'success' });
   } catch (error) {
+    logClientError(error);
     logClientError(error, {
       context: { source: 'AdminCaseResolverCasesPage', action: 'deleteCase' },
     });

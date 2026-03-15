@@ -27,6 +27,8 @@ import { sanitizePathConfig } from '../AiPathsSettingsUtils';
 import { usePathsTabPanelActions } from '../hooks/usePathsTabPanelActions';
 
 import type { ColumnDef } from '@tanstack/react-table';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type PathsTabPanelProps = {
   onPathOpen?: ((id: string) => void) | undefined;
@@ -116,6 +118,7 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
       await navigator.clipboard.writeText(payload);
       toast('Path JSON copied.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       reportAiPathsError(
         error,
         { action: 'copyPathJson', pathId },
@@ -208,6 +211,7 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
       toast('Path imported.', { variant: 'success' });
       handleOpenPath(nextPathId);
     } catch (error) {
+      logClientError(error);
       reportAiPathsError(
         error,
         { action: 'importPathJson' },

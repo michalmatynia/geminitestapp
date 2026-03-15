@@ -13,6 +13,8 @@ import {
   setValueAtMappingPath,
   safeStringify,
 } from '@/shared/lib/ai-paths/core/utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const handleMutator: NodeHandler = ({
   node,
@@ -78,7 +80,8 @@ const applyStringMutatorReplace = (
     try {
       const regex = new RegExp(search, flags);
       return current.replace(regex, replacement);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return current;
     }
   }

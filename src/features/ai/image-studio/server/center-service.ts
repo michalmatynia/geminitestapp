@@ -24,6 +24,8 @@ import {
 import type { UploadedClientCenterImage } from '@/shared/contracts/image-studio';
 
 import { centerBadRequest, isClientCenterMode, isServerCenterMode } from './image-handler-utils';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;
 const STRICT_SERVER_CENTER_ENABLED =
@@ -121,6 +123,7 @@ export async function processCenterPayload(input: {
       }
       sourceBuffer = source.buffer;
     } catch (error) {
+      void ErrorSystem.captureException(error);
       sourceLoadError = error;
     }
   }
@@ -149,6 +152,7 @@ export async function processCenterPayload(input: {
     try {
       centered = await centerAndScaleObjectByLayout(sourceBuffer, payload.layout);
     } catch (error) {
+      void ErrorSystem.captureException(error);
       if (error instanceof Error && /No visible object pixels were detected/i.test(error.message)) {
         throw centerBadRequest(
           IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_OBJECT_NOT_FOUND,

@@ -107,6 +107,7 @@ export const EditableCell = memo(
         setIsEditing(false);
         onUpdate(numValue);
       } catch (error) {
+        logClientError(error);
         logClientError(error, {
           context: { source: 'EditableCell', action: 'save', field, productId },
         });

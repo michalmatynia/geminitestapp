@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { AdminIntegrationsBreadcrumbs, CompactEmptyState, PageLayout } from '@/shared/ui';
+import { AdminIntegrationsPageLayout, CompactEmptyState } from '@/shared/ui';
 
 type AllegroSubpageScaffoldProps = {
   title: string;
@@ -25,16 +25,11 @@ export function AllegroSubpageScaffold({
   const emptyStateDescription = emptyState?.description;
 
   return (
-    <PageLayout
+    <AdminIntegrationsPageLayout
       title={pageTitle}
       description={pageDescription}
-      eyebrow={
-        <AdminIntegrationsBreadcrumbs
-          current={breadcrumbTitle}
-          parent={{ label: 'Allegro', href: '/admin/integrations/marketplaces/allegro' }}
-        />
-      }
-      containerClassName='container mx-auto max-w-5xl py-10'
+      current={breadcrumbTitle}
+      parent={{ label: 'Allegro', href: '/admin/integrations/marketplaces/allegro' }}
     >
       {children ??
         (emptyState ? (
@@ -44,6 +39,6 @@ export function AllegroSubpageScaffold({
             className='border-dashed border-border/60 bg-card/40 py-8'
            />
         ) : null)}
-    </PageLayout>
+    </AdminIntegrationsPageLayout>
   );
 }

@@ -20,6 +20,8 @@ import {
 import { analyzeCanvasImageObject } from '../GenerationToolbarImageUtils';
 
 import type { AnalysisResult } from '../../analysis/analysis-types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const ANALYSIS_REQUEST_TIMEOUT_MS = 60000;
 
@@ -168,6 +170,7 @@ export function useAnalysisHandlers(
 
       toast('Analysis completed and synced to tools.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       if (error instanceof DOMException && error.name === 'AbortError') {
         toast('Image analysis canceled.', { variant: 'info' });
         return;

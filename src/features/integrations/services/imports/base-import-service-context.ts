@@ -17,6 +17,8 @@ import {
   type BaseConnectionContext,
   type PriceGroupLookup,
 } from './base-import-service-shared';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type ProductDataProvider = Awaited<ReturnType<typeof getProductDataProvider>>;
 
@@ -64,7 +66,9 @@ export const resolvePriceGroupContext = async (
           { projection: { code: 1, id: 1 } }
         );
       addCurrencyCandidate(preferredCurrencies, currency?.code);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // Currency lookup is optional during import.
     }
   }

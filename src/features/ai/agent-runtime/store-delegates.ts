@@ -1,6 +1,11 @@
 import 'server-only';
 
-import type { AgentRunStatusType } from '@/shared/contracts/agent-runtime';
+import type {
+  AgentAuditLogRecord,
+  AgentBrowserLogRecord,
+  AgentBrowserSnapshotRecord,
+  AgentRunStatusType,
+} from '@/shared/contracts/agent-runtime';
 
 type StoreDelegateArgs = Record<string, unknown>;
 
@@ -24,24 +29,6 @@ export type AgentRuntimeRunRecord = {
   createdAt: Date | string | null;
   updatedAt: Date | string | null;
   status: AgentRunStatusType;
-};
-
-export type AgentAuditLogRecord = {
-  id?: string;
-  metadata?: unknown;
-};
-
-export type AgentBrowserSnapshotRecord = {
-  id: string;
-  url: string;
-  title: string | null;
-  domText: string | null;
-};
-
-export type AgentBrowserLogRecord = {
-  level: string;
-  message: string;
-  metadata?: unknown;
 };
 
 export type AgentMemoryItemRecord = {

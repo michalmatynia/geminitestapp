@@ -1,3 +1,4 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 const MAX_PORTABLE_PATH_RUN_EXECUTION_ERROR_MESSAGE_LENGTH = 320;
 
 const normalizePortablePathRunExecutionErrorText = (value: unknown): string | null => {
@@ -73,7 +74,8 @@ export const toPortablePathRunExecutionErrorMessage = (value: unknown): string =
       if (typeof serialized === 'string' && serialized.length > 0) {
         return truncatePortablePathRunExecutionErrorMessage(serialized);
       }
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return 'Unserializable portable engine runtime error object.';
     }
   }

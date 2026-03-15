@@ -1,3 +1,4 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 const isEscaped = (value: string, index: number): boolean => {
   let slashCount = 0;
   let cursor = index - 1;
@@ -104,7 +105,8 @@ const safeRegexCompiles = (pattern: string, flags = 'mi'): boolean => {
   try {
     void new RegExp(pattern, flags);
     return true;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return false;
   }
 };

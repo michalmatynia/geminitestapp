@@ -18,6 +18,8 @@ import {
 } from './single-slot-manager-utils';
 
 import type { QueryClient, UseMutationResult } from '@tanstack/react-query';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 interface SlotImageUploadProps {
   projectId: string;
@@ -113,6 +115,7 @@ export function useSlotImageUpload({
               });
               if (updatedSlot) break;
             } catch (error) {
+              logClientError(error);
               updateError = error;
             }
           }
@@ -170,6 +173,7 @@ export function useSlotImageUpload({
         }
         void invalidateImageStudioSlots(queryClient, normalizedProjectId);
       } catch (error) {
+        logClientError(error);
         setUploadError(error instanceof Error ? error.message : 'Failed to upload image');
       }
     },

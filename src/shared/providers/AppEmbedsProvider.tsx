@@ -68,6 +68,7 @@ export function AppEmbedsProvider({ children }: { children: React.ReactNode }): 
       setUserEnabled(null);
       toast('App embed settings saved.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, { context: { source: 'AppEmbedsProvider', action: 'saveSettings' } });
       toast('Failed to save app embed settings.', { variant: 'error' });
       throw error;

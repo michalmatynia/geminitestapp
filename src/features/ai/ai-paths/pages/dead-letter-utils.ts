@@ -1,4 +1,5 @@
 import type {
+  AiPathRunDetail,
   AiPathRunEventRecord,
   AiPathRunNodeRecord,
   AiPathRunRecord,
@@ -7,11 +8,7 @@ import type {
 export const PAGE_SIZES = [10, 25, 50];
 export const SEARCH_DEBOUNCE_MS = 300;
 
-export type RunDetail = {
-  run: AiPathRunRecord;
-  nodes: AiPathRunNodeRecord[];
-  events: AiPathRunEventRecord[];
-} | null;
+export type DeadLetterRunDetail = AiPathRunDetail | null;
 
 export const getLatestEventTimestamp = (events: AiPathRunEventRecord[]): string | null => {
   let max = 0;
@@ -32,7 +29,7 @@ export const formatTimestamp = (value?: Date | string | null): string => {
 };
 
 export const calculateNodeStatusSummary = (
-  detail: RunDetail
+  detail: DeadLetterRunDetail
 ): {
   counts: Record<string, number>;
   totalNodes: number;

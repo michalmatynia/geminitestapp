@@ -4,6 +4,8 @@ import type {
   AuthUser as AuthUserSummary,
 } from '@/shared/contracts/auth';
 import { api } from '@/shared/lib/api-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type { AuthUsersResponse, AuthUserSecurityProfile, AuthUserSummary };
 
@@ -23,6 +25,7 @@ export const updateAuthUser = async (
     const payload = await api.patch<AuthUserSummary>(`/api/auth/users/${userId}`, input);
     return { ok: true, payload };
   } catch (_error: unknown) {
+    logClientError(_error);
     return {
       ok: false,
       payload: { id: userId, email: input.email ?? '' } as AuthUserSummary,
@@ -50,6 +53,7 @@ export const updateAuthUserSecurity = async (
     );
     return { ok: true, payload };
   } catch (_error: unknown) {
+    logClientError(_error);
     return {
       ok: false,
       payload: { userId, mfaEnabled: false, allowedIps: [], disabledAt: null, bannedAt: null },
@@ -72,6 +76,7 @@ export const mockSignIn = async (input: {
     );
     return { ok: true, payload };
   } catch (_error: unknown) {
+    logClientError(_error);
     return {
       ok: false,
       payload: { ok: false, message: _error instanceof Error ? _error.message : 'Sign in failed' },

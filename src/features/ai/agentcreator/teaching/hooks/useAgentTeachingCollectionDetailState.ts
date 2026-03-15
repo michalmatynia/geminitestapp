@@ -16,6 +16,8 @@ import {
   useEmbeddingDocuments,
   useSearchEmbeddingCollectionMutation,
 } from '../hooks/useAgentTeachingQueries';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function useAgentTeachingCollectionDetailState() {
   const { toast } = useToast();
@@ -78,6 +80,7 @@ export function useAgentTeachingCollectionDetailState() {
       setTags('');
       void refetchDocs();
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to add document.', {
         variant: 'error',
       });
@@ -91,6 +94,7 @@ export function useAgentTeachingCollectionDetailState() {
       toast('Document deleted.', { variant: 'success' });
       void refetchDocs();
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to delete document.', {
         variant: 'error',
       });
@@ -113,6 +117,7 @@ export function useAgentTeachingCollectionDetailState() {
       });
       setSearchResults(results);
     } catch (error) {
+      logClientError(error);
       setSearchError(error instanceof Error ? error.message : 'Search failed.');
       setSearchResults([]);
     }

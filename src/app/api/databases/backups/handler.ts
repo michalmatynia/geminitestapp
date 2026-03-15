@@ -12,6 +12,8 @@ import type { DatabaseBackupFile as DatabaseInfo } from '@/shared/contracts/data
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
 import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const isValidDate = (value: unknown): value is Date =>
   value instanceof Date && Number.isFinite(value.getTime());
@@ -71,8 +73,12 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
       },
     });
   } catch (error) {
-    const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
-    void ErrorSystem.captureException(error, { service: 'api/databases/backups', type: 'mongodb' });
+    void ErrorSystem.captureException(error);
+    const { ErrorSystem: SystemLogger } = await import('@/shared/lib/observability/system-logger');
+    void SystemLogger.captureException(error, {
+      service: 'api/databases/backups',
+      type: 'mongodb',
+    });
     throw error;
   }
 }

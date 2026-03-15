@@ -27,6 +27,8 @@ import { resolvePromptExploderValidationStack } from './validation-stack';
 
 import type { PromptExploderSettings } from './types';
 import type { PromptExploderDocument, PromptExploderLearnedTemplate } from './types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type PromptValidationOrchestratorInput = {
   promptSettings: PromptEngineSettings;
@@ -493,6 +495,7 @@ export const resolvePromptValidationRuntime = (
       runtimeLearnedTemplates,
     };
   } catch (error) {
+    logClientError(error);
     if (error instanceof PromptValidationScopeResolutionError) {
       recordPromptValidationError('scope_resolution');
       throw error;
@@ -542,6 +545,7 @@ export const explodePromptWithValidationRuntime = (args: {
     recordPipelineTiming('ok');
     return document;
   } catch (error) {
+    logClientError(error);
     const pipelineMs = performance.now() - pipelineStartedAt;
     if (pipelineMs > 2_500) {
       recordPromptValidationCounter('runtime_timeout', 1, {

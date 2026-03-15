@@ -8,6 +8,8 @@ import {
   useOptionalCmsRuntime,
 } from '../CmsRuntimeContext';
 import { useRequiredBlockSettings } from './BlockContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const parseBoolean = (value: unknown): boolean => value === true || value === 'true';
 
@@ -45,7 +47,8 @@ const parseRuntimeActionArgs = (value: unknown): unknown[] => {
   try {
     const parsed = JSON.parse(trimmed) as unknown;
     return Array.isArray(parsed) ? parsed : [parsed];
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return [trimmed];
   }
 };

@@ -67,6 +67,7 @@ export function usePromptEngineActionsImpl(args: {
               error: null,
             };
           } catch (error) {
+            logClientError(error);
             return {
               ...draft,
               text: nextText,
@@ -289,6 +290,7 @@ export function usePromptEngineActionsImpl(args: {
               error: null,
             };
           } catch (error) {
+            logClientError(error);
             return {
               ...draft,
               text: nextText,
@@ -421,7 +423,9 @@ export function usePromptEngineActionsImpl(args: {
             return parsePromptValidationRules(JSON.stringify(nested));
           }
         }
-      } catch {
+      } catch (error) {
+        logClientError(error);
+      
         // no-op
       }
 
@@ -510,6 +514,7 @@ export function usePromptEngineActionsImpl(args: {
       toast('Prompt engine settings saved successfully.', { variant: 'success' });
       if (args.resolvedOnSaved) args.resolvedOnSaved();
     } catch (error) {
+      logClientError(error);
       logClientError(error, { context: { source: 'PromptEngineContext', action: 'handleSave' } });
       const message = error instanceof Error ? error.message : 'Failed to save settings.';
       args.setSaveError(message);

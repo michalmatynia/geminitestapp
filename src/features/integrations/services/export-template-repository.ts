@@ -58,7 +58,9 @@ const logGuardFailure = async (
         guard: true,
       },
     });
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+  
     // keep guard path non-throwing
   }
 };
@@ -95,6 +97,7 @@ const parseTemplates = async (value: string | null): Promise<Template[]> => {
       mappings: stripBasehostMappings(Array.isArray(template.mappings) ? template.mappings : []),
     })) as Template[];
   } catch (error) {
+    void ErrorSystem.captureException(error);
     try {
       const { logSystemError } = await import('@/shared/lib/observability/system-logger');
       await logSystemError({
@@ -104,6 +107,7 @@ const parseTemplates = async (value: string | null): Promise<Template[]> => {
         context: { action: 'parseTemplates' },
       });
     } catch (logError) {
+      void ErrorSystem.captureException(logError);
       const { logger } = await import('@/shared/utils/logger');
       logger.error(
         '[ExportTemplateRepository] Failed to parse templates (and logging failed):',
@@ -397,6 +401,7 @@ export const getExportActiveTemplateId = async (
     }
     return map.defaultTemplateId ?? null;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await logGuardFailure(
       '[ExportTemplateRepository] Failed to read active export template, returning null',
       error,
@@ -435,6 +440,7 @@ export const getExportDefaultInventoryId = async (): Promise<string | null> => {
     const value = await readDefaultInventoryValue();
     return value ? value : null;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await logGuardFailure(
       '[ExportTemplateRepository] Failed to read default export inventory, returning null',
       error,
@@ -456,6 +462,7 @@ export const getExportStockFallbackEnabled = async (): Promise<boolean> => {
     const value = await readStockFallbackValue();
     return value?.trim().toLowerCase() === 'true';
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await logGuardFailure(
       '[ExportTemplateRepository] Failed to read stock fallback flag, using disabled fallback',
       error,
@@ -477,6 +484,7 @@ export const getExportDefaultConnectionId = async (): Promise<string | null> => 
     const value = await readDefaultConnectionValue();
     return value ? value : null;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await logGuardFailure(
       '[ExportTemplateRepository] Failed to read default export connection, returning null',
       error,
@@ -500,6 +508,7 @@ export const getExportImageRetryPresets = async (): Promise<ImageRetryPreset[]> 
     const parsed = JSON.parse(raw) as unknown;
     return normalizeImageRetryPresets(parsed);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     try {
       const { logSystemError } = await import('@/shared/lib/observability/system-logger');
       await logSystemError({
@@ -509,6 +518,7 @@ export const getExportImageRetryPresets = async (): Promise<ImageRetryPreset[]> 
         context: { action: 'getExportImageRetryPresets' },
       });
     } catch (logError) {
+      void ErrorSystem.captureException(logError);
       const { logger } = await import('@/shared/utils/logger');
       logger.error(
         '[ExportTemplateRepository] Failed to parse image presets (and logging failed):',

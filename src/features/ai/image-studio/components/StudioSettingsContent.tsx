@@ -7,6 +7,8 @@ import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignme
 import { Button, Input, Label, SectionHeader, Textarea, SelectSimple } from '@/shared/ui';
 
 import { useSettingsActions, useSettingsState } from '../context/SettingsContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function StudioSettingsContent(): React.JSX.Element {
   const promptExtractModel = useBrainAssignment({
@@ -57,7 +59,8 @@ export function StudioSettingsContent(): React.JSX.Element {
           },
         },
       }));
-    } catch {
+    } catch (error) {
+      logClientError(error);
       setAdvancedOverridesError('Invalid JSON.');
     }
   };

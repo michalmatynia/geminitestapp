@@ -107,6 +107,7 @@ export function useAiPathsPersistence(
     try {
       return JSON.stringify(value);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'useAiPathsPersistence', action: 'stringifyForStorage', label },
       });
@@ -125,6 +126,7 @@ export function useAiPathsPersistence(
       try {
         return sanitizePathConfig(config);
       } catch (error) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'useAiPathsPersistence',
@@ -206,7 +208,9 @@ export function useAiPathsPersistence(
         let rawPaths: PathMeta[] = [];
         try {
           if (pathIndexItem?.value) rawPaths = JSON.parse(pathIndexItem.value) as PathMeta[];
-        } catch {
+        } catch (error) {
+          logClientError(error);
+        
           /* ignore */
         }
         const loadedPaths = normalizeLoadedPathMetas(rawPaths);
@@ -256,6 +260,7 @@ export function useAiPathsPersistence(
                 fallbackName
               );
             } catch (error) {
+              logClientError(error);
               logClientError(error, {
                 context: {
                   source: 'useAiPathsPersistence',
@@ -266,6 +271,7 @@ export function useAiPathsPersistence(
             }
           }
         } catch (error) {
+          logClientError(error);
           logClientError(error, {
             context: {
               source: 'useAiPathsPersistence',
@@ -354,6 +360,7 @@ export function useAiPathsPersistence(
         }
         setUiStateLoaded(true);
       } catch (error) {
+        logClientError(error);
         const errorDetail = error instanceof Error && error.message ? `: ${error.message}` : '';
         reportAiPathsError(
           error,
@@ -500,6 +507,7 @@ export function useAiPathsPersistence(
               });
               hydratedConfigs[pathId] = sanitized;
             } catch (error) {
+              logClientError(error);
               logClientError(error, {
                 context: {
                   source: 'useAiPathsPersistence',
@@ -522,6 +530,7 @@ export function useAiPathsPersistence(
             });
           }
         } catch (error) {
+          logClientError(error);
           logClientError(error, {
             context: {
               source: 'useAiPathsPersistence',
@@ -625,6 +634,7 @@ export function useAiPathsPersistence(
         }
         toast('Path list saved.', { variant: 'success' });
       } catch (error) {
+        logClientError(error);
         reportAiPathsError(error, { action: 'savePathIndex' }, 'Failed to save path list:');
         toast('Failed to save path list.', { variant: 'error' });
       }

@@ -96,6 +96,8 @@ export function SectionHeader({
                 titleSizes[size],
                 titleClassName
               )}
+              role='heading'
+              aria-level={1}
             >
               {title}
             </div>
@@ -105,7 +107,13 @@ export function SectionHeader({
           typeof subtitle === 'string' ? (
             <h2 className={cn('text-sm text-gray-400', subtitleClassName)}>{subtitle}</h2>
           ) : (
-            <div className={cn('text-sm text-gray-400', subtitleClassName)}>{subtitle}</div>
+            <div
+              className={cn('text-sm text-gray-400', subtitleClassName)}
+              role='heading'
+              aria-level={2}
+            >
+              {subtitle}
+            </div>
           )
         ) : null}
         {description ? (

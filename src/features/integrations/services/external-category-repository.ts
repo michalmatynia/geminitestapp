@@ -7,17 +7,9 @@ import type {
   ExternalCategoryWithChildren,
   ExternalCategorySyncInput,
   BaseCategory,
+  ExternalCategoryRepository,
 } from '@/shared/contracts/integrations';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-
-export type ExternalCategoryRepository = {
-  syncFromBase: (connectionId: string, categories: BaseCategory[]) => Promise<number>;
-  listByConnection: (connectionId: string) => Promise<ExternalCategory[]>;
-  getTreeByConnection: (connectionId: string) => Promise<ExternalCategoryWithChildren[]>;
-  getById: (id: string) => Promise<ExternalCategory | null>;
-  getByExternalId: (connectionId: string, externalId: string) => Promise<ExternalCategory | null>;
-  deleteByConnection: (connectionId: string) => Promise<number>;
-};
 
 function buildCategoryPath(categoryId: string, categoriesById: Map<string, BaseCategory>): string {
   const parts: string[] = [];

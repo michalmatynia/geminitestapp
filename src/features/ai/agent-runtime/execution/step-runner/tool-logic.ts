@@ -8,6 +8,8 @@ import {
 import { runAgentBrowserControl, runAgentTool } from '@/features/ai/agent-runtime/tools';
 import { PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
 import unknownToErrorMessage from '@/shared/utils/error-formatting';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export async function executeTool(args: {
   step: PlanStep;
@@ -97,6 +99,7 @@ export async function executeTool(args: {
           stepLabel: step.title,
         });
   } catch (error) {
+    logClientError(error);
     toolError = error;
   } finally {
     clearTimeout(toolTimeoutId);

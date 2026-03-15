@@ -32,6 +32,8 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'crops');
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;
@@ -69,7 +71,8 @@ const parseJsonFormValue = <T>(value: FormDataEntryValue | null): T | undefined 
   if (!normalized) return undefined;
   try {
     return JSON.parse(normalized) as T;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return undefined;
   }
 };
@@ -91,7 +94,8 @@ function parseDataUrl(dataUrl: string): { buffer: Buffer; mime: string } | null 
     const buffer = Buffer.from(match[2] ?? '', 'base64');
     const mime = (match[1] ?? 'image/png').toLowerCase();
     return { buffer, mime };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 }
@@ -422,6 +426,7 @@ async function processCropPayload(input: {
       }
       sourceBuffer = source.buffer;
     } catch (error) {
+      void ErrorSystem.captureException(error);
       sourceLoadError = error;
     }
   }
@@ -899,6 +904,7 @@ export async function postCropSlotHandler(
 
     return NextResponse.json(responseBody, { status: 201 });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void logSystemEvent({
       level: 'warn',
       source: 'image-studio.crop',

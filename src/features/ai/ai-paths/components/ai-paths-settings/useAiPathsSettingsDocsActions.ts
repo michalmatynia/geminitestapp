@@ -5,6 +5,8 @@ import {
   DOCS_JOBS_SNIPPET,
   DOCS_WIRING_SNIPPET,
 } from '@/shared/lib/ai-paths/core/definitions/docs-snippets';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type ToastFn = (
   message: string,
@@ -37,6 +39,7 @@ export function useAiPathsSettingsDocsActions({
       await navigator.clipboard.writeText(DOCS_WIRING_SNIPPET);
       toast('Wiring copied to clipboard.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       reportAiPathsError(error, { action: 'copyDocsWiring' }, 'Failed to copy wiring:');
       toast('Failed to copy wiring.', { variant: 'error' });
     }
@@ -47,6 +50,7 @@ export function useAiPathsSettingsDocsActions({
       await navigator.clipboard.writeText(DOCS_DESCRIPTION_SNIPPET);
       toast('AI Description wiring copied.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       reportAiPathsError(
         error,
         { action: 'copyDocsDescription' },
@@ -61,6 +65,7 @@ export function useAiPathsSettingsDocsActions({
       await navigator.clipboard.writeText(DOCS_JOBS_SNIPPET);
       toast('Jobs wiring copied.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       reportAiPathsError(error, { action: 'copyDocsJobs' }, 'Failed to copy jobs wiring:');
       toast('Failed to copy jobs wiring.', { variant: 'error' });
     }

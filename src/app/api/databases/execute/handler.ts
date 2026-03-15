@@ -6,6 +6,8 @@ import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
 import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const databaseExecuteRequestSchema = z.object({
   sql: z.string().trim().min(1).optional(),
@@ -44,6 +46,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   try {
     return await handleMongoOperation(parsed);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     try {
       const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
       void ErrorSystem.captureException(error, {
@@ -51,7 +54,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
         provider: 'mongodb',
         collection: parsed.collection,
       });
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // Ignore error capture failures
     }
     throw error;

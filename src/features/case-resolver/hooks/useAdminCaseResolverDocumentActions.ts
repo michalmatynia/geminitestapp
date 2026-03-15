@@ -28,6 +28,8 @@ import {
 import { logCaseResolverWorkspaceEvent } from '../workspace-persistence';
 
 import type { CaseResolverFileEditDraft } from '../types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 
 const sanitizeDocumentExportBaseName = (value: string): string => {
@@ -265,6 +267,7 @@ export function useAdminCaseResolverDocumentActions({
       await navigator.clipboard.writeText(editingDocumentDraft.id);
       toast('File ID copied to clipboard.', { variant: 'success' });
     } catch (_error: unknown) {
+      logClientError(_error);
       toast('Failed to copy file ID.', { variant: 'error' });
     }
   }, [editingDocumentDraft, toast]);
@@ -285,6 +288,7 @@ export function useAdminCaseResolverDocumentActions({
         URL.revokeObjectURL(previewUrl);
       }, 120_000);
     } catch (_error: unknown) {
+      logClientError(_error);
       toast(_error instanceof Error ? _error.message : 'Failed to generate PDF preview.', {
         variant: 'error',
       });
@@ -333,6 +337,7 @@ export function useAdminCaseResolverDocumentActions({
             frameWindow.focus();
             frameWindow.print();
           } catch (_error: unknown) {
+            logClientError(_error);
             toast('Failed to open the print dialog.', { variant: 'error' });
           }
           cleanup();
@@ -351,6 +356,7 @@ export function useAdminCaseResolverDocumentActions({
       const markup = buildDraftPdfPreviewMarkup(editingDocumentDraft, filemakerDatabase);
       printDocumentMarkup(markup);
     } catch (_error: unknown) {
+      logClientError(_error);
       toast(_error instanceof Error ? _error.message : 'Failed to generate printable document.', {
         variant: 'error',
       });
@@ -383,7 +389,9 @@ export function useAdminCaseResolverDocumentActions({
             message?: string;
           };
           message = payload.error?.message ?? payload.message ?? message;
-        } catch {
+        } catch (error) {
+          logClientError(error);
+        
           // Intentionally ignore parsing error; keep fallback 'message' for the throw below.
         }        throw new Error(message);
       }
@@ -402,6 +410,7 @@ export function useAdminCaseResolverDocumentActions({
       }, 500);
       toast('PDF exported.', { variant: 'success' });
     } catch (_error: unknown) {
+      logClientError(_error);
       toast(_error instanceof Error ? _error.message : 'Failed to export PDF.', {
         variant: 'error',
       });

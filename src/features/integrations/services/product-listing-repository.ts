@@ -12,6 +12,8 @@ import {
   ProductListingRepository,
   ProductListingWithDetails,
 } from '../types/listings';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const LISTING_COLLECTION = 'product_listings';
 let listingIndexesEnsured: Promise<void> | null = null;
@@ -34,6 +36,7 @@ const ensureListingIndexes = async (): Promise<void> => {
   try {
     await listingIndexesEnsured;
   } catch (error) {
+    logClientError(error);
     listingIndexesEnsured = null;
     throw error;
   }

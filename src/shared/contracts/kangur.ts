@@ -934,6 +934,7 @@ export const kangurAssignmentSchema = z.object({
   priority: kangurAssignmentPrioritySchema,
   archived: z.boolean().default(false),
   timeLimitMinutes: kangurAssignmentTimeLimitMinutesSchema.optional(),
+  timeLimitStartsAt: kangurAssignmentIsoDateSchema.nullable().optional(),
   target: kangurAssignmentTargetSchema,
   assignedByName: z.string().trim().max(120).nullable().default(null),
   assignedByEmail: z.string().trim().max(160).nullable().default(null),

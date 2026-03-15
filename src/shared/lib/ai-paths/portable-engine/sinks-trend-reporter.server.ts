@@ -38,6 +38,8 @@ import type {
   PortablePathSigningPolicySurface,
 } from './portable-engine-resolution-types';
 import type { PortablePathSigningPolicyAlertLevel } from './sinks-contracts.server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const toPortablePathSigningPolicyUsageSurfaceDelta = (
   current: PortablePathSigningPolicyUsageSnapshot,
@@ -306,7 +308,8 @@ export const createPortablePathSigningPolicyTrendReporter = (
         } else {
           persistenceWritesFailed += 1;
         }
-      } catch {
+      } catch (error) {
+        void ErrorSystem.captureException(error);
         persistenceWritesFailed += 1;
       }
     }

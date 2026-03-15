@@ -11,6 +11,8 @@ import {
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 
@@ -112,7 +114,8 @@ export async function DELETE_handler(
       (result.deletedSlotIds ?? []).forEach((deletedSlotId) => {
         deletedSlotIds.add(deletedSlotId);
       });
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       failedRootSlotIds.push(slot.id);
     }
   }

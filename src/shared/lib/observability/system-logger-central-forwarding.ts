@@ -2,6 +2,8 @@ import type { SystemLogLevelDto as SystemLogLevel } from '@/shared/contracts/obs
 
 import { truncateString } from './log-redaction';
 import { isTransientError, withTransientRecovery } from './transient-recovery/with-recovery';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type CentralLogPayload = {
   level: SystemLogLevel;
@@ -120,7 +122,8 @@ const getCentralLogWebhookHost = (): string | null => {
   try {
     const parsed = new URL(webhookUrl);
     return parsed.host || null;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -186,7 +189,8 @@ const toForwardErrorMessage = (error: unknown): string => {
   }
   try {
     return truncateString(JSON.stringify(error), 500);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return 'unknown_forward_error';
   }
 };
@@ -218,6 +222,7 @@ const loadDeadLetterStore = async (): Promise<DeadLetterStoreModule | null> => {
       (await import('@/shared/lib/observability/central-log-dead-letter-store')) as DeadLetterStoreModule | null;
     return mod;
   } catch (error) {
+    logClientError(error);
     console.error('[system-logger] Failed to load dead-letter persistence module', error);
     return null;
   }
@@ -271,6 +276,7 @@ const queueDeadLetterPersistence = (): void => {
           centralLoggingRuntimeState.lastDeadLetterPersistFailedAt = new Date().toISOString();
         }
       } catch (error) {
+        logClientError(error);
         centralLoggingRuntimeState.deadLetterPersistFailed += 1;
         centralLoggingRuntimeState.lastDeadLetterPersistFailedAt = new Date().toISOString();
         console.error('[system-logger] Failed to persist dead-letter queue', error);
@@ -304,6 +310,7 @@ const ensureDeadLetterStoreHydrated = async (): Promise<void> => {
         centralLoggingRuntimeState.lastDeadLetterHydratedAt = new Date().toISOString();
       }
     } catch (error) {
+      logClientError(error);
       console.error('[system-logger] Failed to hydrate dead-letter queue', error);
     } finally {
       deadLetterStoreHydrated = true;
@@ -412,6 +419,7 @@ const replayCentralLogDeadLetters = async (): Promise<void> => {
         centralLoggingRuntimeState.lastDeliveredAt = new Date().toISOString();
         queueDeadLetterPersistence();
       } catch (error) {
+        logClientError(error);
         centralLoggingRuntimeState.replayFailed += 1;
         centralLoggingRuntimeState.lastFailedAt = new Date().toISOString();
         entry.retryCount += 1;
@@ -445,6 +453,7 @@ export const forwardToCentralizedLogging = async (
     }
     return 'delivered';
   } catch (error) {
+    logClientError(error);
     centralLoggingRuntimeState.failed += 1;
     centralLoggingRuntimeState.lastFailedAt = new Date().toISOString();
     enqueueCentralLogDeadLetter(payload, error, 1);

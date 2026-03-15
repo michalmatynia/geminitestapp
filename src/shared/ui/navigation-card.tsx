@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn, getTextContent, warnMissingAccessibleLabel } from '@/shared/utils';
 
 import { Card, type CardProps } from './card';
 
@@ -40,9 +40,25 @@ export function NavigationCard(props: NavigationCardProps): React.JSX.Element {
     padding = 'md',
   } = props;
   const TitleTag = titleAs;
+  const titleText = getTextContent(title).trim();
+  const descriptionText = getTextContent(description).trim();
+  const accessibleLabel = titleText || descriptionText;
+
+  warnMissingAccessibleLabel({
+    componentName: 'NavigationCard',
+    hasAccessibleLabel: Boolean(accessibleLabel),
+  });
 
   return (
-    <Link href={href} className={cn('block', linkClassName)} aria-label={'Card'} title={'Card'}>
+    <Link
+      href={href}
+      className={cn(
+        'block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+        linkClassName
+      )}
+      {...(!titleText && accessibleLabel ? { 'aria-label': accessibleLabel } : {})}
+      {...(accessibleLabel ? { title: accessibleLabel } : {})}
+    >
       <Card variant={variant} padding={padding} className={cn('h-full transition-colors', className)}>
         <div className={cn('flex h-full items-start gap-4', contentClassName)}>
           {leading ? <div className='shrink-0'>{leading}</div> : null}

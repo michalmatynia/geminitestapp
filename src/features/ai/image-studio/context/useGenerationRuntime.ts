@@ -29,6 +29,8 @@ import type {
   GenerationRecord,
   GenerationState,
 } from './GenerationContext.types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type PollToken = {
   runId: string;
@@ -456,7 +458,9 @@ export function useGenerationRuntime(): {
               if (payload?.type === 'heartbeat') {
                 return;
               }
-            } catch {
+            } catch (error) {
+              logClientError(error);
+            
               // Continue with status refresh for unknown event payloads.
             }
             lastSseHandledAtRef.current = Date.now();
@@ -472,7 +476,9 @@ export function useGenerationRuntime(): {
               token.eventSource = null;
             }
           };
-        } catch {
+        } catch (error) {
+          logClientError(error);
+        
           // Polling fallback remains active.
         }
       }
@@ -492,6 +498,7 @@ export function useGenerationRuntime(): {
               return;
             }
           } catch (error) {
+            logClientError(error);
             if (attempt === 0 && !sseConnected) {
               toast(
                 error instanceof Error ? error.message : 'Failed to receive generation callback.',
@@ -618,7 +625,9 @@ export function useGenerationRuntime(): {
           submittedSlotFolderPath: '',
           expectedOutputs: normalizeExpectedOutputs(latestRun.expectedOutputs, 1),
         });
-      } catch {
+      } catch (error) {
+        logClientError(error);
+      
         // Keep current UI state on hydration failures.
       }
     };

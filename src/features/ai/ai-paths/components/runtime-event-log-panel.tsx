@@ -6,6 +6,8 @@ import type { AiPathRuntimeEvent, AiPathRunEventLevel } from '@/shared/lib/ai-pa
 import { Button, StatusBadge, SelectSimple, Card } from '@/shared/ui';
 
 import { useRuntimeState, useRuntimeActions } from '../context';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -28,7 +30,8 @@ function formatTime(iso: string): string {
     const s = String(d.getSeconds()).padStart(2, '0');
     const ms = String(d.getMilliseconds()).padStart(3, '0');
     return `${h}:${m}:${s}.${ms}`;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return iso;
   }
 }

@@ -54,6 +54,8 @@ import {
   slugifyPresetFilename,
   writeToClipboard,
 } from './product-filters-utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const ProductSelectionActions = memo(function ProductSelectionActions() {
   const {
@@ -102,6 +104,7 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
       toast('Base64 images generated for selected products.', { variant: 'success' });
       setRowSelection({});
     } catch (error) {
+      logClientError(error);
       toast(
         error instanceof Error ? error.message : 'An error occurred during base64 conversion.',
         {
@@ -240,6 +243,7 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
       await writeToClipboard(JSON.stringify(buildPresetBundle(advancedFilterPresets), null, 2));
       toast('Copied all presets JSON to clipboard.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to copy presets JSON.', {
         variant: 'error',
       });
@@ -252,6 +256,7 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
         await writeToClipboard(JSON.stringify(preset, null, 2));
         toast(`Copied preset "${preset.name}" JSON to clipboard.`, { variant: 'success' });
       } catch (error) {
+        logClientError(error);
         toast(error instanceof Error ? error.message : 'Failed to copy preset JSON.', {
           variant: 'error',
         });
@@ -272,6 +277,7 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
       await importPresets(parsedPayload);
       closeImportDialog();
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to import presets.', {
         variant: 'error',
       });
@@ -290,6 +296,7 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
         const parsedPayload: unknown = JSON.parse(content);
         await importPresets(parsedPayload);
       } catch (error) {
+        logClientError(error);
         toast(error instanceof Error ? error.message : 'Failed to import presets from file.', {
           variant: 'error',
         });
@@ -349,6 +356,7 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
 
       closePresetDialog();
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save preset.', {
         variant: 'error',
       });

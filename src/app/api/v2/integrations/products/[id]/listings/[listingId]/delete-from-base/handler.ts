@@ -16,6 +16,8 @@ import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 
 import { resolveDeleteInventoryId } from './helpers';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const BASE_DELETE_RUN_PATH_ID = 'integration-base-delete';
 const BASE_DELETE_RUN_PATH_NAME = 'Base.com Deletion Jobs';
@@ -98,7 +100,9 @@ export async function POST_handler(
         externalListingId: listing.externalListingId,
       },
     });
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+  
     // Keep deletion flow resilient if runtime-run logging fails.
   }
 
@@ -146,7 +150,9 @@ export async function POST_handler(
       if (normalizedBaseProductId === normalizedExternalListingId) {
         await productRepository.updateProduct(productId, { baseProductId: null });
       }
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // Keep Base deletion successful even if local product cleanup fails.
     }
     if (runId) {
@@ -183,6 +189,7 @@ export async function POST_handler(
 
     return NextResponse.json(response);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to delete from Base.com.';
     await repo.updateListingStatus(listingId, 'failed').catch(() => undefined);
     await repo

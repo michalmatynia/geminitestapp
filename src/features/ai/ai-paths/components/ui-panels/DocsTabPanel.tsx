@@ -27,6 +27,8 @@ import {
 import { buildFullDocumentationClipboardText } from './docs-utils';
 import { useAiPathsErrorState } from '../ai-paths-settings/hooks/useAiPathsErrorState';
 import { useAiPathsSettingsDocsActions } from '../ai-paths-settings/useAiPathsSettingsDocsActions';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function DocsTabPanel(): React.JSX.Element {
   const { toast } = useToast();
@@ -98,7 +100,8 @@ export function DocsTabPanel(): React.JSX.Element {
     try {
       await navigator.clipboard.writeText(snippet);
       toast(`Copied ${nodeType} JSON snippet.`, { variant: 'success' });
-    } catch {
+    } catch (error) {
+      logClientError(error);
       toast(`Failed to copy ${nodeType} JSON snippet.`, { variant: 'error' });
     }
   };
@@ -117,7 +120,8 @@ export function DocsTabPanel(): React.JSX.Element {
       toast('Full AI Paths documentation copied (including JSON snippets).', {
         variant: 'success',
       });
-    } catch {
+    } catch (error) {
+      logClientError(error);
       toast('Failed to copy full AI Paths documentation.', { variant: 'error' });
     }
   };

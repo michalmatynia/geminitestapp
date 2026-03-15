@@ -56,6 +56,7 @@ export function usePreferencePersistence(
       try {
         await persistUserPreferences(pathId);
       } catch (error) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'useAiPathsPersistence',
@@ -79,7 +80,8 @@ export function usePreferencePersistence(
           return null;
         }
         return parsed;
-      } catch {
+      } catch (error) {
+        logClientError(error);
         return null;
       }
     },

@@ -695,7 +695,7 @@ export default function LogicalClassificationGame({
           </>
         ) : (
           <KangurInfoCard accent='teal' className='w-full' padding='md' tone='neutral'>
-            <div className='grid grid-cols-2 gap-2 sm:grid-cols-3'>
+            <div className='grid grid-cols-1 gap-2 min-[360px]:grid-cols-2 sm:grid-cols-3'>
               {round.items.map((item) => {
                 const isSelected = selectedIntruderId === item.id;
                 const isCorrect = checked && item.id === round.intruderId;

@@ -23,6 +23,8 @@ import {
 } from './useCanvasInteractions.helpers';
 
 import type { GraphMutationMeta } from '../GraphContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 let inMemorySubgraphClipboard: SubgraphClipboardPayload | null = null;
 let pasteSequence = 0;
@@ -126,7 +128,9 @@ export function useCanvasInteractionsClipboard({
       inMemorySubgraphClipboard = payload;
       try {
         window.localStorage.setItem(SUBGRAPH_CLIPBOARD_STORAGE_KEY, JSON.stringify(payload));
-      } catch {
+      } catch (error) {
+        logClientError(error);
+      
         // Ignore localStorage write failures.
       }
       const serialized = JSON.stringify(payload);
@@ -138,7 +142,9 @@ export function useCanvasInteractionsClipboard({
         ) {
           await navigator.clipboard.writeText(serialized);
         }
-      } catch {
+      } catch (error) {
+        logClientError(error);
+      
         // Clipboard API can be blocked in some contexts; in-memory clipboard still works.
       }
     },
@@ -328,7 +334,9 @@ export function useCanvasInteractionsClipboard({
           return cloneValue(parsed);
         }
       }
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Ignore parse/storage errors and continue to system clipboard.
     }
     try {
@@ -346,7 +354,9 @@ export function useCanvasInteractionsClipboard({
           }
         }
       }
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Clipboard read may be unavailable due to browser permissions.
     }
     return null;

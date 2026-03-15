@@ -80,7 +80,9 @@ export function UrlGuardProvider(): null {
       const originalReplace = window.location.replace.bind(window.location);
       window.location.assign = wrap(originalAssign);
       window.location.replace = wrap(originalReplace);
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Ignore if location is not writable in this environment.
     }
 
@@ -114,7 +116,9 @@ export function UrlGuardProvider(): null {
       const originalReplaceState = window.history.replaceState.bind(window.history);
       window.history.pushState = wrapHistory(originalPush, 'pushState');
       window.history.replaceState = wrapHistory(originalReplaceState, 'replaceState');
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Ignore history patch failures.
     }
 

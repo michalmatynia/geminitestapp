@@ -47,6 +47,7 @@ export const handleSaveSequenceGroup = async (args: {
     );
     notifySuccess(`Group "${normalizedLabel}" saved.`);
   } catch (error) {
+    logClientError(error);
     logClientError(error, {
       context: { source: 'useValidatorSettingsController', action: 'saveSequenceGroup' },
     });
@@ -78,6 +79,7 @@ export const handleUngroup = async (args: {
     );
     notifySuccess('Group members ungrouped.');
   } catch (error) {
+    logClientError(error);
     logClientError(error, {
       context: { source: 'useValidatorSettingsController', action: 'ungroup' },
     });
@@ -116,6 +118,7 @@ export const handleMoveGroup = async (args: {
       })
     );
   } catch (error) {
+    logClientError(error);
     logClientError(error, {
       context: { source: 'useValidatorSettingsController', action: 'moveGroup' },
     });
@@ -168,6 +171,7 @@ export const handleReorderInGroup = async (args: {
       })
     );
   } catch (error) {
+    logClientError(error);
     logClientError(error, {
       context: { source: 'useValidatorSettingsController', action: 'reorderInGroup' },
     });
@@ -196,6 +200,7 @@ export const handleMoveToGroup = async (args: {
       },
     });
   } catch (error) {
+    logClientError(error);
     logClientError(error, {
       context: { source: 'useValidatorSettingsController', action: 'moveToGroup' },
     });
@@ -247,6 +252,7 @@ export const handleRemoveFromGroup = async (args: {
 
     await Promise.all(updates);
   } catch (error) {
+    logClientError(error);
     logClientError(error, {
       context: { source: 'useValidatorSettingsController', action: 'removeFromGroup' },
     });
@@ -279,6 +285,7 @@ export const handleCreateGroup = async (args: {
       )
     );
   } catch (error) {
+    logClientError(error);
     logClientError(error, {
       context: { source: 'useValidatorSettingsController', action: 'createGroup' },
     });
@@ -305,6 +312,7 @@ export const handleRenameGroup = async (args: {
       )
     );
   } catch (error) {
+    logClientError(error);
     logClientError(error, {
       context: { source: 'useValidatorSettingsController', action: 'renameGroup' },
     });
@@ -332,6 +340,7 @@ export const handleUpdateGroupDebounce = async (args: {
       )
     );
   } catch (error) {
+    logClientError(error);
     logClientError(error, {
       context: { source: 'useValidatorSettingsController', action: 'updateGroupDebounce' },
     });

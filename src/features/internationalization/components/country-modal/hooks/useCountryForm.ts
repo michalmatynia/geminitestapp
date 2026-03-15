@@ -76,6 +76,7 @@ export function useCountryForm({
 
       toast('Country saved.', { variant: 'success' });
     } catch (err) {
+      logClientError(err);
       logClientError(err, {
         context: { source: 'CountryModal', action: 'saveCountry', countryId: country?.id },
       });

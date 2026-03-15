@@ -1,5 +1,7 @@
 import type { AiPathRunRepository as PathRunRepository } from '@/shared/contracts/ai-paths';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type CancellationMonitorState = {
   active: boolean;
@@ -38,6 +40,7 @@ export const createCancellationMonitor = (params: {
       params.abortController.abort();
       return true;
     } catch (error) {
+      logClientError(error);
       void ErrorSystem.logWarning('Failed to check cancellation status', {
         service: 'ai-paths-executor',
         error,

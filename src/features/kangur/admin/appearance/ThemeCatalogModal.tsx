@@ -20,6 +20,8 @@ import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { serializeSetting } from '@/shared/utils/settings-json';
 import { useAppearancePage } from './AppearancePage.context';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function ThemeCatalogModal(): React.JSX.Element {
   const { toast } = useToast();
@@ -90,6 +92,7 @@ export function ThemeCatalogModal(): React.JSX.Element {
       setNewThemeName('');
       toast('Nowy motyw został dodany do katalogu.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Błąd zapisu motywu.', { variant: 'error' });
     } finally {
       setIsSavingNew(false);
@@ -103,6 +106,7 @@ export function ThemeCatalogModal(): React.JSX.Element {
       await createCatalogEntry(nextName, entry.settings);
       toast('Motyw został zduplikowany.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Nie udało się zduplikować motywu.', { variant: 'error' });
     } finally {
       setDuplicatingId(null);
@@ -121,6 +125,7 @@ export function ThemeCatalogModal(): React.JSX.Element {
       updateCatalog(serialized);
       toast('Motyw został usunięty.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Błąd usuwania motywu.', { variant: 'error' });
     }
   };

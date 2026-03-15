@@ -187,25 +187,6 @@ const toNullableTrimmed = (value: string): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const toOptionalTrimmed = (value: string): string | undefined => {
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-};
-
-type ParsedEditorState = {
-  store: KangurPageContentStore | null;
-  error: string | null;
-};
-
-type ManifestCoverageRow = {
-  id: string;
-  pageKey: string;
-  title: string;
-  missingEntry: boolean;
-  disabled: boolean;
-  missingGuideLinks: string[];
-};
-
 export function KangurPageContentSettingsPanel(): React.JSX.Element {
   const {
     editorValue,
@@ -215,6 +196,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
     selectedEntryId,
     setSelectedEntryId,
     selectedFragmentId,
+    setSelectedFragmentId,
     isDirty,
     parsedState,
     selectedEntry,
@@ -356,4 +338,3 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
     </FormSection>
   );
 }
-

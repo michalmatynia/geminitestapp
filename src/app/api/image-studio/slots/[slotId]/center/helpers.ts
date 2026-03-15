@@ -17,6 +17,8 @@ import {
   type UploadedClientCenterImage,
   type ImageStudioCenterMetadata,
 } from '@/shared/contracts/image-studio';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export async function parseCenterRequestPayload(
   req: NextRequest
@@ -165,6 +167,7 @@ export function parseCenterResponsePayload(
   try {
     return imageStudioCenterResponseSchema.parse(data);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const err = error as { format?: () => unknown };
     const validationError = new Error('Center response validation failed') as Error & {
       code?: string;

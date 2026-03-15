@@ -1,3 +1,4 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 type InstrumentationGlobal = typeof globalThis & {
   __nodeInstrumentationRegistered?: boolean;
   __cmsProcessHandlersRegistered?: boolean;
@@ -107,7 +108,9 @@ export async function registerNodeInstrumentation() {
             ...context,
           });
         }
-      } catch {
+      } catch (error) {
+        logClientError(error);
+      
         // Prevent infinite loops if logging fails
       }
     })();
@@ -148,7 +151,8 @@ export async function registerNodeInstrumentation() {
           error: reason,
           source: 'process.unhandledRejection',
         });
-      } catch {
+      } catch (error) {
+        logClientError(error);
         const { logger } = await import('@/shared/utils/logger');
         logger.error('Fatal: Unhandled Rejection (and logging failed)', reason, {
           service: 'process.runtime',
@@ -171,7 +175,8 @@ export async function registerNodeInstrumentation() {
           source: 'process.uncaughtException',
           critical: true,
         });
-      } catch {
+      } catch (error) {
+        logClientError(error);
         const { logger } = await import('@/shared/utils/logger');
         logger.error('Fatal: Uncaught Exception (and logging failed)', error, {
           service: 'process.runtime',

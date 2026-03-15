@@ -1,6 +1,8 @@
 import 'server-only';
 
 import { Redis } from 'ioredis';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const TRANSIENT_REDIS_ERROR_CODES = new Set(['EPIPE', 'ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT']);
 
@@ -29,7 +31,9 @@ const captureException = async (
   try {
     const mod = await import('@/shared/lib/observability/system-logger');
     await mod.ErrorSystem.captureException(error, context);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+  
     // ignore
   }
 };
@@ -67,6 +71,7 @@ const ensureRedisClient = (): Redis | null => {
       globalForRedis.redisInitializedAtMs = startedAt;
     }
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void captureException(error, { service: 'redis', action: 'initialize_failed' });
     redis = null;
   }
@@ -90,7 +95,9 @@ export async function closeRedisClient(): Promise<void> {
   if (redis) {
     try {
       await redis.quit();
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // Already disconnected
     }
     redis = null;

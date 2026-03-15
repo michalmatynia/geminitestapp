@@ -35,6 +35,8 @@ import type {
   FilemakerOrganization,
   FilemakerPerson,
 } from '../types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -179,6 +181,7 @@ export function AdminFilemakerEmailEditPage(): React.JSX.Element {
       toast('Email updated.', { variant: 'success' });
       router.push('/admin/filemaker/emails');
     } catch (error: unknown) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to update email.', {
         variant: 'error',
       });

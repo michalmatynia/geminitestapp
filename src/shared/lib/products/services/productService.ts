@@ -2,9 +2,7 @@ import 'server-only';
 
 import { ActivityTypes } from '@/shared/constants/observability';
 import type {
-  ImageFileRecord,
-  ImageFileCreateInput,
-  ImageFileListFilters,
+  ImageFileRepository,
 } from '@/shared/contracts/files';
 import type {
   ProductParameterValue,
@@ -34,16 +32,6 @@ import { validateProductCreate, validateProductUpdate } from '@/shared/lib/produ
 import { logActivity } from '@/shared/utils/observability/activity-service';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { withRetry } from '@/shared/utils/retry';
-
-export type ImageFileRepository = {
-  createImageFile(data: ImageFileCreateInput): Promise<ImageFileRecord>;
-  getImageFileById(id: string): Promise<ImageFileRecord | null>;
-  listImageFiles(filters?: ImageFileListFilters): Promise<ImageFileRecord[]>;
-  findImageFilesByIds(ids: string[]): Promise<ImageFileRecord[]>;
-  updateImageFilePath(id: string, filepath: string): Promise<ImageFileRecord | null>;
-  updateImageFileTags(id: string, tags: string[]): Promise<ImageFileRecord | null>;
-  deleteImageFile(id: string): Promise<ImageFileRecord | null>;
-};
 
 const resolveProductRepository = async (
   providerOverride?: ProductDbProvider
@@ -303,6 +291,7 @@ async function getProducts(
 
     return products;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.captureException(error, {
       service: 'product-service',
       action: 'getProducts',

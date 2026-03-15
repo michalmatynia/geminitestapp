@@ -235,6 +235,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
         setCurrentSessionId(data.sessions[0]?.id ?? null);
       }
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, { context: { source: 'useChatbotLogic.fetchSessions' } });
       toast('Failed to load chat sessions', { variant: 'error' });
     } finally {
@@ -247,6 +248,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       const session = await chatbotApi.fetchChatbotSession(id);
       setMessages(session?.messages || []);
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'useChatbotLogic.loadSessionMessages', sessionId: id },
       });
@@ -263,6 +265,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       setCurrentSessionId(data.sessionId);
       setMessages([]);
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, { context: { source: 'useChatbotLogic.createNewSession' } });
       toast('Failed to create new chat session', { variant: 'error' });
     }
@@ -277,6 +280,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
           setCurrentSessionId(sessions[0]?.id || null);
         }
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error, {
           context: { source: 'useChatbotLogic.deleteSession', sessionId: id },
         });
@@ -343,6 +347,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       setSettingsSnapshot(nextSettings);
       setSettingsDirty(false);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'useChatbotLogic.loadChatbotSettings',
@@ -405,6 +410,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       setSettingsSnapshot(payload);
       toast('Chatbot settings saved.', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, { context: { source: 'useChatbotLogic.saveChatbotSettings' } });
       const message = error instanceof Error ? error.message : 'Failed to save settings.';
       toast(message, { variant: 'error' });
@@ -453,6 +459,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
         setMessages((prev: ChatMessage[]): ChatMessage[] => [...prev, assistantMessage]);
       }
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, { context: { source: 'useChatbotLogic.sendMessage', sessionId } });
       toast('Failed to send message', { variant: 'error' });
     } finally {

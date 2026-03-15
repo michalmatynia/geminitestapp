@@ -45,6 +45,7 @@ export default function CreateSlugPage(): React.JSX.Element {
         : '/admin/cms/slugs';
       router.push(next);
     } catch (err: unknown) {
+      logClientError(err);
       logClientError(err, {
         context: { source: 'CreateSlugPage', action: 'createSlug', slug: data.slug, domainId },
       });

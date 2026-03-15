@@ -8,6 +8,8 @@ import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { uploadFile } from '@/shared/lib/files/file-uploader';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 
@@ -30,7 +32,8 @@ function normalizeStudioPublicPath(filepath: string | null | undefined): string 
     try {
       const url = new URL(raw);
       return normalizeStudioPublicPath(url.pathname);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       return raw;
     }
   }
@@ -154,7 +157,8 @@ export async function GET_handler(
         return normalized === file.filepath ? file : { ...file, filepath: normalized };
       })
       .filter(Boolean) as ImageFileRecord[];
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     // If repository/DB is down, we still want to show disk assets.
     repoAssets = [];
   }
@@ -163,12 +167,14 @@ export async function GET_handler(
   let diskFolders: string[];
   try {
     diskAssets = await listStudioAssetsFromDisk(projectId);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     diskAssets = [];
   }
   try {
     diskFolders = await listStudioFoldersFromDisk(projectId);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     diskFolders = [];
   }
 
@@ -224,6 +230,7 @@ export async function POST_handler(
       });
       uploaded.push(record);
     } catch (error) {
+      void ErrorSystem.captureException(error);
       const message = error instanceof Error ? error.message : 'Upload failed';
       failures.push({ filename: fileName, error: message });
     }

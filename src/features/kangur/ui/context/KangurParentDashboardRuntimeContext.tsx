@@ -18,6 +18,8 @@ import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingCont
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import { internalError } from '@/shared/errors/app-error';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type KangurParentDashboardTabId =
   | 'scores'
@@ -273,6 +275,7 @@ export function KangurParentDashboardRuntimeProvider({
           setCreateLearnerModalOpen(false);
           setFeedback(null);
         } catch (error: unknown) {
+          logClientError(error);
           const details =
             error && typeof error === 'object'
               ? (error as { details?: { issues?: { fieldErrors?: Record<string, string[]> } } })
@@ -321,6 +324,7 @@ export function KangurParentDashboardRuntimeProvider({
           setFeedback('Zapisano dane ucznia.');
           return true;
         } catch (error: unknown) {
+          logClientError(error);
           setFeedback(
             error instanceof Error ? error.message : 'Nie udało się zapisać zmian.'
           );
@@ -343,6 +347,7 @@ export function KangurParentDashboardRuntimeProvider({
           setFeedback(`Usunięto profil ucznia: ${removed.displayName}.`);
           return true;
         } catch (error: unknown) {
+          logClientError(error);
           setFeedback(
             error instanceof Error ? error.message : 'Nie udało się usunąć profilu ucznia.'
           );

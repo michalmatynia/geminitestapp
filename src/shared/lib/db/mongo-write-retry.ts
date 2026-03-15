@@ -1,4 +1,6 @@
 import 'server-only';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const SINGLE_WRITER_ERROR_PATTERNS = [
   'Another write batch or compaction is already active',
@@ -72,6 +74,7 @@ export const executeMongoWriteWithRetry = async <T>(
       try {
         return await operation();
       } catch (error) {
+        void ErrorSystem.captureException(error);
         attempt += 1;
 
         if (attempt >= maxAttempts || !isMongoSingleWriterConflictError(error)) {

@@ -115,6 +115,7 @@ export function useIntegrationsActionsImpl(args: {
           slug: def.slug,
         });
       } catch (error: unknown) {
+        logClientError(error);
         toast((error as Error)?.message ?? `Failed to add ${def.name}`, { variant: 'error' });
         return null;
       }
@@ -202,6 +203,7 @@ export function useIntegrationsActionsImpl(args: {
       }
       return saved;
     } catch (error: unknown) {
+      logClientError(error);
       toast((error as Error)?.message ?? 'Failed to save connection.', { variant: 'error' });
       return null;
     }
@@ -235,6 +237,7 @@ export function useIntegrationsActionsImpl(args: {
       args.setConnectionToDelete(null);
       return true;
     } catch (error: unknown) {
+      logClientError(error);
       toast((error as Error)?.message ?? 'Failed to delete connection.', { variant: 'error' });
       return false;
     }
@@ -293,6 +296,7 @@ export function useIntegrationsActionsImpl(args: {
         );
         args.setShowTestSuccessModal(true);
       } catch (error: unknown) {
+        logClientError(error);
         const durationMs = Math.round(performance.now() - startedAt);
         const message = (error as Error)?.message ?? 'Unknown error';
         const data = isObjectRecord((error as { data?: unknown } | null)?.data)
@@ -388,6 +392,7 @@ export function useIntegrationsActionsImpl(args: {
       });
       toast('Playwright settings saved.', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       toast((error as Error)?.message ?? 'Failed to save Playwright settings.', {
         variant: 'error',
       });
@@ -411,6 +416,7 @@ export function useIntegrationsActionsImpl(args: {
       });
       toast('Allegro disconnected.', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'IntegrationsContext', action: 'disconnectAllegro' },
       });
@@ -434,6 +440,7 @@ export function useIntegrationsActionsImpl(args: {
       });
       toast('Allegro sandbox setting updated.', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       toast((error as Error)?.message ?? 'Failed to update Allegro sandbox setting.', {
         variant: 'error',
       });
@@ -461,6 +468,7 @@ export function useIntegrationsActionsImpl(args: {
       });
       window.location.href = `/api/v2/integrations/${args.activeIntegration.id}/connections/${activeConnection.id}/allegro/authorize`;
     } catch (error: unknown) {
+      logClientError(error);
       toast((error as Error)?.message ?? 'Failed to enable Allegro sandbox.', { variant: 'error' });
     } finally {
       setSavingAllegroSandbox(false);
@@ -476,7 +484,8 @@ export function useIntegrationsActionsImpl(args: {
     try {
       if (args.baseApiParams.trim())
         params = JSON.parse(args.baseApiParams) as Record<string, unknown>;
-    } catch {
+    } catch (error) {
+      logClientError(error);
       toast('Parameters must be valid JSON.', { variant: 'error' });
       return;
     }
@@ -492,6 +501,7 @@ export function useIntegrationsActionsImpl(args: {
       });
       args.setBaseApiResponse(payload);
     } catch (error: unknown) {
+      logClientError(error);
       args.setBaseApiError((error as Error)?.message ?? 'Failed to send request.');
     } finally {
       args.setBaseApiLoading(false);
@@ -507,7 +517,8 @@ export function useIntegrationsActionsImpl(args: {
     if (args.allegroApiMethod !== 'GET' && args.allegroApiBody.trim()) {
       try {
         body = JSON.parse(args.allegroApiBody);
-      } catch {
+      } catch (error) {
+        logClientError(error);
         toast('Request body must be valid JSON.', { variant: 'error' });
         return;
       }
@@ -525,6 +536,7 @@ export function useIntegrationsActionsImpl(args: {
       });
       args.setAllegroApiResponse(payload);
     } catch (error: unknown) {
+      logClientError(error);
       args.setAllegroApiError((error as Error)?.message ?? 'Failed to send request.');
     } finally {
       args.setAllegroApiLoading(false);

@@ -53,6 +53,7 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
       setLocalSectionDropPlaceholder(null);
       toast('Settings saved successfully.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'PageBuilderSettingsPage', action: 'saveSettings' },
       });

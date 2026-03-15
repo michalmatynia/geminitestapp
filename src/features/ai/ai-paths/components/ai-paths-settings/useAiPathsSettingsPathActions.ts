@@ -37,6 +37,8 @@ import {
   parseRuntimeState,
   sanitizePathConfig,
 } from '../AiPathsSettingsUtils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type ConfirmFn = (input: {
   title: string;
@@ -128,6 +130,7 @@ export function useAiPathsSettingsPathActions({
       try {
         return sanitizePathConfig(config);
       } catch (error) {
+        logClientError(error);
         const message = error instanceof Error ? error.message : String(error);
         const errorMeta =
           typeof error === 'object' && error !== null && 'meta' in error
@@ -234,7 +237,8 @@ export function useAiPathsSettingsPathActions({
       let parsedPayload: unknown;
       try {
         parsedPayload = JSON.parse(payload);
-      } catch {
+      } catch (error) {
+        logClientError(error);
         return resolved;
       }
 
@@ -569,6 +573,7 @@ export function useAiPathsSettingsPathActions({
                 ]);
               }
             } catch (error) {
+              logClientError(error);
               reportAiPathsError(
                 error,
                 { action: 'deleteLastPathFallback', pathId: targetId },
@@ -610,6 +615,7 @@ export function useAiPathsSettingsPathActions({
             ]);
             toast('Path removed from the index.', { variant: 'success' });
           } catch (error) {
+            logClientError(error);
             reportAiPathsError(
               error,
               { action: 'deletePath', pathId: targetId },
@@ -690,6 +696,7 @@ export function useAiPathsSettingsPathActions({
             try {
               config = parseLoadedPathConfigPayload(configItem.value, value);
             } catch (error) {
+              logClientError(error);
               reportAiPathsError(
                 error,
                 { action: 'switchPathParseConfig', pathId: value },
@@ -718,6 +725,7 @@ export function useAiPathsSettingsPathActions({
           );
           applyIfLatest(config, 'selective_fetch');
         } catch (error) {
+          logClientError(error);
           try {
             const allSettings = await fetchAiPathsSettingsCached();
             if (switchRequestSeqRef.current !== nextRequestSeq) return;
@@ -729,6 +737,7 @@ export function useAiPathsSettingsPathActions({
               try {
                 recoveredConfig = parseLoadedPathConfigPayload(configItem.value, value);
               } catch (parseError) {
+                logClientError(parseError);
                 reportAiPathsError(
                   parseError,
                   { action: 'switchPathFallbackParseConfig', pathId: value },
@@ -754,6 +763,7 @@ export function useAiPathsSettingsPathActions({
               return;
             }
           } catch (fallbackError) {
+            logClientError(fallbackError);
             reportAiPathsError(
               fallbackError,
               { action: 'switchPathFallbackLoadConfig', pathId: value },

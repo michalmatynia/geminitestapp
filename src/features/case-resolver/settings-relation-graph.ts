@@ -16,6 +16,8 @@ import {
 import { typeStyles } from '@/shared/lib/ai-paths/core/constants';
 
 import { parseCanonicalCaseResolverEdge } from './settings.edge-validation';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const normalizeTimestamp = (value: unknown, fallback: string): string =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback;
@@ -152,7 +154,8 @@ const sanitizeRelationEdges = (value: unknown, validNodeIds: Set<string>): Edge[
     let edge: Edge;
     try {
       edge = parseCanonicalCaseResolverEdge(entry, `case_resolver.relation_graph.edges[${index}]`);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return;
     }
     const id = edge.id.trim();

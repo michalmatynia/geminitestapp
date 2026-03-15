@@ -4,6 +4,8 @@ import { Copy } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button, useToast } from '@/features/products/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export interface ProductFormFooterProps {
   entityId: string | null;
@@ -48,7 +50,8 @@ export function ProductFormFooter({ entityId }: ProductFormFooterProps): React.J
         setIsCopyHighlightActive(false);
         copyHighlightTimeoutRef.current = null;
       }, 1500);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       toast('Failed to copy product ID.', { variant: 'error' });
     }
   }, [entityId, toast]);

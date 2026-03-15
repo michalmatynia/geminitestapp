@@ -166,7 +166,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   try {
     body = (await req.json()) as typeof body;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     throw badRequestError('Invalid JSON payload');
   }
 

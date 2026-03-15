@@ -15,6 +15,8 @@ import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRou
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { type KangurAuthMode, parseKangurAuthMode } from '@/shared/contracts/kangur-auth';
 import { internalError } from '@/shared/errors/app-error';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type KangurLoginModalOpenOptions = {
   authMode?: KangurAuthMode;
@@ -69,8 +71,8 @@ const FALLBACK_ACTIONS: KangurLoginModalActionsValue = {
 
 const isTestEnvironment = (): boolean =>
   process.env.NODE_ENV === 'test' ||
-  process.env.VITEST === 'true' ||
-  typeof process.env.JEST_WORKER_ID === 'string';
+  process.env['VITEST'] === 'true' ||
+  typeof process.env['JEST_WORKER_ID'] === 'string';
 
 const toNonEmptyString = (value: string | null | undefined, fallback: string): string => {
   const trimmed = typeof value === 'string' ? value.trim() : '';
@@ -80,7 +82,8 @@ const toNonEmptyString = (value: string | null | undefined, fallback: string): s
 const getPathnameFromHref = (href: string): string => {
   try {
     return new URL(href, 'https://kangur.local').pathname;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return href.split('?')[0] ?? href;
   }
 };

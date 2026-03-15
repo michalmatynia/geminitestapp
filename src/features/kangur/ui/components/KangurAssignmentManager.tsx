@@ -1,4 +1,5 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { Clock } from 'lucide-react';
 import { useEffect, useMemo, useState, type ComponentProps, type ReactNode } from 'react';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
@@ -9,6 +10,7 @@ import {
 } from '@/features/kangur/settings';
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
+import { logKangurClientError } from '@/features/kangur/observability/client';
 import {
   KangurButton,
   KangurCardDescription,
@@ -32,8 +34,15 @@ import {
 } from '@/features/kangur/ui/services/delegated-assignments';
 import { buildKangurAssignmentDedupeKey } from '@/features/kangur/services/kangur-assignments';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-type KangurAssignmentManagerView = 'full' | 'catalog' | 'tracking' | 'metrics';
+
+type KangurAssignmentManagerView =
+  | 'full'
+  | 'catalog'
+  | 'catalogWithLists'
+  | 'tracking'
+  | 'metrics';
 
 type KangurAssignmentManagerProps = {
   basePath: string;
@@ -45,6 +54,16 @@ type KangurAssignmentManagerItemCardProps = {
   children: ReactNode;
   testId: string;
 };
+
+type TimeLimitModalContext =
+  | {
+      mode: 'update';
+      assignmentId: string;
+    }
+  | {
+      mode: 'create';
+      catalogItemId: string;
+    };
 
 function KangurAssignmentManagerItemCard({
   accent,
@@ -191,7 +210,10 @@ export function KangurAssignmentManager({
   const [activeFilter, setActiveFilter] = useState<FilterOption>('all');
   const [pendingActionId, setPendingActionId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
-  const [timeLimitModalAssignmentId, setTimeLimitModalAssignmentId] = useState<string | null>(null);
+  const [activeListTab, setActiveListTab] = useState<'active' | 'completed'>('active');
+  const [timeLimitModalContext, setTimeLimitModalContext] = useState<TimeLimitModalContext | null>(
+    null
+  );
   const [timeLimitDraft, setTimeLimitDraft] = useState('');
   const [isSavingTimeLimit, setIsSavingTimeLimit] = useState(false);
   const {
@@ -208,8 +230,19 @@ export function KangurAssignmentManager({
     },
   });
   const timeLimitAssignment =
-    assignments.find((assignment) => assignment.id === timeLimitModalAssignmentId) ?? null;
-  const isTimeLimitModalOpen = Boolean(timeLimitModalAssignmentId);
+    timeLimitModalContext?.mode === 'update'
+      ? assignments.find((assignment) => assignment.id === timeLimitModalContext.assignmentId) ??
+        null
+      : null;
+  const timeLimitCatalogItem =
+    timeLimitModalContext?.mode === 'create'
+      ? [...catalog, ...suggestedCatalog].find(
+          (entry) => entry.id === timeLimitModalContext.catalogItemId
+        ) ?? null
+      : null;
+  const timeLimitTarget = timeLimitAssignment ?? timeLimitCatalogItem;
+  const isTimeLimitModalOpen = Boolean(timeLimitModalContext);
+  const isCreateTimeLimit = timeLimitModalContext?.mode === 'create';
 
   useEffect(() => {
     if (!isTimeLimitModalOpen) {
@@ -255,6 +288,8 @@ export function KangurAssignmentManager({
     () => buildKangurAssignmentListItems(basePath, completedAssignments),
     [basePath, completedAssignments]
   );
+  const activeAssignmentsCount = activeAssignmentItems.length;
+  const completedAssignmentsCount = completedAssignmentItems.length;
   const trackerSummary = useMemo(() => buildTrackerSummary(assignments), [assignments]);
   const recommendedCatalog = useMemo(
     () =>
@@ -264,15 +299,19 @@ export function KangurAssignmentManager({
     [assignedTargetKeys, suggestedCatalog]
   );
   const timeLimitParsed = parseTimeLimitInput(timeLimitDraft);
-  const currentTimeLimit = timeLimitAssignment?.timeLimitMinutes ?? null;
-  const hasTimeLimitChange =
-    !timeLimitParsed.error && timeLimitParsed.value !== currentTimeLimit;
-  const isTimeLimitSaveDisabled =
-    isSavingTimeLimit ||
-    !timeLimitAssignment ||
-    Boolean(timeLimitParsed.error) ||
-    !hasTimeLimitChange;
+  const currentTimeLimit = isCreateTimeLimit ? null : timeLimitAssignment?.timeLimitMinutes ?? null;
+  const canSaveTimeLimit = isCreateTimeLimit
+    ? Boolean(timeLimitCatalogItem) && !timeLimitParsed.error
+    : Boolean(timeLimitAssignment) &&
+      !timeLimitParsed.error &&
+      timeLimitParsed.value !== currentTimeLimit;
+  const isTimeLimitSaveDisabled = isSavingTimeLimit || !canSaveTimeLimit;
   const timeLimitPreview = formatTimeLimitValue(currentTimeLimit);
+  const timeLimitSaveLabel = isSavingTimeLimit
+    ? 'Zapisywanie...'
+    : isCreateTimeLimit
+      ? 'Zapisz i przypisz'
+      : 'Zapisz';
 
   const resolveActionErrorMessage = (error: unknown, fallback: string): string => {
     const status =
@@ -293,6 +332,13 @@ export function KangurAssignmentManager({
       await createAssignment(item.createInput);
       setFeedback(`Przypisano: ${item.title}.`);
     } catch (error: unknown) {
+      logClientError(error);
+      logKangurClientError(error, {
+        source: 'KangurAssignmentManager',
+        action: 'assignCatalogItem',
+        catalogItemId: item.id,
+        targetType: item.createInput.target.type,
+      });
       setFeedback(resolveActionErrorMessage(error, 'Nie udało się przypisać zadania.'));
     } finally {
       setPendingActionId(null);
@@ -315,7 +361,13 @@ export function KangurAssignmentManager({
     try {
       await updateAssignment(assignmentId, { archived: true });
       setFeedback('Zadanie przeniesiono do archiwum.');
-    } catch {
+    } catch (error: unknown) {
+      logClientError(error);
+      logKangurClientError(error, {
+        source: 'KangurAssignmentManager',
+        action: 'archiveAssignment',
+        assignmentId,
+      });
       setFeedback('Nie udało się zarchiwizować zadania.');
     } finally {
       setPendingActionId(null);
@@ -335,6 +387,12 @@ export function KangurAssignmentManager({
           : 'Zadanie przypisano ponownie.'
       );
     } catch (error: unknown) {
+      logClientError(error);
+      logKangurClientError(error, {
+        source: 'KangurAssignmentManager',
+        action: 'reassignAssignment',
+        assignmentId,
+      });
       setFeedback(resolveActionErrorMessage(error, 'Nie udało się przypisać ponownie zadania.'));
     } finally {
       setPendingActionId(null);
@@ -342,15 +400,19 @@ export function KangurAssignmentManager({
   };
 
   const handleOpenTimeLimitModal = (assignmentId: string): void => {
-    setTimeLimitModalAssignmentId(assignmentId);
+    setTimeLimitModalContext({ mode: 'update', assignmentId });
+  };
+
+  const handleOpenTimeLimitModalForCatalog = (catalogItemId: string): void => {
+    setTimeLimitModalContext({ mode: 'create', catalogItemId });
   };
 
   const handleCloseTimeLimitModal = (): void => {
-    setTimeLimitModalAssignmentId(null);
+    setTimeLimitModalContext(null);
   };
 
   const handleSaveTimeLimit = async (): Promise<void> => {
-    if (!timeLimitAssignment) {
+    if (!timeLimitModalContext) {
       return;
     }
 
@@ -359,34 +421,86 @@ export function KangurAssignmentManager({
       return;
     }
 
-    const nextValue = parsed.value;
-    const currentValue = timeLimitAssignment.timeLimitMinutes ?? null;
-    if (nextValue === currentValue) {
-      handleCloseTimeLimitModal();
-      return;
-    }
-
     setIsSavingTimeLimit(true);
     setFeedback(null);
 
+    if (timeLimitModalContext.mode === 'update') {
+      if (!timeLimitAssignment) {
+        setIsSavingTimeLimit(false);
+        return;
+      }
+
+      const nextValue = parsed.value;
+      const currentValue = timeLimitAssignment.timeLimitMinutes ?? null;
+      if (nextValue === currentValue) {
+        setIsSavingTimeLimit(false);
+        handleCloseTimeLimitModal();
+        return;
+      }
+
+      try {
+        await updateAssignment(timeLimitAssignment.id, { timeLimitMinutes: nextValue });
+        setFeedback(
+          nextValue === null
+            ? 'Usunięto czas na wykonanie.'
+            : 'Zapisano czas na wykonanie.'
+        );
+        handleCloseTimeLimitModal();
+      } catch (error: unknown) {
+        logClientError(error);
+        logKangurClientError(error, {
+          source: 'KangurAssignmentManager',
+          action: 'updateTimeLimit',
+          assignmentId: timeLimitAssignment.id,
+          timeLimitMinutes: nextValue,
+        });
+        setFeedback('Nie udało się zapisać czasu wykonania.');
+      } finally {
+        setIsSavingTimeLimit(false);
+      }
+      return;
+    }
+
+    if (!timeLimitCatalogItem) {
+      setIsSavingTimeLimit(false);
+      return;
+    }
+
+    setPendingActionId(timeLimitCatalogItem.id);
+
     try {
-      await updateAssignment(timeLimitAssignment.id, { timeLimitMinutes: nextValue });
+      await createAssignment({
+        ...timeLimitCatalogItem.createInput,
+        timeLimitMinutes: parsed.value,
+      });
       setFeedback(
-        nextValue === null
-          ? 'Usunięto czas na wykonanie.'
-          : 'Zapisano czas na wykonanie.'
+        parsed.value === null
+          ? `Przypisano: ${timeLimitCatalogItem.title}.`
+          : `Przypisano: ${timeLimitCatalogItem.title} z limitem czasu.`
       );
       handleCloseTimeLimitModal();
-    } catch {
-      setFeedback('Nie udało się zapisać czasu wykonania.');
+    } catch (error: unknown) {
+      logClientError(error);
+      logKangurClientError(error, {
+        source: 'KangurAssignmentManager',
+        action: 'assignCatalogItemWithTimeLimit',
+        catalogItemId: timeLimitCatalogItem.id,
+        targetType: timeLimitCatalogItem.createInput.target.type,
+        timeLimitMinutes: parsed.value,
+      });
+      setFeedback(resolveActionErrorMessage(error, 'Nie udało się przypisać zadania.'));
     } finally {
+      setPendingActionId(null);
       setIsSavingTimeLimit(false);
     }
   };
 
-  const shouldShowCatalog = view === 'full' || view === 'catalog';
+  const shouldShowCatalog = view === 'full' || view === 'catalog' || view === 'catalogWithLists';
   const shouldShowTracking = view === 'full' || view === 'tracking' || view === 'metrics';
-  const shouldShowLists = view === 'full' || view === 'tracking';
+  const shouldShowLists = view === 'full' || view === 'tracking' || view === 'catalogWithLists';
+  const shouldShowListTabs = shouldShowLists && view === 'catalogWithLists';
+  const showActiveAssignmentsList = !shouldShowListTabs || activeListTab === 'active';
+  const showCompletedAssignmentsList = !shouldShowListTabs || activeListTab === 'completed';
 
   return (
     <div className='flex flex-col gap-5'>
@@ -412,7 +526,7 @@ export function KangurAssignmentManager({
           >
             <DialogPrimitive.Title className='sr-only'>Czas na wykonanie</DialogPrimitive.Title>
             <DialogPrimitive.Description className='sr-only'>
-              Ustaw limit czasu dla zadania lub usuń go pozostawiając pole puste.
+              Ustaw limit czasu dla zadania. Pozostaw puste, aby przypisać bez limitu.
             </DialogPrimitive.Description>
 
             <DialogPrimitive.Close asChild>
@@ -436,18 +550,18 @@ export function KangurAssignmentManager({
                   Czas na wykonanie
                 </KangurStatusChip>
                 <KangurCardDescription className='mt-2 text-slate-600' relaxed size='sm'>
-                  Ustaw limit czasu dla wybranego zadania. Pozostaw puste, aby usunąć limit.
+                  Ustaw limit czasu dla wybranego zadania. Pozostaw puste, aby przypisać bez limitu.
                 </KangurCardDescription>
               </div>
 
-              {timeLimitAssignment ? (
+              {timeLimitTarget ? (
                 <div className='rounded-[18px] border border-slate-200/70 bg-white/80 px-4 py-3'>
                   <div className='text-sm font-semibold text-slate-900'>
-                    {timeLimitAssignment.title}
+                    {timeLimitTarget.title}
                   </div>
-                  {timeLimitAssignment.description ? (
+                  {timeLimitTarget.description ? (
                     <div className='mt-1 text-xs text-slate-600'>
-                      {timeLimitAssignment.description}
+                      {timeLimitTarget.description}
                     </div>
                   ) : null}
                   {timeLimitPreview ? (
@@ -497,7 +611,7 @@ export function KangurAssignmentManager({
                   disabled={isTimeLimitSaveDisabled}
                   onClick={() => void handleSaveTimeLimit()}
                 >
-                  {isSavingTimeLimit ? 'Zapisywanie...' : 'Zapisz'}
+                  {timeLimitSaveLabel}
                 </KangurButton>
               </div>
             </KangurGlassPanel>
@@ -559,20 +673,34 @@ export function KangurAssignmentManager({
                         <KangurStatusChip accent='slate' className='w-fit' labelStyle='compact'>
                           {item.badge}
                         </KangurStatusChip>
-                        <KangurButton
-                          className='w-full sm:w-auto'
-                          type='button'
-                          onClick={() => void handleAssign(item.id)}
-                          disabled={isAssigned || isPending}
-                          size='sm'
-                          variant='surface'
-                        >
-                          {isAssigned
-                            ? 'Przypisane'
-                            : isPending
-                              ? 'Przypisywanie...'
-                              : 'Przypisz sugestię'}
-                        </KangurButton>
+                        <div className='flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center'>
+                          <KangurButton
+                            className='w-full sm:w-auto'
+                            type='button'
+                            onClick={() => void handleAssign(item.id)}
+                            disabled={isAssigned || isPending}
+                            size='sm'
+                            variant='surface'
+                          >
+                            {isAssigned
+                              ? 'Przypisane'
+                              : isPending
+                                ? 'Przypisywanie...'
+                                : 'Przypisz sugestię'}
+                          </KangurButton>
+                          <KangurButton
+                            aria-label='Ustaw czas'
+                            title='Ustaw czas'
+                            className='w-full sm:w-auto sm:px-3'
+                            type='button'
+                            onClick={() => handleOpenTimeLimitModalForCatalog(item.id)}
+                            disabled={isAssigned || isPending}
+                            size='sm'
+                            variant='ghost'
+                          >
+                            <Clock className='h-4 w-4' aria-hidden='true' />
+                          </KangurButton>
+                        </div>
                       </KangurAssignmentManagerCardFooter>
                     </KangurAssignmentManagerItemCard>
                   );
@@ -676,16 +804,30 @@ export function KangurAssignmentManager({
                       labelStyle='compact'
                       priority={item.createInput.priority}
                     />
-                    <KangurButton
-                      type='button'
-                      onClick={() => void handleAssign(item.id)}
-                      disabled={isAssigned || isPending}
-                      size='sm'
-                      variant='surface'
-                      className='w-full sm:w-auto'
-                    >
-                      {isAssigned ? 'Przypisane' : isPending ? 'Przypisywanie...' : 'Przypisz'}
-                    </KangurButton>
+                    <div className='flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center'>
+                      <KangurButton
+                        type='button'
+                        onClick={() => void handleAssign(item.id)}
+                        disabled={isAssigned || isPending}
+                        size='sm'
+                        variant='surface'
+                        className='w-full sm:w-auto'
+                      >
+                        {isAssigned ? 'Przypisane' : isPending ? 'Przypisywanie...' : 'Przypisz'}
+                      </KangurButton>
+                      <KangurButton
+                        aria-label='Ustaw czas'
+                        title='Ustaw czas'
+                        className='w-full sm:w-auto sm:px-3'
+                        type='button'
+                        onClick={() => handleOpenTimeLimitModalForCatalog(item.id)}
+                        disabled={isAssigned || isPending}
+                        size='sm'
+                        variant='ghost'
+                      >
+                        <Clock className='h-4 w-4' aria-hidden='true' />
+                      </KangurButton>
+                    </div>
                   </KangurAssignmentManagerCardFooter>
                 </KangurAssignmentManagerItemCard>
               );
@@ -773,23 +915,65 @@ export function KangurAssignmentManager({
 
       {shouldShowLists ? (
         <>
-          <KangurAssignmentsList
-            items={activeAssignmentItems}
-            title='Aktywne zadania'
-            emptyLabel='Brak aktywnych zadań dla ucznia.'
-            onArchive={(assignmentId) => void handleArchive(assignmentId)}
-            onTimeLimitClick={handleOpenTimeLimitModal}
-          />
+          {shouldShowListTabs ? (
+            <div className='flex flex-col gap-3'>
+              <KangurStatusChip accent='slate' labelStyle='eyebrow'>
+                Lista zadań
+              </KangurStatusChip>
+              <div
+                className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} w-full sm:max-w-sm`}
+                role='tablist'
+                aria-label='Filtrowanie listy zadań'
+              >
+                <KangurButton
+                  type='button'
+                  onClick={() => setActiveListTab('active')}
+                  aria-pressed={activeListTab === 'active'}
+                  aria-selected={activeListTab === 'active'}
+                  role='tab'
+                  className='min-w-0 flex-1 px-3 text-xs'
+                  size='sm'
+                  variant={activeListTab === 'active' ? 'segmentActive' : 'segment'}
+                >
+                  {`Aktywne (${activeAssignmentsCount})`}
+                </KangurButton>
+                <KangurButton
+                  type='button'
+                  onClick={() => setActiveListTab('completed')}
+                  aria-pressed={activeListTab === 'completed'}
+                  aria-selected={activeListTab === 'completed'}
+                  role='tab'
+                  className='min-w-0 flex-1 px-3 text-xs'
+                  size='sm'
+                  variant={activeListTab === 'completed' ? 'segmentActive' : 'segment'}
+                >
+                  {`Ukończone (${completedAssignmentsCount})`}
+                </KangurButton>
+              </div>
+            </div>
+          ) : null}
 
-          <KangurAssignmentsList
-            items={completedAssignmentItems}
-            title='Ukończone zadania'
-            emptyLabel='Uczeń nie zakończył jeszcze żadnych przypisanych zadań.'
-            onArchive={(assignmentId) => void handleArchive(assignmentId)}
-            onTimeLimitClick={handleOpenTimeLimitModal}
-            onReassign={(assignmentId) => void handleReassign(assignmentId)}
-            reassigningId={pendingActionId}
-          />
+          {showActiveAssignmentsList ? (
+            <KangurAssignmentsList
+              items={activeAssignmentItems}
+              title='Aktywne zadania'
+              emptyLabel='Brak aktywnych zadań dla ucznia.'
+              onArchive={(assignmentId) => void handleArchive(assignmentId)}
+              onTimeLimitClick={handleOpenTimeLimitModal}
+            />
+          ) : null}
+
+          {showCompletedAssignmentsList ? (
+            <KangurAssignmentsList
+              items={completedAssignmentItems}
+              title='Ukończone zadania'
+              emptyLabel='Uczeń nie zakończył jeszcze żadnych przypisanych zadań.'
+              onArchive={(assignmentId) => void handleArchive(assignmentId)}
+              onTimeLimitClick={handleOpenTimeLimitModal}
+              onReassign={(assignmentId) => void handleReassign(assignmentId)}
+              reassigningId={pendingActionId}
+            />
+          ) : null}
         </>
       ) : null}
     </div>

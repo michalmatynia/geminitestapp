@@ -179,6 +179,7 @@ export function PromptEngineProvider({
           await navigator.clipboard.writeText(value);
           toast(`${label} copied to clipboard`, { variant: 'success' });
         } catch (error) {
+          logClientError(error);
           logClientError(error, {
             context: { source: 'PromptEngineContext', action: 'handleCopy' },
           });

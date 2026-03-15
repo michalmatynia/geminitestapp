@@ -55,6 +55,8 @@ import {
   integrationKeys,
   productMetadataKeys,
 } from '@/shared/lib/query-key-exports';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type { ImportParameterCacheResponse };
 export type { CatalogRecord };
@@ -181,6 +183,7 @@ export function useImportPreference<T>(
       try {
         return await api.get<T>(endpoint, { cache: 'no-store' });
       } catch (error) {
+        logClientError(error);
         if (options?.fallback !== undefined) return options.fallback;
         throw error;
       }

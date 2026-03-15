@@ -1,6 +1,7 @@
 import type { MongoTimestampedSettingRecord } from '@/shared/contracts/settings';
 
 import type { ObjectId } from 'mongodb';
+import type { MongoSystemLogDoc } from '@/shared/lib/observability/system-log-types';
 
 export const AUTH_COLLECTIONS: readonly string[] = [
   'users',
@@ -75,20 +76,7 @@ export interface MongoUserPreferencesDoc {
   updatedAt?: Date | string;
 }
 
-export interface MongoSystemLogDoc {
-  _id?: ObjectId;
-  level?: string;
-  message?: string;
-  source?: string | null;
-  context?: unknown;
-  stack?: string | null;
-  path?: string | null;
-  method?: string | null;
-  statusCode?: number | null;
-  requestId?: string | null;
-  userId?: string | null;
-  createdAt?: Date | string;
-}
+export type { MongoSystemLogDoc };
 
 export interface MongoFileUploadEventDoc {
   _id?: ObjectId;

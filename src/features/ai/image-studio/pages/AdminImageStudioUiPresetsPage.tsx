@@ -40,6 +40,7 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
         });
         toast('Active UI preset updated.', { variant: 'success' });
       } catch (error) {
+        logClientError(error);
         logClientError(error, {
           context: { source: 'AdminImageStudioUiPresetsPage', action: 'setActive' },
         });
@@ -64,6 +65,7 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
         });
         toast('UI preset deleted.', { variant: 'success' });
       } catch (error) {
+        logClientError(error);
         logClientError(error, {
           context: { source: 'AdminImageStudioUiPresetsPage', action: 'deletePreset' },
         });

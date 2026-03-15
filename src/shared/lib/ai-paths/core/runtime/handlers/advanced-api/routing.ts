@@ -3,6 +3,8 @@ import { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { AdvancedApiErrorRoute } from './config';
 import { parseJsonWithTemplates, toStringRecord, toNumberArray } from './utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const parseErrorRoutes = (
   config: AdvancedApiConfig,
@@ -67,7 +69,9 @@ export const evaluateErrorRoute = (
         if (regex.test(payload.responseText)) {
           return route;
         }
-      } catch {
+      } catch (error) {
+        logClientError(error);
+      
         // Ignore malformed regex and continue checking other routes.
       }
       continue;

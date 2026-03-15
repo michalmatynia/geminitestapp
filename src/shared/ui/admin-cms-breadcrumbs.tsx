@@ -1,7 +1,6 @@
 import * as React from 'react';
 
-import { Breadcrumbs } from './Breadcrumbs';
-import { buildAdminSectionBreadcrumbItems, type AdminBreadcrumbNode } from './admin-section-breadcrumbs';
+import { AdminSectionBreadcrumbs, type AdminBreadcrumbNode } from './admin-section-breadcrumbs';
 
 type AdminCmsBreadcrumbsProps = {
   current: string;
@@ -14,14 +13,12 @@ export function AdminCmsBreadcrumbs({
   parent,
   className,
 }: AdminCmsBreadcrumbsProps): React.JSX.Element {
-  const items = buildAdminSectionBreadcrumbItems({
-    section: { label: 'CMS', href: '/admin/cms' },
-    parent,
-    current,
-  });
-  const resolvedClassName = className;
-
   return (
-    <Breadcrumbs items={items} className={resolvedClassName} />
+    <AdminSectionBreadcrumbs
+      section={{ label: 'CMS', href: '/admin/cms' }}
+      parent={parent}
+      current={current}
+      className={className}
+    />
   );
 }

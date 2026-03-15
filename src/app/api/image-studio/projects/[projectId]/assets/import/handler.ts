@@ -13,6 +13,8 @@ import {
   externalServiceError,
   payloadTooLargeError,
 } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
@@ -42,7 +44,9 @@ function resolveDiskPathFromPublicUploadPath(filepath: string): string | null {
     try {
       const url = new URL(normalized);
       normalized = url.pathname;
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // Keep original if parsing fails.
     }
   }
@@ -100,7 +104,8 @@ function parseDataUrl(dataUrl: string): { buffer: Buffer; mime: string | null } 
   try {
     const buffer = Buffer.from(match[2] ?? '', 'base64');
     return { buffer, mime: match[1] ?? null };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 }
@@ -131,7 +136,9 @@ async function fetchRemoteFile(
     try {
       const pathname = new URL(url).pathname;
       filename = path.basename(pathname) || filename;
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // keep fallback
     }
     return { buffer, mime, filename };
@@ -189,7 +196,8 @@ export async function POST_handler(
       const records = await repo.findImageFilesByIds(ids);
       sourceById = new Map(records.map((record) => [record.id, record]));
     }
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     repo = null;
     sourceById = new Map();
   }
@@ -232,7 +240,9 @@ export async function POST_handler(
         try {
           uploaded.push(await repo.createImageFile(recordInput));
           continue;
-        } catch {
+        } catch (error) {
+          void ErrorSystem.captureException(error);
+        
           // fall through to orphan record
         }
       }
@@ -276,7 +286,9 @@ export async function POST_handler(
           try {
             uploaded.push(await repo.createImageFile(recordInput));
             continue;
-          } catch {
+          } catch (error) {
+            void ErrorSystem.captureException(error);
+          
             // fall through to orphan record
           }
         }
@@ -295,6 +307,7 @@ export async function POST_handler(
         });
         continue;
       } catch (error) {
+        void ErrorSystem.captureException(error);
         failures.push({
           filepath: rawSource,
           error: error instanceof Error ? error.message : 'Failed to fetch remote file',
@@ -337,7 +350,9 @@ export async function POST_handler(
       try {
         uploaded.push(await repo.createImageFile(recordInput));
         continue;
-      } catch {
+      } catch (error) {
+        void ErrorSystem.captureException(error);
+      
         // fall through to orphan record
       }
     }

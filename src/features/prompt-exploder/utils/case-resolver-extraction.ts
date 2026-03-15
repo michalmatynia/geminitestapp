@@ -25,6 +25,8 @@ import {
   normalizeRawCaptureText,
   normalizeText,
 } from './case-resolver-extraction-utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export * from './case-resolver-extraction-utils';
 export * from './case-resolver-extraction-heuristics';
@@ -300,7 +302,8 @@ export const buildCaseResolverSegmentCaptureRules = (
       let regex: RegExp;
       try {
         regex = new RegExp(rule.pattern, flags);
-      } catch {
+      } catch (error) {
+        logClientError(error);
         return null;
       }
       const applyTo = rule.promptExploderCaptureApplyTo === 'segment' ? 'segment' : 'line';

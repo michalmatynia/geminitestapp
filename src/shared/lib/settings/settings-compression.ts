@@ -1,6 +1,8 @@
 import { gunzipSync, gzipSync } from 'zlib';
 
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const COMPRESSED_SETTING_PREFIX = '__gz_b64__:';
 
@@ -24,6 +26,7 @@ export const decodeSettingValue = (key: string, value: string): string => {
     if (!Buffer.isBuffer(decompressedUnknown)) return value;
     return decompressedUnknown.toString('utf8');
   } catch (error) {
+    logClientError(error);
     void ErrorSystem.logWarning('[settings] Failed to decompress setting value.', {
       service: 'settings-compression',
       key,
@@ -44,6 +47,7 @@ export const encodeSettingValue = (key: string, value: string): string => {
     const encoded = `${COMPRESSED_SETTING_PREFIX}${compressedUnknown.toString('base64')}`;
     return encoded.length < value.length ? encoded : value;
   } catch (error) {
+    logClientError(error);
     void ErrorSystem.logWarning('[settings] Failed to compress setting value.', {
       service: 'settings-compression',
       key,

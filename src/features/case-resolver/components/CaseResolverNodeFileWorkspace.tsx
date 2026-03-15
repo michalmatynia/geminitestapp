@@ -34,6 +34,8 @@ import {
   fetchCaseResolverNodeFileSnapshot,
   persistCaseResolverNodeFileSnapshot,
 } from '../workspace-persistence';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 // ─── inner canvas component ───────────────────────────────────────────────────
 
@@ -358,6 +360,7 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
           validationErrorMessage: null,
         });
       } catch (error) {
+        logClientError(error);
         if (isCancelled) return;
         setResolvedSnapshot({
           isLoading: false,

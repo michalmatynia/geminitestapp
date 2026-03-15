@@ -37,6 +37,8 @@ import {
   toDalle2UploadableImageFile,
   toUploadableImageFile,
 } from '../run-executor-utils';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const DEFAULT_OPENAI_TIMEOUT_MS = 180_000;
 const DEFAULT_OPENAI_MAX_RETRIES = 2;
@@ -333,6 +335,7 @@ export async function executeGenerationOperation(params: {
       }
       break;
     } catch (error) {
+      void ErrorSystem.captureException(error);
       const message = extractErrorMessage(error);
       const activeModel = String(payloadRecord['model'] ?? '').toLowerCase();
       if (

@@ -1,6 +1,8 @@
 import { dispatchPortablePathEnvelopeVerificationAuditSinks } from './portable-engine-envelope-audit-sinks';
 
 import type { PortablePathEnvelopeSignatureVerificationMode } from './portable-engine-resolution-types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type PortablePathEnvelopeVerificationOutcome =
   | 'signature_missing'
@@ -95,7 +97,9 @@ const emitPortablePathEnvelopeVerificationObservabilityEvent = (
   for (const hook of portablePathEnvelopeVerificationObservabilityHooks) {
     try {
       hook(event, snapshot);
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Observability hooks must not break verification flow.
     }
   }

@@ -20,6 +20,8 @@ import { getKangurLoginHref, KANGUR_BASE_PATH } from '@/features/kangur/config/r
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
 import { internalError } from '@/shared/errors/app-error';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type KangurAuthError = {
   type: 'unknown' | 'auth_required' | 'user_not_registered';
@@ -83,7 +85,8 @@ const appendAuthModeParam = (href: string, authMode?: KangurAuthMode): string =>
     const parsed = new URL(href, 'https://kangur.local');
     parsed.searchParams.set('authMode', authMode);
     return `${parsed.pathname}${parsed.search}${parsed.hash}`;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     const joiner = href.includes('?') ? '&' : '?';
     return `${href}${joiner}authMode=${encodeURIComponent(authMode)}`;
   }
@@ -116,6 +119,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
       setUser(currentUser);
       setIsAuthenticated(true);
     } catch (error: unknown) {
+      logClientError(error);
       if (authRequestVersionRef.current !== requestVersion) {
         return;
       }
@@ -164,6 +168,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
         router.refresh();
         await checkAppState();
       } catch (error: unknown) {
+        logClientError(error);
         logKangurClientError(error, {
           source: 'KangurAuthContext',
           action: 'logout',

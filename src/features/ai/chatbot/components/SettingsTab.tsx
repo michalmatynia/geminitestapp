@@ -60,6 +60,7 @@ export function SettingsTab(): React.JSX.Element {
         if (!active) return;
         setPlaywrightPersonas(stored);
       } catch (error: unknown) {
+        logClientError(error);
         if (!active) return;
         logClientError(error, {
           context: { source: 'ChatbotSettingsTab', action: 'loadPersonas' },

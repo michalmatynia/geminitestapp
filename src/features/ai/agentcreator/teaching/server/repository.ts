@@ -8,6 +8,8 @@ import type {
 } from '@/shared/contracts/agent-teaching';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const AGENTS_COLLECTION = 'agent_teaching_agents';
 const COLLECTIONS_COLLECTION = 'agent_teaching_collections';
@@ -64,7 +66,9 @@ const ensureIndexesOnce = (() => {
           .collection<DocumentDoc>(DOCUMENTS_COLLECTION)
           .createIndex({ collectionId: 1, updatedAt: -1 }),
       ]);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // best-effort; indexing failures should not block the app
     }
   };

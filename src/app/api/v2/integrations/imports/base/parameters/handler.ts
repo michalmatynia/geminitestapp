@@ -238,7 +238,8 @@ const toPreviewValue = (value: unknown): string | null => {
     try {
       const stringified = JSON.stringify(value);
       return stringified.length > 160 ? `${stringified.slice(0, 157)}...` : stringified;
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       return null;
     }
   }
@@ -518,6 +519,7 @@ export async function postBaseImportParametersHandler(
       values,
     });
   } catch (cacheError) {
+    void ErrorSystem.captureException(cacheError);
     void ErrorSystem.captureException(cacheError, {
       service: 'api/integrations/imports/base/parameters',
       inventoryId: data.inventoryId,

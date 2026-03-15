@@ -15,6 +15,8 @@ import {
 import { logger } from '@/shared/utils/logger';
 
 import { type ProductDocument } from './mongo-product-repository-mappers';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 
 export const BASE_INTEGRATION_SLUGS = ['baselinker', 'base-com', 'base'] as const;
@@ -147,7 +149,8 @@ export const parseAdvancedFilterGroup = (
       issues: validated.error.issues.slice(0, 5).map((issue) => issue.message),
     });
     return null;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     logger.warn('[products.advanced-filter.mongo] invalid JSON payload');
     return null;
   }

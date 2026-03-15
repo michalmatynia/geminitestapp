@@ -11,6 +11,8 @@ import { AI_INSIGHTS_SETTINGS_KEYS } from '@/features/ai/insights/server';
 import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { listSystemLogs } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const AI_INSIGHTS_RUN_PATH_ID = 'brain-ai-insights';
 const AI_INSIGHTS_RUN_PATH_NAME = 'One Site AI Analysis Bots';
@@ -122,7 +124,9 @@ export async function tick(): Promise<void> {
         level: level === 'warning' ? 'warn' : level,
         message,
       });
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // Keep scheduler work resilient if logging fails.
     }
   };
@@ -143,7 +147,9 @@ export async function tick(): Promise<void> {
       startedAt: new Date().toISOString(),
     });
     await appendRunEvent('AI Insights tick started.');
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+  
     // Continue processing even if run logging cannot be initialized.
   }
 
@@ -154,6 +160,7 @@ export async function tick(): Promise<void> {
       await action();
       executedJobs.push(job);
     } catch (error: unknown) {
+      void ErrorSystem.captureException(error);
       const message = toErrorMessage(error);
       failedJobs.push({ job, error: message });
       await appendRunEvent(`Insight step failed (${job}): ${message}`, 'warning');
@@ -242,6 +249,7 @@ export async function tick(): Promise<void> {
       await appendRunEvent('AI Insights tick completed.');
     }
   } catch (error) {
+    void ErrorSystem.captureException(error);
     if (runId) {
       try {
         await runRepository.updateRun(runId, {
@@ -254,7 +262,9 @@ export async function tick(): Promise<void> {
             executedJobs,
           },
         });
-      } catch {
+      } catch (error) {
+        void ErrorSystem.captureException(error);
+      
         // Ignore persistence failures while surfacing processor failure.
       }
       await appendRunEvent(`AI Insights tick failed: ${toErrorMessage(error)}`, 'error');

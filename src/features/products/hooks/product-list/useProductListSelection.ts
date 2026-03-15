@@ -79,6 +79,7 @@ export function useProductListSelection({
         setRowSelection(newSelection);
         toast(`Selected ${productIds.length} products.`, { variant: 'success' });
       } catch (error) {
+        logClientError(error);
         logClientError(error, {
           context: { source: 'useProductListSelection', action: 'selectAllGlobal' },
         });
@@ -105,6 +106,7 @@ export function useProductListSelection({
         setRefreshTrigger((prev: number) => prev + 1);
       }
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'useProductListSelection',
@@ -128,6 +130,7 @@ export function useProductListSelection({
         setRefreshTrigger((prev: number) => prev + 1);
       }
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'useProductListSelection', action: 'singleDelete', productId: targetId },
       });

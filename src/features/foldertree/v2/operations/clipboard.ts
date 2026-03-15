@@ -1,6 +1,7 @@
 import type {
   MasterFolderTreeActionResult,
   MasterFolderTreeController,
+  MasterTreePasteResult,
 } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeId } from '@/shared/utils/master-folder-tree-contract';
 
@@ -12,16 +13,6 @@ export type MasterTreeClipboardEntry = {
   sourceInstanceId: string;
   capturedAt: number;
 };
-
-export type MasterTreePasteResult =
-  | {
-      ok: true;
-      appliedMoves: Array<{ nodeId: MasterTreeId; targetParentId: MasterTreeId | null }>;
-    }
-  | {
-      ok: false;
-      reason: string;
-    };
 
 /**
  * Creates a clipboard entry for the given node IDs and operation.

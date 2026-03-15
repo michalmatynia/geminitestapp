@@ -4,6 +4,8 @@ import path from 'path';
 import { internalError } from '@/shared/errors/app-error';
 
 import type { Locator, Page } from 'playwright';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const TRADERA_SUCCESS_SELECTOR = [
   'a[href*="logout"]',
@@ -53,6 +55,7 @@ export const createTraderaBrowserTestUtils = (input: {
     try {
       return await input.page.waitForSelector(selector, options);
     } catch (error) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw internalError(`${label} wait failed: ${message}`);
     }
@@ -66,6 +69,7 @@ export const createTraderaBrowserTestUtils = (input: {
     try {
       await locator.waitFor(options);
     } catch (error) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw internalError(`${label} wait failed: ${message}`);
     }
@@ -75,6 +79,7 @@ export const createTraderaBrowserTestUtils = (input: {
     try {
       return await locator.count();
     } catch (error) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw internalError(`${label} count failed: ${message}`);
     }
@@ -84,6 +89,7 @@ export const createTraderaBrowserTestUtils = (input: {
     try {
       return await locator.isVisible();
     } catch (error) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw internalError(`${label} visibility check failed: ${message}`);
     }
@@ -93,6 +99,7 @@ export const createTraderaBrowserTestUtils = (input: {
     try {
       return await locator.innerText();
     } catch (error) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw internalError(`${label} text read failed: ${message}`);
     }
@@ -102,6 +109,7 @@ export const createTraderaBrowserTestUtils = (input: {
     try {
       return await input.page.goto(url, options);
     } catch (error) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw internalError(`${label} navigation failed: ${message}`);
     }
@@ -115,6 +123,7 @@ export const createTraderaBrowserTestUtils = (input: {
     try {
       await input.page.waitForLoadState(state, options);
     } catch (error) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw internalError(`${label} load state failed: ${message}`);
     }
@@ -141,7 +150,9 @@ export const createTraderaBrowserTestUtils = (input: {
             }
           })
         );
-      } catch {
+      } catch (error) {
+        logClientError(error);
+      
         // best-effort cleanup only
       }
       const prefix = `${input.connectionId}-${now}-${safeLabel || 'debug'}`;
@@ -153,7 +164,8 @@ export const createTraderaBrowserTestUtils = (input: {
         await writeFile(htmlPath, html, 'utf8');
       }
       return `Screenshot: ${screenshotPath}\nHTML: ${htmlPath}`;
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return '';
     }
   };

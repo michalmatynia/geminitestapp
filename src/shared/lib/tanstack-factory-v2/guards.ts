@@ -6,6 +6,8 @@ import {
 } from './types';
 
 import type { QueryKey } from '@tanstack/react-query';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const DEFAULT_STALE_TIME_MS = 5 * 60 * 1000;
 const MIN_REFETCH_INTERVAL_MS = 1;
@@ -38,7 +40,8 @@ export const isRefetchEnabledForQuery = (query: unknown): boolean => {
   if (typeof enabled === 'function') {
     try {
       return Boolean(enabled(query));
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return false;
     }
   }
@@ -59,7 +62,8 @@ export const guardRefetchInterval = <TQuery>(
       let nextValue: number | false | undefined;
       try {
         nextValue = callback(query);
-      } catch {
+      } catch (error) {
+        logClientError(error);
         return false;
       }
 

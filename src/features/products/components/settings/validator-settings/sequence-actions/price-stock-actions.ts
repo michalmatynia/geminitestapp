@@ -149,6 +149,7 @@ export const handleCreateLatestPriceStockSequence = async (args: {
 
     notifySuccess('Latest price & stock sequence created or updated.');
   } catch (error) {
+    logClientError(error);
     logClientError(error, {
       context: {
         source: 'useValidatorSettingsController',

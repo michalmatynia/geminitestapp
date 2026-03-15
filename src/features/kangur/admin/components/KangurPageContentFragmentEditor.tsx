@@ -22,15 +22,13 @@ const sanitizeRequiredInput = (value: string, fallback: string): string => {
   return trimmed.length > 0 ? trimmed : fallback;
 };
 
-const stringifyList = (values: readonly string[]): string => values.join('
-');
+const stringifyList = (values: readonly string[]): string => values.join('\n');
 
 const parseList = (value: string): string[] => {
   const seen = new Set<string>();
   const normalized: string[] = [];
 
-  for (const token of value.split(/?
-|,/g)) {
+  for (const token of value.split(/\r?\n|,/g)) {
     const trimmed = token.trim();
     if (!trimmed || seen.has(trimmed)) {
       continue;

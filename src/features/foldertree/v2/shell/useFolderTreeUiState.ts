@@ -77,6 +77,7 @@ export function useFolderTreeUiState(
     try {
       return parseFolderTreeUiStateV2Entry(rawUiStateV2);
     } catch (error) {
+      logClientError(error);
       runtime.recordMetric('ui_state_parse_failure');
       logClientError(error, {
         context: {

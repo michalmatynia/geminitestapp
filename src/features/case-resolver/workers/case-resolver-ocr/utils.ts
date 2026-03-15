@@ -1,3 +1,4 @@
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 export const fetchWithTimeout = async (
   input: RequestInfo | URL,
   init: RequestInit,
@@ -12,6 +13,7 @@ export const fetchWithTimeout = async (
       signal: controller.signal,
     });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     if (error instanceof Error && error.name === 'AbortError') {
       throw new Error(`${source} request timed out after ${timeoutMs}ms.`, { cause: error });
     }

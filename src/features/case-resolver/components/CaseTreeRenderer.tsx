@@ -37,6 +37,8 @@ import {
 import { useAdminCaseResolverCasesState } from '../hooks/useAdminCaseResolverCasesState';
 import { CaseTreeNode } from '../pages/AdminCaseResolverCasesUtils';
 import { getCaseResolverDocTooltipWithFallback } from '../relation-search/utils/docs';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function CaseTreeRenderer({
   nodes,
@@ -98,7 +100,9 @@ export function CaseTreeRenderer({
     try {
       await navigator.clipboard.writeText(caseId);
       toast('Case ID copied to clipboard.', { variant: 'success' });
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // ignore
     }
   };

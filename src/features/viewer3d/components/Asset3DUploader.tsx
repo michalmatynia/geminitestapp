@@ -158,6 +158,7 @@ export function Asset3DUploader({ className }: Asset3DUploaderProps): React.JSX.
       );
       onUpload(uploaded);
     } catch (err) {
+      logClientError(err);
       logClientError(err, {
         context: { source: 'Asset3DUploader', action: 'handleUpload', filename: file.name },
       });

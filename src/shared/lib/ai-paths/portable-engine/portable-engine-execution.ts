@@ -24,6 +24,8 @@ import {
 } from './portable-engine-validation';
 
 import type { PortablePathInputSource } from './portable-engine-contract';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 
 export const runPortablePathClient = async (
@@ -136,6 +138,7 @@ export const runPortablePathClient = async (
       reportAiPathsError: reportAiPathsError ?? (() => {}),
     });
   } catch (error) {
+    logClientError(error);
     recordPortablePathRunExecutionFailure({
       runner: 'client',
       surface: telemetrySurface,

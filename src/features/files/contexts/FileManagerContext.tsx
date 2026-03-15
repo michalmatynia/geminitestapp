@@ -150,7 +150,8 @@ export function FileManagerProvider({
       try {
         const url = new URL(clean);
         if (url.pathname.includes('/uploads/')) return 'upload';
-      } catch {
+      } catch (error) {
+        logClientError(error);
         return 'link';
       }
       return 'link';
@@ -171,7 +172,8 @@ export function FileManagerProvider({
       if (kind === 'link') {
         try {
           return new URL(filepath).hostname || 'link';
-        } catch {
+        } catch (error) {
+          logClientError(error);
           return 'link';
         }
       }
@@ -285,6 +287,7 @@ export function FileManagerProvider({
           setSelectedFiles([]);
           toast('Selected files deleted.', { variant: 'success' });
         } catch (error) {
+          logClientError(error);
           logClientError(error, {
             context: {
               source: 'FileManager',
@@ -320,6 +323,7 @@ export function FileManagerProvider({
       toast('Tags updated.', { variant: 'success' });
       setBulkTagInput('');
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'FileManager', action: 'applyTags', count: selectedFiles.length },
       });
@@ -339,6 +343,7 @@ export function FileManagerProvider({
             await deleteFileMutation.mutateAsync(fileId);
             toast('File deleted successfully.', { variant: 'success' });
           } catch (error) {
+            logClientError(error);
             logClientError(error, {
               context: { source: 'FileManager', action: 'deleteFile', fileId },
             });

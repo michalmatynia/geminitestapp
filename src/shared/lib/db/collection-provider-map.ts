@@ -9,6 +9,8 @@ import {
   type DatabaseEngineProvider,
 } from './database-engine-constants';
 import { getDatabaseEnginePolicy } from './database-engine-policy';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const CACHE_TTL_MS = 30_000;
 let mapCache: { value: Record<string, DatabaseEngineProvider>; ts: number } | null = null;
@@ -26,7 +28,8 @@ const parseMap = (raw: unknown): Record<string, DatabaseEngineProvider> => {
       }
     }
     return result;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return {};
   }
 };
@@ -53,7 +56,8 @@ const readMapFromMongo = async (key: string): Promise<Record<string, DatabaseEng
         $or: [{ _id: key }, { key }],
       });
     return parseMap(doc?.value);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return {};
   }
 };

@@ -1,7 +1,7 @@
 import type { SystemLogLevelDto as SystemLogLevel } from '@/shared/contracts/observability';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-export type SystemLogInput = {
+type SystemLogInput = {
   level?: SystemLogLevel;
   message: string;
   source?: string;

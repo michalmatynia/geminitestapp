@@ -9,6 +9,8 @@ import {
   updateImageStudioSlot,
   type ImageStudioSlotRecord,
 } from './slot-repository';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type EnsureSlotAction =
   | 'reused_existing'
@@ -250,6 +252,7 @@ async function ensureImageStudioSlotFromUploadedAssetInternal(
       action: 'created',
     };
   } catch (error: unknown) {
+    void ErrorSystem.captureException(error);
     if (!isDuplicateKeyError(error)) {
       throw error;
     }

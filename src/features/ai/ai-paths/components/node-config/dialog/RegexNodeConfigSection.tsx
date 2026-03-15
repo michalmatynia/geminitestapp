@@ -41,6 +41,8 @@ import {
 } from '../../AiPathConfigContext';
 import { RegexConfigBasicTab } from './regex/RegexConfigBasicTab';
 import { RegexPreviewSection } from './regex/RegexPreviewSection';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function RegexNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode } = useAiPathSelection();
@@ -204,7 +206,8 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
         if (successMessage) {
           toast(successMessage, { variant: 'success' });
         }
-      } catch {
+      } catch (error) {
+        logClientError(error);
         setGlobalTemplates(lastSyncedGlobalTemplatesRef.current);
         toast('Failed to update global regex templates.', { variant: 'error' });
       }
@@ -395,7 +398,8 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
           ? ((): string => {
             try {
               return JSON.stringify(callbackValue, null, 2);
-            } catch {
+            } catch (error) {
+              logClientError(error);
               return typeof callbackValue === 'object'
                 ? '[Object]'
                 : String(callbackValue as string | number | boolean);
@@ -427,6 +431,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
         regex: new RegExp(pattern, normalizedFlags),
       };
     } catch (error) {
+      logClientError(error);
       return {
         ok: false,
         error: error instanceof Error ? error.message : 'Invalid regex.',
@@ -541,7 +546,8 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
     if (sampleSource === undefined || sampleSource === null) return '';
     try {
       return JSON.stringify(sampleSource, null, 2);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return typeof sampleSource === 'object'
         ? '[Object]'
         : String(sampleSource as string | number | boolean);

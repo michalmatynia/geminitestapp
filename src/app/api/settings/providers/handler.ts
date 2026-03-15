@@ -20,6 +20,8 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { getIntegrationDataProvider } from '@/shared/lib/integrations/services/integration-provider';
 import { PRODUCT_DB_PROVIDER_SETTING_KEY } from '@/shared/lib/products/constants';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const normalizeProvider = (value?: string | null): AppDbProvider | null => {
   if (!value) return null;
@@ -34,7 +36,8 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
       .collection<{ _id: string; key?: string; value?: string }>('settings')
       .findOne({ $or: [{ _id: key }, { key }] });
     return typeof doc?.value === 'string' ? doc.value : null;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };

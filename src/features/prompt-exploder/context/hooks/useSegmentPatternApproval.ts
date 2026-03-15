@@ -22,6 +22,8 @@ import type { DocumentActions } from '../document/DocumentActionsContext';
 import type { DocumentState } from '../DocumentContext';
 import type { SettingsActions } from '../settings/SettingsActionsContext';
 import type { SettingsState } from '../SettingsContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const useSegmentPatternApproval = ({
   approvalDraft,
@@ -82,6 +84,7 @@ export const useSegmentPatternApproval = ({
     try {
       void new RegExp(approvalDraft.rulePattern, 'mi');
     } catch (error) {
+      logClientError(error);
       toast(
         error instanceof Error
           ? `Invalid regex pattern: ${error.message}`
@@ -222,6 +225,7 @@ export const useSegmentPatternApproval = ({
       ].filter(Boolean);
       toast(messageParts.join(' '), { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to approve segment pattern.', {
         variant: 'error',
       });

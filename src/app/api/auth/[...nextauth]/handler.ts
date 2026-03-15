@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { handlers } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const AUTH_SESSION_UNAUTH_CACHE_TTL_MS = (() => {
   const raw = process.env['AUTH_SESSION_UNAUTH_CACHE_TTL_MS'];
@@ -137,6 +139,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     }
     return response;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     if (req.nextUrl.pathname.endsWith('/session')) {
       const response = NextResponse.json(null, { status: 200 });
       response.headers.set('Cache-Control', 'no-store');

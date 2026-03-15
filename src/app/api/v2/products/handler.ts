@@ -18,6 +18,8 @@ import {
   productFilterSchema,
   type ProductFiltersParsed,
 } from '@/features/products/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 const freshQuerySchema = z.preprocess(
   (value: unknown) => {
     if (typeof value === 'boolean') return value;
@@ -117,6 +119,7 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
     attachTimingHeaders(response, timings);
     return response;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     timings['total'] = ctx.getElapsedMs();
     if (shouldLogTiming()) {
       await logSystemEvent({
@@ -139,6 +142,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   try {
     formData = await req.formData();
   } catch (error) {
+    void ErrorSystem.captureException(error);
     if (isLikelyPayloadTooLarge(error)) {
       throw payloadTooLargeError(
         'Upload payload too large. Reduce image sizes/count or increase proxyClientMaxBodySize.'

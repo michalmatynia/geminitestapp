@@ -9,6 +9,8 @@ import {
   type FolderTreeInstance,
   type FolderTreeProfileV2,
 } from '@/shared/utils/folder-tree-profiles-v2';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 
 export { FOLDER_TREE_UI_STATE_V2_KEY_PREFIX, FOLDER_TREE_PROFILE_V2_KEY_PREFIX };
@@ -37,6 +39,7 @@ export const parseFolderTreeUiStateV2Entry = (
   try {
     parsed = JSON.parse(raw) as unknown;
   } catch (error) {
+    logClientError(error);
     throw validationError('Invalid folder tree V2 UI state payload.', {
       reason: 'invalid_json',
       cause: error instanceof Error ? error.message : 'unknown_error',
@@ -91,7 +94,8 @@ export const parseFolderTreeProfileV2Entry = (
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     throw validationError('Invalid folder tree V2 profile payload.', {
       instance,
       reason: 'invalid_json',

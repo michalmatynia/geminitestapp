@@ -162,6 +162,7 @@ export const startAiInsightsQueue = (): void => {
     try {
       shouldRegister = await shouldRegisterInsightsScheduler();
     } catch (error) {
+      void ErrorSystem.captureException(error);
       reportQueueActionError(error, 'validateScheduler');
       return;
     }

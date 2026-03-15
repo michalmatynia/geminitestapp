@@ -16,6 +16,8 @@ import {
 import { validationError } from '@/shared/errors/app-error';
 
 import { parseCanonicalCaseResolverEdge } from './settings.edge-validation';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const sanitizeNodeMeta = (
   source: Record<string, CaseResolverNodeMeta> | null | undefined
@@ -252,7 +254,9 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
   rawEdges.forEach((edge: unknown, index: number): void => {
     try {
       parsedEdges.push(parseCanonicalCaseResolverEdge(edge, `case_resolver.graph.edges[${index}]`));
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Drop malformed edges during workspace sanitation.
     }
   });

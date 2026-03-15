@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto';
 
 import { ObjectId } from 'mongodb';
 
+import type { FileUploadEventRecord } from '@/shared/contracts/files';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 export type FileUploadEventInput = {
@@ -21,24 +22,6 @@ export type FileUploadEventInput = {
   userId?: string | null | undefined;
   meta?: Record<string, unknown> | null | undefined;
   createdAt?: Date | undefined;
-};
-
-export type FileUploadEventRecord = {
-  id: string;
-  status: 'success' | 'error';
-  category: string | null;
-  projectId: string | null;
-  folder: string | null;
-  filename: string | null;
-  filepath: string | null;
-  mimetype: string | null;
-  size: number | null;
-  source: string | null;
-  errorMessage: string | null;
-  requestId: string | null;
-  userId: string | null;
-  meta: Record<string, unknown> | null;
-  createdAt: Date;
 };
 
 export type ListFileUploadEventsInput = {
@@ -134,6 +117,7 @@ const buildMongoFilter = (input: ListFileUploadEventsInput): Record<string, unkn
 export async function createFileUploadEvent(
   input: FileUploadEventInput
 ): Promise<FileUploadEventRecord> {
+  const createdAt = input.createdAt ?? new Date();
   const payload: FileUploadEventRecord = {
     id: randomUUID(),
     status: input.status,
@@ -149,13 +133,18 @@ export async function createFileUploadEvent(
     requestId: input.requestId ?? null,
     userId: input.userId ?? null,
     meta: input.meta ?? null,
-    createdAt: input.createdAt ?? new Date(),
+    createdAt,
   };
 
   const mongo = await getMongoDb();
+  const record: MongoFileUploadEventDoc = {
+    _id: toMongoId(payload.id),
+    ...payload,
+    createdAt,
+  };
   await mongo
     .collection<MongoFileUploadEventDoc>(FILE_UPLOAD_EVENTS_COLLECTION)
-    .insertOne({ _id: toMongoId(payload.id), ...payload });
+    .insertOne(record);
   return normalizeRecord(payload);
 }
 

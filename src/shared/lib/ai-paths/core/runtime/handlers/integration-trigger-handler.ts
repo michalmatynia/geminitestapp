@@ -3,6 +3,8 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const pickString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
@@ -41,6 +43,7 @@ export const handleTrigger: NodeHandler = async ({
     try {
       resolvedEntity = await fetchEntityCached(entityType, entityId);
     } catch (error) {
+      logClientError(error);
       entityFetchError = error instanceof Error ? error.message : 'Entity fetch failed.';
       reportAiPathsError(
         error,

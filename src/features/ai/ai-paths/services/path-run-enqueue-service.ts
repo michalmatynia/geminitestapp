@@ -120,6 +120,7 @@ export const dispatchRun = async (runId: string, options?: { delayMs?: number })
       scheduleLocalFallbackRun(runId, baseDelayMs + LOCAL_FALLBACK_GRACE_MS);
     }
   } catch (queueError) {
+    void ErrorSystem.captureException(queueError);
     void ErrorSystem.captureException(queueError, {
       service: 'ai-paths-service',
       action: 'enqueueJob',
@@ -371,6 +372,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       await repo.createRunNodes(run.id, nodes);
       persistNodesMs = performance.now() - persistNodesStartedAt;
     } catch (setupError) {
+      void ErrorSystem.captureException(setupError);
       const finishedAt = new Date();
       const message = `Run setup failed: ${
         setupError instanceof Error ? setupError.message : String(setupError)
@@ -436,6 +438,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
         recordRuntimeRunQueued({ runId: run.id }),
       ]);
     } catch (parallelError) {
+      void ErrorSystem.captureException(parallelError);
       void ErrorSystem.logWarning(`Non-critical setup failure for run ${run.id}`, {
         service: 'ai-paths-service',
         error: parallelError,
@@ -449,6 +452,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       await dispatchRun(run.id);
       dispatchMs = performance.now() - dispatchStartedAt;
     } catch (dispatchError) {
+      void ErrorSystem.captureException(dispatchError);
       const finishedAt = new Date();
       const dispatchMessage = resolveDispatchErrorMessage(dispatchError);
       const message = `Run dispatch failed: ${dispatchMessage}`;
@@ -500,6 +504,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
           }),
         ]);
       } catch (auxError) {
+        void ErrorSystem.captureException(auxError);
         void ErrorSystem.logWarning(`Non-critical dispatch failure logging for run ${run.id}`, {
           service: 'ai-paths-service',
           action: 'dispatchFailureLogging',
@@ -543,6 +548,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
     }
     return await execute();
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.captureException(error, {
       service: 'ai-paths-service',
       action: 'enqueuePathRun',

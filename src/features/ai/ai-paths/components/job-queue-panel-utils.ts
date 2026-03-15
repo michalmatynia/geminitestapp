@@ -9,6 +9,8 @@ import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 import type { StatusVariant } from '@/shared/ui';
 
 import { safeJsonStringify } from './AiPathsSettingsUtils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type QueueHistoryEntry = {
   ts: number;
@@ -162,7 +164,8 @@ export const safePrettyJson = (value: unknown): string => {
   if (!raw) return '';
   try {
     return JSON.stringify(JSON.parse(raw), null, 2);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return raw;
   }
 };

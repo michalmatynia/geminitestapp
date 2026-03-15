@@ -22,6 +22,8 @@ import { useAiPathsSimulation } from './runtime/useAiPathsSimulation';
 import { createRunId } from './runtime/utils';
 
 import type { UseAiPathsRuntimeArgs, UseAiPathsRuntimeResult, QueuedRun } from './runtime/types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntimeResult {
   const runtimeContextState = useRuntimeState();
@@ -333,6 +335,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
       });
       args.toast('AI response received.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       args.reportAiPathsError(
         error,
         { action: 'sendToAi', nodeId: sourceNodeId },

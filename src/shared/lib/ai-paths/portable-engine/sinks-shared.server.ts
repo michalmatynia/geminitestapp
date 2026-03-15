@@ -17,6 +17,8 @@ import type {
   PortablePathEnvelopeVerificationObservabilitySnapshot,
 } from './portable-engine-envelope-observability';
 import type { PortablePathEnvelopeVerificationAuditSinkStartupHealthSummary } from './sinks-contracts.server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export type PortablePathEnvelopeVerificationSinkLevel = 'info' | 'warn' | 'error';
 
@@ -61,7 +63,8 @@ export const toErrorMessage = (error: unknown): string => {
   if (typeof error === 'string' && error.trim().length > 0) return error.trim();
   try {
     return JSON.stringify(error);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return 'unknown_error';
   }
 };

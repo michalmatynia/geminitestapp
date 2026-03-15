@@ -22,6 +22,8 @@ import {
   normalizeKangurSort,
   parseKangurScoreCreatePayload,
 } from '@/shared/validations/kangur';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export const querySchema = z.object({
   sort: z.preprocess(normalizeOptionalQueryString, kangurScoreSortSchema.optional()),
@@ -71,7 +73,8 @@ const readBodyJson = async (request: NextRequest): Promise<unknown> => {
 
   try {
     return JSON.parse(rawBody) as unknown;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     throw badRequestError('Invalid JSON payload.');
   }
 };

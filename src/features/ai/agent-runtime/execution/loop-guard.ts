@@ -12,6 +12,8 @@ import { getAgentAuditLogDelegate } from '@/features/ai/agent-runtime/store-dele
 import type { LoopSignal, PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type PlanStepSpecInput = {
   title?: string;
@@ -260,6 +262,7 @@ export async function buildLoopGuardReview({
       meta,
     };
   } catch (error) {
+    logClientError(error);
     if (DEBUG_CHATBOT) {
       void ErrorSystem.logWarning('Loop guard failed', {
         service: 'agent-engine',

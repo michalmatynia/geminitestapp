@@ -6,6 +6,8 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { optionalIntegerQuerySchema } from '@/shared/lib/api/query-schema';
 import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
 import { getRedisClient } from '@/shared/lib/redis';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export const querySchema = z.object({
   limit: optionalIntegerQuerySchema(z.number().int().min(20).max(2000)),
@@ -60,7 +62,8 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   try {
     await client.ping();
     connected = true;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     connected = false;
   }
 

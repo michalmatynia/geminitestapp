@@ -2,6 +2,8 @@ import { BaseProductRecord, BaseApiResponse } from '@/shared/contracts/integrati
 
 import { callBaseApi } from './core';
 import { extractProductIds, extractProducts, toStringId } from '../base-client-parsers';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export async function fetchBaseProductIds(token: string, inventoryId: string): Promise<string[]> {
   const candidates = [
@@ -22,7 +24,9 @@ export async function fetchBaseProductIds(token: string, inventoryId: string): P
       });
       const ids = extractProductIds(payload);
       if (ids.length > 0) return ids;
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Continue to next candidate
     }
   }
@@ -68,7 +72,9 @@ export async function fetchBaseProductDetails(
             });
             const products = extractProducts(payload);
             if (products.length > 0) return products;
-          } catch {
+          } catch (error) {
+            logClientError(error);
+          
             // Continue
           }
         }
@@ -129,7 +135,9 @@ export async function checkBaseSkuExists(
             return productId ? { exists: true, productId } : { exists: true };
           }
         }
-      } catch {
+      } catch (error) {
+        logClientError(error);
+      
         // Filter might not be supported, continue
       }
     }
@@ -153,6 +161,7 @@ export async function checkBaseSkuExists(
 
     return { exists: false };
   } catch (error: unknown) {
+    logClientError(error);
     try {
       const { logSystemError } = await import('@/shared/lib/observability/system-logger');
       await logSystemError({
@@ -162,6 +171,7 @@ export async function checkBaseSkuExists(
         context: { action: 'checkBaseSkuExists', sku },
       });
     } catch (logError) {
+      logClientError(logError);
       const { logger } = await import('@/shared/utils/logger');
       logger.error('[base-client] Error checking SKU existence (and logging failed):', logError, {
         originalError: error,

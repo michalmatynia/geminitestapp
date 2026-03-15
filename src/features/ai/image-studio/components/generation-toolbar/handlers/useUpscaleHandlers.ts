@@ -10,6 +10,8 @@ import {
 } from '../GenerationToolbar.types';
 import { UPSCALE_REQUEST_TIMEOUT_MS } from '../GenerationToolbar.utils';
 import { loadImageElement } from '../GenerationToolbarImageUtils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function useUpscaleHandlers(
   state: GenerationToolbarState,
@@ -87,6 +89,7 @@ export function useUpscaleHandlers(
       setSelectedSlotId(response.slot.id);
       toast('Upscale completed.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to upscale image.', {
         variant: 'error',
       });

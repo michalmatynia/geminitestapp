@@ -16,6 +16,8 @@ import {
 import { getUnsupportedProviderActionMessage } from '@/shared/lib/ai-paths/core/utils/provider-actions';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const actionSchema = z.object({
   provider: z.enum(['auto', 'mongodb']).optional(),
@@ -60,7 +62,8 @@ const coerceQuery = (value: unknown): Record<string, unknown> => {
   if (typeof value === 'string') {
     try {
       return JSON.parse(value) as Record<string, unknown>;
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       return {};
     }
   }
@@ -460,6 +463,7 @@ export async function postAiPathsDbActionHandler(
     };
     return NextResponse.json(finalResult);
   } catch (primaryError) {
+    void ErrorSystem.captureException(primaryError);
     const isResolutionError = isProviderResolutionError(primaryError);
     if (!isResolutionError) {
       throw primaryError;

@@ -216,7 +216,7 @@ export function KangurGameHomeQuestWidget({
 
           <KangurProgressBar
             accent={quest.progress.status === 'completed' ? 'emerald' : 'violet'}
-            className='mt-4 max-w-sm'
+            className='mt-4 max-w-full sm:max-w-sm'
             data-testid='kangur-home-quest-progress-bar'
             size='sm'
             value={quest.progress.percent}

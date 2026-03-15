@@ -2,6 +2,8 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 interface QueryBatchConfig {
   maxBatchSize?: number;
@@ -95,6 +97,7 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
             }
           }
         } catch (error) {
+          logClientError(error);
           group.forEach((item) => item.reject(error as Error));
         }
       })

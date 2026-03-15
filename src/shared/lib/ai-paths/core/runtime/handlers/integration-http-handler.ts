@@ -10,6 +10,8 @@ import {
 } from '@/shared/lib/security/outbound-url-policy';
 
 import { getValueAtMappingPath, renderTemplate } from '../../utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const handleHttp: NodeHandler = async ({
   node,
@@ -41,6 +43,7 @@ export const handleHttp: NodeHandler = async ({
   try {
     headers = httpConfig.headers ? (JSON.parse(httpConfig.headers) as Record<string, string>) : {};
   } catch (error: unknown) {
+    logClientError(error);
     reportAiPathsError(
       error,
       { action: 'parseHeaders', nodeId: node.id },
@@ -96,7 +99,8 @@ export const handleHttp: NodeHandler = async ({
     } else {
       try {
         data = (await res.json()) as unknown;
-      } catch {
+      } catch (error) {
+        logClientError(error);
         data = await res.text();
       }
     }
@@ -116,6 +120,7 @@ export const handleHttp: NodeHandler = async ({
       },
     };
   } catch (error: unknown) {
+    logClientError(error);
     if (abortSignal?.aborted || (error instanceof Error && error.name === 'AbortError')) {
       throw error;
     }

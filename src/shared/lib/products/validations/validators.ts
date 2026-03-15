@@ -6,6 +6,8 @@ import {
 } from './schemas';
 
 import type { ZodIssue } from 'zod';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 const reportValidationError = async (
   message: string,
   context: Record<string, unknown> = {}
@@ -14,7 +16,8 @@ const reportValidationError = async (
     const { reportValidationError: report } =
       await import('@/shared/utils/observability/validation-reporter');
     await report(message, context);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     const { logger } = await import('@/shared/utils/logger');
     logger.error('[validators] Failed to report validation error', { message });
   }

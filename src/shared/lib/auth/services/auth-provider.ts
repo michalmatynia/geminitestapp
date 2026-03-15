@@ -31,7 +31,8 @@ const readMongoAuthProvider = async (): Promise<AuthDbProvider | null> => {
         $or: [{ _id: AUTH_SETTINGS_KEYS.provider }, { key: AUTH_SETTINGS_KEYS.provider }],
       });
     return normalizeProvider(doc?.value ?? null);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };

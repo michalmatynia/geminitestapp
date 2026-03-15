@@ -26,8 +26,9 @@ export function FiltersContainer(props: FiltersContainerProps) {
   } = props;
 
   return (
-    <div
+    <section
       className={cn('mb-4 space-y-3 rounded-lg border border-border/60 bg-card/40 p-4', className)}
+      aria-label={typeof title === 'string' ? title : 'Filters'}
     >
       <SectionHeader
         title={title}
@@ -35,7 +36,7 @@ export function FiltersContainer(props: FiltersContainerProps) {
         actions={
           hasActiveFilters && onReset ? (
             <Button variant='ghost' size='sm' onClick={onReset} className='h-8 gap-2'>
-              <X className='h-3 w-3' />
+              <X className='h-3 w-3' aria-hidden='true' />
               Reset filters
             </Button>
           ) : undefined
@@ -43,6 +44,6 @@ export function FiltersContainer(props: FiltersContainerProps) {
       />
 
       <div className={cn('grid grid-cols-1 gap-3', gridClassName)}>{children}</div>
-    </div>
+    </section>
   );
 }

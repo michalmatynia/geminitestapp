@@ -90,6 +90,7 @@ const queue = createManagedQueue<ProductSyncSchedulerJobData>({
         });
         started += 1;
       } catch (error) {
+        void ErrorSystem.captureException(error);
         skipped += 1;
         const reason = normalizeSkipReason(error);
         skipReasons.set(reason, (skipReasons.get(reason) ?? 0) + 1);

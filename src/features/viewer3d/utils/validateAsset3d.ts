@@ -1,4 +1,6 @@
 import type { Supported3DExtension } from '@/shared/contracts/viewer3d';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const SUPPORTED_3D_FORMATS = {
   '.glb': { mimetype: 'model/gltf-binary', description: 'GL Transmission Format Binary' },
@@ -27,7 +29,8 @@ const hasExternalGltfResources = async (file: File): Promise<boolean> => {
         .filter((uri: string | undefined): uri is string => Boolean(uri)),
     ];
     return uris.some((uri: string) => !uri.startsWith('data:'));
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return false;
   }
 };

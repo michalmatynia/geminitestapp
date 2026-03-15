@@ -1,6 +1,8 @@
 import 'server-only';
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type ImageStudioSlotLinkDocument = {
   _id: string;
@@ -57,7 +59,9 @@ const ensureIndexesOnce = (() => {
           { unique: true, name: 'project_source_relation_unique' }
         ),
       ]);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // best-effort indexing
     }
   };

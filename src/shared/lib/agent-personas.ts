@@ -13,6 +13,8 @@ import {
 } from '@/shared/contracts/agents';
 import { validationError } from '@/shared/errors/app-error';
 import { sanitizeSvg } from '@/shared/utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type AgentPersonaMoodPreset = {
   id: AgentPersonaMoodId;
@@ -460,7 +462,8 @@ const parseStoredAgentPersonas = (rawValue: string | undefined): unknown[] => {
   let parsed: unknown;
   try {
     parsed = JSON.parse(rawValue) as unknown;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     throw validationError('Invalid agent personas payload.', {
       source: 'agent_personas',
       reason: 'invalid_json',

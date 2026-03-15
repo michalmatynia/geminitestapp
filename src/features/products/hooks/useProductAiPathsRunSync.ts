@@ -20,6 +20,8 @@ import {
   subscribeToTrackedAiPathRun,
 } from '@/shared/lib/ai-paths/client-run-tracker';
 import { getRecentAiPathRunEnqueue } from '@/shared/lib/query-invalidation';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 // Keep the badge visible longer than the last scheduled product refresh (9 s).
 const AI_PATH_RUN_BADGE_TTL_MS = 30_000;
@@ -199,7 +201,8 @@ export function useProductAiPathsRunSync(): void {
         channel.onmessage = (event: MessageEvent<unknown>): void => {
           handlePayload(event.data);
         };
-      } catch {
+      } catch (error) {
+        logClientError(error);
         channel = null;
       }
     }

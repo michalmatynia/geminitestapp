@@ -69,7 +69,8 @@ export function usePageAiAssistant() {
       const match = /```json\n([\s\S]*?)\n```/.exec(text);
       const jsonText = match?.[1] ? match[1] : text;
       return JSON.parse(jsonText);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return null;
     }
   }, []);
@@ -188,7 +189,9 @@ export function usePageAiAssistant() {
         if (doneSignal) {
           try {
             await reader.cancel();
-          } catch {
+          } catch (error) {
+            logClientError(error);
+          
             // ignore
           }
         }
@@ -236,6 +239,7 @@ export function usePageAiAssistant() {
       setPageAiOutput(JSON.stringify(parsed, null, 2));
       toast(`AI output ready (${provider}).`, { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       if (error instanceof Error && error.name === 'AbortError') return;
       logClientError(error, { context: { source: 'usePageAiAssistant', action: 'generate' } });
       const message = error instanceof Error ? error.message : 'Failed to generate AI output.';

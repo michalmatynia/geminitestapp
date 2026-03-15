@@ -19,6 +19,8 @@ import {
 } from '@/shared/lib/ai-paths/portable-engine/server';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { listSystemLogs } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const DEFAULT_HISTORY_LIMIT = 50;
 const MAX_HISTORY_LIMIT = 200;
@@ -220,7 +222,8 @@ const parseReplayHistoryCursor = (
       from: cursorFrom,
       to: cursorTo,
     };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     throw badRequestError('Remediation replay history cursor is invalid.');
   }
 };

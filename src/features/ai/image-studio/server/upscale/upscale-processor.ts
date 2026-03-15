@@ -19,6 +19,8 @@ import {
 } from './types';
 import { loadSourceBuffer, parseDataUrl } from './upscale-buffer-loader';
 import { upscaleBadRequest } from './upscale-request-parser';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const STRICT_SERVER_UPSCALE_ENABLED =
   process.env['IMAGE_STUDIO_UPSCALE_SERVER_AUTHORITATIVE'] !== 'false';
@@ -64,6 +66,7 @@ export async function processUpscalePayload(input: {
       }
       sourceBuffer = source.buffer;
     } catch (error) {
+      void ErrorSystem.captureException(error);
       sourceLoadError = error;
     }
   }
@@ -98,6 +101,7 @@ export async function processUpscalePayload(input: {
         });
       }
     } catch (error) {
+      void ErrorSystem.captureException(error);
       if (error instanceof Error && /scale is invalid/i.test(error.message)) {
         throw upscaleBadRequest(
           IMAGE_STUDIO_UPSCALE_ERROR_CODES.SCALE_INVALID,

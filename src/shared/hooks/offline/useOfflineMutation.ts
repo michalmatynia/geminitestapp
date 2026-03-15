@@ -52,6 +52,7 @@ class OfflineMutationQueue {
         }
         mutation.onProcessed?.({ queryClient });
       } catch (error) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'offline-queue',
@@ -97,7 +98,8 @@ class OfflineMutationQueue {
           if (restoredQueue.length > 0 || this.queue.length === 0) {
             this.queue = restoredQueue;
           }
-        } catch {
+        } catch (error) {
+          logClientError(error);
           if (this.queue.length === 0) {
             this.queue = [];
           }

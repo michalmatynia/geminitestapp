@@ -9,6 +9,8 @@ import {
   parseDynamicReplacementRecipe,
   type DynamicReplacementRecipe,
 } from '@/shared/lib/products/utils/validator-replacement-recipe';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const DEFAULT_SEQUENCE_STEP = 10;
 
@@ -417,7 +419,8 @@ export const canCompileRegex = (pattern: string, flags: string): boolean => {
   try {
     void new RegExp(pattern, flags || undefined);
     return true;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return false;
   }
 };

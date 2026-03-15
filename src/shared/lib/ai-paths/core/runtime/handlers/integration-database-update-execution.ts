@@ -4,7 +4,8 @@ import type {
   DatabaseWriteOutcome,
 } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
-import { dbApi, entityApi, ApiResponse } from '@/shared/lib/ai-paths/api';
+import type { HttpResult } from '@/shared/contracts/http';
+import { dbApi, entityApi } from '@/shared/lib/ai-paths/api';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { buildDbQueryPayload } from '../utils';
@@ -12,6 +13,8 @@ import {
   evaluateWriteOutcome,
   resolveWriteOutcomePolicy,
 } from './integration-database-write-guardrails';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 interface DbActionResult {
   items?: unknown[];
@@ -231,7 +234,7 @@ export async function executeDatabaseUpdate({
         };
         executed.updater.add(nodeId);
       } else {
-        const dbUpdateResult: ApiResponse<DbActionResult> = isCustomPayloadMode
+        const dbUpdateResult: HttpResult<DbActionResult> = isCustomPayloadMode
           ? await dbApi.action<DbActionResult>({
             provider: queryPayload.provider,
             action: 'updateMany',
@@ -388,6 +391,7 @@ export async function executeDatabaseUpdate({
           toast(`Updated ${entityType}${suffix}`, { variant: 'success' });
         }
       } catch (error: unknown) {
+        logClientError(error);
         reportAiPathsError(
           error,
           { action: 'updateEntity', entityType, entityId, nodeId },
@@ -434,7 +438,7 @@ export async function executeDatabaseUpdate({
         };
         executed.updater.add(nodeId);
       } else {
-        const dbUpdateResult: ApiResponse<DbActionResult> = isCustomPayloadMode
+        const dbUpdateResult: HttpResult<DbActionResult> = isCustomPayloadMode
           ? await dbApi.action<DbActionResult>({
             provider: queryPayload.provider,
             action: 'updateOne',

@@ -9,7 +9,7 @@ import {
   GraphExecutionError,
 } from './engine-types';
 
-export type NodeHandlerContext = {
+export type NodeHandlerResolutionContext = {
   node: AiNode;
   options: EvaluateGraphOptions;
   state: EngineStateManager;
@@ -23,7 +23,9 @@ export type NodeHandlerContext = {
   runtimeTelemetry: RuntimeNodeResolutionTelemetry | null;
 };
 
-export const resolveNodeHandlerOrThrow = async (ctx: NodeHandlerContext): Promise<NodeHandler> => {
+export const resolveNodeHandlerOrThrow = async (
+  ctx: NodeHandlerResolutionContext
+): Promise<NodeHandler> => {
   const {
     node,
     options,

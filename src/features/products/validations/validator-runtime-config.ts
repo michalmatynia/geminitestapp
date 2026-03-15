@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 import type { ProductValidationRuntimeType } from '@/shared/contracts/products';
 import { badRequestError } from '@/shared/errors/app-error';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const runtimeOperatorSchema = z.enum([
   'truthy',
@@ -108,6 +110,7 @@ const parseRuntimeConfigJson = (rawValue: string): Record<string, unknown> => {
   try {
     parsed = JSON.parse(rawValue);
   } catch (error) {
+    logClientError(error);
     throw badRequestError('Invalid runtimeConfig JSON.', {
       detail: error instanceof Error ? error.message : String(error),
     });
@@ -178,7 +181,8 @@ export const parseRuntimeConfigForEvaluation = ({
       return result.success ? (result.data as Record<string, unknown>) : null;
     }
     return null;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

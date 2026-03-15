@@ -22,6 +22,8 @@ import {
   parsePathMetas,
   parseTriggerButtons,
 } from './settings-store.parsing';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const toTriggerButtonRecord = (
   preset: {
@@ -77,7 +79,8 @@ const parsePathConfigRecord = (value: string): PathConfig | null => {
     const parsed = JSON.parse(value) as unknown;
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
     return parsed as PathConfig;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };
@@ -172,7 +175,8 @@ const tryRepairBrokenSeededStarterConfig = (args: {
       fallbackName: args.pathId,
     });
     return resolved.changed ? resolved.config : null;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };

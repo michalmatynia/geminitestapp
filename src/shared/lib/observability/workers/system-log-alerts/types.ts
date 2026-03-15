@@ -1,28 +1,10 @@
+import type { MongoSystemLogDoc } from '@/shared/lib/observability/system-log-types';
+
 export type SystemLogAlertsJobData = {
   type: 'alert-tick';
 };
 
-export type MongoSystemLogDoc = {
-  _id?: string;
-  id?: string;
-  level?: string;
-  message?: string;
-  category?: string | null;
-  source?: string | null;
-  service?: string | null;
-  context?: Record<string, unknown> | null;
-  stack?: string | null;
-  path?: string | null;
-  method?: string | null;
-  statusCode?: number | null;
-  requestId?: string | null;
-  traceId?: string | null;
-  correlationId?: string | null;
-  spanId?: string | null;
-  parentSpanId?: string | null;
-  userId?: string | null;
-  createdAt?: Date;
-};
+export type { MongoSystemLogDoc };
 
 export type AlertEvidenceContextRegistry = {
   refs: Array<{

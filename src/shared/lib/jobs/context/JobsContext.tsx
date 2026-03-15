@@ -114,6 +114,7 @@ export function JobsProvider({ children }: { children: ReactNode }): React.JSX.E
     try {
       await cancelListingMutation.mutateAsync({ productId, listingId });
     } catch (err: unknown) {
+      logClientError(err);
       logClientError(err, {
         context: { source: 'JobsContext', action: 'cancelListing', productId, listingId },
       });
@@ -134,6 +135,7 @@ export function JobsProvider({ children }: { children: ReactNode }): React.JSX.E
     try {
       await chatbotMutation.mutateAsync({ jobId, action: 'cancel' });
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'JobsContext', action: 'cancelChatbotJob', jobId },
       });

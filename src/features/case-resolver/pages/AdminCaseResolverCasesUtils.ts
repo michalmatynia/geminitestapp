@@ -1,6 +1,8 @@
 import type {
   CaseResolverFile,
   CaseSearchScope,
+  CaseViewMode,
+  CaseFileTypeFilter,
   CaseSortKey as SharedCaseSortKey,
   CaseSortOrder as SharedCaseSortOrder,
 } from '@/shared/contracts/case-resolver';
@@ -15,9 +17,7 @@ type CaseSortKey = SharedCaseSortKey;
 type CaseSortOrder = SharedCaseSortOrder;
 
 export type { CaseSortKey, CaseSortOrder };
-export type CaseViewMode = 'hierarchy' | 'list';
-export type CaseFileTypeFilter = 'all' | 'case';
-
+export type { CaseViewMode, CaseFileTypeFilter };
 export type IndexedCaseRow = {
   file: CaseResolverFile;
   normalizedName: string;

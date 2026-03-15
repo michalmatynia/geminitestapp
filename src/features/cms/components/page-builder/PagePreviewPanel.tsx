@@ -129,7 +129,8 @@ export function PagePreviewPanel(): React.ReactNode {
     try {
       const url = new URL(previewUrl);
       return url.host === window.location.host;
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return true;
     }
   }, [previewUrl]);
@@ -273,7 +274,9 @@ export function PagePreviewPanel(): React.ReactNode {
     }
     try {
       previewWindow.opener = null;
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // ignore cross-origin or browser restrictions
     }
     try {
@@ -295,6 +298,7 @@ export function PagePreviewPanel(): React.ReactNode {
       }
       previewWindow.location.href = targetUrl;
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'PagePreviewPanel',

@@ -43,6 +43,7 @@ const withAgentRunSchemaGuard = async <T>(operation: () => Promise<T>, fallback:
   try {
     return await operation();
   } catch (error) {
+    void ErrorSystem.captureException(error);
     if (isMissingAgentRunStoreError(error)) {
       logMissingAgentRunSchemaOnce(error);
       return fallback;
@@ -94,6 +95,7 @@ export async function processAgentRun(runId: string): Promise<void> {
   try {
     await runAgentControlLoop(nextRun.id);
   } catch (error: unknown) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.captureException(error, {
       service: 'agent-queue',
       runId: nextRun.id,

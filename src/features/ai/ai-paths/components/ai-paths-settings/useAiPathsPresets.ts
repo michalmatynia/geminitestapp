@@ -25,6 +25,8 @@ import {
 import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
 
 import type { ClusterPresetDraft } from '../cluster-presets-panel';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type ToastFn = (
   message: string,
@@ -182,6 +184,7 @@ export function useAiPathsPresets({
       try {
         await updateAiPathsSetting(CLUSTER_PRESETS_KEY, JSON.stringify(nextPresets));
       } catch (error: unknown) {
+        logClientError(error);
         reportAiPathsError(error, { action: 'saveClusterPresets' }, 'Failed to save presets:');
         toast('Failed to save cluster presets.', { variant: 'error' });
       }
@@ -194,6 +197,7 @@ export function useAiPathsPresets({
       try {
         await updateAiPathsSetting(DB_QUERY_PRESETS_KEY, JSON.stringify(nextPresets));
       } catch (error: unknown) {
+        logClientError(error);
         reportAiPathsError(
           error,
           { action: 'saveDbQueryPresets' },
@@ -211,6 +215,7 @@ export function useAiPathsPresets({
       try {
         await updateAiPathsSetting(DB_NODE_PRESETS_KEY, JSON.stringify(nextPresets));
       } catch (error: unknown) {
+        logClientError(error);
         reportAiPathsError(
           error,
           { action: 'saveDbNodePresets' },
@@ -412,6 +417,7 @@ export function useAiPathsPresets({
         await saveClusterPresets(nextPresets);
         toast('Presets imported.', { variant: 'success' });
       } catch (error: unknown) {
+        logClientError(error);
         reportAiPathsError(error, { action: 'importPresets' }, 'Failed to import presets:');
         toast('Failed to import presets. Check JSON format.', { variant: 'error' });
       }

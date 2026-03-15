@@ -41,6 +41,8 @@ import type {
   AdminCaseResolverCasesActionsValue,
   AdminCaseResolverCasesStateValue,
 } from './AdminCaseResolverCasesContext.types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 interface AdminCaseResolverCasesRuntimeResult {
   actionsValue: AdminCaseResolverCasesActionsValue;
@@ -378,6 +380,7 @@ export function useAdminCaseResolverCasesRuntime(): AdminCaseResolverCasesRuntim
         setCasesLoadState('unavailable');
         setCasesLoadMessage(result.message || 'Could not load cases workspace.');
       } catch (error: unknown) {
+        logClientError(error);
         if (!isMountedRef.current) return;
         setCasesLoadState('unavailable');
         setCasesLoadMessage(
@@ -530,6 +533,7 @@ export function useAdminCaseResolverCasesRuntime(): AdminCaseResolverCasesRuntim
       setDidHydrateCaseListViewDefaults(true);
       toast('Case list defaults saved.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save case list defaults.', {
         variant: 'error',
       });

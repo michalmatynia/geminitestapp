@@ -158,6 +158,7 @@ export async function runAgentBrowserControl({
       },
     };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const errorId = randomUUID();
     const message = error instanceof Error ? error.message : 'Control action failed.';
 
@@ -170,6 +171,7 @@ export async function runAgentBrowserControl({
         requestedAction: action,
       });
     } catch (logError) {
+      void ErrorSystem.captureException(logError);
       if (debugEnabled) {
         const { logger } = await import('@/shared/utils/logger');
         logger.error('[chatbot][agent][control] Failed (and logging failed)', logError, {
@@ -189,7 +191,9 @@ export async function runAgentBrowserControl({
           metadata: { errorId },
         },
       });
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // ignore logging failures
     }
     return { ok: false, error: message, errorId };

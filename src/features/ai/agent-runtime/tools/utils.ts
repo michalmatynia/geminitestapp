@@ -1,3 +1,4 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 export const toDataUrl = (buffer: Buffer): string =>
   `data:image/png;base64,${buffer.toString('base64')}`;
 
@@ -25,7 +26,8 @@ export const getTargetHostname = (prompt?: string): string | null => {
   if (!url) return null;
   try {
     return new URL(url).hostname.replace(/^www\./i, '');
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -35,7 +37,8 @@ export const isAllowedUrl = (url: string, targetHostname: string | null): boolea
   try {
     const hostname = new URL(url).hostname.replace(/^www\./i, '');
     return hostname === targetHostname || hostname.endsWith(`.${targetHostname}`);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return false;
   }
 };
@@ -86,6 +89,7 @@ export const loadRobotsTxt = async (
     const content = await response.text();
     return { ok: true, status: response.status, content };
   } catch (error) {
+    logClientError(error);
     return {
       ok: false,
       status: null,
@@ -230,7 +234,8 @@ export const resolveIgnoreRobotsTxt = (planState?: unknown): boolean => {
       ignoreRobotsTxt?: boolean;
     } | null;
     return Boolean(parsed?.config?.ignoreRobotsTxt || parsed?.ignoreRobotsTxt);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return false;
   }
 };

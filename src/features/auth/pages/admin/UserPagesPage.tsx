@@ -49,6 +49,7 @@ function AuthUserPagesForm(): React.JSX.Element {
       await refetchSettings();
       toast('User page settings saved', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, { context: { source: 'AuthUserPagesPage', action: 'saveSettings' } });
       toast('Failed to save user page settings', { variant: 'error' });
     }

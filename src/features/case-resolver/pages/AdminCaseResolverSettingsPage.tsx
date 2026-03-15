@@ -41,6 +41,8 @@ import {
   parseCaseResolverDefaultDocumentFormat,
   parseCaseResolverSettings,
 } from '../settings';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function AdminCaseResolverSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -186,6 +188,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
       );
       toast('Case Resolver settings saved.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save Case Resolver settings.', {
         variant: 'error',
       });

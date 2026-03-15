@@ -2,6 +2,8 @@
 
 import { sanitizeStudioProjectId } from '@/features/ai/image-studio/utils/project-session';
 import type { VectorShape, VectorToolMode } from '@/shared/lib/vector-drawing';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type MaskGenerationMode = 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges';
 
@@ -215,7 +217,8 @@ const parseMaskingProjectLocalState = (
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 
@@ -287,7 +290,9 @@ export const saveMaskingProjectLocalState = (
   }
   try {
     window.localStorage.setItem(key, JSON.stringify(state));
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Best-effort local cache.
   }
 };

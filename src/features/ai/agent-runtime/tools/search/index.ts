@@ -1,3 +1,4 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 const BRAVE_SEARCH_API_KEY = process.env['BRAVE_SEARCH_API_KEY'];
 const BRAVE_SEARCH_API_URL =
   process.env['BRAVE_SEARCH_API_URL'] || 'https://api.search.brave.com/res/v1/web/search';
@@ -75,6 +76,7 @@ export const fetchSearchResults = async (
           .filter((item: { url: string }) => item.url) || []
       );
     } catch (error) {
+      logClientError(error);
       if (log) {
         await log('warning', 'Brave search failed; falling back to DuckDuckGo.', {
           error: error instanceof Error ? error.message : String(error),
@@ -111,6 +113,7 @@ export const fetchSearchResults = async (
           .filter((item: { url: string }) => item.url) || []
       );
     } catch (error) {
+      logClientError(error);
       if (log) {
         await log('warning', 'Google search failed; falling back to DuckDuckGo.', {
           error: error instanceof Error ? error.message : String(error),
@@ -147,6 +150,7 @@ export const fetchSearchResults = async (
           .filter((item: { url: string }) => item.url) || []
       );
     } catch (error) {
+      logClientError(error);
       if (log) {
         await log('warning', 'SerpApi search failed; falling back to DuckDuckGo.', {
           error: error instanceof Error ? error.message : String(error),

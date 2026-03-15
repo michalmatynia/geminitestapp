@@ -17,6 +17,8 @@ type ShapeBounds = {
   maxY: number;
 };
 
+type MaskPoint = { x: number; y: number };
+
 const resolveContextImageFrame = (context: CropCanvasContext): ImageContentFrame | null => {
   const normalizedFrame = normalizeImageContentFrame(
     context.imageFrame ?? context.imageContentFrame
@@ -104,7 +106,7 @@ export const resolveCropRectFromShapesWithDiagnostics = (
 
   const shapeBounds: ShapeBounds = eligibleShapes.reduce(
     (acc: ShapeBounds, shape) => {
-      shape.points.forEach((point) => {
+      shape.points.forEach((point: MaskPoint) => {
         acc.minX = Math.min(acc.minX, point.x);
         acc.maxX = Math.max(acc.maxX, point.x);
         acc.minY = Math.min(acc.minY, point.y);

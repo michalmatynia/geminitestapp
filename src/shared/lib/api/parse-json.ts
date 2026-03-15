@@ -3,6 +3,8 @@ import { z } from 'zod';
 import type { JsonParseResult, ParseJsonOptions } from '@/shared/contracts/ui';
 import { badRequestError, validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const asRecord = (value: unknown): Record<string, unknown> => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -22,7 +24,8 @@ export async function parseJsonBody<T>(
 
   try {
     body = await req.json();
-  } catch {
+  } catch (error) {
+    logClientError(error);
     if (options?.allowEmpty) {
       body = {};
     } else {

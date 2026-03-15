@@ -6,6 +6,8 @@ import { auth, getUserPreferences } from '@/features/auth/server';
 import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
 
 import type { JSX } from 'react';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const dynamic = 'force-dynamic';
 const ADMIN_MENU_COLLAPSED_COOKIE_KEY = 'admin_menu_collapsed';
@@ -45,7 +47,8 @@ export default async function Layout({
       if (preferences && typeof preferences.adminMenuCollapsed === 'boolean') {
         initialMenuCollapsed = preferences.adminMenuCollapsed;
       }
-    } catch {
+    } catch (error) {
+      logClientError(error);
       // Fallback to cookie-derived value when preferences are unavailable.
       const cookieStore = await cookies();
       const cookieValue = cookieStore.get(ADMIN_MENU_COLLAPSED_COOKIE_KEY)?.value;
@@ -55,7 +58,8 @@ export default async function Layout({
         initialMenuCollapsed = false;
       }
     }
-  } catch {
+  } catch (error) {
+    logClientError(error);
     redirect('/auth/signin');
   }
   return (

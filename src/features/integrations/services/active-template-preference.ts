@@ -1,3 +1,4 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 const ACTIVE_TEMPLATE_SCOPE_SEPARATOR = '::';
 
 export type ActiveTemplateScopeInput = {
@@ -62,7 +63,8 @@ export const parseScopedActiveTemplateMap = (raw: string | null): ScopedActiveTe
       defaultTemplateId: normalizeOptionalId(record['defaultTemplateId']),
       byScope: normalizeByScopeEntries(record['byScope']),
     };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return EMPTY_SCOPED_ACTIVE_TEMPLATE_MAP;
   }
 };

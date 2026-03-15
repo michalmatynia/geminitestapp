@@ -94,6 +94,7 @@ export function useNoteFormFiles({
         );
         toast('File uploaded successfully');
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'NoteForm',
@@ -122,6 +123,7 @@ export function useNoteFormFiles({
         );
         toast('File deleted successfully');
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'NoteForm',
@@ -187,6 +189,7 @@ export function useNoteFormFiles({
 
           toast('Image pasted and uploaded');
         } catch (error: unknown) {
+          logClientError(error);
           logClientError(error, {
             context: {
               source: 'NoteForm',

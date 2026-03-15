@@ -9,6 +9,8 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { getRedisConnection } from '@/shared/lib/queue';
 
 import type { NextRequest } from 'next/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export const AI_PATHS_PERMISSION = 'ai_paths.manage';
 const AI_PATHS_RUNNER_PERMISSION = 'products.manage';
@@ -75,7 +77,8 @@ const withSoftTimeout = async <T>(
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
     try {
       return { value: await promise, timedOut: false };
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       return { value: null, timedOut: false };
     }
   }
@@ -88,7 +91,8 @@ const withSoftTimeout = async <T>(
       }),
     ]);
     return { value, timedOut: value === null };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return { value: null, timedOut: false };
   } finally {
     if (timeoutId) clearTimeout(timeoutId);
@@ -224,7 +228,9 @@ const maybeRecoverStaleRunningRunsForRateLimit = async (
           },
         });
       }
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // Recovery is best-effort in the rate-limit path.
     } finally {
       staleRunningRecoveryInFlight = null;
@@ -385,7 +391,8 @@ const consumeRedisActionRateLimit = async (
       count,
       resetAt: Date.now() + retryAfterMs,
     };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };

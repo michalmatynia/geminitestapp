@@ -28,6 +28,8 @@ import {
   FormActions,
 } from '@/shared/ui';
 import { normalizeProductImageExternalBaseUrl } from '@/shared/utils/image-routing';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const dedupeRoutes = (routes: string[]): string[] => {
   const next: string[] = [];
@@ -55,7 +57,8 @@ const parseRoutesSetting = (
         .filter((entry: string) => entry.length > 0)
     );
     return normalized.length > 0 ? normalized : [fallbackRoute];
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return [fallbackRoute];
   }
 };

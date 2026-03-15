@@ -7,6 +7,8 @@ import type {
 import { sanitizeStudioProjectId } from './project-session';
 
 import type { ImageStudioAnalysisSharedLayout } from './analysis-bridge';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type { IdNameDto as AiPathMeta };
 
@@ -123,7 +125,8 @@ export const loadCustomTriggerButtons = (projectId: string): ImageStudioCustomTr
         typeof (item as Record<string, unknown>)['label'] === 'string' &&
         typeof (item as Record<string, unknown>)['pathId'] === 'string'
     );
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return [];
   }
 };
@@ -136,7 +139,9 @@ export const saveCustomTriggerButtons = (
   const key = BUTTONS_LOCAL_KEY_PREFIX + sanitizeStudioProjectId(projectId);
   try {
     localStorage.setItem(key, JSON.stringify(buttons));
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // ignore
   }
 };
@@ -361,7 +366,8 @@ export const parseAiPathMetasFromSettings = (
       .map((item) => {
         return { id: item['id'] as string, name: item['name'] as string };
       });
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return [];
   }
 };
@@ -380,7 +386,8 @@ export const parseAiPathNodesAndEdgesFromSettings = (
     const nodes = Array.isArray(obj['nodes']) ? obj['nodes'] : [];
     const edges = Array.isArray(obj['edges']) ? obj['edges'] : [];
     return { nodes, edges };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -427,7 +434,8 @@ export const loadAiPathsObjectAnalysisConfig = (projectId: string): AiPathsObjec
         : 'both',
       runAfterApply: obj['runAfterApply'] === true,
     };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return DEFAULT_CONFIG;
   }
 };
@@ -440,7 +448,9 @@ export const saveAiPathsObjectAnalysisConfig = (
   const key = CONFIG_LOCAL_KEY_PREFIX + sanitizeStudioProjectId(projectId);
   try {
     localStorage.setItem(key, JSON.stringify(config));
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // ignore quota errors
   }
 };

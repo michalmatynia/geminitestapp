@@ -109,6 +109,7 @@ export const useProductListingsActionsImpl = ({
         );
         onListingsUpdated?.();
       } catch (err: unknown) {
+        logClientError(err);
         logClientError(err, {
           context: {
             source: 'ProductListingsContext',
@@ -133,6 +134,7 @@ export const useProductListingsActionsImpl = ({
         await purgeListingMutation.mutateAsync(listingId);
         onListingsUpdated?.();
       } catch (err: unknown) {
+        logClientError(err);
         logClientError(err, {
           context: {
             source: 'ProductListingsContext',
@@ -167,6 +169,7 @@ export const useProductListingsActionsImpl = ({
         });
         onListingsUpdated?.();
       } catch (err: unknown) {
+        logClientError(err);
         logClientError(err, {
           context: {
             source: 'ProductListingsContext',
@@ -199,6 +202,7 @@ export const useProductListingsActionsImpl = ({
         });
         toast(`Synced ${response.count} image link(s) from Base.com`, { variant: 'success' });
       } catch (err: unknown) {
+        logClientError(err);
         logClientError(err, {
           context: {
             source: 'ProductListingsContext',
@@ -228,6 +232,7 @@ export const useProductListingsActionsImpl = ({
         );
         onListingsUpdated?.();
       } catch (err: unknown) {
+        logClientError(err);
         logClientError(err, {
           context: {
             source: 'ProductListingsContext',
@@ -266,6 +271,7 @@ export const useProductListingsActionsImpl = ({
         await refetchListingsQuery();
         onListingsUpdated?.();
       } catch (err: unknown) {
+        logClientError(err);
         logClientError(err, {
           context: {
             source: 'ProductListingsContext',
@@ -330,6 +336,7 @@ export const useProductListingsActionsImpl = ({
         await exportListingToBase(listingId);
         onListingsUpdated?.();
       } catch (err: unknown) {
+        logClientError(err);
         logClientError(err, {
           context: {
             source: 'ProductListingsContext',
@@ -383,6 +390,7 @@ export const useProductListingsActionsImpl = ({
 
         onListingsUpdated?.();
       } catch (err: unknown) {
+        logClientError(err);
         logClientError(err, {
           context: {
             source: 'ProductListingsContext',
@@ -418,6 +426,7 @@ export const useProductListingsActionsImpl = ({
         await exportListingToBase(lastExportListingId, exportOptions);
         onListingsUpdated?.();
       } catch (err: unknown) {
+        logClientError(err);
         logClientError(err, {
           context: {
             source: 'ProductListingsContext',

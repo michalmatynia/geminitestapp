@@ -1,4 +1,6 @@
 import type { ActiveTemplateScopeInput as ParameterLinkScopeInput } from '../../active-template-preference';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const PARAMETER_LINK_SCOPE_SEPARATOR = '::';
 
@@ -120,7 +122,8 @@ export const parseScopedCatalogParameterLinkMap = (
       defaultByCatalog: normalizeCatalogParameterLinkMap(parsed['defaultByCatalog']),
       byScope: normalizeScopedCatalogParameterLinkMap(parsed['byScope']),
     };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return EMPTY_SCOPED_LINK_MAP;
   }
 };

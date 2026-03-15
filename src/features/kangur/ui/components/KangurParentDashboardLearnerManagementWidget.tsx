@@ -21,6 +21,8 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { cn } from '@/shared/utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const kangurPlatform = getKangurPlatform();
 const SESSION_PAGE_LIMIT = 20;
@@ -149,7 +151,8 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
           nextOffset: resolvedNextOffset,
         };
       });
-    } catch {
+    } catch (error) {
+      logClientError(error);
       setSessionsLoadMoreError('Nie udało się wczytać starszych sesji.');
     } finally {
       setIsLoadingMoreSessions(false);
@@ -265,7 +268,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                 accent='indigo'
                 aria-pressed={isActiveLearner}
                 aria-label={`Profil ucznia: ${learner.displayName} (${learnerStatusLabel})`}
-                buttonClassName='rounded-[30px] px-5 py-4 text-left'
+                buttonClassName='w-full rounded-[30px] px-5 py-4 text-left'
                 data-doc-id='parent_learner_profile_card'
                 data-testid={`parent-dashboard-learner-card-${learner.id}`}
                 emphasis={isActiveLearner ? 'accent' : 'neutral'}
@@ -282,7 +285,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                       {learner.status === 'active' ? 'Aktywny' : 'Wyłączony'}
                     </KangurStatusChip>
                   }
-                  asideClassName='ml-auto flex shrink-0 flex-col items-end gap-2 self-start'
+                  asideClassName='w-full self-start sm:ml-auto sm:w-auto'
                   className='w-full items-center'
                   contentClassName='min-w-0 flex-1'
                   description={`Login: ${learner.loginName}`}

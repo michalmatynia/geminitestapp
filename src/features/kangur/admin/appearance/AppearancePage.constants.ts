@@ -12,6 +12,8 @@ import {
 } from '@/features/kangur/theme-settings';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import type { SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type AppearanceSlot = 'daily' | 'dawn' | 'sunset' | 'nightly';
 
@@ -132,7 +134,8 @@ export const parseSlotAssignments = (raw: string | null | undefined): SlotAssign
       sunset: parseSlotAssignmentEntry(record['sunset']),
       nightly: parseSlotAssignmentEntry(record['nightly']),
     };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return fallback;
   }
 };

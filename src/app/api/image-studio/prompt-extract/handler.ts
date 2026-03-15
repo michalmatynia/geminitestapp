@@ -31,6 +31,8 @@ import type {
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, badRequestError, internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const payloadSchema = z.object({
   prompt: z.string().trim().min(1),
@@ -72,7 +74,8 @@ function parseJsonCandidate(raw: string): unknown | null {
   for (const candidate of candidates) {
     try {
       return JSON.parse(candidate) as unknown;
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       continue;
     }
   }
@@ -315,6 +318,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       },
     });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     aiError = error instanceof Error ? error.message : 'AI extraction failed.';
   }
 

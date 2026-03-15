@@ -103,6 +103,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     try {
       hydrated = parsePersistedImageStudioSettings(studioSettingsRaw);
     } catch (error) {
+      logClientError(error);
       parseError =
         error instanceof Error ? error : new Error('Invalid Image Studio settings payload.');
       logClientError(parseError, {

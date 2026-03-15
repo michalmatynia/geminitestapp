@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const readDocsTooltipsEnabled = (storageKey: string, defaultValue = false): boolean => {
   if (typeof window === 'undefined') return defaultValue;
@@ -8,7 +10,8 @@ export const readDocsTooltipsEnabled = (storageKey: string, defaultValue = false
     const raw = window.localStorage.getItem(storageKey);
     if (raw === null) return defaultValue;
     return raw === '1';
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return defaultValue;
   }
 };
@@ -32,7 +35,9 @@ export function useDocsTooltipsSetting(
       if (typeof window !== 'undefined') {
         try {
           window.localStorage.setItem(storageKey, value ? '1' : '0');
-        } catch {
+        } catch (error) {
+          logClientError(error);
+        
           // No-op when storage is unavailable; keep UI state responsive.
         }
       }

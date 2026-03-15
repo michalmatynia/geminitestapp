@@ -20,6 +20,8 @@ import { STORAGE_VERSION } from '@/shared/lib/ai-paths';
 import { extractImageUrls } from '@/shared/lib/ai-paths/core/runtime/utils';
 
 import type * as React from 'react';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 /**
  * Generate a unique run ID
@@ -502,7 +504,8 @@ export const buildDebugSnapshot = (args: {
 export const safeJsonStringify = (value: unknown): string | null => {
   try {
     return JSON.stringify(value);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

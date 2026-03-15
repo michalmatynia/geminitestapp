@@ -24,6 +24,7 @@ export function ValidatorDefaultPanel(): React.JSX.Element {
     try {
       await updateSettings.mutateAsync({ enabledByDefault: enabled });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'ValidatorDefaultPanel', action: 'toggleDefault' },
       });
@@ -34,6 +35,7 @@ export function ValidatorDefaultPanel(): React.JSX.Element {
     try {
       await updateSettings.mutateAsync({ formatterEnabledByDefault: enabled });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'ValidatorDefaultPanel', action: 'toggleFormatterDefault' },
       });

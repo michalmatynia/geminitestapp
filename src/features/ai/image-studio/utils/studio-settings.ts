@@ -16,6 +16,8 @@ import {
   type ImageStudioSequenceStep,
   type ImageStudioSequenceUpscaleStep,
 } from './studio-sequencing-settings';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export * from './studio-sequencing-settings';
 
@@ -575,6 +577,7 @@ export function parseImageStudioSettings(raw: string | null | undefined): ImageS
   try {
     parsed = JSON.parse(raw) as unknown;
   } catch (error) {
+    logClientError(error);
     throw validationError('Invalid Image Studio settings payload.', {
       reason: 'json_parse_failed',
       raw,

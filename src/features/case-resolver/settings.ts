@@ -16,6 +16,8 @@ import {
   createDefaultCaseResolverWorkspace,
   normalizeCaseResolverWorkspace,
 } from './settings.workspace';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export * from './settings.constants';
 export * from './settings.helpers';
@@ -132,6 +134,7 @@ export const parseCaseResolverWorkspace = (
   try {
     parsed = JSON.parse(raw) as unknown;
   } catch (error: unknown) {
+    logClientError(error);
     throw validationError('Case Resolver workspace payload is not valid JSON.', {
       source: 'case_resolver.workspace',
       reason: 'invalid_json',
@@ -206,6 +209,7 @@ export const safeParseCaseResolverWorkspace = (
       CASE_RESOLVER_WORKSPACE_SAFE_PARSE_DIAGNOSTICS_EMPTY
     );
   } catch (firstError: unknown) {
+    logClientError(firstError);
     const emptyWorkspace = createDefaultCaseResolverWorkspace();
     return attachCaseResolverWorkspaceSafeParseDiagnostics(emptyWorkspace, {
       parseFallbackApplied: true,

@@ -36,6 +36,8 @@ import {
 } from './runtime-analytics/config';
 import { emptySummary, loadRuntimeTraceAnalytics } from './runtime-analytics/trace';
 import { withTimeout, parseDurationMember, clampRate } from './runtime-analytics/utils';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export const getRuntimeAnalyticsSummary = async (
   window: { from: Date; to: Date },
@@ -179,6 +181,7 @@ export const getRuntimeAnalyticsSummary = async (
       setCachedSummary(cacheKey, summary, now);
       return summary;
     } catch (error) {
+      void ErrorSystem.captureException(error);
       const stale = readStaleSummary(cacheKey);
       if (stale) return stale;
       throw error;

@@ -2,6 +2,8 @@ import { BaseInventory, BaseWarehouse } from '@/shared/contracts/integrations';
 
 import { callBaseApi, callBaseApiRaw, BaseApiRawResult } from './core';
 import { extractInventoryList, extractWarehouseList } from '../base-client-parsers';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export async function fetchBaseInventories(token: string): Promise<BaseInventory[]> {
   const methods = ['getInventories', 'getInventory', 'getInventoryList'];
@@ -14,6 +16,7 @@ export async function fetchBaseInventories(token: string): Promise<BaseInventory
         return inventories;
       }
     } catch (error: unknown) {
+      logClientError(error);
       lastError = error instanceof Error ? error : new Error('Base API error.');
     }
   }
@@ -74,6 +77,7 @@ export async function fetchBaseWarehouses(
         return warehouses;
       }
     } catch (error: unknown) {
+      logClientError(error);
       lastError = error instanceof Error ? error : new Error('Base API error.');
     }
   }
@@ -116,6 +120,7 @@ export async function fetchBaseAllWarehouses(token: string): Promise<BaseWarehou
         return warehouses;
       }
     } catch (error: unknown) {
+      logClientError(error);
       lastError = error instanceof Error ? error : new Error('Base API error.');
     }
   }

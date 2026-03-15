@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { DEFAULT_KANGUR_PAGE_CONTENT_STORE } from '@/features/kangur/page-content-catalog';
 import {
@@ -9,7 +9,7 @@ import {
 } from '@/shared/contracts/kangur-page-content';
 import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
-
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 const AI_TUTOR_PAGE_CONTENT_EDITOR_LOCALE = 'pl';
 
 const stringifyPageContentStore = (store: KangurPageContentStore): string =>
@@ -100,6 +100,7 @@ export function useKangurPageContentMutations() {
         error: null,
       };
     } catch (error) {
+      logClientError(error);
       return {
         store: null,
         error: error instanceof Error ? error.message : 'Invalid page-content JSON.',
@@ -134,6 +135,7 @@ export function useKangurPageContentMutations() {
       setPersistedEditorValue(serialized);
       setSelectedEntryId(parsed.entries[0]?.id ?? null);
     } catch (error) {
+      logClientError(error);
       toast(
         error instanceof Error ? error.message : 'Failed to load Kangur page content.',
         {
@@ -366,6 +368,7 @@ export function useKangurPageContentMutations() {
       setPersistedEditorValue(serialized);
       toast('Kangur page content saved.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save Kangur page content.', {
         variant: 'error',
       });

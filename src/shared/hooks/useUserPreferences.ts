@@ -34,7 +34,8 @@ const hasPreferenceChanged = (
   ) {
     try {
       return JSON.stringify(currentValue) !== JSON.stringify(nextValue);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return true;
     }
   }

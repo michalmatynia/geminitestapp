@@ -92,6 +92,7 @@ export function useMassListForm() {
           });
         }
       } catch (e: unknown) {
+        logClientError(e);
         logClientError(e, {
           context: {
             source: 'MassListProductModal',

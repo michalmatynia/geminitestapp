@@ -105,6 +105,7 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
         });
         toast(successMessage, { variant: 'success' });
       } catch (error) {
+        logClientError(error);
         logClientError(error, {
           context: { source: 'AdminCaseResolverCategoriesPage', action: 'persistCategories' },
         });

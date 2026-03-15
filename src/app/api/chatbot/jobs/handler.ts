@@ -21,6 +21,8 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { logger } from '@/shared/utils/logger';
 import { isObjectRecord } from '@/shared/utils/object-utils';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 const DEFAULT_CHATBOT_SYSTEM_PROMPT = 'You are a helpful assistant.';
@@ -47,7 +49,8 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   let rawBody: unknown = null;
   try {
     rawBody = await clonedRequest.json();
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     rawBody = null;
   }
 

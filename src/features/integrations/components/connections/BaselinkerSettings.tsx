@@ -17,6 +17,8 @@ import {
   Card,
   Hint,
 } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function BaselinkerSettings(): React.JSX.Element {
   const { toast } = useToast();
@@ -42,6 +44,7 @@ export function BaselinkerSettings(): React.JSX.Element {
       await handleSaveAll();
       toast('Baselinker settings saved successfully.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save settings.', {
         variant: 'error',
       });

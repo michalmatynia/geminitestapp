@@ -26,6 +26,7 @@ const repoCall = async <K extends keyof ImageFileRepository>(
     ) => ReturnType<ImageFileRepository[K]>;
     return (await fn(...args)) as Promise<Awaited<ReturnType<ImageFileRepository[K]>>>;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await ErrorSystem.captureException(error, {
       service: 'image-file-service',
       action: 'repoCall',

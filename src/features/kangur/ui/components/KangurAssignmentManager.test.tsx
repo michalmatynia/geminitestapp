@@ -164,6 +164,18 @@ describe('KangurAssignmentManager', () => {
     expect(screen.getByTestId('assignment-list-Ukończone zadania')).toBeInTheDocument();
   });
 
+  it('toggles between active and completed lists in catalogWithLists view', () => {
+    render(<KangurAssignmentManager basePath='/kangur' view='catalogWithLists' />);
+
+    expect(screen.getByTestId('assignment-list-Aktywne zadania')).toBeInTheDocument();
+    expect(screen.queryByTestId('assignment-list-Ukończone zadania')).toBeNull();
+
+    fireEvent.click(screen.getByRole('tab', { name: /Ukończone/ }));
+
+    expect(screen.getByTestId('assignment-list-Ukończone zadania')).toBeInTheDocument();
+    expect(screen.queryByTestId('assignment-list-Aktywne zadania')).toBeNull();
+  });
+
   it('opens the time limit modal and saves the update', async () => {
     const updateAssignment = vi.fn().mockResolvedValue({
       id: 'assignment-1',

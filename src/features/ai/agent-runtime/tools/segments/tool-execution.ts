@@ -26,6 +26,8 @@ import {
 import { resolveToolContext } from './tool-context';
 import { createToolLogger } from './tool-logging';
 import { type AgentToolRequest, type AgentToolResult, type ToolLlmContext } from './types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export async function runAgentTool(
   request: AgentToolRequest,
@@ -36,6 +38,7 @@ export async function runAgentTool(
   try {
     contextData = await resolveToolContext({ request, injectedBrowser, injectedContext });
   } catch (error) {
+    logClientError(error);
     return { ok: false, error: error instanceof Error ? error.message : String(error) };
   }
 
@@ -247,6 +250,7 @@ export async function runAgentTool(
             timeout: 30000,
           });
         } catch (error) {
+          logClientError(error);
           await log('warning', 'Direct navigation failed; attempting search.', {
             stepId: activeStepId ?? null,
             url: targetUrl,
@@ -362,6 +366,7 @@ export async function runAgentTool(
       },
     };
   } catch (error) {
+    logClientError(error);
     const errorId = randomUUID();
     const message = error instanceof Error ? error.message : String(error);
     await log('error', `Tool execution failed: ${message}`, { errorId });

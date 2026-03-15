@@ -18,6 +18,8 @@ import {
   type PlaceholderGroup,
   type PlaceholderTarget,
 } from '../database/PlaceholderMatrixDialog';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function TemplateNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode } = useAiPathSelection();
@@ -100,7 +102,8 @@ export function TemplateNodeConfigSection(): React.JSX.Element | null {
           if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
             bundleContext = parsed as Record<string, unknown>;
           }
-        } catch {
+        } catch (error) {
+          logClientError(error);
           bundleContext = null;
         }
       }

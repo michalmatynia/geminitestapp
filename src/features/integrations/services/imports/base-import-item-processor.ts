@@ -51,6 +51,8 @@ import {
   type ProcessItemResult,
   type ProductLookupMaps,
 } from './base-import-service-shared';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const resolveProducerAndTagLookups = async (
   connectionId: string
@@ -104,7 +106,9 @@ export const resolveProducerAndTagLookups = async (
       externalTagToInternalTagId.set(externalId, internalId);
       externalTagToInternalTagId.set(externalId.toLowerCase(), internalId);
     });
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Optional mapping data.
   }
 
@@ -811,6 +815,7 @@ export const importSingleItem = async (input: {
   try {
     created = await input.productRepository.createProduct(validationResult.data);
   } catch (error: unknown) {
+    logClientError(error);
     if (isSkuConflictError(error) && input.allowDuplicateSku) {
       const fallbackSku = await resolveUniqueSku(
         input.productRepository,

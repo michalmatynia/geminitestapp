@@ -1,5 +1,7 @@
 import { DRAG_KEYS } from '@/shared/utils/drag-drop';
 import type { MasterTreeId } from '@/shared/utils/master-folder-tree-contract';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const MASTER_TREE_DRAG_NODE_ID = 'application/x-master-tree-node-id';
 
@@ -18,7 +20,9 @@ export const setMasterTreeDragNodeData = (
     if (textValue.length > 0) {
       dataTransfer.setData(DRAG_KEYS.TEXT, textValue);
     }
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Some browsers/tools can throw for unsupported dataTransfer operations.
   }
 };
@@ -33,7 +37,8 @@ export const getMasterTreeDragNodeData = (
     if (typeof value !== 'string') return null;
     const normalizedValue = value.trim();
     return normalizedValue.length > 0 ? normalizedValue : null;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

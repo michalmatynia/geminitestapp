@@ -10,7 +10,7 @@ import {
   useBackgroundSyncState,
 } from '@/shared/providers/BackgroundSyncProvider';
 import {
-  AdminSettingsBreadcrumbs,
+  AdminSettingsPageLayout,
   Button,
   Card,
   FormActions,
@@ -19,7 +19,6 @@ import {
   Hint,
   Input,
   MetadataItem,
-  PageLayout,
   SimpleSettingsList,
   ToggleRow,
   useToast,
@@ -105,6 +104,7 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
       offlineQueue.refresh();
       toast('Offline queue processed', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminSyncSettingsPage', action: 'processQueue' },
       });
@@ -120,10 +120,10 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
   };
 
   return (
-    <PageLayout
+    <AdminSettingsPageLayout
       title='Background Sync'
+      current='Background Sync'
       description='Control background synchronization and manage the offline mutation queue.'
-      eyebrow={<AdminSettingsBreadcrumbs current='Background Sync' />}
     >
       <ConfirmModal
         isOpen={isClearQueueConfirmOpen}
@@ -248,6 +248,6 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
           />
         </FormSection>
       </div>
-    </PageLayout>
+    </AdminSettingsPageLayout>
   );
 }

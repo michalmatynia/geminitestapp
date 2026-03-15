@@ -38,6 +38,8 @@ import {
 } from '@/shared/hooks/useUserPreferences';
 import { ApiError } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -162,7 +164,8 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
           await updateUserPreferences.mutateAsync({
             imageStudioLastProjectId: nextPersistedValue,
           });
-        } catch {
+        } catch (error) {
+          logClientError(error);
           profileWriteFailed = true;
         }
       }
@@ -193,6 +196,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
         }
         toast(`Project "${id}" deleted.`, { variant: 'success' });
       } catch (error) {
+        logClientError(error);
         if (error instanceof ApiError && error.status === 404) {
           // Treat stale-project deletion as a successful no-op.
           if (projectId === id) {
@@ -253,6 +257,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
         }
         return resolvedProjectId;
       } catch (error) {
+        logClientError(error);
         toast(error instanceof Error ? error.message : 'Failed to rename project.', {
           variant: 'error',
         });
@@ -297,6 +302,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
         }
         return result;
       } catch (error) {
+        logClientError(error);
         toast(error instanceof Error ? error.message : 'Failed to resize canvas.', {
           variant: 'error',
         });

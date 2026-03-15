@@ -1,6 +1,8 @@
 
 import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const SETTINGS_COLLECTION = 'settings';
 const CENTRAL_LOG_DEAD_LETTER_STORE_VERSION = 1;
@@ -81,7 +83,8 @@ const parseStoredEntries = (
     };
     if (!Array.isArray(envelope.entries)) return [];
     return normalizeEntries(envelope.entries, maxEntries);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return [];
   }
 };
@@ -97,7 +100,8 @@ const stringifyEntries = (
       entries: normalizeEntries(entries, maxEntries),
     };
     return JSON.stringify(payload);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -110,7 +114,8 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
       .collection<MongoTimestampedStringSettingRecord<string, Date>>(SETTINGS_COLLECTION)
       .findOne({ $or: [{ _id: key }, { key }] }, { projection: { value: 1 } });
     return typeof doc?.value === 'string' ? doc.value : null;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -138,7 +143,8 @@ const writeMongoSetting = async (key: string, value: string): Promise<boolean> =
         { upsert: true }
       );
     return true;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return false;
   }
 };

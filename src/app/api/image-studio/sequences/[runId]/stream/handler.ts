@@ -5,6 +5,8 @@ import { getImageStudioSequenceRunById } from '@/features/ai/image-studio/server
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { startIntervalTask, type IntervalTaskHandle } from '@/shared/lib/timers';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const REDIS_CONNECT_TIMEOUT_MS = 3000;
 const HEARTBEAT_INTERVAL_MS = 15000;
@@ -74,12 +76,15 @@ export async function GET_handler(
           try {
             subscriber.removeAllListeners('message');
             await subscriber.unsubscribe(channel);
-          } catch {
+          } catch (error) {
+            void ErrorSystem.captureException(error);
+          
             // best-effort cleanup
           }
           try {
             await subscriber.quit();
-          } catch {
+          } catch (error) {
+            void ErrorSystem.captureException(error);
             subscriber.disconnect();
           }
           subscriber = null;
@@ -126,7 +131,8 @@ export async function GET_handler(
             void closeStream();
           }
           return;
-        } catch {
+        } catch (error) {
+          void ErrorSystem.captureException(error);
           send({ type: 'message', data: rawMessage });
         }
       };
@@ -136,7 +142,8 @@ export async function GET_handler(
       try {
         await subscriber.connect();
         await subscriber.subscribe(channel);
-      } catch {
+      } catch (error) {
+        void ErrorSystem.captureException(error);
         send({ type: 'fallback', data: { reason: 'redis_stream_connect_failed' } });
         await closeStream();
         return;

@@ -13,6 +13,7 @@ export const getParameterRepository = async (
     void providerOverride;
     return mongoParameterRepository;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await ErrorSystem.captureException(error, {
       service: 'parameter-repository',
       action: 'getParameterRepository',

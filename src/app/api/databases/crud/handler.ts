@@ -7,6 +7,8 @@ import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
 import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 // Validate table/collection name to prevent injection
 const SAFE_NAME_RE = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
@@ -60,7 +62,8 @@ function toObjectId(value: unknown): ObjectId | unknown {
   if (typeof value === 'string' && /^[a-f0-9]{24}$/i.test(value)) {
     try {
       return new ObjectId(value);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       return value;
     }
   }

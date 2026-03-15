@@ -19,6 +19,8 @@ import {
 import { Button, Input, LoadingState, SelectSimple, Textarea, FormField } from '@/shared/ui';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const RUNTIME_PERSONA_VALUE = '__runtime__';
 
@@ -47,7 +49,8 @@ const parseJsonError = (value: string | undefined): string | null => {
   try {
     JSON.parse(text);
     return null;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return 'Invalid JSON';
   }
 };
@@ -55,7 +58,8 @@ const parseJsonError = (value: string | undefined): string | null => {
 const stringifyJson = (value: unknown): string => {
   try {
     return JSON.stringify(value ?? {}, null, 2);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return '{}';
   }
 };
@@ -69,7 +73,8 @@ const parseJsonObject = (value: string): Record<string, unknown> | null => {
       return null;
     }
     return parsed as Record<string, unknown>;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

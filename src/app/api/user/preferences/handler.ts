@@ -17,6 +17,8 @@ import { optionalCsvQueryStringArray } from '@/shared/lib/api/query-schema';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { normalizeProductPageSize } from '@/shared/lib/products/constants';
 import { parseUserPreferencesUpdatePayload } from '@/shared/validations/user-preferences';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 // For now, we'll use a hardcoded user ID
 // In a real app, this would come from the session
@@ -180,6 +182,7 @@ export async function getUserPreferencesHandler(
       withTimeout('repository.get', () => getUserPreferences(userId))
     );
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const staleCached = peekUserPreferencesCache(userId, { allowStale: true });
     if (staleCached) {
       return NextResponse.json(buildUserPreferencesResponse(staleCached, includeAdminMenu), {
@@ -243,6 +246,7 @@ export async function patchUserPreferencesHandler(
     try {
       body = JSON.parse(rawBody);
     } catch (parseError) {
+      void ErrorSystem.captureException(parseError);
       if (parseError instanceof SyntaxError) {
         body = {};
       } else {
@@ -274,6 +278,7 @@ export async function patchUserPreferencesHandler(
       withTimeout('repository.patch', () => updateUserPreferences(userId, data))
     );
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const staleCached = peekUserPreferencesCache(userId, { allowStale: true });
     const mergedFallback = mergeUserPreferencesFallback(staleCached, data);
     if (logTiming) {

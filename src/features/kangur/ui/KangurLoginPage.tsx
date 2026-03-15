@@ -41,6 +41,8 @@ import {
   parseKangurParentEmailVerifyResponse,
 } from '@/shared/contracts/kangur-auth';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type KangurLoginPageProps = {
   callbackUrl?: string;
@@ -93,7 +95,8 @@ export const resolveKangurLoginCallbackNavigation = (
     if (parsed.origin === currentOrigin) {
       return { kind: 'router', href: `${parsed.pathname}${parsed.search}${parsed.hash}` };
     }
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return { kind: 'location', href: trimmed };
   }
 
@@ -279,7 +282,9 @@ const clearOneTimeAuthParams = (): void => {
   const nextUrl = `${url.pathname}${url.search}${url.hash}`;
   try {
     window.history.replaceState(window.history.state, '', nextUrl);
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Ignore history rewrite failures; the tokens are still single-use server-side.
   }
 };
@@ -350,7 +355,7 @@ function KangurLoginPageContent(): JSX.Element {
           ? 'Rodzic'
           : 'Rodzic lub uczeń';
   const audienceBadgeClassName =
-    'inline-flex items-center justify-center rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] shadow-[0_14px_30px_-26px_rgba(15,23,42,0.22)]';
+    'inline-flex max-w-full items-center justify-center self-start rounded-full border px-3.5 py-2 text-center text-[10px] font-black uppercase leading-tight tracking-[0.14em] shadow-[0_14px_30px_-26px_rgba(15,23,42,0.22)] sm:self-auto sm:px-4 sm:text-[11px] sm:tracking-[0.18em]';
   const audienceBadgeStyle: CSSProperties =
     parentAuthMode === 'create-account'
       ? {
@@ -607,7 +612,8 @@ function KangurLoginPageContent(): JSX.Element {
         callbackUrl,
       });
       await finishLogin(result.url ?? callbackUrl);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       trackKangurClientEvent('kangur_parent_signin_failed', {
         callbackUrl,
         reason: 'network_error',
@@ -684,7 +690,8 @@ function KangurLoginPageContent(): JSX.Element {
           ? null
           : payload?.message?.trim() || 'To konto czeka na potwierdzenie e-maila. Wysłaliśmy nowy link.'
       );
-    } catch {
+    } catch (error) {
+      logClientError(error);
       trackKangurClientEvent('kangur_parent_account_create_failed', {
         callbackUrl,
         reason: 'network_error',
@@ -750,7 +757,8 @@ function KangurLoginPageContent(): JSX.Element {
       );
       startResendCooldown(retryAfterMs);
       setNotice(payload?.message?.trim() || 'Wysłaliśmy nowy link potwierdzający.');
-    } catch {
+    } catch (error) {
+      logClientError(error);
       trackKangurClientEvent('kangur_parent_account_resend_failed', {
         callbackUrl,
         reason: 'network_error',
@@ -813,7 +821,8 @@ function KangurLoginPageContent(): JSX.Element {
       if (auth?.isAuthenticated) {
         await finishLogin(payload?.callbackUrl?.trim() || callbackUrl);
       }
-    } catch {
+    } catch (error) {
+      logClientError(error);
       trackKangurClientEvent('kangur_parent_email_verify_failed', {
         callbackUrl,
         reason: 'network_error',
@@ -871,7 +880,8 @@ function KangurLoginPageContent(): JSX.Element {
         learnerId: payload.learnerId ?? null,
       });
       await finishLogin(callbackUrl);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       trackKangurClientEvent('kangur_learner_signin_failed', {
         callbackUrl,
         reason: 'network_error',
@@ -948,21 +958,21 @@ function KangurLoginPageContent(): JSX.Element {
   return (
     <KangurGlassPanel
       aria-labelledby={titleId}
-      className='overflow-hidden shadow-[0_30px_90px_-44px_rgba(99,102,241,0.28)]'
+      className='overflow-hidden shadow-[0_30px_90px_-44px_rgba(99,102,241,0.28)] !p-5 sm:!p-8'
       data-testid='kangur-login-shell'
       padding='xl'
       surface='playField'
       variant='soft'
     >
       <KangurGlassPanel
-        className='relative mb-6 overflow-hidden'
+        className='relative mb-6 overflow-hidden !p-4 sm:!p-6'
         data-testid='kangur-login-hero'
         padding='lg'
         surface='warmGlow'
         variant='soft'
       >
         <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_16%,rgba(251,191,36,0.22),transparent_28%),radial-gradient(circle_at_88%_0%,rgba(99,102,241,0.16),transparent_34%),radial-gradient(circle_at_50%_100%,rgba(45,212,191,0.12),transparent_32%)]' />
-        <div className='relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'>
+        <div className='relative flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4'>
           <div className='max-w-2xl'>
             <div className='flex items-center gap-3'>
               <div
@@ -979,7 +989,7 @@ function KangurLoginPageContent(): JSX.Element {
               </div>
             </div>
             <KangurGradientHeading
-              className='mt-3 text-[2rem] tracking-[-0.05em] sm:text-[2.65rem]'
+              className='mt-3 text-[1.9rem] leading-tight tracking-[-0.05em] sm:text-[2.65rem]'
               gradientClass='kangur-gradient-hero'
               id={titleId}
               size='lg'
@@ -999,7 +1009,7 @@ function KangurLoginPageContent(): JSX.Element {
       <form
         aria-busy={isSubmitting ? 'true' : 'false'}
         aria-describedby={formDescribedBy || undefined}
-        className='flex flex-col gap-4'
+        className='flex flex-col gap-3 sm:gap-4'
         data-hydrated={isHydrated ? 'true' : 'false'}
         data-login-kind={loginKind}
         data-tutor-anchor='login_form'
@@ -1153,7 +1163,7 @@ function KangurLoginPageContent(): JSX.Element {
               </p>
             ) : null}
             <KangurButton
-              className='mt-3'
+              className='mt-3 w-full sm:w-auto'
               disabled={isSubmitting || isResendCoolingDown}
               onClick={() => {
                 void handleParentVerificationResend();
@@ -1167,7 +1177,7 @@ function KangurLoginPageContent(): JSX.Element {
           </KangurGlassPanel>
         ) : null}
         {verificationDebugUrl ? (
-          <KangurButton asChild className='w-fit' size='sm' variant='surface'>
+          <KangurButton asChild className='w-full sm:w-fit' size='sm' variant='surface'>
             <a href={verificationDebugUrl}>Potwierdź e-mail teraz</a>
           </KangurButton>
         ) : null}

@@ -29,6 +29,8 @@ import type {
   VersionGraphFilterType,
   VersionGraphState,
 } from './version-graph-context-types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function useVersionGraphRuntime(): {
   state: VersionGraphState;
@@ -321,7 +323,8 @@ export function useVersionGraphRuntime(): {
             detachedRootId = created.id;
           }
         }
-      } catch {
+      } catch (error) {
+        logClientError(error);
         toast('Failed to detach the selected subtree.', { variant: 'error' });
         return;
       }
@@ -401,7 +404,8 @@ export function useVersionGraphRuntime(): {
       setMergeMode(false);
       setMergeSelectedIds([]);
       toast('Merge node created.', { variant: 'success' });
-    } catch {
+    } catch (error) {
+      logClientError(error);
       toast('Failed to create merge node.', { variant: 'error' });
     }
   }, [mergeSelectedIds, slots, createSlots, setSelectedSlotId, toast]);
@@ -477,7 +481,8 @@ export function useVersionGraphRuntime(): {
           id: slotId,
           data: { imageBase64: data.resultImageBase64 },
         });
-      } catch {
+      } catch (error) {
+        logClientError(error);
         toast('Failed to generate composite preview.', { variant: 'error' });
       } finally {
         setCompositeLoading(false);
@@ -530,7 +535,8 @@ export function useVersionGraphRuntime(): {
       setCompositeMode(false);
       setCompositeSelectedIds([]);
       toast('Composite node created.', { variant: 'success' });
-    } catch {
+    } catch (error) {
+      logClientError(error);
       toast('Failed to create composite node.', { variant: 'error' });
     }
   }, [
@@ -652,7 +658,8 @@ export function useVersionGraphRuntime(): {
         }
 
         toast('Composite flattened to new node.', { variant: 'success' });
-      } catch {
+      } catch (error) {
+        logClientError(error);
         toast('Failed to flatten composite.', { variant: 'error' });
       } finally {
         setCompositeLoading(false);

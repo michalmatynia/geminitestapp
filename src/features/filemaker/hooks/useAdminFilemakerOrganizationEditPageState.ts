@@ -32,6 +32,8 @@ import type {
 } from '../types';
 import type { EditableAddress } from './editable-address';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type AdminFilemakerOrganizationEditPageContextValue = {
   organization: FilemakerOrganization | null;
@@ -133,6 +135,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
         });
         toast(message, { variant: 'success' });
       } catch (_error: unknown) {
+        logClientError(_error);
         toast('Failed to save changes.', { variant: 'error' });
       }
     },

@@ -31,6 +31,7 @@ export function useAiPathsValidationActions(args: {
           }
         }
       } catch (err) {
+        logClientError(err);
         logClientError(err, {
           context: {
             service: 'ai-paths',

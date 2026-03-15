@@ -180,6 +180,7 @@ export function useCatalogForm({
 
       toast('Catalog saved.', { variant: 'success' });
     } catch (err) {
+      logClientError(err);
       logClientError(err, {
         context: { source: 'CatalogModal', action: 'saveCatalog', catalogId: catalog?.id },
       });

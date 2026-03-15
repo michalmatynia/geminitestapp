@@ -14,6 +14,8 @@ import { badRequestError } from '@/shared/errors/app-error';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import { streamBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const isValidMessages = (messages: ChatMessage[]): boolean =>
   messages.length > 0 &&
@@ -142,6 +144,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
         send({ done: true });
         controller.close();
       } catch (error) {
+        void ErrorSystem.captureException(error);
         const message = error instanceof Error ? error.message : 'Streaming failed.';
         send({ error: message, done: true });
         controller.close();

@@ -2,7 +2,7 @@ import { cn } from '@/shared/utils';
 
 import { Card } from './card';
 
-import type { ReactNode } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 
 interface ResourceCardProps {
   title: string;
@@ -37,15 +37,30 @@ export function ResourceCard(props: ResourceCardProps): React.JSX.Element {
     className,
     variant = 'default',
   } = props;
+  const isInteractive = Boolean(onClick);
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
+    if (!onClick) return;
+    if (event.currentTarget !== event.target) return;
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onClick();
+    }
+  };
 
   return (
     <Card
       variant={variant}
       padding='none'
       onClick={onClick}
+      onKeyDown={isInteractive ? handleKeyDown : undefined}
+      role={isInteractive ? 'button' : undefined}
+      tabIndex={isInteractive ? 0 : undefined}
+      aria-label={isInteractive ? title : undefined}
       className={cn(
         'flex h-full flex-col overflow-hidden',
-        onClick && 'cursor-pointer transition-colors hover:border-blue-500/60',
+        isInteractive &&
+          'cursor-pointer transition-colors hover:border-blue-500/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
         className
       )}
     >

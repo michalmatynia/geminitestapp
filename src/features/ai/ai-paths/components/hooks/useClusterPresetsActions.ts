@@ -20,6 +20,8 @@ import { useGraphActions, useGraphState } from '../../context/GraphContext';
 import { usePresetsActions, usePresetsState } from '../../context/PresetsContext';
 import { useSelectionActions, useSelectionState } from '../../context/SelectionContext';
 import { useAiPathsErrorState } from '../ai-paths-settings/hooks/useAiPathsErrorState';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function useClusterPresetsActions() {
   const { toast } = useToast();
@@ -44,6 +46,7 @@ export function useClusterPresetsActions() {
       try {
         await updateAiPathsSetting(CLUSTER_PRESETS_KEY, JSON.stringify(nextPresets));
       } catch (error: unknown) {
+        logClientError(error);
         reportAiPathsError(error, { action: 'saveClusterPresets' }, 'Failed to save presets:');
         toast('Failed to save cluster presets.', { variant: 'error' });
       }

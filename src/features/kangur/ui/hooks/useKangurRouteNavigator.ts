@@ -13,6 +13,8 @@ import {
   useOptionalKangurRouteTransitionState,
 } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type KangurRouteNavigationOptions = {
   pageKey?: string | null;
@@ -49,7 +51,8 @@ const normalizeManagedPathname = (pathname: string | null | undefined): string |
 const getManagedPathnameFromHref = (href: string): string | null => {
   try {
     return normalizeManagedPathname(new URL(href, 'https://kangur.local').pathname);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return normalizeManagedPathname(href);
   }
 };
@@ -106,7 +109,8 @@ const resolveManagedPageKeyFromHref = (href: string, basePath: string): string |
 
     const slug = getSlugFromPathname(parsed.pathname, normalizedBasePath);
     return resolveKangurPageKeyFromSlug(slug[0] ?? null);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

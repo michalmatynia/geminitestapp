@@ -23,11 +23,7 @@ import {
   useKangurAiTutorHomeOnboardingFlow,
 } from './KangurAiTutorWidget.entry';
 import { useKangurAiTutorWidgetEnvironment } from './KangurAiTutorWidget.environment';
-import {
-  useKangurAiTutorGuidedFlow,
-  useKangurAiTutorSelectionGuidanceHandoffEffect,
-  useKangurAiTutorSelectionGuidanceDockOpenEffect,
-} from './KangurAiTutorWidget.guided';
+import { useKangurAiTutorGuidedFlow } from './KangurAiTutorWidget.guided';
 import { useKangurAiTutorPanelInteractions } from './KangurAiTutorWidget.interactions';
 import { useKangurAiTutorLifecycleEffects } from './KangurAiTutorWidget.lifecycle';
 import { useKangurAiTutorPanelActions } from './KangurAiTutorWidget.panel-actions';
@@ -37,7 +33,6 @@ import { useKangurAiTutorTelemetryBridge } from './KangurAiTutorWidget.telemetry
 
 import type { KangurAiTutorPortalContextValue } from './KangurAiTutorPortal.context';
 import type { KangurAiTutorWidgetState } from './KangurAiTutorWidget.state';
-import { areTutorSelectionTextsEquivalent } from './KangurAiTutorWidget.helpers';
 import { persistHomeOnboardingRecord } from './KangurAiTutorWidget.storage';
 
 type LoginModalState = {
@@ -115,7 +110,6 @@ export function useKangurAiTutorWidgetCoordinator({
     uiMode,
     viewport,
     persistSelectionGeometry,
-    shouldRenderContextlessTutorUi,
     shouldRenderGuestIntroUi,
     showSources,
   } = environment;
@@ -224,13 +218,11 @@ export function useKangurAiTutorWidgetCoordinator({
     showSelectionExplainCompleteState,
     showSelectionGuidanceCallout,
     suppressPanelSurface: _suppressPanelSurface,
-    tutorPanelMotionState,
     tutorNarrationScript,
     tutorSurfaceMode,
     visibleProactiveNudge,
     visibleQuickActions,
   } = displayState;
-  const _sessionSurface = sessionContext?.surface ?? null;
   const suppressPanelSurface =
     tutorRuntime.isOpen &&    (tutorSurfaceMode === 'onboarding' ||
       tutorSurfaceMode === 'auth_guided' ||
@@ -261,39 +253,6 @@ export function useKangurAiTutorWidgetCoordinator({
     widgetState,
   });
 
-  useKangurAiTutorSelectionGuidanceHandoffEffect({
-    activeSelectedText,
-    handleOpenChat: interactions.handleOpenChat,
-    hasSelectionPanelReady: 
-      tutorRuntime.isOpen && 
-      panelShellMode === 'minimal' && 
-      widgetState.contextualTutorMode === 'selection_explain' && 
-      widgetState.selectionConversationContext !== null && 
-      areTutorSelectionTextsEquivalent(widgetState.selectionConversationContext.selectedText, activeSelectedText),
-    isLoading,
-    isOpen: tutorRuntime.isOpen,
-    panelMotionState: tutorPanelMotionState,
-    selectionConversationSelectedText: widgetState.selectionConversationContext?.selectedText ?? null,
-    selectionGuidanceHandoffText: widgetState.selectionGuidanceHandoffText,
-    setSelectionGuidanceHandoffText: widgetState.setSelectionGuidanceHandoffText,
-    setSelectionResponseComplete: widgetState.setSelectionResponseComplete,
-    setSelectionResponsePending: widgetState.setSelectionResponsePending,
-    telemetryContext,
-  });
-
-  useKangurAiTutorSelectionGuidanceDockOpenEffect({
-    activeSelectedText,
-    handleOpenChat: interactions.handleOpenChat,
-    hasSelectionPanelReady: 
-      tutorRuntime.isOpen && 
-      panelShellMode === 'minimal' && 
-      widgetState.contextualTutorMode === 'selection_explain' && 
-      widgetState.selectionConversationContext !== null && 
-      areTutorSelectionTextsEquivalent(widgetState.selectionConversationContext.selectedText, activeSelectedText),
-    isLoading,
-    selectionConversationSelectedText: widgetState.selectionConversationContext?.selectedText ?? null,
-    selectionGuidanceHandoffText: widgetState.selectionGuidanceHandoffText,
-  });
 
   useKangurAiTutorLifecycleEffects({
     allowCrossPagePersistence,
@@ -636,6 +595,7 @@ export function useKangurAiTutorWidgetCoordinator({
     attachedLaunchOffset,
     basePath,
     bridgeQuickAction,
+    sessionSurface: sessionContext?.surface ?? null,
     bridgeSummaryChipLabel,
     bubblePlacement: {
       ...bubblePlacement,
@@ -695,6 +655,7 @@ export function useKangurAiTutorWidgetCoordinator({
     handleFocusSelectedFragment: panelActions.handleFocusSelectedFragment,
     handleFollowUpClick: panelActions.handleFollowUpClick,
     handleGuestIntroAcceptSilent: guestIntroFlow.handleGuestIntroAcceptSilent,
+    handleGuestIntroClose: guestIntroFlow.handleGuestIntroClose,
     handleGuestIntroDismiss: guestIntroFlow.handleGuestIntroDismiss,
     handleHomeOnboardingAdvance: homeOnboardingFlow.handleHomeOnboardingAdvance,
     handleHomeOnboardingBack: homeOnboardingFlow.handleHomeOnboardingBack,
@@ -772,7 +733,6 @@ export function useKangurAiTutorWidgetCoordinator({
     showSectionGuidanceCallout,
     showSelectionExplainCompleteState,
     showSelectionGuidanceCallout,
-    shouldRenderContextlessTutorUi,
     showSources,
     suppressPanelSurface,
     tutorContent,
@@ -792,7 +752,6 @@ export function useKangurAiTutorWidgetCoordinator({
     (
       enabled ||
       shouldRenderGuestIntroUi ||
-      shouldRenderContextlessTutorUi ||
       isGuidedTutorMode ||
       widgetState.askModalVisible ||
       widgetState.canonicalTutorModalVisible ||

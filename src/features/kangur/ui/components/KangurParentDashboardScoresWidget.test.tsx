@@ -122,4 +122,17 @@ describe('KangurParentDashboardScoresWidget', () => {
     expect(screen.queryByTestId('score-history-stub')).toBeNull();
     expect(scoreHistoryMock).not.toHaveBeenCalled();
   });
+
+  it('does not render when no active learner is selected', () => {
+    runtimeState.value = {
+      ...runtimeState.value,
+      activeLearner: null,
+    };
+
+    render(<KangurParentDashboardScoresWidget />);
+
+    expect(screen.queryByTestId('score-history-stub')).toBeNull();
+    expect(scoreHistoryMock).not.toHaveBeenCalled();
+    expect(screen.queryByText('Wyniki ucznia')).toBeNull();
+  });
 });

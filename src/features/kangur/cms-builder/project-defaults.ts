@@ -806,7 +806,7 @@ export const createDefaultGameScreenComponents = (): PageComponentInput[] =>
           id: 'kangur-game-home-leaderboard',
           title: 'Najlepsze wyniki',
           description:
-            'Ta tablica wyników jest teraz skladana z bloków CMS. Zmieniaj filtry, teksty i wyglad bez wracania do widgetu.',
+            'Ta tablica wyników jest teraz składana z bloków CMS. Zmieniaj filtry, teksty i wygląd bez wracania do widgetu.',
         }),
       ],
       paddingTop: 0,
@@ -1182,7 +1182,7 @@ export const createDefaultGameScreenComponents = (): PageComponentInput[] =>
           id: 'kangur-game-result-leaderboard',
           title: 'Tablica wyników',
           description:
-            'Po zakonczeniu gry nadal możesz przebudowac ten ranking z poziomu CMS buildera.',
+            'Po zakończeniu gry nadal możesz przebudować ten ranking z poziomu CMS buildera.',
         }),
       ],
       paddingTop: 0,
@@ -1199,12 +1199,12 @@ export const createDefaultLessonsScreenComponents = (): PageComponentInput[] =>
       id: 'kangur-lessons-intro',
       title: 'Lekcje',
       description:
-        'Ten ekran jest już skladany w CMS builderze. Zmieniaj uklad, teksty i rozmieszczenie widgetow bez wracania do kodu strony.',
+        'Ten ekran jest już składany w CMS builderze. Zmieniaj układ, teksty i rozmieszczenie widgetów bez wracania do kodu strony.',
       blocks: [
         makeWidgetBlock('kangur-widget-lessons-progress', 'player-progress'),
         makeWidgetBlock('kangur-widget-lessons-assignments', 'priority-assignments', {
           title: 'Priorytetowe zadania',
-          emptyLabel: 'Brak aktywnych priorytetow.',
+          emptyLabel: 'Brak aktywnych priorytetów.',
           limit: 2,
         }),
       ],

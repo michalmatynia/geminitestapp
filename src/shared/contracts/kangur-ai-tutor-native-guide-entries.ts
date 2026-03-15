@@ -489,12 +489,12 @@ export const KANGUR_NATIVE_GUIDE_ENTRIES: KangurAiTutorNativeGuideEntry[] = [
     contentIdPrefixes: ['lesson-'],
     title: 'Specjalna plansza lekcji',
     shortDescription:
-      'To dodatkowa plansza lekcji, która wyjaśnia szczegolny stan albo ukryte zakonczenie.',
+      'To dodatkowa plansza lekcji, która wyjaśnia szczególny stan albo ukryte zakończenie.',
     fullDescription:
       'Specjalna plansza lekcji pojawia się zamiast zwykłej treści, gdy uczeń trafia do szczególnego stanu, na przykład ukrytego finiszu. To miejsce bardziej podsumowuje drogę przez temat i pokazuje, co zostało odblokowane, niż prowadzi przez nowy materiał krok po kroku.',
     hints: [
-      'Przeczytaj ten panel jak nagrode albo specjalne zakonczenie, a nie jak kolejny rozdzial z teoria.',
-      'Po obejrzeniu planszy wróć do listy lekcji albo przejdź do treningu, by utrwalic cały cykl.',
+      'Przeczytaj ten panel jak nagrodę albo specjalne zakończenie, a nie jak kolejny rozdział z teorią.',
+      'Po obejrzeniu planszy wróć do listy lekcji albo przejdź do treningu, by utrwalić cały cykl.',
     ],
     followUpActions: [
       { id: 'lesson-screen-open-list', label: 'Wróć do lekcji', page: 'Lessons' },

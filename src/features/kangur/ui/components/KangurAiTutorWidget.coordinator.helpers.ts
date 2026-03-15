@@ -10,10 +10,6 @@ import type { ActiveTutorFocus } from './KangurAiTutorWidget.shared';
 import type { TutorSurface } from './KangurAiTutorWidget.types';
 
 export const HOME_ONBOARDING_ELIGIBLE_CONTENT_ID = 'game:home';
-export const CONTEXTLESS_TUTOR_EMPTY_STATE_MESSAGE =
-  'Otwórz lekcję, grę albo test, a pomogę Ci w konkretnym zadaniu.';
-export const CONTEXTLESS_TUTOR_DISABLED_PLACEHOLDER =
-  'Przejdź do lekcji, gry albo testu, aby zadać pytanie.';
 const getTutorUiElement = (value: EventTarget | Node | null): Element | null => {
   if (value instanceof Element) {
     return value;

@@ -779,3 +779,262 @@ export function AddingTensOnesAnimation(): React.JSX.Element {
     </svg>
   );
 }
+
+export function AddingColumnAnimation(): React.JSX.Element {
+  return (
+    <svg
+      aria-label='Animacja dodawania w kolumnach: dziesiątki i jedności sumują się osobno.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 440 190'
+    >
+      <style>{`
+        .col-bg { fill: #f8fafc; }
+        .col-stroke { stroke: #e2e8f0; }
+        .digit-a { fill: #f59e0b; }
+        .digit-b { fill: #60a5fa; }
+        .digit-sum { fill: #10b981; }
+        .carry { fill: #f97316; }
+        .move-a, .move-b, .sum { transform-box: fill-box; transform-origin: center; }
+        .move-a { animation: colMoveA 7s ease-in-out infinite; }
+        .move-b { animation: colMoveB 7s ease-in-out infinite; }
+        .sum { animation: colSum 7s ease-in-out infinite; }
+        .carry { animation: colCarry 7s ease-in-out infinite; }
+        @keyframes colMoveA {
+          0%, 20% { transform: translateY(0); opacity: 1; }
+          45% { transform: translateY(22px); opacity: 1; }
+          60% { transform: translateY(30px); opacity: 0; }
+          100% { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes colMoveB {
+          0%, 30% { transform: translateY(0); opacity: 1; }
+          55% { transform: translateY(22px); opacity: 1; }
+          70% { transform: translateY(30px); opacity: 0; }
+          100% { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes colSum {
+          0%, 45% { opacity: 0; transform: scale(0.98); }
+          60%, 100% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes colCarry {
+          0%, 50% { opacity: 0; transform: translateY(6px); }
+          65%, 100% { opacity: 1; transform: translateY(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .move-a, .move-b, .sum, .carry { animation: none; }
+        }
+      `}</style>
+      <rect className='col-bg' height='150' rx='18' width='260' x='30' y='20' />
+      <rect className='col-bg' height='150' rx='18' width='120' x='300' y='20' />
+      <rect className='col-stroke' fill='none' height='150' rx='18' width='260' x='30' y='20' />
+      <rect className='col-stroke' fill='none' height='150' rx='18' width='120' x='300' y='20' />
+      <line className='col-stroke' strokeWidth='2' x1='160' x2='160' y1='32' y2='158' />
+      <line className='col-stroke' strokeWidth='2' x1='300' x2='420' y1='108' y2='108' />
+      <text fill='#475569' fontSize='12' fontWeight='600' x='84' y='44'>Dziesiątki</text>
+      <text fill='#475569' fontSize='12' fontWeight='600' x='188' y='44'>Jedności</text>
+      <text fill='#475569' fontSize='12' fontWeight='600' x='326' y='44'>Suma</text>
+
+      <g className='move-a'>
+        <rect className='digit-a' height='22' rx='6' width='52' x='70' y='58' />
+        <rect className='digit-a' height='22' rx='6' width='52' x='180' y='58' />
+      </g>
+      <g className='move-b'>
+        <rect className='digit-b' height='22' rx='6' width='52' x='70' y='92' />
+        <rect className='digit-b' height='22' rx='6' width='52' x='180' y='92' />
+      </g>
+      <text fill='#0f172a' fontSize='12' fontWeight='600' x='86' y='74'>20</text>
+      <text fill='#0f172a' fontSize='12' fontWeight='600' x='196' y='74'>4</text>
+      <text fill='#0f172a' fontSize='12' fontWeight='600' x='86' y='108'>10</text>
+      <text fill='#0f172a' fontSize='12' fontWeight='600' x='196' y='108'>3</text>
+
+      <text className='carry' fontSize='12' fontWeight='700' x='210' y='60'>+1</text>
+      <g className='sum'>
+        <rect className='digit-sum' height='26' rx='7' width='64' x='320' y='118' />
+        <text fill='#0f172a' fontSize='13' fontWeight='700' x='340' y='136'>37</text>
+      </g>
+    </svg>
+  );
+}
+
+export function AddingAbacusAnimation(): React.JSX.Element {
+  return (
+    <svg
+      aria-label='Animacja liczydła: przesuwanie koralików dla dziesiątek i jedności.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 440 190'
+    >
+      <style>{`
+        .frame { stroke: #e2e8f0; }
+        .rod { stroke: #cbd5f5; }
+        .bead-a { fill: #f59e0b; }
+        .bead-b { fill: #60a5fa; }
+        .sum-bead { fill: #34d399; }
+        .row-a, .row-b, .row-sum {
+          transform-box: fill-box;
+          transform-origin: center;
+        }
+        .row-a { animation: abacusMoveA 7s ease-in-out infinite; }
+        .row-b { animation: abacusMoveB 7s ease-in-out infinite; }
+        .row-sum { animation: abacusSum 7s ease-in-out infinite; }
+        @keyframes abacusMoveA {
+          0%, 20% { transform: translateX(0); opacity: 1; }
+          45% { transform: translateX(120px); opacity: 1; }
+          60% { transform: translateX(140px); opacity: 0; }
+          100% { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes abacusMoveB {
+          0%, 30% { transform: translateX(0); opacity: 1; }
+          55% { transform: translateX(120px); opacity: 1; }
+          70% { transform: translateX(140px); opacity: 0; }
+          100% { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes abacusSum {
+          0%, 45% { opacity: 0; transform: scale(0.98); }
+          60%, 100% { opacity: 1; transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .row-a, .row-b, .row-sum { animation: none; }
+        }
+      `}</style>
+      <rect className='frame' fill='none' height='140' rx='18' strokeWidth='2' width='380' x='30' y='24' />
+      {[0, 1, 2].map((row) => (
+        <line
+          key={`rod-${row}`}
+          className='rod'
+          strokeWidth='6'
+          x1='60'
+          x2='380'
+          y1={60 + row * 40}
+          y2={60 + row * 40}
+        />
+      ))}
+      <text fill='#475569' fontSize='12' fontWeight='600' x='36' y='44'>Dziesiątki</text>
+      <text fill='#475569' fontSize='12' fontWeight='600' x='36' y='84'>Jedności</text>
+      <text fill='#475569' fontSize='12' fontWeight='600' x='36' y='124'>Suma</text>
+
+      <g className='row-a'>
+        {[0, 1].map((index) => (
+          <circle
+            key={`tens-a-${index}`}
+            className='bead-a'
+            cx={90 + index * 28}
+            cy='60'
+            r='10'
+          />
+        ))}
+        {[0, 1, 2, 3].map((index) => (
+          <circle
+            key={`ones-a-${index}`}
+            className='bead-a'
+            cx={90 + index * 24}
+            cy='100'
+            r='9'
+          />
+        ))}
+      </g>
+      <g className='row-b'>
+        <circle className='bead-b' cx='90' cy='60' r='10' />
+        {[0, 1, 2].map((index) => (
+          <circle
+            key={`ones-b-${index}`}
+            className='bead-b'
+            cx={90 + index * 24}
+            cy='100'
+            r='9'
+          />
+        ))}
+      </g>
+      <g className='row-sum'>
+        {[0, 1, 2].map((index) => (
+          <circle
+            key={`tens-sum-${index}`}
+            className='sum-bead'
+            cx={210 + index * 26}
+            cy='60'
+            r='10'
+          />
+        ))}
+        {[0, 1, 2, 3, 4, 5, 6].map((index) => (
+          <circle
+            key={`ones-sum-${index}`}
+            className='sum-bead'
+            cx={210 + index * 22}
+            cy='100'
+            r='9'
+          />
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+export function AddingAssociativeAnimation(): React.JSX.Element {
+  return (
+    <svg
+      aria-label='Animacja: grupowanie liczb nie zmienia sumy.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 320 120'
+    >
+      <style>{`
+        .chip { fill: #e2e8f0; }
+        .group-a { animation: groupA 6s ease-in-out infinite; }
+        .group-b { animation: groupB 6s ease-in-out infinite; }
+        .bracket-a { stroke: #60a5fa; animation: bracketA 6s ease-in-out infinite; }
+        .bracket-b { stroke: #34d399; animation: bracketB 6s ease-in-out infinite; }
+        @keyframes groupA {
+          0%, 40% { opacity: 1; }
+          55%, 100% { opacity: 0; }
+        }
+        @keyframes groupB {
+          0%, 40% { opacity: 0; }
+          55%, 100% { opacity: 1; }
+        }
+        @keyframes bracketA {
+          0%, 40% { opacity: 1; }
+          55%, 100% { opacity: 0; }
+        }
+        @keyframes bracketB {
+          0%, 40% { opacity: 0; }
+          55%, 100% { opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .group-a, .group-b, .bracket-a, .bracket-b { animation: none; opacity: 1; }
+        }
+      `}</style>
+      <g>
+        {[0, 1, 2].map((index) => (
+          <rect key={`chip-${index}`} className='chip' height='26' rx='8' width='40' x={40 + index * 46} y='50' />
+        ))}
+      </g>
+      <text fill='#0f172a' fontSize='14' fontWeight='600' x='54' y='68'>
+        2
+      </text>
+      <text fill='#0f172a' fontSize='14' fontWeight='600' x='100' y='68'>
+        3
+      </text>
+      <text fill='#0f172a' fontSize='14' fontWeight='600' x='146' y='68'>
+        4
+      </text>
+      <text fill='#64748b' fontSize='16' fontWeight='600' x='200' y='68'>
+        =
+      </text>
+      <text fill='#0f172a' fontSize='16' fontWeight='700' x='230' y='68'>
+        9
+      </text>
+      <g className='group-a'>
+        <path className='bracket-a' d='M38 42 V84 M38 42 H86 M38 84 H86' fill='none' strokeWidth='3' />
+        <text fill='#60a5fa' fontSize='12' fontWeight='600' x='52' y='38'>
+          (2+3)
+        </text>
+      </g>
+      <g className='group-b'>
+        <path className='bracket-b' d='M84 42 V84 M84 42 H132 M84 84 H132' fill='none' strokeWidth='3' />
+        <text fill='#34d399' fontSize='12' fontWeight='600' x='96' y='38'>
+          (3+4)
+        </text>
+      </g>
+    </svg>
+  );
+}

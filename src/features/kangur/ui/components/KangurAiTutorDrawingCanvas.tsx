@@ -1,8 +1,7 @@
-import { Eraser, Pen, RotateCcw, Trash2, X, Check } from 'lucide-react';
+import { Eraser, Pen, RotateCcw, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
-import { KangurButton } from '@/features/kangur/ui/design/primitives';
 
 import type { JSX, PointerEvent as ReactPointerEvent } from 'react';
 
@@ -37,9 +36,11 @@ function getPointerPosition(
   canvas: HTMLCanvasElement
 ): { x: number; y: number } {
   const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
   return {
-    x: event.clientX - rect.left,
-    y: event.clientY - rect.top,
+    x: (event.clientX - rect.left) * scaleX,
+    y: (event.clientY - rect.top) * scaleY,
   };
 }
 
@@ -301,27 +302,22 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         </button>
       </div>
 
-      <div className='flex justify-end gap-2 border-t kangur-chat-divider kangur-chat-padding-sm'>
-        <KangurButton
+      <div className='flex justify-end gap-3 border-t kangur-chat-divider kangur-chat-padding-sm text-xs'>
+        <button
           type='button'
-          size='sm'
-          variant='surface'
-          className='h-8 px-3 text-xs'
           onClick={onCancel}
+          className='cursor-pointer font-semibold transition-colors [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] hover:scale-[1.02] hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
         >
           {drawingContent?.cancelLabel ?? 'Anuluj'}
-        </KangurButton>
-        <KangurButton
+        </button>
+        <button
           type='button'
-          size='sm'
-          variant='primary'
-          className='h-8 px-3 text-xs'
           disabled={strokes.length === 0}
           onClick={handleDone}
+          className='cursor-pointer font-semibold transition-colors [color:var(--kangur-chat-panel-text,var(--kangur-page-text))] hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40'
         >
-          <Check className='mr-1 h-3 w-3' />
           {drawingContent?.doneLabel ?? 'Gotowe'}
-        </KangurButton>
+        </button>
       </div>
     </div>
   );

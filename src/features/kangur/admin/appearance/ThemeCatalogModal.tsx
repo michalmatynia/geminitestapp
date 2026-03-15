@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   AppModal,
   Badge,
@@ -16,6 +16,7 @@ import {
   KANGUR_DEFAULT_DAILY_THEME,
   normalizeKangurThemeSettings,
 } from '@/features/kangur/theme-settings';
+import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { serializeSetting } from '@/shared/utils/settings-json';
 import { useAppearancePage } from './AppearancePage.context';
@@ -25,8 +26,8 @@ export function ThemeCatalogModal(): React.JSX.Element {
   const updateSetting = useUpdateSetting();
   const {
     catalog,
+    draft,
     selectedId,
-    slotThemes,
     handleSelect,
     updateCatalog,
   } = useAppearancePage();
@@ -34,33 +35,77 @@ export function ThemeCatalogModal(): React.JSX.Element {
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [newThemeName, setNewThemeName] = useState('');
   const [isCreating, setIsSavingNew] = useState(false);
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+
+  const catalogNames = useMemo(
+    () => new Set(catalog.map((entry) => entry.name.trim()).filter(Boolean)),
+    [catalog]
+  );
+
+  const buildUniqueName = (baseName: string): string => {
+    const trimmed = baseName.trim();
+    if (!trimmed) return 'Nowy motyw';
+    if (!catalogNames.has(trimmed)) return trimmed;
+    let counter = 2;
+    let candidate = `${trimmed} (${counter})`;
+    while (catalogNames.has(candidate)) {
+      counter += 1;
+      candidate = `${trimmed} (${counter})`;
+    }
+    return candidate;
+  };
+
+  const createCatalogEntry = async (
+    name: string,
+    settings: ThemeSettings,
+    {
+      selectAfterCreate = true,
+    }: { selectAfterCreate?: boolean } = {}
+  ): Promise<void> => {
+    const now = new Date().toISOString();
+    const newEntry: KangurThemeCatalogEntry = {
+      id: `theme_${Math.random().toString(36).slice(2, 11)}`,
+      name: name.trim(),
+      settings: normalizeKangurThemeSettings(settings, KANGUR_DEFAULT_DAILY_THEME),
+      createdAt: now,
+      updatedAt: now,
+    };
+    const nextCatalog = [...catalog, newEntry];
+    const serialized = serializeSetting(nextCatalog);
+    await updateSetting.mutateAsync({
+      key: KANGUR_THEME_CATALOG_KEY,
+      value: serialized,
+    });
+    updateCatalog(serialized);
+    if (selectAfterCreate) {
+      handleSelect(newEntry.id);
+    }
+  };
 
   const handleCreateTheme = async () => {
     if (!newThemeName.trim()) return;
     setIsSavingNew(true);
     try {
-      const activeTheme = slotThemes.daily;
-      const now = new Date().toISOString();
-      const newEntry: KangurThemeCatalogEntry = {
-        id: `theme_${Math.random().toString(36).slice(2, 11)}`,
-        name: newThemeName.trim(),
-        settings: activeTheme,
-        createdAt: now,
-        updatedAt: now,
-      };
-      const nextCatalog = [...catalog, newEntry];
-      const serialized = serializeSetting(nextCatalog);
-      await updateSetting.mutateAsync({
-        key: KANGUR_THEME_CATALOG_KEY,
-        value: serialized,
-      });
-      updateCatalog(serialized);
+      await createCatalogEntry(newThemeName.trim(), draft);
       setNewThemeName('');
       toast('Nowy motyw został dodany do katalogu.', { variant: 'success' });
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Błąd zapisu motywu.', { variant: 'error' });
     } finally {
       setIsSavingNew(false);
+    }
+  };
+
+  const handleDuplicateTheme = async (entry: KangurThemeCatalogEntry) => {
+    setDuplicatingId(entry.id);
+    try {
+      const nextName = buildUniqueName(`${entry.name} (kopia)`);
+      await createCatalogEntry(nextName, entry.settings);
+      toast('Motyw został zduplikowany.', { variant: 'success' });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Nie udało się zduplikować motywu.', { variant: 'error' });
+    } finally {
+      setDuplicatingId(null);
     }
   };
 
@@ -96,7 +141,7 @@ export function ThemeCatalogModal(): React.JSX.Element {
           <div className='flex items-end gap-3 rounded-xl border border-dashed p-4'>
             <div className='flex-1'>
               <p className='mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground'>
-                Zapisz aktualny dzień jako nowy motyw
+                Zapisz aktualny motyw jako nowy
               </p>
               <Input
                 placeholder='Nazwa motywu...'
@@ -117,6 +162,7 @@ export function ThemeCatalogModal(): React.JSX.Element {
             const previewTheme = normalizeKangurThemeSettings(entry.settings, KANGUR_DEFAULT_DAILY_THEME);
             const preview = resolveKangurStorefrontAppearance('default', previewTheme);
             const isSelected = selectedId === entry.id;
+            const isDuplicating = duplicatingId === entry.id;
 
             return (
               <Card
@@ -137,10 +183,10 @@ export function ThemeCatalogModal(): React.JSX.Element {
                       Zapisany
                     </Badge>
                   </div>
-                  <div className='flex gap-2'>
+                  <div className='flex flex-wrap gap-2'>
                     <Button
                       size='sm'
-                      className='h-8 flex-1'
+                      className='h-8 flex-1 min-w-[96px]'
                       variant={isSelected ? 'default' : 'outline'}
                       onClick={() => {
                         handleSelect(entry.id);
@@ -148,6 +194,15 @@ export function ThemeCatalogModal(): React.JSX.Element {
                       }}
                     >
                       {isSelected ? 'Wybrany' : 'Wczytaj'}
+                    </Button>
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      className='h-8'
+                      disabled={isDuplicating}
+                      onClick={() => void handleDuplicateTheme(entry)}
+                    >
+                      {isDuplicating ? 'Duplikuję...' : 'Duplikuj'}
                     </Button>
                     <Button
                       size='sm'

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-12'
+last_reviewed: '2026-03-15'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,19 +8,21 @@ canonical: true
 ---
 # Type Cluster Scanner Report
 
-Generated at: 2026-03-12T07:26:24.378Z
+Generated at: 2026-03-15T06:13:52.584Z
 Status: ok
 
 ## Summary
 
-- Files scanned: 5781
-- Exported declarations scanned: 4434
-- Candidate declarations scanned: 4408
-- Exact-shape clusters: 0
+- Files scanned: 6016
+- Exported declarations scanned: 4550
+- Candidate declarations scanned: 4523
+- Exact-shape clusters: 9
 - Near-shape clusters: 0
 - Clusters after filters: 0
 - Declarations in clusters: 0
 - Highest risk score: 0
+- Domain filter: feature:ai
+- Minimum risk filter: 10
 
 ## Top Cluster Candidates
 

@@ -1,8 +1,8 @@
-import { ArrowUp, Pen, X } from 'lucide-react';
+import { Pen, X } from 'lucide-react';
 import { useCallback } from 'react';
 
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
-import { KangurButton, KangurTextField } from '@/features/kangur/ui/design/primitives';
+import { KangurTextField } from '@/features/kangur/ui/design/primitives';
 
 import { KangurAiTutorDrawingCanvas } from './KangurAiTutorDrawingCanvas';
 import { useKangurAiTutorPanelBodyContext } from './KangurAiTutorPanelBody.context';
@@ -51,23 +51,17 @@ export function KangurAiTutorComposer(): JSX.Element {
 
   if (drawingMode) {
     return (
-      <div
-        className='border-t kangur-chat-divider kangur-chat-padding-md kangur-chat-composer-shell'
-        data-testid='kangur-ai-tutor-composer-shell'
-      >
+      <section className='kangur-chat-padding-md pt-3 pb-0'>
         <KangurAiTutorDrawingCanvas
           onComplete={handleDrawingComplete}
           onCancel={handleToggleDrawing}
         />
-      </div>
+      </section>
     );
   }
 
   return (
-    <div
-      className='border-t kangur-chat-divider kangur-chat-padding-md kangur-chat-composer-shell'
-      data-testid='kangur-ai-tutor-composer-shell'
-    >
+    <section className='kangur-chat-padding-md pt-3 pb-0'>
       {drawingImageData ? (
         <div
           data-testid='kangur-ai-tutor-drawing-preview'
@@ -93,6 +87,41 @@ export function KangurAiTutorComposer(): JSX.Element {
           </span>
         </div>
       ) : null}
+      {!showToolboxLayout && visibleQuickActions.length ? (
+        <div
+          className='mb-2.5 flex flex-wrap gap-1.5'
+          data-kangur-tts-ignore='true'
+          data-testid='kangur-ai-tutor-composer-pills'
+        >
+          {visibleQuickActions.map((action) => (
+            <span
+              key={action.id}
+              data-testid={`kangur-ai-tutor-quick-action-${action.id}`}
+              role='button'
+              tabIndex={isLoading || !canSendMessages ? -1 : 0}
+              aria-disabled={isLoading || !canSendMessages}
+              className={`inline-flex h-7 items-center rounded-full border px-3 text-[11px] font-medium transition-colors ${
+                isLoading || !canSendMessages
+                  ? 'cursor-not-allowed border-transparent opacity-40'
+                  : 'cursor-pointer border-[color:var(--kangur-soft-card-border)] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))] hover:[background:var(--kangur-soft-card-background)]'
+              }`}
+              onClick={() => {
+                if (isLoading || !canSendMessages) return;
+                void handleQuickAction(action);
+              }}
+              onKeyDown={(event) => {
+                if (isLoading || !canSendMessages) return;
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  void handleQuickAction(action);
+                }
+              }}
+            >
+              {action.label}
+            </span>
+          ))}
+        </div>
+      ) : null}
       <div className='flex items-center gap-2'>
         <div className='relative flex-1'>
           <KangurTextField
@@ -116,56 +145,20 @@ export function KangurAiTutorComposer(): JSX.Element {
             aria-label={tutorContent.common.questionInputAria}
           />
           {showDrawingToggle ? (
-            <KangurButton
+            <button
               data-testid='kangur-ai-tutor-drawing-toggle'
               type='button'
-              size='sm'
-              variant='surface'
-              className='absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 p-0'
+              className='absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center p-0 transition-colors [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 disabled:opacity-40 disabled:cursor-not-allowed'
               disabled={isLoading || !canSendMessages}
               onClick={handleToggleDrawing}
               aria-label={drawingContent?.toggleLabel ?? 'Rysuj'}
               aria-pressed={drawingMode}
             >
               <Pen className='h-3.5 w-3.5' />
-            </KangurButton>
+            </button>
           ) : null}
         </div>
-        <KangurButton
-          data-testid='kangur-ai-tutor-send-button'
-          type='button'
-          size='sm'
-          variant='primary'
-          className='h-9 w-9 shrink-0 rounded-full p-0 kangur-cta-pill'
-          disabled={!canSubmit || isLoading || !canSendMessages}
-          onClick={handleSubmit}
-          aria-label='Wyślij'
-        >
-          <ArrowUp className='h-4 w-4' />
-        </KangurButton>
       </div>
-      {!showToolboxLayout && visibleQuickActions.length ? (
-        <div
-          className='mt-2.5 flex flex-wrap gap-1.5'
-          data-kangur-tts-ignore='true'
-          data-testid='kangur-ai-tutor-composer-pills'
-        >
-          {visibleQuickActions.map((action) => (
-            <KangurButton
-              key={action.id}
-              data-testid={`kangur-ai-tutor-quick-action-${action.id}`}
-              type='button'
-              size='sm'
-              variant='surface'
-              className='h-8 rounded-full px-3 text-[11px] shadow-[0_4px_10px_-8px_rgba(15,23,42,0.1)]'
-              disabled={isLoading || !canSendMessages}
-              onClick={() => void handleQuickAction(action)}
-            >
-              {action.label}
-            </KangurButton>
-          ))}
-        </div>
-      ) : null}
-    </div>
+    </section>
   );
 }

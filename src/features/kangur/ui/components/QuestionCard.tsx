@@ -157,7 +157,7 @@ export default function QuestionCard({
   const clockMinutes = Number.parseInt(clockParts?.[2] ?? '0', 10);
   const normalizedClockHours = ((clockHours % 12) + 12) % 12 || 12;
   const normalizedClockMinutes = Math.max(0, Math.min(59, clockMinutes));
-  const clockAriaLabel = `Zegar analogowy pokazuje godzine ${normalizedClockHours}:${String(
+  const clockAriaLabel = `Zegar analogowy pokazuje godzinę ${normalizedClockHours}:${String(
     normalizedClockMinutes
   ).padStart(2, '0')}.`;
 
@@ -180,8 +180,8 @@ export default function QuestionCard({
 
       <KangurProgressBar
         accent={timerAccent}
-        aria-label='Pozostaly czas'
-        aria-valuetext={`${timeLeft} sekund pozostalo`}
+        aria-label='Pozostały czas'
+        aria-valuetext={`${timeLeft} sekund pozostało`}
         data-testid='question-card-timer-bar'
         size='lg'
         value={timerPercent}
@@ -262,7 +262,7 @@ export default function QuestionCard({
             <KangurAnswerChoiceCard
               accent={accent}
               aria-disabled={showResult}
-              aria-label={`Odpowiedz ${String(choice)}`}
+              aria-label={`Odpowiedź ${String(choice)}`}
               buttonClassName={cn(
                 'flex items-center justify-center px-4 py-4 text-center text-xl font-bold shadow sm:text-2xl',
                 cardClass,
@@ -298,8 +298,8 @@ export default function QuestionCard({
             {selected === question.answer
               ? '🎉 Dobrze!'
               : timeLeft <= 0
-                ? `⏰ Czas minal! Odpowiedz: ${question.answer}`
-                : `❌ Odpowiedz to ${question.answer}`}
+                ? `⏰ Czas minął! Odpowiedź: ${question.answer}`
+                : `❌ Odpowiedź to ${question.answer}`}
           </motion.div>
         )}
       </AnimatePresence>

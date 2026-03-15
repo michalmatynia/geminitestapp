@@ -48,7 +48,7 @@ export default function OperationSelector({
       <KangurSectionHeading
         accent='indigo'
         data-testid='operation-selector-heading'
-        description='Kazda kategoria ma ten sam uklad. Kolor tylko podpowiada temat.'
+        description='Każda kategoria ma ten sam układ. Kolor tylko podpowiada temat.'
         descriptionId={descriptionId}
         headingAs='h3'
         headingSize='md'

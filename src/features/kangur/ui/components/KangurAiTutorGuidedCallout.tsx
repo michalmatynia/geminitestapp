@@ -211,8 +211,8 @@ export function KangurAiTutorGuidedCallout({
       id: 'hint',
       label: tutorContent.quickActions.hint.defaultLabel,
       prompt: tutorContent.quickActions.hint.defaultPrompt,
-      promptMode: 'hint',
-      interactionIntent: 'hint',
+      promptMode: 'hint' as const,
+      interactionIntent: 'hint' as const,
     };
   }, [
     tutorContent.quickActions.hint.defaultLabel,
@@ -260,6 +260,7 @@ export function KangurAiTutorGuidedCallout({
     !shouldHideResolvedSelectionAnswer;
   const shouldShowSelectionPreview =
     mode !== 'selection' &&
+    mode !== 'home_onboarding' &&
     Boolean(resolvedSelectedPreview ?? selectionPreview) &&
     (!isResolvedSelectionCallout || shouldShowSelectionPageContentBadge);
   const shouldShowSelectionPreparingBadge =

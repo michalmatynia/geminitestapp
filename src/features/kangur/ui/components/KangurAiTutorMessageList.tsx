@@ -100,8 +100,8 @@ export function KangurAiTutorMessageList({
       id: 'hint',
       label: tutorContent.quickActions.hint.defaultLabel,
       prompt: tutorContent.quickActions.hint.defaultPrompt,
-      promptMode: 'hint',
-      interactionIntent: 'hint',
+      promptMode: 'hint' as const,
+      interactionIntent: 'hint' as const,
     };
   }, [tutorContent.quickActions.hint.defaultLabel, tutorContent.quickActions.hint.defaultPrompt, visibleQuickActions]);
   const lastAssistantMessageIndex = useMemo(() => {

@@ -1,12 +1,12 @@
 import { motion } from 'framer-motion';
-
-import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import { useState } from 'react';
 
 import {
   KangurAiTutorChromeCloseButton,
   KangurAiTutorChromeKicker,
   KangurAiTutorWarmOverlayPanel,
 } from './KangurAiTutorChrome';
+import { KangurAiTutorComposer } from './KangurAiTutorComposer';
 
 import type { CSSProperties, JSX } from 'react';
 
@@ -17,6 +17,7 @@ type Props = {
   isAnonymousVisitor: boolean;
   onAccept: () => void;
   onClose: () => void;
+  onDismiss: () => void;
   onStartChat: () => void;
   panelStyle: CSSProperties;
   prefersReducedMotion: boolean;
@@ -27,11 +28,21 @@ export function KangurAiTutorGuestIntroPanel({
   isAnonymousVisitor,
   onAccept,
   onClose,
+  onDismiss,
   onStartChat,
   panelStyle,
   prefersReducedMotion,
 }: Props): JSX.Element | null {
-  const handleYes = isAnonymousVisitor ? onStartChat : onAccept;
+  const [dismissed, setDismissed] = useState(false);
+  const shouldShowProposal = isAnonymousVisitor && !dismissed;
+  const handleYes = (): void => {
+    setDismissed(true);
+    if (isAnonymousVisitor) {
+      onStartChat();
+    } else {
+      onAccept();
+    }
+  };
 
   return (
     <>
@@ -52,7 +63,7 @@ export function KangurAiTutorGuestIntroPanel({
         key='guest-intro'
         data-modal-card='warm-glow-soft'
         data-modal-motion='fade-only'
-        data-modal-surface='canonical-onboarding'
+        data-modal-surface={shouldShowProposal ? 'canonical-onboarding' : 'canonical-chat'}
         data-testid='kangur-ai-tutor-guest-intro'
         initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -76,31 +87,48 @@ export function KangurAiTutorGuestIntroPanel({
               aria-label='Zamknij'
             />
           </div>
-          <p className='text-sm kangur-chat-text-primary'>
-            Czy chcesz rozpocząć onboarding?
-          </p>
-          <div className='flex items-center gap-3'>
-            <KangurButton
-              type='button'
-              size='sm'
-              variant='surface'
-              data-testid='kangur-ai-tutor-onboarding-accept'
-              className='h-8 rounded-full px-5 text-[12px] font-medium'
-              onClick={handleYes}
-            >
-              Tak
-            </KangurButton>
-            <KangurButton
-              type='button'
-              size='sm'
-              variant='ghost'
-              data-testid='kangur-ai-tutor-onboarding-dismiss'
-              className='h-8 rounded-full px-5 text-[12px] font-medium'
-              onClick={onClose}
-            >
-              Nie
-            </KangurButton>
-          </div>
+          {shouldShowProposal ? (
+            <>
+              <p className='text-sm kangur-chat-text-primary'>
+                Cześć,
+                <br />
+                Jestem {guestTutorLabel}.
+                <br />
+                Jak chcesz, mogę pokazać Ci, jak odnaleźć się na Stronie.
+              </p>
+              <div className='flex items-center gap-4 text-[12px] font-semibold'>
+                <button
+                  type='button'
+                  data-testid='kangur-ai-tutor-onboarding-accept'
+                  className='cursor-pointer transition-transform [color:var(--kangur-chat-panel-text,var(--kangur-page-text))] hover:scale-[1.02]'
+                  onClick={handleYes}
+                >
+                  Tak
+                </button>
+                <button
+                  type='button'
+                  data-testid='kangur-ai-tutor-onboarding-dismiss'
+                  className='cursor-pointer transition-transform [color:var(--kangur-chat-panel-text,var(--kangur-page-text))] hover:scale-[1.02]'
+                  onClick={() => {
+                    setDismissed(true);
+                    onDismiss();
+                  }}
+                >
+                  Nie
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p
+                data-testid='kangur-ai-tutor-minimal-prompt'
+                className='text-sm kangur-chat-text-primary'
+              >
+                W czym mogę ci pomóc?
+              </p>
+              <KangurAiTutorComposer />
+            </>
+          )}
         </KangurAiTutorWarmOverlayPanel>
       </motion.div>
     </>

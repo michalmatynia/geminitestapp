@@ -7,6 +7,13 @@ import {
   KangurPracticeGameProgress,
   KangurPracticeGameStage,
   KangurPracticeGameSummary,
+  KangurPracticeGameSummaryActions,
+  KangurPracticeGameSummaryBreakdown,
+  KangurPracticeGameSummaryEmoji,
+  KangurPracticeGameSummaryMessage,
+  KangurPracticeGameSummaryProgress,
+  KangurPracticeGameSummaryTitle,
+  KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import {
   KangurButton,
@@ -828,39 +835,43 @@ export default function AddingBallGame({
   if (done) {
     const percent = Math.round((score / TOTAL_ROUNDS) * 100);
     return (
-      <KangurPracticeGameSummary
-        accent='indigo'
-        breakdown={xpBreakdown}
-        breakdownDataTestId='adding-ball-summary-breakdown'
-        breakdownItemDataTestIdPrefix='adding-ball-summary-breakdown'
-        dataTestId='adding-ball-summary-shell'
-        emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
-        emojiDataTestId='adding-ball-summary-emoji'
-        finishLabel={finishLabel}
-        message={
-          percent === 100
+      <KangurPracticeGameSummary dataTestId='adding-ball-summary-shell' wrapperClassName='w-full max-w-none'>
+        <KangurPracticeGameSummaryEmoji
+          dataTestId='adding-ball-summary-emoji'
+          emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
+        />
+        <KangurPracticeGameSummaryTitle
+          dataTestId='adding-ball-summary-title'
+          title={`Wynik: ${score}/${TOTAL_ROUNDS}`}
+        />
+        <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
+        <KangurPracticeGameSummaryBreakdown
+          breakdown={xpBreakdown}
+          dataTestId='adding-ball-summary-breakdown'
+          itemDataTestIdPrefix='adding-ball-summary-breakdown'
+        />
+        <KangurPracticeGameSummaryProgress accent='amber' percent={percent} />
+        <KangurPracticeGameSummaryMessage>
+          {percent === 100
             ? 'Idealnie! Jesteś mistrzem dodawania!'
             : percent >= 60
               ? 'Świetna robota!'
-              : 'Nie poddawaj się!'
-        }
-        onFinish={handleFinishGame}
-        onRestart={() => {
-          setRoundIdx(0);
-          setScore(0);
-          setDone(false);
-          setXpEarned(0);
-          setXpBreakdown([]);
-          setRound(generateRound(MODES[0] ?? 'complete_equation'));
-          sessionStartedAtRef.current = Date.now();
-        }}
-        percent={percent}
-        progressAccent='amber'
-        title={`Wynik: ${score}/${TOTAL_ROUNDS}`}
-        xpAccent='indigo'
-        xpEarned={xpEarned}
-        wrapperClassName='w-full max-w-none'
-      />
+              : 'Nie poddawaj się!'}
+        </KangurPracticeGameSummaryMessage>
+        <KangurPracticeGameSummaryActions
+          finishLabel={finishLabel}
+          onFinish={handleFinishGame}
+          onRestart={() => {
+            setRoundIdx(0);
+            setScore(0);
+            setDone(false);
+            setXpEarned(0);
+            setXpBreakdown([]);
+            setRound(generateRound(MODES[0] ?? 'complete_equation'));
+            sessionStartedAtRef.current = Date.now();
+          }}
+        />
+      </KangurPracticeGameSummary>
     );
   }
 

@@ -16,6 +16,7 @@ const runtimeState = vi.hoisted(() => ({
     canAccessDashboard: true,
     createForm: {
       displayName: '',
+      age: '',
       loginName: '',
       password: '',
     },
@@ -29,6 +30,7 @@ const runtimeState = vi.hoisted(() => ({
     handleCreateLearner: vi.fn(),
     handleDeleteLearner: vi.fn(),
     handleSaveLearner: vi.fn(),
+    isCreateLearnerModalOpen: false,
     isSubmitting: false,
     learners: [
       {
@@ -45,6 +47,7 @@ const runtimeState = vi.hoisted(() => ({
       },
     ],
     selectLearner: vi.fn(),
+    setCreateLearnerModalOpen: vi.fn(),
     updateCreateField: vi.fn(),
     updateEditField: vi.fn(),
   },
@@ -87,6 +90,7 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
       canAccessDashboard: true,
       createForm: {
         displayName: '',
+        age: '',
         loginName: '',
         password: '',
       },
@@ -100,6 +104,7 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
       handleCreateLearner: vi.fn(),
       handleDeleteLearner: vi.fn(),
       handleSaveLearner: vi.fn(),
+      isCreateLearnerModalOpen: false,
       isSubmitting: false,
       learners: [
         {
@@ -116,12 +121,20 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
         },
       ],
       selectLearner: vi.fn(),
+      setCreateLearnerModalOpen: vi.fn(),
       updateCreateField: vi.fn(),
       updateEditField: vi.fn(),
     };
   });
 
   it('uses storefront text tokens across learner management cards and actions', () => {
+    const setCreateLearnerModalOpen = vi.fn();
+    runtimeState.value = {
+      ...runtimeState.value,
+      isCreateLearnerModalOpen: true,
+      setCreateLearnerModalOpen,
+    };
+
     render(<KangurParentDashboardLearnerManagementWidget />);
 
     expect(screen.getByText('Zarządzaj profilami bez opuszczania panelu')).toHaveClass(
@@ -136,11 +149,16 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
     expect(screen.getByText('Kliknij, aby przełączyć profil')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
-    expect(screen.getByText('Zapisano dane ucznia.')).toHaveClass(
-      '[color:var(--kangur-page-muted-text)]'
-    );
     expect(screen.getByText('Ada', { selector: 'span' })).toHaveClass(
       '[color:var(--kangur-page-text)]'
+    );
+    expect(screen.getByTestId('parent-create-learner-modal')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dodaj ucznia' }));
+
+    expect(setCreateLearnerModalOpen).toHaveBeenCalledWith(true);
+    expect(screen.getByText('Zapisano dane ucznia.')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
     );
 
     fireEvent.click(screen.getByTestId('parent-dashboard-learner-card-learner-2'));

@@ -83,7 +83,7 @@ describe('KangurGameSetupMomentumCard', () => {
       'Misja dnia'
     );
     expect(screen.getByTestId('kangur-game-setup-momentum-title-training')).toHaveTextContent(
-      'Ta sesja przybliza misje dnia'
+      'Ta sesja przybliża misję dnia'
     );
     expect(screen.getByTestId('kangur-game-setup-momentum-title-training')).toHaveClass(
       '[color:var(--kangur-page-text)]'
@@ -98,7 +98,7 @@ describe('KangurGameSetupMomentumCard', () => {
 
   it('falls back to the next badge on kangur setup', () => {
     getNextLockedBadgeMock.mockReturnValue({
-      name: 'Pol tysiaca XP',
+      name: 'Pół tysiąca XP',
       summary: '420/500 XP',
     });
 
@@ -108,16 +108,16 @@ describe('KangurGameSetupMomentumCard', () => {
       'Następna odznaka'
     );
     expect(screen.getByTestId('kangur-game-setup-momentum-title-kangur')).toHaveTextContent(
-      'Zagraj o kolejny prog'
+      'Zagraj o kolejny próg'
     );
     expect(screen.getByTestId('kangur-game-setup-momentum-description-kangur')).toHaveTextContent(
-      'Mocny wynik w tej rundzie przybliza odznake Pol tysiaca XP. 420/500 XP.'
+      'Mocny wynik w tej rundzie przybliża odznakę Pół tysiąca XP. 420/500 XP.'
     );
   });
 
   it('prioritizes guided momentum before the generic next-badge fallback', () => {
     getNextLockedBadgeMock.mockReturnValue({
-      name: 'Pol tysiaca XP',
+      name: 'Pół tysiąca XP',
       summary: '420/500 XP',
     });
 

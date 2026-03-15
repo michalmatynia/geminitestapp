@@ -1,7 +1,16 @@
 import { Eraser, PencilRuler } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { KangurPracticeGameSummary } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
+import {
+  KangurPracticeGameSummary,
+  KangurPracticeGameSummaryActions,
+  KangurPracticeGameSummaryBreakdown,
+  KangurPracticeGameSummaryEmoji,
+  KangurPracticeGameSummaryMessage,
+  KangurPracticeGameSummaryProgress,
+  KangurPracticeGameSummaryTitle,
+  KangurPracticeGameSummaryXP,
+} from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import {
   KangurButton,
   KangurDisplayEmoji,
@@ -677,40 +686,43 @@ export default function GeometrySymmetryGame({
   if (done) {
     const percent = Math.round((score / totalRounds) * 100);
     return (
-      <KangurPracticeGameSummary
-        accent='emerald'
-        breakdown={xpBreakdown}
-        breakdownDataTestId='geometry-symmetry-summary-breakdown'
-        breakdownItemDataTestIdPrefix='geometry-symmetry-summary-breakdown'
-        dataTestId='geometry-symmetry-summary-shell'
-        emoji={score === totalRounds ? '🏆' : score >= Math.ceil(totalRounds / 2) ? '🌟' : '💪'}
-        emojiAriaHidden
-        emojiDataTestId='geometry-symmetry-summary-emoji'
-        finishLabel='Wróć'
-        message={
-          score === totalRounds
-            ? 'Idealnie! Twoje odbicia są perfekcyjne.'
-            : score >= Math.ceil(totalRounds / 2)
-              ? 'Świetna robota! Symetria idzie Ci coraz lepiej.'
-              : 'Próbuj dalej — każda kolejna próba będzie dokładniejsza.'
-        }
-        messageClassName='max-w-xs text-center'
-        onFinish={onFinish}
-        onRestart={handleRestart}
-        percent={percent}
-        progressAccent='emerald'
-        progressAriaLabel='Dokładność w grze o symetrii'
-        progressAriaValueText={`${percent}% poprawnych odpowiedzi`}
-        progressDataTestId='geometry-symmetry-summary-progress-bar'
-        title={
+      <KangurPracticeGameSummary dataTestId='geometry-symmetry-summary-shell'>
+        <KangurPracticeGameSummaryEmoji
+          ariaHidden
+          dataTestId='geometry-symmetry-summary-emoji'
+          emoji={score === totalRounds ? '🏆' : score >= Math.ceil(totalRounds / 2) ? '🌟' : '💪'}
+        />
+        <KangurPracticeGameSummaryTitle unwrapped>
           <KangurHeadline accent='emerald' as='h3' data-testid='geometry-symmetry-summary-title'>
             Wynik: {score}/{totalRounds}
           </KangurHeadline>
-        }
-        titleUnwrapped
-        xpAccent='indigo'
-        xpEarned={xpEarned}
-      />
+        </KangurPracticeGameSummaryTitle>
+        <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
+        <KangurPracticeGameSummaryBreakdown
+          breakdown={xpBreakdown}
+          dataTestId='geometry-symmetry-summary-breakdown'
+          itemDataTestIdPrefix='geometry-symmetry-summary-breakdown'
+        />
+        <KangurPracticeGameSummaryProgress
+          accent='emerald'
+          ariaLabel='Dokładność w grze o symetrii'
+          ariaValueText={`${percent}% poprawnych odpowiedzi`}
+          dataTestId='geometry-symmetry-summary-progress-bar'
+          percent={percent}
+        />
+        <KangurPracticeGameSummaryMessage className='max-w-xs text-center'>
+          {score === totalRounds
+            ? 'Idealnie! Twoje odbicia są perfekcyjne.'
+            : score >= Math.ceil(totalRounds / 2)
+              ? 'Świetna robota! Symetria idzie Ci coraz lepiej.'
+              : 'Próbuj dalej — każda kolejna próba będzie dokładniejsza.'}
+        </KangurPracticeGameSummaryMessage>
+        <KangurPracticeGameSummaryActions
+          finishLabel='Wróć'
+          onFinish={onFinish}
+          onRestart={handleRestart}
+        />
+      </KangurPracticeGameSummary>
     );
   }
 

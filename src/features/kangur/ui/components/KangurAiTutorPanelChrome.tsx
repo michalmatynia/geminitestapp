@@ -366,6 +366,11 @@ export function KangurAiTutorPanelChrome({
 
       const first = candidates[0];
       const last = candidates[candidates.length - 1];
+
+      if (!first || !last) {
+        return;
+      }
+
       const active = document.activeElement as HTMLElement | null;
       const isShift = event.shiftKey;
 
@@ -630,6 +635,7 @@ export function KangurAiTutorPanelChrome({
                   onPointerMove={onHeaderPointerMove}
                   onPointerUp={onHeaderPointerUp}
                 >
+                  {!shouldUseMinimalPanelShell ? (
                   <div className='min-w-0 flex flex-1 flex-col'>
                     <KangurAiTutorChromeKicker
                       className='[color:var(--kangur-chat-kicker-text,var(--kangur-page-text))]'
@@ -669,7 +675,7 @@ export function KangurAiTutorPanelChrome({
                         voice={narratorSettings.voice}
                       />
                     </div>
-                    {!shouldUseMinimalPanelShell && !isContextualResultChrome ? (
+                    {!isContextualResultChrome ? (
                       <KangurAiTutorChromeBadge
                         data-testid='kangur-ai-tutor-mood-chip'
                         data-mood-id={tutorBehaviorMoodId}
@@ -708,7 +714,13 @@ export function KangurAiTutorPanelChrome({
                       </KangurAiTutorChromeBadge>
                     ) : null}
                   </div>
-                  <div className='flex w-full flex-wrap items-center gap-2 pt-0.5 sm:ml-3 sm:w-auto sm:justify-end'>
+                ) : null}
+                  <div className={cn(
+                    'flex items-center gap-2 pt-0.5',
+                    shouldUseMinimalPanelShell
+                      ? 'ml-auto'
+                      : 'w-full flex-wrap sm:ml-3 sm:w-auto sm:justify-end'
+                  )}>
                     {!shouldUseMinimalPanelShell ? (
                       canDetachPanelFromContext && uiMode === 'freeform' ? (
                         <KangurAiTutorChromeTextButton

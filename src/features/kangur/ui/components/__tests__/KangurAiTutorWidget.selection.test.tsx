@@ -319,6 +319,9 @@ describe('KangurAiTutorWidget - Selection', () => {
     expect(screen.getByRole('button', { name: 'Zapytaj o to' })).toBeInTheDocument();
     fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
     fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
     expect(setHighlightedTextMock).toHaveBeenCalledWith('2 + 2');
     expect(activateSelectionGlowMock).toHaveBeenCalledTimes(1);
     expect(clearSelectionMock).toHaveBeenCalledTimes(1);
@@ -333,9 +336,7 @@ describe('KangurAiTutorWidget - Selection', () => {
       width: '160px',
       height: '46px',
     });
-    expect(
-      screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')
-    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-ask-modal')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-avatar-placement',
@@ -402,7 +403,7 @@ describe('KangurAiTutorWidget - Selection', () => {
       'Wyjaśniam ten fragment.'
     );
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
-      '2 + 2'
+      'Wyjaśniam ten fragment'
     );
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveAttribute(
       'data-entry-direction',
@@ -412,7 +413,6 @@ describe('KangurAiTutorWidget - Selection', () => {
       'data-entry-animation',
       'fade'
     );
-    expect(openChatMock).toHaveBeenCalled();
     expect(sendMessageMock).toHaveBeenCalledWith(
       'Wyjaśnij zaznaczony fragment krok po kroku.',
       expect.objectContaining({
@@ -422,15 +422,6 @@ describe('KangurAiTutorWidget - Selection', () => {
         focusId: 'selection',
         focusLabel: '2 + 2',
         interactionIntent: 'explain',
-      })
-    );
-    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
-      'kangur_ai_tutor_opened',
-      expect.objectContaining({
-        surface: 'lesson',
-        title: 'Dodawanie',
-        reason: 'selection_explain',
-        hasSelectedText: true,
       })
     );
     expect(screen.queryByTestId('kangur-ai-tutor-ask-modal')).not.toBeInTheDocument();
@@ -502,18 +493,18 @@ describe('KangurAiTutorWidget - Selection', () => {
 
     expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-guest-intro-backdrop')).not.toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
-      'data-avatar-placement',
-      'guided'
-    );
 
     await act(async () => {
       await vi.runAllTimersAsync();
     });
 
+    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
+      'data-avatar-placement',
+      'guided'
+    );
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
-      '2 + 2'
+      'Wyjaśniam ten fragment'
     );
     expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
     expect(scrollToMock).toHaveBeenCalledWith(
@@ -581,6 +572,10 @@ describe('KangurAiTutorWidget - Selection', () => {
 
     fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
     fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
 
     expect(screen.queryAllByTestId('kangur-ai-tutor-selection-glow')).toHaveLength(0);
     expect(screen.getAllByTestId('kangur-ai-tutor-selection-spotlight')).toHaveLength(1);

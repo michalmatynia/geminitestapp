@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useMemo } from 'react';
 
 import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
@@ -9,6 +10,7 @@ import {
   Button,
   FormSection,
   ProductImageManager,
+  type ProductImageManagerController,
   ProductImageManagerControllerProvider,
 } from '@/features/products/ui';
 
@@ -41,6 +43,39 @@ export function ProductImagesTabContent(): React.JSX.Element {
   const chooseButtonAriaLabel =
     imagesTabStateContext?.chooseButtonAriaLabel ??
     'Choose multiple existing images for the product';
+
+  const fallbackImageManagerController = useMemo<ProductImageManagerController>(
+    () => ({
+      imageSlots: formImages.imageSlots,
+      imageLinks: formImages.imageLinks,
+      imageBase64s: formImages.imageBase64s,
+      setImageLinkAt: formImages.setImageLinkAt,
+      setImageBase64At: formImages.setImageBase64At,
+      handleSlotImageChange: formImages.handleSlotImageChange,
+      handleSlotFileSelect: formImages.handleSlotFileSelect,
+      handleSlotDisconnectImage: formImages.handleSlotDisconnectImage,
+      setShowFileManager: formImages.setShowFileManager,
+      setShowFileManagerForSlot: () => formImages.setShowFileManager(true),
+      swapImageSlots: formImages.swapImageSlots,
+      setImagesReordering: formImages.setImagesReordering,
+      uploadError: formImages.uploadError,
+    }),
+    [
+      formImages.imageSlots,
+      formImages.imageLinks,
+      formImages.imageBase64s,
+      formImages.setImageLinkAt,
+      formImages.setImageBase64At,
+      formImages.handleSlotImageChange,
+      formImages.handleSlotFileSelect,
+      formImages.handleSlotDisconnectImage,
+      formImages.setShowFileManager,
+      formImages.swapImageSlots,
+      formImages.setImagesReordering,
+      formImages.uploadError,
+    ]
+  );
+  const imageManagerController = resolvedImageManagerController ?? fallbackImageManagerController;
 
   if (!onShowFileManager) {
     throw internalError(
@@ -75,19 +110,12 @@ export function ProductImagesTabContent(): React.JSX.Element {
           </Button>
         </div>
       </FormSection>
-      {resolvedImageManagerController ? (
-        <ProductImageManagerControllerProvider value={resolvedImageManagerController}>
-          <ProductImageManager
-            externalBaseUrl={imageExternalBaseUrl}
-            productId={formImages?.productId}
-          />
-        </ProductImageManagerControllerProvider>
-      ) : (
+      <ProductImageManagerControllerProvider value={imageManagerController}>
         <ProductImageManager
           externalBaseUrl={imageExternalBaseUrl}
           productId={formImages?.productId}
         />
-      )}
+      </ProductImageManagerControllerProvider>
     </div>
   );
 }

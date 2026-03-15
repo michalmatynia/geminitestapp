@@ -6,7 +6,7 @@ import {
   LogOut,
   UserRound,
 } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, type RefObject } from 'react';
 
 import {
   appendKangurUrlParams,
@@ -16,11 +16,13 @@ import {
 import KangurBadgeTrackHighlights from '@/features/kangur/ui/components/KangurBadgeTrackHighlights';
 import KangurDailyQuestHighlightCardContent from '@/features/kangur/ui/components/KangurDailyQuestHighlightCardContent';
 import KangurHeroMilestoneSummary from '@/features/kangur/ui/components/KangurHeroMilestoneSummary';
+import { KangurParentDashboardLearnerManagementWidget } from '@/features/kangur/ui/components/KangurParentDashboardLearnerManagementWidget';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { useKangurParentDashboardRuntime } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import {
   KangurButton,
+  KangurEmptyState,
   KangurSectionEyebrow,
   KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
@@ -43,8 +45,12 @@ const buildAssignmentHref = (
 
 export function KangurParentDashboardHeroWidget({
   showActions = true,
+  showLearnerManagement = false,
+  learnerManagementAnchorRef,
 }: {
   showActions?: boolean;
+  showLearnerManagement?: boolean;
+  learnerManagementAnchorRef?: RefObject<HTMLDivElement | null>;
 }): React.JSX.Element {
   const routeNavigator = useKangurRouteNavigator();
   const {
@@ -55,8 +61,7 @@ export function KangurParentDashboardHeroWidget({
     logout,
     navigateToLogin,
     progress,
-    viewerName,
-    viewerRoleLabel,
+    setCreateLearnerModalOpen,
   } = useKangurParentDashboardRuntime();
   const { entry: guestHeroContent } = useKangurPageContentEntry('parent-dashboard-guest-hero');
   const { entry: dashboardHeroContent } = useKangurPageContentEntry('parent-dashboard-hero');
@@ -86,6 +91,7 @@ export function KangurParentDashboardHeroWidget({
         className='mx-auto w-full max-w-2xl'
         description={guestDescription}
         headingAs='h1'
+        showBackButton={false}
         onBack={handleGoHome}
         testId='kangur-parent-dashboard-hero'
         title={guestHeroContent?.title ?? 'Panel Rodzica / Nauczyciela'}
@@ -135,6 +141,7 @@ export function KangurParentDashboardHeroWidget({
         className='mx-auto w-full max-w-2xl'
         description={restrictedDescription}
         headingAs='h1'
+        showBackButton={false}
         onBack={handleGoToProfile}
         testId='kangur-parent-dashboard-hero'
         title='Panel Rodzica'
@@ -152,7 +159,12 @@ export function KangurParentDashboardHeroWidget({
     );
   }
 
-  const dailyQuest = useMemo(() => getCurrentKangurDailyQuest(progress), [progress]);
+  const activeLearnerId = activeLearner?.id ?? null;
+  const hasActiveLearner = Boolean(activeLearnerId);
+  const dailyQuest = useMemo(
+    () => (activeLearnerId ? getCurrentKangurDailyQuest(progress) : null),
+    [activeLearnerId, progress]
+  );
   const dailyQuestAccent =
     dailyQuest?.reward.status === 'claimed'
       ? 'emerald'
@@ -168,10 +180,7 @@ export function KangurParentDashboardHeroWidget({
       className='mx-auto w-full max-w-2xl'
       description={
         <>
-          {dashboardHeroContent?.summary ? `${dashboardHeroContent.summary} ` : null}
-          Rola: <span className='font-semibold [color:var(--kangur-page-text)]'>{viewerRoleLabel}</span>. Konto
-          właściciela: <span className='font-semibold [color:var(--kangur-page-text)]'>{viewerName}</span>. Wybrany
-          uczeń:{' '}
+          Wybrany uczeń:{' '}
           <span className='font-semibold [color:var(--kangur-page-text)]'>
             {activeLearner?.displayName ?? 'Brak profilu'}
           </span>
@@ -179,68 +188,99 @@ export function KangurParentDashboardHeroWidget({
         </>
       }
       headingAs='h1'
+      showBackButton={false}
       onBack={handleGoToProfile}
       testId='kangur-parent-dashboard-hero'
       title={dashboardHeroContent?.title ?? 'Panel Rodzica'}
     >
-      {dailyQuest ? (
-        <div
-          className='soft-card mb-3 rounded-[28px] border border-indigo-200/80 px-4 py-4 text-left shadow-[0_18px_40px_-32px_rgba(79,99,216,0.35)]'
-          data-testid='kangur-parent-dashboard-daily-quest'
-          style={{
-            background:
-              'color-mix(in srgb, var(--kangur-soft-card-background) 88%, rgba(224,231,255,0.92))',
-          }}
-        >
-          <KangurDailyQuestHighlightCardContent
-            action={
-              <KangurButton
-                asChild
-                className='w-full sm:w-auto sm:shrink-0'
-                size='sm'
-                variant='surface'
-              >
-                <Link
-                  href={buildAssignmentHref(basePath, dailyQuest.assignment.action)}
-                  targetPageKey={dailyQuest.assignment.action.page}
-                  transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
-                  transitionSourceId='parent-dashboard-daily-quest'
-                >
-                  {dailyQuest.assignment.action.label}
-                </Link>
-              </KangurButton>
-            }
-            description={dailyQuest.progress.summary}
-            progressAccent={dailyQuestAccent}
-            progressLabel={`${dailyQuest.progress.percent}%`}
-            questLabel={dailyQuest.assignment.questLabel ?? 'Misja dnia'}
-            rewardAccent={dailyQuest.reward.status === 'claimed' ? 'emerald' : dailyQuestAccent}
-            rewardLabel={dailyQuest.reward.label}
-            title={
-              <>
-                {activeLearner?.displayName ? `${activeLearner.displayName}: ` : ''}
-                {dailyQuest.assignment.title}
-              </>
-            }
-          />
+      {hasActiveLearner ? (
+        <>
+          {dailyQuest ? (
+            <div
+              className='soft-card mb-3 rounded-[28px] border border-indigo-200/80 px-4 py-4 text-left shadow-[0_18px_40px_-32px_rgba(79,99,216,0.35)]'
+              data-testid='kangur-parent-dashboard-daily-quest'
+              style={{
+                background:
+                  'color-mix(in srgb, var(--kangur-soft-card-background) 88%, rgba(224,231,255,0.92))',
+              }}
+            >
+              <KangurDailyQuestHighlightCardContent
+                action={
+                  <KangurButton
+                    asChild
+                    className='w-full sm:w-auto sm:shrink-0'
+                    size='sm'
+                    variant='surface'
+                  >
+                    <Link
+                      href={buildAssignmentHref(basePath, dailyQuest.assignment.action)}
+                      targetPageKey={dailyQuest.assignment.action.page}
+                      transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
+                      transitionSourceId='parent-dashboard-daily-quest'
+                    >
+                      {dailyQuest.assignment.action.label}
+                    </Link>
+                  </KangurButton>
+                }
+                description={dailyQuest.progress.summary}
+                progressAccent={dailyQuestAccent}
+                progressLabel={`${dailyQuest.progress.percent}%`}
+                questLabel={dailyQuest.assignment.questLabel ?? 'Misja dnia'}
+                rewardAccent={dailyQuest.reward.status === 'claimed' ? 'emerald' : dailyQuestAccent}
+                rewardLabel={dailyQuest.reward.label}
+                title={
+                  <>
+                    {activeLearner?.displayName ? `${activeLearner.displayName}: ` : ''}
+                    {dailyQuest.assignment.title}
+                  </>
+                }
+              />
+            </div>
+          ) : null}
+
+          <div className='mb-3 text-left' data-testid='kangur-parent-dashboard-track-summary'>
+            <KangurSectionEyebrow as='p' className='mb-2 tracking-[0.18em]'>
+              Ścieżki postępu ucznia
+            </KangurSectionEyebrow>
+            <KangurHeroMilestoneSummary
+              className='mb-3'
+              dataTestIdPrefix='kangur-parent-dashboard-hero-milestone'
+              progress={progress}
+            />
+            <KangurBadgeTrackHighlights
+              dataTestIdPrefix='kangur-parent-dashboard-track'
+              limit={3}
+              progress={progress}
+            />
+          </div>
+        </>
+      ) : (
+        <div className='mb-3 text-left' data-testid='kangur-parent-dashboard-no-learner'>
+          <KangurEmptyState
+            align='left'
+            className='text-left'
+            padding='md'
+            title='Brak profilu ucznia'
+            description='Dodaj lub wybierz profil ucznia w sekcji poniżej, aby zobaczyć postęp i misje dnia.'
+          >
+            <KangurButton
+              className='w-full sm:w-auto'
+              size='sm'
+              variant='surface'
+              onClick={() => setCreateLearnerModalOpen(true)}
+              data-doc-id='parent_open_create_learner'
+            >
+              Dodaj ucznia
+            </KangurButton>
+          </KangurEmptyState>
+        </div>
+      )}
+
+      {showLearnerManagement ? (
+        <div className='mt-4 text-left' ref={learnerManagementAnchorRef}>
+          <KangurParentDashboardLearnerManagementWidget />
         </div>
       ) : null}
-
-      <div className='mb-3 text-left' data-testid='kangur-parent-dashboard-track-summary'>
-        <KangurSectionEyebrow as='p' className='mb-2 tracking-[0.18em]'>
-          Ścieżki postępu ucznia
-        </KangurSectionEyebrow>
-        <KangurHeroMilestoneSummary
-          className='mb-3'
-          dataTestIdPrefix='kangur-parent-dashboard-hero-milestone'
-          progress={progress}
-        />
-        <KangurBadgeTrackHighlights
-          dataTestIdPrefix='kangur-parent-dashboard-track'
-          limit={3}
-          progress={progress}
-        />
-      </div>
 
       {showActions ? (
         <div className='flex flex-col items-center gap-2'>

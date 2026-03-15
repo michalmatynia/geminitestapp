@@ -5,6 +5,7 @@ import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/Ka
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 
 type KangurProfileMenuProps = {
+  label?: string;
   profile?: {
     href: string;
     isActive?: boolean;
@@ -18,6 +19,7 @@ type KangurProfileMenuProps = {
 };
 
 export function KangurProfileMenu({
+  label,
   profile,
   triggerClassName,
   basePath,
@@ -50,7 +52,7 @@ export function KangurProfileMenu({
         transitionSourceId={transitionSourceId}
       >
         <User className='h-[18px] w-[18px] sm:h-5 sm:w-5' strokeWidth={2.15} />
-        <span>Profil</span>
+        <span>{label ?? 'Profil'}</span>
       </Link>
     </KangurButton>
   );

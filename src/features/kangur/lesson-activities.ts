@@ -28,7 +28,7 @@ export const KANGUR_LESSON_ACTIVITY_DEFINITIONS: Record<
     label: 'Subtracting game',
     title: 'Gra z odejmowaniem',
     description:
-      'Przeciagaj i zabieraj obiekty, aby szybciej liczyc odejmowanie.',
+      'Przeciągaj i zabieraj obiekty, aby szybciej liczyć odejmowanie.',
   },
   'multiplication-array': {
     id: 'multiplication-array',

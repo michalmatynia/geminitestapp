@@ -25,7 +25,6 @@ import {
   KangurButton,
   KangurCardDescription,
   KangurCardTitle,
-  KangurGlassPanel,
   KangurPanelIntro,
   KangurSelectField,
   KangurSectionEyebrow,
@@ -326,18 +325,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
   ]);
 
   if (!activeLearner) {
-    return (
-      <KangurGlassPanel padding='lg' surface='solid' variant='soft' className='w-full text-center'>
-        <div className='flex flex-col gap-2'>
-          {aiTutorSectionContent ? (
-            <KangurPanelIntro description={sectionSummary} title={sectionTitle} titleAs='p' />
-          ) : null}
-          <p className='text-sm [color:var(--kangur-page-muted-text)]'>
-            {tutorContent.parentDashboard.noActiveLearner}
-          </p>
-        </div>
-      </KangurGlassPanel>
-    );
+    return null;
   }
 
   return (
@@ -465,32 +453,23 @@ function AiTutorConfigPanel(): React.JSX.Element {
         {settingsManagedNoticeAfter}
       </div>
 
-      {/* Enable toggle */}
-      <label className='flex items-center gap-3 cursor-pointer select-none'>
-        <div className='relative'>
-          <input
-            type='checkbox'
-            className='sr-only'
-            checked={enabled}
-            onChange={(e) => setEnabled(e.target.checked)}
-          />
-          <div
-            className={`w-10 h-5 rounded-full transition-all ${
-              enabled
-                ? 'bg-gradient-to-r kangur-gradient-accent-amber shadow-[0_8px_18px_-14px_rgba(249,115,22,0.72)]'
-                : '[background:color-mix(in_srgb,var(--kangur-soft-card-border)_86%,#94a3b8)]'
-            }`}
-          />
-          <div
-            className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full [background:var(--kangur-soft-card-background)] shadow transition-transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`}
-          />
-        </div>
+      <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
         <span className='text-sm font-medium [color:var(--kangur-page-text)]'>
           {enabled
             ? tutorContent.parentDashboard.toggleEnabledLabel
             : tutorContent.parentDashboard.toggleDisabledLabel}
         </span>
-      </label>
+        <KangurButton
+          className='w-full sm:w-auto'
+          onClick={() => setEnabled((current) => !current)}
+          size='sm'
+          variant={enabled ? 'surface' : 'primary'}
+        >
+          {enabled
+            ? tutorContent.parentDashboard.toggleDisableActionLabel
+            : tutorContent.parentDashboard.toggleEnableActionLabel}
+        </KangurButton>
+      </div>
 
       <div className='space-y-3'>
         <KangurSectionEyebrow className='text-xs tracking-wide'>

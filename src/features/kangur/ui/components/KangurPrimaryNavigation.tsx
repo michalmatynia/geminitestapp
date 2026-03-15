@@ -201,6 +201,17 @@ export function KangurPrimaryNavigation({
     ? Boolean(auth.user.canManageLearners)
     : canManageLearners;
   const effectiveShowParentDashboard = effectiveCanManageLearners && showParentDashboard;
+  const authUser = auth?.user ?? null;
+  const isParentAccount = authUser?.actorType === 'parent';
+  const activeLearner = authUser?.activeLearner ?? null;
+  const activeLearnerId = activeLearner?.id?.trim() ?? '';
+  const hasActiveLearner = activeLearnerId.length > 0;
+  const activeLearnerName =
+    activeLearner?.displayName?.trim() || activeLearner?.loginName?.trim() || null;
+  const profileLabel =
+    isParentAccount && activeLearnerName ? `Profil ${activeLearnerName}` : 'Profil';
+  const shouldRenderProfileMenu =
+    effectiveIsAuthenticated && (!isParentAccount || hasActiveLearner);
   const mobileAuthActionClassName =
     'max-sm:min-w-0 max-sm:flex-1 max-sm:justify-center max-sm:px-3';
   const { entry: createAccountActionContent } = useKangurPageContentEntry(
@@ -492,13 +503,14 @@ export function KangurPrimaryNavigation({
       {renderNavAction(homeAction)}
       {renderNavAction(lessonsAction)}
       {tutorRestoreAction}
-      {effectiveIsAuthenticated ? (
+      {shouldRenderProfileMenu ? (
         <KangurProfileMenu
           isTransitionActive={isTransitionSourceActive({
             activeTransitionSourceId,
             transitionPhase,
             transitionSourceId: profileTransitionSourceId,
           })}
+          label={profileLabel}
           profile={{ href: profileHref, isActive: learnerProfileIsActive }}
           transitionAcknowledgeMs={NAVIGATION_TRANSITION_ACKNOWLEDGE_MS}
           transitionSourceId={profileTransitionSourceId}

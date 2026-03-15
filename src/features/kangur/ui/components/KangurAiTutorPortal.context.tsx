@@ -94,6 +94,7 @@ export type KangurAiTutorPortalContextValue = {
     shouldRender: boolean;
     onAccept: () => void;
     onClose: () => void;
+    onDismiss: () => void;
     onStartChat: () => void;
   };
   guidedCallout: {

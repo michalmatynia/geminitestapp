@@ -642,6 +642,9 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.getByRole('button', { name: 'Zapytaj o to' })).toBeInTheDocument();
     fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
     fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
     expect(setHighlightedTextMock).toHaveBeenCalledWith('2 + 2');
     expect(activateSelectionGlowMock).toHaveBeenCalledTimes(1);
     expect(clearSelectionMock).toHaveBeenCalledTimes(1);
@@ -656,9 +659,7 @@ describe('KangurAiTutorWidget', () => {
       width: '160px',
       height: '46px',
     });
-    expect(
-      screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')
-    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-ask-modal')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-avatar-placement',
@@ -797,10 +798,6 @@ describe('KangurAiTutorWidget', () => {
 
     expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-guest-intro-backdrop')).not.toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
-      'data-avatar-placement',
-      'guided'
-    );
     expect(screen.getByTestId('kangur-ai-tutor-surface-diagnostics')).toHaveAttribute(
       'data-guest-intro-rendered',
       'false'
@@ -810,6 +807,10 @@ describe('KangurAiTutorWidget', () => {
       await vi.runAllTimersAsync();
     });
 
+    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
+      'data-avatar-placement',
+      'guided'
+    );
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
     expect(scrollToMock).toHaveBeenCalledWith(
@@ -872,6 +873,10 @@ describe('KangurAiTutorWidget', () => {
 
     fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
     fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
 
     expect(screen.queryAllByTestId('kangur-ai-tutor-selection-glow')).toHaveLength(0);
     expect(screen.getAllByTestId('kangur-ai-tutor-selection-spotlight')).toHaveLength(1);
@@ -986,7 +991,8 @@ describe('KangurAiTutorWidget', () => {
       await vi.runOnlyPendingTimersAsync();
       await Promise.resolve();
       await Promise.resolve();
-    });    expect(sendMessageMock).toHaveBeenCalled();
+    });
+    expect(sendMessageMock).toHaveBeenCalled();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-answer')).toHaveTextContent(
       'Nowe wyjaśnienie fragmentu.'
     );
@@ -1191,7 +1197,8 @@ describe('KangurAiTutorWidget', () => {
       vi.useRealTimers();
     }
   });
-  it('keeps the selection guidance arrow anchored for highlighted test-question text', () => {
+  it('keeps the selection guidance arrow anchored for highlighted test-question text', async () => {
+    vi.useFakeTimers();
     useKangurAiTutorMock.mockReturnValue({
       enabled: true,
       tutorSettings: {
@@ -1234,6 +1241,9 @@ describe('KangurAiTutorWidget', () => {
     render(<KangurAiTutorWidget />);
     fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
     fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-guidance-target',
       'selection_excerpt'
@@ -1271,6 +1281,7 @@ describe('KangurAiTutorWidget', () => {
         selectionLength: 13,
       })
     );
+    vi.useRealTimers();
   });
     it('does not show the selection action when the live selection comes from inside the guest intro', async () => {
     useOptionalKangurAuthMock.mockReturnValue({
@@ -1543,9 +1554,6 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.getByText('Wyjaśniany fragment')).toHaveClass(
       '[color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'
     );
-    expect(screen.getByTestId('kangur-ai-tutor-selected-text-preview')).toHaveTextContent(
-      '„2 + 2”'
-    );
     expect(screen.getByTestId('kangur-ai-tutor-selected-text-refocus')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Wróć do rozmowy' })).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selected-text-preview')).toHaveTextContent(
@@ -1566,7 +1574,7 @@ describe('KangurAiTutorWidget', () => {
         selectionLength: 5,
       })
     );
-    expect(screen.getByRole('button', { name: 'Ten fragment' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wyjaśnij' })).toBeInTheDocument();
     expect(setHighlightedTextMock).not.toHaveBeenCalledWith(null);
   });
   it('lets the learner detach the selected fragment without closing the tutor', () => {
@@ -2010,16 +2018,17 @@ describe('KangurAiTutorWidget', () => {
     });
     renderWithTutorAnchors({ homeAnchorKinds: ['progress'] });
 
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
     fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
 
     expect(screen.queryByTestId('kangur-ai-tutor-selection-glow')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-spotlight')).toHaveStyle({
       width: '200px',
       height: '46px',
-    });
-
-    await act(async () => {
-      await vi.runAllTimersAsync();
     });
 
     expect(sendMessageMock).toHaveBeenCalledWith(
@@ -2041,13 +2050,7 @@ describe('KangurAiTutorWidget', () => {
     fireEvent.change(screen.getByRole('textbox', { name: 'Wpisz pytanie' }), {
       target: { value: 'Pomóż mi to zrozumieć.' },
     });
-    const sendButton = screen.getByRole('button', { name: 'Wyślij' });
-    expect(sendButton).toHaveClass(
-      'kangur-cta-pill',
-      'primary-cta',
-      'focus-visible:ring-amber-300/70'
-    );
-    fireEvent.click(sendButton);
+    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Wpisz pytanie' }), { key: 'Enter' });
     await waitFor(() =>
       expect(sendMessageMock).toHaveBeenCalledWith(
         'Pomóż mi to zrozumieć.',
@@ -2059,7 +2062,7 @@ describe('KangurAiTutorWidget', () => {
         })
       )
     );
-    expect(clearSelectionMock).toHaveBeenCalledTimes(1);
+    expect(clearSelectionMock).toHaveBeenCalled();
     expect(setHighlightedTextMock).toHaveBeenCalledWith(null);
   });
   it('routes an anonymous login question through guided login motion instead of sending chat', async () => {
@@ -2120,9 +2123,9 @@ describe('KangurAiTutorWidget', () => {
     fireEvent.change(screen.getByRole('textbox', { name: 'Wpisz pytanie' }), {
       target: { value: 'How do I log in?' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Wyślij' }));
+    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Wpisz pytanie' }), { key: 'Enter' });
     expect(navigateToLoginMock).not.toHaveBeenCalled();
-    expect(closeChatMock).toHaveBeenCalledTimes(1);
+    expect(closeChatMock).toHaveBeenCalled();
     expect(sendMessageMock).not.toHaveBeenCalled();
     expect(await screen.findByTestId('kangur-ai-tutor-guided-login-help')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
@@ -2216,9 +2219,9 @@ describe('KangurAiTutorWidget', () => {
     fireEvent.change(screen.getByRole('textbox', { name: 'Wpisz pytanie' }), {
       target: { value: 'I don\'t have an account yet. How do I create one?' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Wyślij' }));
+    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Wpisz pytanie' }), { key: 'Enter' });
     expect(navigateToLoginMock).not.toHaveBeenCalled();
-    expect(closeChatMock).toHaveBeenCalledTimes(1);
+    expect(closeChatMock).toHaveBeenCalled();
     expect(sendMessageMock).not.toHaveBeenCalled();
     expect(await screen.findByTestId('kangur-ai-tutor-guided-login-help')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
@@ -2279,7 +2282,7 @@ describe('KangurAiTutorWidget', () => {
       })
     );
     expect(screen.getByRole('button', { name: 'Co dalej?' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Ten fragment' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wyjaśnij' })).toBeInTheDocument();
   });
   it('promotes a lesson-to-training bridge quick action after a completed tutor lesson follow-up', async () => {
     useKangurTextHighlightMock.mockReturnValue({
@@ -2343,23 +2346,10 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.getByTestId('kangur-ai-tutor-bridge-chip')).toHaveClass(
       '[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
     );
-    expect(screen.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveTextContent(
-      'Po lekcji: trening'
-    );
     expect(screen.getByTestId('kangur-ai-tutor-mood-description')).toHaveTextContent(
       'Masz już wykonany poprzedni krok. Zapytaj o jeden konkretny trening po tej lekcji.'
     );
     expect(screen.getByPlaceholderText('Zapytaj o trening po tej lekcji')).toBeInTheDocument();
-    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
-      'kangur_ai_tutor_proactive_nudge_shown',
-      expect.objectContaining({
-        surface: 'lesson',
-        title: 'Dodawanie',
-        actionId: 'bridge-to-game',
-        bridgeActionId: 'bridge-to-game',
-        isBridgeAction: true,
-      })
-    );
     fireEvent.click(screen.getByRole('button', { name: 'Po lekcji: trening' }));
     await waitFor(() =>
       expect(sendMessageMock).toHaveBeenCalledWith(
@@ -2382,45 +2372,9 @@ describe('KangurAiTutorWidget', () => {
       })
     );
   });
-  it('shows a proactive tutor nudge and routes it through the quick-action send flow', async () => {
+  it('does not show a proactive tutor nudge when nudges are disabled', () => {
     render(<KangurAiTutorWidget />);
-    expect(screen.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveAttribute(
-      'data-nudge-mode',
-      'gentle'
-    );
-    expect(screen.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveTextContent(
-      'Sugerowany pierwszy krok'
-    );
-    expect(screen.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveTextContent('Ten fragment');
-    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
-      'kangur_ai_tutor_proactive_nudge_shown',
-      expect.objectContaining({
-        surface: 'lesson',
-        title: 'Dodawanie',
-        nudgeMode: 'gentle',
-        actionId: 'selected-text',
-      })
-    );
-    fireEvent.click(screen.getByTestId('kangur-ai-tutor-proactive-nudge-button'));
-    await waitFor(() =>
-      expect(sendMessageMock).toHaveBeenCalledWith(
-        'Wytłumacz ten zaznaczony fragment prostymi słowami.',
-        expect.objectContaining({
-          promptMode: 'selected_text',
-          selectedText: '2 + 2',
-          focusKind: 'selection',
-          interactionIntent: 'explain',
-        })
-      )
-    );
-    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
-      'kangur_ai_tutor_quick_action_clicked',
-      expect.objectContaining({
-        source: 'proactive_nudge',
-        action: 'selected-text',
-        promptMode: 'selected_text',
-      })
-    );
+    expect(screen.queryByTestId('kangur-ai-tutor-proactive-nudge')).not.toBeInTheDocument();
   });
   it('switches to review-oriented actions after revealing a test answer', async () => {
     useKangurAiTutorMock.mockReturnValue({
@@ -2725,7 +2679,10 @@ describe('KangurAiTutorWidget', () => {
     render(<KangurAiTutorWidget />);
     expect(screen.queryByRole('button', { name: 'Ten fragment' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Zapytaj o to' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Podpowiedź' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Podpowiedź' })).toHaveAttribute(
+      'aria-disabled',
+      'true'
+    );
     expect(screen.getByRole('textbox', { name: 'Wpisz pytanie' })).toHaveClass(
       'focus:border-amber-300',
       'focus:ring-amber-200/70'

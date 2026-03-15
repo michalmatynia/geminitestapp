@@ -16,6 +16,7 @@ const {
 
 vi.mock('@/features/kangur/services/kangur-actor', () => ({
   resolveKangurActor: resolveKangurActorMock,
+  requireActiveLearner: (actor: { activeLearner?: unknown }) => actor.activeLearner,
 }));
 
 vi.mock('@/features/ai/ai-context-registry/server', () => ({

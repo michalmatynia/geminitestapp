@@ -7,12 +7,18 @@ import {
   KangurPracticeGameProgress,
   KangurPracticeGameStage,
   KangurPracticeGameSummary,
+  KangurPracticeGameSummaryActions,
+  KangurPracticeGameSummaryBreakdown,
+  KangurPracticeGameSummaryEmoji,
+  KangurPracticeGameSummaryMessage,
+  KangurPracticeGameSummaryProgress,
+  KangurPracticeGameSummaryTitle,
+  KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import {
   KangurButton,
   KangurEquationDisplay,
   KangurGlassPanel,
-  KangurHeadline,
   KangurInfoCard,
 } from '@/features/kangur/ui/design/primitives';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
@@ -283,42 +289,43 @@ export default function SubtractingGardenGame({
   if (done) {
     const percent = Math.round((score / TOTAL_ROUNDS) * 100);
     return (
-      <KangurPracticeGameSummary
-        accent='rose'
-        breakdown={xpBreakdown}
-        breakdownDataTestId='subtracting-garden-summary-breakdown'
-        breakdownItemDataTestIdPrefix='subtracting-garden-summary-breakdown'
-        dataTestId='subtracting-garden-summary-shell'
-        emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
-        emojiDataTestId='subtracting-garden-summary-emoji'
-        finishLabel={finishLabel}
-        message={
-          percent === 100
+      <KangurPracticeGameSummary dataTestId='subtracting-garden-summary-shell'>
+        <KangurPracticeGameSummaryEmoji
+          dataTestId='subtracting-garden-summary-emoji'
+          emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
+        />
+        <KangurPracticeGameSummaryTitle
+          dataTestId='subtracting-garden-summary-title'
+          title={`Wynik: ${score}/${TOTAL_ROUNDS}`}
+        />
+        <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
+        <KangurPracticeGameSummaryBreakdown
+          breakdown={xpBreakdown}
+          dataTestId='subtracting-garden-summary-breakdown'
+          itemDataTestIdPrefix='subtracting-garden-summary-breakdown'
+        />
+        <KangurPracticeGameSummaryProgress accent='rose' percent={percent} />
+        <KangurPracticeGameSummaryMessage>
+          {percent === 100
             ? 'Idealnie! Odejmowanie masz w jednym palcu.'
             : percent >= 60
               ? 'Swietna robota!'
-              : 'Cwicz dalej!'
-        }
-        onFinish={handleFinishGame}
-        onRestart={() => {
-          setRoundIndex(0);
-          setScore(0);
-          setDone(false);
-          setXpEarned(0);
-          setXpBreakdown([]);
-          resetRound(createRound(0));
-          sessionStartedAtRef.current = Date.now();
-        }}
-        percent={percent}
-        progressAccent='rose'
-        title={
-          <KangurHeadline data-testid='subtracting-garden-summary-title'>
-            Wynik: {score}/{TOTAL_ROUNDS}
-          </KangurHeadline>
-        }
-        xpAccent='indigo'
-        xpEarned={xpEarned}
-      />
+              : 'Cwicz dalej!'}
+        </KangurPracticeGameSummaryMessage>
+        <KangurPracticeGameSummaryActions
+          finishLabel={finishLabel}
+          onFinish={handleFinishGame}
+          onRestart={() => {
+            setRoundIndex(0);
+            setScore(0);
+            setDone(false);
+            setXpEarned(0);
+            setXpBreakdown([]);
+            resetRound(createRound(0));
+            sessionStartedAtRef.current = Date.now();
+          }}
+        />
+      </KangurPracticeGameSummary>
     );
   }
 

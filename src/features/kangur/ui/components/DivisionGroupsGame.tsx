@@ -7,6 +7,13 @@ import {
   KangurPracticeGameProgress,
   KangurPracticeGameStage,
   KangurPracticeGameSummary,
+  KangurPracticeGameSummaryActions,
+  KangurPracticeGameSummaryBreakdown,
+  KangurPracticeGameSummaryEmoji,
+  KangurPracticeGameSummaryMessage,
+  KangurPracticeGameSummaryProgress,
+  KangurPracticeGameSummaryTitle,
+  KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import {
   KangurButton,
@@ -438,42 +445,47 @@ export default function DivisionGroupsGame({
   if (done) {
     const percent = Math.round((score / TOTAL_ROUNDS) * 100);
     return (
-      <KangurPracticeGameSummary
-        accent='teal'
-        breakdown={xpBreakdown}
-        breakdownDataTestId='division-groups-summary-breakdown'
-        breakdownItemDataTestIdPrefix='division-groups-summary-breakdown'
-        dataTestId='division-groups-summary-shell'
-        emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
-        emojiDataTestId='division-groups-summary-emoji'
-        finishLabel={finishLabel}
-        message={
-          percent === 100
+      <KangurPracticeGameSummary dataTestId='division-groups-summary-shell'>
+        <KangurPracticeGameSummaryEmoji
+          dataTestId='division-groups-summary-emoji'
+          emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
+        />
+        <KangurPracticeGameSummaryTitle
+          accent='teal'
+          title={
+            <KangurHeadline data-testid='division-groups-summary-title'>
+              Wynik: {score}/{TOTAL_ROUNDS}
+            </KangurHeadline>
+          }
+        />
+        <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
+        <KangurPracticeGameSummaryBreakdown
+          breakdown={xpBreakdown}
+          dataTestId='division-groups-summary-breakdown'
+          itemDataTestIdPrefix='division-groups-summary-breakdown'
+        />
+        <KangurPracticeGameSummaryProgress accent='teal' percent={percent} />
+        <KangurPracticeGameSummaryMessage>
+          {percent === 100
             ? 'Idealnie! Dzielenie masz opanowane.'
             : percent >= 60
               ? 'Świetna robota!'
-              : 'Ćwicz dalej!'
-        }
-        onFinish={handleFinishGame}
-        onRestart={() => {
-          setRoundIndex(0);
-          setScore(0);
-          setDone(false);
-          setXpEarned(0);
-          setXpBreakdown([]);
-          resetRound(createRound(0));
-          sessionStartedAtRef.current = Date.now();
-        }}
-        percent={percent}
-        progressAccent='teal'
-        title={
-          <KangurHeadline data-testid='division-groups-summary-title'>
-            Wynik: {score}/{TOTAL_ROUNDS}
-          </KangurHeadline>
-        }
-        xpAccent='indigo'
-        xpEarned={xpEarned}
-      />
+              : 'Ćwicz dalej!'}
+        </KangurPracticeGameSummaryMessage>
+        <KangurPracticeGameSummaryActions
+          finishLabel={finishLabel}
+          onFinish={handleFinishGame}
+          onRestart={() => {
+            setRoundIndex(0);
+            setScore(0);
+            setDone(false);
+            setXpEarned(0);
+            setXpBreakdown([]);
+            resetRound(createRound(0));
+            sessionStartedAtRef.current = Date.now();
+          }}
+        />
+      </KangurPracticeGameSummary>
     );
   }
 

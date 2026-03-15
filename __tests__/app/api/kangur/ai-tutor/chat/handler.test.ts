@@ -58,6 +58,7 @@ vi.mock('@/features/kangur/server', () => ({
   resolveKangurActor: resolveKangurActorMock,
   buildKangurAiTutorLearnerMood: buildKangurAiTutorLearnerMoodMock,
   setKangurLearnerAiTutorState: setKangurLearnerAiTutorStateMock,
+  requireActiveLearner: (actor: { activeLearner?: unknown }) => actor.activeLearner,
 }));
 vi.mock('@/features/ai/agentcreator/server/persona-memory', () => ({
   buildPersonaChatMemoryContext: buildPersonaChatMemoryContextMock,

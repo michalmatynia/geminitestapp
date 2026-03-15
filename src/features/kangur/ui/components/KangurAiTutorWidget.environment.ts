@@ -383,14 +383,7 @@ export function useKangurAiTutorWidgetEnvironment({
   const isAuthenticatedVisitor = Boolean(
     mounted && authState && !authState.isLoadingAuth && authState.isAuthenticated
   );
-  const shouldRenderContextlessTutorUi = Boolean(
-    !isTutorHidden &&
-      isAuthenticatedVisitor &&
-      tutorSettings?.enabled &&
-      !sessionContext &&
-      authState?.user?.ownerEmailVerified !== false
-  );
-  const canSendMessages = remainingMessages !== 0 && !shouldRenderContextlessTutorUi;
+  const canSendMessages = remainingMessages !== 0;
   const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
   const isAnonymousVisitor = Boolean(
     mounted && authState && !authState.isLoadingAuth && !authState.isAuthenticated
@@ -483,7 +476,6 @@ export function useKangurAiTutorWidgetEnvironment({
     selectionContainerRect: liveSelectionContainerRect,
     selectedText: liveSelectedText,
     selectionRect: liveSelectionRect,
-    shouldRenderContextlessTutorUi,
     shouldRenderGuestIntroUi,
     shouldRepeatGuestIntroOnEntry,
     shouldRepeatHomeOnboardingOnEntry,

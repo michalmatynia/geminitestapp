@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const runtimeState = vi.hoisted(() => ({
   value: {
+    activeLearner: { id: 'learner-1', displayName: 'Maja' },
     activeTab: 'progress',
     canAccessDashboard: true,
     progress: {
@@ -72,6 +73,7 @@ describe('KangurParentDashboardProgressWidget', () => {
       status: 'success',
     });
     runtimeState.value = {
+      activeLearner: { id: 'learner-1', displayName: 'Maja' },
       activeTab: 'progress',
       canAccessDashboard: true,
       progress: {
@@ -124,6 +126,19 @@ describe('KangurParentDashboardProgressWidget', () => {
 
     expect(screen.queryByTestId('progress-overview-stub')).toBeNull();
     expect(getCurrentKangurDailyQuestMock).not.toHaveBeenCalled();
+  });
+
+  it('does not render when no active learner is selected', () => {
+    runtimeState.value = {
+      ...runtimeState.value,
+      activeLearner: null,
+    };
+
+    render(<KangurParentDashboardProgressWidget />);
+
+    expect(screen.queryByTestId('progress-overview-stub')).toBeNull();
+    expect(getCurrentKangurDailyQuestMock).not.toHaveBeenCalled();
+    expect(screen.queryByText('Postęp ucznia')).toBeNull();
   });
 
   it('renders Mongo-backed section intro copy when available', () => {

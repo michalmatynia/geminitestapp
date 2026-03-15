@@ -15,15 +15,24 @@ export function KangurParentDashboardAssignmentsWidget({
 }: {
   displayMode?: KangurParentDashboardPanelDisplayMode;
 }): React.JSX.Element | null {
-  const { activeTab, basePath, canAccessDashboard, progress } = useKangurParentDashboardRuntime();
+  const { activeLearner, activeTab, basePath, canAccessDashboard, progress } =
+    useKangurParentDashboardRuntime();
   const { entry: assignmentsContent } = useKangurPageContentEntry('parent-dashboard-assignments');
-  const dailyQuest = useMemo(() => getCurrentKangurDailyQuest(progress), [progress]);
+  const activeLearnerId = activeLearner?.id ?? null;
+  const dailyQuest = useMemo(
+    () => (activeLearnerId ? getCurrentKangurDailyQuest(progress) : null),
+    [activeLearnerId, progress]
+  );
 
   if (!canAccessDashboard) {
     return null;
   }
 
   if (!shouldRenderKangurParentDashboardPanel(displayMode, activeTab, 'assign')) {
+    return null;
+  }
+
+  if (!activeLearnerId) {
     return null;
   }
 

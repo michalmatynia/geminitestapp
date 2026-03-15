@@ -393,7 +393,7 @@ export const buildRecommendedKangurAssignmentCatalog = (
           id: `suggested-${assignment.id}`,
           title: assignment.title,
           description: assignment.description,
-          badge: 'Podpowiedz',
+          badge: 'Podpowiedź',
           group,
           priorityLabel: formatKangurAssignmentPriorityLabel(assignment.priority),
           createInput: {
@@ -420,7 +420,7 @@ export const buildRecommendedKangurAssignmentCatalog = (
           id: `suggested-${assignment.id}`,
           title: assignment.title,
           description: assignment.description,
-          badge: 'Podpowiedz',
+          badge: 'Podpowiedź',
           group: 'practice',
           priorityLabel: formatKangurAssignmentPriorityLabel(assignment.priority),
           createInput: {

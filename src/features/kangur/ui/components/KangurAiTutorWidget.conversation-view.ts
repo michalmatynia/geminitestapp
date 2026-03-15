@@ -258,16 +258,6 @@ const buildQuickActions = (input: {
     }
   }
 
-  if (input.hasSelectedText && !input.hasMessages && !input.isLoading) {
-    actions.push({
-      id: 'selected-text',
-      interactionIntent: 'explain',
-      label: input.tutorContent.quickActions.selectedText.label,
-      prompt: input.tutorContent.quickActions.selectedText.prompt,
-      promptMode: 'selected_text',
-    });
-  }
-
   return actions;
 };
 
@@ -382,8 +372,6 @@ type UseKangurAiTutorConversationViewStateInput = {
   activeFocus: Pick<ActiveTutorFocus, 'kind'>;
   activeSelectedText: string | null;
   canSendMessages: boolean;
-  contextlessDisabledPlaceholder: string;
-  contextlessEmptyStateMessage: string;
   hasAssignmentSummary: boolean;
   hasCurrentQuestion: boolean;
   highlightedSection: { anchorId: string } | null;
@@ -403,7 +391,6 @@ type UseKangurAiTutorConversationViewStateInput = {
     surface: TutorSurface | null | undefined;
     title: string | null | undefined;
   };
-  shouldRenderContextlessTutorUi: boolean;
   tutorContent: KangurAiTutorContent;
 };
 
@@ -485,35 +472,27 @@ export function useKangurAiTutorConversationViewState(
       !isSectionExplainPendingMode
   );
   const visibleQuickActions =
-    input.shouldRenderContextlessTutorUi ||
-    isSelectionExplainPendingMode ||
-    isSectionExplainPendingMode
-      ? []
-      : quickActions;
+    isSelectionExplainPendingMode || isSectionExplainPendingMode ? [] : quickActions;
   const visibleProactiveNudge = null;
-  const emptyStateMessage = input.shouldRenderContextlessTutorUi
-    ? input.contextlessEmptyStateMessage
-    : getEmptyStateMessage({
-      answerRevealed: input.sessionContext.answerRevealed,
-      bridgeQuickAction,
-      hasAssignmentSummary: input.hasAssignmentSummary,
-      hasCurrentQuestion: input.hasCurrentQuestion,
-      hasSelectedText: Boolean(input.activeSelectedText),
-      surface: input.sessionContext.surface,
-      tutorContent: input.tutorContent,
-    });
-  const inputPlaceholder = input.shouldRenderContextlessTutorUi
-    ? input.contextlessDisabledPlaceholder
-    : getInputPlaceholder({
-      answerRevealed: input.sessionContext.answerRevealed,
-      bridgeQuickAction,
-      canSendMessages: input.canSendMessages,
-      hasAssignmentSummary: input.hasAssignmentSummary,
-      hasCurrentQuestion: input.hasCurrentQuestion,
-      hasSelectedText: Boolean(input.activeSelectedText),
-      surface: input.sessionContext.surface,
-      tutorContent: input.tutorContent,
-    });
+  const emptyStateMessage = getEmptyStateMessage({
+    answerRevealed: input.sessionContext.answerRevealed,
+    bridgeQuickAction,
+    hasAssignmentSummary: input.hasAssignmentSummary,
+    hasCurrentQuestion: input.hasCurrentQuestion,
+    hasSelectedText: Boolean(input.activeSelectedText),
+    surface: input.sessionContext.surface,
+    tutorContent: input.tutorContent,
+  });
+  const inputPlaceholder = getInputPlaceholder({
+    answerRevealed: input.sessionContext.answerRevealed,
+    bridgeQuickAction,
+    canSendMessages: input.canSendMessages,
+    hasAssignmentSummary: input.hasAssignmentSummary,
+    hasCurrentQuestion: input.hasCurrentQuestion,
+    hasSelectedText: Boolean(input.activeSelectedText),
+    surface: input.sessionContext.surface,
+    tutorContent: input.tutorContent,
+  });
 
   return {
     bridgeQuickAction,

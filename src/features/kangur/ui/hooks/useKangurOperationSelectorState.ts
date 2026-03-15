@@ -47,10 +47,10 @@ const OPERATIONS: Array<{
 }> = [
   { accent: 'emerald', id: 'addition', label: 'Dodawanie', emoji: '➕' },
   { accent: 'sky', id: 'subtraction', label: 'Odejmowanie', emoji: '➖' },
-  { accent: 'violet', id: 'multiplication', label: 'Mnozenie', emoji: '✖️' },
+  { accent: 'violet', id: 'multiplication', label: 'Mnożenie', emoji: '✖️' },
   { accent: 'amber', id: 'division', label: 'Dzielenie', emoji: '➗' },
-  { accent: 'teal', id: 'decimals', label: 'Ulamki', emoji: '🔢' },
-  { accent: 'amber', id: 'powers', label: 'Potegi', emoji: '⚡' },
+  { accent: 'teal', id: 'decimals', label: 'Ułamki', emoji: '🔢' },
+  { accent: 'amber', id: 'powers', label: 'Potęgi', emoji: '⚡' },
   { accent: 'indigo', id: 'roots', label: 'Pierwiastki', emoji: '√' },
   { accent: 'sky', id: 'clock', label: 'Zegar', emoji: '🕐' },
   { accent: 'rose', id: 'mixed', label: 'Mieszane', emoji: '🎲' },

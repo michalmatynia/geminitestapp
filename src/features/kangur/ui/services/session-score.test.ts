@@ -92,4 +92,23 @@ describe('persistKangurSessionScore', () => {
       })
     );
   });
+
+  it('skips score persistence for parent accounts', async () => {
+    authMeMock.mockResolvedValue({
+      actorType: 'parent',
+      full_name: 'Rodzic',
+      activeLearner: { displayName: 'Maja' },
+    });
+
+    await persistKangurSessionScore({
+      operation: 'adding',
+      score: 4,
+      totalQuestions: 6,
+      correctAnswers: 4,
+      timeTakenSeconds: 30,
+      xpEarned: 18,
+    });
+
+    expect(createScoreMock).not.toHaveBeenCalled();
+  });
 });

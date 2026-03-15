@@ -1,7 +1,16 @@
 import { Eraser, PencilRuler } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-import { KangurPracticeGameSummary } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
+import {
+  KangurPracticeGameSummary,
+  KangurPracticeGameSummaryActions,
+  KangurPracticeGameSummaryBreakdown,
+  KangurPracticeGameSummaryEmoji,
+  KangurPracticeGameSummaryMessage,
+  KangurPracticeGameSummaryProgress,
+  KangurPracticeGameSummaryTitle,
+  KangurPracticeGameSummaryXP,
+} from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import {
   KangurButton,
   KangurDisplayEmoji,
@@ -503,34 +512,13 @@ export default function GeometryDrawingGame({
       className='flex flex-col items-center gap-4 w-full max-w-sm'
     >
       {done ? (
-        <KangurPracticeGameSummary
-          accent='violet'
-          actionsClassName='flex-col sm:flex-row'
-          breakdown={xpBreakdown}
-          breakdownDataTestId='geometry-drawing-summary-breakdown'
-          breakdownItemDataTestIdPrefix='geometry-drawing-summary-breakdown'
-          dataTestId='geometry-drawing-summary-shell'
-          emoji={score === totalRounds ? '🏆' : score >= 3 ? '🌟' : '💪'}
-          emojiAriaHidden
-          emojiDataTestId='geometry-drawing-summary-emoji'
-          finishButtonClassName='w-full sm:flex-1'
-          finishLabel='Wróć'
-          message={
-            score === totalRounds
-              ? 'Perfekcyjnie! Twoje figury są wzorowe.'
-              : score >= Math.ceil(totalRounds / 2)
-                ? 'Świetna robota! Rysujesz coraz dokładniej.'
-                : 'Ćwicz dalej. Każda kolejna figura będzie lepsza.'
-          }
-          onFinish={handleFinishSession}
-          onRestart={handleRestart}
-          percent={Math.round((score / totalRounds) * 100)}
-          progressAccent='emerald'
-          progressAriaLabel='Dokładność w treningu figur'
-          progressAriaValueText={`${Math.round((score / totalRounds) * 100)}% poprawnych figur`}
-          progressDataTestId='geometry-drawing-summary-progress-bar'
-          restartButtonClassName='w-full sm:flex-1'
-          title={
+        <KangurPracticeGameSummary dataTestId='geometry-drawing-summary-shell'>
+          <KangurPracticeGameSummaryEmoji
+            ariaHidden
+            dataTestId='geometry-drawing-summary-emoji'
+            emoji={score === totalRounds ? '🏆' : score >= 3 ? '🌟' : '💪'}
+          />
+          <KangurPracticeGameSummaryTitle unwrapped>
             <KangurHeadline
               accent='violet'
               as='h3'
@@ -539,11 +527,36 @@ export default function GeometryDrawingGame({
             >
               Wynik: {score}/{totalRounds}
             </KangurHeadline>
-          }
-          titleUnwrapped
-          xpAccent='indigo'
-          xpEarned={xpEarned}
-        />
+          </KangurPracticeGameSummaryTitle>
+          <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
+          <KangurPracticeGameSummaryBreakdown
+            breakdown={xpBreakdown}
+            dataTestId='geometry-drawing-summary-breakdown'
+            itemDataTestIdPrefix='geometry-drawing-summary-breakdown'
+          />
+          <KangurPracticeGameSummaryProgress
+            accent='emerald'
+            ariaLabel='Dokładność w treningu figur'
+            ariaValueText={`${Math.round((score / totalRounds) * 100)}% poprawnych figur`}
+            dataTestId='geometry-drawing-summary-progress-bar'
+            percent={Math.round((score / totalRounds) * 100)}
+          />
+          <KangurPracticeGameSummaryMessage>
+            {score === totalRounds
+              ? 'Perfekcyjnie! Twoje figury są wzorowe.'
+              : score >= Math.ceil(totalRounds / 2)
+                ? 'Świetna robota! Rysujesz coraz dokładniej.'
+                : 'Ćwicz dalej. Każda kolejna figura będzie lepsza.'}
+          </KangurPracticeGameSummaryMessage>
+          <KangurPracticeGameSummaryActions
+            className='flex-col sm:flex-row'
+            finishButtonClassName='w-full sm:flex-1'
+            finishLabel='Wróć'
+            onFinish={handleFinishSession}
+            onRestart={handleRestart}
+            restartButtonClassName='w-full sm:flex-1'
+          />
+        </KangurPracticeGameSummary>
       ) : (
         <>
           <div aria-live='polite' aria-atomic='true' className='sr-only'>
@@ -654,7 +667,7 @@ export default function GeometryDrawingGame({
               >
                 <canvas
                   aria-describedby='geometry-drawing-hint geometry-drawing-input-help'
-                  aria-label={`Plansza do rysowania figury ${currentRound?.label}. Uzyj myszy lub dotyku, aby narysowac figure.`}
+                aria-label={`Plansza do rysowania figury ${currentRound?.label}. Użyj myszy lub dotyku, aby narysować figurę.`}
                   aria-keyshortcuts='Enter Space ArrowUp ArrowDown ArrowLeft ArrowRight Escape'
                   data-testid='geometry-drawing-canvas'
                   role='img'

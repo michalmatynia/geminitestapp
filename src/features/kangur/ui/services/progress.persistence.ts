@@ -15,6 +15,7 @@ const DEFAULT_PROGRESS_RAW = JSON.stringify(DEFAULT_PROGRESS);
 let cachedProgressSnapshot: KangurProgressState = { ...DEFAULT_PROGRESS };
 let cachedProgressRaw: string | null = DEFAULT_PROGRESS_RAW;
 const SERVER_PROGRESS_SNAPSHOT: KangurProgressState = { ...DEFAULT_PROGRESS };
+let progressPersistenceEnabled = true;
 
 const progressListeners = new Set<(progress: KangurProgressState) => void>();
 
@@ -52,8 +53,29 @@ export function emitProgressChange(progress: KangurProgressState): void {
   progressListeners.forEach((listener) => listener(progress));
 }
 
+export function setProgressPersistenceEnabled(enabled: boolean): void {
+  if (progressPersistenceEnabled === enabled) {
+    return;
+  }
+
+  progressPersistenceEnabled = enabled;
+
+  if (!enabled) {
+    updateCachedProgressSnapshot(DEFAULT_PROGRESS);
+    emitProgressChange(cachedProgressSnapshot);
+  }
+}
+
+export function isProgressPersistenceEnabled(): boolean {
+  return progressPersistenceEnabled;
+}
+
 export function loadProgress(): KangurProgressState {
   if (typeof window === 'undefined') {
+    return cachedProgressSnapshot;
+  }
+
+  if (!progressPersistenceEnabled) {
     return cachedProgressSnapshot;
   }
 
@@ -84,6 +106,11 @@ export function saveProgress(progress: KangurProgressState): void {
     return;
   }
 
+  if (!progressPersistenceEnabled) {
+    emitProgressChange(normalized);
+    return;
+  }
+
   localStorage.setItem(
     KANGUR_PROGRESS_STORAGE_KEY,
     cachedProgressRaw ?? JSON.stringify(normalized)
@@ -93,6 +120,10 @@ export function saveProgress(progress: KangurProgressState): void {
 
 export function loadProgressOwnerKey(): string | null {
   if (typeof window === 'undefined') {
+    return null;
+  }
+
+  if (!progressPersistenceEnabled) {
     return null;
   }
 
@@ -106,6 +137,10 @@ export function loadProgressOwnerKey(): string | null {
 
 export function saveProgressOwnerKey(ownerKey: string | null): void {
   if (typeof window === 'undefined') {
+    return;
+  }
+
+  if (!progressPersistenceEnabled) {
     return;
   }
 

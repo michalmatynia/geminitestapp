@@ -133,7 +133,7 @@ describe('KangurLearnerAssignmentsPanel', () => {
       entry: {
         id: 'learner-profile-assignments',
         title: 'Przebieg przydzielonych zadań',
-        summary: 'Mongo opis aktywnych i zakonczonych przydziałów ucznia.',
+        summary: 'Mongo opis aktywnych i zakończonych przydziałów ucznia.',
       },
       data: undefined,
       isLoading: false,
@@ -157,7 +157,7 @@ describe('KangurLearnerAssignmentsPanel', () => {
 
     expect(screen.getByText('Przebieg przydzielonych zadań')).toBeInTheDocument();
     expect(
-      screen.getByText('Mongo opis aktywnych i zakonczonych przydziałów ucznia.')
+      screen.getByText('Mongo opis aktywnych i zakończonych przydziałów ucznia.')
     ).toBeInTheDocument();
   });
 });

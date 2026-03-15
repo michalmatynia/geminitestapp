@@ -74,6 +74,7 @@ const createPanelBodyContextValue = (
   inputPlaceholder: 'Pytaj…',
   isAskModalMode: false,
   isLoading: false,
+  isMinimalPanelMode: false,
   lastInteractionIntent: null,
   lastPromptMode: null,
   isSectionExplainPendingMode: false,
@@ -125,7 +126,7 @@ function ComposerHarness({
 }
 
 describe('KangurAiTutorComposer', () => {
-  it('renders the composer shell and drawing preview with shared chat spacing tokens', () => {
+  it('renders the composer input and quick actions with shared chat spacing tokens', () => {
     render(
       <ComposerHarness
         bodyValue={createPanelBodyContextValue({
@@ -143,11 +144,9 @@ describe('KangurAiTutorComposer', () => {
       />
     );
 
-    expect(screen.getByTestId('kangur-ai-tutor-composer-shell')).toHaveClass(
-      'kangur-chat-padding-md'
-    );
     expect(screen.getByAltText('Rysunek')).toHaveClass('kangur-chat-inset');
     expect(screen.getByTestId('kangur-ai-tutor-composer-pills')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Podpowiedź' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Wpisz pytanie')).toBeInTheDocument();
   });
 });

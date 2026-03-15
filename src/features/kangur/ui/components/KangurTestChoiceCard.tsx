@@ -101,7 +101,7 @@ export function KangurTestChoiceCard({
     priority: 86,
     metadata: {
       contentId: contentId ?? question?.suiteId ?? '',
-      label: `Odpowiedz ${choice?.label}: ${choice?.text}`,
+      label: `Odpowiedź ${choice?.label}: ${choice?.text}`,
     },
   });
 

@@ -99,7 +99,8 @@ type UseKangurAiTutorPortalViewModelInput = {
   handleAvatarMouseUp: KangurAiTutorPortalContextValue['avatar']['onMouseUp'];
   handleClearDrawing: KangurAiTutorPanelBodyContextValue['handleClearDrawing'];
   handleCloseChat: (reason: 'toggle' | 'header' | 'outside') => void;
-  handleGuestIntroDismiss: KangurAiTutorPortalContextValue['guestIntro']['onClose'];
+  handleGuestIntroClose: KangurAiTutorPortalContextValue['guestIntro']['onClose'];
+  handleGuestIntroDismiss: KangurAiTutorPortalContextValue['guestIntro']['onDismiss'];
   handleCloseGuidedCallout: KangurAiTutorPortalContextValue['guidedCallout']['onClose'];
   handleDrawingComplete: KangurAiTutorPanelBodyContextValue['handleDrawingComplete'];
   handleDetachHighlightedSection: KangurAiTutorPanelBodyContextValue['handleDetachHighlightedSection'];
@@ -186,7 +187,6 @@ type UseKangurAiTutorPortalViewModelInput = {
   sessionSurface: KangurAiTutorPanelBodyContextValue['sessionSurface'];
   sessionSurfaceLabel: KangurAiTutorPortalContextValue['panel']['sessionSurfaceLabel'];
   shouldRenderAuxiliaryPanelControls: KangurAiTutorPanelBodyContextValue['shouldRenderAuxiliaryPanelControls'];
-  shouldRenderContextlessTutorUi: boolean;
   shouldRenderGuidedCallout: KangurAiTutorPortalContextValue['guidedCallout']['shouldRender'];
   shouldRenderSelectionAction: KangurAiTutorPortalContextValue['selectionAction']['shouldRender'];
   shouldRepeatGuestIntroOnEntry: boolean;
@@ -238,6 +238,7 @@ export function useKangurAiTutorPortalViewModel(
   const guestIntroHeadline = input.tutorContent.guestIntro.initial.headline;
   const guestIntroDescription = input.tutorContent.guestIntro.initial.description;
   const handleCanonicalOnboardingAccept = input.handleGuestIntroStartChat;
+  const handleCanonicalOnboardingClose = input.handleGuestIntroClose;
   const handleCanonicalOnboardingDismiss = input.handleGuestIntroDismiss;
   const shouldRenderGuestIntro =
     input.tutorSurfaceMode === 'onboarding' &&
@@ -246,7 +247,7 @@ export function useKangurAiTutorPortalViewModel(
     (input.canonicalTutorModalVisible || (!input.isAskModalMode && !isGuidedAvatarMode));
   const isMinimalPanelMode =
     !input.isAskModalMode &&
-    (input.panelShellMode === 'minimal' || input.shouldRenderContextlessTutorUi);
+    input.panelShellMode === 'minimal';
   const panelChromeVariant: TutorPanelChromeVariant =
     input.showSelectionExplainCompleteState || input.showSectionExplainCompleteState
       ? 'contextual_result'
@@ -299,6 +300,7 @@ export function useKangurAiTutorPortalViewModel(
       inputPlaceholder: input.inputPlaceholder,
       isAskModalMode: input.isAskModalMode,
       isLoading: input.isLoading,
+      isMinimalPanelMode,
       lastInteractionIntent: input.lastInteractionIntent,
       lastPromptMode: input.lastPromptMode,
       isSectionExplainPendingMode: input.isSectionExplainPendingMode,
@@ -357,6 +359,7 @@ export function useKangurAiTutorPortalViewModel(
       input.inputPlaceholder,
       input.isAskModalMode,
       input.isLoading,
+      isMinimalPanelMode,
       input.lastInteractionIntent,
       input.lastPromptMode,
       input.isSectionExplainPendingMode,
@@ -443,7 +446,8 @@ export function useKangurAiTutorPortalViewModel(
         prefersReducedMotion: prefersReducedMotionEnabled,
         shouldRender: shouldRenderGuestIntro,
         onAccept: handleCanonicalOnboardingAccept,
-        onClose: handleCanonicalOnboardingDismiss,
+        onClose: handleCanonicalOnboardingClose,
+        onDismiss: handleCanonicalOnboardingDismiss,
         onStartChat: input.handleGuestIntroStartChat,
       },
       guidedCallout: {
@@ -602,6 +606,7 @@ export function useKangurAiTutorPortalViewModel(
       input.handleAvatarMouseDown,
       input.handleAvatarMouseUp,
       input.handleCloseChat,
+      input.handleGuestIntroClose,
       input.handleGuestIntroDismiss,
       input.handleCloseGuidedCallout,
       input.handleDisableTutor,

@@ -30,6 +30,10 @@ export function KangurParentDashboardScoresWidget({
     return null;
   }
 
+  if (!activeLearner?.id) {
+    return null;
+  }
+
   return (
     <div className='flex flex-col gap-5'>
       <KangurPanelIntro

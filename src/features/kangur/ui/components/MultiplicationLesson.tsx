@@ -92,7 +92,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array'>, LessonSlide[]> = {
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Mnozenie zbiera powtarzane grupy w jedno krótkie działanie.
+            Mnożenie zbiera powtarzane grupy w jedno krótkie działanie.
           </KangurLessonLead>
           <KangurLessonCallout accent='rose' className='text-center'>
             <div className='flex items-center justify-center gap-2'>
@@ -291,7 +291,7 @@ export const HUB_SECTIONS = [
     id: 'intro',
     emoji: '🍬',
     title: 'Co to mnożenie?',
-    description: 'Mnozenie jako powtarzane dodawanie',
+    description: 'Mnożenie jako powtarzane dodawanie',
   },
   {
     id: 'tabela23',
@@ -375,7 +375,7 @@ export default function MultiplicationLesson(): React.JSX.Element {
   return (
     <LessonHub
       lessonEmoji='✖️'
-      lessonTitle='Mnozenie'
+      lessonTitle='Mnożenie'
       gradientClass='kangur-gradient-accent-indigo'
       progressDotClassName='bg-purple-300'
       sections={HUB_SECTIONS.map((section) =>

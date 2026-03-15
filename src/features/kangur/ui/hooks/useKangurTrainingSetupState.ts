@@ -36,10 +36,10 @@ type UseKangurTrainingSetupStateOptions = {
 const ALL_CATEGORIES: Array<{ id: KangurOperation; label: string; emoji: string }> = [
   { id: 'addition', label: 'Dodawanie', emoji: '➕' },
   { id: 'subtraction', label: 'Odejmowanie', emoji: '➖' },
-  { id: 'multiplication', label: 'Mnozenie', emoji: '✖️' },
+  { id: 'multiplication', label: 'Mnożenie', emoji: '✖️' },
   { id: 'division', label: 'Dzielenie', emoji: '➗' },
-  { id: 'decimals', label: 'Ulamki', emoji: '🔢' },
-  { id: 'powers', label: 'Potegi', emoji: '⚡' },
+  { id: 'decimals', label: 'Ułamki', emoji: '🔢' },
+  { id: 'powers', label: 'Potęgi', emoji: '⚡' },
   { id: 'roots', label: 'Pierwiastki', emoji: '√' },
 ];
 
@@ -50,14 +50,14 @@ const DEFAULT_DIFFICULTY: KangurDifficulty = 'medium';
 
 const formatDifficultySummary = (difficulty: KangurDifficulty): string => {
   if (difficulty === 'easy') {
-    return 'latwy';
+    return 'łatwy';
   }
 
   if (difficulty === 'hard') {
     return 'trudny';
   }
 
-  return 'sredni';
+  return 'średni';
 };
 
 const sanitizeSuggestedSelection = (

@@ -199,7 +199,7 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     shouldRepeatGuestIntroOnEntry,
   ]);
 
-  const handleGuestIntroDismiss = useCallback((): void => {
+  const handleGuestIntroClose = useCallback((): void => {
     const nextRecord = persistGuestIntroRecord('dismissed');
     setCanonicalTutorModalVisible(false);
     setGuestIntroRecord(nextRecord);
@@ -213,6 +213,14 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     setGuestIntroHelpVisible,
     setGuestIntroRecord,
     setGuestIntroVisible,
+  ]);
+
+  const handleGuestIntroDismiss = useCallback((): void => {
+    const nextRecord = persistGuestIntroRecord('dismissed');
+    setGuestIntroRecord(nextRecord);
+    trackKangurClientEvent('kangur_ai_tutor_guest_intro_dismissed');
+  }, [
+    setGuestIntroRecord,
   ]);
 
   const handleGuestIntroHelpClose = useCallback((): void => {
@@ -309,6 +317,7 @@ export function useKangurAiTutorGuestIntroFlow(input: {
   return {
     handleGuestIntroAccept,
     handleGuestIntroAcceptSilent,
+    handleGuestIntroClose,
     handleGuestIntroCreateAccount,
     handleGuestIntroDismiss,
     handleGuestIntroHelpClose,

@@ -175,7 +175,7 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     vi.mocked(queryClientMock.invalidateQueries).mockResolvedValue(undefined);
   });
 
-  it('renders the fallback state when no learner is active', () => {
+  it('does not render when no learner is active', () => {
     runtimeState.value = {
       activeLearner: null,
       activeTab: 'ai-tutor',
@@ -184,7 +184,9 @@ describe('KangurParentDashboardAiTutorWidget', () => {
 
     render(<KangurParentDashboardAiTutorWidget />);
 
-    expect(screen.getByText('Wybierz ucznia, aby skonfigurować AI Tutora.')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Wybierz ucznia, aby skonfigurować AI Tutora.')
+    ).toBeNull();
     expect(screen.queryByText(/^AI Tutor dla /i)).not.toBeInTheDocument();
   });
 
@@ -205,11 +207,9 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     );
     expect(lessonsToggle.parentElement?.parentElement).toHaveClass('border-amber-200', 'bg-amber-50/65');
 
-    const enabledToggle = screen.getByRole('checkbox', { name: /ai tutor włączony/i });
-    expect(enabledToggle.nextElementSibling).toHaveClass(
-      'bg-gradient-to-r',
-      'kangur-gradient-accent-amber'
-    );
+    expect(
+      screen.getByRole('button', { name: /wyłącz ai-tutora/i })
+    ).toBeInTheDocument();
 
     expect(uiModeSelect).toHaveClass(
       'focus:border-amber-300',

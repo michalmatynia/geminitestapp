@@ -433,6 +433,7 @@ export const kangurLearnerProfileSchema = z.object({
   id: nonEmptyTrimmedString.max(120),
   ownerUserId: nonEmptyTrimmedString.max(120),
   displayName: nonEmptyTrimmedString.max(120),
+  age: z.number().int().min(3).max(99).nullable().optional(),
   loginName: nonEmptyTrimmedString.max(80),
   status: kangurLearnerStatusSchema,
   legacyUserKey: z.string().trim().max(160).nullable().default(null),
@@ -447,6 +448,7 @@ export type KangurLearnerProfiles = z.infer<typeof kangurLearnerProfilesSchema>;
 
 export const kangurLearnerCreateInputSchema = z.object({
   displayName: nonEmptyTrimmedString.max(120),
+  age: z.number().int().min(3).max(99).optional(),
   loginName: nonEmptyTrimmedString.max(80),
   password: z.string().min(8).max(160),
 });
@@ -455,6 +457,7 @@ export type KangurLearnerCreateInput = z.infer<typeof kangurLearnerCreateInputSc
 export const kangurLearnerUpdateInputSchema = z
   .object({
     displayName: nonEmptyTrimmedString.max(120).optional(),
+    age: z.number().int().min(3).max(99).optional(),
     loginName: nonEmptyTrimmedString.max(80).optional(),
     password: z.string().min(8).max(160).optional(),
     status: kangurLearnerStatusSchema.optional(),

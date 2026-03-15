@@ -7,8 +7,6 @@ import { cn } from '@/shared/utils';
 
 import { useKangurAiTutorConversationViewState } from './KangurAiTutorWidget.conversation-view';
 import {
-  CONTEXTLESS_TUTOR_DISABLED_PLACEHOLDER,
-  CONTEXTLESS_TUTOR_EMPTY_STATE_MESSAGE,
   HOME_ONBOARDING_ELIGIBLE_CONTENT_ID,
   isSelectionWithinTutorUi,
 } from './KangurAiTutorWidget.coordinator.helpers';
@@ -118,7 +116,6 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     setSectionResponseComplete,
     setSectionResponsePending,
     setSelectionGuidanceCalloutVisibleText,
-    setSelectionGuidanceHandoffText,
     setSelectionResponseComplete,
     setSelectionResponsePending,
     setTutorNarrationObservedText,
@@ -146,7 +143,6 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     selectedText,
     selectionGlowSupported,
     selectionRect,
-    shouldRenderContextlessTutorUi,
     shouldRenderGuestIntroUi,
     showSources,
     telemetryContext,
@@ -253,12 +249,12 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     selectionGuidanceHandoffText,
     messages,
     selectionResponseComplete,
+
     selectionResponseCompleteTimeoutRef,
     selectionResponsePending,
     setSectionResponseComplete,
     setSectionResponsePending,
     setSelectionGuidanceCalloutVisibleText,
-    setSelectionGuidanceHandoffText,
     setSelectionResponseComplete,
     setSelectionResponsePending,
     telemetryContext,
@@ -389,8 +385,6 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     activeFocus: { kind: activeFocus.kind },
     activeSelectedText: effectiveSelectedText,
     canSendMessages,
-    contextlessDisabledPlaceholder: CONTEXTLESS_TUTOR_DISABLED_PLACEHOLDER,
-    contextlessEmptyStateMessage: CONTEXTLESS_TUTOR_EMPTY_STATE_MESSAGE,
     hasAssignmentSummary,
     hasCurrentQuestion,
     highlightedSection,
@@ -410,7 +404,6 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
       surface: sessionContext?.surface,
       title: sessionContext?.title,
     },
-    shouldRenderContextlessTutorUi,
     tutorContent,
   });
 
@@ -755,7 +748,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     isContextualPanelAnchor,
     isEligibleForHomeOnboarding,
     isGuidedTutorMode,
-    isMinimalPanelMode: !isAskModalMode && (panelShellMode === 'minimal' || shouldRenderContextlessTutorUi),
+    isMinimalPanelMode: !isAskModalMode && panelShellMode === 'minimal',
     isPanelDraggable,
     isPanelDragging: isPanelCurrentlyDragging,
     isSectionGuidedTutorMode,

@@ -319,7 +319,6 @@ describe('KangurAiTutorWidget - Actions', () => {
       })
     );
     expect(screen.getByRole('button', { name: 'Co dalej?' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Ten fragment' })).toBeInTheDocument();
   });
 
   it('promotes a lesson-to-training bridge quick action after a completed tutor lesson follow-up', async () => {
@@ -792,7 +791,6 @@ describe('KangurAiTutorWidget - Actions', () => {
       clearSelection: clearSelectionMock,
     });
     render(<KangurAiTutorWidget />);
-    expect(screen.queryByRole('button', { name: 'Ten fragment' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Zapytaj o to' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Podpowiedź' })).toBeDisabled();
     expect(screen.getByRole('textbox', { name: 'Wpisz pytanie' })).toHaveClass(

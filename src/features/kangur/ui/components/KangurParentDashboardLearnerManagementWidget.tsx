@@ -1,3 +1,5 @@
+import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { Eye, EyeOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
@@ -26,14 +28,17 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
     handleDeleteLearner,
     handleSaveLearner,
     isSubmitting,
+    isCreateLearnerModalOpen,
     learners,
     selectLearner,
+    setCreateLearnerModalOpen,
     updateCreateField,
     updateEditField,
   } = useKangurParentDashboardRuntime();
   const { entry: learnerManagementContent } = useKangurPageContentEntry(
     'parent-dashboard-learner-management'
   );
+  const [isCreatePasswordVisible, setIsCreatePasswordVisible] = useState(false);
   const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
   const activeLearnerId = activeLearner?.id ?? null;
   const isRemovalPending = Boolean(activeLearnerId && pendingRemovalId === activeLearnerId);
@@ -43,6 +48,12 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
       setPendingRemovalId(null);
     }
   }, [activeLearnerId, pendingRemovalId]);
+
+  useEffect(() => {
+    if (!isCreateLearnerModalOpen) {
+      setIsCreatePasswordVisible(false);
+    }
+  }, [isCreateLearnerModalOpen]);
 
   if (!canAccessDashboard) {
     return null;
@@ -132,54 +143,180 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
           })}
         </div>
 
-        <KangurGlassPanel className='flex flex-col gap-4' padding='md' surface='solid' variant='subtle'>
-          <KangurPanelIntro
-            eyebrow='Nowy profil'
-            description='Dodaj dziecko i od razu ustaw jego login oraz hasło do gry.'
-          />
+        <div className='flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center'>
+          <KangurButton
+            className='w-full sm:w-auto'
+            disabled={isSubmitting}
+            onClick={() => setCreateLearnerModalOpen(true)}
+            size='sm'
+            variant='surface'
+            data-doc-id='parent_open_create_learner'
+          >
+            Dodaj ucznia
+          </KangurButton>
+        </div>
 
-          <div className='grid gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3'>
-            <KangurTextField
-              accent='indigo'
-              value={createForm.displayName}
-              onChange={(event) => updateCreateField('displayName', event.target.value)}
-              placeholder='Imie ucznia'
-              aria-label='Imie ucznia'
-              title='Imie ucznia'
+        <DialogPrimitive.Root
+          open={isCreateLearnerModalOpen}
+          onOpenChange={setCreateLearnerModalOpen}
+        >
+          <DialogPrimitive.Portal>
+            <DialogPrimitive.Overlay
+              className={cn(
+                'fixed inset-0 z-50 backdrop-blur-[2px]',
+                'data-[state=open]:animate-in data-[state=closed]:animate-out',
+                'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0'
+              )}
+              style={{
+                background:
+                  'color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 16%, rgba(2,6,23,0.7))',
+              }}
             />
-            <KangurTextField
-              accent='indigo'
-              value={createForm.loginName}
-              onChange={(event) => updateCreateField('loginName', event.target.value)}
-              placeholder='Login ucznia'
-              aria-label='Login ucznia'
-              title='Login ucznia'
-            />
-            <KangurTextField
-              accent='indigo'
-              type='password'
-              value={createForm.password}
-              onChange={(event) => updateCreateField('password', event.target.value)}
-              placeholder='Hasło ucznia'
-              aria-label='Hasło ucznia'
-              title='Hasło ucznia'
-            />
-          </div>
-
-          <div className='flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center'>
-            <KangurButton
-              className='w-full sm:w-auto'
-              disabled={isSubmitting}
-              onClick={() => void handleCreateLearner()}
-              size='sm'
-              variant='surface'
-              data-doc-id='parent_create_learner'
+            <DialogPrimitive.Content
+              className={cn(
+                'fixed left-1/2 top-1/2 z-50 w-[min(calc(100vw-2rem),42rem)]',
+                'max-h-[calc(100vh-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto',
+                'outline-none'
+              )}
+              data-testid='parent-create-learner-modal'
             >
-              Dodaj ucznia
-            </KangurButton>
-            {feedback ? <div className='text-sm [color:var(--kangur-page-muted-text)]'>{feedback}</div> : null}
-          </div>
-        </KangurGlassPanel>
+              <DialogPrimitive.Title className='sr-only'>Nowy profil ucznia</DialogPrimitive.Title>
+              <DialogPrimitive.Description className='sr-only'>
+                Dodaj dziecko i od razu ustaw jego login oraz hasło do gry.
+              </DialogPrimitive.Description>
+
+              <DialogPrimitive.Close asChild>
+                <button
+                  aria-label='Zamknij dodawanie profilu'
+                  className={cn(
+                    'absolute right-4 top-4 z-10 cursor-pointer rounded-full border border-amber-200/80',
+                    'px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em]',
+                    'shadow-[0_16px_34px_-26px_rgba(249,115,22,0.5)] transition'
+                  )}
+                  style={{
+                    background:
+                      'linear-gradient(180deg, color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 88%, rgba(254,243,199,0.95)) 0%, color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 82%, rgba(255,237,213,0.9)) 100%)',
+                    color: '#9a5418',
+                  }}
+                  type='button'
+                >
+                  Zamknij
+                </button>
+              </DialogPrimitive.Close>
+
+              <KangurGlassPanel
+                className='flex flex-col gap-4'
+                padding='lg'
+                surface='mistStrong'
+                variant='soft'
+              >
+                <KangurPanelIntro
+                  eyebrow='Nowy profil'
+                  description='Dodaj dziecko i od razu ustaw jego login oraz hasło do gry.'
+                />
+
+                <div className='grid gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3'>
+                  <KangurTextField
+                    accent='indigo'
+                    maxLength={120}
+                    value={createForm.displayName}
+                    onChange={(event) => updateCreateField('displayName', event.target.value)}
+                    placeholder='Imię Ucznia'
+                    aria-label='Imię Ucznia'
+                    title='Imię Ucznia'
+                  />
+                  <div className='flex flex-col gap-1'>
+                    <KangurTextField
+                      accent='indigo'
+                      inputMode='numeric'
+                      pattern='[0-9]*'
+                      type='number'
+                      min={3}
+                      max={99}
+                      step={1}
+                      value={createForm.age}
+                      onChange={(event) => {
+                        const normalized = event.target.value.replace(/[^0-9]/g, '');
+                        updateCreateField('age', normalized);
+                      }}
+                      placeholder='Wiek ucznia'
+                      aria-label='Wiek ucznia'
+                      title='Wiek ucznia'
+                    />
+                    <span className='text-xs [color:var(--kangur-page-muted-text)]'>
+                      opcjonalnie
+                    </span>
+                  </div>
+                  <KangurTextField
+                    accent='indigo'
+                    autoCapitalize='none'
+                    maxLength={80}
+                    pattern='[A-Za-z0-9]*'
+                    spellCheck={false}
+                    value={createForm.loginName}
+                    onChange={(event) => {
+                      const normalized = event.target.value.replace(/[^a-zA-Z0-9]/g, '');
+                      updateCreateField('loginName', normalized);
+                    }}
+                    placeholder='nick'
+                    aria-label='nick'
+                    title='nick'
+                  />
+                  <div className='relative'>
+                    <KangurTextField
+                      accent='indigo'
+                      type={isCreatePasswordVisible ? 'text' : 'password'}
+                      minLength={8}
+                      maxLength={160}
+                      value={createForm.password}
+                      onChange={(event) => updateCreateField('password', event.target.value)}
+                      placeholder='Hasło'
+                      aria-label='Hasło'
+                      title='Hasło'
+                      className='pr-12'
+                    />
+                    <button
+                      type='button'
+                      onClick={() => setIsCreatePasswordVisible((prev) => !prev)}
+                      aria-label={
+                        isCreatePasswordVisible ? 'Ukryj hasło' : 'Pokaż hasło'
+                      }
+                      className={cn(
+                        'absolute right-3 top-1/2 -translate-y-1/2 rounded-full',
+                        'p-2 text-slate-500 transition hover:text-slate-700',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200/70'
+                      )}
+                    >
+                      {isCreatePasswordVisible ? (
+                        <EyeOff className='size-4' aria-hidden='true' />
+                      ) : (
+                        <Eye className='size-4' aria-hidden='true' />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className='flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center'>
+                  <KangurButton
+                    className='w-full sm:w-auto'
+                    disabled={isSubmitting}
+                    onClick={() => void handleCreateLearner()}
+                    size='sm'
+                    variant='surface'
+                    data-doc-id='parent_create_learner'
+                  >
+                    Dodaj ucznia
+                  </KangurButton>
+                  {feedback ? (
+                    <div className='text-sm [color:var(--kangur-page-muted-text)]'>
+                      {feedback}
+                    </div>
+                  ) : null}
+                </div>
+              </KangurGlassPanel>
+            </DialogPrimitive.Content>
+          </DialogPrimitive.Portal>
+        </DialogPrimitive.Root>
       </KangurGlassPanel>
 
       {activeLearner ? (
@@ -199,6 +336,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
           <div className='grid gap-3 min-[420px]:grid-cols-2'>
             <KangurTextField
               accent='indigo'
+              maxLength={120}
               value={editForm.displayName}
               onChange={(event) => updateEditField('displayName', event.target.value)}
               placeholder='Imie ucznia'
@@ -207,6 +345,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
             />
             <KangurTextField
               accent='indigo'
+              maxLength={80}
               value={editForm.loginName}
               onChange={(event) => updateEditField('loginName', event.target.value)}
               placeholder='Login ucznia'
@@ -216,6 +355,8 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
             <KangurTextField
               accent='indigo'
               type='password'
+              minLength={8}
+              maxLength={160}
               value={editForm.password}
               onChange={(event) => updateEditField('password', event.target.value)}
               placeholder='Nowe hasło (opcjonalnie)'

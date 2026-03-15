@@ -5,6 +5,13 @@ import {
   KangurPracticeGameProgress,
   KangurPracticeGameStage,
   KangurPracticeGameSummary,
+  KangurPracticeGameSummaryActions,
+  KangurPracticeGameSummaryBreakdown,
+  KangurPracticeGameSummaryEmoji,
+  KangurPracticeGameSummaryMessage,
+  KangurPracticeGameSummaryProgress,
+  KangurPracticeGameSummaryTitle,
+  KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import {
   KangurButton,
@@ -175,40 +182,45 @@ export default function MultiplicationGame({
   if (done) {
     const percent = Math.round((score / TOTAL) * 100);
     return (
-      <KangurPracticeGameSummary
-        accent='indigo'
-        breakdown={xpBreakdown}
-        breakdownDataTestId='multiplication-game-summary-breakdown'
-        breakdownItemDataTestIdPrefix='multiplication-game-summary-breakdown'
-        dataTestId='multiplication-game-summary-shell'
-        emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
-        emojiDataTestId='multiplication-game-summary-emoji'
-        finishLabel={finishLabel}
-        message={
-          percent === 100
+      <KangurPracticeGameSummary dataTestId='multiplication-game-summary-shell'>
+        <KangurPracticeGameSummaryEmoji
+          dataTestId='multiplication-game-summary-emoji'
+          emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
+        />
+        <KangurPracticeGameSummaryTitle
+          accent='indigo'
+          title={<KangurHeadline data-testid='multiplication-game-summary-title'>Wynik: {score}/{TOTAL}</KangurHeadline>}
+        />
+        <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
+        <KangurPracticeGameSummaryBreakdown
+          breakdown={xpBreakdown}
+          dataTestId='multiplication-game-summary-breakdown'
+          itemDataTestIdPrefix='multiplication-game-summary-breakdown'
+        />
+        <KangurPracticeGameSummaryProgress accent='indigo' percent={percent} />
+        <KangurPracticeGameSummaryMessage>
+          {percent === 100
             ? 'Idealnie! Mistrz tabliczki!'
             : percent >= 60
               ? 'Świetna robota!'
-              : 'Ćwicz dalej!'
-        }
-        onFinish={handleFinishGame}
-        onRestart={() => {
-          setRoundIndex(0);
-          setScore(0);
-          setDone(false);
-          setXpEarned(0);
-          setXpBreakdown([]);
-          setQuestion(generateQuestion(0));
-          setSelected(null);
-          setConfirmed(false);
-          sessionStartedAtRef.current = Date.now();
-        }}
-        percent={percent}
-        progressAccent='indigo'
-        title={<KangurHeadline data-testid='multiplication-game-summary-title'>Wynik: {score}/{TOTAL}</KangurHeadline>}
-        xpAccent='indigo'
-        xpEarned={xpEarned}
-      />
+              : 'Ćwicz dalej!'}
+        </KangurPracticeGameSummaryMessage>
+        <KangurPracticeGameSummaryActions
+          finishLabel={finishLabel}
+          onFinish={handleFinishGame}
+          onRestart={() => {
+            setRoundIndex(0);
+            setScore(0);
+            setDone(false);
+            setXpEarned(0);
+            setXpBreakdown([]);
+            setQuestion(generateQuestion(0));
+            setSelected(null);
+            setConfirmed(false);
+            sessionStartedAtRef.current = Date.now();
+          }}
+        />
+      </KangurPracticeGameSummary>
     );
   }
 

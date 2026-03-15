@@ -129,7 +129,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               7 ÷ 2 = ?
             </KangurEquationDisplay>
             <KangurLessonCaption className='mt-2'>
-              2×3=6 (za mało), 2×4=8 (za duzo)
+              2×3=6 (za mało), 2×4=8 (za dużo)
             </KangurLessonCaption>
             <KangurEquationDisplay accent='teal' className='mt-1' size='md'>
               7 ÷ 2 = <b>3</b> reszta <b>1</b>

@@ -99,6 +99,7 @@ function GameContent(): React.JSX.Element {
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const canAccessParentAssignments =
     runtime.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
+  const hideLearnerWidgetsForParent = user?.actorType === 'parent' && !user?.activeLearner?.id;
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('home');
   const prefersReducedMotion = useReducedMotion();
   const screenHeadingRef = useRef<HTMLHeadingElement>(null);
@@ -526,30 +527,34 @@ function GameContent(): React.JSX.Element {
                     </div>
                   </section>
 
-                  <section
-                    ref={homeQuestRef}
-                    className='mx-auto w-full max-w-[900px]'
-                    aria-labelledby='kangur-home-quest-heading'
-                  >
-                    <h3 id='kangur-home-quest-heading' className='sr-only'>
-                      Misja dla ucznia
-                    </h3>
-                    <KangurGameHomeQuestWidget hideWhenScreenMismatch={false} />
-                  </section>
+                  {!hideLearnerWidgetsForParent ? (
+                    <section
+                      ref={homeQuestRef}
+                      className='mx-auto w-full max-w-[900px]'
+                      aria-labelledby='kangur-home-quest-heading'
+                    >
+                      <h3 id='kangur-home-quest-heading' className='sr-only'>
+                        Misja dla ucznia
+                      </h3>
+                      <KangurGameHomeQuestWidget hideWhenScreenMismatch={false} />
+                    </section>
+                  ) : null}
 
-                  <section
-                    className='w-full max-w-[900px]'
-                    aria-labelledby='kangur-home-hero-heading'
-                  >
-                    <h3 id='kangur-home-hero-heading' className='sr-only'>
-                      Podsumowanie postępu
-                    </h3>
-                    <KangurGameHomeHeroWidget
-                      hideWhenScreenMismatch={false}
-                      showIntro={false}
-                      showAssignmentSpotlight={false}
-                    />
-                  </section>
+                  {!hideLearnerWidgetsForParent ? (
+                    <section
+                      className='w-full max-w-[900px]'
+                      aria-labelledby='kangur-home-hero-heading'
+                    >
+                      <h3 id='kangur-home-hero-heading' className='sr-only'>
+                        Podsumowanie postępu
+                      </h3>
+                      <KangurGameHomeHeroWidget
+                        hideWhenScreenMismatch={false}
+                        showIntro={false}
+                        showAssignmentSpotlight={false}
+                      />
+                    </section>
+                  ) : null}
 
                   {canAccessParentAssignments ? (
                     <section
@@ -569,23 +574,28 @@ function GameContent(): React.JSX.Element {
                     </section>
                   ) : null}
 
-                  <section
-                    className='mx-auto grid w-full max-w-[900px] items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]'
-                    aria-labelledby='kangur-home-progress-heading'
-                  >
-                    <h3 id='kangur-home-progress-heading' className='sr-only'>
-                      Ranking i postęp
-                    </h3>
-                    <div ref={homeLeaderboardRef} className='order-2 flex w-full justify-center xl:order-1'>
-                      <Leaderboard />
-                    </div>
-                    <div
-                      ref={homeProgressRef}
-                      className='order-1 flex w-full justify-center xl:order-2'
+                  {!hideLearnerWidgetsForParent ? (
+                    <section
+                      className='mx-auto grid w-full max-w-[900px] items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]'
+                      aria-labelledby='kangur-home-progress-heading'
                     >
-                      <PlayerProgressCard progress={progress} />
-                    </div>
-                  </section>
+                      <h3 id='kangur-home-progress-heading' className='sr-only'>
+                        Ranking i postęp
+                      </h3>
+                      <div
+                        ref={homeLeaderboardRef}
+                        className='order-2 flex w-full justify-center xl:order-1'
+                      >
+                        <Leaderboard />
+                      </div>
+                      <div
+                        ref={homeProgressRef}
+                        className='order-1 flex w-full justify-center xl:order-2'
+                      >
+                        <PlayerProgressCard progress={progress} />
+                      </div>
+                    </section>
+                  ) : null}
                 </>
               )
             ) : null}

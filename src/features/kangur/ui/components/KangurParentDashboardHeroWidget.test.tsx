@@ -76,6 +76,7 @@ describe('KangurParentDashboardHeroWidget', () => {
       isAuthenticated: false,
       logout: vi.fn(),
       navigateToLogin,
+      setCreateLearnerModalOpen: vi.fn(),
       viewerName: 'parent@example.com',
       viewerRoleLabel: 'Rodzic',
     });
@@ -92,15 +93,9 @@ describe('KangurParentDashboardHeroWidget', () => {
       'text-3xl'
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
     fireEvent.click(screen.getByRole('button', { name: 'Zaloguj się' }));
     fireEvent.click(screen.getByRole('button', { name: 'Utwórz konto rodzica' }));
 
-    expect(routeNavigatorPushMock).toHaveBeenCalledWith('/kangur', {
-      acknowledgeMs: 110,
-      pageKey: 'Game',
-      sourceId: 'parent-dashboard-hero:back-home',
-    });
     expect(navigateToLogin).toHaveBeenCalledTimes(2);
     expect(navigateToLogin).toHaveBeenLastCalledWith({
       authMode: 'create-account',
@@ -132,7 +127,7 @@ describe('KangurParentDashboardHeroWidget', () => {
     });
 
     useKangurParentDashboardRuntimeMock.mockReturnValue({
-      activeLearner: { displayName: 'Maja' },
+      activeLearner: { id: 'learner-1', displayName: 'Maja' },
       basePath: '/kangur',
       canManageLearners: true,
       isAuthenticated: true,
@@ -164,6 +159,7 @@ describe('KangurParentDashboardHeroWidget', () => {
           },
         },
       },
+      setCreateLearnerModalOpen: vi.fn(),
       viewerName: 'parent@example.com',
       viewerRoleLabel: 'Rodzic',
     });
@@ -223,16 +219,9 @@ describe('KangurParentDashboardHeroWidget', () => {
     );
     expect(screen.queryByRole('button', { name: 'Wyloguj' })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
-
-    expect(routeNavigatorPushMock).toHaveBeenCalledWith('/kangur/profile', {
-      acknowledgeMs: 110,
-      pageKey: 'LearnerProfile',
-      sourceId: 'parent-dashboard-hero:back-profile',
-    });
   });
 
-  it('renders Mongo-backed hero copy when available', () => {
+  it('does not render the summary copy in the authenticated hero view', () => {
     useKangurPageContentEntryMock.mockImplementation((entryId: string) => ({
       data: undefined,
       entry:
@@ -258,7 +247,7 @@ describe('KangurParentDashboardHeroWidget', () => {
       status: 'success',
     }));
     useKangurParentDashboardRuntimeMock.mockReturnValue({
-      activeLearner: { displayName: 'Maja' },
+      activeLearner: { id: 'learner-1', displayName: 'Maja' },
       basePath: '/kangur',
       canManageLearners: true,
       isAuthenticated: true,
@@ -281,12 +270,54 @@ describe('KangurParentDashboardHeroWidget', () => {
         activityStats: {},
         lessonMastery: {},
       },
+      setCreateLearnerModalOpen: vi.fn(),
       viewerName: 'parent@example.com',
       viewerRoleLabel: 'Rodzic',
     });
 
     render(<KangurParentDashboardHeroWidget showActions={false} />);
 
-    expect(screen.getByText(/To centrum decyzji opiekuna\./)).toBeInTheDocument();
+    expect(screen.queryByText(/To centrum decyzji opiekuna\./)).toBeNull();
+  });
+
+  it('hides learner progress details when no active learner is selected', () => {
+    const setCreateLearnerModalOpen = vi.fn();
+
+    useKangurParentDashboardRuntimeMock.mockReturnValue({
+      activeLearner: null,
+      basePath: '/kangur',
+      canManageLearners: true,
+      isAuthenticated: true,
+      logout: vi.fn(),
+      navigateToLogin: vi.fn(),
+      progress: {
+        totalXp: 0,
+        gamesPlayed: 0,
+        perfectGames: 0,
+        lessonsCompleted: 0,
+        clockPerfect: 0,
+        calendarPerfect: 0,
+        geometryPerfect: 0,
+        badges: [],
+        operationsPlayed: [],
+        totalCorrectAnswers: 0,
+        totalQuestionsAnswered: 0,
+        bestWinStreak: 0,
+        activityStats: {},
+        lessonMastery: {},
+      },
+      setCreateLearnerModalOpen,
+      viewerName: 'parent@example.com',
+      viewerRoleLabel: 'Rodzic',
+    });
+
+    render(<KangurParentDashboardHeroWidget showActions={false} />);
+
+    expect(screen.queryByTestId('kangur-parent-dashboard-daily-quest')).toBeNull();
+    expect(screen.queryByTestId('kangur-parent-dashboard-track-summary')).toBeNull();
+    expect(screen.getByText('Brak profilu ucznia')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Dodaj ucznia' }));
+    expect(setCreateLearnerModalOpen).toHaveBeenCalledWith(true);
+    expect(getCurrentKangurDailyQuestMock).not.toHaveBeenCalled();
   });
 });

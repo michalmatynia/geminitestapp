@@ -75,6 +75,7 @@ export type KangurAiTutorPanelBodyContextValue = {
   inputPlaceholder: string;
   isAskModalMode: boolean;
   isLoading: boolean;
+  isMinimalPanelMode: boolean;
   lastInteractionIntent: KangurAiTutorInteractionIntent | null;
   lastPromptMode: KangurAiTutorPromptMode | null;
   isSectionExplainPendingMode: boolean;

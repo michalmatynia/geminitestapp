@@ -6,6 +6,13 @@ import {
   KangurPracticeGameProgress,
   KangurPracticeGameStage,
   KangurPracticeGameSummary,
+  KangurPracticeGameSummaryActions,
+  KangurPracticeGameSummaryBreakdown,
+  KangurPracticeGameSummaryEmoji,
+  KangurPracticeGameSummaryMessage,
+  KangurPracticeGameSummaryProgress,
+  KangurPracticeGameSummaryTitle,
+  KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import {
   KangurButton,
@@ -402,35 +409,44 @@ export default function GeometryBasicsWorkshopGame({
   if (done) {
     const percent = Math.round((score / TOTAL_ROUNDS) * 100);
     return (
-      <KangurPracticeGameSummary
-        accent='sky'
-        actionsClassName='flex-col sm:flex-row'
-        breakdown={xpBreakdown}
-        breakdownDataTestId='geometry-basics-summary-breakdown'
-        breakdownItemDataTestIdPrefix='geometry-basics-summary-breakdown'
-        dataTestId='geometry-basics-summary-shell'
-        emoji={percent === 100 ? '🏆' : percent >= 75 ? '🌟' : '💪'}
-        emojiAriaHidden
-        emojiDataTestId='geometry-basics-summary-emoji'
-        finishButtonClassName='w-full sm:flex-1'
-        finishLabel={finishLabel}
-        message={
-          percent === 100
+      <KangurPracticeGameSummary dataTestId='geometry-basics-summary-shell'>
+        <KangurPracticeGameSummaryEmoji
+          ariaHidden
+          dataTestId='geometry-basics-summary-emoji'
+          emoji={percent === 100 ? '🏆' : percent >= 75 ? '🌟' : '💪'}
+        />
+        <KangurPracticeGameSummaryTitle
+          accent='sky'
+          dataTestId='geometry-basics-summary-title'
+          title={`Wynik: ${score}/${TOTAL_ROUNDS}`}
+        />
+        <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
+        <KangurPracticeGameSummaryBreakdown
+          breakdown={xpBreakdown}
+          dataTestId='geometry-basics-summary-breakdown'
+          itemDataTestIdPrefix='geometry-basics-summary-breakdown'
+        />
+        <KangurPracticeGameSummaryProgress
+          accent='sky'
+          dataTestId='geometry-basics-summary-progress-bar'
+          percent={percent}
+        />
+        <KangurPracticeGameSummaryMessage>
+          {percent === 100
             ? 'Perfekcyjnie! Świetnie rozpoznajesz elementy geometrii.'
             : percent >= 75
               ? 'Bardzo dobrze! Jeszcze chwila i będzie perfekcyjnie.'
-              : 'Dobra próba! Spróbuj jeszcze raz, aby utrwalić pojęcia.'
-        }
-        onFinish={onFinish}
-        onRestart={restart}
-        percent={percent}
-        progressAccent='sky'
-        progressDataTestId='geometry-basics-summary-progress-bar'
-        restartButtonClassName='w-full sm:flex-1'
-        title={`Wynik: ${score}/${TOTAL_ROUNDS}`}
-        xpAccent='indigo'
-        xpEarned={xpEarned}
-      />
+              : 'Dobra próba! Spróbuj jeszcze raz, aby utrwalić pojęcia.'}
+        </KangurPracticeGameSummaryMessage>
+        <KangurPracticeGameSummaryActions
+          className='flex-col sm:flex-row'
+          finishButtonClassName='w-full sm:flex-1'
+          finishLabel={finishLabel}
+          onFinish={onFinish}
+          onRestart={restart}
+          restartButtonClassName='w-full sm:flex-1'
+        />
+      </KangurPracticeGameSummary>
     );
   }
 

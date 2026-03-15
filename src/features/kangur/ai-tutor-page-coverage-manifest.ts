@@ -290,7 +290,7 @@ export const KANGUR_AI_TUTOR_PAGE_COVERAGE_MANIFEST: readonly KangurAiTutorPageC
       screenKey: 'result',
       surface: 'game',
       componentId: 'result-leaderboard',
-      title: 'Ranking po zakonczeniu gry',
+      title: 'Ranking po zakończeniu gry',
       widget: 'Leaderboard',
       sourcePath: 'src/features/kangur/ui/pages/Game.tsx',
       status: 'native_guide_ready',

@@ -20,7 +20,11 @@ import { AdminImageStudioPromptsPage } from './AdminImageStudioPromptsPage';
 import { AdminImageStudioSettingsPage } from './AdminImageStudioSettingsPage';
 import { ImageStudioDocsContent } from '../components/ImageStudioDocsContent';
 import { ImageStudioPageSkeleton } from '../components/ImageStudioPageSkeleton';
-import { ImageStudioWorkspaceHeader } from '../components/ImageStudioWorkspaceHeader';
+import {
+  ImageStudioWorkspaceHeader,
+  ImageStudioWorkspaceStudioControls,
+  ImageStudioWorkspaceSlotInfo,
+} from '../components/ImageStudioWorkspaceHeader';
 import { StudioMainContent } from '../components/StudioMainContent';
 import { StudioModals } from '../components/StudioModals';
 import { StudioProjectsList } from '../components/StudioProjectsList';
@@ -271,12 +275,19 @@ function AdminImageStudioPageContent(): React.JSX.Element {
             hideTopBar={hideTopBar}
             returnToPath={returnToPath}
             onReturnToProductStudio={handleReturnToProductStudio}
-            previewCanvasSize={previewCanvasSize}
-            onPreviewCanvasSizeChange={setPreviewCanvasSize}
-            selectedSlot={selectedSlot}
-            copyCardNameTooltip={copyCardNameTooltip}
-            selectCardFirstTooltip={selectCardFirstTooltip}
-          />
+          >
+            {activeTab === 'studio' && !hideTopBar ? (
+              <ImageStudioWorkspaceStudioControls
+                previewCanvasSize={previewCanvasSize}
+                onPreviewCanvasSizeChange={setPreviewCanvasSize}
+              />
+            ) : null}
+            <ImageStudioWorkspaceSlotInfo
+              selectedSlot={selectedSlot}
+              copyCardNameTooltip={copyCardNameTooltip}
+              selectCardFirstTooltip={selectCardFirstTooltip}
+            />
+          </ImageStudioWorkspaceHeader>
           <div className='flex-1 min-w-0 overflow-hidden'>
             <TabsContent value='studio' className='h-full m-0 p-0 flex flex-col'>
               <StudioMainContent />

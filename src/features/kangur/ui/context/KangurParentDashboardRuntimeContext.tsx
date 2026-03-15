@@ -24,6 +24,7 @@ export type KangurParentDashboardPanelDisplayMode = 'always' | 'active-tab';
 
 type KangurParentDashboardCreateForm = {
   displayName: string;
+  age: string;
   loginName: string;
   password: string;
 };
@@ -49,6 +50,7 @@ type KangurParentDashboardRuntimeStateContextValue = {
   viewerRoleLabel: string;
   progress: KangurProgressState;
   activeTab: KangurParentDashboardTabId;
+  isCreateLearnerModalOpen: boolean;
   createForm: KangurParentDashboardCreateForm;
   editForm: KangurParentDashboardEditForm;
   isSubmitting: boolean;
@@ -60,6 +62,7 @@ type KangurParentDashboardRuntimeActionsContextValue = {
   logout: (shouldRedirect?: boolean) => void;
   selectLearner: (learnerId: string) => Promise<void>;
   setActiveTab: (tabId: KangurParentDashboardTabId) => void;
+  setCreateLearnerModalOpen: (open: boolean) => void;
   updateCreateField: <K extends keyof KangurParentDashboardCreateForm>(
     key: K,
     value: KangurParentDashboardCreateForm[K]
@@ -105,8 +108,10 @@ export function KangurParentDashboardRuntimeProvider({
   } = useKangurAuth();
   const progress = useKangurProgressState();
   const [activeTab, setActiveTab] = useState<KangurParentDashboardTabId>('progress');
+  const [isCreateLearnerModalOpen, setCreateLearnerModalOpen] = useState(false);
   const [createForm, setCreateForm] = useState<KangurParentDashboardCreateForm>({
     displayName: '',
+    age: '',
     loginName: '',
     password: '',
   });
@@ -157,6 +162,7 @@ export function KangurParentDashboardRuntimeProvider({
       viewerRoleLabel,
       progress,
       activeTab,
+      isCreateLearnerModalOpen,
       createForm,
       editForm,
       isSubmitting,
@@ -172,6 +178,7 @@ export function KangurParentDashboardRuntimeProvider({
       editForm,
       feedback,
       isAuthenticated,
+      isCreateLearnerModalOpen,
       isSubmitting,
       learners,
       progress,
@@ -189,6 +196,7 @@ export function KangurParentDashboardRuntimeProvider({
       logout,
       selectLearner,
       setActiveTab,
+      setCreateLearnerModalOpen,
       updateCreateField: (key, value) => {
         setCreateForm((current) => ({ ...current, [key]: value }));
       },
@@ -200,22 +208,90 @@ export function KangurParentDashboardRuntimeProvider({
           return;
         }
 
+        const displayName = createForm.displayName.trim();
+        const loginName = createForm.loginName.trim();
+        const normalizedLoginName = loginName.replace(/[^a-zA-Z0-9]/g, '');
+        const password = createForm.password.trim();
+        const normalizedAge = createForm.age.trim();
+        const parsedAge =
+          normalizedAge.length > 0 && !Number.isNaN(Number(normalizedAge))
+            ? Number(normalizedAge)
+            : null;
+
+        if (!displayName || !normalizedLoginName || !password) {
+          setFeedback('Wypełnij dane ucznia');
+          return;
+        }
+
+        if (password.length < 8) {
+          setFeedback('Hasło musi mieć co najmniej 8 znaków');
+          return;
+        }
+
+        if (parsedAge !== null && (parsedAge < 3 || parsedAge > 99)) {
+          setFeedback('Wiek ucznia musi być w zakresie 3–99');
+          return;
+        }
+
+        if (displayName.length > 120) {
+          setFeedback('Imię ucznia może mieć maks. 120 znaków');
+          return;
+        }
+
+        if (normalizedLoginName.length > 80) {
+          setFeedback('Nick może mieć maks. 80 znaków');
+          return;
+        }
+
+        if (password.length > 160) {
+          setFeedback('Hasło może mieć maks. 160 znaków');
+          return;
+        }
+
         setIsSubmitting(true);
         setFeedback(null);
 
         try {
-          const created = await kangurPlatform.learners.create(createForm);
+          const created = await kangurPlatform.learners.create({
+            displayName,
+            loginName: normalizedLoginName,
+            password,
+            ...(parsedAge !== null ? { age: parsedAge } : {}),
+          });
           await selectLearner(created.id);
           setCreateForm({
             displayName: '',
+            age: '',
             loginName: '',
             password: '',
           });
           setFeedback(`Dodano profil ucznia: ${created.displayName}.`);
         } catch (error: unknown) {
-          setFeedback(
-            error instanceof Error ? error.message : 'Nie udało się dodać ucznia.'
-          );
+          const details =
+            error && typeof error === 'object'
+              ? (error as { details?: { issues?: { fieldErrors?: Record<string, string[]> } } })
+                  .details
+              : null;
+          const fieldErrors = details?.issues?.fieldErrors ?? null;
+
+          if (fieldErrors?.password?.length) {
+            setFeedback('Hasło musi mieć co najmniej 8 znaków');
+          } else if (fieldErrors?.age?.length) {
+            setFeedback('Wiek ucznia musi być w zakresie 3–99');
+          } else if (fieldErrors?.loginName?.length) {
+            setFeedback('Nick może zawierać tylko litery i cyfry');
+          } else if (fieldErrors?.displayName?.length) {
+            setFeedback('Wypełnij dane ucznia');
+          } else if (
+            error instanceof Error &&
+            /validation failed|invalid kangur learner payload/i.test(error.message)
+          ) {
+            setFeedback('Wypełnij dane ucznia');
+          } else {
+            setFeedback(
+              error instanceof Error ? error.message : 'Nie udało się dodać ucznia.'
+            );
+          }
         } finally {
           setIsSubmitting(false);
         }
@@ -275,6 +351,7 @@ export function KangurParentDashboardRuntimeProvider({
       editForm,
       logout,
       navigateToLogin,
+      setCreateLearnerModalOpen,
       selectLearner,
     ]
   );

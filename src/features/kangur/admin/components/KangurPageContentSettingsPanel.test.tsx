@@ -102,7 +102,7 @@ describe('KangurPageContentSettingsPanel', () => {
                     id: 'leaderboard-points',
                     text: 'Liczba punktów',
                     aliases: ['punkty'],
-                    explanation: 'Poczatkowe wyjaśnienie fragmentu.',
+                    explanation: 'Początkowe wyjaśnienie fragmentu.',
                     nativeGuideIds: ['shared-leaderboard-points'],
                     triggerPhrases: ['punkty'],
                     enabled: true,
@@ -125,7 +125,7 @@ describe('KangurPageContentSettingsPanel', () => {
       target: { value: 'Liczba punktów w rankingu' },
     });
     fireEvent.change(screen.getByLabelText('Page content fragment explanation'), {
-      target: { value: 'Aktualny wynik ucznia uzywany do wyliczenia miejsca w rankingu.' },
+      target: { value: 'Aktualny wynik ucznia używany do wyliczenia miejsca w rankingu.' },
     });
     fireEvent.change(screen.getByLabelText('Page content fragment aliases'), {
       target: { value: 'punkty\nwynik rankingowy' },
@@ -144,7 +144,7 @@ describe('KangurPageContentSettingsPanel', () => {
         id: 'leaderboard-points',
         text: 'Liczba punktów w rankingu',
         aliases: ['punkty', 'wynik rankingowy'],
-        explanation: 'Aktualny wynik ucznia uzywany do wyliczenia miejsca w rankingu.',
+        explanation: 'Aktualny wynik ucznia używany do wyliczenia miejsca w rankingu.',
       }),
     ]);
   });

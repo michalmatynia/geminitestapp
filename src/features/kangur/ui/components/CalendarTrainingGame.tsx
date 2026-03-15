@@ -1,10 +1,18 @@
 import { useRef, useState } from 'react';
 
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
-import { KangurPracticeGameSummary } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
+import {
+  KangurPracticeGameSummary,
+  KangurPracticeGameSummaryActions,
+  KangurPracticeGameSummaryBreakdown,
+  KangurPracticeGameSummaryEmoji,
+  KangurPracticeGameSummaryMessage,
+  KangurPracticeGameSummaryProgress,
+  KangurPracticeGameSummaryTitle,
+  KangurPracticeGameSummaryXP,
+} from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import {
   KangurGlassPanel,
-  KangurHeadline,
   KangurInfoCard,
   KangurInlineFallback,
   KangurProgressBar,
@@ -203,40 +211,45 @@ export default function CalendarTrainingGame({
 
     return (
       <KangurPracticeGameSummary
-        accent='emerald'
-        breakdown={xpBreakdown}
-        breakdownDataTestId='calendar-training-summary-breakdown'
-        breakdownItemDataTestIdPrefix='calendar-training-summary-breakdown'
         dataTestId='calendar-training-summary-shell'
-        emoji={score >= 5 ? '🏆' : score >= 3 ? '😊' : '💪'}
-        emojiAriaHidden
-        emojiDataTestId='calendar-training-summary-emoji'
-        finishLabel='Zakończ lekcję ✅'
-        message={
-          score === TOTAL
-            ? 'Idealnie! Świetnie znasz kalendarz!'
-            : 'Ćwicz dalej, a zostaniesz mistrzem kalendarza!'
-        }
-        messageClassName='max-w-xs text-center'
-        onFinish={handleFinishLesson}
-        onRestart={handleRestart}
         panelClassName='gap-5'
-        percent={percent}
-        progressAccent='emerald'
-        progressAriaLabel='Postęp w ćwiczeniach z kalendarzem'
-        progressAriaValueText={`${percent}% poprawnych odpowiedzi`}
-        progressClassName='w-full'
-        progressDataTestId='calendar-training-summary-progress-bar'
-        title={
-          <KangurHeadline accent='emerald' as='h3' data-testid='calendar-training-summary-title'>
-            Wynik: {score}/{TOTAL}
-          </KangurHeadline>
-        }
-        titleUnwrapped
         wrapperClassName='py-4'
-        xpAccent='indigo'
-        xpEarned={xpEarned}
-      />
+      >
+        <KangurPracticeGameSummaryEmoji
+          ariaHidden
+          dataTestId='calendar-training-summary-emoji'
+          emoji={score >= 5 ? '🏆' : score >= 3 ? '😊' : '💪'}
+        />
+        <KangurPracticeGameSummaryTitle
+          accent='emerald'
+          dataTestId='calendar-training-summary-title'
+          title={`Wynik: ${score}/${TOTAL}`}
+        />
+        <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
+        <KangurPracticeGameSummaryBreakdown
+          breakdown={xpBreakdown}
+          dataTestId='calendar-training-summary-breakdown'
+          itemDataTestIdPrefix='calendar-training-summary-breakdown'
+        />
+        <KangurPracticeGameSummaryProgress
+          accent='emerald'
+          ariaLabel='Postęp w ćwiczeniach z kalendarzem'
+          ariaValueText={`${percent}% poprawnych odpowiedzi`}
+          className='w-full'
+          dataTestId='calendar-training-summary-progress-bar'
+          percent={percent}
+        />
+        <KangurPracticeGameSummaryMessage className='max-w-xs text-center'>
+          {score === TOTAL
+            ? 'Idealnie! Świetnie znasz kalendarz!'
+            : 'Ćwicz dalej, a zostaniesz mistrzem kalendarza!'}
+        </KangurPracticeGameSummaryMessage>
+        <KangurPracticeGameSummaryActions
+          finishLabel='Zakończ lekcję ✅'
+          onFinish={handleFinishLesson}
+          onRestart={handleRestart}
+        />
+      </KangurPracticeGameSummary>
     );
   }
 
@@ -328,7 +341,7 @@ export default function CalendarTrainingGame({
             <KangurAnswerChoiceCard
               accent={accent}
               aria-disabled={selected !== null}
-              aria-label={`Odpowiedz ${choice}`}
+            aria-label={`Odpowiedź ${choice}`}
               buttonClassName={cn(
                 'px-4 py-3 text-sm font-bold min-[420px]:text-base',
                 choiceClassName,

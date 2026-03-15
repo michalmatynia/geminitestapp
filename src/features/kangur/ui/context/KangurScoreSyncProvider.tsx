@@ -16,6 +16,10 @@ const kangurPlatform = getKangurPlatform();
 const resolveAuthenticatedLearnerKey = (
   user: ReturnType<typeof useKangurAuth>['user']
 ): string | null => {
+  if (user?.actorType === 'parent') {
+    return null;
+  }
+
   const activeLearnerId = user?.activeLearner?.id?.trim();
   if (activeLearnerId) {
     return activeLearnerId;

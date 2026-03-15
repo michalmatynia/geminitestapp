@@ -20,7 +20,13 @@ import {
 import { KangurAnswerChoiceBadge } from '@/features/kangur/ui/components/KangurAnswerChoiceBadge';
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import { KangurLessonNarrator } from '@/features/kangur/ui/components/KangurLessonNarrator';
-import { KangurPracticeGameSummary } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
+import {
+  KangurPracticeGameSummary,
+  KangurPracticeGameSummaryEmoji,
+  KangurPracticeGameSummaryMessage,
+  KangurPracticeGameSummaryProgress,
+  KangurPracticeGameSummaryTitle,
+} from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import { useKangurGameContext } from '@/features/kangur/ui/context/KangurGameContext';
 import {
   KangurButton,
@@ -438,40 +444,32 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
       animate={{ opacity: 1, y: 0 }}
       className='w-full flex flex-col gap-4'
     >
-      <KangurPracticeGameSummary
-        accent='amber'
-        actionsHidden
-        breakdown={[]}
-        breakdownDataTestId='kangur-exam-summary-breakdown'
-        breakdownItemDataTestIdPrefix='kangur-exam-summary-breakdown'
-        dataTestId='kangur-exam-summary-shell'
-        emoji={emoji}
-        emojiDataTestId='kangur-exam-summary-emoji'
-        finishLabel='Wróć'
-        message={
-          pct === 100
+      <KangurPracticeGameSummary dataTestId='kangur-exam-summary-shell'>
+        <KangurPracticeGameSummaryEmoji emoji={emoji} dataTestId='kangur-exam-summary-emoji' />
+        <KangurPracticeGameSummaryTitle
+          accent='amber'
+          title={`Wynik: ${score}/${questions.length}`}
+        />
+        <KangurPracticeGameSummaryProgress
+          accent='amber'
+          ariaLabel='Dokładność odpowiedzi w teście Kangur'
+          ariaValueText={`${pct}% poprawnych odpowiedzi`}
+          dataTestId='kangur-exam-summary-progress-bar'
+          percent={pct}
+        />
+        <p className='text-sm [color:var(--kangur-page-muted-text)]'>
+          {pct}% poprawnych odpowiedzi
+        </p>
+        <KangurPracticeGameSummaryMessage className='text-sm'>
+          {pct === 100
             ? 'Idealny wynik! Jesteś mistrzem Kangura! 🦘'
             : pct >= 70
               ? 'Świetnie! Gotowy/a na konkurs!'
               : pct >= 40
                 ? 'Dobra robota! Ćwicz dalej!'
-                : 'Nie poddawaj się! Spróbuj jeszcze raz!'
-        }
-        messageClassName='text-sm'
-        onFinish={() => undefined}
-        onRestart={() => undefined}
-        percent={pct}
-        postProgressContent={
-          <p className='text-sm [color:var(--kangur-page-muted-text)]'>
-            {pct}% poprawnych odpowiedzi
-          </p>
-        }
-        progressAccent='amber'
-        progressAriaLabel='Dokładność odpowiedzi w teście Kangur'
-        progressAriaValueText={`${pct}% poprawnych odpowiedzi`}
-        progressDataTestId='kangur-exam-summary-progress-bar'
-        title={`Wynik: ${score}/${questions.length}`}
-      />
+                : 'Nie poddawaj się! Spróbuj jeszcze raz!'}
+        </KangurPracticeGameSummaryMessage>
+      </KangurPracticeGameSummary>
 
       <p className='text-center text-sm font-semibold [color:var(--kangur-page-muted-text)]'>
         Kliknij pytanie, aby zobaczyć rozwiązanie:

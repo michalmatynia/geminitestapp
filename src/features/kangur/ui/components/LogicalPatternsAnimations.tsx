@@ -236,7 +236,7 @@ export function RuleCheckAnimation(): React.JSX.Element {
 export function PatternMissingAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja: brakujący element we wzorcu pulsuje, aby podpowiedziec odpowiedz.'
+      aria-label='Animacja: brakujący element we wzorcu pulsuje, aby podpowiedzieć odpowiedź.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 320 120'
@@ -291,7 +291,7 @@ export function PatternMissingAnimation(): React.JSX.Element {
 export function ArithmeticReverseAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja: ciag malejacy ze stalym krokiem.'
+      aria-label='Animacja: ciąg malejący ze stałym krokiem.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 320 140'
@@ -350,7 +350,7 @@ export function ArithmeticReverseAnimation(): React.JSX.Element {
 export function GeometricDotsAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja: podwajanie liczby elementow w ciagu geometrycznym.'
+      aria-label='Animacja: podwajanie liczby elementów w ciągu geometrycznym.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 320 120'

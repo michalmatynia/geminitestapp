@@ -98,7 +98,7 @@ export default function LessonHub({
                           activeDotClassName={activeProgressDotClassName}
                           className='self-end'
                           dotTestIdPrefix={`lesson-hub-progress-dot-${section.id}`}
-                          srLabel={`Obejrzano ${resolvedProgress.viewedCount} z ${resolvedProgress.totalCount} ekranow sekcji.`}
+                          srLabel={`Obejrzano ${resolvedProgress.viewedCount} z ${resolvedProgress.totalCount} ekranów sekcji.`}
                           testId={`lesson-hub-progress-${section.id}`}
                           totalCount={resolvedProgress.totalCount}
                           viewedCount={resolvedProgress.viewedCount}

@@ -30,7 +30,6 @@ const buildInput = (
   sectionResponsePending: null,
   selectionConversationSelectedText: '2 + 2',
   selectionConversationStartIndex: 1,
-  selectionGuidanceHandoffText: null,
   messages: [
     {
       content: 'Stary wątek.',
@@ -53,7 +52,6 @@ const buildInput = (
   setSectionResponseComplete: vi.fn(),
   setSectionResponsePending: vi.fn(),
   setSelectionGuidanceCalloutVisibleText: vi.fn(),
-  setSelectionGuidanceHandoffText: vi.fn(),
   setSelectionResponseComplete: vi.fn(),
   setSelectionResponsePending: vi.fn(),
   telemetryContext: {
@@ -69,32 +67,15 @@ describe('useKangurAiTutorGuidanceCompletionEffects', () => {
     trackKangurClientEventMock.mockReset();
   });
 
-  it('keeps a page-content selection answer in the guided callout instead of creating a handoff reopen', async () => {
+  it('reveals the guided callout and finalizes the selection response when the AI answer is ready', async () => {
     const setSelectionGuidanceCalloutVisibleText = vi.fn();
-    const setSelectionGuidanceHandoffText = vi.fn();
     const setSelectionResponseComplete = vi.fn();
     const setSelectionResponsePending = vi.fn();
 
     renderHook(() =>
       useKangurAiTutorGuidanceCompletionEffects(
         buildInput({
-          messages: [
-            {
-              content: 'Stary wątek.',
-              role: 'assistant',
-            },
-            {
-              content: 'Wyjaśnij zaznaczony fragment krok po kroku.',
-              role: 'user',
-            },
-            {
-              answerResolutionMode: 'page_content',
-              content: 'To wyjaśnienie pochodzi z zapisanej treści strony.',
-              role: 'assistant',
-            },
-          ],
           setSelectionGuidanceCalloutVisibleText,
-          setSelectionGuidanceHandoffText,
           setSelectionResponseComplete,
           setSelectionResponsePending,
         })
@@ -104,7 +85,6 @@ describe('useKangurAiTutorGuidanceCompletionEffects', () => {
     await waitFor(() =>
       expect(setSelectionGuidanceCalloutVisibleText).toHaveBeenCalledWith('2 + 2')
     );
-    expect(setSelectionGuidanceHandoffText).not.toHaveBeenCalled();
     expect(setSelectionResponseComplete).toHaveBeenCalledWith({
       selectedText: '2 + 2',
     });
@@ -118,32 +98,5 @@ describe('useKangurAiTutorGuidanceCompletionEffects', () => {
         title: 'Dodawanie',
       })
     );
-  });
-
-  it('creates a selection handoff for a generic assistant answer so the minimal panel can reopen', async () => {
-    const setSelectionGuidanceCalloutVisibleText = vi.fn();
-    const setSelectionGuidanceHandoffText = vi.fn();
-    const setSelectionResponseComplete = vi.fn();
-    const setSelectionResponsePending = vi.fn();
-
-    renderHook(() =>
-      useKangurAiTutorGuidanceCompletionEffects(
-        buildInput({
-          setSelectionGuidanceCalloutVisibleText,
-          setSelectionGuidanceHandoffText,
-          setSelectionResponseComplete,
-          setSelectionResponsePending,
-        })
-      )
-    );
-
-    await waitFor(() =>
-      expect(setSelectionGuidanceHandoffText).toHaveBeenCalledWith('2 + 2')
-    );
-    expect(setSelectionGuidanceCalloutVisibleText).toHaveBeenCalledWith('2 + 2');
-    expect(setSelectionResponseComplete).toHaveBeenCalledWith({
-      selectedText: '2 + 2',
-    });
-    expect(setSelectionResponsePending).toHaveBeenCalledWith(null);
   });
 });

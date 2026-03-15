@@ -18,6 +18,7 @@ import {
   saveProgress,
   saveProgressOwnerKey,
   subscribeToProgress,
+  setProgressPersistenceEnabled,
 } from '@/features/kangur/ui/services/progress';
 import {
   createDefaultKangurProgressState,
@@ -27,6 +28,10 @@ import {
 const kangurPlatform = getKangurPlatform();
 
 const resolveUserProgressKey = (user: KangurUser | null): string | null => {
+  if (user?.actorType === 'parent') {
+    return null;
+  }
+
   const activeLearnerId = user?.activeLearner?.id?.trim();
   if (activeLearnerId) {
     return activeLearnerId;
@@ -48,9 +53,14 @@ export function KangurProgressSyncProvider({
   children: ReactNode;
 }): React.JSX.Element {
   const { isAuthenticated, isLoadingAuth, user } = useKangurAuth();
+  const isParentAccount = user?.actorType === 'parent';
   const userKey = resolveUserProgressKey(user);
   const lastSyncedProgressRef = useRef<string | null>(null);
   const syncStateRef = useRef<'idle' | 'loading' | 'ready'>('idle');
+
+  useEffect(() => {
+    setProgressPersistenceEnabled(!isParentAccount);
+  }, [isParentAccount]);
 
   useEffect(() => {
     if (isLoadingAuth) {

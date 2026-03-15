@@ -50,18 +50,18 @@ describe('kangur page content contract', () => {
           sourcePath: 'src/features/kangur/ui/pages/Lessons.tsx',
           title: 'Biblioteka lekcji',
           summary: 'Własny opis zapisany w Mongo.',
-          body: 'Wlasna treść zapisna w Mongo.',
+          body: 'Własna treść zapisana w Mongo.',
           anchorIdPrefix: 'kangur-lessons-library',
           focusKind: 'library',
           contentIdPrefixes: ['lesson:list:custom'],
           nativeGuideIds: ['lesson-library-custom'],
-          triggerPhrases: ['wlasna biblioteka'],
+          triggerPhrases: ['własna biblioteka'],
           fragments: [
             {
               id: 'lesson-library-priority',
-              text: 'Najwyzszy priorytet',
+              text: 'Najwyższy priorytet',
               aliases: ['Priorytet'],
-              explanation: 'To etykieta wskazujaca lekcje, od której najlepiej zacząć.',
+              explanation: 'To etykieta wskazująca lekcję, od której najlepiej zacząć.',
               nativeGuideIds: ['lesson-library-custom'],
               triggerPhrases: ['priorytet'],
               enabled: true,
@@ -100,15 +100,15 @@ describe('kangur page content contract', () => {
 
     expect(merged.version).toBe(1);
     expect(lessonLibrary?.summary).toBe('Własny opis zapisany w Mongo.');
-    expect(lessonLibrary?.body).toBe('Wlasna treść zapisna w Mongo.');
+    expect(lessonLibrary?.body).toBe('Własna treść zapisana w Mongo.');
     expect(lessonLibrary?.contentIdPrefixes).toEqual(['lesson:list', 'lesson:list:custom']);
     expect(lessonLibrary?.nativeGuideIds).toEqual(['lesson-library', 'lesson-library-custom']);
     expect(lessonLibrary?.fragments).toEqual([
       {
         id: 'lesson-library-priority',
-        text: 'Najwyzszy priorytet',
+        text: 'Najwyższy priorytet',
         aliases: ['Priorytet'],
-        explanation: 'To etykieta wskazujaca lekcje, od której najlepiej zacząć.',
+        explanation: 'To etykieta wskazująca lekcję, od której najlepiej zacząć.',
         nativeGuideIds: ['lesson-library-custom'],
         triggerPhrases: ['priorytet'],
         enabled: true,

@@ -9,6 +9,13 @@ import {
   KangurPracticeGameProgress,
   KangurPracticeGameStage,
   KangurPracticeGameSummary,
+  KangurPracticeGameSummaryActions,
+  KangurPracticeGameSummaryBreakdown,
+  KangurPracticeGameSummaryEmoji,
+  KangurPracticeGameSummaryMessage,
+  KangurPracticeGameSummaryProgress,
+  KangurPracticeGameSummaryTitle,
+  KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 
 describe('KangurPracticeGameChrome', () => {
@@ -36,31 +43,32 @@ describe('KangurPracticeGameChrome', () => {
     expect(screen.getByText('3/6')).toHaveClass('text-xs', 'font-bold');
   });
 
-  it('renders the shared practice game summary shell', () => {
+  it('renders the shared practice game summary shell with granular components', () => {
     render(
-      <KangurPracticeGameSummary
-        accent='indigo'
-        breakdown={[
-          { kind: 'accuracy', label: 'Za celność', xp: 8 },
-          { kind: 'streak', label: 'Za serię', xp: 4 },
-        ]}
-        breakdownDataTestId='practice-summary-breakdown'
-        breakdownItemDataTestIdPrefix='practice-summary-breakdown'
-        dataTestId='practice-summary-shell'
-        emojiDataTestId='practice-summary-emoji'
-        emoji='🏆'
-        finishLabel='Wróć'
-        message='Świetna robota!'
-        onFinish={vi.fn()}
-        onRestart={vi.fn()}
-        percent={100}
-        progressAccent='indigo'
-        progressDataTestId='practice-summary-progress'
-        title='Wynik: 6/6'
-        titleDataTestId='practice-summary-title'
-        xpAccent='indigo'
-        xpEarned={12}
-      />
+      <KangurPracticeGameSummary dataTestId='practice-summary-shell'>
+        <KangurPracticeGameSummaryEmoji dataTestId='practice-summary-emoji' emoji='🏆' />
+        <KangurPracticeGameSummaryTitle dataTestId='practice-summary-title' title='Wynik: 6/6' />
+        <KangurPracticeGameSummaryXP accent='indigo' xpEarned={12} />
+        <KangurPracticeGameSummaryBreakdown
+          breakdown={[
+            { kind: 'accuracy', label: 'Za celność', xp: 8 },
+            { kind: 'streak', label: 'Za serię', xp: 4 },
+          ]}
+          dataTestId='practice-summary-breakdown'
+          itemDataTestIdPrefix='practice-summary-breakdown'
+        />
+        <KangurPracticeGameSummaryProgress
+          accent='indigo'
+          dataTestId='practice-summary-progress'
+          percent={100}
+        />
+        <KangurPracticeGameSummaryMessage>Świetna robota!</KangurPracticeGameSummaryMessage>
+        <KangurPracticeGameSummaryActions
+          finishLabel='Wróć'
+          onFinish={vi.fn()}
+          onRestart={vi.fn()}
+        />
+      </KangurPracticeGameSummary>
     );
 
     expect(screen.getByTestId('practice-summary-shell')).toHaveClass(
@@ -83,33 +91,25 @@ describe('KangurPracticeGameChrome', () => {
     );
   });
 
-  it('can hide summary actions and render extra summary content blocks', () => {
+  it('can render extra summary content blocks using custom layout', () => {
     render(
-      <KangurPracticeGameSummary
-        accent='amber'
-        actionsHidden
-        breakdown={[]}
-        breakdownDataTestId='practice-summary-hidden-breakdown'
-        breakdownItemDataTestIdPrefix='practice-summary-hidden-breakdown'
-        dataTestId='practice-summary-hidden-shell'
-        emoji='🌟'
-        emojiDataTestId='practice-summary-hidden-emoji'
-        finishLabel='Ignored'
-        message='Dobra robota!'
-        onFinish={vi.fn()}
-        onRestart={vi.fn()}
-        percent={70}
-        postProgressContent={<p>70% poprawnych odpowiedzi</p>}
-        preProgressContent={<p>Tryb: Wyzwanie</p>}
-        progressAccent='amber'
-        progressDataTestId='practice-summary-hidden-progress'
-        title='Wynik: 7/10'
-      />
+      <KangurPracticeGameSummary dataTestId='practice-summary-custom-shell'>
+        <KangurPracticeGameSummaryEmoji dataTestId='practice-summary-custom-emoji' emoji='🌟' />
+        <KangurPracticeGameSummaryTitle title='Wynik: 7/10' />
+        <p>Tryb: Wyzwanie</p>
+        <KangurPracticeGameSummaryProgress
+          accent='amber'
+          dataTestId='practice-summary-custom-progress'
+          percent={70}
+        />
+        <p>70% poprawnych odpowiedzi</p>
+        <KangurPracticeGameSummaryMessage>Dobra robota!</KangurPracticeGameSummaryMessage>
+      </KangurPracticeGameSummary>
     );
 
     expect(screen.getByText('Tryb: Wyzwanie')).toBeInTheDocument();
     expect(screen.getByText('70% poprawnych odpowiedzi')).toBeInTheDocument();
-    expect(screen.getByTestId('practice-summary-hidden-progress')).toHaveAttribute(
+    expect(screen.getByTestId('practice-summary-custom-progress')).toHaveAttribute(
       'aria-valuenow',
       '70'
     );

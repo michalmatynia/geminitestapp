@@ -21,6 +21,7 @@ vi.mock('@/features/kangur/server/page-content-repository', () => ({
 
 vi.mock('@/features/kangur/services/kangur-actor', () => ({
   resolveKangurActor: resolveKangurActorMock,
+  requireActiveLearner: (actor: { activeLearner?: unknown }) => actor.activeLearner,
 }));
 
 import {

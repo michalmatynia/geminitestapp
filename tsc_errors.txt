@@ -2,3 +2,80 @@
 > libapp2@0.1.0 typecheck
 > tsc --noEmit --incremental false
 
+src/features/kangur/admin/AdminKangurTestSuitesManagerPage.tsx(14,3): error TS6133: 'Badge' is declared but its value is never read.
+src/features/kangur/admin/AdminKangurTestSuitesManagerPage.tsx(18,1): error TS6133: 'serializeSetting' is declared but its value is never read.
+src/features/kangur/admin/AdminKangurTestSuitesManagerPage.tsx(20,3): error TS6133: 'KANGUR_TEST_SUITES_SETTING_KEY' is declared but its value is never read.
+src/features/kangur/admin/AdminKangurTestSuitesManagerPage.tsx(69,81): error TS2345: Argument of type 'Map<unknown, unknown>' is not assignable to parameter of type 'Map<string, { id: string; title: string; description: string; year: number | null; gradeLevel: string; category: string; enabled: boolean; publicationStatus: "draft" | "live"; sortOrder: number; groupId?: string | undefined; publishedAt?: string | undefined; }>'.
+  Type 'unknown' is not assignable to type 'string'.
+src/features/kangur/admin/AdminKangurTestSuitesManagerPage.tsx(70,17): error TS6133: 'nextSuites' is declared but its value is never read.
+src/features/kangur/admin/AdminKangurTestSuitesManagerPage.tsx(100,9): error TS2322: Type 'Map<unknown, unknown>' is not assignable to type 'Map<string, { id: string; title: string; description: string; year: number | null; gradeLevel: string; category: string; enabled: boolean; publicationStatus: "draft" | "live"; sortOrder: number; groupId?: string | undefined; publishedAt?: string | undefined; }>'.
+  Type 'unknown' is not assignable to type 'string'.
+src/features/kangur/admin/AdminKangurTestSuitesManagerPage.tsx(104,23): error TS6133: 'title' is declared but its value is never read.
+src/features/kangur/admin/AdminKangurTestSuitesManagerPage.tsx(108,30): error TS6133: 'suite' is declared but its value is never read.
+src/features/kangur/admin/test-suites-manager/GroupMetadataPanel.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/features/kangur/admin/test-suites-manager/GroupMetadataPanel.tsx(6,81): error TS2307: Cannot find module '../test-suites' or its corresponding type declarations.
+src/features/kangur/admin/test-suites-manager/GroupMetadataPanel.tsx(17,83): error TS2339: Property 'groupById' does not exist on type '{ suites: any; groups: any; questionStore: any; groupTitleBySuiteId: Map<string, string>; suiteById: Map<unknown, unknown>; questionCountBySuiteId: Map<string, number>; suiteHealthById: Map<...>; ... 19 more ...; isUpdating: boolean; }'.
+src/features/kangur/admin/test-suites-manager/LibraryStatusSidebar.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/features/kangur/admin/test-suites-manager/QuestionsManagerWorkspace.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/features/kangur/admin/test-suites-manager/QuestionsManagerWorkspace.tsx(9,50): error TS2307: Cannot find module '../test-suites' or its corresponding type declarations.
+src/features/kangur/admin/test-suites-manager/QuestionsManagerWorkspace.tsx(90,64): error TS2339: Property 'groupById' does not exist on type '{ suites: any; groups: any; questionStore: any; groupTitleBySuiteId: Map<string, string>; suiteById: Map<unknown, unknown>; questionCountBySuiteId: Map<string, number>; suiteHealthById: Map<...>; ... 19 more ...; isUpdating: boolean; }'.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.context.tsx(1,54): error TS6133: 'useCallback' is declared but its value is never read.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.context.tsx(3,40): error TS2307: Cannot find module '../test-suites' or its corresponding type declarations.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.context.tsx(4,48): error TS2307: Cannot find module '../test-suites' or its corresponding type declarations.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(16,3): error TS6133: 'canonicalizeKangurTestGroups' is declared but its value is never read.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(21,3): error TS6133: 'normalizeKangurTestGroupTitle' is declared but its value is never read.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(22,3): error TS6133: 'createKangurTestGroup' is declared but its value is never read.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(23,3): error TS6133: 'upsertKangurTestGroup' is declared but its value is never read.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(28,8): error TS2307: Cannot find module '../test-suites' or its corresponding type declarations.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(34,8): error TS2307: Cannot find module '../test-questions' or its corresponding type declarations.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(37,1): error TS6133: 'importLegacyKangurQuestions' is declared but its value is never read.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(37,45): error TS2307: Cannot find module '../test-suites/import-legacy' or its corresponding type declarations.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(59,39): error TS7006: Parameter 'group' implicitly has an 'any' type.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(64,21): error TS7006: Parameter 'suite' implicitly has an 'any' type.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(69,55): error TS7006: Parameter 's' implicitly has an 'any' type.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(79,49): error TS2345: Argument of type 'unknown[]' is not assignable to parameter of type '{ id: string; suiteId: string; sortOrder: number; prompt: string; choices: { label: string; text: string; svgContent: string; description?: string | undefined; }[]; correctChoiceLabel: string; pointValue: number; ... 6 more ...; hintDocument?: { ...; } | undefined; }[]'.
+  Type 'unknown' is not assignable to type '{ id: string; suiteId: string; sortOrder: number; prompt: string; choices: { label: string; text: string; svgContent: string; description?: string | undefined; }[]; correctChoiceLabel: string; pointValue: number; ... 6 more ...; hintDocument?: { ...; } | undefined; }'.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(93,51): error TS2345: Argument of type 'unknown' is not assignable to parameter of type '{ id: string; suiteId: string; sortOrder: number; prompt: string; choices: { label: string; text: string; svgContent: string; description?: string | undefined; }[]; correctChoiceLabel: string; pointValue: number; ... 6 more ...; hintDocument?: { ...; } | undefined; } | QuestionAuthoringDraftLike'.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(94,11): error TS18046: 'question' is of type 'unknown'.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(98,40): error TS18046: 'question' is of type 'unknown'.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(99,29): error TS18046: 'question' is of type 'unknown'.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(100,15): error TS18046: 'question' is of type 'unknown'.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(115,18): error TS7006: Parameter 'suite' implicitly has an 'any' type.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(116,15): error TS7006: Parameter 'suite' implicitly has an 'any' type.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(122,18): error TS7006: Parameter 'suite' implicitly has an 'any' type.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(123,15): error TS7006: Parameter 'suite' implicitly has an 'any' type.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(146,10): error TS7006: Parameter 'question' implicitly has an 'any' type.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(225,24): error TS7006: Parameter 's' implicitly has an 'any' type.
+src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts(347,38): error TS7006: Parameter 'suite' implicitly has an 'any' type.
+src/features/kangur/admin/test-suites-manager/TestSuiteLibraryHeader.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/features/kangur/admin/test-suites-manager/TestSuiteLibraryHeader.tsx(3,18): error TS2305: Module '"@/shared/ui"' has no exported member 'cn'.
+src/features/kangur/admin/test-suites-manager/TestSuitesModals.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/features/kangur/admin/test-suites-manager/TestSuitesModals.tsx(8,1): error TS6133: 'resolveKangurTestSuiteGroupTitle' is declared but its value is never read.
+src/features/kangur/admin/test-suites-manager/TestSuitesModals.tsx(8,50): error TS2307: Cannot find module '../test-suites' or its corresponding type declarations.
+src/features/kangur/admin/test-suites-manager/TestSuitesModals.tsx(102,20): error TS2339: Property 'resolvedGroups' does not exist on type '{ suites: any; groups: any; questionStore: any; groupTitleBySuiteId: Map<string, string>; suiteById: Map<unknown, unknown>; questionCountBySuiteId: Map<string, number>; suiteHealthById: Map<...>; ... 19 more ...; isUpdating: boolean; }'.
+src/features/kangur/ui/components/GeometryDrawingGame.tsx(521,12): error TS2322: Type '{ children: Element; unwrapped: true; }' is not assignable to type 'IntrinsicAttributes & { title: ReactNode; dataTestId?: string | undefined; accent?: KangurAccent | undefined; unwrapped?: boolean | undefined; }'.
+  Property 'children' does not exist on type 'IntrinsicAttributes & { title: ReactNode; dataTestId?: string | undefined; accent?: KangurAccent | undefined; unwrapped?: boolean | undefined; }'.
+src/features/kangur/ui/components/GeometryPerimeterDrawingGame.tsx(669,12): error TS2304: Cannot find name 'KangurHeadline'.
+src/features/kangur/ui/components/GeometryPerimeterDrawingGame.tsx(671,13): error TS2304: Cannot find name 'KangurHeadline'.
+src/features/kangur/ui/components/GeometrySymmetryGame.tsx(695,10): error TS2322: Type '{ children: Element; unwrapped: true; }' is not assignable to type 'IntrinsicAttributes & { title: ReactNode; dataTestId?: string | undefined; accent?: KangurAccent | undefined; unwrapped?: boolean | undefined; }'.
+  Property 'children' does not exist on type 'IntrinsicAttributes & { title: ReactNode; dataTestId?: string | undefined; accent?: KangurAccent | undefined; unwrapped?: boolean | undefined; }'.
+src/shared/ui/templates/SettingsPanelBuilder.tsx(118,19): error TS2532: Object is possibly 'undefined'.
+src/shared/ui/templates/SettingsPanelBuilder.tsx(131,25): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/shared/ui/templates/SettingsPanelBuilder.tsx(132,25): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/shared/ui/templates/SettingsPanelBuilder.tsx(133,25): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/shared/ui/templates/SettingsPanelBuilder.tsx(181,19): error TS2532: Object is possibly 'undefined'.
+src/shared/ui/templates/SettingsPanelBuilder.tsx(183,28): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/shared/ui/templates/SettingsPanelBuilder.tsx(187,24): error TS18048: 'saturationRaw' is possibly 'undefined'.
+src/shared/ui/templates/SettingsPanelBuilder.tsx(188,20): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/shared/ui/templates/SettingsPanelBuilder.tsx(189,20): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/shared/ui/templates/SettingsPanelBuilder.tsx(190,23): error TS18048: 'lightnessRaw' is possibly 'undefined'.
+src/shared/ui/templates/SettingsPanelBuilder.tsx(191,20): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/shared/ui/templates/SettingsPanelBuilder.tsx(192,20): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.

@@ -141,8 +141,8 @@ function generateQuestion(operation: KangurOperation, range: number): KangurQues
 }
 
 export const DIFFICULTY_CONFIG: KangurDifficultyConfig = {
-  easy: { label: 'Latwy', emoji: '🟢', range: 10, timeLimit: 20 },
-  medium: { label: 'Sredni', emoji: '🟡', range: 50, timeLimit: 15 },
+  easy: { label: 'Łatwy', emoji: '🟢', range: 10, timeLimit: 20 },
+  medium: { label: 'Średni', emoji: '🟡', range: 50, timeLimit: 15 },
   hard: { label: 'Trudny', emoji: '🔴', range: 100, timeLimit: 10 },
 };
 

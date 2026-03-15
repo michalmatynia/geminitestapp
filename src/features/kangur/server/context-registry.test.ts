@@ -111,7 +111,7 @@ describe('buildKangurTestContextRuntimeDocument', () => {
         questionStore: {
           [makeQuestion().id]: makeQuestion({
             choices: [
-              { label: 'A', text: '3', description: 'Za malo', svgContent: '' },
+              { label: 'A', text: '3', description: 'Za mało', svgContent: '' },
               { label: 'B', text: '4', description: 'Poprawny wynik', svgContent: '' },
             ],
           }),
@@ -125,7 +125,7 @@ describe('buildKangurTestContextRuntimeDocument', () => {
         questionProgressLabel: 'Pytanie 1/1',
         questionPointValue: 3,
         questionChoicesSummary:
-          'Opcje odpowiedzi: A - 3: Za malo; B - 4: Poprawny wynik.',
+          'Opcje odpowiedzi: A - 3: Za mało; B - 4: Poprawny wynik.',
       })
     );
   });

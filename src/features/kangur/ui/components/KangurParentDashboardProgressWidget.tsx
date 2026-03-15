@@ -13,14 +13,20 @@ export function KangurParentDashboardProgressWidget({
 }: {
   displayMode?: KangurParentDashboardPanelDisplayMode;
 }): React.JSX.Element | null {
-  const { activeTab, canAccessDashboard, progress } = useKangurParentDashboardRuntime();
+  const { activeLearner, activeTab, canAccessDashboard, progress } =
+    useKangurParentDashboardRuntime();
   const { entry: progressContent } = useKangurPageContentEntry('parent-dashboard-progress');
+  const activeLearnerId = activeLearner?.id ?? null;
 
   if (!canAccessDashboard) {
     return null;
   }
 
   if (!shouldRenderKangurParentDashboardPanel(displayMode, activeTab, 'progress')) {
+    return null;
+  }
+
+  if (!activeLearnerId) {
     return null;
   }
 

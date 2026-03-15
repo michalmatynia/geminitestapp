@@ -20,7 +20,16 @@ import {
   Q15Illustration,
   Q16Illustration,
 } from '@/features/kangur/ui/components/KangurIllustrations';
-import { KangurPracticeGameSummary } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
+import {
+  KangurPracticeGameSummary,
+  KangurPracticeGameSummaryActions,
+  KangurPracticeGameSummaryBreakdown,
+  KangurPracticeGameSummaryEmoji,
+  KangurPracticeGameSummaryMessage,
+  KangurPracticeGameSummaryProgress,
+  KangurPracticeGameSummaryTitle,
+  KangurPracticeGameSummaryXP,
+} from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import { useKangurGameContext } from '@/features/kangur/ui/context/KangurGameContext';
 import { useOptionalKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import {
@@ -270,39 +279,39 @@ function ResultView({
   };
 
   return (
-    <KangurPracticeGameSummary
-      accent='amber'
-      breakdown={summaryBreakdown}
-      breakdownDataTestId='kangur-game-summary-breakdown'
-      breakdownItemDataTestIdPrefix='kangur-game-summary-breakdown'
-      dataTestId='kangur-game-summary-shell'
-      emoji={emoji}
-      emojiDataTestId='kangur-game-summary-emoji'
-      finishLabel='Spróbuj ponownie 🔁'
-      message={
-        pct === 100
+    <KangurPracticeGameSummary dataTestId='kangur-game-summary-shell'>
+      <KangurPracticeGameSummaryEmoji dataTestId='kangur-game-summary-emoji' emoji={emoji} />
+      <KangurPracticeGameSummaryTitle accent='amber' title={`Wynik: ${score}/${total}`} />
+      <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
+      <KangurPracticeGameSummaryBreakdown
+        breakdown={summaryBreakdown}
+        dataTestId='kangur-game-summary-breakdown'
+        itemDataTestIdPrefix='kangur-game-summary-breakdown'
+      />
+      <KangurPracticeGameSummaryProgress
+        accent='amber'
+        dataTestId='kangur-game-summary-progress-bar'
+        percent={pct}
+      />
+      <p className='text-sm [color:var(--kangur-page-muted-text)]'>
+        {pct}% poprawnych odpowiedzi
+      </p>
+      <KangurPracticeGameSummaryMessage>
+        {pct === 100
           ? 'Idealny wynik! Jesteś mistrzem Kangura! 🦘'
           : pct >= 70
             ? 'Świetnie! Gotowy/a na konkurs!'
             : pct >= 40
               ? 'Dobra robota! Ćwicz dalej!'
-              : 'Nie poddawaj się! Spróbuj jeszcze raz!'
-      }
-      onFinish={handleRestart}
-      onRestart={onBack}
-      percent={pct}
-      postProgressContent={
-        <p className='text-sm [color:var(--kangur-page-muted-text)]'>
-          {pct}% poprawnych odpowiedzi
-        </p>
-      }
-      progressAccent='amber'
-      progressDataTestId='kangur-game-summary-progress-bar'
-      restartLabel='Menu'
-      title={`Wynik: ${score}/${total}`}
-      xpAccent='indigo'
-      xpEarned={xpEarned}
-    />
+              : 'Nie poddawaj się! Spróbuj jeszcze raz!'}
+      </KangurPracticeGameSummaryMessage>
+      <KangurPracticeGameSummaryActions
+        finishLabel='Spróbuj ponownie 🔁'
+        onFinish={handleRestart}
+        onRestart={onBack}
+        restartLabel='Menu'
+      />
+    </KangurPracticeGameSummary>
   );
 }
 

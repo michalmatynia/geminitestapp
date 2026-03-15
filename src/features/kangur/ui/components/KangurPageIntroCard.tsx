@@ -18,6 +18,7 @@ type KangurPageIntroCardProps = {
   headingAs?: 'h1' | 'h2' | 'h3';
   headingSize?: 'xs' | 'sm' | 'md' | 'lg';
   headingTestId?: string;
+  showBackButton?: boolean;
   testId?: string;
   title: string;
   titleId?: string;
@@ -33,6 +34,7 @@ type KangurPageIntroCardContextValue = {
   headingAs: 'h1' | 'h2' | 'h3';
   headingSize: 'xs' | 'sm' | 'md' | 'lg';
   headingTestId?: string;
+  showBackButton: boolean;
   title: string;
   titleId?: string;
   visualTitle?: ReactNode;
@@ -88,8 +90,13 @@ function KangurPageIntroDescription(): React.JSX.Element | null {
   ) : null;
 }
 
-function KangurPageIntroBackButton(): React.JSX.Element {
-  const { backButtonLabel, backButtonTestId, onBack } = useKangurPageIntroCardContext();
+function KangurPageIntroBackButton(): React.JSX.Element | null {
+  const { backButtonLabel, backButtonTestId, onBack, showBackButton } =
+    useKangurPageIntroCardContext();
+
+  if (!showBackButton) {
+    return null;
+  }
 
   return (
     <KangurButton
@@ -115,6 +122,7 @@ export function KangurPageIntroCard({
   headingAs = 'h2',
   headingSize = 'lg',
   headingTestId,
+  showBackButton = true,
   testId,
   title,
   titleId,
@@ -131,6 +139,7 @@ export function KangurPageIntroCard({
     headingAs,
     headingSize,
     headingTestId,
+    showBackButton,
     title,
     titleId,
     visualTitle,

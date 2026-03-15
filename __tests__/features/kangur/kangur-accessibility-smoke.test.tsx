@@ -244,7 +244,7 @@ describe('Kangur accessibility smoke', () => {
 
     expect(screen.getByRole('link', { name: 'Strona główna' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Lekcje' })).toBeVisible();
-    expect(screen.getByRole('link', { name: 'Profil' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Profil Jan' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Rodzic' })).toBeVisible();
     expect(screen.getByText('Plan na dziś')).toBeVisible();
 

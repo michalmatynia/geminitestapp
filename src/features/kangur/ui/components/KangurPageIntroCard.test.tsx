@@ -35,4 +35,21 @@ describe('KangurPageIntroCard', () => {
 
     expect(handleBack).toHaveBeenCalledTimes(1);
   });
+
+  it('omits the back button when disabled', () => {
+    const handleBack = vi.fn();
+
+    render(
+      <KangurPageIntroCard
+        onBack={handleBack}
+        showBackButton={false}
+        title='Lekcje'
+      />
+    );
+
+    expect(
+      screen.queryByRole('button', { name: 'Wróć do poprzedniej strony' })
+    ).toBeNull();
+    expect(handleBack).not.toHaveBeenCalled();
+  });
 });

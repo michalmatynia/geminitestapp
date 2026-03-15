@@ -29,7 +29,7 @@ export function KangurLessonProgressDots({
 
   const normalizedViewedCount = Math.min(Math.max(Math.floor(viewedCount), 0), totalCount);
   const resolvedLabel =
-    srLabel ?? `Obejrzano ${normalizedViewedCount} z ${totalCount} ekranow tej sekcji.`;
+    srLabel ?? `Obejrzano ${normalizedViewedCount} z ${totalCount} ekranów tej sekcji.`;
 
   return (
     <div

@@ -1,24 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/features/auth/server';
-import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/server';
+import { listAuthUsers } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
-import type { AuthUser } from '@/shared/contracts/auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { authError, internalError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
-
-import type { ObjectId } from 'mongodb';
-
-type MongoUserDoc = {
-  _id: ObjectId;
-  email?: string | null;
-  name?: string | null;
-  image?: string | null;
-  emailVerified?: Date | null;
-  createdAt?: Date | null;
-  updatedAt?: Date | null;
-};
+import { authError } from '@/shared/errors/app-error';
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
@@ -33,29 +19,8 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     stage: 'start',
     userId: session?.user?.id ?? null,
   });
-  requireAuthProvider(await getAuthDataProvider());
 
-  if (!process.env['MONGODB_URI']) {
-    throw internalError('MongoDB is not configured.');
-  }
-  const db = await getMongoDb();
-  const docs = await db
-    .collection<MongoUserDoc>('users')
-    .find({})
-    .sort({ createdAt: -1 })
-    .limit(500)
-    .toArray();
-
-  const users: AuthUser[] = docs.map((doc: MongoUserDoc) => ({
-    id: doc._id.toString(),
-    email: doc.email ?? null,
-    name: doc.name ?? null,
-    image: doc.image ?? null,
-    emailVerified: doc.emailVerified ? doc.emailVerified.toISOString() : null,
-    provider: 'mongodb',
-    createdAt: doc.createdAt?.toISOString() ?? new Date().toISOString(),
-    updatedAt: doc.updatedAt?.toISOString() ?? new Date().toISOString(),
-  }));
+  const users = await listAuthUsers(500);
 
   await logAuthEvent({
     req,

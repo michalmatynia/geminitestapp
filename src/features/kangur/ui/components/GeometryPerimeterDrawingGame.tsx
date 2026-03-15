@@ -6,12 +6,18 @@ import {
   KangurPracticeGameProgress,
   KangurPracticeGameStage,
   KangurPracticeGameSummary,
+  KangurPracticeGameSummaryActions,
+  KangurPracticeGameSummaryBreakdown,
+  KangurPracticeGameSummaryEmoji,
+  KangurPracticeGameSummaryMessage,
+  KangurPracticeGameSummaryProgress,
+  KangurPracticeGameSummaryTitle,
+  KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import {
   KangurButton,
   KangurDisplayEmoji,
   KangurGlassPanel,
-  KangurHeadline,
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -578,46 +584,46 @@ export default function GeometryPerimeterDrawingGame({
   if (done) {
     const percent = Math.round((score / TOTAL_ROUNDS) * 100);
     return (
-      <KangurPracticeGameSummary
-        accent='amber'
-        actionsClassName='flex-col sm:flex-row'
-        breakdown={xpBreakdown}
-        breakdownDataTestId='geometry-perimeter-summary-breakdown'
-        breakdownItemDataTestIdPrefix='geometry-perimeter-summary-breakdown'
-        dataTestId='geometry-perimeter-summary-shell'
-        emoji={percent === 100 ? '🏆' : percent >= 70 ? '🌟' : '💪'}
-        emojiAriaHidden
-        emojiDataTestId='geometry-perimeter-summary-emoji'
-        finishButtonClassName='w-full sm:flex-1'
-        finishLabel={finishLabel}
-        message={
-          percent === 100
+      <KangurPracticeGameSummary dataTestId='geometry-perimeter-summary-shell'>
+        <KangurPracticeGameSummaryEmoji
+          ariaHidden
+          dataTestId='geometry-perimeter-summary-emoji'
+          emoji={percent === 100 ? '🏆' : percent >= 70 ? '🌟' : '💪'}
+        />
+        <KangurPracticeGameSummaryTitle
+          accent='amber'
+          dataTestId='geometry-perimeter-summary-title'
+          title={`Wynik: ${score}/${TOTAL_ROUNDS}`}
+        />
+        <KangurPracticeGameSummaryXP accent='amber' xpEarned={xpEarned} />
+        <KangurPracticeGameSummaryBreakdown
+          breakdown={xpBreakdown}
+          dataTestId='geometry-perimeter-summary-breakdown'
+          itemDataTestIdPrefix='geometry-perimeter-summary-breakdown'
+        />
+        <KangurPracticeGameSummaryProgress
+          accent='amber'
+          ariaLabel='Skuteczność w grze o obwodach'
+          ariaValueText={`${percent}% poprawnych odpowiedzi`}
+          dataTestId='geometry-perimeter-summary-progress-bar'
+          percent={percent}
+        />
+        <KangurPracticeGameSummaryMessage>
+          {percent === 100
             ? 'Perfekcyjnie! Obwody opanowane.'
             : percent >= 70
               ? 'Świetna robota! Jeszcze trochę i będzie perfekcja.'
-              : 'Dobra próba! Spróbuj ponownie.'
-        }
-        onFinish={onFinish}
-        onRestart={handleRestart}
-        percent={percent}
-        progressAccent='amber'
-        progressAriaLabel='Skuteczność w grze o obwodach'
-        progressAriaValueText={`${percent}% poprawnych odpowiedzi`}
-        progressDataTestId='geometry-perimeter-summary-progress-bar'
-        restartButtonClassName='w-full sm:flex-1'
-        title={
-          <KangurHeadline
-            accent='amber'
-            as='h3'
-            data-testid='geometry-perimeter-summary-title'
-          >
-            Wynik: {score}/{TOTAL_ROUNDS}
-          </KangurHeadline>
-        }
-        titleUnwrapped
-        xpAccent='amber'
-        xpEarned={xpEarned}
-      />
+              : 'Dobra próba! Spróbuj ponownie.'}
+        </KangurPracticeGameSummaryMessage>
+        <KangurPracticeGameSummaryActions
+          className='flex-col sm:flex-row'
+          finishButtonClassName='w-full sm:flex-1'
+          finishLabel={finishLabel}
+          onFinish={onFinish}
+          onRestart={handleRestart}
+          restartButtonClassName='w-full sm:flex-1'
+        />
+      </KangurPracticeGameSummary>
     );
   }
 

@@ -129,13 +129,13 @@ describe('CalendarTrainingGame', () => {
 
     const correctAnswer = deriveCorrectAnswer(questionText);
 
-    fireEvent.click(screen.getByRole('button', { name: `Odpowiedz ${correctAnswer}` }));
+    fireEvent.click(screen.getByRole('button', { name: `Odpowiedź ${correctAnswer}` }));
 
-    expect(screen.getByRole('button', { name: `Odpowiedz ${correctAnswer}` })).toHaveClass(
+    expect(screen.getByRole('button', { name: `Odpowiedź ${correctAnswer}` })).toHaveClass(
       'soft-card',
       'cursor-default'
     );
-    expect(screen.getByRole('button', { name: `Odpowiedz ${correctAnswer}` })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: `Odpowiedź ${correctAnswer}` })).toHaveAttribute(
       'aria-disabled',
       'true'
     );
@@ -155,7 +155,7 @@ describe('CalendarTrainingGame', () => {
         ).textContent ?? '';
       const correctAnswer = deriveCorrectAnswer(questionText);
 
-      fireEvent.click(screen.getByRole('button', { name: `Odpowiedz ${correctAnswer}` }));
+      fireEvent.click(screen.getByRole('button', { name: `Odpowiedź ${correctAnswer}` }));
 
       act(() => {
         vi.advanceTimersByTime(1200);

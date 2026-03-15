@@ -45,7 +45,7 @@ function ClockFrame({ ariaLabel, children, className = 'h-full w-full' }: ClockF
 
 export function ClockHourHandSweepAnimation(): React.JSX.Element {
   return (
-    <ClockFrame ariaLabel='Animacja: krótka wskazówka przeskakuje co godzine.'>
+    <ClockFrame ariaLabel='Animacja: krótka wskazówka przeskakuje co godzinę.'>
       <style>{`
         .hour-hand { stroke: #dc2626; stroke-width: 7; stroke-linecap: round; }
         .hour-sweep {
@@ -71,7 +71,7 @@ export function ClockHourHandSweepAnimation(): React.JSX.Element {
 
 export function ClockMinuteHandSweepAnimation(): React.JSX.Element {
   return (
-    <ClockFrame ariaLabel='Animacja: długa wskazówka robi pełny obrot.'>
+    <ClockFrame ariaLabel='Animacja: długa wskazówka robi pełny obrót.'>
       <style>{`
         .minute-hand { stroke: #16a34a; stroke-width: 5; stroke-linecap: round; }
         .minute-sweep {

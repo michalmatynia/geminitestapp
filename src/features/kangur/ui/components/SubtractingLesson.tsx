@@ -904,7 +904,7 @@ export const HUB_SECTIONS = [
     id: 'game',
     emoji: '🎮',
     title: 'Gra z odejmowaniem',
-    description: 'Przeciagaj i zabieraj obiekty',
+    description: 'Przeciągaj i zabieraj obiekty',
     isGame: true,
   },
 ];

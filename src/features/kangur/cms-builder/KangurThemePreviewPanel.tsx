@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import { resolveKangurStorefrontAppearance } from '@/features/cms/public';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { Badge } from '@/shared/ui';
 import type { KangurThemeMode } from '@/features/kangur/admin/components/KangurThemeSettingsPanel';
@@ -19,56 +20,13 @@ const MODE_LABELS: Record<KangurThemeMode, string> = {
   nightly: 'Nightly',
 };
 
-const isNonEmpty = (value?: string | null): value is string =>
-  typeof value === 'string' && value.trim().length > 0;
-
-const resolveColor = (value: string | null | undefined, fallback: string): string =>
-  isNonEmpty(value) ? value : fallback;
-
-const resolveNumber = (value: number | null | undefined, fallback: number): number =>
-  typeof value === 'number' && !Number.isNaN(value) ? value : fallback;
-
-const hexToRgba = (hex: string, alpha: number): string | null => {
-  const normalized = hex.replace('#', '').trim();
-  if (![3, 4, 6, 8].includes(normalized.length)) return null;
-  const full =
-    normalized.length <= 4
-      ? normalized
-          .split('')
-          .map((char) => `${char}${char}`)
-          .join('')
-      : normalized;
-  const r = parseInt(full.slice(0, 2), 16);
-  const g = parseInt(full.slice(2, 4), 16);
-  const b = parseInt(full.slice(4, 6), 16);
-  if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return null;
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-};
-
-const withAlpha = (color: string, alpha: number): string => {
-  const trimmed = color.trim();
-  if (trimmed.startsWith('rgba') || trimmed.startsWith('hsla')) return trimmed;
-  if (trimmed.startsWith('rgb') || trimmed.startsWith('hsl')) {
-    return trimmed.replace(/\)$/, `, ${alpha})`).replace('rgb(', 'rgba(').replace('hsl(', 'hsla(');
-  }
-  const rgba = hexToRgba(trimmed, alpha);
-  return rgba ?? trimmed;
-};
-
-const resolveGradient = (
-  start: string | null | undefined,
-  mid: string | null | undefined,
-  end: string | null | undefined,
-  fallbackStart: string,
-  fallbackEnd: string
-): string => {
-  const first = resolveColor(start, fallbackStart);
-  const last = resolveColor(end, fallbackEnd);
-  const middle = isNonEmpty(mid) ? mid.trim() : null;
-  if (middle) {
-    return `linear-gradient(135deg, ${first}, ${middle}, ${last})`;
-  }
-  return `linear-gradient(135deg, ${first}, ${last})`;
+const resolveAppearanceMode = (
+  mode: KangurThemeMode
+): 'default' | 'dark' | 'dawn' | 'sunset' => {
+  if (mode === 'nightly') return 'dark';
+  if (mode === 'dawn') return 'dawn';
+  if (mode === 'sunset') return 'sunset';
+  return 'default';
 };
 
 const PreviewCard = ({
@@ -84,6 +42,271 @@ const PreviewCard = ({
   </div>
 );
 
+const PreviewScene = ({
+  children,
+  className,
+  style,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+}): React.JSX.Element => (
+  <div
+    className={`rounded-lg p-3 ${className ?? ''}`}
+    style={{
+      background: 'var(--kangur-page-background)',
+      color: 'var(--kangur-page-text)',
+      fontFamily: 'var(--kangur-font-body, sans-serif)',
+      fontSize: 'var(--kangur-font-base-size, 16px)',
+      lineHeight: 'var(--kangur-font-line-height, 1.5)',
+      border: '1px solid var(--kangur-soft-card-border, rgba(148,163,184,0.3))',
+      ...style,
+    }}
+  >
+    {children}
+  </div>
+);
+
+const navStyle: React.CSSProperties = {
+  background: 'var(--kangur-nav-group-background)',
+  border: '1px solid var(--kangur-nav-group-border)',
+  borderRadius: 'var(--kangur-nav-group-radius)',
+  padding: '4px 6px',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 4,
+  flexWrap: 'wrap',
+};
+
+const pillBase: React.CSSProperties = {
+  borderRadius: 'var(--kangur-nav-item-radius)',
+  padding: 'var(--kangur-pill-padding-y) var(--kangur-pill-padding-x)',
+  fontSize: 'var(--kangur-pill-font-size)',
+  fontWeight: 600,
+  whiteSpace: 'nowrap',
+};
+
+const pillActive: React.CSSProperties = {
+  ...pillBase,
+  background: 'var(--kangur-nav-item-active-background)',
+  color: 'var(--kangur-nav-item-active-text)',
+  border: '1px solid var(--kangur-nav-item-active-border, transparent)',
+};
+
+const pillInactive: React.CSSProperties = {
+  ...pillBase,
+  background: 'transparent',
+  color: 'var(--kangur-nav-item-text)',
+  border: '1px solid transparent',
+};
+
+const pillHover: React.CSSProperties = {
+  ...pillBase,
+  background: 'var(--kangur-nav-item-hover-background, transparent)',
+  color: 'var(--kangur-nav-item-hover-text, var(--kangur-nav-item-text))',
+  border: '1px solid var(--kangur-nav-item-hover-border, transparent)',
+};
+
+const cardStyle: React.CSSProperties = {
+  background: 'var(--kangur-soft-card-background)',
+  border: '1px solid var(--kangur-soft-card-border)',
+  borderRadius: 'var(--kangur-card-radius)',
+  padding: '10px 12px',
+  boxShadow: 'var(--kangur-soft-card-shadow)',
+  color: 'var(--kangur-soft-card-text)',
+};
+
+const glassStyle: React.CSSProperties = {
+  background: 'var(--kangur-glass-panel-background)',
+  border: '1px solid var(--kangur-glass-panel-border)',
+  borderRadius: 'var(--kangur-panel-radius-soft)',
+  padding: '10px 12px',
+  boxShadow: 'var(--kangur-glass-panel-shadow)',
+};
+
+const buttonBase: React.CSSProperties = {
+  borderRadius: 'var(--kangur-button-border-radius, var(--kangur-button-radius, 999px))',
+  padding: 'var(--kangur-button-padding-y) var(--kangur-button-padding-x)',
+  fontSize: 'var(--kangur-button-font-size)',
+  fontWeight: 600,
+  textShadow: 'var(--kangur-button-text-shadow, none)',
+  border: 'var(--kangur-button-border-width, 0px) solid var(--kangur-button-border-color, transparent)',
+  minHeight: 'var(--kangur-button-height, auto)',
+  cursor: 'default',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  whiteSpace: 'nowrap',
+  position: 'relative',
+  overflow: 'hidden',
+};
+
+const buttonPrimary: React.CSSProperties = {
+  ...buttonBase,
+  background: 'var(--kangur-button-primary-background)',
+  color: 'var(--kangur-button-primary-text, #fff)',
+  boxShadow: 'var(--kangur-button-primary-shadow)',
+};
+
+const buttonPrimaryHover: React.CSSProperties = {
+  ...buttonBase,
+  background: 'var(--kangur-button-primary-hover-background, var(--kangur-button-primary-background))',
+  color: 'var(--kangur-button-primary-text, #fff)',
+  boxShadow: 'var(--kangur-button-primary-hover-shadow, var(--kangur-button-primary-shadow))',
+};
+
+const buttonSecondary: React.CSSProperties = {
+  ...buttonBase,
+  background: 'var(--kangur-button-secondary-background)',
+  color: 'var(--kangur-button-secondary-text)',
+  boxShadow: 'var(--kangur-button-secondary-shadow)',
+};
+
+const buttonSurface: React.CSSProperties = {
+  ...buttonBase,
+  background: 'var(--kangur-button-surface-background)',
+  color: 'var(--kangur-button-surface-text)',
+  boxShadow: 'var(--kangur-button-surface-shadow)',
+};
+
+const buttonWarning: React.CSSProperties = {
+  ...buttonBase,
+  background: 'var(--kangur-button-warning-background)',
+  color: 'var(--kangur-button-warning-text)',
+  boxShadow: 'var(--kangur-button-warning-shadow)',
+};
+
+const buttonSuccess: React.CSSProperties = {
+  ...buttonBase,
+  background: 'var(--kangur-button-success-background)',
+  color: 'var(--kangur-button-success-text)',
+  boxShadow: 'var(--kangur-button-success-shadow)',
+};
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  background: 'var(--kangur-text-field-background)',
+  border: '1px solid var(--kangur-text-field-border)',
+  borderRadius: 'var(--kangur-input-radius, 22px)',
+  height: 'var(--kangur-input-height, 34px)',
+  fontSize: 'var(--kangur-input-font-size, 12px)',
+  color: 'var(--kangur-text-field-text)',
+  padding: '0 12px',
+  outline: 'none',
+  boxSizing: 'border-box',
+};
+
+function ButtonGloss(): React.JSX.Element {
+  return (
+    <div
+      aria-hidden
+      style={{
+        position: 'absolute',
+        inset: '1px 1px auto',
+        height: 'var(--kangur-button-gloss-height, 48%)',
+        borderRadius: 'inherit',
+        background: `linear-gradient(
+          var(--kangur-button-gloss-angle, 180deg),
+          color-mix(in srgb, var(--kangur-button-gloss-color, #fff) calc(var(--kangur-button-gloss-opacity, 0) * 100%), transparent),
+          transparent
+        )`,
+        pointerEvents: 'none',
+        zIndex: 1,
+      }}
+    />
+  );
+}
+
+const HOME_ACTIONS = [
+  { id: 'lessons', label: 'Lessons', icon: 'L' },
+  { id: 'play', label: 'Play', icon: 'P' },
+  { id: 'training', label: 'Training', icon: 'T' },
+  { id: 'kangur', label: 'Kangur', icon: 'K' },
+] as const;
+
+function HomeActionCard({
+  actionId,
+  label,
+  icon,
+}: {
+  actionId: string;
+  label: string;
+  icon: string;
+}): React.JSX.Element {
+  return (
+    <div
+      style={{
+        flex: '1 1 0',
+        minWidth: 0,
+        borderRadius: 12,
+        padding: '8px 6px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 4,
+        background: `linear-gradient(
+          180deg,
+          var(--kangur-home-action-${actionId}-underlay-start, var(--kangur-cta-primary-start)) 0%,
+          var(--kangur-home-action-${actionId}-underlay-mid, var(--kangur-cta-primary-mid)) 50%,
+          var(--kangur-home-action-${actionId}-underlay-end, var(--kangur-cta-primary-end)) 100%
+        )`,
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: `0 12px 18px -16px rgba(var(--kangur-home-action-${actionId}-underlay-shadow-rgb, 0,0,0), 0.5)`,
+      }}
+    >
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 3,
+          background: `linear-gradient(
+            90deg,
+            var(--kangur-home-action-${actionId}-accent-start, var(--kangur-cta-primary-start)) 0%,
+            var(--kangur-home-action-${actionId}-accent-mid, var(--kangur-cta-primary-mid)) 50%,
+            var(--kangur-home-action-${actionId}-accent-end, var(--kangur-cta-primary-end)) 100%
+          )`,
+        }}
+      />
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          inset: 'auto 0 0',
+          height: '40%',
+          background: `linear-gradient(
+            180deg,
+            transparent,
+            rgba(var(--kangur-home-action-${actionId}-surface-shadow-rgb, 0,0,0), 0.22)
+          )`,
+        }}
+      />
+      <span style={{ fontSize: 14, fontWeight: 700, lineHeight: 1 }}>{icon}</span>
+      <span
+        style={{
+          fontSize: 9,
+          fontWeight: 800,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          background: `linear-gradient(
+            90deg,
+            var(--kangur-home-action-${actionId}-label-start, var(--kangur-cta-primary-start)) 0%,
+            var(--kangur-home-action-${actionId}-label-mid, var(--kangur-cta-primary-mid)) 50%,
+            var(--kangur-home-action-${actionId}-label-end, var(--kangur-cta-primary-end)) 100%
+          )`,
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+        }}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
 function CorePalettePreview({ theme }: { theme: ThemeSettings }): React.JSX.Element {
   const swatches = [
     { label: 'Primary', color: theme.primaryColor },
@@ -96,400 +319,346 @@ function CorePalettePreview({ theme }: { theme: ThemeSettings }): React.JSX.Elem
 
   return (
     <PreviewCard title='Core Palette'>
-      <div className='grid grid-cols-3 gap-2'>
-        {swatches.map((swatch) => (
-          <div key={swatch.label} className='rounded-lg border border-border/60 p-2 text-[10px] text-gray-300'>
+      <PreviewScene>
+        <div className='grid grid-cols-3 gap-2'>
+          {swatches.map((swatch) => (
             <div
-              className='h-8 w-full rounded-md border border-border/60'
-              style={{ background: swatch.color }}
-            />
-            <div className='mt-1 text-center'>{swatch.label}</div>
-          </div>
-        ))}
-      </div>
+              key={swatch.label}
+              className='rounded-lg border border-border/60 p-2 text-[10px] text-gray-300'
+            >
+              <div
+                className='h-8 w-full rounded-md border border-border/60'
+                style={{ background: swatch.color }}
+              />
+              <div className='mt-1 text-center'>{swatch.label}</div>
+            </div>
+          ))}
+        </div>
+      </PreviewScene>
     </PreviewCard>
   );
 }
 
-function TextOverridesPreview({ theme }: { theme: ThemeSettings }): React.JSX.Element {
-  const pageText = resolveColor(theme.pageTextColor, theme.textColor);
-  const pageMuted = resolveColor(theme.pageMutedTextColor, theme.mutedTextColor);
-  const cardText = resolveColor(theme.cardTextColor, theme.textColor);
-  const navText = resolveColor(theme.navTextColor, theme.textColor);
-  const navActive = resolveColor(theme.navActiveTextColor, theme.primaryColor);
-  const navHover = resolveColor(theme.navHoverTextColor, theme.secondaryColor);
-
+function TextOverridesPreview(): React.JSX.Element {
   return (
     <PreviewCard title='Text Overrides'>
-      <div className='flex items-center justify-between rounded-lg border border-border/60 px-3 py-2 text-xs'>
-        <span style={{ color: navText }}>Home</span>
-        <span style={{ color: navActive }}>Active</span>
-        <span style={{ color: navHover }}>Hover</span>
-      </div>
-      <div
-        className='rounded-lg border border-border/60 p-3'
-        style={{ background: theme.surfaceColor, color: pageText }}
-      >
-        <div className='text-sm font-semibold' style={{ color: cardText }}>
-          Card headline
+      <PreviewScene className='space-y-2'>
+        <div style={navStyle}>
+          <span style={pillActive}>Home</span>
+          <span style={pillInactive}>Library</span>
+          <span style={pillHover}>Hover</span>
         </div>
-        <div className='text-xs' style={{ color: pageMuted }}>
-          Muted helper text preview.
+        <div style={cardStyle}>
+          <div
+            style={{
+              fontFamily: 'var(--kangur-font-heading, sans-serif)',
+              fontWeight: 700,
+              fontSize: 12,
+              marginBottom: 2,
+            }}
+          >
+            Card headline
+          </div>
+          <div style={{ color: 'var(--kangur-page-muted-text)', fontSize: 10 }}>
+            Muted helper text preview.
+          </div>
         </div>
-      </div>
+      </PreviewScene>
     </PreviewCard>
   );
 }
 
-function LogoPreview({ theme }: { theme: ThemeSettings }): React.JSX.Element {
-  const wordmarkGradient = resolveGradient(
-    theme.logoWordStart,
-    theme.logoWordMid,
-    theme.logoWordEnd,
-    theme.primaryColor,
-    theme.secondaryColor
-  );
-  const ringGradient = resolveGradient(
-    theme.logoRingStart,
-    null,
-    theme.logoRingEnd,
-    theme.secondaryColor,
-    theme.accentColor
-  );
-  const accentGradient = resolveGradient(
-    theme.logoAccentStart,
-    null,
-    theme.logoAccentEnd,
-    theme.accentColor,
-    theme.primaryColor
-  );
-
+function LogoPreview(): React.JSX.Element {
   return (
     <PreviewCard title='Logo & Loader'>
-      <div className='flex items-center gap-3'>
-        <div
-          className='text-lg font-bold tracking-[0.3em] text-transparent'
-          style={{
-            backgroundImage: wordmarkGradient,
-            WebkitBackgroundClip: 'text',
-            backgroundClip: 'text',
-          }}
-        >
-          KANGUR
-        </div>
-        <div className='flex items-center gap-2'>
+      <PreviewScene className='space-y-2'>
+        <div className='flex items-center gap-3'>
           <div
-            className='h-10 w-10 rounded-full border border-white/20'
-            style={{ background: ringGradient }}
-          />
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              background:
+                'linear-gradient(135deg, var(--kangur-logo-ring-start) 0%, var(--kangur-logo-ring-end) 100%)',
+              boxShadow: '0 2px 8px var(--kangur-logo-shadow, rgba(0,0,0,0.2))',
+              position: 'relative',
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                inset: 5,
+                borderRadius: '50%',
+                background:
+                  'linear-gradient(180deg, var(--kangur-logo-inner-start) 0%, var(--kangur-logo-inner-end) 100%)',
+              }}
+            />
+          </div>
           <div
-            className='h-6 w-6 rounded-full border border-white/20'
-            style={{ background: accentGradient }}
+            className='text-lg font-bold uppercase tracking-[0.2em] text-transparent'
+            style={{
+              fontFamily: 'var(--kangur-font-heading, sans-serif)',
+              background:
+                'linear-gradient(90deg, var(--kangur-logo-word-start) 0%, var(--kangur-logo-word-mid) 50%, var(--kangur-logo-word-end) 100%)',
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+            }}
+          >
+            Kangur
+          </div>
+          <div
+            style={{
+              width: 12,
+              height: 12,
+              borderRadius: '50%',
+              background:
+                'linear-gradient(135deg, var(--kangur-logo-accent-start) 0%, var(--kangur-logo-accent-end) 100%)',
+            }}
           />
         </div>
-      </div>
+      </PreviewScene>
     </PreviewCard>
   );
 }
 
-function BackgroundPreview({ theme }: { theme: ThemeSettings }): React.JSX.Element {
+function BackgroundPreview(): React.JSX.Element {
   return (
     <PreviewCard title='Backgrounds & Surfaces'>
-      <div className='grid grid-cols-2 gap-2 text-[10px] text-gray-300'>
-        <div className='rounded-lg border border-border/60 p-2' style={{ background: theme.backgroundColor }}>
-          Page
+      <PreviewScene className='space-y-2'>
+        <div style={{ ...glassStyle, padding: '8px 10px' }}>
+          <div style={{ fontSize: 10, color: 'var(--kangur-page-muted-text)' }}>
+            Glass panel surface
+          </div>
         </div>
-        <div className='rounded-lg border border-border/60 p-2' style={{ background: theme.surfaceColor }}>
-          Surface
+        <div style={{ ...cardStyle, padding: '8px 10px' }}>
+          <div style={{ fontSize: 10 }}>Soft card surface</div>
         </div>
-        <div className='rounded-lg border border-border/60 p-2' style={{ background: theme.cardBg }}>
-          Card
+        <div className='grid grid-cols-2 gap-2 text-[10px] text-gray-300'>
+          <div
+            className='rounded-md border border-border/60 p-2'
+            style={{ background: 'var(--kangur-page-background)' }}
+          >
+            Page
+          </div>
+          <div
+            className='rounded-md border border-border/60 p-2'
+            style={{ background: 'var(--kangur-soft-card-background)' }}
+          >
+            Card
+          </div>
         </div>
-        <div className='rounded-lg border border-border/60 p-2' style={{ background: theme.containerBg }}>
-          Container
-        </div>
-      </div>
+      </PreviewScene>
     </PreviewCard>
   );
 }
 
-function ButtonsPreview({ theme }: { theme: ThemeSettings }): React.JSX.Element {
-  const paddingX = resolveNumber(theme.btnPaddingX, 18);
-  const paddingY = resolveNumber(theme.btnPaddingY, 10);
-  const fontSize = resolveNumber(theme.btnFontSize, 14);
-  const fontWeight = theme.btnFontWeight ?? '600';
-  const radius = resolveNumber(theme.btnBorderRadius ?? theme.btnRadius, 10);
-  const borderWidth = resolveNumber(theme.btnBorderWidth, 1);
-  const borderOpacity = resolveNumber(theme.btnBorderOpacity, 100) / 100;
-  const borderColor = resolveColor(theme.btnOutlineBorder, theme.borderColor);
-  const shadowOpacity = resolveNumber(theme.btnShadowOpacity, 0);
-  const shadowX = resolveNumber(theme.btnShadowX, 0);
-  const shadowY = resolveNumber(theme.btnShadowY, 2);
-  const shadowBlur = resolveNumber(theme.btnShadowBlur, 6);
-  const glowOpacity = resolveNumber(theme.btnGlowOpacity, 0);
-  const glowSpread = resolveNumber(theme.btnGlowSpread, 8);
-  const glowColor = resolveColor(theme.btnGlowColor, theme.primaryColor);
-
-  const baseShadow =
-    shadowOpacity > 0
-      ? `${shadowX}px ${shadowY}px ${shadowBlur}px ${withAlpha('#000000', shadowOpacity)}`
-      : 'none';  const glowShadow =
-    glowOpacity > 0 ? `0 0 ${glowSpread}px ${withAlpha(glowColor, glowOpacity)}` : '';
-  const buttonShadow = [baseShadow, glowShadow].filter(Boolean).join(', ');
-
+function ButtonsPreview(): React.JSX.Element {
   return (
     <PreviewCard title='Buttons'>
-      <div className='flex flex-col gap-2'>
-        <button
-          type='button'
-          className='text-xs font-semibold'
-          style={{
-            background: resolveColor(theme.btnPrimaryBg, theme.primaryColor),
-            color: resolveColor(theme.btnPrimaryText, '#ffffff'),
-            padding: `${paddingY}px ${paddingX}px`,
-            borderRadius: radius,
-            border: `${borderWidth}px solid ${withAlpha(borderColor, borderOpacity)}`,
-            fontSize,
-            fontWeight,
-            boxShadow: buttonShadow,
-          }}
-        >
-          Primary CTA
-        </button>
-        <button
-          type='button'
-          className='text-xs font-semibold'
-          style={{
-            background: resolveColor(theme.btnSecondaryBg, theme.secondaryColor),
-            color: resolveColor(theme.btnSecondaryText, '#ffffff'),
-            padding: `${paddingY}px ${paddingX}px`,
-            borderRadius: radius,
-            border: `${borderWidth}px solid ${withAlpha(borderColor, borderOpacity)}`,
-            fontSize,
-            fontWeight,
-          }}
-        >
-          Secondary CTA
-        </button>
-      </div>
+      <PreviewScene className='space-y-2'>
+        <div className='flex flex-wrap gap-2'>
+          <span style={buttonPrimary}>
+            <ButtonGloss />
+            <span style={{ position: 'relative', zIndex: 2 }}>Primary</span>
+          </span>
+          <span style={buttonPrimaryHover}>
+            <ButtonGloss />
+            <span style={{ position: 'relative', zIndex: 2 }}>Hover</span>
+          </span>
+          <span style={buttonSecondary}>
+            <ButtonGloss />
+            <span style={{ position: 'relative', zIndex: 2 }}>Secondary</span>
+          </span>
+        </div>
+        <div className='flex flex-wrap gap-2'>
+          <span style={buttonSurface}>
+            <ButtonGloss />
+            <span style={{ position: 'relative', zIndex: 2 }}>Surface</span>
+          </span>
+          <span style={buttonWarning}>
+            <ButtonGloss />
+            <span style={{ position: 'relative', zIndex: 2 }}>Warning</span>
+          </span>
+          <span style={buttonSuccess}>
+            <ButtonGloss />
+            <span style={{ position: 'relative', zIndex: 2 }}>Success</span>
+          </span>
+        </div>
+      </PreviewScene>
     </PreviewCard>
   );
 }
 
-function PillsPreview({ theme }: { theme: ThemeSettings }): React.JSX.Element {
-  const paddingX = resolveNumber(theme.pillPaddingX, 12);
-  const paddingY = resolveNumber(theme.pillPaddingY, 4);
-  const fontSize = resolveNumber(theme.pillFontSize, 12);
-  const radius = resolveNumber(theme.pillRadius, 999);
-
+function PillsPreview(): React.JSX.Element {
   return (
     <PreviewCard title='Navigation Pills'>
-      <div className='flex items-center gap-2'>
-        <span
-          className='text-xs font-medium'
-          style={{
-            background: resolveColor(theme.pillBg, theme.surfaceColor),
-            color: resolveColor(theme.pillText, theme.textColor),
-            padding: `${paddingY}px ${paddingX}px`,
-            borderRadius: radius,
-            fontSize,
-          }}
-        >
-          Default
-        </span>
-        <span
-          className='text-xs font-medium'
-          style={{
-            background: resolveColor(theme.pillActiveBg, theme.primaryColor),
-            color: resolveColor(theme.pillActiveText, '#ffffff'),
-            padding: `${paddingY}px ${paddingX}px`,
-            borderRadius: radius,
-            fontSize,
-          }}
-        >
-          Active
-        </span>
-      </div>
+      <PreviewScene>
+        <div style={navStyle}>
+          <span style={pillActive}>Active</span>
+          <span style={pillInactive}>Library</span>
+          <span style={pillHover}>Hover</span>
+        </div>
+      </PreviewScene>
     </PreviewCard>
   );
 }
 
-function GradientsPreview({ theme }: { theme: ThemeSettings }): React.JSX.Element {
+function GradientsPreview(): React.JSX.Element {
   const gradients = [
-    { label: 'Indigo', start: theme.gradientIndigoStart, end: theme.gradientIndigoEnd },
-    { label: 'Violet', start: theme.gradientVioletStart, end: theme.gradientVioletEnd },
-    { label: 'Emerald', start: theme.gradientEmeraldStart, end: theme.gradientEmeraldEnd },
-    { label: 'Sky', start: theme.gradientSkyStart, end: theme.gradientSkyEnd },
-    { label: 'Amber', start: theme.gradientAmberStart, end: theme.gradientAmberEnd },
-    { label: 'Rose', start: theme.gradientRoseStart, end: theme.gradientRoseEnd },
-    { label: 'Teal', start: theme.gradientTealStart, end: theme.gradientTealEnd },
-    { label: 'Slate', start: theme.gradientSlateStart, end: theme.gradientSlateEnd },
+    { label: 'Indigo', start: '--kangur-accent-indigo-start', end: '--kangur-accent-indigo-end' },
+    { label: 'Violet', start: '--kangur-accent-violet-start', end: '--kangur-accent-violet-end' },
+    { label: 'Emerald', start: '--kangur-accent-emerald-start', end: '--kangur-accent-emerald-end' },
+    { label: 'Sky', start: '--kangur-accent-sky-start', end: '--kangur-accent-sky-end' },
+    { label: 'Amber', start: '--kangur-accent-amber-start', end: '--kangur-accent-amber-end' },
+    { label: 'Rose', start: '--kangur-accent-rose-start', end: '--kangur-accent-rose-end' },
+    { label: 'Teal', start: '--kangur-accent-teal-start', end: '--kangur-accent-teal-end' },
+    { label: 'Slate', start: '--kangur-accent-slate-start', end: '--kangur-accent-slate-end' },
   ];
 
   return (
     <PreviewCard title='Gradients'>
-      <div className='grid grid-cols-2 gap-2 text-[10px] text-gray-300'>
-        {gradients.map((gradient) => (
-          <div key={gradient.label} className='rounded-lg border border-border/60 p-2'>
-            <div
-              className='h-7 rounded-md border border-border/60'
-              style={{ background: `linear-gradient(135deg, ${gradient.start}, ${gradient.end})` }}
-            />
-            <div className='mt-1 text-center'>{gradient.label}</div>
-          </div>
-        ))}
-      </div>
+      <PreviewScene>
+        <div className='grid grid-cols-2 gap-2 text-[10px] text-gray-300'>
+          {gradients.map((gradient) => (
+            <div key={gradient.label} className='rounded-lg border border-border/60 p-2'>
+              <div
+                className='h-7 rounded-md border border-border/60'
+                style={{
+                  background: `linear-gradient(135deg, var(${gradient.start}), var(${gradient.end}))`,
+                }}
+              />
+              <div className='mt-1 text-center'>{gradient.label}</div>
+            </div>
+          ))}
+        </div>
+      </PreviewScene>
     </PreviewCard>
   );
 }
 
-function HomeActionsPreview({ theme }: { theme: ThemeSettings }): React.JSX.Element {
-  const actions = [
-    { label: 'Lessons', prefix: 'homeActionLessons' },
-    { label: 'Play', prefix: 'homeActionPlay' },
-    { label: 'Training', prefix: 'homeActionTraining' },
-    { label: 'Kangur', prefix: 'homeActionKangur' },
-  ] as const;
-
+function HomeActionsPreview(): React.JSX.Element {
   return (
     <PreviewCard title='Home Actions'>
-      <div className='grid grid-cols-2 gap-2'>
-        {actions.map((action) => {
-          const start = theme[`${action.prefix}LabelStart` as keyof ThemeSettings] as string;
-          const mid = theme[`${action.prefix}LabelMid` as keyof ThemeSettings] as string;
-          const end = theme[`${action.prefix}LabelEnd` as keyof ThemeSettings] as string;
-          const textColor = theme[`${action.prefix}TextColor` as keyof ThemeSettings] as string;
-
-          return (
-            <div
-              key={action.label}
-              className='rounded-lg border border-border/60 px-3 py-2 text-xs font-semibold'
-              style={{
-                background: resolveGradient(start, mid, end, theme.primaryColor, theme.secondaryColor),
-                color: resolveColor(textColor, theme.textColor),
-              }}
-            >
-              {action.label}
-            </div>
-          );
-        })}
-      </div>
+      <PreviewScene>
+        <div className='grid grid-cols-2 gap-2'>
+          {HOME_ACTIONS.map((action) => (
+            <HomeActionCard
+              key={action.id}
+              actionId={action.id}
+              label={action.label}
+              icon={action.icon}
+            />
+          ))}
+        </div>
+      </PreviewScene>
     </PreviewCard>
   );
 }
 
-function ProgressPreview({ theme }: { theme: ThemeSettings }): React.JSX.Element {
-  const track = resolveColor(theme.progressTrackColor, theme.borderColor);
-  const fill = theme.primaryColor;
-
+function ProgressPreview(): React.JSX.Element {
   return (
     <PreviewCard title='Progress Bars'>
-      <div className='h-2 rounded-full' style={{ background: track }}>
-        <div className='h-2 w-2/3 rounded-full' style={{ background: fill }} />
-      </div>
+      <PreviewScene>
+        <div className='h-2 rounded-full' style={{ background: 'var(--kangur-progress-track)' }}>
+          <div
+            className='h-2 w-2/3 rounded-full'
+            style={{
+              background:
+                'linear-gradient(90deg, var(--kangur-accent-indigo-start), var(--kangur-accent-violet-end))',
+            }}
+          />
+        </div>
+      </PreviewScene>
     </PreviewCard>
   );
 }
 
-function InputsPreview({ theme }: { theme: ThemeSettings }): React.JSX.Element {
-  const height = resolveNumber(theme.inputHeight, 40);
-  const radius = resolveNumber(theme.inputRadius, 10);
-  const fontSize = resolveNumber(theme.inputFontSize, 14);
-
+function InputsPreview(): React.JSX.Element {
   return (
     <PreviewCard title='Inputs'>
-      <div
-        className='w-full rounded-lg border px-3 py-2 text-xs'
-        style={{
-          height,
-          borderColor: resolveColor(theme.inputBorderColor, theme.borderColor),
-          background: resolveColor(theme.inputBg, theme.surfaceColor),
-          color: resolveColor(theme.inputText, theme.textColor),
-          borderRadius: radius,
-          fontSize,
-        }}
-      >
-        <span style={{ color: resolveColor(theme.inputPlaceholder, theme.mutedTextColor) }}>
-          Search prompt…
-        </span>
-      </div>
+      <PreviewScene>
+        <input
+          readOnly
+          tabIndex={-1}
+          placeholder='Search prompt…'
+          style={inputStyle}
+          aria-label='Input preview'
+        />
+      </PreviewScene>
     </PreviewCard>
   );
 }
 
-function TypographyPreview({ theme }: { theme: ThemeSettings }): React.JSX.Element {
-  const headingSize = resolveNumber(theme.baseSize, 16) * 1.4;
-
+function TypographyPreview(): React.JSX.Element {
   return (
     <PreviewCard title='Typography & Layout'>
-      <div className='space-y-1'>
+      <PreviewScene className='space-y-2'>
         <div
-          className='font-semibold'
           style={{
-            fontFamily: theme.headingFont,
-            fontSize: headingSize,
-            lineHeight: theme.headingLineHeight,
+            fontFamily: 'var(--kangur-font-heading, sans-serif)',
+            fontWeight: 700,
+            fontSize: '1.1em',
+            lineHeight: 'var(--kangur-font-heading-line-height, 1.2)',
           }}
         >
           Kangur Heading
         </div>
         <div
-          className='text-xs'
           style={{
-            fontFamily: theme.bodyFont,
-            fontSize: theme.baseSize,
-            lineHeight: theme.lineHeight,
-            color: theme.mutedTextColor,
+            fontFamily: 'var(--kangur-font-body, sans-serif)',
+            fontSize: '0.8em',
+            lineHeight: 'var(--kangur-font-line-height, 1.5)',
+            color: 'var(--kangur-page-muted-text)',
           }}
         >
           Body text sample with the current base size and line height.
         </div>
-      </div>
+        <div>
+          <div className='text-[10px] uppercase tracking-[0.2em] text-gray-400'>Layout</div>
+          <div
+            className='mt-1 h-2 rounded-full'
+            style={{ background: 'var(--kangur-soft-card-border)' }}
+          >
+            <div
+              className='h-2 rounded-full'
+              style={{
+                width: '65%',
+                background: 'var(--kangur-accent-indigo-start)',
+              }}
+            />
+          </div>
+        </div>
+      </PreviewScene>
     </PreviewCard>
   );
 }
 
-function ShapePreview({ theme }: { theme: ThemeSettings }): React.JSX.Element {
+function ShapePreview(): React.JSX.Element {
   return (
     <PreviewCard title='Shape & Spacing'>
-      <div className='grid grid-cols-2 gap-2 text-[10px] text-gray-300'>
-        <div
-          className='rounded-lg border border-border/60 p-3'
-          style={{ borderRadius: resolveNumber(theme.containerRadius, 12), background: theme.containerBg }}
-        >
-          Panel
+      <PreviewScene className='space-y-2'>
+        <div style={{ ...glassStyle, padding: 'var(--kangur-panel-padding-md)' }}>
+          <div className='text-[10px] uppercase tracking-[0.2em] text-gray-400'>Panel</div>
         </div>
-        <div
-          className='rounded-lg border border-border/60 p-3'
-          style={{ borderRadius: resolveNumber(theme.cardRadius, 12), background: theme.cardBg }}
-        >
-          Card
+        <div style={{ ...cardStyle, padding: 'var(--kangur-card-padding-md)' }}>
+          <div className='text-[10px] uppercase tracking-[0.2em] text-gray-400'>Card</div>
         </div>
-      </div>
+      </PreviewScene>
     </PreviewCard>
   );
 }
 
-function ShadowPreview({ theme }: { theme: ThemeSettings }): React.JSX.Element {
-  const shadowOpacity = resolveNumber(theme.containerShadowOpacity, 0);
-  const shadowX = resolveNumber(theme.containerShadowX, 0);
-  const shadowY = resolveNumber(theme.containerShadowY, 10);
-  const shadowBlur = resolveNumber(theme.containerShadowBlur, 20);
-
+function ShadowPreview(): React.JSX.Element {
   return (
     <PreviewCard title='Shadows & Depth'>
-      <div
-        className='rounded-lg border border-border/60 p-4 text-xs text-gray-300'
-        style={{
-          background: theme.containerBg,
-          boxShadow:
-            shadowOpacity > 0
-              ? `${shadowX}px ${shadowY}px ${shadowBlur}px ${withAlpha('#000000', shadowOpacity)}`
-              : 'none',
-        }}
-      >
-        Floating panel preview
-      </div>
+      <PreviewScene className='space-y-2'>
+        <div style={{ ...glassStyle, padding: '10px 12px' }}>
+          <div className='text-[10px] uppercase tracking-[0.2em] text-gray-400'>Glass panel</div>
+        </div>
+        <div style={{ ...cardStyle, padding: '10px 12px' }}>
+          <div className='text-[10px] uppercase tracking-[0.2em] text-gray-400'>Soft card</div>
+        </div>
+      </PreviewScene>
     </PreviewCard>
   );
 }
@@ -500,9 +669,17 @@ export function KangurThemePreviewPanel({
   mode,
 }: KangurThemePreviewPanelProps): React.JSX.Element {
   const resolvedSection = section ?? 'Core Palette';
+  const appearance = React.useMemo(
+    () => resolveKangurStorefrontAppearance(resolveAppearanceMode(mode), theme),
+    [mode, theme]
+  );
+  const appearanceVars = React.useMemo(
+    () => appearance.vars as React.CSSProperties,
+    [appearance]
+  );
 
   return (
-    <div className='flex min-h-0 flex-1 flex-col'>
+    <div className='flex min-h-0 flex-1 flex-col' style={appearanceVars}>
       <div className='border-b border-border px-4 py-3'>
         <div className='flex items-center justify-between gap-2'>
           <div className='text-sm font-semibold text-white'>Theme Preview</div>
@@ -514,18 +691,18 @@ export function KangurThemePreviewPanel({
       </div>
       <div className='flex-1 overflow-y-auto p-4 space-y-3'>
         {resolvedSection === 'Core Palette' && <CorePalettePreview theme={theme} />}
-        {resolvedSection === 'Text Overrides' && <TextOverridesPreview theme={theme} />}
-        {resolvedSection === 'Logo & Loader' && <LogoPreview theme={theme} />}
-        {resolvedSection === 'Backgrounds and Surfaces' && <BackgroundPreview theme={theme} />}
-        {resolvedSection === 'Buttons' && <ButtonsPreview theme={theme} />}
-        {resolvedSection === 'Navigation Pills' && <PillsPreview theme={theme} />}
-        {resolvedSection === 'Gradients' && <GradientsPreview theme={theme} />}
-        {resolvedSection === 'Home Actions' && <HomeActionsPreview theme={theme} />}
-        {resolvedSection === 'Progress Bars' && <ProgressPreview theme={theme} />}
-        {resolvedSection === 'Inputs' && <InputsPreview theme={theme} />}
-        {resolvedSection === 'Typography and Layout' && <TypographyPreview theme={theme} />}
-        {resolvedSection === 'Shape and Spacing' && <ShapePreview theme={theme} />}
-        {resolvedSection === 'Shadows and Depth' && <ShadowPreview theme={theme} />}
+        {resolvedSection === 'Text Overrides' && <TextOverridesPreview />}
+        {resolvedSection === 'Logo & Loader' && <LogoPreview />}
+        {resolvedSection === 'Backgrounds and Surfaces' && <BackgroundPreview />}
+        {resolvedSection === 'Buttons' && <ButtonsPreview />}
+        {resolvedSection === 'Navigation Pills' && <PillsPreview />}
+        {resolvedSection === 'Gradients' && <GradientsPreview />}
+        {resolvedSection === 'Home Actions' && <HomeActionsPreview />}
+        {resolvedSection === 'Progress Bars' && <ProgressPreview />}
+        {resolvedSection === 'Inputs' && <InputsPreview />}
+        {resolvedSection === 'Typography and Layout' && <TypographyPreview />}
+        {resolvedSection === 'Shape and Spacing' && <ShapePreview />}
+        {resolvedSection === 'Shadows and Depth' && <ShadowPreview />}
 
         {resolvedSection !== 'Core Palette' &&
           resolvedSection !== 'Text Overrides' &&

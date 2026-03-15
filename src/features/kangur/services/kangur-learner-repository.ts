@@ -36,6 +36,7 @@ type MongoKangurLearnerDocument = {
   id?: string;
   ownerUserId: string;
   displayName: string;
+  age?: number | null;
   loginName: string;
   status: KangurLearnerStatus;
   legacyUserKey: string | null;
@@ -53,17 +54,28 @@ const normalizeLegacyUserKey = (value: string | null | undefined): string | null
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const toPublicLearnerProfile = (stored: StoredKangurLearnerProfile): KangurLearnerProfile => ({
-  id: stored.id,
-  ownerUserId: stored.ownerUserId,
-  displayName: stored.displayName,
-  loginName: stored.loginName,
-  status: stored.status,
-  legacyUserKey: stored.legacyUserKey ?? null,
-  aiTutor: stored.aiTutor,
-  createdAt: stored.createdAt,
-  updatedAt: stored.updatedAt,
-});
+const toPublicLearnerProfile = (stored: StoredKangurLearnerProfile): KangurLearnerProfile => {
+  const baseProfile: KangurLearnerProfile = {
+    id: stored.id,
+    ownerUserId: stored.ownerUserId,
+    displayName: stored.displayName,
+    loginName: stored.loginName,
+    status: stored.status,
+    legacyUserKey: stored.legacyUserKey ?? null,
+    aiTutor: stored.aiTutor,
+    createdAt: stored.createdAt,
+    updatedAt: stored.updatedAt,
+  };
+
+  if (stored.age === undefined) {
+    return baseProfile;
+  }
+
+  return {
+    ...baseProfile,
+    age: stored.age,
+  };
+};
 
 const sortPublicLearners = (profiles: KangurLearnerProfile[]): KangurLearnerProfile[] =>
   [...profiles].sort((left, right) => left.displayName.localeCompare(right.displayName, 'pl'));
@@ -74,6 +86,13 @@ const normalizeStoredLearner = (value: unknown): StoredKangurLearnerProfile | nu
   }
 
   const record = value as Record<string, unknown>;
+  const rawAge = record['age'];
+  const normalizedAge =
+    typeof rawAge === 'number'
+      ? rawAge
+      : typeof rawAge === 'string' && rawAge.trim().length > 0 && !Number.isNaN(Number(rawAge))
+        ? Number(rawAge)
+        : undefined;
   const publicProfiles = kangurLearnerProfilesSchema.safeParse([
     {
       id:
@@ -84,6 +103,7 @@ const normalizeStoredLearner = (value: unknown): StoredKangurLearnerProfile | nu
             : '',
       ownerUserId: typeof record['ownerUserId'] === 'string' ? record['ownerUserId'] : '',
       displayName: typeof record['displayName'] === 'string' ? record['displayName'] : '',
+      ...(normalizedAge !== undefined ? { age: normalizedAge } : {}),
       loginName:
         typeof record['loginName'] === 'string' ? normalizeLoginName(record['loginName']) : '',
       status: record['status'] === 'disabled' ? 'disabled' : 'active',
@@ -167,6 +187,7 @@ const toMongoLearnerUpdate = (
 ): Omit<MongoKangurLearnerDocument, '_id'> => ({
   ownerUserId: profile.ownerUserId,
   displayName: profile.displayName,
+  ...(profile.age !== undefined ? { age: profile.age } : {}),
   loginName: profile.loginName,
   status: profile.status,
   legacyUserKey: profile.legacyUserKey ?? null,
@@ -410,6 +431,7 @@ export const createKangurLearner = async (input: {
     id: randomUUID(),
     ownerUserId: input.ownerUserId,
     displayName: input.learner.displayName.trim(),
+    ...(input.learner.age !== undefined ? { age: input.learner.age } : {}),
     loginName,
     status: input.status ?? 'active',
     legacyUserKey: normalizeLegacyUserKey(input.legacyUserKey),
@@ -453,6 +475,7 @@ export const updateKangurLearner = async (
     ...current,
     displayName:
       typeof input.displayName === 'string' ? input.displayName.trim() : current.displayName,
+    ...(typeof input.age === 'number' ? { age: input.age } : {}),
     loginName: nextLoginName,
     status: input.status ?? current.status,
     updatedAt: new Date().toISOString(),

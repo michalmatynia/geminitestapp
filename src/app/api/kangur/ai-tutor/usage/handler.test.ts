@@ -21,6 +21,7 @@ const {
 
 vi.mock('@/features/kangur/server', () => ({
   resolveKangurActor: resolveKangurActorMock,
+  requireActiveLearner: (actor: { activeLearner?: unknown }) => actor.activeLearner,
 }));
 
 vi.mock('@/shared/lib/ai-brain/server', () => ({

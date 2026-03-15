@@ -7,7 +7,6 @@ import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kan
 import { KangurParentDashboardAiTutorWidget } from '@/features/kangur/ui/components/KangurParentDashboardAiTutorWidget';
 import { KangurParentDashboardAssignmentsWidget } from '@/features/kangur/ui/components/KangurParentDashboardAssignmentsWidget';
 import { KangurParentDashboardHeroWidget } from '@/features/kangur/ui/components/KangurParentDashboardHeroWidget';
-import { KangurParentDashboardLearnerManagementWidget } from '@/features/kangur/ui/components/KangurParentDashboardLearnerManagementWidget';
 import { KangurParentDashboardProgressWidget } from '@/features/kangur/ui/components/KangurParentDashboardProgressWidget';
 import { KangurParentDashboardScoresWidget } from '@/features/kangur/ui/components/KangurParentDashboardScoresWidget';
 import { KangurParentDashboardTabsWidget } from '@/features/kangur/ui/components/KangurParentDashboardTabsWidget';
@@ -65,6 +64,7 @@ function ParentDashboardContent(): React.JSX.Element {
   const restoreScrollAnimationFrameRef = useRef<number | null>(null);
   const [reservedTabPanelHeight, setReservedTabPanelHeight] = useState<number | null>(null);
   const activeLearnerId = activeLearner?.id?.trim() || null;
+  const hasActiveLearner = Boolean(activeLearnerId);
   const dashboardContentId = canAccessDashboard
     ? `parent-dashboard:${activeLearnerId ?? 'none'}:${activeTab}`
     : 'parent-dashboard:guest';
@@ -124,7 +124,7 @@ function ParentDashboardContent(): React.JSX.Element {
     kind: 'navigation',
     ref: tabsAnchorRef,
     surface: 'parent_dashboard',
-    enabled: canAccessDashboard,
+    enabled: canAccessDashboard && hasActiveLearner,
     priority: 84,
     metadata: {
       contentId: dashboardContentId,
@@ -136,7 +136,7 @@ function ParentDashboardContent(): React.JSX.Element {
     kind: 'progress',
     ref: progressAnchorRef,
     surface: 'parent_dashboard',
-    enabled: canAccessDashboard && activeTab === 'progress',
+    enabled: canAccessDashboard && hasActiveLearner && activeTab === 'progress',
     priority: 82,
     metadata: {
       contentId: dashboardContentId,
@@ -148,7 +148,7 @@ function ParentDashboardContent(): React.JSX.Element {
     kind: 'summary',
     ref: scoresAnchorRef,
     surface: 'parent_dashboard',
-    enabled: canAccessDashboard && activeTab === 'scores',
+    enabled: canAccessDashboard && hasActiveLearner && activeTab === 'scores',
     priority: 80,
     metadata: {
       contentId: dashboardContentId,
@@ -160,7 +160,7 @@ function ParentDashboardContent(): React.JSX.Element {
     kind: 'assignment',
     ref: assignmentsAnchorRef,
     surface: 'parent_dashboard',
-    enabled: canAccessDashboard && activeTab === 'assign',
+    enabled: canAccessDashboard && hasActiveLearner && activeTab === 'assign',
     priority: 78,
     metadata: {
       contentId: dashboardContentId,
@@ -172,7 +172,7 @@ function ParentDashboardContent(): React.JSX.Element {
     kind: 'screen',
     ref: aiTutorAnchorRef,
     surface: 'parent_dashboard',
-    enabled: canAccessDashboard && activeTab === 'ai-tutor',
+    enabled: canAccessDashboard && hasActiveLearner && activeTab === 'ai-tutor',
     priority: 76,
     metadata: {
       contentId: dashboardContentId,
@@ -370,39 +370,45 @@ function ParentDashboardContent(): React.JSX.Element {
         className='max-w-2xl flex flex-col gap-6'
       >
         <motion.div ref={heroAnchorRef} initial={false} animate={{ opacity: 1, y: 0 }}>
-          <KangurParentDashboardHeroWidget showActions={false} />
+          <KangurParentDashboardHeroWidget
+            showActions={false}
+            showLearnerManagement
+            learnerManagementAnchorRef={learnerManagementAnchorRef}
+          />
         </motion.div>
+        {hasActiveLearner ? (
+          <>
+            <div ref={tabsAnchorRef}>
+              <KangurParentDashboardTabsWidget
+                onBeforeTabChange={reservePanelHeightBeforeTabChange}
+              />
+            </div>
 
-        <div ref={learnerManagementAnchorRef}>
-          <KangurParentDashboardLearnerManagementWidget />
-        </div>
-        <div ref={tabsAnchorRef}>
-          <KangurParentDashboardTabsWidget onBeforeTabChange={reservePanelHeightBeforeTabChange} />
-        </div>
-
-        <div
-          ref={tabPanelsRef}
-          style={
-            reservedTabPanelHeight !== null
-              ? { minHeight: `${reservedTabPanelHeight}px` }
-              : undefined
-          }
-        >
-          <div ref={tabPanelsContentRef}>
-            <div ref={progressAnchorRef}>
-              <KangurParentDashboardProgressWidget displayMode='active-tab' />
+            <div
+              ref={tabPanelsRef}
+              style={
+                reservedTabPanelHeight !== null
+                  ? { minHeight: `${reservedTabPanelHeight}px` }
+                  : undefined
+              }
+            >
+              <div ref={tabPanelsContentRef}>
+                <div ref={progressAnchorRef}>
+                  <KangurParentDashboardProgressWidget displayMode='active-tab' />
+                </div>
+                <div ref={scoresAnchorRef}>
+                  <KangurParentDashboardScoresWidget displayMode='active-tab' />
+                </div>
+                <div ref={assignmentsAnchorRef}>
+                  <KangurParentDashboardAssignmentsWidget displayMode='active-tab' />
+                </div>
+                <div ref={aiTutorAnchorRef}>
+                  <KangurParentDashboardAiTutorWidget displayMode='active-tab' />
+                </div>
+              </div>
             </div>
-            <div ref={scoresAnchorRef}>
-              <KangurParentDashboardScoresWidget displayMode='active-tab' />
-            </div>
-            <div ref={assignmentsAnchorRef}>
-              <KangurParentDashboardAssignmentsWidget displayMode='active-tab' />
-            </div>
-            <div ref={aiTutorAnchorRef}>
-              <KangurParentDashboardAiTutorWidget displayMode='active-tab' />
-            </div>
-          </div>
-        </div>
+          </>
+        ) : null}
       </KangurPageContainer>
     </KangurPageShell>
   );

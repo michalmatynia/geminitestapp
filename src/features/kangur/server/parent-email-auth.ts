@@ -108,7 +108,7 @@ const assertKangurParentVerificationSendAllowed = (
   }
 
   throw rateLimitedError(
-    `Email potwierdzajacy zostal juz wyslany. Poczekaj ${formatRetryAfterLabel(retryAfterMs)} i sprobuj ponownie.`,
+    `Email potwierdzający został już wysłany. Poczekaj ${formatRetryAfterLabel(retryAfterMs)} i spróbuj ponownie.`,
     retryAfterMs
   );
 };
@@ -167,7 +167,7 @@ const assertValidParentPassword = async (password: string): Promise<void> => {
   const passwordCheck = validatePasswordStrength(password, policy);
   if (!passwordCheck.ok) {
     throw validationError(
-      passwordCheck.errors[0] ?? 'Hasło nie spelnia wymagan bezpieczeństwa.',
+      passwordCheck.errors[0] ?? 'Hasło nie spełnia wymagań bezpieczeństwa.',
       {
         issues: passwordCheck.errors,
       }
@@ -458,7 +458,7 @@ export const setKangurParentPassword = async (input: {
   const passwordCheck = validatePasswordStrength(input.password, policy);
   if (!passwordCheck.ok) {
     throw validationError(
-      passwordCheck.errors[0] ?? 'Hasło nie spelnia wymagan bezpieczeństwa.',
+      passwordCheck.errors[0] ?? 'Hasło nie spełnia wymagań bezpieczeństwa.',
       {
         issues: passwordCheck.errors,
       }

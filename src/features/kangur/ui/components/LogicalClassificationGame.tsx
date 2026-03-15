@@ -6,6 +6,13 @@ import {
   KangurPracticeGameProgress,
   KangurPracticeGameStage,
   KangurPracticeGameSummary,
+  KangurPracticeGameSummaryActions,
+  KangurPracticeGameSummaryBreakdown,
+  KangurPracticeGameSummaryEmoji,
+  KangurPracticeGameSummaryMessage,
+  KangurPracticeGameSummaryProgress,
+  KangurPracticeGameSummaryTitle,
+  KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import {
   KangurButton,
@@ -479,47 +486,55 @@ export default function LogicalClassificationGame({
   if (done) {
     const percent = TOTAL_TARGETS ? Math.round((score / TOTAL_TARGETS) * 100) : 0;
     return (
-      <KangurPracticeGameSummary
-        accent='teal'
-        actionsClassName='flex-col sm:flex-row'
-        breakdown={xpBreakdown}
-        breakdownDataTestId='logical-classification-summary-breakdown'
-        breakdownItemDataTestIdPrefix='logical-classification-summary-breakdown'
-        dataTestId='logical-classification-summary-shell'
-        emoji={percent === 100 ? '🏆' : percent >= 70 ? '🌟' : '💪'}
-        emojiAriaHidden
-        emojiDataTestId='logical-classification-summary-emoji'
-        finishButtonClassName='w-full sm:flex-1'
-        finishLabel={finishLabel}
-        message={
-          percent === 100
+      <KangurPracticeGameSummary dataTestId='logical-classification-summary-shell'>
+        <KangurPracticeGameSummaryEmoji
+          ariaHidden
+          dataTestId='logical-classification-summary-emoji'
+          emoji={percent === 100 ? '🏆' : percent >= 70 ? '🌟' : '💪'}
+        />
+        <KangurPracticeGameSummaryTitle
+          dataTestId='logical-classification-summary-title'
+          title={`Wynik: ${score}/${TOTAL_TARGETS}`}
+        />
+        <KangurPracticeGameSummaryXP accent='teal' xpEarned={xpEarned} />
+        <KangurPracticeGameSummaryBreakdown
+          breakdown={xpBreakdown}
+          dataTestId='logical-classification-summary-breakdown'
+          itemDataTestIdPrefix='logical-classification-summary-breakdown'
+        />
+        <KangurPracticeGameSummaryProgress
+          accent='teal'
+          dataTestId='logical-classification-summary-progress-bar'
+          percent={percent}
+        />
+        <KangurPracticeGameSummaryMessage>
+          {percent === 100
             ? 'Perfekcyjnie! Świetnie klasyfikujesz.'
             : percent >= 70
               ? 'Super! Masz oko do grup i intruzów.'
-              : 'Dobra próba! Jeszcze kilka rund i będzie perfekcyjnie.'
-        }
-        onFinish={onFinish}
-        onRestart={() => {
-          setRoundIndex(0);
-          setRoundState(buildRoundState(FIRST_ROUND));
-          setSelectedTokenId(null);
-          setSelectedIntruderId(null);
-          setChecked(false);
-          setRoundCorrect(0);
-          setScore(0);
-          setDone(false);
-          setXpEarned(0);
-          setXpBreakdown([]);
-          sessionStartedAtRef.current = Date.now();
-        }}
-        percent={percent}
-        progressAccent='teal'
-        progressDataTestId='logical-classification-summary-progress-bar'
-        restartButtonClassName='w-full sm:flex-1'
-        title={`Wynik: ${score}/${TOTAL_TARGETS}`}
-        xpAccent='teal'
-        xpEarned={xpEarned}
-      />
+              : 'Dobra próba! Jeszcze kilka rund i będzie perfekcyjnie.'}
+        </KangurPracticeGameSummaryMessage>
+        <KangurPracticeGameSummaryActions
+          className='flex-col sm:flex-row'
+          finishButtonClassName='w-full sm:flex-1'
+          finishLabel={finishLabel}
+          onFinish={onFinish}
+          onRestart={() => {
+            setRoundIndex(0);
+            setRoundState(buildRoundState(FIRST_ROUND));
+            setSelectedTokenId(null);
+            setSelectedIntruderId(null);
+            setChecked(false);
+            setRoundCorrect(0);
+            setScore(0);
+            setDone(false);
+            setXpEarned(0);
+            setXpBreakdown([]);
+            sessionStartedAtRef.current = Date.now();
+          }}
+          restartButtonClassName='w-full sm:flex-1'
+        />
+      </KangurPracticeGameSummary>
     );
   }
 

@@ -56,6 +56,10 @@ export async function persistKangurSessionScore({
     }
   }
 
+  if (user?.actorType === 'parent') {
+    return;
+  }
+
   try {
     await kangurPlatform.score.create({
       player_name: resolveSessionPlayerName(user),

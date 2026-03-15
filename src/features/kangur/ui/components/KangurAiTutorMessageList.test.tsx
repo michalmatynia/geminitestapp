@@ -68,6 +68,7 @@ const createPanelBodyContextValue = (
   inputPlaceholder: 'Pytaj…',
   isAskModalMode: false,
   isLoading: false,
+  isMinimalPanelMode: false,
   lastInteractionIntent: null,
   lastPromptMode: null,
   isSectionExplainPendingMode: false,

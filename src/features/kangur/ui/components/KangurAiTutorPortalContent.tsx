@@ -90,6 +90,7 @@ export function KangurAiTutorPortalContent() {
               prefersReducedMotion={guestIntro.prefersReducedMotion}
               panelStyle={guestIntro.panelStyle}
               onClose={guestIntro.onClose}
+              onDismiss={guestIntro.onDismiss}
               onAccept={guestIntro.onAccept}
               onStartChat={guestIntro.onStartChat}
             />

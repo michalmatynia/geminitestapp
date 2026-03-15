@@ -69,7 +69,7 @@ export const KANGUR_NATIVE_GUIDE_ENTRIES_AUTH: KangurAiTutorNativeGuideEntry[] =
     shortDescription:
       'Ten formularz zbiera dane potrzebne do wejścia ucznia albo rodzica do aplikacji.',
     fullDescription:
-      'Formularz logowania łączy dwa tryby pracy: zwykle logowanie i założenie konta rodzica. W zależności od wybranego scenariusza pokazuje odpowiednie pola, komunikaty i przycisk akcji, dlatego Tutor-AI powinien wyjaśniać nie tylko gdzie wpisać dane, ale tez jaki tryb jest teraz aktywny. Jeśli widzisz dodatkowe pola rejestracji, oznacza to, że formularz jest w trybie tworzenia konta.',
+      'Formularz logowania łączy dwa tryby pracy: zwykle logowanie i założenie konta rodzica. W zależności od wybranego scenariusza pokazuje odpowiednie pola, komunikaty i przycisk akcji, dlatego Tutor-AI powinien wyjaśniać nie tylko gdzie wpisać dane, ale też jaki tryb jest teraz aktywny. Jeśli widzisz dodatkowe pola rejestracji, oznacza to, że formularz jest w trybie tworzenia konta.',
     hints: [
       'Jeśli na formularzu widać tryb tworzenia konta, rodzic powinien wpisać email i nowe hasło, a nie dane ucznia.',
       'Gdy uczeń loguje się nickiem, najważniejsze jest poprawne wpisanie identyfikatora bez spacji.',

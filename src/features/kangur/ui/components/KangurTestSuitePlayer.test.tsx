@@ -192,17 +192,17 @@ describe('KangurTestSuitePlayer', () => {
 
     await userEvent.click(askAboutChoiceButton);
 
-    expect(tutorSetHighlightedTextMock).toHaveBeenCalledWith('Odpowiedz A: 4');
+    expect(tutorSetHighlightedTextMock).toHaveBeenCalledWith('Odpowiedź A: 4');
     expect(tutorOpenChatMock).toHaveBeenCalledTimes(1);
     expect(tutorSendMessageMock).toHaveBeenCalledWith(
       'Wyjaśnij zaznaczony fragment krok po kroku.',
       expect.objectContaining({
         promptMode: 'selected_text',
-        selectedText: 'Odpowiedz A: 4',
+    selectedText: 'Odpowiedź A: 4',
         contentId: 'suite-2024',
         focusKind: 'selection',
         focusId: 'kangur-test-selection:suite-2024:question-1:A',
-        focusLabel: 'Odpowiedz A: 4',
+    focusLabel: 'Odpowiedź A: 4',
         knowledgeReference: {
           sourceCollection: 'kangur_page_content',
           sourceRecordId: 'tests-selection',

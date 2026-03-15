@@ -10,6 +10,7 @@ import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProg
 import {
   KANGUR_PROGRESS_OWNER_STORAGE_KEY,
   saveProgress,
+  setProgressPersistenceEnabled,
 } from '@/features/kangur/ui/services/progress';
 
 const {
@@ -53,7 +54,7 @@ const createProgress = (
   ...overrides,
 });
 
-const buildAuthState = () => ({
+const baseAuthState = {
   isAuthenticated: true,
   isLoadingAuth: false,
   user: {
@@ -61,8 +62,8 @@ const buildAuthState = () => ({
     full_name: 'Ada',
     email: 'ada@example.com',
     role: 'user' as const,
-    actorType: 'parent' as const,
-    canManageLearners: true,
+    actorType: 'learner' as const,
+    canManageLearners: false,
     ownerUserId: 'parent-1',
     activeLearner: {
       id: 'learner-1',
@@ -76,6 +77,19 @@ const buildAuthState = () => ({
     },
     learners: [],
   },
+};
+
+const buildAuthState = (
+  overrides: Partial<typeof baseAuthState> & {
+    user?: Partial<typeof baseAuthState.user>;
+  } = {}
+) => ({
+  ...baseAuthState,
+  ...overrides,
+  user: {
+    ...baseAuthState.user,
+    ...overrides.user,
+  },
 });
 
 const ProgressProbe = (): React.JSX.Element => {
@@ -87,6 +101,7 @@ describe('KangurProgressSyncProvider', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
+    setProgressPersistenceEnabled(true);
 
     useKangurAuthMock.mockReturnValue(buildAuthState());
     progressGetMock.mockResolvedValue(createProgress());
@@ -174,5 +189,26 @@ describe('KangurProgressSyncProvider', () => {
       )
     );
     expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('45');
+  });
+
+  it('does not hydrate progress for parent accounts', async () => {
+    useKangurAuthMock.mockReturnValue(
+      buildAuthState({
+        user: {
+          actorType: 'parent',
+          canManageLearners: true,
+        },
+      })
+    );
+
+    render(
+      <KangurProgressSyncProvider>
+        <ProgressProbe />
+      </KangurProgressSyncProvider>
+    );
+
+    await waitFor(() => expect(progressGetMock).not.toHaveBeenCalled());
+    expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('0');
+    expect(localStorage.getItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY)).toBeNull();
   });
 });

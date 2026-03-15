@@ -61,7 +61,7 @@ describe('Logical lessons shared surfaces', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /wnioskowanie.*jeśli/i }));
 
-    expect(screen.getByText(/Wnioskowanie to wyciaganie nowych wniosków/i)).toHaveClass(
+    expect(screen.getByText(/Wnioskowanie to wyciąganie nowych wniosków/i)).toHaveClass(
       '[color:var(--kangur-page-text)]'
     );
 

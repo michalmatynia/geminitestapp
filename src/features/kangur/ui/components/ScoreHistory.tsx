@@ -45,10 +45,10 @@ type ScoreHistoryProps = {
 const OP_LABELS: Record<string, OperationLabel> = {
   addition: { label: 'Dodawanie', emoji: '➕' },
   subtraction: { label: 'Odejmowanie', emoji: '➖' },
-  multiplication: { label: 'Mnozenie', emoji: '✖️' },
+  multiplication: { label: 'Mnożenie', emoji: '✖️' },
   division: { label: 'Dzielenie', emoji: '➗' },
-  decimals: { label: 'Ulamki', emoji: '🔢' },
-  powers: { label: 'Potegi', emoji: '⚡' },
+  decimals: { label: 'Ułamki', emoji: '🔢' },
+  powers: { label: 'Potęgi', emoji: '⚡' },
   roots: { label: 'Pierwiastki', emoji: '√' },
   clock: { label: 'Zegar', emoji: '🕐' },
   calendar: { label: 'Kalendarz', emoji: '📅' },

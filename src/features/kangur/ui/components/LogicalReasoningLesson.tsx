@@ -73,7 +73,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Wnioskowanie to wyciaganie nowych wniosków z tego, co już wiemy. Idziemy od znanych
+            Wnioskowanie to wyciąganie nowych wniosków z tego, co już wiemy. Idziemy od znanych
             faktów do nowej prawdy.
           </KangurLessonLead>
           <KangurLessonCallout

@@ -955,7 +955,7 @@ export default function Lessons() {
                             </p>
                             <p className='max-w-xl text-sm leading-relaxed text-slate-600'>
                               {activeLessonSecretPanelContent?.summary ??
-                                'Złota pigulka odblokowala final na samym koncu ostatniej lekcji w kolejce. Trafiles od razu do ukrytego zakonczenia.'}
+                                'Złota pigułka odblokowała finał na samym końcu ostatniej lekcji w kolejce. Trafiłeś od razu do ukrytego zakończenia.'}
                             </p>
                           </div>
                         </KangurGlassPanel>

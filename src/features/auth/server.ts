@@ -13,7 +13,7 @@ export {
 export type { AuthSecurityProfile } from './services/auth-security-profile';
 export { invalidateAuthSecurityProfileCache } from './services/auth-security-profile';
 export * from './services/auth-settings';
-export { normalizeAuthEmail } from './services/auth-user-repository';
+export { normalizeAuthEmail, listAuthUsers } from './services/auth-user-repository';
 export * from './services/auth-user-service';
 export * from './services/user-preferences-repository';
 export * from './services/totp';

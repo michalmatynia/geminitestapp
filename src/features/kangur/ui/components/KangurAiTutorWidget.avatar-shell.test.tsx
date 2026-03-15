@@ -43,6 +43,7 @@ const createAvatarShellInput = (
   setSelectionGuidanceCalloutVisibleText: vi.fn(),
   setSelectionResponseComplete: vi.fn() as AvatarShellInput['setSelectionResponseComplete'],
   setSelectionResponsePending: vi.fn() as AvatarShellInput['setSelectionResponsePending'],
+  setHasNewMessage: vi.fn(),
   setSelectionGuidanceHandoffText: vi.fn(),
   startGuidedSelectionExplanation: vi.fn(),
   suppressAvatarClickRef: { current: false } as MutableRefObject<boolean>,

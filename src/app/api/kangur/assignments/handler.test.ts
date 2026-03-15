@@ -33,6 +33,7 @@ vi.mock('@/features/kangur/server', () => ({
   getKangurProgressRepository: getKangurProgressRepositoryMock,
   getKangurScoreRepository: getKangurScoreRepositoryMock,
   resolveKangurActor: resolveKangurActorMock,
+  requireActiveLearner: (actor: { activeLearner?: unknown }) => actor.activeLearner,
 }));
 
 vi.mock('@/features/kangur/observability/server', () => ({

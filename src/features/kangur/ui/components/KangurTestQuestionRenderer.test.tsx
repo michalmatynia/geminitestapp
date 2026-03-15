@@ -143,7 +143,7 @@ describe('KangurTestQuestionRenderer', () => {
         priority: 86,
         metadata: expect.objectContaining({
           contentId: 'suite-1',
-          label: 'Odpowiedz A: 4',
+      label: 'Odpowiedź A: 4',
         }),
       })
     );

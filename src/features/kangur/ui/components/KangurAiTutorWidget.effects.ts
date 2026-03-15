@@ -51,7 +51,6 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
   setSectionResponseComplete: (value: SectionExplainContext | null) => void;
   setSectionResponsePending: (value: SectionExplainContext | null) => void;
   setSelectionGuidanceCalloutVisibleText: (value: string | null) => void;
-  setSelectionGuidanceHandoffText: (value: string | null) => void;
   setSelectionResponseComplete: (value: PendingSelectionResponse | null) => void;
   setSelectionResponsePending: (value: PendingSelectionResponse | null) => void;
   telemetryContext: TelemetryContext;
@@ -78,7 +77,6 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
     setSectionResponseComplete,
     setSectionResponsePending,
     setSelectionGuidanceCalloutVisibleText,
-    setSelectionGuidanceHandoffText,
     setSelectionResponseComplete,
     setSelectionResponsePending,
     telemetryContext,
@@ -99,11 +97,8 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
         selectionConversationSelectedText,
         selectionResponsePending?.selectedText ?? null
       );
-    const shouldKeepSelectionAnswerInGuidedCallout =
-      latestSelectionResponseMessage?.answerResolutionMode === 'page_content';
     const shouldRevealGuidedSelectionCallout =
       isSelectionGuidedMode &&
-      selectionGuidanceHandoffText === null &&
       hasSelectionResponseMessage;
     const shouldFinalizeSelectionPanel =
       !isSelectionGuidedMode &&
@@ -130,9 +125,6 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
     setSelectionResponsePending(null);
     if (shouldRevealGuidedSelectionCallout) {
       setSelectionGuidanceCalloutVisibleText(selectionResponsePending.selectedText);
-      if (!shouldKeepSelectionAnswerInGuidedCallout) {
-        setSelectionGuidanceHandoffText(selectionResponsePending.selectedText);
-      }
     }
   }, [
     messages,
@@ -143,13 +135,12 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
     isSelectionGuidedMode,
     selectionConversationSelectedText,
     selectionConversationStartIndex,
-    selectionGuidanceHandoffText,
     selectionResponsePending,
     setSelectionGuidanceCalloutVisibleText,
-    setSelectionGuidanceHandoffText,
     setSelectionResponseComplete,
     setSelectionResponsePending,
     telemetryContext,
+    selectionGuidanceHandoffText,
   ]);
 
   useEffect(() => {

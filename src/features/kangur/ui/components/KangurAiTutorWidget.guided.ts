@@ -1,6 +1,5 @@
 import {
   useCallback,
-  useEffect,
   type Dispatch,
   type MutableRefObject,
   type SetStateAction,
@@ -20,7 +19,6 @@ import { getMotionSafeScrollBehavior } from '@/shared/utils';
 
 import {
   getPageRect,
-  areTutorSelectionTextsEquivalent,
   isSectionGuidedTutorTarget,
 } from './KangurAiTutorWidget.helpers';
 
@@ -69,128 +67,6 @@ const buildSectionExplainPrompt = (
   return prompt.defaultPrompt;
 };
 
-export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
-  activeSelectedText: string | null;
-  handleOpenChat: (
-    reason: 'section_explain' | 'selection_explain',
-    options?: {
-      panelShellMode?: 'default' | 'minimal';
-    }
-  ) => void;
-  hasSelectionPanelReady: boolean;
-  isLoading?: boolean;
-  isOpen: boolean;
-  panelMotionState: 'animating' | 'settled';
-  selectionConversationSelectedText: string | null;
-  selectionGuidanceHandoffText: string | null;
-  setSelectionGuidanceHandoffText: (value: string | null) => void;
-  setSelectionResponseComplete: (value: PendingSelectionResponse | null) => void;
-  setSelectionResponsePending: Dispatch<SetStateAction<PendingSelectionResponse | null>>;
-  telemetryContext: TelemetryContext;
-}): void {
-  const {
-    handleOpenChat,
-    hasSelectionPanelReady,
-    isLoading = false,
-    isOpen,
-    panelMotionState,
-    selectionConversationSelectedText,
-    selectionGuidanceHandoffText,
-    setSelectionGuidanceHandoffText,
-    setSelectionResponseComplete,
-    setSelectionResponsePending,
-    telemetryContext,
-  } = input;
-
-  useEffect(() => {
-    if (
-      !selectionGuidanceHandoffText ||
-      isLoading ||
-      !isOpen ||
-      !hasSelectionPanelReady ||
-      panelMotionState !== 'settled' ||
-      !areTutorSelectionTextsEquivalent(
-        selectionConversationSelectedText,
-        selectionGuidanceHandoffText
-      )
-    ) {
-      return;
-    }
-
-    trackKangurClientEvent('kangur_ai_tutor_selection_guidance_completed', {
-      ...telemetryContext,
-      selectionLength: selectionGuidanceHandoffText.length,
-    });
-    handleOpenChat('selection_explain', {
-      panelShellMode: 'minimal',
-    });
-    setSelectionResponseComplete({
-      selectedText: selectionGuidanceHandoffText,
-    });
-    setSelectionResponsePending((current) =>
-      current?.selectedText === selectionGuidanceHandoffText ? null : current
-    );
-    setSelectionGuidanceHandoffText(null);
-  }, [
-    handleOpenChat,
-    hasSelectionPanelReady,
-    isLoading,
-    isOpen,
-    panelMotionState,
-    selectionConversationSelectedText,
-    selectionGuidanceHandoffText,
-    setSelectionGuidanceHandoffText,
-    setSelectionResponseComplete,
-    setSelectionResponsePending,
-    telemetryContext,
-  ]);
-}
-
-export function useKangurAiTutorSelectionGuidanceDockOpenEffect(input: {
-  activeSelectedText: string | null;
-  handleOpenChat: (
-    reason: 'section_explain' | 'selection_explain',
-    options?: {
-      panelShellMode?: 'default' | 'minimal';
-    }
-  ) => void;
-  hasSelectionPanelReady: boolean;
-  isLoading?: boolean;
-  selectionConversationSelectedText: string | null;
-  selectionGuidanceHandoffText: string | null;
-}): void {
-  const {
-    handleOpenChat,
-    hasSelectionPanelReady,
-    isLoading = false,
-    selectionConversationSelectedText,
-    selectionGuidanceHandoffText,
-  } = input;
-
-  useEffect(() => {
-    if (
-      !selectionGuidanceHandoffText ||
-      isLoading ||
-      hasSelectionPanelReady ||
-      !areTutorSelectionTextsEquivalent(
-        selectionConversationSelectedText,
-        selectionGuidanceHandoffText
-      )
-    ) {
-      return;
-    }
-
-    handleOpenChat('selection_explain', {
-      panelShellMode: 'minimal',
-    });
-  }, [
-    handleOpenChat,
-    hasSelectionPanelReady,
-    isLoading,
-    selectionConversationSelectedText,
-    selectionGuidanceHandoffText,
-  ]);
-}
 
 export function useKangurAiTutorGuidedFlow(input: {
   activeSelectionPageRect: DOMRect | null;
@@ -547,18 +423,12 @@ export function useKangurAiTutorGuidedFlow(input: {
       selectionGuidanceRevealTimeoutRef.current = window.setTimeout(() => {
         selectionGuidanceRevealTimeoutRef.current = null;
         setSelectionGuidanceCalloutVisibleText(selectionText);
-        if (messageCount === 0) {
-          handleOpenChat('selection_explain', {
-            panelShellMode: 'minimal',
-          });
-        }
       }, revealDelayMs);
     },
     [
       activeSelectionPageRect,
       activateSelectionGlow,
       focusSelectionPageRect,
-      handleOpenChat,
       messageCount,
       motionProfile.guidedAvatarTransition.duration,
       prefersReducedMotion,

@@ -387,7 +387,7 @@ describe('Game page', () => {
       ...buildRuntime('playing'),
       activePracticeAssignment: {
         id: 'assignment-division-easy',
-        title: 'Dzielenie latwe',
+        title: 'Dzielenie łatwe',
         progress: {
           summary: '2/5',
         },

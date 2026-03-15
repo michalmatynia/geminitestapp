@@ -82,10 +82,10 @@ describe('KangurGameQuestionWidget', () => {
     useKangurGameRuntimeMock.mockReturnValue({
       activePracticeAssignment: null,
       activeSessionRecommendation: {
-        description: 'To teraz najmocniej podbija tempo i kolejna odznake.',
+        description: 'To teraz najmocniej podbija tempo i kolejną odznakę.',
         label: 'Tor odznak',
         source: 'operation_selector',
-        title: 'Rozpedz tor: XP',
+        title: 'Rozpędź tor: XP',
       },
       basePath: '/kangur',
       currentQuestion: { question: '2 + 2 = ?', answer: 4, choices: [4, 5, 6, 7] },
@@ -121,7 +121,7 @@ describe('KangurGameQuestionWidget', () => {
     expect(screen.getByText(/⭐ Wynik:/i)).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
-    expect(screen.getByText(/🟢 Latwy/i)).toHaveClass(
+    expect(screen.getByText(/🟢 Łatwy/i)).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
     expect(screen.getByTestId('kangur-game-question-momentum')).toBeInTheDocument();
@@ -132,7 +132,7 @@ describe('KangurGameQuestionWidget', () => {
       'Perfekt w toku'
     );
     expect(screen.getByTestId('kangur-game-question-recommendation')).toHaveTextContent(
-      'Polecony kierunek: Rozpedz tor: XP'
+      'Polecony kierunek: Rozpędź tor: XP'
     );
     expect(screen.getByTestId('kangur-game-question-guided')).toHaveTextContent(
       'Po tej rundzie: 3/3 rundy'

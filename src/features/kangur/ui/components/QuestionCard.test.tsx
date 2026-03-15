@@ -43,7 +43,7 @@ describe('QuestionCard', () => {
     expect(screen.getByTestId('question-card-timer-bar')).toHaveAttribute('aria-valuenow', '100');
     expect(screen.getByTestId('question-card-timer-bar')).toHaveAttribute(
       'aria-valuetext',
-      '30 sekund pozostalo'
+      '30 sekund pozostało'
     );
     expect(screen.getByTestId('question-card-shell')).toHaveClass(
       'glass-panel',
@@ -58,7 +58,7 @@ describe('QuestionCard', () => {
 
     expect(correctChoice).toHaveAttribute('aria-disabled', 'true');
     expect(wrongChoice).toHaveAttribute('aria-disabled', 'true');
-    expect(screen.getByRole('status')).toHaveTextContent('❌ Odpowiedz to 7');
+    expect(screen.getByRole('status')).toHaveTextContent('❌ Odpowiedź to 7');
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(900);
@@ -83,7 +83,7 @@ describe('QuestionCard', () => {
     );
 
     expect(
-      screen.getByRole('img', { name: 'Zegar analogowy pokazuje godzine 3:15.' })
+      screen.getByRole('img', { name: 'Zegar analogowy pokazuje godzinę 3:15.' })
     ).toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Którą godzinę pokazuje zegar?' })).toBeInTheDocument();
   });

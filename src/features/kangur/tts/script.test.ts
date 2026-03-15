@@ -213,7 +213,7 @@ describe('kangur tts script builder', () => {
     const longText = Array.from(
       { length: 120 },
       (_, index) =>
-        `Zdanie numer ${index + 1}. To jest dluzsze wyjasnienie pomagajace dziecku zrozumiec temat.`
+        `Zdanie numer ${index + 1}. To jest dłuższe wyjaśnienie pomagające dziecku zrozumieć temat.`
     ).join(' ');
     const script = buildKangurLessonNarrationScriptFromText({
       lessonId: 'clock',

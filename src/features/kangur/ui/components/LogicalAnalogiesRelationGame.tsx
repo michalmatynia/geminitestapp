@@ -6,6 +6,13 @@ import {
   KangurPracticeGameProgress,
   KangurPracticeGameStage,
   KangurPracticeGameSummary,
+  KangurPracticeGameSummaryActions,
+  KangurPracticeGameSummaryBreakdown,
+  KangurPracticeGameSummaryEmoji,
+  KangurPracticeGameSummaryMessage,
+  KangurPracticeGameSummaryProgress,
+  KangurPracticeGameSummaryTitle,
+  KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import {
@@ -348,42 +355,48 @@ export default function LogicalAnalogiesRelationGame({
   if (done) {
     const percent = TOTAL_TARGETS ? Math.round((score / TOTAL_TARGETS) * 100) : 0;
     return (
-      <KangurPracticeGameSummary
-        accent='rose'
-        actionsClassName='flex-col sm:flex-row'
-        breakdown={xpBreakdown}
-        breakdownDataTestId='logical-analogies-summary-breakdown'
-        breakdownItemDataTestIdPrefix='logical-analogies-summary-breakdown'
-        dataTestId='logical-analogies-summary-shell'
-        emoji={percent === 100 ? '🏆' : percent >= 70 ? '🌟' : '💪'}
-        emojiAriaHidden
-        emojiDataTestId='logical-analogies-summary-emoji'
-        finishButtonClassName='w-full sm:flex-1'
-        finishLabel={finishLabel}
-        message={
-          percent === 100
+      <KangurPracticeGameSummary dataTestId='logical-analogies-summary-shell'>
+        <KangurPracticeGameSummaryEmoji
+          ariaHidden
+          dataTestId='logical-analogies-summary-emoji'
+          emoji={percent === 100 ? '🏆' : percent >= 70 ? '🌟' : '💪'}
+        />
+        <KangurPracticeGameSummaryTitle
+          dataTestId='logical-analogies-summary-title'
+          title={`Wynik: ${score}/${TOTAL_TARGETS}`}
+        />
+        <KangurPracticeGameSummaryXP accent='rose' xpEarned={xpEarned} />
+        <KangurPracticeGameSummaryBreakdown
+          breakdown={xpBreakdown}
+          dataTestId='logical-analogies-summary-breakdown'
+          itemDataTestIdPrefix='logical-analogies-summary-breakdown'
+        />
+        {isRushMode ? (
+          <KangurStatusChip accent='amber' className='mx-auto'>
+            Bridge Rush ⏱
+          </KangurStatusChip>
+        ) : null}
+        <KangurPracticeGameSummaryProgress
+          accent='rose'
+          dataTestId='logical-analogies-summary-progress-bar'
+          percent={percent}
+        />
+        <KangurPracticeGameSummaryMessage>
+          {percent === 100
             ? 'Idealnie! Rozpoznajesz relacje w każdym kontekście.'
             : percent >= 70
               ? 'Świetnie! Masz oko do relacji.'
-              : 'Dobra próba! Spróbuj jeszcze raz i zobacz różnice.'
-        }
-        onFinish={onFinish}
-        onRestart={restart}
-        preProgressContent={
-          isRushMode ? (
-            <KangurStatusChip accent='amber' className='mx-auto'>
-              Bridge Rush ⏱
-            </KangurStatusChip>
-          ) : null
-        }
-        percent={percent}
-        progressAccent='rose'
-        progressDataTestId='logical-analogies-summary-progress-bar'
-        restartButtonClassName='w-full sm:flex-1'
-        title={`Wynik: ${score}/${TOTAL_TARGETS}`}
-        xpAccent='rose'
-        xpEarned={xpEarned}
-      />
+              : 'Dobra próba! Spróbuj jeszcze raz i zobacz różnice.'}
+        </KangurPracticeGameSummaryMessage>
+        <KangurPracticeGameSummaryActions
+          className='flex-col sm:flex-row'
+          finishButtonClassName='w-full sm:flex-1'
+          finishLabel={finishLabel}
+          onFinish={onFinish}
+          onRestart={restart}
+          restartButtonClassName='w-full sm:flex-1'
+        />
+      </KangurPracticeGameSummary>
     );
   }
 

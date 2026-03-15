@@ -735,7 +735,7 @@ export function AdminKangurSettingsPage(): ReactElement {
               <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
                 <FormField
                   label='Dzienny limit wiadomości'
-                  description='Kazda wyslana wiadomość do tutora zuzywa 1 punkt limitu. Puste pole oznacza brak limitu.'
+                  description='Każda wysłana wiadomość do tutora zużywa 1 punkt limitu. Puste pole oznacza brak limitu.'
                 >
                   <Input
                     type='number'

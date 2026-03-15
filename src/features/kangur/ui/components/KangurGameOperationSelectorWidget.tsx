@@ -35,7 +35,7 @@ import type { KangurLessonComponentId, KangurRouteAction } from '@/shared/contra
 const QUICK_PRACTICE_OPTIONS = [
   {
     accent: 'rose',
-    description: 'Szybka seria odejmowania z natychmiastowa odpowiedzia.',
+    description: 'Szybka seria odejmowania z natychmiastową odpowiedzią.',
     emoji: '➖',
     label: 'Quiz odejmowania',
     onSelectScreen: 'subtraction_quiz',

@@ -52,7 +52,7 @@ export default function DifficultySelector({
       {showHeading ? (
         <KangurSectionHeading
           data-testid='difficulty-selector-heading'
-          description='Ten sam uklad, tylko rosnacy poziom wyzwania.'
+          description='Ten sam układ, tylko rosnący poziom wyzwania.'
           descriptionId={descriptionId}
           headingAs='h3'
           headingSize='sm'

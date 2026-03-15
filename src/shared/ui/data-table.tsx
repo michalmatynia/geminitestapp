@@ -189,6 +189,13 @@ export const DataTable = memo(function DataTable<TData>({
     enabled: enableVirtualization,
   });
 
+  const resolvedContainerStyle = maxHeight
+    ? {
+        maxHeight,
+        ...(enableVirtualization ? { height: maxHeight } : {}),
+      }
+    : undefined;
+
   return (
     <div
       className={cn(
@@ -196,7 +203,7 @@ export const DataTable = memo(function DataTable<TData>({
         className,
         'w-full min-w-0 max-w-none'
       )}
-      style={maxHeight ? { maxHeight } : undefined}
+      style={resolvedContainerStyle}
     >
       <div ref={parentRef} className={cn('flex-1 min-h-0', maxHeight && 'overflow-auto')}>
         <Table className='border-collapse' wrapperClassName={cn(maxHeight && 'overflow-visible')}>

@@ -66,7 +66,7 @@ export function KangurTestSuitePlayer({
       : null;
   const selectedChoiceSelectionText =
     currentQuestion && selectedLabel && selectedChoiceText
-      ? `Odpowiedz ${selectedLabel}: ${selectedChoiceText}`
+      ? `Odpowiedź ${selectedLabel}: ${selectedChoiceText}`
       : null;
   const selectedChoiceFocusId =
     currentQuestion && selectedLabel

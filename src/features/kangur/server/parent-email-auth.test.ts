@@ -224,7 +224,7 @@ describe('parent email auth service', () => {
           retryAfterMs: 15_000,
         });
         expect((error as Error).message).toBe(
-          'Email potwierdzajacy zostal juz wyslany. Poczekaj 15 s i sprobuj ponownie.'
+          'Email potwierdzający został już wysłany. Poczekaj 15 s i spróbuj ponownie.'
         );
       }
 
@@ -495,7 +495,7 @@ describe('parent email auth service', () => {
           retryAfterMs: 30_000,
         });
         expect((error as Error).message).toBe(
-          'Email potwierdzajacy zostal juz wyslany. Poczekaj 30 s i sprobuj ponownie.'
+          'Email potwierdzający został już wysłany. Poczekaj 30 s i spróbuj ponownie.'
         );
       }
 
@@ -538,7 +538,7 @@ describe('parent email auth service', () => {
           retryAfterMs: 45_000,
         });
         expect((error as Error).message).toBe(
-          'Email potwierdzajacy zostal juz wyslany. Poczekaj 45 s i sprobuj ponownie.'
+          'Email potwierdzający został już wysłany. Poczekaj 45 s i spróbuj ponownie.'
         );
       }
 

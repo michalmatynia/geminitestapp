@@ -1,7 +1,16 @@
 // @ts-nocheck
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { KangurPracticeGameSummary } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
+import {
+  KangurPracticeGameSummary,
+  KangurPracticeGameSummaryActions,
+  KangurPracticeGameSummaryBreakdown,
+  KangurPracticeGameSummaryEmoji,
+  KangurPracticeGameSummaryMessage,
+  KangurPracticeGameSummaryProgress,
+  KangurPracticeGameSummaryTitle,
+  KangurPracticeGameSummaryXP,
+} from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import {
   KangurAccentDot,
   KangurButton,
@@ -1236,63 +1245,70 @@ export default function ClockTrainingGame({
     const percent = Math.round((score / tasks.length) * 100);
     return (
       <KangurPracticeGameSummary
-        accent='indigo'
-        breakdown={xpBreakdown}
-        breakdownDataTestId='clock-training-summary-breakdown'
-        breakdownItemDataTestIdPrefix='clock-training-summary-breakdown'
         dataTestId='clock-training-summary-shell'
-        emoji={score >= 4 ? '🏆' : score >= 2 ? '😊' : '💪'}
-        emojiAriaHidden
-        emojiDataTestId='clock-training-summary-emoji'
-        finishLabel={completionPrimaryActionLabel}
-        message={getClockTrainingSummaryMessage(section, score, tasks.length)}
-        messageClassName='max-w-xs text-center'
-        onFinish={completionAction}
-        onRestart={() => resetSession(gameMode)}
         panelClassName='gap-5'
-        percent={percent}
-        preProgressContent={
-          <>
-            <p className='text-xs font-semibold text-indigo-600'>
-              Tryb: {gameMode === 'challenge' ? 'Wyzwanie' : 'Nauka'}
-            </p>
-            {gameMode === 'challenge' && challengeMedal ? (
-              <KangurStatusChip
-                accent={
-                  challengeMedal === 'gold'
-                    ? 'amber'
-                    : challengeMedal === 'silver'
-                      ? 'slate'
-                      : 'rose'
-                }
-                className='px-4 py-2 text-sm font-bold'
-                data-testid='clock-challenge-medal'
-              >
-                {getClockChallengeMedalLabel(challengeMedal)}
-              </KangurStatusChip>
-            ) : null}
-            {gameMode === 'challenge' ? (
-              <p data-testid='clock-challenge-summary' className='text-xs font-semibold text-amber-600'>
-                Najlepsza seria: {challengeBestStreak}
-              </p>
-            ) : null}
-            {gameMode === 'practice' && retryAddedCount > 0 ? (
-              <p className='text-xs font-semibold text-indigo-600'>
-                Powtórki adaptacyjne: {retryAddedCount}
-              </p>
-            ) : null}
-          </>
-        }
-        progressAccent='indigo'
-        progressAriaLabel='Dokładność w treningu zegara'
-        progressAriaValueText={`${percent}% poprawnych ustawień`}
-        progressDataTestId='clock-training-summary-progress-bar'
-        title={<h3 className='text-2xl font-extrabold text-indigo-700'>Wynik: {score}/{tasks.length}</h3>}
-        titleUnwrapped
         wrapperClassName='py-4'
-        xpAccent='indigo'
-        xpEarned={xpEarned}
-      />
+      >
+        <KangurPracticeGameSummaryEmoji
+          ariaHidden
+          dataTestId='clock-training-summary-emoji'
+          emoji={score >= 4 ? '🏆' : score >= 2 ? '😊' : '💪'}
+        />
+        <KangurPracticeGameSummaryTitle
+          dataTestId='clock-training-summary-title'
+          title={<h3 className='text-2xl font-extrabold text-indigo-700'>Wynik: {score}/{tasks.length}</h3>}
+          unwrapped
+        />
+        <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
+        <KangurPracticeGameSummaryBreakdown
+          breakdown={xpBreakdown}
+          dataTestId='clock-training-summary-breakdown'
+          itemDataTestIdPrefix='clock-training-summary-breakdown'
+        />
+        <p className='text-xs font-semibold text-indigo-600'>
+          Tryb: {gameMode === 'challenge' ? 'Wyzwanie' : 'Nauka'}
+        </p>
+        {gameMode === 'challenge' && challengeMedal ? (
+          <KangurStatusChip
+            accent={
+              challengeMedal === 'gold'
+                ? 'amber'
+                : challengeMedal === 'silver'
+                  ? 'slate'
+                  : 'rose'
+            }
+            className='px-4 py-2 text-sm font-bold'
+            data-testid='clock-challenge-medal'
+          >
+            {getClockChallengeMedalLabel(challengeMedal)}
+          </KangurStatusChip>
+        ) : null}
+        {gameMode === 'challenge' ? (
+          <p data-testid='clock-challenge-summary' className='text-xs font-semibold text-amber-600'>
+            Najlepsza seria: {challengeBestStreak}
+          </p>
+        ) : null}
+        {gameMode === 'practice' && retryAddedCount > 0 ? (
+          <p className='text-xs font-semibold text-indigo-600'>
+            Powtórki adaptacyjne: {retryAddedCount}
+          </p>
+        ) : null}
+        <KangurPracticeGameSummaryProgress
+          accent='indigo'
+          ariaLabel='Dokładność w treningu zegara'
+          ariaValueText={`${percent}% poprawnych ustawień`}
+          dataTestId='clock-training-summary-progress-bar'
+          percent={percent}
+        />
+        <KangurPracticeGameSummaryMessage className='max-w-xs text-center'>
+          {getClockTrainingSummaryMessage(section, score, tasks.length)}
+        </KangurPracticeGameSummaryMessage>
+        <KangurPracticeGameSummaryActions
+          finishLabel={completionPrimaryActionLabel}
+          onFinish={completionAction}
+          onRestart={() => resetSession(gameMode)}
+        />
+      </KangurPracticeGameSummary>
     );
   }
   const taskSummaryTitle = showTaskTitle ? `${task.hours}:${pad(task.minutes)}` : null;

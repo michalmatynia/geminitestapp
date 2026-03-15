@@ -81,13 +81,16 @@ export function KangurPracticeGameSummaryTitle({
   dataTestId,
   accent,
   unwrapped = false,
+  children,
 }: {
-  title: React.ReactNode;
+  title?: React.ReactNode;
   dataTestId?: string;
   accent?: KangurAccent;
   unwrapped?: boolean;
+  children?: React.ReactNode;
 }): React.JSX.Element {
-  if (unwrapped) return <>{title}</>;
+  const content = children ?? title;
+  if (unwrapped) return <>{content}</>;
   return (
     <div
       className={cn(
@@ -96,7 +99,7 @@ export function KangurPracticeGameSummaryTitle({
       )}
       data-testid={dataTestId}
     >
-      {title}
+      {content}
     </div>
   );
 }
@@ -205,81 +208,32 @@ export function KangurPracticeGameSummaryActions({
   );
 }
 
+export function KangurPracticeGameSummaryMessage({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}): React.JSX.Element | null {
+  if (!children) return null;
+  return <p className={cn('[color:var(--kangur-page-muted-text)]', className)}>{children}</p>;
+}
+
 // ── Main Summary Component ───────────────────────────────────────────────────
 
 type KangurPracticeGameSummaryProps = {
-  accent: KangurAccent;
-  actionsHidden?: boolean;
-  actionsClassName?: string;
-  breakdown?: KangurRewardBreakdownEntry[];
-  breakdownDataTestId: string;
-  breakdownItemDataTestIdPrefix: string;
+  children: React.ReactNode;
   dataTestId: string;
-  emoji: React.ReactNode;
-  emojiAriaHidden?: boolean;
-  emojiDataTestId: string;
-  finishLabel: string;
-  finishButtonClassName?: string;
-  message: React.ReactNode;
-  messageClassName?: string;
-  postProgressContent?: React.ReactNode;
-  preProgressContent?: React.ReactNode;
-  onFinish: () => void;
-  onRestart: () => void;
-  percent: number;
-  progressAccent: KangurAccent;
-  progressAriaLabel?: string;
-  progressAriaValueText?: string;
-  progressClassName?: string;
-  progressDataTestId?: string;
   panelClassName?: string;
-  restartLabel?: React.ReactNode;
-  restartButtonClassName?: string;
-  title: React.ReactNode;
-  titleDataTestId?: string;
-  titleUnwrapped?: boolean;
   wrapperClassName?: string;
-  xpAccent?: KangurAccent;
-  xpEarned?: number;
 };
 
-export function KangurPracticeGameSummary(props: KangurPracticeGameSummaryProps): React.JSX.Element {
-  const {
-    accent,
-    actionsHidden = false,
-    actionsClassName,
-    breakdown = [],
-    breakdownDataTestId,
-    breakdownItemDataTestIdPrefix,
-    dataTestId,
-    emoji,
-    emojiAriaHidden,
-    emojiDataTestId,
-    finishLabel,
-    finishButtonClassName,
-    message,
-    messageClassName,
-    postProgressContent,
-    preProgressContent,
-    onFinish,
-    onRestart,
-    percent,
-    progressAccent,
-    progressAriaLabel,
-    progressAriaValueText,
-    progressClassName,
-    progressDataTestId,
-    panelClassName,
-    restartLabel = 'Jeszcze raz',
-    restartButtonClassName,
-    title,
-    titleDataTestId,
-    titleUnwrapped = false,
-    wrapperClassName,
-    xpAccent = 'indigo',
-    xpEarned = 0,
-  } = props;
-
+export function KangurPracticeGameSummary({
+  children,
+  dataTestId,
+  panelClassName,
+  wrapperClassName,
+}: KangurPracticeGameSummaryProps): React.JSX.Element {
   return (
     <motion.div
       animate={{ opacity: 1, scale: 1 }}
@@ -293,45 +247,7 @@ export function KangurPracticeGameSummary(props: KangurPracticeGameSummaryProps)
         surface='solid'
         variant='soft'
       >
-        <KangurPracticeGameSummaryEmoji
-          ariaHidden={emojiAriaHidden}
-          dataTestId={emojiDataTestId}
-          emoji={emoji}
-        />
-        <KangurPracticeGameSummaryTitle
-          accent={accent}
-          dataTestId={titleDataTestId}
-          title={title}
-          unwrapped={titleUnwrapped}
-        />
-        {preProgressContent}
-        <KangurPracticeGameSummaryXP accent={xpAccent} xpEarned={xpEarned} />
-        <KangurPracticeGameSummaryBreakdown
-          breakdown={breakdown}
-          dataTestId={breakdownDataTestId}
-          itemDataTestIdPrefix={breakdownItemDataTestIdPrefix}
-        />
-        <KangurPracticeGameSummaryProgress
-          accent={progressAccent}
-          ariaLabel={progressAriaLabel}
-          ariaValueText={progressAriaValueText}
-          className={progressClassName}
-          dataTestId={progressDataTestId}
-          percent={percent}
-        />
-        <p className={cn('[color:var(--kangur-page-muted-text)]', messageClassName)}>{message}</p>
-        {postProgressContent}
-        {actionsHidden ? null : (
-          <KangurPracticeGameSummaryActions
-            className={actionsClassName}
-            finishButtonClassName={finishButtonClassName}
-            finishLabel={finishLabel}
-            onFinish={onFinish}
-            onRestart={onRestart}
-            restartButtonClassName={restartButtonClassName}
-            restartLabel={restartLabel}
-          />
-        )}
+        {children}
       </KangurGlassPanel>
     </motion.div>
   );

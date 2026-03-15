@@ -402,6 +402,93 @@ describe('KangurPrimaryNavigation', () => {
     );
   });
 
+  it('hides the profile link for parent accounts without an active learner', () => {
+    optionalAuthMock.mockReturnValue({
+      authError: null,
+      appPublicSettings: null,
+      canAccessParentAssignments: false,
+      checkAppState: vi.fn(),
+      isAuthenticated: true,
+      isLoadingAuth: false,
+      isLoadingPublicSettings: false,
+      logout: vi.fn(),
+      navigateToLogin: vi.fn(),
+      selectLearner: vi.fn(),
+      user: {
+        activeLearner: null,
+        actorType: 'parent',
+        canManageLearners: true,
+        email: 'parent@example.com',
+        full_name: 'Rodzic',
+        id: 'parent-1',
+        learners: [],
+        ownerUserId: 'parent-1',
+        ownerEmailVerified: true,
+        role: 'user',
+      },
+    });
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByRole('link', { name: /profil/i })).toBeNull();
+  });
+
+  it('shows the active learner name in the profile label for parent accounts', () => {
+    optionalAuthMock.mockReturnValue({
+      authError: null,
+      appPublicSettings: null,
+      canAccessParentAssignments: true,
+      checkAppState: vi.fn(),
+      isAuthenticated: true,
+      isLoadingAuth: false,
+      isLoadingPublicSettings: false,
+      logout: vi.fn(),
+      navigateToLogin: vi.fn(),
+      selectLearner: vi.fn(),
+      user: {
+        activeLearner: {
+          createdAt: '2026-03-08T10:00:00.000Z',
+          displayName: 'Maja',
+          id: 'learner-2',
+          loginName: 'maja',
+          ownerUserId: 'parent-1',
+          status: 'active',
+          updatedAt: '2026-03-08T10:00:00.000Z',
+        },
+        actorType: 'parent',
+        canManageLearners: true,
+        email: 'parent@example.com',
+        full_name: 'Rodzic',
+        id: 'parent-1',
+        learners: [],
+        ownerUserId: 'parent-1',
+        ownerEmailVerified: true,
+        role: 'user',
+      },
+    });
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('link', { name: 'Profil Maja' })).toHaveAttribute(
+      'href',
+      '/kangur/profile'
+    );
+  });
+
   it('shows login and create-account actions when the user is not authenticated', () => {
     const onLogin = vi.fn();
     const onCreateAccount = vi.fn();

@@ -6,6 +6,13 @@ import {
   KangurPracticeGameProgress,
   KangurPracticeGameStage,
   KangurPracticeGameSummary,
+  KangurPracticeGameSummaryActions,
+  KangurPracticeGameSummaryBreakdown,
+  KangurPracticeGameSummaryEmoji,
+  KangurPracticeGameSummaryMessage,
+  KangurPracticeGameSummaryProgress,
+  KangurPracticeGameSummaryTitle,
+  KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import {
   KangurButton,
@@ -403,35 +410,43 @@ export default function LogicalPatternsWorkshopGame({
   if (done) {
     const percent = TOTAL_TARGETS ? Math.round((score / TOTAL_TARGETS) * 100) : 0;
     return (
-      <KangurPracticeGameSummary
-        accent='violet'
-        actionsClassName='flex-col sm:flex-row'
-        breakdown={xpBreakdown}
-        breakdownDataTestId='logical-patterns-summary-breakdown'
-        breakdownItemDataTestIdPrefix='logical-patterns-summary-breakdown'
-        dataTestId='logical-patterns-summary-shell'
-        emoji={percent === 100 ? '🏆' : percent >= 70 ? '🌟' : '💪'}
-        emojiAriaHidden
-        emojiDataTestId='logical-patterns-summary-emoji'
-        finishButtonClassName='w-full sm:flex-1'
-        finishLabel={finishLabel}
-        message={
-          percent === 100
+      <KangurPracticeGameSummary dataTestId='logical-patterns-summary-shell'>
+        <KangurPracticeGameSummaryEmoji
+          ariaHidden
+          dataTestId='logical-patterns-summary-emoji'
+          emoji={percent === 100 ? '🏆' : percent >= 70 ? '🌟' : '💪'}
+        />
+        <KangurPracticeGameSummaryTitle
+          accent='violet'
+          title={`Wynik: ${score}/${TOTAL_TARGETS}`}
+        />
+        <KangurPracticeGameSummaryXP accent='violet' xpEarned={xpEarned} />
+        <KangurPracticeGameSummaryBreakdown
+          breakdown={xpBreakdown}
+          dataTestId='logical-patterns-summary-breakdown'
+          itemDataTestIdPrefix='logical-patterns-summary-breakdown'
+        />
+        <KangurPracticeGameSummaryProgress
+          accent='violet'
+          dataTestId='logical-patterns-summary-progress-bar'
+          percent={percent}
+        />
+        <KangurPracticeGameSummaryMessage>
+          {percent === 100
             ? 'Perfekcyjnie! Rozpoznajesz wzorce w mgnieniu oka.'
             : percent >= 70
               ? 'Świetnie! Wzorce i ciągi idą Ci coraz lepiej.'
-              : 'Dobra próba! Spróbuj jeszcze raz i sprawdź reguły.'
-        }
-        onFinish={onFinish}
-        onRestart={restart}
-        percent={percent}
-        progressAccent='violet'
-        progressDataTestId='logical-patterns-summary-progress-bar'
-        restartButtonClassName='w-full sm:flex-1'
-        title={`Wynik: ${score}/${TOTAL_TARGETS}`}
-        xpAccent='violet'
-        xpEarned={xpEarned}
-      />
+              : 'Dobra próba! Spróbuj jeszcze raz i sprawdź reguły.'}
+        </KangurPracticeGameSummaryMessage>
+        <KangurPracticeGameSummaryActions
+          className='flex-col sm:flex-row'
+          finishButtonClassName='w-full sm:flex-1'
+          finishLabel={finishLabel}
+          onFinish={onFinish}
+          onRestart={restart}
+          restartButtonClassName='w-full sm:flex-1'
+        />
+      </KangurPracticeGameSummary>
     );
   }
 

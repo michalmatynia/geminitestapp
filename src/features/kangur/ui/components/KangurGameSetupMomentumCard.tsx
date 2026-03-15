@@ -39,10 +39,10 @@ const getSetupFocus = (
   ) {
     const title =
       quest.progress.status === 'completed'
-        ? 'Misja dnia czeka na odbior'
+        ? 'Misja dnia czeka na odbiór'
         : mode === 'training'
-          ? 'Ta sesja przybliza misje dnia'
-          : 'Ta runda może domknąć misje dnia';
+          ? 'Ta sesja przybliża misję dnia'
+          : 'Ta runda może domknąć misję dnia';
 
     return {
       accent: 'emerald',
@@ -69,10 +69,10 @@ const getSetupFocus = (
       accent: mode === 'kangur' ? 'amber' : 'indigo',
       description:
         mode === 'kangur'
-          ? `Mocny wynik w tej rundzie przybliza odznake ${nextBadge.name}. ${nextBadge.summary}.`
-          : `Ta sesja pcha odznake ${nextBadge.name}. ${nextBadge.summary}.`,
+          ? `Mocny wynik w tej rundzie przybliża odznakę ${nextBadge.name}. ${nextBadge.summary}.`
+          : `Ta sesja pcha odznakę ${nextBadge.name}. ${nextBadge.summary}.`,
       label: 'Następna odznaka',
-      title: mode === 'kangur' ? 'Zagraj o kolejny prog' : 'Rozpedz kolejna nagrode',
+      title: mode === 'kangur' ? 'Zagraj o kolejny próg' : 'Rozpędź kolejną nagrodę',
     };
   }
 

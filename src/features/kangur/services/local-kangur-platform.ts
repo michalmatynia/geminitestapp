@@ -719,6 +719,9 @@ const updateProgressViaApi = async (
   }
 };
 
+const looksLikeHtml = (value: string): boolean =>
+  /<!doctype|<html|<head|<body/i.test(value);
+
 const createLearnerViaApi = async (
   input: KangurLearnerCreateInput
 ): Promise<KangurLearnerProfile> => {
@@ -733,12 +736,45 @@ const createLearnerViaApi = async (
     });
 
     if (!response.ok) {
-      const error = new Error(
-        `Kangur learner create request failed with ${response.status}`
-      ) as Error & {
+      let errorMessage = `Kangur learner create request failed with ${response.status}`;
+      let errorDetails: unknown = null;
+      const errorId = response.headers.get('x-error-id');
+
+      try {
+        const responseText = await response.text();
+        if (responseText.trim().length > 0) {
+          try {
+            const payload = JSON.parse(responseText) as Record<string, unknown>;
+            if (typeof payload['error'] === 'string') {
+              errorMessage = payload['error'];
+            } else if (!looksLikeHtml(responseText)) {
+              errorMessage = responseText.trim().slice(0, 240);
+            }
+            if (payload['details'] !== undefined) {
+              errorDetails = payload['details'];
+            }
+          } catch {
+            if (!looksLikeHtml(responseText)) {
+              errorMessage = responseText.trim().slice(0, 240);
+            }
+          }
+        }
+      } catch {
+        // Ignore response body parsing failures.
+      }
+
+      const error = new Error(errorMessage) as Error & {
         status: number;
+        details?: unknown;
+        errorId?: string;
       };
       error.status = response.status;
+      if (errorDetails) {
+        error.details = errorDetails;
+      }
+      if (errorId) {
+        error.errorId = errorId;
+      }
       throw error;
     }
 

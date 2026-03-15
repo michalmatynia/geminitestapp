@@ -9,6 +9,8 @@ type MongoUserDoc = {
   passwordHash?: string | null;
   image?: string | null;
   emailVerified?: Date | null;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
 };
 
 const normalizeEmail = (email: string): string => email.trim().toLowerCase();
@@ -64,6 +66,29 @@ export const findAuthUserById = async (userId: string): Promise<AuthUserRecord |
     image: user.image ?? null,
     emailVerified: user.emailVerified ?? null,
   };
+};
+
+export const listAuthUsers = async (limit = 500): Promise<AuthUserRecord[]> => {
+  requireAuthProvider(await getAuthDataProvider());
+  if (!process.env['MONGODB_URI']) return [];
+  const db = await getMongoDb();
+  const docs = await db
+    .collection<MongoUserDoc & { _id: import('mongodb').ObjectId }>('users')
+    .find({})
+    .sort({ createdAt: -1 })
+    .limit(limit)
+    .toArray();
+
+  return docs.map((doc) => ({
+    id: doc._id.toString(),
+    email: doc.email!,
+    name: doc.name ?? null,
+    passwordHash: doc.passwordHash ?? null,
+    image: doc.image ?? null,
+    emailVerified: doc.emailVerified ?? null,
+    createdAt: doc.createdAt?.toISOString() ?? new Date().toISOString(),
+    updatedAt: doc.updatedAt?.toISOString() ?? new Date().toISOString(),
+  }));
 };
 
 export const normalizeAuthEmail = normalizeEmail;

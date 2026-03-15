@@ -7,6 +7,11 @@ import {
   KangurPracticeGameProgress,
   KangurPracticeGameStage,
   KangurPracticeGameSummary,
+  KangurPracticeGameSummaryActions,
+  KangurPracticeGameSummaryEmoji,
+  KangurPracticeGameSummaryMessage,
+  KangurPracticeGameSummaryProgress,
+  KangurPracticeGameSummaryTitle,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import {
   KangurButton,
@@ -424,27 +429,34 @@ export default function CalendarInteractiveGame({
   if (done) {
     const percent = Math.round((score / TOTAL) * 100);
     return (
-      <KangurPracticeGameSummary
-        accent='emerald'
-        actionsClassName='flex-col sm:flex-row'
-        breakdown={[]}
-        breakdownDataTestId='calendar-interactive-summary-breakdown'
-        breakdownItemDataTestIdPrefix='calendar-interactive-summary-breakdown'
-        dataTestId='calendar-interactive-summary-shell'
-        emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
-        emojiAriaHidden
-        emojiDataTestId='calendar-interactive-summary-emoji'
-        finishButtonClassName='w-full sm:flex-1'
-        finishLabel='Wróć'
-        message={getCalendarInteractiveSummaryMessage(section, percent)}
-        onFinish={handleFinishSession}
-        onRestart={restart}
-        percent={percent}
-        progressAccent='emerald'
-        progressDataTestId='calendar-interactive-summary-progress-bar'
-        restartButtonClassName='w-full sm:flex-1'
-        title={`Wynik: ${score}/${TOTAL}`}
-      />
+      <KangurPracticeGameSummary dataTestId='calendar-interactive-summary-shell'>
+        <KangurPracticeGameSummaryEmoji
+          ariaHidden
+          dataTestId='calendar-interactive-summary-emoji'
+          emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
+        />
+        <KangurPracticeGameSummaryTitle
+          accent='emerald'
+          dataTestId='calendar-interactive-summary-title'
+          title={`Wynik: ${score}/${TOTAL}`}
+        />
+        <KangurPracticeGameSummaryProgress
+          accent='emerald'
+          dataTestId='calendar-interactive-summary-progress-bar'
+          percent={percent}
+        />
+        <KangurPracticeGameSummaryMessage>
+          {getCalendarInteractiveSummaryMessage(section, percent)}
+        </KangurPracticeGameSummaryMessage>
+        <KangurPracticeGameSummaryActions
+          className='flex-col sm:flex-row'
+          finishButtonClassName='w-full sm:flex-1'
+          finishLabel='Wróć'
+          onFinish={handleFinishSession}
+          onRestart={restart}
+          restartButtonClassName='w-full sm:flex-1'
+        />
+      </KangurPracticeGameSummary>
     );
   }
 

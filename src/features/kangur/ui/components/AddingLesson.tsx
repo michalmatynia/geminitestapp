@@ -534,7 +534,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               <p className='text-xs font-semibold uppercase tracking-wide text-emerald-700'>
                 Podwojenia
               </p>
-              <p className='mt-1'>Podwojenia daja szybki wynik: <b>5 + 5 = 10</b></p>
+              <p className='mt-1'>Podwojenia dają szybki wynik: <b>5 + 5 = 10</b></p>
             </KangurLessonCallout>
             <KangurLessonCallout accent='slate' className='text-sm' padding='sm'>
               <p className='text-xs font-semibold uppercase tracking-wide text-slate-600'>
@@ -549,7 +549,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
             <p className='text-xs font-semibold uppercase tracking-wide text-slate-500'>Ścieżka</p>
             <div className='mt-2 space-y-2 border-l-2 border-slate-200 pl-3'>
               <div>
-                <p className='font-semibold text-slate-700'>Znajdz pary do 10</p>
+                <p className='font-semibold text-slate-700'>Znajdź pary do 10</p>
                 <p className='text-xs text-slate-500'>6 + 4, 7 + 3, 8 + 2</p>
               </div>
               <div>
@@ -566,7 +566,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
       ),
     },
     {
-      title: 'Zamiana skladnikow',
+      title: 'Zamiana składników',
       content: (
         <KangurLessonStack>
           <KangurLessonInset accent='rose' className='text-center'>
@@ -574,7 +574,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               <KangurIconBadge accent='rose' size='sm'>
                 ↔
               </KangurIconBadge>
-              <span>Zamiana skladnikow</span>
+              <span>Zamiana składników</span>
             </div>
             <p className='mt-2 text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
               Zamień kolejność i porównaj wynik.

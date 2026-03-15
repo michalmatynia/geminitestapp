@@ -1,5 +1,7 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
+import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
+import type { KangurLearnerInteractionHistory } from '@/features/kangur/services/ports';
 import { KANGUR_LESSONS_SETTING_KEY, parseKangurLessons } from '@/features/kangur/settings';
 import {
   type KangurParentDashboardPanelDisplayMode,
@@ -7,13 +9,19 @@ import {
   useKangurParentDashboardRuntime,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import {
+  KangurButton,
+  KangurEmptyState,
   KangurInfoCard,
   KangurMetaText,
   KangurPanelIntro,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
+import { ActivityTypes } from '@/shared/constants/observability';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+
+const kangurPlatform = getKangurPlatform();
+const INTERACTIONS_PAGE_LIMIT = 20;
 
 const formatDuration = (seconds: number): string => {
   const normalized = Math.max(0, Math.round(seconds));
@@ -64,6 +72,34 @@ const parseTimestamp = (value: string | null | undefined): number => {
   return Number.isNaN(parsed) ? 0 : parsed;
 };
 
+const asRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+  return value as Record<string, unknown>;
+};
+
+const readString = (value: unknown): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const readNumber = (value: unknown): number | null => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return null;
+  }
+  return value;
+};
+
+const TASK_KIND_LABELS: Record<string, string> = {
+  game: 'Gra',
+  lesson: 'Lekcja',
+  test: 'Test',
+};
+
 export function KangurParentDashboardAssignmentsMonitoringWidget({
   displayMode = 'always',
 }: {
@@ -84,6 +120,12 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
   );
   const activeLearnerId = activeLearner?.id ?? null;
   const lessonPanelProgress = progress.lessonPanelProgress ?? {};
+  const [interactionHistory, setInteractionHistory] =
+    useState<KangurLearnerInteractionHistory | null>(null);
+  const [isLoadingInteractions, setIsLoadingInteractions] = useState(false);
+  const [interactionsError, setInteractionsError] = useState<string | null>(null);
+  const [isLoadingMoreInteractions, setIsLoadingMoreInteractions] = useState(false);
+  const [interactionsLoadMoreError, setInteractionsLoadMoreError] = useState<string | null>(null);
   const lessonPanelTimeCards = useMemo(
     () =>
       lessons
@@ -147,6 +189,163 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
         .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry)),
     [lessonPanelProgress, lessons]
   );
+  const lessonsById = useMemo(
+    () => new Map(lessons.map((lesson) => [lesson.componentId, lesson] as const)),
+    [lessons]
+  );
+  const interactions = interactionHistory?.items ?? [];
+  const hasMoreInteractions = interactionHistory
+    ? interactionHistory.offset + interactions.length < interactionHistory.total
+    : false;
+  const nextInteractionOffset = interactionHistory
+    ? interactionHistory.offset + interactions.length
+    : 0;
+  const interactionViews = useMemo(
+    () =>
+      interactions.map((entry) => {
+        const metadata = asRecord(entry.metadata);
+        const timestamp =
+          readString(metadata?.['openedAt']) ??
+          readString(metadata?.['sessionUpdatedAt']) ??
+          readString(entry.createdAt) ??
+          readString(entry.updatedAt) ??
+          null;
+
+        if (entry.type === ActivityTypes.KANGUR.OPENED_TASK) {
+          const title =
+            readString(metadata?.['title']) ??
+            readString(entry.description) ??
+            'Otwarte zadanie';
+          const kindRaw = readString(metadata?.['kind']);
+          const kindLabel = kindRaw ? TASK_KIND_LABELS[kindRaw] ?? 'Zadanie' : 'Zadanie';
+          return {
+            id: entry.id,
+            label: `Otwarte ${kindLabel.toLowerCase()}`,
+            description: title,
+            timestamp,
+          };
+        }
+
+        if (entry.type === ActivityTypes.KANGUR.LESSON_PANEL_ACTIVITY) {
+          const lessonKey = readString(metadata?.['lessonKey']);
+          const sectionLabel =
+            readString(metadata?.['label']) ?? readString(metadata?.['sectionId']);
+          const lessonTitle = lessonKey
+            ? lessonsById.get(lessonKey)?.title ?? 'Lekcja'
+            : 'Lekcja';
+          const detail = sectionLabel ? `${lessonTitle} · ${sectionLabel}` : lessonTitle;
+          const totalSeconds = readNumber(metadata?.['totalSeconds']);
+          const timeLabel = totalSeconds ? ` · ${formatDuration(totalSeconds)}` : '';
+          return {
+            id: entry.id,
+            label: 'Aktywność w panelach',
+            description: `${detail}${timeLabel}`,
+            timestamp,
+          };
+        }
+
+        if (entry.type === ActivityTypes.KANGUR.LEARNER_SIGNIN) {
+          return {
+            id: entry.id,
+            label: 'Logowanie ucznia',
+            description: 'Uczeń zalogował się do aplikacji.',
+            timestamp,
+          };
+        }
+
+        if (entry.type === ActivityTypes.KANGUR.LEARNER_SIGNOUT) {
+          return {
+            id: entry.id,
+            label: 'Wylogowanie ucznia',
+            description: 'Uczeń zakończył sesję.',
+            timestamp,
+          };
+        }
+
+        return {
+          id: entry.id,
+          label: 'Aktywność ucznia',
+          description: entry.description ?? 'Aktywność ucznia.',
+          timestamp,
+        };
+      }),
+    [interactions, lessonsById]
+  );
+
+  const handleLoadMoreInteractions = async (): Promise<void> => {
+    if (!activeLearnerId || !interactionHistory || isLoadingMoreInteractions) {
+      return;
+    }
+
+    setIsLoadingMoreInteractions(true);
+    setInteractionsLoadMoreError(null);
+    try {
+      const history = await kangurPlatform.learnerInteractions.list(activeLearnerId, {
+        limit: INTERACTIONS_PAGE_LIMIT,
+        offset: nextInteractionOffset,
+      });
+      setInteractionHistory((current) => {
+        if (!current) {
+          return history;
+        }
+        const existingIds = new Set(current.items.map((entry) => entry.id));
+        const mergedItems = [
+          ...current.items,
+          ...history.items.filter((entry) => !existingIds.has(entry.id)),
+        ];
+        const total = Math.max(current.total, history.total);
+        return {
+          ...history,
+          items: mergedItems,
+          total,
+          offset: current.offset,
+          limit: current.limit,
+        };
+      });
+    } catch {
+      setInteractionsLoadMoreError('Nie udało się wczytać starszych interakcji.');
+    } finally {
+      setIsLoadingMoreInteractions(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!activeLearnerId || !canAccessDashboard) {
+      setInteractionHistory(null);
+      return;
+    }
+
+    let isActive = true;
+    setIsLoadingInteractions(true);
+    setIsLoadingMoreInteractions(false);
+    setInteractionsError(null);
+    setInteractionsLoadMoreError(null);
+    setInteractionHistory(null);
+
+    kangurPlatform.learnerInteractions
+      .list(activeLearnerId, { limit: INTERACTIONS_PAGE_LIMIT, offset: 0 })
+      .then((history) => {
+        if (!isActive) {
+          return;
+        }
+        setInteractionHistory(history);
+      })
+      .catch(() => {
+        if (!isActive) {
+          return;
+        }
+        setInteractionsError('Nie udało się wczytać historii interakcji.');
+      })
+      .finally(() => {
+        if (isActive) {
+          setIsLoadingInteractions(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [activeLearnerId, canAccessDashboard]);
 
   if (!canAccessDashboard) {
     return null;
@@ -236,6 +435,78 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
         ) : (
           <div className='mt-3 text-sm [color:var(--kangur-page-muted-text)]'>
             Brak danych o czasie paneli. Dane pojawią się po przejściu ucznia przez lekcje.
+          </div>
+        )}
+      </KangurSummaryPanel>
+
+      <KangurSummaryPanel
+        accent='indigo'
+        className='mt-1'
+        description='Ostatnie interakcje ucznia: otwarte zadania, aktywność w panelach oraz logowania.'
+        label='Historia interakcji'
+      >
+        {isLoadingInteractions ? (
+          <KangurEmptyState
+            accent='slate'
+            align='center'
+            data-testid='parent-monitoring-interactions-loading'
+            description='Ładujemy ostatnie interakcje ucznia.'
+            title='Ładowanie...'
+          />
+        ) : interactionsError ? (
+          <KangurEmptyState
+            accent='rose'
+            align='center'
+            data-testid='parent-monitoring-interactions-error'
+            description='Spróbuj ponownie za chwilę.'
+            title={interactionsError}
+          />
+        ) : interactionViews.length === 0 ? (
+          <KangurEmptyState
+            accent='slate'
+            align='center'
+            data-testid='parent-monitoring-interactions-empty'
+            description='Brak interakcji do pokazania.'
+            title='Brak aktywności.'
+          />
+        ) : (
+          <div className='mt-3 flex flex-col gap-3'>
+            {interactionViews.map((entry) => (
+              <div
+                key={entry.id}
+                className='rounded-[18px] border border-indigo-200/70 bg-white/80 px-4 py-3'
+                data-testid={`parent-monitoring-interaction-${entry.id}`}
+              >
+                <div className='flex flex-wrap items-center justify-between gap-2'>
+                  <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+                    {entry.label}
+                  </div>
+                  <KangurMetaText tone='slate'>
+                    {formatProgressTimestamp(entry.timestamp)}
+                  </KangurMetaText>
+                </div>
+                <div className='mt-1 text-sm [color:var(--kangur-page-text)]'>
+                  {entry.description}
+                </div>
+              </div>
+            ))}
+            {hasMoreInteractions ? (
+              <div className='flex justify-center'>
+                <KangurButton
+                  className='w-full sm:w-auto'
+                  disabled={isLoadingMoreInteractions}
+                  onClick={() => void handleLoadMoreInteractions()}
+                  size='sm'
+                  variant='surface'
+                  data-doc-id='parent_monitoring_interactions_load_more'
+                >
+                  {isLoadingMoreInteractions ? 'Ładowanie...' : 'Pokaż starsze'}
+                </KangurButton>
+              </div>
+            ) : null}
+            {interactionsLoadMoreError ? (
+              <div className='text-xs text-rose-600'>{interactionsLoadMoreError}</div>
+            ) : null}
           </div>
         )}
       </KangurSummaryPanel>

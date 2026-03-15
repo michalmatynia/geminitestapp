@@ -167,6 +167,9 @@ const resolveLessonPanelActivity = (
       const panelTimes = entry.panelTimes ?? {};
       const totalSeconds = sumPanelSeconds(panelTimes);
       const panelCount = countPanels(panelTimes);
+      if (totalSeconds <= 0) {
+        return;
+      }
       const previousPanelTimes = previousEntry?.panelTimes ?? {};
       const previousTotalSeconds = sumPanelSeconds(previousPanelTimes);
       const totalDelta = totalSeconds - previousTotalSeconds;

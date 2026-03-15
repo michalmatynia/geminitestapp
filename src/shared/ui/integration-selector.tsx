@@ -46,7 +46,7 @@ export function IntegrationSelector(props: IntegrationSelectorProps) {
               label: integration.name,
             }))}
           placeholder='Select an integration...'
-         ariaLabel="Select an integration..." title="Select an integration..."/>
+         ariaLabel='Select an integration...' title='Select an integration...'/>
       </div>
 
       {selectedIntegration && selectedIntegration.connections.length > 0 && (
@@ -66,7 +66,7 @@ export function IntegrationSelector(props: IntegrationSelectorProps) {
                 label: connection.name,
               }))}
             placeholder='Select an account...'
-           ariaLabel="Select an account..." title="Select an account..."/>
+           ariaLabel='Select an account...' title='Select an account...'/>
         </div>
       )}
     </div>

@@ -305,7 +305,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                         placeholder='Select parameter'
                         ariaLabel='Parameter'
                         triggerClassName='h-9 bg-gray-900 border-border/50'
-                       title="Select parameter"/>
+                       title='Select parameter'/>
                     </div>
                     <div className='flex-1 space-y-3'>
                       <div key={`${index}-${activeParameterLanguage.code}`} className='space-y-1'>
@@ -453,7 +453,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                       className='h-9 w-9 text-gray-500 hover:text-red-400'
                       aria-label='Remove parameter'
                       onClick={() => removeParameterValue(index)}
-                    >
+                      title={'Remove parameter'}>
                       <X className='h-4 w-4' />
                     </Button>
                   </div>

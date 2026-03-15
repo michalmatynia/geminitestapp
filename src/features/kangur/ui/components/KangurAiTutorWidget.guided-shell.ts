@@ -253,6 +253,8 @@ export function useKangurAiTutorGuidedShellState(input: {
     guidedFocusRect &&
     (guidedFocusRect.top <= GUIDED_SELECTION_CALLOUT_EDGE_BUFFER ||
       guidedFocusRect.right >= viewport.width - GUIDED_SELECTION_CALLOUT_EDGE_BUFFER);
+  const shouldDeferSelectionGuidanceCallout =
+    guidedMode === 'selection' && !showSelectionGuidanceCallout;
   const shouldRenderGuidedCallout =
     !isTutorHidden &&
     (!isOpen || panelShellMode === 'minimal' || suppressPanelSurface) &&
@@ -268,7 +270,8 @@ export function useKangurAiTutorGuidedShellState(input: {
     !(
       shouldSuppressSelectionGuidanceCallout &&
       (guidedMode === 'selection' || showSelectionGuidanceCallout)
-    );
+    ) &&
+    !shouldDeferSelectionGuidanceCallout;
   const guidedCalloutTransitionDuration = Math.max(
     0.34,
     motionProfile.guidedAvatarTransition.duration * 0.78

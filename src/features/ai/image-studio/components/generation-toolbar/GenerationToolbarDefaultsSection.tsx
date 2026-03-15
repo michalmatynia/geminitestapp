@@ -22,7 +22,7 @@ export function GenerationToolbarDefaultsSection(): React.JSX.Element {
           disabled
           placeholder='Not configured in AI Brain'
           aria-label='Brain-managed generation model'
-         title="Not configured in AI Brain"/>
+         title='Not configured in AI Brain'/>
         <SelectSimple
           size='sm'
           className='w-full'
@@ -31,7 +31,7 @@ export function GenerationToolbarDefaultsSection(): React.JSX.Element {
           options={imageCountOptions}
           triggerClassName='h-8 text-xs'
           ariaLabel='Generation image count'
-         title="Select option"/>
+         title='Select option'/>
       </div>
     </div>
   );

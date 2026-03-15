@@ -96,7 +96,7 @@ export default function ProductFormNoteLink(): React.JSX.Element {
             aria-label='Search notes'
             placeholder='Type at least 2 characters...'
             className='max-w-md h-9'
-           title="Type at least 2 characters..."/>
+           title='Type at least 2 characters...'/>
           {query.trim() && (
             <Button
               type='button'

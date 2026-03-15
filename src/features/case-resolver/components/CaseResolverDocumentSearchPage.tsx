@@ -325,28 +325,28 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
                 { value: 'scanfile', label: 'Scan File' },
               ]}
               triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
-             ariaLabel="Select option" title="Select option"/>
+             ariaLabel='Select option' title='Select option'/>
             <SelectSimple
               size='sm'
               value={selectedTagId}
               onValueChange={setSelectedTagId}
               options={tagOptions}
               triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
-             ariaLabel="Select option" title="Select option"/>
+             ariaLabel='Select option' title='Select option'/>
             <SelectSimple
               size='sm'
               value={selectedCaseIdentifierId}
               onValueChange={setSelectedCaseIdentifierId}
               options={caseIdentifierOptions}
               triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
-             ariaLabel="Select option" title="Select option"/>
+             ariaLabel='Select option' title='Select option'/>
             <SelectSimple
               size='sm'
               value={selectedCategoryId}
               onValueChange={setSelectedCategoryId}
               options={categoryOptions}
               triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
-             ariaLabel="Select option" title="Select option"/>
+             ariaLabel='Select option' title='Select option'/>
             <SelectSimple
               size='sm'
               value={sortBy}
@@ -359,7 +359,7 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
                 { value: 'name', label: 'Sort: Name' },
               ]}
               triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
-             ariaLabel="Select option" title="Select option"/>
+             ariaLabel='Select option' title='Select option'/>
             <Button
               type='button'
               variant='outline'

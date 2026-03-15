@@ -57,7 +57,7 @@ export function ValidationHeader(): React.JSX.Element {
               options={pathOptions}
               ariaLabel='Path'
               className='mt-2'
-             title="Select option"/>
+             title='Select option'/>
           </div>
           <Button
             type='button'

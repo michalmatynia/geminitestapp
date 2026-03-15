@@ -166,7 +166,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                           { value: 'right', label: 'End (Right)' },
                         ]}
                         triggerClassName='w-[200px]'
-                       ariaLabel="Trim Mode" title="Trim Mode"/>
+                       ariaLabel='Trim Mode' title='Trim Mode'/>
                     </FormField>
                   </div>
                 )}
@@ -182,7 +182,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                           updateOperation(index, { search: event.target.value })
                         }
                         placeholder='Text or pattern'
-                       aria-label="Text or pattern" title="Text or pattern"/>
+                       aria-label='Text or pattern' title='Text or pattern'/>
                     </FormField>
                     {operation.type === 'replace' && (
                       <FormField label='Replace With'>
@@ -194,7 +194,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                             updateOperation(index, { replace: event.target.value })
                           }
                           placeholder='Replacement text'
-                         aria-label="Replacement text" title="Replacement text"/>
+                         aria-label='Replacement text' title='Replacement text'/>
                       </FormField>
                     )}
                     <FormField label='Match Mode'>
@@ -210,7 +210,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                           { value: 'all', label: 'All Matches' },
                         ]}
                         triggerClassName='w-full'
-                       ariaLabel="Match Mode" title="Match Mode"/>
+                       ariaLabel='Match Mode' title='Match Mode'/>
                     </FormField>
 
                     <ToggleRow
@@ -234,7 +234,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                           }
                           placeholder='gim'
                           className='font-mono'
-                         aria-label="gim" title="gim"/>
+                         aria-label='gim' title='gim'/>
                       </FormField>
                     )}
                   </div>
@@ -255,7 +255,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                           { value: 'upper', label: 'Uppercase' },
                         ]}
                         triggerClassName='w-[200px]'
-                       ariaLabel="Case Mode" title="Case Mode"/>
+                       ariaLabel='Case Mode' title='Case Mode'/>
                     </FormField>
                   </div>
                 )}
@@ -271,7 +271,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                           updateOperation(index, { value: event.target.value })
                         }
                         placeholder='Text to append'
-                       aria-label="Text to append" title="Text to append"/>
+                       aria-label='Text to append' title='Text to append'/>
                     </FormField>
                     <FormField label='Position'>
                       <SelectSimple
@@ -286,7 +286,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                           { value: 'suffix', label: 'Suffix' },
                         ]}
                         triggerClassName='w-full'
-                       ariaLabel="Position" title="Position"/>
+                       ariaLabel='Position' title='Position'/>
                     </FormField>
                   </div>
                 )}
@@ -303,7 +303,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                           updateOperation(index, val !== undefined ? { start: val } : {});
                         }}
                         placeholder='0'
-                       aria-label="0" title="0"/>
+                       aria-label='0' title='0'/>
                     </FormField>
                     <FormField label='End Index'>
                       <Input
@@ -315,7 +315,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                           updateOperation(index, val !== undefined ? { end: val } : {});
                         }}
                         placeholder='Leave blank for end'
-                       aria-label="Leave blank for end" title="Leave blank for end"/>
+                       aria-label='Leave blank for end' title='Leave blank for end'/>
                     </FormField>
                   </div>
                 )}
@@ -338,7 +338,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
             }))}
             ariaLabel='New operation type'
             triggerClassName='w-[180px]'
-           title="Select option"/>
+           title='Select option'/>
           <Button
             type='button'
             variant='outline'

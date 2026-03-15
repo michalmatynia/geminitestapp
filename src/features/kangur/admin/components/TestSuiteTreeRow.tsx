@@ -101,7 +101,7 @@ export function TestSuiteTreeRow(props: {
                 input.isExpanded ? `Collapse ${input.node.name}` : `Expand ${input.node.name}`
               }
               aria-expanded={input.isExpanded}
-            >
+              title={input.isExpanded ? `Collapse ${input.node.name}` : `Expand ${input.node.name}`}>
               {input.isExpanded ? (
                 <ChevronDown className='size-3.5' />
               ) : (
@@ -141,7 +141,7 @@ export function TestSuiteTreeRow(props: {
                 }}
                 aria-label={`Edit test group ${input.node.name}`}
                 disabled={isUpdating}
-              >
+                title={`Edit test group ${input.node.name}`}>
                 <Pencil className='size-3.5' />
               </button>
               <button

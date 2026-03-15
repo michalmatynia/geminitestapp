@@ -117,7 +117,7 @@ export function KangurClassOverridesSettingsPanel(): React.JSX.Element {
             rows={12}
             className='font-mono text-xs leading-relaxed'
             data-doc-id='settings_class_overrides_json'
-           aria-label="Class overrides JSON" title="Class overrides JSON"/>
+           aria-label='Class overrides JSON' title='Class overrides JSON'/>
         </FormField>
 
         <div className='mt-4 flex items-center justify-end'>

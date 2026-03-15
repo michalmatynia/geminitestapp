@@ -127,7 +127,7 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
                     event.preventDefault();
                     onSaveActiveCase();
                   }}
-                 title="Input field"/>
+                 title='Input field'/>
               </div>
 
               <div className='w-full md:w-[240px]'>
@@ -148,7 +148,7 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
                   placeholder='Select signature ID'
                   triggerClassName='h-8 bg-card/50 text-white'
                   variant='subtle'
-                 title="Select signature ID"/>
+                 title='Select signature ID'/>
               </div>
             </div>
             <div className='flex items-center gap-2'>
@@ -186,7 +186,7 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
               options={filteredParentOptions}
               placeholder='Parent case'
               triggerClassName='h-9'
-             ariaLabel="Parent case" title="Parent case"/>
+             ariaLabel='Parent case' title='Parent case'/>
           </FormField>
 
           <FormField label='Case Status'>
@@ -202,7 +202,7 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
               options={CASE_STATUS_OPTIONS}
               placeholder='Select case status'
               triggerClassName='h-9'
-             ariaLabel="Select case status" title="Select case status"/>
+             ariaLabel='Select case status' title='Select case status'/>
           </FormField>
 
           <FormField label='Happening Date'>
@@ -220,7 +220,7 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
                 event.preventDefault();
                 onSaveActiveCase();
               }}
-             aria-label="YYYY-MM-DD or custom date" title="YYYY-MM-DD or custom date"/>
+             aria-label='YYYY-MM-DD or custom date' title='YYYY-MM-DD or custom date'/>
           </FormField>
 
           <FormField label='Reference Cases'>
@@ -257,7 +257,7 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
               options={caseTagOptions}
               placeholder='Select tag'
               triggerClassName='h-9'
-             ariaLabel="Select tag" title="Select tag"/>
+             ariaLabel='Select tag' title='Select tag'/>
           </FormField>
 
           <FormField label='Category'>
@@ -273,7 +273,7 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
               options={caseCategoryOptions}
               placeholder='Select category'
               triggerClassName='h-9'
-             ariaLabel="Select category" title="Select category"/>
+             ariaLabel='Select category' title='Select category'/>
           </FormField>
         </div>
       </Card>

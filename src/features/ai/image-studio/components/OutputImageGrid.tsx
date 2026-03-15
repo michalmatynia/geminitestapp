@@ -40,6 +40,8 @@ export function OutputImageGrid(props: OutputImageGridProps): React.JSX.Element 
             target='_blank'
             rel='noopener noreferrer'
             className='block relative aspect-square'
+            aria-label={output.filename}
+            title={output.filename}
           >
             <Image
               src={output.filepath}
@@ -56,7 +58,7 @@ export function OutputImageGrid(props: OutputImageGridProps): React.JSX.Element 
               className='rounded p-1 text-white/80 hover:text-white hover:bg-white/10'
               title='Download'
               onClick={(e: React.MouseEvent) => e.stopPropagation()}
-            >
+              aria-label={'Download'}>
               <Download className='size-3.5' />
             </a>
             {onSaveAsSlot && (
@@ -67,7 +69,7 @@ export function OutputImageGrid(props: OutputImageGridProps): React.JSX.Element 
                 className='size-6 rounded p-0 text-white/80 hover:text-white hover:bg-white/10'
                 title='Save to card history'
                 onClick={() => onSaveAsSlot(output)}
-              >
+                aria-label={'Save to card history'}>
                 <Save className='size-3.5' />
               </Button>
             )}
@@ -82,7 +84,7 @@ export function OutputImageGrid(props: OutputImageGridProps): React.JSX.Element 
                   e.stopPropagation();
                   onDelete(output);
                 }}
-              >
+                aria-label={'Delete'}>
                 <Trash2 className='size-3.5' />
               </Button>
             )}

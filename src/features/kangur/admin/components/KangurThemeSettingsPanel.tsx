@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   FONT_OPTIONS,
   ThemeSettingsFieldsSection,
   ThemeSettingsProvider,
+  useThemeSettingsValue,
 } from '@/features/cms/public';
 import {
   KANGUR_DAILY_THEME_SETTINGS_KEY,
@@ -24,6 +25,7 @@ import type { SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 type ThemeMode = 'daily' | 'dawn' | 'sunset' | 'nightly';
+export type KangurThemeMode = ThemeMode;
 
 const FONT_WEIGHT_OPTIONS = [
   { value: '300', label: 'Light (300)' },
@@ -386,7 +388,7 @@ const KANGUR_THEME_SECTIONS: Array<{
                 disabled={disabled}
                 className='font-mono'
                 aria-label='Progress track color value'
-               title="Auto"/>
+               title='Auto'/>
               <Button
                 type='button'
                 size='xs'
@@ -684,9 +686,23 @@ const MODE_CONFIG: Record<
   },
 };
 
-export function KangurThemeSettingsPanel(): React.JSX.Element {
+type KangurThemeSettingsPanelProps = {
+  onSectionChange?: (section: string) => void;
+  onThemeChange?: (theme: ThemeSettings) => void;
+  onModeChange?: (mode: ThemeMode) => void;
+};
+
+export function KangurThemeSettingsPanel({
+  onSectionChange,
+  onThemeChange,
+  onModeChange,
+}: KangurThemeSettingsPanelProps): React.JSX.Element {
   const [mode, setMode] = useState<ThemeMode>('daily');
   const config = MODE_CONFIG[mode];
+
+  useEffect((): void => {
+    onModeChange?.(mode);
+  }, [mode, onModeChange]);
 
   return (
     <div className='space-y-4'>
@@ -722,6 +738,8 @@ export function KangurThemeSettingsPanel(): React.JSX.Element {
           storageKey={config.storageKey}
           defaultTheme={config.defaultTheme}
           resetLabel={config.resetLabel}
+          onSectionChange={onSectionChange}
+          onThemeChange={onThemeChange}
         />
       </ThemeSettingsProvider>
     </div>
@@ -733,15 +751,39 @@ function KangurThemeSettingsEditor({
   storageKey,
   defaultTheme,
   resetLabel,
+  onSectionChange,
+  onThemeChange,
 }: {
   mode: ThemeMode;
   storageKey: string;
   defaultTheme: ThemeSettings;
   resetLabel: string;
+  onSectionChange?: (section: string) => void;
+  onThemeChange?: (theme: ThemeSettings) => void;
 }): React.JSX.Element {
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
   const [isResetting, setIsResetting] = useState(false);
+  const theme = useThemeSettingsValue();
+  const lastSectionRef = useRef<string | null>(null);
+
+  useEffect((): void => {
+    onThemeChange?.(theme);
+  }, [onThemeChange, theme]);
+
+  useEffect((): void => {
+    if (!KANGUR_THEME_SECTIONS[0]) return;
+    onSectionChange?.(KANGUR_THEME_SECTIONS[0].title);
+  }, [onSectionChange]);
+
+  const handleSectionActivate = useCallback(
+    (title: string): void => {
+      if (lastSectionRef.current === title) return;
+      lastSectionRef.current = title;
+      onSectionChange?.(title);
+    },
+    [onSectionChange]
+  );
 
   const handleReset = async (): Promise<void> => {
     setIsResetting(true);
@@ -789,15 +831,21 @@ function KangurThemeSettingsEditor({
 
       <div className='space-y-4'>
         {KANGUR_THEME_SECTIONS.map((section) => (
-          <FormSection
+          <div
             key={section.title}
-            title={section.title}
-            subtitle={section.subtitle}
-            variant='subtle'
-            className='border border-border/60 bg-card/20'
+            onFocusCapture={() => handleSectionActivate(section.title)}
+            onPointerEnter={() => handleSectionActivate(section.title)}
+            onPointerDown={() => handleSectionActivate(section.title)}
           >
-            <ThemeSettingsFieldsSection fields={section.fields} />
-          </FormSection>
+            <FormSection
+              title={section.title}
+              subtitle={section.subtitle}
+              variant='subtle'
+              className='border border-border/60 bg-card/20'
+            >
+              <ThemeSettingsFieldsSection fields={section.fields} />
+            </FormSection>
+          </div>
         ))}
       </div>
     </div>

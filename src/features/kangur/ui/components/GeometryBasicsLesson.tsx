@@ -293,12 +293,12 @@ export default function GeometryBasicsLesson(): React.JSX.Element {
   if (activeSection) {
     return (
       <LessonSlideSection
-        slides={SLIDES[activeSection as Exclude<SectionId, 'game'>]}
+        slides={SLIDES[activeSection]}
         sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
         onBack={() => setActiveSection(null)}
         onComplete={activeSection === 'podsumowanie' ? handleComplete : undefined}
         onProgressChange={(viewedCount) =>
-          markSectionViewedCount(activeSection as Exclude<SectionId, 'game'>, viewedCount)
+          markSectionViewedCount(activeSection, viewedCount)
         }
         dotActiveClass='bg-cyan-500'
         dotDoneClass='bg-cyan-300'

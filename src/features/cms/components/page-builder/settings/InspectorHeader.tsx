@@ -85,7 +85,7 @@ export function InspectorHeader(): React.JSX.Element {
               onClick={() => dispatch({ type: 'TOGGLE_RIGHT_PANEL' })}
               className='h-6 w-6 p-0 text-gray-500 hover:text-gray-300'
               aria-label='Hide right panel'
-            >
+              title={'Hide right panel'}>
               <PanelRightClose className='size-3.5' />
             </Button>
           </Tooltip>
@@ -97,7 +97,7 @@ export function InspectorHeader(): React.JSX.Element {
               onClick={handleToggleInspector}
               className={`h-6 w-6 p-0 ${state.inspectorEnabled ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`}
               aria-label='Toggle inspector'
-            >
+              title={'Toggle inspector'}>
               <MousePointer2 className='size-3.5' />
             </Button>
           </Tooltip>
@@ -109,7 +109,7 @@ export function InspectorHeader(): React.JSX.Element {
               onClick={() => dispatch({ type: 'SET_PREVIEW_MODE', mode: 'desktop' })}
               className={`h-6 w-6 p-0 ${state.previewMode === 'desktop' ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`}
               aria-label='Desktop preview'
-            >
+              title={'Desktop preview'}>
               <Monitor className='size-3.5' />
             </Button>
           </Tooltip>
@@ -121,7 +121,7 @@ export function InspectorHeader(): React.JSX.Element {
               onClick={() => dispatch({ type: 'SET_PREVIEW_MODE', mode: 'mobile' })}
               className={`h-6 w-6 p-0 ${state.previewMode === 'mobile' ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`}
               aria-label='Mobile preview'
-            >
+              title={'Mobile preview'}>
               <Smartphone className='size-3.5' />
             </Button>
           </Tooltip>
@@ -135,7 +135,7 @@ export function InspectorHeader(): React.JSX.Element {
               }
               className={`h-6 w-6 p-0 ${inspectorSettings.showEditorChrome ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`}
               aria-label='Toggle editor chrome'
-            >
+              title={'Toggle editor chrome'}>
               <Paintbrush className='size-3.5' />
             </Button>
           </Tooltip>

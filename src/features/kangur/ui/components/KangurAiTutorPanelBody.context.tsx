@@ -5,6 +5,8 @@ import type { KangurLessonNarrationScript } from '@/features/kangur/tts/contract
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type {
   KangurAiTutorFollowUpAction,
+  KangurAiTutorInteractionIntent,
+  KangurAiTutorPromptMode,
   KangurAiTutorRuntimeMessage as TutorRenderedMessage,
   KangurAiTutorUsageSummary,
   KangurAiTutorWebsiteHelpTarget,
@@ -12,6 +14,7 @@ import type {
 import { internalError } from '@/shared/errors/app-error';
 
 import type { ActiveTutorFocus, TutorQuickAction } from './KangurAiTutorWidget.shared';
+import type { TutorSurface } from './KangurAiTutorWidget.types';
 
 export type TutorProactiveNudge = {
   mode: 'gentle' | 'coach';
@@ -72,6 +75,8 @@ export type KangurAiTutorPanelBodyContextValue = {
   inputPlaceholder: string;
   isAskModalMode: boolean;
   isLoading: boolean;
+  lastInteractionIntent: KangurAiTutorInteractionIntent | null;
+  lastPromptMode: KangurAiTutorPromptMode | null;
   isSectionExplainPendingMode: boolean;
   isSelectionExplainPendingMode: boolean;
   isUsageLoading: boolean;
@@ -80,6 +85,7 @@ export type KangurAiTutorPanelBodyContextValue = {
   panelEmptyStateMessage: string;
   remainingMessages: number | null;
   selectedTextPreview: string | null;
+  sessionSurface: TutorSurface | null;
   showToolboxLayout: boolean;
   shouldRenderAuxiliaryPanelControls: boolean;
   showSectionExplainCompleteState: boolean;

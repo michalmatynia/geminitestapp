@@ -238,6 +238,7 @@ function DraggableTile({
               }
             }}
             aria-pressed={isSelected}
+            aria-label={`Etykieta: ${tile.label}`}
           >
             <span className='text-base'>{tile.icon}</span>
             <span>{tile.label}</span>

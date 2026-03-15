@@ -40,7 +40,7 @@ export function MaintenanceSettingsTab(): React.JSX.Element {
                 value={backfillProjectId}
                 onChange={(e) => setBackfillProjectId(e.target.value)}
                 placeholder='Leave empty for all projects'
-               aria-label="Leave empty for all projects" title="Leave empty for all projects"/>
+               aria-label='Leave empty for all projects' title='Leave empty for all projects'/>
             </FormField>
             <div className='flex flex-col gap-2 pt-6'>
               <ToggleRow

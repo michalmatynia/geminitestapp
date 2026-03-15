@@ -131,7 +131,7 @@ export function CenterPreviewCanvas(): React.JSX.Element {
             className='h-8 w-8 p-0 rounded-full bg-slate-900/60 backdrop-blur-md border-white/10'
             onClick={onRevealInTreeFromCanvas}
             title='Reveal in Tree'
-          >
+            aria-label={'Reveal in Tree'}>
             <Locate className='size-4' />
           </Button>
         )}

@@ -60,7 +60,7 @@ export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
             onClick={onDismiss}
             className='shrink-0 rounded-md p-1 opacity-50 hover:opacity-100 hover:bg-black/10 transition-all'
             aria-label='Dismiss alert'
-          >
+            title={'Dismiss alert'}>
             <X className='size-3.5' />
           </button>
         )}

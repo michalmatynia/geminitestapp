@@ -102,7 +102,7 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                     })
                   )}
                   placeholder='Select position'
-                 ariaLabel="Select position" title="Select position"/>
+                 ariaLabel='Select position' title='Select position'/>
               </FormField>
 
               {/* Accent Color Setting */}
@@ -122,7 +122,7 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                     })
                   )}
                   placeholder='Select accent color'
-                 ariaLabel="Select accent color" title="Select accent color"/>
+                 ariaLabel='Select accent color' title='Select accent color'/>
               </FormField>
 
               {/* Color Palette Preview */}

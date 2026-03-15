@@ -177,7 +177,7 @@ export function NotesFilters(): React.JSX.Element {
             onClick={() => updateSettings({ showTimestamps: !showTimestamps })}
             className='h-8 gap-1 px-2'
             title='Toggle timestamps'
-          >
+            aria-label={'Toggle timestamps'}>
             {showTimestamps ? <Eye size={14} /> : <EyeOff size={14} />}
           </Button>
           <Button
@@ -185,7 +185,7 @@ export function NotesFilters(): React.JSX.Element {
             onClick={() => updateSettings({ showBreadcrumbs: !showBreadcrumbs })}
             className='h-8 gap-1 px-2'
             title='Toggle breadcrumbs'
-          >
+            aria-label={'Toggle breadcrumbs'}>
             {showBreadcrumbs ? <Eye size={14} /> : <EyeOff size={14} />}
           </Button>
           <Button
@@ -193,7 +193,7 @@ export function NotesFilters(): React.JSX.Element {
             onClick={() => updateSettings({ showRelatedNotes: !showRelatedNotes })}
             className='h-8 gap-1 px-2'
             title='Toggle related notes'
-          >
+            aria-label={'Toggle related notes'}>
             {showRelatedNotes ? <Eye size={14} /> : <EyeOff size={14} />}
           </Button>
         </div>

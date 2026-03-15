@@ -107,7 +107,7 @@ export function VersionGraphFilterBar(): React.JSX.Element {
             else if (filterHasMask === true) onSetFilterHasMask(false);
             else onSetFilterHasMask(null);
           }}
-        >
+          aria-label={versionGraphTooltipsEnabled ? tooltipContent.maskCycle : undefined}>
           <Shield className='inline size-2.5' />
         </button>
 
@@ -133,7 +133,7 @@ export function VersionGraphFilterBar(): React.JSX.Element {
             className='rounded px-1 py-0.5 text-[9px] text-gray-500 hover:text-gray-400'
             title={versionGraphTooltipsEnabled ? tooltipContent.clear : undefined}
             onClick={onClearFilters}
-          >
+            aria-label={versionGraphTooltipsEnabled ? tooltipContent.clear : undefined}>
             <X className='size-3' />
           </button>
         ) : null}

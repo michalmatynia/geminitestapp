@@ -225,6 +225,7 @@ function KangurHomeActionCard({
           href={actionHref}
           className={sharedClassName}
           data-doc-id={docId}
+          aria-label={actionLabel}
           targetPageKey={actionTargetPageKey}
           transitionAcknowledgeMs={actionTransitionAcknowledgeMs}
           transitionSourceId={actionTransitionSourceId}
@@ -238,6 +239,7 @@ function KangurHomeActionCard({
           disabled={actionDisabled}
           className={sharedClassName}
           data-doc-id={docId}
+          aria-label={actionLabel}
         >
           {content}
         </button>

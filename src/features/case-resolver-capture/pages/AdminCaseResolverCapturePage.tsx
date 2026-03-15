@@ -197,7 +197,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
                 );
               }}
               options={BOOLEAN_OPTIONS}
-             ariaLabel="Capture Pipeline" title="Capture Pipeline"/>
+             ariaLabel='Capture Pipeline' title='Capture Pipeline'/>
           </FormField>
           <FormField label='Auto-open Proposal Modal' id='auto-open-modal'>
             <SelectSimple
@@ -213,7 +213,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
                 );
               }}
               options={BOOLEAN_OPTIONS}
-             ariaLabel="Auto-open Proposal Modal" title="Auto-open Proposal Modal"/>
+             ariaLabel='Auto-open Proposal Modal' title='Auto-open Proposal Modal'/>
           </FormField>
         </div>
       </FormSection>
@@ -242,7 +242,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
                     updateRoleMapping(role, 'enabled', fromBooleanOptionValue(value));
                   }}
                   options={BOOLEAN_OPTIONS}
-                 ariaLabel="Role Mapping Enabled" title="Role Mapping Enabled"/>
+                 ariaLabel='Role Mapping Enabled' title='Role Mapping Enabled'/>
               </FormField>
               <FormField label='Target Case Role' id={`target-role-${role}`}>
                 <SelectSimple
@@ -255,7 +255,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
                     );
                   }}
                   options={CASE_RESOLVER_CAPTURE_TARGET_ROLE_OPTIONS}
-                 ariaLabel="Target Case Role" title="Target Case Role"/>
+                 ariaLabel='Target Case Role' title='Target Case Role'/>
               </FormField>
               <FormField label='Default Action' id={`default-action-${role}`}>
                 <SelectSimple
@@ -270,7 +270,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
                     );
                   }}
                   options={CASE_RESOLVER_CAPTURE_ACTION_OPTIONS}
-                 ariaLabel="Default Action" title="Default Action"/>
+                 ariaLabel='Default Action' title='Default Action'/>
               </FormField>
               <FormField label='Auto-match Filemaker Party' id={`auto-match-party-${role}`}>
                 <SelectSimple
@@ -283,7 +283,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
                     );
                   }}
                   options={BOOLEAN_OPTIONS}
-                 ariaLabel="Auto-match Filemaker Party" title="Auto-match Filemaker Party"/>
+                 ariaLabel='Auto-match Filemaker Party' title='Auto-match Filemaker Party'/>
               </FormField>
               <FormField
                 label='Auto-match Filemaker Address'
@@ -296,7 +296,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
                     updateRoleMapping(role, 'autoMatchAddress', fromBooleanOptionValue(value));
                   }}
                   options={BOOLEAN_OPTIONS}
-                 ariaLabel="Auto-match Filemaker Address" title="Auto-match Filemaker Address"/>
+                 ariaLabel='Auto-match Filemaker Address' title='Auto-match Filemaker Address'/>
               </FormField>
             </div>
           </FormSection>

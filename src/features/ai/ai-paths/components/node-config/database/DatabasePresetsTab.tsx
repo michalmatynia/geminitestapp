@@ -124,13 +124,13 @@ export function DatabasePresetsTab(): React.JSX.Element {
                           void handleRename(preset.id, draftName);
                         }
                       }}
-                     title="Input field"/>
+                     title='Input field'/>
                     <Button
                       type='button'
                       className='h-7 rounded-md border border-sky-500/40 px-2 text-[10px] text-sky-200 hover:bg-sky-500/10'
                       onClick={(): void => setViewPresetId(preset.id)}
                       title='View preset'
-                    >
+                      aria-label={'View preset'}>
                       <Eye className='h-3.5 w-3.5' />
                     </Button>
                     <Button
@@ -172,7 +172,7 @@ export function DatabasePresetsTab(): React.JSX.Element {
               value={activePreset?.queryTemplate ?? ''}
               readOnly
               aria-label='Filter query'
-             title="Textarea"/>
+             title='Textarea'/>
           </div>
           <div className='space-y-1'>
             <Label className='text-xs text-gray-400'>Update Document</Label>
@@ -183,7 +183,7 @@ export function DatabasePresetsTab(): React.JSX.Element {
               }
               readOnly
               aria-label='Update document'
-             title="Textarea"/>
+             title='Textarea'/>
           </div>
         </div>
       </DetailModal>

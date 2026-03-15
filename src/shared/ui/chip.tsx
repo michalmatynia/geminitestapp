@@ -56,7 +56,8 @@ export function Chip(props: ChipProps): React.JSX.Element {
         'group outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-full transition-all',
         !onClick && 'pointer-events-none'
       )}
-    >
+      aria-label={'Badge'}
+      title={'Badge'}>
       <Badge
         variant={badgeVariant}
         className={cn(

@@ -104,7 +104,7 @@ export function StateNodeConfigSection(): React.JSX.Element | null {
           value={stateConfig.key ?? ''}
           onChange={handleKeyChange}
           aria-label='Variable key'
-         title="e.g. totalCount"/>
+         title='e.g. totalCount'/>
         <p className='mt-1 text-[11px] text-gray-500'>
           Shared variable name in{' '}
           <span className='font-mono text-gray-300'>RuntimeState.variables</span>.
@@ -142,7 +142,8 @@ export function StateNodeConfigSection(): React.JSX.Element | null {
           value={stateConfig.initialJson ?? ''}
           onChange={handleInitialJsonChange}
           aria-label='Initial value JSON'
-         title="{\"count\": 0}"/>
+          title='{"count": 0}'
+        />
         <p className='mt-1 text-[11px] text-gray-500'>
           Used only when the variable does not yet exist. If empty or invalid, the node will fall
           back to
@@ -162,7 +163,7 @@ export function StateNodeConfigSection(): React.JSX.Element | null {
           value={stateConfig.maxValueBytes?.toString() ?? ''}
           onChange={handleMaxValueBytesChange}
           aria-label='Max stored size in bytes'
-         title="e.g. 32768"/>
+         title='e.g. 32768'/>
         <p className='mt-1 text-[11px] text-gray-500'>
           Soft limit on serialized variable size. If exceeded, the node fails with{' '}
           <span className='font-mono text-gray-300'>STATE_VALUE_TOO_LARGE</span> instead of updating

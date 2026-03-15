@@ -128,7 +128,7 @@ export function QuizEditorCard(props: {
           onChange={(e): void => onChange({ ...block, ttsText: e.target.value })}
           placeholder='Spoken text override for screen readers and narration'
           className='min-h-[72px]'
-         aria-label="Spoken text override for screen readers and narration" title="Spoken text override for screen readers and narration"/>
+         aria-label='Spoken text override for screen readers and narration' title='Spoken text override for screen readers and narration'/>
       </FormField>
     </div>
   );

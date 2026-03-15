@@ -26,8 +26,8 @@ type TutorDrawingContent = {
   clearLabel?: string;
   cancelLabel?: string;
   doneLabel?: string;
+  canvasLabel?: string;
 };
-
 const COLORS = ['#1e293b', '#2563eb', '#dc2626', '#16a34a', '#f59e0b'] as const;
 const STROKE_WIDTHS = [2, 4, 8] as const;
 const CANVAS_BG = '#ffffff';
@@ -185,7 +185,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
           onClick={onCancel}
           className='cursor-pointer rounded-full p-1 [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
           aria-label={tutorContent.common.closeAria}
-        >
+          title={tutorContent.common.closeAria}>
           <X className='h-3.5 w-3.5' />
         </button>
       </div>
@@ -195,6 +195,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
           ref={canvasRef}
           width={320}
           height={240}
+          aria-label={drawingContent?.canvasLabel ?? 'Plansza do rysowania'}
           className='touch-none rounded-none'
           style={{ cursor: isEraser ? 'cell' : 'crosshair', width: '100%', height: 'auto' }}
           onPointerDown={handlePointerDown}
@@ -210,7 +211,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
             <button
               key={color}
               type='button'
-              aria-label={color}
+              aria-label={`Kolor ${color}`}
               className={`h-5 w-5 cursor-pointer rounded-full border-2 transition-transform ${
                 selectedColor === color && !isEraser
                   ? 'scale-110 kangur-chat-accent-border'
@@ -232,7 +233,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
             <button
               key={w}
               type='button'
-              aria-label={`${w}px`}
+              aria-label={`Grubość ${w}px`}
               className={`flex h-6 w-6 cursor-pointer items-center justify-center rounded-full transition-colors ${
                 selectedWidth === w && !isEraser
                   ? '[background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'
@@ -262,7 +263,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
               : '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]'
           }`}
           onClick={() => setIsEraser(false)}
-        >
+          title={drawingContent?.penLabel ?? 'Pióro'}>
           <Pen className='h-3 w-3' />
         </button>
         <button
@@ -274,7 +275,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
               : '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]'
           }`}
           onClick={() => setIsEraser(true)}
-        >
+          title={drawingContent?.eraserLabel ?? 'Gumka'}>
           <Eraser className='h-3 w-3' />
         </button>
 
@@ -286,7 +287,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
           className='flex h-6 w-6 cursor-pointer items-center justify-center rounded-full [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))] disabled:opacity-30'
           disabled={strokes.length === 0}
           onClick={handleUndo}
-        >
+          title={drawingContent?.undoLabel ?? 'Cofnij'}>
           <RotateCcw className='h-3 w-3' />
         </button>
         <button
@@ -295,7 +296,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
           className='flex h-6 w-6 cursor-pointer items-center justify-center rounded-full [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors hover:[background:var(--kangur-chat-danger-background,#fff1f2)] hover:[color:var(--kangur-chat-danger-text,#ef4444)] disabled:opacity-30'
           disabled={strokes.length === 0}
           onClick={handleClear}
-        >
+          title={drawingContent?.clearLabel ?? 'Wyczyść'}>
           <Trash2 className='h-3 w-3' />
         </button>
       </div>

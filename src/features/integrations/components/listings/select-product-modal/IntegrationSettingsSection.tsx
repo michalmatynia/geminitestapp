@@ -39,7 +39,7 @@ export function IntegrationSettingsSection(): React.JSX.Element {
                 onValueChange={setSelectedIntegrationId}
                 options={integrationsWithConnections.map((i) => ({ value: i.id, label: i.name }))}
                 placeholder='Select marketplace...'
-               ariaLabel="Select marketplace..." title="Select marketplace..."/>
+               ariaLabel='Select marketplace...' title='Select marketplace...'/>
             </FormField>
 
             {selectedIntegration && (
@@ -52,7 +52,7 @@ export function IntegrationSettingsSection(): React.JSX.Element {
                     label: c.name,
                   }))}
                   placeholder='Select account...'
-                 ariaLabel="Select account..." title="Select account..."/>
+                 ariaLabel='Select account...' title='Select account...'/>
               </FormField>
             )}
 

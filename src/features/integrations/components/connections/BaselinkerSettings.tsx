@@ -106,7 +106,7 @@ export function BaselinkerSettings(): React.JSX.Element {
                     }
                     size='sm'
                     className='w-24 h-9'
-                   aria-label="Sync Interval" title="Sync Interval"/>
+                   aria-label='Sync Interval' title='Sync Interval'/>
                   <span className='text-xs text-gray-500 font-medium uppercase'>Minutes</span>
                 </div>
               </FormField>
@@ -140,7 +140,7 @@ export function BaselinkerSettings(): React.JSX.Element {
                 placeholder='Select default connection...'
                 disabled={connections.length === 0}
                 size='sm'
-               ariaLabel="Select default connection..." title="Select default connection..."/>
+               ariaLabel='Select default connection...' title='Select default connection...'/>
               {defaultExportConnectionId ? (
                 <MetadataItem
                   label='Active Default ID'

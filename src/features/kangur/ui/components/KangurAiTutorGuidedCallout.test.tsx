@@ -21,15 +21,31 @@ const widgetStateContextMock = vi.hoisted(() => ({
 const panelBodyContextMock = vi.hoisted(() => ({
   activeSelectedText: null,
   activeFocus: {
+    assignmentId: null,
+    rect: null,
+    kind: null,
+    id: null,
+    label: null,
     conversationFocus: {
+      assignmentId: null,
+      contentId: null,
+      id: null,
+      kind: null,
       knowledgeReference: null,
       label: null,
+      surface: null,
     },
   },
+  canSendMessages: true,
+  handleQuickAction: vi.fn(),
   isLoading: false,
+  lastInteractionIntent: null,
+  lastPromptMode: null,
   isSelectionExplainPendingMode: false,
   messages: [],
   selectedTextPreview: null,
+  sessionSurface: null,
+  visibleQuickActions: [],
 }));
 
 const pageContentQueryMock = vi.hoisted(() => ({
@@ -117,9 +133,19 @@ describe('KangurAiTutorGuidedCallout', () => {
     widgetStateContextMock.selectionGuidanceHandoffText = null;
     widgetStateContextMock.selectionResponsePending = null;
     panelBodyContextMock.activeFocus = {
+      assignmentId: null,
+      rect: null,
+      kind: null,
+      id: null,
+      label: null,
       conversationFocus: {
+        assignmentId: null,
+        contentId: null,
+        id: null,
+        kind: null,
         knowledgeReference: null,
         label: null,
+        surface: null,
       },
     };
     panelBodyContextMock.activeSelectedText = null;
@@ -127,6 +153,7 @@ describe('KangurAiTutorGuidedCallout', () => {
     panelBodyContextMock.isSelectionExplainPendingMode = false;
     panelBodyContextMock.messages = [];
     panelBodyContextMock.selectedTextPreview = null;
+    panelBodyContextMock.sessionSurface = null;
     pageContentQueryMock.entry = null;
   });
 
@@ -202,16 +229,27 @@ describe('KangurAiTutorGuidedCallout', () => {
       selectedText: '🏗️ MISTRZOSTWO 67% 2/4 odznak',
     };
     panelBodyContextMock.activeFocus = {
+      assignmentId: null,
+      rect: null,
+      kind: 'selection',
+      id: 'selection',
+      label: 'Postęp gracza',
       conversationFocus: {
+        assignmentId: null,
+        contentId: 'game:home',
+        id: 'game-home-progress',
+        kind: 'selection',
         knowledgeReference: {
           sourceCollection: 'kangur_page_content',
           sourceRecordId: 'game-home-progress',
           sourcePath: 'entry:game-home-progress#fragment:badge-track-mastery',
         },
         label: 'Postęp gracza',
+        surface: 'game',
       },
     };
     panelBodyContextMock.activeSelectedText = '🏗️ MISTRZOSTWO 67% 2/4 odznak';
+    panelBodyContextMock.sessionSurface = 'game';
     panelBodyContextMock.messages = [
       {
         content: 'Wyjaśnij zaznaczony fragment krok po kroku.',
@@ -282,6 +320,116 @@ describe('KangurAiTutorGuidedCallout', () => {
     expect(screen.queryByText('Za chwilę otworzę wyjaśnienie dokładnie dla zaznaczonego tekstu.')).not.toBeInTheDocument();
     expect(screen.queryByText('Już przygotowuję wyjaśnienie…')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Rozumiem' })).toBeInTheDocument();
+  });
+
+  it('replaces the resolved page-content answer with a hint follow-up on test surfaces', () => {
+    pageContentQueryMock.entry = {
+      fragments: [
+        {
+          aliases: ['Zadanie 1'],
+          enabled: true,
+          explanation: 'Ten fragment opisuje warunek zadania.',
+          id: 'task-1',
+          nativeGuideIds: [],
+          sortOrder: 0,
+          text: 'Który kwadrat został rozcięty wzdłuż pogrubionych linii?',
+          triggerPhrases: [],
+        },
+      ],
+      summary: 'Streszczenie zadania.',
+      title: 'Zadanie 1',
+    };
+    widgetStateContextMock.guidedTutorTarget = {
+      kind: 'selection_excerpt',
+      mode: 'selection',
+      selectedText: 'Który kwadrat został rozcięty wzdłuż pogrubionych linii?',
+    };
+    widgetStateContextMock.selectionConversationContext = {
+      focusLabel: 'Zadanie 1',
+      knowledgeReference: {
+        sourceCollection: 'kangur_page_content',
+        sourceRecordId: 'test-task-1',
+        sourcePath: 'entry:test-task-1#fragment:task-1',
+      },
+      messageStartIndex: 0,
+      selectedText: 'Który kwadrat został rozcięty wzdłuż pogrubionych linii?',
+    };
+    panelBodyContextMock.activeFocus = {
+      assignmentId: null,
+      rect: null,
+      kind: 'selection',
+      id: 'selection',
+      label: 'Zadanie 1',
+      conversationFocus: {
+        assignmentId: null,
+        contentId: 'test:suite-1',
+        id: 'test-task-1',
+        kind: 'selection',
+        knowledgeReference: {
+          sourceCollection: 'kangur_page_content',
+          sourceRecordId: 'test-task-1',
+          sourcePath: 'entry:test-task-1#fragment:task-1',
+        },
+        label: 'Zadanie 1',
+        surface: 'test',
+      },
+    };
+    panelBodyContextMock.activeSelectedText =
+      'Który kwadrat został rozcięty wzdłuż pogrubionych linii?';
+    panelBodyContextMock.sessionSurface = 'test';
+    panelBodyContextMock.messages = [
+      {
+        content: 'Wyjaśnij zaznaczony fragment krok po kroku.',
+        role: 'user',
+      },
+      {
+        answerResolutionMode: 'page_content',
+        content: 'To zadanie sprawdza, czy po rozcięciu powstają dwie identyczne części.',
+        role: 'assistant',
+      },
+    ];
+
+    render(
+      <KangurAiTutorGuidedCallout
+        avatarPlacement='left'
+        calloutKey='selection-test'
+        calloutTestId='kangur-ai-tutor-selection-guided-callout'
+        detail={null}
+        entryDirection='left'
+        headerLabel='Janek'
+        mode='selection'
+        onAction={vi.fn()}
+        placement='right'
+        prefersReducedMotion
+        reducedMotionTransitions={{
+          instant: { duration: 0 },
+          stableState: { opacity: 1, scale: 1, y: 0 },
+        }}
+        sectionGuidanceLabel={null}
+        sectionResponsePendingKind={null}
+        selectionPreview='Który kwadrat został rozcięty wzdłuż pogrubionych linii?'
+        shouldRender
+        showSectionGuidanceCallout={false}
+        showSelectionGuidanceCallout
+        stepLabel={null}
+        style={{ left: 16, position: 'fixed', top: 24, width: 320 }}
+        title='Wyjaśniam ten fragment.'
+        transitionDuration={0}
+        transitionEase={[0.22, 1, 0.36, 1]}
+      />
+    );
+
+    expect(
+      screen.queryByTestId('kangur-ai-tutor-selection-guided-page-content-badge')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('kangur-ai-tutor-selection-guided-answer')
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-hint-followup')).toHaveTextContent(
+      'Potrzebujesz kolejnej podpowiedzi?'
+    );
+    expect(screen.getByRole('button', { name: 'Tak, pomóż mi' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Rozumiem' })).not.toBeInTheDocument();
   });
 
   it('hides the quoted selection preview once a generic selection answer is fully resolved', () => {
@@ -384,15 +532,26 @@ describe('KangurAiTutorGuidedCallout', () => {
     panelBodyContextMock.isLoading = true;
     panelBodyContextMock.isSelectionExplainPendingMode = true;
     panelBodyContextMock.activeFocus = {
+      assignmentId: null,
+      rect: null,
+      kind: 'selection',
+      id: 'selection',
+      label: 'Postęp gracza',
       conversationFocus: {
+        assignmentId: null,
+        contentId: 'game:home',
+        id: 'game-home-progress',
+        kind: 'selection',
         knowledgeReference: {
           sourceCollection: 'kangur_page_content',
           sourceRecordId: 'game-home-progress',
           sourcePath: 'entry:game-home-progress#fragment:badge-track-mastery',
         },
         label: 'Postęp gracza',
+        surface: 'game',
       },
     };
+    panelBodyContextMock.sessionSurface = 'game';
 
     render(
       <KangurAiTutorGuidedCallout

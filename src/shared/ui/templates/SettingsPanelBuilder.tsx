@@ -88,6 +88,131 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
     errors ?? ({} as Partial<Record<keyof T, string>>);
   const isHexColor = (value: string): boolean =>
     /^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(value.trim());
+  const clampChannel = (value: number): number => Math.max(0, Math.min(255, Math.round(value)));
+  const normalizeHexColor = (value: string): string | null => {
+    const trimmed = value.trim();
+    if (!trimmed.startsWith('#')) return null;
+    const hex = trimmed.slice(1);
+    if (!hex.length) return null;
+    if (hex.length === 3 || hex.length === 4) {
+      return `#${hex
+        .slice(0, 3)
+        .split('')
+        .map((char) => char + char)
+        .join('')}`;
+    }
+    if (hex.length === 6 || hex.length === 8) {
+      return `#${hex.slice(0, 6)}`;
+    }
+    return null;
+  };
+  const extractColorToken = (value: string): string | null => {
+    const match = value.match(
+      /(#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})|rgba?\([^)]*\)|hsla?\([^)]*\))/i
+    );
+    return match ? match[0] : null;
+  };
+  const parseRgbToHex = (value: string): string | null => {
+    const match = value.match(/rgba?\(([^)]+)\)/i);
+    if (!match) return null;
+    const parts = match[1].split(',').map((part) => part.trim());
+    if (parts.length < 3) return null;
+    const toChannel = (part: string): number => {
+      if (part.endsWith('%')) {
+        return clampChannel((parseFloat(part) / 100) * 255);
+      }
+      const parsed = parseFloat(part);
+      if (Number.isNaN(parsed)) return 0;
+      if (parsed <= 1 && part.includes('.')) {
+        return clampChannel(parsed * 255);
+      }
+      return clampChannel(parsed);
+    };
+    const r = toChannel(parts[0]);
+    const g = toChannel(parts[1]);
+    const b = toChannel(parts[2]);
+    return (
+      '#' +
+      [r, g, b]
+        .map((channel) => channel.toString(16).padStart(2, '0'))
+        .join('')
+    );
+  };
+  const hslToRgb = (hue: number, saturation: number, lightness: number): [number, number, number] => {
+    const s = Math.max(0, Math.min(1, saturation));
+    const l = Math.max(0, Math.min(1, lightness));
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const h = ((hue % 360) + 360) % 360;
+    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+    const m = l - c / 2;
+    let r = 0;
+    let g = 0;
+    let b = 0;
+
+    if (h < 60) {
+      r = c;
+      g = x;
+    } else if (h < 120) {
+      r = x;
+      g = c;
+    } else if (h < 180) {
+      g = c;
+      b = x;
+    } else if (h < 240) {
+      g = x;
+      b = c;
+    } else if (h < 300) {
+      r = x;
+      b = c;
+    } else {
+      r = c;
+      b = x;
+    }
+
+    return [
+      clampChannel((r + m) * 255),
+      clampChannel((g + m) * 255),
+      clampChannel((b + m) * 255),
+    ];
+  };
+  const parseHslToHex = (value: string): string | null => {
+    const match = value.match(/hsla?\(([^)]+)\)/i);
+    if (!match) return null;
+    const parts = match[1].split(',').map((part) => part.trim());
+    if (parts.length < 3) return null;
+    const hue = parseFloat(parts[0]);
+    const saturationRaw = parts[1];
+    const lightnessRaw = parts[2];
+    if (Number.isNaN(hue)) return null;
+    const saturation = saturationRaw.endsWith('%')
+      ? parseFloat(saturationRaw) / 100
+      : parseFloat(saturationRaw);
+    const lightness = lightnessRaw.endsWith('%')
+      ? parseFloat(lightnessRaw) / 100
+      : parseFloat(lightnessRaw);
+    if (Number.isNaN(saturation) || Number.isNaN(lightness)) return null;
+    const [r, g, b] = hslToRgb(hue, saturation, lightness);
+    return (
+      '#' +
+      [r, g, b]
+        .map((channel) => channel.toString(16).padStart(2, '0'))
+        .join('')
+    );
+  };
+  const derivePickerColor = (rawValue: string): string => {
+    const trimmed = rawValue.trim();
+    if (!trimmed.length) return '#000000';
+    const normalizedHex =
+      (isHexColor(trimmed) ? normalizeHexColor(trimmed) : null) ??
+      normalizeHexColor(extractColorToken(trimmed) ?? '');
+    if (normalizedHex) return normalizedHex;
+    const token = extractColorToken(trimmed) ?? trimmed;
+    const rgbHex = parseRgbToHex(token);
+    if (rgbHex) return rgbHex;
+    const hslHex = parseHslToHex(token);
+    if (hslHex) return hslHex;
+    return '#000000';
+  };
 
   const handleFieldChange = (key: keyof T, value: unknown) => {
     onChange({ [key]: value } as Partial<T>);
@@ -267,7 +392,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                     aria-invalid={isInvalid || undefined}
                     aria-errormessage={errorId}
                     aria-label={`${field.label} value`}
-                   title="#000000"/>
+                   title='#000000'/>
                 </div>
               </FormField>
             ) : field.type === 'background' ? (
@@ -280,28 +405,36 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                 error={fieldError}
                 errorId={errorId}
               >
+                {(() => {
+                  const rawValue = String(values[field.key] ?? '');
+                  const trimmedValue = rawValue.trim();
+                  const isAuto = trimmedValue.length === 0;
+                  return (
                 <div className='flex items-center gap-2'>
                   <div
-                    className='size-8 rounded border border-border shrink-0 overflow-hidden'
-                    style={{ background: String(values[field.key] || '#000000') }}
+                    className={cn(
+                      'size-8 rounded border border-border shrink-0 overflow-hidden flex items-center justify-center text-[8px] uppercase',
+                      isAuto ? 'border-dashed bg-muted/40' : ''
+                    )}
+                    style={isAuto ? undefined : { background: rawValue }}
+                  >
+                    {isAuto ? <span className='text-muted-foreground'>Auto</span> : null}
+                  </div>
+                  <input
+                    type='color'
+                    id={`${fieldId}-picker`}
+                    value={derivePickerColor(rawValue)}
+                    onChange={(e) => handleFieldChange(field.key, e.target.value)}
+                    className='h-8 w-8 cursor-pointer rounded border border-border'
+                    disabled={field.disabled || disabled}
+                    aria-describedby={describedBy}
+                    aria-invalid={isInvalid || undefined}
+                    aria-errormessage={errorId}
+                    aria-label={`${field.label} color picker`}
                   />
-                  {isHexColor(String(values[field.key] || '')) ? (
-                    <input
-                      type='color'
-                      id={`${fieldId}-picker`}
-                      value={String(values[field.key] || '#000000')}
-                      onChange={(e) => handleFieldChange(field.key, e.target.value)}
-                      className='h-8 w-8 cursor-pointer rounded border border-border'
-                      disabled={field.disabled || disabled}
-                      aria-describedby={describedBy}
-                      aria-invalid={isInvalid || undefined}
-                      aria-errormessage={errorId}
-                      aria-label={`${field.label} color picker`}
-                    />
-                  ) : null}
                   <Input
                     id={fieldId}
-                    value={String(values[field.key] || '')}
+                    value={rawValue}
                     onChange={(e) => handleFieldChange(field.key, e.target.value)}
                     placeholder={field.placeholder}
                     disabled={field.disabled || disabled}
@@ -312,6 +445,8 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                     aria-label={`${field.label} value`}
                    title={field.placeholder}/>
                 </div>
+                  );
+                })()}
               </FormField>
             ) : field.type === 'range' ? (
               <FormField

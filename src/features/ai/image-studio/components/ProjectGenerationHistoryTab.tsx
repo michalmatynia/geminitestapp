@@ -586,6 +586,8 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
                             target='_blank'
                             rel='noopener noreferrer'
                             className='block relative h-36 w-full rounded overflow-hidden'
+                            aria-label={output.filename || `Output ${index + 1}`}
+                            title={output.filename || `Output ${index + 1}`}
                           >
                             <Image
                               src={output.filepath}

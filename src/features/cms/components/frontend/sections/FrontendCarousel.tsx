@@ -274,7 +274,7 @@ export function FrontendCarousel(): React.ReactNode {
               style={{ transform: 'translateY(-50%)' }}
               aria-label='Previous slide'
               aria-controls={`${carouselId}-slide-${currentIndex}`}
-            >
+              title={'Previous slide'}>
               <ChevronLeft className='w-6 h-6' />
             </button>
             <button
@@ -285,7 +285,7 @@ export function FrontendCarousel(): React.ReactNode {
               style={{ transform: 'translateY(-50%)' }}
               aria-label='Next slide'
               aria-controls={`${carouselId}-slide-${currentIndex}`}
-            >
+              title={'Next slide'}>
               <ChevronRight className='w-6 h-6' />
             </button>
           </>

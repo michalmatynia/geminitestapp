@@ -59,7 +59,7 @@ export function AgentNodeConfigSection(): React.JSX.Element | null {
           }
           options={personaOptions}
           placeholder='Select persona'
-         ariaLabel="Select persona" title="Select persona"/>
+         ariaLabel='Select persona' title='Select persona'/>
       </FormField>
       {personasQuery.isLoading && (
         <LoadingState message='Loading personas...' size='sm' className='py-2' />
@@ -89,7 +89,7 @@ export function AgentNodeConfigSection(): React.JSX.Element | null {
             })
           }
           placeholder='Use {{bundle}} or {{context}} placeholders to build the agent prompt.'
-         aria-label="Use {{bundle}} or {{context}} placeholders to build the agent prompt." title="Use {{bundle}} or {{context}} placeholders to build the agent prompt."/>
+         aria-label='Use {{bundle}} or {{context}} placeholders to build the agent prompt.' title='Use {{bundle}} or {{context}} placeholders to build the agent prompt.'/>
       </FormField>
       <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
         <span>Wait for result</span>

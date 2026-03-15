@@ -178,7 +178,7 @@ export function AdminProductProducersPage(): React.JSX.Element {
                 onClick={(): void => confirmDelete(producer)}
                 className='text-red-300 hover:text-red-200'
                 title='Delete producer'
-              >
+                aria-label={'Delete producer'}>
                 <Trash2 className='size-3.5' />
               </Button>
             </div>

@@ -54,7 +54,7 @@ export function SimulationNodeConfigSection(): React.JSX.Element | null {
           }
           options={collectionOptions}
           placeholder='Select collection'
-         ariaLabel="Select collection" title="Select collection"/>
+         ariaLabel='Select collection' title='Select collection'/>
       </FormField>
 
       <FormField label='Document ID'>
@@ -71,7 +71,7 @@ export function SimulationNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-         aria-label="Document ID" title="Document ID"/>
+         aria-label='Document ID' title='Document ID'/>
         {showIdHint ? (
           <Card variant='warning' padding='sm' className='mt-2 text-[11px] text-amber-100'>
             This looks like a UUID, but its length is {idLength}. UUIDs should be 36 characters.
@@ -103,7 +103,7 @@ export function SimulationNodeConfigSection(): React.JSX.Element | null {
             },
           ]}
           placeholder='Select run behavior'
-         ariaLabel="Select run behavior" title="Select run behavior"/>
+         ariaLabel='Select run behavior' title='Select run behavior'/>
       </FormField>
 
       <p className='text-[11px] text-gray-500 italic'>

@@ -360,7 +360,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
             })
           }
           options={SOURCE_OPTIONS}
-         ariaLabel="Source" title="Source"/>
+         ariaLabel='Source' title='Source'/>
       </FormField>
 
       {config.source === 'global_stack' ? (
@@ -381,7 +381,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
               }}
               options={stackOptions}
               placeholder='Select global validation stack'
-             ariaLabel="Select global validation stack" title="Select global validation stack"/>
+             ariaLabel='Select global validation stack' title='Select global validation stack'/>
           </FormField>
           <div className='flex flex-wrap items-center gap-2'>
             <Button type='button' variant='outline' size='xs' onClick={syncRulesFromGlobalStack}>
@@ -405,7 +405,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 updateConfig({ localListName: event.target.value })
               }
-             aria-label="Path-Local List Name" title="Path-Local List Name"/>
+             aria-label='Path-Local List Name' title='Path-Local List Name'/>
           </FormField>
           <FormField label='Description'>
             <Textarea
@@ -416,7 +416,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
                 updateConfig({ localListDescription: event.target.value })
               }
-             aria-label="Description" title="Description"/>
+             aria-label='Description' title='Description'/>
           </FormField>
           <div className='flex items-center gap-2'>
             <Button
@@ -449,7 +449,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
               })
             }
             options={SCOPE_OPTIONS}
-           ariaLabel="Rule Scope" title="Rule Scope"/>
+           ariaLabel='Rule Scope' title='Rule Scope'/>
         </FormField>
         <FormField label='Runtime Mode'>
           <SelectSimple
@@ -463,7 +463,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
               })
             }
             options={RUNTIME_MODE_OPTIONS}
-           ariaLabel="Runtime Mode" title="Runtime Mode"/>
+           ariaLabel='Runtime Mode' title='Runtime Mode'/>
         </FormField>
         <FormField label='Fail Policy'>
           <SelectSimple
@@ -476,7 +476,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
               })
             }
             options={FAIL_POLICY_OPTIONS}
-           ariaLabel="Fail Policy" title="Fail Policy"/>
+           ariaLabel='Fail Policy' title='Fail Policy'/>
         </FormField>
         <FormField label='Input Port'>
           <SelectSimple
@@ -490,7 +490,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
               })
             }
             options={INPUT_PORT_OPTIONS}
-           ariaLabel="Input Port" title="Input Port"/>
+           ariaLabel='Input Port' title='Input Port'/>
         </FormField>
         <FormField label='Output Port'>
           <SelectSimple
@@ -504,7 +504,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
               })
             }
             options={OUTPUT_PORT_OPTIONS}
-           ariaLabel="Output Port" title="Output Port"/>
+           ariaLabel='Output Port' title='Output Port'/>
         </FormField>
         <FormField label='Max Autofix Passes'>
           <Input
@@ -520,7 +520,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
                 maxAutofixPasses: Number.isFinite(parsed) && parsed > 0 ? Math.min(10, parsed) : 1,
               });
             }}
-           aria-label="Max Autofix Passes" title="Max Autofix Passes"/>
+           aria-label='Max Autofix Passes' title='Max Autofix Passes'/>
         </FormField>
       </div>
 
@@ -544,7 +544,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             updateConfig({ includeRuleIds: parseRuleIdList(event.target.value) })
           }
-         aria-label="Rule ID Allowlist (optional)" title="Rule ID Allowlist (optional)"/>
+         aria-label='Rule ID Allowlist (optional)' title='Rule ID Allowlist (optional)'/>
       </FormField>
 
       <FormField
@@ -563,7 +563,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
             setRulesDraft(event.target.value)
           }
           onBlur={commitRulesDraft}
-         aria-label="Rules JSON" title="Rules JSON"/>
+         aria-label='Rules JSON' title='Rules JSON'/>
       </FormField>
 
       <FormField
@@ -584,7 +584,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
             setLearnedRulesDraft(event.target.value)
           }
           onBlur={commitLearnedRulesDraft}
-         aria-label="Learned Rules JSON" title="Learned Rules JSON"/>
+         aria-label='Learned Rules JSON' title='Learned Rules JSON'/>
       </FormField>
     </div>
   );

@@ -156,6 +156,8 @@ type UseKangurAiTutorPortalViewModelInput = {
   isSelectionExplainPendingMode: KangurAiTutorPanelBodyContextValue['isSelectionExplainPendingMode'];
   isTutorHidden: KangurAiTutorPortalContextValue['panel']['isTutorHidden'];
   isUsageLoading: KangurAiTutorPanelBodyContextValue['isUsageLoading'];
+  lastInteractionIntent: KangurAiTutorPanelBodyContextValue['lastInteractionIntent'];
+  lastPromptMode: KangurAiTutorPanelBodyContextValue['lastPromptMode'];
   messages: KangurAiTutorPanelBodyContextValue['messages'];
   motionProfile: TutorMotionProfile;
   narratorSettings: KangurAiTutorPanelBodyContextValue['narratorSettings'];
@@ -181,6 +183,7 @@ type UseKangurAiTutorPortalViewModelInput = {
   selectionGlowStyles: KangurAiTutorPortalContextValue['spotlights']['selectionGlowStyles'];
   selectionContextSpotlightStyle: KangurAiTutorPortalContextValue['spotlights']['selectionContextSpotlightStyle'];
   selectionSpotlightStyle: KangurAiTutorPortalContextValue['spotlights']['selectionSpotlightStyle'];
+  sessionSurface: KangurAiTutorPanelBodyContextValue['sessionSurface'];
   sessionSurfaceLabel: KangurAiTutorPortalContextValue['panel']['sessionSurfaceLabel'];
   shouldRenderAuxiliaryPanelControls: KangurAiTutorPanelBodyContextValue['shouldRenderAuxiliaryPanelControls'];
   shouldRenderContextlessTutorUi: boolean;
@@ -296,6 +299,8 @@ export function useKangurAiTutorPortalViewModel(
       inputPlaceholder: input.inputPlaceholder,
       isAskModalMode: input.isAskModalMode,
       isLoading: input.isLoading,
+      lastInteractionIntent: input.lastInteractionIntent,
+      lastPromptMode: input.lastPromptMode,
       isSectionExplainPendingMode: input.isSectionExplainPendingMode,
       isSelectionExplainPendingMode: input.isSelectionExplainPendingMode,
       isUsageLoading: input.isUsageLoading,
@@ -304,6 +309,7 @@ export function useKangurAiTutorPortalViewModel(
       panelEmptyStateMessage: input.panelEmptyStateMessage,
       remainingMessages: input.remainingMessages,
       selectedTextPreview: input.selectedTextPreview,
+      sessionSurface: input.sessionSurface,
       showToolboxLayout,
       shouldRenderAuxiliaryPanelControls: input.shouldRenderAuxiliaryPanelControls,
       showSectionExplainCompleteState: input.showSectionExplainCompleteState,
@@ -351,6 +357,8 @@ export function useKangurAiTutorPortalViewModel(
       input.inputPlaceholder,
       input.isAskModalMode,
       input.isLoading,
+      input.lastInteractionIntent,
+      input.lastPromptMode,
       input.isSectionExplainPendingMode,
       input.isSelectionExplainPendingMode,
       input.isUsageLoading,
@@ -359,6 +367,7 @@ export function useKangurAiTutorPortalViewModel(
       input.panelEmptyStateMessage,
       input.remainingMessages,
       input.selectedTextPreview,
+      input.sessionSurface,
       showToolboxLayout,
       input.shouldRenderAuxiliaryPanelControls,
       input.showSectionExplainCompleteState,

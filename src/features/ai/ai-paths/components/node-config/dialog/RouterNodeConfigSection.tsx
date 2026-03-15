@@ -38,7 +38,7 @@ export function RouterNodeConfigSection(): React.JSX.Element | null {
           ]}
           placeholder='Select mode'
           triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
-         ariaLabel="Select mode" title="Select mode"/>
+         ariaLabel='Select mode' title='Select mode'/>
       </div>
       <div>
         <Label className='text-xs text-gray-400'>Match Mode</Label>
@@ -61,7 +61,7 @@ export function RouterNodeConfigSection(): React.JSX.Element | null {
           ]}
           placeholder='Select match mode'
           triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
-         ariaLabel="Select match mode" title="Select match mode"/>
+         ariaLabel='Select match mode' title='Select match mode'/>
       </div>
       <div>
         <Label className='text-xs text-gray-400'>Compare To</Label>
@@ -76,7 +76,7 @@ export function RouterNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-         aria-label="Input field" title="Input field"/>
+         aria-label='Input field' title='Input field'/>
       </div>
     </div>
   );

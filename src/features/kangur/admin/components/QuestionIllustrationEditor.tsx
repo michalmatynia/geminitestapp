@@ -48,7 +48,7 @@ function PanelEditor(): React.JSX.Element {
           className='h-7 w-12 shrink-0 text-center text-sm font-bold px-1'
           maxLength={4}
           aria-label='Panel label'
-         title="Input field"/>
+         title='Input field'/>
         <div className='flex-1 text-xs text-muted-foreground'>Panel {panel.label}</div>
         <Button
           type='button'
@@ -67,7 +67,7 @@ function PanelEditor(): React.JSX.Element {
             className='h-6 px-1 text-rose-400'
             onClick={remove}
             aria-label='Delete panel'
-          >
+            title={'Delete panel'}>
             <Trash2 className='size-3' />
           </Button>
         ) : null}
@@ -86,7 +86,7 @@ function PanelEditor(): React.JSX.Element {
           onChange={(event): void => setDescription(event.target.value)}
           placeholder='Optional text description'
           className='h-7 text-xs'
-         aria-label="Optional text description" title="Optional text description"/>
+         aria-label='Optional text description' title='Optional text description'/>
       </FormField>
     </div>
   );
@@ -155,7 +155,7 @@ function QuestionIllustrationEditorContent(): React.JSX.Element {
             onValueChange={setType}
             options={SVG_TYPE_OPTIONS}
             triggerClassName='h-9'
-           ariaLabel="Select option" title="Select option"/>
+           ariaLabel='Select option' title='Select option'/>
         </div>
         {illustration.type === 'panels' ? (
           <>
@@ -167,7 +167,7 @@ function QuestionIllustrationEditorContent(): React.JSX.Element {
                 onValueChange={setPanelCount}
                 options={PANEL_COUNT_OPTIONS}
                 triggerClassName='h-8 w-16'
-               ariaLabel="Select option" title="Select option"/>
+               ariaLabel='Select option' title='Select option'/>
             </div>
             <div className='w-36'>
               <SelectSimple
@@ -179,7 +179,7 @@ function QuestionIllustrationEditorContent(): React.JSX.Element {
                 }}
                 options={LAYOUT_OPTIONS}
                 triggerClassName='h-8'
-               ariaLabel="Select option" title="Select option"/>
+               ariaLabel='Select option' title='Select option'/>
             </div>
             <Button
               type='button'

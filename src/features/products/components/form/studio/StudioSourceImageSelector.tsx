@@ -33,7 +33,8 @@ export function StudioSourceImageSelector(): React.JSX.Element {
                     ? 'border-emerald-400/80 bg-emerald-500/10'
                     : 'border-border/60 hover:border-emerald-400/40'
                 )}
-              >
+                aria-label={preview.label}
+                title={preview.label}>
                 <Image
                   src={preview.src}
                   alt={preview.label}

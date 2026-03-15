@@ -108,7 +108,8 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
                       ? 'border border-white/20 bg-white/10 text-white'
                       : 'border border-transparent text-gray-300 hover:bg-white/5'
                   }`}
-                >
+                  aria-label={'Icon'}
+                  title={'Icon'}>
                   <Icon className='size-3.5' />
                   <Hint size='xs' uppercase className='font-semibold'>
                     {tab.label}

@@ -595,7 +595,7 @@ export function RunHistoryPanel(): React.JSX.Element {
                             )}
                             triggerClassName='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'
                             placeholder='Select node'
-                           ariaLabel="Select node" title="Select node"/>
+                           ariaLabel='Select node' title='Select node'/>
                         ) : (
                           <div className='text-[11px] text-gray-400'>
                             {runHistoryOptions[0]?.label ?? 'No nodes'}

@@ -67,7 +67,7 @@ function Asset3DResourceCard(): JSX.Element {
               e.stopPropagation();
               runtime.onEditAsset();
             }}
-          >
+            title={'Edit asset'}>
             <Edit2 className='h-4 w-4' />
           </Button>
           <Button
@@ -81,7 +81,7 @@ function Asset3DResourceCard(): JSX.Element {
             }}
             disabled={isDeleting}
             loading={isDeleting}
-          >
+            title={'Delete asset'}>
             <Trash2 className='h-4 w-4' />
           </Button>
         </div>

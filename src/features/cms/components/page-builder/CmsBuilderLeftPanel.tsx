@@ -16,11 +16,13 @@ export type LeftPanelMode = 'sections' | 'theme' | 'menu' | 'app-embeds' | 'stru
 export interface CmsBuilderLeftPanelProps {
   variant?: 'standard' | 'kangur';
   themePanel?: React.ReactNode;
+  onModeChange?: (mode: LeftPanelMode) => void;
 }
 
 export function CmsBuilderLeftPanel({
   variant = 'standard',
   themePanel,
+  onModeChange,
 }: CmsBuilderLeftPanelProps): React.JSX.Element {
   const { state, dispatch } = usePageBuilder();
   const [leftPanelMode, setLeftPanelMode] = React.useState<LeftPanelMode>(
@@ -115,7 +117,7 @@ export function CmsBuilderLeftPanel({
         variant='ghost'
         className='h-6 w-6 p-0 text-gray-500 hover:text-gray-300'
         aria-label='Hide left panel'
-      >
+        title={'Hide left panel'}>
         <PanelLeftClose className='size-3.5' />
       </Button>
     </div>
@@ -129,6 +131,10 @@ export function CmsBuilderLeftPanel({
     if (leftPanelMode === 'app-embeds') return 'App embeds';
     return 'Panel';
   }, [leftPanelMode, isKangur]);
+
+  React.useEffect((): void => {
+    onModeChange?.(leftPanelMode);
+  }, [leftPanelMode, onModeChange]);
 
   React.useEffect((): (() => void) | void => {
     if (typeof window === 'undefined') return undefined;

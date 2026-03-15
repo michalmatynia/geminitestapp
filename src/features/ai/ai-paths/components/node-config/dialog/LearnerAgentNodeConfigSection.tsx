@@ -64,7 +64,7 @@ export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
           }
           options={agentOptions}
           placeholder='Select learner agent'
-         ariaLabel="Select learner agent" title="Select learner agent"/>
+         ariaLabel='Select learner agent' title='Select learner agent'/>
       </FormField>
 
       {agentsQuery.isLoading && (
@@ -104,7 +104,7 @@ export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
             })
           }
           placeholder='Use {{context}} / {{bundle}} placeholders to build the question.'
-         aria-label="Use {{context}} / {{bundle}} placeholders to build the question." title="Use {{context}} / {{bundle}} placeholders to build the question."/>
+         aria-label='Use {{context}} / {{bundle}} placeholders to build the question.' title='Use {{context}} / {{bundle}} placeholders to build the question.'/>
       </FormField>
 
       <Card

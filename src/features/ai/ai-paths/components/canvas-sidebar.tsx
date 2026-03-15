@@ -276,7 +276,7 @@ export function CanvasSidebar(): React.JSX.Element {
               placeholder='Search nodes...'
               aria-label='Search node palette'
               className='h-8 w-full rounded-md border bg-card/70 px-3 text-xs text-white placeholder:text-gray-500'
-             title="Search nodes..."/>
+             title='Search nodes...'/>
             {isPaletteSearchActive ? (
               <p className='mt-1 text-[10px] text-gray-500'>
                 {totalFilteredPaletteItems > 0
@@ -313,7 +313,8 @@ export function CanvasSidebar(): React.JSX.Element {
                           togglePaletteGroup(group.title);
                         }}
                         className='flex w-full items-center justify-between px-3 py-2 text-left transition hover:bg-muted/40'
-                      >
+                        aria-label={'Hint'}
+                        title={'Hint'}>
                         <div className='flex items-center gap-2'>
                           <span className='text-sm'>{group.icon}</span>
                           <Hint size='xs' uppercase className='font-medium text-gray-300'>

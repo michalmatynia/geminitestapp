@@ -42,7 +42,7 @@ export function ConstantNodeConfigSection(): React.JSX.Element | null {
           options={valueTypeOptions}
           placeholder='Select type'
           className='mt-2'
-         ariaLabel="Select type" title="Select type"/>
+         ariaLabel='Select type' title='Select type'/>
       </div>
       <div>
         <Label className='text-xs text-gray-400'>Value</Label>
@@ -55,7 +55,7 @@ export function ConstantNodeConfigSection(): React.JSX.Element | null {
                 constant: { ...constantConfig, value: event.target.value },
               })
             }
-           aria-label="Textarea" title="Textarea"/>
+           aria-label='Textarea' title='Textarea'/>
         ) : (
           <Input
             className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
@@ -65,7 +65,7 @@ export function ConstantNodeConfigSection(): React.JSX.Element | null {
                 constant: { ...constantConfig, value: event.target.value },
               })
             }
-           aria-label="Input field" title="Input field"/>
+           aria-label='Input field' title='Input field'/>
         )}
       </div>
     </div>

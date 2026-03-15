@@ -219,7 +219,7 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
                 !activeTargetEnabledDraft ||
                 settingsValidationErrors.length > 0
               }
-             aria-label="Daily Run Time (Server Local)" title="Daily Run Time (Server Local)"/>
+             aria-label='Daily Run Time (Server Local)' title='Daily Run Time (Server Local)'/>
           </FormField>
         </Card>
         <ToggleRow

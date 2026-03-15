@@ -171,7 +171,7 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
                   }}
                   className='absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600'
                   aria-label='Clear search'
-                >
+                  title={'Clear search'}>
                   <X className='h-4 w-4' />
                 </button>
               )}
@@ -434,7 +434,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
                 })
               }
               className='h-8 text-sm'
-             title="From"/>
+             title='From'/>
             <Input
               type='date'
               placeholder='To'
@@ -448,7 +448,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
                 })
               }
               className='h-8 text-sm'
-             title="To"/>
+             title='To'/>
           </div>
         </div>
       );

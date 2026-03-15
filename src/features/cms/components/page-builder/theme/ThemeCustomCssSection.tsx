@@ -36,7 +36,7 @@ export function ThemeCustomCssSection(): React.JSX.Element {
           placeholder={'.my-class {\n  color: red;\n}'}
           className='w-full bg-card/40 p-2 font-mono text-xs text-gray-300 placeholder:text-gray-600 min-h-[120px]'
           spellCheck={false}
-         title=".my-class {\n  color: red;\n}"/>
+         title='.my-class {\n  color: red;\n}'/>
       </div>
     </div>
   );

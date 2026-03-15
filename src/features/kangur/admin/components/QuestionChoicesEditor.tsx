@@ -129,7 +129,7 @@ export function QuestionChoicesEditor(): React.JSX.Element {
                 className='h-7 w-10 shrink-0 px-1 text-center text-sm font-bold'
                 maxLength={4}
                 aria-label='Choice label'
-               title="Input field"/>
+               title='Input field'/>
 
               <Input
                 value={choice.text}
@@ -147,7 +147,7 @@ export function QuestionChoicesEditor(): React.JSX.Element {
                   onClick={(): void => move(index, index - 1)}
                   disabled={index === 0}
                   aria-label='Move up'
-                >
+                  title={'Move up'}>
                   <ArrowUp className='size-3' />
                 </Button>
                 <Button
@@ -158,7 +158,7 @@ export function QuestionChoicesEditor(): React.JSX.Element {
                   onClick={(): void => move(index, index + 1)}
                   disabled={index === choices.length - 1}
                   aria-label='Move down'
-                >
+                  title={'Move down'}>
                   <ArrowDown className='size-3' />
                 </Button>
                 <Button
@@ -169,7 +169,7 @@ export function QuestionChoicesEditor(): React.JSX.Element {
                   onClick={(): void => removeChoice(index)}
                   disabled={choices.length <= 1}
                   aria-label='Delete choice'
-                >
+                  title={'Delete choice'}>
                   <Trash2 className='size-3' />
                 </Button>
               </div>
@@ -186,7 +186,7 @@ export function QuestionChoicesEditor(): React.JSX.Element {
                     onChange={(event): void => updateDescription(index, event.target.value)}
                     placeholder='Optional learner-facing note or visual description'
                     className='min-h-[72px] text-sm'
-                   aria-label="Optional learner-facing note or visual description" title="Optional learner-facing note or visual description"/>
+                   aria-label='Optional learner-facing note or visual description' title='Optional learner-facing note or visual description'/>
                 </FormField>
                 <div className='space-y-1'>
                   <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>

@@ -67,7 +67,7 @@ export function KangurLessonNavigationWidget({
             size='lg'
             variant='surface'
             data-doc-id='lessons_prev_next'
-            aria-label={`Nastepna lekcja: ${nextLesson.title}`}
+            aria-label={`Następna lekcja: ${nextLesson.title}`}
           >
             <span className='min-w-0 truncate'>{nextLesson.title}</span>
             <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />

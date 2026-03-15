@@ -122,7 +122,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
           )}
           title={versionGraphTooltipsEnabled ? tooltipContent.mergeModeToggle : undefined}
           onClick={onToggleMergeMode}
-        >
+          aria-label={versionGraphTooltipsEnabled ? tooltipContent.mergeModeToggle : undefined}>
           <GitMerge className='size-3' />
         </Button>
 
@@ -148,7 +148,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
             className='size-6 text-gray-400'
             title={versionGraphTooltipsEnabled ? tooltipContent.mergeClearSelection : undefined}
             onClick={onClearMergeSelection}
-          >
+            aria-label={versionGraphTooltipsEnabled ? tooltipContent.mergeClearSelection : undefined}>
             <X className='size-3' />
           </Button>
         ) : null}
@@ -163,7 +163,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
           )}
           title={versionGraphTooltipsEnabled ? tooltipContent.compositeModeToggle : undefined}
           onClick={onToggleCompositeMode}
-        >
+          aria-label={versionGraphTooltipsEnabled ? tooltipContent.compositeModeToggle : undefined}>
           <Layers className='size-3' />
         </Button>
 
@@ -189,7 +189,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
             className='size-6 text-gray-400'
             title={versionGraphTooltipsEnabled ? tooltipContent.compositeClearSelection : undefined}
             onClick={onClearCompositeSelection}
-          >
+            aria-label={versionGraphTooltipsEnabled ? tooltipContent.compositeClearSelection : undefined}>
             <X className='size-3' />
           </Button>
         ) : null}
@@ -204,7 +204,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
           )}
           title={versionGraphTooltipsEnabled ? tooltipContent.compareModeToggle : undefined}
           onClick={onToggleCompareMode}
-        >
+          aria-label={versionGraphTooltipsEnabled ? tooltipContent.compareModeToggle : undefined}>
           <Columns2 className='size-3' />
         </Button>
 
@@ -219,7 +219,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
           className='size-6'
           title={versionGraphTooltipsEnabled ? tooltipContent.collapseAll : undefined}
           onClick={onCollapseAll}
-        >
+          aria-label={versionGraphTooltipsEnabled ? tooltipContent.collapseAll : undefined}>
           <ChevronUp className='size-3' />
         </Button>
         <Button
@@ -228,7 +228,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
           className='size-6'
           title={versionGraphTooltipsEnabled ? tooltipContent.expandAll : undefined}
           onClick={onExpandAll}
-        >
+          aria-label={versionGraphTooltipsEnabled ? tooltipContent.expandAll : undefined}>
           <ChevronDown className='size-3' />
         </Button>
 
@@ -239,7 +239,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
           className={cn('size-6', showStats && 'bg-accent')}
           title={versionGraphTooltipsEnabled ? tooltipContent.statsToggle : undefined}
           onClick={onToggleStats}
-        >
+          aria-label={versionGraphTooltipsEnabled ? tooltipContent.statsToggle : undefined}>
           <BarChart3 className='size-3' />
         </Button>
 
@@ -251,7 +251,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
             className={cn('size-6', showMinimap && 'bg-accent')}
             title={versionGraphTooltipsEnabled ? tooltipContent.minimapToggle : undefined}
             onClick={onToggleMinimap}
-          >
+            aria-label={versionGraphTooltipsEnabled ? tooltipContent.minimapToggle : undefined}>
             <Map className='size-3' />
           </Button>
         ) : null}
@@ -264,7 +264,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
           title={versionGraphTooltipsEnabled ? tooltipContent.exportPng : undefined}
           disabled={exporting || nodeCount === 0}
           onClick={onExportPng}
-        >
+          aria-label={versionGraphTooltipsEnabled ? tooltipContent.exportPng : undefined}>
           <Download className='size-3' />
         </Button>
 
@@ -300,7 +300,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
           className='size-6'
           title={versionGraphTooltipsEnabled ? tooltipContent.zoomOut : undefined}
           onClick={() => onSetZoom((z) => Math.max(0.25, z - ZOOM_BUTTON_STEP))}
-        >
+          aria-label={versionGraphTooltipsEnabled ? tooltipContent.zoomOut : undefined}>
           <Minus className='size-3' />
         </Button>
         <span className='min-w-[36px] text-center text-[10px] text-gray-400'>
@@ -312,7 +312,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
           className='size-6'
           title={versionGraphTooltipsEnabled ? tooltipContent.zoomIn : undefined}
           onClick={() => onSetZoom((z) => Math.min(3, z + ZOOM_BUTTON_STEP))}
-        >
+          aria-label={versionGraphTooltipsEnabled ? tooltipContent.zoomIn : undefined}>
           <Plus className='size-3' />
         </Button>
         <Button
@@ -321,7 +321,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
           className='size-6'
           title={versionGraphTooltipsEnabled ? tooltipContent.fitToView : undefined}
           onClick={onFitToView}
-        >
+          aria-label={versionGraphTooltipsEnabled ? tooltipContent.fitToView : undefined}>
           <Maximize2 className='size-3' />
         </Button>
       </div>

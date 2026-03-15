@@ -43,7 +43,7 @@ export function SubgraphNodeConfigSection(): React.JSX.Element | null {
           value={subgraphConfig.pathId ?? ''}
           aria-label='Subgraph path ID'
           onChange={handleFieldChange('pathId')}
-         title="e.g. path_123"/>
+         title='e.g. path_123'/>
         <p className='mt-1 text-[11px] text-gray-500'>
           ID of the AI Path to invoke as a subgraph. By default this is prefilled with the current
           path ID.
@@ -57,7 +57,7 @@ export function SubgraphNodeConfigSection(): React.JSX.Element | null {
           value={subgraphConfig.triggerNodeId ?? ''}
           aria-label='Subgraph trigger node ID'
           onChange={handleFieldChange('triggerNodeId')}
-         title="Node ID inside the subgraph to treat as trigger"/>
+         title='Node ID inside the subgraph to treat as trigger'/>
         <p className='mt-1 text-[11px] text-gray-500'>
           If empty, the subgraph&apos;s own trigger node will be used.
         </p>
@@ -70,7 +70,7 @@ export function SubgraphNodeConfigSection(): React.JSX.Element | null {
           value={subgraphConfig.subgraphName ?? ''}
           aria-label='Subgraph name'
           onChange={handleFieldChange('subgraphName')}
-         title="e.g. enrichment_subgraph"/>
+         title='e.g. enrichment_subgraph'/>
       </div>
       <div className='space-y-2'>
         <Label className='text-xs text-gray-400'>Input mapping JSON (optional)</Label>
@@ -80,7 +80,8 @@ export function SubgraphNodeConfigSection(): React.JSX.Element | null {
           value={subgraphConfig.inputMappingJson ?? ''}
           aria-label='Input mapping JSON'
           onChange={handleFieldChange('inputMappingJson')}
-         title="{\n  \"value\": \"subgraphInput\",\n  \"context\": \"subgraphContext\"\n}"/>
+          title={'{\n  "value": "subgraphInput",\n  "context": "subgraphContext"\n}'}
+        />
         <p className='mt-1 text-[11px] text-gray-500'>
           Optional mapping from this node&apos;s inputs to subgraph inputs. Keys are local input
           port names, values are subgraph input port names.
@@ -94,7 +95,8 @@ export function SubgraphNodeConfigSection(): React.JSX.Element | null {
           value={subgraphConfig.outputMappingJson ?? ''}
           aria-label='Output mapping JSON'
           onChange={handleFieldChange('outputMappingJson')}
-         title="{\n  \"subgraphResult\": \"value\"\n}"/>
+          title={'{\n  "subgraphResult": "value"\n}'}
+        />
         <p className='mt-1 text-[11px] text-gray-500'>
           Optional mapping from subgraph outputs back to this node&apos;s outputs. Keys are subgraph
           output port names, values are local output port names.

@@ -48,7 +48,7 @@ export function CaseListSorting({ className = '' }: CaseListSortingProps): React
           className='w-40 shrink-0'
           triggerClassName='h-8 text-xs'
           ariaLabel='Sort cases by'
-         title="Select option"/>
+         title='Select option'/>
         <Button
           variant='outline'
           size='sm'

@@ -94,7 +94,7 @@ export function JobQueueControls(): React.JSX.Element {
             }))}
             ariaLabel='Base interval'
             triggerClassName='h-7 w-[110px] border-border bg-card/70 text-[11px] text-white'
-           title="Select option"/>
+           title='Select option'/>
         </div>
         <Button
           type='button'

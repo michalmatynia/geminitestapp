@@ -195,7 +195,7 @@ function KangurTestQuestionEditorContent({
                   }}
                   options={POINT_VALUE_OPTIONS}
                   triggerClassName='h-9'
-                 ariaLabel="Select option" title="Select option"/>
+                 ariaLabel='Select option' title='Select option'/>
               </div>
             </div>
           </div>
@@ -444,7 +444,7 @@ function KangurTestQuestionEditorContent({
               }}
               options={PRESENTATION_LAYOUT_OPTIONS}
               triggerClassName='h-9'
-             ariaLabel="Select option" title="Select option"/>
+             ariaLabel='Select option' title='Select option'/>
           </div>
           <div className='space-y-1'>
             <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
@@ -466,7 +466,7 @@ function KangurTestQuestionEditorContent({
               }}
               options={CHOICE_STYLE_OPTIONS}
               triggerClassName='h-9'
-             ariaLabel="Select option" title="Select option"/>
+             ariaLabel='Select option' title='Select option'/>
           </div>
           {formData.editorial.auditFlags.length > 0 ? (
             <div className='space-y-2 md:col-span-2'>
@@ -498,7 +498,7 @@ function KangurTestQuestionEditorContent({
             onChange={(e): void => updateFormData({ prompt: e.target.value })}
             placeholder='Enter the question text. You can use $$formula$$ markers for math expressions.'
             className='min-h-[100px]'
-           aria-label="Enter the question text. You can use $$formula$$ markers for math expressions." title="Enter the question text. You can use $$formula$$ markers for math expressions."/>
+           aria-label='Enter the question text. You can use $$formula$$ markers for math expressions.' title='Enter the question text. You can use $$formula$$ markers for math expressions.'/>
           <div className='text-xs text-muted-foreground'>
             This prompt is also mirrored into the structured question-content engine so richer
             layouts can evolve without migrating the data again.
@@ -526,7 +526,7 @@ function KangurTestQuestionEditorContent({
             onChange={(e): void => updateFormData({ explanation: e.target.value })}
             placeholder='Step-by-step explanation of why the correct answer is correct.'
             className='min-h-[80px]'
-           aria-label="Step-by-step explanation of why the correct answer is correct." title="Step-by-step explanation of why the correct answer is correct."/>
+           aria-label='Step-by-step explanation of why the correct answer is correct.' title='Step-by-step explanation of why the correct answer is correct.'/>
           <div className='text-xs text-muted-foreground'>
             Add the learner-facing explanation here. Imported legacy questions keep any review
             flags above until they are repaired.

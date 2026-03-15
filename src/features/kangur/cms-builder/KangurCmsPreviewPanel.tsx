@@ -562,7 +562,7 @@ export function KangurCmsPreviewPanel({
               className='text-gray-400 hover:text-white'
               disabled={state.history.past.length === 0}
               aria-label='Undo'
-            >
+              title={'Undo'}>
               <Undo2 className='size-4' />
             </Button>
             <Button
@@ -572,7 +572,7 @@ export function KangurCmsPreviewPanel({
               className='text-gray-400 hover:text-white'
               disabled={state.history.future.length === 0}
               aria-label='Redo'
-            >
+              title={'Redo'}>
               <Redo2 className='size-4' />
             </Button>
             <Button

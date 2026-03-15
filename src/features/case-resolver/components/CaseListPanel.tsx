@@ -738,7 +738,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
                 onClick={() => {
                   handleCreateCaseLocal(null);
                 }}
-              >
+                title={'Create new case'}>
                 <PlusIcon className='h-6 w-6' />
               </Button>
             </div>
@@ -784,7 +784,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
               onClick={() => {
                 handleCreateCaseLocal(null);
               }}
-            >
+              title={'Create new case'}>
               <PlusIcon className='h-6 w-6' />
             </Button>
           </Card>

@@ -146,7 +146,7 @@ function renderFieldGroups(
                   }}
                   className='text-xs h-7 px-1.5'
                   aria-label={`${label} ${side}`.trim()}
-                 title="Input field"/>
+                 title='Input field'/>
               </div>
             );
           })}

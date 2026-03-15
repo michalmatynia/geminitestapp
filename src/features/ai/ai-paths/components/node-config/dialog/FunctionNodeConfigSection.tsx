@@ -110,7 +110,7 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
           value={functionConfig.script}
           onChange={handleScriptChange}
           aria-label='Function script'
-         title="// inputs, context are available\nreturn inputs.value;"/>
+         title='// inputs, context are available\nreturn inputs.value;'/>
         <p className='mt-2 text-[11px] text-gray-500'>
           The script runs as <span className='font-mono text-gray-300'>fn(inputs, context)</span>.
           Return either a single value (mapped to{' '}
@@ -133,7 +133,8 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
           value={functionConfig.contextJson ?? ''}
           onChange={handleContextJsonChange}
           aria-label='Context JSON'
-         title="{\"factor\": 2, \"mode\": \"debug\"}"/>
+          title='{"factor": 2, "mode": "debug"}'
+        />
         <p className='mt-2 text-[11px] text-gray-500'>
           Parsed once and passed as <span className='font-mono text-gray-300'>context</span>. If
           invalid, it is ignored.
@@ -178,7 +179,7 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
           ariaLabel='Expected output type'
           placeholder='Any type'
           variant='subtle'
-         title="Any type"/>
+         title='Any type'/>
         <p className='mt-1 text-[11px] text-gray-500'>
           When set, the runtime validates the <span className='font-mono text-gray-300'>value</span>{' '}
           output and fails with{' '}
@@ -198,7 +199,7 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
             value={functionConfig.maxExecutionMs?.toString() ?? ''}
             onChange={handleMaxExecutionMsChange}
             aria-label='Max execution time in milliseconds'
-           title="e.g. 2000"/>
+           title='e.g. 2000'/>
           <p className='mt-1 text-[11px] text-gray-500'>
             Soft limit for this node&apos;s script. If execution exceeds this, the node fails with{' '}
             <span className='font-mono text-gray-300'>FUNCTION_EXECUTION_TIMEOUT</span>.
@@ -216,7 +217,7 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
             value={functionConfig.maxOutputBytes?.toString() ?? ''}
             onChange={handleMaxOutputBytesChange}
             aria-label='Max output size in bytes'
-           title="e.g. 32768"/>
+           title='e.g. 32768'/>
           <p className='mt-1 text-[11px] text-gray-500'>
             Soft limit on serialized outputs. If exceeded, the node fails with{' '}
             <span className='font-mono text-gray-300'>FUNCTION_OUTPUT_TOO_LARGE</span>.

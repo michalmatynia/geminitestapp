@@ -108,7 +108,7 @@ function PaginationPageSize(): React.JSX.Element | null {
           label: String(size),
         }))}
         triggerClassName='h-8 w-20 text-xs'
-       ariaLabel="Select option" title="Select option"/>
+       ariaLabel='Select option' title='Select option'/>
     </div>
   );
 }
@@ -126,7 +126,7 @@ function PaginationControls(): React.JSX.Element {
         disabled={page <= 1 || isLoading}
         className='h-8 w-8 p-0'
         aria-label='Previous page'
-      >
+        title={'Previous page'}>
         <ChevronLeft className='h-4 w-4' aria-hidden='true' />
       </Button>
 
@@ -150,7 +150,7 @@ function PaginationControls(): React.JSX.Element {
         disabled={page >= totalPages || isLoading}
         className='h-8 w-8 p-0'
         aria-label='Next page'
-      >
+        title={'Next page'}>
         <ChevronRight className='h-4 w-4' aria-hidden='true' />
       </Button>
     </div>

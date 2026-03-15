@@ -45,14 +45,14 @@ export function DocumentAddForm(props: DocumentAddFormProps): React.JSX.Element 
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder='e.g. Product naming rules'
-             aria-label="e.g. Product naming rules" title="e.g. Product naming rules"/>
+             aria-label='e.g. Product naming rules' title='e.g. Product naming rules'/>
           </FormField>
           <FormField label='Source (optional)'>
             <Input
               value={source}
               onChange={(e) => setSource(e.target.value)}
               placeholder='e.g. internal wiki'
-             aria-label="e.g. internal wiki" title="e.g. internal wiki"/>
+             aria-label='e.g. internal wiki' title='e.g. internal wiki'/>
           </FormField>
         </div>
         <FormField label='Tags (comma separated)'>
@@ -60,7 +60,7 @@ export function DocumentAddForm(props: DocumentAddFormProps): React.JSX.Element 
             value={tags}
             onChange={(e) => setTags(e.target.value)}
             placeholder='pricing, listings, seo'
-           aria-label="pricing, listings, seo" title="pricing, listings, seo"/>
+           aria-label='pricing, listings, seo' title='pricing, listings, seo'/>
         </FormField>
         <FormField label='Text Content' description='Raw text to be vectorized and stored.'>
           <Textarea
@@ -68,7 +68,7 @@ export function DocumentAddForm(props: DocumentAddFormProps): React.JSX.Element 
             onChange={(e) => setText(e.target.value)}
             placeholder='Paste knowledge content here...'
             className='min-h-[120px] font-mono text-xs'
-           aria-label="Paste knowledge content here..." title="Paste knowledge content here..."/>
+           aria-label='Paste knowledge content here...' title='Paste knowledge content here...'/>
         </FormField>
         <div className='flex justify-end'>
           <Button

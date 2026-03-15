@@ -73,7 +73,7 @@ export function IteratorNodeConfigSection(): React.JSX.Element | null {
               value={value !== undefined ? formatRuntimeValue(value) : ''}
               readOnly
               placeholder='No item emitted yet.'
-             aria-label="No item emitted yet." title="No item emitted yet."/>
+             aria-label='No item emitted yet.' title='No item emitted yet.'/>
           </FormField>
           <FormField label='Callback Input'>
             <Textarea
@@ -83,7 +83,7 @@ export function IteratorNodeConfigSection(): React.JSX.Element | null {
               value={callbackValue !== undefined ? formatRuntimeValue(callbackValue) : ''}
               readOnly
               placeholder='Connect a downstream output to the callback input to advance.'
-             aria-label="Connect a downstream output to the callback input to advance." title="Connect a downstream output to the callback input to advance."/>
+             aria-label='Connect a downstream output to the callback input to advance.' title='Connect a downstream output to the callback input to advance.'/>
           </FormField>
         </div>
 
@@ -126,7 +126,7 @@ export function IteratorNodeConfigSection(): React.JSX.Element | null {
                   },
                 });
               }}
-             aria-label="Max steps" title="Max steps"/>
+             aria-label='Max steps' title='Max steps'/>
           </FormField>
         </div>
       </Card>

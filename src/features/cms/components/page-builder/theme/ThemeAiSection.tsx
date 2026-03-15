@@ -37,7 +37,7 @@ export function ThemeAiSection(): React.JSX.Element {
           disabled
           aria-label='Provider'
           className='cursor-not-allowed'
-         title="Input field"/>
+         title='Input field'/>
       </div>
       <div className='space-y-1.5'>
         <Label className='text-xs text-gray-400'>
@@ -53,7 +53,7 @@ export function ThemeAiSection(): React.JSX.Element {
           disabled
           aria-label={brainAiProvider === 'agent' ? 'Deepthinking agent' : 'Model'}
           className='cursor-not-allowed'
-         title="Input field"/>
+         title='Input field'/>
       </div>
       <div className='space-y-1.5'>
         <Label className='text-xs text-gray-400'>Prompt</Label>
@@ -66,7 +66,7 @@ export function ThemeAiSection(): React.JSX.Element {
           placeholder='Describe the theme you want (e.g. cinematic dark with neon accents).'
           className='min-h-[90px] text-xs'
           spellCheck={false}
-         title="Describe the theme you want (e.g. cinematic dark with neon accents)."/>
+         title='Describe the theme you want (e.g. cinematic dark with neon accents).'/>
       </div>
       <div className='text-[11px] text-gray-500'>
         Use <span className='font-mono text-gray-300'>{'{{theme_context}}'}</span> to inject current
@@ -96,7 +96,7 @@ export function ThemeAiSection(): React.JSX.Element {
             readOnly
             aria-label='AI output'
             className='min-h-[90px] text-xs font-mono text-gray-300'
-           title="Textarea"/>
+           title='Textarea'/>
         </div>
       )}
       {schemeAiPreview && (

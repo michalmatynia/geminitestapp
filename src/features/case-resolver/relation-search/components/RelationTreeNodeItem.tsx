@@ -99,7 +99,7 @@ export function RelationTreeNodeItem(props: RelationTreeNodeItemProps): React.JS
               toggleExpand();
             }}
             aria-label={isExpanded ? 'Collapse' : 'Expand'}
-          >
+            title={isExpanded ? 'Collapse' : 'Expand'}>
             {isExpanded ? (
               <ChevronDown className='size-3.5' />
             ) : (
@@ -169,7 +169,7 @@ export function RelationTreeNodeItem(props: RelationTreeNodeItemProps): React.JS
               onArmDragHandle?.(row.file.id);
             }}
             aria-label='Drag handle'
-          >
+            title={'Drag handle'}>
             <GripVertical className='size-3.5' />
           </button>
         </Tooltip>
@@ -201,7 +201,7 @@ export function RelationTreeNodeItem(props: RelationTreeNodeItemProps): React.JS
             onLinkFile?.(row.file.id);
           }}
           aria-label={`Link ${row.file.name}`}
-        >
+          title={`Link ${row.file.name}`}>
           <Plus className='size-3.5' />
         </Button>
       ) : (
@@ -215,7 +215,7 @@ export function RelationTreeNodeItem(props: RelationTreeNodeItemProps): React.JS
             onAddFile?.(row.file.id);
           }}
           aria-label={`Add ${row.file.name} to canvas`}
-        >
+          title={`Add ${row.file.name} to canvas`}>
           <Plus className='size-3.5' />
         </Button>
       )}

@@ -85,7 +85,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
               { value: 'replace', label: 'Replace' },
               { value: 'append', label: 'Append' },
             ]}
-           ariaLabel="Write Mode" title="Write Mode"/>
+           ariaLabel='Write Mode' title='Write Mode'/>
         </FormField>
       )}
 
@@ -111,7 +111,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                 { value: 'custom', label: 'Custom Template' },
                 { value: 'mapping', label: 'Field Mapping' },
               ]}
-             ariaLabel="Update Payload Mode" title="Update Payload Mode"/>
+             ariaLabel='Update Payload Mode' title='Update Payload Mode'/>
           </FormField>
 
           {updatePayloadMode === 'mapping' && (
@@ -146,7 +146,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                         }
                         aria-label='Target path'
                         placeholder='Target path (e.g. description_pl)'
-                       title="Target path (e.g. description_pl)"/>
+                       title='Target path (e.g. description_pl)'/>
                       <SelectSimple
                         size='sm'
                         variant='subtle'
@@ -160,7 +160,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                           label: formatPortLabel(port),
                         }))}
                         placeholder='Source port'
-                       title="Source port"/>
+                       title='Source port'/>
                       <Input
                         variant='subtle'
                         size='sm'
@@ -170,7 +170,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                         }
                         aria-label='Source path'
                         placeholder='Source path (optional)'
-                       title="Source path (optional)"/>
+                       title='Source path (optional)'/>
                       <Button
                         type='button'
                         variant='outline'
@@ -215,7 +215,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                 label: option.label,
               }))}
               placeholder='Collection type'
-             ariaLabel="Collection type" title="Collection type"/>
+             ariaLabel='Collection type' title='Collection type'/>
           </FormField>
 
           <FormField
@@ -236,7 +236,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                 label: formatPortLabel(port),
               }))}
               placeholder='Select payload input'
-             ariaLabel="Select payload input" title="Select payload input"/>
+             ariaLabel='Select payload input' title='Select payload input'/>
           </FormField>
 
           <FormField
@@ -257,7 +257,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                   })
                 }
                 placeholder='payload.subset'
-               aria-label="payload.subset" title="payload.subset"/>
+               aria-label='payload.subset' title='payload.subset'/>
               {writeSource === 'bundle' && bundleKeys.size > 0 && (
                 <SelectSimple
                   size='xs'
@@ -276,7 +276,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                     label: formatPortLabel(key),
                   }))}
                   placeholder='Pick bundle key'
-                 ariaLabel="Pick bundle key" title="Pick bundle key"/>
+                 ariaLabel='Pick bundle key' title='Pick bundle key'/>
               )}
             </div>
           </FormField>
@@ -301,7 +301,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
               label: option.label,
             }))}
             placeholder='Collection type'
-           ariaLabel="Collection type" title="Collection type"/>
+           ariaLabel='Collection type' title='Collection type'/>
         </FormField>
       )}
 
@@ -328,7 +328,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
               { value: 'fail', label: 'Fail run when 0 records affected' },
               { value: 'warn', label: 'Warn only when 0 records affected' },
             ]}
-           ariaLabel="Write Outcome Policy" title="Write Outcome Policy"/>
+           ariaLabel='Write Outcome Policy' title='Write Outcome Policy'/>
         </FormField>
       )}
 
@@ -367,7 +367,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                   value={normalizedGuardTargetPath ?? CANONICAL_PARAMETER_INFERENCE_TARGET_PATH}
                   placeholder='parameters'
                   readOnly
-                 aria-label="parameters" title="parameters"/>
+                 aria-label='parameters' title='parameters'/>
               </FormField>
 
               <FormField
@@ -384,7 +384,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                     label: formatPortLabel(port),
                   }))}
                   placeholder='Select port'
-                 ariaLabel="Select port" title="Select port"/>
+                 ariaLabel='Select port' title='Select port'/>
               </FormField>
 
               <FormField label='Definitions path (optional)'>
@@ -396,7 +396,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                     updateGuard({ definitionsPath: e.target.value || undefined })
                   }
-                 aria-label="e.g. definitions or data.items" title="e.g. definitions or data.items"/>
+                 aria-label='e.g. definitions or data.items' title='e.g. definitions or data.items'/>
               </FormField>
 
               <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>

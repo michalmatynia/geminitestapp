@@ -147,7 +147,7 @@ export function MarkdownToolbar(props: MarkdownToolbarProps): React.JSX.Element 
             variant='outline'
             className='h-7 px-2 text-xs text-gray-200'
             title='Undo'
-          >
+            aria-label={'Undo'}>
             <Undo className='size-3.5' />
           </Button>
           <Button
@@ -157,7 +157,7 @@ export function MarkdownToolbar(props: MarkdownToolbarProps): React.JSX.Element 
             variant='outline'
             className='h-7 px-2 text-xs text-gray-200'
             title='Redo'
-          >
+            aria-label={'Redo'}>
             <Redo className='size-3.5' />
           </Button>
 
@@ -294,7 +294,7 @@ export function MarkdownToolbar(props: MarkdownToolbarProps): React.JSX.Element 
               placeholder='Insert File'
               triggerClassName='h-7 rounded border bg-card/40 px-2 text-xs text-gray-200'
               contentClassName='border-border bg-card text-white'
-             ariaLabel="Insert File" title="Insert File"/>
+             ariaLabel='Insert File' title='Insert File'/>
           ) : null}
 
           <div className='ml-2 flex items-center gap-2 border-l border-border pl-2'>
@@ -311,7 +311,7 @@ export function MarkdownToolbar(props: MarkdownToolbarProps): React.JSX.Element 
               ]}
               triggerClassName='h-7 rounded border bg-card/40 px-2 text-xs text-gray-200'
               contentClassName='border-border bg-card text-white'
-             ariaLabel="Select option" title="Select option"/>
+             ariaLabel='Select option' title='Select option'/>
           </div>
 
           <div className='flex items-center gap-2'>
@@ -323,7 +323,7 @@ export function MarkdownToolbar(props: MarkdownToolbarProps): React.JSX.Element 
                 onTextColorChange(event.target.value);
               }}
               className='h-7 w-10 border-none bg-card/40 p-0'
-             aria-label="Input field" title="Input field"/>
+             aria-label='Input field' title='Input field'/>
           </div>
           <Button
             type='button'

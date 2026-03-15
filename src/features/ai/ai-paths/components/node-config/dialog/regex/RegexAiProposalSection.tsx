@@ -50,7 +50,7 @@ export function RegexAiProposalSection(
               { value: 'manual', label: 'Manual' },
               { value: 'ai', label: 'AI Proposal' },
             ]}
-           title="Select variant"/>
+           title='Select variant'/>
           <div className='text-[11px] text-gray-500'>Switch between manual and AI proposal.</div>
         </div>
       )}

@@ -29,7 +29,7 @@ export function FileManagerBulkActions(): React.JSX.Element {
         value={bulkTagInput}
         onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setBulkTagInput(e.target.value)}
         className='w-full md:w-72 p-2 bg-gray-800 rounded'
-       aria-label="Tags to apply (comma-separated)" title="Tags to apply (comma-separated)"/>
+       aria-label='Tags to apply (comma-separated)' title='Tags to apply (comma-separated)'/>
       <SelectSimple
         size='sm'
         value={bulkTagMode}
@@ -40,7 +40,7 @@ export function FileManagerBulkActions(): React.JSX.Element {
         ]}
         className='w-full md:w-32'
         triggerClassName='text-sm'
-       ariaLabel="Select option" title="Select option"/>
+       ariaLabel='Select option' title='Select option'/>
       <Button
         size='sm'
         onClick={(): void => {

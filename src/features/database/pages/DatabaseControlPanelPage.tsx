@@ -201,7 +201,7 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
                   ...jsonBackups.map((name: string) => ({ value: name, label: name })),
                 ]}
                 triggerClassName='w-[200px]'
-               ariaLabel="Select backup to restore" title="Select backup to restore"/>
+               ariaLabel='Select backup to restore' title='Select backup to restore'/>
             </FormField>
             <Button
               variant='outline'

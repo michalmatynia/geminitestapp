@@ -96,7 +96,7 @@ export function Drawer(props: DrawerProps): React.JSX.Element | null {
                   onClick={onClose}
                   className='h-7 w-7'
                   aria-label='Close drawer'
-                >
+                  title={'Close drawer'}>
                   <XIcon className='size-4' aria-hidden='true' />
                 </Button>
               ) : null}

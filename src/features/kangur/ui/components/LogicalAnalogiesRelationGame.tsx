@@ -571,6 +571,7 @@ export default function LogicalAnalogiesRelationGame({
                             })}
                             disabled={checked}
                             aria-pressed={selectedTokenId === token.id}
+                            aria-label={`Relacja: ${token.label}`}
                             aria-describedby={`${instructionsId} ${hintId}`}
                             role='listitem'
                             onMouseEnter={() => setHoveredRelationId(token.id)}

@@ -38,7 +38,7 @@ function ConnectionsTab(): React.ReactNode {
           aria-label='Data source'
           placeholder='e.g. product, collection, hero'
           className='h-8 text-xs'
-         title="e.g. product, collection, hero"/>
+         title='e.g. product, collection, hero'/>
       </div>
       <div className='space-y-2'>
         <Label className='text-xs text-gray-400'>Key path</Label>
@@ -50,7 +50,7 @@ function ConnectionsTab(): React.ReactNode {
           aria-label='Key path'
           placeholder='e.g. title, hero.text'
           className='h-8 text-xs'
-         title="e.g. title, hero.text"/>
+         title='e.g. title, hero.text'/>
       </div>
       <div className='space-y-2'>
         <Label className='text-xs text-gray-400'>Fallback</Label>
@@ -62,7 +62,7 @@ function ConnectionsTab(): React.ReactNode {
           aria-label='Fallback'
           placeholder='Optional fallback text'
           className='h-8 text-xs'
-         title="Optional fallback text"/>
+         title='Optional fallback text'/>
       </div>
       <div className='flex items-center gap-2 text-xs text-gray-400'>
         <Checkbox

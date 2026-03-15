@@ -43,7 +43,7 @@ export function FilterBar(): React.JSX.Element {
           className='w-[130px]'
           value={dateFrom ?? ''}
           onChange={(e) => setDateFrom(e.target.value || null)}
-         aria-label="Input field" title="Input field"/>
+         aria-label='Input field' title='Input field'/>
       </div>
       <div className='flex items-center gap-1'>
         <span className='text-[10px] text-gray-500'>To:</span>
@@ -53,7 +53,7 @@ export function FilterBar(): React.JSX.Element {
           className='w-[130px]'
           value={dateTo ?? ''}
           onChange={(e) => setDateTo(e.target.value || null)}
-         aria-label="Input field" title="Input field"/>
+         aria-label='Input field' title='Input field'/>
       </div>
       <SelectSimple
         size='xs'
@@ -64,7 +64,7 @@ export function FilterBar(): React.JSX.Element {
         options={tagOpts}
         className='w-[130px]'
         ariaLabel='Filter by tag'
-       title="Any tag"/>
+       title='Any tag'/>
       <SelectSimple
         size='xs'
         variant='subtle'
@@ -74,7 +74,7 @@ export function FilterBar(): React.JSX.Element {
         options={catOpts}
         className='w-[130px]'
         ariaLabel='Filter by category'
-       title="Any category"/>
+       title='Any category'/>
       <div className='flex-1' />
       {filtersActiveCount > 0 && (
         <Button

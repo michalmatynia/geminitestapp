@@ -113,7 +113,7 @@ export const ProductListHeader = memo(function ProductListHeader({
         size='icon-lg'
         variant='outline'
         aria-label='Create new product'
-      >
+        title={'Create new product'}>
         <PlusIcon className='h-6 w-6' />
       </Button>
       <div className='flex flex-wrap items-center gap-1.5'>
@@ -157,7 +157,7 @@ export const ProductListHeader = memo(function ProductListHeader({
         className='w-40 shrink-0'
         triggerClassName='h-8 text-xs'
         ariaLabel='Select product name language'
-       title="Language"/>
+       title='Language'/>
 
       <SelectSimple
         size='sm'
@@ -168,7 +168,7 @@ export const ProductListHeader = memo(function ProductListHeader({
         className='w-28 shrink-0'
         triggerClassName='h-8 text-xs'
         ariaLabel='Select currency'
-       title="Currency"/>
+       title='Currency'/>
 
       <SelectSimple
         size='sm'
@@ -183,7 +183,7 @@ export const ProductListHeader = memo(function ProductListHeader({
         className='w-48 shrink-0'
         triggerClassName='h-8 text-xs'
         ariaLabel='Filter by catalog'
-       title="Catalog"/>
+       title='Catalog'/>
 
       <div className='inline-flex shrink-0 items-center gap-2'>
         <TriggerButtonBar

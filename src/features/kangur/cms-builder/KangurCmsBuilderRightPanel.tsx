@@ -1,9 +1,25 @@
 'use client';
 
+import type { ThemeSettings } from '@/shared/contracts/cms-theme';
+import type { KangurThemeMode } from '@/features/kangur/admin/components/KangurThemeSettingsPanel';
 import { ComponentSettingsPanel, usePageBuilder } from '@/features/cms/public';
 import { SidePanel } from '@/shared/ui';
 
-export function KangurCmsBuilderRightPanel(): React.JSX.Element {
+import { KangurThemePreviewPanel } from './KangurThemePreviewPanel';
+
+type KangurCmsBuilderRightPanelProps = {
+  showThemePreview?: boolean;
+  themePreviewSection?: string | null;
+  themePreviewTheme?: ThemeSettings;
+  themePreviewMode?: KangurThemeMode;
+};
+
+export function KangurCmsBuilderRightPanel({
+  showThemePreview = false,
+  themePreviewSection = null,
+  themePreviewTheme,
+  themePreviewMode = 'daily',
+}: KangurCmsBuilderRightPanelProps): React.JSX.Element {
   const { state, selectedBlock, selectedColumn, selectedSection } = usePageBuilder();
   const hasSelection = Boolean(selectedSection || selectedBlock || selectedColumn);
 
@@ -15,7 +31,15 @@ export function KangurCmsBuilderRightPanel(): React.JSX.Element {
           : 'w-80 translate-x-0 opacity-100'
       }`}
     >
-      {hasSelection ? (
+      {showThemePreview && themePreviewTheme ? (
+        <SidePanel position='right' width={320} isFocusMode={!state.currentPage}>
+          <KangurThemePreviewPanel
+            section={themePreviewSection}
+            theme={themePreviewTheme}
+            mode={themePreviewMode}
+          />
+        </SidePanel>
+      ) : hasSelection ? (
         <ComponentSettingsPanel />
       ) : (
         <SidePanel

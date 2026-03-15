@@ -260,7 +260,7 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
           }}
           className='h-7 w-7 rounded p-1 text-gray-300 hover:text-white hover:bg-white/10'
           title={isHidden ? 'Show section' : 'Hide section'}
-        >
+          aria-label={isHidden ? 'Show section' : 'Hide section'}>
           {isHidden ? <EyeOff className='size-3.5' /> : <Eye className='size-3.5' />}
         </Button>
         <Button
@@ -273,7 +273,7 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
           }}
           className='h-7 w-7 rounded p-1 text-gray-300 hover:text-red-200 hover:bg-red-500/20'
           title='Delete section'
-        >
+          aria-label={'Delete section'}>
           <Trash2 className='size-3.5' />
         </Button>
       </div>

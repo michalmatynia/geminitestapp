@@ -67,7 +67,7 @@ export function LessonMetadataForm(props: {
                 onValueChange={onComponentChange}
                 options={KANGUR_LESSON_COMPONENT_OPTIONS}
                 triggerClassName='h-10'
-               ariaLabel="Lesson Type" title="Lesson Type"/>
+               ariaLabel='Lesson Type' title='Lesson Type'/>
             </FormField>
           </div>
           <div className='rounded-3xl border border-border/50 bg-card/30 p-4'>
@@ -84,7 +84,7 @@ export function LessonMetadataForm(props: {
                   label: opt.label,
                 }))}
                 triggerClassName='h-10'
-               ariaLabel="Rendering Mode" title="Rendering Mode"/>
+               ariaLabel='Rendering Mode' title='Rendering Mode'/>
             </FormField>
           </div>
         </div>
@@ -99,7 +99,7 @@ export function LessonMetadataForm(props: {
                 }}
                 placeholder='Lesson title'
                 className='h-10'
-               aria-label="Lesson title" title="Lesson title"/>
+               aria-label='Lesson title' title='Lesson title'/>
             </FormField>
 
             <FormField label='Description'>
@@ -110,7 +110,7 @@ export function LessonMetadataForm(props: {
                 }}
                 placeholder='Short lesson description'
                 className='min-h-[120px]'
-               aria-label="Short lesson description" title="Short lesson description"/>
+               aria-label='Short lesson description' title='Short lesson description'/>
             </FormField>
           </div>
         </div>
@@ -144,7 +144,7 @@ export function LessonMetadataForm(props: {
                 placeholder='📚'
                 className='h-10'
                 maxLength={12}
-               aria-label="📚" title="📚"/>
+               aria-label='📚' title='📚'/>
             </FormField>
           </div>
         </div>

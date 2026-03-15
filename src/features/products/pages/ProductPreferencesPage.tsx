@@ -124,7 +124,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                   { value: 'name_pl', label: 'Polish' },
                   { value: 'name_de', label: 'German' },
                 ]}
-               ariaLabel="Product Name Language" title="Product Name Language"/>
+               ariaLabel='Product Name Language' title='Product Name Language'/>
             </FormField>
 
             {/* Default Catalog Filter */}
@@ -148,7 +148,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                     label: catalog.name,
                   })),
                 ]}
-               ariaLabel="Default Catalog Filter" title="Default Catalog Filter"/>
+               ariaLabel='Default Catalog Filter' title='Default Catalog Filter'/>
             </FormField>
 
             {/* Currency Code */}
@@ -166,7 +166,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                   }))
                 }
                 placeholder='EUR, USD, PLN, etc.'
-               aria-label="EUR, USD, PLN, etc." title="EUR, USD, PLN, etc."/>
+               aria-label='EUR, USD, PLN, etc.' title='EUR, USD, PLN, etc.'/>
             </FormField>
 
             {/* Thumbnail Source */}
@@ -188,7 +188,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                   { value: 'link', label: 'URL Links' },
                   { value: 'base64', label: 'Base64' },
                 ]}
-               ariaLabel="Thumbnail Source" title="Thumbnail Source"/>
+               ariaLabel='Thumbnail Source' title='Thumbnail Source'/>
             </FormField>
 
             {/* Page Size */}
@@ -209,7 +209,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                   value: size,
                   label: size,
                 }))}
-               ariaLabel="Products Per Page" title="Products Per Page"/>
+               ariaLabel='Products Per Page' title='Products Per Page'/>
             </FormField>
 
             {/* Filter Toggle Default */}
@@ -230,7 +230,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                   { value: 'shown', label: 'Show Filters' },
                   { value: 'hidden', label: 'Hide Filters' },
                 ]}
-               ariaLabel="Filters Button Default" title="Filters Button Default"/>
+               ariaLabel='Filters Button Default' title='Filters Button Default'/>
             </FormField>
 
             <FormField
@@ -250,7 +250,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                   { value: 'shown', label: 'Show Pills' },
                   { value: 'hidden', label: 'Hide Pills' },
                 ]}
-               ariaLabel="Trigger Run Feedback Pills" title="Trigger Run Feedback Pills"/>
+               ariaLabel='Trigger Run Feedback Pills' title='Trigger Run Feedback Pills'/>
             </FormField>
           </div>
         </FormSection>

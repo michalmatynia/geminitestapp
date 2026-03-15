@@ -5,6 +5,7 @@ import {
   type TargetAndTransition,
   type Transition,
 } from 'framer-motion';
+import { useEffect, useRef } from 'react';
 
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { useKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
@@ -116,6 +117,21 @@ type Props = {
 };
 
 const CONTEXTUAL_PANEL_ENTRY_OFFSET_PX = 84;
+const FOCUSABLE_SELECTOR =
+  'a[href],button:not([disabled]),textarea:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
+const getFocusableElements = (container: HTMLElement | null): HTMLElement[] => {
+  if (!container) {
+    return [];
+  }
+
+  return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+    (element) =>
+      !element.hasAttribute('disabled') &&
+      element.getAttribute('aria-hidden') !== 'true' &&
+      (element.offsetWidth > 0 || element.offsetHeight > 0 || element.getClientRects().length > 0)
+  );
+};
 const SNAP_TARGET_CONTENT_KEYS: Record<
   Exclude<TutorPanelSnapState, 'free'>,
   keyof ReturnType<typeof useKangurAiTutorContent>['panelChrome']['snapTargets']
@@ -209,6 +225,8 @@ export function KangurAiTutorPanelChrome({
   const tutor = useKangurAiTutor();
   const { panelMotionState, panelRef, tutorNarrationRootRef } =
     useKangurAiTutorWidgetStateContext();
+  const panelSurfaceRef = useRef<HTMLDivElement | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
   const {
     narratorSettings,
     tutorNarrationScript,
@@ -311,6 +329,70 @@ export function KangurAiTutorPanelChrome({
             ...(bubbleMode === 'sheet' ? {} : { scale: 0.985 }),
           }
           : { opacity: 0 };
+
+  const shouldTrapFocus =
+    isOpen && !isTutorHidden && (isAskModalMode || (!shouldUseMinimalPanelShell && bubbleMode === 'sheet'));
+
+  useEffect(() => {
+    if (!shouldTrapFocus) {
+      return;
+    }
+
+    const container = panelSurfaceRef.current;
+    if (!container) {
+      return;
+    }
+
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
+
+    const focusables = getFocusableElements(container);
+    const fallbackTarget = container;
+    const target = focusables[0] ?? fallbackTarget;
+    if (typeof target.focus === 'function') {
+      target.focus();
+    }
+
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.key !== 'Tab') {
+        return;
+      }
+
+      const candidates = getFocusableElements(container);
+      if (candidates.length === 0) {
+        event.preventDefault();
+        fallbackTarget.focus();
+        return;
+      }
+
+      const first = candidates[0];
+      const last = candidates[candidates.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      const isShift = event.shiftKey;
+
+      if (isShift) {
+        if (active === first || !container.contains(active)) {
+          event.preventDefault();
+          last.focus();
+        }
+        return;
+      }
+
+      if (active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    container.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      container.removeEventListener('keydown', handleKeyDown);
+      const previousFocus = previousFocusRef.current;
+      if (previousFocus && typeof previousFocus.focus === 'function') {
+        previousFocus.focus();
+      }
+    };
+  }, [shouldTrapFocus]);
 
   return (
     <AnimatePresence>
@@ -486,7 +568,7 @@ export function KangurAiTutorPanelChrome({
                   className={cn('absolute z-10', avatarButtonClassName)}
                   style={attachedAvatarStyle}
                   aria-label={tutorContent.common.closeTutorAria}
-                >
+                  title={tutorContent.common.closeTutorAria}>
                   <KangurAiTutorMoodAvatar
                     svgContent={tutor?.tutorAvatarSvg ?? null}
                     avatarImageUrl={tutor?.tutorAvatarImageUrl ?? null}
@@ -503,6 +585,8 @@ export function KangurAiTutorPanelChrome({
                 data-testid={panelSurfaceTestId}
                 surface='warmGlow'
                 variant='soft'
+                ref={panelSurfaceRef}
+                tabIndex={shouldTrapFocus ? -1 : undefined}
                 className={panelSurfaceClassName}
                 style={panelSurfaceStyle}
               >

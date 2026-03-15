@@ -76,7 +76,7 @@ export function PromptEngineToolbar(): React.JSX.Element {
       actions={
         <>
           {!resolvedEmbedded ? (
-            <Button type='button' variant='outline' asChild>
+            <Button type='button' variant='outline' asChild aria-label={'Open link'} title={'Open link'}>
               <Link href={resolvedBackLinkHref}>{resolvedBackLinkLabel}</Link>
             </Button>
           ) : null}

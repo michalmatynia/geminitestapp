@@ -108,7 +108,7 @@ export default function CreatePagePage(): React.JSX.Element {
                 onChange={(e) => setName(e.target.value)}
                 placeholder='e.g. Summer Collection 2026'
                 className='h-9'
-               aria-label="e.g. Summer Collection 2026" title="e.g. Summer Collection 2026"/>
+               aria-label='e.g. Summer Collection 2026' title='e.g. Summer Collection 2026'/>
             </FormField>
           </FormSection>
 

@@ -1083,7 +1083,7 @@ export function AdminKangurTestSuitesManagerPage({
               onChange={(event): void => setGroupTitle(event.target.value)}
               placeholder='e.g. Olympiad 2024'
               className='h-10'
-             aria-label="e.g. Olympiad 2024" title="e.g. Olympiad 2024"/>
+             aria-label='e.g. Olympiad 2024' title='e.g. Olympiad 2024'/>
             <textarea
               value={groupDescription}
               onChange={(event): void => setGroupDescription(event.target.value)}
@@ -1350,7 +1350,7 @@ export function AdminKangurTestSuitesManagerPage({
             onChange={(event): void => setGroupTitle(event.target.value)}
             placeholder='e.g. Olympiad 2024'
             className='h-9'
-           aria-label="e.g. Olympiad 2024" title="e.g. Olympiad 2024"/>
+           aria-label='e.g. Olympiad 2024' title='e.g. Olympiad 2024'/>
           <textarea
             value={groupDescription}
             onChange={(event): void => setGroupDescription(event.target.value)}

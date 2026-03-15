@@ -1043,7 +1043,7 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
               placeholder='Search prompts, answers, or audit flags...'
               aria-label='Search questions'
               className='h-10 text-sm'
-             title="Search prompts, answers, or audit flags..."/>
+             title='Search prompts, answers, or audit flags...'/>
             <div className='grid gap-3 lg:min-w-[26rem] lg:grid-cols-2'>
               <div className='space-y-2'>
                 <div className='text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground'>
@@ -1138,7 +1138,7 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
                         }}
                         disabled={!canReorder || absoluteIndex === 0 || isSaving}
                         aria-label='Move up'
-                      >
+                        title={'Move up'}>
                         <ArrowUp className='size-3' />
                       </Button>
                       <Button
@@ -1153,7 +1153,7 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
                         }}
                         disabled={!canReorder || absoluteIndex === questions.length - 1 || isSaving}
                         aria-label='Move down'
-                      >
+                        title={'Move down'}>
                         <ArrowDown className='size-3' />
                       </Button>
                     </div>
@@ -1267,7 +1267,7 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
                         }}
                         title='Duplicate question'
                         disabled={isSaving}
-                      >
+                        aria-label={'Duplicate question'}>
                         <Copy className='size-3.5' />
                       </button>
                       <button
@@ -1276,7 +1276,7 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
                         onClick={(): void => setQuestionToDelete(q)}
                         title='Delete question'
                         disabled={isSaving}
-                      >
+                        aria-label={'Delete question'}>
                         <Trash2 className='size-3.5' />
                       </button>
                     </div>

@@ -66,7 +66,7 @@ export function FetcherNodeConfigSection(): React.JSX.Element | null {
           }
           options={FETCHER_SOURCE_OPTIONS}
           placeholder='Select source mode'
-         ariaLabel="Select source mode" title="Select source mode"/>
+         ariaLabel='Select source mode' title='Select source mode'/>
       </FormField>
 
       {needsSimulationTarget ? (
@@ -86,7 +86,7 @@ export function FetcherNodeConfigSection(): React.JSX.Element | null {
               }
               options={collectionOptions}
               placeholder='Select collection'
-             ariaLabel="Select collection" title="Select collection"/>
+             ariaLabel='Select collection' title='Select collection'/>
           </FormField>
           <FormField label='Document ID'>
             <Input
@@ -102,7 +102,7 @@ export function FetcherNodeConfigSection(): React.JSX.Element | null {
                   },
                 })
               }
-             aria-label="Document ID" title="Document ID"/>
+             aria-label='Document ID' title='Document ID'/>
           </FormField>
         </>
       ) : null}

@@ -672,6 +672,7 @@ export default function LogicalClassificationGame({
                       isWrong && 'ring-2 ring-rose-400/80'
                     )}
                     aria-pressed={isSelected}
+                    aria-label={`Wybierz intruza: ${item.label}`}
                   >
                     <span>{item.emoji}</span>
                     <span className='text-xs text-slate-600'>{item.label}</span>

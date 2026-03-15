@@ -39,7 +39,7 @@ export function AudioOscillatorNodeConfigSection(): React.JSX.Element | null {
           }
           options={waveformOptions}
           placeholder='Select waveform'
-         ariaLabel="Select waveform" title="Select waveform"/>
+         ariaLabel='Select waveform' title='Select waveform'/>
       </FormField>
 
       <FormField label='Frequency (Hz)'>
@@ -59,7 +59,7 @@ export function AudioOscillatorNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-         aria-label="Frequency (Hz)" title="Frequency (Hz)"/>
+         aria-label='Frequency (Hz)' title='Frequency (Hz)'/>
       </FormField>
 
       <FormField label='Gain (0-1)'>
@@ -79,7 +79,7 @@ export function AudioOscillatorNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-         aria-label="Gain (0-1)" title="Gain (0-1)"/>
+         aria-label='Gain (0-1)' title='Gain (0-1)'/>
       </FormField>
 
       <FormField label='Duration (ms)'>
@@ -99,7 +99,7 @@ export function AudioOscillatorNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-         aria-label="Duration (ms)" title="Duration (ms)"/>
+         aria-label='Duration (ms)' title='Duration (ms)'/>
       </FormField>
 
       <p className='text-[11px] text-gray-500'>

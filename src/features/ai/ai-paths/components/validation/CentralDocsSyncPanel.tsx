@@ -141,13 +141,13 @@ export function CentralDocsSyncPanel(): React.JSX.Element {
           onValueChange={(value: string) => setCandidateModuleFilter(value || 'all')}
           options={candidateModuleOptions}
           ariaLabel='Filter candidates by module'
-         title="Select option"/>
+         title='Select option'/>
         <SelectSimple
           value={candidateTagFilter}
           onValueChange={(value: string) => setCandidateTagFilter(value || 'all')}
           options={candidateTagOptions}
           ariaLabel='Filter candidates by tag'
-         title="Select option"/>
+         title='Select option'/>
       </div>
       <div className='space-y-2'>
         <Hint size='xs' uppercase={false} className='font-medium text-gray-300'>

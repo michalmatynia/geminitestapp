@@ -53,7 +53,7 @@ export function IntegrationSelection(): React.JSX.Element {
               label: integration.name,
             }))}
           placeholder='Select a marketplace...'
-         ariaLabel="Select a marketplace..." title="Select a marketplace..."/>
+         ariaLabel='Select a marketplace...' title='Select a marketplace...'/>
       </FormField>
 
       {selectedIntegration && (
@@ -71,7 +71,7 @@ export function IntegrationSelection(): React.JSX.Element {
                 label: connection.name,
               }))}
             placeholder='Select an account...'
-           ariaLabel="Select an account..." title="Select an account..."/>
+           ariaLabel='Select an account...' title='Select an account...'/>
         </FormField>
       )}
     </FormSection>

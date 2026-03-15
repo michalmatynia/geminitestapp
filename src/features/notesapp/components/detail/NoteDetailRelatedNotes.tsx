@@ -151,7 +151,7 @@ export function NoteDetailRelatedNotes(): React.JSX.Element | null {
                     }}
                     className='absolute right-2 top-2 opacity-70 hover:opacity-100'
                     aria-label='Unlink related note'
-                  >
+                    title={'Unlink related note'}>
                     <X size={12} />
                   </Button>
                 </div>

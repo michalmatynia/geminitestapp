@@ -168,7 +168,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                 onValueChange={(v: string): void => setEnvironment(v as EnvironmentPreset)}
                 options={environmentPresets}
                 triggerClassName='w-full bg-gray-800 border-gray-700 text-white text-sm h-10'
-               ariaLabel="HDR Environment" title="HDR Environment"/>
+               ariaLabel='HDR Environment' title='HDR Environment'/>
             </FormField>
 
             {/* Lighting Preset */}
@@ -227,7 +227,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                   value={backgroundColor}
                   onChange={(e) => setBackgroundColor(e.target.value)}
                   className='w-8 h-8 rounded-md cursor-pointer p-0 border-none'
-                 aria-label="Background" title="Background"/>
+                 aria-label='Background' title='Background'/>
               </div>
             </FormField>
 
@@ -392,7 +392,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                         { value: 'custom', label: 'Custom' },
                       ]}
                       triggerClassName='w-full bg-gray-800 border-gray-700 text-xs text-gray-200 h-8'
-                     ariaLabel="Preset" title="Preset"/>
+                     ariaLabel='Preset' title='Preset'/>
                   </FormField>
                   <FormField label={`Grid Size: ${orderedDitheringGridSize.toFixed(1)}`}>
                     <Input
@@ -435,7 +435,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                         label: opt.label,
                       }))}
                       triggerClassName='w-full bg-gray-800 border-gray-700 text-xs text-gray-200 h-8'
-                     ariaLabel="Luminance" title="Luminance"/>
+                     ariaLabel='Luminance' title='Luminance'/>
                   </FormField>
                   <div className='space-y-2'>
                     <ToggleRow

@@ -176,7 +176,7 @@ export default function PagesPage(): React.ReactNode {
                   }
                   options={zoneSlugs.map((s) => ({ value: s, label: `/${s}` }))}
                   className='h-7 w-28 text-[10px]'
-                 ariaLabel="Select option" title="Select option"/>
+                 ariaLabel='Select option' title='Select option'/>
               ) : (
                 <span className='text-[10px] text-blue-400 font-mono'>/{previewSlug}</span>
               )}
@@ -186,7 +186,7 @@ export default function PagesPage(): React.ReactNode {
                 className='h-7 w-7 p-0'
                 onClick={() => handlePreview(previewSlug)}
                 title={`Preview on ${activeDomain?.domain ?? 'current'}`}
-              >
+                aria-label={`Preview on ${activeDomain?.domain ?? 'current'}`}>
                 <Eye className='size-3.5' />
               </Button>
             </div>

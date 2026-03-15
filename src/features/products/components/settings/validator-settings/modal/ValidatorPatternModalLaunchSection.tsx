@@ -86,7 +86,7 @@ export function ValidatorPatternModalLaunchSection(): React.JSX.Element {
                 }))
               }
               options={LAUNCH_SCOPE_BEHAVIOR_OPTIONS}
-             ariaLabel="Launch Scope Behavior" title="Launch Scope Behavior"/>
+             ariaLabel='Launch Scope Behavior' title='Launch Scope Behavior'/>
           </FormField>
 
           <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
@@ -101,7 +101,7 @@ export function ValidatorPatternModalLaunchSection(): React.JSX.Element {
                   }))
                 }
                 options={SOURCE_MODE_OPTIONS}
-               ariaLabel="Launch Source Mode" title="Launch Source Mode"/>
+               ariaLabel='Launch Source Mode' title='Launch Source Mode'/>
             </FormField>
             <FormField label='Launch Operator'>
               <SelectSimple
@@ -114,7 +114,7 @@ export function ValidatorPatternModalLaunchSection(): React.JSX.Element {
                   }))
                 }
                 options={LAUNCH_OPERATOR_OPTIONS}
-               ariaLabel="Launch Operator" title="Launch Operator"/>
+               ariaLabel='Launch Operator' title='Launch Operator'/>
             </FormField>
             <FormField label='Launch Value'>
               <Input
@@ -127,7 +127,7 @@ export function ValidatorPatternModalLaunchSection(): React.JSX.Element {
                   }))
                 }
                 placeholder='KEYCHA000'
-               aria-label="KEYCHA000" title="KEYCHA000"/>
+               aria-label='KEYCHA000' title='KEYCHA000'/>
             </FormField>
           </div>
 
@@ -144,7 +144,7 @@ export function ValidatorPatternModalLaunchSection(): React.JSX.Element {
                   }))
                 }
                 options={[SOURCE_FIELD_PLACEHOLDER_OPTION, ...sourceFieldOptions]}
-               ariaLabel="Launch Source Field" title="Launch Source Field"/>
+               ariaLabel='Launch Source Field' title='Launch Source Field'/>
             </FormField>
           )}
 
@@ -159,7 +159,7 @@ export function ValidatorPatternModalLaunchSection(): React.JSX.Element {
                 }))
               }
               placeholder='i'
-             aria-label="i" title="i"/>
+             aria-label='i' title='i'/>
           </FormField>
         </div>
       )}

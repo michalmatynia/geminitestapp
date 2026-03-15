@@ -84,7 +84,7 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
               { value: 'redis', label: 'Redis' },
             ]}
             className='h-7 w-28 text-[10px]'
-           ariaLabel="Select option" title="Select option"/>
+           ariaLabel='Select option' title='Select option'/>
         ),
       },
     ],

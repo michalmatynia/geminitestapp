@@ -84,7 +84,7 @@ export function TreeCaret({
           onToggle(event);
         }
       }}
-    >
+      title={ariaLabel ?? (isOpen ? 'Collapse section' : 'Expand section')}>
       <Icon className={iconClasses} aria-hidden='true' />
     </button>
   );

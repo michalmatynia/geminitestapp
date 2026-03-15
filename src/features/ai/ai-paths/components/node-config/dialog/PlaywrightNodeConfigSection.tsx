@@ -232,7 +232,7 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
           placeholder='Select persona'
           dataDocId='playwright_persona_select'
           ariaLabel='Playwright persona'
-         title="Select persona"/>
+         title='Select persona'/>
       </FormField>
 
       {personasQuery.isLoading ? (
@@ -279,7 +279,7 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
               updateConfig({ browserEngine: value as PlaywrightConfig['browserEngine'] })
             }
             options={BROWSER_ENGINE_OPTIONS}
-           ariaLabel="Browser Engine" title="Browser Engine"/>
+           ariaLabel='Browser Engine' title='Browser Engine'/>
         </FormField>
         <FormField label='Timeout (ms)'>
           <Input
@@ -298,7 +298,7 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
                     : defaultPlaywrightConfig.timeoutMs,
               });
             }}
-           aria-label="Timeout (ms)" title="Timeout (ms)"/>
+           aria-label='Timeout (ms)' title='Timeout (ms)'/>
         </FormField>
       </div>
 
@@ -311,7 +311,7 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
             updateConfig({ startUrlTemplate: event.target.value })
           }
           placeholder='https://example.com/{{entityId}}'
-         aria-label="https://example.com/{{entityId}}" title="https://example.com/{{entityId}}"/>
+         aria-label='https://example.com/{{entityId}}' title='https://example.com/{{entityId}}'/>
       </FormField>
 
       <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
@@ -355,7 +355,7 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
             placeholder='Select script template'
             dataDocId='playwright_script_template_select'
             ariaLabel='Playwright script template'
-           title="Select script template"/>
+           title='Select script template'/>
         </FormField>
         {selectedTemplate ? (
           <p
@@ -385,7 +385,7 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
             updateConfig({ script: event.target.value })
           }
           placeholder='export default async function run({ page, input, emit, artifacts, log }) { ... }'
-         aria-label="export default async function run({ page, input, emit, artifacts, log }) { ... }" title="export default async function run({ page, input, emit, artifacts, log }) { ... }"/>
+         aria-label='export default async function run({ page, input, emit, artifacts, log }) { ... }' title='export default async function run({ page, input, emit, artifacts, log }) { ... }'/>
       </FormField>
 
       <div className='grid gap-3 sm:grid-cols-2'>
@@ -398,7 +398,7 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
               updateConfig({ launchOptionsJson: event.target.value })
             }
-           aria-label="Launch Options (JSON)" title="Launch Options (JSON)"/>
+           aria-label='Launch Options (JSON)' title='Launch Options (JSON)'/>
         </FormField>
         <FormField label='Context Options (JSON)' error={contextJsonError ?? undefined}>
           <Textarea
@@ -409,7 +409,7 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
               updateConfig({ contextOptionsJson: event.target.value })
             }
-           aria-label="Context Options (JSON)" title="Context Options (JSON)"/>
+           aria-label='Context Options (JSON)' title='Context Options (JSON)'/>
         </FormField>
       </div>
 
@@ -440,7 +440,7 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
             setSettingsOverridesDraft(event.target.value)
           }
           onBlur={applySettingsOverrides}
-         aria-label="Settings Overrides (JSON)" title="Settings Overrides (JSON)"/>
+         aria-label='Settings Overrides (JSON)' title='Settings Overrides (JSON)'/>
       </FormField>
 
       <div className='space-y-3 pt-2 border-t border-border/20'>

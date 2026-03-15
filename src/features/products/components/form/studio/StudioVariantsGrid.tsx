@@ -52,7 +52,8 @@ export function StudioVariantsGrid(): React.JSX.Element {
                       ? 'border-blue-400/80 bg-blue-500/10'
                       : 'border-border/60 hover:border-blue-400/40'
                   )}
-                >
+                  aria-label={slot.name ?? 'Variant'}
+                  title={slot.name ?? 'Variant'}>
                   {src ? (
                     <Image
                       src={src}

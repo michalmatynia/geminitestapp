@@ -284,7 +284,7 @@ export function SectionNodeItem(props: SectionNodeItemProps): React.JSX.Element 
               data-no-section-drag='true'
               className='size-7 p-0 text-gray-500 hover:text-gray-200'
               title={isHidden ? 'Show section' : 'Hide section'}
-            >
+              aria-label={isHidden ? 'Show section' : 'Hide section'}>
               {isHidden ? <EyeOff className='size-3.5' /> : <Eye className='size-3.5' />}
             </Button>
             <Button
@@ -297,7 +297,7 @@ export function SectionNodeItem(props: SectionNodeItemProps): React.JSX.Element 
               data-no-section-drag='true'
               className='size-7 p-0 text-gray-500 hover:bg-red-500/10 hover:text-red-400'
               title='Delete section'
-            >
+              aria-label={'Delete section'}>
               <Trash2 className='size-3.5' />
             </Button>
             <Button
@@ -310,7 +310,7 @@ export function SectionNodeItem(props: SectionNodeItemProps): React.JSX.Element 
               data-no-section-drag='true'
               className='size-7 p-0 text-gray-500 hover:text-gray-200'
               title='Duplicate section'
-            >
+              aria-label={'Duplicate section'}>
               <Plus className='size-3.5' />
             </Button>
           </div>

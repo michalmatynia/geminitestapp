@@ -195,9 +195,22 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
     [catalog, settingsStore]
   );
 
-  const [draft, setDraft] = useState<ThemeSettings>(() => loadTheme(BUILTIN_DAILY_ID));
+  const [draft, setDraftState] = useState<ThemeSettings>(() => loadTheme(BUILTIN_DAILY_ID));
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  const setDraft = useCallback(
+    (next: React.SetStateAction<ThemeSettings>) => {
+      setDraftState((prev) => {
+        const resolved = typeof next === 'function' ? next(prev) : next;
+        if (resolved !== prev) {
+          setIsDirty(true);
+        }
+        return resolved;
+      });
+    },
+    []
+  );
 
   const slotThemes = useMemo(
     () => ({
@@ -216,7 +229,7 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
         if (!confirm('Masz niezapisane zmiany w aktualnym motywie. Czy na pewno chcesz przełączyć?')) return;
       }
       setSelectedId(id);
-      setDraft(loadTheme(id));
+      setDraftState(loadTheme(id));
       setIsDirty(false);
     },
     [isDirty, loadTheme, selectedId]
@@ -236,7 +249,7 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
                 ? FACTORY_NIGHTLY_ID
                 : FACTORY_DAILY_ID;
 
-    setDraft(resolveFactoryTheme(factoryId));
+    setDraftState(resolveFactoryTheme(factoryId));
     setIsDirty(true);
   }, [selectedId]);
 

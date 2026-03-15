@@ -755,7 +755,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     className='h-8 px-2'
                     onClick={duplicateActivePage}
                     aria-label='Duplicate active page'
-                  >
+                    title={'Duplicate active page'}>
                     <Copy className='size-3.5' />
                   </Button>
                   <Button
@@ -766,7 +766,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     onClick={(): void => moveActivePage(activePageIndex - 1)}
                     disabled={activePageIndex <= 0}
                     aria-label='Move active page up'
-                  >
+                    title={'Move active page up'}>
                     <ArrowUp className='size-3.5' />
                   </Button>
                   <Button
@@ -777,7 +777,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     onClick={(): void => moveActivePage(activePageIndex + 1)}
                     disabled={activePageIndex < 0 || activePageIndex >= pages.length - 1}
                     aria-label='Move active page down'
-                  >
+                    title={'Move active page down'}>
                     <ArrowDown className='size-3.5' />
                   </Button>
                   <Button
@@ -788,7 +788,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     onClick={deleteActivePage}
                     disabled={pages.length <= 1}
                     aria-label='Delete active page'
-                  >
+                    title={'Delete active page'}>
                     <Trash2 className='size-3.5' />
                   </Button>
                 </div>
@@ -842,7 +842,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     }}
                     placeholder='Optional stable section id'
                     className='h-9'
-                   aria-label="Optional stable section id" title="Optional stable section id"/>
+                   aria-label='Optional stable section id' title='Optional stable section id'/>
                 </FormField>
                 <FormField label='Section Title'>
                   <Input
@@ -855,7 +855,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     }}
                     placeholder='Optional section heading'
                     className='h-9'
-                   aria-label="Optional section heading" title="Optional section heading"/>
+                   aria-label='Optional section heading' title='Optional section heading'/>
                 </FormField>
                 <FormField label='Section Description'>
                   <Textarea
@@ -868,7 +868,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     }}
                     placeholder='Optional summary shared by this section'
                     className='min-h-[96px]'
-                   aria-label="Optional summary shared by this section" title="Optional summary shared by this section"/>
+                   aria-label='Optional summary shared by this section' title='Optional summary shared by this section'/>
                 </FormField>
                 <FormField label='Page Title'>
                   <Input
@@ -881,7 +881,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     }}
                     placeholder='Optional page title'
                     className='h-9'
-                   aria-label="Optional page title" title="Optional page title"/>
+                   aria-label='Optional page title' title='Optional page title'/>
                 </FormField>
                 <FormField label='Page Description'>
                   <Textarea
@@ -894,7 +894,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     }}
                     placeholder='Optional summary or instructions for this page'
                     className='min-h-[96px]'
-                   aria-label="Optional summary or instructions for this page" title="Optional summary or instructions for this page"/>
+                   aria-label='Optional summary or instructions for this page' title='Optional summary or instructions for this page'/>
                 </FormField>
               </div>
             </div>
@@ -914,7 +914,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                   onChange={(event): void => setInsertQuery(event.target.value)}
                   placeholder='Search insert actions...'
                   className='h-9 pl-9'
-                 aria-label="Search insert actions..." title="Search insert actions..."/>
+                 aria-label='Search insert actions...' title='Search insert actions...'/>
               </div>
             </div>
             <div className='space-y-4'>
@@ -1029,7 +1029,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     className='h-8 px-2'
                     onClick={(): void => duplicateRootBlock(index)}
                     aria-label={`Duplicate block ${index + 1}`}
-                  >
+                    title={`Duplicate block ${index + 1}`}>
                     <Copy className='size-3.5' />
                   </Button>
                   <Button
@@ -1040,7 +1040,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     onClick={(): void => moveRootBlock(index, index - 1)}
                     disabled={index === 0}
                     aria-label={`Move block ${index + 1} up`}
-                  >
+                    title={`Move block ${index + 1} up`}>
                     <ArrowUp className='size-3.5' />
                   </Button>
                   <Button
@@ -1051,7 +1051,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     onClick={(): void => moveRootBlock(index, index + 1)}
                     disabled={index === activePage.blocks.length - 1}
                     aria-label={`Move block ${index + 1} down`}
-                  >
+                    title={`Move block ${index + 1} down`}>
                     <ArrowDown className='size-3.5' />
                   </Button>
                   <Button
@@ -1061,7 +1061,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     className='h-8 px-2 text-rose-600'
                     onClick={(): void => removeRootBlock(block.id)}
                     aria-label={`Delete block ${index + 1}`}
-                  >
+                    title={`Delete block ${index + 1}`}>
                     <Trash2 className='size-3.5' />
                   </Button>
                 </div>
@@ -1096,7 +1096,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                           }));
                         }}
                         className='h-9'
-                       aria-label="Columns" title="Columns"/>
+                       aria-label='Columns' title='Columns'/>
                     </FormField>
                     <FormField label='Gap'>
                       <Input
@@ -1111,7 +1111,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                           }));
                         }}
                         className='h-9'
-                       aria-label="Gap" title="Gap"/>
+                       aria-label='Gap' title='Gap'/>
                     </FormField>
                     <FormField label='Row Height'>
                       <Input
@@ -1130,7 +1130,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                           }));
                         }}
                         className='h-9'
-                       aria-label="Row Height" title="Row Height"/>
+                       aria-label='Row Height' title='Row Height'/>
                     </FormField>
                     <div className='flex items-end'>
                       <div className='flex w-full items-center justify-between rounded-xl border border-border/60 bg-card/30 px-3 py-2'>
@@ -1330,7 +1330,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                           label: option.label,
                         }))}
                         triggerClassName='h-9'
-                       ariaLabel="Block Type" title="Block Type"/>
+                       ariaLabel='Block Type' title='Block Type'/>
                     </FormField>
                   </div>
                   {block.type === 'activity' ? (

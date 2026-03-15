@@ -410,7 +410,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
             placeholder='List name'
             aria-label='List name'
             className='h-9'
-           title="List name"/>
+           title='List name'/>
           <SelectSimple
             size='sm'
             value={newListScope}
@@ -420,7 +420,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
             }}
             options={scopeOptions}
             triggerClassName='h-9'
-           ariaLabel="Select option" title="Select option"/>
+           ariaLabel='Select option' title='Select option'/>
           <Input
             value={newListDescription}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -429,7 +429,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
             placeholder='Optional description'
             aria-label='List description'
             className='h-9'
-           title="Optional description"/>
+           title='Optional description'/>
           <Button type='button' onClick={handleAddList} className='h-9 whitespace-nowrap'>
             <Plus className='mr-1.5 size-3.5' />
             Add List

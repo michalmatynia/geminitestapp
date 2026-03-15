@@ -513,6 +513,8 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                     isCorrect && 'border-emerald-300 bg-emerald-50',
                     isWrong && 'border-rose-300 bg-rose-50'
                   )}
+                  aria-label={`Opcja: ${option.label}`}
+                  aria-pressed={isSelected}
                 >
                   {option.label}
                 </button>

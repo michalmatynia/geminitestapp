@@ -234,7 +234,7 @@ export function CaseResolverTreeHeader({
           className='h-7 w-7 border p-0 text-gray-300 hover:bg-muted/50'
           title={createContextTooltip ?? 'Add folder'}
           disabled={disableCreateActions}
-        >
+          aria-label={createContextTooltip ?? 'Add folder'}>
           <FolderPlus className='size-4' />
         </Button>
         <Button
@@ -247,7 +247,7 @@ export function CaseResolverTreeHeader({
           className='h-7 w-7 border p-0 text-gray-300 hover:bg-muted/50'
           title={createContextTooltip ?? 'Add case file'}
           disabled={disableCreateActions}
-        >
+          aria-label={createContextTooltip ?? 'Add case file'}>
           <FilePlus className='size-4' />
         </Button>
         <Button
@@ -260,7 +260,7 @@ export function CaseResolverTreeHeader({
           className='h-7 w-7 border p-0 text-gray-300 hover:bg-muted/50'
           title={createContextTooltip ?? 'Create new image file'}
           disabled={disableCreateActions}
-        >
+          aria-label={createContextTooltip ?? 'Create new image file'}>
           <FileImage className='size-4' />
         </Button>
         <Button
@@ -273,7 +273,7 @@ export function CaseResolverTreeHeader({
           className='h-7 w-7 border p-0 text-gray-300 hover:bg-muted/50'
           title={createContextTooltip ?? 'Create new image asset'}
           disabled={disableCreateActions}
-        >
+          aria-label={createContextTooltip ?? 'Create new image asset'}>
           <ImagePlus className='size-4' />
         </Button>
         <Button
@@ -286,7 +286,7 @@ export function CaseResolverTreeHeader({
           className='h-7 w-7 border p-0 text-gray-300 hover:bg-muted/50'
           title={createContextTooltip ?? 'Add node file'}
           disabled={disableCreateActions}
-        >
+          aria-label={createContextTooltip ?? 'Add node file'}>
           <FileCode2 className='size-4' />
         </Button>
       </div>

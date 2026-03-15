@@ -194,7 +194,7 @@ export function PromptExploderCaptureMappingModal(
                     }}
                     options={dateActionOptions}
                     triggerClassName='h-9'
-                   ariaLabel="Date Action" title="Date Action"/>
+                   ariaLabel='Date Action' title='Date Action'/>
                 </FormField>
               </div>
             ) : (
@@ -273,7 +273,7 @@ export function PromptExploderCaptureMappingModal(
                         }}
                         options={actionOptions}
                         triggerClassName='h-9'
-                       ariaLabel="Action" title="Action"/>
+                       ariaLabel='Action' title='Action'/>
                     </FormField>
 
                     {shouldShowMatchedPartySelector ? (
@@ -286,7 +286,7 @@ export function PromptExploderCaptureMappingModal(
                           }}
                           options={partyOptions}
                           triggerClassName='h-9'
-                         ariaLabel="Database Party" title="Database Party"/>
+                         ariaLabel='Database Party' title='Database Party'/>
                       </FormField>
                     ) : (
                       <FormField label='Matched Party'>

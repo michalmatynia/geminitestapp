@@ -145,7 +145,7 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
                   ariaLabel='Wybrany motyw'
                   variant='subtle'
                   className='w-full'
-                 title="Select option"/>
+                 title='Select option'/>
               </div>
               <ThemeCatalogModal />
               {isDirty && (

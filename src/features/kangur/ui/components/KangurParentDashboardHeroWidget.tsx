@@ -114,6 +114,7 @@ export function KangurParentDashboardHeroWidget({
                 navigateToLogin({ authMode: 'create-account' });
               }}
               type='button'
+              aria-label='Utwórz konto rodzica'
             >
               Utwórz konto rodzica
             </button>

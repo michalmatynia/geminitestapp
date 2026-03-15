@@ -112,7 +112,7 @@ export function GenerationSettingsTab(): React.JSX.Element {
                   disabled
                   className='cursor-not-allowed'
                   placeholder='Not configured in AI Brain'
-                 aria-label="Not configured in AI Brain" title="Not configured in AI Brain"/>
+                 aria-label='Not configured in AI Brain' title='Not configured in AI Brain'/>
               </FormField>
 
               <div className='rounded-md border border-border/60 bg-card/35 px-3 py-2 text-[11px] text-gray-400'>
@@ -128,14 +128,14 @@ export function GenerationSettingsTab(): React.JSX.Element {
                     value={modelAwareSizeValue}
                     onValueChange={handleSizeChange}
                     options={modelAwareSizeOptions}
-                   ariaLabel="Image Size" title="Image Size"/>
+                   ariaLabel='Image Size' title='Image Size'/>
                 </FormField>
                 <FormField label='Quality'>
                   <SelectSimple
                     value={modelAwareQualityValue}
                     onValueChange={handleQualityChange}
                     options={modelAwareQualityOptions}
-                   ariaLabel="Quality" title="Quality"/>
+                   ariaLabel='Quality' title='Quality'/>
                 </FormField>
               </div>
               <div className='grid grid-cols-2 gap-4'>
@@ -144,7 +144,7 @@ export function GenerationSettingsTab(): React.JSX.Element {
                     value={modelAwareFormatValue}
                     onValueChange={handleFormatChange}
                     options={modelAwareFormatOptions}
-                   ariaLabel="Output Format" title="Output Format"/>
+                   ariaLabel='Output Format' title='Output Format'/>
                 </FormField>
                 {modelCapabilities.supportsOutputCompression && (
                   <FormField label='Compression'>
@@ -168,7 +168,7 @@ export function GenerationSettingsTab(): React.JSX.Element {
                           },
                         }))
                       }
-                     aria-label="Compression" title="Compression"/>
+                     aria-label='Compression' title='Compression'/>
                   </FormField>
                 )}
               </div>
@@ -190,7 +190,7 @@ export function GenerationSettingsTab(): React.JSX.Element {
             value={advancedOverridesText}
             onChange={(e) => handleAdvancedOverridesChange(e.target.value)}
             spellCheck={false}
-           aria-label="Textarea" title="Textarea"/>
+           aria-label='Textarea' title='Textarea'/>
           {advancedOverridesError && (
             <p className='text-xs font-medium text-rose-400'>{String(advancedOverridesError)}</p>
           )}

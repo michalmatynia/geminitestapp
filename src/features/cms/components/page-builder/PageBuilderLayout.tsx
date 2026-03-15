@@ -142,7 +142,7 @@ function PageBuilderInner(): React.JSX.Element {
             variant='outline'
             className='absolute left-1 top-1 z-10 h-8 w-8 p-0 border text-gray-300 hover:bg-muted/50'
             aria-label='Show left panel'
-          >
+            title={'Show left panel'}>
             <PanelLeftClose className='size-4' />
           </Button>
         )}
@@ -159,7 +159,7 @@ function PageBuilderInner(): React.JSX.Element {
             variant='outline'
             className='absolute right-1 top-1 z-10 h-8 w-8 p-0 border text-gray-300 hover:bg-muted/50'
             aria-label='Show right panel'
-          >
+            title={'Show right panel'}>
             <PanelRightClose className='size-4' />
           </Button>
         )}

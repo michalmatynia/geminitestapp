@@ -52,7 +52,7 @@ export function JobTable(props: JobTableProps): React.JSX.Element {
                   href={`/admin/products?id=${job.productId}`}
                   className='text-blue-400 hover:text-blue-300'
                   aria-label='Open product'
-                >
+                  title={'Open product'}>
                   <ExternalLink className='size-4' />
                 </Link>
               )}

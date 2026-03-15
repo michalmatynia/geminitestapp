@@ -93,7 +93,7 @@ function AuthUsersPageContent(): React.JSX.Element {
                 ...roles.map((r: AuthRole) => ({ value: r.id, label: r.name })),
               ]}
               className='h-7 w-32 text-[10px]'
-             ariaLabel="Select option" title="Select option"/>
+             ariaLabel='Select option' title='Select option'/>
           );
         },
       },

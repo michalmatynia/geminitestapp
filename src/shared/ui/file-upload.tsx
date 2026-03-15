@@ -125,7 +125,7 @@ export function FileUploadButton(props: FileUploadButtonProps): React.JSX.Elemen
   );
   const inferredLabel = React.useMemo(() => {
     const explicitLabel =
-      (buttonProps['aria-label'] as string | undefined) ??
+      (buttonProps['aria-label']) ??
       buttonProps.title ??
       getTextContent(children).trim();
     if (explicitLabel) return explicitLabel;
@@ -383,7 +383,7 @@ export function FileUploadTrigger(props: FileUploadTriggerProps): React.JSX.Elem
         onChange={(e) => {
           void handleChange(e);
         }}
-       aria-label="Input field" title="Input field"/>
+       aria-label='Input field' title='Input field'/>
       {asChild ? (
         <Slot
           className={className}

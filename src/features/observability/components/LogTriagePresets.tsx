@@ -128,7 +128,8 @@ export function LogTriagePresets(): React.JSX.Element {
                 'h-auto w-full justify-start px-3 py-2 text-left',
                 isActive && 'border-emerald-400/60 bg-emerald-500/10 hover:bg-emerald-500/20'
               )}
-            >
+              aria-label={'Icon'}
+              title={'Icon'}>
               <span className='flex items-start gap-2'>
                 <Icon
                   className={cn(

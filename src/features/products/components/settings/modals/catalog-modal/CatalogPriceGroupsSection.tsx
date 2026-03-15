@@ -70,7 +70,7 @@ export function CatalogPriceGroupsSection(): React.JSX.Element {
                 };
               })}
               triggerClassName='w-full bg-gray-900 border-border text-xs text-white h-9'
-             title="Select default price group"/>
+             title='Select default price group'/>
           </div>
         </div>
       )}

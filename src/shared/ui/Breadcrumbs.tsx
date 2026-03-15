@@ -136,7 +136,7 @@ export function Breadcrumbs({
             aria-label='Scroll breadcrumb left'
             onClick={() => handleScroll('left')}
             className='absolute left-1 top-1/2 z-10 -translate-y-1/2 rounded-full size-6 bg-black/40 p-1 text-gray-300 hover:bg-black/60'
-          >
+            title={'Scroll breadcrumb left'}>
             <ChevronLeft size={12} aria-hidden='true' />
           </Button>
         )}
@@ -148,7 +148,7 @@ export function Breadcrumbs({
             aria-label='Scroll breadcrumb right'
             onClick={() => handleScroll('right')}
             className='absolute right-1 top-1/2 z-10 -translate-y-1/2 rounded-full size-6 bg-black/40 p-1 text-gray-300 hover:bg-black/60'
-          >
+            title={'Scroll breadcrumb right'}>
             <ChevronRight size={12} aria-hidden='true' />
           </Button>
         )}

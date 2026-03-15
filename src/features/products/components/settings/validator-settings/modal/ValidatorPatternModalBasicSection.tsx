@@ -37,7 +37,7 @@ export function ValidatorPatternModalBasicSection(): React.JSX.Element {
             setFormData((prev: PatternFormData) => ({ ...prev, label: event.target.value }))
           }
           placeholder='Double spaces'
-         aria-label="Double spaces" title="Double spaces"/>
+         aria-label='Double spaces' title='Double spaces'/>
       </FormField>
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
@@ -72,7 +72,7 @@ export function ValidatorPatternModalBasicSection(): React.JSX.Element {
                 })
               }
               options={TARGET_OPTIONS}
-             ariaLabel="Target" title="Target"/>
+             ariaLabel='Target' title='Target'/>
           </ValidatorDocTooltip>
         </FormField>
 
@@ -88,7 +88,7 @@ export function ValidatorPatternModalBasicSection(): React.JSX.Element {
             }
             disabled={!isLocaleTarget(formData.target)}
             options={LOCALE_OPTIONS}
-           ariaLabel="Locale Context" title="Locale Context"/>
+           ariaLabel='Locale Context' title='Locale Context'/>
         </FormField>
       </div>
 
@@ -125,7 +125,7 @@ export function ValidatorPatternModalBasicSection(): React.JSX.Element {
               }))
             }
             options={SEVERITY_OPTIONS}
-           ariaLabel="Severity" title="Severity"/>
+           ariaLabel='Severity' title='Severity'/>
         </FormField>
         <FormField label='Replacer Mode'>
           <SelectSimple
@@ -138,7 +138,7 @@ export function ValidatorPatternModalBasicSection(): React.JSX.Element {
               }))
             }
             options={REPLACEMENT_MODE_OPTIONS}
-           ariaLabel="Replacer Mode" title="Replacer Mode"/>
+           ariaLabel='Replacer Mode' title='Replacer Mode'/>
         </FormField>
         <div>
           {formData.replacementMode === 'static' ? (
@@ -153,7 +153,7 @@ export function ValidatorPatternModalBasicSection(): React.JSX.Element {
                   }))
                 }
                 placeholder='e.g. Przypinka'
-               aria-label="e.g. Przypinka" title="e.g. Przypinka"/>
+               aria-label='e.g. Przypinka' title='e.g. Przypinka'/>
             </FormField>
           ) : (
             <FormField label='Source Mode'>
@@ -167,7 +167,7 @@ export function ValidatorPatternModalBasicSection(): React.JSX.Element {
                   }))
                 }
                 options={SOURCE_MODE_OPTIONS}
-               ariaLabel="Source Mode" title="Source Mode"/>
+               ariaLabel='Source Mode' title='Source Mode'/>
             </FormField>
           )}
         </div>

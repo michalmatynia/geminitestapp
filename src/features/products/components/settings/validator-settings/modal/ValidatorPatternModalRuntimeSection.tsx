@@ -52,7 +52,7 @@ export function ValidatorPatternModalRuntimeSection(): React.JSX.Element {
                 }))
               }
               options={RUNTIME_TYPE_OPTIONS}
-             ariaLabel="Runtime Type" title="Runtime Type"/>
+             ariaLabel='Runtime Type' title='Runtime Type'/>
           </FormField>
           <FormField label='Runtime Config (JSON)'>
             <ValidatorDocTooltip docId='validator.modal.runtime.config'>

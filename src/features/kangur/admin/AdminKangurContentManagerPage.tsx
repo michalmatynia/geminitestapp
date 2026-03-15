@@ -158,8 +158,10 @@ export function AdminKangurContentManagerPage(): React.JSX.Element {
                       key={id}
                       type='button'
                       onClick={() => handleTabChange(id)}
+                      aria-pressed={activeTab === id}
+                      aria-label={label}
                       className={cn(
-                        'flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-medium transition-colors',
+                        'flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background',
                         activeTab === id
                           ? 'bg-primary/15 text-foreground shadow-sm'
                           : 'text-muted-foreground hover:bg-card hover:text-foreground'

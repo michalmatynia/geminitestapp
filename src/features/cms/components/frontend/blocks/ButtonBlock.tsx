@@ -121,6 +121,8 @@ export function ButtonBlock(): React.ReactNode {
           disabled={isDisabled}
           className={`${baseClasses} cms-appearance-button-outline border-2 hover:text-current focus:ring-white`}
           style={customStyles}
+          aria-label={label || 'Button'}
+          title={label || 'Button'}
         >
           {label}
         </button>
@@ -132,6 +134,8 @@ export function ButtonBlock(): React.ReactNode {
         href={link}
         className={`${baseClasses} cms-appearance-button-outline border-2 hover:text-current focus:ring-white`}
         style={customStyles}
+        aria-label={label || 'Link'}
+        title={label || 'Link'}
       >
         {label}
       </a>
@@ -146,6 +150,8 @@ export function ButtonBlock(): React.ReactNode {
         disabled={isDisabled}
         className={`${baseClasses} cms-appearance-button-primary border focus:ring-white`}
         style={customStyles}
+        aria-label={label || 'Button'}
+        title={label || 'Button'}
       >
         {label}
       </button>
@@ -157,6 +163,8 @@ export function ButtonBlock(): React.ReactNode {
       href={link}
       className={`${baseClasses} cms-appearance-button-primary border focus:ring-white`}
       style={customStyles}
+      aria-label={label || 'Link'}
+      title={label || 'Link'}
     >
       {label}
     </a>

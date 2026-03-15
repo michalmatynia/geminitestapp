@@ -295,6 +295,8 @@ export function AdminAiContextRegistryPage(): React.JSX.Element {
                         key={node.id}
                         type='button'
                         onClick={() => setSelectedId(node.id)}
+                        aria-pressed={isSelected}
+                        aria-label={`Select ${node.name}`}
                         className={`w-full rounded-2xl border p-4 text-left transition ${
                           isSelected
                             ? 'border-sky-400/70 bg-sky-500/10'

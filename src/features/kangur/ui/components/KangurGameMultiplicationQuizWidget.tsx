@@ -20,7 +20,7 @@ export function KangurGameMultiplicationQuizWidget(): React.JSX.Element | null {
       shellTestId='kangur-multiplication-quiz-top-section'
       title='Quiz mnożenia'
     >
-      <MultiplicationGame finishLabel='Wróć do Grajmy' onFinish={handleHome} />
+      <MultiplicationGame finishLabelVariant='play' onFinish={handleHome} />
     </LessonActivityStage>
   );
 }

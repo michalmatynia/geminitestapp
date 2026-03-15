@@ -65,6 +65,11 @@ export default function ProgressOverview({
   const dailyQuestProgressPercent = dailyQuest?.progress.percent ?? 0;
   const dailyQuestProgressAccent =
     dailyQuest?.reward.status === 'claimed' ? 'emerald' : dailyQuestAccent;
+  const dailyQuestHeaderDescription = dailyQuest
+    ? `${dailyQuest.progress.summary} · ${dailyQuest.reward.label}`
+    : '';
+  const dailyQuestHeaderTitle = dailyQuest?.assignment.title ?? '';
+  const dailyQuestProgressLabel = dailyQuest ? `${dailyQuest.progress.percent}%` : '';
 
   const stats: ProgressStat[] = [
     { accent: 'indigo', label: 'Łączne XP', value: totalXp },
@@ -134,15 +139,15 @@ export default function ProgressOverview({
           <KangurProgressHighlightCardContent>
             <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
               <KangurProgressHighlightHeader
-                description={`${dailyQuest.progress.summary} · ${dailyQuest.reward.label}`}
+                description={dailyQuestHeaderDescription}
                 descriptionClassName='text-xs leading-5'
                 eyebrow='Misja dnia'
-                title={dailyQuest.assignment.title}
+                title={dailyQuestHeaderTitle}
               />
               <KangurProgressHighlightChip
                 accent={dailyQuestAccent}
                 className='shrink-0'
-                label={`${dailyQuest.progress.percent}%`}
+                label={dailyQuestProgressLabel}
               />
             </div>
             <KangurProgressHighlightBar

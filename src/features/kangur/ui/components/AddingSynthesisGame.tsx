@@ -769,6 +769,8 @@ export default function AddingSynthesisGame({
             accent={feedback ? getFeedbackAccent(feedback.kind) : currentStage.accent}
             padding='lg'
             role='status'
+            aria-live='polite'
+            aria-atomic='true'
             title={feedback ? feedback.title : currentNote ? 'Podpowiedź do tej nuty' : undefined}
             description={feedback ? feedback.description : currentNote ? currentNote.focus : undefined}
             tone={feedback ? 'accent' : 'neutral'}

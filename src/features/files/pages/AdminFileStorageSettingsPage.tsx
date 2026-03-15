@@ -10,7 +10,7 @@ import {
 } from '@/shared/lib/files/constants';
 import type { FastCometStorageConfig, FileStorageSource } from '@/shared/lib/files/constants';
 import {
-  AdminSettingsPageLayout,
+  AdminSettingsBreadcrumbs,
   Alert,
   Card,
   FormActions,
@@ -18,6 +18,7 @@ import {
   FormSection,
   Hint,
   Input,
+  PageLayout,
   SelectSimple,
   ToggleRow,
   useToast,
@@ -139,10 +140,10 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
   };
 
   return (
-    <AdminSettingsPageLayout
+    <PageLayout
       title='File Storage'
-      current='File Storage'
       description='Choose whether files are served from local uploads or FastComet storage.'
+      eyebrow={<AdminSettingsBreadcrumbs current='File Storage' />}
     >
       <div className='grid gap-6 lg:grid-cols-2'>
         <FormSection
@@ -311,6 +312,6 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
         isSaving={updateSettingsBulk.isPending}
         className='mt-8'
       />
-    </AdminSettingsPageLayout>
+    </PageLayout>
   );
 }

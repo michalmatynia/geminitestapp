@@ -1,7 +1,7 @@
 import { ArrowLeft, Lock } from 'lucide-react';
 import { useId, useState, type ReactNode } from 'react';
 
-import KangurAnimatedOptionCard from '@/features/kangur/ui/components/KangurAnimatedOptionCard';
+import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
 import {
   KangurButton,
@@ -59,10 +59,11 @@ type KangurSetupShellProps = {
 };
 
 function KangurSetupShell({ children, testId }: KangurSetupShellProps): React.JSX.Element {
+  const dataTestId = testId;
   return (
     <KangurGlassPanel
       className='flex flex-col items-center gap-5 text-center'
-      data-testid={testId}
+      data-testid={dataTestId}
       padding='xl'
       surface='solid'
       variant='soft'
@@ -150,7 +151,7 @@ export default function KangurSetup({
 
           <div aria-labelledby={editionsHeadingId} className='flex w-full flex-col gap-3' role='list'>
             {EDITIONS.map((edition) => (
-              <KangurAnimatedOptionCard
+              <KangurAnswerChoiceCard
                 accent='amber'
                 aria-describedby={`kangur-setup-edition-status-${edition.year}`}
                 aria-label={`${edition.label}. ${edition.available ? 'Dostępna.' : 'Niedostępna, wkrótce dostępna.'}`}
@@ -202,7 +203,7 @@ export default function KangurSetup({
                     ) : null}
                   </span>
                 </div>
-              </KangurAnimatedOptionCard>
+              </KangurAnswerChoiceCard>
             ))}
           </div>
 
@@ -272,7 +273,7 @@ export default function KangurSetup({
             };
 
             return (
-              <KangurAnimatedOptionCard
+              <KangurAnswerChoiceCard
                 accent='amber'
                 aria-describedby={`kangur-setup-set-description-${setItem.id}`}
                 aria-label={`${setItem.label}. ${setItem.isExam ? 'Tryb konkursowy.' : 'Tryb treningowy.'} ${setItem.available ? 'Dostępny.' : 'Niedostępny, wkrótce dostępny.'}`}
@@ -319,7 +320,7 @@ export default function KangurSetup({
                 >
                   {setItem.desc}
                 </span>
-              </KangurAnimatedOptionCard>
+              </KangurAnswerChoiceCard>
             );
           })}
         </div>

@@ -4,7 +4,7 @@ import { PlusIcon, FileUp, Link as LinkIcon, MessageSquareQuote, Save } from 'lu
 import React, { Suspense, useMemo, useCallback } from 'react';
 
 import {
-  AdminChatbotPageLayout,
+  AdminChatbotBreadcrumbs,
   Button,
   Tag,
   FileUploadTrigger,
@@ -16,6 +16,7 @@ import {
   EmptyState,
   LoadingState,
   Hint,
+  PageLayout,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -135,9 +136,9 @@ function ChatbotContextPageInner(): React.JSX.Element {
   }, [tagQuery, tagFilters, toast]);
 
   return (
-    <AdminChatbotPageLayout
+    <PageLayout
       title='Chatbot Context'
-      current='Context'
+      eyebrow={<AdminChatbotBreadcrumbs current='Context' />}
       description='Define global instructions and reference materiał applied to every chat.'
       icon={<MessageSquareQuote className='size-4' />}
       headerActions={
@@ -163,6 +164,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
           </Button>
         </>
       }
+      containerClassName='mx-auto w-full max-w-none py-10'
     >
       <div className='space-y-6'>
         <StandardDataTablePanel
@@ -262,7 +264,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
           onSave={handleSaveDraft}
         />
       </div>
-    </AdminChatbotPageLayout>
+    </PageLayout>
   );
 }
 

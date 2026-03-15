@@ -19,6 +19,8 @@ export function AnnouncementBlock(): React.ReactNode {
         href={link}
         className='text-sm font-medium text-blue-200 underline decoration-blue-400/50 hover:text-blue-100'
         style={typoStyles}
+        aria-label={text}
+        title={text}
       >
         {text}
       </a>
@@ -78,6 +80,8 @@ export function SocialLinksBlock(): React.ReactNode {
             target='_blank'
             rel='noopener noreferrer'
             className='cms-appearance-subtle-surface cms-appearance-muted-text rounded-full border p-2 transition hover:text-[var(--cms-appearance-page-text)]'
+            aria-label={`Visit ${label}`}
+            title={`Visit ${label}`}
           >
             <span className='text-xs font-medium uppercase'>{label.slice(0, 2)}</span>
           </a>

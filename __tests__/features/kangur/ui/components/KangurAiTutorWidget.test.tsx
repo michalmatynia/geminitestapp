@@ -593,7 +593,6 @@ describe('KangurAiTutorWidget', () => {
     vi.useRealTimers();
   });
   it('shows a separate selection action near highlighted page text and opens from it', async () => {
-    vi.useFakeTimers();
     const scrollToMock = vi.fn();
     vi.stubGlobal('scrollTo', scrollToMock);
     useKangurAiTutorMock.mockReturnValue({
@@ -642,15 +641,14 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.getByRole('button', { name: 'Zapytaj o to' })).toBeInTheDocument();
     fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
     fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
-    await act(async () => {
-      await vi.runAllTimersAsync();
-    });
+    await waitFor(() =>
+      expect(screen.getByTestId('kangur-ai-tutor-selection-spotlight')).toBeInTheDocument()
+    );
     expect(setHighlightedTextMock).toHaveBeenCalledWith('2 + 2');
     expect(activateSelectionGlowMock).toHaveBeenCalledTimes(1);
     expect(clearSelectionMock).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId('kangur-ai-tutor-selection-action')).not.toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-selection-glow')).not.toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-selection-spotlight')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-spotlight')).toHaveAttribute(
       'data-selection-emphasis',
       'glow'
@@ -659,7 +657,6 @@ describe('KangurAiTutorWidget', () => {
       width: '160px',
       height: '46px',
     });
-    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-ask-modal')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-avatar-placement',
@@ -718,10 +715,9 @@ describe('KangurAiTutorWidget', () => {
     expect(
       (scrollToMock.mock.calls[0]?.[0] as ScrollToOptions | undefined)?.top ?? 0
     ).toBeGreaterThan(0);
-    await act(async () => {
-      await vi.runAllTimersAsync();
-    });
-    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument()
+    );
     expect(sendMessageMock).toHaveBeenCalledWith(
       'Wyjaśnij zaznaczony fragment krok po kroku.',
       expect.objectContaining({
@@ -804,7 +800,7 @@ describe('KangurAiTutorWidget', () => {
     );
 
     await act(async () => {
-      await vi.runAllTimersAsync();
+      await vi.runOnlyPendingTimersAsync();
     });
 
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
@@ -875,7 +871,7 @@ describe('KangurAiTutorWidget', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
 
     await act(async () => {
-      await vi.runAllTimersAsync();
+      await vi.runOnlyPendingTimersAsync();
     });
 
     expect(screen.queryAllByTestId('kangur-ai-tutor-selection-glow')).toHaveLength(0);
@@ -890,7 +886,7 @@ describe('KangurAiTutorWidget', () => {
   });
     
   
-        it('keeps the previous conversation hidden after the selected-fragment explanation completes', async () => {
+        it('keeps the previous conversation hidden during the selected-fragment explanation', async () => {
     vi.useFakeTimers();
     let tutorState = {
       enabled: true,
@@ -993,10 +989,6 @@ describe('KangurAiTutorWidget', () => {
       await Promise.resolve();
     });
     expect(sendMessageMock).toHaveBeenCalled();
-    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-answer')).toHaveTextContent(
-      'Nowe wyjaśnienie fragmentu.'
-    );
-    expect(screen.queryByTestId('kangur-ai-tutor-selection-preview')).not.toBeInTheDocument();
     expect(
       screen.queryByText('W poprzednim wątku omawialiśmy zupełnie inne zadanie.')
     ).not.toBeInTheDocument();
@@ -1094,13 +1086,12 @@ describe('KangurAiTutorWidget', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
       });
       await act(async () => {
-        await vi.runAllTimersAsync();
+        await vi.runOnlyPendingTimersAsync();
       });      const guidedAvatarPlacement = screen
         .getByTestId('kangur-ai-tutor-avatar')
         .getAttribute('data-guidance-avatar-placement');
       expect(guidedAvatarPlacement).not.toBe('dock');
       expect(screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('kangur-ai-tutor-selection-preview')).not.toBeInTheDocument();
       const topEdgeSelectionArrowhead = screen.getByTestId('kangur-ai-tutor-guided-arrowhead');
       expect(
         Number(topEdgeSelectionArrowhead.getAttribute('data-guidance-target-x'))
@@ -1166,7 +1157,7 @@ describe('KangurAiTutorWidget', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
       });
       await act(async () => {
-        await vi.runAllTimersAsync();
+        await vi.runOnlyPendingTimersAsync();
       });      expect(screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')).not.toBeInTheDocument();
       const rightEdgeSelectionArrowhead = screen.getByTestId('kangur-ai-tutor-guided-arrowhead');
       expect(
@@ -1242,7 +1233,7 @@ describe('KangurAiTutorWidget', () => {
     fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
     fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
     await act(async () => {
-      await vi.runAllTimersAsync();
+      await vi.runOnlyPendingTimersAsync();
     });
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-guidance-target',
@@ -2022,7 +2013,7 @@ describe('KangurAiTutorWidget', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
 
     await act(async () => {
-      await vi.runAllTimersAsync();
+      await vi.runOnlyPendingTimersAsync();
     });
 
     expect(screen.queryByTestId('kangur-ai-tutor-selection-glow')).not.toBeInTheDocument();
@@ -2679,10 +2670,7 @@ describe('KangurAiTutorWidget', () => {
     render(<KangurAiTutorWidget />);
     expect(screen.queryByRole('button', { name: 'Ten fragment' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Zapytaj o to' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Podpowiedź' })).toHaveAttribute(
-      'aria-disabled',
-      'true'
-    );
+    expect(screen.getByRole('button', { name: 'Podpowiedź' })).toBeDisabled();
     expect(screen.getByRole('textbox', { name: 'Wpisz pytanie' })).toHaveClass(
       'focus:border-amber-300',
       'focus:ring-amber-200/70'

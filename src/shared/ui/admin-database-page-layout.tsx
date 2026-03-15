@@ -18,10 +18,11 @@ export function AdminDatabasePageLayout({
   parent,
   ...props
 }: AdminDatabasePageLayoutProps): React.JSX.Element {
+  const breadcrumbProps = { current, parent, className: 'mb-2' };
+  const eyebrow = <AdminDatabaseBreadcrumbs {...breadcrumbProps} />;
+  const pageLayoutProps = { ...props, eyebrow };
+
   return (
-    <PageLayout
-      eyebrow={<AdminDatabaseBreadcrumbs current={current} parent={parent} className='mb-2' />}
-      {...props}
-    />
+    <PageLayout {...pageLayoutProps} />
   );
 }

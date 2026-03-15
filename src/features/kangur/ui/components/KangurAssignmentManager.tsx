@@ -311,6 +311,15 @@ export function KangurAssignmentManager({
           : 'slate';
   const featuredQuestRewardAccent =
     featuredDailyQuest?.reward.status === 'claimed' ? 'emerald' : featuredQuestAccent;
+  const featuredQuestActionLabel = featuredDailyQuest?.assignment.action.label ?? '';
+  const featuredQuestDescription = featuredDailyQuest?.assignment.description ?? '';
+  const featuredQuestProgressSummary = featuredDailyQuest?.progress.summary ?? '';
+  const featuredQuestProgressLabel = featuredDailyQuest
+    ? `${featuredDailyQuest.progress.percent}%`
+    : '';
+  const featuredQuestLabel = featuredDailyQuest?.assignment.questLabel ?? 'Misja dnia';
+  const featuredQuestRewardLabel = featuredDailyQuest?.reward.label ?? '';
+  const featuredQuestTitle = featuredDailyQuest?.assignment.title ?? '';
 
   const resolveActionErrorMessage = (error: unknown, fallback: string): string => {
     const status =
@@ -448,27 +457,27 @@ export function KangurAssignmentManager({
                         transitionAcknowledgeMs={110}
                         transitionSourceId='assignment-manager:featured-daily-quest'
                       >
-                        {featuredDailyQuest.assignment.action.label}
+                        {featuredQuestActionLabel}
                       </Link>
                     </KangurButton>
                   ) : null
                 }
                 chipLabelStyle='compact'
-                description={featuredDailyQuest.assignment.description}
+                description={featuredQuestDescription}
                 descriptionClassName='mt-1 text-slate-600'
                 descriptionRelaxed
                 descriptionSize='sm'
                 footer={
                   <KangurMetaText caps className='mt-2' tone='slate'>
-                    {featuredDailyQuest.progress.summary}
+                    {featuredQuestProgressSummary}
                   </KangurMetaText>
                 }
                 progressAccent={featuredQuestAccent}
-                progressLabel={`${featuredDailyQuest.progress.percent}%`}
-                questLabel={featuredDailyQuest.assignment.questLabel ?? 'Misja dnia'}
+                progressLabel={featuredQuestProgressLabel}
+                questLabel={featuredQuestLabel}
                 rewardAccent={featuredQuestRewardAccent}
-                rewardLabel={featuredDailyQuest.reward.label}
-                title={featuredDailyQuest.assignment.title}
+                rewardLabel={featuredQuestRewardLabel}
+                title={featuredQuestTitle}
                 titleClassName='text-slate-900'
               />
             </div>
@@ -530,6 +539,9 @@ export function KangurAssignmentManager({
             description={feedback}
             padding='sm'
             tone='accent'
+            role='status'
+            aria-live='polite'
+            aria-atomic='true'
           >
             {null}
           </KangurSummaryPanel>

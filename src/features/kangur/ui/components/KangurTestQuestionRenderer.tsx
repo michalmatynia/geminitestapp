@@ -200,23 +200,19 @@ export function KangurTestQuestionRenderer({
           let accent: KangurAccent = 'slate';
           let emphasis: 'neutral' | 'accent' = 'neutral';
           let cardClassName = '[color:var(--kangur-page-text)]';
-          let badgeClassName = KANGUR_ACCENT_STYLES.slate.badge;
 
           if (isSelected && !showAnswer) {
             accent = 'amber';
             emphasis = 'accent';
             cardClassName = KANGUR_ACCENT_STYLES.amber.activeText;
-            badgeClassName = KANGUR_ACCENT_STYLES.amber.badge;
           } else if (showAnswer && isChoiceCorrect) {
             accent = 'emerald';
             emphasis = 'accent';
             cardClassName = KANGUR_ACCENT_STYLES.emerald.activeText;
-            badgeClassName = KANGUR_ACCENT_STYLES.emerald.badge;
           } else if (showAnswer && isSelected && !isChoiceCorrect) {
             accent = 'rose';
             emphasis = 'accent';
             cardClassName = KANGUR_ACCENT_STYLES.rose.activeText;
-            badgeClassName = KANGUR_ACCENT_STYLES.rose.badge;
           }
 
           return (
@@ -242,7 +238,7 @@ export function KangurTestQuestionRenderer({
                 onClick={(): void => handleChoiceSelect(choice.label)}
                 type='button'
               >
-                <KangurTestChoiceCardBadge className={badgeClassName} label={choice.label} />
+                <KangurTestChoiceCardBadge accent={accent} label={choice.label} />
                 <KangurTestChoiceCardContent choice={choice} />
                 <KangurTestChoiceCardFeedback
                   isChoiceCorrect={isChoiceCorrect}

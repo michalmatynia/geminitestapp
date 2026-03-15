@@ -129,6 +129,7 @@ export function KangurCmsPreviewPanel({
   const state = usePageBuilderState();
   const dispatch = usePageBuilderDispatch();
   const { vectorOverlay, closeVectorOverlay } = useVectorOverlay();
+  const handleToggleStatusSidebar = onToggleStatusSidebar;
   const theme = useThemeSettingsValue();
   const [mediaTarget, setMediaTarget] = useState<MediaReplaceTarget | null>(null);
   const [mediaOpen, setMediaOpen] = useState(false);
@@ -544,7 +545,7 @@ export function KangurCmsPreviewPanel({
                 size='sm'
                 variant='outline'
                 className='h-8 px-3 text-xs'
-                onClick={onToggleStatusSidebar}
+                onClick={handleToggleStatusSidebar}
                 aria-label='Toggle status sidebar'
               >
                 {statusSidebarOpen ? (

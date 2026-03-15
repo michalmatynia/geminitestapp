@@ -254,6 +254,7 @@ export function VersionGraphInspector(): React.JSX.Element {
           onChange={(e) => onAnnotationChange(e.target.value)}
           onBlur={onAnnotationBlur}
           placeholder='Add note...'
+          aria-label='Add note'
           rows={2}
           className='w-full resize-none rounded border border-border/40 bg-transparent px-2 py-1 text-[10px] text-gray-300 placeholder:text-gray-600 focus:border-gray-500 focus:outline-none'
         />

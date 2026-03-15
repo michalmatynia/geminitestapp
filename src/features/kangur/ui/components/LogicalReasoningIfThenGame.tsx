@@ -102,6 +102,17 @@ const statusChip: Record<CardStatus, string> = {
   wrong: 'Źle',
 };
 
+const removeItemById = <T extends { id: string }>(
+  items: T[],
+  id: string
+): { updated: T[]; item: T | null } => {
+  const index = items.findIndex((entry) => entry.id === id);
+  if (index === -1) return { updated: items, item: null };
+  const updated = [...items];
+  const [item] = updated.splice(index, 1);
+  return { updated, item: item ?? null };
+};
+
 function getCardStatus(item: IfThenCase, zoneId: ZoneId, checked: boolean): CardStatus {
   if (!checked || zoneId === 'pool') return 'neutral';
   const correctZone: ZoneId = item.valid ? 'valid' : 'invalid';
@@ -113,11 +124,15 @@ function DraggableCase({
   index,
   zoneId,
   checked,
+  isSelected,
+  onSelect,
 }: {
   item: IfThenCase;
   index: number;
   zoneId: ZoneId;
   checked: boolean;
+  isSelected: boolean;
+  onSelect: () => void;
 }): React.ReactElement | React.ReactPortal {
   const status = getCardStatus(item, zoneId, checked);
   const accent = statusAccent[status];
@@ -170,14 +185,26 @@ function DraggableCase({
     <Draggable draggableId={item.id} index={index} isDragDisabled={checked}>
       {(provided, snapshot) => {
         const content = (
-          <div
+          <button
+            type='button'
             ref={provided.innerRef}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
-            className='w-full cursor-grab active:cursor-grabbing'
+            className={cn(
+              'w-full text-left cursor-grab active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+              isSelected && 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white'
+            )}
+            aria-pressed={isSelected}
+            aria-label={`Wybierz kartę: ${item.conclusion}`}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              if (checked) return;
+              onSelect();
+            }}
           >
             {card}
-          </div>
+          </button>
         );
 
         if (snapshot.isDragging && dragPortal) {
@@ -197,6 +224,7 @@ export default function LogicalReasoningIfThenGame({
   const [checked, setChecked] = useState(false);
   const [score, setScore] = useState(0);
   const [attempted, setAttempted] = useState(false);
+  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
 
   const total = cases.length;
   const allPlaced = state.pool.length === 0;
@@ -206,6 +234,7 @@ export default function LogicalReasoningIfThenGame({
     if (checked) return;
     const { source, destination } = result;
     if (!destination) return;
+    setSelectedCaseId(null);
     if (!isZoneId(source.droppableId) || !isZoneId(destination.droppableId)) return;
     if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
@@ -250,6 +279,7 @@ export default function LogicalReasoningIfThenGame({
     setChecked(false);
     setAttempted(false);
     setScore(0);
+    setSelectedCaseId(null);
   };
 
   const summaryLabel = useMemo(() => {
@@ -265,6 +295,32 @@ export default function LogicalReasoningIfThenGame({
     if (score >= Math.max(1, Math.floor(total * 0.6))) return 'amber';
     return 'rose';
   }, [attempted, score, total]);
+
+  const selectedCase =
+    selectedCaseId
+      ? [...state.pool, ...state.valid, ...state.invalid].find((item) => item.id === selectedCaseId) ??
+        null
+      : null;
+
+  const moveSelectedCaseTo = (destinationId: ZoneId): void => {
+    if (checked || !selectedCaseId) return;
+    setState((prev) => {
+      const zones: ZoneId[] = ['pool', 'valid', 'invalid'];
+      let moved: IfThenCase | null = null;
+      const nextState = { ...prev };
+      zones.forEach((zone) => {
+        const { updated, item } = removeItemById(prev[zone], selectedCaseId);
+        nextState[zone] = updated;
+        if (item) {
+          moved = item;
+        }
+      });
+      if (!moved) return prev;
+      nextState[destinationId] = [...nextState[destinationId], moved];
+      return nextState;
+    });
+    setSelectedCaseId(null);
+  };
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
@@ -306,6 +362,26 @@ export default function LogicalReasoningIfThenGame({
                       zoneBorder[zoneId],
                       snapshot.isDraggingOver && 'scale-[1.01]'
                     )}
+                    role='button'
+                    tabIndex={checked ? -1 : 0}
+                    aria-disabled={checked}
+                    aria-label={
+                      zoneId === 'valid'
+                        ? 'Strefa: wniosek wynika'
+                        : 'Strefa: wniosek nie wynika'
+                    }
+                    onClick={() => {
+                      if (!selectedCaseId || checked) return;
+                      moveSelectedCaseTo(zoneId);
+                    }}
+                    onKeyDown={(event) => {
+                      if (checked) return;
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        if (!selectedCaseId) return;
+                        moveSelectedCaseTo(zoneId);
+                      }
+                    }}
                     {...provided.droppableProps}
                   >
                     <div className='mb-2 flex items-center justify-between gap-2'>
@@ -331,6 +407,12 @@ export default function LogicalReasoningIfThenGame({
                           index={index}
                           zoneId={zoneId}
                           checked={checked}
+                          isSelected={selectedCaseId === item.id}
+                          onSelect={() =>
+                            setSelectedCaseId((current) =>
+                              current === item.id ? null : item.id
+                            )
+                          }
                         />
                       ))}
                       {provided.placeholder}
@@ -351,6 +433,22 @@ export default function LogicalReasoningIfThenGame({
               padding='sm'
               dashed
               className={cn('min-h-[150px] w-full', zoneBorder.pool)}
+              role='button'
+              tabIndex={checked ? -1 : 0}
+              aria-disabled={checked}
+              aria-label='Strefa: nieprzypisane'
+              onClick={() => {
+                if (!selectedCaseId || checked) return;
+                moveSelectedCaseTo('pool');
+              }}
+              onKeyDown={(event) => {
+                if (checked) return;
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  if (!selectedCaseId) return;
+                  moveSelectedCaseTo('pool');
+                }
+              }}
               {...provided.droppableProps}
             >
               <div className='mb-2 flex items-center justify-between gap-2'>
@@ -369,20 +467,66 @@ export default function LogicalReasoningIfThenGame({
                 {zoneHints.pool}
               </p>
               <div className='flex flex-col gap-2'>
-                {state.pool.map((item, index) => (
-                  <DraggableCase
-                    key={item.id}
-                    item={item}
-                    index={index}
-                    zoneId='pool'
-                    checked={checked}
-                  />
-                ))}
+                  {state.pool.map((item, index) => (
+                    <DraggableCase
+                      key={item.id}
+                      item={item}
+                      index={index}
+                      zoneId='pool'
+                      checked={checked}
+                      isSelected={selectedCaseId === item.id}
+                      onSelect={() =>
+                        setSelectedCaseId((current) =>
+                          current === item.id ? null : item.id
+                        )
+                      }
+                    />
+                  ))}
                 {provided.placeholder}
               </div>
             </KangurInfoCard>
           )}
         </Droppable>
+
+        <div className='flex flex-wrap items-center gap-2 text-xs'>
+          <span
+            className='text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500'
+            role='status'
+            aria-live='polite'
+            aria-atomic='true'
+          >
+            {selectedCase
+              ? `Wybrana karta: ${selectedCase.conclusion}`
+              : 'Wybierz kartę, aby przenieść ją klawiaturą.'}
+          </span>
+          <KangurButton
+            size='sm'
+            type='button'
+            variant='surface'
+            onClick={() => moveSelectedCaseTo('valid')}
+            disabled={!selectedCase || checked}
+          >
+            Do „wynika”
+          </KangurButton>
+          <KangurButton
+            size='sm'
+            type='button'
+            variant='surface'
+            onClick={() => moveSelectedCaseTo('invalid')}
+            disabled={!selectedCase || checked}
+          >
+            Do „nie wynika”
+          </KangurButton>
+          <KangurButton
+            size='sm'
+            type='button'
+            variant='surface'
+            onClick={() => moveSelectedCaseTo('pool')}
+            disabled={!selectedCase || checked}
+          >
+            Do puli
+          </KangurButton>
+        </div>
 
         <div className='flex flex-wrap items-center gap-3'>
           <KangurButton

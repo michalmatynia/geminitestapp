@@ -18,10 +18,11 @@ export function AdminProductsPageLayout({
   parent,
   ...props
 }: AdminProductsPageLayoutProps): React.JSX.Element {
+  const breadcrumbProps = { current, parent };
+  const eyebrow = <AdminProductsBreadcrumbs {...breadcrumbProps} />;
+  const pageLayoutProps = { ...props, eyebrow };
+
   return (
-    <PageLayout
-      eyebrow={<AdminProductsBreadcrumbs current={current} parent={parent} />}
-      {...props}
-    />
+    <PageLayout {...pageLayoutProps} />
   );
 }

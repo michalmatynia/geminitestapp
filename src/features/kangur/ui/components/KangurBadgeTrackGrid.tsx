@@ -24,11 +24,12 @@ export default function KangurBadgeTrackGrid({
   progress,
 }: KangurBadgeTrackGridProps): React.JSX.Element {
   const trackTestIdPrefix = dataTestIdPrefix;
+  const emptyTestIdValue = emptyTestId;
   const tracks = getProgressBadgeTrackSummaries(progress);
 
   if (tracks.length === 0) {
     return (
-      <KangurCardDescription as='p' data-testid={emptyTestId} size='sm'>
+      <KangurCardDescription as='p' data-testid={emptyTestIdValue} size='sm'>
         Kolejne odznaki pojawiają się wraz z postępem.
       </KangurCardDescription>
     );

@@ -1,6 +1,7 @@
 import { AnimatePresence } from 'framer-motion';
 
 import { KangurAiTutorComposer } from './KangurAiTutorComposer';
+import { KangurAiTutorDrawingSidePanel } from './KangurAiTutorDrawingSidePanel';
 import { KangurAiTutorFloatingAvatar } from './KangurAiTutorFloatingAvatar';
 import { KangurAiTutorGuestIntroPanel } from './KangurAiTutorGuestIntroPanel';
 import { KangurAiTutorGuidedCallout } from './KangurAiTutorGuidedCallout';
@@ -22,6 +23,7 @@ export function KangurAiTutorPortalContent() {
   const {
     avatar,
     diagnostics,
+    drawingPanel,
     guestIntro,
     guidedCallout,
     panel,
@@ -249,6 +251,15 @@ export function KangurAiTutorPortalContent() {
           </>
         </KangurAiTutorPanelBodyProvider>
       </KangurAiTutorPanelChrome>
+
+      <KangurAiTutorDrawingSidePanel
+        hint={drawingPanel.hint}
+        onClose={drawingPanel.onClose}
+        onComplete={drawingPanel.onComplete}
+        prefersReducedMotion={drawingPanel.prefersReducedMotion}
+        shouldRender={drawingPanel.shouldRender}
+        style={drawingPanel.style}
+      />
     </>
   );
 }

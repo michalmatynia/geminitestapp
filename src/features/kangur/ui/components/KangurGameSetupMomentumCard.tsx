@@ -122,7 +122,7 @@ export default function KangurGameSetupMomentumCard({
       description={focus.description}
       descriptionClassName='mt-1'
       descriptionSize='sm'
-      descriptionTestId={`kangur-game-setup-momentum-description-${mode}`}
+      descriptionTestId={`kangur-game-setup-momentum-description-${modeKey}`}
       headerExtras={
         <>
           {streak > 0 ? (

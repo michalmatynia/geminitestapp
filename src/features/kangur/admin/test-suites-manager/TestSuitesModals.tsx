@@ -1,11 +1,11 @@
-import React from 'react';
+
 import { FormModal, Input } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { TestSuiteMetadataForm } from '../components/TestSuiteMetadataForm';
 import { useTestSuitesManager } from './test-suites-manager.context';
 import { useTestSuitesManagerLogic } from './test-suites-manager.logic';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { resolveKangurTestSuiteGroupTitle } from '../../test-suites';
+import type { KangurTestGroup } from '@/shared/contracts/kangur-tests';
 
 export function TestSuitesModals() {
   const settingsStore = useSettingsStore();
@@ -45,9 +45,7 @@ export function TestSuitesModals() {
         title='Create Test Group'
         subtitle='Create a reusable group for organizing Kangur test suites.'
         onSave={(): void => {
-          // Note: Logic for saving group might need to be moved to logic.ts
-          // For now I'll assume handleSaveGroup will be there
-          // void logic.handleSaveGroup();
+          void logic.handleSaveGroup();
         }}
         isSaving={logic.isUpdating}
         isSaveDisabled={isGroupSaveDisabled}
@@ -66,6 +64,7 @@ export function TestSuitesModals() {
             value={state.groupDescription}
             onChange={(event): void => state.setGroupDescription(event.target.value)}
             placeholder='Optional description for this group'
+            aria-label='Group description'
             className='min-h-[96px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm'
           />
         </div>
@@ -81,7 +80,7 @@ export function TestSuitesModals() {
         title='Move Suite To Another Group'
         subtitle='Reassign this suite without opening the full suite editor.'
         onSave={(): void => {
-          // void logic.handleMoveSuiteToGroup();
+          void logic.handleMoveSuiteToGroup();
         }}
         isSaving={logic.isUpdating}
         isSaveDisabled={!state.suiteMoveTargetGroupTitle.trim() || logic.isUpdating}
@@ -99,7 +98,7 @@ export function TestSuitesModals() {
             title='Destination group'
           >
             <option value=''>Choose destination group</option>
-            {logic.resolvedGroups?.map((group: any) => (
+            {logic.resolvedGroups?.map((group: KangurTestGroup) => (
               <option key={group.id} value={group.title}>
                 {group.title}
               </option>
@@ -112,9 +111,7 @@ export function TestSuitesModals() {
       <ConfirmModal
         isOpen={Boolean(state.groupToDeleteTitle)}
         onClose={(): void => state.setGroupToDeleteTitle(null)}
-        onConfirm={() => {
-          // void logic.handleDeleteGroup();
-        }}
+        onConfirm={logic.handleDeleteGroup}
         title='Delete Test Group'
         message={`Delete test group "${state.groupToDeleteTitle ?? ''}"? Only empty groups can be removed.`}
         confirmText='Delete'

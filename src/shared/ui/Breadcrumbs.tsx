@@ -109,6 +109,7 @@ export function Breadcrumbs({
               <button
                 type='button'
                 onClick={item.onClick}
+                aria-label={item.label}
                 className='transition-colors hover:text-gray-200 whitespace-nowrap text-gray-400'
               >
                 {item.label}

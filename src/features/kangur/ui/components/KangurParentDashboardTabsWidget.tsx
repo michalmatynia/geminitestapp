@@ -1,5 +1,5 @@
 import { BarChart2, BookOpen, BrainCircuit, ClipboardList } from 'lucide-react';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 import {
   type KangurParentDashboardTabId,
@@ -47,6 +47,13 @@ const TABS: Array<{
   },
 ];
 
+export const getParentDashboardTabIds = (
+  tabId: KangurParentDashboardTabId
+): { tabId: string; panelId: string } => ({
+  tabId: `parent-dashboard-tab-${tabId}`,
+  panelId: `parent-dashboard-panel-${tabId}`,
+});
+
 export function KangurParentDashboardTabsWidget({
   onBeforeTabChange,
 }: {
@@ -54,12 +61,52 @@ export function KangurParentDashboardTabsWidget({
 } = {}): React.JSX.Element | null {
   const { activeTab, canAccessDashboard, setActiveTab } = useKangurParentDashboardRuntime();
   const { entry: tabsContent } = useKangurPageContentEntry('parent-dashboard-tabs');
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
   const handleTabChange = useCallback(
-    (tabId: KangurParentDashboardTabId): void => {
-      onBeforeTabChange?.(tabId);
+    (tabId: KangurParentDashboardTabId): void => {      onBeforeTabChange?.(tabId);
       setActiveTab(tabId);
     },
     [onBeforeTabChange, setActiveTab]
+  );
+  const focusTabAt = useCallback((index: number): void => {
+    tabRefs.current[index]?.focus();
+  }, []);
+  const handleTabKeyDown = useCallback(
+    (index: number, event: React.KeyboardEvent<HTMLButtonElement>): void => {
+      if (TABS.length === 0) {
+        return;
+      }
+
+      let nextIndex = index;
+      switch (event.key) {
+        case 'ArrowRight':
+        case 'ArrowDown':
+          nextIndex = (index + 1) % TABS.length;
+          break;
+        case 'ArrowLeft':
+        case 'ArrowUp':
+          nextIndex = (index - 1 + TABS.length) % TABS.length;
+          break;
+        case 'Home':
+          nextIndex = 0;
+          break;
+        case 'End':
+          nextIndex = TABS.length - 1;
+          break;
+        default:
+          return;
+      }
+
+      event.preventDefault();
+      const nextTab = TABS[nextIndex];
+      if (!nextTab) {
+        return;
+      }
+      handleTabChange(nextTab.id);
+      requestAnimationFrame(() => focusTabAt(nextIndex));
+    },
+    [focusTabAt, handleTabChange]
   );
 
   const handlePointerTabMouseDown = useCallback(
@@ -91,28 +138,39 @@ export function KangurParentDashboardTabsWidget({
           KANGUR_SEGMENTED_CONTROL_CLASSNAME,
           'grid grid-cols-2 sm:w-auto sm:grid-cols-none sm:flex'
         )}
+        role='tablist'
+        aria-orientation='horizontal'
       >
-        {TABS.map((tab) => {
+        {TABS.map((tab, index) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
+          const { tabId, panelId } = getParentDashboardTabIds(tab.id);
           return (
             <KangurButton
+              id={tabId}
               key={tab.id}
               onMouseDown={handlePointerTabMouseDown}
+              onKeyDown={(event) => handleTabKeyDown(index, event)}
               onClick={() => {
                 if (isActive) {
                   return;
                 }
                 handleTabChange(tab.id);
               }}
-              aria-pressed={isActive}
+              ref={(node) => {
+                tabRefs.current[index] = node;
+              }}
+              role='tab'
+              aria-selected={isActive}
+              aria-controls={panelId}
+              tabIndex={isActive ? 0 : -1}
               className='min-w-0 flex-1 justify-center gap-1.5 px-2 text-center sm:px-4'
               size='sm'
               type='button'
               variant={isActive ? 'segmentActive' : 'segment'}
               data-doc-id={tab.docId}
             >
-              <Icon className='h-4 w-4' />
+              <Icon className='h-4 w-4' aria-hidden='true' />
               <span className='text-[11px] font-semibold leading-tight sm:text-sm'>
                 <span className='sm:hidden'>{tab.mobileLabel}</span>
                 <span className='hidden sm:inline'>{tab.label}</span>

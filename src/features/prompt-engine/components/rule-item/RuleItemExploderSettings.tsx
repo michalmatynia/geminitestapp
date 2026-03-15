@@ -122,6 +122,8 @@ export function RuleItemExploderSettings(): React.JSX.Element | null {
               promptExploderTreatAsHeading: !promptExploderTreatAsHeading,
             })
           }
+          aria-pressed={promptExploderTreatAsHeading}
+          aria-label='Exploder: Treat Match As Heading'
         >
           {promptExploderTreatAsHeading ? 'ON' : 'OFF'}
         </button>
@@ -223,6 +225,8 @@ export function RuleItemExploderSettings(): React.JSX.Element | null {
               promptExploderCaptureOverwrite: !promptExploderCaptureOverwrite,
             })
           }
+          aria-pressed={promptExploderCaptureOverwrite}
+          aria-label='Capture Overwrite'
         >
           {promptExploderCaptureOverwrite ? 'ON' : 'OFF'}
         </button>

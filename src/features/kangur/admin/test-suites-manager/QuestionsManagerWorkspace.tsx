@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Button, FormModal } from '@/shared/ui';
 import { KangurAdminContentShell } from '../components/KangurAdminContentShell';
 import { KangurQuestionsManagerRuntimeProvider } from '../context/KangurQuestionsManagerRuntimeContext';
@@ -7,6 +7,7 @@ import { useTestSuitesManager } from './test-suites-manager.context';
 import { useTestSuitesManagerLogic } from './test-suites-manager.logic';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { resolveKangurTestSuiteGroupTitle } from '../../test-suites';
+import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
 
 export function QuestionsManagerWorkspace({ standalone }: { standalone: boolean }) {
   const settingsStore = useSettingsStore();
@@ -15,7 +16,9 @@ export function QuestionsManagerWorkspace({ standalone }: { standalone: boolean 
 
   if (!state.managingSuite) return null;
 
-  const targetSuites = logic.suites.filter((suite: any) => suite.id !== state.managingSuite?.id);
+  const targetSuites = logic.suites.filter(
+    (suite: KangurTestSuite) => suite.id !== state.managingSuite?.id
+  );
   const currentManagedSuiteQuestionCount = logic.questionCountBySuiteId.get(state.managingSuite.id) ?? 0;
 
   const questionsContent = (
@@ -85,7 +88,7 @@ export function QuestionsManagerWorkspace({ standalone }: { standalone: boolean 
             title='Destination suite'
           >
             <option value=''>Choose destination suite</option>
-            {targetSuites.map((suite: any) => (
+            {targetSuites.map((suite: KangurTestSuite) => (
               <option key={suite.id} value={suite.id}>
                 {resolveKangurTestSuiteGroupTitle(suite, logic.groupById)} / {suite.title}
               </option>

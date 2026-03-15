@@ -282,7 +282,7 @@ export default function DivisionLesson(): React.JSX.Element {
         title='Gra z dzieleniem!'
       >
         <DivisionGroupsGame
-          finishLabel='Wróć do tematów'
+          finishLabelVariant='topics'
           onFinish={() => setActiveSection(null)}
         />
       </LessonActivityStage>

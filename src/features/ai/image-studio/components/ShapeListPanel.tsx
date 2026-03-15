@@ -160,6 +160,7 @@ export function ShapeListPanel({ className }: ShapeListPanelProps): React.JSX.El
                   startRename(shape);
                 }}
                 aria-pressed={isActive}
+                aria-label={`Select ${shape.label ?? shape.name}`}
                 className='flex min-w-0 flex-1 items-center gap-1.5 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
               >
                 <span

@@ -18,12 +18,11 @@ export function AdminAgentTeachingPageLayout({
   parent,
   ...props
 }: AdminAgentTeachingPageLayoutProps): React.JSX.Element {
+  const breadcrumbProps = { current, parent };
+  const eyebrow = <AdminAgentTeachingBreadcrumbs {...breadcrumbProps} />;
+  const pageLayoutProps = { ...props, eyebrow };
+
   return (
-    <PageLayout
-      eyebrow={
-        <AdminAgentTeachingBreadcrumbs current={current} parent={parent} className='mb-2' />
-      }
-      {...props}
-    />
+    <PageLayout {...pageLayoutProps} />
   );
 }

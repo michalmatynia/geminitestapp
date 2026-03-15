@@ -16,8 +16,10 @@ export function KangurAiTutorNativeGuideEntryList({
   entryValidationCounts,
   className,
 }: Props): React.JSX.Element {
+  const cardClassName = className;
+
   return (
-    <Card variant='subtle' padding='md' className={className}>
+    <Card variant='subtle' padding='md' className={cardClassName}>
       <div className='flex items-center justify-between gap-2'>
         <div className='text-sm font-semibold text-foreground'>Guide entries</div>
         <Badge variant='outline'>{entries.length}</Badge>
@@ -34,7 +36,9 @@ export function KangurAiTutorNativeGuideEntryList({
               key={entry.id}
               type='button'
               onClick={() => onSelect(entry.id)}
-              className={`w-full rounded-2xl border px-3 py-3 text-left transition ${
+              aria-pressed={isSelected}
+              aria-label={`Select ${entry.title}`}
+              className={`w-full rounded-2xl border px-3 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background ${
                 isSelected
                   ? 'border-primary/40 bg-card shadow-sm ring-1 ring-primary/15'
                   : 'border-border/60 bg-background/50 hover:bg-card/60'

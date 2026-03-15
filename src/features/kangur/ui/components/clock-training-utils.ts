@@ -5,24 +5,25 @@ export type ClockTask = {
   minutes: number;
 };
 
-type Feedback = 'correct' | 'wrong' | null;
-type Hand = 'hour' | 'minute';
-type MinuteSnapMode = '5min' | '1min';
+export type Feedback = 'correct' | 'wrong' | null;
+export type Hand = 'hour' | 'minute';
+export type MinuteSnapMode = '5min' | '1min';
 export type ClockGameMode = 'practice' | 'challenge';
 export type ClockTrainingSectionId = 'hours' | 'minutes' | 'combined';
 export type ClockTrainingTaskPoolId = ClockTrainingSectionId | 'mixed';
 export type ClockChallengeMedal = 'gold' | 'silver' | 'bronze';
 
-type ClockChallengeResult = {
+export type ClockChallengeResult = {
   correctCount: number;
   medal: ClockChallengeMedal;
   totalCount: number;
 };
 
-type ClockFeedback = {
+export type ClockFeedback = {
   kind: Feedback;
   title: string;
   details: string;
+  emoji: string;
   tone?: 'near' | 'far';
 };
 
@@ -241,7 +242,7 @@ export function buildClockWrongFeedback(
     return {
       kind: 'wrong',
       title,
-      tone: hourDistance === 1 ? 'near' : 'far',
+      tone: hourDistance === 1 ? 'near' : 'far', emoji: '❌',
       details: `Twoja odpowiedź: ${actualHours}:${pad(actualMinutes)}. Poprawna: ${expectedHours}:${pad(expectedMinutes)}. Pomyłka o ${hourDistance} godz. ${hint}`,
     };
   }
@@ -274,9 +275,9 @@ export function buildClockWrongFeedback(
     kind: 'wrong',
     title,
     tone,
+    emoji: '❌',
     details: `Twoja odpowiedź: ${actualHours}:${pad(actualMinutes)}. Poprawna: ${expectedHours}:${pad(expectedMinutes)}. Różnica: ${totalMinuteDistance} min. ${hint}`,
-  };
-}
+  };}
 
 export function taskToKey(task: ClockTask): string {
   return `${task.hours}:${task.minutes}`;
@@ -347,8 +348,8 @@ export function buildClockCorrectFeedback(
     kind: 'correct',
     title,
     details,
-  };
-}
+    emoji: '🌟',
+  };}
 
 export function buildClockTimeoutFeedback(
   section: ClockTrainingTaskPoolId,
@@ -360,7 +361,7 @@ export function buildClockTimeoutFeedback(
     return {
       kind: 'wrong',
       title: 'Czas minął!',
-      tone: 'far',
+      tone: 'far', emoji: '❌',
       details: `Nie zdążyłeś/aś ustawić pełnej godziny. Poprawna godzina: ${time}.`,
     };
   }
@@ -369,7 +370,7 @@ export function buildClockTimeoutFeedback(
     return {
       kind: 'wrong',
       title: 'Czas minął!',
-      tone: 'far',
+      tone: 'far', emoji: '❌',
       details: `Nie zdążyłeś/aś ustawić minut. Poprawny odczyt: ${time}.`,
     };
   }
@@ -378,7 +379,7 @@ export function buildClockTimeoutFeedback(
     return {
       kind: 'wrong',
       title: 'Czas minął!',
-      tone: 'far',
+      tone: 'far', emoji: '❌',
       details: `Nie zdążyłeś/aś ustawić pełnego czasu. Poprawna godzina: ${time}.`,
     };
   }
@@ -386,7 +387,7 @@ export function buildClockTimeoutFeedback(
   return {
     kind: 'wrong',
     title: 'Czas minął!',
-    tone: 'far',
+    tone: 'far', emoji: '❌',
     details: `Nie zdążyłeś/aś ustawić czasu. Poprawna godzina: ${time}.`,
   };
 }
@@ -454,7 +455,6 @@ export function scheduleRetryTask(
 }
 
 export { CHALLENGE_TIME_LIMIT_SECONDS, MINUTE_STEP_BY_MODE };
-export type { ClockChallengeResult, ClockFeedback, Feedback, Hand, MinuteSnapMode };
 export {
   createClockTaskSet,
   resolveClockChallengeMedal,

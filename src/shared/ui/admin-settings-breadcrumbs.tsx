@@ -2,7 +2,8 @@ import * as React from 'react';
 
 import { cn } from '@/shared/utils';
 
-import { AdminSectionBreadcrumbs } from './admin-section-breadcrumbs';
+import { Breadcrumbs } from './Breadcrumbs';
+import { buildAdminSectionBreadcrumbItems } from './admin-section-breadcrumbs';
 
 type AdminSettingsBreadcrumbsProps = {
   current: string;
@@ -13,11 +14,13 @@ export function AdminSettingsBreadcrumbs({
   current,
   className,
 }: AdminSettingsBreadcrumbsProps): React.JSX.Element {
+  const items = buildAdminSectionBreadcrumbItems({
+    section: { label: 'Settings', href: '/admin/settings' },
+    current,
+  });
+  const resolvedClassName = cn('mb-2', className);
+
   return (
-    <AdminSectionBreadcrumbs
-      section={{ label: 'Settings', href: '/admin/settings' }}
-      current={current}
-      className={cn('mb-2', className)}
-    />
+    <Breadcrumbs items={items} className={resolvedClassName} />
   );
 }

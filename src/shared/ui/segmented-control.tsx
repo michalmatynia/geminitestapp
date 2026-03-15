@@ -113,7 +113,7 @@ export function SegmentedControl<T extends string>({
                 : cn('text-gray-400 hover:text-gray-200 hover:bg-white/5', itemClassName)
             )}
           >
-            {Icon && <Icon className='size-3' />}
+            {Icon && <Icon className='size-3' aria-hidden='true' />}
             {option.label}
           </button>
         );

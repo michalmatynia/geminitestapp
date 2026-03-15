@@ -82,7 +82,13 @@ export function FrontendBlockSection(): React.ReactNode {
           })}
         >
           {linkUrl ? (
-            <a href={linkUrl} target={linkTarget} rel={linkRel} className='block w-full'>
+            <a
+              href={linkUrl}
+              target={linkTarget}
+              rel={linkRel}
+              className='block w-full'
+              aria-label={linkUrl}
+            >
               {content}
             </a>
           ) : (

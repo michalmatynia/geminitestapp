@@ -115,7 +115,7 @@ export function QuestionChoicesEditor(): React.JSX.Element {
                 title={isCorrect ? 'Correct answer' : 'Mark as correct'}
                 onClick={(): void => setCorrectChoiceLabel(choice.label)}
                 className={cn(
-                  'size-5 shrink-0 rounded-full border-2 transition-colors',
+                  'size-5 shrink-0 rounded-full border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background',
                   isCorrect
                     ? 'border-emerald-400 bg-emerald-400'
                     : 'border-gray-500 bg-transparent hover:border-emerald-400/60'

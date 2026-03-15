@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { cn } from '@/shared/utils';
+import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
 
 import {
   Select,
@@ -78,6 +78,18 @@ const { Context: SelectSimpleRuntimeContext, useStrictContext: useSelectSimpleRu
 
 function SelectSimpleControl(): React.JSX.Element {
   const runtime = useSelectSimpleRuntime();
+  const allowFallbackLabel = !runtime.id;
+  const { ariaLabel: resolvedAriaLabel, hasAccessibleLabel } = resolveAccessibleLabel({
+    children: null,
+    ariaLabel: runtime.ariaLabel,
+    ariaLabelledBy: undefined,
+    title: allowFallbackLabel ? runtime.title : undefined,
+    fallbackLabel: allowFallbackLabel ? runtime.placeholder : undefined,
+  });
+  const hasLabel = hasAccessibleLabel || Boolean(runtime.id);
+  if (!hasLabel) {
+    warnMissingAccessibleLabel({ componentName: 'SelectSimple', hasAccessibleLabel: hasLabel });
+  }
 
   return (
     <Select
@@ -95,7 +107,7 @@ function SelectSimpleControl(): React.JSX.Element {
             'border-border/40 bg-card/40 hover:bg-card/60 hover:border-border/60',
           runtime.triggerClassName
         )}
-        aria-label={runtime.ariaLabel}
+        aria-label={resolvedAriaLabel}
         aria-describedby={runtime.ariaDescribedBy}
         aria-invalid={runtime.ariaInvalid || undefined}
         aria-errormessage={runtime.ariaErrorMessage}

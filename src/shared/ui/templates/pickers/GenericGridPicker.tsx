@@ -136,6 +136,8 @@ export const GenericGridPicker = memo(function GenericGridPicker<
                 type='button'
                 role='option'
                 aria-selected={isSelected}
+                aria-label={item.label}
+                title={item.label}
                 disabled={isDisabledItem}
                 onClick={() => handleSelect(item)}
                 onKeyDown={(e) => handleKeyDown(e, item)}

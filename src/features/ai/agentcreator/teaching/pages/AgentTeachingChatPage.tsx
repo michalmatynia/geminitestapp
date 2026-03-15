@@ -14,7 +14,7 @@ import type {
 } from '@/shared/contracts/agent-teaching';
 import type { SimpleChatMessage } from '@/shared/contracts/chatbot';
 import {
-  AdminAgentTeachingPageLayout,
+  AdminAgentTeachingBreadcrumbs,
   Button,
   Textarea,
   useToast,
@@ -23,6 +23,7 @@ import {
   LoadingState,
   EmptyState,
   Card,
+  PageLayout,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -121,9 +122,9 @@ function AgentTeachingChatPageContent(): React.JSX.Element {
   };
 
   return (
-    <AdminAgentTeachingPageLayout
+    <PageLayout
       title='Learner Chat'
-      current='Chat'
+      eyebrow={<AdminAgentTeachingBreadcrumbs current='Chat' className='mb-2' />}
       description='Chat with a learner agent. The response is generated with retrieved embedded sources.'
     >
 
@@ -264,7 +265,7 @@ function AgentTeachingChatPageContent(): React.JSX.Element {
           </FormSection>
         </FormSection>
       </div>
-    </AdminAgentTeachingPageLayout>
+    </PageLayout>
   );
 }
 

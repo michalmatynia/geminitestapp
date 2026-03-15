@@ -231,6 +231,7 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
           'text-sm font-normal text-white/90',
           'hover:text-white/80',
         ].join(' ')}
+        aria-label={`Open ${nameValue || 'product'}`}
         onClick={(): void => {
           const selection = typeof window !== 'undefined' ? window.getSelection() : null;
           if (selection && selection.toString().trim().length > 0) return;

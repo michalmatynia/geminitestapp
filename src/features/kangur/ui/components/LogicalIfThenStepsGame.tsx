@@ -228,6 +228,9 @@ export default function LogicalIfThenStepsGame(): React.JSX.Element {
           tone='accent'
           padding='sm'
           className='w-full text-sm'
+          role='status'
+          aria-live='polite'
+          aria-atomic='true'
         >
           {feedback === 'info'
             ? 'Uzupełnij wszystkie kroki, aby sprawdzić wniosek.'

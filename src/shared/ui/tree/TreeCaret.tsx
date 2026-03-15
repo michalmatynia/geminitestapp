@@ -57,7 +57,7 @@ export function TreeCaret({
   if (!onToggle) {
     return (
       <span className={sharedClasses} aria-hidden='true'>
-        <Icon className={iconClasses} />
+        <Icon className={iconClasses} aria-hidden='true' />
       </span>
     );
   }

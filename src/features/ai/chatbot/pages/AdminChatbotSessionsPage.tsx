@@ -6,7 +6,7 @@ import React, { useMemo } from 'react';
 
 import type { ChatbotSessionListItem } from '@/shared/contracts/chatbot';
 import {
-  AdminChatbotPageLayout,
+  AdminChatbotBreadcrumbs,
   Button,
   Input,
   Checkbox,
@@ -14,6 +14,7 @@ import {
   EmptyState,
   SearchInput,
   FormActions,
+  PageLayout,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -179,15 +180,16 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
   );
 
   return (
-    <AdminChatbotPageLayout
+    <PageLayout
       title='Chat Sessions'
-      current='Sessions'
+      eyebrow={<AdminChatbotBreadcrumbs current='Sessions' />}
       description='History of conversations with AI agents.'
       headerActions={
         <Button variant='outline' size='xs' onClick={refetch} disabled={isFetching}>
           {isFetching ? 'Refreshing...' : 'Refresh'}
         </Button>
       }
+      containerClassName='mx-auto w-full max-w-none py-10'
     >
       <StandardDataTablePanel
         variant='flat'
@@ -276,6 +278,6 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
         confirmText='Delete All'
         isDangerous={true}
       />
-    </AdminChatbotPageLayout>
+    </PageLayout>
   );
 }

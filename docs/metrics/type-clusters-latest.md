@@ -8,21 +8,19 @@ canonical: true
 ---
 # Type Cluster Scanner Report
 
-Generated at: 2026-03-15T06:13:52.584Z
+Generated at: 2026-03-15T06:32:50.488Z
 Status: ok
 
 ## Summary
 
 - Files scanned: 6016
-- Exported declarations scanned: 4550
-- Candidate declarations scanned: 4523
-- Exact-shape clusters: 9
+- Exported declarations scanned: 4543
+- Candidate declarations scanned: 4516
+- Exact-shape clusters: 0
 - Near-shape clusters: 0
 - Clusters after filters: 0
 - Declarations in clusters: 0
 - Highest risk score: 0
-- Domain filter: feature:ai
-- Minimum risk filter: 10
 
 ## Top Cluster Candidates
 

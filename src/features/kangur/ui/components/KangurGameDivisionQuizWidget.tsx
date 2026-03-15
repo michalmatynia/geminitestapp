@@ -20,7 +20,7 @@ export function KangurGameDivisionQuizWidget(): React.JSX.Element | null {
       shellTestId='kangur-division-quiz-top-section'
       title='Quiz dzielenia'
     >
-      <DivisionGame finishLabel='Wróć do Grajmy' onFinish={handleHome} />
+      <DivisionGame finishLabelVariant='play' onFinish={handleHome} />
     </LessonActivityStage>
   );
 }

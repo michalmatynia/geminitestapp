@@ -142,7 +142,7 @@ const buildTileClassName = ({
   isCompact: boolean;
 }): string =>
   cn(
-    'inline-flex items-center justify-center gap-2 rounded-full border font-semibold transition',
+    'inline-flex items-center justify-center gap-2 rounded-full border font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
     isCompact ? 'px-3 py-1 text-xs' : 'px-4 py-2 text-sm',
     KANGUR_ACCENT_STYLES[accent].badge,
     !isDisabled && KANGUR_ACCENT_STYLES[accent].hoverCard,
@@ -495,7 +495,7 @@ export default function GeometryBasicsWorkshopGame({
                   ref={provided.innerRef}
                   {...provided.droppableProps}
                   className={cn(
-                    'absolute flex min-h-[48px] min-w-[150px] items-center justify-center rounded-[18px] border border-dashed px-3 py-2 text-xs font-semibold text-sky-700/80 bg-white/80',
+                    'absolute flex min-h-[48px] min-w-[150px] items-center justify-center rounded-[18px] border border-dashed px-3 py-2 text-xs font-semibold text-sky-700 bg-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
                     targetPosition[round.board],
                     snapshot.isDraggingOver && 'border-sky-300 bg-sky-50/80'
                   )}
@@ -509,7 +509,8 @@ export default function GeometryBasicsWorkshopGame({
                     }
                   }}
                   role='button'
-                  tabIndex={0}
+                  tabIndex={checked ? -1 : 0}
+                  aria-disabled={checked}
                   aria-label={
                     roundState.slot
                       ? `Plansza: etykieta ${roundState.slot.label}`
@@ -550,6 +551,9 @@ export default function GeometryBasicsWorkshopGame({
                 'text-sm font-semibold',
                 feedback.kind === 'success' ? 'text-emerald-600' : 'text-rose-600'
               )}
+              role='status'
+              aria-live='polite'
+              aria-atomic='true'
             >
               {feedback.text}
             </p>

@@ -76,7 +76,7 @@ export function GridLayoutCanvas({
               style={itemStyle}
               onClick={(): void => onFocusItem?.(item.id)}
               className={cn(
-                'flex flex-col items-center justify-center rounded-lg border px-2 py-1.5 text-center text-[10px] font-medium transition',
+                'flex flex-col items-center justify-center rounded-lg border px-2 py-1.5 text-center text-[10px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background',
                 color,
                 isFocused && 'ring-2 ring-white/60',
                 onFocusItem ? 'cursor-pointer hover:brightness-110' : 'cursor-default'

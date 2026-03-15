@@ -37,7 +37,7 @@ import { cn } from '@/shared/utils';
 import type { DropResult } from '@hello-pangea/dnd';
 
 type AddingBallGameProps = {
-  finishLabel?: string;
+  finishLabelVariant?: 'lesson' | 'topics';
   onFinish: () => void;
 };
 
@@ -94,6 +94,8 @@ type SlotZoneProps = {
   label: string;
   checked: boolean;
   correct: boolean;
+  selectedBallId?: string | null;
+  onSelectBall?: (id: string) => void;
 };
 
 type BallProps = {
@@ -106,6 +108,8 @@ type DraggableBallProps = {
   index: number;
   isDragDisabled?: boolean;
   small?: boolean;
+  isSelected?: boolean;
+  onSelect?: () => void;
 };
 
 type SurfaceTone = 'neutral' | 'accent';
@@ -216,6 +220,14 @@ function createBalls(count: number): BallItem[] {
   }));
 }
 
+function removeBallById(items: BallItem[], id: string): { updated: BallItem[]; ball: BallItem | null } {
+  const index = items.findIndex((entry) => entry.id === id);
+  if (index === -1) return { updated: items, ball: null };
+  const updated = [...items];
+  const [ball] = updated.splice(index, 1);
+  return { updated, ball: ball ?? null };
+}
+
 function reorderWithinList<T>(list: T[], startIndex: number, endIndex: number): T[] {
   const next = [...list];
   const [moved] = next.splice(startIndex, 1);
@@ -298,6 +310,7 @@ function CompleteEquation({
   }));
   const [checked, setChecked] = useState(false);
   const [correct, setCorrect] = useState(false);
+  const [selectedBallId, setSelectedBallId] = useState<string | null>(null);
   const slotALabel = `Grupa A (${round.a})`;
   const slotBLabel = `Grupa B (${round.b})`;
 
@@ -312,6 +325,7 @@ function CompleteEquation({
     if (source.droppableId === destination.droppableId && source.index === destination.index) {
       return;
     }
+    setSelectedBallId(null);
 
     const sourceId = source.droppableId;
     const destinationId = destination.droppableId;
@@ -344,7 +358,34 @@ function CompleteEquation({
     const ok = state.slotA.length === round.a && state.slotB.length === round.b;
     setCorrect(ok);
     setChecked(true);
+    setSelectedBallId(null);
     setTimeout(() => onResult(ok), 1400);
+  };
+
+  const selectedBall =
+    selectedBallId
+      ? [...state.pool, ...state.slotA, ...state.slotB].find((ball) => ball.id === selectedBallId) ??
+        null
+      : null;
+
+  const moveSelectedBallTo = (destinationId: CompleteSlotId): void => {
+    if (checked || !selectedBallId) return;
+    setState((prev) => {
+      const zones: CompleteSlotId[] = ['pool', 'slotA', 'slotB'];
+      let moved: BallItem | null = null;
+      const nextState = { ...prev };
+      zones.forEach((zone) => {
+        const { updated, ball } = removeBallById(prev[zone], selectedBallId);
+        nextState[zone] = updated;
+        if (ball) {
+          moved = ball;
+        }
+      });
+      if (!moved) return prev;
+      nextState[destinationId] = [...nextState[destinationId], moved];
+      return nextState;
+    });
+    setSelectedBallId(null);
   };
 
   return (
@@ -360,6 +401,10 @@ function CompleteEquation({
             label={slotALabel}
             checked={checked}
             correct={correct}
+            selectedBallId={selectedBallId}
+            onSelectBall={(id) =>
+              setSelectedBallId((current) => (current === id ? null : id))
+            }
           />
           <span className='text-3xl font-extrabold [color:var(--kangur-page-muted-text)]'>
             +
@@ -370,6 +415,10 @@ function CompleteEquation({
             label={slotBLabel}
             checked={checked}
             correct={correct}
+            selectedBallId={selectedBallId}
+            onSelectBall={(id) =>
+              setSelectedBallId((current) => (current === id ? null : id))
+            }
           />
           <span className='text-3xl font-extrabold [color:var(--kangur-page-muted-text)]'>
             = {round.target}
@@ -388,12 +437,60 @@ function CompleteEquation({
               {...provided.droppableProps}
             >
               {state.pool.map((ball, i) => (
-                <DraggableBall key={ball.id} ball={ball} index={i} isDragDisabled={checked} />
+                <DraggableBall
+                  key={ball.id}
+                  ball={ball}
+                  index={i}
+                  isDragDisabled={checked}
+                  isSelected={selectedBallId === ball.id}
+                  onSelect={() =>
+                    setSelectedBallId((current) => (current === ball.id ? null : ball.id))
+                  }
+                />
               ))}
               {provided.placeholder}
             </KangurInfoCard>
           )}
         </Droppable>
+        <div className='flex flex-wrap items-center justify-center gap-2 text-xs'>
+          <span
+            className='text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500'
+            role='status'
+            aria-live='polite'
+            aria-atomic='true'
+          >
+            {selectedBall
+              ? `Wybrana piłka: ${selectedBall.num}`
+              : 'Wybierz piłkę, aby przenieść ją klawiaturą.'}
+          </span>
+          <KangurButton
+            size='sm'
+            type='button'
+            variant='surface'
+            onClick={() => moveSelectedBallTo('slotA')}
+            disabled={!selectedBall || checked}
+          >
+            Do {slotALabel}
+          </KangurButton>
+          <KangurButton
+            size='sm'
+            type='button'
+            variant='surface'
+            onClick={() => moveSelectedBallTo('slotB')}
+            disabled={!selectedBall || checked}
+          >
+            Do {slotBLabel}
+          </KangurButton>
+          <KangurButton
+            size='sm'
+            type='button'
+            variant='surface'
+            onClick={() => moveSelectedBallTo('pool')}
+            disabled={!selectedBall || checked}
+          >
+            Do puli
+          </KangurButton>
+        </div>
 
         {!checked && (
           <KangurButton
@@ -419,7 +516,15 @@ function CompleteEquation({
   );
 }
 
-function SlotZone({ id, items, label, checked, correct }: SlotZoneProps): React.JSX.Element {
+function SlotZone({
+  id,
+  items,
+  label,
+  checked,
+  correct,
+  selectedBallId,
+  onSelectBall,
+}: SlotZoneProps): React.JSX.Element {
   const slotZoneTestId = `adding-ball-${id}`;
 
   return (
@@ -455,6 +560,8 @@ function SlotZone({ id, items, label, checked, correct }: SlotZoneProps): React.
                   index={i}
                   isDragDisabled={checked}
                   small
+                  isSelected={selectedBallId === ball.id}
+                  onSelect={onSelectBall ? () => onSelectBall(ball.id) : undefined}
                 />
               ))}
               {provided.placeholder}
@@ -481,6 +588,7 @@ function GroupSum({
   }));
   const [checked, setChecked] = useState(false);
   const [correct, setCorrect] = useState(false);
+  const [selectedBallId, setSelectedBallId] = useState<string | null>(null);
 
   const onDragEnd = (result: DropResult): void => {
     if (checked) return;
@@ -501,6 +609,7 @@ function GroupSum({
       }));
       return;
     }
+    setSelectedBallId(null);
 
     setState((prev) => {
       const moved = moveBetweenLists(
@@ -526,7 +635,34 @@ function GroupSum({
       (group1Count === round.b && group2Count === round.a);
     setCorrect(ok);
     setChecked(true);
+    setSelectedBallId(null);
     setTimeout(() => onResult(ok), 1400);
+  };
+
+  const selectedBall =
+    selectedBallId
+      ? [...state.pool, ...state.group1, ...state.group2].find((ball) => ball.id === selectedBallId) ??
+        null
+      : null;
+
+  const moveSelectedBallTo = (destinationId: GroupSlotId): void => {
+    if (checked || !selectedBallId) return;
+    setState((prev) => {
+      const zones: GroupSlotId[] = ['pool', 'group1', 'group2'];
+      let moved: BallItem | null = null;
+      const nextState = { ...prev };
+      zones.forEach((zone) => {
+        const { updated, ball } = removeBallById(prev[zone], selectedBallId);
+        nextState[zone] = updated;
+        if (ball) {
+          moved = ball;
+        }
+      });
+      if (!moved) return prev;
+      nextState[destinationId] = [...nextState[destinationId], moved];
+      return nextState;
+    });
+    setSelectedBallId(null);
   };
 
   return (
@@ -576,6 +712,10 @@ function GroupSum({
                           index={i}
                           isDragDisabled={checked}
                           small
+                          isSelected={selectedBallId === ball.id}
+                          onSelect={() =>
+                            setSelectedBallId((current) => (current === ball.id ? null : ball.id))
+                          }
                         />
                       ))}
                       {provided.placeholder}
@@ -599,12 +739,61 @@ function GroupSum({
               {...provided.droppableProps}
             >
               {state.pool.map((ball, i) => (
-                <DraggableBall key={ball.id} ball={ball} index={i} isDragDisabled={checked} />
+                <DraggableBall
+                  key={ball.id}
+                  ball={ball}
+                  index={i}
+                  isDragDisabled={checked}
+                  isSelected={selectedBallId === ball.id}
+                  onSelect={() =>
+                    setSelectedBallId((current) => (current === ball.id ? null : ball.id))
+                  }
+                />
               ))}
               {provided.placeholder}
             </KangurInfoCard>
           )}
         </Droppable>
+
+        <div className='flex flex-wrap items-center justify-center gap-2 text-xs'>
+          <span
+            className='text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500'
+            role='status'
+            aria-live='polite'
+            aria-atomic='true'
+          >
+            {selectedBall
+              ? `Wybrana piłka: ${selectedBall.num}`
+              : 'Wybierz piłkę, aby przenieść ją klawiaturą.'}
+          </span>
+          <KangurButton
+            size='sm'
+            type='button'
+            variant='surface'
+            onClick={() => moveSelectedBallTo('group1')}
+            disabled={!selectedBall || checked}
+          >
+            Do grupy 1
+          </KangurButton>
+          <KangurButton
+            size='sm'
+            type='button'
+            variant='surface'
+            onClick={() => moveSelectedBallTo('group2')}
+            disabled={!selectedBall || checked}
+          >
+            Do grupy 2
+          </KangurButton>
+          <KangurButton
+            size='sm'
+            type='button'
+            variant='surface'
+            onClick={() => moveSelectedBallTo('pool')}
+            disabled={!selectedBall || checked}
+          >
+            Do puli
+          </KangurButton>
+        </div>
 
         {!checked && (
           <KangurButton
@@ -639,6 +828,7 @@ function PickAnswer({
 }): React.JSX.Element {
   const [dropped, setDropped] = useState<BallItem | null>(null);
   const [checked, setChecked] = useState(false);
+  const [selectedBallId, setSelectedBallId] = useState<string | null>(null);
 
   const balls: BallItem[] = round.choices.map((num, i) => ({
     id: `ans-${i}`,
@@ -656,6 +846,20 @@ function PickAnswer({
     setDropped(ball);
     const ok = ball.num === round.correct;
     setChecked(true);
+    setSelectedBallId(null);
+    setTimeout(() => onResult(ok), 1400);
+  };
+
+  const selectedBall = selectedBallId
+    ? balls.find((entry) => entry.id === selectedBallId) ?? null
+    : null;
+
+  const applySelectedBall = (): void => {
+    if (checked || !selectedBall) return;
+    setDropped(selectedBall);
+    const ok = selectedBall.num === round.correct;
+    setChecked(true);
+    setSelectedBallId(null);
     setTimeout(() => onResult(ok), 1400);
   };
 
@@ -712,6 +916,28 @@ function PickAnswer({
           </motion.div>
         )}
 
+        <div className='flex flex-wrap items-center justify-center gap-2 text-xs'>
+          <span
+            className='text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500'
+            role='status'
+            aria-live='polite'
+            aria-atomic='true'
+          >
+            {selectedBall
+              ? `Wybrana piłka: ${selectedBall.num}`
+              : 'Wybierz piłkę, aby ustawić odpowiedź klawiaturą.'}
+          </span>
+          <KangurButton
+            size='sm'
+            type='button'
+            variant='surface'
+            onClick={applySelectedBall}
+            disabled={!selectedBall || checked}
+          >
+            Ustaw jako odpowiedź
+          </KangurButton>
+        </div>
+
         <Droppable droppableId='balls-pool' direction='horizontal'>
           {(provided) => (
             <KangurInfoCard
@@ -724,7 +950,16 @@ function PickAnswer({
               {...provided.droppableProps}
             >
               {balls.map((ball, i) => (
-                <DraggableBall key={ball.id} ball={ball} index={i} isDragDisabled={checked} />
+                <DraggableBall
+                  key={ball.id}
+                  ball={ball}
+                  index={i}
+                  isDragDisabled={checked}
+                  isSelected={selectedBallId === ball.id}
+                  onSelect={() =>
+                    setSelectedBallId((current) => (current === ball.id ? null : ball.id))
+                  }
+                />
               ))}
               {provided.placeholder}
             </KangurInfoCard>
@@ -740,18 +975,39 @@ function DraggableBall({
   index,
   isDragDisabled = false,
   small = false,
+  isSelected = false,
+  onSelect,
 }: DraggableBallProps): React.ReactElement | React.ReactPortal {
   return (
-    <Draggable draggableId={ball.id} index={index} isDragDisabled={isDragDisabled}>
+    <Draggable
+      draggableId={ball.id}
+      index={index}
+      isDragDisabled={isDragDisabled}
+      disableInteractiveElementBlocking
+    >
       {(draggableProvided, snapshot) => {
         const content = (
-          <div
+          <button
+            type='button'
             ref={draggableProvided.innerRef}
             {...draggableProvided.draggableProps}
             {...draggableProvided.dragHandleProps}
+            className={cn(
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+              isSelected && 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white',
+              isDragDisabled ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'
+            )}
+            aria-label={`Piłka: ${ball.num}`}
+            aria-pressed={isSelected}
+            disabled={isDragDisabled}
+            onClick={(event) => {
+              event.preventDefault();
+              if (isDragDisabled || !onSelect) return;
+              onSelect();
+            }}
           >
-            <Ball ball={ball} small={small} />
-          </div>
+            <Ball ball={ball} small={small} isSelected={isSelected} />
+          </button>
         );
 
         if (snapshot.isDragging && dragPortal) {
@@ -764,12 +1020,15 @@ function DraggableBall({
   );
 }
 
-function Ball({ ball, small = false }: BallProps): React.JSX.Element {
+function Ball({ ball, small = false, isSelected = false }: BallProps & { isSelected?: boolean }): React.JSX.Element {
   const sizeClass = small ? 'w-9 h-9 text-sm' : 'w-14 h-14 text-lg';
 
   return (
     <div
-      className={`${sizeClass} rounded-full ${ball.color} flex items-center justify-center shadow-md cursor-grab active:cursor-grabbing select-none`}
+      className={cn(
+        `${sizeClass} rounded-full ${ball.color} flex items-center justify-center shadow-md select-none`,
+        isSelected && 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white'
+      )}
     >
       <span className='text-white font-extrabold'>{ball.num}</span>
     </div>
@@ -777,9 +1036,10 @@ function Ball({ ball, small = false }: BallProps): React.JSX.Element {
 }
 
 export default function AddingBallGame({
-  finishLabel = 'Wróć do lekcji',
+  finishLabelVariant = 'lesson',
   onFinish,
 }: AddingBallGameProps): React.JSX.Element {
+  const finishLabel = finishLabelVariant === 'topics' ? 'Wróć do tematów' : 'Wróć do lekcji';
   const prefersReducedMotion = useReducedMotion();
   const resolveMotionOpacity = (value: unknown, fallback: number): number => {
     if (!value || typeof value !== 'object') return fallback;

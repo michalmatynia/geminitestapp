@@ -545,6 +545,7 @@ export function SequenceStackCard(): React.JSX.Element {
                         onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                           toggleSequenceStep(step.id, event.target.checked)
                         }
+                        aria-label={`Enable ${PROJECT_SEQUENCE_OPERATION_LABELS[operation]}`}
                       />
                       <span
                         className='truncate'

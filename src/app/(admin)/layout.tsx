@@ -21,6 +21,7 @@ export default async function Layout({
 }): Promise<JSX.Element> {
   let initialMenuCollapsed = false;
   let session = null;
+  let canReadAdminSettings = false;
   try {
     session = await auth();
     if (!session?.user?.id) {
@@ -29,6 +30,8 @@ export default async function Layout({
     if (session.user.accountDisabled || session.user.accountBanned) {
       redirect('/auth/signin?error=AccountDisabled');
     }
+    canReadAdminSettings =
+      session.user.isElevated || session.user.permissions?.includes('settings.manage') === true;
     try {
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
       const preferencesPromise = getUserPreferences(session.user.id).catch(() => null);
@@ -56,7 +59,7 @@ export default async function Layout({
     redirect('/auth/signin');
   }
   return (
-    <SettingsStoreProvider mode='admin'>
+    <SettingsStoreProvider mode='admin' canReadAdminSettings={canReadAdminSettings}>
       <AdminLayout session={session} initialMenuCollapsed={initialMenuCollapsed}>
         {children}
       </AdminLayout>

@@ -741,6 +741,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
           type='button'
           disabled={isDisabled}
           className={`pointer-events-none inline-flex rounded-md px-6 py-2.5 text-sm font-semibold transition ${style === 'outline' ? 'border-2 border-white text-white' : 'bg-white text-gray-900'} ${isDisabled ? 'opacity-55' : ''}`}
+          aria-label={label || 'Preview button'}
         >
           {label}
         </button>

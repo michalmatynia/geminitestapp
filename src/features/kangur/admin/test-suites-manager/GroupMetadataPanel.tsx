@@ -1,9 +1,10 @@
-import React from 'react';
+
 import { Button, Input } from '@/shared/ui';
 import { useTestSuitesManager } from './test-suites-manager.context';
 import { useTestSuitesManagerLogic } from './test-suites-manager.logic';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { normalizeKangurTestGroupTitle, resolveKangurTestSuiteGroupTitle } from '../../test-suites';
+import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
 
 export function GroupMetadataPanel() {
   const settingsStore = useSettingsStore();
@@ -13,7 +14,7 @@ export function GroupMetadataPanel() {
   if (!state.editingGroupOriginalTitle) return null;
 
   const activeGroupSuiteCount = logic.suites.filter(
-    (suite: any) =>
+    (suite: KangurTestSuite) =>
       normalizeKangurTestGroupTitle(resolveKangurTestSuiteGroupTitle(suite, logic.groupById)).toLowerCase() ===
         normalizeKangurTestGroupTitle(state.editingGroupOriginalTitle!).toLowerCase()
   ).length;
@@ -50,6 +51,7 @@ export function GroupMetadataPanel() {
           value={state.groupDescription}
           onChange={(event): void => state.setGroupDescription(event.target.value)}
           placeholder='Description for editors using this group'
+          aria-label='Group description'
           className='min-h-[110px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm'
         />
       </div>

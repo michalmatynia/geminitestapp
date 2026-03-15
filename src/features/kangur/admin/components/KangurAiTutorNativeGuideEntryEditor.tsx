@@ -39,9 +39,11 @@ type Props = {
 };
 
 export function KangurAiTutorNativeGuideEntryEditor(props: Props): React.JSX.Element {
+  const entryEditorClassName = props.className;
+
   return (
     <KangurAiTutorNativeGuideEntryEditorProvider value={props}>
-      <KangurAiTutorNativeGuideEntryEditorContent className={props.className} />
+      <KangurAiTutorNativeGuideEntryEditorContent className={entryEditorClassName} />
     </KangurAiTutorNativeGuideEntryEditorProvider>
   );
 }
@@ -51,10 +53,11 @@ function KangurAiTutorNativeGuideEntryEditorContent({
 }: {
   className: string;
 }): React.JSX.Element {
+  const cardClassName = className;
   const { selectedEntry, selectedEntryValidationIssues } = useKangurAiTutorNativeGuideEntryEditor();
 
   return (
-    <Card variant='subtle' padding='md' className={className}>
+    <Card variant='subtle' padding='md' className={cardClassName}>
       {selectedEntry ? (
         <div className='space-y-4'>
           <EntryHeader />

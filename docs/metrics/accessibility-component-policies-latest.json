@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-11T04:30:46.779Z",
-  "durationMs": 783,
+  "generatedAt": "2026-03-15T07:43:52.406Z",
+  "durationMs": 1213,
   "status": "passed",
   "summary": {
-    "fileCount": 68,
+    "fileCount": 66,
     "dialogCount": 5,
     "alertDialogCount": 1,
-    "tabsListCount": 32,
-    "tooltipCount": 73,
+    "tabsListCount": 29,
+    "tooltipCount": 74,
     "errorCount": 0,
     "warningCount": 0
   },

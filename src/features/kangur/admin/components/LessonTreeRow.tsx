@@ -45,7 +45,7 @@ export function LessonTreeRow(props: {
   const lesson = lessonId ? (lessonById.get(lessonId) ?? null) : null;
   const rowStatusBadgeClassName = 'h-5 rounded-full border px-2 text-[10px] uppercase tracking-wide';
   const actionButtonClassName =
-    'inline-flex cursor-pointer items-center justify-center rounded-lg border border-transparent p-1.5 text-muted-foreground transition hover:border-border/60 hover:bg-background/70 hover:text-foreground';
+    'inline-flex cursor-pointer items-center justify-center rounded-lg border border-transparent p-1.5 text-muted-foreground transition hover:border-border/60 hover:bg-background/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background';
 
   if (!lesson) {
     const lessonCount = readLessonGroupCount(input.node.metadata);
@@ -67,7 +67,7 @@ export function LessonTreeRow(props: {
           {input.hasChildren ? (
             <button
               type='button'
-              className='inline-flex size-5 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-background/70 hover:text-foreground'
+              className='inline-flex size-5 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-background/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
               onClick={(event): void => {
                 event.preventDefault();
                 event.stopPropagation();

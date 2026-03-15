@@ -148,6 +148,7 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
             className='h-3 w-3 accent-emerald-500'
             checked={Boolean(functionConfig.safeMode)}
             onChange={handleSafeModeToggle}
+            aria-label='Safe mode (block risky tokens)'
           />
           <Label htmlFor='function-safe-mode' className='text-xs text-gray-200'>
             Safe mode (block risky tokens)

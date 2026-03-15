@@ -47,7 +47,11 @@ export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
         )}
         {...props}
       >
-        {resolvedIcon && <div className='mt-0.5 shrink-0 opacity-80'>{resolvedIcon}</div>}
+        {resolvedIcon && (
+          <div className='mt-0.5 shrink-0 opacity-80' aria-hidden='true'>
+            {resolvedIcon}
+          </div>
+        )}
         <div className='flex-1 min-w-0'>
           {title && <div className='font-semibold mb-1 leading-none tracking-tight'>{title}</div>}
           <div className={cn('text-xs opacity-90 leading-relaxed', !title && 'text-sm')}>
@@ -61,7 +65,7 @@ export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
             className='shrink-0 rounded-md p-1 opacity-50 hover:opacity-100 hover:bg-black/10 transition-all'
             aria-label='Dismiss alert'
             title={'Dismiss alert'}>
-            <X className='size-3.5' />
+            <X className='size-3.5' aria-hidden='true' />
           </button>
         )}
       </div>

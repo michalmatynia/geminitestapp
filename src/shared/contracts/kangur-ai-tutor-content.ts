@@ -215,6 +215,8 @@ export const kangurAiTutorContentSchema = z.object({
     selectionRequestPrompt: tutorCopySchema,
     selectionDetailPending: tutorCopySchema,
     selectionDetailSoon: tutorCopySchema,
+    selectionSketchCtaLabel: tutorCopySchema,
+    selectionSketchHint: tutorCopySchema,
     sectionDetailPending: tutorCopySchema,
     sectionDetailSoon: tutorCopySchema,
     selectionPreparingBadge: tutorCopySchema,
@@ -702,6 +704,9 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
         'Już przygotowuję wyjaśnienie dokładnie dla zaznaczonego tekstu.',
       selectionDetailSoon:
         'Za chwilę otworzę wyjaśnienie dokładnie dla zaznaczonego tekstu.',
+      selectionSketchCtaLabel: 'Rozrysuj mi to, proszę',
+      selectionSketchHint:
+        'Otwieram planszę do rysowania. Spróbuj rozrysować podziały i porównać kształty po obrocie lub odbiciu.',
       sectionDetailPending:
         'Już przygotowuję wyjaśnienie dokładnie dla tej części strony.',
       sectionDetailSoon:

@@ -2,13 +2,14 @@ import { useState, type ChangeEvent } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
-  AdminSettingsPageLayout,
+  AdminSettingsBreadcrumbs,
   Button,
+  FormField,
+  FormSection,
   Input,
+  PageLayout,
   ToggleRow,
   useToast,
-  FormSection,
-  FormField,
 } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -104,10 +105,10 @@ export function TransientRecoverySettingsForm({
   };
 
   return (
-    <AdminSettingsPageLayout
+    <PageLayout
       title='Transient Recovery'
-      current='Recovery'
       description='Configure retry and circuit-breaker policies for transient failures.'
+      eyebrow={<AdminSettingsBreadcrumbs current='Recovery' />}
     >
       <FormSection
         title='Global Controls'
@@ -269,6 +270,6 @@ export function TransientRecoverySettingsForm({
           </Button>
         </div>
       </FormSection>
-    </AdminSettingsPageLayout>
+    </PageLayout>
   );
 }

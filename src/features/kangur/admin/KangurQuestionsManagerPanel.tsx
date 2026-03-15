@@ -1244,7 +1244,7 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
                     <div className='flex shrink-0 items-center justify-end gap-1 rounded-xl border border-border/50 bg-background/25 p-1 sm:justify-start'>
                       <button
                         type='button'
-                        className='inline-flex items-center justify-center rounded-lg p-2.5 text-gray-400 hover:bg-sky-500/20 hover:text-sky-200'
+                        className='inline-flex items-center justify-center rounded-lg p-2.5 text-gray-400 hover:bg-sky-500/20 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
                         onClick={(): void => openEdit(q)}
                         title='Edit question'
                         disabled={isSaving}
@@ -1261,7 +1261,7 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
                       </button>
                       <button
                         type='button'
-                        className='inline-flex items-center justify-center rounded-lg p-2.5 text-gray-400 hover:bg-gray-700/60 hover:text-white'
+                        className='inline-flex items-center justify-center rounded-lg p-2.5 text-gray-400 hover:bg-gray-700/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
                         onClick={(): void => {
                           void handleDuplicate(q);
                         }}
@@ -1272,7 +1272,7 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
                       </button>
                       <button
                         type='button'
-                        className='inline-flex items-center justify-center rounded-lg p-2.5 text-gray-400 hover:bg-red-500/20 hover:text-red-300'
+                        className='inline-flex items-center justify-center rounded-lg p-2.5 text-gray-400 hover:bg-red-500/20 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
                         onClick={(): void => setQuestionToDelete(q)}
                         title='Delete question'
                         disabled={isSaving}

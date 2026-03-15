@@ -19,7 +19,9 @@ const ProviderBadge = ({
   if (!exists) {
     return <span className='text-xs text-gray-500'>--</span>;
   }
-  return <StatusBadge status={count !== null ? count.toLocaleString() : '?'} variant='success' size='sm' />;
+  const statusValue = count !== null ? count.toLocaleString() : '?';
+
+  return <StatusBadge status={statusValue} variant='success' size='sm' />;
 };
 
 export function getControlPanelColumns(options: {

@@ -18,6 +18,7 @@ import {
   KangurButton,
   KangurDisplayEmoji,
   KangurGlassPanel,
+  KangurHeadline,
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -788,6 +789,9 @@ export default function GeometryPerimeterDrawingGame({
                   ? 'text-rose-600'
                   : 'text-amber-600'
             )}
+            role='status'
+            aria-live='polite'
+            aria-atomic='true'
           >
             {feedback.text}
           </p>

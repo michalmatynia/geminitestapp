@@ -131,7 +131,7 @@ const buildTileClassName = ({
   isMuted: boolean;
 }): string =>
   cn(
-    'inline-flex items-center justify-center gap-2 rounded-[18px] border font-semibold transition',
+    'inline-flex items-center justify-center gap-2 rounded-[18px] border font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
     isCompact ? 'px-3 py-1.5 text-sm' : 'px-4 py-2 text-base',
     KANGUR_ACCENT_STYLES[accent].badge,
     !isDisabled && KANGUR_ACCENT_STYLES[accent].hoverCard,
@@ -152,11 +152,14 @@ const getSlotSurface = ({
   isCorrect: boolean;
   hasToken: boolean;
 }): { accent: KangurAccent; className: string } => {
+  const focusRingClassName =
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white';
   if (checked && hasToken) {
     return {
       accent: isCorrect ? 'emerald' : 'rose',
       className: cn(
         'flex min-h-[56px] min-w-[64px] items-center justify-center rounded-[20px] border px-2 py-2 transition',
+        focusRingClassName,
         isCorrect
           ? KANGUR_ACCENT_STYLES.emerald.activeCard
           : KANGUR_ACCENT_STYLES.rose.activeCard
@@ -167,8 +170,10 @@ const getSlotSurface = ({
   if (isDraggingOver) {
     return {
       accent: 'violet',
-      className:
+      className: cn(
         'flex min-h-[56px] min-w-[64px] items-center justify-center rounded-[20px] border border-violet-300 bg-violet-100/70 px-2 py-2 transition scale-[1.02]',
+        focusRingClassName
+      ),
     };
   }
 
@@ -176,6 +181,7 @@ const getSlotSurface = ({
     accent: 'violet',
     className: cn(
       'flex min-h-[56px] min-w-[64px] items-center justify-center rounded-[20px] border border-dashed border-violet-300/70 px-2 py-2 text-xs font-semibold text-violet-600/80 transition',
+      focusRingClassName,
       KANGUR_ACCENT_STYLES.violet.hoverCard
     ),
   };
@@ -197,6 +203,8 @@ export default function LogicalPatternsWorkshopGame({
   finishLabel = 'Wróć do tematów',
   onFinish,
 }: LogicalPatternsWorkshopGameProps): React.JSX.Element {
+  const summaryFinishLabel = finishLabel;
+  const handleFinish = onFinish;
   const [roundIndex, setRoundIndex] = useState(0);
   const [roundState, setRoundState] = useState<RoundState>(() =>
     buildRoundState(FIRST_ROUND)
@@ -441,8 +449,8 @@ export default function LogicalPatternsWorkshopGame({
         <KangurPracticeGameSummaryActions
           className='flex-col sm:flex-row'
           finishButtonClassName='w-full sm:flex-1'
-          finishLabel={finishLabel}
-          onFinish={onFinish}
+          finishLabel={summaryFinishLabel}
+          onFinish={handleFinish}
           onRestart={restart}
           restartButtonClassName='w-full sm:flex-1'
         />
@@ -552,7 +560,8 @@ export default function LogicalPatternsWorkshopGame({
                           className={slotSurface.className}
                           onClick={() => handleSlotClick(cell.id)}
                           role='button'
-                          tabIndex={0}
+                          tabIndex={checked ? -1 : 0}
+                          aria-disabled={checked}
                           aria-label={
                             assigned
                               ? `Pole sekwencji: ${assigned.label}`
@@ -726,7 +735,7 @@ export default function LogicalPatternsWorkshopGame({
                 className={cn(
                   'flex min-h-[72px] flex-wrap items-center justify-center gap-2 rounded-[22px] border border-dashed px-3 py-3 text-center text-xs',
                   roundState.pool.length === 0
-                    ? 'text-violet-500/70'
+                    ? 'text-violet-600'
                     : '[color:var(--kangur-page-muted-text)]'
                 )}
               >

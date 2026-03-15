@@ -253,13 +253,15 @@ function ExamQuestion({
 function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Element {
   const { onBack } = useKangurGameContext();
   const [reviewing, setReviewing] = useState<number | null>(null);
+  const questionCount = questions.length;
   const score = questions.reduce(
     (acc, question) => acc + (answers[question.id] === question.answer ? 1 : 0),
     0
   );
-  const pct = Math.round((score / questions.length) * 100);
+  const pct = Math.round((score / questionCount) * 100);
   const emoji = pct === 100 ? '🏆' : pct >= 70 ? '🌟' : pct >= 40 ? '👍' : '💪';
-  const reviewQuestionCount = questions.length;
+  const reviewQuestionCount = questionCount;
+  const summaryTitle = `Wynik: ${score}/${questionCount}`;
 
   if (reviewing !== null) {
     const question = questions[reviewing];
@@ -448,7 +450,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
         <KangurPracticeGameSummaryEmoji emoji={emoji} dataTestId='kangur-exam-summary-emoji' />
         <KangurPracticeGameSummaryTitle
           accent='amber'
-          title={`Wynik: ${score}/${questions.length}`}
+          title={summaryTitle}
         />
         <KangurPracticeGameSummaryProgress
           accent='amber'

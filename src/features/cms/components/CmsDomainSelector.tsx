@@ -47,7 +47,7 @@ function CmsDomainSelectorControl(): React.JSX.Element {
       className='w-[220px]'
       triggerClassName={runtime.triggerClassName}
       ariaLabel='Zone selector'
-     title='Select zone'/>
+     title='Zone selector'/>
   );
 }
 
@@ -56,7 +56,7 @@ export function CmsDomainSelector({
   triggerClassName,
   onChange,
 }: CmsDomainSelectorProps): React.ReactNode {
-  const { domains, activeDomainId, hostDomainId, setActiveDomainId, zoningEnabled } =
+  const { domains, activeDomainId, hostDomainId, setActiveDomainId, zoningEnabled, isLoading } =
     useCmsDomainSelection();
   const options = useMemo(
     () =>
@@ -78,6 +78,19 @@ export function CmsDomainSelector({
     setActiveDomainId(domainId);
     onChange?.(domainId);
   };
+
+  if (isLoading) {
+    return (
+      <div className='flex items-center gap-2' aria-busy='true'>
+        {label && (
+          <span className='text-[11px] font-medium uppercase tracking-wide text-gray-400'>
+            {label}
+          </span>
+        )}
+        <span className='text-[11px] text-gray-500'>Loading zones...</span>
+      </div>
+    );
+  }
 
   if (!zoningEnabled) {
     return (

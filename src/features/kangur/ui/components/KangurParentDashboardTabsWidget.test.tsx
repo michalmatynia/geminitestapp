@@ -52,7 +52,7 @@ describe('KangurParentDashboardTabsWidget', () => {
 
     render(<KangurParentDashboardTabsWidget onBeforeTabChange={onBeforeTabChange} />);
 
-    const scoresTab = screen.getByRole('button', { name: /wyniki gier/i });
+    const scoresTab = screen.getByRole('tab', { name: /wyniki/i });
     const mouseDown = createEvent.mouseDown(scoresTab);
 
     fireEvent(scoresTab, mouseDown);
@@ -68,8 +68,8 @@ describe('KangurParentDashboardTabsWidget', () => {
 
     render(<KangurParentDashboardTabsWidget onBeforeTabChange={onBeforeTabChange} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /postęp/i }));
-    fireEvent.click(screen.getByRole('button', { name: /zadania/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /postęp/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /zadania/i }));
 
     expect(onBeforeTabChange).toHaveBeenCalledTimes(1);
     expect(onBeforeTabChange).toHaveBeenCalledWith('assign');
@@ -84,7 +84,7 @@ describe('KangurParentDashboardTabsWidget', () => {
 
     render(<KangurParentDashboardTabsWidget />);
 
-    expect(screen.queryByRole('button', { name: /postęp/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /postęp/i })).not.toBeInTheDocument();
   });
 
   it('renders Mongo-backed intro copy when available', () => {

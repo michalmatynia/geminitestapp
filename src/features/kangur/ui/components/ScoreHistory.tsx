@@ -211,6 +211,9 @@ export default function ScoreHistory({
         description='Pobieramy ostatnie wyniki i przygotowujemy podsumowanie postępu.'
         padding='lg'
         title='Ładowanie wyników...'
+        role='status'
+        aria-live='polite'
+        aria-atomic='true'
       />
     );
   }

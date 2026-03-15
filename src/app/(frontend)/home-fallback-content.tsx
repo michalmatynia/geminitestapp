@@ -178,12 +178,13 @@ export function HomeFallbackContent({
   themeSettings: SocialThemeSettings;
   appearanceTone?: CmsAppearanceTone;
 }): React.JSX.Element {
+  const appearanceToneValue = appearanceTone;
   const socialLinks = React.useMemo(() => buildSocialLinks(themeSettings), [themeSettings]);
   const hasProducts = products.length > 0;
   const heroStyle = {
-    '--hero-accent': appearanceTone?.accent ?? 'var(--cms-appearance-page-text)',
-    '--hero-border': appearanceTone?.border ?? 'var(--cms-appearance-page-border)',
-    '--hero-text': appearanceTone?.text ?? 'var(--cms-appearance-page-text)',
+    '--hero-accent': appearanceToneValue?.accent ?? 'var(--cms-appearance-page-text)',
+    '--hero-border': appearanceToneValue?.border ?? 'var(--cms-appearance-page-border)',
+    '--hero-text': appearanceToneValue?.text ?? 'var(--cms-appearance-page-text)',
   } as React.CSSProperties;
   const heroGlowStyle: React.CSSProperties = {
     backgroundImage:
@@ -301,7 +302,10 @@ export function HomeFallbackContent({
               </Link>
             </nav>
             <div className='flex items-center gap-3'>
-              <CmsStorefrontAppearanceButtons label='Homepage appearance' tone={appearanceTone} />
+              <CmsStorefrontAppearanceButtons
+                label='Homepage appearance'
+                tone={appearanceToneValue}
+              />
               <Link
                 href='/admin'
                 className='hidden items-center gap-1 rounded-full border border-[var(--cms-appearance-page-border)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] md:inline-flex'

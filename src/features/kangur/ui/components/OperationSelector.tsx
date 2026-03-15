@@ -3,7 +3,7 @@ import { useId } from 'react';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import DifficultySelector from '@/features/kangur/ui/components/DifficultySelector';
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
-import KangurAnimatedOptionCard from '@/features/kangur/ui/components/KangurAnimatedOptionCard';
+import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import {
   KangurIconBadge,
   KangurSectionHeading,
@@ -70,7 +70,7 @@ export default function OperationSelector({
             : null;
 
           return (
-            <KangurAnimatedOptionCard
+            <KangurAnswerChoiceCard
               key={operation.id}
               accent={operation.accent}
               animate={{ opacity: 1, y: 0 }}
@@ -147,7 +147,7 @@ export default function OperationSelector({
               <span className={cn('mt-auto text-sm font-semibold', accent.activeText)}>
                 {operation.actionLabel}
               </span>
-            </KangurAnimatedOptionCard>
+            </KangurAnswerChoiceCard>
           );
         })}
       </div>

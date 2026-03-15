@@ -412,6 +412,7 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
                 <textarea
                   className='min-h-[400px] flex-1 resize-none bg-transparent p-4 text-sm font-mono text-gray-300 focus:outline-none'
                   placeholder='OCR results will appear here after running OCR, or type/paste markdown content...'
+                  aria-label='OCR results and markdown content'
                   value={draft.documentContent ?? ''}
                   onChange={(e) => handleUpdateDraftDocumentContent(e.target.value)}
                   readOnly={isEditingDocumentLocked}

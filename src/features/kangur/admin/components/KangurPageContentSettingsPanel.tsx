@@ -704,13 +704,18 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                       type='button'
                       onClick={() => setSelectedEntryId(entry.id)}
                       className={cn(
-                        'w-full rounded-2xl border px-3 py-3 text-left transition-colors',
+                        'w-full rounded-2xl border px-3 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background',
                         isSelected
                           ? 'border-primary/40 bg-primary/10'
                           : 'border-border/60 bg-card/30 hover:bg-card/55'
                       )}
-                      aria-label={'Badge'}
-                      title={'Badge'}>
+                      aria-label={
+                        entry.title?.trim()
+                          ? `Section: ${entry.title}`
+                          : `Section ${entry.id}`
+                      }
+                      title={entry.title?.trim() ? `Section: ${entry.title}` : `Section ${entry.id}`}
+                    >
                       <div className='flex items-start justify-between gap-2'>
                         <div className='min-w-0'>
                           <div className='truncate text-sm font-medium text-foreground'>
@@ -1104,13 +1109,22 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                                 type='button'
                                 onClick={() => setSelectedFragmentId(fragment.id)}
                                 className={cn(
-                                  'w-full rounded-2xl border px-3 py-3 text-left transition-colors',
+                                  'w-full rounded-2xl border px-3 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background',
                                   isSelected
                                     ? 'border-primary/40 bg-primary/10'
                                     : 'border-border/60 bg-card/30 hover:bg-card/55'
                                 )}
-                                aria-label={'Badge'}
-                                title={'Badge'}>
+                                aria-label={
+                                  fragment.text?.trim()
+                                    ? `Fragment: ${fragment.text}`
+                                    : `Fragment ${fragment.id}`
+                                }
+                                title={
+                                  fragment.text?.trim()
+                                    ? `Fragment: ${fragment.text}`
+                                    : `Fragment ${fragment.id}`
+                                }
+                              >
                                 <div className='flex items-start justify-between gap-2'>
                                   <div className='min-w-0'>
                                     <div className='truncate text-sm font-medium text-foreground'>

@@ -76,7 +76,7 @@ export function KangurAiTutorComposer(): JSX.Element {
             <button
               type='button'
               onClick={handleClearDrawing}
-              className='absolute -right-1.5 -top-1.5 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border kangur-chat-surface-soft shadow-sm transition-colors hover:[background:var(--kangur-chat-danger-background,#fff1f2)] hover:[color:var(--kangur-chat-danger-text,#ef4444)] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
+              className='absolute -right-1.5 -top-1.5 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border kangur-chat-surface-soft shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white hover:[background:var(--kangur-chat-danger-background,#fff1f2)] hover:[color:var(--kangur-chat-danger-text,#ef4444)] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
               aria-label={drawingContent?.clearLabel ?? 'Usuń rysunek'}
               title={drawingContent?.clearLabel ?? 'Usuń rysunek'}>
               <X className='h-2.5 w-2.5' />
@@ -94,13 +94,13 @@ export function KangurAiTutorComposer(): JSX.Element {
           data-testid='kangur-ai-tutor-composer-pills'
         >
           {visibleQuickActions.map((action) => (
-            <span
+            <button
               key={action.id}
               data-testid={`kangur-ai-tutor-quick-action-${action.id}`}
-              role='button'
-              tabIndex={isLoading || !canSendMessages ? -1 : 0}
-              aria-disabled={isLoading || !canSendMessages}
-              className={`inline-flex h-7 items-center rounded-full border px-3 text-[11px] font-medium transition-colors ${
+              type='button'
+              disabled={isLoading || !canSendMessages}
+              aria-label={action.label}
+              className={`inline-flex h-7 items-center rounded-full border px-3 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white ${
                 isLoading || !canSendMessages
                   ? 'cursor-not-allowed border-transparent opacity-40'
                   : 'cursor-pointer border-[color:var(--kangur-soft-card-border)] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))] hover:[background:var(--kangur-soft-card-background)]'
@@ -109,16 +109,9 @@ export function KangurAiTutorComposer(): JSX.Element {
                 if (isLoading || !canSendMessages) return;
                 void handleQuickAction(action);
               }}
-              onKeyDown={(event) => {
-                if (isLoading || !canSendMessages) return;
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  void handleQuickAction(action);
-                }
-              }}
             >
               {action.label}
-            </span>
+            </button>
           ))}
         </div>
       ) : null}

@@ -3,12 +3,13 @@ import { useState, type ChangeEvent } from 'react';
 import { CLIENT_LOGGING_KEYS } from '@/shared/contracts/observability';
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {
-  AdminSettingsPageLayout,
+  AdminSettingsBreadcrumbs,
   Button,
-  useToast,
-  Textarea,
-  FormSection,
   FormField,
+  FormSection,
+  PageLayout,
+  Textarea,
+  useToast,
 } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -54,10 +55,10 @@ export function LoggingSettingsForm({
   };
 
   return (
-    <AdminSettingsPageLayout
+    <PageLayout
       title='Logging Settings'
-      current='Logging'
       description='Configure client logging context shared with error reports.'
+      eyebrow={<AdminSettingsBreadcrumbs current='Logging' />}
     >
       <FormSection
         title='Client logging context'
@@ -105,6 +106,6 @@ export function LoggingSettingsForm({
           </Button>
         </div>
       </FormSection>
-    </AdminSettingsPageLayout>
+    </PageLayout>
   );
 }

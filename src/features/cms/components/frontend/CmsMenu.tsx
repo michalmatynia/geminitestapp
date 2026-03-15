@@ -428,6 +428,7 @@ export function CmsMenu({
                     target='_blank'
                     rel='noopener noreferrer'
                     data-menu-item
+                    aria-label={item.label}
                   >
                     {content}
                   </a>
@@ -438,6 +439,7 @@ export function CmsMenu({
                     style={style}
                     data-menu-item
                     aria-current={isActive ? 'page' : undefined}
+                    aria-label={item.label}
                   >
                     {content}
                   </Link>

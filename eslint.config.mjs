@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import { defineConfig, globalIgnores } from 'eslint/config';
 import js from '@eslint/js';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
@@ -75,6 +76,7 @@ const typedTestLanguageOptions = {
 
 const sharedPluginConfig = {
   '@typescript-eslint': tseslint.plugin,
+  'jsx-a11y': jsxA11y,
 };
 
 const sharedSettings = {
@@ -139,6 +141,13 @@ const commonRules = {
       ],
     },
   ],
+};
+
+const a11yRules = {
+  'jsx-a11y/alt-text': 'error',
+  'jsx-a11y/anchor-has-content': 'error',
+  'jsx-a11y/control-has-associated-label': 'error',
+  'jsx-a11y/label-has-associated-control': ['error', { assert: 'either', depth: 3 }],
 };
 
 export default defineConfig([
@@ -247,7 +256,10 @@ export default defineConfig([
     },
     plugins: sharedPluginConfig,
     settings: sharedSettings,
-    rules: commonRules,
+    rules: {
+      ...commonRules,
+      ...a11yRules,
+    },
   },
 
   {

@@ -4,6 +4,7 @@ import {
 } from '@/shared/contracts/kangur';
 
 export type LessonTreeMode = 'ordered' | 'catalog';
+export type TreeMode = LessonTreeMode;
 
 export type LessonFormData = {
   componentId: KangurLessonComponentId;

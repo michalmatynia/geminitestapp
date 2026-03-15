@@ -2,7 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { X } from 'lucide-react';
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn, getTextContent } from '@/shared/utils';
 
 const badgeVariants = cva(
   'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
@@ -62,6 +62,7 @@ function Badge({
   const isSplitInteractive = isClickable && !!onRemove;
   const handleButtonClick = onClick;
   const handleButtonKeyDown = onKeyDown;
+  const accessibleLabel = getTextContent(children).trim();
   const sharedClassName = cn(
     badgeVariants({ variant }),
     isClickable && 'cursor-pointer hover:brightness-110 active:opacity-80 transition-all',
@@ -95,6 +96,7 @@ function Badge({
         className={sharedClassName}
         onClick={handleButtonClick}
         onKeyDown={handleButtonKeyDown}
+        aria-label={accessibleLabel || undefined}
         {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
       >
         {content}
@@ -110,6 +112,7 @@ function Badge({
           className='inline-flex items-center rounded-full rounded-r-none px-2.5 py-0.5 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2'
           onClick={handleButtonClick}
           onKeyDown={handleButtonKeyDown}
+          aria-label={accessibleLabel || undefined}
         >
           {icon && <span className='mr-1.5 shrink-0'>{icon}</span>}
           {children}

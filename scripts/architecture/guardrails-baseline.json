@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-14T22:11:02.092Z",
+  "generatedAt": "2026-03-15T07:27:32Z",
   "hardLimits": {
     "sourceLargestFileLines": 4000,
     "imports.featuresToAppApiTotalImports": 0
@@ -20,8 +20,8 @@
     "imports.sharedToFeaturesTotalImports": 72,
     "architecture.crossFeatureEdgePairs": 24,
     "runtime.setIntervalOccurrences": 24,
-    "propDrilling.depthGte4Chains": 21,
-    "propDrilling.componentsWithForwarding": 76,
+    "propDrilling.depthGte4Chains": 0,
+    "propDrilling.componentsWithForwarding": 55,
     "uiConsolidation.totalOpportunities": 0,
     "uiConsolidation.highPriorityOpportunities": 0,
     "uiConsolidation.duplicateNameClusters": 0,

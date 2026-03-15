@@ -383,7 +383,8 @@ function KangurLessonQuizBlockView({ block }: { block: KangurLessonQuizBlock }):
         {block.choices.map((choice) => {
           const isSelected = state.selectedId === choice.id;
           const isCorrect = choice.id === block.correctChoiceId;
-          let choiceClass = 'rounded-lg border px-4 py-2 text-left text-sm w-full transition';
+          let choiceClass =
+            'rounded-lg border px-4 py-2 text-left text-sm w-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white';
           if (!state.revealed) {
             choiceClass +=
               ' soft-card [color:var(--kangur-page-text)]';

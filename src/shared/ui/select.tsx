@@ -194,6 +194,10 @@ const SelectTrigger = React.forwardRef<
   const useNativeSelect = useNativeSelectMode();
   const context = React.useContext(NativeSelectContext);
   const nativeTriggerProps = React.useMemo(() => getNativeSelectTriggerProps(props), [props]);
+  const inferredAriaLabel =
+    !nativeTriggerProps['aria-labelledby'] && !nativeTriggerProps['aria-label']
+      ? nativeTriggerProps.title
+      : nativeTriggerProps['aria-label'];
 
   if (!useNativeSelect) {
     return (
@@ -208,7 +212,7 @@ const SelectTrigger = React.forwardRef<
       >
         {children}
         <SelectPrimitive.Icon asChild>
-          <ChevronDown className='size-4 opacity-50' />
+          <ChevronDown className='size-4 opacity-50' aria-hidden='true' />
         </SelectPrimitive.Icon>
       </SelectPrimitive.Trigger>
     );
@@ -223,6 +227,7 @@ const SelectTrigger = React.forwardRef<
           className
         )}
         disabled={props.disabled ?? true}
+        aria-label={inferredAriaLabel}
       />
     );
   }
@@ -240,6 +245,7 @@ const SelectTrigger = React.forwardRef<
       value={value}
       onChange={(event) => onValueChange?.(event.target.value)}
       disabled={disabled}
+      aria-label={inferredAriaLabel}
     >
       {placeholder ? (
         <option value='' disabled>

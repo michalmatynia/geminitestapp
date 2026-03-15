@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
 
 import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
+import type { TutorHomeOnboardingStepKind } from '@/features/kangur/ui/components/KangurAiTutorWidget.types';
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
 
 import {
@@ -14,7 +15,6 @@ import {
   resetTutorAuthAnchorRects,
   TutorAuthAnchor,
   TutorGameAnchor,
-  type TutorGameAnchorKind,
 } from './KangurAiTutorWidget.test-utils';
 
 const mocks = createTutorMocks();
@@ -117,7 +117,7 @@ vi.mock('@/features/kangur/observability/client', () => ({
 let KangurAiTutorWidget: any;
 
 const renderWithTutorAnchors = (options: {
-  homeAnchorKinds?: TutorGameAnchorKind[];
+  homeAnchorKinds?: TutorHomeOnboardingStepKind[];
   showCreateAccountAnchor?: boolean;
   useCoverageAnchorIds?: boolean;
   showLoginIdentifierAnchor?: boolean;

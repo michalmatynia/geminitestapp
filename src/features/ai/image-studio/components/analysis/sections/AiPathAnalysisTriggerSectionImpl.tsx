@@ -104,6 +104,7 @@ function FieldMappingRow({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        aria-label={label}
         className={cn(
           'h-6 flex-1 rounded border border-border/60 bg-background/50 px-2',
           'text-xs text-gray-200 placeholder:text-gray-600',
@@ -251,6 +252,7 @@ function AiPathAnalysisTriggerFull(): React.JSX.Element {
               setConfig((prev) => ({ ...prev, applyPreviewOffset: e.target.checked }))
             }
             className='h-3 w-3 rounded border-gray-600 accent-primary'
+            aria-label='Reposition canvas preview to object centre'
           />
           <span className='text-xs text-gray-400'>Reposition canvas preview to object centre</span>
         </label>
@@ -262,6 +264,7 @@ function AiPathAnalysisTriggerFull(): React.JSX.Element {
             checked={config.runAfterApply}
             onChange={(e) => setConfig((prev) => ({ ...prev, runAfterApply: e.target.checked }))}
             className='h-3 w-3 rounded border-gray-600 accent-primary'
+            aria-label='Auto-run tool after applying settings'
           />
           <span className='text-xs text-gray-400'>Auto-run tool after applying settings</span>
         </label>

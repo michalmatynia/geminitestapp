@@ -210,6 +210,8 @@ export function FileUploadButton(props: FileUploadButtonProps): React.JSX.Elemen
       <Button
         type='button'
         {...buttonProps}
+        aria-label={buttonProps['aria-label'] ?? inferredLabel}
+        title={buttonProps.title ?? inferredLabel}
         aria-describedby={describedBy}
         aria-busy={isUploading}
         onClick={() => inputRef.current?.click()}
@@ -311,6 +313,11 @@ export function FileUploadTrigger(props: FileUploadTriggerProps): React.JSX.Elem
     () => getUploadInstructions({ multiple, enableDrop, enablePaste }),
     [multiple, enableDrop, enablePaste]
   );
+  const inferredLabel = React.useMemo(() => {
+    const explicitLabel = getTextContent(children).trim();
+    if (explicitLabel) return explicitLabel;
+    return multiple ? 'Upload files' : 'Upload file';
+  }, [children, multiple]);
   const describedBy = mergeAriaDescribedBy(
     instructions ? instructionsId : undefined,
     statusMessage ? statusId : undefined
@@ -383,13 +390,16 @@ export function FileUploadTrigger(props: FileUploadTriggerProps): React.JSX.Elem
         onChange={(e) => {
           void handleChange(e);
         }}
-       aria-label='Input field' title='Input field'/>
+        aria-label={inferredLabel}
+        title={inferredLabel}
+      />
       {asChild ? (
         <Slot
           className={className}
           role={preserveChildSemantics ? undefined : 'button'}
           tabIndex={preserveChildSemantics ? undefined : disabled ? -1 : 0}
           aria-disabled={preserveChildSemantics ? undefined : disabled}
+          aria-label={preserveChildSemantics ? undefined : inferredLabel}
           aria-describedby={describedBy}
           aria-busy={isUploading || undefined}
           onClick={() => {
@@ -425,6 +435,7 @@ export function FileUploadTrigger(props: FileUploadTriggerProps): React.JSX.Elem
           type='button'
           className={className}
           disabled={disabled}
+          aria-label={inferredLabel}
           aria-describedby={describedBy}
           aria-busy={isUploading || undefined}
           onClick={() => {

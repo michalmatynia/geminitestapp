@@ -67,13 +67,13 @@ export function KangurErrorFallback({
           <button
             type='button'
             onClick={reset}
-            className='rounded-xl bg-indigo-600 px-4 py-2 font-semibold text-white transition hover:bg-indigo-700'
+            className='rounded-xl bg-indigo-600 px-4 py-2 font-semibold text-white transition hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white'
           >
             Try Again
           </button>
           <Link
             href={homeHref}
-            className='soft-card rounded-xl border px-4 py-2 font-semibold [color:var(--kangur-page-text)] transition'
+            className='soft-card rounded-xl border px-4 py-2 font-semibold [color:var(--kangur-page-text)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white'
           >
             Back to Kangur
           </Link>

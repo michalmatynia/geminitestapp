@@ -125,6 +125,8 @@ export default function LogicalAnalogiesRelationGame({
   finishLabel = 'Wróć do tematów',
   onFinish,
 }: LogicalAnalogiesRelationGameProps): React.JSX.Element {
+  const summaryFinishLabel = finishLabel;
+  const handleFinish = onFinish;
   const [roundIndex, setRoundIndex] = useState(0);
   const [roundState, setRoundState] = useState<RoundState>(() =>
     buildRoundState(FIRST_ROUND)
@@ -391,8 +393,8 @@ export default function LogicalAnalogiesRelationGame({
         <KangurPracticeGameSummaryActions
           className='flex-col sm:flex-row'
           finishButtonClassName='w-full sm:flex-1'
-          finishLabel={finishLabel}
-          onFinish={onFinish}
+          finishLabel={summaryFinishLabel}
+          onFinish={handleFinish}
           onRestart={restart}
           restartButtonClassName='w-full sm:flex-1'
         />

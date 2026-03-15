@@ -323,8 +323,11 @@ export function ThemePreviewPanel({
   };
 
   const SectionToggle = ({ label, section }: { label: string; section: PreviewSection }) => (
-    <div
+    <button
+      type='button'
       onClick={() => toggle(section)}
+      aria-expanded={!collapsed.has(section)}
+      className='rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
       style={{
         ...sectionLabelStyle,
         cursor: 'pointer',
@@ -333,11 +336,15 @@ export function ThemePreviewPanel({
         alignItems: 'center',
         gap: 4,
         marginBottom: collapsed.has(section) ? 0 : 5,
+        padding: 0,
+        border: 'none',
+        background: 'transparent',
+        textAlign: 'left',
       }}
     >
       <span style={{ fontSize: 8, opacity: 0.6 }}>{collapsed.has(section) ? '\u25b6' : '\u25bc'}</span>
       {label}
-    </div>
+    </button>
   );
 
   return (
@@ -350,8 +357,10 @@ export function ThemePreviewPanel({
               key={target}
               type='button'
               onClick={() => setPreviewTarget(target)}
+              aria-pressed={previewTarget === target}
+              aria-label={PREVIEW_TARGET_LABELS[target]}
               className={[
-                'rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors',
+                'rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background',
                 previewTarget === target
                   ? 'bg-foreground text-background'
                   : 'text-muted-foreground hover:text-foreground',
@@ -364,7 +373,7 @@ export function ThemePreviewPanel({
       </div>
 
       {/* preview scene */}
-      <div style={sceneStyle} className='space-y-2 p-3' role='img' aria-label='Theme preview'>
+      <div style={sceneStyle} className='space-y-2 p-3' role='group' aria-label='Theme preview'>
 
         {/* ════════════ PAGE: Logo + Nav + Heading ════════════ */}
         <SectionToggle label='Page & Navigation' section='page' />

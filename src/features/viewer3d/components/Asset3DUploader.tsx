@@ -275,7 +275,7 @@ export function Asset3DUploader({ className }: Asset3DUploaderProps): React.JSX.
              aria-label='Enter category...' title='Enter category...'/>
             <datalist id='upload-categories-list'>
               {existingCategories.map((cat: string) => (
-                <option key={cat} value={cat} />
+                <option key={cat} value={cat} aria-label={cat} />
               ))}
             </datalist>
           </FormField>
@@ -304,7 +304,7 @@ export function Asset3DUploader({ className }: Asset3DUploaderProps): React.JSX.
                   {existingTags
                     .filter((t: string) => !tags.includes(t))
                     .map((tag: string) => (
-                      <option key={tag} value={tag} />
+                      <option key={tag} value={tag} aria-label={tag} />
                     ))}
                 </datalist>
                 <Button

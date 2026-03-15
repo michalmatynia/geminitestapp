@@ -140,7 +140,7 @@ const buildTokenClassName = ({
   const sizeClass =
     size === 'lg' ? 'text-2xl px-4 py-2' : size === 'sm' ? 'text-lg px-3 py-1.5' : 'text-xl px-3.5 py-2';
   return cn(
-    'inline-flex items-center justify-center gap-2 rounded-[18px] border font-semibold transition',
+    'inline-flex items-center justify-center gap-2 rounded-[18px] border font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
     sizeClass,
     KANGUR_ACCENT_STYLES[accent].badge,
     !isDisabled && KANGUR_ACCENT_STYLES[accent].hoverCard,
@@ -159,11 +159,14 @@ const resolveBinStatus = ({
   isDraggingOver: boolean;
   isCorrect: boolean;
 }): { accent: KangurAccent; className: string } => {
+  const focusRingClassName =
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white';
   if (checked) {
     return {
       accent: isCorrect ? 'emerald' : 'rose',
       className: cn(
         'rounded-[22px] border px-3 py-3 transition min-h-[90px]',
+        focusRingClassName,
         isCorrect
           ? KANGUR_ACCENT_STYLES.emerald.activeCard
           : KANGUR_ACCENT_STYLES.rose.activeCard
@@ -174,8 +177,10 @@ const resolveBinStatus = ({
   if (isDraggingOver) {
     return {
       accent: 'teal',
-      className:
+      className: cn(
         'rounded-[22px] border border-teal-300 bg-teal-100/70 px-3 py-3 transition min-h-[90px] scale-[1.01]',
+        focusRingClassName
+      ),
     };
   }
 
@@ -183,6 +188,7 @@ const resolveBinStatus = ({
     accent: 'teal',
     className: cn(
       'rounded-[22px] border border-dashed border-teal-300/70 px-3 py-3 transition min-h-[90px]',
+      focusRingClassName,
       KANGUR_ACCENT_STYLES.teal.hoverCard
     ),
   };
@@ -263,6 +269,8 @@ export default function LogicalClassificationGame({
   finishLabel = 'Wróć do tematów',
   onFinish,
 }: LogicalClassificationGameProps): React.JSX.Element {
+  const summaryFinishLabel = finishLabel;
+  const handleFinish = onFinish;
   const [roundIndex, setRoundIndex] = useState(0);
   const [roundState, setRoundState] = useState<RoundState>(() => buildRoundState(FIRST_ROUND));
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
@@ -517,8 +525,8 @@ export default function LogicalClassificationGame({
         <KangurPracticeGameSummaryActions
           className='flex-col sm:flex-row'
           finishButtonClassName='w-full sm:flex-1'
-          finishLabel={finishLabel}
-          onFinish={onFinish}
+          finishLabel={summaryFinishLabel}
+          onFinish={handleFinish}
           onRestart={() => {
             setRoundIndex(0);
             setRoundState(buildRoundState(FIRST_ROUND));
@@ -573,13 +581,20 @@ export default function LogicalClassificationGame({
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                     className={cn(
-                      'flex flex-wrap items-center justify-center gap-2 rounded-[18px] border border-dashed border-teal-300/70 p-3 min-h-[64px]',
+                      'flex flex-wrap items-center justify-center gap-2 rounded-[18px] border border-dashed border-teal-300/70 p-3 min-h-[64px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
                       snapshot.isDraggingOver && 'bg-teal-50'
                     )}
                     onClick={handleReturnToPool}
                     role='button'
-                    tabIndex={0}
+                    tabIndex={checked ? -1 : 0}
+                    aria-disabled={checked}
                     aria-label='Pula elementów do sortowania'
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        handleReturnToPool();
+                      }
+                    }}
                   >
                     {roundState.pool.map((item, index) => (
                       <DraggableToken
@@ -621,8 +636,15 @@ export default function LogicalClassificationGame({
                           className={surface.className}
                           onClick={() => handleAssignToken(bin.id)}
                           role='button'
-                          tabIndex={0}
+                          tabIndex={checked ? -1 : 0}
+                          aria-disabled={checked}
                           aria-label={`${bin.label}: kliknij, aby dodać element`}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              handleAssignToken(bin.id);
+                            }
+                          }}
                         >
                           <div className='flex items-center justify-between mb-2'>
                             <div className='flex items-center gap-2 text-sm font-bold text-slate-700'>
@@ -655,7 +677,13 @@ export default function LogicalClassificationGame({
                             {provided.placeholder}
                           </div>
                           {checked && items.length === 0 ? (
-                            <p className='mt-2 text-xs text-rose-600'>Brakuje elementów</p>
+                            <p
+                              className='mt-2 text-xs text-rose-600'
+                              role='status'
+                              aria-live='polite'
+                            >
+                              Brakuje elementów
+                            </p>
                           ) : null}
                         </div>
                       );
@@ -696,7 +724,15 @@ export default function LogicalClassificationGame({
               })}
             </div>
             {checked ? (
-              <p className={cn('mt-3 text-sm font-semibold text-center', roundCorrect ? 'text-emerald-600' : 'text-rose-600')}>
+              <p
+                className={cn(
+                  'mt-3 text-sm font-semibold text-center',
+                  roundCorrect ? 'text-emerald-600' : 'text-rose-600'
+                )}
+                role='status'
+                aria-live='polite'
+                aria-atomic='true'
+              >
                 {roundCorrect ? `Brawo! ${round.explain}` : `To nie ten intruz. ${round.explain}`}
               </p>
             ) : null}

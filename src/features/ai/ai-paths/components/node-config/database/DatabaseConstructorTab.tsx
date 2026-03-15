@@ -452,6 +452,8 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
                               ? 'bg-emerald-500/15 text-emerald-200 border border-emerald-500/30'
                               : 'text-gray-400 hover:bg-card/60 border border-transparent'
                           }`}
+                          aria-pressed={queryConfig.collection === coll.name}
+                          aria-label={`Select collection ${coll.name}`}
                           onClick={() => {
                             setSelectedAiQueryId('');
                             updateSelectedNodeConfig({

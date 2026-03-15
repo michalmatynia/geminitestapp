@@ -355,6 +355,7 @@ export function VectorCanvas(props: VectorCanvasProps): React.JSX.Element {
                     ? 'cursor-move'
                     : 'cursor-crosshair'
             )}
+            aria-label='Drawing canvas'
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}

@@ -18,20 +18,22 @@ export type KangurPanelIntroProps = React.HTMLAttributes<HTMLDivElement> & {
   titleClassName?: string;
 };
 
-export function KangurPanelIntro({
-  className,
-  description,
-  descriptionClassName,
-  eyebrow,
-  eyebrowClassName,
-  eyebrowTone = 'muted',
-  title,
-  titleAs: TitleComp = 'div',
-  titleClassName,
-  ...props
-}: KangurPanelIntroProps): React.JSX.Element {
+export function KangurPanelIntro(props: KangurPanelIntroProps): React.JSX.Element {
+  const {
+    className,
+    description,
+    descriptionClassName,
+    eyebrow,
+    eyebrowClassName,
+    eyebrowTone = 'muted',
+    title,
+    titleAs: TitleComp = 'div',
+    titleClassName,
+    ...restProps
+  } = props;
+
   return (
-    <div className={cn('flex flex-col gap-1', className)} {...props}>
+    <div className={cn('flex flex-col gap-1', className)} {...restProps}>
       {eyebrow ? (
         <KangurSectionEyebrow className={eyebrowClassName} tone={eyebrowTone}>
           {eyebrow}

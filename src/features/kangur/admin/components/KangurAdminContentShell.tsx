@@ -122,6 +122,7 @@ export function KangurAdminContentShell({
   );
   const panelContentClassName = cn('min-h-0 space-y-6', contentClassName);
   const shellClassNameValue = className;
+  const listPanelVariant = panelVariant;
 
   return (
     <KangurAdminContentShellContext.Provider value={contextValue}>
@@ -138,7 +139,7 @@ export function KangurAdminContentShell({
             className={panelSurfaceClassName}
             headerClassName='mb-6'
             contentClassName={panelContentClassName}
-            variant={panelVariant}
+            variant={listPanelVariant}
           >
             {children}
           </ListPanel>

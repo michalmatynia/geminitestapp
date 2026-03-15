@@ -37,10 +37,13 @@ export type KangurAiTutorPanelBodyContextValue = {
   canStartHomeOnboardingManually: boolean;
   drawingImageData: string | null;
   drawingMode: boolean;
+  drawingPanelOpen: boolean;
+  drawingPanelAvailable: boolean;
   guestAuthFormVisible: boolean;
   emptyStateMessage: string;
   focusChipLabel: string | null;
   handleClearDrawing: () => void;
+  handleCloseDrawingPanel: () => void;
   handleDetachHighlightedSection: () => void;
   handleDetachSelectedFragment: () => void;
   handleFocusHighlightedSection: () => void;
@@ -56,6 +59,7 @@ export type KangurAiTutorPanelBodyContextValue = {
     href: string
   ) => void;
   handleDrawingComplete: (dataUrl: string) => void;
+  handleOpenDrawingPanel: () => void;
   handleKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
   handleMessageFeedback: (
     messageIndex: number,

@@ -33,8 +33,10 @@ export function CalloutEditorCard(props: {
               key={option.value}
               type='button'
               onClick={(): void => onChange({ ...block, variant: option.value })}
+              aria-pressed={block.variant === option.value}
+              aria-label={option.label}
               className={cn(
-                'rounded-lg border px-3 py-1.5 text-sm font-medium transition',
+                'rounded-lg border px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background',
                 block.variant === option.value
                   ? option.className + ' ring-2 ring-offset-1'
                   : 'border-border/60 bg-card/30 text-muted-foreground hover:bg-card/50'

@@ -55,7 +55,7 @@ type MultiplicationBlankQuestion = {
 type MultiplicationQuestion = MultiplicationResultQuestion | MultiplicationBlankQuestion;
 
 type MultiplicationGameProps = {
-  finishLabel?: string;
+  finishLabelVariant?: 'lesson' | 'play';
   onFinish: () => void;
 };
 
@@ -120,9 +120,10 @@ function MultiplyGrid({ a, b }: { a: number; b: number }): React.JSX.Element | n
 }
 
 export default function MultiplicationGame({
-  finishLabel = 'Wróć do lekcji',
+  finishLabelVariant = 'lesson',
   onFinish,
 }: MultiplicationGameProps): React.JSX.Element {
+  const finishLabel = finishLabelVariant === 'play' ? 'Wróć do Grajmy' : 'Wróć do lekcji';
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);

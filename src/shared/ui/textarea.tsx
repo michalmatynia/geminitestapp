@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
 
 const textareaVariants = cva(
   'flex min-h-[80px] w-full rounded-md border border-foreground/10 px-3 py-2 text-sm transition-colors ring-offset-background placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:border-foreground/30 hover:border-foreground/20 disabled:cursor-not-allowed disabled:opacity-50',
@@ -30,11 +30,41 @@ export interface TextareaProps
     VariantProps<typeof textareaVariants> {}
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, variant, size, ...props }, ref) => {
+  (
+    {
+      className,
+      variant,
+      size,
+      id,
+      placeholder,
+      title,
+      'aria-label': ariaLabelProp,
+      'aria-labelledby': ariaLabelledByProp,
+      ...props
+    },
+    ref
+  ) => {
+    const allowFallbackLabel = !ariaLabelledByProp && !id;
+    const { ariaLabel: resolvedAriaLabel, hasAccessibleLabel } = resolveAccessibleLabel({
+      children: null,
+      ariaLabel: ariaLabelProp,
+      ariaLabelledBy: ariaLabelledByProp,
+      title: allowFallbackLabel ? title : undefined,
+      fallbackLabel: allowFallbackLabel ? placeholder : undefined,
+    });
+    const hasLabel = hasAccessibleLabel || Boolean(id);
+    if (!hasLabel) {
+      warnMissingAccessibleLabel({ componentName: 'Textarea', hasAccessibleLabel: hasLabel });
+    }
     return (
       <textarea
         className={cn(textareaVariants({ variant, size, className }))}
         ref={ref}
+        id={id}
+        placeholder={placeholder}
+        aria-label={resolvedAriaLabel}
+        aria-labelledby={ariaLabelledByProp}
+        title={title}
         {...props}
       />
     );

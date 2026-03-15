@@ -17,11 +17,11 @@ import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurP
 
 const renderUserFilterIcon = (icon: KangurLeaderboardUserFilterIcon): React.ReactNode => {
   if (icon === 'user') {
-    return <User className='w-3 h-3' />;
+    return <User className='w-3 h-3' aria-hidden='true' />;
   }
 
   if (icon === 'ghost') {
-    return <Ghost className='w-3 h-3' />;
+    return <Ghost className='w-3 h-3' aria-hidden='true' />;
   }
 
   return null;
@@ -41,7 +41,7 @@ export default function Leaderboard(): React.JSX.Element {
       variant='soft'
     >
       <div className='mb-4 flex items-center gap-2'>
-        <Trophy className='text-amber-400 w-6 h-6 flex-shrink-0' />
+        <Trophy className='text-amber-400 w-6 h-6 flex-shrink-0' aria-hidden='true' />
         <h3 className='text-lg font-extrabold [color:var(--kangur-page-text)] sm:text-xl'>
           {leaderboardContent?.title ?? 'Najlepsze wyniki'}
         </h3>
@@ -101,6 +101,9 @@ export default function Leaderboard(): React.JSX.Element {
           data-testid='leaderboard-loading'
           description='Pobieramy najnowsze wyniki uczniów.'
           title='Ładowanie...'
+          role='status'
+          aria-live='polite'
+          aria-atomic='true'
         />
       ) : items.length === 0 ? (
         <KangurEmptyState

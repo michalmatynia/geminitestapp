@@ -70,6 +70,7 @@ export function AdminAiPathsPage(): React.JSX.Element {
                     key={view.id}
                     type='button'
                     aria-pressed={isActive}
+                    aria-label={view.label}
                     onClick={() => setActiveTab(view.id)}
                     className={cn(
                       'inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 hover:bg-foreground/6',

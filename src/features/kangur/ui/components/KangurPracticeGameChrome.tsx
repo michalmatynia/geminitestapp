@@ -11,7 +11,7 @@ import {
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 
@@ -112,8 +112,9 @@ export function KangurPracticeGameSummaryXP({
   accent?: KangurAccent;
 }): React.JSX.Element | null {
   if (xpEarned <= 0) return null;
+  const accentClassName = KANGUR_ACCENT_STYLES[accent].badge;
   return (
-    <KangurStatusChip accent={accent} className='px-4 py-2 text-sm font-bold'>
+    <KangurStatusChip className={cn('px-4 py-2 text-sm font-bold', accentClassName)}>
       +{xpEarned} XP ✨
     </KangurStatusChip>
   );
@@ -216,7 +217,16 @@ export function KangurPracticeGameSummaryMessage({
   className?: string;
 }): React.JSX.Element | null {
   if (!children) return null;
-  return <p className={cn('[color:var(--kangur-page-muted-text)]', className)}>{children}</p>;
+  return (
+    <p
+      className={cn('[color:var(--kangur-page-muted-text)]', className)}
+      role='status'
+      aria-live='polite'
+      aria-atomic='true'
+    >
+      {children}
+    </p>
+  );
 }
 
 // ── Main Summary Component ───────────────────────────────────────────────────

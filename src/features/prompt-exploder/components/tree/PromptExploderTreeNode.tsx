@@ -98,8 +98,7 @@ export function PromptExploderTreeNode(props: PromptExploderTreeNodeProps): Reac
         }}
         onMouseUp={releaseDragHandle}
         className='inline-flex size-5 shrink-0 items-center justify-center rounded cursor-grab text-gray-400 transition hover:bg-white/10 hover:text-gray-100 active:cursor-grabbing'
-        title={'Drag node'}>
-        <GripVertical className='size-3.5' />
+        title='Drag node'>        <GripVertical className='size-3.5' />
       </button>
       {hasChildren ? (
         <Button
@@ -122,6 +121,7 @@ export function PromptExploderTreeNode(props: PromptExploderTreeNodeProps): Reac
         type='button'
         onClick={select}
         aria-pressed={isSelected}
+        aria-label={`Select ${node.name}`}
         className='flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
       >
         <Icon className='size-4 shrink-0 text-sky-200/80' />

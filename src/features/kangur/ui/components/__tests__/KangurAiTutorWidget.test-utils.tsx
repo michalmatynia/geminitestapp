@@ -4,6 +4,10 @@ import { vi } from 'vitest';
 
 import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
+import type {
+  GuidedTutorAuthKind,
+  TutorHomeOnboardingStepKind,
+} from '@/features/kangur/ui/components/KangurAiTutorWidget.types';
 
 // ── Shared Mocks ──
 
@@ -78,24 +82,9 @@ export class MockSpeechSynthesisUtterance {
   }
 }
 
-// ── Types ──
-
-export type TutorAuthAnchorKind =
-  | 'login_action'
-  | 'create_account_action'
-  | 'login_identifier_field'
-  | 'login_form';
-
-export type TutorGameAnchorKind =
-  | 'home_actions'
-  | 'home_quest'
-  | 'priority_assignments'
-  | 'leaderboard'
-  | 'progress';
-
 // ── Anchors setup ──
 
-export const tutorAuthAnchorRects: Record<TutorAuthAnchorKind, DOMRect> = {
+export const tutorAuthAnchorRects: Record<GuidedTutorAuthKind, DOMRect> = {
   login_action: new DOMRect(360, 220, 340, 260),
   create_account_action: new DOMRect(360, 220, 340, 260),
   login_identifier_field: new DOMRect(360, 220, 340, 260),
@@ -110,7 +99,7 @@ export const resetTutorAuthAnchorRects = (): void => {
   tutorAuthAnchorRects.login_form = rect;
 };
 
-export const tutorGameAnchorRects: Record<TutorGameAnchorKind, DOMRect> = {
+export const tutorGameAnchorRects: Record<TutorHomeOnboardingStepKind, DOMRect> = {
   home_actions: new DOMRect(120, 120, 420, 200),
   home_quest: new DOMRect(120, 420, 420, 180),
   priority_assignments: new DOMRect(120, 700, 420, 180),
@@ -125,7 +114,7 @@ export const TutorAuthAnchor = ({
   label,
   testId,
 }: {
-  kind: TutorAuthAnchorKind;
+  kind: GuidedTutorAuthKind;
   label: string;
   testId: string;
 }): ReactNode => {
@@ -153,13 +142,13 @@ export const TutorGameAnchor = ({
   testId,
   useCoverageAnchorId = false,
 }: {
-  kind: TutorGameAnchorKind;
+  kind: TutorHomeOnboardingStepKind;
   label: string;
   testId: string;
   useCoverageAnchorId?: boolean;
 }): ReactNode => {
   const ref = useRef<HTMLDivElement | null>(null);
-  const coverageAnchorIds: Record<TutorGameAnchorKind, string> = {
+  const coverageAnchorIds: Record<TutorHomeOnboardingStepKind, string> = {
     home_actions: 'kangur-game-home-actions',
     home_quest: 'kangur-game-home-quest',
     priority_assignments: 'kangur-game-home-assignments',

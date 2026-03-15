@@ -368,6 +368,7 @@ const drawTargetZone = (
 export default function GeometrySymmetryGame({
   onFinish,
 }: GeometrySymmetryGameProps): React.JSX.Element {
+  const handleFinish = onFinish;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isDrawingRef = useRef(false);
   const sessionStartedAtRef = useRef(Date.now());
@@ -719,7 +720,7 @@ export default function GeometrySymmetryGame({
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
           finishLabel='Wróć'
-          onFinish={onFinish}
+          onFinish={handleFinish}
           onRestart={handleRestart}
         />
       </KangurPracticeGameSummary>

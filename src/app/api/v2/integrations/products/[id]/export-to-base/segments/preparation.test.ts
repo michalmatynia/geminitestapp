@@ -15,14 +15,17 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/features/integrations/server', () => ({
   getExportActiveTemplateId: (...args: unknown[]) => mocks.getExportActiveTemplateIdMock(...args),
   listExportTemplates: (...args: unknown[]) => mocks.listExportTemplatesMock(...args),
-  getCategoryMappingRepository: () => ({
-    listByConnection: (...args: unknown[]) => mocks.listCategoryMappingsMock(...args),
-  }),
   getProducerMappingRepository: () => ({
     listByInternalProducerIds: vi.fn().mockResolvedValue([]),
   }),
   getTagMappingRepository: () => ({
     listByInternalTagIds: vi.fn().mockResolvedValue([]),
+  }),
+}));
+
+vi.mock('@/features/integrations/services/category-mapping-repository', () => ({
+  getCategoryMappingRepository: () => ({
+    listByConnection: (...args: unknown[]) => mocks.listCategoryMappingsMock(...args),
   }),
 }));
 

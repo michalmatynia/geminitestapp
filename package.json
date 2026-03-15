@@ -11,7 +11,7 @@
     "dev:playwright-broker": "node --max-old-space-size=12288 server.cjs",
     "dev:heap": "node --max-old-space-size=8192 --heapsnapshot-near-heap-limit=2 --trace-gc server.cjs",
     "prebuild": "node scripts/build/prebuild-cleanup.cjs",
-    "build": "NODE_OPTIONS='--max-old-space-size=3584' next build --webpack",
+    "build": "NODE_OPTIONS='--max-old-space-size=7168' next build --webpack",
     "build:hi-mem": "NODE_OPTIONS='--max-old-space-size=6144' next build --webpack",
     "neo4j:up": "docker compose -f compose.db.yaml up -d neo4j",
     "neo4j:down": "docker compose -f compose.db.yaml stop neo4j",

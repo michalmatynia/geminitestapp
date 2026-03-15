@@ -68,8 +68,10 @@ const nextConfig = {
     // Raise it so multipart requests don't fail before route handlers read formData().
     proxyClientMaxBodySize: '50mb',
     // Limit worker processes to 1 — each worker inherits NODE_OPTIONS heap size.
-    // On Vercel Standard (8GB total), 1 main + 1 worker × 3.5GB = 7GB, leaves 1GB for OS.
     cpus: 1,
+    // Run webpack in the main process instead of a separate worker.
+    // Avoids spawning a second Node process that doubles heap usage on Vercel (8GB limit).
+    webpackBuildWorker: false,
     optimizePackageImports: [
       'lucide-react',
       '@radix-ui/react-alert-dialog',

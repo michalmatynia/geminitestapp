@@ -56,7 +56,7 @@ const PAGE_CONTENT_COPY_OVERRIDES: Partial<
   },
   'parent-dashboard-tabs': {
     title: 'Zakładki panelu',
-    summary: 'Przełączaj między postępem, wynikami, zadaniami i ustawieniami Tutor-AI.',
+    summary: 'Przełączaj między wynikami, postępem, zadaniami, monitoringiem i ustawieniami Tutor-AI.',
   },
   'parent-dashboard-progress': {
     title: 'Postęp ucznia',
@@ -68,7 +68,11 @@ const PAGE_CONTENT_COPY_OVERRIDES: Partial<
   },
   'parent-dashboard-assignments': {
     title: 'Zadania ucznia',
-    summary: 'Nadaj priorytet pracy i sprawdź, co jest aktywne albo wymaga przypomnienia.',
+    summary: 'Nadaj priorytet pracy, sprawdź zadania przypisane i sugestie od StudiQ.',
+  },
+  'parent-dashboard-monitoring': {
+    title: 'Monitorowanie zadań',
+    summary: 'Sprawdź postęp przypisanych zadań oraz sugestii od StudiQ.',
   },
   'parent-dashboard-ai-tutor': {
     title: 'Tutor-AI dla rodzica',
@@ -164,8 +168,8 @@ const PAGE_CONTENT_COPY_OVERRIDES: Partial<
     summary: 'Krótka lista kolejnych kroków na podstawie ostatnich wyników i aktywności.',
   },
   'learner-profile-assignments': {
-    title: 'Przebieg przydzielonych zadań',
-    summary: 'Sprawdź, co jest nadal aktywne, ile zadań masz już za sobą i co było ostatnim sukcesem.',
+    title: 'Sugestie od Rodzica',
+    summary: 'Zadania i wskazówki od rodzica, które warto wykonać w pierwszej kolejności.',
   },
   'learner-profile-performance': {
     title: 'Skuteczność ucznia',

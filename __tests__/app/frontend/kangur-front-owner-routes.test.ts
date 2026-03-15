@@ -144,6 +144,9 @@ describe('kangur public-owner frontend routes', () => {
   });
 
   it('redirects legacy /kangur/login to /login when Kangur owns the frontend', async () => {
+    const originalNodeEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+
     const { default: KangurAliasLoginPage } = await import('@/app/(frontend)/kangur/login/page');
 
     await expect(
@@ -153,6 +156,8 @@ describe('kangur public-owner frontend routes', () => {
     ).rejects.toThrow('redirect:/login?callbackUrl=%2Ftests');
 
     expect(redirectMock).toHaveBeenCalledWith('/login?callbackUrl=%2Ftests');
+
+    process.env.NODE_ENV = originalNodeEnv;
   });
 
   it('keeps legacy /kangur/login rendering when CMS owns the frontend', async () => {

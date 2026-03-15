@@ -1265,11 +1265,11 @@ export const KANGUR_NATIVE_GUIDE_ENTRIES: KangurAiTutorNativeGuideEntry[] = [
     contentIdPrefixes: ['parent-dashboard:'],
     title: 'Panel rodzica',
     shortDescription:
-      'Panel rodzica zbiera nadzór nad uczniem: postęp, wyniki, zadania i ustawienia profilu.',
+      'Panel rodzica zbiera nadzór nad uczniem: postęp, wyniki, zadania, monitoring i ustawienia profilu.',
     fullDescription:
-      'Panel rodzica nie służy do rozwiązywania zadań, tylko do czytania obrazu nauki i ustawiania kolejnych priorytetów. To miejsce do spokojnego sprawdzenia, co dzieje się z uczniem i jaki następny ruch ma największy sens. W tym panelu rodzic może też planować zadania oraz ustalać, na czym uczeń ma się skupić w najbliższej sesji.',
+      'Panel rodzica nie służy do rozwiązywania zadań, tylko do czytania obrazu nauki i ustawiania kolejnych priorytetów. To miejsce do spokojnego sprawdzenia, co dzieje się z uczniem i jaki następny ruch ma największy sens. W tym panelu rodzic może planować zadania, monitorować ich wykonanie oraz ustalać, na czym uczeń ma się skupić w najbliższej sesji.',
     hints: [
-      'Najpierw wybierz zakładkę zgodną z tym, czego chcesz się dowiedzieć: postęp, wyniki, zadania albo Tutor-AI.',
+      'Najpierw wybierz zakładkę zgodną z tym, czego chcesz się dowiedzieć: wyniki, postęp, zadania, monitoring albo Tutor-AI.',
       'Najlepiej wyciągać jeden konkretny wniosek i od razu zamieniać go na działanie dla ucznia.',
       'Zanim przejdziesz do szczegółów, upewnij się, że wybrany jest właściwy uczeń.',
     ],
@@ -1345,9 +1345,9 @@ export const KANGUR_NATIVE_GUIDE_ENTRIES: KangurAiTutorNativeGuideEntry[] = [
     contentIdPrefixes: ['parent-dashboard:'],
     title: 'Zakładki dashboardu rodzica',
     shortDescription:
-      'Te zakładki dzielą panel rodzica na postęp, wyniki, zadania i wsparcie Tutor-AI.',
+      'Te zakładki dzielą panel rodzica na wyniki, postęp, zadania, monitoring i wsparcie Tutor-AI.',
     fullDescription:
-      'Zakładki porządkują panel rodzica według celu. Zamiast czytać wszystko naraz, można wejść tylko w ten rodzaj informacji, który jest teraz potrzebny: postęp, wyniki, zadania albo wskazówki od Tutor-AI.',
+      'Zakładki porządkują panel rodzica według celu. Zamiast czytać wszystko naraz, można wejść tylko w ten rodzaj informacji, który jest teraz potrzebny: wyniki, postęp, zadania, monitoring albo wskazówki od Tutor-AI.',
     hints: [
       'Wybieraj zakładkę zgodnie z pytaniem, na które chcesz odpowiedzieć.',
       'Po zmianie zakładki porównuj wnioski z innymi sekcjami, ale nie mieszaj wszystkich naraz.',
@@ -1415,6 +1415,27 @@ export const KANGUR_NATIVE_GUIDE_ENTRIES: KangurAiTutorNativeGuideEntry[] = [
     sortOrder: 177,
   }),
   createGuideEntry({
+    id: 'parent-dashboard-monitoring',
+    surface: 'parent_dashboard',
+    focusKind: 'assignment',
+    focusIdPrefixes: ['kangur-parent-dashboard-monitoring'],
+    contentIdPrefixes: ['parent-dashboard:'],
+    title: 'Monitorowanie zadań w dashboardzie rodzica',
+    shortDescription:
+      'Ta zakładka pokazuje postęp przypisanych zadań oraz sugestii, które uczeń ma do wykonania.',
+    fullDescription:
+      'Zakładka monitoringu zadań skupia się na realizacji priorytetów: ile zadań jest aktywnych, które są w trakcie, a które wymagają przypomnienia. To najlepsze miejsce, aby sprawdzić, czy uczeń faktycznie domyka zadania przypisane przez rodzica lub wynikające z sugestii StudiQ.',
+    hints: [
+      'Zwracaj uwagę na zadania o wysokim priorytecie z niskim postępem.',
+      'Jeśli wiele zadań stoi w miejscu, wróć do planowania i ogranicz liczbę priorytetów.',
+    ],
+    followUpActions: [
+      { id: 'parent-dashboard-monitoring-game', label: 'Przejdź do gry', page: 'Game' },
+    ],
+    triggerPhrases: ['monitorowanie zadań', 'postęp zadań', 'które zadania są wykonane'],
+    sortOrder: 178,
+  }),
+  createGuideEntry({
     id: 'parent-dashboard-ai-tutor',
     surface: 'parent_dashboard',
     focusKind: 'screen',
@@ -1431,7 +1452,7 @@ export const KANGUR_NATIVE_GUIDE_ENTRIES: KangurAiTutorNativeGuideEntry[] = [
     ],
     followUpActions: [{ id: 'parent-dashboard-ai-tutor-profile', label: 'Zobacz profil ucznia', page: 'LearnerProfile' }],
     triggerPhrases: ['tutor-ai dla rodzica', 'jak korzystać z tej zakładki', 'co mogę zapytać tutaj'],
-    sortOrder: 178,
+    sortOrder: 179,
   }),
   ...KANGUR_NATIVE_GUIDE_ENTRIES_AUTH,
 ];

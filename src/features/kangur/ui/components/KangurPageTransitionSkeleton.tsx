@@ -324,6 +324,7 @@ const ParentDashboardSkeleton = (): React.JSX.Element => (
           <SkeletonChip className='h-11 w-28' />
           <SkeletonChip className='h-11 w-24' />
           <SkeletonChip className='h-11 w-24' />
+          <SkeletonChip className='h-11 w-28' />
         </div>
       </div>
     </SkeletonPanel>

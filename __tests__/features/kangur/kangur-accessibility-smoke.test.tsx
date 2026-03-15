@@ -15,6 +15,7 @@ import { expectNoAxeViolations } from '@/testing/accessibility/axe';
 const {
   useKangurRoutingMock,
   useKangurAuthMock,
+  useKangurLoginModalMock,
   useKangurProgressStateMock,
   useKangurAssignmentsMock,
   scoreFilterMock,
@@ -23,6 +24,7 @@ const {
 } = vi.hoisted(() => ({
   useKangurRoutingMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
+  useKangurLoginModalMock: vi.fn(),
   useKangurProgressStateMock: vi.fn(),
   useKangurAssignmentsMock: vi.fn(),
   scoreFilterMock: vi.fn(),
@@ -38,6 +40,10 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
   useOptionalKangurAuth: useKangurAuthMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
+  useKangurLoginModal: useKangurLoginModalMock,
 }));
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
@@ -222,6 +228,9 @@ describe('Kangur accessibility smoke', () => {
       navigateToLogin: navigateToLoginMock,
       logout: logoutMock,
     });
+    useKangurLoginModalMock.mockReturnValue({
+      openLoginModal: vi.fn(),
+    });
   });
 
   it('exposes profile landmarks and action links by accessible role/name', async () => {
@@ -249,7 +258,8 @@ describe('Kangur accessibility smoke', () => {
     );
     expect(screen.getByRole('navigation', { name: 'Główna nawigacja Kangur' })).toBeInTheDocument();
     expect(screen.getByRole('main')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Profil ucznia' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Statystyki ucznia' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Profil ucznia/ })).toBeInTheDocument();
 
     expect(screen.getByRole('link', { name: 'Strona główna' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Lekcje' })).toBeVisible();
@@ -258,7 +268,7 @@ describe('Kangur accessibility smoke', () => {
     expect(screen.getByText('Plan na dziś')).toBeVisible();
 
     expect(screen.getByRole('link', { name: 'Zagraj teraz' })).toBeVisible();
-    expect(screen.getByRole('link', { name: 'Otwórz lekcję' })).toBeVisible();
+    expect(screen.getAllByRole('link', { name: 'Otwórz lekcję' }).length).toBeGreaterThan(0);
   });
 
   it('has no obvious accessibility violations in the learner profile shell', async () => {
@@ -286,6 +296,10 @@ describe('Kangur accessibility smoke', () => {
       navigateToLogin: navigateToLoginMock,
       logout: logoutMock,
     });
+    const openLoginModal = vi.fn();
+    useKangurLoginModalMock.mockReturnValue({
+      openLoginModal,
+    });
 
     renderLearnerProfilePage();
 
@@ -297,7 +311,7 @@ describe('Kangur accessibility smoke', () => {
     const user = userEvent.setup();
     await user.keyboard('{Enter}');
 
-    expect(navigateToLoginMock).toHaveBeenCalledTimes(1);
+    expect(openLoginModal).toHaveBeenCalledTimes(1);
   });
 
   it('exposes skip navigation, landmarks, and labeled home controls on the game page', () => {

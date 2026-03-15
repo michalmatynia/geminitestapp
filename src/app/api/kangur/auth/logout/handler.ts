@@ -2,8 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { authConfig } from '@/features/auth/auth.config';
 import { auth } from '@/features/auth/server';
-import { clearKangurLearnerSession } from '@/features/kangur/services/kangur-learner-session';
+import {
+  clearKangurLearnerSession,
+  readKangurLearnerSession,
+} from '@/features/kangur/services/kangur-learner-session';
+import { ActivityTypes } from '@/shared/constants/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { logActivity } from '@/shared/utils/observability/activity-service';
 
 const AUTH_COOKIE_KEYS = [
   'sessionToken',
@@ -118,9 +123,26 @@ export async function postKangurLogoutHandler(
   _ctx: ApiHandlerContext
 ): Promise<Response> {
   await auth().catch(() => null);
+  const learnerSession = readKangurLearnerSession(req);
   const response = NextResponse.json({ ok: true });
 
   clearKangurLearnerSession(response);
+  if (learnerSession) {
+    void logActivity({
+      type: ActivityTypes.KANGUR.LEARNER_SIGNOUT,
+      description: 'Kangur learner signed out (parent logout).',
+      userId: learnerSession.ownerUserId,
+      entityId: learnerSession.learnerId,
+      entityType: 'kangur_learner',
+      metadata: {
+        surface: 'kangur',
+        actorType: 'learner',
+        learnerId: learnerSession.learnerId,
+        ownerUserId: learnerSession.ownerUserId,
+        reason: 'parent_logout',
+      },
+    }).catch(() => {});
+  }
 
   AUTH_COOKIE_KEYS.forEach((key) => {
     const cookie = authConfig.cookies[key];

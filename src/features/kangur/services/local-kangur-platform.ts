@@ -26,10 +26,15 @@ import type {
   KangurAssignmentListQuery,
   KangurAssignmentSnapshot,
   KangurAssignmentUpdateInput,
+  KangurLearnerActivitySnapshot,
+  KangurLearnerActivityStatus,
+  KangurLearnerActivityUpdateInput,
+  KangurLearnerSessionHistory,
   KangurLearnerCreateInput,
   KangurLearnerProfile,
   KangurLearnerUpdateInput,
   KangurPlatform,
+  KangurProgressUpdateContext,
   KangurScoreCreateInput,
   KangurScoreRecord,
   KangurUser,
@@ -42,6 +47,9 @@ import {
   kangurAuthUserSchema,
   kangurAssignmentSnapshotSchema,
   kangurLearnerProfileSchema,
+  kangurLearnerActivitySnapshotSchema,
+  kangurLearnerActivityStatusSchema,
+  kangurLearnerSessionHistorySchema,
   kangurProgressStateSchema,
   kangurScoreSchema,
   type KangurProgressState,
@@ -54,15 +62,22 @@ const KANGUR_PROGRESS_ENDPOINT = '/api/kangur/progress';
 const KANGUR_SCORES_ENDPOINT = '/api/kangur/scores';
 const KANGUR_ASSIGNMENTS_ENDPOINT = '/api/kangur/assignments';
 const KANGUR_LEARNERS_ENDPOINT = '/api/kangur/learners';
+const KANGUR_LEARNER_ACTIVITY_ENDPOINT = '/api/kangur/learner-activity';
+const KANGUR_LEARNER_SESSIONS_ENDPOINT = '/api/kangur/learners';
 const DEFAULT_SCORE_LIMIT = 100;
 const AUTH_CACHE_TTL_MS = 30_000;
 const ANONYMOUS_AUTH_CACHE_TTL_MS = 8_000;
 const SCORE_CACHE_TTL_MS = 12_000;
 const KANGUR_ACTIVE_LEARNER_HEADER = 'x-kangur-learner-id';
+const KANGUR_PROGRESS_SOURCE_HEADER = 'x-kangur-progress-source';
+const KANGUR_PROGRESS_CTA_HEADER = 'x-kangur-progress-cta';
+const KANGUR_PROGRESS_CTA_SOURCE = 'lesson_panel_navigation';
 const progressResponseSchema = kangurProgressStateSchema;
 const scoreListSchema = z.array(kangurScoreSchema);
 const assignmentListSchema = z.array(kangurAssignmentSnapshotSchema);
 const learnerProfileSchema = kangurLearnerProfileSchema;
+const learnerActivityStatusSchema = kangurLearnerActivityStatusSchema;
+const learnerSessionHistorySchema = kangurLearnerSessionHistorySchema;
 
 type SessionUserCacheEntry = {
   user: KangurUser | null;
@@ -667,14 +682,23 @@ const updateAssignmentViaApi = async (
 };
 
 const updateProgressViaApi = async (
-  input: KangurProgressState
+  input: KangurProgressState,
+  context?: KangurProgressUpdateContext
 ): Promise<KangurProgressState> => {
   try {
+    const progressHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (context?.source === KANGUR_PROGRESS_CTA_SOURCE) {
+      progressHeaders[KANGUR_PROGRESS_SOURCE_HEADER] = context.source;
+    }
+    if (context?.cta) {
+      progressHeaders[KANGUR_PROGRESS_CTA_HEADER] = context.cta;
+    }
+
     const response = await fetch(KANGUR_PROGRESS_ENDPOINT, {
       method: 'PATCH',
-      headers: createActorAwareHeaders({
-        'Content-Type': 'application/json',
-      }),
+      headers: createActorAwareHeaders(progressHeaders),
       credentials: 'same-origin',
       body: JSON.stringify(input),
     });
@@ -713,6 +737,152 @@ const updateProgressViaApi = async (
       action: 'progress.update',
       method: 'PATCH',
       endpoint: KANGUR_PROGRESS_ENDPOINT,
+      ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
+    });
+    throw error;
+  }
+};
+
+const requestLearnerActivityStatus = async (): Promise<KangurLearnerActivityStatus> => {
+  try {
+    const response = await fetch(KANGUR_LEARNER_ACTIVITY_ENDPOINT, {
+      method: 'GET',
+      headers: createActorAwareHeaders(),
+      credentials: 'same-origin',
+    });
+
+    if (!response.ok) {
+      const requestError = new Error(
+        `Kangur learner activity request failed with ${response.status}`
+      ) as Error & { status: number };
+      requestError.status = response.status;
+      throw requestError;
+    }
+
+    const payload = (await response.json()) as unknown;
+    const parsed = learnerActivityStatusSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new Error('Kangur learner activity payload validation failed.');
+    }
+
+    return parsed.data;
+  } catch (error: unknown) {
+    if (isKangurAuthStatusError(error)) {
+      throw error;
+    }
+
+    trackReadFailure('learnerActivity.get', error, {
+      endpoint: KANGUR_LEARNER_ACTIVITY_ENDPOINT,
+      method: 'GET',
+    });
+    logKangurClientError(error, {
+      source: 'kangur.local-platform',
+      action: 'learnerActivity.get',
+      method: 'GET',
+      endpoint: KANGUR_LEARNER_ACTIVITY_ENDPOINT,
+      ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
+    });
+    throw error;
+  }
+};
+
+const updateLearnerActivityViaApi = async (
+  input: KangurLearnerActivityUpdateInput
+): Promise<KangurLearnerActivitySnapshot> => {
+  try {
+    const response = await fetch(KANGUR_LEARNER_ACTIVITY_ENDPOINT, {
+      method: 'POST',
+      headers: createActorAwareHeaders({
+        'Content-Type': 'application/json',
+      }),
+      credentials: 'same-origin',
+      body: JSON.stringify(input),
+    });
+
+    if (!response.ok) {
+      const requestError = new Error(
+        `Kangur learner activity update failed with ${response.status}`
+      ) as Error & { status: number };
+      requestError.status = response.status;
+      throw requestError;
+    }
+
+    const payload = (await response.json()) as unknown;
+    const parsed = kangurLearnerActivitySnapshotSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new Error('Kangur learner activity update payload validation failed.');
+    }
+
+    trackWriteSuccess('learnerActivity.update', {
+      endpoint: KANGUR_LEARNER_ACTIVITY_ENDPOINT,
+      method: 'POST',
+      kind: parsed.data.kind,
+    });
+    return parsed.data;
+  } catch (error: unknown) {
+    trackWriteFailure('learnerActivity.update', error, {
+      endpoint: KANGUR_LEARNER_ACTIVITY_ENDPOINT,
+      method: 'POST',
+      kind: input.kind,
+    });
+    logKangurClientError(error, {
+      source: 'kangur.local-platform',
+      action: 'learnerActivity.update',
+      method: 'POST',
+      endpoint: KANGUR_LEARNER_ACTIVITY_ENDPOINT,
+      kind: input.kind,
+      ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
+    });
+    throw error;
+  }
+};
+
+const buildLearnerSessionsUrl = (learnerId: string): string =>
+  `${KANGUR_LEARNER_SESSIONS_ENDPOINT}/${encodeURIComponent(learnerId)}/sessions`;
+
+const requestLearnerSessions = async (
+  learnerId: string
+): Promise<KangurLearnerSessionHistory> => {
+  const endpoint = buildLearnerSessionsUrl(learnerId);
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: createActorAwareHeaders(),
+      credentials: 'same-origin',
+    });
+
+    if (!response.ok) {
+      const requestError = new Error(
+        `Kangur learner sessions request failed with ${response.status}`
+      ) as Error & { status: number };
+      requestError.status = response.status;
+      throw requestError;
+    }
+
+    const payload = (await response.json()) as unknown;
+    const parsed = learnerSessionHistorySchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new Error('Kangur learner sessions payload validation failed.');
+    }
+
+    return parsed.data;
+  } catch (error: unknown) {
+    if (isKangurAuthStatusError(error)) {
+      throw error;
+    }
+
+    trackReadFailure('learnerSessions.list', error, {
+      endpoint,
+      method: 'GET',
+      learnerId,
+    });
+    logKangurClientError(error, {
+      source: 'kangur.local-platform',
+      action: 'learnerSessions.list',
+      method: 'GET',
+      endpoint,
+      learnerId,
       ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
     });
     throw error;
@@ -1001,13 +1171,21 @@ export const createLocalKangurPlatform = (): KangurPlatform => {
     },
     progress: {
       get: async () => requestProgressFromApi(),
-      update: async (input: KangurProgressState) => updateProgressViaApi(input),
+      update: async (input: KangurProgressState, context?: KangurProgressUpdateContext) =>
+        updateProgressViaApi(input, context),
     },
     assignments: {
       list: async (query?: KangurAssignmentListQuery) => requestAssignmentsFromApi(query),
       create: async (input: KangurAssignmentCreateInput) => createAssignmentViaApi(input),
       update: async (id: string, input: KangurAssignmentUpdateInput) =>
         updateAssignmentViaApi(id, input),
+    },
+    learnerActivity: {
+      get: async () => requestLearnerActivityStatus(),
+      update: async (input: KangurLearnerActivityUpdateInput) => updateLearnerActivityViaApi(input),
+    },
+    learnerSessions: {
+      list: async (learnerId: string) => requestLearnerSessions(learnerId),
     },
   };
 };

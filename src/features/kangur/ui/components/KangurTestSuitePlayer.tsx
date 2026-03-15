@@ -8,6 +8,7 @@ import {
   useKangurAiTutorSessionSync,
   useOptionalKangurAiTutor,
 } from '@/features/kangur/ui/context/KangurAiTutorContext';
+import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurTestSuiteRuntimeProvider } from '@/features/kangur/ui/context/KangurTestSuiteRuntimeContext';
 import {
@@ -18,6 +19,7 @@ import {
   KangurProgressBar,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
@@ -40,6 +42,14 @@ export function KangurTestSuitePlayer({
 }: Props): React.JSX.Element {
   const suiteId = suite.id;
   const suiteTitle = suite.title;
+  const auth = useOptionalKangurAuth();
+  useKangurLearnerActivityPing({
+    activity: {
+      kind: 'test',
+      title: `Test: ${suiteTitle}`,
+    },
+    enabled: auth?.user?.actorType === 'learner',
+  });
   const prefersReducedMotion = useReducedMotion();
   const questionMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const tutor = useOptionalKangurAiTutor();

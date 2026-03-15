@@ -4,6 +4,10 @@ import type {
   KangurAssignmentSnapshot as SharedKangurAssignmentSnapshot,
   KangurAssignmentUpdateInput as SharedKangurAssignmentUpdateInput,
   KangurAuthUser as SharedKangurAuthUser,
+  KangurLearnerActivitySnapshot as SharedKangurLearnerActivitySnapshot,
+  KangurLearnerActivityStatus as SharedKangurLearnerActivityStatus,
+  KangurLearnerActivityUpdateInput as SharedKangurLearnerActivityUpdateInput,
+  KangurLearnerSessionHistory as SharedKangurLearnerSessionHistory,
   KangurLearnerCreateInput as SharedKangurLearnerCreateInput,
   KangurLearnerProfile as SharedKangurLearnerProfile,
   KangurLearnerUpdateInput as SharedKangurLearnerUpdateInput,
@@ -25,6 +29,10 @@ export type KangurAssignmentSnapshot = SharedKangurAssignmentSnapshot;
 export type KangurAssignmentCreateInput = SharedKangurAssignmentCreateInput;
 export type KangurAssignmentUpdateInput = SharedKangurAssignmentUpdateInput;
 export type KangurAssignmentListQuery = SharedKangurAssignmentListQuery;
+export type KangurLearnerActivitySnapshot = SharedKangurLearnerActivitySnapshot;
+export type KangurLearnerActivityUpdateInput = SharedKangurLearnerActivityUpdateInput;
+export type KangurLearnerActivityStatus = SharedKangurLearnerActivityStatus;
+export type KangurLearnerSessionHistory = SharedKangurLearnerSessionHistory;
 
 export interface KangurAuthPort {
   me: () => Promise<KangurUser>;
@@ -52,13 +60,30 @@ export interface KangurScorePort {
 
 export interface KangurProgressPort {
   get: () => Promise<KangurProgressState>;
-  update: (input: KangurProgressState) => Promise<KangurProgressState>;
+  update: (
+    input: KangurProgressState,
+    context?: KangurProgressUpdateContext
+  ) => Promise<KangurProgressState>;
 }
+
+export type KangurProgressUpdateContext = {
+  source?: 'lesson_panel_navigation';
+  cta?: string;
+};
 
 export interface KangurAssignmentPort {
   list: (query?: KangurAssignmentListQuery) => Promise<KangurAssignmentSnapshot[]>;
   create: (input: KangurAssignmentCreateInput) => Promise<KangurAssignmentSnapshot>;
   update: (id: string, input: KangurAssignmentUpdateInput) => Promise<KangurAssignmentSnapshot>;
+}
+
+export interface KangurLearnerActivityPort {
+  get: () => Promise<KangurLearnerActivityStatus>;
+  update: (input: KangurLearnerActivityUpdateInput) => Promise<KangurLearnerActivitySnapshot>;
+}
+
+export interface KangurLearnerSessionsPort {
+  list: (learnerId: string) => Promise<KangurLearnerSessionHistory>;
 }
 
 export interface KangurPlatform {
@@ -67,4 +92,6 @@ export interface KangurPlatform {
   score: KangurScorePort;
   progress: KangurProgressPort;
   assignments: KangurAssignmentPort;
+  learnerActivity: KangurLearnerActivityPort;
+  learnerSessions: KangurLearnerSessionsPort;
 }

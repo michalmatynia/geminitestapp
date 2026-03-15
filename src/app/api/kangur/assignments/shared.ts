@@ -162,6 +162,7 @@ export const createAssignmentSnapshotForLearner = async (input: {
     title: input.payload.title,
     description: input.payload.description,
     priority: input.payload.priority,
+    timeLimitMinutes: input.payload.timeLimitMinutes ?? null,
     target: storedTarget,
     assignedByName: input.learnerName,
     assignedByEmail: input.learnerEmail,

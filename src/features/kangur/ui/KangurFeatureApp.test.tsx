@@ -119,6 +119,9 @@ vi.mock('@/features/kangur/config/pages', () => ({
   kangurPages: {
     Game: () => <div data-testid='kangur-page-game'>Game</div>,
     Lessons: () => <div data-testid='kangur-page-lessons'>Lessons</div>,
+    ParentDashboard: () => (
+      <div data-testid='kangur-page-parent-dashboard'>ParentDashboard</div>
+    ),
     Tests: () => <div data-testid='kangur-page-tests'>Tests</div>,
   },
 }));
@@ -376,11 +379,13 @@ describe('KangurFeatureApp', () => {
 
     render(<KangurFeatureApp />);
 
-    await waitFor(() => {
-      expect(routeNavigatorMock.replace).toHaveBeenCalledWith('/', {
-        pageKey: 'Game',
-        sourceId: 'kangur-auth:redirect-parent-dashboard',
-      });
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    expect(routeNavigatorMock.replace).toHaveBeenCalledWith('/', {
+      pageKey: 'Game',
+      sourceId: 'kangur-auth:redirect-parent-dashboard',
     });
   });
 });

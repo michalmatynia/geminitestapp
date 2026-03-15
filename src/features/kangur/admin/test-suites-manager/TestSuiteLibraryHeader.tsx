@@ -10,6 +10,15 @@ export function TestSuiteLibraryHeader() {
   const settingsStore = useSettingsStore();
   const state = useTestSuitesManager();
   const logic = useTestSuitesManagerLogic(settingsStore);
+  const handleTakeLiveSuitesOffline = (): void => {
+    void (logic.handleTakeLiveSuitesOffline as () => Promise<void>)();
+  };
+  const handleGoLiveReadySuites = (): void => {
+    void (logic.handleGoLiveReadySuites as () => Promise<void>)();
+  };
+  const handlePublishReadyQueue = (): void => {
+    void (logic.handlePublishReadyQueue as () => Promise<void>)();
+  };
 
   return (
     <div className='overflow-hidden rounded-[28px] border border-border/60 bg-[linear-gradient(135deg,rgba(10,18,32,0.95),rgba(19,38,61,0.86))] p-5 sm:p-6 shadow-[0_24px_90px_-52px_rgba(14,165,233,0.35)]'>
@@ -26,7 +35,7 @@ export function TestSuiteLibraryHeader() {
         <div className='flex flex-wrap items-center gap-2.5 xl:justify-end'>
           <Button
             onClick={() => {
-              // void logic.handleTakeLiveSuitesOffline();
+              handleTakeLiveSuitesOffline();
             }}
             size='sm'
             variant='outline'
@@ -38,7 +47,7 @@ export function TestSuiteLibraryHeader() {
           </Button>
           <Button
             onClick={() => {
-              // void logic.handleGoLiveReadySuites();
+              handleGoLiveReadySuites();
             }}
             size='sm'
             variant='outline'
@@ -50,7 +59,7 @@ export function TestSuiteLibraryHeader() {
           </Button>
           <Button
             onClick={() => {
-              // void logic.handlePublishReadyQueue();
+              handlePublishReadyQueue();
             }}
             size='sm'
             variant='outline'

@@ -15,6 +15,7 @@ type KangurPageIntroCardProps = {
   className?: string;
   children?: ReactNode;
   description?: ReactNode;
+  headingAction?: ReactNode;
   headingAs?: 'h1' | 'h2' | 'h3';
   headingSize?: 'xs' | 'sm' | 'md' | 'lg';
   headingTestId?: string;
@@ -33,6 +34,7 @@ type KangurPageIntroCardContextValue = {
   backButtonLabel: string;
   backButtonTestId?: string;
   description?: ReactNode;
+  headingAction?: ReactNode;
   headingAs: 'h1' | 'h2' | 'h3';
   headingSize: 'xs' | 'sm' | 'md' | 'lg';
   headingTestId?: string;
@@ -55,9 +57,10 @@ const useKangurPageIntroCardContext = () => {
   return value;
 };
 
-function KangurPageIntroHeading(): React.JSX.Element {
+function KangurPageIntroHeading(): React.JSX.Element | null {
   const {
     accent,
+    headingAction,
     headingAs,
     headingSize,
     headingTestId,
@@ -71,7 +74,7 @@ function KangurPageIntroHeading(): React.JSX.Element {
     return null;
   }
 
-  return (
+  const headline = (
     <KangurHeadline
       accent={accent}
       as={headingAs}
@@ -89,6 +92,17 @@ function KangurPageIntroHeading(): React.JSX.Element {
         title
       )}
     </KangurHeadline>
+  );
+
+  if (!headingAction) {
+    return headline;
+  }
+
+  return (
+    <div className='flex flex-col gap-3 text-left sm:flex-row sm:items-center sm:justify-between'>
+      <div className='min-w-0'>{headline}</div>
+      <div className='flex w-full justify-start sm:w-auto sm:justify-end'>{headingAction}</div>
+    </div>
   );
 }
 
@@ -132,6 +146,7 @@ export function KangurPageIntroCard({
   className,
   children,
   description,
+  headingAction,
   headingAs = 'h2',
   headingSize = 'lg',
   headingTestId,
@@ -144,13 +159,14 @@ export function KangurPageIntroCard({
   visualTitle,
   onBack,
 }: KangurPageIntroCardProps): React.JSX.Element {
-  const panelClassName = cn('w-full text-center', className);
+  const panelClassName = cn('w-full', headingAction ? 'text-left' : 'text-center', className);
   const panelTestId = testId;
   const contextValue: KangurPageIntroCardContextValue = {
     accent,
     backButtonLabel,
     backButtonTestId,
     description,
+    headingAction,
     headingAs,
     headingSize,
     headingTestId,

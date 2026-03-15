@@ -30,9 +30,9 @@ const runtimeState = vi.hoisted(() => ({
   },
 }));
 
-const progressOverviewMock = vi.hoisted(() => vi.fn());
 const getCurrentKangurDailyQuestMock = vi.hoisted(() => vi.fn());
 const useKangurPageContentEntryMock = vi.hoisted(() => vi.fn());
+const assignmentManagerMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () => ({
   shouldRenderKangurParentDashboardPanel: (displayMode: string, activeTab: string, targetTab: string) =>
@@ -48,10 +48,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
-vi.mock('@/features/kangur/ui/components/ProgressOverview', () => ({
+vi.mock('@/features/kangur/ui/components/KangurAssignmentManager', () => ({
   default: (props: unknown) => {
-    progressOverviewMock(props);
-    return <div data-testid='progress-overview-stub' />;
+    assignmentManagerMock(props);
+    return <div data-testid='assignment-manager-stub' />;
   },
 }));
 
@@ -97,9 +97,12 @@ describe('KangurParentDashboardProgressWidget', () => {
     };
   });
 
-  it('passes the resolved daily quest into the shared progress overview', () => {
+  it('renders the daily quest summary when available', () => {
     const dailyQuest = {
-      assignment: { title: 'Trening mieszany' },
+      assignment: {
+        title: 'Trening mieszany',
+        action: { label: 'Uruchom', page: 'Game' },
+      },
       progress: { percent: 100, summary: '1/1 runda dzisiaj', status: 'completed' },
       reward: { label: 'Nagroda gotowa +36 XP', status: 'ready' },
     };
@@ -108,12 +111,12 @@ describe('KangurParentDashboardProgressWidget', () => {
 
     render(<KangurParentDashboardProgressWidget />);
 
-    expect(screen.getByTestId('progress-overview-stub')).toBeInTheDocument();
+    expect(screen.getByTestId('parent-dashboard-daily-quest')).toBeInTheDocument();
     expect(getCurrentKangurDailyQuestMock).toHaveBeenCalledWith(runtimeState.value.progress);
-    expect(progressOverviewMock).toHaveBeenCalledWith(
+    expect(assignmentManagerMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        progress: runtimeState.value.progress,
-        dailyQuest,
+        basePath: '/kangur',
+        view: 'tracking',
       })
     );
   });
@@ -126,8 +129,9 @@ describe('KangurParentDashboardProgressWidget', () => {
 
     render(<KangurParentDashboardProgressWidget />);
 
-    expect(screen.queryByTestId('progress-overview-stub')).toBeNull();
+    expect(screen.queryByTestId('parent-dashboard-daily-quest')).toBeNull();
     expect(getCurrentKangurDailyQuestMock).not.toHaveBeenCalled();
+    expect(assignmentManagerMock).not.toHaveBeenCalled();
   });
 
   it('does not render when no active learner is selected', () => {
@@ -138,9 +142,10 @@ describe('KangurParentDashboardProgressWidget', () => {
 
     render(<KangurParentDashboardProgressWidget />);
 
-    expect(screen.queryByTestId('progress-overview-stub')).toBeNull();
+    expect(screen.queryByTestId('parent-dashboard-daily-quest')).toBeNull();
     expect(getCurrentKangurDailyQuestMock).not.toHaveBeenCalled();
     expect(screen.queryByText('Postęp ucznia')).toBeNull();
+    expect(assignmentManagerMock).not.toHaveBeenCalled();
   });
 
   it('renders Mongo-backed section intro copy when available', () => {
@@ -168,5 +173,11 @@ describe('KangurParentDashboardProgressWidget', () => {
     expect(
       screen.getByText('Sprawdź rytm nauki i główny kierunek dalszej pracy.')
     ).toHaveClass('[color:var(--kangur-page-muted-text)]');
+    expect(assignmentManagerMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        basePath: '/kangur',
+        view: 'tracking',
+      })
+    );
   });
 });

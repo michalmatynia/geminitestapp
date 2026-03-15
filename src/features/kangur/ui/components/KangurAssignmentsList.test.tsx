@@ -17,6 +17,7 @@ const regularAssignment: KangurAssignmentSnapshot = {
   description: 'Zrób jedną sesję dzielenia.',
   priority: 'high',
   archived: false,
+  timeLimitMinutes: 45,
   target: {
     type: 'practice',
     operation: 'division',
@@ -91,6 +92,7 @@ describe('KangurAssignmentsList', () => {
       'aria-valuenow',
       '40'
     );
+    expect(screen.getByText('Czas na wykonanie: 45 min')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Trenuj teraz' })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'

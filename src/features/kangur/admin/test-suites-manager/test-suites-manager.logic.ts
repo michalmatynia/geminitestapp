@@ -343,6 +343,85 @@ export function useTestSuitesManagerLogic(settingsStore: SettingsStoreValue) {
     [publishableQuestionIdsBySuiteId, questionStore, toast, updateSetting]
   );
 
+  const handlePublishReadyQueue = useCallback(async (): Promise<void> => {
+    const publishableQuestionIds = Array.from(publishableQuestionIdsBySuiteId.values()).flat();
+    if (publishableQuestionIds.length === 0) {
+      toast('No structurally ready questions are waiting to publish.', { variant: 'info' });
+      return;
+    }
+
+    try {
+      const { store: nextStore, publishedQuestionIds } = publishReadyQuestions(questionStore, {
+        questionIds: publishableQuestionIds,
+      });
+      await updateSetting.mutateAsync({
+        key: KANGUR_TEST_QUESTIONS_SETTING_KEY,
+        value: serializeSetting(nextStore),
+      });
+      toast(
+        `Published ${publishedQuestionIds.length} ready question${publishedQuestionIds.length === 1 ? '' : 's'} across the queue.`,
+        { variant: 'success' }
+      );
+    } catch (error) {
+      logClientError(error, {
+        context: { source: 'AdminKangurTestSuitesManagerPage', action: 'publishReadyQueue' },
+      });
+      toast('Failed to publish the ready queue.', { variant: 'error' });
+    }
+  }, [publishableQuestionIdsBySuiteId, questionStore, toast, updateSetting]);
+
+  const handleGoLiveReadySuites = useCallback(async (): Promise<void> => {
+    if (liveReadySuiteIds.length === 0) {
+      toast('No suites are ready to go live yet.', { variant: 'info' });
+      return;
+    }
+
+    try {
+      const { suites: nextSuites, publishedSuiteIds } = promoteKangurTestSuitesLive(suites, {
+        suiteIds: liveReadySuiteIds,
+      });
+      await updateSetting.mutateAsync({
+        key: KANGUR_TEST_SUITES_SETTING_KEY,
+        value: serializeSetting(canonicalizeKangurTestSuites(nextSuites)),
+      });
+      toast(
+        `Marked ${publishedSuiteIds.length} suite${publishedSuiteIds.length === 1 ? '' : 's'} live for learners.`,
+        { variant: 'success' }
+      );
+    } catch (error) {
+      logClientError(error, {
+        context: { source: 'AdminKangurTestSuitesManagerPage', action: 'goLiveReadySuites' },
+      });
+      toast('Failed to publish ready suites.', { variant: 'error' });
+    }
+  }, [liveReadySuiteIds, suites, toast, updateSetting]);
+
+  const handleTakeLiveSuitesOffline = useCallback(async (): Promise<void> => {
+    if (liveSuiteIds.length === 0) {
+      toast('No live suites are currently visible to learners.', { variant: 'info' });
+      return;
+    }
+
+    try {
+      const { suites: nextSuites, draftSuiteIds } = demoteKangurTestSuitesToDraft(suites, {
+        suiteIds: liveSuiteIds,
+      });
+      await updateSetting.mutateAsync({
+        key: KANGUR_TEST_SUITES_SETTING_KEY,
+        value: serializeSetting(canonicalizeKangurTestSuites(nextSuites)),
+      });
+      toast(
+        `Moved ${draftSuiteIds.length} live suite${draftSuiteIds.length === 1 ? '' : 's'} back to draft.`,
+        { variant: 'success' }
+      );
+    } catch (error) {
+      logClientError(error, {
+        context: { source: 'AdminKangurTestSuitesManagerPage', action: 'takeLiveSuitesOffline' },
+      });
+      toast('Failed to take live suites offline.', { variant: 'error' });
+    }
+  }, [liveSuiteIds, suites, toast, updateSetting]);
+
   const handleSaveGroup = async (): Promise<void> => {
     try {
       const nextGroup = createKangurTestGroup({
@@ -521,6 +600,9 @@ export function useTestSuitesManagerLogic(settingsStore: SettingsStoreValue) {
     handleGoLiveSuite,
     handleTakeSuiteOffline,
     handlePublishReadyForSuite,
+    handlePublishReadyQueue,
+    handleGoLiveReadySuites,
+    handleTakeLiveSuitesOffline,
     handleSaveGroup,
     handleDeleteGroup,
     handleMoveSuiteToGroup,

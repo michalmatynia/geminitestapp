@@ -184,8 +184,8 @@ export function AlertsGrid(): JSX.Element {
               variant='ghost'
               size='sm'
               className='mt-4 w-full justify-between gap-2'
-              aria-label={'Open link'}
-              title={'Open link'}>
+              aria-label={alert.investigation.label}
+              title={alert.investigation.label}>
               <Link href={alert.investigation.href}>
                 {alert.investigation.label}
                 <ArrowUpRightIcon className='size-3.5' />

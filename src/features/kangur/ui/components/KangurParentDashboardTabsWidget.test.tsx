@@ -28,7 +28,7 @@ import { KangurParentDashboardTabsWidget } from './KangurParentDashboardTabsWidg
 describe('KangurParentDashboardTabsWidget', () => {
   beforeEach(() => {
     runtimeState.value = {
-      activeTab: 'progress',
+      activeTab: 'scores',
       canAccessDashboard: true,
       setActiveTab: vi.fn<(tabId: string) => void>(),
     };
@@ -52,15 +52,15 @@ describe('KangurParentDashboardTabsWidget', () => {
 
     render(<KangurParentDashboardTabsWidget onBeforeTabChange={onBeforeTabChange} />);
 
-    const scoresTab = screen.getByRole('tab', { name: /wyniki/i });
-    const mouseDown = createEvent.mouseDown(scoresTab);
+    const progressTab = screen.getByRole('tab', { name: /postęp/i });
+    const mouseDown = createEvent.mouseDown(progressTab);
 
-    fireEvent(scoresTab, mouseDown);
-    fireEvent.click(scoresTab);
+    fireEvent(progressTab, mouseDown);
+    fireEvent.click(progressTab);
 
     expect(mouseDown.defaultPrevented).toBe(true);
-    expect(onBeforeTabChange).toHaveBeenCalledWith('scores');
-    expect(runtimeState.value.setActiveTab).toHaveBeenCalledWith('scores');
+    expect(onBeforeTabChange).toHaveBeenCalledWith('progress');
+    expect(runtimeState.value.setActiveTab).toHaveBeenCalledWith('progress');
   });
 
   it('calls the pre-switch hook only when the user picks a different tab', () => {
@@ -68,7 +68,7 @@ describe('KangurParentDashboardTabsWidget', () => {
 
     render(<KangurParentDashboardTabsWidget onBeforeTabChange={onBeforeTabChange} />);
 
-    fireEvent.click(screen.getByRole('tab', { name: /postęp/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /wyniki/i }));
     fireEvent.click(screen.getByRole('tab', { name: /zadania/i }));
 
     expect(onBeforeTabChange).toHaveBeenCalledTimes(1);
@@ -77,7 +77,7 @@ describe('KangurParentDashboardTabsWidget', () => {
 
   it('does not render for viewers without dashboard access', () => {
     runtimeState.value = {
-      activeTab: 'progress',
+      activeTab: 'scores',
       canAccessDashboard: false,
       setActiveTab: vi.fn<(tabId: string) => void>(),
     };

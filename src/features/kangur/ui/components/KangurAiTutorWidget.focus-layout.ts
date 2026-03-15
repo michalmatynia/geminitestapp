@@ -535,6 +535,10 @@ const getAnchorKindsForSurface = (
       return ['assignment', 'navigation', 'hero', 'screen'];
     }
 
+    if (contentId?.endsWith(':monitoring')) {
+      return ['assignment', 'navigation', 'hero', 'screen'];
+    }
+
     if (contentId?.endsWith(':ai-tutor')) {
       return ['screen', 'navigation', 'hero'];
     }

@@ -33,6 +33,7 @@ import {
   Lessons as LessonsPage,
   ParentDashboard as ParentDashboardPage,
   KangurParentDashboardAssignmentsWidget,
+  KangurParentDashboardAssignmentsMonitoringWidget,
   KangurParentDashboardHeroWidget,
   KangurParentDashboardLearnerManagementWidget,
   KangurParentDashboardProgressWidget,
@@ -122,6 +123,7 @@ const PARENT_DASHBOARD_RUNTIME_WIDGET_IDS = new Set([
   'parent-dashboard-progress',
   'parent-dashboard-scores',
   'parent-dashboard-assignments',
+  'parent-dashboard-monitoring',
 ]);
 
 export function KangurWidgetBlock(): React.ReactNode {
@@ -261,6 +263,12 @@ export function KangurWidgetBlock(): React.ReactNode {
     case 'parent-dashboard-assignments':
       return (
         <KangurParentDashboardAssignmentsWidget
+          displayMode={resolveParentDashboardDisplayMode(settings['displayMode'])}
+        />
+      );
+    case 'parent-dashboard-monitoring':
+      return (
+        <KangurParentDashboardAssignmentsMonitoringWidget
           displayMode={resolveParentDashboardDisplayMode(settings['displayMode'])}
         />
       );

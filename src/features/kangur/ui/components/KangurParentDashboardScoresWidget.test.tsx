@@ -14,6 +14,22 @@ const { runtimeState, useKangurPageContentEntryMock } = vi.hoisted(() => ({
       activeTab: 'scores',
       basePath: '/kangur',
       canAccessDashboard: true,
+      progress: {
+        totalXp: 0,
+        gamesPlayed: 0,
+        perfectGames: 0,
+        lessonsCompleted: 0,
+        clockPerfect: 0,
+        calendarPerfect: 0,
+        geometryPerfect: 0,
+        badges: [],
+        operationsPlayed: [],
+        totalCorrectAnswers: 0,
+        totalQuestionsAnswered: 0,
+        bestWinStreak: 0,
+        activityStats: {},
+        lessonMastery: {},
+      },
       scoreViewerEmail: 'parent@example.com',
       scoreViewerName: 'Ada',
     },
@@ -22,6 +38,8 @@ const { runtimeState, useKangurPageContentEntryMock } = vi.hoisted(() => ({
 }));
 
 const scoreHistoryMock = vi.hoisted(() => vi.fn());
+const progressOverviewMock = vi.hoisted(() => vi.fn());
+const getCurrentKangurDailyQuestMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () => ({
   shouldRenderKangurParentDashboardPanel: (displayMode: string, activeTab: string, targetTab: string) =>
@@ -31,6 +49,21 @@ vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () =
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
+}));
+
+vi.mock('@/features/kangur/ui/services/daily-quests', () => ({
+  getCurrentKangurDailyQuest: getCurrentKangurDailyQuestMock,
+}));
+
+vi.mock('@/features/kangur/ui/components/ProgressOverview', () => ({
+  default: (props: unknown) => {
+    progressOverviewMock(props);
+    return <div data-testid='progress-overview-stub' />;
+  },
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurBadgeTrackHighlights', () => ({
+  default: () => <div data-testid='badge-track-highlights-stub' />,
 }));
 
 vi.mock('@/features/kangur/ui/components/ScoreHistory', () => ({
@@ -52,9 +85,26 @@ describe('KangurParentDashboardScoresWidget', () => {
       activeTab: 'scores',
       basePath: '/kangur',
       canAccessDashboard: true,
+      progress: {
+        totalXp: 0,
+        gamesPlayed: 0,
+        perfectGames: 0,
+        lessonsCompleted: 0,
+        clockPerfect: 0,
+        calendarPerfect: 0,
+        geometryPerfect: 0,
+        badges: [],
+        operationsPlayed: [],
+        totalCorrectAnswers: 0,
+        totalQuestionsAnswered: 0,
+        bestWinStreak: 0,
+        activityStats: {},
+        lessonMastery: {},
+      },
       scoreViewerEmail: 'parent@example.com',
       scoreViewerName: 'Ada',
     };
+    getCurrentKangurDailyQuestMock.mockReturnValue(null);
     useKangurPageContentEntryMock.mockReturnValue({
       data: undefined,
       entry: null,
@@ -74,12 +124,20 @@ describe('KangurParentDashboardScoresWidget', () => {
     render(<KangurParentDashboardScoresWidget />);
 
     expect(screen.getByTestId('score-history-stub')).toBeInTheDocument();
+    expect(screen.getByTestId('progress-overview-stub')).toBeInTheDocument();
+    expect(getCurrentKangurDailyQuestMock).toHaveBeenCalledWith(runtimeState.value.progress);
     expect(scoreHistoryMock).toHaveBeenCalledWith(
       expect.objectContaining({
         basePath: '/kangur',
         createdBy: 'parent@example.com',
         learnerId: 'learner-1',
         playerName: 'Ada',
+      })
+    );
+    expect(progressOverviewMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        progress: runtimeState.value.progress,
+        dailyQuest: null,
       })
     );
   });
@@ -121,6 +179,7 @@ describe('KangurParentDashboardScoresWidget', () => {
 
     expect(screen.queryByTestId('score-history-stub')).toBeNull();
     expect(scoreHistoryMock).not.toHaveBeenCalled();
+    expect(progressOverviewMock).not.toHaveBeenCalled();
   });
 
   it('does not render when no active learner is selected', () => {
@@ -133,6 +192,7 @@ describe('KangurParentDashboardScoresWidget', () => {
 
     expect(screen.queryByTestId('score-history-stub')).toBeNull();
     expect(scoreHistoryMock).not.toHaveBeenCalled();
+    expect(progressOverviewMock).not.toHaveBeenCalled();
     expect(screen.queryByText('Wyniki ucznia')).toBeNull();
   });
 });

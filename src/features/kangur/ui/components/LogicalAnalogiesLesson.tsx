@@ -20,7 +20,7 @@ import {
   PartWholeAnimation,
   ShapeTransformAnimation,
 } from '@/features/kangur/ui/components/LogicalAnalogiesAnimations';
-import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
+import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 
 type SectionId = 'intro' | 'liczby_ksztalty' | 'relacje' | 'game_relacje' | 'podsumowanie';
 type SlideSectionId = Exclude<SectionId, 'game_relacje'>;
@@ -394,10 +394,18 @@ export const HUB_SECTIONS = [
   },
 ];
 
+const SECTION_LABELS: Partial<Record<SectionId, string>> = Object.fromEntries(
+  HUB_SECTIONS.map((section) => [section.id, section.title])
+);
+
 export default function LogicalAnalogiesLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
-  const { markSectionOpened, markSectionViewedCount, sectionProgress } =
-    useLessonHubProgress(SLIDES);
+  const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
+    useKangurLessonPanelProgress({
+      lessonKey: 'logical_analogies',
+      slideSections: SLIDES,
+      sectionLabels: SECTION_LABELS,
+    });
 
   if (activeSection === 'game_relacje') {
     const gameSection = HUB_SECTIONS.find((section) => section.id === activeSection) ?? null;
@@ -424,6 +432,9 @@ export default function LogicalAnalogiesLesson(): React.JSX.Element {
         onBack={() => setActiveSection(null)}
         onProgressChange={(viewedCount) =>
           markSectionViewedCount(activeSection as SlideSectionId, viewedCount)
+        }
+        onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
+          recordPanelTime(activeSection as SlideSectionId, panelIndex, seconds, panelTitle)
         }
         dotActiveClass='bg-pink-500'
         dotDoneClass='bg-pink-300'

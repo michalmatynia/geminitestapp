@@ -19,7 +19,7 @@ import {
   KangurEquationDisplay,
   KangurIconBadge,
 } from '@/features/kangur/ui/design/primitives';
-import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
+import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 
 type SectionId = 'podstawy' | 'przekroczenie' | 'dwucyfrowe' | 'zapamietaj' | 'game';
 
@@ -909,10 +909,18 @@ export const HUB_SECTIONS = [
   },
 ];
 
+const SECTION_LABELS: Partial<Record<SectionId, string>> = Object.fromEntries(
+  HUB_SECTIONS.map((section) => [section.id, section.title])
+);
+
 export default function SubtractingLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
-  const { markSectionOpened, markSectionViewedCount, sectionProgress } =
-    useLessonHubProgress(SLIDES);
+  const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
+    useKangurLessonPanelProgress({
+      lessonKey: 'subtracting',
+      slideSections: SLIDES,
+      sectionLabels: SECTION_LABELS,
+    });
 
   if (activeSection === 'game') {
     return (
@@ -941,6 +949,9 @@ export default function SubtractingLesson(): React.JSX.Element {
         sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
         onBack={() => setActiveSection(null)}
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
+        onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
+          recordPanelTime(activeSection, panelIndex, seconds, panelTitle)
+        }
         dotActiveClass='bg-red-400'
         dotDoneClass='bg-red-200'
         gradientClass='kangur-gradient-accent-rose'

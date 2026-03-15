@@ -24,7 +24,7 @@ import {
   RuleChecklistAnimation,
   RuleCheckAnimation,
 } from '@/features/kangur/ui/components/LogicalPatternsAnimations';
-import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
+import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 
 type SectionId = 'intro' | 'ciagi_arytm' | 'ciagi_geom' | 'strategie' | 'game_warsztat';
 type SlideSectionId = Exclude<SectionId, 'game_warsztat'>;
@@ -429,10 +429,18 @@ export const HUB_SECTIONS = [
   },
 ];
 
+const SECTION_LABELS: Partial<Record<SectionId, string>> = Object.fromEntries(
+  HUB_SECTIONS.map((section) => [section.id, section.title])
+);
+
 export default function LogicalPatternsLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
-  const { markSectionOpened, markSectionViewedCount, sectionProgress } =
-    useLessonHubProgress(SLIDES);
+  const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
+    useKangurLessonPanelProgress({
+      lessonKey: 'logical_patterns',
+      slideSections: SLIDES,
+      sectionLabels: SECTION_LABELS,
+    });
 
   if (activeSection === 'game_warsztat') {
     const gameSection = HUB_SECTIONS.find((section) => section.id === activeSection) ?? null;
@@ -459,6 +467,9 @@ export default function LogicalPatternsLesson(): React.JSX.Element {
         onBack={() => setActiveSection(null)}
         onProgressChange={(viewedCount) =>
           markSectionViewedCount(activeSection as SlideSectionId, viewedCount)
+        }
+        onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
+          recordPanelTime(activeSection as SlideSectionId, panelIndex, seconds, panelTitle)
         }
         dotActiveClass='bg-violet-500'
         dotDoneClass='bg-violet-300'

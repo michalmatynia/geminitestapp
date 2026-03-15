@@ -67,6 +67,7 @@ export const mongoKangurAssignmentRepository: KangurAssignmentRepository = {
       description: input.description,
       priority: input.priority,
       archived: input.archived ?? false,
+      timeLimitMinutes: input.timeLimitMinutes ?? null,
       target: input.target,
       assignedByName: input.assignedByName ?? null,
       assignedByEmail: input.assignedByEmail ?? null,
@@ -151,6 +152,9 @@ export const mongoKangurAssignmentRepository: KangurAssignmentRepository = {
       ...parsed,
       ...(input.archived !== undefined ? { archived: input.archived } : {}),
       ...(input.priority ? { priority: input.priority } : {}),
+      ...(input.timeLimitMinutes !== undefined
+        ? { timeLimitMinutes: input.timeLimitMinutes }
+        : {}),
       updatedAt: new Date().toISOString(),
     };
 

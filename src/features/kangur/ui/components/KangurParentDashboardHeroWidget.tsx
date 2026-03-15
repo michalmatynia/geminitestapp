@@ -17,8 +17,10 @@ import { useKangurParentDashboardRuntime } from '@/features/kangur/ui/context/Ka
 import {
   KangurButton,
   KangurEmptyState,
+  KangurSummaryPanel,
   KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurLearnerActivityStatus } from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 
@@ -40,7 +42,35 @@ export function KangurParentDashboardHeroWidget({
     canManageLearners,
     isAuthenticated,
     logout,
+    setCreateLearnerModalOpen,
+    viewerName,
+    viewerRoleLabel,
   } = useKangurParentDashboardRuntime();
+  const activeLearnerId = activeLearner?.id ?? null;
+  const hasActiveLearner = Boolean(activeLearnerId);
+  const { status: learnerActivityStatus, isLoading: isActivityLoading } =
+    useKangurLearnerActivityStatus({
+      enabled: canManageLearners && hasActiveLearner,
+      learnerId: activeLearnerId,
+    });
+  const learnerActivitySnapshot = learnerActivityStatus?.snapshot ?? null;
+  const isLearnerOnline = Boolean(learnerActivityStatus?.isOnline);
+  const activityLabel = isActivityLoading
+    ? 'Sprawdzanie'
+    : isLearnerOnline
+      ? 'Uczeń online'
+      : 'Uczeń offline';
+  const activityDescription = isActivityLoading
+    ? 'Sprawdzamy bieżącą aktywność ucznia.'
+    : isLearnerOnline
+      ? learnerActivitySnapshot
+        ? `Aktualnie: ${learnerActivitySnapshot.title}.`
+        : 'Uczeń jest aktywny w aplikacji.'
+      : learnerActivitySnapshot
+        ? `Ostatnio: ${learnerActivitySnapshot.title}.`
+        : 'Brak bieżącej aktywności w aplikacji.';
+  const activityHref = isLearnerOnline ? learnerActivitySnapshot?.href ?? null : null;
+  const shouldShowActivityLink = Boolean(activityHref);
   const { openLoginModal } = useKangurLoginModal();
   const { entry: guestHeroContent } = useKangurPageContentEntry('parent-dashboard-guest-hero');
   const { entry: dashboardHeroContent } = useKangurPageContentEntry('parent-dashboard-hero');
@@ -57,6 +87,9 @@ export function KangurParentDashboardHeroWidget({
       pageKey: 'LearnerProfile',
       sourceId: 'parent-dashboard-hero:back-profile',
     });
+  };
+  const handleCreateLearner = (): void => {
+    setCreateLearnerModalOpen(true);
   };
 
   if (!isAuthenticated) {
@@ -138,8 +171,7 @@ export function KangurParentDashboardHeroWidget({
     );
   }
 
-  const activeLearnerId = activeLearner?.id ?? null;
-  const hasActiveLearner = Boolean(activeLearnerId);
+  const shouldShowCreateLearner = showLearnerManagement && canManageLearners;
 
   return (
     <KangurPageIntroCard
@@ -149,12 +181,29 @@ export function KangurParentDashboardHeroWidget({
         <>
           Wybrany uczeń:{' '}
           <span className='font-semibold [color:var(--kangur-page-text)]'>
-            {activeLearner?.displayName ?? 'Brak profilu'}
+            {activeLearner?.displayName ?? 'Brak profilu ucznia'}
           </span>
           .
+          <span className='mt-1 block text-xs [color:var(--kangur-page-muted-text)]'>
+            {viewerRoleLabel ?? 'Rodzic'}:{' '}
+            <span className='font-semibold [color:var(--kangur-page-text)]'>{viewerName}</span>
+          </span>
         </>
       }
       headingAs='h1'
+      headingAction={
+        shouldShowCreateLearner ? (
+          <KangurButton
+            className='w-full sm:w-auto'
+            onClick={handleCreateLearner}
+            size='sm'
+            variant='surface'
+            data-doc-id='parent_open_create_learner'
+          >
+            Dodaj ucznia
+          </KangurButton>
+        ) : null
+      }
       showBackButton={false}
       onBack={handleGoToProfile}
       testId='kangur-parent-dashboard-hero'
@@ -175,6 +224,30 @@ export function KangurParentDashboardHeroWidget({
             </div>
           ) : null}
         </div>
+      ) : null}
+
+      {hasActiveLearner ? (
+        <KangurSummaryPanel
+          accent={isLearnerOnline ? 'emerald' : 'slate'}
+          className='mt-4 text-left'
+          data-testid='kangur-parent-dashboard-learner-activity'
+          description={activityDescription}
+          label={activityLabel}
+          padding='sm'
+          tone='accent'
+        >
+          {shouldShowActivityLink ? (
+            <KangurButton asChild className='w-full sm:w-auto' size='sm' variant='surface'>
+              <Link
+                href={activityHref ?? createPageUrl('Game', basePath)}
+                transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
+                transitionSourceId='parent-dashboard-hero:learner-activity'
+              >
+                Otwórz aktywność
+              </Link>
+            </KangurButton>
+          ) : null}
+        </KangurSummaryPanel>
       ) : null}
 
       {showActions ? (

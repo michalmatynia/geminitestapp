@@ -8,7 +8,7 @@ import { GenericMapperExternalCell } from './GenericMapperExternalCell';
 import { GenericMapperHeaderActions } from './GenericMapperHeaderActions';
 import { GenericMapperStats } from './GenericMapperStats';
 import { usePendingMappings, type PendingExternalMappingsState } from './usePendingMappings';
-import { EmptyState } from '../../empty-state';
+import { CompactEmptyState } from '../../empty-state';
 import { useToast } from '../../toast';
 import { StandardDataTablePanel } from '../StandardDataTablePanel';
 
@@ -255,12 +255,11 @@ export function GenericMapper<TInternal, TExternal, TMapping>({
         maxHeight='60vh'
         stickyHeader
         emptyState={
-          <EmptyState
+          <CompactEmptyState
             title={`No ${title.toLowerCase()} found`}
             description={`Try fetching ${title.toLowerCase()} from the marketplace.`}
-            variant='compact'
             className='py-8'
-          />
+           />
         }
         getRowClassName={(row: Row<TInternal>) => {
           const hasPendingChange =

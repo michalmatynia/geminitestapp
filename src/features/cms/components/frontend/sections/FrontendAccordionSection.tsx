@@ -3,7 +3,7 @@
 import React, { useId, useState } from 'react';
 
 import type { BlockInstance } from '@/features/cms/types/page-builder';
-import { EmptyState } from '@/shared/ui';
+import { CompactEmptyState } from '@/shared/ui';
 
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useSectionBlockData } from './SectionBlockContext';
@@ -43,12 +43,11 @@ export function FrontendAccordionSection(): React.ReactNode {
     return (
       <section style={sectionStyles}>
         <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
-          <EmptyState
+          <CompactEmptyState
             title='No accordion items'
             description='Add Heading and Text blocks to create accordion items.'
-            variant='compact'
             className='bg-card/20 py-8'
-          />
+           />
         </div>
       </section>
     );

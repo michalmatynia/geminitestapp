@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { EmptyState } from '@/shared/ui';
+import { CompactEmptyState } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import {
@@ -38,12 +38,11 @@ export function CaseResolverLinkedPreviewModal(): React.JSX.Element {
               </div>
             ))
           ) : (
-            <EmptyState
+            <CompactEmptyState
               title='No linked segments yet'
               description='Compilation starts from the selected node. If no node is selected, it starts from graph roots.'
-              variant='compact'
               className='py-6'
-            />
+             />
           )}
         </div>
 

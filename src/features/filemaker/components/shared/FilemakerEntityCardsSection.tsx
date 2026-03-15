@@ -1,7 +1,7 @@
 import { Edit2, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 
-import { Button, Card, EmptyState, FormSection } from '@/shared/ui';
+import { Button, Card, CompactEmptyState, FormSection } from '@/shared/ui';
 
 export interface FilemakerEntityCardsSectionProps<TItem extends { id: string }> {
   title: string;
@@ -47,12 +47,11 @@ export function FilemakerEntityCardsSection<TItem extends { id: string }>(
     >
       <div className='space-y-2'>
         {items.length === 0 ? (
-          <EmptyState
+          <CompactEmptyState
             title={emptyTitle}
             description={emptyDescription}
-            variant='compact'
             className='border-border/60 bg-card/20 py-8 border-dashed'
-          />
+           />
         ) : (
           items.map((item) => (
             <Card

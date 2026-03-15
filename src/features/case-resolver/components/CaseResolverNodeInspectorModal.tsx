@@ -19,7 +19,7 @@ import {
   Input,
   Label,
   SelectSimple,
-  EmptyState,
+  CompactEmptyState,
   Textarea,
   CopyButton,
   ValidatorFormatterToggle,
@@ -437,21 +437,19 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                 </div>
               </>
             ) : (
-              <EmptyState
+              <CompactEmptyState
                 title='Prompt Metadata'
                 description='Select a Prompt node to configure metadata.'
-                variant='compact'
                 className='py-4'
-              />
+               />
             )}
           </>
         ) : (
-          <EmptyState
+          <CompactEmptyState
             title='No Node Selected'
             description='Select a node on the map to edit it.'
-            variant='compact'
             className='py-8'
-          />
+           />
         )}
 
         {selectedEdge ? (
@@ -486,12 +484,11 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
             </FormField>
           </div>
         ) : (
-          <EmptyState
+          <CompactEmptyState
             title='No Connection Selected'
             description='Select a connection to choose how linked node text joins.'
-            variant='compact'
             className='py-4'
-          />
+           />
         )}
       </div>
     </DetailModal>

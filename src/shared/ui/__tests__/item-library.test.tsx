@@ -63,6 +63,21 @@ vi.mock('../empty-state', () => ({
       {action}
     </div>
   ),
+  CompactEmptyState: ({
+    title,
+    description,
+    action,
+  }: {
+    title: string;
+    description: string;
+    action?: React.ReactNode;
+  }) => (
+    <div>
+      <p>{title}</p>
+      <p>{description}</p>
+      {action}
+    </div>
+  ),
 }));
 
 vi.mock('../FormModal', () => ({

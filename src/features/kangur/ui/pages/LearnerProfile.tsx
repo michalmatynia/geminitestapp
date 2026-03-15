@@ -68,7 +68,7 @@ function LearnerProfileContent(): React.JSX.Element {
   const { user, logout } = useKangurAuth();
   const { openLoginModal } = useKangurLoginModal();
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
-  const { isLoadingScores, user: profileUser } = useKangurLearnerProfileRuntime();
+  const { isLoadingScores, progress, user: profileUser } = useKangurLearnerProfileRuntime();
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('profile');
   const heroAnchorRef = useRef<HTMLDivElement | null>(null);
   const questSummaryAnchorRef = useRef<HTMLDivElement | null>(null);
@@ -86,6 +86,13 @@ function LearnerProfileContent(): React.JSX.Element {
   const profileTitle = getKangurLearnerProfileDisplayName(profileUser);
   const isOverviewTab = activeTab === 'overview';
   const isMoodTab = activeTab === 'ai-mood';
+  const hasMeaningfulProgress =
+    progress.totalXp > 0 ||
+    progress.gamesPlayed > 0 ||
+    progress.lessonsCompleted > 0 ||
+    (progress.dailyQuestsCompleted ?? 0) > 0;
+  const shouldRenderHero = !profileUser || hasMeaningfulProgress;
+  const containerStyle = shouldRenderHero ? undefined : { paddingTop: 0 };
 
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const focusTabAt = useCallback((index: number): void => {
@@ -303,11 +310,14 @@ function LearnerProfileContent(): React.JSX.Element {
         data-kangur-route-main='true'
         id='kangur-learner-profile-main'
         className='flex flex-col gap-6'
+        style={containerStyle}
       >
         <h2 className='sr-only'>Statystyki ucznia</h2>
-        <div ref={heroAnchorRef}>
-          <KangurLearnerProfileHeroWidget />
-        </div>
+        {shouldRenderHero ? (
+          <div ref={heroAnchorRef}>
+            <KangurLearnerProfileHeroWidget />
+          </div>
+        ) : null}
         <div
           className={cn(
             KANGUR_SEGMENTED_CONTROL_CLASSNAME,

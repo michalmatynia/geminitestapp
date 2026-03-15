@@ -3,7 +3,7 @@
  */
 
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import { buildKangurAssignmentListItems } from '@/features/kangur/ui/services/delegated-assignments';
@@ -64,6 +64,35 @@ const compactAssignment: KangurAssignmentSnapshot = {
     attemptsRequired: 1,
     lastActivityAt: null,
     completedAt: null,
+  },
+};
+
+const completedAssignment: KangurAssignmentSnapshot = {
+  id: 'assignment-completed',
+  learnerKey: 'jan@example.com',
+  title: 'Praktyka: Dodawanie',
+  description: 'Ukończ jedną sesję dodawania.',
+  priority: 'low',
+  archived: false,
+  timeLimitMinutes: null,
+  target: {
+    type: 'practice',
+    operation: 'addition',
+    requiredAttempts: 1,
+    minAccuracyPercent: 70,
+  },
+  assignedByName: 'Rodzic',
+  assignedByEmail: 'rodzic@example.com',
+  createdAt: '2026-03-06T08:00:00.000Z',
+  updatedAt: '2026-03-06T08:00:00.000Z',
+  progress: {
+    status: 'completed',
+    percent: 100,
+    summary: 'Sesje: 1/1',
+    attemptsCompleted: 1,
+    attemptsRequired: 1,
+    lastActivityAt: '2026-03-06T09:00:00.000Z',
+    completedAt: '2026-03-06T09:00:00.000Z',
   },
 };
 
@@ -132,5 +161,21 @@ describe('KangurAssignmentsList', () => {
       'kangur-cta-pill',
       'primary-cta'
     );
+  });
+
+  it('shows reassign action only for completed assignments', () => {
+    const onReassign = vi.fn();
+
+    render(
+      <KangurAssignmentsList
+        items={buildKangurAssignmentListItems('/kangur', [completedAssignment])}
+        emptyLabel='Brak'
+        onArchive={() => undefined}
+        onReassign={onReassign}
+        title='Ukończone zadania'
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Przypisz ponownie' })).toBeInTheDocument();
   });
 });

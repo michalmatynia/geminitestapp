@@ -9,6 +9,16 @@ import { KangurButton } from '@/features/kangur/ui/design/primitives';
 export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
   const { user, progress } = useKangurLearnerProfileRuntime();
   const { openLoginModal } = useKangurLoginModal();
+  const hasMeaningfulProgress =
+    progress.totalXp > 0 ||
+    progress.gamesPlayed > 0 ||
+    progress.lessonsCompleted > 0 ||
+    (progress.dailyQuestsCompleted ?? 0) > 0;
+  const shouldRender = !user || hasMeaningfulProgress;
+
+  if (!shouldRender) {
+    return null;
+  }
 
   return (
     <KangurPageIntroCard

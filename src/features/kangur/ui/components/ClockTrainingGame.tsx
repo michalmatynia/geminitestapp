@@ -529,3 +529,21 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
     </div>
   );
 }
+
+export {
+  angleToMinute,
+  applyHourAngleToCycleMinutes,
+  applyMinuteStepToCycleMinutes,
+  applyMinuteValueToCycleMinutes,
+  buildClockCorrectFeedback,
+  buildClockTaskPrompt,
+  buildClockTimeoutFeedback,
+  buildClockWrongFeedback,
+  cycleMinutesToDisplayHour,
+  cycleMinutesToDisplayMinutes,
+  cycleMinutesToHourAngle,
+  getClockDistanceInMinutes,
+  getClockTrainingSummaryMessage,
+  scheduleRetryTask,
+  taskToKey,
+} from './clock-training-utils';

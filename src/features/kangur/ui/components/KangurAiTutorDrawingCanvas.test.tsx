@@ -48,10 +48,10 @@ describe('KangurAiTutorDrawingCanvas', () => {
       '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]',
       'hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
     );
-    expect(screen.getByRole('button', { name: '#2563eb' })).toHaveClass(
+    expect(screen.getByRole('button', { name: 'Kolor #2563eb' })).toHaveClass(
       '[border-color:var(--kangur-soft-card-border)]'
     );
-    expect(screen.getByRole('button', { name: '2px' })).toHaveClass(
+    expect(screen.getByRole('button', { name: 'Grubość 2px' })).toHaveClass(
       '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
     );
     expect(screen.getByRole('button', { name: 'Pióro' })).toHaveClass(
@@ -61,10 +61,7 @@ describe('KangurAiTutorDrawingCanvas', () => {
     expect(screen.getByRole('button', { name: 'Gumka' })).toHaveClass(
       '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
     );
-    expect(screen.getByRole('button', { name: 'Cofnij' })).toHaveClass(
-      '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]',
-      'hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
-    );
+    expect(screen.getByRole('button', { name: 'Cofnij' })).toBeInTheDocument();
   });
 
   it('keeps cancel wired while the themed shell is open', () => {

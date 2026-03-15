@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import type { KangurAiTutorContextValue } from '@/features/kangur/ui/context/KangurAiTutorRuntime.shared';
 import type { KangurAuthContextValue } from '@/features/kangur/ui/context/KangurAuthContext';
@@ -81,6 +81,8 @@ export function useKangurAiTutorWidgetCoordinator({
     setHighlightedText,
     sessionContext,
   } = tutorRuntime;
+  const selectionExplainRequest = tutorRuntime.selectionExplainRequest ?? null;
+  const selectionExplainRequestRef = useRef<number | null>(null);
 
   const {
     activateSelectionGlow,
@@ -385,6 +387,20 @@ export function useKangurAiTutorWidgetCoordinator({
     tutorContent,
     viewportHeight: viewport.height,
   });
+  const { startGuidedSelectionExplanation } = guidedFlow;
+
+  useEffect(() => {
+    if (!selectionExplainRequest) {
+      return;
+    }
+
+    if (selectionExplainRequestRef.current === selectionExplainRequest.id) {
+      return;
+    }
+
+    selectionExplainRequestRef.current = selectionExplainRequest.id;
+    startGuidedSelectionExplanation(selectionExplainRequest.selectedText);
+  }, [selectionExplainRequest, startGuidedSelectionExplanation]);
 
   const homeOnboardingFlow = useKangurAiTutorHomeOnboardingFlow({
     canStartHomeOnboardingManually,

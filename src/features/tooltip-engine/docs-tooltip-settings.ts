@@ -1,1 +1,5 @@
-export { readDocsTooltipsEnabled, useDocsTooltipsSetting } from '@/shared/lib/documentation';
+export {
+  createDocsTooltipsState,
+  readDocsTooltipsEnabled,
+  useDocsTooltipsSetting,
+} from '@/shared/lib/documentation';

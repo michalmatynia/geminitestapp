@@ -30,9 +30,10 @@ import {
   buildRecommendedKangurAssignmentCatalog,
   filterKangurAssignmentCatalog,
 } from '@/features/kangur/ui/services/delegated-assignments';
+import { buildKangurAssignmentDedupeKey } from '@/features/kangur/services/kangur-assignments';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
-type KangurAssignmentManagerView = 'full' | 'catalog' | 'tracking';
+type KangurAssignmentManagerView = 'full' | 'catalog' | 'tracking' | 'metrics';
 
 type KangurAssignmentManagerProps = {
   basePath: string;
@@ -193,12 +194,19 @@ export function KangurAssignmentManager({
   const [timeLimitModalAssignmentId, setTimeLimitModalAssignmentId] = useState<string | null>(null);
   const [timeLimitDraft, setTimeLimitDraft] = useState('');
   const [isSavingTimeLimit, setIsSavingTimeLimit] = useState(false);
-  const { assignments, isLoading, error, createAssignment, updateAssignment } = useKangurAssignments({
-      enabled: true,
-      query: {
-        includeArchived: false,
-      },
-    });
+  const {
+    assignments,
+    isLoading,
+    error,
+    createAssignment,
+    updateAssignment,
+    reassignAssignment,
+  } = useKangurAssignments({
+    enabled: true,
+    query: {
+      includeArchived: false,
+    },
+  });
   const timeLimitAssignment =
     assignments.find((assignment) => assignment.id === timeLimitModalAssignmentId) ?? null;
   const isTimeLimitModalOpen = Boolean(timeLimitModalAssignmentId);
@@ -218,6 +226,13 @@ export function KangurAssignmentManager({
     () => filterKangurAssignmentCatalog(catalog, searchTerm, activeFilter),
     [activeFilter, catalog, searchTerm]
   );
+  const assignedTargetKeys = useMemo(() => {
+    const keys = new Set<string>();
+    assignments
+      .filter((assignment) => !assignment.archived)
+      .forEach((assignment) => keys.add(buildKangurAssignmentDedupeKey(assignment.target)));
+    return keys;
+  }, [assignments]);
   const activeAssignments = useMemo(
     () =>
       assignments.filter(
@@ -243,26 +258,10 @@ export function KangurAssignmentManager({
   const trackerSummary = useMemo(() => buildTrackerSummary(assignments), [assignments]);
   const recommendedCatalog = useMemo(
     () =>
-      suggestedCatalog.filter((item) => {
-        const lessonTarget =
-          item.createInput.target.type === 'lesson'
-            ? item.createInput.target.lessonComponentId
-            : null;
-
-        return !activeAssignments.some((assignment) => {
-          if (item.createInput.target.type === 'lesson' && assignment.target.type === 'lesson') {
-            return assignment.target.lessonComponentId === lessonTarget;
-          }
-          if (
-            item.createInput.target.type === 'practice' &&
-            assignment.target.type === 'practice'
-          ) {
-            return assignment.target.operation === item.createInput.target.operation;
-          }
-          return false;
-        });
-      }),
-    [activeAssignments, suggestedCatalog]
+      suggestedCatalog.filter(
+        (item) => !assignedTargetKeys.has(buildKangurAssignmentDedupeKey(item.createInput.target))
+      ),
+    [assignedTargetKeys, suggestedCatalog]
   );
   const timeLimitParsed = parseTimeLimitInput(timeLimitDraft);
   const currentTimeLimit = timeLimitAssignment?.timeLimitMinutes ?? null;
@@ -323,6 +322,25 @@ export function KangurAssignmentManager({
     }
   };
 
+  const handleReassign = async (assignmentId: string): Promise<void> => {
+    const assignment = assignments.find((entry) => entry.id === assignmentId);
+    setPendingActionId(assignmentId);
+    setFeedback(null);
+
+    try {
+      await reassignAssignment(assignmentId);
+      setFeedback(
+        assignment?.title
+          ? `Przypisano ponownie: ${assignment.title}.`
+          : 'Zadanie przypisano ponownie.'
+      );
+    } catch (error: unknown) {
+      setFeedback(resolveActionErrorMessage(error, 'Nie udało się przypisać ponownie zadania.'));
+    } finally {
+      setPendingActionId(null);
+    }
+  };
+
   const handleOpenTimeLimitModal = (assignmentId: string): void => {
     setTimeLimitModalAssignmentId(assignmentId);
   };
@@ -367,7 +385,7 @@ export function KangurAssignmentManager({
   };
 
   const shouldShowCatalog = view === 'full' || view === 'catalog';
-  const shouldShowTracking = view === 'full' || view === 'tracking';
+  const shouldShowTracking = view === 'full' || view === 'tracking' || view === 'metrics';
   const shouldShowLists = view === 'full' || view === 'tracking';
 
   return (
@@ -512,40 +530,53 @@ export function KangurAssignmentManager({
               label='Sugestie od StudiQ'
             >
               <div className='mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2'>
-                {recommendedCatalog.map((item) => (
-                  <KangurAssignmentManagerItemCard
-                    key={item.id}
-                    testId={`assignment-manager-recommended-card-${item.id}`}
-                  >
-                    <KangurAssignmentManagerCardHeader>
-                      <div className='min-w-0'>
-                        <KangurCardTitle className='text-slate-900'>{item.title}</KangurCardTitle>
-                        <KangurCardDescription className='mt-1 text-slate-600' relaxed size='sm'>
-                          {item.description}
-                        </KangurCardDescription>
-                      </div>
-                      <KangurAssignmentPriorityChip
-                        labelStyle='compact'
-                        priority={item.createInput.priority}
-                      />
-                    </KangurAssignmentManagerCardHeader>
-                    <KangurAssignmentManagerCardFooter>
-                      <KangurStatusChip accent='slate' className='w-fit' labelStyle='compact'>
-                        {item.badge}
-                      </KangurStatusChip>
-                      <KangurButton
-                        className='w-full sm:w-auto'
-                        type='button'
-                        onClick={() => void handleAssign(item.id)}
-                        disabled={pendingActionId === item.id}
-                        size='sm'
-                        variant='surface'
-                      >
-                        {pendingActionId === item.id ? 'Przypisywanie...' : 'Przypisz sugestię'}
-                      </KangurButton>
-                    </KangurAssignmentManagerCardFooter>
-                  </KangurAssignmentManagerItemCard>
-                ))}
+                {recommendedCatalog.map((item) => {
+                  const isAssigned = assignedTargetKeys.has(
+                    buildKangurAssignmentDedupeKey(item.createInput.target)
+                  );
+                  const isPending = pendingActionId === item.id;
+
+                  return (
+                    <KangurAssignmentManagerItemCard
+                      key={item.id}
+                      testId={`assignment-manager-recommended-card-${item.id}`}
+                    >
+                      <KangurAssignmentManagerCardHeader>
+                        <div className='min-w-0'>
+                          <KangurCardTitle className='text-slate-900'>
+                            {item.title}
+                          </KangurCardTitle>
+                          <KangurCardDescription className='mt-1 text-slate-600' relaxed size='sm'>
+                            {item.description}
+                          </KangurCardDescription>
+                        </div>
+                        <KangurAssignmentPriorityChip
+                          labelStyle='compact'
+                          priority={item.createInput.priority}
+                        />
+                      </KangurAssignmentManagerCardHeader>
+                      <KangurAssignmentManagerCardFooter>
+                        <KangurStatusChip accent='slate' className='w-fit' labelStyle='compact'>
+                          {item.badge}
+                        </KangurStatusChip>
+                        <KangurButton
+                          className='w-full sm:w-auto'
+                          type='button'
+                          onClick={() => void handleAssign(item.id)}
+                          disabled={isAssigned || isPending}
+                          size='sm'
+                          variant='surface'
+                        >
+                          {isAssigned
+                            ? 'Przypisane'
+                            : isPending
+                              ? 'Przypisywanie...'
+                              : 'Przypisz sugestię'}
+                        </KangurButton>
+                      </KangurAssignmentManagerCardFooter>
+                    </KangurAssignmentManagerItemCard>
+                  );
+                })}
               </div>
             </KangurSummaryPanel>
           ) : null}
@@ -612,46 +643,53 @@ export function KangurAssignmentManager({
           ) : null}
 
           <div className='mt-5 grid grid-cols-1 gap-3 xl:grid-cols-2'>
-            {filteredCatalog.map((item) => (
-              <KangurAssignmentManagerItemCard
-                key={item.id}
-                testId={`assignment-manager-catalog-card-${item.id}`}
-              >
-                <KangurAssignmentManagerCardHeader>
-                  <div>
-                    <KangurCardTitle className='text-slate-900'>{item.title}</KangurCardTitle>
-                    <KangurCardDescription className='mt-1 text-slate-600' relaxed size='sm'>
-                      {item.description}
-                    </KangurCardDescription>
-                  </div>
-                  <KangurStatusChip
-                    accent='slate'
-                    className='self-start sm:self-auto'
-                    labelStyle='compact'
-                  >
-                    {item.badge}
-                  </KangurStatusChip>
-                </KangurAssignmentManagerCardHeader>
+            {filteredCatalog.map((item) => {
+              const isAssigned = assignedTargetKeys.has(
+                buildKangurAssignmentDedupeKey(item.createInput.target)
+              );
+              const isPending = pendingActionId === item.id;
 
-                <KangurAssignmentManagerCardFooter>
-                  <KangurAssignmentPriorityChip
-                    className='self-start'
-                    labelStyle='compact'
-                    priority={item.createInput.priority}
-                  />
-                  <KangurButton
-                    type='button'
-                    onClick={() => void handleAssign(item.id)}
-                    disabled={pendingActionId === item.id}
-                    size='sm'
-                    variant='surface'
-                    className='w-full sm:w-auto'
-                  >
-                    {pendingActionId === item.id ? 'Przypisywanie...' : 'Przypisz'}
-                  </KangurButton>
-                </KangurAssignmentManagerCardFooter>
-              </KangurAssignmentManagerItemCard>
-            ))}
+              return (
+                <KangurAssignmentManagerItemCard
+                  key={item.id}
+                  testId={`assignment-manager-catalog-card-${item.id}`}
+                >
+                  <KangurAssignmentManagerCardHeader>
+                    <div>
+                      <KangurCardTitle className='text-slate-900'>{item.title}</KangurCardTitle>
+                      <KangurCardDescription className='mt-1 text-slate-600' relaxed size='sm'>
+                        {item.description}
+                      </KangurCardDescription>
+                    </div>
+                    <KangurStatusChip
+                      accent='slate'
+                      className='self-start sm:self-auto'
+                      labelStyle='compact'
+                    >
+                      {item.badge}
+                    </KangurStatusChip>
+                  </KangurAssignmentManagerCardHeader>
+
+                  <KangurAssignmentManagerCardFooter>
+                    <KangurAssignmentPriorityChip
+                      className='self-start'
+                      labelStyle='compact'
+                      priority={item.createInput.priority}
+                    />
+                    <KangurButton
+                      type='button'
+                      onClick={() => void handleAssign(item.id)}
+                      disabled={isAssigned || isPending}
+                      size='sm'
+                      variant='surface'
+                      className='w-full sm:w-auto'
+                    >
+                      {isAssigned ? 'Przypisane' : isPending ? 'Przypisywanie...' : 'Przypisz'}
+                    </KangurButton>
+                  </KangurAssignmentManagerCardFooter>
+                </KangurAssignmentManagerItemCard>
+              );
+            })}
           </div>
 
           {!isLoading && filteredCatalog.length === 0 ? (
@@ -749,6 +787,8 @@ export function KangurAssignmentManager({
             emptyLabel='Uczeń nie zakończył jeszcze żadnych przypisanych zadań.'
             onArchive={(assignmentId) => void handleArchive(assignmentId)}
             onTimeLimitClick={handleOpenTimeLimitModal}
+            onReassign={(assignmentId) => void handleReassign(assignmentId)}
+            reassigningId={pendingActionId}
           />
         </>
       ) : null}

@@ -2,6 +2,7 @@ export * from '@/shared/contracts/documentation';
 export * from './registry';
 export * from './tooltips';
 export * from './docs-tooltip-settings';
+export * from './create-docs-tooltip-enhancer';
 export * from './DocumentationTooltip';
 export * from './DocumentationTooltipEnhancer';
 export * from './catalogs';

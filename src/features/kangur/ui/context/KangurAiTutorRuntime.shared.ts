@@ -148,6 +148,8 @@ export type KangurAiTutorContextValue = {
     targetSearch?: string | null;
   }) => void;
   setHighlightedText: (text: string | null) => void;
+  requestSelectionExplain?: (selectedText: string) => void;
+  selectionExplainRequest?: { id: number; selectedText: string } | null;
 };
 
 export type KangurAiTutorSessionSyncProps = {
@@ -329,6 +331,11 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
   const [learnerMoodById, setLearnerMoodById] = useState<Record<string, KangurAiTutorLearnerMood>>(
     {}
   );
+  const selectionExplainRequestIdRef = useRef(0);
+  const [selectionExplainRequest, setSelectionExplainRequest] = useState<{
+    id: number;
+    selectedText: string;
+  } | null>(null);
   const authState = useOptionalKangurAuth();
   const authUser = authState?.user ?? null;
   const pageContextRegistry = useOptionalContextRegistryPageEnvelope();
@@ -993,6 +1000,18 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
     });
   }, []);
   const sessionRegistryValue = useMemo(() => ({ setRegistration }), [setRegistration]);
+  const requestSelectionExplain = useCallback((selectedText: string): void => {
+    const trimmed = selectedText.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    selectionExplainRequestIdRef.current += 1;
+    setSelectionExplainRequest({
+      id: selectionExplainRequestIdRef.current,
+      selectedText: trimmed,
+    });
+  }, []);
 
   const value = useMemo<KangurAiTutorContextValue>(
     () => ({
@@ -1020,6 +1039,8 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       sendMessage,
       recordFollowUpCompletion,
       setHighlightedText,
+      requestSelectionExplain,
+      selectionExplainRequest,
     }),
     [
       activeSessionContext,
@@ -1033,6 +1054,8 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       messages,
       openChat,
       recordFollowUpCompletion,
+      requestSelectionExplain,
+      selectionExplainRequest,
       sendMessage,
       setHighlightedText,
       tutorAvatarImageUrl,

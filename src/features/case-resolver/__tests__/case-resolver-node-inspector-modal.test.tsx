@@ -59,6 +59,7 @@ vi.mock('@/shared/ui', () => ({
   Label: ({ children }: { children: React.ReactNode }) => <label>{children}</label>,
   SelectSimple: () => <div />,
   EmptyState: ({ title }: { title: string }) => <div>{title}</div>,
+  CompactEmptyState: ({ title }: { title: string }) => <div>{title}</div>,
   Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
   useToast: () => ({ toast: vi.fn() }),
   ValidatorFormatterToggle: () => <div />,

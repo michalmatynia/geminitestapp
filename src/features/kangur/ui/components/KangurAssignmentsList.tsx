@@ -30,6 +30,8 @@ type KangurAssignmentsListProps = {
   compact?: boolean;
   onArchive?: (assignmentId: string) => void;
   onTimeLimitClick?: (assignmentId: string) => void;
+  onReassign?: (assignmentId: string) => void;
+  reassigningId?: string | null;
 };
 
 type KangurAssignmentsListItemContextValue = {
@@ -39,6 +41,8 @@ type KangurAssignmentsListItemContextValue = {
 type KangurAssignmentsListArchiveContextValue = {
   onArchive?: (assignmentId: string) => void;
   onTimeLimitClick?: (assignmentId: string) => void;
+  onReassign?: (assignmentId: string) => void;
+  reassigningId?: string | null;
 };
 
 const KangurAssignmentsListItemContext = createContext<KangurAssignmentsListItemContextValue | null>(
@@ -137,7 +141,10 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
 
 function KangurAssignmentsListStandardCard(): React.JSX.Element {
   const item = useKangurAssignmentsListItem();
-  const { onArchive, onTimeLimitClick } = useKangurAssignmentsListArchive();
+  const { onArchive, onTimeLimitClick, onReassign, reassigningId } =
+    useKangurAssignmentsListArchive();
+  const canReassign = Boolean(onReassign && item.status === 'completed');
+  const isReassigning = Boolean(reassigningId && reassigningId === item.id);
 
   return (
     <KangurInfoCard
@@ -220,6 +227,18 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
             <Clock className='h-4 w-4' aria-hidden='true' />
           </KangurButton>
         ) : null}
+        {canReassign ? (
+          <KangurButton
+            className='w-full sm:w-auto'
+            type='button'
+            onClick={() => onReassign?.(item.id)}
+            size='sm'
+            variant='ghost'
+            disabled={isReassigning}
+          >
+            {isReassigning ? 'Przypisywanie...' : 'Przypisz ponownie'}
+          </KangurButton>
+        ) : null}
         {onArchive ? (
           <KangurButton
             className='w-full sm:w-auto'
@@ -244,11 +263,13 @@ export function KangurAssignmentsList({
   compact = false,
   onArchive,
   onTimeLimitClick,
+  onReassign,
+  reassigningId,
 }: KangurAssignmentsListProps): React.JSX.Element {
   const emptyStateDescription = emptyLabel;
   const panelSummary = summary;
   const panelTitle = title;
-  const archiveContextValue = { onArchive, onTimeLimitClick };
+  const archiveContextValue = { onArchive, onTimeLimitClick, onReassign, reassigningId };
 
   if (compact) {
     return (

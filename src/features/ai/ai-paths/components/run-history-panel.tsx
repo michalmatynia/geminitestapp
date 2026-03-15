@@ -10,7 +10,7 @@ import {
   SelectSimple,
   StatusBadge,
   Alert,
-  EmptyState,
+  CompactEmptyState,
   Card,
   Hint,
   JsonViewer,
@@ -148,8 +148,6 @@ export function RunHistoryPanel(): React.JSX.Element {
     if (rawRunFilter === 'dead') return 'dead';
     return 'all';
   }, [rawRunFilter]);
-  const EmptyStateComponent = EmptyState;
-
   const setRunFilter = React.useCallback(
     (nextFilter: RunHistoryFilter): void => {
       setRunFilterContext(nextFilter);
@@ -383,12 +381,11 @@ export function RunHistoryPanel(): React.JSX.Element {
         )}
       </div>
       {filteredRunList.length === 0 ? (
-        <EmptyStateComponent
+        <CompactEmptyState
           title='No runs yet'
           description='Execute a path to see your run history and detailed node outputs.'
-          variant='compact'
           className='py-8'
-        />
+         />
       ) : (
         <div className='space-y-2 text-xs text-gray-300'>
           {filteredRunList.slice(0, 6).map((run: AiPathRunRecord): React.JSX.Element => {

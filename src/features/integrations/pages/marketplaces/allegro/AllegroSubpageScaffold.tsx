@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { AdminIntegrationsBreadcrumbs, EmptyState, PageLayout } from '@/shared/ui';
+import { AdminIntegrationsBreadcrumbs, CompactEmptyState, PageLayout } from '@/shared/ui';
 
 type AllegroSubpageScaffoldProps = {
   title: string;
@@ -38,12 +38,11 @@ export function AllegroSubpageScaffold({
     >
       {children ??
         (emptyState ? (
-          <EmptyState
+          <CompactEmptyState
             title={emptyStateTitle}
             description={emptyStateDescription}
-            variant='compact'
             className='border-dashed border-border/60 bg-card/40 py-8'
-          />
+           />
         ) : null)}
     </PageLayout>
   );

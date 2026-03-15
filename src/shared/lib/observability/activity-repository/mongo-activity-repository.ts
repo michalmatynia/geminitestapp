@@ -36,7 +36,11 @@ export const mongoActivityRepository: ActivityRepository = {
     const query: Filter<ActivityLogDoc> = {};
 
     if (filters.userId) query.userId = filters.userId;
-    if (filters.type) query.type = filters.type;
+    if (filters.types && filters.types.length > 0) {
+      query.type = { $in: filters.types };
+    } else if (filters.type) {
+      query.type = filters.type;
+    }
     if (filters.entityId) query.entityId = filters.entityId;
     if (filters.entityType) query.entityType = filters.entityType;
     if (filters.search) {
@@ -59,7 +63,11 @@ export const mongoActivityRepository: ActivityRepository = {
     const query: Filter<ActivityLogDoc> = {};
 
     if (filters.userId) query.userId = filters.userId;
-    if (filters.type) query.type = filters.type;
+    if (filters.types && filters.types.length > 0) {
+      query.type = { $in: filters.types };
+    } else if (filters.type) {
+      query.type = filters.type;
+    }
     if (filters.entityId) query.entityId = filters.entityId;
     if (filters.entityType) query.entityType = filters.entityType;
     if (filters.search) {

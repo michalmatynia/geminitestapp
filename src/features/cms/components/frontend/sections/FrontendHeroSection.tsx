@@ -1,7 +1,7 @@
 'use client';
 
 import type { BlockInstance } from '@/features/cms/types/page-builder';
-import { EmptyState } from '@/shared/ui';
+import { CompactEmptyState } from '@/shared/ui';
 
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
@@ -58,12 +58,11 @@ export function FrontendHeroSection(): React.ReactNode {
             ))}
           </div>
           {blocks.length === 0 && (
-            <EmptyState
+            <CompactEmptyState
               title='Hero section'
               description='Add content blocks here.'
-              variant='compact'
               className='bg-transparent border-none'
-            />
+             />
           )}
         </div>
       </section>

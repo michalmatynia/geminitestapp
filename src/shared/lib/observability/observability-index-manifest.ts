@@ -22,6 +22,7 @@ export const OBSERVABILITY_INDEX_MANIFEST: readonly ObservabilityIndexManifestEn
   { collection: 'activity_logs', key: { userId: 1, createdAt: -1 } },
   { collection: 'activity_logs', key: { entityId: 1, createdAt: -1 } },
   { collection: 'activity_logs', key: { entityType: 1, createdAt: -1 } },
+  { collection: 'activity_logs', key: { userId: 1, entityId: 1, createdAt: -1 } },
 ] as const;
 
 export const buildObservabilityExpectedByCollection = (): Record<

@@ -10,7 +10,7 @@ import {
   StatusBadge,
   FormSection,
   FormField,
-  EmptyState,
+  CompactEmptyState,
   FormActions,
   useToast,
   MetadataItem,
@@ -55,12 +55,11 @@ export function BaselinkerSettings(): React.JSX.Element {
       className='p-6'
     >
       {!activeConnection ? (
-        <EmptyState
+        <CompactEmptyState
           title='No connection'
           description='Add a connection first to enable Baselinker API access.'
-          variant='compact'
           className='bg-card/20 py-8'
-        />
+         />
       ) : (
         <div className='space-y-6'>
           {/* Connection Status */}

@@ -10,7 +10,7 @@ import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { Button, Input, FormSection, EmptyState, LoadingState } from '@/features/products/ui';
+import { Button, Input, FormSection, CompactEmptyState, LoadingState } from '@/features/products/ui';
 
 type NotesLookupResult = RelatedNote[];
 
@@ -120,12 +120,11 @@ export default function ProductFormNoteLink(): React.JSX.Element {
           ) : searching ? (
             <LoadingState message='Searching...' className='py-4' size='sm' />
           ) : searchResults.length === 0 ? (
-            <EmptyState
+            <CompactEmptyState
               title='No notes found'
               description='No notes match your search criteria.'
-              variant='compact'
               className='py-6'
-            />
+             />
           ) : (
             searchResults.slice(0, 10).map((note: NoteWithRelations) => {
               const isLinked = selectedNoteIds.includes(note.id);
@@ -197,21 +196,19 @@ export default function ProductFormNoteLink(): React.JSX.Element {
 
         <div className='mt-2 space-y-2'>
           {selectedNoteIds.length === 0 ? (
-            <EmptyState
+            <CompactEmptyState
               title='No notes linked yet'
               description='Search and attach notes above to link them with this product.'
-              variant='compact'
               className='py-8'
-            />
+             />
           ) : loadingLinked ? (
             <LoadingState message='Loading linked notes...' size='sm' className='py-8' />
           ) : orderedLinked.length === 0 ? (
-            <EmptyState
+            <CompactEmptyState
               title='Details unavailable'
               description='Linked note details could not be loaded.'
-              variant='compact'
               className='py-8'
-            />
+             />
           ) : (
             orderedLinked.map((note: RelatedNote) => (
               <div

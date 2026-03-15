@@ -89,6 +89,12 @@ vi.mock('@/shared/ui', () => ({
       {description ? <div>{description}</div> : null}
     </div>
   ),
+  CompactEmptyState: ({ title, description }: { title: string; description?: string }) => (
+    <div>
+      <div>{title}</div>
+      {description ? <div>{description}</div> : null}
+    </div>
+  ),
   Badge: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Chip: ({ label, onClick }: { label: React.ReactNode; onClick?: () => void }) => (
     <button type='button' onClick={onClick}>

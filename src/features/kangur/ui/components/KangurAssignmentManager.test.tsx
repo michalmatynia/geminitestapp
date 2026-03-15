@@ -9,6 +9,32 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const useKangurProgressStateMock = vi.hoisted(() => vi.fn());
 const useKangurAssignmentsMock = vi.hoisted(() => vi.fn());
 const useSettingsStoreMock = vi.hoisted(() => vi.fn());
+const delegatedAssignmentsState = vi.hoisted(() => ({
+  catalog: [] as Array<{
+    id: string;
+    title: string;
+    description: string;
+    badge: string;
+    group: string;
+    priorityLabel: string;
+    createInput: {
+      title: string;
+      description: string;
+      priority: 'high' | 'medium' | 'low';
+      target: {
+        type: 'lesson' | 'practice';
+        lessonComponentId?: string;
+        operation?: string;
+        requiredAttempts?: number;
+        minAccuracyPercent?: number | null;
+        requiredCompletions?: number;
+      };
+    };
+    keywords: string[];
+  }>,
+  recommended: [] as Array<unknown>,
+  filtered: [] as Array<unknown>,
+}));
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: useSettingsStoreMock,
@@ -23,11 +49,11 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/services/delegated-assignments', () => ({
-  buildKangurAssignmentCatalog: () => [],
+  buildKangurAssignmentCatalog: () => delegatedAssignmentsState.catalog,
   buildKangurAssignmentListItems: (_basePath: string, assignments: Array<{ id: string }>) =>
     assignments.map((assignment) => ({ id: assignment.id })),
-  buildRecommendedKangurAssignmentCatalog: () => [],
-  filterKangurAssignmentCatalog: () => [],
+  buildRecommendedKangurAssignmentCatalog: () => delegatedAssignmentsState.recommended,
+  filterKangurAssignmentCatalog: () => delegatedAssignmentsState.filtered,
   buildKangurAssignmentHref: () => '/kangur/game',
   formatKangurAssignmentPriorityLabel: (priority: 'high' | 'medium' | 'low') =>
     priority === 'high'
@@ -117,6 +143,9 @@ describe('KangurAssignmentManager', () => {
       get: vi.fn(),
     });
     useKangurProgressStateMock.mockReturnValue(progress);
+    delegatedAssignmentsState.catalog = [];
+    delegatedAssignmentsState.recommended = [];
+    delegatedAssignmentsState.filtered = [];
     useKangurAssignmentsMock.mockReturnValue({
       assignments: [],
       isLoading: false,
@@ -124,6 +153,7 @@ describe('KangurAssignmentManager', () => {
       refresh: vi.fn(),
       createAssignment: vi.fn(),
       updateAssignment: vi.fn(),
+      reassignAssignment: vi.fn(),
     });
   });
 
@@ -173,6 +203,7 @@ describe('KangurAssignmentManager', () => {
       refresh: vi.fn(),
       createAssignment: vi.fn(),
       updateAssignment,
+      reassignAssignment: vi.fn(),
     });
 
     render(<KangurAssignmentManager basePath='/kangur' />);
@@ -190,5 +221,72 @@ describe('KangurAssignmentManager', () => {
         timeLimitMinutes: 25,
       })
     );
+  });
+
+  it('marks assigned catalog items as already assigned', () => {
+    delegatedAssignmentsState.catalog = [
+      {
+        id: 'practice-addition',
+        title: 'Praktyka: Dodawanie',
+        description: 'Jedna sesja dodawania.',
+        badge: 'Praktyka',
+        group: 'practice',
+        priorityLabel: 'Priorytet wysoki',
+        createInput: {
+          title: 'Praktyka: Dodawanie',
+          description: 'Jedna sesja dodawania.',
+          priority: 'high',
+          target: {
+            type: 'practice',
+            operation: 'addition',
+            requiredAttempts: 1,
+            minAccuracyPercent: 80,
+          },
+        },
+        keywords: ['dodawanie'],
+      },
+    ];
+    delegatedAssignmentsState.filtered = delegatedAssignmentsState.catalog;
+    useKangurAssignmentsMock.mockReturnValue({
+      assignments: [
+        {
+          id: 'assignment-1',
+          learnerKey: 'jan@example.com',
+          title: 'Praktyka: Dodawanie',
+          description: 'Jedna sesja dodawania.',
+          priority: 'high',
+          archived: false,
+          target: {
+            type: 'practice',
+            operation: 'addition',
+            requiredAttempts: 1,
+            minAccuracyPercent: 80,
+          },
+          assignedByName: 'Rodzic',
+          assignedByEmail: 'rodzic@example.com',
+          createdAt: '2026-03-06T10:00:00.000Z',
+          updatedAt: '2026-03-06T10:00:00.000Z',
+          progress: {
+            status: 'not_started',
+            percent: 0,
+            summary: 'Sesje: 0/1',
+            attemptsCompleted: 0,
+            attemptsRequired: 1,
+            lastActivityAt: null,
+            completedAt: null,
+          },
+        },
+      ],
+      isLoading: false,
+      error: null,
+      refresh: vi.fn(),
+      createAssignment: vi.fn(),
+      updateAssignment: vi.fn(),
+    });
+
+    render(<KangurAssignmentManager basePath='/kangur' view='catalog' />);
+
+    const assignedButton = screen.getByRole('button', { name: 'Przypisane' });
+    expect(assignedButton).toBeDisabled();
   });
 });

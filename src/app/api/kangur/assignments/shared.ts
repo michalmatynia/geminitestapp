@@ -175,7 +175,7 @@ export const createAssignmentSnapshotForLearner = async (input: {
   });
 };
 
-const loadKangurScoresForLearner = async (input: {
+export const loadKangurScoresForLearner = async (input: {
   learnerName: string | null;
   learnerEmail: string | null;
 }): Promise<KangurScore[]> => {

@@ -15,7 +15,7 @@ import {
   FormField,
   CollapsibleSection,
   LoadingState,
-  EmptyState,
+  CompactEmptyState,
 } from '@/shared/ui';
 
 import {
@@ -474,12 +474,11 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                 className='border-border/70 bg-black/20'
               >
                 {nodes.length === 0 ? (
-                  <EmptyState
+                  <CompactEmptyState
                     title='No nodes recorded'
                     description='No node execution details were captured for this run.'
-                    variant='compact'
                     className='border-none bg-transparent py-4'
-                  />
+                   />
                 ) : (
                   <div className='mt-1 space-y-2'>
                     {nodes.map((node: AiPathRunNodeRecord) => {
@@ -571,12 +570,11 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                 className='border-border/70 bg-black/20'
               >
                 {events.length === 0 ? (
-                  <EmptyState
+                  <CompactEmptyState
                     title='No events'
                     description='No runtime events were emitted during this execution.'
-                    variant='compact'
                     className='border-none bg-transparent py-4'
-                  />
+                   />
                 ) : (
                   <div className='mt-1 divide-y divide-border/70'>
                     {events.map((event: AiPathRunEventRecord) => (

@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { ClientOnly, EmptyState, Hint, SectionHeader, Card } from '@/shared/ui';
+import { ClientOnly, CompactEmptyState, Hint, SectionHeader, Card } from '@/shared/ui';
 
 import { LearnedRuleItem } from './LearnedRuleItem';
 import { usePromptEngineConfig } from '../context/prompt-engine/PromptEngineConfigContext';
@@ -31,11 +31,10 @@ export function LearnedRuleList(): React.JSX.Element {
       </Card>
 
       {filteredLearnedDrafts.length === 0 ? (
-        <EmptyState
+        <CompactEmptyState
           title='No learned patterns'
           description='No patterns have been generated for this context yet.'
-          variant='compact'
-        />
+         />
       ) : null}
 
       {filteredLearnedDrafts.map((draft) => (

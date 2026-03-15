@@ -23,6 +23,7 @@ import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurP
 import { cn } from '@/shared/utils';
 
 const kangurPlatform = getKangurPlatform();
+const SESSION_PAGE_LIMIT = 20;
 
 export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Element | null {
   const {
@@ -52,6 +53,8 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
   const [sessionHistory, setSessionHistory] = useState<KangurLearnerSessionHistory | null>(null);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [sessionsError, setSessionsError] = useState<string | null>(null);
+  const [isLoadingMoreSessions, setIsLoadingMoreSessions] = useState(false);
+  const [sessionsLoadMoreError, setSessionsLoadMoreError] = useState<string | null>(null);
   const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
   const activeLearnerId = activeLearner?.id ?? null;
   const isRemovalPending = Boolean(activeLearnerId && pendingRemovalId === activeLearnerId);
@@ -106,6 +109,52 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
   };
   const lastActivityLabel = formatDateTime(lastActivityAt);
   const sessions = sessionHistory?.sessions ?? [];
+  const hasMoreSessions =
+    sessionHistory?.hasMore ??
+    (sessionHistory ? sessions.length < sessionHistory.totalSessions : false);
+  const nextSessionOffset = sessionHistory?.nextOffset ?? Math.max(sessions.length, 0);
+
+  const handleLoadMoreSessions = async (): Promise<void> => {
+    if (!activeLearnerId || !sessionHistory || isLoadingMoreSessions) {
+      return;
+    }
+
+    setIsLoadingMoreSessions(true);
+    setSessionsLoadMoreError(null);
+    try {
+      const history = await kangurPlatform.learnerSessions.list(activeLearnerId, {
+        limit: SESSION_PAGE_LIMIT,
+        offset: nextSessionOffset,
+      });
+      setSessionHistory((current) => {
+        if (!current) {
+          return history;
+        }
+        const existingIds = new Set(current.sessions.map((entry) => entry.id));
+        const mergedSessions = [
+          ...current.sessions,
+          ...history.sessions.filter((entry) => !existingIds.has(entry.id)),
+        ];
+        const totalSessions = Math.max(current.totalSessions, history.totalSessions);
+        const resolvedHasMore =
+          history.hasMore ?? mergedSessions.length < totalSessions;
+        const resolvedNextOffset = resolvedHasMore
+          ? history.nextOffset ?? mergedSessions.length
+          : null;
+        return {
+          ...history,
+          sessions: mergedSessions,
+          totalSessions,
+          hasMore: resolvedHasMore,
+          nextOffset: resolvedNextOffset,
+        };
+      });
+    } catch {
+      setSessionsLoadMoreError('Nie udało się wczytać starszych sesji.');
+    } finally {
+      setIsLoadingMoreSessions(false);
+    }
+  };
 
   useEffect(() => {
     if (pendingRemovalId && pendingRemovalId !== activeLearnerId) {
@@ -140,11 +189,13 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
 
     let isActive = true;
     setIsLoadingSessions(true);
+    setIsLoadingMoreSessions(false);
     setSessionsError(null);
+    setSessionsLoadMoreError(null);
     setSessionHistory(null);
 
     kangurPlatform.learnerSessions
-      .list(activeLearnerId)
+      .list(activeLearnerId, { limit: SESSION_PAGE_LIMIT, offset: 0 })
       .then((history) => {
         if (!isActive) {
           return;
@@ -661,6 +712,23 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                           );
                         })}
                       </div>
+                      {hasMoreSessions ? (
+                        <div className='mt-3 flex justify-center'>
+                          <KangurButton
+                            className='w-full sm:w-auto'
+                            disabled={isLoadingMoreSessions}
+                            onClick={() => void handleLoadMoreSessions()}
+                            size='sm'
+                            variant='surface'
+                            data-doc-id='parent_profile_sessions_load_more'
+                          >
+                            {isLoadingMoreSessions ? 'Ładowanie...' : 'Pokaż starsze sesje'}
+                          </KangurButton>
+                        </div>
+                      ) : null}
+                      {sessionsLoadMoreError ? (
+                        <div className='mt-2 text-xs text-rose-600'>{sessionsLoadMoreError}</div>
+                      ) : null}
                     </div>
                   )}
                 </KangurSummaryPanel>

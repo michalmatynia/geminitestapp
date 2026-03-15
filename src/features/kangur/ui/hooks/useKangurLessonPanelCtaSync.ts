@@ -21,7 +21,7 @@ export const useKangurLessonPanelCtaSync = (): ((ctaId: string) => void) => {
       if (!isAuthenticated) {
         return;
       }
-      if (!user || user.actorType !== 'learner') {
+      if (user?.actorType !== 'learner') {
         return;
       }
       if (!user.ownerUserId) {
@@ -29,8 +29,13 @@ export const useKangurLessonPanelCtaSync = (): ((ctaId: string) => void) => {
       }
 
       const progress = loadProgress();
+      const normalizedCtaId = ctaId.trim();
+      const context =
+        normalizedCtaId.length > 0
+          ? { ...CTA_PROGRESS_CONTEXT, cta: normalizedCtaId }
+          : CTA_PROGRESS_CONTEXT;
       void kangurPlatform.progress
-        .update(progress, { ...CTA_PROGRESS_CONTEXT, cta: ctaId })
+        .update(progress, context)
         .catch(() => {
           // Avoid throwing on CTA-triggered sync failures.
         });

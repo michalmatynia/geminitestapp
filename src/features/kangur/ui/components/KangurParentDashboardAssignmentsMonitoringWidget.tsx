@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 
-import KangurAssignmentManager from '@/features/kangur/ui/components/KangurAssignmentManager';
 import { KANGUR_LESSONS_SETTING_KEY, parseKangurLessons } from '@/features/kangur/settings';
 import {
   type KangurParentDashboardPanelDisplayMode,
@@ -8,19 +7,13 @@ import {
   useKangurParentDashboardRuntime,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import {
-  KangurButton,
-  KangurGlassPanel,
   KangurInfoCard,
-  KangurIconBadge,
   KangurMetaText,
   KangurPanelIntro,
   KangurSummaryPanel,
-  KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { cn } from '@/shared/utils';
 
 const formatDuration = (seconds: number): string => {
   const normalized = Math.max(0, Math.round(seconds));
@@ -79,11 +72,8 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
   const {
     activeLearner,
     activeTab,
-    basePath,
     canAccessDashboard,
-    learners: runtimeLearners,
     progress,
-    selectLearner,
   } = useKangurParentDashboardRuntime();
   const { entry: monitoringContent } = useKangurPageContentEntry('parent-dashboard-monitoring');
   const settingsStore = useSettingsStore();
@@ -93,12 +83,6 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
     [rawLessons]
   );
   const activeLearnerId = activeLearner?.id ?? null;
-  const learners = runtimeLearners ?? [];
-  const activeLearnerName = activeLearner?.displayName?.trim() || 'Uczeń';
-  const activeLearnerLogin = activeLearner?.loginName?.trim() || null;
-  const activeLearnerStatus = activeLearner?.status ?? 'active';
-  const activeLearnerInitial = activeLearnerName.charAt(0).toUpperCase() || '?';
-  const canSwitchLearners = learners.length > 1;
   const lessonPanelProgress = progress.lessonPanelProgress ?? {};
   const lessonPanelTimeCards = useMemo(
     () =>
@@ -187,75 +171,6 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
         titleAs='h2'
         titleClassName='text-lg font-bold tracking-[-0.02em]'
       />
-      <KangurGlassPanel
-        padding='lg'
-        surface='playGlow'
-        variant='soft'
-        data-testid='parent-dashboard-monitoring-learner-panel'
-      >
-        <div className='flex flex-col gap-3'>
-          <KangurPanelIntro
-            eyebrow='Profil ucznia'
-            title={`Postęp zadań dla ${activeLearnerName}`}
-            description='Sprawdź, jak uczeń realizuje przypisane zadania oraz sugestie StudiQ.'
-            titleAs='h3'
-            titleClassName='text-base font-bold tracking-[-0.02em]'
-            descriptionClassName='text-xs sm:text-sm'
-          />
-          <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-            <div className='flex items-center gap-3'>
-              <KangurIconBadge accent='indigo' size='md'>
-                {activeLearnerInitial}
-              </KangurIconBadge>
-              <div className='min-w-0'>
-                <div className='text-base font-semibold [color:var(--kangur-page-text)]'>
-                  {activeLearnerName}
-                </div>
-                {activeLearnerLogin ? (
-                  <KangurMetaText tone='slate'>Login: {activeLearnerLogin}</KangurMetaText>
-                ) : null}
-              </div>
-            </div>
-            <KangurStatusChip
-              accent={activeLearnerStatus === 'active' ? 'emerald' : 'slate'}
-              className='w-fit uppercase tracking-wide'
-              size='sm'
-            >
-              {activeLearnerStatus === 'active' ? 'Aktywny' : 'Wyłączony'}
-            </KangurStatusChip>
-          </div>
-          {canSwitchLearners ? (
-            <div>
-              <KangurMetaText className='mb-2' caps tone='slate'>
-                Szybkie przełączanie profilu
-              </KangurMetaText>
-              <div
-                className={cn(
-                  KANGUR_SEGMENTED_CONTROL_CLASSNAME,
-                  'flex flex-wrap justify-start'
-                )}
-              >
-                {learners.map((learner) => {
-                  const isActive = learner.id === activeLearnerId;
-                  return (
-                    <KangurButton
-                      key={learner.id}
-                      type='button'
-                      onClick={() => void selectLearner(learner.id)}
-                      aria-pressed={isActive}
-                      className='min-w-0 flex-none px-3 text-xs'
-                      size='sm'
-                      variant={isActive ? 'segmentActive' : 'segment'}
-                    >
-                      {learner.displayName}
-                    </KangurButton>
-                  );
-                })}
-              </div>
-            </div>
-          ) : null}
-        </div>
-      </KangurGlassPanel>
       <KangurSummaryPanel
         accent='sky'
         className='mt-1'
@@ -324,11 +239,6 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
           </div>
         )}
       </KangurSummaryPanel>
-      <KangurAssignmentManager
-        basePath={basePath}
-        view='tracking'
-        key={activeLearnerId ?? 'no-learner'}
-      />
     </div>
   );
 }

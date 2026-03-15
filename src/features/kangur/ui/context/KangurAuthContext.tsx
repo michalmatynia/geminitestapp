@@ -63,7 +63,10 @@ const kangurPlatform = getKangurPlatform();
 const resolveCanAccessParentAssignments = (
   user: KangurUser | null,
   isAuthenticated: boolean
-): boolean => isAuthenticated && Boolean(user?.activeLearner?.id);
+): boolean =>
+  isAuthenticated &&
+  user?.actorType === 'learner' &&
+  Boolean(user?.activeLearner?.id);
 
 const resolveErrorMessage = (value: unknown): string => {
   if (value instanceof Error && value.message.trim().length > 0) {

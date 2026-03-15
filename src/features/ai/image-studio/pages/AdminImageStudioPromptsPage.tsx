@@ -9,7 +9,7 @@ import {
   type ImageStudioPromptEntry,
 } from '@/features/ai/image-studio/utils/prompt-library';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, Input, Label, Textarea, useToast, EmptyState, Card } from '@/shared/ui';
+import { Button, Input, Label, Textarea, useToast, EmptyState, CompactEmptyState, Card } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -172,12 +172,11 @@ export function AdminImageStudioPromptsPage(): React.JSX.Element {
               {promptEntries.length} prompt{promptEntries.length === 1 ? '' : 's'}
             </div>
             {promptEntries.length === 0 ? (
-              <EmptyState
-                variant='compact'
+              <CompactEmptyState
                 title='No prompts yet'
                 description='Add your first reusable prompt to get started.'
                 className='border-none bg-transparent p-0'
-              />
+               />
             ) : (
               promptEntries.map((entry: ImageStudioPromptEntry) => {
                 const isSelected = entry.id === selectedPromptId;

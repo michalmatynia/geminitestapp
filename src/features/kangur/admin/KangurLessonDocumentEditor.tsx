@@ -3,37 +3,21 @@ import {
   ArrowDown,
   ArrowUp,
   Copy,
-  Grid2x2,
   GripVertical,
-  Image,
   Plus,
-  Search,
-  Sparkles,
   Trash2,
-  Type,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   cloneKangurLessonGridItem,
-  cloneKangurLessonPage,
-  cloneKangurLessonRootBlock,
   convertKangurLessonRootBlockType,
-  createKangurLessonDocumentFromTemplate,
-  createKangurLessonActivityBlock,
-  createKangurLessonCalloutBlock,
-  createKangurLessonGridBlock,
   createKangurLessonGridBlockFromTemplate,
   createKangurLessonGridItem,
   createKangurLessonImageBlock,
-  createKangurLessonPage,
-  createKangurLessonQuizBlock,
   createKangurLessonSvgBlock,
   createKangurLessonTextBlock,
-  reorderKangurLessonBlocks,
   resolveKangurLessonDocumentPages,
-  updateKangurLessonDocumentPages,
-  type KangurLessonDocumentTemplateId,
 } from '@/features/kangur/lesson-documents';
 import { KANGUR_LESSON_COMPONENT_OPTIONS } from '@/features/kangur/settings';
 import type {
@@ -64,53 +48,18 @@ import {
 import { validateKangurLessonPageDraft } from './content-creator-insights';
 import { useLessonContentEditorContext } from './context/LessonContentEditorContext';
 import { useBlockListDnd } from './hooks/useBlockListDnd';
-import { clamp, clampGridColumnStart, insertAfterIndex, moveItem, parseNumberInput } from './utils';
-const resolvePageSectionOptions = (
-  page: KangurLessonPage | null
-): {
-  sectionKey?: string;
-  sectionTitle?: string;
-  sectionDescription?: string;
-} => ({
-  sectionKey: page?.sectionKey?.trim() || '',
-  sectionTitle: page?.sectionTitle?.trim() || '',
-  sectionDescription: page?.sectionDescription?.trim() || '',
-});
-type StarterRecipe = {
-  id: string;
-  label: string;
-  description: string;
-  onClick: () => void;
-};
-const getLessonRecipeFamily = (
-  componentId: KangurLessonComponentId | null | undefined
-): 'time' | 'arithmetic' | 'geometry' | 'logic' => {
-  if (componentId === 'clock' || componentId === 'calendar') {
-    return 'time';
-  }
-  if (
-    componentId === 'adding' ||
-    componentId === 'subtracting' ||
-    componentId === 'multiplication' ||
-    componentId === 'division'
-  ) {
-    return 'arithmetic';
-  }
-  if (
-    componentId === 'geometry_basics' ||
-    componentId === 'geometry_shapes' ||
-    componentId === 'geometry_symmetry' ||
-    componentId === 'geometry_perimeter'
-  ) {
-    return 'geometry';
-  }
-  return 'logic';
-};
+import { useKangurLessonMutations } from './hooks/useKangurLessonMutations';
+import { useKangurStarterRecipes } from './hooks/useKangurStarterRecipes';
+import {
+  clamp,
+  clampGridColumnStart,
+  parseNumberInput,
+} from './utils';
+
 export function KangurLessonDocumentEditor(): React.JSX.Element {
   const { lesson, document: value, onChange } = useLessonContentEditorContext();
   const pages = resolveKangurLessonDocumentPages(value);
   const [activePageId, setActivePageId] = useState<string | null>(pages[0]?.id ?? null);
-  const [insertQuery, setInsertQuery] = useState('');
   useEffect(() => {
     if (!pages.some((page) => page.id === activePageId)) {
       setActivePageId(pages[0]?.id ?? null);
@@ -118,304 +67,33 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
   }, [activePageId, pages]);
   const activePage = pages.find((page) => page.id === activePageId) ?? pages[0] ?? null;
   const activePageIndex = activePage ? pages.findIndex((page) => page.id === activePage.id) : -1;
-  const applyPages = useCallback(
-    (nextPages: KangurLessonPage[]): void => {
-      const nextDocument = updateKangurLessonDocumentPages(value, nextPages);
-      onChange({
-        ...nextDocument,
-        updatedAt: new Date().toISOString(),
-      });
-    },
-    [onChange, value]
+  const {
+    applyPages,
+    updatePage,
+    updateDocument,
+    updateRootBlock,
+    removeRootBlock,
+    moveRootBlock,
+    handleBlockReorder,
+    duplicateRootBlock,
+    updateGridBlock,
+    replaceWithDocumentTemplate,
+    insertPageAfterActive,
+    addBlankPage,
+    addPageFromTemplate,
+    duplicateActivePage,
+    moveActivePage,
+    deleteActivePage,
+  } = useKangurLessonMutations(
+    value,
+    onChange,
+    activePage,
+    pages,
+    activePageIndex,
+    setActivePageId
   );
-  const updatePage = useCallback(
-    (pageId: string, updater: (page: KangurLessonPage) => KangurLessonPage): void => {
-      applyPages(pages.map((page) => (page.id === pageId ? updater(page) : page)));
-    },
-    [applyPages, pages]
-  );
-  const updateDocument = useCallback(
-    (nextBlocks: KangurLessonRootBlock[]): void => {
-      if (!activePage) return;
-      updatePage(activePage.id, (page) => ({
-        ...page,
-        blocks: nextBlocks,
-      }));
-    },
-    [activePage, updatePage]
-  );
-  const updateRootBlock = useCallback(
-    (blockId: string, nextBlock: KangurLessonRootBlock): void => {
-      if (!activePage) return;
-      updateDocument(activePage.blocks.map((block) => (block.id === blockId ? nextBlock : block)));
-    },
-    [activePage, updateDocument]
-  );
-  const removeRootBlock = useCallback(
-    (blockId: string): void => {
-      if (!activePage) return;
-      updateDocument(activePage.blocks.filter((block) => block.id !== blockId));
-    },
-    [activePage, updateDocument]
-  );
-  const moveRootBlock = useCallback(
-    (fromIndex: number, toIndex: number): void => {
-      if (!activePage) return;
-      updateDocument(moveItem(activePage.blocks, fromIndex, toIndex));
-    },
-    [activePage, updateDocument]
-  );
-  const handleBlockReorder = useCallback(
-    (draggedId: string, targetId: string, position: 'before' | 'after'): void => {
-      if (!activePage) return;
-      updateDocument(reorderKangurLessonBlocks(activePage.blocks, draggedId, targetId, position));
-    },
-    [activePage, updateDocument]
-  );
+
   const { dragState, getHandlers } = useBlockListDnd({ onReorder: handleBlockReorder });
-  const duplicateRootBlock = useCallback(
-    (index: number): void => {
-      if (!activePage) return;
-      const blockToClone = activePage.blocks[index];
-      if (!blockToClone) return;
-      updateDocument(
-        insertAfterIndex(activePage.blocks, index, cloneKangurLessonRootBlock(blockToClone))
-      );
-    },
-    [activePage, updateDocument]
-  );
-  const updateGridBlock = useCallback(
-    (blockId: string, updater: (block: KangurLessonGridBlock) => KangurLessonGridBlock): void => {
-      if (!activePage) return;
-      updateDocument(
-        activePage.blocks.map((block) => {
-          if (block.id !== blockId || block.type !== 'grid') return block;
-          return updater(block);
-        })
-      );
-    },
-    [activePage, updateDocument]
-  );
-  const replaceWithDocumentTemplate = useCallback(
-    (templateId: KangurLessonDocumentTemplateId): void => {
-      const nextDocument = createKangurLessonDocumentFromTemplate(templateId);
-      onChange({
-        ...nextDocument,
-        updatedAt: new Date().toISOString(),
-      });
-      setActivePageId(resolveKangurLessonDocumentPages(nextDocument)[0]?.id ?? null);
-    },
-    [onChange]
-  );
-  const insertPageAfterActive = useCallback(
-    (nextPage: KangurLessonPage): void => {
-      if (activePageIndex >= 0) {
-        applyPages(insertAfterIndex(pages, activePageIndex, nextPage));
-      } else {
-        applyPages([...pages, nextPage]);
-      }
-      setActivePageId(nextPage.id);
-    },
-    [activePageIndex, applyPages, pages]
-  );
-  const addBlankPage = useCallback((): void => {
-    const nextPage = createKangurLessonPage('', [], resolvePageSectionOptions(activePage));
-    insertPageAfterActive(nextPage);
-  }, [activePage, insertPageAfterActive]);
-  const addPageFromTemplate = useCallback(
-    (templateId: KangurLessonDocumentTemplateId): void => {
-      const templatePage =
-        resolveKangurLessonDocumentPages(createKangurLessonDocumentFromTemplate(templateId))[0] ??
-        createKangurLessonPage('', []);
-      const nextPage = {
-        ...cloneKangurLessonPage(templatePage),
-        ...resolvePageSectionOptions(activePage),
-      };
-      insertPageAfterActive(nextPage);
-    },
-    [activePage, insertPageAfterActive]
-  );
-  const duplicateActivePage = useCallback((): void => {
-    if (activePageIndex < 0 || !activePage) return;
-    const nextPage = cloneKangurLessonPage(activePage);
-    applyPages(insertAfterIndex(pages, activePageIndex, nextPage));
-    setActivePageId(nextPage.id);
-  }, [activePage, activePageIndex, applyPages, pages]);
-  const moveActivePage = useCallback(
-    (toIndex: number): void => {
-      if (activePageIndex < 0 || !activePage) return;
-      applyPages(moveItem(pages, activePageIndex, toIndex));
-      setActivePageId(activePage.id);
-    },
-    [activePage, activePageIndex, applyPages, pages]
-  );
-  const deleteActivePage = useCallback((): void => {
-    if (!activePage || pages.length <= 1) return;
-    const nextPages = pages.filter((page) => page.id !== activePage.id);
-    applyPages(nextPages);
-    setActivePageId(nextPages[Math.max(0, activePageIndex - 1)]?.id ?? nextPages[0]?.id ?? null);
-  }, [activePage, activePageIndex, applyPages, pages]);
-  const quickInsertActions = useMemo(
-    () => [
-      {
-        id: 'text',
-        group: 'Writing & explanation',
-        label: 'Add text block',
-        description: 'Paragraphs, explanations, and learner instructions.',
-        keywords: ['text', 'writing', 'paragraph', 'copy', 'intro'],
-        Icon: Type,
-        onClick: (): void =>
-          updateDocument([...(activePage?.blocks ?? []), createKangurLessonTextBlock()]),
-      },
-      {
-        id: 'callout',
-        group: 'Writing & explanation',
-        label: 'Add callout',
-        description: 'Tips, hints, warnings, and highlighted teaching moments.',
-        keywords: ['callout', 'tip', 'hint', 'warning'],
-        Icon: Sparkles,
-        onClick: (): void =>
-          updateDocument([...(activePage?.blocks ?? []), createKangurLessonCalloutBlock()]),
-      },
-      {
-        id: 'svg',
-        group: 'Visuals & layouts',
-        label: 'Add SVG block',
-        description: 'Inline vector illustration with optional narration.',
-        keywords: ['svg', 'vector', 'illustration', 'diagram'],
-        Icon: Image,
-        onClick: (): void =>
-          updateDocument([...(activePage?.blocks ?? []), createKangurLessonSvgBlock()]),
-      },
-      {
-        id: 'image',
-        group: 'Visuals & layouts',
-        label: 'Add SVG image block',
-        description: 'Referenced SVG asset with title, caption, and alt text.',
-        keywords: ['image', 'svg image', 'asset', 'media'],
-        Icon: Image,
-        onClick: (): void =>
-          updateDocument([...(activePage?.blocks ?? []), createKangurLessonImageBlock()]),
-      },
-      {
-        id: 'grid',
-        group: 'Visuals & layouts',
-        label: 'Add grid block',
-        description: 'Flexible layout container with starter items.',
-        keywords: ['grid', 'layout', 'columns'],
-        Icon: Grid2x2,
-        onClick: (): void =>
-          updateDocument([...(activePage?.blocks ?? []), createKangurLessonGridBlock()]),
-      },
-      {
-        id: 'hero-left',
-        group: 'Visuals & layouts',
-        label: 'Add hero layout',
-        description: 'Headline + supporting visual in a ready-made layout.',
-        keywords: ['hero', 'layout', 'featured'],
-        Icon: Grid2x2,
-        onClick: (): void =>
-          updateDocument([
-            ...(activePage?.blocks ?? []),
-            createKangurLessonGridBlockFromTemplate('hero-left'),
-          ]),
-      },
-      {
-        id: 'image-gallery',
-        group: 'Visuals & layouts',
-        label: 'Add SVG image gallery',
-        description: 'Referenced SVG images in a neat gallery layout.',
-        keywords: ['gallery', 'images', 'svg image'],
-        Icon: Image,
-        onClick: (): void =>
-          updateDocument([
-            ...(activePage?.blocks ?? []),
-            createKangurLessonGridBlockFromTemplate('image-gallery'),
-          ]),
-      },
-      {
-        id: 'image-mosaic',
-        group: 'Visuals & layouts',
-        label: 'Add SVG image mosaic',
-        description: 'Dense image-led layout for richer explanation pages.',
-        keywords: ['mosaic', 'images', 'svg image'],
-        Icon: Grid2x2,
-        onClick: (): void =>
-          updateDocument([
-            ...(activePage?.blocks ?? []),
-            createKangurLessonGridBlockFromTemplate('image-mosaic'),
-          ]),
-      },
-      {
-        id: 'svg-gallery',
-        group: 'Visuals & layouts',
-        label: 'Add SVG gallery',
-        description: 'Multiple inline SVG examples on one page.',
-        keywords: ['gallery', 'svg', 'examples'],
-        Icon: Image,
-        onClick: (): void =>
-          updateDocument([
-            ...(activePage?.blocks ?? []),
-            createKangurLessonGridBlockFromTemplate('svg-gallery'),
-          ]),
-      },
-      {
-        id: 'svg-mosaic',
-        group: 'Visuals & layouts',
-        label: 'Add SVG mosaic',
-        description: 'Dense SVG showcase with featured tiles.',
-        keywords: ['mosaic', 'svg', 'featured'],
-        Icon: Grid2x2,
-        onClick: (): void =>
-          updateDocument([
-            ...(activePage?.blocks ?? []),
-            createKangurLessonGridBlockFromTemplate('svg-mosaic'),
-          ]),
-      },
-      {
-        id: 'activity',
-        group: 'Practice & assessment',
-        label: 'Add activity block',
-        description: 'Interactive learner task such as clock or arithmetic practice.',
-        keywords: ['activity', 'interactive', 'game', 'practice'],
-        Icon: Plus,
-        onClick: (): void =>
-          updateDocument([...(activePage?.blocks ?? []), createKangurLessonActivityBlock()]),
-      },
-      {
-        id: 'quiz',
-        group: 'Practice & assessment',
-        label: 'Add quiz',
-        description: 'Quick comprehension check with choices and explanation.',
-        keywords: ['quiz', 'assessment', 'choices', 'question'],
-        Icon: Plus,
-        onClick: (): void =>
-          updateDocument([...(activePage?.blocks ?? []), createKangurLessonQuizBlock()]),
-      },
-    ],
-    [activePage?.blocks, updateDocument]
-  );
-  const filteredQuickInsertActions = useMemo(() => {
-    const normalizedQuery = insertQuery.trim().toLowerCase();
-    if (!normalizedQuery) {
-      return quickInsertActions;
-    }
-    return quickInsertActions.filter((action) =>
-      [action.label, action.description, action.group, ...action.keywords]
-        .join(' ')
-        .toLowerCase()
-        .includes(normalizedQuery)
-    );
-  }, [insertQuery, quickInsertActions]);
-  const groupedQuickInsertActions = useMemo(() => {
-    const groups = new Map<string, typeof filteredQuickInsertActions>();
-    for (const action of filteredQuickInsertActions) {
-      const existing = groups.get(action.group) ?? [];
-      existing.push(action);
-      groups.set(action.group, existing);
-    }
-    return Array.from(groups.entries());
-  }, [filteredQuickInsertActions]);
   const pageDraftReviews = useMemo(
     () =>
       new Map(
@@ -433,106 +111,15 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
       ? (KANGUR_LESSON_COMPONENT_OPTIONS.find((option) => option.value === lesson.componentId)?.label ??
         lesson.componentId)
       : null;
-  const starterRecipes = useMemo<StarterRecipe[]>(() => {
-    const family = getLessonRecipeFamily(lesson?.componentId);
-    if (family === 'time') {
-      return [
-        {
-          id: 'time-intro',
-          label: 'Add guided intro page',
-          description: 'Start with an explanation page that can hold text and one reference visual.',
-          onClick: (): void => addPageFromTemplate('text-with-figure'),
-        },
-        {
-          id: 'time-practice',
-          label: 'Add practice activity',
-          description: 'Create the interactive learner task for clock or calendar practice.',
-          onClick: (): void =>
-            updateDocument([...(activePage?.blocks ?? []), createKangurLessonActivityBlock()]),
-        },
-        {
-          id: 'time-reference',
-          label: 'Add reference illustration',
-          description: 'Insert an SVG image block for a worked example or annotated reference.',
-          onClick: (): void =>
-            updateDocument([...(activePage?.blocks ?? []), createKangurLessonImageBlock()]),
-        },
-      ];
-    }
-    if (family === 'arithmetic') {
-      return [
-        {
-          id: 'arithmetic-intro',
-          label: 'Start with worked example',
-          description: 'Use a text-and-figure page to explain the method before practice.',
-          onClick: (): void => addPageFromTemplate('text-with-figure'),
-        },
-        {
-          id: 'arithmetic-practice',
-          label: 'Add practice activity',
-          description: 'Drop in an interactive task for repeated learner practice.',
-          onClick: (): void =>
-            updateDocument([...(activePage?.blocks ?? []), createKangurLessonActivityBlock()]),
-        },
-        {
-          id: 'arithmetic-check',
-          label: 'Check with a quiz',
-          description: 'Finish the page with a short comprehension check.',
-          onClick: (): void =>
-            updateDocument([...(activePage?.blocks ?? []), createKangurLessonQuizBlock()]),
-        },
-      ];
-    }
-    if (family === 'geometry') {
-      return [
-        {
-          id: 'geometry-visual',
-          label: 'Add visual explainer page',
-          description: 'Open with a diagram-friendly page for definitions and examples.',
-          onClick: (): void => addPageFromTemplate('svg-gallery-page'),
-        },
-        {
-          id: 'geometry-diagram',
-          label: 'Insert SVG diagram',
-          description: 'Add an inline SVG block for a labelled shape or construction.',
-          onClick: (): void =>
-            updateDocument([...(activePage?.blocks ?? []), createKangurLessonSvgBlock()]),
-        },
-        {
-          id: 'geometry-gallery',
-          label: 'Build example gallery',
-          description: 'Use a gallery layout to compare multiple shapes or worked examples.',
-          onClick: (): void =>
-            updateDocument([
-              ...(activePage?.blocks ?? []),
-              createKangurLessonGridBlockFromTemplate('svg-gallery'),
-            ]),
-        },
-      ];
-    }
-    return [
-      {
-        id: 'logic-intro',
-        label: 'Start with reasoning prompt',
-        description: 'Introduce the pattern or rule with a compact explanation page.',
-        onClick: (): void => addPageFromTemplate('article'),
-      },
-      {
-        id: 'logic-hint',
-        label: 'Add hint callout',
-        description: 'Give learners a scaffold or clue without revealing the answer.',
-        onClick: (): void =>
-          updateDocument([...(activePage?.blocks ?? []), createKangurLessonCalloutBlock()]),
-      },
-      {
-        id: 'logic-quiz',
-        label: 'Add reasoning quiz',
-        description: 'Check whether the learner can apply the rule in a new situation.',
-        onClick: (): void =>
-          updateDocument([...(activePage?.blocks ?? []), createKangurLessonQuizBlock()]),
-      },
-    ];
-  }, [activePage?.blocks, addPageFromTemplate, lesson?.componentId, updateDocument]);
+  const starterRecipes = useKangurStarterRecipes(
+    lesson,
+    activePage,
+    updateDocument,
+    addPageFromTemplate
+  );
+
+
+
   return (
     <div className='grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]'>
       <div className='space-y-4'>
@@ -893,62 +480,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
               </div>
             </div>
           ) : null}
-          <div className='mt-4 rounded-2xl border border-border/60 bg-card/30 p-4'>
-            <div className='mb-3 flex flex-wrap items-start justify-between gap-3'>
-              <div>
-                <div className='text-sm font-semibold text-foreground'>Quick insert</div>
-                <div className='text-xs text-muted-foreground'>
-                  Add the next teaching block by intent instead of scanning one long toolbar.
-                </div>
-              </div>
-              <div className='relative min-w-[240px] max-w-sm flex-1'>
-                <Search className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
-                <Input
-                  value={insertQuery}
-                  onChange={(event): void => setInsertQuery(event.target.value)}
-                  placeholder='Search insert actions...'
-                  className='h-9 pl-9'
-                 aria-label='Search insert actions...' title='Search insert actions...'/>
-              </div>
-            </div>
-            <div className='space-y-4'>
-              {groupedQuickInsertActions.length === 0 ? (
-                <div className='rounded-2xl border border-dashed border-border/70 bg-card/20 p-4 text-sm text-muted-foreground'>
-                  No insert actions match that search yet.
-                </div>
-              ) : (
-                groupedQuickInsertActions.map(([group, actions]) => (
-                  <div key={group} className='space-y-2'>
-                    <div className='text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground'>
-                      {group}
-                    </div>
-                    <div className='grid gap-2 lg:grid-cols-2'>
-                      {actions.map((action) => (
-                        <button
-                          key={action.id}
-                          type='button'
-                          onClick={action.onClick}
-                          disabled={!activePage}
-                          aria-label={action.label}
-                          className='flex cursor-pointer items-start gap-3 rounded-2xl border border-border/60 bg-background/60 px-3 py-3 text-left transition hover:border-primary/25 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background disabled:pointer-events-none disabled:opacity-50'
-                        >
-                          <div className='rounded-xl border border-primary/20 bg-primary/10 p-2 text-primary'>
-                            <action.Icon className='size-4' />
-                          </div>
-                          <div className='min-w-0'>
-                            <div className='text-sm font-semibold text-foreground'>{action.label}</div>
-                            <div className='mt-1 text-xs leading-relaxed text-muted-foreground'>
-                              {action.description}
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          <KangurLessonQuickInsert activePage={activePage} updateDocument={updateDocument} />
           <div className='mt-3 text-xs text-muted-foreground'>
             Build lesson pages from typed blocks. Mix explanation, SVG references, interactive
             activities, and responsive layouts without switching tools.

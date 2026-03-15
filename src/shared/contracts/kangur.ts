@@ -4,6 +4,7 @@ import {
   createDefaultKangurAiTutorLearnerMood,
   kangurAiTutorLearnerMoodSchema,
 } from './kangur-ai-tutor-mood';
+import { activityLogSchema } from './system';
 
 const nonEmptyTrimmedString = z.string().trim().min(1);
 
@@ -584,8 +585,25 @@ export type KangurLearnerSessionEntry = z.infer<typeof kangurLearnerSessionEntry
 export const kangurLearnerSessionHistorySchema = z.object({
   sessions: z.array(kangurLearnerSessionEntrySchema),
   totalSessions: z.number().int().min(0),
+  nextOffset: z.number().int().min(0).nullable().optional(),
+  hasMore: z.boolean().optional(),
 });
 export type KangurLearnerSessionHistory = z.infer<typeof kangurLearnerSessionHistorySchema>;
+
+export const kangurLearnerInteractionEntrySchema = activityLogSchema;
+export type KangurLearnerInteractionEntry = z.infer<
+  typeof kangurLearnerInteractionEntrySchema
+>;
+
+export const kangurLearnerInteractionHistorySchema = z.object({
+  items: z.array(kangurLearnerInteractionEntrySchema),
+  total: z.number().int().min(0),
+  limit: z.number().int().min(1),
+  offset: z.number().int().min(0),
+});
+export type KangurLearnerInteractionHistory = z.infer<
+  typeof kangurLearnerInteractionHistorySchema
+>;
 
 export const kangurRoutePageSchema = z.enum([
   'Game',

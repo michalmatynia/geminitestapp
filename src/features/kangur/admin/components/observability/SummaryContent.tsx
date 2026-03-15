@@ -13,7 +13,7 @@ import {
 import Link from 'next/link';
 import { type JSX } from 'react';
 
-import { Button, Card, EmptyState, FormSection, MetadataItem, StatusBadge } from '@/shared/ui';
+import { Button, Card, CompactEmptyState, FormSection, MetadataItem, StatusBadge } from '@/shared/ui';
 import type { KangurRouteMetrics } from '@/shared/contracts';
 
 import {
@@ -209,11 +209,10 @@ export function SummaryContent(): JSX.Element {
       <div className='grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]'>
         <FormSection title='Degraded Dependencies' variant='subtle'>
           {!summary.errors || Object.keys(summary.errors).length === 0 ? (
-            <EmptyState
+            <CompactEmptyState
               title='No degraded dependencies'
               description='All summary contributors responded without a partial-failure marker.'
-              variant='compact'
-            />
+             />
           ) : (
             <div className='space-y-2'>
               {Object.entries(summary.errors).map(([key, message]) => (

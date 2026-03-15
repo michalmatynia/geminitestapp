@@ -6,7 +6,7 @@ import { cn } from '@/shared/utils';
 
 import { ActionMenu } from '../ActionMenu';
 import { DropdownMenuItem } from '../dropdown-menu';
-import { EmptyState } from '../empty-state';
+import { CompactEmptyState } from '../empty-state';
 import { LoadingState } from '../LoadingState';
 
 
@@ -64,7 +64,7 @@ export function SimpleSettingsList<T extends SimpleSettingsListItem>(
   }
 
   if (items.length === 0) {
-    return <EmptyState title={emptyMessage} variant='compact' className='py-8' />;
+    return <CompactEmptyState title={emptyMessage} className='py-8'  />;
   }
 
   const gridCols = {

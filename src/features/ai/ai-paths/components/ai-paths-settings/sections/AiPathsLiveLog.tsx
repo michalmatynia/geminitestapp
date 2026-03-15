@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 
 import { useRuntimeState } from '@/features/ai/ai-paths/context';
 import type { AiPathRuntimeEvent } from '@/shared/lib/ai-paths';
-import { StatusBadge, EmptyState } from '@/shared/ui';
+import { StatusBadge, CompactEmptyState } from '@/shared/ui';
 
 export function AiPathsLiveLog(): React.JSX.Element {
   const { runtimeEvents } = useRuntimeState();
@@ -53,12 +53,11 @@ export function AiPathsLiveLog(): React.JSX.Element {
             </div>
           ))
         ) : (
-          <EmptyState
+          <CompactEmptyState
             title='Log empty'
             description='Runtime log is empty. Fire a trigger to stream node/run events.'
-            variant='compact'
             className='border-dashed border-border/60 py-4'
-          />
+           />
         )}
       </div>
     </div>

@@ -39,6 +39,7 @@ export type KangurAssignmentListItem = {
   description: string;
   icon: string;
   priority: KangurAssignmentSnapshot['priority'];
+  status: KangurAssignmentSnapshot['progress']['status'];
   priorityLabel: string;
   priorityAccent: 'rose' | 'amber' | 'emerald';
   statusLabel: string;
@@ -363,6 +364,7 @@ export const buildKangurAssignmentListItem = (
     description: assignment.description,
     icon: assignment.target.type === 'lesson' ? '📚' : '🎯',
     priority: assignment.priority,
+    status: assignment.progress.status,
     priorityLabel: formatKangurAssignmentPriorityLabel(assignment.priority),
     priorityAccent: resolveKangurAssignmentPriorityAccent(assignment.priority),
     statusLabel: formatKangurAssignmentStatusLabel(assignment.progress.status),

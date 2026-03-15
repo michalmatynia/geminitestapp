@@ -10,7 +10,7 @@ import {
   type ImageStudioUiPreset,
 } from '@/features/ai/image-studio/utils/ui-presets';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, Label, Textarea, SelectSimple, useToast, Card, EmptyState } from '@/shared/ui';
+import { Button, Label, Textarea, SelectSimple, useToast, Card, CompactEmptyState } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
@@ -125,12 +125,11 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
         </div>
 
         {empty ? (
-          <EmptyState
+          <CompactEmptyState
             title='No presets'
             description='No UI presets saved yet. Save a UI from the Image Studio right panel.'
-            variant='compact'
             className='border-dashed border-border py-8'
-          />
+           />
         ) : (
           <div className='grid gap-4 md:grid-cols-2'>
             {presets.map((preset: ImageStudioUiPreset) => (

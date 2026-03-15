@@ -24,7 +24,7 @@ import {
   FormField,
   StandardDataTablePanel,
   Tag,
-  EmptyState,
+  CompactEmptyState,
   FilterPanel,
   FormActions,
 } from '@/shared/ui';
@@ -322,16 +322,15 @@ export function AdminNotesTagsPage(): React.JSX.Element {
           data={filteredTags}
           isLoading={loading}
           emptyState={
-            <EmptyState
+            <CompactEmptyState
               title={searchQuery ? 'No tags found' : 'No tags created yet'}
               description={
                 searchQuery
                   ? 'Try a different search query.'
                   : 'Create your first tag to start organizing notes.'
               }
-              variant='compact'
               className='py-8'
-            />
+             />
           }
         />
       </div>

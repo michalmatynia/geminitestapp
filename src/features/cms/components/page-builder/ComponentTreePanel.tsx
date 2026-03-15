@@ -5,7 +5,7 @@ import React, { useMemo, useState } from 'react';
 import { FolderTreeViewportV2, useMasterFolderTreeShell } from '@/features/foldertree';
 import type { PageZone, SectionInstance } from '@/shared/contracts/cms';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, FolderTreePanel, TreeHeader, EmptyState } from '@/shared/ui';
+import { Button, FolderTreePanel, TreeHeader, CompactEmptyState } from '@/shared/ui';
 import { canNestTreeNodeV2, type MasterTreeNode } from '@/shared/utils';
 
 import {
@@ -279,12 +279,11 @@ export function ComponentTreePanel(): React.ReactNode {
             <div className='p-4' data-testid='empty-page-state' />
           ) : panelCollapsed ? (
             <div className='p-4'>
-              <EmptyState
+              <CompactEmptyState
                 title='Tree Collapsed'
                 description='Structure tree is collapsed.'
-                variant='compact'
                 className='bg-card/30 border-dashed border-border/70 py-6'
-              />
+               />
             </div>
           ) : (
             <ComponentTreeNodeRuntimeProvider value={nodeRuntimeContextValue}>

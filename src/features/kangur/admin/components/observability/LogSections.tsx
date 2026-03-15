@@ -2,7 +2,7 @@
 
 import { type JSX } from 'react';
 
-import { Button, Card, EmptyState, FormSection, MetadataItem, StatusBadge } from '@/shared/ui';
+import { Button, Card, CompactEmptyState, FormSection, MetadataItem, StatusBadge } from '@/shared/ui';
 
 import { useObservabilitySummaryContext } from '../../AdminKangurObservabilityPage';
 import { useKnowledgeGraphObservability } from './KnowledgeGraphObservabilityContext';
@@ -29,11 +29,10 @@ export function RecentAnalyticsEvents(): JSX.Element {
     <div id='recent-analytics-events'>
       <FormSection title='Recent Analytics Events' variant='subtle'>
         {events.length === 0 ? (
-          <EmptyState
+          <CompactEmptyState
             title='No recent analytics events'
             description='Client telemetry has not recorded a recent Kangur event in this window.'
-            variant='compact'
-          />
+           />
         ) : (
           <div className='space-y-2'>
             {events.map((event) => {
@@ -110,11 +109,10 @@ export function RecentServerLogs(): JSX.Element {
   return (
     <FormSection title='Recent Server Logs' variant='subtle'>
       {logs.length === 0 ? (
-        <EmptyState
+        <CompactEmptyState
           title='No recent server logs'
           description='No Kangur server-side log entries were captured in this window.'
-          variant='compact'
-        />
+         />
       ) : (
         <div className='space-y-2'>
           {logs.map((log) => (

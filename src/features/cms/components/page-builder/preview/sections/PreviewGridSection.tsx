@@ -30,7 +30,7 @@ import { PreviewNodeSelectionButton } from '@/features/cms/components/page-build
 import { getSectionContainerClass, getSectionStyles, getTextAlign } from '@/features/cms/public';
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 import type { BlockInstance } from '@/shared/contracts/cms';
-import { Separator, EmptyState, Button } from '@/shared/ui';
+import { Separator, CompactEmptyState, Button } from '@/shared/ui';
 
 export function PreviewGridSection() {
   const { colorSchemes, layout } = useCmsPageContext();
@@ -156,12 +156,11 @@ export function PreviewGridSection() {
           {rowsToRender.length === 0 ? (
             showEditorChrome ? (
               <div className='py-8'>
-                <EmptyState
+                <CompactEmptyState
                   title='No rows'
                   description='Add rows to this grid section.'
-                  variant='compact'
                   className='bg-card/20'
-                />
+                 />
               </div>
             ) : null
           ) : showEditorChrome && isEmptyGrid && hasZeroSpacing && !hasFixedHeights ? (
@@ -383,11 +382,10 @@ export function PreviewGridSection() {
                                       if (contentBlocks.length === 0 && showEditorChrome) {
                                         return (
                                           <div className='flex h-full items-center justify-center p-4'>
-                                            <EmptyState
+                                            <CompactEmptyState
                                               title='Empty Column'
-                                              variant='compact'
                                               className='bg-transparent border-none'
-                                            />
+                                             />
                                           </div>
                                         );
                                       }
@@ -435,11 +433,10 @@ export function PreviewGridSection() {
                                     })()
                                   ) : showEditorChrome ? (
                                     <div className='flex h-full items-center justify-center p-4'>
-                                      <EmptyState
+                                      <CompactEmptyState
                                         title='Empty Column'
-                                        variant='compact'
                                         className='bg-transparent border-none'
-                                      />
+                                       />
                                     </div>
                                   ) : null}
                                 </div>

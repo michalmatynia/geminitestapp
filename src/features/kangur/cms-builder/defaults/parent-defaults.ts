@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { PageComponentInput } from '@/shared/contracts/cms';
 import {
   makeBlockSection,

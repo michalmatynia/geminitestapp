@@ -6,7 +6,7 @@ import {
   Alert,
   Button,
   Card,
-  EmptyState,
+  CompactEmptyState,
   FormSection,
   Input,
   MetadataItem,
@@ -469,11 +469,10 @@ export function KnowledgeGraphQueryPreviewSection(): JSX.Element {
               {error ? <Alert variant='warning'>{error}</Alert> : null}
 
               {!result ? (
-                <EmptyState
+                <CompactEmptyState
                   title='No graph preview yet'
                   description='Run a preview query to inspect the raw seed, normalized lookup text, tokens, and top graph hits.'
-                  variant='compact'
-                />
+                 />
               ) : (
                 <div className='space-y-4'>
                   <div className='grid gap-3 sm:grid-cols-2'>

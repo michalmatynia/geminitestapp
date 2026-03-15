@@ -3,7 +3,7 @@
 import { Zap, Cpu, Sparkles, Wand2 } from 'lucide-react';
 import React from 'react';
 
-import { FormModal, Label, StandardDataTablePanel, EmptyState } from '@/shared/ui';
+import { FormModal, Label, StandardDataTablePanel, CompactEmptyState } from '@/shared/ui';
 
 import { StudioActionButtonRow, type StudioActionButtonConfig } from './StudioActionButtonRow';
 import { StudioPromptTextSection } from './StudioPromptTextSection';
@@ -216,12 +216,11 @@ export function ExtractPromptParamsModal(): React.JSX.Element {
               maxHeight='20rem'
             />
           ) : (
-            <EmptyState
+            <CompactEmptyState
               title='No parameters'
               description='No parameters extracted yet. Use one of the extraction methods above.'
-              variant='compact'
               className='bg-card/20 border-dashed border-border py-12'
-            />
+             />
           )}
         </div>
       </div>

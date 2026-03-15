@@ -236,7 +236,7 @@ describe('ProductColumns queued badge', () => {
     const cell = nameColumn.cell({ row: { original: product } } as never);
     render(cell);
 
-    expect(screen.getByRole('button', { name: 'Brelok | Metal' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open Brelok | Metal' })).toBeInTheDocument();
   });
 
   it('falls back to nested localized names and legacy localized parameter fields', () => {
@@ -273,7 +273,7 @@ describe('ProductColumns queued badge', () => {
     const cell = nameColumn.cell({ row: { original: product } } as never);
     render(cell);
 
-    expect(screen.getByRole('button', { name: 'Keychain | Faux Leather' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open Keychain | Faux Leather' })).toBeInTheDocument();
   });
 
   it('preserves an existing composite product title instead of recomposing it from parameters', () => {
@@ -324,7 +324,7 @@ describe('ProductColumns queued badge', () => {
 
     expect(
       screen.getByRole('button', {
-        name: 'The Vessel | 13 cm | Faux Leather | Gaming Wallet | Hollow Knight',
+        name: 'Open The Vessel | 13 cm | Faux Leather | Gaming Wallet | Hollow Knight',
       })
     ).toBeInTheDocument();
   });
@@ -375,7 +375,7 @@ describe('ProductColumns queued badge', () => {
 
     expect(
       screen.getByRole('button', {
-        name: 'Silksong | 13 cm | Faux Leather | Gaming Wallet | Hollow Knight Test',
+        name: 'Open Silksong | 13 cm | Faux Leather | Gaming Wallet | Hollow Knight Test',
       })
     ).toBeInTheDocument();
   });

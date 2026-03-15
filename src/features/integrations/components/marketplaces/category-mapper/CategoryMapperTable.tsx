@@ -9,7 +9,7 @@ import {
   useCategoryMapperData,
   useCategoryMapperUIState,
 } from '@/features/integrations/context/CategoryMapperContext';
-import { StandardDataTablePanel, EmptyState, GenericMapperStats } from '@/shared/ui';
+import { StandardDataTablePanel, CompactEmptyState, GenericMapperStats } from '@/shared/ui';
 
 import { CategoryMapperNameCell } from './category-table/CategoryMapperNameCell';
 import { CategoryMapperSelectCell } from './category-table/CategoryMapperSelectCell';
@@ -96,12 +96,11 @@ export function CategoryMapperTable(): React.JSX.Element {
 
   if (externalCategories.length === 0 && !isLoading) {
     return (
-      <EmptyState
+      <CompactEmptyState
         title='No external categories found'
         description='Click "Fetch Categories" to load from Base.com.'
-        variant='compact'
         className='py-8'
-      />
+       />
     );
   }
 

@@ -39,7 +39,7 @@ import {
   Tooltip,
   useToast,
   SelectSimple,
-  EmptyState,
+  CompactEmptyState,
   FormSection,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -500,12 +500,11 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                 )}
               </div>
               {relatedFiles.length === 0 ? (
-                <EmptyState
-                  variant='compact'
+                <CompactEmptyState
                   title='No related documents'
                   description='Use the search above to find and link documents.'
                   className='py-12 border-dashed'
-                />
+                 />
               ) : (
                 <div className='grid gap-2'>
                   {relatedFiles.map((file) => {

@@ -30,6 +30,7 @@ import type {
   KangurLearnerActivityStatus,
   KangurLearnerActivityUpdateInput,
   KangurLearnerSessionHistory,
+  KangurLearnerInteractionHistory,
   KangurLearnerCreateInput,
   KangurLearnerProfile,
   KangurLearnerUpdateInput,
@@ -50,6 +51,7 @@ import {
   kangurLearnerActivitySnapshotSchema,
   kangurLearnerActivityStatusSchema,
   kangurLearnerSessionHistorySchema,
+  kangurLearnerInteractionHistorySchema,
   kangurProgressStateSchema,
   kangurScoreSchema,
   type KangurProgressState,
@@ -64,6 +66,7 @@ const KANGUR_ASSIGNMENTS_ENDPOINT = '/api/kangur/assignments';
 const KANGUR_LEARNERS_ENDPOINT = '/api/kangur/learners';
 const KANGUR_LEARNER_ACTIVITY_ENDPOINT = '/api/kangur/learner-activity';
 const KANGUR_LEARNER_SESSIONS_ENDPOINT = '/api/kangur/learners';
+const KANGUR_LEARNER_INTERACTIONS_ENDPOINT = '/api/kangur/learners';
 const DEFAULT_SCORE_LIMIT = 100;
 const AUTH_CACHE_TTL_MS = 30_000;
 const ANONYMOUS_AUTH_CACHE_TTL_MS = 8_000;
@@ -78,6 +81,7 @@ const assignmentListSchema = z.array(kangurAssignmentSnapshotSchema);
 const learnerProfileSchema = kangurLearnerProfileSchema;
 const learnerActivityStatusSchema = kangurLearnerActivityStatusSchema;
 const learnerSessionHistorySchema = kangurLearnerSessionHistorySchema;
+const learnerInteractionHistorySchema = kangurLearnerInteractionHistorySchema;
 
 type SessionUserCacheEntry = {
   user: KangurUser | null;
@@ -681,6 +685,55 @@ const updateAssignmentViaApi = async (
   }
 };
 
+const reassignAssignmentViaApi = async (id: string): Promise<KangurAssignmentSnapshot> => {
+  const endpoint = `${KANGUR_ASSIGNMENTS_ENDPOINT}/${encodeURIComponent(id)}/reassign`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: createActorAwareHeaders(),
+      credentials: 'same-origin',
+    });
+
+    if (!response.ok) {
+      const requestError = new Error(
+        `Kangur assignment reassign request failed with ${response.status}`
+      ) as Error & { status: number };
+      requestError.status = response.status;
+      throw requestError;
+    }
+
+    const payload = (await response.json()) as unknown;
+    const parsed = kangurAssignmentSnapshotSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new Error('Kangur assignment reassign payload validation failed.');
+    }
+
+    trackWriteSuccess('assignments.reassign', {
+      endpoint,
+      method: 'POST',
+      assignmentId: parsed.data.id,
+      status: parsed.data.progress.status,
+    });
+    return parsed.data;
+  } catch (error: unknown) {
+    trackWriteFailure('assignments.reassign', error, {
+      endpoint,
+      method: 'POST',
+      assignmentId: id,
+    });
+    logKangurClientError(error, {
+      source: 'kangur.local-platform',
+      action: 'assignments.reassign',
+      method: 'POST',
+      endpoint,
+      assignmentId: id,
+      ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
+    });
+    throw error;
+  }
+};
+
 const updateProgressViaApi = async (
   input: KangurProgressState,
   context?: KangurProgressUpdateContext
@@ -692,8 +745,8 @@ const updateProgressViaApi = async (
     if (context?.source === KANGUR_PROGRESS_CTA_SOURCE) {
       progressHeaders[KANGUR_PROGRESS_SOURCE_HEADER] = context.source;
     }
-    if (context?.cta) {
-      progressHeaders[KANGUR_PROGRESS_CTA_HEADER] = context.cta;
+    if (context?.cta?.trim()) {
+      progressHeaders[KANGUR_PROGRESS_CTA_HEADER] = context.cta.trim();
     }
 
     const response = await fetch(KANGUR_PROGRESS_ENDPOINT, {
@@ -837,13 +890,27 @@ const updateLearnerActivityViaApi = async (
   }
 };
 
-const buildLearnerSessionsUrl = (learnerId: string): string =>
-  `${KANGUR_LEARNER_SESSIONS_ENDPOINT}/${encodeURIComponent(learnerId)}/sessions`;
+const buildLearnerSessionsUrl = (
+  learnerId: string,
+  options?: { limit?: number; offset?: number }
+): string => {
+  const base = `${KANGUR_LEARNER_SESSIONS_ENDPOINT}/${encodeURIComponent(learnerId)}/sessions`;
+  const params = new URLSearchParams();
+  if (typeof options?.limit === 'number' && Number.isFinite(options.limit)) {
+    params.set('limit', String(Math.max(1, Math.floor(options.limit))));
+  }
+  if (typeof options?.offset === 'number' && Number.isFinite(options.offset)) {
+    params.set('offset', String(Math.max(0, Math.floor(options.offset))));
+  }
+  const query = params.toString();
+  return query ? `${base}?${query}` : base;
+};
 
 const requestLearnerSessions = async (
-  learnerId: string
+  learnerId: string,
+  options?: { limit?: number; offset?: number }
 ): Promise<KangurLearnerSessionHistory> => {
-  const endpoint = buildLearnerSessionsUrl(learnerId);
+  const endpoint = buildLearnerSessionsUrl(learnerId, options);
 
   try {
     const response = await fetch(endpoint, {
@@ -880,6 +947,74 @@ const requestLearnerSessions = async (
     logKangurClientError(error, {
       source: 'kangur.local-platform',
       action: 'learnerSessions.list',
+      method: 'GET',
+      endpoint,
+      learnerId,
+      ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
+    });
+    throw error;
+  }
+};
+
+const buildLearnerInteractionsUrl = (
+  learnerId: string,
+  options?: { limit?: number; offset?: number }
+): string => {
+  const base = `${KANGUR_LEARNER_INTERACTIONS_ENDPOINT}/${encodeURIComponent(
+    learnerId
+  )}/interactions`;
+  const params = new URLSearchParams();
+  if (typeof options?.limit === 'number' && Number.isFinite(options.limit)) {
+    params.set('limit', String(Math.max(1, Math.floor(options.limit))));
+  }
+  if (typeof options?.offset === 'number' && Number.isFinite(options.offset)) {
+    params.set('offset', String(Math.max(0, Math.floor(options.offset))));
+  }
+  const query = params.toString();
+  return query ? `${base}?${query}` : base;
+};
+
+const requestLearnerInteractions = async (
+  learnerId: string,
+  options?: { limit?: number; offset?: number }
+): Promise<KangurLearnerInteractionHistory> => {
+  const endpoint = buildLearnerInteractionsUrl(learnerId, options);
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: createActorAwareHeaders(),
+      credentials: 'same-origin',
+    });
+
+    if (!response.ok) {
+      const requestError = new Error(
+        `Kangur learner interactions request failed with ${response.status}`
+      ) as Error & { status: number };
+      requestError.status = response.status;
+      throw requestError;
+    }
+
+    const payload = (await response.json()) as unknown;
+    const parsed = learnerInteractionHistorySchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new Error('Kangur learner interactions payload validation failed.');
+    }
+
+    return parsed.data;
+  } catch (error: unknown) {
+    if (isKangurAuthStatusError(error)) {
+      throw error;
+    }
+
+    trackReadFailure('learnerInteractions.list', error, {
+      endpoint,
+      method: 'GET',
+      learnerId,
+    });
+    logKangurClientError(error, {
+      source: 'kangur.local-platform',
+      action: 'learnerInteractions.list',
       method: 'GET',
       endpoint,
       learnerId,
@@ -1179,13 +1314,19 @@ export const createLocalKangurPlatform = (): KangurPlatform => {
       create: async (input: KangurAssignmentCreateInput) => createAssignmentViaApi(input),
       update: async (id: string, input: KangurAssignmentUpdateInput) =>
         updateAssignmentViaApi(id, input),
+      reassign: async (id: string) => reassignAssignmentViaApi(id),
     },
     learnerActivity: {
       get: async () => requestLearnerActivityStatus(),
       update: async (input: KangurLearnerActivityUpdateInput) => updateLearnerActivityViaApi(input),
     },
     learnerSessions: {
-      list: async (learnerId: string) => requestLearnerSessions(learnerId),
+      list: async (learnerId: string, options?: { limit?: number; offset?: number }) =>
+        requestLearnerSessions(learnerId, options),
+    },
+    learnerInteractions: {
+      list: async (learnerId: string, options?: { limit?: number; offset?: number }) =>
+        requestLearnerInteractions(learnerId, options),
     },
   };
 };

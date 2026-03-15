@@ -32,6 +32,8 @@ const runtimeState = vi.hoisted(() => ({
 
 const getCurrentKangurDailyQuestMock = vi.hoisted(() => vi.fn());
 const useKangurPageContentEntryMock = vi.hoisted(() => vi.fn());
+const useKangurAssignmentsMock = vi.hoisted(() => vi.fn());
+const assignmentsListMock = vi.hoisted(() => vi.fn());
 const assignmentManagerMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () => ({
@@ -46,6 +48,17 @@ vi.mock('@/features/kangur/ui/services/daily-quests', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
+  useKangurAssignments: useKangurAssignmentsMock,
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurAssignmentsList', () => ({
+  default: (props: unknown) => {
+    assignmentsListMock(props);
+    return <div data-testid='assignments-list-stub' />;
+  },
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurAssignmentManager', () => ({
@@ -72,6 +85,14 @@ describe('KangurParentDashboardProgressWidget', () => {
       isSuccess: true,
       refetch: vi.fn(),
       status: 'success',
+    });
+    useKangurAssignmentsMock.mockReturnValue({
+      assignments: [],
+      isLoading: false,
+      error: null,
+      refresh: vi.fn(),
+      createAssignment: vi.fn(),
+      updateAssignment: vi.fn(),
     });
     runtimeState.value = {
       activeLearner: { id: 'learner-1', displayName: 'Maja' },
@@ -113,10 +134,22 @@ describe('KangurParentDashboardProgressWidget', () => {
 
     expect(screen.getByTestId('parent-dashboard-daily-quest')).toBeInTheDocument();
     expect(getCurrentKangurDailyQuestMock).toHaveBeenCalledWith(runtimeState.value.progress);
+    expect(screen.getByTestId('assignments-list-stub')).toBeInTheDocument();
+    expect(assignmentsListMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Ostatnie aktywne zadania',
+      })
+    );
+    expect(assignmentsListMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Aktywne zadania',
+      })
+    );
+    expect(screen.getByTestId('assignment-manager-stub')).toBeInTheDocument();
     expect(assignmentManagerMock).toHaveBeenCalledWith(
       expect.objectContaining({
         basePath: '/kangur',
-        view: 'tracking',
+        view: 'metrics',
       })
     );
   });
@@ -131,6 +164,7 @@ describe('KangurParentDashboardProgressWidget', () => {
 
     expect(screen.queryByTestId('parent-dashboard-daily-quest')).toBeNull();
     expect(getCurrentKangurDailyQuestMock).not.toHaveBeenCalled();
+    expect(assignmentsListMock).not.toHaveBeenCalled();
     expect(assignmentManagerMock).not.toHaveBeenCalled();
   });
 
@@ -145,6 +179,7 @@ describe('KangurParentDashboardProgressWidget', () => {
     expect(screen.queryByTestId('parent-dashboard-daily-quest')).toBeNull();
     expect(getCurrentKangurDailyQuestMock).not.toHaveBeenCalled();
     expect(screen.queryByText('Postęp ucznia')).toBeNull();
+    expect(assignmentsListMock).not.toHaveBeenCalled();
     expect(assignmentManagerMock).not.toHaveBeenCalled();
   });
 
@@ -173,11 +208,16 @@ describe('KangurParentDashboardProgressWidget', () => {
     expect(
       screen.getByText('Sprawdź rytm nauki i główny kierunek dalszej pracy.')
     ).toHaveClass('[color:var(--kangur-page-muted-text)]');
-    expect(assignmentManagerMock).toHaveBeenCalledWith(
+    expect(assignmentsListMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        basePath: '/kangur',
-        view: 'tracking',
+        title: 'Ostatnie aktywne zadania',
       })
     );
+    expect(assignmentsListMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Aktywne zadania',
+      })
+    );
+    expect(assignmentManagerMock).toHaveBeenCalled();
   });
 });

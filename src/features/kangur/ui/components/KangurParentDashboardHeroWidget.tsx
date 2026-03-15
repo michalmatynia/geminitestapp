@@ -6,9 +6,10 @@ import {
   LogOut,
   UserRound,
 } from 'lucide-react';
-import { type RefObject } from 'react';
+import { type RefObject, useMemo } from 'react';
 
 import { getKangurHomeHref, getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import { KANGUR_LESSONS_SETTING_KEY, parseKangurLessons } from '@/features/kangur/settings';
 import { KangurParentDashboardLearnerManagementWidget } from '@/features/kangur/ui/components/KangurParentDashboardLearnerManagementWidget';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
@@ -23,6 +24,8 @@ import {
 import { useKangurLearnerActivityStatus } from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
+import { buildKangurLearnerLiveState } from '@/features/kangur/ui/services/learner-live-state';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 const PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS = 110;
 
@@ -42,6 +45,7 @@ export function KangurParentDashboardHeroWidget({
     canManageLearners,
     isAuthenticated,
     logout,
+    progress,
     setCreateLearnerModalOpen,
     viewerName,
     viewerRoleLabel,
@@ -53,24 +57,25 @@ export function KangurParentDashboardHeroWidget({
       enabled: canManageLearners && hasActiveLearner,
       learnerId: activeLearnerId,
     });
-  const learnerActivitySnapshot = learnerActivityStatus?.snapshot ?? null;
-  const isLearnerOnline = Boolean(learnerActivityStatus?.isOnline);
-  const activityLabel = isActivityLoading
-    ? 'Sprawdzanie'
-    : isLearnerOnline
-      ? 'Uczeń online'
-      : 'Uczeń offline';
-  const activityDescription = isActivityLoading
-    ? 'Sprawdzamy bieżącą aktywność ucznia.'
-    : isLearnerOnline
-      ? learnerActivitySnapshot
-        ? `Aktualnie: ${learnerActivitySnapshot.title}.`
-        : 'Uczeń jest aktywny w aplikacji.'
-      : learnerActivitySnapshot
-        ? `Ostatnio: ${learnerActivitySnapshot.title}.`
-        : 'Brak bieżącej aktywności w aplikacji.';
-  const activityHref = isLearnerOnline ? learnerActivitySnapshot?.href ?? null : null;
-  const shouldShowActivityLink = Boolean(activityHref);
+  const settingsStore = useSettingsStore();
+  const rawLessons = settingsStore.get(KANGUR_LESSONS_SETTING_KEY);
+  const lessons = useMemo(() => parseKangurLessons(rawLessons), [rawLessons]);
+  const learnerLiveState = useMemo(
+    () =>
+      buildKangurLearnerLiveState({
+        activityStatus: learnerActivityStatus,
+        isActivityLoading,
+        progress,
+        lessons,
+        basePath,
+      }),
+    [basePath, isActivityLoading, learnerActivityStatus, lessons, progress]
+  );
+  const isLearnerOnline = learnerLiveState.isOnline;
+  const activityLabel = learnerLiveState.label;
+  const activityDescription = learnerLiveState.description;
+  const activityHref = learnerLiveState.href;
+  const shouldShowActivityLink = learnerLiveState.showLink;
   const { openLoginModal } = useKangurLoginModal();
   const { entry: guestHeroContent } = useKangurPageContentEntry('parent-dashboard-guest-hero');
   const { entry: dashboardHeroContent } = useKangurPageContentEntry('parent-dashboard-hero');

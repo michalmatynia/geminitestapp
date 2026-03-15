@@ -60,6 +60,8 @@ const nextConfig = {
   // Skip TypeScript type-checking during `next build` — already enforced in CI.
   // Saves ~5-10 minutes on a 5926-file project.
   typescript: { ignoreBuildErrors: true },
+  // Skip ESLint during build — already enforced in CI/editor.
+  eslint: { ignoreDuringBuilds: true },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
@@ -67,8 +69,7 @@ const nextConfig = {
     // Default proxy body clone limit (~10MB) is too low for multi-image product forms.
     // Raise it so multipart requests don't fail before route handlers read formData().
     proxyClientMaxBodySize: '50mb',
-    // Limit worker processes to 1 to stay within Vercel 8GB RAM limit.
-    cpus: 1,
+    // cpus: 1 was needed for webpack; Turbopack manages its own parallelism.
     optimizePackageImports: [
       'lucide-react',
       '@radix-ui/react-alert-dialog',

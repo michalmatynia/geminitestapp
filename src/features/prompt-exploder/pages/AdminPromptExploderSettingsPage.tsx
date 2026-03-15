@@ -29,7 +29,7 @@ import {
 } from '@/shared/ui';
 import {
   SettingsFieldsRenderer,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -164,7 +164,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
     ? brainEffectiveModelId
     : 'Not configured in AI Brain';
 
-  const runtimeFields: SettingsField<PromptExploderSettings['runtime']>[] = useMemo(
+  const runtimeFields: SettingsPanelField<PromptExploderSettings['runtime']>[] = useMemo(
     () => [
       {
         key: 'orchestratorEnabled',
@@ -228,7 +228,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
     [validationPatternStackOptions]
   );
 
-  const learningFields: SettingsField<PromptExploderSettings['learning']>[] = useMemo(
+  const learningFields: SettingsPanelField<PromptExploderSettings['learning']>[] = useMemo(
     () => [
       {
         key: 'enabled',

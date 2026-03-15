@@ -14,7 +14,7 @@ import {
 import { Checkbox, FormSection } from '@/shared/ui';
 import {
   SettingsFieldsRenderer,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import {
@@ -32,7 +32,7 @@ export function CssAnimationConfigPanel(): React.ReactNode {
     ? config.easing
     : 'custom';
 
-  const fields: SettingsField<CssAnimationConfig>[] = useMemo(
+  const fields: SettingsPanelField<CssAnimationConfig>[] = useMemo(
     () => [
       {
         key: 'effect',
@@ -58,7 +58,7 @@ export function CssAnimationConfigPanel(): React.ReactNode {
               key: 'replayOnExit',
               label: 'Replay when leaving/entering',
               type: 'checkbox',
-            } as SettingsField<CssAnimationConfig>,
+            } as SettingsPanelField<CssAnimationConfig>,
         ]
         : []),
       {
@@ -92,7 +92,7 @@ export function CssAnimationConfigPanel(): React.ReactNode {
                   label: '',
                   type: 'select',
                   options: CSS_EASINGS,
-                } as SettingsField<{ easing: string }>,
+                } as SettingsPanelField<{ easing: string }>,
               ]}
               values={{ easing: easingSelectValue || 'ease-out' }}
               onChange={(vals) => fieldChange(vals.easing === 'custom' ? value : vals.easing)}
@@ -106,7 +106,7 @@ export function CssAnimationConfigPanel(): React.ReactNode {
                     type: 'text',
                     placeholder: 'cubic-bezier(0.22, 0.61, 0.36, 1)',
                     className: 'text-xs font-mono',
-                  } as SettingsField<{ easing: string }>,
+                  } as SettingsPanelField<{ easing: string }>,
                 ]}
                 values={{ easing: String(value) }}
                 onChange={(vals) => fieldChange(vals.easing)}
@@ -129,7 +129,7 @@ export function CssAnimationConfigPanel(): React.ReactNode {
               min: 1,
               max: 50,
               step: 1,
-            } as SettingsField<CssAnimationConfig>,
+            } as SettingsPanelField<CssAnimationConfig>,
         ]
         : []),
       {
@@ -148,7 +148,7 @@ export function CssAnimationConfigPanel(): React.ReactNode {
     [config.trigger, config.loop, easingSelectValue]
   );
 
-  const transformFields: SettingsField<CssAnimationConfig>[] = useMemo(
+  const transformFields: SettingsPanelField<CssAnimationConfig>[] = useMemo(
     () => [
       {
         key: 'distance',

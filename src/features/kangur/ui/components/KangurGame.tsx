@@ -136,7 +136,7 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
         variant='soft'
       >
         <div className='flex items-center justify-between mb-1'>
-          <p className='text-sm font-bold text-orange-500 uppercase tracking-wide'>
+          <p className='break-words text-sm font-bold uppercase tracking-wide text-orange-500'>
             Pytanie {questionNumber}
           </p>
           {q.id.startsWith('2024_') && (
@@ -145,7 +145,7 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
             </KangurStatusChip>
           )}
         </div>
-        <p className='font-semibold leading-relaxed [color:var(--kangur-page-text)]'>
+        <p className='break-words font-semibold leading-relaxed [color:var(--kangur-page-text)]'>
           {q.question}
         </p>
         {ILLUSTRATIONS[q.id] &&
@@ -219,7 +219,7 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
               <KangurAnswerChoiceBadge className={badgeClassName}>
                 {String.fromCharCode(65 + index)}
               </KangurAnswerChoiceBadge>
-              <span>{choice}</span>
+          <span className='min-w-0 flex-1 break-words'>{choice}</span>
               {confirmed && choice === q.answer && (
                 <CheckCircle className='w-4 h-4 text-green-600 ml-auto flex-shrink-0' />
               )}
@@ -238,7 +238,7 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
         >
           <KangurInfoCard
             accent='sky'
-            className='rounded-[22px] text-sm'
+            className='rounded-[22px] text-sm break-words'
             data-testid='kangur-game-explanation'
             padding='sm'
             tone='accent'
@@ -295,7 +295,7 @@ function ResultView({
         dataTestId='kangur-game-summary-progress-bar'
         percent={pct}
       />
-      <p className='text-sm [color:var(--kangur-page-muted-text)]'>
+      <p className='break-words text-sm [color:var(--kangur-page-muted-text)]'>
         {pct}% poprawnych odpowiedzi
       </p>
       <KangurPracticeGameSummaryMessage>

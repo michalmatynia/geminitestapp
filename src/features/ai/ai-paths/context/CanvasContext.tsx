@@ -31,7 +31,7 @@ export interface PanState {
   originY: number;
 }
 
-export interface DragState {
+export interface CanvasDragState {
   nodeId: string;
   offsetX: number;
   offsetY: number;
@@ -46,7 +46,7 @@ export interface ConnectingState {
 export interface CanvasState {
   view: ViewState;
   panState: PanState | null;
-  dragState: DragState | null;
+  dragState: CanvasDragState | null;
   connecting: ConnectingState | null;
   connectingPos: { x: number; y: number } | null;
   lastDrop: { x: number; y: number } | null;
@@ -73,7 +73,7 @@ export interface CanvasActions {
   setIsPanning: (isPanning: boolean) => void;
 
   // Drag actions
-  setDragState: (dragState: DragState | null) => void;
+  setDragState: (dragState: CanvasDragState | null) => void;
   startDrag: (nodeId: string, offsetX: number, offsetY: number) => void;
   endDrag: () => void;
 
@@ -119,7 +119,7 @@ export function CanvasProvider({
 }: CanvasProviderProps): React.ReactNode {
   const [view, setViewState] = useState<ViewState>(initialView);
   const [panState, setPanStateInternal] = useState<PanState | null>(null);
-  const [dragState, setDragStateInternal] = useState<DragState | null>(null);
+  const [dragState, setDragStateInternal] = useState<CanvasDragState | null>(null);
   const [connecting, setConnectingInternal] = useState<ConnectingState | null>(null);
   const [connectingPos, setConnectingPosInternal] = useState<{ x: number; y: number } | null>(null);
   const [lastDrop, setLastDropInternal] = useState<{ x: number; y: number } | null>(null);

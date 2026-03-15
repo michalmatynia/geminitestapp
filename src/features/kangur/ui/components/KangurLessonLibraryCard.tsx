@@ -101,15 +101,15 @@ export function KangurLessonLibraryCardFooter({
   return (
     <>
       {footerChips.length > 0 ? <div className='flex flex-wrap gap-2'>{footerChips}</div> : null}
-      <div className='mt-3 text-xs font-medium [color:var(--kangur-page-muted-text)]'>
+      <div className='mt-3 break-words text-xs font-medium [color:var(--kangur-page-muted-text)]'>
         {masteryPresentation.summaryLabel}
       </div>
       {lessonAssignment ? (
-        <div className='mt-2 text-xs font-semibold text-rose-600'>
+        <div className='mt-2 break-words text-xs font-semibold text-rose-600'>
           {lessonAssignment.description}
         </div>
       ) : completedLessonAssignment ? (
-        <div className='mt-2 text-xs font-semibold text-emerald-600'>
+        <div className='mt-2 break-words text-xs font-semibold text-emerald-600'>
           Zadanie od rodzica zostało już wykonane. {completedLessonAssignment.progress.summary}
         </div>
       ) : null}

@@ -7,7 +7,7 @@ import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button, Input, Tag } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import type { ContextDraft } from '../hooks/useChatbotContextState';
@@ -25,7 +25,7 @@ export interface ChatbotContextModalRuntimeValue {
   open: boolean;
   onClose: () => void;
   title: string;
-  fields: SettingsField<ContextDraft>[];
+  fields: SettingsPanelField<ContextDraft>[];
   values: ContextDraft;
   onChange: (vals: Partial<ContextDraft>) => void;
   isSaving: boolean;
@@ -104,7 +104,7 @@ export function ChatbotContextModal(props: ChatbotContextModalProps): React.JSX.
   }, [modalDraft]);
   const draftTags = effectiveDraft.tags ?? [];
 
-  const fields: SettingsField<ContextDraft>[] = useMemo(
+  const fields: SettingsPanelField<ContextDraft>[] = useMemo(
     () => [
       {
         key: 'title',

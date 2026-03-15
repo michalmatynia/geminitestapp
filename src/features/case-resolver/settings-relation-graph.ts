@@ -3,7 +3,7 @@ import {
   DEFAULT_CASE_RESOLVER_RELATION_EDGE_META,
   DEFAULT_CASE_RESOLVER_RELATION_NODE_META,
   type AiNode,
-  type Edge,
+  type CaseResolverEdge,
   type CaseResolverAssetFile,
   type CaseResolverFile,
   type CaseResolverRelationEdgeKind,
@@ -146,12 +146,12 @@ const sanitizeRelationNodes = (value: unknown): AiNode[] => {
   return nodes;
 };
 
-const sanitizeRelationEdges = (value: unknown, validNodeIds: Set<string>): Edge[] => {
+const sanitizeRelationEdges = (value: unknown, validNodeIds: Set<string>): CaseResolverEdge[] => {
   if (!Array.isArray(value)) return [];
   const seen = new Set<string>();
-  const edges: Edge[] = [];
+  const edges: CaseResolverEdge[] = [];
   value.forEach((entry: unknown, index: number): void => {
-    let edge: Edge;
+    let edge: CaseResolverEdge;
     try {
       edge = parseCanonicalCaseResolverEdge(entry, `case_resolver.relation_graph.edges[${index}]`);
     } catch (error) {
@@ -372,7 +372,7 @@ export const buildCaseResolverRelationGraph = ({
   const rawNodes = sanitizeRelationNodes(sourceRecord['nodes']);
   const rawNodeIds = new Set(rawNodes.map((node: AiNode): string => node.id));
   const rawEdges = sanitizeRelationEdges(sourceRecord['edges'], rawNodeIds);
-  const rawEdgeIds = new Set(rawEdges.map((edge: Edge): string => edge.id));
+  const rawEdgeIds = new Set(rawEdges.map((edge: CaseResolverEdge): string => edge.id));
   const rawNodeMeta = sanitizeRelationNodeMeta(sourceRecord['nodeMeta'], rawNodeIds, now);
   const rawEdgeMeta = sanitizeRelationEdgeMeta(sourceRecord['edgeMeta'], rawEdgeIds, now);
   const existingNodeById = new Map<string, AiNode>(
@@ -563,11 +563,11 @@ export const buildCaseResolverRelationGraph = ({
   });
 
   const nextNodeIdSet = new Set<string>(nextNodes.map((node: AiNode): string => node.id));
-  const nextEdges: Edge[] = [];
+  const nextEdges: CaseResolverEdge[] = [];
   const nextEdgeMeta: Record<string, CaseResolverRelationEdgeMeta> = {};
   const usedEdgeIds = new Set<string>();
-  const existingEdgeById = new Map<string, Edge>(
-    rawEdges.map((edge: Edge): [string, Edge] => [edge.id, edge])
+  const existingEdgeById = new Map<string, CaseResolverEdge>(
+    rawEdges.map((edge: CaseResolverEdge): [string, CaseResolverEdge] => [edge.id, edge])
   );
 
   const upsertEdge = (input: {
@@ -689,7 +689,7 @@ export const buildCaseResolverRelationGraph = ({
     });
   });
 
-  rawEdges.forEach((edge: Edge): void => {
+  rawEdges.forEach((edge: CaseResolverEdge): void => {
     const existingMeta = rawEdgeMeta[edge.id];
     if (existingMeta?.isStructural) return;
     const sourceNodeId = edge.source?.trim() ?? '';

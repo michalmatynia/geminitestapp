@@ -21,7 +21,7 @@ import {
 } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -95,7 +95,7 @@ const EMPTY_EDITOR_STATE: ValidatorPatternListEditorState = {
   deletionLocked: true,
 };
 
-const EDITOR_FIELDS: SettingsField<ValidatorPatternListEditorState>[] = [
+const EDITOR_FIELDS: SettingsPanelField<ValidatorPatternListEditorState>[] = [
   {
     key: 'name',
     label: 'List Name',

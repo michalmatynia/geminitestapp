@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getCategoryMappingRepository } from '@/features/integrations/server';
+import { getCategoryMappingRepository } from '@/features/integrations/services/category-mapping-repository';
 import {
   bulkCategoryMappingRequestSchema,
   type MarketplaceBulkUpsertResponse,
@@ -24,7 +24,7 @@ export async function POST_handler(
   }
   const { connectionId, catalogId, mappings } = parsed.data;
 
-  const repo = await getCategoryMappingRepository();
+  const repo = getCategoryMappingRepository();
   const upsertedCount = await repo.bulkUpsert(connectionId, catalogId, mappings);
 
   const response: MarketplaceBulkUpsertResponse = {

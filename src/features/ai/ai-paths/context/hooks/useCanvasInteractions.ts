@@ -23,7 +23,7 @@ import {
   useCanvasActions,
   useCanvasRefs,
   type PanState,
-  type DragState,
+  type CanvasDragState,
   type ConnectingState,
 } from './useCanvas';
 import {
@@ -440,7 +440,7 @@ export interface UseCanvasInteractionsReturn
     UseCanvasInteractionsNavigationValue {
   edgePaths: EdgePath[];
   panState: PanState;
-  dragState: DragState;
+  dragState: CanvasDragState;
   connecting: ConnectingState | null;
   connectingPos: { x: number; y: number } | null;
   marqueeSelection: MarqueeSelectionState | null;

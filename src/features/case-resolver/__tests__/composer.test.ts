@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { compileCaseResolverPrompt } from '@/features/case-resolver/composer';
-import type { AiNode, Edge, CaseResolverGraph } from '@/shared/contracts/case-resolver';
+import type { AiNode, CaseResolverEdge, CaseResolverGraph } from '@/shared/contracts/case-resolver';
 
 const createPromptNode = (input: {
   id: string;
@@ -30,14 +30,14 @@ const createEdge = (input: {
   target: string;
   sourceHandle?: string;
   targetHandle?: string;
-}): Edge =>
+}): CaseResolverEdge =>
   ({
     id: input.id,
     source: input.source,
     target: input.target,
     sourceHandle: input.sourceHandle,
     targetHandle: input.targetHandle,
-  }) as Edge;
+  }) as CaseResolverEdge;
 
 describe('case-resolver composer', () => {
   it('compiles linked nodes from selected node and applies join/operator rules', () => {
@@ -47,7 +47,7 @@ describe('case-resolver composer', () => {
       createPromptNode({ id: 'c', title: 'C', template: 'Gamma', x: 200, y: 0 }),
       createPromptNode({ id: 'd', title: 'D', template: 'Detached', x: 0, y: 120 }),
     ];
-    const edges: Edge[] = [
+    const edges: CaseResolverEdge[] = [
       createEdge({
         id: 'e1',
         source: 'a',

@@ -45,6 +45,8 @@ export function RunHistoryPanel(): React.JSX.Element {
     setPrimaryRunId,
     secondaryRunId,
     setSecondaryRunId,
+    compareInspectorRowKey,
+    setCompareInspectorRowKey,
     compareResumeChangesOnly,
     setCompareResumeChangesOnly,
     primaryRun,
@@ -207,6 +209,8 @@ export function RunHistoryPanel(): React.JSX.Element {
           traceComparison={traceComparison}
           displayedComparisonRows={displayedComparisonRows}
           compareResumeChangesOnly={compareResumeChangesOnly}
+          compareInspectorRowKey={compareInspectorRowKey}
+          onSetCompareInspectorRowKey={setCompareInspectorRowKey}
           onToggleResumeChangesOnly={(): void => setCompareResumeChangesOnly((prev) => !prev)}
         />
       )}

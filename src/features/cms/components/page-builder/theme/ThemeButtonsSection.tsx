@@ -3,13 +3,13 @@
 import React from 'react';
 
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import type { SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { WEIGHT_OPTIONS } from './theme-constants';
 import { ThemeSettingsFieldsSection } from './ThemeSettingsFieldsSection';
 
 export function ThemeButtonsSection(): React.JSX.Element {
-  const fields: SettingsField<ThemeSettings>[] = [
+  const fields: SettingsPanelField<ThemeSettings>[] = [
     { key: 'btnPaddingX', label: 'Padding X', type: 'number', min: 4, max: 48, suffix: 'px' },
     { key: 'btnPaddingY', label: 'Padding Y', type: 'number', min: 4, max: 24, suffix: 'px' },
     { key: 'btnFontSize', label: 'Font size', type: 'number', min: 10, max: 24, suffix: 'px' },

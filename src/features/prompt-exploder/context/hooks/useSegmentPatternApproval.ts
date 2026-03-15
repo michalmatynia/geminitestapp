@@ -20,8 +20,8 @@ import { upsertLearnedTemplate } from '../../template-learning';
 
 import type { DocumentActions } from '../document/DocumentActionsContext';
 import type { DocumentState } from '../DocumentContext';
-import type { SettingsActions } from '../settings/SettingsActionsContext';
-import type { SettingsState } from '../SettingsContext';
+import type { PromptExploderSettingsActions } from '../settings/SettingsActionsContext';
+import type { PromptExploderSettingsState } from '../SettingsContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -49,26 +49,26 @@ export const useSegmentPatternApproval = ({
   updateSettingsBulk,
 }: {
   approvalDraft: ApprovalDraft;
-  activeValidationScope: SettingsState['activeValidationScope'];
+  activeValidationScope: PromptExploderSettingsState['activeValidationScope'];
   documentState: DocumentState['documentState'];
-  effectiveLearnedTemplates: SettingsState['effectiveLearnedTemplates'];
-  learningDraft: SettingsState['learningDraft'];
-  promptExploderSettings: SettingsState['promptExploderSettings'];
-  promptSettings: SettingsState['promptSettings'];
+  effectiveLearnedTemplates: PromptExploderSettingsState['effectiveLearnedTemplates'];
+  learningDraft: PromptExploderSettingsState['learningDraft'];
+  promptExploderSettings: PromptExploderSettingsState['promptExploderSettings'];
+  promptSettings: PromptExploderSettingsState['promptSettings'];
   promptText: DocumentState['promptText'];
-  runtimeLearnedTemplates: SettingsState['runtimeLearnedTemplates'];
-  runtimeValidationRules: SettingsState['runtimeValidationRules'];
+  runtimeLearnedTemplates: PromptExploderSettingsState['runtimeLearnedTemplates'];
+  runtimeValidationRules: PromptExploderSettingsState['runtimeValidationRules'];
   selectedSegment: DocumentState['selectedSegment'];
-  settingsMap: SettingsState['settingsMap'];
-  templateMergeThreshold: SettingsState['templateMergeThreshold'];
+  settingsMap: PromptExploderSettingsState['settingsMap'];
+  templateMergeThreshold: PromptExploderSettingsState['templateMergeThreshold'];
   toast: Toast;
   setDocumentState: DocumentActions['setDocumentState'];
   setManualBindings: DocumentActions['setManualBindings'];
   setSelectedSegmentId: DocumentActions['setSelectedSegmentId'];
-  setSessionLearnedRules: SettingsActions['setSessionLearnedRules'];
-  setSessionLearnedTemplates: SettingsActions['setSessionLearnedTemplates'];
-  updateSetting: SettingsActions['updateSetting'];
-  updateSettingsBulk: SettingsActions['updateSettingsBulk'];
+  setSessionLearnedRules: PromptExploderSettingsActions['setSessionLearnedRules'];
+  setSessionLearnedTemplates: PromptExploderSettingsActions['setSessionLearnedTemplates'];
+  updateSetting: PromptExploderSettingsActions['updateSetting'];
+  updateSettingsBulk: PromptExploderSettingsActions['updateSettingsBulk'];
 }) =>
   useCallback(async () => {
     if (!selectedSegment) {

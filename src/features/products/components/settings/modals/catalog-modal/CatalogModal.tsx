@@ -8,7 +8,7 @@ import type { EntityModalProps } from '@/shared/contracts/ui';
 import { Alert } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { CatalogLanguagesSection } from './CatalogLanguagesSection';
@@ -164,7 +164,7 @@ export function CatalogModal(props: CatalogModalProps): React.JSX.Element {
     setForm((prev) => ({ ...prev, ...vals }));
   };
 
-  const fields: SettingsField<typeof form>[] = [
+  const fields: SettingsPanelField<typeof form>[] = [
     {
       key: 'name',
       label: 'Catalog Name',

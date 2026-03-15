@@ -13,6 +13,7 @@ const {
   useKangurAuthMock,
   useKangurProgressStateMock,
   useKangurPageContentEntryMock,
+  openLoginModalMock,
   navigateToLoginMock,
   logoutMock,
   selectLearnerMock,
@@ -22,6 +23,7 @@ const {
   useKangurAuthMock: vi.fn(),
   useKangurProgressStateMock: vi.fn(),
   useKangurPageContentEntryMock: vi.fn(),
+  openLoginModalMock: vi.fn(),
   navigateToLoginMock: vi.fn(),
   logoutMock: vi.fn(),
   selectLearnerMock: vi.fn(),
@@ -63,6 +65,12 @@ vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
+  useKangurLoginModal: () => ({
+    openLoginModal: openLoginModalMock,
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurAssignmentManager', () => ({
@@ -124,7 +132,9 @@ describe('ParentDashboard page', () => {
       'glass-panel',
       'border-white/78'
     );
-    expect(screen.getByRole('heading', { name: 'Panel Rodzica' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Panel Rodzica / Nauczyciela' })
+    ).toBeInTheDocument();
     expect(
       screen.getByText(
         'Ten widok pokazuje prywatne postępy ucznia, więc wymaga konta rodzica. Jeśli go jeszcze nie masz, załóż je bez opuszczania StudiQ.'
@@ -134,11 +144,11 @@ describe('ParentDashboard page', () => {
     await userEvent.click(screen.getByRole('button', { name: /Zaloguj się/i }));
     await userEvent.click(screen.getByRole('button', { name: /Utwórz konto rodzica/i }));
 
-    expect(navigateToLoginMock).toHaveBeenCalledTimes(2);
-    expect(navigateToLoginMock).toHaveBeenLastCalledWith({
+    expect(openLoginModalMock).toHaveBeenCalledTimes(2);
+    expect(openLoginModalMock).toHaveBeenLastCalledWith(null, {
       authMode: 'create-account',
     });
-    expect(screen.getByRole('button', { name: /Wróć do poprzedniej strony/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Wróć do poprzedniej strony/i })).toBeNull();
   });
 
   it('renders the authenticated dashboard and supports tab switching and logout', async () => {
@@ -218,15 +228,13 @@ describe('ParentDashboard page', () => {
       'rounded-full',
       'border'
     );
-    expect(screen.getAllByPlaceholderText('Imie ucznia')[0]).toHaveClass(
-      'soft-card'
-    );
-    expect(screen.getByRole('combobox')).toHaveClass('soft-card');
-    expect(progressTab).toHaveAttribute('aria-selected', 'true');
-    expect(scoresTab).toHaveAttribute('aria-selected', 'false');
+    expect(screen.getByRole('button', { name: /Edytuj Profil/i })).toBeInTheDocument();
+    expect(screen.queryByRole('combobox')).toBeNull();
+    expect(progressTab).toHaveAttribute('aria-selected', 'false');
+    expect(scoresTab).toHaveAttribute('aria-selected', 'true');
     expect(assignmentsTab).toHaveAttribute('aria-selected', 'false');
-    expect(progressTab).toHaveClass('kangur-segmented-control-item-active');
-    expect(scoresTab).not.toHaveClass('kangur-segmented-control-item-active');
+    expect(progressTab).not.toHaveClass('kangur-segmented-control-item-active');
+    expect(scoresTab).toHaveClass('kangur-segmented-control-item-active');
     expect(assignmentsTab).not.toHaveClass('kangur-segmented-control-item-active');
 
     await userEvent.click(screen.getByRole('button', { name: /ola/i }));

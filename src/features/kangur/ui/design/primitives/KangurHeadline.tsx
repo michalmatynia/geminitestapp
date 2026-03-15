@@ -6,7 +6,7 @@ import { cn } from '@/features/kangur/utils/cn';
 import { type KangurAccent } from '../tokens';
 
 export const kangurHeadlineVariants = cva(
-  'font-extrabold tracking-tight leading-tight [font-family:var(--kangur-font-heading,var(--app-font-heading))]',
+  'break-words font-extrabold tracking-tight leading-tight [font-family:var(--kangur-font-heading,var(--app-font-heading))]',
   {
     variants: {
       size: {

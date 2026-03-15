@@ -289,7 +289,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                   className='w-full items-center'
                   contentClassName='min-w-0 flex-1'
                   description={`Login: ${learner.loginName}`}
-                  descriptionClassName='text-xs'
+                  descriptionClassName='break-words text-xs'
                   footer={
                     <div
                       className={cn(
@@ -317,7 +317,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                     </KangurIconBadge>
                   }
                   title={learner.displayName}
-                  titleClassName='font-bold leading-normal'
+                  titleClassName='break-words font-bold leading-normal'
                 />
               </KangurIconSummaryOptionCard>
             );
@@ -587,7 +587,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                       <KangurMetaText caps size='xs'>
                         Login ucznia
                       </KangurMetaText>
-                      <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                      <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
                         {activeLearner.loginName}
                       </div>
                     </div>
@@ -595,7 +595,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                       <KangurMetaText caps size='xs'>
                         Status profilu
                       </KangurMetaText>
-                      <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                      <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
                         {activeLearner.status === 'active' ? 'Aktywny' : 'Wyłączony'}
                       </div>
                     </div>
@@ -603,7 +603,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                       <KangurMetaText caps size='xs'>
                         Wiek
                       </KangurMetaText>
-                      <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                      <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
                         {typeof activeLearner.age === 'number'
                           ? `${activeLearner.age} lat`
                           : 'Brak danych'}
@@ -613,7 +613,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                       <KangurMetaText caps size='xs'>
                         Ostatnie logowanie / aktywność
                       </KangurMetaText>
-                      <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                      <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
                         {lastActivityLabel}
                       </div>
                     </div>
@@ -621,7 +621,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                       <KangurMetaText caps size='xs'>
                         Profil utworzony
                       </KangurMetaText>
-                      <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                      <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
                         {formatDateTime(activeLearner.createdAt)}
                       </div>
                     </div>
@@ -629,7 +629,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                       <KangurMetaText caps size='xs'>
                         Ostatnia aktualizacja profilu
                       </KangurMetaText>
-                      <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                      <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
                         {formatDateTime(activeLearner.updatedAt)}
                       </div>
                     </div>
@@ -690,7 +690,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                                   <KangurMetaText caps size='xs'>
                                     Start
                                   </KangurMetaText>
-                                  <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                                  <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
                                     {formatDateTime(session.startedAt)}
                                   </div>
                                 </div>
@@ -698,7 +698,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                                   <KangurMetaText caps size='xs'>
                                     Koniec
                                   </KangurMetaText>
-                                  <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                                  <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
                                     {endedLabel}
                                   </div>
                                 </div>
@@ -706,7 +706,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                                   <KangurMetaText caps size='xs'>
                                     Czas trwania
                                   </KangurMetaText>
-                                  <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                                  <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
                                     {durationLabel}
                                   </div>
                                 </div>
@@ -807,7 +807,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                   description={
                     <>
                       Aktualizujesz dane ucznia{' '}
-                      <span className='font-semibold [color:var(--kangur-page-text)]'>
+                      <span className='break-words font-semibold [color:var(--kangur-page-text)]'>
                         {activeLearner.displayName}
                       </span>
                       .

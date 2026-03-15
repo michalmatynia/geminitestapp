@@ -6,7 +6,7 @@ import type {
   AiNode,
   CaseResolverNodeMeta,
   CaseResolverFile,
-  Edge,
+  CaseResolverEdge,
   CaseResolverEdgeMeta,
   CaseResolverCompileResult,
   CaseResolverSnapshotNodeMeta as CaseResolverNodeFileMeta,
@@ -27,7 +27,7 @@ export type NodeFileWorkspaceContextValue = {
   assetId: string;
   assetName: string;
   nodes: AiNode[];
-  edges: Edge[];
+  edges: CaseResolverEdge[];
   selectedNodeId: string | null;
   selectedEdgeId: string | null;
   configOpen: boolean;
@@ -69,7 +69,7 @@ export type NodeFileWorkspaceContextValue = {
   updateNode: (nodeId: string, patch: Partial<AiNode>) => void;
   setNodeFileMeta: (nodeId: string, meta: CaseResolverNodeFileMeta) => void;
   setNodes: (nodes: AiNode[]) => void;
-  setEdges: (edges: Edge[]) => void;
+  setEdges: (edges: CaseResolverEdge[]) => void;
   setView: (view: { x: number; y: number; scale: number }) => void;
   view: { x: number; y: number; scale: number };
   canvasHostRef: React.RefObject<HTMLDivElement | null>;
@@ -93,7 +93,7 @@ export type NodeFileWorkspaceContextValue = {
   selectedPromptSecondaryOutputHint?: string;
   updateSelectedPromptTemplate?: (template: string) => void;
   updateSelectedNodeMeta?: (patch: Partial<CaseResolverNodeMeta>) => void;
-  selectedEdge?: Edge | null;
+  selectedEdge?: CaseResolverEdge | null;
   selectedEdgeJoinMode?: string;
   updateSelectedEdgeMeta?: (patch: Partial<CaseResolverEdgeMeta>) => void;
   hasPendingSnapshotChanges?: boolean;

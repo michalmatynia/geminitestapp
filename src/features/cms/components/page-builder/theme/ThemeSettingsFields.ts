@@ -2,13 +2,13 @@ import React from 'react';
 
 import type { ThemeSettings, ColorScheme } from '@/shared/contracts/cms-theme';
 import { SelectSimple } from '@/shared/ui';
-import type { SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 export const getFieldsForSection = (
   section: string,
   theme: ThemeSettings,
   themePresetOptions: Array<{ label: string; value: string }>
-): SettingsField<ThemeSettings>[] => {
+): SettingsPanelField<ThemeSettings>[] => {
   switch (section) {
     case 'Global Settings':
       return [
@@ -62,7 +62,7 @@ export const getFieldsForSection = (
               step: 0.01,
               suffix: 'x',
             },
-          ] as SettingsField<ThemeSettings>[])
+          ] as SettingsPanelField<ThemeSettings>[])
           : []),
       ];
 
@@ -624,7 +624,7 @@ export const getFieldsForSection = (
           ? ([
             { key: 'searchShowVendor', label: 'Show product vendor', type: 'checkbox' },
             { key: 'searchShowPrice', label: 'Show product price', type: 'checkbox' },
-          ] as SettingsField<ThemeSettings>[])
+          ] as SettingsPanelField<ThemeSettings>[])
           : []),
         { key: 'searchMaxResults', label: 'Max results', type: 'number', min: 3, max: 20 },
       ];
@@ -702,7 +702,7 @@ export const getFieldsForSection = (
                 value: scheme.id,
               })),
             },
-          ] as SettingsField<ThemeSettings>[])
+          ] as SettingsPanelField<ThemeSettings>[])
           : []),
       ];
 

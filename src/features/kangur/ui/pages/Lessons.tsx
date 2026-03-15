@@ -90,8 +90,10 @@ const LessonLoadingFallbackCard = (): React.JSX.Element => {
         <KangurStatusChip accent='indigo' className='uppercase tracking-[0.18em]' size='sm'>
           Lekcja
         </KangurStatusChip>
-        <div className='text-base font-semibold text-slate-700'>Ładowanie lekcji...</div>
-        <p className='max-w-lg text-sm text-slate-500'>
+        <div className='break-words text-base font-semibold text-slate-700'>
+          Ładowanie lekcji...
+        </div>
+        <p className='max-w-lg break-words text-sm text-slate-500'>
           Przygotowujemy materiał, aby przejście do aktywnej sekcji było płynniejsze.
         </p>
       </KangurGlassPanel>
@@ -985,12 +987,12 @@ export default function Lessons() {
                               {activeLessonSecretPanelContent?.title ?? 'Ukryty finisz'}
                             </h2>
                             <p
-                              className='text-sm font-semibold uppercase tracking-[0.18em] text-amber-700'
+                              className='break-words text-sm font-semibold uppercase tracking-[0.18em] text-amber-700'
                               data-testid='lessons-secret-host-label'
                             >
                               {activeLesson.title}
                             </p>
-                            <p className='max-w-xl text-sm leading-relaxed text-slate-600'>
+                            <p className='max-w-xl break-words text-sm leading-relaxed text-slate-600'>
                               {activeLessonSecretPanelContent?.summary ??
                                 'Złota pigułka odblokowała finał na samym końcu ostatniej lekcji w kolejce. Trafiłeś od razu do ukrytego zakończenia.'}
                             </p>

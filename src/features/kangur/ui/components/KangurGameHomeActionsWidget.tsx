@@ -152,7 +152,7 @@ function KangurHomeActionCard({
         >
           {actionSymbol}
         </span>
-        <span className='home-action-featured-label max-w-full text-balance text-center sm:justify-self-center'>
+        <span className='home-action-featured-label max-w-full break-words text-balance text-center sm:justify-self-center'>
           {actionLabel}
         </span>
         {actionTrailingSymbol ? (

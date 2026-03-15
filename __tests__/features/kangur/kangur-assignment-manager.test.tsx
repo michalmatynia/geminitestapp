@@ -121,8 +121,8 @@ describe('KangurAssignmentManager', () => {
     expect(practiceFilter).toHaveAttribute('aria-pressed', 'false');
 
     expect(screen.getByText('Przydziel nowe zadanie')).toBeInTheDocument();
-    expect(screen.getByText('Podpowiedzi z postępu ucznia')).toBeInTheDocument();
-    expect(screen.getByText('Podpowiedzi z postępu ucznia')).toHaveClass('rounded-full', 'border');
+    expect(screen.getByText('Sugestie od StudiQ')).toBeInTheDocument();
+    expect(screen.getByText('Sugestie od StudiQ')).toHaveClass('rounded-full', 'border');
     expect(screen.getAllByTestId(/assignment-manager-recommended-card-/)[0]).toHaveClass(
       'soft-card'
     );
@@ -165,7 +165,7 @@ describe('KangurAssignmentManager', () => {
     expect(screen.queryByText('Nauka zegara')).not.toBeInTheDocument();
     expect(screen.getByText('Trening: Dzielenie')).toBeInTheDocument();
 
-    await userEvent.click(screen.getAllByRole('button', { name: 'Przypisz' })[0]!);
+    await userEvent.click(screen.getAllByRole('button', { name: 'Przypisz sugestię' })[0]!);
 
     expect(createAssignmentMock).toHaveBeenCalledTimes(1);
     expect(screen.getByText(/Przypisano:/i)).toBeInTheDocument();
@@ -267,18 +267,11 @@ describe('KangurAssignmentManager', () => {
     render(<KangurAssignmentManager basePath='/kangur' />);
 
     expect(screen.getByText('Monitorowanie zadań')).toBeInTheDocument();
-    expect(screen.getByText('Do uwagi')).toBeInTheDocument();
     expect(screen.getByText('Skuteczność wykonania')).toBeInTheDocument();
     expect(screen.getByText('Skuteczność wykonania').parentElement).toHaveClass(
       'soft-card'
     );
     expect(screen.getByText('33%')).toBeInTheDocument();
-    expect(
-      screen.getByText('Wysoki priorytet, ale uczeń jeszcze nie rozpoczął tego zadania.')
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('Postęp jest poniżej polowy celu, warto przypomniec o kontynuacji.')
-    ).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Przypisz sugestię' }));
 
@@ -326,10 +319,6 @@ describe('KangurAssignmentManager', () => {
 
     render(<KangurAssignmentManager basePath='/kangur' />);
 
-    expect(screen.getByTestId('assignment-manager-attention-empty')).toHaveClass(
-      'soft-card',
-      'border-dashed'
-    );
-    expect(screen.getByText('Brak zadań wymagających dodatkowej reakcji.')).toBeInTheDocument();
+    expect(screen.getByText('Brak aktywnych zadań dla ucznia.')).toBeInTheDocument();
   });
 });

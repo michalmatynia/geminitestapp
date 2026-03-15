@@ -4,9 +4,6 @@ import type {
   AiNode,
   DataContractNodeIssueSummary,
   DataContractPreflightIssue,
-  PathFlowIntensity,
-  Edge,
-  RuntimeState,
   SvgDetailLevel,
 } from '@/shared/lib/ai-paths';
 import { isObjectRecord } from '@/shared/utils/object-utils';
@@ -17,9 +14,6 @@ export {
   BLOCKER_PROCESSING_STATUSES,
   formatRuntimeStatusLabel,
 } from './canvas/signal-flow-visual-state';
-
-type RuntimeEvent = Record<string, unknown>;
-type NodeProcessingStatus = string;
 
 export const DEFAULT_NODE_NOTE_COLOR = '#f5e7c3';
 export const EDGE_ROUTING_MODE_STORAGE_KEY = 'ai-paths:canvas-edge-routing-mode';

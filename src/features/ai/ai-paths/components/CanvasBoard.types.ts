@@ -20,7 +20,7 @@ import {
 import {
   type ViewState,
   type PanState,
-  type DragState,
+  type CanvasDragState,
   type ConnectingState,
 } from '../context/CanvasContext';
 import { type EdgeRoutingMode, type EdgePath } from '../context/hooks/useEdgePaths';
@@ -39,7 +39,7 @@ export interface CanvasBoardState {
   // View State
   view: ViewState;
   panState: PanState | null;
-  dragState: DragState | null;
+  dragState: CanvasDragState | null;
   lastDrop: { x: number; y: number } | null;
   connecting: ConnectingState | null;
   connectingPos: { x: number; y: number } | null;

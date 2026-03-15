@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import { type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import { type SettingsPanelField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import {
   CaseResolverEntitySettingsModal,
@@ -39,7 +39,7 @@ interface BaseCaseResolverEntityModalProps<
   setFormData: React.Dispatch<React.SetStateAction<TForm>>;
   isSaving: boolean;
   onSave: () => void;
-  fields: SettingsField<TForm>[];
+  fields: SettingsPanelField<TForm>[];
   createTitle: string;
   editTitle: string;
   parentNullSentinel?: string;
@@ -107,7 +107,7 @@ export function CaseResolverCategoryModal(
 ): React.JSX.Element {
   const { parentOptions, isOpen, onClose, item, formData, setFormData, isSaving, onSave } = props;
 
-  const fields: SettingsField<CategoryFormData>[] = useMemo(
+  const fields: SettingsPanelField<CategoryFormData>[] = useMemo(
     () => [
       {
         key: 'name',
@@ -178,7 +178,7 @@ export function CaseResolverIdentifierModal(
     onSave,
   } = props;
 
-  const fields: SettingsField<CaseIdentifierFormData>[] = useMemo(
+  const fields: SettingsPanelField<CaseIdentifierFormData>[] = useMemo(
     () => [
       {
         key: 'name',
@@ -236,7 +236,7 @@ export function CaseResolverTagModal(props: CaseResolverTagModalProps): React.JS
   const { parentTagOptions, isOpen, onClose, item, formData, setFormData, isSaving, onSave } =
     props;
 
-  const fields: SettingsField<TagFormData>[] = useMemo(
+  const fields: SettingsPanelField<TagFormData>[] = useMemo(
     () => [
       {
         key: 'name',

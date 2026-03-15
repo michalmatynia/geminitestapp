@@ -494,13 +494,13 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
                 {recommendation.label}
               </KangurStatusChip>
               <p
-                className='mt-3 text-lg font-extrabold [color:var(--kangur-page-text)]'
+                className='mt-3 break-words text-lg font-extrabold [color:var(--kangur-page-text)]'
                 data-testid='kangur-operation-recommendation-title'
               >
                 {recommendation.title}
               </p>
               <p
-                className='mt-1 text-sm [color:var(--kangur-page-muted-text)]'
+                className='mt-1 break-words text-sm [color:var(--kangur-page-muted-text)]'
                 data-testid='kangur-operation-recommendation-description'
               >
                 {recommendation.description}

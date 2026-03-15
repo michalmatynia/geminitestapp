@@ -15,6 +15,7 @@ import {
   parseKangurTestQuestionStore,
   publishReadyQuestions,
   reorderQuestions,
+  shouldDemotePublishedQuestionAfterEdit,
   toQuestionFormData,
   upsertKangurTestQuestion,
   type QuestionFormData,
@@ -22,6 +23,7 @@ import {
 import {
   canonicalizeKangurTestSuites,
   KANGUR_TEST_SUITES_SETTING_KEY,
+  demoteInvalidLiveKangurTestSuites,
   demoteKangurTestSuitesToDraft,
   promoteKangurTestSuitesLive,
 } from '../../test-suites';
@@ -29,6 +31,7 @@ import {
   clearQuestionEditorDraft,
   QUESTION_EDITOR_NEW_DRAFT_SLOT,
 } from '../question-editor-drafts';
+import { moveItem } from '../utils';
 import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
 
 const buildQuestionEditorSnapshot = (
@@ -124,8 +127,9 @@ export function useKangurQuestionsMutations(
         key: KANGUR_TEST_QUESTIONS_SETTING_KEY,
         value: serializeSetting(nextStore),
       });
+      const questionCount = publishedQuestionIds.length;
       toast(
-        `Published ${publishedQuestionIds.length} ready question${publishedQuestionIds.length === 1 ? '' : 's'}.`,
+        `Published ${questionCount} ready question${questionCount === 1 ? '' : 's'} in ${suite.title}.`,
         { variant: 'success' }
       );
     } catch (error) {
@@ -159,8 +163,9 @@ export function useKangurQuestionsMutations(
         key: KANGUR_TEST_SUITES_SETTING_KEY,
         value: serializeSetting(canonicalizeKangurTestSuites(nextSuites)),
       });
+      const questionCount = publishedQuestionIds.length;
       toast(
-        `Published ${publishedQuestionIds.length} ready question and marked live.`,
+        `Published ${questionCount} ready question${questionCount === 1 ? '' : 's'} and marked ${suite.title} live for learners (1 suite updated).`,
         { variant: 'success' }
       );
     } catch (error) {
@@ -185,10 +190,9 @@ export function useKangurQuestionsMutations(
         key: KANGUR_TEST_SUITES_SETTING_KEY,
         value: serializeSetting(canonicalizeKangurTestSuites(nextSuites)),
       });
-      toast(
-        `Suite is now live.`,
-        { variant: 'success' }
-      );
+      toast(`Suite ${suite.title} is now live for learners (1 suite updated).`, {
+        variant: 'success',
+      });
     } catch (error) {
       logClientError(error);
       logClientError(error, {
@@ -211,10 +215,9 @@ export function useKangurQuestionsMutations(
         key: KANGUR_TEST_SUITES_SETTING_KEY,
         value: serializeSetting(canonicalizeKangurTestSuites(nextSuites)),
       });
-      toast(
-        `Suite is now offline.`,
-        { variant: 'success' }
-      );
+      toast(`Suite ${suite.title} is now offline for learners (1 suite updated).`, {
+        variant: 'success',
+      });
     } catch (error) {
       logClientError(error);
       logClientError(error, {
@@ -237,6 +240,10 @@ export function useKangurQuestionsMutations(
         suite.id,
         editingQuestion.sortOrder
       );
+      const wasDemotedByPolicy = shouldDemotePublishedQuestionAfterEdit(
+        editingQuestion,
+        savedDraft
+      );
       const saved = applyPublishedQuestionEditPolicy(
         isNewQuestion ? null : editingQuestion,
         savedDraft
@@ -248,8 +255,20 @@ export function useKangurQuestionsMutations(
       });
       const activeDraftQuestionId = isNewQuestion ? QUESTION_EDITOR_NEW_DRAFT_SLOT : editingQuestion.id;
       clearQuestionEditorDraft(suite.id, activeDraftQuestionId);
-      await maybeTakeSuiteOfflineAfterQuestionMutation(nextStore);
-      toast('Question saved.', { variant: 'success' });
+      const suiteWasDemoted = await maybeTakeSuiteOfflineAfterQuestionMutation(nextStore);
+      if (wasDemotedByPolicy) {
+        toast(
+          'Question updated. Learner-facing changes moved this published question back to draft.',
+          { variant: 'warning' }
+        );
+      } else if (suiteWasDemoted) {
+        toast(
+          'Question saved. The live suite was taken offline because its published question set changed.',
+          { variant: 'warning' }
+        );
+      } else {
+        toast('Question saved.', { variant: 'success' });
+      }
       closeEditor();
     } catch (error) {
       logClientError(error);
@@ -267,8 +286,15 @@ export function useKangurQuestionsMutations(
         value: serializeSetting(nextStore),
       });
       clearQuestionEditorDraft(suite.id, questionToDelete.id);
-      await maybeTakeSuiteOfflineAfterQuestionMutation(nextStore);
-      toast('Question deleted.', { variant: 'success' });
+      const suiteWasDemoted = await maybeTakeSuiteOfflineAfterQuestionMutation(nextStore);
+      if (suiteWasDemoted) {
+        toast(
+          'Question deleted. The live suite was taken offline because its published question set changed.',
+          { variant: 'warning' }
+        );
+      } else {
+        toast('Question deleted.', { variant: 'success' });
+      }
       setQuestionToDelete(null);
     } catch (error) {
       logClientError(error);
@@ -297,8 +323,15 @@ export function useKangurQuestionsMutations(
         key: KANGUR_TEST_QUESTIONS_SETTING_KEY,
         value: serializeSetting(nextStore),
       });
-      await maybeTakeSuiteOfflineAfterQuestionMutation(nextStore);
-      toast('Question duplicated.', { variant: 'success' });
+      const suiteWasDemoted = await maybeTakeSuiteOfflineAfterQuestionMutation(nextStore);
+      if (suiteWasDemoted) {
+        toast(
+          'Question duplicated. The live suite was taken offline because its published question set changed.',
+          { variant: 'warning' }
+        );
+      } else {
+        toast('Question duplicated.', { variant: 'success' });
+      }
     } catch (error) {
       logClientError(error);
       logClientError(error, {

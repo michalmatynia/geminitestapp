@@ -6,6 +6,13 @@ import { type AlertEvidenceQuery, type MongoSystemLogDoc } from './types';
 export const escapeRegex = (value: string): string =>
   value.replace(new RegExp('[.*+?^${}()|[\\]\\\\]', 'g'), '\\$&');
 
+const toIsoString = (value?: string | Date | null): string => {
+  if (!value) return new Date().toISOString();
+  if (value instanceof Date) return value.toISOString();
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+};
+
 export const toSystemLogRecord = (doc: MongoSystemLogDoc): SystemLogRecord => ({
   id: String(doc.id ?? doc._id ?? ''),
   level:
@@ -40,7 +47,7 @@ export const toSystemLogRecord = (doc: MongoSystemLogDoc): SystemLogRecord => ({
       ? doc.parentSpanId
       : (doc.context?.['parentSpanId'] as string | undefined)) ?? null,
   userId: doc.userId ?? null,
-  createdAt: (doc.createdAt ?? new Date()).toISOString(),
+  createdAt: toIsoString(doc.createdAt),
   updatedAt: null,
 });
 

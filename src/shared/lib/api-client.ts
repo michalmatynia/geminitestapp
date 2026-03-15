@@ -159,7 +159,6 @@ export async function apiClient<T>(
 
     throw error;
   } catch (error) {
-    logClientError(error);
     if (error instanceof ApiError) {
       throw error;
     }

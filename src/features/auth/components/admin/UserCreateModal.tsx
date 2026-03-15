@@ -5,7 +5,7 @@ import React from 'react';
 import { useToast } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useUsersData, useUsersDialogs } from '../../context/UsersContext';
@@ -20,7 +20,7 @@ export interface UserCreateFormState {
   verified: boolean;
 }
 
-const FIELDS: SettingsField<UserCreateFormState>[] = [
+const FIELDS: SettingsPanelField<UserCreateFormState>[] = [
   {
     key: 'name',
     label: 'Full Name',

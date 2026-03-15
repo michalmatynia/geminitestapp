@@ -5,7 +5,7 @@ import React, { useMemo } from 'react';
 import { useToast } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useUsersData, useUsersDialogs } from '../../context/UsersContext';
@@ -51,7 +51,7 @@ export function MockSignInModal(): React.JSX.Element | null {
     }
   };
 
-  const fields: SettingsField<MockSignInFormState>[] = useMemo(
+  const fields: SettingsPanelField<MockSignInFormState>[] = useMemo(
     () => [
       {
         key: 'email',

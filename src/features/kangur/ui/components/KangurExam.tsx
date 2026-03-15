@@ -154,7 +154,7 @@ function ExamQuestion({
           size='sm'
           value={progressValue}
         />
-        <span className='text-xs font-bold [color:var(--kangur-page-muted-text)]'>
+        <span className='break-words text-xs font-bold [color:var(--kangur-page-muted-text)]'>
           {questionNumber}/{total}
         </span>
       </div>
@@ -166,7 +166,10 @@ function ExamQuestion({
         tone='neutral'
       >
         <div className='mb-1 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
-          <p id={headingId} className='text-sm font-bold text-orange-500 uppercase tracking-wide'>
+          <p
+            id={headingId}
+            className='break-words text-sm font-bold uppercase tracking-wide text-orange-500'
+          >
             Pytanie {questionNumber}
           </p>
           <div className='flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end'>
@@ -190,7 +193,10 @@ function ExamQuestion({
             ) : null}
           </div>
         </div>
-        <p id={descriptionId} className='font-semibold leading-relaxed [color:var(--kangur-page-text)]'>
+        <p
+          id={descriptionId}
+          className='break-words font-semibold leading-relaxed [color:var(--kangur-page-text)]'
+        >
           {q.question}
         </p>
         {Illustration && (
@@ -241,7 +247,7 @@ function ExamQuestion({
               >
                 {String.fromCharCode(65 + index)}
               </KangurAnswerChoiceBadge>
-              <span>{choice}</span>
+              <span className='min-w-0 flex-1 break-words'>{choice}</span>
             </KangurAnswerChoiceCard>
           );
         })}
@@ -309,7 +315,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
             >
               <ChevronLeft className='w-4 h-4 [color:var(--kangur-page-muted-text)]' />
             </KangurButton>
-            <span className='self-center text-xs font-bold [color:var(--kangur-page-muted-text)]'>
+            <span className='self-center break-words text-xs font-bold [color:var(--kangur-page-muted-text)]'>
               {reviewing + 1}/{reviewQuestionCount}
             </span>
             <KangurButton
@@ -333,7 +339,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
           tone='neutral'
         >
           <div className='flex items-center justify-between'>
-            <p className='text-sm font-bold text-orange-500 uppercase tracking-wide'>
+            <p className='break-words text-sm font-bold uppercase tracking-wide text-orange-500'>
               Pytanie {reviewing + 1}
             </p>
             {pointLabel ? (
@@ -346,7 +352,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
               </KangurStatusChip>
             ) : null}
           </div>
-          <p className='font-semibold leading-relaxed [color:var(--kangur-page-text)]'>
+          <p className='break-words font-semibold leading-relaxed [color:var(--kangur-page-text)]'>
             {question.question}
           </p>
           {Illustration && (
@@ -401,7 +407,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
                 <KangurAnswerChoiceBadge className={badgeClassName}>
                   {String.fromCharCode(65 + index)}
                 </KangurAnswerChoiceBadge>
-                <span>{choice}</span>
+                <span className='min-w-0 flex-1 break-words'>{choice}</span>
                 {choice === question.answer && (
                   <CheckCircle className='w-4 h-4 text-green-600 ml-auto flex-shrink-0' />
                 )}
@@ -416,7 +422,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
         {question.explanation && (
           <KangurInfoCard
             accent='sky'
-            className='rounded-[22px] text-sm'
+            className='rounded-[22px] text-sm break-words'
             data-testid='kangur-exam-review-explanation'
             padding='sm'
             tone='accent'
@@ -459,7 +465,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
           dataTestId='kangur-exam-summary-progress-bar'
           percent={pct}
         />
-        <p className='text-sm [color:var(--kangur-page-muted-text)]'>
+        <p className='break-words text-sm [color:var(--kangur-page-muted-text)]'>
           {pct}% poprawnych odpowiedzi
         </p>
         <KangurPracticeGameSummaryMessage className='text-sm'>
@@ -473,7 +479,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
         </KangurPracticeGameSummaryMessage>
       </KangurPracticeGameSummary>
 
-      <p className='text-center text-sm font-semibold [color:var(--kangur-page-muted-text)]'>
+      <p className='break-words text-center text-sm font-semibold [color:var(--kangur-page-muted-text)]'>
         Kliknij pytanie, aby zobaczyć rozwiązanie:
       </p>
 
@@ -596,10 +602,10 @@ export default function KangurExam(): React.JSX.Element {
           selected={selected}
           onSelect={handleSelect}
         />
-        <div className='flex gap-3'>
+        <div className='flex flex-col gap-3 sm:flex-row'>
           <KangurButton
             onClick={handlePrev}
-            className='flex-1'
+            className='w-full sm:flex-1'
             disabled={current === 0}
             size='lg'
             type='button'
@@ -609,7 +615,7 @@ export default function KangurExam(): React.JSX.Element {
           </KangurButton>
           <KangurButton
             onClick={handleNext}
-            className='flex-1'
+            className='w-full sm:flex-1'
             size='lg'
             type='button'
             variant='primary'
@@ -624,7 +630,7 @@ export default function KangurExam(): React.JSX.Element {
           </KangurButton>
         </div>
         {!selected && (
-          <p className='text-center text-xs [color:var(--kangur-page-muted-text)]'>
+          <p className='break-words text-center text-xs [color:var(--kangur-page-muted-text)]'>
             Możesz pominąć pytanie i wrócić do niego później
           </p>
         )}

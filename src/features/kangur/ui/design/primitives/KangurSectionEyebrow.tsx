@@ -21,7 +21,7 @@ export function KangurSectionEyebrow({
   return (
     <Comp
       className={cn(
-        'text-[11px] font-bold uppercase tracking-[0.22em]',
+        'break-words text-[11px] font-bold uppercase tracking-[0.22em]',
         KANGUR_SECTION_EYEBROW_CLASSNAMES[tone],
         className
       )}

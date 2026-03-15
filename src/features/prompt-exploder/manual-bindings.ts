@@ -1,5 +1,4 @@
 import type {
-  PromptExploderBinding,
   PromptExploderBindingType,
   PromptExploderSegment,
   PromptExploderSubsection,

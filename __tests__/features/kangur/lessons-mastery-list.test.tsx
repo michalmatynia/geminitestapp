@@ -273,7 +273,7 @@ describe('Lessons page mastery list', () => {
     renderLessonsPage();
 
     expect(screen.getByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
-    expect(screen.getByText('Lekcje zaraz beda gotowe.', { exact: false })).toBeInTheDocument();
+    expect(screen.getByText('Lekcje zaraz będą gotowe.', { exact: false })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /nauka zegara/i })).not.toBeInTheDocument();
     expect(screen.queryByText('Ladowanie lekcji...')).not.toBeInTheDocument();
     expect(screen.queryByTestId('lessons-loading-fallback')).not.toBeInTheDocument();
@@ -284,7 +284,7 @@ describe('Lessons page mastery list', () => {
     });
 
     expect(await screen.findByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
-    expect(screen.queryByText('Lekcje zaraz beda gotowe.', { exact: false })).not.toBeInTheDocument();
+    expect(screen.queryByText('Lekcje zaraz będą gotowe.', { exact: false })).not.toBeInTheDocument();
   });
 
   it('keeps loading copy visible until deferred content resolves', async () => {
@@ -298,7 +298,7 @@ describe('Lessons page mastery list', () => {
 
     const section = screen.getByTestId('lessons-shell-transition');
     expect(section).toBeInTheDocument();
-    expect(screen.getByText('Lekcje zaraz beda gotowe.', { exact: false })).toBeInTheDocument();
+    expect(screen.getByText('Lekcje zaraz będą gotowe.', { exact: false })).toBeInTheDocument();
     expect(
       screen.queryByText('Wybierz temat i przejdź od razu do praktyki lub powtórki.')
     ).not.toBeInTheDocument();
@@ -310,7 +310,7 @@ describe('Lessons page mastery list', () => {
 
     const contentTransitionSection = await screen.findByTestId('lessons-list-transition');
     expect(contentTransitionSection).toBeInTheDocument();
-    expect(screen.queryByText('Lekcje zaraz beda gotowe.', { exact: false })).not.toBeInTheDocument();
+    expect(screen.queryByText('Lekcje zaraz będą gotowe.', { exact: false })).not.toBeInTheDocument();
     expect(
       screen.getByText('Wybierz temat i przejdź od razu do praktyki lub powtórki.')
     ).toBeInTheDocument();

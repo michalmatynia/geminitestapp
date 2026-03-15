@@ -18,7 +18,7 @@ import { ANIMATION_PRESETS } from '@/shared/contracts/gsap';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Input, SelectSimple, Button, SectionHeader, FormSection } from '@/shared/ui';
-import { SettingsField, SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
+import { SettingsPanelField, SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import { useThemeSettingsValue } from './ThemeSettingsContext';
@@ -190,7 +190,7 @@ export function MenuSettingsPanel({
   );
 
   const getFieldsForSection = useCallback(
-    (section: string): SettingsField<MenuSettings>[] => {
+    (section: string): SettingsPanelField<MenuSettings>[] => {
       switch (section) {
         case 'Visibility & Placement':
           return [
@@ -212,7 +212,7 @@ export function MenuSettingsPanel({
                     key: 'collapsedByDefault',
                     label: 'Collapsed by default',
                     type: 'checkbox',
-                  } as SettingsField<MenuSettings>,
+                  } as SettingsPanelField<MenuSettings>,
               ]
               : []),
             ...(settings.menuPlacement === 'left' || settings.menuPlacement === 'right'
@@ -224,7 +224,7 @@ export function MenuSettingsPanel({
                     min: 160,
                     max: 420,
                     suffix: 'px',
-                  } as SettingsField<MenuSettings>,
+                  } as SettingsPanelField<MenuSettings>,
               ]
               : []),
             ...(settings.collapsible
@@ -236,7 +236,7 @@ export function MenuSettingsPanel({
                     min: 48,
                     max: 120,
                     suffix: 'px',
-                  } as SettingsField<MenuSettings>,
+                  } as SettingsPanelField<MenuSettings>,
               ]
               : []),
           ];
@@ -287,7 +287,7 @@ export function MenuSettingsPanel({
                     min: 12,
                     max: 48,
                     suffix: 'px',
-                  } as SettingsField<MenuSettings>,
+                  } as SettingsPanelField<MenuSettings>,
               ]
               : []),
           ];
@@ -349,7 +349,7 @@ export function MenuSettingsPanel({
                 { key: 'textColor', label: 'Text color', type: 'color' },
                 { key: 'activeItemColor', label: 'Active item', type: 'color' },
                 { key: 'borderColor', label: 'Border', type: 'color' },
-              ] as SettingsField<MenuSettings>[])
+              ] as SettingsPanelField<MenuSettings>[])
               : []),
           ];
 
@@ -484,7 +484,7 @@ export function MenuSettingsPanel({
                 },
                 { key: 'shrinkOnScroll', label: 'Shrink on scroll', type: 'checkbox' },
                 { key: 'stickyBackground', label: 'Sticky background', type: 'color' },
-              ] as SettingsField<MenuSettings>[])
+              ] as SettingsPanelField<MenuSettings>[])
               : []),
             ...(canHideOnScroll
               ? ([
@@ -499,9 +499,9 @@ export function MenuSettingsPanel({
                       max: 600,
                       suffix: 'px',
                     },
-                  ] as SettingsField<MenuSettings>[])
+                  ] as SettingsPanelField<MenuSettings>[])
                   : []),
-              ] as SettingsField<MenuSettings>[])
+              ] as SettingsPanelField<MenuSettings>[])
               : []),
           ];
         }

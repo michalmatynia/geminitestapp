@@ -54,10 +54,12 @@ export function KangurEmptyState({
         </div>
       ) : null}
       {emptyStateTitle ? (
-        <div className='text-base font-bold [color:var(--kangur-page-text)]'>{emptyStateTitle}</div>
+        <div className='break-words text-base font-bold [color:var(--kangur-page-text)]'>
+          {emptyStateTitle}
+        </div>
       ) : null}
       {emptyStateDescription ? (
-        <p className='text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
+        <p className='break-words text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
           {emptyStateDescription}
         </p>
       ) : null}

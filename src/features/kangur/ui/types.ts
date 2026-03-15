@@ -1,8 +1,4 @@
-import type {
-  KangurQuestionChoice,
-  KangurLessonMasteryEntry,
-  KangurProgressState,
-} from '@/shared/contracts/kangur';
+import type { KangurQuestionChoice, KangurProgressState } from '@/shared/contracts/kangur';
 export type { KangurExamQuestion, KangurQuestionChoice } from '@/shared/contracts/kangur';
 export type { KangurLessonMasteryEntry, KangurProgressState } from '@/shared/contracts/kangur';
 

@@ -2,7 +2,6 @@ import type {
   AiPathRunDetail,
   AiPathRunEventRecord,
   AiPathRunNodeRecord,
-  AiPathRunRecord,
 } from '@/shared/contracts/ai-paths';
 
 export const PAGE_SIZES = [10, 25, 50];

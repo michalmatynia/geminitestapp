@@ -3,6 +3,7 @@ import React from 'react';
 
 import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
 import { Badge, Button } from '@/shared/ui';
+import type { KangurTestSuiteHealth } from '../test-suite-health';
 
 interface KangurQuestionsHeaderProps {
   currentSuite: KangurTestSuite;
@@ -16,7 +17,7 @@ interface KangurQuestionsHeaderProps {
   draftCount: number;
   readyToPublishCount: number;
   publishedCount: number;
-  currentSuiteHealth: any;
+  currentSuiteHealth: KangurTestSuiteHealth;
   canPublishAndGoLive: boolean;
   canPublishReady: boolean;
   isSaving: boolean;

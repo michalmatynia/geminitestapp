@@ -12,7 +12,7 @@ import { leavePromptRuntimeScope, tryEnterPromptRuntimeScope } from '../../runti
 
 import type { PromptExploderDocument, PromptExploderLearnedTemplate } from '../../types';
 import type { DocumentActions } from '../document/DocumentActionsContext';
-import type { SettingsState } from '../SettingsContext';
+import type { PromptExploderSettingsState } from '../SettingsContext';
 
 export const useDocumentExplodeAction = ({
   promptText,
@@ -27,9 +27,9 @@ export const useDocumentExplodeAction = ({
   toast,
 }: {
   promptText: string;
-  promptExploderSettings: SettingsState['promptExploderSettings'];
-  runtimeGuardrailIssue: SettingsState['runtimeGuardrailIssue'];
-  runtimeSelection: SettingsState['runtimeSelection'];
+  promptExploderSettings: PromptExploderSettingsState['promptExploderSettings'];
+  runtimeGuardrailIssue: PromptExploderSettingsState['runtimeGuardrailIssue'];
+  runtimeSelection: PromptExploderSettingsState['runtimeSelection'];
   explodeInFlightRef: MutableRefObject<boolean>;
   lastExplosionRef: MutableRefObject<{
     signature: string;

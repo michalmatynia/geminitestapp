@@ -40,7 +40,7 @@ import {
 } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { cn } from '@/shared/utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -546,7 +546,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     setIconLibraryOpen(false);
   }, []);
 
-  const editorFields: SettingsField<TriggerButtonDraft>[] = useMemo(
+  const editorFields: SettingsPanelField<TriggerButtonDraft>[] = useMemo(
     () => [
       {
         key: 'name',

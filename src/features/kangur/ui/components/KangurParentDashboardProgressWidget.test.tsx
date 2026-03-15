@@ -134,7 +134,7 @@ describe('KangurParentDashboardProgressWidget', () => {
 
     expect(screen.getByTestId('parent-dashboard-daily-quest')).toBeInTheDocument();
     expect(getCurrentKangurDailyQuestMock).toHaveBeenCalledWith(runtimeState.value.progress);
-    expect(screen.getByTestId('assignments-list-stub')).toBeInTheDocument();
+    expect(screen.getAllByTestId('assignments-list-stub')).toHaveLength(2);
     expect(assignmentsListMock).toHaveBeenCalledWith(
       expect.objectContaining({
         title: 'Ostatnie aktywne zadania',

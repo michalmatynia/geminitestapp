@@ -48,7 +48,7 @@ export type {
   CanvasRefs,
   ViewState,
   PanState,
-  DragState,
+  CanvasDragState,
   ConnectingState,
 } from './CanvasContext';
 

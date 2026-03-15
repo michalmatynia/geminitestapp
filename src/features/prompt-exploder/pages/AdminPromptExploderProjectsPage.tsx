@@ -23,7 +23,7 @@ import {
 } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -200,7 +200,7 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
     if (vals.prompt !== undefined) setDraftPrompt(vals.prompt);
   };
 
-  const editorFields: SettingsField<{ name: string; prompt: string }>[] = [
+  const editorFields: SettingsPanelField<{ name: string; prompt: string }>[] = [
     {
       key: 'name',
       label: 'Project Name',

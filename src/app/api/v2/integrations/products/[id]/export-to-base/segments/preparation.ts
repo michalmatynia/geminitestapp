@@ -3,11 +3,11 @@ import {
   listExportTemplates,
   type ImageBase64Mode,
   type ImageTransformOptions,
-  getCategoryMappingRepository,
   getProducerMappingRepository,
   getTagMappingRepository,
   type Template,
 } from '@/features/integrations/server';
+import { getCategoryMappingRepository } from '@/features/integrations/services/category-mapping-repository';
 import {
   getProducerRepository,
   getTagRepository,
@@ -406,7 +406,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
     }
 
     if (internalCategoryId) {
-      const categoryMappingRepo = await getCategoryMappingRepository();
+      const categoryMappingRepo = getCategoryMappingRepository();
       const categoryMappings = await categoryMappingRepo.listByConnection(data.connectionId);
       const productCatalogIds = new Set(
         (product.catalogs ?? []).map((catalog) => (catalog as { catalogId: string }).catalogId)

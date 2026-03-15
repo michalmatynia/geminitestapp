@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getCategoryMappingRepository } from '@/features/integrations/server';
+import { getCategoryMappingRepository } from '@/features/integrations/services/category-mapping-repository';
 import {
   categoryMappingUpdateInputSchema,
 } from '@/shared/contracts/integrations';
@@ -21,7 +21,7 @@ export async function GET_handler(
 ): Promise<Response> {
   const { id } = params;
 
-  const repo = await getCategoryMappingRepository();
+  const repo = getCategoryMappingRepository();
   const mapping = await repo.getById(id);
 
   if (!mapping) {
@@ -50,7 +50,7 @@ export async function PUT_handler(
   }
   const body = parsed.data;
 
-  const repo = await getCategoryMappingRepository();
+  const repo = getCategoryMappingRepository();
 
   // Check if mapping exists
   const existing = await repo.getById(id);
@@ -79,7 +79,7 @@ export async function DELETE_handler(
 ): Promise<Response> {
   const { id } = params;
 
-  const repo = await getCategoryMappingRepository();
+  const repo = getCategoryMappingRepository();
 
   // Check if mapping exists
   const existing = await repo.getById(id);

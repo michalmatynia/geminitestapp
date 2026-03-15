@@ -7,7 +7,7 @@ import { Label } from './label';
 import { SectionHeader } from './section-header';
 
 
-import type { ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 
 interface FormSectionProps {
   title?: ReactNode | undefined;
@@ -123,37 +123,36 @@ export function FormField(props: FormFieldProps): React.JSX.Element {
 
   const describedBy = mergeIds(resolvedDescriptionId, resolvedErrorId);
 
-  const linkedChildren =
-    isValidElement(children)
-      ? cloneElement(children, {
-          ...(fieldId &&
-          !controlId &&
-          (children.props.id === undefined || children.props.id === '')
-            ? { id: fieldId }
-            : {}),
-          ...(describedBy
-            ? {
-                'aria-describedby': mergeIds(children.props['aria-describedby'], describedBy),
-              }
-            : {}),
-          ...(resolvedErrorId
-            ? {
-                'aria-errormessage': mergeIds(
-                  children.props['aria-errormessage'],
-                  resolvedErrorId
-                ),
-              }
-            : {}),
-          ...(error
-            ? {
-                'aria-invalid':
-                  children.props['aria-invalid'] !== undefined
-                    ? children.props['aria-invalid']
-                    : true,
-              }
-            : {}),
-        })
-      : children;
+  const childElement = isValidElement(children)
+    ? (children as ReactElement<Record<string, unknown>>)
+    : null;
+  const childProps = childElement?.props ?? {};
+  const childId = typeof childProps['id'] === 'string' ? childProps['id'] : undefined;
+  const childDescribedBy =
+    typeof childProps['aria-describedby'] === 'string'
+      ? childProps['aria-describedby']
+      : undefined;
+  const childErrorMessage =
+    typeof childProps['aria-errormessage'] === 'string'
+      ? childProps['aria-errormessage']
+      : undefined;
+  const childAriaInvalid =
+    typeof childProps['aria-invalid'] === 'boolean' || typeof childProps['aria-invalid'] === 'string'
+      ? childProps['aria-invalid']
+      : undefined;
+
+  const linkedChildren = childElement
+    ? cloneElement(childElement, {
+        ...(fieldId && !controlId && (!childId || childId === '') ? { id: fieldId } : {}),
+        ...(describedBy ? { 'aria-describedby': mergeIds(childDescribedBy, describedBy) } : {}),
+        ...(resolvedErrorId
+          ? {
+              'aria-errormessage': mergeIds(childErrorMessage, resolvedErrorId),
+            }
+          : {}),
+        ...(error ? { 'aria-invalid': childAriaInvalid ?? true } : {}),
+      })
+    : children;
 
   return (
     <div className={cn('space-y-2', className)}>

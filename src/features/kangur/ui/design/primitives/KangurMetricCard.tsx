@@ -51,7 +51,7 @@ export function KangurMetricCard({
     >
       <div
         className={cn(
-          'text-[11px] font-bold uppercase tracking-wide',
+          'break-words text-[11px] font-bold uppercase tracking-wide',
           metricTone === 'accent'
             ? KANGUR_ACCENT_STYLES[metricAccent].activeText
             : '[color:var(--kangur-page-muted-text)]'
@@ -61,7 +61,7 @@ export function KangurMetricCard({
       </div>
       <div
         className={cn(
-          'text-3xl font-extrabold leading-none',
+          'break-words text-3xl font-extrabold leading-none',
           metricTone === 'accent'
             ? KANGUR_ACCENT_STYLES[metricAccent].activeText
             : '[color:var(--kangur-page-text)]',
@@ -73,7 +73,7 @@ export function KangurMetricCard({
       {metricDescription ? (
         <div
           className={cn(
-            'text-xs leading-5',
+            'break-words text-xs leading-5',
             metricTone === 'accent'
               ? KANGUR_ACCENT_STYLES[metricAccent].mutedText
               : '[color:var(--kangur-page-muted-text)]'

@@ -80,9 +80,7 @@ describe('CmsMenu accessibility', () => {
     expect(screen.getByRole('list')).toBeInTheDocument();
     expect(screen.getAllByRole('listitem')).toHaveLength(3);
     expect(screen.getByRole('link', { name: 'About' })).toHaveAttribute('aria-current', 'page');
-    expect(
-      screen.getByRole('link', { name: /Docs.*opens in a new tab/i })
-    ).toHaveAttribute('target', '_blank');
+    expect(screen.getByRole('link', { name: 'Docs' })).toHaveAttribute('target', '_blank');
   });
 
   it('exposes the collapsible navigation state to assistive tech', () => {

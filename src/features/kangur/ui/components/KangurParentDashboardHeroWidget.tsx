@@ -187,13 +187,15 @@ export function KangurParentDashboardHeroWidget({
       description={
         <>
           Wybrany uczeń:{' '}
-          <span className='font-semibold [color:var(--kangur-page-text)]'>
+          <span className='break-words font-semibold [color:var(--kangur-page-text)]'>
             {activeLearner?.displayName ?? 'Brak profilu ucznia'}
           </span>
           .
           <span className='mt-1 block text-xs [color:var(--kangur-page-muted-text)]'>
             {viewerRoleLabel ?? 'Rodzic'}:{' '}
-            <span className='font-semibold [color:var(--kangur-page-text)]'>{viewerName}</span>
+            <span className='break-words font-semibold [color:var(--kangur-page-text)]'>
+              {viewerName}
+            </span>
           </span>
         </>
       }

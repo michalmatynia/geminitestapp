@@ -130,11 +130,18 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
       </div>
 
       <div className='pr-0 pt-0 sm:pr-52'>
-        <KangurCardTitle as='div' className='flex items-center gap-2 text-base sm:text-[1.1rem]'>
+        <KangurCardTitle
+          as='div'
+          className='flex min-w-0 items-center gap-2 text-base sm:text-[1.1rem]'
+        >
           <span aria-hidden='true'>{item.icon}</span>
-          <span>{item.title}</span>
+          <span className='min-w-0 break-words'>{item.title}</span>
         </KangurCardTitle>
-        <KangurCardDescription as='div' className='mt-4 leading-7' size='md'>
+        <KangurCardDescription
+          as='div'
+          className='mt-4 break-words leading-7'
+          size='md'
+        >
           {item.description}
         </KangurCardDescription>
       </div>
@@ -197,10 +204,10 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
     >
       <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
         <div className='min-w-0'>
-          <KangurCardTitle className='text-lg' size='lg'>
+          <KangurCardTitle className='break-words text-lg' size='lg'>
             {item.title}
           </KangurCardTitle>
-          <KangurCardDescription as='div' className='mt-2' relaxed size='sm'>
+          <KangurCardDescription as='div' className='mt-2 break-words' relaxed size='sm'>
             {item.description}
           </KangurCardDescription>
         </div>

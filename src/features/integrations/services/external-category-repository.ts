@@ -127,6 +127,18 @@ const buildMongoIdFilter = (id: string): Filter<MongoExternalCategoryDoc> => {
 };
 
 export function getExternalCategoryRepository(): ExternalCategoryRepository {
+  const listByConnection = async (connectionId: string): Promise<ExternalCategory[]> => {
+    await ensureMongoExternalCategoryIndexes();
+    const db = await getMongoDb();
+    const records = await db
+      .collection<MongoExternalCategoryDoc>(EXTERNAL_CATEGORY_COLLECTION)
+      .find({ connectionId })
+      .sort({ depth: 1, name: 1 })
+      .toArray();
+
+    return records.map((record: MongoExternalCategoryDoc) => toMongoRecord(record));
+  };
+
   return {
     async syncFromBase(connectionId: string, categories: BaseCategory[]): Promise<number> {
       const categoriesById = new Map<string, BaseCategory>();
@@ -180,20 +192,10 @@ export function getExternalCategoryRepository(): ExternalCategoryRepository {
       return count;
     },
 
-    async listByConnection(connectionId: string): Promise<ExternalCategory[]> {
-      await ensureMongoExternalCategoryIndexes();
-      const db = await getMongoDb();
-      const records = await db
-        .collection<MongoExternalCategoryDoc>(EXTERNAL_CATEGORY_COLLECTION)
-        .find({ connectionId })
-        .sort({ depth: 1, name: 1 })
-        .toArray();
-
-      return records.map((record: MongoExternalCategoryDoc) => toMongoRecord(record));
-    },
+    listByConnection,
 
     async getTreeByConnection(connectionId: string): Promise<ExternalCategoryWithChildren[]> {
-      const categories = await this.listByConnection(connectionId);
+      const categories = await listByConnection(connectionId);
       return buildTree(categories, null);
     },
 

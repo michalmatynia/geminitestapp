@@ -4,7 +4,7 @@ import * as React from 'react';
 import { cn } from '@/shared/utils';
 
 export const kangurCardTitleVariants = cva(
-  '[color:var(--kangur-page-text)] [font-family:var(--kangur-font-heading,var(--app-font-heading))]',
+  'break-words [color:var(--kangur-page-text)] [font-family:var(--kangur-font-heading,var(--app-font-heading))]',
   {
     variants: {
       size: {

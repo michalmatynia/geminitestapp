@@ -6,7 +6,7 @@ import type { AuthUser as AuthUserSummary } from '@/shared/contracts/auth';
 import { StatusToggle, MetadataItem, LoadingState, ToggleRow, useToast } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useUsersData, useUsersDialogs } from '../../context/UsersContext';
@@ -41,7 +41,7 @@ export function UserEditModal(): React.JSX.Element | null {
     setEditingUser((prev) => (prev ? { ...prev, ...values } : null));
   };
 
-  const fields: SettingsField<AuthUserSummary>[] = [
+  const fields: SettingsPanelField<AuthUserSummary>[] = [
     {
       key: 'name',
       label: 'Full Name',

@@ -14,6 +14,7 @@ import {
 import { serializeSetting } from '@/shared/utils/settings-json';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+export type { TransientRecoverySettings };
 
 const toNumber = (value: string, fallback: number, min: number = 0): number => {
   const parsed = Number(value);

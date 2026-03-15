@@ -6,7 +6,7 @@ import { cn } from '@/shared/utils';
 import { KANGUR_ACCENT_STYLES, type KangurAccent } from '../tokens';
 
 export const kangurStatusChipVariants = cva(
-  'inline-flex items-center justify-center rounded-full border font-semibold tracking-tight shadow-[0_12px_28px_-24px_rgba(15,23,42,0.32)]',
+  'inline-flex max-w-full items-center justify-center rounded-full border font-semibold tracking-tight text-center whitespace-normal break-words shadow-[0_12px_28px_-24px_rgba(15,23,42,0.32)]',
   {
     variants: {
       size: {

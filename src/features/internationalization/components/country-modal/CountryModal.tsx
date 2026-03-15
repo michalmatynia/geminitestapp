@@ -11,7 +11,7 @@ import { countryCodeOptions } from '@/shared/constants/internationalization';
 import { LoadingState } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useCountryForm } from './hooks/useCountryForm';
@@ -48,7 +48,7 @@ export function CountryModal(): React.JSX.Element | null {
     );
   };
 
-  const fields: SettingsField<CountryFormState>[] = [
+  const fields: SettingsPanelField<CountryFormState>[] = [
     {
       key: 'code',
       label: 'Code',

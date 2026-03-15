@@ -85,7 +85,11 @@ function KangurAssignmentManagerCardHeader({
 }: {
   children: ReactNode;
 }): React.JSX.Element {
-  return <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>{children}</div>;
+  return (
+    <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
+      {children}
+    </div>
+  );
 }
 
 function KangurAssignmentManagerCardFooter({
@@ -556,11 +560,11 @@ export function KangurAssignmentManager({
 
               {timeLimitTarget ? (
                 <div className='rounded-[18px] border border-slate-200/70 bg-white/80 px-4 py-3'>
-                  <div className='text-sm font-semibold text-slate-900'>
+                  <div className='break-words text-sm font-semibold text-slate-900'>
                     {timeLimitTarget.title}
                   </div>
                   {timeLimitTarget.description ? (
-                    <div className='mt-1 text-xs text-slate-600'>
+                    <div className='mt-1 break-words text-xs text-slate-600'>
                       {timeLimitTarget.description}
                     </div>
                   ) : null}
@@ -657,10 +661,14 @@ export function KangurAssignmentManager({
                     >
                       <KangurAssignmentManagerCardHeader>
                         <div className='min-w-0'>
-                          <KangurCardTitle className='text-slate-900'>
+                          <KangurCardTitle className='break-words text-slate-900'>
                             {item.title}
                           </KangurCardTitle>
-                          <KangurCardDescription className='mt-1 text-slate-600' relaxed size='sm'>
+                          <KangurCardDescription
+                            className='mt-1 break-words text-slate-600'
+                            relaxed
+                            size='sm'
+                          >
                             {item.description}
                           </KangurCardDescription>
                         </div>
@@ -783,9 +791,15 @@ export function KangurAssignmentManager({
                   testId={`assignment-manager-catalog-card-${item.id}`}
                 >
                   <KangurAssignmentManagerCardHeader>
-                    <div>
-                      <KangurCardTitle className='text-slate-900'>{item.title}</KangurCardTitle>
-                      <KangurCardDescription className='mt-1 text-slate-600' relaxed size='sm'>
+                    <div className='min-w-0'>
+                      <KangurCardTitle className='break-words text-slate-900'>
+                        {item.title}
+                      </KangurCardTitle>
+                      <KangurCardDescription
+                        className='mt-1 break-words text-slate-600'
+                        relaxed
+                        size='sm'
+                      >
                         {item.description}
                       </KangurCardDescription>
                     </div>

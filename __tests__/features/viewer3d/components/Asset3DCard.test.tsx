@@ -81,7 +81,7 @@ describe('Asset3DCard', () => {
   it('should call onEdit when clicking the edit button', () => {
     render(<Asset3DCard {...defaultProps} />);
 
-    const editButton = screen.getAllByRole('button')[0]; // Edit is first
+    const editButton = screen.getByRole('button', { name: 'Edit asset' });
     fireEvent.click(editButton!);
 
     expect(mockContext.setEditAsset).toHaveBeenCalledWith(mockAsset);
@@ -90,7 +90,7 @@ describe('Asset3DCard', () => {
   it('should call onDelete when clicking the delete button', () => {
     render(<Asset3DCard {...defaultProps} />);
 
-    const deleteButton = screen.getAllByRole('button')[1]; // Delete is second
+    const deleteButton = screen.getByRole('button', { name: 'Delete asset' });
     fireEvent.click(deleteButton!);
 
     expect(mockContext.handleDelete).toHaveBeenCalledWith(mockAsset);
@@ -100,7 +100,7 @@ describe('Asset3DCard', () => {
     mockContext.isDeleting.mockReturnValue(true);
     render(<Asset3DCard {...defaultProps} />);
 
-    const deleteButton = screen.getAllByRole('button')[1];
+    const deleteButton = screen.getByRole('button', { name: 'Delete asset' });
     expect(deleteButton).toBeDisabled();
     expect(deleteButton?.querySelector('.animate-spin')).toBeInTheDocument();
   });

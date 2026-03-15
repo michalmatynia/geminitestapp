@@ -1,6 +1,10 @@
 export { PromptExploderProvider } from './PromptExploderProvider';
 
-export type { SettingsState, SettingsActions, LearningDraft } from './SettingsContext';
+export type {
+  PromptExploderSettingsState,
+  PromptExploderSettingsActions,
+  LearningDraft,
+} from './SettingsContext';
 export type { DocumentState, DocumentActions } from './DocumentContext';
 export type { BenchmarkState, BenchmarkActions } from './BenchmarkContext';
 export type { LibraryState, LibraryActions } from './LibraryContext.types';

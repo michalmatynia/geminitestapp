@@ -5,7 +5,7 @@ import React, { useMemo, useState } from 'react';
 import type { ModalStateProps } from '@/shared/contracts/ui';
 import {
   SettingsPanelBuilder,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 interface RestoreModalProps extends ModalStateProps {
@@ -32,7 +32,7 @@ export const RestoreModal = (props: RestoreModalProps): React.JSX.Element | null
 
   const [values, setValues] = useState<RestoreFormState>({ truncate: true });
 
-  const fields: SettingsField<RestoreFormState>[] = useMemo(
+  const fields: SettingsPanelField<RestoreFormState>[] = useMemo(
     () => [
       {
         key: 'truncate',

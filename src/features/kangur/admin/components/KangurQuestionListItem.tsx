@@ -9,7 +9,7 @@ import {
   hasRichChoiceContent,
   usesRichQuestionPresentation,
 } from '../../test-questions';
-import { getQuestionWorkflowLabel } from '../question-authoring-insights';
+import { getQuestionWorkflowLabel, type QuestionAuthoringSummary } from '../question-authoring-insights';
 
 interface KangurQuestionListItemProps {
   question: KangurTestQuestion;
@@ -17,7 +17,8 @@ interface KangurQuestionListItemProps {
   absoluteIndex: number;
   canReorder: boolean;
   isSaving: boolean;
-  questionSummary: any;
+  questionSummary: QuestionAuthoringSummary | null;
+  queuePosition?: number | null;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onEdit: () => void;
@@ -32,6 +33,7 @@ export function KangurQuestionListItem({
   canReorder,
   isSaving,
   questionSummary,
+  queuePosition,
   onMoveUp,
   onMoveDown,
   onEdit,
@@ -75,6 +77,11 @@ export function KangurQuestionListItem({
           {absoluteIndex >= 0 ? (
             <Badge variant='outline' className='h-4 px-1 text-[9px] text-slate-300'>
               Order {absoluteIndex + 1}
+            </Badge>
+          ) : null}
+          {queuePosition ? (
+            <Badge variant='outline' className='h-4 px-1 text-[9px] text-cyan-300 border-cyan-400/40'>
+              Queue {queuePosition}
             </Badge>
           ) : null}
           <Badge variant='outline' className='h-4 px-1 text-[9px]'>

@@ -20,7 +20,7 @@ import {
 } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
-  type SettingsField,
+  type SettingsPanelField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -31,7 +31,7 @@ type ProducerFormState = {
   website: string;
 };
 
-const FIELDS: SettingsField<ProducerFormState>[] = [
+const FIELDS: SettingsPanelField<ProducerFormState>[] = [
   {
     key: 'name',
     label: 'Name',

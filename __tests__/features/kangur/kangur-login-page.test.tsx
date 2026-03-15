@@ -134,7 +134,7 @@ describe('KangurLoginPage', () => {
       .querySelector<HTMLInputElement>('input[name="password"]');
     expect(passwordInput).not.toBeNull();
     await user.type(passwordInput!, 'secret');
-    await user.click(screen.getByRole('button', { name: 'Zaloguj ucznia' }));
+    await user.click(screen.getByRole('button', { name: 'Zaloguj się' }));
 
     await waitFor(() => {
       expect(setStoredActiveLearnerIdMock).toHaveBeenCalledWith('learner-1');
@@ -160,7 +160,7 @@ describe('KangurLoginPage', () => {
       .querySelector<HTMLInputElement>('input[name="password"]');
     expect(passwordInput).not.toBeNull();
     await user.type(passwordInput!, 'secret');
-    await user.click(screen.getByRole('button', { name: 'Zaloguj ucznia' }));
+    await user.click(screen.getByRole('button', { name: 'Zaloguj się' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(

@@ -67,13 +67,20 @@ export function KangurSectionHeading({
       ) : null}
       <div className={cn('space-y-1', isInline ? 'min-w-0' : undefined)}>
         <HeadingComp
-          className={cn(kangurHeadlineVariants({ size: headingSize }), KANGUR_HEADLINE_CLASSNAMES[accent])}
+          className={cn(
+            'break-words',
+            kangurHeadlineVariants({ size: headingSize }),
+            KANGUR_HEADLINE_CLASSNAMES[accent]
+          )}
           id={titleId}
         >
           {title}
         </HeadingComp>
         {description ? (
-          <p className='text-sm [color:var(--kangur-page-muted-text)]' id={descriptionId}>
+          <p
+            className='break-words text-sm [color:var(--kangur-page-muted-text)]'
+            id={descriptionId}
+          >
             {description}
           </p>
         ) : null}

@@ -39,7 +39,10 @@ export function KangurLabeledValueSummary({
         {label}
       </KangurSectionEyebrow>
       <div
-        className={cn('mt-2 text-base font-bold [color:var(--kangur-page-text)]', valueClassName)}
+        className={cn(
+          'mt-2 break-words text-base font-bold [color:var(--kangur-page-text)]',
+          valueClassName
+        )}
         data-testid={valueTestId}
       >
         {value}

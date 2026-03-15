@@ -22,10 +22,10 @@ interface RunHistoryListProps {
   onSetPrimaryRunId: (id: string | null) => void;
   onSetSecondaryRunId: (id: string | null) => void;
   onOpenRunDetail: (id: string) => void;
-  onExpandedRunHistory: (prev: any) => void;
+  onExpandedRunHistory: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   expandedRunHistory: Record<string, boolean>;
   runHistorySelection: Record<string, string>;
-  onSetRunHistorySelection: (prev: any) => void;
+  onSetRunHistorySelection: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   onResumeRun: (id: string, mode: 'resume' | 'replay') => void;
   onHandoffRun: (id: string) => void;
   handoffStateByRunId: Record<string, 'pending' | 'success'>;

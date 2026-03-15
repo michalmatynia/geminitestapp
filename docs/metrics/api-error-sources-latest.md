@@ -8,24 +8,27 @@ canonical: true
 ---
 # API Error Sources Check
 
-Generated at: 2026-03-15T06:12:24.192Z
+Generated at: 2026-03-15T13:59:22.828Z
 
 ## Summary
 
-- Status: PASSED
-- Route files scanned: 350
-- Handler files scanned: 335
+- Status: WARN
+- Route files scanned: 353
+- Handler files scanned: 338
 - Errors: 0
-- Warnings: 0
+- Warnings: 1
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
+| unchecked-req-json | 0 | 1 | 0 |
 
 ## Issues
 
-All API error sources are consistent.
+| Severity | Rule | Location | Message |
+| --- | --- | --- | --- |
+| WARN | unchecked-req-json | src/app/api/kangur/learner-activity/handler.ts:49 | req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation. |
 
 ## Notes
 

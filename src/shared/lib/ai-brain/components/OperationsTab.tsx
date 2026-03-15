@@ -22,7 +22,7 @@ import type {
   BrainOperationsRange,
   BrainOperationsTrend,
 } from '@/shared/contracts/ai-brain';
-import { Card, EmptyState, SectionHeader, SelectSimple, StatusBadge } from '@/shared/ui';
+import { Card, CompactEmptyState, SectionHeader, SelectSimple, StatusBadge } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
 
@@ -227,15 +227,14 @@ export function OperationsTab(): React.JSX.Element {
       ) : null}
 
       {!operationsOverviewQuery.isLoading && !data ? (
-        <EmptyState
+        <CompactEmptyState
           title='Operations data unavailable'
           description={
             operationsOverviewQuery.error instanceof Error
               ? operationsOverviewQuery.error.message
               : 'Failed to load Brain operations overview.'
           }
-          variant='compact'
-        />
+         />
       ) : null}
 
       {data ? (

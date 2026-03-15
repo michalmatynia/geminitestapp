@@ -1,7 +1,7 @@
 'use client';
 
 import type { BlockInstance } from '@/features/cms/types/page-builder';
-import { EmptyState, Card } from '@/shared/ui';
+import { CompactEmptyState, Card } from '@/shared/ui';
 
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useSectionBlockData } from './SectionBlockContext';
@@ -19,12 +19,11 @@ export function FrontendTestimonialsSection(): React.ReactNode {
     return (
       <section style={sectionStyles}>
         <div className='container mx-auto px-4 md:px-6 py-8'>
-          <EmptyState
+          <CompactEmptyState
             title='No testimonials'
             description='Add blocks to create testimonial cards.'
-            variant='compact'
             className='bg-card/20'
-          />
+           />
         </div>
       </section>
     );

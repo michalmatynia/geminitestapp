@@ -47,6 +47,12 @@ vi.mock('@/shared/ui', async () => {
         <div>{description}</div>
       </div>
     ),
+    CompactEmptyState: ({ title, description }: { title: string; description: string }) => (
+      <div>
+        <div>{title}</div>
+        <div>{description}</div>
+      </div>
+    ),
     FormSection: ({
       title,
       description,

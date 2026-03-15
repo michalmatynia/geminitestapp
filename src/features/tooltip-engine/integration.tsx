@@ -7,7 +7,7 @@ import type { DocumentationModuleId } from '@/shared/contracts/documentation';
 import { useDocsTooltipsSetting } from './docs-tooltip-settings';
 import { DocumentationTooltip } from './DocumentationTooltip';
 import { DocumentationTooltipEnhancer } from './DocumentationTooltipEnhancer';
-import { getDocumentationTooltip } from './tooltip-content';
+import { getDocumentationTooltip } from '@/shared/lib/documentation';
 
 type CreateDocsTooltipIntegrationConfig = {
   moduleId: DocumentationModuleId;

@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { AiInsightRecord } from '@/shared/contracts';
-import { Button, FormSection, EmptyState, LoadingState } from '@/shared/ui';
+import { Button, FormSection, CompactEmptyState, LoadingState } from '@/shared/ui';
 
 import { InsightCard } from './InsightCard';
 
@@ -53,12 +53,11 @@ export function InsightsResultPanel(props: InsightsResultPanelProps): React.JSX.
         ) : query.error ? (
           <div className='text-xs text-red-400'>{query.error.message}</div>
         ) : (query.data?.insights?.length ?? 0) === 0 ? (
-          <EmptyState
+          <CompactEmptyState
             title='No insights yet'
             description={emptyDescription}
-            variant='compact'
             className='py-8'
-          />
+           />
         ) : (
           query.data?.insights?.map((insight: AiInsightRecord) => (
             <InsightCard key={insight.id} insight={insight} />

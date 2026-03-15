@@ -9,7 +9,7 @@ import {
   Button,
   StatusBadge,
   FormSection,
-  EmptyState,
+  CompactEmptyState,
   FormActions,
   ToggleRow,
   MetadataItem,
@@ -51,12 +51,11 @@ export function AllegroSettings(): React.JSX.Element {
         />
 
         {!activeConnection ? (
-          <EmptyState
+          <CompactEmptyState
             title='No connection'
             description='Add a connection first to enable Allegro authorization.'
-            variant='compact'
             className='bg-card/20 py-8'
-          />
+           />
         ) : (
           <div className='space-y-4'>
             <Card variant='glass' padding='md' className='bg-white/5 space-y-3'>

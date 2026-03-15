@@ -220,6 +220,10 @@ export function KangurTestSuitePlayer({
     }
 
     tutor.setHighlightedText(selectedChoiceSelectionText);
+    if (tutor.requestSelectionExplain) {
+      tutor.requestSelectionExplain(selectedChoiceSelectionText);
+      return;
+    }
     tutor.openChat();
     await tutor.sendMessage(tutorContent.guidedCallout.selectionRequestPrompt, {
       promptMode: 'selected_text',

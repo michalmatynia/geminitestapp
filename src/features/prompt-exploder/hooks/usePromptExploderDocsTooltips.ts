@@ -1,20 +1,14 @@
-import { readDocsTooltipsEnabled, useDocsTooltipsSetting } from '@/shared/lib/documentation';
+import { createDocsTooltipsState, type DocsTooltipsState } from '@/shared/lib/documentation';
 
 export const PROMPT_EXPLODER_DOCS_TOOLTIP_KEY = 'prompt_exploder:docs_tooltips_enabled';
 
-export const readPromptExploderDocsTooltipsEnabled = (): boolean =>
-  readDocsTooltipsEnabled(PROMPT_EXPLODER_DOCS_TOOLTIP_KEY, false);
+const { readEnabled, useDocsTooltips } = createDocsTooltipsState(
+  PROMPT_EXPLODER_DOCS_TOOLTIP_KEY,
+  false
+);
 
-type PromptExploderDocsTooltipsState = {
-  docsTooltipsEnabled: boolean;
-  setDocsTooltipsEnabled: (enabled: boolean) => void;
-};
+export type PromptExploderDocsTooltipsState = DocsTooltipsState;
 
-export function usePromptExploderDocsTooltips(): PromptExploderDocsTooltipsState {
-  const { enabled, setEnabled } = useDocsTooltipsSetting(PROMPT_EXPLODER_DOCS_TOOLTIP_KEY, false);
+export const readPromptExploderDocsTooltipsEnabled = readEnabled;
 
-  return {
-    docsTooltipsEnabled: enabled,
-    setDocsTooltipsEnabled: setEnabled,
-  };
-}
+export const usePromptExploderDocsTooltips = useDocsTooltips;

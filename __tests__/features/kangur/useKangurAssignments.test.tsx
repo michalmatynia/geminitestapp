@@ -7,10 +7,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KANGUR_PROGRESS_EVENT_NAME } from '@/features/kangur/ui/services/progress';
 
-const { assignmentsListMock, assignmentsCreateMock, assignmentsUpdateMock } = vi.hoisted(() => ({
+const {
+  assignmentsListMock,
+  assignmentsCreateMock,
+  assignmentsUpdateMock,
+  assignmentsReassignMock,
+} = vi.hoisted(() => ({
   assignmentsListMock: vi.fn(),
   assignmentsCreateMock: vi.fn(),
   assignmentsUpdateMock: vi.fn(),
+  assignmentsReassignMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
@@ -19,6 +25,7 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
       list: assignmentsListMock,
       create: assignmentsCreateMock,
       update: assignmentsUpdateMock,
+      reassign: assignmentsReassignMock,
     },
   }),
 }));

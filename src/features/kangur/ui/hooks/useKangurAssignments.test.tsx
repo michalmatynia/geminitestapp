@@ -2,18 +2,20 @@
  * @vitest-environment jsdom
  */
 
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   listAssignmentsMock,
   createAssignmentMock,
   updateAssignmentMock,
+  reassignAssignmentMock,
   logKangurClientErrorMock,
 } = vi.hoisted(() => ({
   listAssignmentsMock: vi.fn(),
   createAssignmentMock: vi.fn(),
   updateAssignmentMock: vi.fn(),
+  reassignAssignmentMock: vi.fn(),
   logKangurClientErrorMock: vi.fn(),
 }));
 
@@ -23,6 +25,7 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
       list: listAssignmentsMock,
       create: createAssignmentMock,
       update: updateAssignmentMock,
+      reassign: reassignAssignmentMock,
     },
   }),
 }));
@@ -67,6 +70,10 @@ describe('useKangurAssignments', () => {
     listAssignmentsMock.mockResolvedValue([ASSIGNMENT_SNAPSHOT]);
     createAssignmentMock.mockResolvedValue(ASSIGNMENT_SNAPSHOT);
     updateAssignmentMock.mockResolvedValue(ASSIGNMENT_SNAPSHOT);
+    reassignAssignmentMock.mockResolvedValue({
+      ...ASSIGNMENT_SNAPSHOT,
+      id: 'assignment-reassigned',
+    });
   });
 
   it('clears loaded assignments immediately when access is disabled', async () => {
@@ -98,5 +105,28 @@ describe('useKangurAssignments', () => {
 
     expect(listAssignmentsMock).toHaveBeenCalledTimes(1);
     expect(logKangurClientErrorMock).not.toHaveBeenCalled();
+  });
+
+  it('replaces the reassigned assignment with the new snapshot', async () => {
+    const { result } = renderHook(() =>
+      useKangurAssignments({
+        enabled: true,
+        query: {
+          includeArchived: false,
+        },
+      })
+    );
+
+    await waitFor(() => {
+      expect(result.current.assignments).toHaveLength(1);
+    });
+
+    await act(async () => {
+      await result.current.reassignAssignment('assignment-1');
+    });
+
+    expect(reassignAssignmentMock).toHaveBeenCalledWith('assignment-1');
+    expect(result.current.assignments[0].id).toBe('assignment-reassigned');
+    expect(result.current.assignments.find((assignment) => assignment.id === 'assignment-1')).toBeUndefined();
   });
 });

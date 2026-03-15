@@ -37,6 +37,7 @@ vi.mock('@/shared/ui', async () => {
   const mocks = await import('../../studio-modals/__tests__/studioInlineEditRuntimeMockComponents');
   return {
     EmptyState: mocks.MockEmptyState,
+    CompactEmptyState: mocks.MockEmptyState,
     FormModal: mocks.MockFormModal,
     Label: mocks.MockLabel,
     StandardDataTablePanel: mocks.MockStandardDataTablePanel,

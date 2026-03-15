@@ -21,7 +21,7 @@ import {
   TabsTrigger,
   Textarea,
   ToggleRow,
-  EmptyState,
+  CompactEmptyState,
   LoadingState,
 } from '@/features/products/ui';
 
@@ -194,19 +194,17 @@ export default function ProductFormParameters(): React.JSX.Element {
         {parametersLoading ? (
           <LoadingState message='Loading parameters...' className='py-8 border border-dashed' />
         ) : parameters.length === 0 ? (
-          <EmptyState
+          <CompactEmptyState
             title='No parameters'
             description='No parameters available for the selected catalog(s).'
-            variant='compact'
             className='bg-card/20 py-8'
-          />
+           />
         ) : parameterValues.length === 0 ? (
-          <EmptyState
+          <CompactEmptyState
             title='No values'
             description='Add your first parameter to start building values.'
-            variant='compact'
             className='bg-card/20 py-8'
-          />
+           />
         ) : (
           <div className='space-y-3'>
             <Tabs

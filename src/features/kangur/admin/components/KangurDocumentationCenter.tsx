@@ -6,7 +6,7 @@ import {
   KANGUR_DOC_CATALOG,
   KANGUR_DOCUMENTATION_LIBRARY,
 } from '@/shared/lib/documentation/catalogs/kangur';
-import { Badge, Card, EmptyState, ListPanel, PanelStats, SearchInput } from '@/shared/ui';
+import { Badge, Card, CompactEmptyState, ListPanel, PanelStats, SearchInput } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 type GroupedTooltipDocs = {
@@ -196,12 +196,11 @@ export function KangurDocumentationCenter(): React.JSX.Element {
               ))}
             </div>
           ) : (
-            <EmptyState
+            <CompactEmptyState
               title='No Kangur guide matched the current search.'
               description='Try a broader phrase, a guide title, or a documentation path.'
               className='rounded-2xl border-border/60 bg-background/30'
-              variant='compact'
-            />
+             />
           )}
         </ListPanel>
 
@@ -269,12 +268,11 @@ export function KangurDocumentationCenter(): React.JSX.Element {
               ))}
             </div>
           ) : (
-            <EmptyState
+            <CompactEmptyState
               title='No Kangur tooltip documentation matched the current search.'
               description='Try a guide name, tooltip id, or UI target to widen the result set.'
               className='rounded-2xl border-border/60 bg-background/30'
-              variant='compact'
-            />
+             />
           )}
         </ListPanel>
       </div>

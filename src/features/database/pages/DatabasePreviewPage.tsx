@@ -45,7 +45,7 @@ import {
   CollapsibleSection,
   MetadataItem,
   LoadingState,
-  EmptyState,
+  CompactEmptyState,
   Hint,
 } from '@/shared/ui';
 
@@ -394,12 +394,11 @@ function DataTab(): React.JSX.Element {
 
   if (!tableRows || tableRows.rows.length === 0) {
     return (
-      <EmptyState
+      <CompactEmptyState
         title='No row data available'
         description='This table appears to be empty.'
-        variant='compact'
         className='py-8'
-      />
+       />
     );
   }
 

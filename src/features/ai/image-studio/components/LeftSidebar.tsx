@@ -19,7 +19,7 @@ import {
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/shared/lib/products/constants';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, Input, SidePanel, Tooltip, useToast, EmptyState } from '@/shared/ui';
+import { Button, Input, SidePanel, Tooltip, useToast, CompactEmptyState } from '@/shared/ui';
 
 import {
   ImageStudioSingleSlotManager,
@@ -673,12 +673,11 @@ export function LeftSidebar(): React.JSX.Element {
             {maskShapes.length > 0 ? (
               <ShapeListPanel />
             ) : (
-              <EmptyState
+              <CompactEmptyState
                 title='No shapes drawn yet'
                 description='Use the mask tools above to draw polygons or lasso shapes on the canvas.'
-                variant='compact'
                 className='border-none bg-transparent py-4'
-              />
+               />
             )}
           </div>
         </div>

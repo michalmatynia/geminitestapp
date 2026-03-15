@@ -58,8 +58,8 @@ const AUTHENTICATED_USER = {
   full_name: 'Ada Parent',
   email: 'ada@example.com',
   role: 'user' as const,
-  actorType: 'parent' as const,
-  canManageLearners: true,
+  actorType: 'learner' as const,
+  canManageLearners: false,
   ownerUserId: 'parent-1',
   activeLearner: {
     id: 'learner-1',
@@ -113,7 +113,7 @@ describe('KangurAuthContext', () => {
     );
   });
 
-  it('exposes parent-assignment access only when auth resolves an active learner', async () => {
+it('exposes assignment access only when auth resolves an active learner session', async () => {
     render(
       <KangurAuthProvider>
         <AuthProbe />

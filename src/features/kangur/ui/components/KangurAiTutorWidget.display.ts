@@ -287,6 +287,21 @@ export function useKangurAiTutorGuidedDisplayState(input: {
     return rect.width >= 0 && rect.height >= 0 ? rect : null;
   }, [authGuidedAnchorRetryTick, guidedTargetAnchor, guidedTutorTarget, viewportTick]);
 
+  const selectionAnchorRect = useMemo(() => {
+    if (!tutorAnchorContext || !sessionSurface) {
+      return null;
+    }
+
+    const selectionAnchor = selectBestTutorAnchor({
+      anchors: tutorAnchorContext.anchors,
+      contentId: sessionContentId ?? null,
+      kinds: ['selection'],
+      surface: sessionSurface,
+    });
+
+    return selectionAnchor?.getRect() ?? null;
+  }, [sessionContentId, sessionSurface, tutorAnchorContext, viewportTick]);
+
   const guidedSelectionRect = useMemo(() => {
     if (!isSelectionGuidedTutorTarget(guidedTutorTarget) && !selectionResponsePending && !selectionResponseComplete) {
       return null;
@@ -303,7 +318,8 @@ export function useKangurAiTutorGuidedDisplayState(input: {
       selectionViewportBounds ??
         getViewportRectFromPageRect(activeSelectionPageRect ?? persistedSelectionPageRect) ??
         persistedSelectionRect ??
-        activeSelectionRect
+        activeSelectionRect ??
+        selectionAnchorRect
     );
   }, [
     activeSelectionPageRects,
@@ -315,6 +331,7 @@ export function useKangurAiTutorGuidedDisplayState(input: {
     persistedSelectionRect,
     selectionResponsePending,
     selectionResponseComplete,
+    selectionAnchorRect,
   ]);
 
   const guidedSelectionSpotlightRect =

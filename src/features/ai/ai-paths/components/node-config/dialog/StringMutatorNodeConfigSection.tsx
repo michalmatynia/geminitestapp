@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 
 import type { StringMutatorOperation } from '@/shared/lib/ai-paths';
-import { Button, Input, SelectSimple, ToggleRow, FormField, EmptyState } from '@/shared/ui';
+import { Button, Input, SelectSimple, ToggleRow, FormField, CompactEmptyState } from '@/shared/ui';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
@@ -106,12 +106,11 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
         <div className='text-[11px] text-gray-400'>Operations</div>
         <div className='mt-3 space-y-3'>
           {operations.length === 0 ? (
-            <EmptyState
+            <CompactEmptyState
               title='No operations'
               description='No operations yet. Add a step to transform the incoming string.'
-              variant='compact'
               className='bg-card/30 border-dashed border-border/70 py-4'
-            />
+             />
           ) : (
             operations.map((operation: StringMutatorOperation, index: number) => (
               <div

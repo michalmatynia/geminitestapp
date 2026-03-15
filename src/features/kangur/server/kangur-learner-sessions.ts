@@ -14,12 +14,18 @@ export type KangurLearnerSessionEntry = {
 export type KangurLearnerSessionHistory = {
   sessions: KangurLearnerSessionEntry[];
   totalSessions: number;
+  nextOffset?: number | null;
+  hasMore?: boolean;
 };
 
 const SESSION_ACTIVITY_TYPES = new Set<string>([
   ActivityTypes.KANGUR.LEARNER_SIGNIN,
   ActivityTypes.KANGUR.LEARNER_SIGNOUT,
 ]);
+
+const DEFAULT_SESSION_LIMIT = 20;
+const MAX_SESSION_LIMIT = 200;
+const ACTIVITY_PAGE_SIZE = 200;
 
 const readTimestampMs = (activity: ActivityLog): number | null => {
   const raw = activity.createdAt ?? activity.updatedAt ?? null;
@@ -36,12 +42,6 @@ const readTimestampMs = (activity: ActivityLog): number | null => {
 const readTimestamp = (activity: ActivityLog): string | null => {
   const parsed = readTimestampMs(activity);
   return parsed === null ? null : new Date(parsed).toISOString();
-};
-
-const sortByNewest = (left: ActivityLog, right: ActivityLog): number => {
-  const leftMs = readTimestampMs(left) ?? 0;
-  const rightMs = readTimestampMs(right) ?? 0;
-  return rightMs - leftMs;
 };
 
 const normalizeDurationSeconds = (
@@ -62,6 +62,8 @@ const normalizeDurationSeconds = (
 export const listKangurLearnerSessions = async (input: {
   ownerUserId: string;
   learnerId: string;
+  limit?: number;
+  offset?: number;
 }): Promise<KangurLearnerSessionHistory> => {
   const repository = await getActivityRepository();
   const filters = {
@@ -69,54 +71,98 @@ export const listKangurLearnerSessions = async (input: {
     entityId: input.learnerId,
     entityType: 'kangur_learner',
   };
+  const sessionLimit = Math.min(
+    MAX_SESSION_LIMIT,
+    Math.max(1, Math.floor(input.limit ?? DEFAULT_SESSION_LIMIT))
+  );
+  const sessionOffset = Math.max(0, Math.floor(input.offset ?? 0));
 
-  const totalEvents = await repository.countActivity(filters);
-  const events =
-    totalEvents > 0
-      ? await repository.listActivity({
-          ...filters,
-          limit: totalEvents,
-          offset: 0,
-        })
-      : [];
+  const totalSessions = await repository.countActivity({
+    ...filters,
+    type: ActivityTypes.KANGUR.LEARNER_SIGNIN,
+  });
 
-  const sessionEvents = events
-    .filter((event) => SESSION_ACTIVITY_TYPES.has(event.type))
-    .sort(sortByNewest);
+  if (totalSessions === 0 || sessionOffset >= totalSessions) {
+    return {
+      sessions: [],
+      totalSessions,
+      nextOffset: null,
+      hasMore: false,
+    };
+  }
 
   const sessions: KangurLearnerSessionEntry[] = [];
   let pendingEnd: { id: string; at: string } | null = null;
+  let seenSessions = 0;
+  let eventOffset = 0;
+  let hasMoreEvents = true;
 
-  for (const event of sessionEvents) {
-    const timestamp = readTimestamp(event);
-    if (!timestamp) {
-      continue;
+  while (sessions.length < sessionLimit && hasMoreEvents) {
+    const events = await repository.listActivity({
+      ...filters,
+      limit: ACTIVITY_PAGE_SIZE,
+      offset: eventOffset,
+    });
+
+    if (events.length === 0) {
+      hasMoreEvents = false;
+      break;
     }
-    if (event.type === ActivityTypes.KANGUR.LEARNER_SIGNOUT) {
-      if (!pendingEnd) {
-        pendingEnd = { id: event.id, at: timestamp };
+
+    for (const event of events) {
+      if (!SESSION_ACTIVITY_TYPES.has(event.type)) {
+        continue;
       }
-      continue;
+      const timestamp = readTimestamp(event);
+      if (!timestamp) {
+        continue;
+      }
+      if (event.type === ActivityTypes.KANGUR.LEARNER_SIGNOUT) {
+        if (!pendingEnd) {
+          pendingEnd = { id: event.id, at: timestamp };
+        }
+        continue;
+      }
+
+      if (event.type === ActivityTypes.KANGUR.LEARNER_SIGNIN) {
+        const startedAt = timestamp;
+        const endedAt =
+          pendingEnd && Date.parse(pendingEnd.at) >= Date.parse(startedAt)
+            ? pendingEnd.at
+            : null;
+        const entry = {
+          id: event.id,
+          startedAt,
+          endedAt,
+          durationSeconds: normalizeDurationSeconds(startedAt, endedAt),
+        };
+        pendingEnd = null;
+        seenSessions += 1;
+
+        if (seenSessions <= sessionOffset) {
+          continue;
+        }
+
+        sessions.push(entry);
+        if (sessions.length >= sessionLimit) {
+          break;
+        }
+      }
     }
 
-    if (event.type === ActivityTypes.KANGUR.LEARNER_SIGNIN) {
-      const startedAt = timestamp;
-      const endedAt =
-        pendingEnd && Date.parse(pendingEnd.at) >= Date.parse(startedAt)
-          ? pendingEnd.at
-          : null;
-      sessions.push({
-        id: event.id,
-        startedAt,
-        endedAt,
-        durationSeconds: normalizeDurationSeconds(startedAt, endedAt),
-      });
-      pendingEnd = null;
+    eventOffset += events.length;
+    if (events.length < ACTIVITY_PAGE_SIZE) {
+      hasMoreEvents = false;
     }
   }
 
+  const nextOffset = sessionOffset + sessions.length;
+  const hasMore = nextOffset < totalSessions;
+
   return {
     sessions,
-    totalSessions: sessions.length,
+    totalSessions,
+    nextOffset: hasMore ? nextOffset : null,
+    hasMore,
   };
 };

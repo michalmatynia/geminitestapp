@@ -7,12 +7,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   routeNavigatorPushMock,
+  settingsStoreMock,
   useKangurLoginModalMock,
   useKangurLearnerActivityStatusMock,
   useKangurParentDashboardRuntimeMock,
   useKangurPageContentEntryMock,
 } = vi.hoisted(() => ({
   routeNavigatorPushMock: vi.fn(),
+  settingsStoreMock: {
+    get: vi.fn<(key: string) => string | undefined>(),
+  },
   useKangurLoginModalMock: vi.fn(),
   useKangurLearnerActivityStatusMock: vi.fn(),
   useKangurParentDashboardRuntimeMock: vi.fn(),
@@ -56,6 +60,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLearnerActivity', () => ({
   useKangurLearnerActivityStatus: useKangurLearnerActivityStatusMock,
 }));
 
+vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
+  useSettingsStore: () => settingsStoreMock,
+}));
+
 vi.mock('@/features/kangur/ui/components/KangurParentDashboardLearnerManagementWidget', () => ({
   KangurParentDashboardLearnerManagementWidget: () => (
     <div data-testid='parent-dashboard-learner-management-stub' />
@@ -67,6 +75,7 @@ import { KangurParentDashboardHeroWidget } from '@/features/kangur/ui/components
 describe('KangurParentDashboardHeroWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    settingsStoreMock.get.mockReturnValue(undefined);
     useKangurLoginModalMock.mockReturnValue({
       authMode: 'sign-in',
       callbackUrl: '/kangur',
@@ -108,6 +117,24 @@ describe('KangurParentDashboardHeroWidget', () => {
       isAuthenticated: false,
       logout: vi.fn(),
       navigateToLogin: vi.fn(),
+      progress: {
+        totalXp: 0,
+        gamesPlayed: 0,
+        perfectGames: 0,
+        lessonsCompleted: 0,
+        clockPerfect: 0,
+        calendarPerfect: 0,
+        geometryPerfect: 0,
+        badges: [],
+        operationsPlayed: [],
+        totalCorrectAnswers: 0,
+        totalQuestionsAnswered: 0,
+        bestWinStreak: 0,
+        activityStats: {},
+        lessonMastery: {},
+        openedTasks: [],
+        lessonPanelProgress: {},
+      },
       setCreateLearnerModalOpen: vi.fn(),
       viewerName: 'parent@example.com',
       viewerRoleLabel: 'Rodzic',
@@ -177,6 +204,8 @@ describe('KangurParentDashboardHeroWidget', () => {
             lastCompletedAt: '2026-03-10T11:00:00.000Z',
           },
         },
+        openedTasks: [],
+        lessonPanelProgress: {},
       },
       setCreateLearnerModalOpen: vi.fn(),
       viewerName: 'parent@example.com',
@@ -220,6 +249,8 @@ describe('KangurParentDashboardHeroWidget', () => {
         bestWinStreak: 0,
         activityStats: {},
         lessonMastery: {},
+        openedTasks: [],
+        lessonPanelProgress: {},
       },
       setCreateLearnerModalOpen,
       viewerName: 'parent@example.com',
@@ -282,6 +313,8 @@ describe('KangurParentDashboardHeroWidget', () => {
         bestWinStreak: 2,
         activityStats: {},
         lessonMastery: {},
+        openedTasks: [],
+        lessonPanelProgress: {},
       },
       setCreateLearnerModalOpen: vi.fn(),
       viewerName: 'parent@example.com',
@@ -294,6 +327,8 @@ describe('KangurParentDashboardHeroWidget', () => {
   });
 
   it('shows a link to the learner activity when the learner is online', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-15T09:03:00.000Z'));
     useKangurParentDashboardRuntimeMock.mockReturnValue({
       activeLearner: { id: 'learner-1', displayName: 'Maja' },
       basePath: '/kangur',
@@ -316,6 +351,8 @@ describe('KangurParentDashboardHeroWidget', () => {
         bestWinStreak: 0,
         activityStats: {},
         lessonMastery: {},
+        openedTasks: [],
+        lessonPanelProgress: {},
       },
       setCreateLearnerModalOpen: vi.fn(),
       viewerName: 'parent@example.com',
@@ -345,6 +382,164 @@ describe('KangurParentDashboardHeroWidget', () => {
       'href',
       '/kangur/lessons?focus=clock'
     );
+
+    vi.useRealTimers();
+  });
+
+  it('falls back to activity log when observability is unavailable', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-15T09:05:00.000Z'));
+
+    useKangurParentDashboardRuntimeMock.mockReturnValue({
+      activeLearner: { id: 'learner-1', displayName: 'Maja' },
+      basePath: '/kangur',
+      canManageLearners: true,
+      isAuthenticated: true,
+      logout: vi.fn(),
+      navigateToLogin: vi.fn(),
+      progress: {
+        totalXp: 0,
+        gamesPlayed: 0,
+        perfectGames: 0,
+        lessonsCompleted: 0,
+        clockPerfect: 0,
+        calendarPerfect: 0,
+        geometryPerfect: 0,
+        badges: [],
+        operationsPlayed: [],
+        totalCorrectAnswers: 0,
+        totalQuestionsAnswered: 0,
+        bestWinStreak: 0,
+        activityStats: {},
+        lessonMastery: {},
+        openedTasks: [
+          {
+            kind: 'lesson',
+            title: 'Lekcja: Dodawanie',
+            href: '/kangur/lessons?focus=adding',
+            openedAt: '2026-03-15T09:04:30.000Z',
+          },
+        ],
+        lessonPanelProgress: {},
+      },
+      setCreateLearnerModalOpen: vi.fn(),
+      viewerName: 'parent@example.com',
+      viewerRoleLabel: 'Rodzic',
+    });
+    useKangurLearnerActivityStatusMock.mockReturnValue({
+      status: null,
+      isLoading: false,
+      error: null,
+      refresh: vi.fn(),
+    });
+
+    render(<KangurParentDashboardHeroWidget showActions={false} />);
+
+    expect(screen.getByText('Uczeń online')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Otwórz aktywność' })).toHaveAttribute(
+      'href',
+      '/kangur/lessons?focus=adding'
+    );
+
+    vi.useRealTimers();
+  });
+
+  it('falls back to monitoring session data for recent activity', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-15T09:05:00.000Z'));
+
+    useKangurParentDashboardRuntimeMock.mockReturnValue({
+      activeLearner: { id: 'learner-1', displayName: 'Maja' },
+      basePath: '/kangur',
+      canManageLearners: true,
+      isAuthenticated: true,
+      logout: vi.fn(),
+      navigateToLogin: vi.fn(),
+      progress: {
+        totalXp: 0,
+        gamesPlayed: 0,
+        perfectGames: 0,
+        lessonsCompleted: 0,
+        clockPerfect: 0,
+        calendarPerfect: 0,
+        geometryPerfect: 0,
+        badges: [],
+        operationsPlayed: [],
+        totalCorrectAnswers: 0,
+        totalQuestionsAnswered: 0,
+        bestWinStreak: 0,
+        activityStats: {},
+        lessonMastery: {},
+        openedTasks: [],
+        lessonPanelProgress: {
+          clock: {
+            intro: {
+              viewedCount: 1,
+              totalCount: 3,
+              sessionUpdatedAt: '2026-03-15T08:55:00.000Z',
+              label: 'Wprowadzenie',
+            },
+          },
+        },
+      },
+      setCreateLearnerModalOpen: vi.fn(),
+      viewerName: 'parent@example.com',
+      viewerRoleLabel: 'Rodzic',
+    });
+    useKangurLearnerActivityStatusMock.mockReturnValue({
+      status: null,
+      isLoading: false,
+      error: null,
+      refresh: vi.fn(),
+    });
+
+    render(<KangurParentDashboardHeroWidget showActions={false} />);
+
+    expect(screen.getByText('Uczeń ostatnio aktywny')).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
+  it('shows offline status when no activity signals are present', () => {
+    useKangurParentDashboardRuntimeMock.mockReturnValue({
+      activeLearner: { id: 'learner-1', displayName: 'Maja' },
+      basePath: '/kangur',
+      canManageLearners: true,
+      isAuthenticated: true,
+      logout: vi.fn(),
+      navigateToLogin: vi.fn(),
+      progress: {
+        totalXp: 0,
+        gamesPlayed: 0,
+        perfectGames: 0,
+        lessonsCompleted: 0,
+        clockPerfect: 0,
+        calendarPerfect: 0,
+        geometryPerfect: 0,
+        badges: [],
+        operationsPlayed: [],
+        totalCorrectAnswers: 0,
+        totalQuestionsAnswered: 0,
+        bestWinStreak: 0,
+        activityStats: {},
+        lessonMastery: {},
+        openedTasks: [],
+        lessonPanelProgress: {},
+      },
+      setCreateLearnerModalOpen: vi.fn(),
+      viewerName: 'parent@example.com',
+      viewerRoleLabel: 'Rodzic',
+    });
+    useKangurLearnerActivityStatusMock.mockReturnValue({
+      status: null,
+      isLoading: false,
+      error: null,
+      refresh: vi.fn(),
+    });
+
+    render(<KangurParentDashboardHeroWidget showActions={false} />);
+
+    expect(screen.getByText('Uczeń offline')).toBeInTheDocument();
   });
 
   it('hides learner progress details when no active learner is selected', () => {
@@ -370,6 +565,8 @@ describe('KangurParentDashboardHeroWidget', () => {
         bestWinStreak: 0,
         activityStats: {},
         lessonMastery: {},
+        openedTasks: [],
+        lessonPanelProgress: {},
       },
       setCreateLearnerModalOpen: vi.fn(),
       viewerName: 'parent@example.com',

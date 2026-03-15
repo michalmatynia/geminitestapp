@@ -11,7 +11,7 @@ import {
   StatusBadge,
   Card,
   Badge,
-  EmptyState,
+  CompactEmptyState,
   Hint,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -288,21 +288,19 @@ export function CanvasSidebar(): React.JSX.Element {
             ) : null}
           </div>
           {paletteCollapsed ? (
-            <EmptyState
+            <CompactEmptyState
               title='Palette collapsed'
               description='Expand to add nodes.'
-              variant='compact'
               className='border-dashed border-border/60 bg-transparent py-4'
-            />
+             />
           ) : (
             <div className='max-h-[520px] space-y-1 overflow-y-auto pr-1'>
               {filteredPaletteGroups.length === 0 ? (
-                <EmptyState
+                <CompactEmptyState
                   title='No matches'
                   description='No nodes match your search.'
-                  variant='compact'
                   className='border-dashed border-border/60 bg-transparent py-4'
-                />
+                 />
               ) : (
                 filteredPaletteGroups.map(({ group, items }) => {
                   const isExpanded = isPaletteSearchActive || expandedPaletteGroups.has(group.title);

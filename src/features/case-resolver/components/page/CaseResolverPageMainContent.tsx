@@ -3,7 +3,7 @@
 import { FileText } from 'lucide-react';
 import React from 'react';
 
-import { Card, EmptyState } from '@/shared/ui';
+import { Card, CompactEmptyState } from '@/shared/ui';
 
 import { useCaseResolverViewStateContext } from '../CaseResolverViewContext';
 import { CaseResolverDocumentEditor } from './CaseResolverDocumentEditor';
@@ -79,11 +79,10 @@ export function CaseResolverPageMainContent(): React.JSX.Element {
           padding='lg'
           className='flex flex-1 items-center justify-center border-dashed border-border/40 bg-card/10'
         >
-          <EmptyState
+          <CompactEmptyState
             icon={<FileText className='size-12 text-gray-700' />}
             title='No document or case selected'
             description='Select a file from the tree to begin editing or viewing.'
-            variant='compact'
             className='border-none p-0'
           />
         </Card>

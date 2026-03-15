@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 
 import type { AnalyticsSummary } from '@/shared/contracts';
-import { Button, StandardDataTablePanel, EmptyState } from '@/shared/ui';
+import { Button, StandardDataTablePanel, CompactEmptyState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { AnalyticsEventDetails } from './AnalyticsEventDetails';
@@ -108,11 +108,10 @@ export function RecentEventsTable(): React.JSX.Element {
       maxHeight='60vh'
       enableVirtualization={true}
       emptyState={
-        <EmptyState
+        <CompactEmptyState
           title='No events yet'
           description='Visitor activity will appear here once tracked.'
-          variant='compact'
-        />
+         />
       }
       renderRowDetails={({ row }) => {
         if (expandedId !== row.original.id) return null;

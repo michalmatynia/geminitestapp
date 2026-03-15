@@ -8,12 +8,14 @@ import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacriti
 
 const {
   tutorOpenChatMock,
+  tutorRequestSelectionExplainMock,
   tutorSendMessageMock,
   tutorSetHighlightedTextMock,
   useKangurAiTutorSessionSyncMock,
   useOptionalKangurAiTutorMock,
 } = vi.hoisted(() => ({
   tutorOpenChatMock: vi.fn(),
+  tutorRequestSelectionExplainMock: vi.fn(),
   tutorSendMessageMock: vi.fn(),
   tutorSetHighlightedTextMock: vi.fn(),
   useKangurAiTutorSessionSyncMock: vi.fn(),
@@ -74,6 +76,7 @@ describe('KangurTestSuitePlayer', () => {
     useKangurAiTutorSessionSyncMock.mockClear();
     useOptionalKangurAiTutorMock.mockReset();
     tutorOpenChatMock.mockReset();
+    tutorRequestSelectionExplainMock.mockReset();
     tutorSendMessageMock.mockReset();
     tutorSetHighlightedTextMock.mockReset();
     tutorSendMessageMock.mockResolvedValue(undefined);
@@ -81,6 +84,7 @@ describe('KangurTestSuitePlayer', () => {
       enabled: true,
       isLoading: false,
       openChat: tutorOpenChatMock,
+      requestSelectionExplain: tutorRequestSelectionExplainMock,
       sendMessage: tutorSendMessageMock,
       setHighlightedText: tutorSetHighlightedTextMock,
     });
@@ -193,25 +197,9 @@ describe('KangurTestSuitePlayer', () => {
     await userEvent.click(askAboutChoiceButton);
 
     expect(tutorSetHighlightedTextMock).toHaveBeenCalledWith('Odpowiedź A: 4');
-    expect(tutorOpenChatMock).toHaveBeenCalledTimes(1);
-    expect(tutorSendMessageMock).toHaveBeenCalledWith(
-      'Wyjaśnij zaznaczony fragment krok po kroku.',
-      expect.objectContaining({
-        promptMode: 'selected_text',
-    selectedText: 'Odpowiedź A: 4',
-        contentId: 'suite-2024',
-        focusKind: 'selection',
-        focusId: 'kangur-test-selection:suite-2024:question-1:A',
-    focusLabel: 'Odpowiedź A: 4',
-        knowledgeReference: {
-          sourceCollection: 'kangur_page_content',
-          sourceRecordId: 'tests-selection',
-          sourcePath: 'entry:tests-selection',
-        },
-        interactionIntent: 'explain',
-        surface: 'test',
-      })
-    );
+    expect(tutorRequestSelectionExplainMock).toHaveBeenCalledWith('Odpowiedź A: 4');
+    expect(tutorOpenChatMock).not.toHaveBeenCalled();
+    expect(tutorSendMessageMock).not.toHaveBeenCalled();
   });
 
   it('syncs revealed review details into the tutor session context after checking the answer', async () => {

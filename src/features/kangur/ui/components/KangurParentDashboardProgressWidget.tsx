@@ -2,9 +2,12 @@ import {
   appendKangurUrlParams,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
+import { useMemo, useState } from 'react';
+
 import { KANGUR_LESSONS_SETTING_KEY, parseKangurLessons } from '@/features/kangur/settings';
 import KangurAssignmentManager from '@/features/kangur/ui/components/KangurAssignmentManager';
 import KangurDailyQuestHighlightCardContent from '@/features/kangur/ui/components/KangurDailyQuestHighlightCardContent';
+import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   type KangurParentDashboardPanelDisplayMode,
@@ -13,16 +16,29 @@ import {
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import {
   KangurButton,
+  KangurEmptyState,
+  KangurGlassPanel,
   KangurInfoCard,
   KangurMetaText,
   KangurPanelIntro,
   KangurProgressBar,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
+import { buildKangurAssignmentListItems } from '@/features/kangur/ui/services/delegated-assignments';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { useMemo } from 'react';
+
+const ACTIVE_ASSIGNMENTS_TITLE = 'Aktywne zadania';
+const ACTIVE_ASSIGNMENTS_EMPTY_LABEL = 'Brak aktywnych zadań dla ucznia.';
+const ACTIVE_ASSIGNMENTS_ERROR_LABEL = 'Nie udało się pobrać aktywnych zadań.';
+const ARCHIVE_ASSIGNMENT_ERROR_LABEL = 'Nie udało się zarchiwizować zadania.';
+const RECENT_ACTIVE_ASSIGNMENTS_LIMIT = 3;
+const RECENT_ACTIVE_ASSIGNMENTS_TITLE = 'Ostatnie aktywne zadania';
+const RECENT_ACTIVE_ASSIGNMENTS_SUMMARY =
+  'Szybki podgląd zadań, które uczeń ma aktualnie do wykonania.';
+const RECENT_ACTIVE_ASSIGNMENTS_EMPTY_LABEL = 'Brak aktywnych zadań dla ucznia.';
 
 const buildAssignmentHref = (
   basePath: string,
@@ -78,42 +94,47 @@ export function KangurParentDashboardProgressWidget({
     [rawLessons]
   );
   const activeLearnerId = activeLearner?.id ?? null;
-
-  if (!canAccessDashboard) {
-    return null;
-  }
-
-  if (!shouldRenderKangurParentDashboardPanel(displayMode, activeTab, 'progress')) {
-    return null;
-  }
-
-  if (!activeLearnerId) {
-    return null;
-  }
-
-  const dailyQuest = getCurrentKangurDailyQuest(progress);
-  const dailyQuestAction = dailyQuest?.assignment.action ?? null;
-  const dailyQuestHref = dailyQuestAction ? buildAssignmentHref(basePath, dailyQuestAction) : null;
-  const dailyQuestTargetPage = dailyQuestAction?.page ?? null;
-  const dailyQuestAccent =
-    dailyQuest?.reward.status === 'claimed'
-      ? 'emerald'
-      : dailyQuest?.progress.status === 'completed'
-        ? 'amber'
-        : dailyQuest?.progress.status === 'in_progress'
-          ? 'indigo'
-          : 'slate';
-  const dailyQuestRewardAccent =
-    dailyQuest?.reward.status === 'claimed' ? 'emerald' : dailyQuestAccent;
-  const dailyQuestActionLabel = dailyQuestAction?.label ?? '';
-  const dailyQuestDescription = dailyQuest?.assignment.description ?? '';
-  const dailyQuestProgressSummary = dailyQuest?.progress.summary ?? '';
-  const dailyQuestProgressLabel = dailyQuest ? `${dailyQuest.progress.percent}%` : '';
-  const dailyQuestLabel = dailyQuest?.assignment.questLabel ?? 'Misja dnia';
-  const dailyQuestRewardLabel = dailyQuest?.reward.label ?? '';
-  const dailyQuestTitle = dailyQuest?.assignment.title ?? '';
+  const [archiveError, setArchiveError] = useState<string | null>(null);
+  const {
+    assignments,
+    isLoading: assignmentsLoading,
+    error: assignmentsError,
+    updateAssignment,
+  } = useKangurAssignments({
+    enabled: Boolean(activeLearnerId),
+    query: {
+      includeArchived: false,
+    },
+  });
   const openedTasks = progress.openedTasks ?? [];
   const lessonPanelProgress = progress.lessonPanelProgress ?? {};
+  const activeAssignments = useMemo(
+    () =>
+      assignments.filter(
+        (assignment) => !assignment.archived && assignment.progress.status !== 'completed'
+      ),
+    [assignments]
+  );
+  const recentAssignments = useMemo(
+    () =>
+      activeAssignments
+        .slice()
+        .sort((left, right) => {
+          const leftTimestamp = Date.parse(left.progress.lastActivityAt ?? left.updatedAt);
+          const rightTimestamp = Date.parse(right.progress.lastActivityAt ?? right.updatedAt);
+          return rightTimestamp - leftTimestamp;
+        })
+        .slice(0, RECENT_ACTIVE_ASSIGNMENTS_LIMIT),
+    [activeAssignments]
+  );
+  const activeAssignmentItems = useMemo(
+    () => buildKangurAssignmentListItems(basePath, activeAssignments),
+    [activeAssignments, basePath]
+  );
+  const recentAssignmentItems = useMemo(
+    () => buildKangurAssignmentListItems(basePath, recentAssignments),
+    [basePath, recentAssignments]
+  );
   const lessonPanelCards = useMemo(
     () =>
       lessons
@@ -152,6 +173,49 @@ export function KangurParentDashboardProgressWidget({
         .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry)),
     [lessonPanelProgress, lessons]
   );
+
+  if (!canAccessDashboard) {
+    return null;
+  }
+
+  if (!shouldRenderKangurParentDashboardPanel(displayMode, activeTab, 'progress')) {
+    return null;
+  }
+
+  if (!activeLearnerId) {
+    return null;
+  }
+
+  const dailyQuest = getCurrentKangurDailyQuest(progress);
+  const dailyQuestAction = dailyQuest?.assignment.action ?? null;
+  const dailyQuestHref = dailyQuestAction ? buildAssignmentHref(basePath, dailyQuestAction) : null;
+  const dailyQuestTargetPage = dailyQuestAction?.page ?? null;
+  const dailyQuestAccent =
+    dailyQuest?.reward.status === 'claimed'
+      ? 'emerald'
+      : dailyQuest?.progress.status === 'completed'
+        ? 'amber'
+        : dailyQuest?.progress.status === 'in_progress'
+          ? 'indigo'
+          : 'slate';
+  const dailyQuestRewardAccent =
+    dailyQuest?.reward.status === 'claimed' ? 'emerald' : dailyQuestAccent;
+  const dailyQuestActionLabel = dailyQuestAction?.label ?? '';
+  const dailyQuestDescription = dailyQuest?.assignment.description ?? '';
+  const dailyQuestProgressSummary = dailyQuest?.progress.summary ?? '';
+  const dailyQuestProgressLabel = dailyQuest ? `${dailyQuest.progress.percent}%` : '';
+  const dailyQuestLabel = dailyQuest?.assignment.questLabel ?? 'Misja dnia';
+  const dailyQuestRewardLabel = dailyQuest?.reward.label ?? '';
+  const dailyQuestTitle = dailyQuest?.assignment.title ?? '';
+
+  const handleArchiveAssignment = async (assignmentId: string): Promise<void> => {
+    setArchiveError(null);
+    try {
+      await updateAssignment(assignmentId, { archived: true });
+    } catch {
+      setArchiveError(ARCHIVE_ASSIGNMENT_ERROR_LABEL);
+    }
+  };
 
   return (
     <div className='flex flex-col gap-5'>
@@ -254,6 +318,73 @@ export function KangurParentDashboardProgressWidget({
           </div>
         )}
       </KangurSummaryPanel>
+      {assignmentsLoading ? (
+        <KangurGlassPanel
+          data-testid='parent-dashboard-active-assignments-loading'
+          padding='lg'
+          surface='neutral'
+          variant='soft'
+        >
+          <KangurEmptyState
+            accent='slate'
+            className='text-sm'
+            description='Ładowanie aktywnych zadań...'
+            padding='lg'
+            role='status'
+            aria-live='polite'
+            aria-atomic='true'
+          />
+        </KangurGlassPanel>
+      ) : assignmentsError ? (
+        <KangurGlassPanel
+          data-testid='parent-dashboard-active-assignments-error'
+          padding='lg'
+          surface='rose'
+          variant='soft'
+        >
+          <KangurSummaryPanel
+            accent='rose'
+            description={ACTIVE_ASSIGNMENTS_ERROR_LABEL}
+            padding='lg'
+            tone='accent'
+            role='alert'
+            aria-live='assertive'
+            aria-atomic='true'
+          />
+        </KangurGlassPanel>
+      ) : (
+        <>
+          <KangurAssignmentsList
+            items={recentAssignmentItems}
+            title={RECENT_ACTIVE_ASSIGNMENTS_TITLE}
+            summary={RECENT_ACTIVE_ASSIGNMENTS_SUMMARY}
+            emptyLabel={RECENT_ACTIVE_ASSIGNMENTS_EMPTY_LABEL}
+            compact
+          />
+          {archiveError ? (
+            <KangurSummaryPanel
+              accent='rose'
+              description={archiveError}
+              padding='sm'
+              tone='accent'
+              role='alert'
+              aria-live='assertive'
+              aria-atomic='true'
+            />
+          ) : null}
+          <KangurAssignmentsList
+            items={activeAssignmentItems}
+            title={ACTIVE_ASSIGNMENTS_TITLE}
+            emptyLabel={ACTIVE_ASSIGNMENTS_EMPTY_LABEL}
+            onArchive={(assignmentId) => void handleArchiveAssignment(assignmentId)}
+          />
+        </>
+      )}
+      <KangurAssignmentManager
+        basePath={basePath}
+        view='metrics'
+        key={`${activeLearnerId ?? 'no-learner'}:metrics`}
+      />
       <KangurSummaryPanel
         accent='amber'
         className='mt-1'
@@ -311,11 +442,6 @@ export function KangurParentDashboardProgressWidget({
           </div>
         )}
       </KangurSummaryPanel>
-      <KangurAssignmentManager
-        basePath={basePath}
-        view='tracking'
-        key={activeLearnerId ?? 'no-learner'}
-      />
     </div>
   );
 }

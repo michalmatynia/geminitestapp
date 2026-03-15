@@ -17,7 +17,7 @@ import {
 import { PreviewNodeSelectionButton } from '@/features/cms/components/page-builder/preview/PreviewNodeSelectionButton';
 import { getSectionContainerClass, getSectionStyles } from '@/features/cms/public';
 import type { BlockInstance } from '@/shared/contracts/cms';
-import { EmptyState, Button } from '@/shared/ui';
+import { CompactEmptyState, Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 export function PreviewSlideshowSection() {
@@ -129,12 +129,11 @@ export function PreviewSlideshowSection() {
       {slideCount === 0 ? (
         showEditorChrome ? (
           <div className='container mx-auto px-4 md:px-6 py-12'>
-            <EmptyState
+            <CompactEmptyState
               title='No slides'
               description='Add blocks to create slideshow slides.'
-              variant='compact'
               className='bg-card/20'
-            />
+             />
           </div>
         ) : null
       ) : (
@@ -267,12 +266,11 @@ export function PreviewSlideshowSection() {
                         );
                       })
                     ) : (
-                      <EmptyState
+                      <CompactEmptyState
                         title='Empty slide'
                         description='Add content to this slide.'
-                        variant='compact'
                         className='bg-transparent border-none'
-                      />
+                       />
                     )}
                   </div>
                 </div>

@@ -13,6 +13,11 @@ export async function getKangurLearnerSessionsHandler(
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
+  const searchParams = req.nextUrl.searchParams;
+  const limitParam = searchParams.get('limit');
+  const offsetParam = searchParams.get('offset');
+  const limit = limitParam ? Number.parseInt(limitParam, 10) : undefined;
+  const offset = offsetParam ? Number.parseInt(offsetParam, 10) : undefined;
   const actor = await resolveKangurActor(req);
   if (!actor.canManageLearners) {
     throw forbiddenError('Only parent accounts can manage learners.');
@@ -28,6 +33,8 @@ export async function getKangurLearnerSessionsHandler(
   const history = await listKangurLearnerSessions({
     ownerUserId: actor.ownerUserId,
     learnerId: params.id,
+    limit: Number.isFinite(limit) ? limit : undefined,
+    offset: Number.isFinite(offset) ? offset : undefined,
   });
 
   return NextResponse.json(history, {

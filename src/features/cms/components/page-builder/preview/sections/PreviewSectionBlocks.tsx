@@ -4,7 +4,7 @@ import React from 'react';
 
 import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
 import type { BlockInstance } from '@/shared/contracts/cms';
-import { EmptyState } from '@/shared/ui';
+import { CompactEmptyState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 const CONTAINED_BLOCK_CONTEXT_VALUE = { contained: true };
@@ -34,12 +34,11 @@ export function PreviewSectionBlocks(props: PreviewSectionBlocksProps): React.JS
         </BlockContextProvider>
       ) : null}
       {showEmptyState && blocks.length === 0 && emptyState ? (
-        <EmptyState
+        <CompactEmptyState
           title={emptyState.title}
           description={emptyState.description}
-          variant='compact'
           className={emptyState.className}
-        />
+         />
       ) : null}
     </div>
   );

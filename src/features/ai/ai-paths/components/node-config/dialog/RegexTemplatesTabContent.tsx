@@ -1,7 +1,7 @@
 import React from 'react';
 
 import type { RegexConfig, RegexTemplate } from '@/shared/lib/ai-paths';
-import { Button, EmptyState, FormField, Input, Label, SelectSimple, ToggleRow } from '@/shared/ui';
+import { Button, CompactEmptyState, FormField, Input, Label, SelectSimple, ToggleRow } from '@/shared/ui';
 
 type RegexTemplatesTabContentProps = {
   globalTemplates: RegexTemplate[];
@@ -40,12 +40,11 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
           <span className='text-[11px] text-gray-500'>{regexTemplates.length} saved</span>
         </div>
         {regexTemplates.length === 0 ? (
-          <EmptyState
+          <CompactEmptyState
             title='No node templates'
             description='No node templates yet. Save one from the Config tab.'
-            variant='compact'
             className='bg-card/40 border-dashed border-border/70 py-4'
-          />
+           />
         ) : (
           <div className='space-y-4'>
             {regexTemplates.map((template: RegexTemplate) => (
@@ -223,19 +222,17 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
           <span className='text-[11px] text-gray-500'>{globalTemplates.length} shared</span>
         </div>
         {settingsLoading && globalTemplates.length === 0 ? (
-          <EmptyState
+          <CompactEmptyState
             title='Loading...'
             description='Loading global templates…'
-            variant='compact'
             className='bg-card/40 border-dashed border-border/70 py-4'
-          />
+           />
         ) : globalTemplates.length === 0 ? (
-          <EmptyState
+          <CompactEmptyState
             title='No global templates'
             description='No global templates yet. Save one from the Config tab.'
-            variant='compact'
             className='bg-card/40 border-dashed border-border/70 py-4'
-          />
+           />
         ) : (
           <div className='space-y-4'>
             {globalTemplates.map((template: RegexTemplate) => (

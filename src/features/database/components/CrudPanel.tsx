@@ -16,7 +16,7 @@ import {
   Alert,
   StandardDataTablePanel,
   Card,
-  EmptyState,
+  CompactEmptyState,
   PanelPagination,
   Button,
 } from '@/shared/ui';
@@ -312,12 +312,11 @@ export function CrudPanel(props: {
               {filters}
             </Card>
             {alerts}
-            <EmptyState
+            <CompactEmptyState
               title='No table selected'
               description='Please select a table from the list above to view and manage its data.'
-              variant='compact'
               className='bg-card/40 border-dashed border-border/60 py-20'
-            />
+             />
           </div>
         )}
 

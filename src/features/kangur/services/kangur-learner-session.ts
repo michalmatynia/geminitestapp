@@ -72,6 +72,23 @@ const parsePayload = (raw: string | undefined): KangurLearnerSessionPayload | nu
   }
 };
 
+const readCookieFromHeader = (cookieHeader: string | null, name: string): string | undefined => {
+  if (!cookieHeader) {
+    return undefined;
+  }
+
+  const prefix = `${name}=`;
+  const entries = cookieHeader.split(';');
+  for (const entry of entries) {
+    const trimmed = entry.trim();
+    if (trimmed.startsWith(prefix)) {
+      return trimmed.slice(prefix.length);
+    }
+  }
+
+  return undefined;
+};
+
 const buildCookieValue = (input: { value: string; maxAge: number }): string => {
   const parts = [
     `${COOKIE_NAME}=${input.value}`,
@@ -88,7 +105,17 @@ const buildCookieValue = (input: { value: string; maxAge: number }): string => {
 
 export const readKangurLearnerSession = (
   request: NextRequest
-): KangurLearnerSessionPayload | null => parsePayload(request.cookies.get(COOKIE_NAME)?.value);
+): KangurLearnerSessionPayload | null => {
+  const cookies = (
+    request as NextRequest & {
+      cookies?: { get?: (name: string) => { value?: string } | undefined };
+    }
+  ).cookies;
+  const cookieValue =
+    cookies?.get?.(COOKIE_NAME)?.value ??
+    readCookieFromHeader(request.headers.get('cookie'), COOKIE_NAME);
+  return parsePayload(cookieValue);
+};
 
 export const setKangurLearnerSession = (
   response: NextResponse,

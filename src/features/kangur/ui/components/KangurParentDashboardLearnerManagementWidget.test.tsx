@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const runtimeState = vi.hoisted(() => ({
@@ -205,7 +205,7 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
     expect(screen.getByText('Kliknij, aby przełączyć profil')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
-    expect(screen.getByText('Ada', { selector: 'span' })).toHaveClass(
+    expect(screen.getByText('Ada')).toHaveClass(
       '[color:var(--kangur-page-text)]'
     );
     expect(screen.getByTestId('parent-create-learner-modal')).toBeInTheDocument();
@@ -217,6 +217,61 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
     fireEvent.click(screen.getByTestId('parent-dashboard-learner-card-learner-2'));
 
     expect(runtimeState.value.selectLearner).toHaveBeenCalledWith('learner-2');
+  });
+
+  it('loads more learner sessions when requested', async () => {
+    learnerSessionsListMock
+      .mockResolvedValueOnce({
+        sessions: [
+          {
+            id: 'session-1',
+            startedAt: '2026-03-12T10:00:00.000Z',
+            endedAt: '2026-03-12T10:30:00.000Z',
+            durationSeconds: 1800,
+          },
+        ],
+        totalSessions: 2,
+        hasMore: true,
+        nextOffset: 1,
+      })
+      .mockResolvedValueOnce({
+        sessions: [
+          {
+            id: 'session-2',
+            startedAt: '2026-03-10T10:00:00.000Z',
+            endedAt: '2026-03-10T10:20:00.000Z',
+            durationSeconds: 1200,
+          },
+        ],
+        totalSessions: 2,
+        hasMore: false,
+        nextOffset: null,
+      });
+
+    render(<KangurParentDashboardLearnerManagementWidget />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Metryka' }));
+
+    await waitFor(() => {
+      expect(learnerSessionsListMock).toHaveBeenCalledWith('learner-1', {
+        limit: 20,
+        offset: 0,
+      });
+    });
+
+    const loadMoreButton = await screen.findByRole('button', {
+      name: 'Pokaż starsze sesje',
+    });
+    fireEvent.click(loadMoreButton);
+
+    await waitFor(() => {
+      expect(learnerSessionsListMock).toHaveBeenCalledWith('learner-1', {
+        limit: 20,
+        offset: 1,
+      });
+    });
+
+    expect(await screen.findByTestId('parent-profile-session-session-2')).toBeInTheDocument();
   });
 
   it('stays hidden without dashboard access', () => {

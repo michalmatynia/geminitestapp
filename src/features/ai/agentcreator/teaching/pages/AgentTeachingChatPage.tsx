@@ -21,7 +21,7 @@ import {
   FormSection,
   FormField,
   LoadingState,
-  EmptyState,
+  CompactEmptyState,
   Card,
   PageLayout,
 } from '@/shared/ui';
@@ -133,12 +133,11 @@ function AgentTeachingChatPageContent(): React.JSX.Element {
           {loadingAgents ? (
             <LoadingState message='Loading agents…' className='py-8' size='sm' />
           ) : agents.length === 0 ? (
-            <EmptyState
-              variant='compact'
+            <CompactEmptyState
               title='No agents'
               description='Create a learner agent first.'
               className='py-8'
-            />
+             />
           ) : (
             <div className='space-y-2'>
               {agents.map((agent: AgentTeachingAgentRecord) => (

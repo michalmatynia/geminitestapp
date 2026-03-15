@@ -5,7 +5,7 @@ import * as React from 'react';
 import {
   Alert,
   Button,
-  EmptyState,
+  CompactEmptyState,
   FormSection,
   MetadataItem,
   StatusBadge,
@@ -39,16 +39,15 @@ export function KnowledgeGraphStatusSection(): React.JSX.Element {
     return (
       <div id='knowledge-graph-status'>
         <FormSection title='Knowledge Graph Status' variant='subtle'>
-          <EmptyState
+          <CompactEmptyState
             title='Neo4j graph status disabled'
             description={knowledgeGraphStatus.message}
-            variant='compact'
             action={
               <Button variant='outline' size='sm' onClick={onRefresh} disabled={isRefreshing}>
                 Refresh graph status
               </Button>
             }
-          />
+           />
         </FormSection>
       </div>
     );

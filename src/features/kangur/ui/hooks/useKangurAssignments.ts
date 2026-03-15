@@ -30,6 +30,7 @@ type UseKangurAssignmentsResult = {
     id: string,
     input: KangurAssignmentUpdateInput
   ) => Promise<KangurAssignmentSnapshot>;
+  reassignAssignment: (id: string) => Promise<KangurAssignmentSnapshot>;
 };
 
 export const useKangurAssignments = (
@@ -126,6 +127,19 @@ export const useKangurAssignments = (
     []
   );
 
+  const reassignAssignment = useCallback(
+    async (id: string): Promise<KangurAssignmentSnapshot> => {
+      const reassignedAssignment = await kangurPlatform.assignments.reassign(id);
+      setAssignments((prev) => [
+        reassignedAssignment,
+        ...prev.filter((assignment) => assignment.id !== id),
+      ]);
+      setError(null);
+      return reassignedAssignment;
+    },
+    []
+  );
+
   return {
     assignments: enabled ? assignments : [],
     isLoading: enabled ? isLoading : false,
@@ -133,5 +147,6 @@ export const useKangurAssignments = (
     refresh,
     createAssignment,
     updateAssignment,
+    reassignAssignment,
   };
 };

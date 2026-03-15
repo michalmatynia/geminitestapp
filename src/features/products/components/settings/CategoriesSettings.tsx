@@ -23,6 +23,7 @@ import type {
 import {
   Button,
   EmptyState,
+  CompactEmptyState,
   FolderTreePanel,
   Skeleton,
   SelectSimple,
@@ -488,12 +489,11 @@ export function CategoriesSettings(): React.JSX.Element {
                     </Button>
                   </div>
                   {panelCollapsed ? (
-                    <EmptyState
+                    <CompactEmptyState
                       title='Tree Collapsed'
                       description='Category tree is collapsed.'
-                      variant='compact'
                       className='bg-card/30 border-dashed border-border/70 py-4'
-                    />
+                     />
                   ) : (
                     <CategoryTreeNodeRuntimeProvider value={categoryTreeNodeRuntimeValue}>
                       <FolderTreeViewportV2

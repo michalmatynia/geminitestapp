@@ -1,8 +1,8 @@
+import type { DocumentationEntry, DocumentationModuleId } from '@/shared/contracts/documentation';
+
 import {
   getDocumentationEntry,
   resolveDocumentationEntryFromElement,
-  type DocumentationEntry,
-  type DocumentationModuleId,
 } from '@/shared/lib/documentation';
 
 export const formatDocumentationTooltip = (entry: DocumentationEntry): string =>

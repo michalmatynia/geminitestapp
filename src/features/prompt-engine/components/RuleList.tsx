@@ -4,7 +4,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
 import type { PromptValidationRule } from '@/shared/lib/prompt-engine/settings';
-import { Button, Input, Label, EmptyState, Card } from '@/shared/ui';
+import { Button, Input, Label, CompactEmptyState, Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { RuleListDragProvider } from './context/RuleListDragContext';
@@ -189,11 +189,10 @@ export function RuleList(): React.JSX.Element {
     <RuleListDragProvider value={dragContextValue}>
       <div className='space-y-4'>
         {filteredDrafts.length === 0 ? (
-          <EmptyState
+          <CompactEmptyState
             title='No rules found'
             description={`No rules match your filters in the ${activeTabLabel} list.`}
-            variant='compact'
-          />
+           />
         ) : null}
         {sequencingLocked ? (
           <Card variant='warning' padding='md' className='border-amber-500/40 bg-amber-500/10'>

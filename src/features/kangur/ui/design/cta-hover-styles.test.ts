@@ -58,10 +58,10 @@ describe('Kangur CTA hover styles', () => {
     const primaryCtaBlock = source.match(/\.primary-cta\s*\{[\s\S]*?will-change:\s*transform;/)?.[0];
     const warningCtaBlock = source.match(/\.warning-cta\s*\{[\s\S]*?will-change:\s*transform;/)?.[0];
     const sharedButtonGradientMotionBlock = source.match(
-      /\.warning-cta,[\s\S]*?background-image:\s*linear-gradient\([\s\S]*?animation-name:\s*kangur-button-gradient-color-shift;[\s\S]*?animation-duration:\s*18s !important;[\s\S]*?animation-timing-function:\s*cubic-bezier\(0\.37, 0, 0\.23, 1\) !important;[\s\S]*?animation-iteration-count:\s*infinite !important;/
+      /\.warning-cta,[\s\S]*?background-image:\s*linear-gradient\([\s\S]*?animation-name:\s*kangur-button-gradient-color-shift;[\s\S]*?animation-duration:\s*18s(?:\s*!important)?;\s*animation-timing-function:\s*cubic-bezier\(0\.37, 0, 0\.23, 1\)(?:\s*!important)?;\s*animation-iteration-count:\s*infinite(?:\s*!important)?;[\s\S]*?\}/
     )?.[0];
     const progressGradientMotionBlock = source.match(
-      /\.kangur-progress-fill\s*\{[\s\S]*?--kangur-progress-primary:\s*var\(--tw-gradient-from,\s*transparent\);[\s\S]*?background-image:\s*linear-gradient\([\s\S]*?animation-name:\s*kangur-progress-gradient-color-shift;[\s\S]*?animation-duration:\s*10s !important;[\s\S]*?animation-timing-function:\s*ease-in-out !important;[\s\S]*?animation-iteration-count:\s*infinite !important;/
+      /\.kangur-progress-fill\s*\{[\s\S]*?--kangur-progress-primary:\s*var\(--tw-gradient-from,\s*transparent\);[\s\S]*?background-image:\s*linear-gradient\([\s\S]*?animation-name:\s*kangur-progress-gradient-color-shift;[\s\S]*?animation-duration:\s*10s(?:\s*!important)?;\s*animation-timing-function:\s*ease-in-out(?:\s*!important)?;\s*animation-iteration-count:\s*infinite(?:\s*!important)?;[\s\S]*?\}/
     )?.[0];
 
     expect(source).toContain('@property --kangur-gradient-live-start');

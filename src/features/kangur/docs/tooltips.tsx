@@ -11,7 +11,7 @@ import {
 } from '@/features/kangur/help-settings';
 import {
   DOCUMENTATION_MODULE_IDS,
-  DocumentationTooltipEnhancer,
+  createDocsTooltipEnhancer,
   getDocumentationTooltip,
 } from '@/shared/lib/documentation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -38,21 +38,6 @@ export function useKangurDocsTooltips(surface: KangurDocsTooltipSurface): {
   };
 }
 
-export function KangurDocsTooltipEnhancer({
-  enabled,
-  rootId,
-}: {
-  enabled: boolean;
-  rootId: string;
-}): React.JSX.Element {
-  const tooltipEnhancerEnabled = enabled;
-  const tooltipRootId = rootId;
-
-  return (
-    <DocumentationTooltipEnhancer
-      enabled={tooltipEnhancerEnabled}
-      moduleId={DOCUMENTATION_MODULE_IDS.kangur}
-      rootId={tooltipRootId}
-    />
-  );
-}
+export const KangurDocsTooltipEnhancer = createDocsTooltipEnhancer({
+  moduleId: DOCUMENTATION_MODULE_IDS.kangur,
+});

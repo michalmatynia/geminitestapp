@@ -28,7 +28,7 @@ import {
   Alert,
   Badge,
   Button,
-  EmptyState,
+  CompactEmptyState,
   LoadingState,
   SegmentedControl,
   StatusBadge,
@@ -339,16 +339,15 @@ export function AdminKangurObservabilityPage(): JSX.Element {
         {summaryQuery.isLoading && !summary ? (
           <LoadingState message='Loading Kangur observability...' className='min-h-[320px]' />
         ) : !summary || !knowledgeGraphStatus ? (
-          <EmptyState
+          <CompactEmptyState
             title='No observability summary available'
             description='The Kangur summary endpoint did not return data for this window.'
-            variant='compact'
             action={
               <Button variant='outline' onClick={() => void summaryQuery.refetch()}>
                 Refresh
               </Button>
             }
-          />
+           />
         ) : (
           <ObservabilitySummaryContext.Provider value={{ range, summary }}>
             <KnowledgeGraphObservabilityProvider

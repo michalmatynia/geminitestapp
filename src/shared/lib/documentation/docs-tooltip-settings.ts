@@ -42,3 +42,29 @@ export function useDocsTooltipsSetting(
 
   return { enabled, setEnabled };
 }
+
+export type DocsTooltipsState = {
+  docsTooltipsEnabled: boolean;
+  setDocsTooltipsEnabled: (enabled: boolean) => void;
+};
+
+export function createDocsTooltipsState(
+  storageKey: string,
+  defaultValue = false
+): {
+  readEnabled: () => boolean;
+  useDocsTooltips: () => DocsTooltipsState;
+} {
+  const readEnabled = (): boolean => readDocsTooltipsEnabled(storageKey, defaultValue);
+
+  const useDocsTooltips = (): DocsTooltipsState => {
+    const { enabled, setEnabled } = useDocsTooltipsSetting(storageKey, defaultValue);
+
+    return {
+      docsTooltipsEnabled: enabled,
+      setDocsTooltipsEnabled: setEnabled,
+    };
+  };
+
+  return { readEnabled, useDocsTooltips };
+}

@@ -147,8 +147,8 @@ describe('PromptNodeConfigSection', () => {
   it('renders placeholder chips as native buttons and inserts placeholders on click', () => {
     render(<PromptNodeConfigSection />);
 
-    const directInputButton = screen.getByRole('button', { name: 'TITLE' });
-    const bundleKeyButton = screen.getByRole('button', { name: 'SKU' });
+    const directInputButton = screen.getByRole('button', { name: 'Insert TITLE placeholder' });
+    const bundleKeyButton = screen.getByRole('button', { name: 'Insert SKU placeholder' });
 
     fireEvent.click(directInputButton);
     expect(readPromptTemplateFromCall(0)).toContain('{{title}}');

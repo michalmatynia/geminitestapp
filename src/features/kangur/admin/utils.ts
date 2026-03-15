@@ -1,5 +1,9 @@
 import type { KangurLessonInlineBlock } from '@/shared/contracts/kangur';
-import type { KangurLesson } from '@/shared/contracts/kangur';
+import type {
+  KangurLesson,
+  KangurLessonComponentId,
+  KangurLessonPage,
+} from '@/shared/contracts/kangur';
 
 import {
   hasKangurLessonDocumentContent,
@@ -9,6 +13,43 @@ import { createKangurLessonDraft } from '../settings';
 import { TREE_MODE_STORAGE_KEY } from './constants';
 
 import type { LessonFormData, LessonTreeMode } from './types';
+
+export const resolvePageSectionOptions = (
+  page: KangurLessonPage | null
+): {
+  sectionKey?: string;
+  sectionTitle?: string;
+  sectionDescription?: string;
+} => ({
+  sectionKey: page?.sectionKey?.trim() || '',
+  sectionTitle: page?.sectionTitle?.trim() || '',
+  sectionDescription: page?.sectionDescription?.trim() || '',
+});
+
+export const getLessonRecipeFamily = (
+  componentId: KangurLessonComponentId | null | undefined
+): 'time' | 'arithmetic' | 'geometry' | 'logic' => {
+  if (componentId === 'clock' || componentId === 'calendar') {
+    return 'time';
+  }
+  if (
+    componentId === 'adding' ||
+    componentId === 'subtracting' ||
+    componentId === 'multiplication' ||
+    componentId === 'division'
+  ) {
+    return 'arithmetic';
+  }
+  if (
+    componentId === 'geometry_basics' ||
+    componentId === 'geometry_shapes' ||
+    componentId === 'geometry_symmetry' ||
+    componentId === 'geometry_perimeter'
+  ) {
+    return 'geometry';
+  }
+  return 'logic';
+};
 
 export const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));

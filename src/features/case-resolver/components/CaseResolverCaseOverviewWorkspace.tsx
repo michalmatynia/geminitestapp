@@ -7,7 +7,7 @@ import {
   Badge,
   Button,
   Card,
-  EmptyState,
+  CompactEmptyState,
   FormField,
   Input,
   MultiSelect,
@@ -59,11 +59,10 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
         padding='lg'
         className='flex flex-1 items-center justify-center border-dashed'
       >
-        <EmptyState
+        <CompactEmptyState
           icon={<Network className='size-12 text-gray-600' />}
           title='No case context'
           description='Select a case in the folder tree to see case-specific options.'
-          variant='compact'
           className='border-none p-0'
         />
       </Card>

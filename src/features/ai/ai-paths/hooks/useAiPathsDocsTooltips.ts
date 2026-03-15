@@ -1,20 +1,14 @@
-import { readDocsTooltipsEnabled, useDocsTooltipsSetting } from '@/shared/lib/documentation';
+import { createDocsTooltipsState, type DocsTooltipsState } from '@/shared/lib/documentation';
 
 export const AI_PATHS_DOCS_TOOLTIP_KEY = 'ai_paths:docs_tooltips_enabled';
 
-export const readAiPathsDocsTooltipsEnabled = (): boolean =>
-  readDocsTooltipsEnabled(AI_PATHS_DOCS_TOOLTIP_KEY, false);
+const { readEnabled, useDocsTooltips } = createDocsTooltipsState(
+  AI_PATHS_DOCS_TOOLTIP_KEY,
+  false
+);
 
-type AiPathsDocsTooltipsState = {
-  docsTooltipsEnabled: boolean;
-  setDocsTooltipsEnabled: (enabled: boolean) => void;
-};
+export type AiPathsDocsTooltipsState = DocsTooltipsState;
 
-export function useAiPathsDocsTooltips(): AiPathsDocsTooltipsState {
-  const { enabled, setEnabled } = useDocsTooltipsSetting(AI_PATHS_DOCS_TOOLTIP_KEY, false);
+export const readAiPathsDocsTooltipsEnabled = readEnabled;
 
-  return {
-    docsTooltipsEnabled: enabled,
-    setDocsTooltipsEnabled: setEnabled,
-  };
-}
+export const useAiPathsDocsTooltips = useDocsTooltips;

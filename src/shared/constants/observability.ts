@@ -8,6 +8,8 @@ export const ActivityTypes = {
     LEARNER_SIGNIN: 'kangur.learner_signin',
     LEARNER_SIGNOUT: 'kangur.learner_signout',
     LESSON_PANEL_CTA: 'kangur.lesson_panel_cta',
+    OPENED_TASK: 'kangur.opened_task',
+    LESSON_PANEL_ACTIVITY: 'kangur.lesson_panel_activity',
   },
   INTEGRATION: {
     UPDATED: 'integration.updated',

@@ -24,7 +24,7 @@ describe('listKangurLearnerSessions', () => {
   });
 
   it('pairs learner sign-ins with the nearest later sign-out and keeps open sessions', async () => {
-    countActivityMock.mockResolvedValue(3);
+    countActivityMock.mockResolvedValue(2);
     listActivityMock.mockResolvedValue([
       {
         id: 'signin-2',
@@ -93,5 +93,107 @@ describe('listKangurLearnerSessions', () => {
       },
     ]);
     expect(result.totalSessions).toBe(2);
+    expect(result.hasMore).toBe(false);
+    expect(result.nextOffset).toBeNull();
+  });
+
+  it('supports paging through sessions using limit and offset', async () => {
+    countActivityMock.mockResolvedValue(3);
+    listActivityMock.mockResolvedValue([
+      {
+        id: 'signin-3',
+        type: ActivityTypes.KANGUR.LEARNER_SIGNIN,
+        description: 'Kangur learner signed in: Ada',
+        userId: 'parent-1',
+        entityId: 'learner-1',
+        entityType: 'kangur_learner',
+        metadata: {
+          surface: 'kangur',
+          actorType: 'learner',
+          learnerId: 'learner-1',
+        },
+        createdAt: '2026-03-10T12:00:00.000Z',
+        updatedAt: '2026-03-10T12:00:00.000Z',
+      },
+      {
+        id: 'signout-2',
+        type: ActivityTypes.KANGUR.LEARNER_SIGNOUT,
+        description: 'Kangur learner signed out.',
+        userId: 'parent-1',
+        entityId: 'learner-1',
+        entityType: 'kangur_learner',
+        metadata: {
+          surface: 'kangur',
+          actorType: 'learner',
+          learnerId: 'learner-1',
+        },
+        createdAt: '2026-03-10T11:30:00.000Z',
+        updatedAt: '2026-03-10T11:30:00.000Z',
+      },
+      {
+        id: 'signin-2',
+        type: ActivityTypes.KANGUR.LEARNER_SIGNIN,
+        description: 'Kangur learner signed in: Ada',
+        userId: 'parent-1',
+        entityId: 'learner-1',
+        entityType: 'kangur_learner',
+        metadata: {
+          surface: 'kangur',
+          actorType: 'learner',
+          learnerId: 'learner-1',
+        },
+        createdAt: '2026-03-10T10:00:00.000Z',
+        updatedAt: '2026-03-10T10:00:00.000Z',
+      },
+      {
+        id: 'signout-1',
+        type: ActivityTypes.KANGUR.LEARNER_SIGNOUT,
+        description: 'Kangur learner signed out.',
+        userId: 'parent-1',
+        entityId: 'learner-1',
+        entityType: 'kangur_learner',
+        metadata: {
+          surface: 'kangur',
+          actorType: 'learner',
+          learnerId: 'learner-1',
+        },
+        createdAt: '2026-03-10T09:30:00.000Z',
+        updatedAt: '2026-03-10T09:30:00.000Z',
+      },
+      {
+        id: 'signin-1',
+        type: ActivityTypes.KANGUR.LEARNER_SIGNIN,
+        description: 'Kangur learner signed in: Ada',
+        userId: 'parent-1',
+        entityId: 'learner-1',
+        entityType: 'kangur_learner',
+        metadata: {
+          surface: 'kangur',
+          actorType: 'learner',
+          learnerId: 'learner-1',
+        },
+        createdAt: '2026-03-10T08:00:00.000Z',
+        updatedAt: '2026-03-10T08:00:00.000Z',
+      },
+    ]);
+
+    const result = await listKangurLearnerSessions({
+      ownerUserId: 'parent-1',
+      learnerId: 'learner-1',
+      limit: 1,
+      offset: 1,
+    });
+
+    expect(result.sessions).toEqual([
+      {
+        id: 'signin-2',
+        startedAt: '2026-03-10T10:00:00.000Z',
+        endedAt: '2026-03-10T11:30:00.000Z',
+        durationSeconds: 5400,
+      },
+    ]);
+    expect(result.totalSessions).toBe(3);
+    expect(result.hasMore).toBe(true);
+    expect(result.nextOffset).toBe(2);
   });
 });

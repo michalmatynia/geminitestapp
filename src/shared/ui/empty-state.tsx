@@ -45,3 +45,11 @@ export function EmptyState({
     </div>
   );
 }
+
+type CompactEmptyStateProps = Omit<CompactEmptyStateProps, 'variant'>;
+
+export function CompactEmptyState(props: CompactEmptyStateProps): React.JSX.Element {
+  return (
+    <EmptyState {...props}  />
+  );
+}

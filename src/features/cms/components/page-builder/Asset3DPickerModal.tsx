@@ -11,7 +11,7 @@ import {
 } from '@/features/viewer3d';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import type { Asset3DListFilters, Asset3DRecord } from '@/shared/contracts/viewer3d';
-import { FilterPanel, Button, FormSection, EmptyState } from '@/shared/ui';
+import { FilterPanel, Button, FormSection, CompactEmptyState } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 import type { FilterField } from '@/shared/ui/templates/panels';
 
@@ -113,12 +113,11 @@ export function Asset3DPickerModal(props: Asset3DPickerModalProps): React.JSX.El
               {assetsQuery.isLoading ? (
                 <div className='text-xs text-gray-400'>Loading assets...</div>
               ) : assets.length === 0 ? (
-                <EmptyState
+                <CompactEmptyState
                   title='No 3D assets found'
                   description='Try adjusting your filters or upload new assets in the 3D Viewer admin.'
-                  variant='compact'
                   className='py-12'
-                />
+                 />
               ) : (
                 <div className='space-y-2'>
                   {assets.map((asset: Asset3DRecord) => (

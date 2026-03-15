@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/ui';
-import { Button, SelectSimple, EmptyState } from '@/shared/ui';
+import { Button, SelectSimple, CompactEmptyState } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 export type PlaceholderTarget = 'query' | 'aiPrompt' | 'prompt' | 'template';
@@ -102,12 +102,11 @@ export function PlaceholderMatrixDialog(props: PlaceholderMatrixDialogProps): Re
       </div>
       <div className='mt-4 space-y-4'>
         {visibleGroups.length === 0 ? (
-          <EmptyState
+          <CompactEmptyState
             title='No placeholders'
             description='No placeholders available yet. Connect inputs to surface placeholders (or sync schema placeholders where available).'
-            variant='compact'
             className='bg-card/40 border-dashed border-border/70 py-4'
-          />
+           />
         ) : (
           visibleGroups.map((group: PlaceholderGroup) => (
             <div key={group.id} className='space-y-2'>

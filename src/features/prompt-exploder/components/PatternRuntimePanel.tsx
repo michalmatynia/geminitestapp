@@ -10,7 +10,7 @@ import {
   Label,
   StatusToggle,
   SelectSimple,
-  EmptyState,
+  CompactEmptyState,
   Card,
   Badge,
   Hint,
@@ -608,12 +608,11 @@ export function PatternRuntimePanel(): React.JSX.Element {
           Learned Template Lifecycle
         </Hint>
         {effectiveLearnedTemplates.length === 0 ? (
-          <EmptyState
+          <CompactEmptyState
             title='No learned templates'
             description='Templates will appear here as they are discovered from your prompts.'
-            variant='compact'
             className='border-none bg-transparent py-4'
-          />
+           />
         ) : (
           <div className='max-h-[220px] space-y-2 overflow-auto'>
             {effectiveLearnedTemplates.slice(0, 20).map((template) => (

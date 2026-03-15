@@ -9,7 +9,7 @@ import {
   StatusBadge,
   SectionHeader,
   FormSection,
-  EmptyState,
+  CompactEmptyState,
   Card,
 } from '@/shared/ui';
 
@@ -109,11 +109,10 @@ export function MetricsTab(): React.JSX.Element {
               {}
             </div>
           ) : (
-            <EmptyState
+            <CompactEmptyState
               title='No analytics'
               description='Failed to load analytics summary.'
-              variant='compact'
-            />
+             />
           )}
         </FormSection>
 
@@ -141,11 +140,10 @@ export function MetricsTab(): React.JSX.Element {
               />
             </div>
           ) : (
-            <EmptyState
+            <CompactEmptyState
               title='No log metrics'
               description='Failed to load log metrics.'
-              variant='compact'
-            />
+             />
           )}
         </FormSection>
       </div>
@@ -237,11 +235,10 @@ export function MetricsTab(): React.JSX.Element {
         description='Execution performance and node status summary.'
       >
         {!runtimeAnalyticsLiveEnabled ? (
-          <EmptyState
+          <CompactEmptyState
             title='Runtime analytics disabled'
             description='Enable Runtime Analytics and AI Paths model capabilities in AI Brain to load this telemetry.'
-            variant='compact'
-          />
+           />
         ) : runtimeAnalyticsQuery.isLoading ? (
           <div className='py-8 text-center text-xs text-gray-500'>Loading runtime analytics...</div>
         ) : runtimeAnalyticsQuery.data ? (
@@ -287,11 +284,10 @@ export function MetricsTab(): React.JSX.Element {
             {}
           </div>
         ) : (
-          <EmptyState
+          <CompactEmptyState
             title='No runtime telemetry'
             description='Failed to load runtime analytics.'
-            variant='compact'
-          />
+           />
         )}
       </FormSection>
 

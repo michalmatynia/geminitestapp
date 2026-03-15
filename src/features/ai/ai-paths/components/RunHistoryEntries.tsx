@@ -1,6 +1,6 @@
 import type { RuntimeHistoryEntry, RuntimeHistoryLink } from '@/shared/lib/ai-paths';
 import { formatDurationMs, formatRuntimeValue } from '@/shared/lib/ai-paths';
-import { StatusBadge, EmptyState, Button, type StatusVariant } from '@/shared/ui';
+import { StatusBadge, CompactEmptyState, Button, type StatusVariant } from '@/shared/ui';
 
 import {
   resolveRunHistoryEntryAction,
@@ -61,11 +61,10 @@ export function RunHistoryEntries(props: RunHistoryEntriesProps): React.JSX.Elem
 
   if (sortedEntries.length === 0) {
     return (
-      <EmptyState
+      <CompactEmptyState
         title='No history'
         description={emptyMessage ?? 'No history recorded yet.'}
-        variant='compact'
-      />
+       />
     );
   }
 

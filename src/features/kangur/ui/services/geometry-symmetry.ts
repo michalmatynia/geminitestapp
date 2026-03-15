@@ -30,14 +30,15 @@ export type SymmetryMirrorEvaluation = {
 };
 
 const MIN_POINTS = 12;
-const MIN_AXIS_LENGTH = 90;
-const MAX_AXIS_DEVIATION = 10;
-const MAX_AXIS_OFFSET = 14;
-const MAX_AXIS_CROSS_RANGE = 26;
-const MIRROR_DISTANCE_TOLERANCE = 14;
-const MIN_MIRROR_COVERAGE = 0.55;
-const MAX_MIRROR_AVG_DISTANCE = 18;
-const MAX_OFFSIDE_RATIO = 0.28;
+const MIN_AXIS_LENGTH = 80;
+const MAX_AXIS_DEVIATION = 12;
+const MAX_AXIS_OFFSET = 16;
+const MAX_AXIS_CROSS_RANGE = 30;
+const MIRROR_DISTANCE_TOLERANCE = 6;
+const MIN_MIRROR_COVERAGE = 0.825;
+const MAX_MIRROR_AVG_DISTANCE = 7;
+const MAX_OFFSIDE_RATIO = 0.1;
+const MIN_MIRROR_LENGTH_RATIO = 0.85;
 
 const distance = (a: Point2d, b: Point2d): number =>
   Math.hypot(a.x - b.x, a.y - b.y);
@@ -107,6 +108,18 @@ const meanAbsDeviation = (values: number[], center: number): number => {
   if (values.length === 0) return 0;
   const total = values.reduce((sum, value) => sum + Math.abs(value - center), 0);
   return total / values.length;
+};
+
+const pathLength = (points: Point2d[]): number => {
+  if (points.length < 2) return 0;
+  let total = 0;
+  for (let i = 1; i < points.length; i += 1) {
+    const a = points[i - 1];
+    const b = points[i];
+    if (!a || !b) continue;
+    total += distance(a, b);
+  }
+  return total;
 };
 
 const computeAxisMeasures = (
@@ -242,6 +255,20 @@ export const evaluateMirrorDrawing = ({
 
   const sampledUser = samplePath(sanitized, 160);
   const expected = samplePath(mirrorPoints(template, axis), 140);
+  const expectedLength = pathLength(template);
+  const userLength = pathLength(sanitized);
+
+  if (expectedLength > 0 && userLength < expectedLength * MIN_MIRROR_LENGTH_RATIO) {
+    return {
+      accepted: false,
+      kind: 'info',
+      coverage: 0,
+      avgDistance: 0,
+      offsideRatio: 0,
+      message: 'Dorysuj więcej kształtu — jeszcze brakuje sporej części odbicia.',
+    };
+  }
+
   const offsideCount = sampledUser.filter(
     (point) => !isOnExpectedSide(point, axis, expectedSide)
   ).length;
@@ -254,7 +281,7 @@ export const evaluateMirrorDrawing = ({
       coverage: 0,
       avgDistance: 0,
       offsideRatio,
-      message: 'Rysuj po drugiej stronie osi symetrii.',
+      message: 'Rysuj po zielonej stronie osi symetrii.',
     };
   }
 
@@ -284,7 +311,7 @@ export const evaluateMirrorDrawing = ({
       coverage,
       avgDistance,
       offsideRatio,
-      message: 'Spróbuj dorysować kształt bardziej podobnie do odbicia.',
+      message: 'Spróbuj dorysować kształt bliżej przerywanego odbicia.',
     };
   }
 

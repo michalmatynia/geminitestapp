@@ -125,7 +125,7 @@ export function ClockFiveMinuteStepsAnimation(): React.JSX.Element {
 
 export function ClockCombinedHandsAnimation(): React.JSX.Element {
   return (
-    <ClockFrame ariaLabel='Animacja: dwie wskazówki pracuja razem.'>
+    <ClockFrame ariaLabel='Animacja: dwie wskazówki pracują razem.'>
       <style>{`
         .hour-hand { stroke: #dc2626; stroke-width: 6; stroke-linecap: round; }
         .minute-hand { stroke: #4f46e5; stroke-width: 4; stroke-linecap: round; }
@@ -188,7 +188,7 @@ export function ClockQuarterAnimation(): React.JSX.Element {
 
 export function ClockHalfPastAnimation(): React.JSX.Element {
   return (
-    <ClockFrame ariaLabel='Animacja: pol godziny, minuta na 6.'>
+    <ClockFrame ariaLabel='Animacja: pół godziny, minuta na 6.'>
       <style>{`
         .hour-hand { stroke: #dc2626; stroke-width: 6; stroke-linecap: round; }
         .minute-hand { stroke: #16a34a; stroke-width: 5; stroke-linecap: round; }

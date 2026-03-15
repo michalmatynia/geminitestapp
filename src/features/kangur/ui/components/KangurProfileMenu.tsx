@@ -33,6 +33,9 @@ export function KangurProfileMenu({
     getKangurPageHref('LearnerProfile', basePath ?? KANGUR_BASE_PATH);
   const navigationActive = isActive ?? profile?.isActive ?? false;
   const buttonClassName = triggerClassName;
+  const transitionMs = transitionAcknowledgeMs;
+  const transitionSource = transitionSourceId;
+  const navState = isTransitionActive ? 'transitioning' : 'idle';
   const shouldRenderActiveState = navigationActive || isTransitionActive;
 
   return (
@@ -41,15 +44,15 @@ export function KangurProfileMenu({
       aria-current={navigationActive ? 'page' : undefined}
       className={buttonClassName}
       data-doc-id='top_nav_profile'
-      data-nav-state={isTransitionActive ? 'transitioning' : 'idle'}
+      data-nav-state={navState}
       size='md'
       variant={shouldRenderActiveState ? 'navigationActive' : 'navigation'}
     >
       <Link
         href={resolvedHref}
         targetPageKey='LearnerProfile'
-        transitionAcknowledgeMs={transitionAcknowledgeMs}
-        transitionSourceId={transitionSourceId}
+        transitionAcknowledgeMs={transitionMs}
+        transitionSourceId={transitionSource}
       >
         <User className='h-[18px] w-[18px] sm:h-5 sm:w-5' strokeWidth={2.15} />
         <span>{label ?? 'Profil'}</span>

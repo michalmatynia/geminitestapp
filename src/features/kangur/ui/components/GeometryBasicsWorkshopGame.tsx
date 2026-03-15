@@ -266,6 +266,8 @@ export default function GeometryBasicsWorkshopGame({
   finishLabel = 'Wróć do tematów',
   onFinish,
 }: GeometryBasicsWorkshopGameProps): React.JSX.Element {
+  const summaryFinishLabel = finishLabel;
+  const handleFinish = onFinish;
   const [roundIndex, setRoundIndex] = useState(0);
   const [roundState, setRoundState] = useState<RoundState>(() => buildRoundState());
   const [selectedTileId, setSelectedTileId] = useState<TileId | null>(null);
@@ -441,8 +443,8 @@ export default function GeometryBasicsWorkshopGame({
         <KangurPracticeGameSummaryActions
           className='flex-col sm:flex-row'
           finishButtonClassName='w-full sm:flex-1'
-          finishLabel={finishLabel}
-          onFinish={onFinish}
+          finishLabel={summaryFinishLabel}
+          onFinish={handleFinish}
           onRestart={restart}
           restartButtonClassName='w-full sm:flex-1'
         />

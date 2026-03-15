@@ -31,17 +31,12 @@ const runtimeState = vi.hoisted(() => ({
 }));
 
 const assignmentManagerMock = vi.hoisted(() => vi.fn());
-const getCurrentKangurDailyQuestMock = vi.hoisted(() => vi.fn());
 const useKangurPageContentEntryMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () => ({
   shouldRenderKangurParentDashboardPanel: (displayMode: string, activeTab: string, targetTab: string) =>
     displayMode === 'always' || activeTab === targetTab,
   useKangurParentDashboardRuntime: () => runtimeState.value,
-}));
-
-vi.mock('@/features/kangur/ui/services/daily-quests', () => ({
-  getCurrentKangurDailyQuest: getCurrentKangurDailyQuestMock,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
@@ -97,22 +92,13 @@ describe('KangurParentDashboardAssignmentsWidget', () => {
     };
   });
 
-  it('passes the resolved daily quest into the assignment manager', () => {
-    const dailyQuest = {
-      assignment: { id: 'mixed-practice', title: 'Trening mieszany' },
-      progress: { percent: 100, summary: '1/1 runda dzisiaj', status: 'completed' },
-      reward: { label: 'Nagroda gotowa +36 XP', status: 'ready' },
-    };
-    getCurrentKangurDailyQuestMock.mockReturnValue(dailyQuest);
-
+  it('renders the assignment manager for the active learner', () => {
     render(<KangurParentDashboardAssignmentsWidget />);
 
     expect(screen.getByTestId('assignment-manager-stub')).toBeInTheDocument();
-    expect(getCurrentKangurDailyQuestMock).toHaveBeenCalledWith(runtimeState.value.progress);
     expect(assignmentManagerMock).toHaveBeenCalledWith(
       expect.objectContaining({
         basePath: '/kangur',
-        featuredDailyQuest: dailyQuest,
       })
     );
   });
@@ -138,7 +124,6 @@ describe('KangurParentDashboardAssignmentsWidget', () => {
     render(<KangurParentDashboardAssignmentsWidget />);
 
     expect(screen.queryByTestId('assignment-manager-stub')).toBeNull();
-    expect(getCurrentKangurDailyQuestMock).not.toHaveBeenCalled();
     expect(screen.queryByText('Zadania ucznia')).toBeNull();
   });
 

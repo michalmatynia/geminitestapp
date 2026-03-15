@@ -31,16 +31,22 @@ export function KangurRecommendationCardHeader({
   headerExtras?: ReactNode;
   className?: string;
 }): React.JSX.Element {
+  const chipAccent = accent;
+  const chipClassName = labelClassName;
+  const chipTestId = labelTestId;
+  const chipLabelStyle = labelStyle;
+  const chipLabelSize = labelSize;
+
   return (
     <div className={cn('flex flex-wrap items-center gap-2', className)}>
       {labelContent ??
         (label ? (
           <KangurStatusChip
-            accent={accent}
-            className={cn('w-fit text-[11px] uppercase tracking-[0.16em]', labelClassName)}
-            data-testid={labelTestId}
-            labelStyle={labelStyle}
-            size={labelSize}
+            accent={chipAccent}
+            className={cn('w-fit text-[11px] uppercase tracking-[0.16em]', chipClassName)}
+            data-testid={chipTestId}
+            labelStyle={chipLabelStyle}
+            size={chipLabelSize}
           >
             {label}
           </KangurStatusChip>

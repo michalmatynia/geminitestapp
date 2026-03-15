@@ -1,54 +1,26 @@
 import { LogIn } from 'lucide-react';
 
-import { getKangurHomeHref } from '@/features/kangur/config/routing';
 import KangurHeroMilestoneSummary from '@/features/kangur/ui/components/KangurHeroMilestoneSummary';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
-import {
-  getKangurLearnerProfileDisplayName,
-  useKangurLearnerProfileRuntime,
-} from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
+import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import { useKangurLearnerProfileRuntime } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
-import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
-import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
-
-const HERO_BACK_TRANSITION_ACKNOWLEDGE_MS = 110;
 
 export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
-  const routeNavigator = useKangurRouteNavigator();
-  const { basePath, user, navigateToLogin, progress } = useKangurLearnerProfileRuntime();
-  const { entry: heroContent } = useKangurPageContentEntry('learner-profile-hero');
-  const displayName = getKangurLearnerProfileDisplayName(user);
-  const heroTitle = heroContent?.title ?? 'Profil ucznia';
-  const heroUserSummary =
-    heroContent?.summary ?? 'Statystyki ucznia:';
-  const heroGuestSummary =
-    heroContent?.summary ??
-    'Zaloguj się, aby synchronizować postęp ucznia między urządzeniami. Jeśli nie masz jeszcze konta rodzica, załóż je tutaj.';
+  const { user, progress } = useKangurLearnerProfileRuntime();
+  const { openLoginModal } = useKangurLoginModal();
 
   return (
     <KangurPageIntroCard
       accent='indigo'
       className='mx-auto w-full max-w-2xl'
-      description={
-        user ? (
-          <>
-            {heroUserSummary}{' '}
-            <span className='font-semibold [color:var(--kangur-page-text)]'>{displayName}</span>.
-          </>
-        ) : (
-          heroGuestSummary
-        )
-      }
       headingAs='h1'
-      onBack={() =>
-        routeNavigator.push(getKangurHomeHref(basePath), {
-          acknowledgeMs: HERO_BACK_TRANSITION_ACKNOWLEDGE_MS,
-          pageKey: 'Game',
-          sourceId: 'learner-profile-hero:back',
-        })
-      }
+      onBack={() => {}}
+      showBackButton={false}
+      showDescription={false}
+      showHeading={false}
       testId='kangur-learner-profile-hero'
-      title={heroTitle}
+      title='Profil ucznia'
     >
       <KangurHeroMilestoneSummary
         className='mb-3 w-full'
@@ -62,7 +34,7 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
           <KangurButton
             className='w-full sm:w-auto'
             onClick={() => {
-              navigateToLogin();
+              openLoginModal();
             }}
             size='sm'
             variant='surface'
@@ -73,7 +45,7 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
           <KangurButton
             className='w-full sm:w-auto'
             onClick={() => {
-              navigateToLogin({ authMode: 'create-account' });
+              openLoginModal(null, { authMode: 'create-account' });
             }}
             size='sm'
             type='button'

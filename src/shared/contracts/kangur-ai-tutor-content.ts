@@ -431,8 +431,6 @@ export const kangurAiTutorContentSchema = z.object({
     usageExhaustedBadge: tutorCopySchema,
     usageRemainingBadgeTemplate: tutorCopySchema,
     usageHelp: tutorCopySchema,
-    settingsManagedNotice: tutorCopySchema,
-    settingsManagedHighlight: tutorCopySchema,
     toggleEnabledLabel: tutorCopySchema,
     toggleDisabledLabel: tutorCopySchema,
     toggleEnableActionLabel: tutorCopySchema,
@@ -1024,9 +1022,6 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
       usageRemainingBadgeTemplate: 'Pozostało {remainingMessages}',
       usageHelp:
         'Widok odświeża się automatycznie, więc rodzic widzi bieżące użycie aktywnego ucznia.',
-      settingsManagedNotice:
-        'Globalna persona tutora, agent nauczający, dzienny limit wiadomości i preset urządzenia są zarządzane w {highlight}.',
-      settingsManagedHighlight: 'Kangur Settings',
       toggleEnabledLabel: 'AI Tutor włączony',
       toggleDisabledLabel: 'AI Tutor wyłączony',
       toggleEnableActionLabel: 'Włącz AI-Tutora',

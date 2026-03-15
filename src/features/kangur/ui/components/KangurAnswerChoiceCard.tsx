@@ -16,22 +16,25 @@ type KangurAnswerChoiceCardProps = Omit<ComponentProps<typeof KangurOptionCardBu
     wrapperRole?: string;
   };
 
-export default function KangurAnswerChoiceCard({
-  animate,
-  buttonClassName,
-  children,
-  exit,
-  hoverScale = 1.04,
-  initial,
-  interactive = true,
-  tapScale = 0.96,
-  transition,
-  whileHover,
-  whileTap,
-  wrapperClassName,
-  wrapperRole,
-  ...buttonProps
-}: KangurAnswerChoiceCardProps): React.JSX.Element {
+export default function KangurAnswerChoiceCard(
+  props: KangurAnswerChoiceCardProps
+): React.JSX.Element {
+  const {
+    animate,
+    buttonClassName,
+    children,
+    exit,
+    hoverScale = 1.04,
+    initial,
+    interactive = true,
+    tapScale = 0.96,
+    transition,
+    whileHover,
+    whileTap,
+    wrapperClassName,
+    wrapperRole,
+    ...buttonProps
+  } = props;
   const resolvedWhileHover = whileHover ?? (interactive ? { scale: hoverScale } : undefined);
   const resolvedWhileTap = whileTap ?? (interactive ? { scale: tapScale } : undefined);
 

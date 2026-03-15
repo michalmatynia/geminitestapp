@@ -11,6 +11,7 @@ import {
   KangurRewardProfileConfig,
   REWARD_PROFILE_CONFIG,
 } from './progress.contracts';
+import { isProgressPersistenceEnabled } from './progress.persistence';
 import { clampPercent } from './progress.badges';
 
 export const DIFFICULTY_XP_BONUS: Record<string, number> = {
@@ -345,6 +346,16 @@ export const createRewardOutcome = (
       : clampPercent(
         safeTotalQuestions > 0 ? (normalizedCorrectAnswers / safeTotalQuestions) * 100 : 0
       );
+
+  if (!isProgressPersistenceEnabled()) {
+    return {
+      xp: 0,
+      scorePercent,
+      progressUpdates: {},
+      breakdown: [],
+    };
+  }
+
   const isPerfect =
     safeTotalQuestions > 0
       ? normalizedCorrectAnswers === safeTotalQuestions

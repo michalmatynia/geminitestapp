@@ -48,7 +48,7 @@ export function LogicalThinkingStepsAnimation(): React.JSX.Element {
         }
         .s2 { animation-delay: 0.8s; }
         .s3 { animation-delay: 1.6s; }
-        .label { font: 700 11px/1.1 system-ui, sans-serif; fill: #6d28d9; }
+        .label { font: 700 13px/1.1 system-ui, sans-serif; fill: #6d28d9; }
         .arrow { stroke: #a78bfa; stroke-width: 3; stroke-linecap: round; }
         @keyframes stepGlow {
           0%, 100% { opacity: 0.35; transform: scale(0.96); }
@@ -58,14 +58,14 @@ export function LogicalThinkingStepsAnimation(): React.JSX.Element {
           .step { animation: none; opacity: 1; }
         }
       `}</style>
-      <rect className='step s1' x='30' y='40' width='90' height='38' rx='12' />
-      <rect className='step s2' x='135' y='40' width='90' height='38' rx='12' />
-      <rect className='step s3' x='240' y='40' width='90' height='38' rx='12' />
-      <line className='arrow' x1='120' y1='59' x2='135' y2='59' />
-      <line className='arrow' x1='225' y1='59' x2='240' y2='59' />
-      <text className='label' x='46' y='63'>OBSERWUJ</text>
-      <text className='label' x='155' y='63'>ŁĄCZ</text>
-      <text className='label' x='258' y='63'>WNIOSEK</text>
+      <rect className='step s1' x='20' y='38' width='100' height='44' rx='14' />
+      <rect className='step s2' x='130' y='38' width='100' height='44' rx='14' />
+      <rect className='step s3' x='240' y='38' width='100' height='44' rx='14' />
+      <line className='arrow' x1='120' y1='60' x2='130' y2='60' />
+      <line className='arrow' x1='230' y1='60' x2='240' y2='60' />
+      <text className='label' x='70' y='66' textAnchor='middle'>OBSERWUJ</text>
+      <text className='label' x='180' y='66' textAnchor='middle'>ŁĄCZ</text>
+      <text className='label' x='290' y='66' textAnchor='middle'>WNIOSEK</text>
     </svg>
   );
 }
@@ -187,7 +187,7 @@ export function LogicalClassificationKeyAnimation(): React.JSX.Element {
     >
       <style>{`
         .tag { fill: #ecfdf5; stroke: #34d399; stroke-width: 2; }
-        .tag-label { font: 700 11px/1.1 system-ui, sans-serif; fill: #047857; }
+        .tag-label { font: 700 13px/1.1 system-ui, sans-serif; fill: #047857; }
         .bin { fill: #f0fdf4; stroke: #34d399; stroke-width: 2; }
         .branch { stroke: #34d399; stroke-width: 3; stroke-linecap: round; }
         .dot {
@@ -215,14 +215,14 @@ export function LogicalClassificationKeyAnimation(): React.JSX.Element {
           .dot, .dot-b { animation: none; opacity: 1; }
         }
       `}</style>
-      <rect className='tag' x='135' y='10' width='90' height='26' rx='12' />
-      <text className='tag-label' x='155' y='28'>CECHA</text>
-      <line className='branch' x1='180' y1='36' x2='90' y2='70' />
-      <line className='branch' x1='180' y1='36' x2='270' y2='70' />
-      <rect className='bin' x='30' y='70' width='110' height='40' rx='12' />
-      <rect className='bin' x='220' y='70' width='110' height='40' rx='12' />
-      <circle className='dot' cx='180' cy='52' r='7' />
-      <circle className='dot dot-b' cx='180' cy='52' r='7' />
+      <rect className='tag' x='120' y='8' width='120' height='32' rx='14' />
+      <text className='tag-label' x='180' y='30' textAnchor='middle'>CECHA</text>
+      <line className='branch' x1='180' y1='40' x2='85' y2='64' />
+      <line className='branch' x1='180' y1='40' x2='275' y2='64' />
+      <rect className='bin' x='20' y='64' width='130' height='48' rx='14' />
+      <rect className='bin' x='210' y='64' width='130' height='48' rx='14' />
+      <circle className='dot' cx='180' cy='54' r='8' />
+      <circle className='dot dot-b' cx='180' cy='54' r='8' />
     </svg>
   );
 }
@@ -238,7 +238,7 @@ export function LogicalReasoningAnimation(): React.JSX.Element {
       <style>{`
         .box { fill: #eef2ff; stroke: #6366f1; stroke-width: 2; }
         .arrow { stroke: #6366f1; stroke-width: 4; stroke-linecap: round; animation: arrowPulse 3.8s ease-in-out infinite; }
-        .label { font: 700 12px/1.1 system-ui, sans-serif; fill: #4338ca; }
+        .label { font: 700 14px/1.1 system-ui, sans-serif; fill: #4338ca; }
         @keyframes arrowPulse {
           0%, 100% { opacity: 0.4; }
           50% { opacity: 1; }
@@ -247,12 +247,12 @@ export function LogicalReasoningAnimation(): React.JSX.Element {
           .arrow { animation: none; opacity: 1; }
         }
       `}</style>
-      <rect className='box' x='40' y='40' width='90' height='40' rx='10' />
-      <rect className='box' x='230' y='40' width='90' height='40' rx='10' />
-      <text className='label' x='70' y='65'>JEŚLI</text>
-      <text className='label' x='255' y='65'>WTEDY</text>
-      <line className='arrow' x1='140' y1='60' x2='220' y2='60' />
-      <polyline className='arrow' points='210,52 220,60 210,68' fill='none' />
+      <rect className='box' x='30' y='36' width='110' height='48' rx='12' />
+      <rect className='box' x='220' y='36' width='110' height='48' rx='12' />
+      <text className='label' x='85' y='66' textAnchor='middle'>JEŚLI</text>
+      <text className='label' x='275' y='66' textAnchor='middle'>WTEDY</text>
+      <line className='arrow' x1='150' y1='60' x2='210' y2='60' />
+      <polyline className='arrow' points='200,52 210,60 200,68' fill='none' />
     </svg>
   );
 }

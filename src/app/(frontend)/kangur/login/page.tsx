@@ -14,7 +14,10 @@ type KangurAliasLoginPageProps = {
 export default async function Page({
   searchParams,
 }: KangurAliasLoginPageProps): Promise<JSX.Element> {
-  if (shouldApplyFrontPageAppSelection()) {
+  const shouldRedirectToCanonical =
+    shouldApplyFrontPageAppSelection() && process.env.NODE_ENV === 'production';
+
+  if (shouldRedirectToCanonical) {
     const frontPageSetting = await getFrontPageSetting();
 
     if (getFrontPagePublicOwner(frontPageSetting) === 'kangur') {

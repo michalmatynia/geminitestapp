@@ -93,11 +93,11 @@ describe('persistKangurSessionScore', () => {
     );
   });
 
-  it('skips score persistence for parent accounts', async () => {
+  it('skips score persistence for parent accounts without an active learner', async () => {
     authMeMock.mockResolvedValue({
       actorType: 'parent',
       full_name: 'Rodzic',
-      activeLearner: { displayName: 'Maja' },
+      activeLearner: null,
     });
 
     await persistKangurSessionScore({
@@ -110,5 +110,33 @@ describe('persistKangurSessionScore', () => {
     });
 
     expect(createScoreMock).not.toHaveBeenCalled();
+  });
+
+  it('records a session for parent accounts with an active learner', async () => {
+    authMeMock.mockResolvedValue({
+      actorType: 'parent',
+      full_name: 'Rodzic',
+      activeLearner: { displayName: 'Maja', id: 'learner-1' },
+    });
+    createScoreMock.mockResolvedValue(undefined);
+
+    await persistKangurSessionScore({
+      operation: 'adding',
+      score: 4,
+      totalQuestions: 6,
+      correctAnswers: 4,
+      timeTakenSeconds: 30,
+      xpEarned: 18,
+    });
+
+    expect(createScoreMock).toHaveBeenCalledWith({
+      player_name: 'Rodzic',
+      score: 4,
+      operation: 'adding',
+      total_questions: 6,
+      correct_answers: 4,
+      time_taken: 30,
+      xp_earned: 18,
+    });
   });
 });

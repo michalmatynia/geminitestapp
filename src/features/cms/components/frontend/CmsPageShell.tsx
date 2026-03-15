@@ -97,6 +97,9 @@ function CmsPageShellFrame({
   const appearance = useOptionalCmsStorefrontAppearance();
   const appearanceMode = appearance?.mode ?? 'default';
   const storefrontAppearance = resolveCmsStorefrontAppearance(theme, appearanceMode);
+  const menuConfig = menu;
+  const menuColorSchemes = colorSchemes;
+  const menuAnimationsEnabled = animationsEnabled;
 
   const pageStyle: CSSProperties = {
     backgroundColor: storefrontAppearance.pageTone.background,
@@ -114,7 +117,11 @@ function CmsPageShellFrame({
       suppressHydrationWarning
     >
       {menuVisible ? (
-        <CmsMenu menu={menu} colorSchemes={colorSchemes} animationsEnabled={animationsEnabled} />
+        <CmsMenu
+          menu={menuConfig}
+          colorSchemes={menuColorSchemes}
+          animationsEnabled={menuAnimationsEnabled}
+        />
       ) : null}
       <div style={contentStyle} suppressHydrationWarning>
         {children}

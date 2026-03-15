@@ -18,13 +18,19 @@ export function AllegroSubpageScaffold({
   emptyState,
   children,
 }: AllegroSubpageScaffoldProps): React.JSX.Element {
+  const pageTitle = title;
+  const pageDescription = description;
+  const breadcrumbTitle = title;
+  const emptyStateTitle = emptyState?.title;
+  const emptyStateDescription = emptyState?.description;
+
   return (
     <PageLayout
-      title={title}
-      description={description}
+      title={pageTitle}
+      description={pageDescription}
       eyebrow={
         <AdminIntegrationsBreadcrumbs
-          current={title}
+          current={breadcrumbTitle}
           parent={{ label: 'Allegro', href: '/admin/integrations/marketplaces/allegro' }}
         />
       }
@@ -33,8 +39,8 @@ export function AllegroSubpageScaffold({
       {children ??
         (emptyState ? (
           <EmptyState
-            title={emptyState.title}
-            description={emptyState.description}
+            title={emptyStateTitle}
+            description={emptyStateDescription}
             variant='compact'
             className='border-dashed border-border/60 bg-card/40 py-8'
           />

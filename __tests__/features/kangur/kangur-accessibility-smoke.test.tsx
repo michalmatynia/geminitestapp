@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
+import { KangurMainRoleProvider } from '@/features/kangur/ui/design/primitives';
 import { expectNoAxeViolations } from '@/testing/accessibility/axe';
 
 const {
@@ -108,16 +109,24 @@ import LearnerProfile from '@/features/kangur/ui/pages/LearnerProfile';
 
 const renderLearnerProfilePage = () =>
   render(
-    <KangurGuestPlayerProvider>
-      <LearnerProfile />
-    </KangurGuestPlayerProvider>
+    <main id='app-content' tabIndex={-1}>
+      <KangurMainRoleProvider suppressMainRole>
+        <KangurGuestPlayerProvider>
+          <LearnerProfile />
+        </KangurGuestPlayerProvider>
+      </KangurMainRoleProvider>
+    </main>
   );
 
 const renderGamePage = () =>
   render(
-    <KangurGuestPlayerProvider>
-      <Game />
-    </KangurGuestPlayerProvider>
+    <main id='app-content' tabIndex={-1}>
+      <KangurMainRoleProvider suppressMainRole>
+        <KangurGuestPlayerProvider>
+          <Game />
+        </KangurGuestPlayerProvider>
+      </KangurMainRoleProvider>
+    </main>
   );
 
 const baseProgress: KangurProgressState = {
@@ -305,7 +314,8 @@ describe('Kangur accessibility smoke', () => {
       '#kangur-game-main'
     );
     expect(screen.getByRole('navigation', { name: 'Główna nawigacja Kangur' })).toBeInTheDocument();
-    expect(screen.getByRole('main', { name: /Sprycio/i })).toBeInTheDocument();
+    expect(screen.getByRole('main')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /Sprycio/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Strona główna' })).toHaveAttribute(
       'aria-current',
       'page'

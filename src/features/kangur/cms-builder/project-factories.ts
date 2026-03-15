@@ -214,3 +214,5 @@ export const makeBlockSection = (input: {
 
 export const withOrders = (components: PageComponentInput[]): PageComponentInput[] =>
   components.map((c, i) => ({ ...c, order: i }));
+
+export { makeGridColumn, makeGridRow, makeGridSection } from './project-sections';

@@ -10,6 +10,20 @@ export type KangurPageContainerProps = React.HTMLAttributes<HTMLElement> & {
   'data-kangur-route-main'?: boolean | 'true' | 'false';
 };
 
+const KangurMainRoleContext = React.createContext<boolean>(false);
+
+export const KangurMainRoleProvider = ({
+  suppressMainRole = false,
+  children,
+}: {
+  suppressMainRole?: boolean;
+  children: React.ReactNode;
+}): React.JSX.Element => (
+  <KangurMainRoleContext.Provider value={suppressMainRole}>
+    {children}
+  </KangurMainRoleContext.Provider>
+);
+
 export const KangurPageContainer = ({
   as: Comp = 'main',
   className,
@@ -19,17 +33,21 @@ export const KangurPageContainer = ({
   ...props
 }: KangurPageContainerProps): React.JSX.Element => {
   const routing = useOptionalKangurRouting();
-  const ResolvedComp = routing?.embedded && Comp === 'main' ? 'div' : Comp;
+  const suppressMainRole = React.useContext(KangurMainRoleContext);
+  const shouldSuppressMain = Boolean(routing?.embedded) || suppressMainRole;
+  const shouldSuppressMainTag = shouldSuppressMain && Comp === 'main';
+  const ResolvedComp = shouldSuppressMainTag ? 'div' : Comp;
   const explicitRouteMain =
     props['data-kangur-route-main'] === 'true' || props['data-kangur-route-main'] === true;
-  const shouldMarkMain = Comp === 'main' || explicitRouteMain;
+  const shouldMarkRouteMain = Comp === 'main' || explicitRouteMain;
+  const shouldSetMainRole = (Comp === 'main' || explicitRouteMain) && !shouldSuppressMain;
   const resolvedRole =
-    role ?? (shouldMarkMain && ResolvedComp !== 'main' ? 'main' : undefined);
+    role ?? (shouldSetMainRole && ResolvedComp !== 'main' ? 'main' : undefined);
 
   return (
     <ResolvedComp
       className={cn(KANGUR_PAGE_CONTAINER_CLASSNAME, className)}
-      data-kangur-route-main={shouldMarkMain ? 'true' : undefined}
+      data-kangur-route-main={shouldMarkRouteMain ? 'true' : undefined}
       tabIndex={tabIndex ?? -1}
       role={resolvedRole}
       {...props}

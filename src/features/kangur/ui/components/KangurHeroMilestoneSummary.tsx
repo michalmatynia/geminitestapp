@@ -48,6 +48,10 @@ export default function KangurHeroMilestoneSummary({
   const summaryTestIdPrefix = dataTestIdPrefix;
   const badgeTrackTestIdPrefix = trackDataTestIdPrefix;
   const badgeTrackProgress = progress;
+  const trackPinnedKeys = pinnedTrackKeys;
+  const trackLimitValue = trackLimit;
+  const trackMinimumValue = trackMinimumItems;
+  const trackShowPlaceholders = showPlaceholderForMissingPinnedTracks;
 
   return (
     <div
@@ -101,11 +105,11 @@ export default function KangurHeroMilestoneSummary({
         <KangurBadgeTrackHighlights
           className='min-[360px]:grid-cols-2'
           dataTestIdPrefix={badgeTrackTestIdPrefix}
-          limit={trackLimit}
-          minimumItems={trackMinimumItems}
-          pinnedTrackKeys={pinnedTrackKeys}
+          limit={trackLimitValue}
+          minimumItems={trackMinimumValue}
+          pinnedTrackKeys={trackPinnedKeys}
           progress={badgeTrackProgress}
-          showPlaceholderForMissingPinnedTracks={showPlaceholderForMissingPinnedTracks}
+          showPlaceholderForMissingPinnedTracks={trackShowPlaceholders}
         />
       </div>
     </div>

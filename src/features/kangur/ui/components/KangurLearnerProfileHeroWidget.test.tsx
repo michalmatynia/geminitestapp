@@ -5,18 +5,13 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { routeNavigatorPushMock, useKangurLearnerProfileRuntimeMock, useKangurPageContentEntryMock } = vi.hoisted(() => ({
-  routeNavigatorPushMock: vi.fn(),
+const { useKangurLearnerProfileRuntimeMock, useKangurLoginModalMock } = vi.hoisted(() => ({
   useKangurLearnerProfileRuntimeMock: vi.fn(),
-  useKangurPageContentEntryMock: vi.fn(),
+  useKangurLoginModalMock: vi.fn(),
 }));
 
-vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
-  useKangurRouteNavigator: () => ({
-    prefetch: vi.fn(),
-    push: routeNavigatorPushMock,
-    replace: vi.fn(),
-  }),
+vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
+  useKangurLoginModal: useKangurLoginModalMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', () => ({
@@ -25,30 +20,29 @@ vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', () =>
   useKangurLearnerProfileRuntime: useKangurLearnerProfileRuntimeMock,
 }));
 
-vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
-  useKangurPageContentEntry: useKangurPageContentEntryMock,
-}));
-
 import { KangurLearnerProfileHeroWidget } from '@/features/kangur/ui/components/KangurLearnerProfileHeroWidget';
 
 describe('KangurLearnerProfileHeroWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useKangurPageContentEntryMock.mockReturnValue({
-      entry: null,
-      data: undefined,
-      isLoading: false,
-      isError: false,
-      error: null,
+    useKangurLoginModalMock.mockReturnValue({
+      authMode: 'sign-in',
+      callbackUrl: '/kangur',
+      closeLoginModal: vi.fn(),
+      dismissLoginModal: vi.fn(),
+      homeHref: '/kangur',
+      isOpen: false,
+      isRouteDriven: false,
+      openLoginModal: vi.fn(),
     });
   });
 
-  it('renders the shared intro-card shell and routes back home', () => {
-    const navigateToLogin = vi.fn();
+  it('renders the hero shell without intro copy or back button', () => {
+    const openLoginModal = vi.fn();
 
     useKangurLearnerProfileRuntimeMock.mockReturnValue({
       basePath: '/kangur',
-      navigateToLogin,
+      navigateToLogin: vi.fn(),
       progress: {
         totalXp: 0,
         gamesPlayed: 0,
@@ -67,6 +61,16 @@ describe('KangurLearnerProfileHeroWidget', () => {
       },
       user: null,
     });
+    useKangurLoginModalMock.mockReturnValue({
+      authMode: 'sign-in',
+      callbackUrl: '/kangur',
+      closeLoginModal: vi.fn(),
+      dismissLoginModal: vi.fn(),
+      homeHref: '/kangur',
+      isOpen: false,
+      isRouteDriven: false,
+      openLoginModal,
+    });
 
     render(<KangurLearnerProfileHeroWidget />);
 
@@ -76,28 +80,27 @@ describe('KangurLearnerProfileHeroWidget', () => {
       'bg-white/68',
       'text-center'
     );
-    expect(screen.getByRole('heading', { name: 'Profil ucznia' })).toHaveClass('text-3xl');
     expect(
-      screen.getByText(
+      screen.queryByRole('heading', { name: 'Profil ucznia' })
+    ).toBeNull();
+    expect(
+      screen.queryByText(
         'Zaloguj się, aby synchronizować postęp ucznia między urządzeniami. Jeśli nie masz jeszcze konta rodzica, załóż je tutaj.'
       )
-    ).toBeInTheDocument();
+    ).toBeNull();
     expect(
       screen.getByRole('button', { name: 'Zaloguj się, aby synchronizować postęp' })
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Utwórz konto rodzica' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Wróć do poprzedniej strony' })
+    ).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
     fireEvent.click(screen.getByRole('button', { name: 'Zaloguj się, aby synchronizować postęp' }));
     fireEvent.click(screen.getByRole('button', { name: 'Utwórz konto rodzica' }));
 
-    expect(routeNavigatorPushMock).toHaveBeenCalledWith('/kangur', {
-      acknowledgeMs: 110,
-      pageKey: 'Game',
-      sourceId: 'learner-profile-hero:back',
-    });
-    expect(navigateToLogin).toHaveBeenCalledTimes(2);
-    expect(navigateToLogin).toHaveBeenLastCalledWith({
+    expect(openLoginModal).toHaveBeenCalledTimes(2);
+    expect(openLoginModal).toHaveBeenLastCalledWith(null, {
       authMode: 'create-account',
     });
   });
@@ -142,8 +145,6 @@ describe('KangurLearnerProfileHeroWidget', () => {
     render(<KangurLearnerProfileHeroWidget />);
 
     expect(screen.getByTestId('kangur-learner-profile-hero')).toHaveClass('text-center');
-    expect(screen.getByText('Ala')).toBeInTheDocument();
-    expect(screen.getByText('Ala')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(screen.getByTestId('kangur-learner-profile-hero-milestone-shell')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-learner-profile-hero-milestone-next-badge')).toHaveTextContent(
       '⭐ Pół tysiąca XP'
@@ -162,53 +163,5 @@ describe('KangurLearnerProfileHeroWidget', () => {
     expect(
       screen.queryByRole('button', { name: 'Zaloguj się, aby synchronizować postęp' })
     ).not.toBeInTheDocument();
-  });
-
-  it('uses Mongo-backed hero copy when available', () => {
-    useKangurPageContentEntryMock.mockReturnValue({
-      entry: {
-        id: 'learner-profile-hero',
-        title: 'Profil ucznia',
-        summary: 'Mongo opis profilu ucznia i jego kamieni milowych.',
-      },
-      data: undefined,
-      isLoading: false,
-      isError: false,
-      error: null,
-    });
-    useKangurLearnerProfileRuntimeMock.mockReturnValue({
-      basePath: '/kangur',
-      navigateToLogin: vi.fn(),
-      progress: {
-        totalXp: 480,
-        gamesPlayed: 4,
-        perfectGames: 1,
-        lessonsCompleted: 2,
-        clockPerfect: 1,
-        calendarPerfect: 0,
-        geometryPerfect: 0,
-        badges: [],
-        operationsPlayed: ['addition', 'clock'],
-        lessonMastery: {},
-        totalCorrectAnswers: 20,
-        totalQuestionsAnswered: 25,
-        dailyQuestsCompleted: 1,
-        bestWinStreak: 2,
-        activityStats: {},
-      },
-      user: {
-        activeLearner: {
-          displayName: 'Ala',
-        },
-      },
-    });
-
-    render(<KangurLearnerProfileHeroWidget />);
-
-    expect(screen.getByRole('heading', { name: 'Profil ucznia' })).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-learner-profile-hero')).toHaveTextContent(
-      'Mongo opis profilu ucznia i jego kamieni milowych. Ala.'
-    );
-    expect(screen.getByText('Ala')).toBeInTheDocument();
   });
 });

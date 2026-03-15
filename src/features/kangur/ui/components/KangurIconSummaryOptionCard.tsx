@@ -10,12 +10,11 @@ type KangurIconSummaryOptionCardProps = Omit<
   children: ReactNode;
 };
 
-export function KangurIconSummaryOptionCard({
-  buttonClassName,
-  children,
-  type = 'button',
-  ...buttonProps
-}: KangurIconSummaryOptionCardProps): React.JSX.Element {
+export function KangurIconSummaryOptionCard(
+  props: KangurIconSummaryOptionCardProps
+): React.JSX.Element {
+  const { buttonClassName, children, type = 'button', ...buttonProps } = props;
+
   return (
     <KangurOptionCardButton className={buttonClassName} type={type} {...buttonProps}>
       {children}

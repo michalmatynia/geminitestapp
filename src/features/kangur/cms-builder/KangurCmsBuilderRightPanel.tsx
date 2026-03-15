@@ -22,6 +22,9 @@ export function KangurCmsBuilderRightPanel({
 }: KangurCmsBuilderRightPanelProps): React.JSX.Element {
   const { state, selectedBlock, selectedColumn, selectedSection } = usePageBuilder();
   const hasSelection = Boolean(selectedSection || selectedBlock || selectedColumn);
+  const previewSection = themePreviewSection;
+  const previewTheme = themePreviewTheme;
+  const previewMode = themePreviewMode;
 
   return (
     <div
@@ -31,12 +34,12 @@ export function KangurCmsBuilderRightPanel({
           : 'w-80 translate-x-0 opacity-100'
       }`}
     >
-      {showThemePreview && themePreviewTheme ? (
+      {showThemePreview && previewTheme ? (
         <SidePanel position='right' width={320} isFocusMode={!state.currentPage}>
           <KangurThemePreviewPanel
-            section={themePreviewSection}
-            theme={themePreviewTheme}
-            mode={themePreviewMode}
+            section={previewSection}
+            theme={previewTheme}
+            mode={previewMode}
           />
         </SidePanel>
       ) : hasSelection ? (

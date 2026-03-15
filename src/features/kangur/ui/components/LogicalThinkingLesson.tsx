@@ -33,6 +33,7 @@ type SectionId =
   | 'klasyfikacja'
   | 'wnioskowanie'
   | 'wnioskowanie_gra'
+  | 'laboratorium_gra'
   | 'analogie'
   | 'zapamietaj';
 
@@ -73,7 +74,7 @@ const INTRO_SLIDES: LessonSlide[] = [
           Najpierw obserwujesz, potem łączysz fakty, a na końcu sprawdzasz wniosek.
         </KangurLessonLead>
         <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
-          <div className='mx-auto h-20 w-40'>
+          <div className='mx-auto h-28 w-56 sm:h-32 sm:w-64'>
             <LogicalThinkingStepsAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>
@@ -196,7 +197,7 @@ const CLASSIFICATION_SLIDES: LessonSlide[] = [
           Najpierw wybierasz cechę, a potem elementy trafiają do właściwej grupy.
         </KangurLessonLead>
         <KangurLessonCallout accent='emerald' className='w-full text-center' padding='sm'>
-          <div className='mx-auto h-20 w-40'>
+          <div className='mx-auto h-28 w-56 sm:h-32 sm:w-64'>
             <LogicalClassificationKeyAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>
@@ -242,7 +243,7 @@ const REASONING_SLIDES: LessonSlide[] = [
           Wnioskowanie to wyciąganie wniosków z tego, co wiemy. Używamy schematu: jeśli... to...
         </KangurLessonLead>
         <KangurLessonCallout accent='indigo' className='w-full text-center' padding='sm'>
-          <div className='mx-auto h-20 w-40'>
+          <div className='mx-auto h-28 w-56 sm:h-32 sm:w-64'>
             <LogicalReasoningAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>
@@ -276,6 +277,7 @@ const REASONING_SLIDES: LessonSlide[] = [
 const REASONING_GAME_SLIDES: LessonSlide[] = [
   {
     title: 'Gra: Jeśli… to… krok po kroku',
+    containerClassName: 'max-w-[min(760px,90vw)]',
     panelClassName: 'w-full mx-auto lg:w-[min(760px,90vw)]',
     content: (
       <KangurLessonStack>
@@ -356,20 +358,6 @@ const ANALOGIES_SLIDES: LessonSlide[] = [
 
 const SUMMARY_SLIDES: LessonSlide[] = [
   {
-    title: 'Gra: Logiczne Laboratorium 🧪',
-    panelClassName: 'w-full mx-auto lg:w-[min(760px,90vw)]',
-    content: (
-      <KangurLessonStack>
-        <KangurLessonLead>
-          Wykonaj trzy misje: wzorzec, klasyfikacja i analogia. Przeciągaj i klikaj!
-        </KangurLessonLead>
-        <KangurLessonCallout accent='violet' className='w-full' padding='sm'>
-          <LogicalThinkingLabGame />
-        </KangurLessonCallout>
-      </KangurLessonStack>
-    ),
-  },
-  {
     title: 'Zapamiętaj! 🌟',
     content: (
       <KangurLessonStack>
@@ -408,14 +396,33 @@ const SUMMARY_SLIDES: LessonSlide[] = [
   },
 ];
 
+const LAB_GAME_SLIDES: LessonSlide[] = [
+  {
+    title: 'Gra: Logiczne Laboratorium 🧪',
+    containerClassName: 'max-w-[min(760px,90vw)]',
+    panelClassName: 'w-full mx-auto lg:w-[min(760px,90vw)]',
+    content: (
+      <KangurLessonStack>
+        <KangurLessonLead>
+          Wykonaj trzy misje: wzorzec, klasyfikacja i analogia. Przeciągaj i klikaj!
+        </KangurLessonLead>
+        <KangurLessonCallout accent='violet' className='w-full' padding='sm'>
+          <LogicalThinkingLabGame />
+        </KangurLessonCallout>
+      </KangurLessonStack>
+    ),
+  },
+];
+
 export const SECTION_SLIDES: Record<SectionId, LessonSlide[]> = {
   wprowadzenie: INTRO_SLIDES,
   wzorce: PATTERN_SLIDES,
   klasyfikacja: CLASSIFICATION_SLIDES,
   wnioskowanie: REASONING_SLIDES,
-  wnioskowanie_gra: REASONING_GAME_SLIDES,
   analogie: ANALOGIES_SLIDES,
   zapamietaj: SUMMARY_SLIDES,
+  wnioskowanie_gra: REASONING_GAME_SLIDES,
+  laboratorium_gra: LAB_GAME_SLIDES,
 };
 
 export const SLIDES: LessonSlide[] = [
@@ -423,9 +430,10 @@ export const SLIDES: LessonSlide[] = [
   ...PATTERN_SLIDES,
   ...CLASSIFICATION_SLIDES,
   ...REASONING_SLIDES,
-  ...REASONING_GAME_SLIDES,
   ...ANALOGIES_SLIDES,
   ...SUMMARY_SLIDES,
+  ...REASONING_GAME_SLIDES,
+  ...LAB_GAME_SLIDES,
 ];
 
 export const HUB_SECTIONS = [
@@ -454,12 +462,6 @@ export const HUB_SECTIONS = [
     description: 'Myślenie krok po kroku: jeśli... to...',
   },
   {
-    id: 'wnioskowanie_gra',
-    emoji: '🎮',
-    title: 'Gra: Jeśli… to…',
-    description: 'Układanie faktów, reguły i wniosku',
-  },
-  {
     id: 'analogie',
     emoji: '🔗',
     title: 'Analogie',
@@ -470,6 +472,20 @@ export const HUB_SECTIONS = [
     emoji: '🌟',
     title: 'Zapamiętaj',
     description: 'Najważniejsze zasady logicznego myślenia',
+  },
+  {
+    id: 'wnioskowanie_gra',
+    emoji: '🎮',
+    title: 'Gra: Jeśli… to…',
+    description: 'Układanie faktów, reguły i wniosku',
+    isGame: true,
+  },
+  {
+    id: 'laboratorium_gra',
+    emoji: '🎮',
+    title: 'Gra: Logiczne Laboratorium 🧪',
+    description: 'Wzorzec, klasyfikacja i analogia',
+    isGame: true,
   },
 ];
 

@@ -265,7 +265,7 @@ function SubtractingTenFrameAnimation(): React.JSX.Element {
 function SubtractingDifferenceBarAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja roznicy: 12 minus 7 zostawia 5.'
+      aria-label='Animacja różnicy: 12 minus 7 zostawia 5.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 420 140'
@@ -291,7 +291,7 @@ function SubtractingDifferenceBarAnimation(): React.JSX.Element {
       `}</style>
       <text className='label' x='18' y='48'>12</text>
       <text className='label' x='18' y='92'>7</text>
-      <text className='diff-label' x='300' y='118'>roznica 5</text>
+      <text className='diff-label' x='300' y='118'>różnica 5</text>
       <g>
         {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((index) => (
           <rect
@@ -382,8 +382,8 @@ function SubtractingAbacusAnimation(): React.JSX.Element {
         />
       ))}
       <line className='divider' strokeWidth='2' x1='220' x2='220' y1='36' y2='152' />
-      <text fill='#475569' fontSize='12' fontWeight='600' x='70' y='44'>Dziesiatki</text>
-      <text fill='#475569' fontSize='12' fontWeight='600' x='250' y='44'>Jednosci</text>
+      <text fill='#475569' fontSize='12' fontWeight='600' x='70' y='44'>Dziesiątki</text>
+      <text fill='#475569' fontSize='12' fontWeight='600' x='250' y='44'>Jedności</text>
       <text fill='#475569' fontSize='12' fontWeight='600' x='36' y='56'>Start</text>
       <text fill='#475569' fontSize='12' fontWeight='600' x='36' y='96'>Odejmij</text>
       <text fill='#475569' fontSize='12' fontWeight='600' x='36' y='136'>Wynik</text>
@@ -851,7 +851,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Roznica liczb',
+      title: 'Różnica liczb',
       content: (
         <KangurLessonStack>
           <KangurLessonInset accent='teal' className='text-center'>
@@ -859,7 +859,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               <KangurIconBadge accent='teal' size='sm'>
                 =
               </KangurIconBadge>
-              <span>Roznica</span>
+              <span>Różnica</span>
             </div>
             <p className='mt-2 text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
               Porównaj dwie liczby i zobacz, ile brakuje do większej.
@@ -871,7 +871,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               12 - 7 = 5
             </KangurEquationDisplay>
             <KangurLessonCaption className='mt-1'>
-              Roznica to "brakujaca" część.
+              Różnica to "brakująca" część.
             </KangurLessonCaption>
           </KangurLessonInset>
         </KangurLessonStack>
@@ -891,7 +891,7 @@ export const HUB_SECTIONS = [
     id: 'przekroczenie',
     emoji: '🔟',
     title: 'Odejmowanie przez 10',
-    description: 'Rozklad przez dziesiec',
+    description: 'Rozkład przez dziesięć',
   },
   {
     id: 'dwucyfrowe',

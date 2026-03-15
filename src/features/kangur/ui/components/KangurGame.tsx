@@ -274,6 +274,8 @@ function ResultView({
   const pct = total > 0 ? Math.round((score / total) * 100) : 0;
   const emoji = pct === 100 ? '🏆' : pct >= 70 ? '🌟' : pct >= 40 ? '👍' : '💪';
   const summaryBreakdown = rewardBreakdown;
+  const summaryTitle = `Wynik: ${score}/${total}`;
+  const summaryXpEarned = xpEarned;
   const handleRestart = (): void => {
     onRestart();
   };
@@ -281,8 +283,8 @@ function ResultView({
   return (
     <KangurPracticeGameSummary dataTestId='kangur-game-summary-shell'>
       <KangurPracticeGameSummaryEmoji dataTestId='kangur-game-summary-emoji' emoji={emoji} />
-      <KangurPracticeGameSummaryTitle accent='amber' title={`Wynik: ${score}/${total}`} />
-      <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
+      <KangurPracticeGameSummaryTitle accent='amber' title={summaryTitle} />
+      <KangurPracticeGameSummaryXP accent='indigo' xpEarned={summaryXpEarned} />
       <KangurPracticeGameSummaryBreakdown
         breakdown={summaryBreakdown}
         dataTestId='kangur-game-summary-breakdown'

@@ -3,7 +3,7 @@ import {
   KANGUR_CONTEXT_ROOT_IDS,
   KANGUR_RUNTIME_ENTITY_TYPES,
 } from '@/features/kangur/context-registry/refs';
-import { parseKangurLessonDocumentStore, resolveKangurLessonDocumentPages, stripHtmlToText } from '@/features/kangur/lesson-documents';
+import { parseKangurLessonDocumentStore } from '@/features/kangur/lesson-documents';
 import { listKangurLoginActivity } from '@/features/kangur/server/kangur-login-activity';
 import { getKangurAssignmentRepository } from '@/features/kangur/services/kangur-assignment-repository';
 import { evaluateKangurAssignment } from '@/features/kangur/services/kangur-assignments';
@@ -24,20 +24,12 @@ import { isLiveKangurTestSuite, parseKangurTestSuites } from '@/features/kangur/
 import {
   buildKangurLearnerProfileSnapshot,
   buildLessonMasteryInsights,
-  type KangurLearnerProfileSnapshot,
-  type KangurLearnerRecommendation,
-  type KangurLessonMasteryInsight,
-  type KangurRecentSession,
 } from '@/features/kangur/ui/services/profile';
 import type {
   ContextRegistryResolutionBundle,
   ContextRuntimeDocument,
 } from '@/shared/contracts/ai-context-registry';
 import type {
-  KangurAssignmentSnapshot,
-  KangurLesson,
-  KangurLessonComponentId,
-  KangurLessonDocument,
   KangurLessonMasteryEntry,
 } from '@/shared/contracts/kangur';
 import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
@@ -45,80 +37,34 @@ import {
   KANGUR_TEST_QUESTIONS_SETTING_KEY,
   KANGUR_TEST_SUITES_SETTING_KEY,
 } from '@/shared/contracts/kangur-tests';
-import type { KangurTestQuestion, KangurTestQuestionStore, KangurTestSuite } from '@/shared/contracts/kangur-tests';
+import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
 import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
-const KANGUR_AI_TUTOR_DAILY_GOAL_GAMES = 3;
-const KANGUR_AI_TUTOR_RECENT_SCORE_LIMIT = 24;
-const QUICK_START_OPERATIONS = new Set([
-  'addition',
-  'subtraction',
-  'multiplication',
-  'division',
-  'decimals',
-  'powers',
-  'roots',
-  'clock',
-  'mixed',
-]);
-type KangurRecommendationSectionItem = {
-  id: string;
-  title: string;
-  description: string;
-  priority: string;
-  actionLabel: string;
-  actionPage: string;
-  actionQuery?: Record<string, string>;
-};
-type KangurAssignmentSectionItem = {
-  id: string;
-  title: string;
-  description: string;
-  priority: string;
-  targetType: string;
-  progressSummary: string;
-  actionLabel: string;
-  actionPage: string;
-  actionQuery?: Record<string, string>;
-};
-type LessonDocumentSnippetCard = {
-  id: string;
-  text: string;
-  explanation: string | null;
-};
-type KangurRegistryBaseData = {
-  learnerId: string;
-  learnerDisplayName: string | null;
-  ownerUserId: string | null;
-  progress: Awaited<ReturnType<Awaited<ReturnType<typeof getKangurProgressRepository>>['getProgress']>>;
-  scores: Awaited<ReturnType<Awaited<ReturnType<typeof getKangurScoreRepository>>['listScores']>>;
-  snapshot: KangurLearnerProfileSnapshot;
-  lessons: KangurLesson[];
-  lessonsById: Map<string, KangurLesson>;
-  lessonDocuments: Record<string, KangurLessonDocument>;
-  testSuites: KangurTestSuite[];
-  testSuitesById: Map<string, KangurTestSuite>;
-  questionStore: KangurTestQuestionStore;
-  evaluatedAssignments: KangurAssignmentSnapshot[];
-  activeAssignments: KangurAssignmentSnapshot[];
-  masteryInsights: ReturnType<typeof buildLessonMasteryInsights>;
-};
-const ASSIGNMENT_PRIORITY_ORDER = {
-  high: 0,
-  medium: 1,
-  low: 2,
-} as const;
-const ASSIGNMENT_STATUS_ORDER = {
-  not_started: 0,
-  in_progress: 1,
-  completed: 2,
-} as const;
-const readTrimmedString = (value: unknown): string | null => {
-  if (typeof value !== 'string') {
-    return null;
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
+
+import {
+  KANGUR_AI_TUTOR_DAILY_GOAL_GAMES,
+  KANGUR_AI_TUTOR_RECENT_SCORE_LIMIT,
+  type KangurRegistryBaseData,
+} from './context-registry/kangur-registry-types';
+import { readTrimmedString, truncate } from './context-registry/kangur-registry-utils';
+import {
+  sortAssignments,
+  toAssignmentAction,
+  toRecommendationItem,
+  toAssignmentItem,
+  formatAssignmentSummary,
+  buildRecentSessionItem,
+  buildWeakLessonItem,
+  buildOrderedLessonsForNavigation,
+} from './context-registry/kangur-registry-transformers';
+import {
+  buildLessonNavigationSummary,
+  buildLessonDocumentSnippets,
+  buildLessonDocumentSnippetCards,
+  findRelevantLessonAssignment,
+  buildLoginActivitySummary,
+  augmentKangurTestSurfaceRuntimeDocument,
+} from './context-registry/kangur-registry-resolvers';
+
 const buildKangurTestResultSummaryFromContext = (
   context: KangurAiTutorConversationContext | null | undefined
 ): string | null => {
@@ -134,6 +80,7 @@ const buildKangurTestResultSummaryFromContext = (
 
   return readTrimmedString(context.description);
 };
+
 const buildKangurTestReviewSummaryFromContext = (
   context: KangurAiTutorConversationContext | null | undefined
 ): string | null => {
@@ -149,6 +96,7 @@ const buildKangurTestReviewSummaryFromContext = (
 
   return readTrimmedString(context.description);
 };
+
 const buildKangurTestSelectedChoiceFactsFromContext = (
   context: KangurAiTutorConversationContext | null | undefined
 ): {
@@ -174,218 +122,11 @@ const buildKangurTestSelectedChoiceFactsFromContext = (
       : `Wybrana odpowiedź: ${selectedChoiceLabel}.`,
   };
 };
-const truncate = (value: string, maxLength: number): string =>
-  value.length > maxLength ? `${value.slice(0, maxLength - 3)}...` : value;
-const sortAssignments = (
-  left: KangurAssignmentSnapshot,
-  right: KangurAssignmentSnapshot
-): number => {
-  const priorityDiff =
-    ASSIGNMENT_PRIORITY_ORDER[left.priority] - ASSIGNMENT_PRIORITY_ORDER[right.priority];
-  if (priorityDiff !== 0) {
-    return priorityDiff;
-  }
-  const statusDiff =
-    ASSIGNMENT_STATUS_ORDER[left.progress.status] - ASSIGNMENT_STATUS_ORDER[right.progress.status];
-  if (statusDiff !== 0) {
-    return statusDiff;
-  }
-  return Date.parse(right.updatedAt) - Date.parse(left.updatedAt);
-};
-const resolvePracticeDifficulty = (averageAccuracy: number): 'easy' | 'medium' | 'hard' => {
-  if (averageAccuracy >= 85) {
-    return 'hard';
-  }
-  if (averageAccuracy >= 70) {
-    return 'medium';
-  }
-  return 'easy';
-};
-const toAssignmentAction = (
-  assignment: KangurAssignmentSnapshot,
-  averageAccuracy: number
-): {
-  actionLabel: string;
-  actionPage: string;
-  actionQuery?: Record<string, string>;
-} => {
-  if (assignment.target.type === 'lesson') {
-    return {
-      actionLabel: 'Otwórz lekcję',
-      actionPage: 'Lessons',
-      actionQuery: {
-        focus: assignment.target.lessonComponentId,
-      },
-    };
-  }
-  const query: Record<string, string> = QUICK_START_OPERATIONS.has(assignment.target.operation)
-    ? {
-      quickStart: 'operation',
-      operation: assignment.target.operation,
-      difficulty: resolvePracticeDifficulty(averageAccuracy),
-    }
-    : {
-      quickStart: 'training',
-    };
-  return {
-    actionLabel: 'Uruchom trening',
-    actionPage: 'Game',
-    actionQuery: query,
-  };
-};
-const toRecommendationItem = (
-  recommendation: KangurLearnerRecommendation
-): KangurRecommendationSectionItem => ({
-  id: recommendation.id,
-  title: recommendation.title,
-  description: recommendation.description,
-  priority: recommendation.priority,
-  actionLabel: recommendation.action.label,
-  actionPage: recommendation.action.page,
-  ...(recommendation.action.query ? { actionQuery: recommendation.action.query } : {}),
-});
-const toAssignmentItem = (
-  assignment: KangurAssignmentSnapshot,
-  averageAccuracy: number
-): KangurAssignmentSectionItem => {
-  const action = toAssignmentAction(assignment, averageAccuracy);
-  return {
-    id: assignment.id,
-    title: assignment.title,
-    description: assignment.description,
-    priority: assignment.priority,
-    targetType: assignment.target.type,
-    progressSummary: assignment.progress.summary,
-    ...action,
-  };
-};
-const formatAssignmentSummary = (
-  assignment: KangurAssignmentSnapshot,
-  averageAccuracy: number
-): string => {
-  const action = toAssignmentAction(assignment, averageAccuracy);
-  const targetSummary =
-    assignment.target.type === 'lesson'
-      ? `Lesson target: ${assignment.target.lessonComponentId}.`
-      : `Practice target: ${assignment.target.operation}.`;
-  return [
-    assignment.title,
-    assignment.description,
-    targetSummary,
-    `Progress: ${assignment.progress.summary}`,
-    `Suggested action: ${action.actionLabel} on ${action.actionPage}.`,
-  ]
-    .filter(Boolean)
-    .join(' ');
-};
-const buildRecentSessionItem = (session: KangurRecentSession): Record<string, unknown> => ({
-  id: session.id,
-  operation: session.operation,
-  operationLabel: session.operationLabel,
-  accuracyPercent: session.accuracyPercent,
-  score: session.score,
-  totalQuestions: session.totalQuestions,
-  createdAt: session.createdAt,
-  ...(session.xpEarned !== null ? { xpEarned: session.xpEarned } : {}),
-});
-const buildWeakLessonItem = (lesson: KangurLessonMasteryInsight): Record<string, unknown> => ({
-  componentId: lesson.componentId,
-  title: lesson.title,
-  masteryPercent: lesson.masteryPercent,
-  attempts: lesson.attempts,
-  bestScorePercent: lesson.bestScorePercent,
-  lastScorePercent: lesson.lastScorePercent,
-  lastCompletedAt: lesson.lastCompletedAt,
-});
-const buildOrderedLessonsForNavigation = (
-  lessons: KangurLesson[],
-  assignments: KangurAssignmentSnapshot[]
-): KangurLesson[] => {
-  const activeLessonAssignments = new Map<KangurLessonComponentId, KangurAssignmentSnapshot>();
 
-  assignments
-    .filter((assignment) => assignment.progress.status !== 'completed')
-    .filter(
-      (assignment): assignment is KangurAssignmentSnapshot & { target: { type: 'lesson' } } =>
-        assignment.target.type === 'lesson'
-    )
-    .forEach((assignment) => {
-      const componentId = assignment.target.lessonComponentId;
-      const existing = activeLessonAssignments.get(componentId);
-      if (
-        !existing ||
-        ASSIGNMENT_PRIORITY_ORDER[assignment.priority] <
-          ASSIGNMENT_PRIORITY_ORDER[existing.priority]
-      ) {
-        activeLessonAssignments.set(componentId, assignment);
-      }
-    });
-
-  return [...lessons].sort((left, right) => {
-    const leftAssignment = activeLessonAssignments.get(left.componentId);
-    const rightAssignment = activeLessonAssignments.get(right.componentId);
-
-    if (leftAssignment && !rightAssignment) {
-      return -1;
-    }
-    if (!leftAssignment && rightAssignment) {
-      return 1;
-    }
-    if (leftAssignment && rightAssignment) {
-      const priorityDiff =
-        ASSIGNMENT_PRIORITY_ORDER[leftAssignment.priority] -
-        ASSIGNMENT_PRIORITY_ORDER[rightAssignment.priority];
-      if (priorityDiff !== 0) {
-        return priorityDiff;
-      }
-    }
-
-    return left.sortOrder - right.sortOrder;
-  });
-};
-const buildLessonNavigationSummary = (
-  previousLesson: KangurLesson | null,
-  nextLesson: KangurLesson | null
-): string | null => {
-  if (previousLesson && nextLesson) {
-    return `Bez wracania do listy możesz cofnąć się do ${previousLesson.title} albo przejść dalej do ${nextLesson.title}.`;
-  }
-  if (previousLesson) {
-    return `Bez wracania do listy możesz cofnąć się do ${previousLesson.title}.`;
-  }
-  if (nextLesson) {
-    return `Bez wracania do listy możesz przejść dalej do ${nextLesson.title}.`;
-  }
-  return null;
-};
-const buildLoginActivitySummary = (input: {
-  learnerDisplayName: string | null;
-  parentLoginCount7d: number;
-  learnerSignInCount7d: number;
-  lastParentLoginAt: string | null;
-  lastLearnerSignInAt: string | null;
-}): string => {
-  const learnerLabel = input.learnerDisplayName ?? 'This learner';
-  const lines: string[] = [];
-  if (input.lastLearnerSignInAt) {
-    lines.push(`${learnerLabel} last signed into Kangur at ${input.lastLearnerSignInAt}.`);
-  } else {
-    lines.push(`No recent Kangur learner sign-in was recorded for ${learnerLabel}.`);
-  }
-  if (input.lastParentLoginAt) {
-    lines.push(`The parent last logged into Kangur at ${input.lastParentLoginAt}.`);
-  } else {
-    lines.push('No recent Kangur parent login was recorded.');
-  }
-  lines.push(
-    `In the last 7 days there were ${input.learnerSignInCount7d} learner sign-ins and ${input.parentLoginCount7d} parent Kangur logins.`
-  );
-  return lines.join(' ');
-};
 const buildLearnerSummary = (
-  snapshot: KangurLearnerProfileSnapshot,
-  activeAssignments: KangurAssignmentSnapshot[],
-  masteryInsights: ReturnType<typeof buildLessonMasteryInsights>
+  snapshot: any,
+  activeAssignments: any[],
+  masteryInsights: any
 ): string =>
   [
     `Average accuracy ${snapshot.averageAccuracy}%.`,
@@ -397,200 +138,6 @@ const buildLearnerSummary = (
     `${masteryInsights.lessonsNeedingPractice} lessons need practice.`,
   ].join(' ');
 
-const createLessonDocumentSnippetCard = (
-  id: string,
-  text: string | null | undefined,
-  explanation: string | null | undefined
-): LessonDocumentSnippetCard | null => {
-  const trimmedText = readTrimmedString(text);
-  if (!trimmedText) {
-    return null;
-  }
-
-  const trimmedExplanation = readTrimmedString(explanation);
-  return {
-    id,
-    text: trimmedText,
-    explanation:
-      trimmedExplanation && trimmedExplanation !== trimmedText ? trimmedExplanation : null,
-  };
-};
-
-const extractLessonDocumentSnippetCards = (
-  block: KangurLessonDocument['blocks'][number]
-): LessonDocumentSnippetCard[] => {
-  switch (block.type) {
-    case 'text':
-      return [
-        createLessonDocumentSnippetCard(
-          `${block.id}:text`,
-          stripHtmlToText(block.html),
-          block.ttsText
-        ),
-      ].filter((card): card is LessonDocumentSnippetCard => Boolean(card));
-    case 'svg':
-      return [
-        createLessonDocumentSnippetCard(
-          `${block.id}:svg`,
-          block.title,
-          block.ttsDescription
-        ),
-      ].filter((card): card is LessonDocumentSnippetCard => Boolean(card));
-    case 'image':
-      return [
-        createLessonDocumentSnippetCard(
-          `${block.id}:image`,
-          block.title || block.caption,
-          block.ttsDescription || block.caption
-        ),
-      ].filter((card): card is LessonDocumentSnippetCard => Boolean(card));
-    case 'activity':
-      return [
-        createLessonDocumentSnippetCard(
-          `${block.id}:activity`,
-          block.title || block.description,
-          block.ttsDescription || block.description
-        ),
-      ].filter((card): card is LessonDocumentSnippetCard => Boolean(card));
-    case 'callout':
-      return [
-        createLessonDocumentSnippetCard(
-          `${block.id}:callout`,
-          block.title || stripHtmlToText(block.html),
-          block.ttsText || stripHtmlToText(block.html)
-        ),
-      ].filter((card): card is LessonDocumentSnippetCard => Boolean(card));
-    case 'quiz':
-      return [
-        createLessonDocumentSnippetCard(
-          `${block.id}:quiz`,
-          stripHtmlToText(block.question),
-          block.explanation || block.ttsText
-        ),
-      ].filter((card): card is LessonDocumentSnippetCard => Boolean(card));
-    case 'grid':
-      return block.items.flatMap((item) => extractLessonDocumentSnippetCards(item.block));
-    default:
-      return [];
-  }
-};
-
-const extractBlockSnippets = (block: KangurLessonDocument['blocks'][number]): string[] => {
-  switch (block.type) {
-    case 'text':
-      return readTrimmedString(stripHtmlToText(block.html)) ? [stripHtmlToText(block.html)] : [];
-    case 'svg':
-      return [block.title, block.ttsDescription].filter((value): value is string => Boolean(readTrimmedString(value)));
-    case 'image':
-      return [block.title, block.caption, block.ttsDescription].filter((value): value is string =>
-        Boolean(readTrimmedString(value))
-      );
-    case 'activity':
-      return [block.title, block.description, block.ttsDescription].filter((value): value is string =>
-        Boolean(readTrimmedString(value))
-      );
-    case 'callout':
-      return [block.title, stripHtmlToText(block.html)].filter((value): value is string =>
-        Boolean(readTrimmedString(value))
-      );
-    case 'quiz':
-      return [
-        block.question,
-        ...block.choices.map((choice) => choice.text),
-        block.explanation ?? '',
-      ].filter((value): value is string => Boolean(readTrimmedString(value)));
-    case 'grid':
-      return block.items.flatMap((item) => extractBlockSnippets(item.block));
-    default:
-      return [];
-  }
-};
-const buildLessonDocumentSnippets = (document: KangurLessonDocument | null | undefined): string[] => {
-  if (!document) {
-    return [];
-  }
-  const snippets = resolveKangurLessonDocumentPages(document).flatMap((page) => [
-    page.sectionTitle ?? '',
-    page.sectionDescription ?? '',
-    page.title ?? '',
-    page.description ?? '',
-    ...page.blocks.flatMap((block) => extractBlockSnippets(block)),
-  ]);
-  const seen = new Set<string>();
-  return snippets
-    .map((snippet) => truncate(snippet.trim(), 260))
-    .filter((snippet) => snippet.length > 0)
-    .filter((snippet) => {
-      if (seen.has(snippet)) {
-        return false;
-      }
-      seen.add(snippet);
-      return true;
-    })
-    .slice(0, 8);
-};
-
-const buildLessonDocumentSnippetCards = (
-  document: KangurLessonDocument | null | undefined
-): LessonDocumentSnippetCard[] => {
-  if (!document) {
-    return [];
-  }
-
-  const seen = new Set<string>();
-  return resolveKangurLessonDocumentPages(document)
-    .flatMap((page) => [
-      createLessonDocumentSnippetCard(
-        `${page.id}:section-title`,
-        page.sectionTitle ?? '',
-        page.sectionDescription || page.description || page.title
-      ),
-      createLessonDocumentSnippetCard(
-        `${page.id}:page-title`,
-        page.title ?? '',
-        page.description || page.sectionDescription
-      ),
-      ...page.blocks.flatMap((block) => extractLessonDocumentSnippetCards(block)),
-    ])
-    .filter((card): card is LessonDocumentSnippetCard => Boolean(card))
-    .filter((card) => {
-      const key = card.text.toLocaleLowerCase();
-      if (seen.has(key)) {
-        return false;
-      }
-      seen.add(key);
-      return true;
-    })
-    .slice(0, 24);
-};
-const findRelevantLessonAssignment = (
-  lesson: KangurLesson,
-  assignments: KangurAssignmentSnapshot[],
-  context?: Pick<KangurAiTutorConversationContext, 'assignmentId'>
-): KangurAssignmentSnapshot | null => {
-  if (context?.assignmentId) {
-    const exact = assignments.find((assignment) => assignment.id === context.assignmentId);
-    if (exact) {
-      return exact;
-    }
-  }
-  const active = assignments.find(
-    (assignment) =>
-      assignment.target.type === 'lesson' &&
-      assignment.target.lessonComponentId === lesson.componentId &&
-      assignment.progress.status !== 'completed'
-  );
-  if (active) {
-    return active;
-  }
-  return (
-    assignments.find(
-      (assignment) =>
-        assignment.target.type === 'lesson' &&
-        assignment.target.lessonComponentId === lesson.componentId
-    ) ?? null
-  );
-};
 const buildQuestionChoiceItems = (
   question: KangurTestQuestion,
   answerRevealed: boolean
@@ -601,6 +148,7 @@ const buildQuestionChoiceItems = (
     ...(choice.description?.trim() ? { description: choice.description.trim() } : {}),
     ...(answerRevealed ? { isCorrect: choice.label === question.correctChoiceLabel } : {}),
   }));
+
 const buildQuestionChoiceSummary = (question: KangurTestQuestion): string =>
   `Opcje odpowiedzi: ${question.choices
     .map((choice) =>
@@ -612,6 +160,7 @@ const buildQuestionChoiceSummary = (question: KangurTestQuestion): string =>
         .join(': ')
     )
     .join('; ')}.`;
+
 export const loadKangurRegistryBaseData = async (learnerId: string): Promise<KangurRegistryBaseData> => {
   const [
     learner,
@@ -685,6 +234,7 @@ export const loadKangurRegistryBaseData = async (learnerId: string): Promise<Kan
     masteryInsights: buildLessonMasteryInsights(progress, 3),
   };
 };
+
 export const buildKangurLearnerSnapshotRuntimeDocument = async (input: {
   learnerId: string;
   data?: KangurRegistryBaseData;
@@ -783,6 +333,7 @@ export const buildKangurLearnerSnapshotRuntimeDocument = async (input: {
     },
   };
 };
+
 export const buildKangurLoginActivityRuntimeDocument = async (input: {
   learnerId: string;
   data?: KangurRegistryBaseData;
@@ -849,6 +400,7 @@ export const buildKangurLoginActivityRuntimeDocument = async (input: {
     },
   };
 };
+
 export const buildKangurLessonContextRuntimeDocument = async (input: {
   learnerId: string;
   lessonId: string;
@@ -1006,6 +558,7 @@ export const buildKangurLessonContextRuntimeDocument = async (input: {
     },
   };
 };
+
 export const buildKangurTestContextRuntimeDocument = async (input: {
   learnerId: string;
   suiteId: string;
@@ -1117,6 +670,7 @@ export const buildKangurTestContextRuntimeDocument = async (input: {
     },
   };
 };
+
 export const buildKangurAssignmentContextRuntimeDocument = async (input: {
   learnerId: string;
   assignmentId: string;
@@ -1189,6 +743,7 @@ export const buildKangurAssignmentContextRuntimeDocument = async (input: {
     },
   };
 };
+
 const buildKangurGameSurfaceRuntimeDocument = (
   context: KangurAiTutorConversationContext | null | undefined
 ): ContextRuntimeDocument | null => {
@@ -1257,6 +812,7 @@ const buildKangurGameSurfaceRuntimeDocument = (
     },
   };
 };
+
 const buildKangurTestSurfaceRuntimeDocument = (
   context: KangurAiTutorConversationContext | null | undefined
 ): ContextRuntimeDocument | null => {
@@ -1315,86 +871,7 @@ const buildKangurTestSurfaceRuntimeDocument = (
     },
   };
 };
-const augmentKangurTestSurfaceRuntimeDocument = (
-  document: ContextRuntimeDocument | null,
-  context: KangurAiTutorConversationContext | null | undefined
-): ContextRuntimeDocument | null => {
-  if (document?.entityType !== KANGUR_RUNTIME_ENTITY_TYPES.testContext) {
-    return document ?? null;
-  }
 
-  const resultSummary = buildKangurTestResultSummaryFromContext(context);
-  const reviewSummary = buildKangurTestReviewSummaryFromContext(context);
-  const selectedChoiceFacts = buildKangurTestSelectedChoiceFactsFromContext(context);
-  if (!resultSummary && !reviewSummary && !selectedChoiceFacts) {
-    return document;
-  }
-
-  const sections = document.sections ?? [];
-  const nextResultSection =
-    resultSummary === null
-      ? null
-      : {
-        id: 'test_result',
-        kind: 'text' as const,
-        title: 'Test result summary',
-        text: resultSummary,
-      };
-  const sectionsWithResult =
-    nextResultSection === null
-      ? sections
-      : (() => {
-        const existingResultSectionIndex = sections.findIndex(
-          (section) => section.id === 'test_result'
-        );
-        return existingResultSectionIndex >= 0
-          ? sections.map((section, index) =>
-            index === existingResultSectionIndex ? nextResultSection : section
-          )
-          : [...sections, nextResultSection];
-      })();
-  const existingReviewSectionIndex = sectionsWithResult.findIndex(
-    (section) => section.id === 'question_review'
-  );
-  const nextReviewSection =
-    reviewSummary === null
-      ? null
-      : {
-        id: 'question_review',
-        kind: 'text' as const,
-        title: 'Question review',
-        text:
-          [
-            reviewSummary,
-            selectedChoiceFacts?.selectedChoiceSummary,
-            readTrimmedString(document.facts?.['revealedExplanation']),
-            readTrimmedString(document.facts?.['correctChoiceLabel'])
-              ? `Correct choice: ${readTrimmedString(document.facts?.['correctChoiceLabel'])}.`
-              : null,
-          ]
-            .filter(Boolean)
-            .join(' ') || reviewSummary,
-      };
-  const mergedSections =
-    nextReviewSection === null
-      ? sectionsWithResult
-      : existingReviewSectionIndex >= 0
-        ? sectionsWithResult.map((section, index) =>
-          index === existingReviewSectionIndex ? nextReviewSection : section
-        )
-        : [...sectionsWithResult, nextReviewSection];
-
-  return {
-    ...document,
-    facts: {
-      ...(document.facts ?? {}),
-      ...(selectedChoiceFacts ?? {}),
-      ...(reviewSummary ? { reviewSummary } : {}),
-      ...(resultSummary ? { resultSummary } : {}),
-    },
-    sections: mergedSections,
-  };
-};
 export const resolveKangurAiTutorRuntimeDocuments = (
   bundle: ContextRegistryResolutionBundle | null | undefined,
   context?: KangurAiTutorConversationContext | null
@@ -1422,7 +899,12 @@ export const resolveKangurAiTutorRuntimeDocuments = (
       null,
     surfaceContext: augmentKangurTestSurfaceRuntimeDocument(
       bundleSurfaceContext ?? fallbackSurfaceContext,
-      context
+      {
+        resultSummary: buildKangurTestResultSummaryFromContext(context),
+        reviewSummary: buildKangurTestReviewSummaryFromContext(context),
+        selectedChoiceFacts: buildKangurTestSelectedChoiceFactsFromContext(context),
+        testContextType: KANGUR_RUNTIME_ENTITY_TYPES.testContext,
+      }
     ),
     assignmentContext:
       documents.find(

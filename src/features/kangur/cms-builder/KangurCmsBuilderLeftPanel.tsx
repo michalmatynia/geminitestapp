@@ -19,17 +19,24 @@ export function KangurCmsBuilderLeftPanel({
   onThemeChange,
   onThemeModeChange,
 }: KangurCmsBuilderLeftPanelProps): React.JSX.Element {
+  const handleModeChange = onModeChange;
+  const handleThemeSectionChange = onThemeSectionChange;
+  const handleThemeChange = onThemeChange;
+  const handleThemeModeChange = onThemeModeChange;
+
+  const themePanel = (
+    <KangurThemeSettingsPanel
+      onSectionChange={handleThemeSectionChange}
+      onThemeChange={handleThemeChange}
+      onModeChange={handleThemeModeChange}
+    />
+  );
+
   return (
     <CmsBuilderLeftPanel
       variant='kangur'
-      onModeChange={onModeChange}
-      themePanel={
-        <KangurThemeSettingsPanel
-          onSectionChange={onThemeSectionChange}
-          onThemeChange={onThemeChange}
-          onModeChange={onThemeModeChange}
-        />
-      }
+      onModeChange={handleModeChange}
+      themePanel={themePanel}
     />
   );
 }

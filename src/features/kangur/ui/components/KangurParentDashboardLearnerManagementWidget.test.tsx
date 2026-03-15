@@ -28,8 +28,8 @@ const runtimeState = vi.hoisted(() => ({
     },
     feedback: 'Zapisano dane ucznia.',
     handleCreateLearner: vi.fn(),
-    handleDeleteLearner: vi.fn(),
-    handleSaveLearner: vi.fn(),
+    handleDeleteLearner: vi.fn().mockResolvedValue(true),
+    handleSaveLearner: vi.fn().mockResolvedValue(true),
     isCreateLearnerModalOpen: false,
     isSubmitting: false,
     learners: [
@@ -102,8 +102,8 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
       },
       feedback: 'Zapisano dane ucznia.',
       handleCreateLearner: vi.fn(),
-      handleDeleteLearner: vi.fn(),
-      handleSaveLearner: vi.fn(),
+      handleDeleteLearner: vi.fn().mockResolvedValue(true),
+      handleSaveLearner: vi.fn().mockResolvedValue(true),
       isCreateLearnerModalOpen: false,
       isSubmitting: false,
       learners: [

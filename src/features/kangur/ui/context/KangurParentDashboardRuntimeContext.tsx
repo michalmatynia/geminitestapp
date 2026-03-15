@@ -72,8 +72,8 @@ type KangurParentDashboardRuntimeActionsContextValue = {
     value: KangurParentDashboardEditForm[K]
   ) => void;
   handleCreateLearner: () => Promise<void>;
-  handleSaveLearner: () => Promise<void>;
-  handleDeleteLearner: (learnerId: string) => Promise<void>;
+  handleSaveLearner: () => Promise<boolean>;
+  handleDeleteLearner: (learnerId: string) => Promise<boolean>;
 };
 
 type KangurParentDashboardRuntimeContextValue = KangurParentDashboardRuntimeStateContextValue &
@@ -265,7 +265,8 @@ export function KangurParentDashboardRuntimeProvider({
             loginName: '',
             password: '',
           });
-          setFeedback(`Dodano profil ucznia: ${created.displayName}.`);
+          setCreateLearnerModalOpen(false);
+          setFeedback(null);
         } catch (error: unknown) {
           const details =
             error && typeof error === 'object'
@@ -297,7 +298,7 @@ export function KangurParentDashboardRuntimeProvider({
       },
       handleSaveLearner: async () => {
         if (!canAccessDashboard || !activeLearner) {
-          return;
+          return false;
         }
 
         setIsSubmitting(true);
@@ -313,17 +314,19 @@ export function KangurParentDashboardRuntimeProvider({
           await checkAppState();
           setEditForm((current) => ({ ...current, password: '' }));
           setFeedback('Zapisano dane ucznia.');
+          return true;
         } catch (error: unknown) {
           setFeedback(
             error instanceof Error ? error.message : 'Nie udało się zapisać zmian.'
           );
+          return false;
         } finally {
           setIsSubmitting(false);
         }
       },
       handleDeleteLearner: async (learnerId: string) => {
         if (!canAccessDashboard) {
-          return;
+          return false;
         }
 
         setIsSubmitting(true);
@@ -333,10 +336,12 @@ export function KangurParentDashboardRuntimeProvider({
           const removed = await kangurPlatform.learners.delete(learnerId);
           await checkAppState();
           setFeedback(`Usunięto profil ucznia: ${removed.displayName}.`);
+          return true;
         } catch (error: unknown) {
           setFeedback(
             error instanceof Error ? error.message : 'Nie udało się usunąć profilu ucznia.'
           );
+          return false;
         } finally {
           setIsSubmitting(false);
         }

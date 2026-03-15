@@ -43,6 +43,7 @@ import { ORDERED_TREE_INSTANCE, CATALOG_TREE_INSTANCE } from './test-suites-mana
 function TestSuitesManagerInner({ standalone }: { standalone: boolean }) {
   const isStandalone = standalone;
   const settingsStore = useSettingsStore();
+  const updateSetting = useUpdateSetting();
   const state = useTestSuitesManager();
   const logic = useTestSuitesManagerLogic(settingsStore);
 
@@ -85,35 +86,35 @@ function TestSuitesManagerInner({ standalone }: { standalone: boolean }) {
     [state.treeMode, logic.suiteById, logic.suites, updateSetting]
   );
 
-          const {
-          controller,
-          capabilities,
-          appearance: { rootDropUi },
-          viewport: { scrollToNodeRef },
-          } = useMasterFolderTreeShell({ instance: activeTreeInstance, nodes: masterNodes, adapter });
+  const {
+    controller,
+    capabilities,
+    appearance: { rootDropUi },
+    viewport: { scrollToNodeRef },
+  } = useMasterFolderTreeShell({ instance: activeTreeInstance, nodes: masterNodes, adapter });
 
-          const searchState = useMasterFolderTreeSearch(masterNodes, state.searchQuery, {
-          config: capabilities.search,
-          });
+  const searchState = useMasterFolderTreeSearch(masterNodes, state.searchQuery, {
+    config: capabilities.search,
+  });
 
-          const renderNode = useCallback(
-          (input: FolderTreeViewportRenderNodeInput): React.ReactNode => (
-          <TestSuiteTreeRow
-          input={input}
-          suiteById={logic.suiteById}
-          groupTitleBySuiteId={logic.groupTitleBySuiteId}
-          questionCountBySuiteId={logic.questionCountBySuiteId}
-          suiteHealthById={logic.suiteHealthById}
-          onEditGroup={(title) => {
-            state.setEditingGroupOriginalTitle(title);
-            state.setGroupTitle(title);
-            state.setGroupDescription(logic.groupById.get(title)?.description ?? '');
-          }}
-          onDeleteGroup={state.setGroupToDeleteTitle}
-          onMoveSuiteToGroup={(suite) => {
-            state.setSuiteToMove(suite);
-            state.setSuiteMoveTargetGroupTitle(logic.groupTitleBySuiteId.get(suite.id) ?? '');
-          }}
+  const renderNode = useCallback(
+    (input: FolderTreeViewportRenderNodeInput): React.ReactNode => (
+      <TestSuiteTreeRow
+        input={input}
+        suiteById={logic.suiteById}
+        groupTitleBySuiteId={logic.groupTitleBySuiteId}
+        questionCountBySuiteId={logic.questionCountBySuiteId}
+        suiteHealthById={logic.suiteHealthById}
+        onEditGroup={(title) => {
+          state.setEditingGroupOriginalTitle(title);
+          state.setGroupTitle(title);
+          state.setGroupDescription(logic.groupById.get(title)?.description ?? '');
+        }}
+        onDeleteGroup={state.setGroupToDeleteTitle}
+        onMoveSuiteToGroup={(suite) => {
+          state.setSuiteToMove(suite);
+          state.setSuiteMoveTargetGroupTitle(logic.groupTitleBySuiteId.get(suite.id) ?? '');
+        }}
         onEdit={logic.openEditModal}
         onManageQuestions={(suite) => logic.openQuestionsManager(suite)}
         onGoLive={(suite) => {

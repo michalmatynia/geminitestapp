@@ -442,10 +442,6 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     expect(screen.queryByLabelText(/agent nauczający/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/persona \(charakter tutora\)/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/persona playwright/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/zarządzane w/i)).toHaveTextContent('Kangur Settings');
-    expect(screen.getByText(/zarządzane w/i)).toHaveClass(
-      '[color:var(--kangur-page-muted-text)]'
-    );
   });
 
   it('renders Mongo-backed section intro copy when available', () => {

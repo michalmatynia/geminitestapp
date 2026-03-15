@@ -4,20 +4,26 @@ import { KangurLoginPage } from '@/features/kangur/ui/KangurLoginPage';
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { cn } from '@/shared/utils';
 
+import { useCallback } from 'react';
 import type { JSX } from 'react';
 
 export function KangurLoginModal(): JSX.Element {
-  const { authMode, callbackUrl, closeLoginModal, dismissLoginModal, isOpen } =
+  const { authMode, callbackUrl, closeLoginModal, dismissLoginModal, isOpen, isRouteDriven } =
     useKangurLoginModal();
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (!nextOpen && !isRouteDriven) {
+        closeLoginModal();
+      }
+    },
+    [closeLoginModal, isRouteDriven]
+  );
 
   return (
     <DialogPrimitive.Root
       open={isOpen}
-      onOpenChange={(nextOpen) => {
-        if (!nextOpen) {
-          closeLoginModal();
-        }
-      }}
+      modal={!isRouteDriven}
+      onOpenChange={handleOpenChange}
     >
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay
@@ -38,6 +44,18 @@ export function KangurLoginModal(): JSX.Element {
             'outline-none'
           )}
           data-testid='kangur-login-modal'
+          onEscapeKeyDown={(event) => {
+            if (!isRouteDriven) {
+              return;
+            }
+            event.preventDefault();
+            closeLoginModal();
+          }}
+          onInteractOutside={(event) => {
+            if (isRouteDriven) {
+              event.preventDefault();
+            }
+          }}
         >
           <DialogPrimitive.Title className='sr-only'>Zaloguj się</DialogPrimitive.Title>
           <DialogPrimitive.Description className='sr-only'>

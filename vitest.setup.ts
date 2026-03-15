@@ -686,17 +686,10 @@ if (typeof window !== 'undefined') {
   if (!HTMLElement.prototype.getAnimations) {
     HTMLElement.prototype.getAnimations = vi.fn(() => []);
   }
-  if (typeof window.scrollTo !== 'function') {
-    Object.defineProperty(window, 'scrollTo', {
-      configurable: true,
-      value: vi.fn(),
-    });
-  } else {
-    Object.defineProperty(window, 'scrollTo', {
-      configurable: true,
-      value: vi.fn(),
-    });
-  }
+  Object.defineProperty(window, 'scrollTo', {
+    configurable: true,
+    value: vi.fn(),
+  });
 }
 
 // Polyfill for window.matchMedia (GSAP needs this)

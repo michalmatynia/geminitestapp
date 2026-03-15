@@ -135,12 +135,11 @@ type WarmOverlayPanelProps = ComponentPropsWithoutRef<typeof KangurGlassPanel> &
   tone?: keyof typeof warmOverlayShadowClassNameByTone;
 };
 
-export function KangurAiTutorWarmOverlayPanel({
-  children,
-  className,
-  tone = 'callout',
-  ...props
-}: WarmOverlayPanelProps): JSX.Element {
+export function KangurAiTutorWarmOverlayPanel(
+  props: WarmOverlayPanelProps
+): JSX.Element {
+  const { children, className, tone = 'callout', ...panelProps } = props;
+
   return (
     <KangurGlassPanel
       surface='warmGlow'
@@ -150,7 +149,7 @@ export function KangurAiTutorWarmOverlayPanel({
         warmOverlayShadowClassNameByTone[tone],
         className
       )}
-      {...props}
+      {...panelProps}
     >
       {children}
     </KangurGlassPanel>

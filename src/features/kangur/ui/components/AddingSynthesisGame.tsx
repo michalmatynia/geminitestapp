@@ -496,6 +496,8 @@ export default function AddingSynthesisGame({
   }
 
   if (phase === 'summary' && summary) {
+    const showRewards = summary.xpEarned > 0 || summary.breakdown.length > 0;
+
     return (
       <div className='flex w-full flex-col gap-4'>
         <KangurGlassPanel
@@ -507,14 +509,18 @@ export default function AddingSynthesisGame({
           <div className='flex flex-col gap-5'>
             <div className='flex flex-wrap items-center gap-2'>
               <KangurStatusChip accent='emerald'>Sesja zakończona</KangurStatusChip>
-              <KangurStatusChip accent='amber'>+{summary.xpEarned} XP</KangurStatusChip>
+              {showRewards ? (
+                <KangurStatusChip accent='amber'>+{summary.xpEarned} XP</KangurStatusChip>
+              ) : null}
             </div>
-            <KangurRewardBreakdownChips
-              accent='slate'
-              breakdown={summary.breakdown}
-              dataTestId='adding-synthesis-summary-breakdown'
-              itemDataTestIdPrefix='adding-synthesis-summary-breakdown'
-            />
+            {showRewards ? (
+              <KangurRewardBreakdownChips
+                accent='slate'
+                breakdown={summary.breakdown}
+                dataTestId='adding-synthesis-summary-breakdown'
+                itemDataTestIdPrefix='adding-synthesis-summary-breakdown'
+              />
+            ) : null}
 
             <div className='flex flex-col gap-2'>
               <h2 className='text-3xl font-extrabold tracking-[-0.03em] [color:var(--kangur-page-text)] sm:text-4xl'>

@@ -191,12 +191,14 @@ describe('KangurProgressSyncProvider', () => {
     expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('45');
   });
 
-  it('does not hydrate progress for parent accounts', async () => {
+  it('does not hydrate progress for parent accounts without an active learner', async () => {
     useKangurAuthMock.mockReturnValue(
       buildAuthState({
         user: {
           actorType: 'parent',
           canManageLearners: true,
+          activeLearner: null,
+          learners: [],
         },
       })
     );

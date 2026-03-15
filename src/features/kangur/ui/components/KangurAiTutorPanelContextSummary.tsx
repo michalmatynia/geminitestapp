@@ -62,9 +62,14 @@ function KangurAiTutorPanelContextCard({
   testId,
   title,
 }: ContextSummaryCardProps): JSX.Element {
+  const cardTestId = testId;
+  const primaryActionConfig = primaryAction;
+  const secondaryActionConfig = secondaryAction;
+  const statusConfig = status;
+
   return (
     <KangurAiTutorWarmInsetCard
-      data-testid={testId}
+      data-testid={cardTestId}
       tone='panel'
       className='mt-2 kangur-chat-padding-md'
     >
@@ -76,40 +81,40 @@ function KangurAiTutorPanelContextCard({
           {content ? <div className='mt-2'>{content}</div> : null}
         </div>
         <div className='flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end'>
-          {primaryAction ? (
+          {primaryActionConfig ? (
             <KangurButton
-              data-testid={primaryAction.testId}
+              data-testid={primaryActionConfig.testId}
               type='button'
               size='sm'
               variant='surface'
               className={contextSummaryCardActionClassName}
-              onClick={primaryAction.onClick}
+              onClick={primaryActionConfig.onClick}
             >
-              {primaryAction.label}
+              {primaryActionConfig.label}
             </KangurButton>
           ) : null}
           <KangurButton
-            data-testid={secondaryAction.testId}
+            data-testid={secondaryActionConfig.testId}
             type='button'
             size='sm'
             variant='surface'
             className={contextSummaryCardActionClassName}
-            onClick={secondaryAction.onClick}
+            onClick={secondaryActionConfig.onClick}
           >
-            {secondaryAction.label}
+            {secondaryActionConfig.label}
           </KangurButton>
         </div>
       </div>
       <div className='mt-2 text-[11px] leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
         {detail}
       </div>
-      {status ? (
+      {statusConfig ? (
         <KangurAiTutorWarmInsetCard
-          data-testid={status.testId}
-          tone={status.tone}
+          data-testid={statusConfig.testId}
+          tone={statusConfig.tone}
           className='mt-2 kangur-chat-padding-sm text-[11px] font-semibold'
         >
-          {status.label}
+          {statusConfig.label}
         </KangurAiTutorWarmInsetCard>
       ) : null}
     </KangurAiTutorWarmInsetCard>

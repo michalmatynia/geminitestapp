@@ -27,11 +27,14 @@ function KangurResultSectionCard({
   children,
   testId,
 }: KangurResultSectionCardProps): React.JSX.Element {
+  const cardAccent = accent;
+  const cardTestId = testId;
+
   return (
     <KangurInfoCard
-      accent={accent}
+      accent={cardAccent}
       className='w-full max-w-2xl rounded-[28px]'
-      data-testid={testId}
+      data-testid={cardTestId}
       padding='md'
       tone='accent'
     >

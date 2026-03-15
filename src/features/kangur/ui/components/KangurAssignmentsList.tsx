@@ -217,6 +217,9 @@ export function KangurAssignmentsList({
   onArchive,
 }: KangurAssignmentsListProps): React.JSX.Element {
   const emptyStateDescription = emptyLabel;
+  const panelSummary = summary;
+  const panelTitle = title;
+  const archiveContextValue = { onArchive };
 
   if (compact) {
     return (
@@ -228,9 +231,9 @@ export function KangurAssignmentsList({
       >
         <div className='mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
           <KangurPanelIntro
-            description={summary}
+            description={panelSummary}
             eyebrow='Szybki podgląd'
-            title={title}
+            title={panelTitle}
             titleAs='div'
             titleClassName='text-lg font-extrabold tracking-tight sm:text-xl'
           />
@@ -259,7 +262,7 @@ export function KangurAssignmentsList({
   }
 
   return (
-    <KangurAssignmentsListArchiveContext.Provider value={{ onArchive }}>
+    <KangurAssignmentsListArchiveContext.Provider value={archiveContextValue}>
       <KangurGlassPanel
         data-testid='kangur-assignments-list-shell'
         padding='lg'
@@ -268,9 +271,9 @@ export function KangurAssignmentsList({
       >
         <div className='mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
           <KangurPanelIntro
-            description={summary}
+            description={panelSummary}
             eyebrow='Przydzielone zadania'
-            title={title}
+            title={panelTitle}
             titleAs='div'
             titleClassName='text-lg font-extrabold tracking-tight sm:text-xl'
           />

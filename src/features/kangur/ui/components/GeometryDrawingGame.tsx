@@ -707,24 +707,6 @@ export default function GeometryDrawingGame({
                 kończy kreskę, strzałki przesuwają kursor, Escape czyści planszę.
               </p>
 
-              {feedback && (
-                <p
-                  aria-live='polite'
-                  className={cn(
-                    'text-sm font-semibold text-center',
-                    feedback.kind === 'success'
-                      ? 'text-emerald-600'
-                      : feedback.kind === 'error'
-                        ? 'text-rose-600'
-                        : 'text-amber-600'
-                  )}
-                  data-testid='geometry-drawing-feedback'
-                  role='status'
-                >
-                  {feedback.text}
-                </p>
-              )}
-
               <div className='flex w-full flex-col gap-3 sm:flex-row'>
                 <KangurButton
                   className='w-full sm:flex-1'
@@ -757,6 +739,24 @@ export default function GeometryDrawingGame({
                   Sprawdź
                 </KangurButton>
               </div>
+
+              {feedback && (
+                <p
+                  aria-live='polite'
+                  className={cn(
+                    'text-sm font-semibold text-center',
+                    feedback.kind === 'success'
+                      ? 'text-emerald-600'
+                      : feedback.kind === 'error'
+                        ? 'text-rose-600'
+                        : 'text-amber-600'
+                  )}
+                  data-testid='geometry-drawing-feedback'
+                  role='status'
+                >
+                  {feedback.text}
+                </p>
+              )}
             </KangurGlassPanel>
           </div>
         </>

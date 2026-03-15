@@ -697,6 +697,8 @@ export function KangurThemeSettingsPanel({
   onThemeChange,
   onModeChange,
 }: KangurThemeSettingsPanelProps): React.JSX.Element {
+  const handleSectionChange = onSectionChange;
+  const handleThemeChange = onThemeChange;
   const [mode, setMode] = useState<ThemeMode>('daily');
   const config = MODE_CONFIG[mode];
 
@@ -740,8 +742,8 @@ export function KangurThemeSettingsPanel({
           storageKey={config.storageKey}
           defaultTheme={config.defaultTheme}
           resetLabel={config.resetLabel}
-          onSectionChange={onSectionChange}
-          onThemeChange={onThemeChange}
+          onSectionChange={handleSectionChange}
+          onThemeChange={handleThemeChange}
         />
       </ThemeSettingsProvider>
     </div>

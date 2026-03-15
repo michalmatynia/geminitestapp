@@ -182,7 +182,12 @@ function DraggableCase({
   );
 
   return (
-    <Draggable draggableId={item.id} index={index} isDragDisabled={checked}>
+    <Draggable
+      draggableId={item.id}
+      index={index}
+      isDragDisabled={checked}
+      disableInteractiveElementBlocking
+    >
       {(provided, snapshot) => {
         const content = (
           <button

@@ -25,10 +25,13 @@ export function KangurLessonLibraryCardAside({
   completedLessonAssignment: KangurAssignmentSnapshot | null;
   className?: string;
 }): React.JSX.Element {
+  const masteryAccent = masteryPresentation.badgeAccent;
+  const assignmentPriority = lessonAssignment?.priority;
+
   return (
     <div className={cn('flex flex-wrap items-center gap-2 sm:flex-col sm:items-end', className)}>
       <KangurStatusChip
-        accent={masteryPresentation.badgeAccent}
+        accent={masteryAccent}
         className='uppercase tracking-[0.14em]'
         size='sm'
       >
@@ -38,7 +41,7 @@ export function KangurLessonLibraryCardAside({
         <KangurAssignmentPriorityChip
           accent='rose'
           className='uppercase tracking-[0.14em]'
-          priority={lessonAssignment.priority}
+          priority={assignmentPriority ?? 'medium'}
           size='sm'
         />
       ) : completedLessonAssignment ? (

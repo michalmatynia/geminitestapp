@@ -6,11 +6,16 @@ import {
   requireActiveLearner,
   resolveKangurActor,
 } from '@/features/kangur/server';
+import { ActivityTypes } from '@/shared/constants/observability';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { logActivity } from '@/shared/utils/observability/activity-service';
 import { parseKangurProgressUpdatePayload } from '@/shared/validations/kangur';
 
+const KANGUR_PROGRESS_SOURCE_HEADER = 'x-kangur-progress-source';
+const KANGUR_PROGRESS_CTA_HEADER = 'x-kangur-progress-cta';
+const KANGUR_PROGRESS_CTA_SOURCE = 'lesson_panel_navigation';
 
 const readBodyJson = async (request: NextRequest): Promise<unknown> => {
   const rawBody = await request.text();
@@ -82,6 +87,8 @@ export async function patchKangurProgressHandler(
   ctx: ApiHandlerContext
 ): Promise<Response> {
   const payload = parseKangurProgressUpdatePayload(await resolveBodyJson(req, ctx));
+  const ctaSource = req.headers.get(KANGUR_PROGRESS_SOURCE_HEADER);
+  const ctaId = req.headers.get(KANGUR_PROGRESS_CTA_HEADER);
   const actor = await resolveKangurActor(req);
   const activeLearner = requireActiveLearner(actor);
   const repository = await getKangurProgressRepository();
@@ -101,5 +108,25 @@ export async function patchKangurProgressHandler(
       perfectGames: progress.perfectGames,
     },
   });
+
+  if (
+    ctaSource === KANGUR_PROGRESS_CTA_SOURCE &&
+    actor.actorType === 'learner' &&
+    actor.ownerUserId
+  ) {
+    void logActivity({
+      type: ActivityTypes.KANGUR.LESSON_PANEL_CTA,
+      description: `Lesson panel navigation CTA${ctaId ? `: ${ctaId}` : ''}`,
+      userId: actor.ownerUserId,
+      entityId: activeLearner.id,
+      entityType: 'kangur_learner',
+      metadata: {
+        source: ctaSource,
+        cta: ctaId ?? null,
+      },
+    }).catch(() => {
+      // Avoid failing the progress write on activity log issues.
+    });
+  }
   return NextResponse.json(progress);
 }

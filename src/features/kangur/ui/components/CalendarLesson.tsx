@@ -20,7 +20,7 @@ import {
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurDisplayEmoji } from '@/features/kangur/ui/design/primitives';
-import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
+import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
   addXp,
   createLessonCompletionReward,
@@ -467,10 +467,21 @@ const TRAINING_SECTIONS: Array<CalendarLiveHubSection & { isGame: true }> = LIVE
   (section): section is CalendarLiveHubSection & { isGame: true } => section.isGame === true
 );
 
+const SECTION_LABELS: Partial<Record<LessonSectionId, string>> = Object.fromEntries(
+  LIVE_HUB_SECTIONS.filter((section) => !section.isGame).map((section) => [
+    section.id,
+    section.title,
+  ])
+);
+
 export default function CalendarLesson(): React.JSX.Element {
   const [view, setView] = useState<CalendarLessonView>({ kind: 'hub' });
-  const { markSectionOpened, markSectionViewedCount, sectionProgress } =
-    useLessonHubProgress(SECTION_SLIDES);
+  const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
+    useKangurLessonPanelProgress({
+      lessonKey: 'calendar',
+      slideSections: SECTION_SLIDES,
+      sectionLabels: SECTION_LABELS,
+    });
   const lessonCompletionAwardedRef = useRef(false);
 
   const lessonHubSections = LIVE_HUB_SECTIONS.map((section) =>
@@ -534,6 +545,9 @@ export default function CalendarLesson(): React.JSX.Element {
         }
         onBack={() => setView({ kind: 'hub' })}
         onProgressChange={(viewedCount) => markSectionViewedCount(view.sectionId, viewedCount)}
+        onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
+          recordPanelTime(view.sectionId, panelIndex, seconds, panelTitle)
+        }
         dotActiveClass='bg-emerald-500'
         dotDoneClass='bg-emerald-200'
         gradientClass='kangur-gradient-accent-emerald'

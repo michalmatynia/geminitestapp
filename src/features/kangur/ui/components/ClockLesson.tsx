@@ -27,7 +27,7 @@ import {
   KANGUR_PENDING_STEP_PILL_CLASSNAME,
   KANGUR_STEP_PILL_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
-import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
+import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
   addXp,
   createLessonCompletionReward,
@@ -504,6 +504,10 @@ export const LESSON_SECTIONS: LessonSection[] = [
   },
 ];
 
+const SECTION_LABELS: Partial<Record<SectionId, string>> = Object.fromEntries(
+  LESSON_SECTIONS.map((section) => [section.id, section.title])
+);
+
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   hours: HOURS_SLIDES,
   minutes: MINUTES_SLIDES,
@@ -696,8 +700,12 @@ export default function ClockLesson(): React.JSX.Element {
               },
               ],    };
   }
-  const { markSectionOpened, markSectionViewedCount, sectionProgress } =
-    useLessonHubProgress(runtimeSlides.current);
+  const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
+    useKangurLessonPanelProgress({
+      lessonKey: 'clock',
+      slideSections: runtimeSlides.current,
+      sectionLabels: SECTION_LABELS,
+    });
   const lessonCompletionAwardedRef = useRef(false);
   const isHoursComplete =
     (sectionProgress.hours?.totalCount ?? 0) > 0 &&
@@ -1090,6 +1098,9 @@ export default function ClockLesson(): React.JSX.Element {
         sectionHeader={HUB_SECTIONS.find((section) => section.id === view.sectionId) ?? null}
         onBack={handleReturnToHub}
         onProgressChange={(viewedCount) => markSectionViewedCount(view.sectionId, viewedCount)}
+        onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
+          recordPanelTime(view.sectionId, panelIndex, seconds, panelTitle)
+        }
         dotActiveClass='bg-indigo-500'
         dotDoneClass='bg-indigo-200'
         gradientClass='kangur-gradient-accent-indigo-reverse'

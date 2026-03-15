@@ -5,8 +5,10 @@ import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
+  appendKangurUrlParams,
   getKangurHomeHref,
   getKangurInternalQueryParamName,
+  getKangurPageHref as createPageUrl,
   readKangurUrlParam,
 } from '@/features/kangur/config/routing';
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
@@ -38,6 +40,7 @@ import {
   KangurStatusChip,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
@@ -545,6 +548,31 @@ export default function Lessons() {
     (expectsFocusedLesson
       ? Boolean(activeLesson) && isActiveLessonSurfaceReady
       : isActiveLessonSurfaceReady);
+  const learnerActivityTitle = useMemo(() => {
+    if (activeLesson?.title) {
+      return `Lekcja: ${activeLesson.title}`;
+    }
+    return 'Lekcje';
+  }, [activeLesson?.title]);
+  const learnerActivityHref = useMemo(() => {
+    const baseHref = createPageUrl('Lessons', basePath);
+    if (!activeLesson) {
+      return baseHref;
+    }
+    return appendKangurUrlParams(
+      baseHref,
+      { focus: activeLesson.componentId },
+      basePath
+    );
+  }, [activeLesson, basePath]);
+  useKangurLearnerActivityPing({
+    activity: {
+      kind: 'lesson',
+      title: learnerActivityTitle,
+      href: learnerActivityHref,
+    },
+    enabled: user?.actorType === 'learner',
+  });
 
   useKangurRoutePageReady({
     pageKey: 'Lessons',

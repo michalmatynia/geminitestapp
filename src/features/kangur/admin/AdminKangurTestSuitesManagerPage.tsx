@@ -16,6 +16,7 @@ import {
   Skeleton,
 } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
+import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
 import {
   KANGUR_TEST_SUITES_SETTING_KEY,
   canonicalizeKangurTestSuites,
@@ -70,10 +71,10 @@ function TestSuitesManagerInner({ standalone }: { standalone: boolean }) {
           if (!applied?.nodes) return;
           const nextOrder = resolveKangurTestSuiteOrderFromNodes(applied.nodes, logic.suiteById);
           const nextSuites = canonicalizeKangurTestSuites(
-            logic.suites.map((s: any) => ({
-              ...s,
+            logic.suites.map((suite: KangurTestSuite) => ({
+              ...suite,
               sortOrder:
-                (nextOrder.findIndex((ns) => ns.id === s.id) + 1) *
+                (nextOrder.findIndex((ns) => ns.id === suite.id) + 1) *
                 KANGUR_TEST_SUITE_SORT_ORDER_GAP,
             }))
           );

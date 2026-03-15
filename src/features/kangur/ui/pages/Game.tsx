@@ -37,6 +37,7 @@ import {
   KangurPageContainer,
   KangurPageShell,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
@@ -226,6 +227,20 @@ function GameContent(): React.JSX.Element {
     screen,
     tutorActivityContentId,
   ]);
+  const learnerActivityTitle = useMemo(() => {
+    const assignmentTitle = activeGameAssignment?.title?.trim();
+    if (assignmentTitle) {
+      return `Gra: ${assignmentTitle}`;
+    }
+    return `Gra: ${currentScreenLabel}`;
+  }, [activeGameAssignment?.title, currentScreenLabel]);
+  useKangurLearnerActivityPing({
+    activity: {
+      kind: 'game',
+      title: learnerActivityTitle,
+    },
+    enabled: user?.actorType === 'learner',
+  });
   const screenMotionProps = useMemo(
     () => createKangurPageTransitionMotionProps(prefersReducedMotion),
     [prefersReducedMotion]
@@ -514,7 +529,7 @@ function GameContent(): React.JSX.Element {
                       aria-labelledby='kangur-home-parent-assignment-heading'
                     >
                       <h3 id='kangur-home-parent-assignment-heading' className='sr-only'>
-                        Zadanie od rodzica
+                        Sugestie od Rodzica
                       </h3>
                       <KangurAssignmentSpotlight
                         basePath={basePath}

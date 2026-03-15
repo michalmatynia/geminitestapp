@@ -1,0 +1,97 @@
+'use client';
+
+import { useCallback, useRef } from 'react';
+
+import {
+  recordKangurLessonPanelProgress,
+  recordKangurLessonPanelTime,
+} from '@/features/kangur/ui/services/progress';
+
+import { useLessonHubProgress, type LessonHubSectionProgress } from './useLessonHubProgress';
+
+type UseKangurLessonPanelProgressOptions<SectionId extends string> = {
+  lessonKey: string;
+  slideSections: Partial<Record<SectionId, readonly unknown[]>>;
+  sectionLabels?: Partial<Record<SectionId, string>>;
+};
+
+type UseKangurLessonPanelProgressResult<SectionId extends string> = {
+  markSectionOpened: (sectionId: SectionId) => void;
+  markSectionViewedCount: (sectionId: SectionId, viewedCount: number) => void;
+  recordPanelTime: (
+    sectionId: SectionId,
+    panelIndex: number,
+    seconds: number,
+    panelTitle?: string | null
+  ) => void;
+  sectionProgress: Partial<Record<SectionId, LessonHubSectionProgress>>;
+};
+
+export const useKangurLessonPanelProgress = <SectionId extends string>({
+  lessonKey,
+  slideSections,
+  sectionLabels,
+}: UseKangurLessonPanelProgressOptions<SectionId>): UseKangurLessonPanelProgressResult<SectionId> => {
+  const { markSectionOpened, markSectionViewedCount, sectionProgress } =
+    useLessonHubProgress(slideSections);
+  const sessionIdRef = useRef<string>(
+    `lesson-session-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+  );
+  const sessionStartedAtRef = useRef<string>(new Date().toISOString());
+
+  const persistProgress = useCallback(
+    (sectionId: SectionId, viewedCount: number): void => {
+      const totalCount = slideSections[sectionId]?.length ?? 0;
+      if (totalCount <= 0) {
+        return;
+      }
+
+      recordKangurLessonPanelProgress({
+        lessonKey,
+        sectionId,
+        viewedCount,
+        totalCount,
+        label: sectionLabels?.[sectionId],
+      });
+    },
+    [lessonKey, sectionLabels, slideSections]
+  );
+
+  const handleSectionViewedCount = useCallback(
+    (sectionId: SectionId, viewedCount: number): void => {
+      markSectionViewedCount(sectionId, viewedCount);
+      persistProgress(sectionId, viewedCount);
+    },
+    [markSectionViewedCount, persistProgress]
+  );
+
+  const handleSectionOpened = useCallback(
+    (sectionId: SectionId): void => {
+      markSectionOpened(sectionId);
+      persistProgress(sectionId, 1);
+    },
+    [markSectionOpened, persistProgress]
+  );
+
+  const handlePanelTime = useCallback(
+    (sectionId: SectionId, panelIndex: number, seconds: number, panelTitle?: string | null): void => {
+      recordKangurLessonPanelTime({
+        lessonKey,
+        sectionId,
+        panelId: `panel-${panelIndex + 1}`,
+        panelTitle,
+        seconds,
+        sessionId: sessionIdRef.current,
+        sessionStartedAt: sessionStartedAtRef.current,
+      });
+    },
+    [lessonKey]
+  );
+
+  return {
+    markSectionOpened: handleSectionOpened,
+    markSectionViewedCount: handleSectionViewedCount,
+    recordPanelTime: handlePanelTime,
+    sectionProgress,
+  };
+};

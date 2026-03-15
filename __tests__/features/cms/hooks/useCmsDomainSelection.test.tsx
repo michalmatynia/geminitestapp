@@ -53,6 +53,7 @@ describe('useCmsDomainSelection Hook', () => {
         if (key === 'cms_domain_settings.v1') return JSON.stringify({ zoningEnabled: true });
         return null;
       }),
+      isLoading: false,
     } as any);
 
     server.use(
@@ -130,6 +131,7 @@ describe('useCmsDomainSelection Hook', () => {
         if (key === 'cms_domain_settings.v1') return JSON.stringify({ zoningEnabled: false });
         return null;
       }),
+      isLoading: false,
     } as any);
 
     const { result } = renderHook(() => useCmsDomainSelection(), { wrapper });

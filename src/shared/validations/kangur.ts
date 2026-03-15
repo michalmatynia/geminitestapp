@@ -7,6 +7,7 @@ import {
   kangurLearnerCreateInputSchema,
   kangurLearnerSignInInputSchema,
   kangurLearnerUpdateInputSchema,
+  kangurLearnerActivityUpdateInputSchema,
   kangurProgressStateSchema,
   kangurScoreCreateInputSchema,
   kangurScoreListQuerySchema,
@@ -14,6 +15,7 @@ import {
   type KangurAssignmentCreateInput,
   type KangurAssignmentListQuery,
   type KangurAssignmentUpdateInput,
+  type KangurLearnerActivityUpdateInput,
   type KangurLearnerCreateInput,
   type KangurLearnerSignInInput,
   type KangurLearnerUpdateInput,
@@ -161,5 +163,17 @@ export const parseKangurAssignmentListQuery = (
     });
   }
 
+  return parsed.data;
+};
+
+export const parseKangurLearnerActivityUpdatePayload = (
+  payload: unknown
+): KangurLearnerActivityUpdateInput => {
+  const parsed = kangurLearnerActivityUpdateInputSchema.safeParse(payload);
+  if (!parsed.success) {
+    throw validationError('Invalid Kangur learner activity payload.', {
+      issues: extractValidationIssues(parsed.error),
+    });
+  }
   return parsed.data;
 };

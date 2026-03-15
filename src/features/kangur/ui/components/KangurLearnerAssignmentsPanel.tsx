@@ -78,20 +78,20 @@ export function KangurLearnerAssignmentsPanel({
     (assignment) => assignment.priority === 'high'
   ).length;
   const latestCompletedTitle = completedAssignments[0]?.title ?? 'Brak ukończonych zadań';
-  const sectionTitle = assignmentsContent?.title ?? 'Przebieg przydzielonych zadań';
+  const sectionTitle = assignmentsContent?.title ?? 'Sugestie od Rodzica';
   const sectionSummary =
     assignmentsContent?.summary ??
-    'Sprawdź, co jest nadal aktywne, ile zadań masz już za sobą i co było ostatnim sukcesem.';
+    'Zadania i wskazówki od rodzica, które warto wykonać w pierwszej kolejności.';
 
   if (!enabled) {
     return (
       <KangurSummaryPanel
         accent='slate'
         data-testid='learner-assignments-disabled'
-        description='Po zalogowaniu zobaczysz zadania przypisane przez rodzica oraz historię ich wykonania.'
+        description='Po zalogowaniu zobaczysz sugestie od rodzica oraz historię ich wykonania.'
         label='Tryb lokalny'
         padding='lg'
-        title='Przebieg przydzielonych zadań'
+        title='Sugestie od Rodzica'
       />
     );
   }
@@ -181,15 +181,15 @@ export function KangurLearnerAssignmentsPanel({
 
       <KangurAssignmentsList
         items={activeAssignmentItems}
-        title='Aktywne zadania od rodzica'
-        emptyLabel='Brak aktywnych zadań przypisanych do tego profilu.'
+        title='Aktualne sugestie od rodzica'
+        emptyLabel='Brak aktualnych sugestii od rodzica.'
         compact
       />
 
       <KangurAssignmentsList
         items={completedAssignmentItems}
-        title='Historia ukończonych zadań'
-        emptyLabel='Nie masz jeszcze zakończonych przydzielonych zadań.'
+        title='Historia wykonanych sugestii'
+        emptyLabel='Nie masz jeszcze wykonanych sugestii od rodzica.'
         compact
       />
     </div>

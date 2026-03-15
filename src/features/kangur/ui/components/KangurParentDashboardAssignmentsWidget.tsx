@@ -6,7 +6,6 @@ import {
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import { KangurPanelIntro } from '@/features/kangur/ui/design/primitives';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
-
 export function KangurParentDashboardAssignmentsWidget({
   displayMode = 'always',
 }: {
@@ -40,7 +39,11 @@ export function KangurParentDashboardAssignmentsWidget({
         titleAs='h2'
         titleClassName='text-lg font-bold tracking-[-0.02em]'
       />
-      <KangurAssignmentManager basePath={basePath} />
+      <KangurAssignmentManager
+        basePath={basePath}
+        view='catalog'
+        key={activeLearnerId ?? 'no-learner'}
+      />
     </div>
   );
 }

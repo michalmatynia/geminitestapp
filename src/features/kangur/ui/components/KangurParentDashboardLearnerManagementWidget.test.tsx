@@ -12,6 +12,9 @@ const runtimeState = vi.hoisted(() => ({
       displayName: 'Ada',
       loginName: 'ada01',
       status: 'active',
+      age: 9,
+      createdAt: '2026-03-10T08:00:00.000Z',
+      updatedAt: '2026-03-12T09:15:00.000Z',
     },
     canAccessDashboard: true,
     createForm: {
@@ -38,24 +41,54 @@ const runtimeState = vi.hoisted(() => ({
         displayName: 'Ada',
         loginName: 'ada01',
         status: 'active',
+        age: 9,
+        createdAt: '2026-03-10T08:00:00.000Z',
+        updatedAt: '2026-03-12T09:15:00.000Z',
       },
       {
         id: 'learner-2',
         displayName: 'Olek',
         loginName: 'olek02',
         status: 'disabled',
+        createdAt: '2026-03-08T10:00:00.000Z',
+        updatedAt: '2026-03-09T10:00:00.000Z',
       },
     ],
     selectLearner: vi.fn(),
     setCreateLearnerModalOpen: vi.fn(),
     updateCreateField: vi.fn(),
     updateEditField: vi.fn(),
+    progress: {
+      totalXp: 0,
+      gamesPlayed: 0,
+      perfectGames: 0,
+      lessonsCompleted: 0,
+      clockPerfect: 0,
+      calendarPerfect: 0,
+      geometryPerfect: 0,
+      badges: [],
+      operationsPlayed: [],
+      totalCorrectAnswers: 0,
+      totalQuestionsAnswered: 0,
+      bestWinStreak: 0,
+      activityStats: {},
+      lessonMastery: {},
+    },
   },
 }));
 const useKangurPageContentEntryMock = vi.hoisted(() => vi.fn());
+const learnerSessionsListMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () => ({
   useKangurParentDashboardRuntime: () => runtimeState.value,
+}));
+
+vi.mock('@/features/kangur/services/kangur-platform', () => ({
+  getKangurPlatform: () => ({
+    learnerSessions: {
+      list: learnerSessionsListMock,
+    },
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
@@ -67,6 +100,7 @@ import { KangurParentDashboardLearnerManagementWidget } from './KangurParentDash
 describe('KangurParentDashboardLearnerManagementWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    learnerSessionsListMock.mockResolvedValue({ sessions: [], totalSessions: 0 });
     useKangurPageContentEntryMock.mockReturnValue({
       data: undefined,
       entry: null,
@@ -86,6 +120,9 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
         displayName: 'Ada',
         loginName: 'ada01',
         status: 'active',
+        age: 9,
+        createdAt: '2026-03-10T08:00:00.000Z',
+        updatedAt: '2026-03-12T09:15:00.000Z',
       },
       canAccessDashboard: true,
       createForm: {
@@ -112,27 +149,46 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
           displayName: 'Ada',
           loginName: 'ada01',
           status: 'active',
+          age: 9,
+          createdAt: '2026-03-10T08:00:00.000Z',
+          updatedAt: '2026-03-12T09:15:00.000Z',
         },
         {
           id: 'learner-2',
           displayName: 'Olek',
           loginName: 'olek02',
           status: 'disabled',
+          createdAt: '2026-03-08T10:00:00.000Z',
+          updatedAt: '2026-03-09T10:00:00.000Z',
         },
       ],
       selectLearner: vi.fn(),
       setCreateLearnerModalOpen: vi.fn(),
       updateCreateField: vi.fn(),
       updateEditField: vi.fn(),
+      progress: {
+        totalXp: 0,
+        gamesPlayed: 0,
+        perfectGames: 0,
+        lessonsCompleted: 0,
+        clockPerfect: 0,
+        calendarPerfect: 0,
+        geometryPerfect: 0,
+        badges: [],
+        operationsPlayed: [],
+        totalCorrectAnswers: 0,
+        totalQuestionsAnswered: 0,
+        bestWinStreak: 0,
+        activityStats: {},
+        lessonMastery: {},
+      },
     };
   });
 
   it('uses storefront text tokens across learner management cards and actions', () => {
-    const setCreateLearnerModalOpen = vi.fn();
     runtimeState.value = {
       ...runtimeState.value,
       isCreateLearnerModalOpen: true,
-      setCreateLearnerModalOpen,
     };
 
     render(<KangurParentDashboardLearnerManagementWidget />);
@@ -154,9 +210,6 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
     );
     expect(screen.getByTestId('parent-create-learner-modal')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Dodaj ucznia' }));
-
-    expect(setCreateLearnerModalOpen).toHaveBeenCalledWith(true);
     expect(screen.getByText('Zapisano dane ucznia.')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );

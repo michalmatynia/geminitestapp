@@ -1,21 +1,28 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Eye, EyeOff } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
 import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
+import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
+import type { KangurLearnerSessionHistory } from '@/features/kangur/services/ports';
 import { useKangurParentDashboardRuntime } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import {
   KangurButton,
+  KangurEmptyState,
   KangurGlassPanel,
   KangurIconBadge,
+  KangurMetaText,
   KangurPanelIntro,
   KangurSelectField,
   KangurStatusChip,
+  KangurSummaryPanel,
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { cn } from '@/shared/utils';
+
+const kangurPlatform = getKangurPlatform();
 
 export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Element | null {
   const {
@@ -34,15 +41,71 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
     setCreateLearnerModalOpen,
     updateCreateField,
     updateEditField,
+    progress,
   } = useKangurParentDashboardRuntime();
   const { entry: learnerManagementContent } = useKangurPageContentEntry(
     'parent-dashboard-learner-management'
   );
   const [isCreatePasswordVisible, setIsCreatePasswordVisible] = useState(false);
   const [isEditLearnerModalOpen, setIsEditLearnerModalOpen] = useState(false);
+  const [isProfileMetricsModalOpen, setIsProfileMetricsModalOpen] = useState(false);
+  const [sessionHistory, setSessionHistory] = useState<KangurLearnerSessionHistory | null>(null);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+  const [sessionsError, setSessionsError] = useState<string | null>(null);
   const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
   const activeLearnerId = activeLearner?.id ?? null;
   const isRemovalPending = Boolean(activeLearnerId && pendingRemovalId === activeLearnerId);
+  const lastActivityAt = useMemo(() => {
+    let latestMs = 0;
+    const pushDate = (value: string | null | undefined): void => {
+      if (!value) {
+        return;
+      }
+      const timestamp = Date.parse(value);
+      if (!Number.isNaN(timestamp) && timestamp > latestMs) {
+        latestMs = timestamp;
+      }
+    };
+
+    if (progress.activityStats) {
+      Object.values(progress.activityStats).forEach((entry) => {
+        pushDate(entry.lastPlayedAt);
+      });
+    }
+
+    Object.values(progress.lessonMastery ?? {}).forEach((entry) => {
+      pushDate(entry.lastCompletedAt);
+    });
+
+    return latestMs > 0 ? latestMs : null;
+  }, [progress.activityStats, progress.lessonMastery]);
+  const formatDateTime = (value: string | number | null | undefined): string => {
+    if (!value) {
+      return 'Brak danych';
+    }
+    const date = typeof value === 'number' ? new Date(value) : new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return 'Brak danych';
+    }
+    return new Intl.DateTimeFormat('pl-PL', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(date);
+  };
+  const formatSessionDuration = (seconds: number | null | undefined): string => {
+    if (seconds === null || seconds === undefined) {
+      return 'Brak danych';
+    }
+    const normalized = Math.max(0, Math.round(seconds));
+    const minutes = Math.floor(normalized / 60);
+    const remainingSeconds = normalized % 60;
+    if (minutes === 0) {
+      return `${remainingSeconds}s`;
+    }
+    return `${minutes}m ${`${remainingSeconds}`.padStart(2, '0')}s`;
+  };
+  const lastActivityLabel = formatDateTime(lastActivityAt);
+  const sessions = sessionHistory?.sessions ?? [];
 
   useEffect(() => {
     if (pendingRemovalId && pendingRemovalId !== activeLearnerId) {
@@ -59,6 +122,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
   useEffect(() => {
     if (!activeLearnerId) {
       setIsEditLearnerModalOpen(false);
+      setIsProfileMetricsModalOpen(false);
       setPendingRemovalId(null);
     }
   }, [activeLearnerId]);
@@ -68,6 +132,41 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
       setPendingRemovalId(null);
     }
   }, [isEditLearnerModalOpen]);
+
+  useEffect(() => {
+    if (!isProfileMetricsModalOpen || !activeLearnerId) {
+      return;
+    }
+
+    let isActive = true;
+    setIsLoadingSessions(true);
+    setSessionsError(null);
+    setSessionHistory(null);
+
+    kangurPlatform.learnerSessions
+      .list(activeLearnerId)
+      .then((history) => {
+        if (!isActive) {
+          return;
+        }
+        setSessionHistory(history);
+      })
+      .catch(() => {
+        if (!isActive) {
+          return;
+        }
+        setSessionsError('Nie udało się wczytać historii sesji.');
+      })
+      .finally(() => {
+        if (isActive) {
+          setIsLoadingSessions(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [activeLearnerId, isProfileMetricsModalOpen]);
 
   const handleEditSave = async (): Promise<void> => {
     const saved = await handleSaveLearner();
@@ -174,16 +273,6 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
         <div className='flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center'>
           <KangurButton
             className='w-full sm:w-auto'
-            disabled={isSubmitting}
-            onClick={() => setCreateLearnerModalOpen(true)}
-            size='sm'
-            variant='surface'
-            data-doc-id='parent_open_create_learner'
-          >
-            Dodaj ucznia
-          </KangurButton>
-          <KangurButton
-            className='w-full sm:w-auto'
             disabled={isSubmitting || !activeLearner}
             onClick={() => setIsEditLearnerModalOpen(true)}
             size='sm'
@@ -191,6 +280,16 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
             data-doc-id='parent_open_edit_learner'
           >
             Edytuj Profil
+          </KangurButton>
+          <KangurButton
+            className='w-full sm:w-auto'
+            disabled={isSubmitting || !activeLearner}
+            onClick={() => setIsProfileMetricsModalOpen(true)}
+            size='sm'
+            variant='surface'
+            data-doc-id='parent_open_profile_metrics'
+          >
+            Metryka
           </KangurButton>
         </div>
 
@@ -362,6 +461,214 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
           </DialogPrimitive.Portal>
         </DialogPrimitive.Root>
       </KangurGlassPanel>
+
+      <DialogPrimitive.Root
+        open={isProfileMetricsModalOpen}
+        onOpenChange={setIsProfileMetricsModalOpen}
+      >
+        <DialogPrimitive.Portal>
+          <DialogPrimitive.Overlay
+            className={cn(
+              'fixed inset-0 z-50 backdrop-blur-[2px]',
+              'data-[state=open]:animate-in data-[state=closed]:animate-out',
+              'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0'
+            )}
+            style={{
+              background:
+                'color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 16%, rgba(2,6,23,0.7))',
+            }}
+          />
+          <DialogPrimitive.Content
+            className={cn(
+              'fixed left-1/2 top-1/2 z-50 w-[min(calc(100vw-2rem),42rem)]',
+              'max-h-[calc(100vh-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto',
+              'outline-none'
+            )}
+            data-testid='parent-profile-metrics-modal'
+            onEscapeKeyDown={() => setIsProfileMetricsModalOpen(false)}
+            onInteractOutside={() => setIsProfileMetricsModalOpen(false)}
+            onPointerDownOutside={() => setIsProfileMetricsModalOpen(false)}
+          >
+            <DialogPrimitive.Title className='sr-only'>
+              Szczegóły profilu ucznia
+            </DialogPrimitive.Title>
+            <DialogPrimitive.Description className='sr-only'>
+              Szybkie dane o aktywnym profilu ucznia, w tym ostatnia aktywność.
+            </DialogPrimitive.Description>
+
+            <DialogPrimitive.Close asChild>
+              <button
+                aria-label='Zamknij metrykę profilu'
+                className={cn(
+                  'absolute right-4 top-4 z-10 cursor-pointer rounded-full border border-amber-200/80',
+                  'px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em]',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+                  'shadow-[0_16px_34px_-26px_rgba(249,115,22,0.5)] transition'
+                )}
+                style={{
+                  background:
+                    'linear-gradient(180deg, color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 88%, rgba(254,243,199,0.95)) 0%, color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 82%, rgba(255,237,213,0.9)) 100%)',
+                  color: '#9a5418',
+                }}
+                type='button'
+              >
+                Zamknij
+              </button>
+            </DialogPrimitive.Close>
+
+            {activeLearner ? (
+              <KangurGlassPanel
+                className='flex flex-col gap-4'
+                padding='lg'
+                surface='mistSoft'
+                variant='soft'
+              >
+                <KangurSummaryPanel
+                  accent='indigo'
+                  description='Szybkie dane o aktywnym profilu ucznia, w tym ostatnia aktywność.'
+                  label='Szczegóły profilu'
+                >
+                  <div className='mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2'>
+                    <div className='rounded-[22px] border border-indigo-200/70 bg-white/80 px-4 py-3'>
+                      <KangurMetaText caps size='xs'>
+                        Login ucznia
+                      </KangurMetaText>
+                      <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                        {activeLearner.loginName}
+                      </div>
+                    </div>
+                    <div className='rounded-[22px] border border-indigo-200/70 bg-white/80 px-4 py-3'>
+                      <KangurMetaText caps size='xs'>
+                        Status profilu
+                      </KangurMetaText>
+                      <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                        {activeLearner.status === 'active' ? 'Aktywny' : 'Wyłączony'}
+                      </div>
+                    </div>
+                    <div className='rounded-[22px] border border-indigo-200/70 bg-white/80 px-4 py-3'>
+                      <KangurMetaText caps size='xs'>
+                        Wiek
+                      </KangurMetaText>
+                      <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                        {typeof activeLearner.age === 'number'
+                          ? `${activeLearner.age} lat`
+                          : 'Brak danych'}
+                      </div>
+                    </div>
+                    <div className='rounded-[22px] border border-indigo-200/70 bg-white/80 px-4 py-3'>
+                      <KangurMetaText caps size='xs'>
+                        Ostatnie logowanie / aktywność
+                      </KangurMetaText>
+                      <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                        {lastActivityLabel}
+                      </div>
+                    </div>
+                    <div className='rounded-[22px] border border-indigo-200/70 bg-white/80 px-4 py-3'>
+                      <KangurMetaText caps size='xs'>
+                        Profil utworzony
+                      </KangurMetaText>
+                      <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                        {formatDateTime(activeLearner.createdAt)}
+                      </div>
+                    </div>
+                    <div className='rounded-[22px] border border-indigo-200/70 bg-white/80 px-4 py-3'>
+                      <KangurMetaText caps size='xs'>
+                        Ostatnia aktualizacja profilu
+                      </KangurMetaText>
+                      <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                        {formatDateTime(activeLearner.updatedAt)}
+                      </div>
+                    </div>
+                  </div>
+                </KangurSummaryPanel>
+
+                <KangurSummaryPanel
+                  accent='slate'
+                  description='Historia logowań ucznia z czasem rozpoczęcia i zakończenia.'
+                  label='Sesje logowania'
+                >
+                  {isLoadingSessions ? (
+                    <KangurEmptyState
+                      accent='slate'
+                      align='center'
+                      data-testid='parent-profile-sessions-loading'
+                      description='Ładujemy historię sesji ucznia.'
+                      title='Ładowanie sesji...'
+                    />
+                  ) : sessionsError ? (
+                    <KangurEmptyState
+                      accent='rose'
+                      align='center'
+                      data-testid='parent-profile-sessions-error'
+                      description='Spróbuj odświeżyć metrykę za chwilę.'
+                      title={sessionsError}
+                    />
+                  ) : sessions.length === 0 ? (
+                    <KangurEmptyState
+                      accent='slate'
+                      align='center'
+                      data-testid='parent-profile-sessions-empty'
+                      description='Sesje ucznia pojawią się tutaj po pierwszym logowaniu.'
+                      title='Brak sesji logowania.'
+                    />
+                  ) : (
+                    <div className='mt-3 max-h-72 overflow-y-auto pr-1'>
+                      <div className='flex flex-col gap-2'>
+                        {sessions.map((session, index) => {
+                          const endedLabel = session.endedAt
+                            ? formatDateTime(session.endedAt)
+                            : 'W trakcie';
+                          const durationLabel = session.endedAt
+                            ? formatSessionDuration(session.durationSeconds)
+                            : 'W trakcie';
+                          return (
+                            <div
+                              key={session.id}
+                              className='rounded-[20px] border border-slate-200/80 bg-white/80 px-4 py-3'
+                              data-testid={`parent-profile-session-${session.id}`}
+                            >
+                              <div className='flex items-center justify-between text-xs font-semibold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                                <span>{`Sesja ${index + 1}`}</span>
+                                <span>{session.endedAt ? 'Zakończona' : 'Aktywna'}</span>
+                              </div>
+                              <div className='mt-2 grid gap-3 sm:grid-cols-3'>
+                                <div>
+                                  <KangurMetaText caps size='xs'>
+                                    Start
+                                  </KangurMetaText>
+                                  <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                                    {formatDateTime(session.startedAt)}
+                                  </div>
+                                </div>
+                                <div>
+                                  <KangurMetaText caps size='xs'>
+                                    Koniec
+                                  </KangurMetaText>
+                                  <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                                    {endedLabel}
+                                  </div>
+                                </div>
+                                <div>
+                                  <KangurMetaText caps size='xs'>
+                                    Czas trwania
+                                  </KangurMetaText>
+                                  <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                                    {durationLabel}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </KangurSummaryPanel>
+              </KangurGlassPanel>
+            ) : null}
+          </DialogPrimitive.Content>
+        </DialogPrimitive.Portal>
+      </DialogPrimitive.Root>
 
       <DialogPrimitive.Root
         open={isEditLearnerModalOpen}

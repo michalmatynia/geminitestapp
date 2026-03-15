@@ -19,6 +19,7 @@ describe('Kangur tooltip catalog', () => {
       'tests_suite_card',
       'learner_daily_plan',
       'parent_progress_tab',
+      'parent_monitoring_tab',
       'settings_docs_tooltips_master_toggle',
       'settings_documentation_library',
       'settings_save',

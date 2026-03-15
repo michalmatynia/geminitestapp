@@ -25,7 +25,7 @@ import {
   KangurLessonLead,
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
-import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
+import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 
 type SectionId =
   | 'wprowadzenie'
@@ -489,10 +489,21 @@ export const HUB_SECTIONS = [
   },
 ];
 
+const SECTION_LABELS: Partial<Record<SectionId, string>> = Object.fromEntries(
+  HUB_SECTIONS.filter((section) => !section.isGame).map((section) => [
+    section.id,
+    section.title,
+  ])
+);
+
 export default function LogicalThinkingLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
-  const { markSectionOpened, markSectionViewedCount, sectionProgress } =
-    useLessonHubProgress(SECTION_SLIDES);
+  const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
+    useKangurLessonPanelProgress({
+      lessonKey: 'logical_thinking',
+      slideSections: SECTION_SLIDES,
+      sectionLabels: SECTION_LABELS,
+    });
 
   if (activeSection) {
     return (
@@ -501,6 +512,9 @@ export default function LogicalThinkingLesson(): React.JSX.Element {
         sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
         onBack={() => setActiveSection(null)}
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
+        onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
+          recordPanelTime(activeSection, panelIndex, seconds, panelTitle)
+        }
         dotActiveClass='bg-violet-500'
         dotDoneClass='bg-violet-300'
         gradientClass='kangur-gradient-accent-indigo'

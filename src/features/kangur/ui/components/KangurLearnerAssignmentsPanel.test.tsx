@@ -97,23 +97,23 @@ describe('KangurLearnerAssignmentsPanel', () => {
 
     render(<KangurLearnerAssignmentsPanel basePath='/kangur' enabled />);
 
-    expect(screen.getByText('Przebieg przydzielonych zadań')).toHaveClass(
+    expect(screen.getByText('Sugestie od Rodzica')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
     expect(
       screen.getByText(
-        'Sprawdź, co jest nadal aktywne, ile zadań masz już za sobą i co było ostatnim sukcesem.'
+        'Zadania i wskazówki od rodzica, które warto wykonać w pierwszej kolejności.'
       )
     ).toHaveClass('[color:var(--kangur-page-muted-text)]');
-    expect(screen.getByText('Aktywne zadania od rodzica')).toBeInTheDocument();
-    expect(screen.getByText('Historia ukończonych zadań')).toBeInTheDocument();
+    expect(screen.getByText('Aktualne sugestie od rodzica')).toBeInTheDocument();
+    expect(screen.getByText('Historia wykonanych sugestii')).toBeInTheDocument();
     expect(
-      within(screen.getByTestId('assignments-list-Aktywne zadania od rodzica')).getByText(
+      within(screen.getByTestId('assignments-list-Aktualne sugestie od rodzica')).getByText(
         'Dodawanie'
       )
     ).toBeInTheDocument();
     expect(
-      within(screen.getByTestId('assignments-list-Historia ukończonych zadań')).getByText('Zegar')
+      within(screen.getByTestId('assignments-list-Historia wykonanych sugestii')).getByText('Zegar')
     ).toBeInTheDocument();
   });
 
@@ -132,8 +132,8 @@ describe('KangurLearnerAssignmentsPanel', () => {
     useKangurPageContentEntryMock.mockReturnValue({
       entry: {
         id: 'learner-profile-assignments',
-        title: 'Przebieg przydzielonych zadań',
-        summary: 'Mongo opis aktywnych i zakończonych przydziałów ucznia.',
+        title: 'Sugestie od Rodzica',
+        summary: 'Mongo opis aktywnych i zakończonych sugestii od rodzica.',
       },
       data: undefined,
       isLoading: false,
@@ -155,9 +155,9 @@ describe('KangurLearnerAssignmentsPanel', () => {
 
     render(<KangurLearnerAssignmentsPanel basePath='/kangur' enabled />);
 
-    expect(screen.getByText('Przebieg przydzielonych zadań')).toBeInTheDocument();
+    expect(screen.getByText('Sugestie od Rodzica')).toBeInTheDocument();
     expect(
-      screen.getByText('Mongo opis aktywnych i zakończonych przydziałów ucznia.')
+      screen.getByText('Mongo opis aktywnych i zakończonych sugestii od rodzica.')
     ).toBeInTheDocument();
   });
 });

@@ -53,7 +53,7 @@ export function KangurAssignmentSpotlight({
     >
       <div className='px-3 pt-2 sm:px-4'>
         <div className='text-[1.9rem] font-extrabold tracking-tight [color:var(--kangur-page-text)] sm:text-[2rem]'>
-          Zadanie od rodzica
+          Sugestie od Rodzica
         </div>
       </div>
 

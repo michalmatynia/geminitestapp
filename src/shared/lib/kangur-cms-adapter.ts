@@ -43,6 +43,7 @@ export * from '@/features/kangur/ui/components/KangurLearnerProfileSessionsWidge
 export * from '@/features/kangur/ui/components/KangurLessonNavigationWidget';
 export * from '@/features/kangur/ui/components/KangurLessonsCatalogWidget';
 export * from '@/features/kangur/ui/components/KangurParentDashboardAssignmentsWidget';
+export * from '@/features/kangur/ui/components/KangurParentDashboardAssignmentsMonitoringWidget';
 export * from '@/features/kangur/ui/components/KangurParentDashboardHeroWidget';
 export * from '@/features/kangur/ui/components/KangurParentDashboardLearnerManagementWidget';
 export * from '@/features/kangur/ui/components/KangurParentDashboardProgressWidget';

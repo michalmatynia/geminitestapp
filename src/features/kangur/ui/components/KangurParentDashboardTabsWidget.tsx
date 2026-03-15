@@ -1,4 +1,4 @@
-import { BarChart2, BookOpen, BrainCircuit, ClipboardList } from 'lucide-react';
+import { BarChart2, BookOpen, BrainCircuit, ClipboardList, ListChecks } from 'lucide-react';
 import { useCallback, useRef } from 'react';
 
 import {
@@ -18,6 +18,13 @@ const TABS: Array<{
   docId: string;
 }> = [
   {
+    id: 'scores',
+    label: 'Wyniki',
+    mobileLabel: 'Wyniki',
+    icon: ClipboardList,
+    docId: 'parent_scores_tab',
+  },
+  {
     id: 'progress',
     label: 'Postęp',
     mobileLabel: 'Postęp',
@@ -25,18 +32,18 @@ const TABS: Array<{
     docId: 'parent_progress_tab',
   },
   {
-    id: 'scores',
-    label: 'Wyniki gier',
-    mobileLabel: 'Wyniki',
-    icon: ClipboardList,
-    docId: 'parent_scores_tab',
-  },
-  {
     id: 'assign',
     label: 'Zadania',
     mobileLabel: 'Zadania',
     icon: BookOpen,
     docId: 'parent_assignments_tab',
+  },
+  {
+    id: 'monitoring',
+    label: 'Monitorowanie',
+    mobileLabel: 'Monitoring',
+    icon: ListChecks,
+    docId: 'parent_monitoring_tab',
   },
   {
     id: 'ai-tutor',
@@ -64,7 +71,8 @@ export function KangurParentDashboardTabsWidget({
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const handleTabChange = useCallback(
-    (tabId: KangurParentDashboardTabId): void => {      onBeforeTabChange?.(tabId);
+    (tabId: KangurParentDashboardTabId): void => {
+      onBeforeTabChange?.(tabId);
       setActiveTab(tabId);
     },
     [onBeforeTabChange, setActiveTab]
@@ -127,7 +135,7 @@ export function KangurParentDashboardTabsWidget({
       <KangurPanelIntro
         description={
           tabsContent?.summary ??
-          'Przełączaj między postępem, wynikami, zadaniami i ustawieniami Tutor-AI.'
+          'Przełączaj między wynikami, postępem, zadaniami, monitoringiem i ustawieniami Tutor-AI.'
         }
         title={tabsContent?.title ?? 'Zakładki panelu'}
         titleAs='h2'

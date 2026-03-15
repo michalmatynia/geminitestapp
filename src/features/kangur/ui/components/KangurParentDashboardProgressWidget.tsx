@@ -2,9 +2,9 @@ import {
   appendKangurUrlParams,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
+import { KANGUR_LESSONS_SETTING_KEY, parseKangurLessons } from '@/features/kangur/settings';
+import KangurAssignmentManager from '@/features/kangur/ui/components/KangurAssignmentManager';
 import KangurDailyQuestHighlightCardContent from '@/features/kangur/ui/components/KangurDailyQuestHighlightCardContent';
-import ProgressOverview from '@/features/kangur/ui/components/ProgressOverview';
-import KangurBadgeTrackHighlights from '@/features/kangur/ui/components/KangurBadgeTrackHighlights';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   type KangurParentDashboardPanelDisplayMode,
@@ -13,12 +13,16 @@ import {
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import {
   KangurButton,
+  KangurInfoCard,
   KangurMetaText,
   KangurPanelIntro,
+  KangurProgressBar,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useMemo } from 'react';
 
 const buildAssignmentHref = (
   basePath: string,
@@ -31,6 +35,34 @@ const buildAssignmentHref = (
   return action.query ? appendKangurUrlParams(href, action.query, basePath) : href;
 };
 
+const TASK_KIND_LABELS: Record<string, string> = {
+  game: 'Gra',
+  lesson: 'Lekcja',
+  test: 'Test',
+};
+
+const formatProgressTimestamp = (value: string | null | undefined): string => {
+  if (!value) {
+    return 'Brak danych';
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return 'Brak danych';
+  }
+  return new Intl.DateTimeFormat('pl-PL', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date);
+};
+
+const normalizePanelLabel = (value: string | null | undefined, fallback: string): string => {
+  const trimmed = value?.trim();
+  if (trimmed) {
+    return trimmed;
+  }
+  return fallback.replace(/_/g, ' ').trim();
+};
+
 export function KangurParentDashboardProgressWidget({
   displayMode = 'always',
 }: {
@@ -39,6 +71,12 @@ export function KangurParentDashboardProgressWidget({
   const { activeLearner, activeTab, basePath, canAccessDashboard, progress } =
     useKangurParentDashboardRuntime();
   const { entry: progressContent } = useKangurPageContentEntry('parent-dashboard-progress');
+  const settingsStore = useSettingsStore();
+  const rawLessons = settingsStore.get(KANGUR_LESSONS_SETTING_KEY);
+  const lessons = useMemo(
+    () => parseKangurLessons(rawLessons).filter((lesson) => lesson.enabled),
+    [rawLessons]
+  );
   const activeLearnerId = activeLearner?.id ?? null;
 
   if (!canAccessDashboard) {
@@ -74,6 +112,46 @@ export function KangurParentDashboardProgressWidget({
   const dailyQuestLabel = dailyQuest?.assignment.questLabel ?? 'Misja dnia';
   const dailyQuestRewardLabel = dailyQuest?.reward.label ?? '';
   const dailyQuestTitle = dailyQuest?.assignment.title ?? '';
+  const openedTasks = progress.openedTasks ?? [];
+  const lessonPanelProgress = progress.lessonPanelProgress ?? {};
+  const lessonPanelCards = useMemo(
+    () =>
+      lessons
+        .map((lesson) => {
+          const panels = lessonPanelProgress[lesson.componentId] ?? {};
+          const entries = Object.entries(panels);
+          if (entries.length === 0) {
+            return null;
+          }
+
+          const totals = entries.reduce(
+            (acc, [, entry]) => ({
+              viewed: acc.viewed + Math.min(entry.viewedCount, entry.totalCount),
+              total: acc.total + entry.totalCount,
+            }),
+            { viewed: 0, total: 0 }
+          );
+          const percent = totals.total > 0 ? Math.round((totals.viewed / totals.total) * 100) : 0;
+          const sectionEntries = entries
+            .map(([sectionId, entry]) => ({
+              id: sectionId,
+              label: normalizePanelLabel(entry.label, sectionId),
+              viewedCount: entry.viewedCount,
+              totalCount: entry.totalCount,
+            }))
+            .sort((left, right) => left.label.localeCompare(right.label));
+
+          return {
+            lesson,
+            percent,
+            viewed: totals.viewed,
+            total: totals.total,
+            sections: sectionEntries,
+          };
+        })
+        .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry)),
+    [lessonPanelProgress, lessons]
+  );
 
   return (
     <div className='flex flex-col gap-5'>
@@ -133,19 +211,111 @@ export function KangurParentDashboardProgressWidget({
       ) : null}
       <KangurSummaryPanel
         accent='indigo'
-        data-testid='parent-dashboard-track-summary'
-        description='Najważniejsze ścieżki odznak, które aktualnie buduje uczeń.'
-        label='Ścieżki postępu ucznia'
+        className='mt-1'
+        description='Ostatnie aktywności ucznia — każde zadanie, które otworzył.'
+        label='Otwarte zadania'
       >
-        <div className='mt-3'>
-          <KangurBadgeTrackHighlights
-            dataTestIdPrefix='parent-dashboard-track'
-            limit={3}
-            progress={progress}
-          />
-        </div>
+        {openedTasks.length > 0 ? (
+          <ul className='mt-3 flex flex-col gap-3' aria-label='Otwarte zadania ucznia'>
+            {openedTasks.map((task) => {
+              const kindLabel = TASK_KIND_LABELS[task.kind] ?? 'Aktywność';
+              const isLocalHref = task.href.startsWith('/');
+              return (
+                <li
+                  key={`${task.kind}-${task.href}-${task.openedAt}`}
+                  className='flex flex-col gap-3 rounded-[24px] border border-indigo-200/70 bg-white/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between'
+                >
+                  <div className='min-w-0'>
+                    <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+                      {task.title}
+                    </div>
+                    <KangurMetaText tone='slate'>
+                      {kindLabel} · {formatProgressTimestamp(task.openedAt)}
+                    </KangurMetaText>
+                  </div>
+                  {isLocalHref ? (
+                    <KangurButton asChild className='shrink-0' size='sm' variant='surface'>
+                      <Link
+                        href={task.href}
+                        transitionAcknowledgeMs={110}
+                        transitionSourceId='parent-dashboard:opened-task'
+                      >
+                        Otwórz
+                      </Link>
+                    </KangurButton>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <div className='mt-3 text-sm [color:var(--kangur-page-muted-text)]'>
+            Brak zapisanych otwarć. Dane pojawią się, gdy uczeń uruchomi zadanie.
+          </div>
+        )}
       </KangurSummaryPanel>
-      <ProgressOverview progress={progress} dailyQuest={dailyQuest} />
+      <KangurSummaryPanel
+        accent='amber'
+        className='mt-1'
+        description='Postęp lekcji zapisany panel po panelu.'
+        label='Postęp lekcji'
+      >
+        {lessonPanelCards.length > 0 ? (
+          <ul className='mt-3 flex flex-col gap-3' aria-label='Postęp lekcji ucznia'>
+            {lessonPanelCards.map((entry) => (
+              <li key={entry.lesson.componentId}>
+                <KangurInfoCard className='rounded-[26px]' padding='lg'>
+                  <div className='flex flex-col gap-3'>
+                    <div className='flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between'>
+                      <div>
+                        <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+                          {entry.lesson.title}
+                        </div>
+                        <KangurMetaText tone='slate'>
+                          {entry.viewed}/{entry.total} paneli
+                        </KangurMetaText>
+                      </div>
+                      <div className='text-sm font-semibold text-amber-700'>
+                        {entry.percent}%
+                      </div>
+                    </div>
+                    <KangurProgressBar
+                      accent='amber'
+                      size='sm'
+                      value={entry.percent}
+                      aria-label={`Postęp lekcji ${entry.lesson.title}`}
+                    />
+                    <div className='grid gap-2 sm:grid-cols-2'>
+                      {entry.sections.map((section) => (
+                        <div
+                          key={`${entry.lesson.componentId}-${section.id}`}
+                          className='rounded-[18px] border border-amber-200/70 bg-white/80 px-3 py-2'
+                        >
+                          <div className='text-xs font-semibold [color:var(--kangur-page-text)]'>
+                            {section.label}
+                          </div>
+                          <KangurMetaText tone='slate'>
+                            {section.viewedCount}/{section.totalCount} paneli
+                          </KangurMetaText>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </KangurInfoCard>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className='mt-3 text-sm [color:var(--kangur-page-muted-text)]'>
+            Brak danych o panelach. Dane pojawią się po wejściu ucznia w lekcje.
+          </div>
+        )}
+      </KangurSummaryPanel>
+      <KangurAssignmentManager
+        basePath={basePath}
+        view='tracking'
+        key={activeLearnerId ?? 'no-learner'}
+      />
     </div>
   );
 }

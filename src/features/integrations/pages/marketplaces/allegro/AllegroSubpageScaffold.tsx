@@ -21,7 +21,7 @@ export function AllegroSubpageScaffold({
   const pageTitle = title;
   const pageDescription = description;
   const breadcrumbTitle = title;
-  const emptyStateTitle = emptyState?.title;
+  const emptyStateTitle = emptyState?.title ?? pageTitle;
   const emptyStateDescription = emptyState?.description;
 
   return (

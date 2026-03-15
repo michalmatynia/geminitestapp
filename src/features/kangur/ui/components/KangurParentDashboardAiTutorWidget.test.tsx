@@ -4,14 +4,12 @@
 
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
   KANGUR_AI_TUTOR_SETTINGS_KEY,
 } from '@/features/kangur/settings-ai-tutor';
-import { kangurKeys } from '@/shared/lib/query-key-exports';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 
 const {
@@ -190,101 +188,22 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     expect(screen.queryByText(/^AI Tutor dla /i)).not.toBeInTheDocument();
   });
 
-  it('saves only learner guardrails from the parent dashboard', async () => {
+  it('temporarily disables AI Tutor controls in the parent dashboard', async () => {
     render(<KangurParentDashboardAiTutorWidget />);
-    const [
-      testAccessModeSelect,
-      hintDepthSelect,
-      proactiveNudgesSelect,
-      uiModeSelect,
-    ] = screen.getAllByRole('combobox');
-
     const lessonsToggle = screen.getByRole('checkbox', { name: /pokazuj tutora w lekcjach/i });
-    const gamesToggle = screen.getByRole('checkbox', { name: /pokazuj tutora w grach/i });
-    expect(lessonsToggle.nextElementSibling).toHaveClass(
-      'bg-gradient-to-r',
-      'kangur-gradient-accent-amber'
-    );
-    expect(lessonsToggle.parentElement?.parentElement).toHaveClass('border-amber-200', 'bg-amber-50/65');
-
-    expect(
-      screen.getByRole('button', { name: /wyłącz ai-tutora/i })
-    ).toBeInTheDocument();
-
-    expect(uiModeSelect).toHaveClass(
-      'focus:border-amber-300',
-      'focus:ring-amber-200/70'
-    );
-    expect(testAccessModeSelect).toHaveClass(
-      'focus:border-amber-300',
-      'focus:ring-amber-200/70'
-    );
-    expect(hintDepthSelect).toHaveClass(
-      'focus:border-amber-300',
-      'focus:ring-amber-200/70'
-    );
-    expect(proactiveNudgesSelect).toHaveClass(
-      'focus:border-amber-300',
-      'focus:ring-amber-200/70'
-    );
-
-    await userEvent.click(lessonsToggle);
-    await userEvent.click(gamesToggle);
-    await userEvent.selectOptions(uiModeSelect, 'static');
-    await userEvent.selectOptions(testAccessModeSelect, 'review_after_answer');
-    await userEvent.selectOptions(hintDepthSelect, 'step_by_step');
-    await userEvent.selectOptions(proactiveNudgesSelect, 'coach');
-    await userEvent.click(screen.getByRole('checkbox', { name: /pokazuj źródła odpowiedzi/i }));
-    await userEvent.click(
-      screen.getByRole('checkbox', { name: /pozwól pytać o zaznaczony fragment/i })
-    );
-    await userEvent.click(
-      screen.getByRole('checkbox', { name: /zachowuj rozmowę po zmianie miejsca/i })
-    );
-    expect(
-      screen.getByRole('checkbox', {
-        name: repairKangurPolishCopy('Zapamiętuj ostatnie wskazówki'),
-      })
-    ).toBeDisabled();
     const saveButton = screen.getByRole('button', { name: /zapisz ustawienia ai tutora/i });
-    expect(saveButton).toHaveClass(
-      'kangur-cta-pill',
-      'primary-cta',
-      'focus-visible:ring-amber-300/70'
-    );
+    const toggleButton = screen.getByRole('button', { name: /włącz ai-tutora/i });
+
+    expect(lessonsToggle).toBeDisabled();
+    expect(toggleButton).toBeDisabled();
+    expect(saveButton).toBeDisabled();
 
     fireEvent.click(saveButton);
 
-    await waitFor(() =>
-      expect(apiPostMock).toHaveBeenCalledWith('/api/settings', {
-        key: KANGUR_AI_TUTOR_SETTINGS_KEY,
-        value: JSON.stringify({
-          'learner-1': {
-            enabled: true,
-            uiMode: 'static',
-            allowCrossPagePersistence: false,
-            rememberTutorContext: false,
-            allowLessons: false,
-            allowGames: false,
-            testAccessMode: 'review_after_answer',
-            showSources: false,
-            allowSelectedTextSupport: false,
-            hintDepth: 'step_by_step',
-            proactiveNudges: 'coach',
-          },
-        }),
-      })
-    );
-
-    expect(invalidateSettingsCacheMock).toHaveBeenCalledTimes(1);
-    expect(invalidateAllSettingsMock).toHaveBeenCalledWith(queryClientMock);
-    expect(queryClientMock.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: kangurKeys.aiTutor.usage('learner-1'),
-    });
-    expect(screen.getByText('Ustawienia AI Tutora zapisane.')).toBeInTheDocument();
+    await waitFor(() => expect(apiPostMock).not.toHaveBeenCalled());
   });
 
-  it('renders live daily usage for the active learner when the tutor is enabled', () => {
+  it('hides live daily usage when the parent dashboard control is disabled', () => {
     settingsStoreMock.get.mockImplementation((key: string) => {
       if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
         return JSON.stringify({
@@ -324,7 +243,6 @@ describe('KangurParentDashboardAiTutorWidget', () => {
 
     render(<KangurParentDashboardAiTutorWidget />);
 
-    expect(screen.getByText(/wykorzystanie dzisiaj/i)).toHaveClass('text-amber-700');
     expect(screen.getByText('Tutor-AI dla rodzica')).toBeInTheDocument();
     expect(screen.getByText('AI Tutor dla Ada')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(
@@ -332,8 +250,7 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     ).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
-    expect(screen.getByText('Zużyto 4 z 12 wiadomości.')).toBeInTheDocument();
-    expect(screen.getByText('Pozostało 8')).toHaveClass('text-amber-700');
+    expect(screen.queryByText(/wykorzystanie dzisiaj/i)).not.toBeInTheDocument();
   });
 
   it('shows the learner-specific tutor mood summary for the active learner', () => {
@@ -432,7 +349,9 @@ describe('KangurParentDashboardAiTutorWidget', () => {
 
     render(<KangurParentDashboardAiTutorWidget />);
 
-    expect(screen.getByText('Nie udało się odczytać bieżącego użycia.')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Nie udało się odczytać bieżącego użycia.')
+    ).not.toBeInTheDocument();
   });
 
   it('does not show app-wide tutor controls in the parent dashboard', () => {

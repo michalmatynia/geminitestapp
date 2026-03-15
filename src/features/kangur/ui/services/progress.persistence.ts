@@ -27,6 +27,30 @@ function cloneProgress(progress: KangurProgressState): KangurProgressState {
     lessonMastery: Object.fromEntries(
       Object.entries(progress.lessonMastery).map(([key, value]) => [key, { ...value }])
     ),
+    openedTasks: (progress.openedTasks ?? []).map((entry) => ({ ...entry })),
+    lessonPanelProgress: Object.fromEntries(
+      Object.entries(progress.lessonPanelProgress ?? {}).map(([lessonKey, sections]) => [
+        lessonKey,
+        Object.fromEntries(
+          Object.entries(sections ?? {}).map(([sectionId, entry]) => [
+            sectionId,
+            {
+              ...entry,
+              ...(entry.panelTimes
+                ? {
+                    panelTimes: Object.fromEntries(
+                      Object.entries(entry.panelTimes).map(([panelId, panel]) => [
+                        panelId,
+                        { ...panel },
+                      ])
+                    ),
+                  }
+                : {}),
+            },
+          ])
+        ),
+      ])
+    ),
     activityStats: Object.fromEntries(
       Object.entries(progress.activityStats ?? {}).map(([key, value]) => [key, { ...value }])
     ),
@@ -186,6 +210,11 @@ export function mergeProgressStates(
     ...Object.keys(right.activityStats ?? {}),
   ]);
   const activityStats: KangurProgressState['activityStats'] = {};
+  const openedTasks = mergeOpenedTasks(left.openedTasks ?? [], right.openedTasks ?? []);
+  const lessonPanelProgress = mergeLessonPanelProgress(
+    left.lessonPanelProgress ?? {},
+    right.lessonPanelProgress ?? {}
+  );
   
   const leftActivityEntries = Object.values(left.activityStats ?? {});
   const rightActivityEntries = Object.values(right.activityStats ?? {});
@@ -305,8 +334,214 @@ export function mergeProgressStates(
     badges: Array.from(new Set([...left.badges, ...right.badges])),
     operationsPlayed: Array.from(new Set([...left.operationsPlayed, ...right.operationsPlayed])),
     lessonMastery,
+    openedTasks,
+    lessonPanelProgress,
     activityStats,
     lastRewardedActivityKey: latestRepeatSide.lastRewardedActivityKey,
     currentActivityRepeatStreak: latestRepeatSide.currentActivityRepeatStreak,
   };
 }
+
+const OPENED_TASKS_LIMIT = 60;
+
+const getOpenedTaskKey = (entry: { kind: string; href: string }): string =>
+  `${entry.kind}::${entry.href}`;
+
+const parseTimestamp = (value: string | null | undefined): number => {
+  if (!value) {
+    return 0;
+  }
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? 0 : parsed;
+};
+
+const mergeOpenedTasks = (
+  left: NonNullable<KangurProgressState['openedTasks']>,
+  right: NonNullable<KangurProgressState['openedTasks']>
+): NonNullable<KangurProgressState['openedTasks']> => {
+  const merged = new Map<string, (typeof left)[number]>();
+
+  const pushEntry = (entry: (typeof left)[number]): void => {
+    const key = getOpenedTaskKey(entry);
+    const existing = merged.get(key);
+    if (!existing) {
+      merged.set(key, entry);
+      return;
+    }
+
+    const existingTimestamp = parseTimestamp(existing.openedAt);
+    const nextTimestamp = parseTimestamp(entry.openedAt);
+    if (nextTimestamp >= existingTimestamp) {
+      merged.set(key, entry);
+    }
+  };
+
+  left.forEach(pushEntry);
+  right.forEach(pushEntry);
+
+  return Array.from(merged.values())
+    .sort((a, b) => parseTimestamp(b.openedAt) - parseTimestamp(a.openedAt))
+    .slice(0, OPENED_TASKS_LIMIT);
+};
+
+const mergeLessonPanelProgress = (
+  left: NonNullable<KangurProgressState['lessonPanelProgress']>,
+  right: NonNullable<KangurProgressState['lessonPanelProgress']>
+): NonNullable<KangurProgressState['lessonPanelProgress']> => {
+  const lessonKeys = new Set([...Object.keys(left), ...Object.keys(right)]);
+  const merged: NonNullable<KangurProgressState['lessonPanelProgress']> = {};
+  const mergePanelTimes = (
+    leftTimes: NonNullable<
+      NonNullable<KangurProgressState['lessonPanelProgress']>[string][string]['panelTimes']
+    >,
+    rightTimes: NonNullable<
+      NonNullable<KangurProgressState['lessonPanelProgress']>[string][string]['panelTimes']
+    >
+  ): NonNullable<
+    NonNullable<KangurProgressState['lessonPanelProgress']>[string][string]['panelTimes']
+  > => {
+    const panelKeys = new Set([...Object.keys(leftTimes), ...Object.keys(rightTimes)]);
+    const mergedTimes: NonNullable<
+      NonNullable<KangurProgressState['lessonPanelProgress']>[string][string]['panelTimes']
+    > = {};
+
+    panelKeys.forEach((panelKey) => {
+      const leftPanel = leftTimes[panelKey];
+      const rightPanel = rightTimes[panelKey];
+
+      if (!leftPanel && rightPanel) {
+        mergedTimes[panelKey] = { ...rightPanel };
+        return;
+      }
+
+      if (leftPanel && !rightPanel) {
+        mergedTimes[panelKey] = { ...leftPanel };
+        return;
+      }
+
+      if (!leftPanel || !rightPanel) {
+        return;
+      }
+
+      const title = rightPanel.title ?? leftPanel.title;
+      mergedTimes[panelKey] = {
+        seconds: Math.max(leftPanel.seconds, rightPanel.seconds),
+        ...(title ? { title } : {}),
+      };
+    });
+
+    return mergedTimes;
+  };
+
+  lessonKeys.forEach((lessonKey) => {
+    const leftSections = left[lessonKey] ?? {};
+    const rightSections = right[lessonKey] ?? {};
+    const sectionKeys = new Set([...Object.keys(leftSections), ...Object.keys(rightSections)]);
+    const mergedSections: NonNullable<KangurProgressState['lessonPanelProgress']>[string] = {};
+
+    sectionKeys.forEach((sectionId) => {
+      const leftEntry = leftSections[sectionId];
+      const rightEntry = rightSections[sectionId];
+
+      if (!leftEntry && rightEntry) {
+        mergedSections[sectionId] = { ...rightEntry };
+        return;
+      }
+
+      if (leftEntry && !rightEntry) {
+        mergedSections[sectionId] = { ...leftEntry };
+        return;
+      }
+
+      if (!leftEntry || !rightEntry) {
+        return;
+      }
+
+      const leftTimestamp = parseTimestamp(leftEntry.lastViewedAt);
+      const rightTimestamp = parseTimestamp(rightEntry.lastViewedAt);
+      const latestEntry = rightTimestamp >= leftTimestamp ? rightEntry : leftEntry;
+      const fallbackEntry = latestEntry === rightEntry ? leftEntry : rightEntry;
+      const leftSessionId = leftEntry.sessionId?.trim() || null;
+      const rightSessionId = rightEntry.sessionId?.trim() || null;
+      const leftSessionUpdatedAt = parseTimestamp(leftEntry.sessionUpdatedAt ?? leftEntry.lastViewedAt);
+      const rightSessionUpdatedAt = parseTimestamp(rightEntry.sessionUpdatedAt ?? rightEntry.lastViewedAt);
+      const latestSessionEntry =
+        rightSessionUpdatedAt >= leftSessionUpdatedAt ? rightEntry : leftEntry;
+      const fallbackSessionEntry = latestSessionEntry === rightEntry ? leftEntry : rightEntry;
+      const isSameSession = leftSessionId !== null && leftSessionId === rightSessionId;
+
+      const mergedPanelTimes = (() => {
+        if (isSameSession) {
+          const leftTimes = leftEntry.panelTimes ?? {};
+          const rightTimes = rightEntry.panelTimes ?? {};
+          const mergedTimes = mergePanelTimes(leftTimes, rightTimes);
+          return Object.keys(mergedTimes).length > 0 ? mergedTimes : undefined;
+        }
+
+        const candidate = latestSessionEntry.panelTimes ?? fallbackSessionEntry.panelTimes ?? undefined;
+        return candidate && Object.keys(candidate).length > 0 ? candidate : undefined;
+      })();
+
+      const resolveSessionStartedAt = (): string | null => {
+        if (!isSameSession) {
+          return latestSessionEntry.sessionStartedAt ?? fallbackSessionEntry.sessionStartedAt ?? null;
+        }
+
+        const leftStartedAt = parseTimestamp(leftEntry.sessionStartedAt);
+        const rightStartedAt = parseTimestamp(rightEntry.sessionStartedAt);
+        if (leftStartedAt === 0 && rightStartedAt === 0) {
+          return leftEntry.sessionStartedAt ?? rightEntry.sessionStartedAt ?? null;
+        }
+        if (leftStartedAt === 0) {
+          return rightEntry.sessionStartedAt ?? null;
+        }
+        if (rightStartedAt === 0) {
+          return leftEntry.sessionStartedAt ?? null;
+        }
+        return leftStartedAt <= rightStartedAt
+          ? leftEntry.sessionStartedAt ?? null
+          : rightEntry.sessionStartedAt ?? null;
+      };
+
+      const resolveSessionUpdatedAt = (): string | null => {
+        if (!isSameSession) {
+          return latestSessionEntry.sessionUpdatedAt ?? fallbackSessionEntry.sessionUpdatedAt ?? null;
+        }
+
+        const leftUpdatedAt = parseTimestamp(leftEntry.sessionUpdatedAt);
+        const rightUpdatedAt = parseTimestamp(rightEntry.sessionUpdatedAt);
+        if (leftUpdatedAt === 0 && rightUpdatedAt === 0) {
+          return leftEntry.sessionUpdatedAt ?? rightEntry.sessionUpdatedAt ?? null;
+        }
+        if (leftUpdatedAt === 0) {
+          return rightEntry.sessionUpdatedAt ?? null;
+        }
+        if (rightUpdatedAt === 0) {
+          return leftEntry.sessionUpdatedAt ?? null;
+        }
+        return leftUpdatedAt >= rightUpdatedAt
+          ? leftEntry.sessionUpdatedAt ?? null
+          : rightEntry.sessionUpdatedAt ?? null;
+      };
+
+      mergedSections[sectionId] = {
+        viewedCount: Math.max(leftEntry.viewedCount, rightEntry.viewedCount),
+        totalCount: Math.max(leftEntry.totalCount, rightEntry.totalCount),
+        lastViewedAt: latestEntry.lastViewedAt ?? fallbackEntry.lastViewedAt ?? null,
+        label: latestEntry.label ?? fallbackEntry.label,
+        ...(mergedPanelTimes ? { panelTimes: mergedPanelTimes } : {}),
+        sessionId: isSameSession
+          ? leftSessionId ?? rightSessionId ?? undefined
+          : latestSessionEntry.sessionId ?? fallbackSessionEntry.sessionId ?? undefined,
+        sessionStartedAt: resolveSessionStartedAt(),
+        sessionUpdatedAt: resolveSessionUpdatedAt(),
+      };
+    });
+
+    if (Object.keys(mergedSections).length > 0) {
+      merged[lessonKey] = mergedSections;
+    }
+  });
+
+  return merged;
+};

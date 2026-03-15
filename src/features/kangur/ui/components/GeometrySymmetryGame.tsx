@@ -1,4 +1,4 @@
-import { Eraser, PencilRuler } from 'lucide-react';
+import { Eraser } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -481,18 +481,10 @@ const drawTargetZone = (
     }
   }
   ctx.fillStyle = 'rgba(16, 185, 129, 0.1)';
-  if (axis.orientation === 'vertical') {
-    if (expectedSide === 'right') {
-      drawZone(axis.position, 0, CANVAS_WIDTH - axis.position, CANVAS_HEIGHT);
-    } else {
-      drawZone(0, 0, axis.position, CANVAS_HEIGHT);
-    }
+  if (expectedSide === 'bottom') {
+    drawZone(0, axis.position, CANVAS_WIDTH, CANVAS_HEIGHT - axis.position);
   } else {
-    if (expectedSide === 'bottom') {
-      drawZone(0, axis.position, CANVAS_WIDTH, CANVAS_HEIGHT - axis.position);
-    } else {
-      drawZone(0, 0, CANVAS_WIDTH, axis.position);
-    }
+    drawZone(0, 0, CANVAS_WIDTH, axis.position);
   }
   ctx.restore();
 };

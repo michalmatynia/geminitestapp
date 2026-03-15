@@ -47,6 +47,8 @@ export type KangurAssignmentListItem = {
   progressSummary: string;
   progressCountLabel: string;
   lastActivityLabel: string | null;
+  timeLimitMinutes: number | null;
+  timeLimitLabel: string | null;
   actionHref: string;
   actionLabel: string;
   actionVariant: 'primary' | 'surface';
@@ -306,6 +308,33 @@ const formatKangurAssignmentTimestamp = (value: string | null): string | null =>
   });
 };
 
+const formatKangurAssignmentTimeLimit = (
+  value: number | null | undefined
+): { minutes: number | null; label: string | null } => {
+  if (value === null || value === undefined) {
+    return { minutes: null, label: null };
+  }
+
+  const rounded = Math.round(value);
+  if (!Number.isFinite(rounded) || rounded <= 0) {
+    return { minutes: null, label: null };
+  }
+
+  const hours = Math.floor(rounded / 60);
+  const minutes = rounded % 60;
+  const timeLabel =
+    hours > 0
+      ? minutes > 0
+        ? `${hours} godz. ${minutes} min`
+        : `${hours} godz.`
+      : `${rounded} min`;
+
+  return {
+    minutes: rounded,
+    label: `Czas na wykonanie: ${timeLabel}`,
+  };
+};
+
 export const resolveKangurAssignmentPriorityAccent = (
   priority: KangurAssignmentSnapshot['priority']
 ): 'rose' | 'amber' | 'emerald' => {
@@ -325,24 +354,30 @@ const resolveKangurAssignmentStatusAccent = (
 export const buildKangurAssignmentListItem = (
   basePath: string,
   assignment: KangurAssignmentSnapshot
-): KangurAssignmentListItem => ({
-  id: assignment.id,
-  title: assignment.title,
-  description: assignment.description,
-  icon: assignment.target.type === 'lesson' ? '📚' : '🎯',
-  priority: assignment.priority,
-  priorityLabel: formatKangurAssignmentPriorityLabel(assignment.priority),
-  priorityAccent: resolveKangurAssignmentPriorityAccent(assignment.priority),
-  statusLabel: formatKangurAssignmentStatusLabel(assignment.progress.status),
-  statusAccent: resolveKangurAssignmentStatusAccent(assignment.progress.status),
-  progressPercent: assignment.progress.percent,
-  progressSummary: assignment.progress.summary,
-  progressCountLabel: `${assignment.progress.attemptsCompleted}/${assignment.progress.attemptsRequired}`,
-  lastActivityLabel: formatKangurAssignmentTimestamp(assignment.progress.lastActivityAt),
-  actionHref: buildKangurAssignmentHref(basePath, assignment),
-  actionLabel: getKangurAssignmentActionLabel(assignment),
-  actionVariant: assignment.target.type === 'lesson' ? 'primary' : 'surface',
-});
+): KangurAssignmentListItem => {
+  const timeLimit = formatKangurAssignmentTimeLimit(assignment.timeLimitMinutes);
+
+  return {
+    id: assignment.id,
+    title: assignment.title,
+    description: assignment.description,
+    icon: assignment.target.type === 'lesson' ? '📚' : '🎯',
+    priority: assignment.priority,
+    priorityLabel: formatKangurAssignmentPriorityLabel(assignment.priority),
+    priorityAccent: resolveKangurAssignmentPriorityAccent(assignment.priority),
+    statusLabel: formatKangurAssignmentStatusLabel(assignment.progress.status),
+    statusAccent: resolveKangurAssignmentStatusAccent(assignment.progress.status),
+    progressPercent: assignment.progress.percent,
+    progressSummary: assignment.progress.summary,
+    progressCountLabel: `${assignment.progress.attemptsCompleted}/${assignment.progress.attemptsRequired}`,
+    lastActivityLabel: formatKangurAssignmentTimestamp(assignment.progress.lastActivityAt),
+    timeLimitMinutes: timeLimit.minutes,
+    timeLimitLabel: timeLimit.label,
+    actionHref: buildKangurAssignmentHref(basePath, assignment),
+    actionLabel: getKangurAssignmentActionLabel(assignment),
+    actionVariant: assignment.target.type === 'lesson' ? 'primary' : 'surface',
+  };
+};
 
 export const buildKangurAssignmentListItems = (
   basePath: string,

@@ -22,7 +22,7 @@ import {
   KangurLessonLead,
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
-import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
+import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
   addXp,
   createLessonCompletionReward,
@@ -263,10 +263,18 @@ export const HUB_SECTIONS = [
   },
 ];
 
+const SECTION_LABELS: Partial<Record<SectionId, string>> = Object.fromEntries(
+  HUB_SECTIONS.map((section) => [section.id, section.title])
+);
+
 export default function GeometryBasicsLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
-  const { markSectionOpened, markSectionViewedCount, sectionProgress } =
-    useLessonHubProgress(SLIDES);
+  const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
+    useKangurLessonPanelProgress({
+      lessonKey: 'geometry_basics',
+      slideSections: SLIDES,
+      sectionLabels: SECTION_LABELS,
+    });
 
   const handleComplete = (): void => {
     const progress = loadProgress();
@@ -299,6 +307,9 @@ export default function GeometryBasicsLesson(): React.JSX.Element {
         onComplete={activeSection === 'podsumowanie' ? handleComplete : undefined}
         onProgressChange={(viewedCount) =>
           markSectionViewedCount(activeSection, viewedCount)
+        }
+        onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
+          recordPanelTime(activeSection, panelIndex, seconds, panelTitle)
         }
         dotActiveClass='bg-cyan-500'
         dotDoneClass='bg-cyan-300'

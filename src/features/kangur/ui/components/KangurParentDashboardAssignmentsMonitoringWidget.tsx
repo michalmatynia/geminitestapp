@@ -1,0 +1,334 @@
+import { useMemo } from 'react';
+
+import KangurAssignmentManager from '@/features/kangur/ui/components/KangurAssignmentManager';
+import { KANGUR_LESSONS_SETTING_KEY, parseKangurLessons } from '@/features/kangur/settings';
+import {
+  type KangurParentDashboardPanelDisplayMode,
+  shouldRenderKangurParentDashboardPanel,
+  useKangurParentDashboardRuntime,
+} from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
+import {
+  KangurButton,
+  KangurGlassPanel,
+  KangurInfoCard,
+  KangurIconBadge,
+  KangurMetaText,
+  KangurPanelIntro,
+  KangurSummaryPanel,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
+import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { cn } from '@/shared/utils';
+
+const formatDuration = (seconds: number): string => {
+  const normalized = Math.max(0, Math.round(seconds));
+  const minutes = Math.floor(normalized / 60);
+  const remainingSeconds = normalized % 60;
+  if (minutes === 0) {
+    return `${remainingSeconds}s`;
+  }
+  return `${minutes}m ${`${remainingSeconds}`.padStart(2, '0')}s`;
+};
+
+const formatProgressTimestamp = (value: string | null | undefined): string => {
+  if (!value) {
+    return 'Brak danych';
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return 'Brak danych';
+  }
+  return new Intl.DateTimeFormat('pl-PL', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date);
+};
+
+const normalizePanelLabel = (value: string | null | undefined, fallback: string): string => {
+  const trimmed = value?.trim();
+  if (trimmed) {
+    return trimmed;
+  }
+  return fallback.replace(/_/g, ' ').trim();
+};
+
+const parsePanelIndex = (panelId: string): number => {
+  const match = panelId.match(/\d+/u);
+  if (!match) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+  const parsed = Number.parseInt(match[0], 10);
+  return Number.isNaN(parsed) ? Number.MAX_SAFE_INTEGER : parsed;
+};
+
+const parseTimestamp = (value: string | null | undefined): number => {
+  if (!value) {
+    return 0;
+  }
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? 0 : parsed;
+};
+
+export function KangurParentDashboardAssignmentsMonitoringWidget({
+  displayMode = 'always',
+}: {
+  displayMode?: KangurParentDashboardPanelDisplayMode;
+}): React.JSX.Element | null {
+  const {
+    activeLearner,
+    activeTab,
+    basePath,
+    canAccessDashboard,
+    learners: runtimeLearners,
+    progress,
+    selectLearner,
+  } = useKangurParentDashboardRuntime();
+  const { entry: monitoringContent } = useKangurPageContentEntry('parent-dashboard-monitoring');
+  const settingsStore = useSettingsStore();
+  const rawLessons = settingsStore.get(KANGUR_LESSONS_SETTING_KEY);
+  const lessons = useMemo(
+    () => parseKangurLessons(rawLessons).filter((lesson) => lesson.enabled),
+    [rawLessons]
+  );
+  const activeLearnerId = activeLearner?.id ?? null;
+  const learners = runtimeLearners ?? [];
+  const activeLearnerName = activeLearner?.displayName?.trim() || 'Uczeń';
+  const activeLearnerLogin = activeLearner?.loginName?.trim() || null;
+  const activeLearnerStatus = activeLearner?.status ?? 'active';
+  const activeLearnerInitial = activeLearnerName.charAt(0).toUpperCase() || '?';
+  const canSwitchLearners = learners.length > 1;
+  const lessonPanelProgress = progress.lessonPanelProgress ?? {};
+  const lessonPanelTimeCards = useMemo(
+    () =>
+      lessons
+        .map((lesson) => {
+          const panels = lessonPanelProgress[lesson.componentId] ?? {};
+          const sectionEntries = Object.entries(panels)
+            .map(([sectionId, entry]) => {
+              const panelTimes = entry.panelTimes ?? {};
+              const panelEntries = Object.entries(panelTimes)
+                .map(([panelId, panel]) => {
+                  const panelIndex = parsePanelIndex(panelId);
+                  const title =
+                    panel.title?.trim() ||
+                    (panelIndex !== Number.MAX_SAFE_INTEGER
+                      ? `Panel ${panelIndex}`
+                      : 'Panel');
+                  return {
+                    id: panelId,
+                    index: panelIndex,
+                    title,
+                    seconds: panel.seconds,
+                  };
+                })
+                .filter((panel) => panel.seconds > 0)
+                .sort((left, right) => left.index - right.index);
+
+              if (panelEntries.length === 0) {
+                return null;
+              }
+
+              const totalSeconds = panelEntries.reduce((sum, panel) => sum + panel.seconds, 0);
+              return {
+                id: sectionId,
+                label: normalizePanelLabel(entry.label, sectionId),
+                panels: panelEntries,
+                totalSeconds,
+                sessionUpdatedAt: entry.sessionUpdatedAt ?? entry.lastViewedAt ?? null,
+              };
+            })
+            .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
+            .sort((left, right) => left.label.localeCompare(right.label));
+
+          if (sectionEntries.length === 0) {
+            return null;
+          }
+
+          const totalSeconds = sectionEntries.reduce((sum, section) => sum + section.totalSeconds, 0);
+          const sessionUpdatedAt = sectionEntries.reduce<string | null>((latest, section) => {
+            const latestTimestamp = parseTimestamp(latest);
+            const sectionTimestamp = parseTimestamp(section.sessionUpdatedAt);
+            return sectionTimestamp >= latestTimestamp ? section.sessionUpdatedAt : latest;
+          }, null);
+
+          return {
+            lesson,
+            sections: sectionEntries,
+            totalSeconds,
+            sessionUpdatedAt,
+          };
+        })
+        .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry)),
+    [lessonPanelProgress, lessons]
+  );
+
+  if (!canAccessDashboard) {
+    return null;
+  }
+
+  if (!shouldRenderKangurParentDashboardPanel(displayMode, activeTab, 'monitoring')) {
+    return null;
+  }
+
+  if (!activeLearnerId) {
+    return null;
+  }
+
+  return (
+    <div className='flex flex-col gap-5'>
+      <KangurPanelIntro
+        description={
+          monitoringContent?.summary ??
+          'Monitoruj postęp przypisanych zadań, w tym sugestii StudiQ, aby utrzymać stały rytm nauki.'
+        }
+        title={monitoringContent?.title ?? 'Monitorowanie zadań'}
+        titleAs='h2'
+        titleClassName='text-lg font-bold tracking-[-0.02em]'
+      />
+      <KangurGlassPanel
+        padding='lg'
+        surface='playGlow'
+        variant='soft'
+        data-testid='parent-dashboard-monitoring-learner-panel'
+      >
+        <div className='flex flex-col gap-3'>
+          <KangurPanelIntro
+            eyebrow='Profil ucznia'
+            title={`Postęp zadań dla ${activeLearnerName}`}
+            description='Sprawdź, jak uczeń realizuje przypisane zadania oraz sugestie StudiQ.'
+            titleAs='h3'
+            titleClassName='text-base font-bold tracking-[-0.02em]'
+            descriptionClassName='text-xs sm:text-sm'
+          />
+          <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+            <div className='flex items-center gap-3'>
+              <KangurIconBadge accent='indigo' size='md'>
+                {activeLearnerInitial}
+              </KangurIconBadge>
+              <div className='min-w-0'>
+                <div className='text-base font-semibold [color:var(--kangur-page-text)]'>
+                  {activeLearnerName}
+                </div>
+                {activeLearnerLogin ? (
+                  <KangurMetaText tone='slate'>Login: {activeLearnerLogin}</KangurMetaText>
+                ) : null}
+              </div>
+            </div>
+            <KangurStatusChip
+              accent={activeLearnerStatus === 'active' ? 'emerald' : 'slate'}
+              className='w-fit uppercase tracking-wide'
+              size='sm'
+            >
+              {activeLearnerStatus === 'active' ? 'Aktywny' : 'Wyłączony'}
+            </KangurStatusChip>
+          </div>
+          {canSwitchLearners ? (
+            <div>
+              <KangurMetaText className='mb-2' caps tone='slate'>
+                Szybkie przełączanie profilu
+              </KangurMetaText>
+              <div
+                className={cn(
+                  KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+                  'flex flex-wrap justify-start'
+                )}
+              >
+                {learners.map((learner) => {
+                  const isActive = learner.id === activeLearnerId;
+                  return (
+                    <KangurButton
+                      key={learner.id}
+                      type='button'
+                      onClick={() => void selectLearner(learner.id)}
+                      aria-pressed={isActive}
+                      className='min-w-0 flex-none px-3 text-xs'
+                      size='sm'
+                      variant={isActive ? 'segmentActive' : 'segment'}
+                    >
+                      {learner.displayName}
+                    </KangurButton>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </KangurGlassPanel>
+      <KangurSummaryPanel
+        accent='sky'
+        className='mt-1'
+        description='Czas spędzony w panelach lekcji podczas ostatniej sesji (liczony tylko przy aktywnej karcie).'
+        label='Czas w panelach lekcji'
+      >
+        {lessonPanelTimeCards.length > 0 ? (
+          <div className='mt-3 flex flex-col gap-3'>
+            {lessonPanelTimeCards.map((entry) => (
+              <KangurInfoCard
+                key={entry.lesson.componentId}
+                className='rounded-[26px]'
+                padding='lg'
+              >
+                <div className='flex flex-col gap-3'>
+                  <div className='flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between'>
+                    <div>
+                      <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+                        {entry.lesson.title}
+                      </div>
+                      <KangurMetaText tone='slate'>
+                        Ostatnia sesja: {formatProgressTimestamp(entry.sessionUpdatedAt)}
+                      </KangurMetaText>
+                    </div>
+                    <div className='text-sm font-semibold text-sky-700'>
+                      {formatDuration(entry.totalSeconds)}
+                    </div>
+                  </div>
+                  <div className='grid gap-2 sm:grid-cols-2'>
+                    {entry.sections.map((section) => (
+                      <div
+                        key={`${entry.lesson.componentId}-${section.id}`}
+                        className='rounded-[18px] border border-sky-200/70 bg-white/80 px-3 py-2'
+                      >
+                        <div className='text-xs font-semibold [color:var(--kangur-page-text)]'>
+                          {section.label}
+                        </div>
+                        <KangurMetaText tone='slate'>
+                          {formatDuration(section.totalSeconds)} łącznie
+                        </KangurMetaText>
+                        <div className='mt-2 flex flex-col gap-1 text-xs'>
+                          {section.panels.map((panel) => (
+                            <div
+                              key={`${entry.lesson.componentId}-${section.id}-${panel.id}`}
+                              className='flex items-center justify-between gap-2'
+                            >
+                              <span className='min-w-0 truncate [color:var(--kangur-page-text)]'>
+                                {panel.title}
+                              </span>
+                              <span className='shrink-0 text-slate-500'>
+                                {formatDuration(panel.seconds)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </KangurInfoCard>
+            ))}
+          </div>
+        ) : (
+          <div className='mt-3 text-sm [color:var(--kangur-page-muted-text)]'>
+            Brak danych o czasie paneli. Dane pojawią się po przejściu ucznia przez lekcje.
+          </div>
+        )}
+      </KangurSummaryPanel>
+      <KangurAssignmentManager
+        basePath={basePath}
+        view='tracking'
+        key={activeLearnerId ?? 'no-learner'}
+      />
+    </div>
+  );
+}

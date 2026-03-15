@@ -124,9 +124,9 @@ const buildKangurTestSelectedChoiceFactsFromContext = (
 };
 
 const buildLearnerSummary = (
-  snapshot: any,
-  activeAssignments: any[],
-  masteryInsights: any
+  snapshot: KangurRegistryBaseData['snapshot'],
+  activeAssignments: KangurRegistryBaseData['activeAssignments'],
+  masteryInsights: KangurRegistryBaseData['masteryInsights']
 ): string =>
   [
     `Average accuracy ${snapshot.averageAccuracy}%.`,

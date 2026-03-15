@@ -1,3 +1,4 @@
+import { Clock } from 'lucide-react';
 import { createContext, useContext } from 'react';
 
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
@@ -28,6 +29,7 @@ type KangurAssignmentsListProps = {
   emptyLabel?: string;
   compact?: boolean;
   onArchive?: (assignmentId: string) => void;
+  onTimeLimitClick?: (assignmentId: string) => void;
 };
 
 type KangurAssignmentsListItemContextValue = {
@@ -36,6 +38,7 @@ type KangurAssignmentsListItemContextValue = {
 
 type KangurAssignmentsListArchiveContextValue = {
   onArchive?: (assignmentId: string) => void;
+  onTimeLimitClick?: (assignmentId: string) => void;
 };
 
 const KangurAssignmentsListItemContext = createContext<KangurAssignmentsListItemContextValue | null>(
@@ -118,10 +121,14 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
             </Link>
           </KangurButton>
         </div>
-        {item.lastActivityLabel ? (
-          <KangurMetaText>
-            Ostatnia aktywność: {item.lastActivityLabel}
+        {item.timeLimitLabel ? (
+          <KangurMetaText className='flex items-center gap-2'>
+            <Clock className='h-4 w-4 text-slate-400' aria-hidden='true' />
+            {item.timeLimitLabel}
           </KangurMetaText>
+        ) : null}
+        {item.lastActivityLabel ? (
+          <KangurMetaText>Ostatnia aktywność: {item.lastActivityLabel}</KangurMetaText>
         ) : null}
       </div>
     </KangurInfoCard>
@@ -130,7 +137,7 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
 
 function KangurAssignmentsListStandardCard(): React.JSX.Element {
   const item = useKangurAssignmentsListItem();
-  const { onArchive } = useKangurAssignmentsListArchive();
+  const { onArchive, onTimeLimitClick } = useKangurAssignmentsListArchive();
 
   return (
     <KangurInfoCard
@@ -175,10 +182,18 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
           size='sm'
           value={item.progressPercent}
         />
-        {item.lastActivityLabel ? (
-          <KangurMetaText className='mt-3'>
-            Ostatnia aktywność: {item.lastActivityLabel}
-          </KangurMetaText>
+        {item.timeLimitLabel || item.lastActivityLabel ? (
+          <div className='mt-3 space-y-2'>
+            {item.timeLimitLabel ? (
+              <KangurMetaText className='flex items-center gap-2'>
+                <Clock className='h-4 w-4 text-slate-400' aria-hidden='true' />
+                {item.timeLimitLabel}
+              </KangurMetaText>
+            ) : null}
+            {item.lastActivityLabel ? (
+              <KangurMetaText>Ostatnia aktywność: {item.lastActivityLabel}</KangurMetaText>
+            ) : null}
+          </div>
         ) : null}
       </KangurSummaryPanel>
 
@@ -192,6 +207,19 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
             {item.actionLabel}
           </Link>
         </KangurButton>
+        {onTimeLimitClick ? (
+          <KangurButton
+            aria-label='Czas na wykonanie'
+            title='Czas na wykonanie'
+            className='w-full sm:w-auto sm:px-3'
+            type='button'
+            onClick={() => onTimeLimitClick(item.id)}
+            size='sm'
+            variant='ghost'
+          >
+            <Clock className='h-4 w-4' aria-hidden='true' />
+          </KangurButton>
+        ) : null}
         {onArchive ? (
           <KangurButton
             className='w-full sm:w-auto'
@@ -215,11 +243,12 @@ export function KangurAssignmentsList({
   emptyLabel = 'Brak zadań do pokazania.',
   compact = false,
   onArchive,
+  onTimeLimitClick,
 }: KangurAssignmentsListProps): React.JSX.Element {
   const emptyStateDescription = emptyLabel;
   const panelSummary = summary;
   const panelTitle = title;
-  const archiveContextValue = { onArchive };
+  const archiveContextValue = { onArchive, onTimeLimitClick };
 
   if (compact) {
     return (

@@ -1178,7 +1178,7 @@ describe('KangurLoginPage', () => {
 
     await user.type(screen.getByLabelText('Email rodzica albo nick ucznia'), 'janek123');
     await user.type(screen.getByLabelText('Hasło'), 'tajnehaslo');
-    await user.click(screen.getByRole('button', { name: 'Zaloguj ucznia' }));
+    await user.click(screen.getByRole('button', { name: 'Zaloguj się' }));
 
     expect(signOutMock).toHaveBeenCalledWith({ redirect: false });
     expect(fetchMock).toHaveBeenNthCalledWith(
@@ -1209,7 +1209,7 @@ describe('KangurLoginPage', () => {
 
     await user.type(screen.getByLabelText('Email rodzica albo nick ucznia'), 'janek-123');
     await user.type(screen.getByLabelText('Hasło'), 'tajnehaslo');
-    await user.click(screen.getByRole('button', { name: 'Zaloguj ucznia' }));
+    await user.click(screen.getByRole('button', { name: 'Zaloguj się' }));
 
     expect(await screen.findByText('Nick ucznia może zawierać tylko litery i cyfry.')).toBeVisible();
     expect(signOutMock).not.toHaveBeenCalled();

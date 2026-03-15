@@ -56,9 +56,10 @@ Important behavior:
 
 The parent dashboard exposes separate tabs for:
 
+- `Wyniki`
 - `Postęp`
-- `Wyniki gier`
 - `Zadania`
+- `Monitorowanie zadań`
 - `AI Tutor`
 
 Each tab needs a stable documentation entry because the same shell is reused while the content focus changes.

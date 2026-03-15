@@ -231,7 +231,7 @@ function LearnerProfileContent(): React.JSX.Element {
     priority: 76,
     metadata: {
       contentId: profileContentId,
-      label: 'Zadania ucznia',
+      label: 'Sugestie od rodzica',
     },
   });
   useKangurTutorAnchor({

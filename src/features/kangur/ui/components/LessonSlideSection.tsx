@@ -14,6 +14,7 @@ import {
   KangurEmptyState,
   KangurGlassPanel,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurLessonPanelCtaSync } from '@/features/kangur/ui/hooks/useKangurLessonPanelCtaSync';
 import { KANGUR_STEP_PILL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { cn } from '@/shared/utils';
@@ -31,6 +32,7 @@ type LessonSlideSectionProps = {
   onBack?: () => void;
   onComplete?: () => void;
   onProgressChange?: (viewedCount: number, totalCount: number) => void;
+  onPanelTimeUpdate?: (panelIndex: number, panelTitle: string, seconds: number) => void;
   dotActiveClass: string;
   dotDoneClass: string;
   gradientClass: string;
@@ -42,6 +44,7 @@ export default function LessonSlideSection({
   onBack,
   onComplete,
   onProgressChange,
+  onPanelTimeUpdate,
   dotActiveClass,
   dotDoneClass,
 }: LessonSlideSectionProps): React.JSX.Element {
@@ -55,6 +58,14 @@ export default function LessonSlideSection({
   const slideTitleRef = useRef<HTMLHeadingElement | null>(null);
   const [slide, setSlide] = useState(0);
   const completionReportedRef = useRef(false);
+  const panelTimeUpdateRef = useRef(onPanelTimeUpdate);
+  const panelTimeFlushRef = useRef<(() => void) | null>(null);
+  const slidesRef = useRef(slides);
+  const panelTimingRef = useRef({
+    activeIndex: 0,
+    lastTick: null as number | null,
+    panelTimes: new Map<number, number>(),
+  });
   const totalSlides = slides.length;
   const isLast = slide === totalSlides - 1;
   const isFirst = slide === 0;
@@ -65,11 +76,26 @@ export default function LessonSlideSection({
   const slideKeyboardHintId = `lesson-slide-keyboard-${slideInstanceId}`;
   const shouldRenderNavigationPills = totalSlides > 1 || Boolean(secretLessonPill?.isUnlocked);
   const shouldRenderArrowNavigation = totalSlides > 1;
-  const handlePreviousSlide = (): void => {
+  const syncLessonPanelCta = useKangurLessonPanelCtaSync();
+  const handlePanelNavigationCta = (ctaId: string, action: () => void): void => {
+    panelTimeFlushRef.current?.();
+    syncLessonPanelCta(ctaId);
+    action();
+  };
+  const goPreviousSlide = (): void => {
     setSlide((currentSlide) => Math.max(0, currentSlide - 1));
   };
-  const handleNextSlide = (): void => {
+  const goNextSlide = (): void => {
     setSlide((currentSlide) => Math.min(totalSlides - 1, currentSlide + 1));
+  };
+  const handlePreviousSlideCta = (): void => {
+    handlePanelNavigationCta('lesson_panel_prev', goPreviousSlide);
+  };
+  const handleNextSlideCta = (): void => {
+    handlePanelNavigationCta('lesson_panel_next', goNextSlide);
+  };
+  const handleBackCta = (): void => {
+    handlePanelNavigationCta('lesson_panel_back', handleBack);
   };
   const handleKeyDownCapture: KeyboardEventHandler<HTMLDivElement> = (event) => {
     if (event.defaultPrevented) {
@@ -99,7 +125,7 @@ export default function LessonSlideSection({
       case 'PageUp': {
         if (!isFirst) {
           event.preventDefault();
-          handlePreviousSlide();
+          goPreviousSlide();
         }
         break;
       }
@@ -107,7 +133,7 @@ export default function LessonSlideSection({
       case 'PageDown': {
         if (!isLast) {
           event.preventDefault();
-          handleNextSlide();
+          goNextSlide();
         }
         break;
       }
@@ -144,6 +170,14 @@ export default function LessonSlideSection({
   }
 
   useEffect(() => {
+    panelTimeUpdateRef.current = onPanelTimeUpdate;
+  }, [onPanelTimeUpdate]);
+
+  useEffect(() => {
+    slidesRef.current = slides;
+  }, [slides]);
+
+  useEffect(() => {
     onProgressChange?.(slide + 1, slides.length);
   }, [onProgressChange, slide, slides.length]);
 
@@ -165,6 +199,151 @@ export default function LessonSlideSection({
     slideTitleRef.current?.focus({ preventScroll: true });
   }, [slide]);
 
+  useEffect(() => {
+    if (!panelTimeUpdateRef.current) {
+      return;
+    }
+
+    const flushActivePanel = (now: number): void => {
+      const state = panelTimingRef.current;
+      if (state.lastTick === null) {
+        return;
+      }
+
+      const delta = Math.max(0, now - state.lastTick);
+      if (delta > 0) {
+        const current = state.panelTimes.get(state.activeIndex) ?? 0;
+        state.panelTimes.set(state.activeIndex, current + delta);
+      }
+
+      state.lastTick = now;
+    };
+
+    const commitPanelTime = (panelIndex: number): void => {
+      const update = panelTimeUpdateRef.current;
+      if (!update) {
+        return;
+      }
+
+      const ms = panelTimingRef.current.panelTimes.get(panelIndex) ?? 0;
+      const seconds = Math.round(ms / 1000);
+      if (seconds <= 0) {
+        return;
+      }
+
+      const panelTitle =
+        slidesRef.current[panelIndex]?.title ?? `Panel ${panelIndex + 1}`;
+      update(panelIndex, panelTitle, seconds);
+    };
+
+    const flushCurrentPanelTime = (): void => {
+      const state = panelTimingRef.current;
+      if (state.lastTick === null) {
+        return;
+      }
+
+      const now = Date.now();
+      flushActivePanel(now);
+      commitPanelTime(state.activeIndex);
+    };
+
+    const pauseTracking = (): void => {
+      const state = panelTimingRef.current;
+      if (state.lastTick === null) {
+        return;
+      }
+
+      const now = Date.now();
+      flushActivePanel(now);
+      commitPanelTime(state.activeIndex);
+      state.lastTick = null;
+    };
+
+    const resumeTracking = (): void => {
+      const state = panelTimingRef.current;
+      if (state.lastTick !== null) {
+        return;
+      }
+
+      state.lastTick = Date.now();
+    };
+
+    const handleVisibilityChange = (): void => {
+      const isVisible =
+        typeof document === 'undefined' || document.visibilityState === 'visible';
+      const isFocused = typeof document === 'undefined' || document.hasFocus();
+      if (isVisible && isFocused) {
+        resumeTracking();
+      } else {
+        pauseTracking();
+      }
+    };
+
+    handleVisibilityChange();
+
+    const handlePageHide = (): void => {
+      pauseTracking();
+    };
+
+    panelTimeFlushRef.current = flushCurrentPanelTime;
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleVisibilityChange);
+    window.addEventListener('blur', handleVisibilityChange);
+    window.addEventListener('pagehide', handlePageHide);
+    const intervalId = window.setInterval(() => {
+      const state = panelTimingRef.current;
+      if (state.lastTick === null) {
+        return;
+      }
+      const now = Date.now();
+      flushActivePanel(now);
+      commitPanelTime(state.activeIndex);
+    }, 15000);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleVisibilityChange);
+      window.removeEventListener('blur', handleVisibilityChange);
+      window.removeEventListener('pagehide', handlePageHide);
+      panelTimeFlushRef.current = null;
+      window.clearInterval(intervalId);
+      pauseTracking();
+    };
+  }, []);
+
+  useEffect(() => {
+    const update = panelTimeUpdateRef.current;
+    if (!update) {
+      return;
+    }
+
+    const state = panelTimingRef.current;
+    if (state.activeIndex === slide) {
+      return;
+    }
+
+    const now = Date.now();
+    if (state.lastTick !== null) {
+      const delta = Math.max(0, now - state.lastTick);
+      if (delta > 0) {
+        const current = state.panelTimes.get(state.activeIndex) ?? 0;
+        state.panelTimes.set(state.activeIndex, current + delta);
+      }
+      state.lastTick = now;
+      const ms = state.panelTimes.get(state.activeIndex) ?? 0;
+      const seconds = Math.round(ms / 1000);
+      if (seconds > 0) {
+        const panelTitle =
+          slidesRef.current[state.activeIndex]?.title ??
+          `Panel ${state.activeIndex + 1}`;
+        update(state.activeIndex, panelTitle, seconds);
+      }
+    }
+
+    state.activeIndex = slide;
+  }, [slide]);
+
   const isPrevDisabled = isFirst;
   const isNextDisabled = isLast;
 
@@ -175,7 +354,7 @@ export default function LessonSlideSection({
     >
       <div className='flex w-full flex-col gap-3 sm:grid sm:grid-cols-[auto_1fr_auto] sm:items-center'>
         <KangurButton
-          onClick={handleBack}
+          onClick={handleBackCta}
           size='sm'
           variant='surface'
           className='w-full justify-center sm:w-auto sm:justify-start'
@@ -191,7 +370,7 @@ export default function LessonSlideSection({
             aria-label='Nawigacja paneli'
           >
             <KangurButton
-              onClick={handlePreviousSlide}
+              onClick={handlePreviousSlideCta}
               disabled={isPrevDisabled}
               aria-label='Poprzedni panel'
               aria-keyshortcuts='ArrowLeft PageUp'
@@ -207,7 +386,7 @@ export default function LessonSlideSection({
             </KangurButton>
 
             <KangurButton
-              onClick={handleNextSlide}
+              onClick={handleNextSlideCta}
               disabled={isNextDisabled}
               aria-label='Następny panel'
               aria-keyshortcuts='ArrowRight PageDown'
@@ -236,7 +415,9 @@ export default function LessonSlideSection({
               <button
                 key={i}
                 type='button'
-                onClick={() => setSlide(i)}
+                onClick={() =>
+                  handlePanelNavigationCta(`lesson_panel_indicator_${i + 1}`, () => setSlide(i))
+                }
                 aria-label={`Przejdź do slajdu ${i + 1} z ${totalSlides}: ${slideItem.title}`}
                 aria-current={i === slide ? 'step' : undefined}
                 aria-controls={slidePanelId}
@@ -257,7 +438,9 @@ export default function LessonSlideSection({
             {secretLessonPill?.isUnlocked ? (
               <button
                 type='button'
-                onClick={secretLessonPill.onOpen}
+                onClick={() =>
+                  handlePanelNavigationCta('lesson_panel_secret', secretLessonPill.onOpen)
+                }
                 aria-label='Otwórz sekretny panel'
                 className={cn(
                   KANGUR_STEP_PILL_CLASSNAME,

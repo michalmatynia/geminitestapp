@@ -19,7 +19,12 @@ import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProg
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import { internalError } from '@/shared/errors/app-error';
 
-export type KangurParentDashboardTabId = 'progress' | 'scores' | 'assign' | 'ai-tutor';
+export type KangurParentDashboardTabId =
+  | 'scores'
+  | 'progress'
+  | 'assign'
+  | 'monitoring'
+  | 'ai-tutor';
 export type KangurParentDashboardPanelDisplayMode = 'always' | 'active-tab';
 
 type KangurParentDashboardCreateForm = {
@@ -107,7 +112,7 @@ export function KangurParentDashboardRuntimeProvider({
     checkAppState,
   } = useKangurAuth();
   const progress = useKangurProgressState();
-  const [activeTab, setActiveTab] = useState<KangurParentDashboardTabId>('progress');
+  const [activeTab, setActiveTab] = useState<KangurParentDashboardTabId>('scores');
   const [isCreateLearnerModalOpen, setCreateLearnerModalOpen] = useState(false);
   const [createForm, setCreateForm] = useState<KangurParentDashboardCreateForm>({
     displayName: '',

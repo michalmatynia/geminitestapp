@@ -11,6 +11,11 @@ const runtimeState = vi.hoisted(() => ({
     activeTab: 'assign',
     basePath: '/kangur',
     canAccessDashboard: true,
+    learners: [
+      { id: 'learner-1', displayName: 'Maja', loginName: 'maja', status: 'active' },
+      { id: 'learner-2', displayName: 'Tomek', loginName: 'tomek', status: 'active' },
+    ],
+    selectLearner: vi.fn(),
     progress: {
       totalXp: 480,
       gamesPlayed: 4,
@@ -73,6 +78,11 @@ describe('KangurParentDashboardAssignmentsWidget', () => {
       activeTab: 'assign',
       basePath: '/kangur',
       canAccessDashboard: true,
+      learners: [
+        { id: 'learner-1', displayName: 'Maja', loginName: 'maja', status: 'active' },
+        { id: 'learner-2', displayName: 'Tomek', loginName: 'tomek', status: 'active' },
+      ],
+      selectLearner: vi.fn(),
       progress: {
         totalXp: 480,
         gamesPlayed: 4,
@@ -99,6 +109,7 @@ describe('KangurParentDashboardAssignmentsWidget', () => {
     expect(assignmentManagerMock).toHaveBeenCalledWith(
       expect.objectContaining({
         basePath: '/kangur',
+        view: 'catalog',
       })
     );
   });

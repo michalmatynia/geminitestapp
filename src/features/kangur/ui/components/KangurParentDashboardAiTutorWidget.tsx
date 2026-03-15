@@ -71,6 +71,9 @@ const KANGUR_PARENT_TUTOR_MOOD_ACCENTS: Record<KangurTutorMoodId, 'slate' | 'ind
   celebrating: 'rose',
 };
 
+// TODO: Re-enable once parent dashboard AI Tutor controls are ready to ship.
+const PARENT_DASHBOARD_AI_TUTOR_TEMPORARILY_DISABLED = true;
+
 const formatTutorMoodTimestamp = (value: string | null, fallback: string): string => {
   if (!value) {
     return fallback;
@@ -152,6 +155,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
   const settingsStore = useSettingsStore();
   const queryClient = useQueryClient();
   const activeLearnerId = activeLearner?.id ?? null;
+  const isTemporarilyDisabled = PARENT_DASHBOARD_AI_TUTOR_TEMPORARILY_DISABLED;
 
   const rawSettings = settingsStore.get(KANGUR_AI_TUTOR_SETTINGS_KEY);
   const rawAppSettings = settingsStore.get(KANGUR_AI_TUTOR_APP_SETTINGS_KEY);
@@ -170,9 +174,10 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
         : null,
     [appSettings, settingsStoreMap, activeLearnerId]
   );
-  const shouldLoadUsage = canAccessDashboard && Boolean(activeLearnerId) && currentSettings?.enabled;
+  const isUsageEnabled = isTemporarilyDisabled ? false : currentSettings?.enabled ?? false;
+  const shouldLoadUsage = canAccessDashboard && Boolean(activeLearnerId) && isUsageEnabled;
 
-  const [enabled, setEnabled] = useState(currentSettings?.enabled ?? false);
+  const [enabled, setEnabled] = useState(isUsageEnabled);
   const [uiMode, setUiMode] = useState<KangurAiTutorUiMode>(
     currentSettings?.uiMode ?? 'anchored'
   );
@@ -199,7 +204,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
   );
 
   useEffect(() => {
-    setEnabled(currentSettings?.enabled ?? false);
+    setEnabled(isTemporarilyDisabled ? false : currentSettings?.enabled ?? false);
     setUiMode(currentSettings?.uiMode ?? 'anchored');
     setAllowCrossPagePersistence(currentSettings?.allowCrossPagePersistence ?? true);
     setRememberTutorContext(currentSettings?.rememberTutorContext ?? true);
@@ -210,7 +215,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
     setAllowSelectedTextSupport(currentSettings?.allowSelectedTextSupport ?? true);
     setHintDepth(currentSettings?.hintDepth ?? 'guided');
     setProactiveNudges(currentSettings?.proactiveNudges ?? 'gentle');
-  }, [activeLearner?.id, currentSettings]);
+  }, [activeLearner?.id, currentSettings, isTemporarilyDisabled]);
   const [isSaving, setIsSaving] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const uiModeFieldId = useId();
@@ -256,9 +261,10 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
     : undefined;
   const sectionTitle = aiTutorSectionContent?.title ?? 'Tutor-AI dla rodzica';
   const sectionSummary = aiTutorSectionContent?.summary ?? tutorContent.parentDashboard.subtitle;
+  const controlsDisabled = isTemporarilyDisabled || !enabled;
 
   const handleSave = useCallback(async (): Promise<void> => {
-    if (!activeLearner || !canAccessDashboard) return;
+    if (!activeLearner || !canAccessDashboard || isTemporarilyDisabled) return;
 
     setIsSaving(true);
     setFeedback(null);
@@ -303,6 +309,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
   }, [
     activeLearner,
     canAccessDashboard,
+    isTemporarilyDisabled,
     enabled,
     uiMode,
     allowCrossPagePersistence,
@@ -396,7 +403,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
         </div>
       </div>
 
-      {currentSettings?.enabled ? (
+      {isUsageEnabled ? (
         <div className='rounded-2xl border border-amber-100 bg-amber-50/75 px-4 py-3'>
           <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
             <div className='min-w-0'>
@@ -452,6 +459,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
           onClick={() => setEnabled((current) => !current)}
           size='sm'
           variant={enabled ? 'surface' : 'primary'}
+          disabled={isTemporarilyDisabled}
         >
           {enabled
             ? tutorContent.parentDashboard.toggleDisableActionLabel
@@ -465,14 +473,14 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
         </KangurSectionEyebrow>
         <TutorToggleField
           checked={allowLessons}
-          disabled={!enabled}
+          disabled={controlsDisabled}
           label={tutorContent.parentDashboard.toggles.allowLessonsLabel}
           description={tutorContent.parentDashboard.toggles.allowLessonsDescription}
           onChange={setAllowLessons}
         />
         <TutorToggleField
           checked={allowGames}
-          disabled={!enabled}
+          disabled={controlsDisabled}
           label={tutorContent.parentDashboard.toggles.allowGamesLabel}
           description={tutorContent.parentDashboard.toggles.allowGamesDescription}
           onChange={setAllowGames}
@@ -490,7 +498,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
             onChange={(event) => setTestAccessMode(event.target.value as KangurAiTutorTestAccessMode)}
             accent='amber'
             size='md'
-            disabled={!enabled}
+            disabled={controlsDisabled}
           >
             <option value='disabled'>{tutorContent.parentDashboard.selects.testAccessModeDisabled}</option>
             <option value='guided'>{tutorContent.parentDashboard.selects.testAccessModeGuided}</option>
@@ -516,7 +524,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
               onChange={(event) => setHintDepth(event.target.value as KangurAiTutorHintDepth)}
               accent='amber'
               size='md'
-              disabled={!enabled}
+              disabled={controlsDisabled}
             >
               <option value='brief'>{tutorContent.parentDashboard.selects.hintDepthBrief}</option>
               <option value='guided'>{tutorContent.parentDashboard.selects.hintDepthGuided}</option>
@@ -542,7 +550,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
                 setProactiveNudges(event.target.value as KangurAiTutorProactiveNudges)}
               accent='amber'
               size='md'
-              disabled={!enabled}
+              disabled={controlsDisabled}
             >
               <option value='off'>{tutorContent.parentDashboard.selects.proactiveNudgesOff}</option>
               <option value='gentle'>
@@ -559,21 +567,21 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
         </div>
         <TutorToggleField
           checked={showSources}
-          disabled={!enabled}
+          disabled={controlsDisabled}
           label={tutorContent.parentDashboard.toggles.showSourcesLabel}
           description={tutorContent.parentDashboard.toggles.showSourcesDescription}
           onChange={setShowSources}
         />
         <TutorToggleField
           checked={allowSelectedTextSupport}
-          disabled={!enabled}
+          disabled={controlsDisabled}
           label={tutorContent.parentDashboard.toggles.allowSelectedTextSupportLabel}
           description={tutorContent.parentDashboard.toggles.allowSelectedTextSupportDescription}
           onChange={setAllowSelectedTextSupport}
         />
         <TutorToggleField
           checked={allowCrossPagePersistence}
-          disabled={!enabled}
+          disabled={controlsDisabled}
           label={tutorContent.parentDashboard.toggles.allowCrossPagePersistenceLabel}
           description={tutorContent.parentDashboard.toggles.allowCrossPagePersistenceDescription}
           onChange={(checked) => {
@@ -585,7 +593,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
         />
         <TutorToggleField
           checked={rememberTutorContext}
-          disabled={!enabled || !allowCrossPagePersistence}
+          disabled={controlsDisabled || !allowCrossPagePersistence}
           label={tutorContent.parentDashboard.toggles.rememberTutorContextLabel}
           description={tutorContent.parentDashboard.toggles.rememberTutorContextDescription}
           onChange={setRememberTutorContext}
@@ -605,7 +613,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
           onChange={(event) => setUiMode(event.target.value as KangurAiTutorUiMode)}
           accent='amber'
           size='md'
-          disabled={!enabled}
+          disabled={controlsDisabled}
         >
           <option value='anchored'>{tutorContent.parentDashboard.selects.uiModeAnchored}</option>
           <option value='freeform'>{tutorContent.parentDashboard.selects.uiModeFreeform}</option>
@@ -622,7 +630,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
         variant='primary'
         size='sm'
         onClick={() => void handleSave()}
-        disabled={isSaving}
+        disabled={isSaving || isTemporarilyDisabled}
         fullWidth
       >
         {isSaving

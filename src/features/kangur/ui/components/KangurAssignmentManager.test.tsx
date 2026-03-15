@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { AnchorHTMLAttributes } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -24,7 +24,8 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
 
 vi.mock('@/features/kangur/ui/services/delegated-assignments', () => ({
   buildKangurAssignmentCatalog: () => [],
-  buildKangurAssignmentListItems: () => [],
+  buildKangurAssignmentListItems: (_basePath: string, assignments: Array<{ id: string }>) =>
+    assignments.map((assignment) => ({ id: assignment.id })),
   buildRecommendedKangurAssignmentCatalog: () => [],
   filterKangurAssignmentCatalog: () => [],
   buildKangurAssignmentHref: () => '/kangur/game',
@@ -40,7 +41,24 @@ vi.mock('@/features/kangur/ui/services/delegated-assignments', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurAssignmentsList', () => ({
-  default: ({ title }: { title: string }) => <div data-testid={`assignment-list-${title}`}>{title}</div>,
+  default: ({
+    title,
+    items = [],
+    onTimeLimitClick,
+  }: {
+    title: string;
+    items?: Array<{ id: string }>;
+    onTimeLimitClick?: (id: string) => void;
+  }) => (
+    <div data-testid={`assignment-list-${title}`}>
+      <div>{title}</div>
+      {onTimeLimitClick && items[0] ? (
+        <button type='button' onClick={() => onTimeLimitClick(items[0].id)}>
+          Czas na wykonanie
+        </button>
+      ) : null}
+    </div>
+  ),
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurTransitionLink', () => ({
@@ -114,5 +132,63 @@ describe('KangurAssignmentManager', () => {
 
     expect(screen.getByTestId('assignment-list-Aktywne zadania')).toBeInTheDocument();
     expect(screen.getByTestId('assignment-list-Ukończone zadania')).toBeInTheDocument();
+  });
+
+  it('opens the time limit modal and saves the update', async () => {
+    const updateAssignment = vi.fn().mockResolvedValue({
+      id: 'assignment-1',
+    });
+    useKangurAssignmentsMock.mockReturnValue({
+      assignments: [
+        {
+          id: 'assignment-1',
+          learnerKey: 'jan@example.com',
+          title: 'Praktyka: Dodawanie',
+          description: 'Jedna sesja dodawania.',
+          priority: 'high',
+          archived: false,
+          target: {
+            type: 'practice',
+            operation: 'addition',
+            requiredAttempts: 1,
+            minAccuracyPercent: 80,
+          },
+          assignedByName: 'Rodzic',
+          assignedByEmail: 'rodzic@example.com',
+          createdAt: '2026-03-06T10:00:00.000Z',
+          updatedAt: '2026-03-06T10:00:00.000Z',
+          progress: {
+            status: 'not_started',
+            percent: 0,
+            summary: 'Sesje: 0/1',
+            attemptsCompleted: 0,
+            attemptsRequired: 1,
+            lastActivityAt: null,
+            completedAt: null,
+          },
+        },
+      ],
+      isLoading: false,
+      error: null,
+      refresh: vi.fn(),
+      createAssignment: vi.fn(),
+      updateAssignment,
+    });
+
+    render(<KangurAssignmentManager basePath='/kangur' />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Czas na wykonanie' }));
+    expect(screen.getByTestId('assignment-time-limit-modal')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Czas na wykonanie w minutach'), {
+      target: { value: '25' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Zapisz' }));
+
+    await waitFor(() =>
+      expect(updateAssignment).toHaveBeenCalledWith('assignment-1', {
+        timeLimitMinutes: 25,
+      })
+    );
   });
 });

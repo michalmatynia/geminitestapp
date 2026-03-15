@@ -14,7 +14,7 @@ import {
   GeometrySymmetryMirrorAnimation,
   GeometrySymmetryRotationAnimation,
 } from '@/features/kangur/ui/components/GeometryLessonAnimations';
-import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
+import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
   addXp,
   createLessonCompletionReward,
@@ -271,10 +271,18 @@ export const HUB_SECTIONS = [
   },
 ];
 
+const SECTION_LABELS: Partial<Record<SectionId, string>> = Object.fromEntries(
+  HUB_SECTIONS.map((section) => [section.id, section.title])
+);
+
 export default function GeometrySymmetryLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
-  const { markSectionOpened, markSectionViewedCount, sectionProgress } =
-    useLessonHubProgress(SLIDES);
+  const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
+    useKangurLessonPanelProgress({
+      lessonKey: 'geometry_symmetry',
+      slideSections: SLIDES,
+      sectionLabels: SECTION_LABELS,
+    });
 
   const handleComplete = (): void => {
     const progress = loadProgress();
@@ -308,6 +316,9 @@ export default function GeometrySymmetryLesson(): React.JSX.Element {
         onComplete={activeSection === 'podsumowanie' ? handleComplete : undefined}
         onProgressChange={(viewedCount) =>
           markSectionViewedCount(activeSection as SlideSectionId, viewedCount)
+        }
+        onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
+          recordPanelTime(activeSection as SlideSectionId, panelIndex, seconds, panelTitle)
         }
         dotActiveClass='bg-emerald-500'
         dotDoneClass='bg-emerald-300'

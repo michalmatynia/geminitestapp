@@ -36,6 +36,17 @@ import {
 
 import { KangurPageContentSettingsPanel } from './KangurPageContentSettingsPanel';
 
+const coverageLabel = `${DEFAULT_KANGUR_PAGE_CONTENT_STORE.entries.length} / ${
+  DEFAULT_KANGUR_PAGE_CONTENT_STORE.entries.length
+} tracked sections covered`;
+const getSectionLabel = (entryId: string): string => {
+  const entry = DEFAULT_KANGUR_PAGE_CONTENT_STORE.entries.find((item) => item.id === entryId);
+  if (!entry?.title) {
+    throw new Error(`Expected page-content entry with title for ${entryId}.`);
+  }
+  return `Section: ${entry.title}`;
+};
+
 describe('KangurPageContentSettingsPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -55,7 +66,7 @@ describe('KangurPageContentSettingsPanel', () => {
       );
     });
 
-    expect(await screen.findByText('50 / 50 tracked sections covered')).toBeInTheDocument();
+    expect(await screen.findByText(coverageLabel)).toBeInTheDocument();
     expect(screen.getByText('No manifest gaps')).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -67,9 +78,11 @@ describe('KangurPageContentSettingsPanel', () => {
   it('keeps the raw JSON editor in sync with structured entry edits', async () => {
     render(<KangurPageContentSettingsPanel />);
 
-    await screen.findByText('50 / 50 tracked sections covered');
+    await screen.findByText(coverageLabel);
 
-    fireEvent.click(screen.getByRole('button', { name: /game-home-leaderboard/i }));
+    fireEvent.click(
+      screen.getByRole('button', { name: new RegExp(getSectionLabel('game-home-leaderboard'), 'i') })
+    );
     fireEvent.change(screen.getByLabelText('Page content title'), {
       target: { value: 'Ranking głównej planszy' },
     });
@@ -117,10 +130,12 @@ describe('KangurPageContentSettingsPanel', () => {
 
     render(<KangurPageContentSettingsPanel />);
 
-    await screen.findByText('50 / 50 tracked sections covered');
+    await screen.findByText(coverageLabel);
 
-    fireEvent.click(screen.getByRole('button', { name: /game-home-leaderboard/i }));
-    fireEvent.click(screen.getByRole('button', { name: /liczba punktów/i }));
+    fireEvent.click(
+      screen.getByRole('button', { name: new RegExp(getSectionLabel('game-home-leaderboard'), 'i') })
+    );
+    fireEvent.click(screen.getByRole('button', { name: /fragment: liczba punktów/i }));
     fireEvent.change(screen.getByLabelText('Page content fragment text'), {
       target: { value: 'Liczba punktów w rankingu' },
     });

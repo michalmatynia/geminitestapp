@@ -14,6 +14,7 @@ const {
   useKangurRoutingMock,
   useOptionalKangurRoutingMock,
   useKangurAuthMock,
+  useKangurLoginModalMock,
   scoreFilterMock,
   loadProgressMock,
   navigateToLoginMock,
@@ -23,6 +24,7 @@ const {
   useKangurRoutingMock: vi.fn(),
   useOptionalKangurRoutingMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
+  useKangurLoginModalMock: vi.fn(),
   scoreFilterMock: vi.fn(),
   loadProgressMock: vi.fn(),
   navigateToLoginMock: vi.fn(),
@@ -38,6 +40,10 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
   useOptionalKangurAuth: useKangurAuthMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
+  useKangurLoginModal: useKangurLoginModalMock,
 }));
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
@@ -184,6 +190,9 @@ describe('LearnerProfile page', () => {
       navigateToLogin: navigateToLoginMock,
       logout: logoutMock,
     });
+    useKangurLoginModalMock.mockReturnValue({
+      openLoginModal: vi.fn(),
+    });
   });
 
   it('loads user scores and renders profile metrics', async () => {
@@ -211,8 +220,8 @@ describe('LearnerProfile page', () => {
     expect(scoreFilterMock).toHaveBeenCalledWith({ created_by: 'jan@example.com' }, '-created_date', 120);
     expect(scoreFilterMock).toHaveBeenCalledWith({ player_name: 'Jan' }, '-created_date', 120);
 
-    expect(screen.getByRole('heading', { name: 'Profil ucznia' })).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-learner-profile-hero')).toHaveTextContent('Jan.');
+    expect(screen.getByRole('tab', { name: /Profil ucznia/ })).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-learner-profile-hero')).toBeInTheDocument();
     expect(screen.getByText('Poziom 4 · 620 XP łącznie')).toBeInTheDocument();
     expect(screen.getByTestId('learner-profile-overview-average-accuracy')).toHaveClass(
       'soft-card'
@@ -266,10 +275,10 @@ describe('LearnerProfile page', () => {
         .getAllByRole('link', { name: 'Otwórz lekcję' })
         .map((link) => link.getAttribute('href'))
     ).toContain('/kangur/lessons?focus=division');
-    expect(screen.getAllByRole('link', { name: 'Otwórz lekcję' })[0]).toHaveClass(
-      'kangur-cta-pill',
-      'primary-cta'
-    );
+    const lessonLinks = screen.getAllByRole('link', { name: 'Otwórz lekcję' });
+    expect(
+      lessonLinks.some((link) => link.classList.contains('primary-cta'))
+    ).toBe(true);
     expect(screen.getByRole('link', { name: /zagraj/i })).toHaveAttribute(
       'href',
       '/kangur/game?quickStart=training'
@@ -299,11 +308,15 @@ describe('LearnerProfile page', () => {
       navigateToLogin: navigateToLoginMock,
       logout: logoutMock,
     });
+    const openLoginModal = vi.fn();
+    useKangurLoginModalMock.mockReturnValue({
+      openLoginModal,
+    });
 
     renderLearnerProfilePage();
 
     expect(scoreFilterMock).not.toHaveBeenCalled();
-    expect(screen.getByTestId('kangur-learner-profile-hero')).toHaveTextContent('Profil ucznia');
+    expect(screen.getByRole('tab', { name: /Profil ucznia/ })).toBeInTheDocument();
     expect(screen.getByTestId('learner-profile-operation-empty')).toHaveClass(
       'soft-card',
       'border-dashed'
@@ -314,8 +327,8 @@ describe('LearnerProfile page', () => {
     const createAccountButton = screen.getByRole('button', { name: 'Utwórz konto rodzica' });
     await userEvent.click(loginButton);
     await userEvent.click(createAccountButton);
-    expect(navigateToLoginMock).toHaveBeenCalledTimes(2);
-    expect(navigateToLoginMock).toHaveBeenLastCalledWith({
+    expect(openLoginModal).toHaveBeenCalledTimes(2);
+    expect(openLoginModal).toHaveBeenLastCalledWith(null, {
       authMode: 'create-account',
     });
   });

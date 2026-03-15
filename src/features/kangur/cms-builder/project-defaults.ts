@@ -1,5 +1,4 @@
 // @ts-nocheck
-import type { PageComponentInput } from '@/shared/contracts/cms';
 import {
   KANGUR_CMS_SCREEN_LABELS,
   type KangurCmsProject,
@@ -44,7 +43,7 @@ export function createDefaultKangurCmsProject(): KangurCmsProject {
       },
       Auth: {
         key: 'Auth',
-        name: KANGUR_CMS_SCREEN_LABELS.Auth,
+        name: 'Auth',
         components: createDefaultAuthScreenComponents(),
       },
     },

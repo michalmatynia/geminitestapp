@@ -1,10 +1,11 @@
-import { apiFetch, ApiResponse } from './base';
+import type { HttpResult } from '@/shared/contracts/http';
+import { apiFetch } from './base';
 
 import type { AiPathRuntimeAnalyticsSummary } from '..';
 
 export async function fetchRuntimeAnalyticsSummary(
   range: string
-): Promise<ApiResponse<AiPathRuntimeAnalyticsSummary>> {
+): Promise<HttpResult<AiPathRuntimeAnalyticsSummary>> {
   return apiFetch<AiPathRuntimeAnalyticsSummary>(
     `/api/ai/ai-paths/analytics/summary?range=${range}`
   );

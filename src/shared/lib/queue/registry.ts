@@ -3,6 +3,8 @@ import 'server-only';
 import type { ManagedQueue, QueueHealthStatus } from '@/shared/contracts/jobs';
 
 import { logSystemEvent } from '../observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const registry = new Map<string, ManagedQueue<unknown>>();
 
@@ -40,6 +42,7 @@ export const startAllWorkers = (options?: { excludeQueueNames?: readonly string[
     try {
       queue.startWorker();
     } catch (error) {
+      void ErrorSystem.captureException(error);
       void logSystemEvent({
         level: 'error',
         message: `[queue-registry] Failed to start queue worker: ${name}`,

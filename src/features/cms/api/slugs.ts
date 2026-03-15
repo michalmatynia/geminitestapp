@@ -1,5 +1,7 @@
 import type { Slug } from '@/shared/contracts/cms';
 import { api } from '@/shared/lib/api-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const fetchSlugs = async (domainId?: string | null): Promise<Slug[]> => {
   return api.get<Slug[]>('/api/cms/slugs', {
@@ -44,6 +46,7 @@ export const createSlug = async (input: {
     );
     return { ok: true, payload };
   } catch (_error) {
+    logClientError(_error);
     return { ok: false, payload: {} as Slug };
   }
 };
@@ -59,6 +62,7 @@ export const updateSlug = async (
     });
     return { ok: true, payload };
   } catch (_error) {
+    logClientError(_error);
     return { ok: false, payload: {} as Slug };
   }
 };
@@ -73,6 +77,7 @@ export const deleteSlug = async (
     });
     return { ok: true };
   } catch (_error) {
+    logClientError(_error);
     return { ok: false };
   }
 };

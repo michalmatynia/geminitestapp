@@ -131,6 +131,7 @@ export function ProductSettingsPage(): React.JSX.Element {
       await updatePriceGroupMutation.mutateAsync({ ...group, isDefault: true });
       toast('Default price group updated.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'ProductSettingsPage', action: 'handleSetDefaultGroup', groupId },
       });
@@ -148,6 +149,7 @@ export function ProductSettingsPage(): React.JSX.Element {
           await deleteCatalogMutation.mutateAsync(catalog.id);
           toast('Catalog deleted.', { variant: 'success' });
         } catch (err) {
+          logClientError(err);
           logClientError(err, {
             context: {
               source: 'ProductSettingsPage',
@@ -176,6 +178,7 @@ export function ProductSettingsPage(): React.JSX.Element {
           await deletePriceGroupMutation.mutateAsync(group.id);
           toast('Price group deleted.', { variant: 'success' });
         } catch (err) {
+          logClientError(err);
           logClientError(err, {
             context: {
               source: 'ProductSettingsPage',

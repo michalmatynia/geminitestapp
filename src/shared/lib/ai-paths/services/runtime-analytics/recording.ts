@@ -38,6 +38,7 @@ export const recordRuntimeRunQueued = async (input: {
     multi.hincrby(keyTotals(), 'runs_queued', 1);
     await multi.exec();
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning('Failed to record run queued analytics', {
       service: 'ai-paths-analytics',
       error,
@@ -65,6 +66,7 @@ export const recordRuntimeRunStarted = async (input: {
     multi.hincrby(keyTotals(), 'runs_started', 1);
     await multi.exec();
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning('Failed to record run started analytics', {
       service: 'ai-paths-analytics',
       error,
@@ -94,6 +96,7 @@ const recordRuntimeRunStatusMetric = async (input: {
     multi.hincrby(keyTotals(), `runs_${input.status}`, 1);
     await multi.exec();
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning('Failed to record run status analytics', {
       service: 'ai-paths-analytics',
       error,
@@ -158,6 +161,7 @@ export const recordRuntimeRunFinished = async (input: {
     }
     await multi.exec();
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning('Failed to record run finished analytics', {
       service: 'ai-paths-analytics',
       error,
@@ -190,6 +194,7 @@ export const recordRuntimeNodeStatus = async (input: {
     multi.hincrby(keyTotals(), `nodes_${statusKey}`, 1);
     await multi.exec();
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning('Failed to record node status analytics', {
       service: 'ai-paths-analytics',
       error,
@@ -236,6 +241,7 @@ export const recordBrainInsightAnalytics = async (input: {
     multi.hincrby(keyTotals(), `brain_${input.type}_${input.status}`, 1);
     await multi.exec();
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning('Failed to record Brain insight analytics', {
       service: 'ai-paths-analytics',
       error,

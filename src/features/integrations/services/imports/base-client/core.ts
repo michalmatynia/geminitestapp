@@ -1,4 +1,4 @@
-import type { BaseApiResponse } from '@/shared/contracts/integrations';
+import type { BaseApiResponse, BaseApiRawResult } from '@/shared/contracts/integrations';
 import { externalServiceError } from '@/shared/errors/app-error';
 import { withTransientRecovery } from '@/shared/lib/observability/transient-recovery/with-recovery';
 
@@ -9,14 +9,9 @@ import {
   BASE_API_LARGE_PAYLOAD_BYTES,
   buildBaseApiUrl,
 } from './config';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
-export type BaseApiRawResult = {
-  ok: boolean;
-  statusCode: number;
-  payload: BaseApiResponse | null;
-  error?: string;
-};
+export type { BaseApiRawResult };
 
 export type BaseApiCallOptions = {
   timeoutMs?: number;
@@ -60,7 +55,8 @@ export const estimatePayloadSizeBytes = (parameters: Record<string, unknown>): n
       }
     }
     return total;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return 0;
   }
 };
@@ -127,6 +123,7 @@ export async function callBaseApi(
           signal: controller.signal,
         });
       } catch (error: unknown) {
+        logClientError(error);
         if (error instanceof Error && error.name === 'AbortError') {
           throw externalServiceError(
             `Base API request timed out after ${timeoutMs}ms.`,
@@ -199,6 +196,7 @@ export async function callBaseApiRaw(
   try {
     payload = (await response.json()) as BaseApiResponse;
   } catch (error: unknown) {
+    logClientError(error);
     const message = error instanceof Error ? error.message : 'Invalid JSON payload.';
     return {
       ok: false,

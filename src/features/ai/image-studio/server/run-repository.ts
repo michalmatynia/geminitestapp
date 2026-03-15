@@ -13,6 +13,8 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import type { UpdateFilter } from 'mongodb';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export type {
   ImageStudioRunDispatchMode,
@@ -98,7 +100,8 @@ const createId = (): string => {
 const toJsonSafe = <T>(value: T): T => {
   try {
     return JSON.parse(JSON.stringify(value)) as T;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return value;
   }
 };
@@ -116,7 +119,9 @@ const ensureIndexesOnce = (() => {
           .createIndex({ projectId: 1, createdAt: -1 }),
         db.collection<ImageStudioRunDocument>(COLLECTION).createIndex({ status: 1, updatedAt: -1 }),
       ]);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // best-effort indexing
     }
   };

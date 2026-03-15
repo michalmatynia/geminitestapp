@@ -175,6 +175,7 @@ export function InternationalizationProvider({
           await deleteLanguageMutation.mutateAsync(language.id);
           toast(`Language ${language.name} deleted.`, { variant: 'success' });
         } catch (error) {
+          logClientError(error);
           logClientError(error, {
             context: {
               source: 'InternationalizationContext',
@@ -204,6 +205,7 @@ export function InternationalizationProvider({
           await deleteCurrencyMutation.mutateAsync(currency.id);
           toast(`Currency ${currency.code} deleted.`, { variant: 'success' });
         } catch (error) {
+          logClientError(error);
           logClientError(error, {
             context: {
               source: 'InternationalizationContext',
@@ -233,6 +235,7 @@ export function InternationalizationProvider({
           await deleteCountryMutation.mutateAsync(country.id);
           toast(`Country ${country.name} deleted.`, { variant: 'success' });
         } catch (error) {
+          logClientError(error);
           logClientError(error, {
             context: {
               source: 'InternationalizationContext',

@@ -282,6 +282,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
         });
 
       } catch (error) {
+        logClientError(error);
         logClientError(error, { context: { source: 'useAiPathsServerExecution', action: 'runServerStream', pathId: args.activePathId, triggerNodeId: triggerNode.id } });
         finalizeRun('failed', { message: 'Failed to initiate server run.' });
       }

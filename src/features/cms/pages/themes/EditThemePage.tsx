@@ -41,6 +41,7 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
       await updateTheme.mutateAsync({ id, input });
       router.push('/admin/cms/themes');
     } catch (submitError: unknown) {
+      logClientError(submitError);
       logClientError(submitError, {
         context: { source: 'EditThemePage', action: 'saveTheme', themeId: id },
       });

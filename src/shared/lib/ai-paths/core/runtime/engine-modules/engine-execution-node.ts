@@ -30,6 +30,8 @@ import {
   resolveEdgeToNodeId,
 } from './engine-utils';
 import { applyValidationBlockedNodeState, runRuntimeValidation } from './engine-validation-helpers';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const EXECUTED_STATE_KEY = '__executed_state__';
 const createExecutedState = (): NodeHandlerContext['executed'] => ({
@@ -760,6 +762,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
 
     return true;
   } catch (error) {
+    logClientError(error);
     const recoverableWaitState = resolveRecoverableNodeWaitState(node, error);
     if (recoverableWaitState) {
       state.activeNodes.delete(node.id);

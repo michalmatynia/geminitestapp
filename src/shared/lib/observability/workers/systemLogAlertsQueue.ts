@@ -20,6 +20,8 @@ import {
 } from './system-log-alerts/config';
 import { queueState, shouldCheckAlerts } from './system-log-alerts/state';
 import { type SystemLogAlertsJobData } from './system-log-alerts/types';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export { SYSTEM_LOG_ALERT_REPEAT_EVERY_MS };
 
@@ -35,6 +37,7 @@ const checkSystemLogAlerts = async (): Promise<void> => {
     await evaluateUserDefinedAlerts();
     await evaluateLogSilence();
   } catch (error: unknown) {
+    void ErrorSystem.captureException(error);
     void logSystemEvent({
       level: 'error',
       source: 'system-log-alerts',

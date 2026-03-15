@@ -130,6 +130,7 @@ export function AdminImageStudioPromptsPage(): React.JSX.Element {
       });
       toast('Prompts saved.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminImageStudioPromptsPage', action: 'savePrompts' },
       });

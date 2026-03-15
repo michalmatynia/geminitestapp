@@ -133,6 +133,7 @@ export const handleCreateSkuAutoIncrementSequence = async (args: {
     }));
     notifySuccess('SKU auto-increment sequence created.');
   } catch (error) {
+    logClientError(error);
     logClientError(error, {
       context: {
         source: 'useValidatorSettingsController',

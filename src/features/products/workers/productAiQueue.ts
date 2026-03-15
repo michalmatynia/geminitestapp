@@ -121,6 +121,7 @@ const runStoredProductAiJob = async (args: {
     });
     return result;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const message = error instanceof Error ? error.message : 'Job failed.';
     await ErrorSystem.captureException(error, {
       service: logSource,

@@ -6,6 +6,8 @@ import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
 import type { CmsStorefrontAppearanceMode } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import { useKangurClassOverrides } from '@/features/kangur/ui/useKangurClassOverrides';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const KANGUR_ACTIVE_SURFACE_CLASSNAME = 'kangur-surface-active';
 const KANGUR_ACTIVE_SURFACE_MODE_ATTRIBUTE = 'data-kangur-appearance-mode';
@@ -102,7 +104,9 @@ const restoreKangurSurfaceStyle = (target: HTMLElement): void => {
           target.style.removeProperty(key);
         }
       });
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Ignore malformed restore payloads and fall back to removing injected vars.
     }
   }
@@ -151,7 +155,9 @@ const restoreKangurSurfaceClassOverrides = (target: HTMLElement): void => {
       parsed.forEach((entry) => {
         target.classList.remove(entry);
       });
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Ignore malformed restore payloads.
     }
   }

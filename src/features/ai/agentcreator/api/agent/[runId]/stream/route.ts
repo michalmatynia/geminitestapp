@@ -7,6 +7,8 @@ import {
   type ApiHandlerContext as _ApiHandlerContext,
 } from '@/shared/lib/api/api-handler';
 import { startIntervalTask, type IntervalTaskHandle } from '@/shared/lib/timers';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const runtime = 'nodejs';
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
@@ -34,6 +36,7 @@ async function GET_handler(
           const payload = latest ? { snapshot: latest } : { snapshot: null };
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
         } catch (error) {
+          logClientError(error);
           try {
             const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
             void ErrorSystem.captureException(error, {
@@ -42,6 +45,7 @@ async function GET_handler(
               runId,
             });
           } catch (logError) {
+            logClientError(logError);
             if (DEBUG_CHATBOT) {
               const { logger } = await import('@/shared/utils/logger');
               logger.error(

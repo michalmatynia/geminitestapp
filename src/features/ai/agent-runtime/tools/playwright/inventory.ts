@@ -2,6 +2,8 @@ import type { UiElement, UiInventory } from '@/shared/contracts/agent-runtime';
 import { getAgentAuditLogDelegate } from '@/features/ai/agent-runtime/store-delegates';
 
 import type { Page } from 'playwright';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type { UiElement, UiInventory };
 
@@ -141,6 +143,7 @@ export const collectUiInventory = async (
     });
     return uiInventory;
   } catch (error) {
+    logClientError(error);
     if (log) {
       await log('warning', 'Failed to capture UI inventory.', {
         label,

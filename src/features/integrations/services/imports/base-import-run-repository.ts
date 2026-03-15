@@ -22,6 +22,8 @@ import { mutateAgentLease } from '@/shared/lib/agent-lease-service';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type { Filter } from 'mongodb';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const RUN_KEY_PREFIX = 'base_import_run:';
 const ITEM_KEY_PREFIX = 'base_import_run_item:';
@@ -72,7 +74,8 @@ const parseJson = <T>(value: string | null | undefined): T | null => {
   if (!value) return null;
   try {
     return JSON.parse(value) as T;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };

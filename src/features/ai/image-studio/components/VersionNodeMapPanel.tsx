@@ -32,6 +32,8 @@ import { useSettingsState } from '../context/SettingsContext';
 import { useSlotsActions } from '../context/SlotsContext';
 import { useVersionGraphActions, useVersionGraphState } from '../context/VersionGraphContext';
 import { useVersionGraphShortcuts } from '../hooks/useVersionGraphShortcuts';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -171,7 +173,9 @@ export function VersionNodeMapPanel(): React.JSX.Element {
     setExporting(true);
     try {
       await exportSvgAsPng(svg);
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // silently fail
     } finally {
       setExporting(false);

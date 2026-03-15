@@ -131,10 +131,12 @@ export function KangurSessionHistoryRow(props: KangurSessionHistoryRowProps): Re
             xpText={xpText}
           />
         }
+        asideClassName='w-full sm:ml-auto sm:w-auto'
         className='w-full items-center'
         contentClassName='flex-1'
         description={subtitle}
         descriptionClassName={subtitleClassName}
+        headerClassName='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'
         icon={<KangurSessionHistoryIcon accent={iconAccent} icon={icon} testId={iconTestId} />}
         title={title}
         titleClassName={titleClassName}

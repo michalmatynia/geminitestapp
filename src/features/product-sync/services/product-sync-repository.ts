@@ -27,6 +27,8 @@ import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/set
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type { Filter } from 'mongodb';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const ITEM_LIMIT_HARD = 100_000;
 const MAX_RUN_SCAN_LIMIT = 2_000;
@@ -133,7 +135,8 @@ const parseJson = <T>(value: string | null | undefined): T | null => {
   if (!value) return null;
   try {
     return JSON.parse(value) as T;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };

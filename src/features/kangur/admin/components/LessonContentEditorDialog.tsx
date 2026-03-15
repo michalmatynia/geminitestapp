@@ -26,6 +26,8 @@ import {
   writeLessonContentEditorDraft,
 } from '../lesson-content-editor-drafts';
 import { KangurAdminWorkspaceSectionCard } from './KangurAdminWorkspaceSectionCard';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type Props = {
   lesson: KangurLesson | null;
@@ -48,7 +50,8 @@ const formatDraftTimestamp = (value: string | null): string | null => {
       dateStyle: 'medium',
       timeStyle: 'short',
     }).format(new Date(value));
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return value;
   }
 };

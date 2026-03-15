@@ -133,6 +133,7 @@ const persistBackupSchedule = async (schedule: DatabaseEngineBackupSchedule): Pr
       );
       wroteMongo = true;
     } catch (error) {
+      void ErrorSystem.captureException(error);
       void ErrorSystem.logWarning(
         '[database-backup-scheduler] Failed to persist schedule to MongoDB',
         {
@@ -185,6 +186,7 @@ const enqueueScheduledBackup = async (dbType: DatabaseEngineBackupType): Promise
         });
       });
   } catch (error: unknown) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.captureException(error, {
       service: LOG_SOURCE,
       context: {
@@ -265,6 +267,7 @@ export async function tickDatabaseBackupScheduler(
       changed = true;
       result.triggered.push({ dbType, jobId });
     } catch (error: unknown) {
+      void ErrorSystem.captureException(error);
       const message = error instanceof Error ? error.message : String(error);
       nextSchedule = {
         ...nextSchedule,

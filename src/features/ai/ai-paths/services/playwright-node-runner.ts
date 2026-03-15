@@ -29,6 +29,8 @@ import type {
   LaunchOptions,
   Page,
 } from 'playwright';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const RUN_ROOT_DIR = path.join(process.cwd(), 'tmp', 'ai-paths-playwright-runs');
 const RUN_TTL_MS = 24 * 60 * 60 * 1000;
@@ -43,7 +45,8 @@ const safeStringify = (value: unknown): string => {
   if (value === null || value === undefined) return '';
   try {
     return JSON.stringify(value);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return '[unserializable]';
   }
 };
@@ -90,7 +93,9 @@ const cleanupOldRuns = async (): Promise<void> => {
         await fs.rm(targetPath, { recursive: true, force: true }).catch(() => undefined);
       })
     );
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+  
     // best effort cleanup only
   }
 };
@@ -344,7 +349,8 @@ const registerOutboundPolicyRoute = async (
     let parsed: URL;
     try {
       parsed = new URL(requestUrl);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       await route.continue();
       return;
     }
@@ -608,6 +614,7 @@ const executePlaywrightNodeRun = async (
     await writeRunState(finalState);
     return finalState;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const completedAt = nowIso();
     const existingRun = await readPlaywrightNodeRun(runId);
     const message = error instanceof Error ? error.message : String(error);
@@ -645,7 +652,9 @@ const executePlaywrightNodeRun = async (
           logs.push('[runtime] Video capture saved.');
           shouldPersistArtifacts = true;
         }
-      } catch {
+      } catch (error) {
+        void ErrorSystem.captureException(error);
+      
         // best effort
       }
     }
@@ -703,7 +712,8 @@ export const readPlaywrightNodeRun = async (
       ...(parsed as PlaywrightNodeRunRecord),
       ownerUserId: typeof parsed['ownerUserId'] === 'string' ? parsed['ownerUserId'] : null,
     };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };
@@ -749,7 +759,8 @@ export const readPlaywrightNodeArtifact = async (input: {
       artifact,
       content,
     };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };

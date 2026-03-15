@@ -1,3 +1,4 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 /**
  * Utility functions for AI generation in the CMS inspector.
  */
@@ -24,7 +25,8 @@ export function extractJsonFromResponse(raw: string): Record<string, unknown> | 
     const parsed = JSON.parse(jsonText) as unknown;
     if (!parsed || typeof parsed !== 'object') return null;
     return parsed as Record<string, unknown>;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 }

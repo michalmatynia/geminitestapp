@@ -3,6 +3,8 @@ import type {
   CaseResolverDocumentHistoryEntry,
   CaseResolverFileEditDraft,
 } from '@/shared/contracts/case-resolver';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const stripHtmlToComparablePlainText = (value: string): string =>
   value
@@ -42,7 +44,8 @@ export const decodeHistoryPreviewEntities = (value: string): string =>
       }
       try {
         return String.fromCodePoint(parsedCodePoint);
-      } catch {
+      } catch (error) {
+        logClientError(error);
         return fullMatch;
       }
     }

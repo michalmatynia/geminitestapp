@@ -14,6 +14,8 @@ import {
   useSaveChatbotContextMutation,
   useUploadChatbotContextPdfMutation,
 } from './useChatbotContextQueries';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type { ContextItem, ContextDraft };
 
@@ -24,7 +26,9 @@ const buildContextItems = (rawItems?: string): ContextItem[] => {
       if (Array.isArray(parsed)) {
         return parsed as ContextItem[];
       }
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // ignore invalid payload
     }
   }
@@ -38,7 +42,9 @@ const buildActiveIds = (rawActive?: string, items?: ContextItem[]): string[] => 
       if (Array.isArray(parsed)) {
         return parsed as string[];
       }
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // ignore invalid payload
     }
   }
@@ -186,6 +192,7 @@ export function useChatbotContextState() {
       setActiveIds((prev) => [...prev, ...nextItems.map((item) => item.id)]);
       toast('PDF added to context list', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Failed to parse PDF.';
       toast(message, { variant: 'error' });
     }
@@ -205,6 +212,7 @@ export function useChatbotContextState() {
       });
       toast('Global contexts saved', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Failed to save contexts.';
       toast(message, { variant: 'error' });
     }

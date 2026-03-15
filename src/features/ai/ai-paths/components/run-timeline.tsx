@@ -16,6 +16,8 @@ import {
   type RuntimeTraceDurationRow,
   type RuntimeTraceTimelineItem,
 } from './run-trace-utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type TimelineFilter = 'run' | 'node' | 'event';
 
@@ -53,6 +55,7 @@ const formatMetadata = (metadata?: Record<string, unknown> | null): string | nul
   try {
     return JSON.stringify(metadata, null, 2);
   } catch (error: unknown) {
+    logClientError(error);
     return error instanceof Error ? error.message : String(error);
   }
 };
@@ -93,7 +96,8 @@ export function RunTimeline(props: {
           node: parsed?.node ?? true,
           event: parsed?.event ?? true,
         };
-      } catch {
+      } catch (error) {
+        logClientError(error);
         return { run: true, node: true, event: true };
       }
     }

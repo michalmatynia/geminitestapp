@@ -4,6 +4,8 @@ import fs from 'fs/promises';
 
 import type { UploadedImageBinaryDto as ParsedImageDataUrl } from '@/shared/contracts/image-studio';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type SourceSlotLike = {
   imageBase64?: string | null;
@@ -28,7 +30,8 @@ export const parseImageDataUrl = (dataUrl: string): ParsedImageDataUrl | null =>
     const buffer = Buffer.from(match[2] ?? '', 'base64');
     const mime = (match[1] ?? 'image/png').toLowerCase();
     return { buffer, mime };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };

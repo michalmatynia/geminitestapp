@@ -10,6 +10,8 @@ import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
 
 import type { KangurLearnerActivityRepository } from './types';
 import type { Filter } from 'mongodb';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const SETTINGS_COLLECTION = 'settings';
 const KANGUR_ACTIVITY_SETTING_PREFIX = 'kangur_activity:';
@@ -31,7 +33,8 @@ const parseActivityValue = (value: string | undefined): KangurLearnerActivitySna
   try {
     const parsed = kangurLearnerActivitySnapshotSchema.safeParse(JSON.parse(value));
     return parsed.success ? parsed.data : null;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };

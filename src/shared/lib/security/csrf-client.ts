@@ -1,3 +1,4 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 export const CSRF_COOKIE_NAME = 'csrf-token';
 export const CSRF_HEADER_NAME = 'x-csrf-token';
 export const CSRF_SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
@@ -59,7 +60,8 @@ export const isSameOriginUrl = (input: RequestInfo | URL): boolean => {
           ? input
           : new URL(input.url, origin);
     return url.origin === origin;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return true;
   }
 };

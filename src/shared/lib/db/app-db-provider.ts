@@ -7,6 +7,8 @@ import {
   getDatabaseEngineServiceProvider,
   isPrimaryProviderConfigured,
 } from './database-engine-policy';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const APP_DB_PROVIDER_SETTING_KEY = 'app_db_provider';
 export type { AppDbProvider };
@@ -40,7 +42,8 @@ const readMongoAppProviderSetting = async (): Promise<AppDbProvider | null> => {
         $or: [{ _id: APP_DB_PROVIDER_SETTING_KEY }, { key: APP_DB_PROVIDER_SETTING_KEY }],
       });
     return normalizeProvider(doc?.value ?? null);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

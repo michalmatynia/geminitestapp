@@ -1,4 +1,6 @@
 import type { SettingsScope, SettingRecord } from '@/shared/lib/settings-cache';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const HEAVY_PREFIXES = ['image_studio_', 'base_import_', 'base_export_'];
 const HEAVY_KEYS = new Set<string>([
@@ -79,7 +81,8 @@ const parseJsonStringLiteral = (raw: string): string | null => {
   try {
     const parsed = JSON.parse(raw) as unknown;
     return typeof parsed === 'string' ? parsed : null;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -132,7 +135,8 @@ export const parseCaseResolverWorkspaceMetadata = (
       revision,
       lastMutationId,
     };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return {
       revision: 0,
       lastMutationId: null,
@@ -146,7 +150,8 @@ export const parseUpdatedAtMsFromPathConfig = (raw: string): number | null => {
     if (typeof parsed?.updatedAt !== 'string') return null;
     const ms = Date.parse(parsed.updatedAt);
     return Number.isFinite(ms) ? ms : null;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -156,7 +161,8 @@ export const parsePathConfigObject = (raw: string): Record<string, unknown> | nu
     const parsed: unknown = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
     return parsed as Record<string, unknown>;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

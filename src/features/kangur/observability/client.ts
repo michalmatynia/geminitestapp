@@ -58,7 +58,8 @@ const getOrCreateSessionId = (): string => {
 const getTimeZone = (): string | null => {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone ?? null;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -189,7 +190,9 @@ export const trackKangurClientEvent = (
         return;
       }
     }
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Fall back to fetch when sendBeacon is unavailable or fails.
   }
 

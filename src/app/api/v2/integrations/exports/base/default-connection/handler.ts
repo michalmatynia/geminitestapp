@@ -31,6 +31,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     };
     return NextResponse.json(response);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning(
       'Failed to read Base.com default connection setting; returning null.',
       {
@@ -59,7 +60,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   let previousConnectionId: string | null = null;
   try {
     previousConnectionId = normalizeOptionalId(await getExportDefaultConnectionId());
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     previousConnectionId = null;
   }
   if (previousConnectionId !== connectionId) {

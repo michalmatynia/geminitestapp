@@ -2,6 +2,8 @@ import { noteService } from '@/server/notes/note-service';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const LOG_SOURCE = 'ai-paths-runtime';
 
@@ -43,6 +45,7 @@ export const fetchEntityByType = async (
     });
     return result;
   } catch (error) {
+    logClientError(error);
     const durationMs = Date.now() - fetchStart;
     void ErrorSystem.logWarning(`Failed to fetch entity ${entityType} ${entityId}`, {
       service: LOG_SOURCE,

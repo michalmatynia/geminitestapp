@@ -212,6 +212,7 @@ export function useTestSuitesManagerLogic(settingsStore: SettingsStoreValue) {
       state.setShowModal(false);
       state.setEditingSuite(null);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminKangurTestSuitesManagerPage', action: 'saveSuite' },
       });
@@ -237,6 +238,7 @@ export function useTestSuitesManagerLogic(settingsStore: SettingsStoreValue) {
       toast('Suite deleted.', { variant: 'success' });
       state.setSuiteToDelete(null);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminKangurTestSuitesManagerPage', action: 'deleteSuite' },
       });
@@ -267,6 +269,7 @@ export function useTestSuitesManagerLogic(settingsStore: SettingsStoreValue) {
           { variant: 'success' }
         );
       } catch (error) {
+        logClientError(error);
         logClientError(error, {
           context: { source: 'AdminKangurTestSuitesManagerPage', action: 'goLiveSuite', suiteId: suite.id },
         });
@@ -297,6 +300,7 @@ export function useTestSuitesManagerLogic(settingsStore: SettingsStoreValue) {
           { variant: 'success' }
         );
       } catch (error) {
+        logClientError(error);
         logClientError(error, {
           context: { source: 'AdminKangurTestSuitesManagerPage', action: 'takeSuiteOffline', suiteId: suite.id },
         });
@@ -330,6 +334,7 @@ export function useTestSuitesManagerLogic(settingsStore: SettingsStoreValue) {
           { variant: 'success' }
         );
       } catch (error) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'AdminKangurTestSuitesManagerPage',
@@ -363,6 +368,7 @@ export function useTestSuitesManagerLogic(settingsStore: SettingsStoreValue) {
         { variant: 'success' }
       );
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminKangurTestSuitesManagerPage', action: 'publishReadyQueue' },
       });
@@ -389,6 +395,7 @@ export function useTestSuitesManagerLogic(settingsStore: SettingsStoreValue) {
         { variant: 'success' }
       );
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminKangurTestSuitesManagerPage', action: 'goLiveReadySuites' },
       });
@@ -415,6 +422,7 @@ export function useTestSuitesManagerLogic(settingsStore: SettingsStoreValue) {
         { variant: 'success' }
       );
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminKangurTestSuitesManagerPage', action: 'takeLiveSuitesOffline' },
       });
@@ -438,6 +446,7 @@ export function useTestSuitesManagerLogic(settingsStore: SettingsStoreValue) {
       state.setGroupTitle('');
       state.setGroupDescription('');
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminKangurTestSuitesManagerPage', action: 'saveGroup' },
       });
@@ -459,6 +468,7 @@ export function useTestSuitesManagerLogic(settingsStore: SettingsStoreValue) {
       toast('Test group deleted.', { variant: 'success' });
       state.setGroupToDeleteTitle(null);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminKangurTestSuitesManagerPage', action: 'deleteGroup' },
       });
@@ -494,6 +504,7 @@ export function useTestSuitesManagerLogic(settingsStore: SettingsStoreValue) {
       state.setSuiteToMove(null);
       state.setSuiteMoveTargetGroupTitle('');
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminKangurTestSuitesManagerPage', action: 'moveSuiteToGroup' },
       });
@@ -565,6 +576,7 @@ export function useTestSuitesManagerLogic(settingsStore: SettingsStoreValue) {
       state.setManagingSuite(targetSuite);
       state.setManagerInitialView(undefined);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminKangurTestSuitesManagerPage', action: 'bulkMoveQuestions' },
       });

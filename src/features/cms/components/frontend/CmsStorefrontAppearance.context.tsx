@@ -7,6 +7,8 @@ import {
   CmsStorefrontAppearanceProviderProps,
   VALID_MODES,
 } from './CmsStorefrontAppearance.contracts';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const CmsStorefrontAppearanceContext =
   createContext<CmsStorefrontAppearanceContextValue | null>(null);
@@ -22,7 +24,8 @@ const readPersistedMode = (storageKey: string): CmsStorefrontAppearanceMode | nu
     return VALID_MODES.has(value as CmsStorefrontAppearanceMode)
       ? (value as CmsStorefrontAppearanceMode)
       : null;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -32,7 +35,9 @@ const writePersistedMode = (storageKey: string, mode: CmsStorefrontAppearanceMod
 
   try {
     window.localStorage.setItem(storageKey, mode);
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Ignore localStorage persistence failures and keep the in-memory selection.
   }
 };

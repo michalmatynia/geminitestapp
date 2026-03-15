@@ -225,6 +225,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
         toast('AI log insight generated.', { variant: 'success' });
       }
     } catch (error) {
+      logClientError(error);
       logClientError(error, { context: { source: 'SystemLogsContext', action: 'runInsight' } });
       toast(error instanceof Error ? error.message : 'Failed to generate log insight.', {
         variant: 'error',
@@ -247,6 +248,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
       }));
       toast('AI interpretation added.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'SystemLogsContext', action: 'interpretLog', logId },
       });
@@ -349,6 +351,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
       void metricsQuery.refetch();
       void insightsQuery.refetch();
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, { context: { source: 'SystemLogsContext', action: 'clearLogs' } });
       toast(error instanceof Error ? error.message : 'Failed to clear logs.', {
         variant: 'error',
@@ -367,6 +370,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
         { variant: 'success' }
       );
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, { context: { source: 'SystemLogsContext', action: 'rebuildIndexes' } });
       toast(error instanceof Error ? error.message : 'Failed to rebuild indexes.', {
         variant: 'error',

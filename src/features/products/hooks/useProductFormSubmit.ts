@@ -288,6 +288,7 @@ export function useProductFormSubmit({
             onSuccessRef.current?.();
           }
         } catch (error: unknown) {
+          logClientError(error);
           logClientError(error, {
             context: {
               service: 'product-form',

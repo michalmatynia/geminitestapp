@@ -13,6 +13,8 @@ import {
   type CropRect,
 } from './GenerationToolbarImageUtils';
 import { useGenerationToolbarResolution } from './useGenerationToolbarResolution';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function useGenerationToolbarActions(
   state: GenerationToolbarState,
@@ -157,6 +159,7 @@ export function useGenerationToolbarActions(
         variant: 'success',
       });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to attach mask variants.', {
         variant: 'error',
       });
@@ -215,6 +218,7 @@ export function useGenerationToolbarActions(
         cropDiagnosticsRef.current = null;
         handleCrop(squareCropRect, { includeCanvasContext: false }).catch(() => {});
       } catch (error) {
+        logClientError(error);
         toast(error instanceof Error ? error.message : 'Failed to prepare square crop.', {
           variant: 'error',
         });
@@ -276,6 +280,7 @@ export function useGenerationToolbarActions(
 
         handleCrop(previewCrop.cropRect, { includeCanvasContext: false }).catch(() => {});
       } catch (error) {
+        logClientError(error);
         toast(
           error instanceof Error ? error.message : 'Failed to prepare crop from preview view.',
           { variant: 'error' }

@@ -30,6 +30,8 @@ import { RunHistoryPanel } from '../../run-history-panel';
 import { RuntimeEventLogPanel } from '../../runtime-event-log-panel';
 import { useAiPathsSettingsPageContext } from '../AiPathsSettingsPageContext';
 import { AiPathsRuntimeAnalysis } from '../panels/AiPathsRuntimeAnalysis';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const asRecord = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === 'object' && !Array.isArray(value)
@@ -172,7 +174,9 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
       setRuntimeKernelNodeTypesDraft(nodeTypes.join(', '));
       setRuntimeKernelPersistedResolverIds(resolverIds);
       setRuntimeKernelResolverIdsDraft(resolverIds.join(', '));
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Non-fatal: keep defaults and let run-time env/settings resolver stay authoritative.
     } finally {
       setRuntimeKernelLoading(false);
@@ -254,6 +258,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
       setRuntimeKernelResolverIdsDraft(runtimeKernelDraftResolverIds.join(', '));
       notify('Runtime kernel settings saved.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       const message =
         error instanceof Error ? error.message : 'Failed to save runtime kernel settings.';
       notify(message, { variant: 'error' });
@@ -315,6 +320,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
       setPathRuntimeKernelResolverIdsDraft(pathRuntimeKernelDraftResolverIds.join(', '));
       notify('Path runtime-kernel settings saved.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       const message =
         error instanceof Error ? error.message : 'Failed to save path runtime-kernel settings.';
       notify(message, { variant: 'error' });

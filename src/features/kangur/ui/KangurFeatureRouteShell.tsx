@@ -20,6 +20,8 @@ import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurSto
 import { cn } from '@/shared/utils';
 
 import type { CSSProperties, JSX } from 'react';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const getSlugFromPathname = (
   pathname: string | null,
@@ -85,7 +87,8 @@ export function KangurFeatureRouteShell({
       const parsed = new URL(baseHref, 'https://kangur.local');
       const normalizedPathname = parsed.pathname.replace(/\/+$/, '') || '/';
       return search ? `${normalizedPathname}?${search}` : normalizedPathname;
-    } catch {
+    } catch (error) {
+      logClientError(error);
       const normalizedHref = baseHref.replace(/\/+$/, '') || '/';
       return search ? `${normalizedHref}?${search}` : normalizedHref;
     }

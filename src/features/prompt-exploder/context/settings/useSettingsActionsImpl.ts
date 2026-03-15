@@ -101,6 +101,7 @@ export function useSettingsActionsImpl(args: UseSettingsActionsImplArgs) {
         { variant: 'success' }
       );
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'PromptExploderSettingsContext', action: 'handleInstallPatternPack' },
       });
@@ -130,6 +131,7 @@ export function useSettingsActionsImpl(args: UseSettingsActionsImplArgs) {
       args.setHasUnsavedLearningDraft(false);
       toast('Learning settings saved.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'PromptExploderSettingsContext', action: 'handleSaveLearningSettings' },
       });
@@ -157,6 +159,7 @@ export function useSettingsActionsImpl(args: UseSettingsActionsImplArgs) {
       args.setHasUnsavedParserTuningDrafts(false);
       toast(`Saved ${args.parserTuningDrafts.length} parser tuning rules.`, { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'PromptExploderSettingsContext', action: 'handleSaveParserTuningRules' },
       });
@@ -201,6 +204,7 @@ export function useSettingsActionsImpl(args: UseSettingsActionsImplArgs) {
       args.setSnapshotDraftName('');
       toast(`Captured snapshot "${snapshot.name ?? 'Unnamed snapshot'}".`, { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'PromptExploderSettingsContext',
@@ -234,6 +238,7 @@ export function useSettingsActionsImpl(args: UseSettingsActionsImplArgs) {
         variant: 'success',
       });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'PromptExploderSettingsContext',
@@ -264,6 +269,7 @@ export function useSettingsActionsImpl(args: UseSettingsActionsImplArgs) {
         variant: 'success',
       });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to delete snapshot.', {
         variant: 'error',
       });
@@ -298,6 +304,7 @@ export function useSettingsActionsImpl(args: UseSettingsActionsImplArgs) {
         );
         toast(`Template state changed to ${nextState}.`, { variant: 'success' });
       } catch (error) {
+        logClientError(error);
         toast(error instanceof Error ? error.message : 'Failed to update template state.', {
           variant: 'error',
         });
@@ -329,6 +336,7 @@ export function useSettingsActionsImpl(args: UseSettingsActionsImplArgs) {
         );
         toast('Template removed.', { variant: 'success' });
       } catch (error) {
+        logClientError(error);
         toast(error instanceof Error ? error.message : 'Failed to delete template.', {
           variant: 'error',
         });

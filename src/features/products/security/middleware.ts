@@ -10,6 +10,8 @@ import {
   type SanitizationOptions,
 } from './input-sanitization';
 import { withRateLimit, rateLimiters } from './rate-limiting';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type SecurityConfig = {
   enableRateLimit?: boolean | undefined;
@@ -79,7 +81,8 @@ export class SecurityMiddleware {
             };
           }
         }
-      } catch {
+      } catch (error) {
+        logClientError(error);
         return {
           allowed: false,
           status: 400,
@@ -194,6 +197,7 @@ export function withSecurity(
       // Add security headers to response
       return addSecurityHeaders(response as NextResponse);
     } catch (error) {
+      logClientError(error);
       const { createErrorResponse } = await import('@/shared/lib/api/handle-api-error');
       const response = await createErrorResponse(error, {
         request: req,
@@ -231,6 +235,7 @@ export function withFileUploadSecurity(
       const response = await handler(req, validation.files || [], ...args);
       return addSecurityHeaders(response as NextResponse);
     } catch (error) {
+      logClientError(error);
       const { createErrorResponse } = await import('@/shared/lib/api/handle-api-error');
       const response = await createErrorResponse(error, {
         request: req,

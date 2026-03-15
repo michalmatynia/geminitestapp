@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { clearOfflineMutationQueue } from '@/shared/hooks/offline/useOfflineMutation';
 import { useInterval } from '@/shared/hooks/use-interval';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type OfflineQueueItem = {
   id: string;
@@ -31,7 +33,8 @@ const readQueueFromStorage = (): OfflineQueueItem[] => {
           timestamp: typeof item.timestamp === 'number' ? item.timestamp : Date.now(),
         })
       );
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return [];
   }
 };

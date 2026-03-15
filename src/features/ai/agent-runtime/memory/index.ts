@@ -25,7 +25,8 @@ const parseJsonObject = (raw: string): unknown => {
   try {
     const parsed: unknown = JSON.parse(jsonText);
     return parsed;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };
@@ -57,6 +58,7 @@ export async function addAgentMemory(params: {
       },
     });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     try {
       await ErrorSystem.captureException(error, {
         service: 'agent-memory',
@@ -64,6 +66,7 @@ export async function addAgentMemory(params: {
         runId: params.runId ?? undefined,
       });
     } catch (logError) {
+      void ErrorSystem.captureException(logError);
       if (DEBUG_CHATBOT) {
         const { logger } = await import('@/shared/utils/logger');
         logger.error(
@@ -102,6 +105,7 @@ export async function listAgentMemory(params: {
       orderBy: { createdAt: 'asc' },
     });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     try {
       await ErrorSystem.captureException(error, {
         service: 'agent-memory',
@@ -110,6 +114,7 @@ export async function listAgentMemory(params: {
         scope: params.scope,
       });
     } catch (logError) {
+      void ErrorSystem.captureException(logError);
       if (DEBUG_CHATBOT) {
         const { logger } = await import('@/shared/utils/logger');
         logger.error(
@@ -181,6 +186,7 @@ export async function addAgentLongTermMemory(params: {
       },
     });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     try {
       await ErrorSystem.captureException(error, {
         service: 'agent-memory',
@@ -189,6 +195,7 @@ export async function addAgentLongTermMemory(params: {
         runId: params.runId ?? undefined,
       });
     } catch (logError) {
+      void ErrorSystem.captureException(logError);
       if (DEBUG_CHATBOT) {
         const { logger } = await import('@/shared/utils/logger');
         logger.error(
@@ -262,6 +269,7 @@ export async function validateAgentLongTermMemory(params: {
       model,
     };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     return {
       valid: false,
       issues: [
@@ -335,7 +343,9 @@ export async function validateAndAddAgentLongTermMemory(params: {
       if (typeof parsed?.summary === 'string' && parsed.summary.trim()) {
         summary = parsed.summary.trim();
       }
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // keep existing summary if summarization fails
     }
   }
@@ -407,6 +417,7 @@ export async function listAgentLongTermMemory(params: {
     }
     return items;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     try {
       await ErrorSystem.captureException(error, {
         service: 'agent-memory',
@@ -414,6 +425,7 @@ export async function listAgentLongTermMemory(params: {
         memoryKey: params.memoryKey,
       });
     } catch (logError) {
+      void ErrorSystem.captureException(logError);
       if (DEBUG_CHATBOT) {
         const { logger } = await import('@/shared/utils/logger');
         logger.error(

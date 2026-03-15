@@ -33,6 +33,8 @@ import { usePromptState } from '../context/PromptContext';
 import { useSettingsActions, useSettingsState } from '../context/SettingsContext';
 import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
 import { useUiState } from '../context/UiContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 
 const REVEAL_IN_TREE_EVENT = 'image-studio:reveal-in-tree';
@@ -388,6 +390,7 @@ export function LeftSidebar(): React.JSX.Element {
       try {
         serializedSession = serializeImageStudioProjectSession(projectSession);
       } catch (error: unknown) {
+        logClientError(error);
         throw new Error(
           error instanceof Error
             ? `Failed to serialize project session: ${error.message}`
@@ -397,7 +400,9 @@ export function LeftSidebar(): React.JSX.Element {
       }
       try {
         saveImageStudioProjectSessionLocal(normalizedProjectId, projectSession);
-      } catch {
+      } catch (error) {
+        logClientError(error);
+      
         // Continue with cloud save; local cache is best-effort.
       }
 
@@ -411,7 +416,9 @@ export function LeftSidebar(): React.JSX.Element {
       .catch((error: unknown) => {
         try {
           saveImageStudioProjectSessionLocal(normalizedProjectId, projectSession);
-        } catch {
+        } catch (error) {
+          logClientError(error);
+        
           // Ignore local fallback failures and surface the original error.
         }
         toast(

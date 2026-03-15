@@ -7,6 +7,8 @@ import { Textarea, LoadingState } from '@/shared/ui';
 import { useOptionalMarkdownSplitEditorContext } from '../context/MarkdownSplitEditorContext';
 import { useMarkdownPreviewDebounce } from '../hooks/useMarkdownPreviewDebounce';
 import { useMarkdownSplitResizer } from '../hooks/useMarkdownSplitResizer';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export interface MarkdownSplitEditorProps {
   value?: string;
@@ -95,7 +97,8 @@ export function MarkdownSplitEditor(props: MarkdownSplitEditorProps): React.JSX.
     async (code: string): Promise<void> => {
       try {
         await navigator.clipboard.writeText(code);
-      } catch {
+      } catch (error) {
+        logClientError(error);
         onCopyCodeFailure?.();
       }
     },

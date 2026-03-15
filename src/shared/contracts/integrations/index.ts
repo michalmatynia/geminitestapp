@@ -532,14 +532,6 @@ export type ExportJobDetail = z.infer<typeof exportJobDetailSchema>;
 export const baseProductRecordSchema = z.record(z.string(), z.unknown());
 export type BaseProductRecord = z.infer<typeof baseProductRecordSchema>;
 
-export const baseApiRawResultSchema = z
-  .object({
-    status: z.string(),
-  })
-  .catchall(z.unknown());
-
-export type BaseApiRawResult = z.infer<typeof baseApiRawResultSchema>;
-
 export const importParameterCacheSchema = z.object({
   key: z.string(),
   value: z.unknown(),
@@ -557,6 +549,15 @@ export const baseApiResponseSchema = z
   .catchall(z.unknown());
 
 export type BaseApiResponse = z.infer<typeof baseApiResponseSchema>;
+
+export const baseApiRawResultSchema = z.object({
+  ok: z.boolean(),
+  statusCode: z.number(),
+  payload: baseApiResponseSchema.nullable(),
+  error: z.string().optional(),
+});
+
+export type BaseApiRawResult = z.infer<typeof baseApiRawResultSchema>;
 
 export const priceGroupLookupSchema = z.object({
   id: z.string(),
@@ -713,15 +714,37 @@ export type IntegrationRepository = {
 };
 
 export type ExternalCategoryRepository = {
-  listCategories: (
-    integrationId: string
-  ) => Promise<{ category_id: string; name: string; parent_id: string }[]>;
-  syncCategories: (integrationId: string) => Promise<void>;
+  syncFromBase: (connectionId: string, categories: BaseCategory[]) => Promise<number>;
+  listByConnection: (connectionId: string) => Promise<ExternalCategory[]>;
+  getTreeByConnection: (connectionId: string) => Promise<ExternalCategoryWithChildren[]>;
+  getById: (id: string) => Promise<ExternalCategory | null>;
+  getByExternalId: (
+    connectionId: string,
+    externalId: string
+  ) => Promise<ExternalCategory | null>;
+  deleteByConnection: (connectionId: string) => Promise<number>;
 };
 
 export type CategoryMappingRepository = {
-  getMapping: (categoryId: string, integrationId: string) => Promise<string | null>;
-  saveMapping: (categoryId: string, integrationId: string, externalId: string) => Promise<void>;
+  create: (input: CategoryMappingCreateInput) => Promise<CategoryMapping>;
+  update: (id: string, input: CategoryMappingUpdateInput) => Promise<CategoryMapping>;
+  delete: (id: string) => Promise<void>;
+  getById: (id: string) => Promise<CategoryMapping | null>;
+  listByConnection: (
+    connectionId: string,
+    catalogId?: string
+  ) => Promise<CategoryMappingWithDetails[]>;
+  getByExternalCategory: (
+    connectionId: string,
+    externalCategoryId: string,
+    catalogId: string
+  ) => Promise<CategoryMapping | null>;
+  bulkUpsert: (
+    connectionId: string,
+    catalogId: string,
+    mappings: CategoryMappingAssignment[]
+  ) => Promise<number>;
+  deleteByConnection: (connectionId: string) => Promise<number>;
 };
 
 export type CreateProductListingInput = Omit<

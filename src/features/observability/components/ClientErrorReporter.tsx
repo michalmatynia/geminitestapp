@@ -11,6 +11,8 @@ import {
   setClientErrorBaseContext,
 } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export default function ClientErrorReporter(): null {
   const pathname = usePathname();
@@ -84,7 +86,8 @@ export default function ClientErrorReporter(): null {
               try {
                 const raw = window.localStorage.getItem('featureFlags');
                 return raw ? (JSON.parse(raw) as Record<string, unknown>) : null;
-              } catch {
+              } catch (error) {
+                logClientError(error);
                 return null;
               }
             })())
@@ -97,7 +100,8 @@ export default function ClientErrorReporter(): null {
               try {
                 const raw = window.localStorage.getItem('clientLogTags');
                 return raw ? (JSON.parse(raw) as Record<string, unknown>) : null;
-              } catch {
+              } catch (error) {
+                logClientError(error);
                 return null;
               }
             })())

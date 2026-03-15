@@ -21,6 +21,8 @@ import { mapStatusToAppError } from '@/shared/errors/error-mapper';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 import type { Browser, BrowserContext, Page, BrowserContextOptions } from 'playwright';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type PersistedStorageState = NonNullable<Exclude<BrowserContextOptions['storageState'], string>>;
 
@@ -160,6 +162,7 @@ export async function postTestConnectionHandler(
       appKey = decryptSecret(encryptedAppKey).trim();
       token = decryptSecret(encryptedToken).trim();
     } catch (error) {
+      void ErrorSystem.captureException(error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       return fail(
         'Decrypting credentials',
@@ -198,6 +201,7 @@ export async function postTestConnectionHandler(
 
       return NextResponse.json(response);
     } catch (error) {
+      void ErrorSystem.captureException(error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       return fail('Testing API connection', message);
     }
@@ -260,6 +264,7 @@ export async function postTestConnectionHandler(
         pushStep('Loading session', 'failed', 'Stored session has invalid shape');
       }
     } catch (error) {
+      void ErrorSystem.captureException(error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       pushStep('Loading session', 'failed', `Failed to load session: ${message}`);
     }
@@ -295,6 +300,7 @@ export async function postTestConnectionHandler(
     try {
       proxyPassword = decryptSecret(connection.playwrightProxyPassword);
     } catch (error) {
+      void ErrorSystem.captureException(error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       pushStep('Proxy setup', 'failed', `Failed to decrypt proxy password: ${message}`);
     }
@@ -354,6 +360,7 @@ export async function postTestConnectionHandler(
       context.setDefaultNavigationTimeout(navigationTimeout);
       page = await context.newPage();
     } catch (error) {
+      void ErrorSystem.captureException(error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       return fail('Launching Playwright', message);
     }
@@ -414,6 +421,7 @@ export async function postTestConnectionHandler(
           pushStep('Reusing session', 'failed', 'Session invalid or expired');
         }
       } catch (error) {
+        void ErrorSystem.captureException(error);
         const message = error instanceof Error ? error.message : 'Unknown error';
         pushStep('Reusing session', 'failed', `Failed to check session: ${message}`);
       }
@@ -444,6 +452,7 @@ export async function postTestConnectionHandler(
             return url;
           }
         } catch (error) {
+          void ErrorSystem.captureException(error);
           const message = error instanceof Error ? error.message : 'Unknown error';
           pushStep('Opening login page', 'failed', `${url} failed: ${message}`);
         }
@@ -502,6 +511,7 @@ export async function postTestConnectionHandler(
         );
         pushStep('Manual login', 'ok', 'Logged-in state detected.');
       } catch (error) {
+        void ErrorSystem.captureException(error);
         const message = error instanceof Error ? error.message : 'Unknown error';
         return await failWithDebug(
           'Manual login',
@@ -525,6 +535,7 @@ export async function postTestConnectionHandler(
           throw internalError('Login form not visible yet');
         }
       } catch (error) {
+        void ErrorSystem.captureException(error);
         const message = error instanceof Error ? error.message : 'Unknown error';
         pushStep('Locating login form', 'failed', `Form not ready: ${message}`);
         if (!page) throw internalError('Page not found');
@@ -548,6 +559,7 @@ export async function postTestConnectionHandler(
             await humanizedClick(signInTrigger);
             await humanizedPause();
           } catch (clickError) {
+            void ErrorSystem.captureException(clickError);
             const clickMessage = clickError instanceof Error ? clickError.message : 'Unknown error';
             pushStep(
               'Locating login form',
@@ -568,6 +580,7 @@ export async function postTestConnectionHandler(
             'Login form'
           );
         } catch (waitError) {
+          void ErrorSystem.captureException(waitError);
           const waitMessage = waitError instanceof Error ? waitError.message : 'Unknown error';
           return await failWithDebug(
             'Locating login form',
@@ -588,6 +601,7 @@ export async function postTestConnectionHandler(
           'Password field'
         );
       } catch (error) {
+        void ErrorSystem.captureException(error);
         const message = error instanceof Error ? error.message : 'Unknown error';
         return await failWithDebug('Locating login form', `Input fields not visible: ${message}`);
       }
@@ -623,6 +637,7 @@ export async function postTestConnectionHandler(
         await humanizedFill(passwordField.locator, decryptedPassword);
         await humanizedPause();
       } catch (error) {
+        void ErrorSystem.captureException(error);
         const message = error instanceof Error ? error.message : 'Unknown error';
         return await failWithDebug('Filling credentials', `Failed to fill fields: ${message}`);
       }
@@ -651,6 +666,7 @@ export async function postTestConnectionHandler(
           pushStep('Keep me logged in', 'failed', 'Checkbox not found');
         }
       } catch (error) {
+        void ErrorSystem.captureException(error);
         const message = error instanceof Error ? error.message : 'Unknown error';
         pushStep('Keep me logged in', 'failed', `Checkbox error: ${message}`);
       }
@@ -674,6 +690,7 @@ export async function postTestConnectionHandler(
         ]);
         await humanizedPause();
       } catch (error) {
+        void ErrorSystem.captureException(error);
         const message = error instanceof Error ? error.message : 'Unknown error';
         return await failWithDebug('Submitting login', `Submit failed: ${message}`);
       }
@@ -692,6 +709,7 @@ export async function postTestConnectionHandler(
         }`;
         pushStep('Post-submit debug', 'ok', postSubmitDetail);
       } catch (error) {
+        void ErrorSystem.captureException(error);
         const message = error instanceof Error ? error.message : 'Unknown error';
         pushStep('Post-submit debug', 'failed', `Debug failed: ${message}`);
       }
@@ -730,6 +748,7 @@ export async function postTestConnectionHandler(
           pushStep('Captcha required', 'ok', 'Captcha solved.');
         }
       } catch (error) {
+        void ErrorSystem.captureException(error);
         const message = error instanceof Error ? error.message : 'Unknown error';
         pushStep('Captcha required', 'failed', `Captcha check failed: ${message}`);
       }
@@ -774,6 +793,7 @@ export async function postTestConnectionHandler(
           return await failWithDebug('Verifying session', `Login verification timed out. ${hint}`);
         }
       } catch (error) {
+        void ErrorSystem.captureException(error);
         const message = error instanceof Error ? error.message : 'Unknown error';
         return await failWithDebug('Verifying session', `Verification failed: ${message}`);
       }
@@ -797,6 +817,7 @@ export async function postTestConnectionHandler(
       });
       pushStep('Saving session', 'ok', 'Session stored for reuse');
     } catch (error) {
+      void ErrorSystem.captureException(error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       pushStep('Saving session', 'failed', `Failed to store session: ${message}`);
     }

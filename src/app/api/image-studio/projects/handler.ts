@@ -15,6 +15,8 @@ import { badRequestError, operationFailedError } from '@/shared/errors/app-error
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { clearSettingsCache } from '@/shared/lib/settings-cache';
 import { serializeSetting } from '@/shared/utils/settings-json';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 const PROJECT_METADATA_FILENAME = '.image-studio-project.json';
@@ -137,7 +139,8 @@ const resolveProjectSummary = async (
       canvasWidthPx: parseCanvasDimension(metadata['canvasWidthPx']),
       canvasHeightPx: parseCanvasDimension(metadata['canvasHeightPx']),
     };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return {
       id: projectId,
       createdAt: fallbackCreatedAt,

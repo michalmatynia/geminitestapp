@@ -1,27 +1,15 @@
+import type { ClientErrorPayloadDto as ClientErrorPayload } from '@/shared/contracts/observability';
 import { classifyError } from '@/shared/errors/error-classifier';
 
 import { isSensitiveKey, REDACTED_VALUE, truncateString } from './client-redaction';
 import { isAbortLikeError } from './is-abort-like-error';
 import { getLastUserAction, initUserActionTracker } from './user-action-tracker';
-
 type ClientErrorContext = Record<string, unknown>;
 type SerializedContext =
   | Record<string, unknown>
   | { truncated: true; preview: string }
   | { error: string }
   | null;
-
-export type ClientErrorPayload = {
-  message: string;
-  name?: string;
-  stack?: string | null;
-  digest?: string;
-  url?: string;
-  userAgent?: string;
-  componentStack?: string | null;
-  context?: ClientErrorContext | null;
-  timestamp?: string;
-};
 
 const MAX_CONTEXT_SIZE = 6000;
 const MAX_VALUE_LENGTH = 2000;
@@ -57,7 +45,8 @@ const safeSerialize = (value: unknown): SerializedContext => {
       return { truncated: true, preview: json.slice(0, MAX_CONTEXT_SIZE) };
     }
     return JSON.parse(json) as Record<string, unknown>;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return { error: 'Failed to serialize context.' };
   }
 };
@@ -126,16 +115,20 @@ const pruneRecentClientErrorSignatures = (nowMs: number): void => {
 };
 
 const shouldSkipDuplicateClientTimeout = (payload: ClientErrorPayload): boolean => {
-  if (!isTimeoutLikeMessage(payload.message)) {
+  const message = payload.message?.trim();
+  if (!message || !isTimeoutLikeMessage(message)) {
     return false;
   }
 
-  const context = payload.context;
+  const context =
+    payload.context && typeof payload.context === 'object'
+      ? (payload.context as ClientErrorContext)
+      : null;
   const endpoint = readContextString(context, 'endpoint');
   const method = readContextString(context, 'method');
   const source = readContextString(context, 'source');
   const pageUrl = typeof payload.url === 'string' ? payload.url.trim() : '';
-  const signature = [payload.message.trim().toLowerCase(), endpoint, method, source, pageUrl].join(
+  const signature = [message.toLowerCase(), endpoint, method, source, pageUrl].join(
     '::'
   );
   if (!signature.replace(/:/g, '').trim()) {
@@ -186,7 +179,9 @@ export const logClientError = (
   if (isLoggableObject(error)) {
     try {
       error.__logged = true;
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Ignore frozen objects
     }
   }
@@ -197,7 +192,9 @@ export const logClientError = (
       navigator.sendBeacon('/api/client-errors', blob);
       return;
     }
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // fall back to fetch
   }
 

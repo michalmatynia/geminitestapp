@@ -47,6 +47,7 @@ async function fetchWithRetry(url: string, init: RequestInit): Promise<Response>
   try {
     return await fetch(url, init);
   } catch (error) {
+    logClientError(error);
     if (!isTransientFetchError(error)) throw error;
     await delay(SETTINGS_FETCH_RETRY_DELAY_MS);
     return fetch(url, init);
@@ -127,6 +128,7 @@ async function fetchSettingsFromApi(
     }
     return (await res.json()) as SettingRecord[];
   } catch (error: unknown) {
+    logClientError(error);
     const normalizedError = toError(error);
     const scopeValue = normalizeScope(scope);
     const cached = settingsCache.get(scopeValue);
@@ -172,6 +174,7 @@ async function fetchLiteSettingsFromApi(bypassCache: boolean): Promise<SettingRe
     }
     return (await res.json()) as SettingRecord[];
   } catch (error: unknown) {
+    logClientError(error);
     const normalizedError = toError(error);
     if (liteSettingsCache) {
       logSettingsFetchError(

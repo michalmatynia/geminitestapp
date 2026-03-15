@@ -5,6 +5,8 @@ import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 
 import { StudioSlotRecord } from './types';
 import { upscaleBadRequest } from './upscale-request-parser';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;
 
@@ -15,7 +17,8 @@ export function parseDataUrl(dataUrl: string): { buffer: Buffer; mime: string } 
     const buffer = Buffer.from(match[2] ?? '', 'base64');
     const mime = (match[1] ?? 'image/png').toLowerCase();
     return { buffer, mime };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 }

@@ -32,6 +32,8 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 
 import { assertTriggerButtonPathExists } from './path-validation';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const AI_PATHS_TRIGGER_BUTTONS_KEY = 'ai_paths_trigger_buttons';
 export const querySchema = z.object({
@@ -54,7 +56,8 @@ const isMalformedPathIndexPayload = (raw: string | null): boolean => {
       return true;
     }
     return parsed.some((item: unknown) => !item || typeof item !== 'object' || Array.isArray(item));
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return true;
   }
 };
@@ -99,7 +102,9 @@ const filterButtonsWithExistingPaths = async (
           await upsertAiPathsSetting(configKey, JSON.stringify(resolved.config));
         }
         validButtonIds.add(button.id);
-      } catch {
+      } catch (error) {
+        void ErrorSystem.captureException(error);
+      
         // Hide buttons bound to malformed or otherwise invalid path configs.
       }
     })
@@ -123,6 +128,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   try {
     await requireAiPathsRunAccess();
   } catch (error) {
+    void ErrorSystem.captureException(error);
     // Trigger buttons are rendered across multiple surfaces. For users without
     // AI-paths permissions, treat this as an empty list rather than a noisy API error.
     if (
@@ -142,7 +148,8 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   let parsedButtons: AiTriggerButtonRecord[];
   try {
     parsedButtons = parseAiTriggerButtonsRaw(raw);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return NextResponse.json([], {
       headers: {
         'Cache-Control': 'no-store',
@@ -160,7 +167,8 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   let visibleButtons = scopedButtons;
   try {
     visibleButtons = await filterButtonsWithExistingPaths(scopedButtons);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     visibleButtons = scopedButtons;
   }
 

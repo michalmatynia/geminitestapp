@@ -82,6 +82,7 @@ export async function postDatabasesPreviewHandler(
         '--drop',
       ]);
     } catch (error) {
+      void ErrorSystem.captureException(error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw internalError(`Failed to inspect backup: ${message}`);
     }
@@ -118,6 +119,7 @@ export async function postDatabasesPreviewHandler(
       try {
         await db.dropDatabase();
       } catch (error) {
+        void ErrorSystem.captureException(error);
         void ErrorSystem.captureException(error, {
           service: 'api/databases/preview',
           stage: 'cleanup-preview-db',

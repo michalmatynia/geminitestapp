@@ -3,6 +3,7 @@ import type {
   MasterTreeTargetTypeDto,
   MasterTreeDropPositionDto,
   MasterTreeNode,
+  MasterTreeId,
 } from '../contracts/master-folder-tree';
 
 export const masterTreeNodeTypeValues = ['folder', 'file'] as const;
@@ -14,11 +15,10 @@ export type MasterTreeTargetType = MasterTreeTargetTypeDto;
 export const masterTreeDropPositionValues = ['inside', 'before', 'after'] as const;
 export type MasterTreeDropPosition = MasterTreeDropPositionDto;
 
-export type MasterTreeId = string;
 export type MasterTreeKind = string;
 export type MasterTreePath = string;
 
-export type { MasterTreeNode };
+export type { MasterTreeNode, MasterTreeId };
 
 export const isMasterTreeNodeType = (value: unknown): value is MasterTreeNodeType =>
   typeof value === 'string' && (masterTreeNodeTypeValues as readonly string[]).includes(value);

@@ -1,3 +1,4 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 // ---------------------------------------------------------------------------
 // Ring buffer — O(1) push, O(n) drain; bounded, no slice on every overflow
 // ---------------------------------------------------------------------------
@@ -72,7 +73,9 @@ function shipMetric(name: string, value: number, tags?: Record<string, string>):
           ...(tags ?? {}),
         },
       });
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Never let observability failures propagate
     }
   })();
@@ -300,6 +303,7 @@ export function withPerformanceMiddleware(
 
       return result;
     } catch (error) {
+      logClientError(error);
       const duration = performance.now() - start;
 
       performanceMonitor.record('request', duration, {

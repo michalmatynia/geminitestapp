@@ -1,4 +1,6 @@
 import type { PromptExploderParamEntry } from '@/shared/contracts/prompt-exploder';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const promptExploderClampNumber = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
@@ -18,7 +20,8 @@ export const promptExploderBenchmarkSuiteLabel = (suite: unknown): string => {
 export const promptExploderSafeJsonStringify = (value: unknown): string => {
   try {
     return JSON.stringify(value, null, 2);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return String(value);
   }
 };

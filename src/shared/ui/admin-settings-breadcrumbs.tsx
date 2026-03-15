@@ -1,26 +1,25 @@
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
-
-import { Breadcrumbs } from './Breadcrumbs';
-import { buildAdminSectionBreadcrumbItems } from './admin-section-breadcrumbs';
+import { AdminSectionBreadcrumbs, type AdminBreadcrumbNode } from './admin-section-breadcrumbs';
 
 type AdminSettingsBreadcrumbsProps = {
   current: string;
+  parent?: AdminBreadcrumbNode;
   className?: string;
 };
 
 export function AdminSettingsBreadcrumbs({
   current,
+  parent,
   className,
 }: AdminSettingsBreadcrumbsProps): React.JSX.Element {
-  const items = buildAdminSectionBreadcrumbItems({
-    section: { label: 'Settings', href: '/admin/settings' },
-    current,
-  });
-  const resolvedClassName = cn('mb-2', className);
-
   return (
-    <Breadcrumbs items={items} className={resolvedClassName} />
+    <AdminSectionBreadcrumbs
+      section={{ label: 'Settings', href: '/admin/settings' }}
+      current={current}
+      parent={parent}
+      className={className}
+      baseClassName='mb-2'
+    />
   );
 }

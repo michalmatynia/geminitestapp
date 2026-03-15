@@ -105,6 +105,7 @@ export async function uploadNoteFile(
 
     return noteFile;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void createFileUploadEvent({
       status: 'error',
       category: 'notes',
@@ -140,11 +141,14 @@ export async function deleteNoteFile(
       if (remaining.length === 0) {
         await fs.rmdir(noteDir);
       }
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // ignore cleanup errors
     }
     return await noteService.deleteNoteFile(noteId, slotIndex);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await ErrorSystem.captureException(error, {
       service: 'noteFileService',
       action: 'deleteNoteFile',

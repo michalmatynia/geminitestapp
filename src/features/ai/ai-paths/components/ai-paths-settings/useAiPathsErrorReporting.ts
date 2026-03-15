@@ -40,6 +40,7 @@ export function useAiPathsErrorReporting(
     try {
       await updateAiPathsSetting(AI_PATHS_LAST_ERROR_KEY, payload ? JSON.stringify(payload) : '');
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'useAiPathsErrorReporting', action: 'persistLastError' },
       });

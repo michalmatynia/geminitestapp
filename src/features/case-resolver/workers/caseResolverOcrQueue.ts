@@ -40,6 +40,8 @@ import {
   type CaseResolverResolvedOcrModel,
   type PreparedCaseResolverOcrInput,
 } from './case-resolver-ocr/types';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const resolveImageMimeType = (filepath: string): string => {
   const extension = path.extname(filepath).toLowerCase();
@@ -194,6 +196,7 @@ const processOcrJob = async (data: CaseResolverOcrQueueJobData): Promise<void> =
         });
         if (resultText) break;
       } catch (error) {
+        void ErrorSystem.captureException(error);
         lastError = error;
         void logSystemEvent({
           level: 'warn',
@@ -223,6 +226,7 @@ const processOcrJob = async (data: CaseResolverOcrQueueJobData): Promise<void> =
       },
     });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const isRetryable = isRetryableCaseResolverOcrError(error);
     if (isRetryable) {
       await markCaseResolverOcrJobQueuedForRetry(data.jobId, {
@@ -267,6 +271,7 @@ export const enqueueCaseResolverOcrJob = async (
       try {
         await processOcrJob(data);
       } catch (error) {
+        void ErrorSystem.captureException(error);
         void logSystemEvent({
           source: LOG_SOURCE,
           message: 'Inline OCR processing failed',

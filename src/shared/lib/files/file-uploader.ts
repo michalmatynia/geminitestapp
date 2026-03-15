@@ -268,6 +268,7 @@ export async function uploadFile(
 
     return imageFile;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void createFileUploadEvent({
       status: 'error',
       category: options?.category ?? null,
@@ -314,7 +315,9 @@ export async function deleteFileFromStorage(filepath: string): Promise<void> {
       try {
         const diskPath = getDiskPathFromPublicPath(publicPath);
         await fs.unlink(diskPath).catch(() => {});
-      } catch {
+      } catch (error) {
+        void ErrorSystem.captureException(error);
+      
         // ignore invalid or non-local paths
       }
     },

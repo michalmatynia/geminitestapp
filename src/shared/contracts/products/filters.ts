@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
 import { commonListQuerySchema } from '../../validations/api-schemas';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 export const productAdvancedFilterFieldSchema = z.enum([
   'id',
   'sku',
@@ -401,7 +403,8 @@ const getAdvancedFilterPayloadValidationError = (value: string): string | null =
     const result = productAdvancedFilterGroupSchema.safeParse(parsed);
     if (result.success) return null;
     return result.error.issues[0]?.message ?? 'Invalid advancedFilter payload.';
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return 'advancedFilter must be valid JSON.';
   }
 };

@@ -35,6 +35,7 @@ const getKnownMongoCollections = async (): Promise<string[]> => {
       .filter((name): name is string => Boolean(name && !name.startsWith('system.')))
       .sort((a, b) => a.localeCompare(b));
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning('[database-engine-status] Failed to list Mongo collections', {
       service: 'database-engine-status',
       error,
@@ -115,6 +116,7 @@ const buildServiceStatuses = async (params: {
           resolutionError: null,
         };
       } catch (error: unknown) {
+        void ErrorSystem.captureException(error);
         return {
           service,
           configuredProvider,

@@ -27,6 +27,8 @@ import {
   type CenterLayoutResult,
   type ClientImageObjectAnalysisResult,
 } from './GenerationToolbarImageUtils.types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const isClientCenterCrossOriginError = (error: unknown): boolean =>
   error instanceof Error && /cross-origin restrictions/i.test(error.message);
@@ -63,6 +65,7 @@ export const withCenterRetry = async <T>(
     try {
       return await run();
     } catch (error) {
+      logClientError(error);
       if (attempt >= retries || !isRetryableCenterError(error) || signal.aborted) {
         throw error;
       }
@@ -111,6 +114,7 @@ export const withAutoScalerRetry = async <T>(
     try {
       return await run();
     } catch (error) {
+      logClientError(error);
       if (attempt >= retries || !isRetryableAutoScalerError(error) || signal.aborted) {
         throw error;
       }
@@ -173,7 +177,8 @@ export const centerCanvasImageObject = async (src: string): Promise<string> => {
   let imageData: ImageData;
   try {
     imageData = sourceContext.getImageData(0, 0, sourceWidth, sourceHeight);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     throw new Error(
       'Client centering failed due to cross-origin restrictions. Use "Center Server: Sharp".'
     );
@@ -238,7 +243,8 @@ export const centerCanvasImageObjectWhiteBg = async (
   let imageData: ImageData;
   try {
     imageData = sourceContext.getImageData(0, 0, sourceWidth, sourceHeight);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     throw new Error(
       'Client centering failed due to cross-origin restrictions. Use "Center Server: Sharp".'
     );
@@ -314,7 +320,8 @@ const loadSourceCanvasWithImageData = async (
       sourceHeight,
       imageData,
     };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     throw new Error(crossOriginErrorMessage);
   }
 };

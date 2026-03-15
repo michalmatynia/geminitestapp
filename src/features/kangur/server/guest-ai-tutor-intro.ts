@@ -3,6 +3,8 @@ import 'server-only';
 import { createHash } from 'crypto';
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type KangurGuestAiTutorIntroDoc = {
   fingerprintHash: string;
@@ -144,6 +146,7 @@ export async function registerKangurGuestAiTutorIntroAppearance(input: {
       reason: 'first_visit',
     };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     if (isDuplicateKeyError(error)) {
       return {
         shouldShow: false,

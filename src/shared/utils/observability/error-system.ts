@@ -7,6 +7,8 @@ import {
   classifyError as classifySharedError,
   getSuggestedActions as getSharedSuggestedActions,
 } from '@/shared/errors/error-classifier';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const ErrorCategories = ERROR_CATEGORY;
 export type { ErrorCategory, ErrorContext };
@@ -57,12 +59,14 @@ export const ErrorSystem = {
             ...context,
           });
         } catch (auditError) {
+          logClientError(auditError);
           // Fallback to logger if audit logging fails
           const { logger } = await import('@/shared/utils/logger');
           logger.error('[ErrorSystem] Failed to log to Agent Audit:', auditError);
         }
       }
     } catch (importError) {
+      logClientError(importError);
       const { logger } = await import('@/shared/utils/logger');
       logger.error('[ErrorSystem] Failed to import dependencies:', importError);
     }
@@ -93,11 +97,13 @@ export const ErrorSystem = {
           const { logAgentAudit } = await import('@/features/ai/agent-runtime/audit');
           await logAgentAudit(context.runId, 'warning', message, context);
         } catch (auditError) {
+          logClientError(auditError);
           const { logger } = await import('@/shared/utils/logger');
           logger.warn('[ErrorSystem] Failed to log warning to Agent Audit:', { error: auditError });
         }
       }
     } catch (importError) {
+      logClientError(importError);
       const { logger } = await import('@/shared/utils/logger');
       logger.error('[ErrorSystem] Failed to import dependencies:', importError);
     }
@@ -121,6 +127,7 @@ export const ErrorSystem = {
         },
       });
     } catch (importError) {
+      logClientError(importError);
       const { logger } = await import('@/shared/utils/logger');
       logger.error('[ErrorSystem] Failed to import dependencies:', importError);
     }
@@ -146,6 +153,7 @@ export const ErrorSystem = {
         },
       });
     } catch (importError) {
+      logClientError(importError);
       const { logger } = await import('@/shared/utils/logger');
       logger.error('[ErrorSystem] Failed to import dependencies:', importError);
     }

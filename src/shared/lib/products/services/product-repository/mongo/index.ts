@@ -18,6 +18,8 @@ import { productCollectionName } from '../mongo-product-repository.helpers';
 import { mongoProductAssociationsImpl } from './associations';
 import { mongoProductReadImpl } from './read';
 import { mongoProductWriteImpl } from './write';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 let productIndexesEnsured: Promise<void> | null = null;
 
@@ -55,6 +57,7 @@ const ensureProductIndexes = async (): Promise<void> => {
   try {
     await productIndexesEnsured;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     productIndexesEnsured = null;
     throw error;
   }

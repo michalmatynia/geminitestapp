@@ -9,6 +9,8 @@ import {
   truncateString,
 } from './log-redaction';
 import { getActiveOtelContextAttributes } from './otel-context';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const OTEL_LOGGER_NAME = 'geminitestapp.system-logger';
 const MAX_ATTRIBUTE_VALUE_LENGTH = 2000;
@@ -58,7 +60,8 @@ const asAttributeValue = (key: string, value: unknown): string | number | boolea
     const serialized = JSON.stringify(value);
     if (!serialized) return undefined;
     return truncateString(redactSensitiveText(serialized), MAX_ATTRIBUTE_VALUE_LENGTH);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return '[Unserializable]';
   }
 };
@@ -114,7 +117,9 @@ export const emitOtelLogRecord = (input: EmitOtelLogRecordInput): void => {
       body,
       attributes,
     });
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Never throw from observability bridge.
   }
 };

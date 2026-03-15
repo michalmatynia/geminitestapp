@@ -28,6 +28,8 @@ import {
   SuspenseQueryOptionsWithoutCore,
   SuspenseQueryDescriptorV2,
 } from './types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const createTelemetrizedQueryFnInternal = <
   TQueryFnData,
@@ -86,6 +88,7 @@ const createTelemetrizedQueryFnInternal = <
       attemptRef.current = 0;
       return data;
     } catch (error) {
+      logClientError(error);
       const finalError = transformError ? transformError(error) : (error as TError);
       emitFactoryTelemetry({
         entity,

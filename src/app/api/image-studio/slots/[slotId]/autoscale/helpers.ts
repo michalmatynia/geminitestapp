@@ -19,6 +19,8 @@ import {
   type ImageStudioAutoScaleMetadata,
   IMAGE_STUDIO_AUTOSCALER_ERROR_CODES,
 } from '@/shared/contracts/image-studio';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export type { ImageStudioAutoScaleMetadata };
 
@@ -169,6 +171,7 @@ export function parseAutoScaleResponsePayload(
   try {
     return imageStudioAutoScalerResponseSchema.parse(data);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     // If validation fails, we still want to return a response but maybe with some context
     // This matches the error handling observed in tests
     const validationError = new Error('Auto scaler response validation failed') as Error & {

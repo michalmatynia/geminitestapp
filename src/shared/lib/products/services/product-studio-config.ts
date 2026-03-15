@@ -1,16 +1,12 @@
 import 'server-only';
 
 
+import type { ProductStudioConfig } from '@/shared/contracts/products';
 import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-export type ProductStudioConfig = {
-  projectId: string | null;
-  sourceSlotByImageIndex: Record<string, string>;
-  sourceSlotHistoryByImageIndex: Record<string, string[]>;
-  updatedAt: string;
-};
 
 type ProductStudioConfigInput = {
   projectId?: string | null | undefined;
@@ -113,7 +109,8 @@ const toConfig = (raw: string | null): ProductStudioConfig => {
       ),
       updatedAt,
     };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return createDefaultConfig();
   }
 };

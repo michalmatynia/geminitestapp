@@ -6,6 +6,8 @@ import { kangurLessonTtsProbeRequestSchema } from '@/features/kangur/tts/contrac
 import { probeKangurLessonNarrationBackend } from '@/features/kangur/tts/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 
 const readBodyJson = async (request: NextRequest): Promise<unknown> => {
@@ -16,7 +18,8 @@ const readBodyJson = async (request: NextRequest): Promise<unknown> => {
 
   try {
     return JSON.parse(rawBody) as unknown;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     throw badRequestError('Invalid JSON payload.');
   }
 };

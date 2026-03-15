@@ -68,6 +68,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
       toast('Preferences saved successfully', { variant: 'success' });
       router.push('/admin/products');
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'ProductPreferencesPage', action: 'handleSave' },
       });
@@ -81,6 +82,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
       setPreferences(DEFAULT_PREFERENCES);
       toast('Preferences reset to default', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'ProductPreferencesPage', action: 'handleResetToDefault' },
       });

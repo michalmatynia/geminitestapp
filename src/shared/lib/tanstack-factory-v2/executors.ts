@@ -5,6 +5,8 @@ import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 
 import { emitFactoryTelemetry, withQueryKeyMeta } from './telemetry';
 import { EnsureQueryDataV2Config, ManualQueryExecutorInput, QueryFactoryFn } from './types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const invokeQueryFactoryFn = <TQueryFnData, TQueryKey extends QueryKey>(
   queryFn: QueryFactoryFn<TQueryFnData, TQueryKey>,
@@ -58,6 +60,7 @@ export const createManualQueryExecutor = <
 
       return data;
     } catch (error) {
+      logClientError(error);
       emitFactoryTelemetry({
         entity: 'query',
         stage: telemetryErrorStage(error),

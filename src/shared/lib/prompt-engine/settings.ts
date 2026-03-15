@@ -21,6 +21,8 @@ import type {
   PromptValidationSettings,
   PromptEngineSettings,
 } from '@/shared/contracts/prompt-engine';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export { PROMPT_ENGINE_SETTINGS_KEY };
 export type {
@@ -739,7 +741,8 @@ export function parsePromptEngineSettings(raw: string | null | undefined): Promp
         learnedRules: result.data.promptValidation.learnedRules ?? [],
       },
     } as PromptEngineSettings;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return defaultPromptEngineSettings;
   }
 }
@@ -777,7 +780,8 @@ export function parsePromptValidationRules(
       return { ok: true, rules: mergedRules };
     }
     return { ok: false, error: 'Invalid rules shape. Expected an array of rule objects.' };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return { ok: false, error: 'Invalid JSON.' };
   }
 }

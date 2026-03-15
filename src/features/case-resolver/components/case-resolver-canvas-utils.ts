@@ -19,6 +19,8 @@ import {
   NODE_WIDTH,
 } from '@/shared/lib/ai-paths/core/constants';
 import { getDefaultConfigForType } from '@/shared/lib/ai-paths/core/normalization';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const buildNode = (
   definition: NodeDefinition,
@@ -244,7 +246,8 @@ const decodeHtmlEntity = (value: string): string => {
     const textarea = document.createElement('textarea');
     textarea.innerHTML = basicDecoded;
     return decodeBasicHtmlEntities(textarea.value);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return basicDecoded;
   }
 };

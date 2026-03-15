@@ -41,6 +41,8 @@ import {
 import { cn } from '@/shared/utils';
 
 import { ValidatedField } from './ValidatedField';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export default function ProductFormGeneral(): React.JSX.Element {
   const {
@@ -184,7 +186,8 @@ export default function ProductFormGeneral(): React.JSX.Element {
         let compiledRegex: RegExp | null;
         try {
           compiledRegex = new RegExp(p.regex, p.flags ?? undefined);
-        } catch {
+        } catch (error) {
+          logClientError(error);
           compiledRegex = null;
         }
         return { pattern: p, compiledRegex };
@@ -304,7 +307,8 @@ export default function ProductFormGeneral(): React.JSX.Element {
           if (precompiled) {
             try {
               hasMatch = precompiled.test(candidateValue);
-            } catch {
+            } catch (error) {
+              logClientError(error);
               hasMatch = false;
             }
           }
@@ -329,7 +333,8 @@ export default function ProductFormGeneral(): React.JSX.Element {
               pattern,
               replacement: effectiveReplacement,
             });
-          } catch {
+          } catch (error) {
+            logClientError(error);
             // If replacement evaluation fails (e.g. unresolved value), keep the current field value unchanged.
             break;
           }

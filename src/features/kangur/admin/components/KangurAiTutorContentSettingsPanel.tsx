@@ -14,6 +14,8 @@ import { api } from '@/shared/lib/api-client';
 import { parsePromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Alert, Badge, Button, Card, FormField, FormSection, Input, Textarea, useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const AI_TUTOR_CONTENT_EDITOR_LOCALE = 'pl';
 const SETTINGS_SECTION_CLASS_NAME = 'border-border/60 bg-card/35 shadow-sm';
@@ -60,6 +62,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
         setAiTutorContentEditorValue(nextValue);
         setPersistedAiTutorContentEditorValue(nextValue);
       } catch (error) {
+        logClientError(error);
         if (!cancelled) {
           toast(error instanceof Error ? error.message : 'Failed to load AI Tutor content.', {
             variant: 'error',
@@ -86,6 +89,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
         error: null,
       };
     } catch (error) {
+      logClientError(error);
       return {
         content: null,
         error: error instanceof Error ? error.message : 'Invalid AI Tutor content JSON.',
@@ -161,6 +165,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
       setPersistedAiTutorContentEditorValue(nextValue);
       toast('Kangur AI Tutor content reloaded.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to reload AI Tutor content.', {
         variant: 'error',
       });
@@ -196,6 +201,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
       setPersistedAiTutorContentEditorValue(nextValue);
       toast('Kangur AI Tutor content saved.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save AI Tutor content.', {
         variant: 'error',
       });

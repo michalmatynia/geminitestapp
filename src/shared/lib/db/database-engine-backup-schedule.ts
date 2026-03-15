@@ -5,6 +5,8 @@ import {
   type DatabaseEngineBackupStatus,
   type DatabaseEngineBackupTargetSchedule,
 } from './database-engine-constants';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const VALID_TIME_UTC = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
@@ -18,7 +20,8 @@ const parseRawObject = (raw: unknown): Record<string, unknown> | null => {
     try {
       const parsed = JSON.parse(raw) as unknown;
       return asRecord(parsed);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return null;
     }
   }

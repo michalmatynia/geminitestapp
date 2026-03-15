@@ -124,15 +124,15 @@ describe('ParentDashboard page', () => {
       'glass-panel',
       'border-white/78'
     );
-    expect(screen.getByRole('heading', { name: 'Panel Rodzica / Nauczyciela' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Panel Rodzica' })).toBeInTheDocument();
     expect(
       screen.getByText(
         'Ten widok pokazuje prywatne postępy ucznia, więc wymaga konta rodzica. Jeśli go jeszcze nie masz, załóż je bez opuszczania StudiQ.'
       )
     ).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Zaloguj się' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Utwórz konto rodzica' }));
+    await userEvent.click(screen.getByRole('button', { name: /Zaloguj się/i }));
+    await userEvent.click(screen.getByRole('button', { name: /Utwórz konto rodzica/i }));
 
     expect(navigateToLoginMock).toHaveBeenCalledTimes(2);
     expect(navigateToLoginMock).toHaveBeenLastCalledWith({
@@ -195,9 +195,9 @@ describe('ParentDashboard page', () => {
 
     const activeLearnerCard = screen.getByTestId('parent-dashboard-learner-card-learner-1');
     const inactiveLearnerCard = screen.getByTestId('parent-dashboard-learner-card-learner-2');
-    const progressTab = screen.getByRole('button', { name: /Post/i });
-    const scoresTab = screen.getByRole('button', { name: /Wyniki/i });
-    const assignmentsTab = screen.getByRole('button', { name: /Zadania/i });
+    const progressTab = screen.getByRole('tab', { name: /Post/i });
+    const scoresTab = screen.getByRole('tab', { name: /Wyniki/i });
+    const assignmentsTab = screen.getByRole('tab', { name: /Zadania/i });
 
     expect(activeLearnerCard).toHaveAttribute('aria-pressed', 'true');
     expect(activeLearnerCard).toHaveClass('soft-card', 'rounded-[30px]');
@@ -222,9 +222,9 @@ describe('ParentDashboard page', () => {
       'soft-card'
     );
     expect(screen.getByRole('combobox')).toHaveClass('soft-card');
-    expect(progressTab).toHaveAttribute('aria-pressed', 'true');
-    expect(scoresTab).toHaveAttribute('aria-pressed', 'false');
-    expect(assignmentsTab).toHaveAttribute('aria-pressed', 'false');
+    expect(progressTab).toHaveAttribute('aria-selected', 'true');
+    expect(scoresTab).toHaveAttribute('aria-selected', 'false');
+    expect(assignmentsTab).toHaveAttribute('aria-selected', 'false');
     expect(progressTab).toHaveClass('kangur-segmented-control-item-active');
     expect(scoresTab).not.toHaveClass('kangur-segmented-control-item-active');
     expect(assignmentsTab).not.toHaveClass('kangur-segmented-control-item-active');
@@ -233,13 +233,13 @@ describe('ParentDashboard page', () => {
     expect(selectLearnerMock).toHaveBeenCalledWith('learner-2');
 
     await userEvent.click(scoresTab);
-    expect(scoresTab).toHaveAttribute('aria-pressed', 'true');
-    expect(progressTab).toHaveAttribute('aria-pressed', 'false');
+    expect(scoresTab).toHaveAttribute('aria-selected', 'true');
+    expect(progressTab).toHaveAttribute('aria-selected', 'false');
     expect(scoresTab).toHaveClass('kangur-segmented-control-item-active');
     expect(progressTab).not.toHaveClass('kangur-segmented-control-item-active');
 
     await userEvent.click(assignmentsTab);
-    expect(assignmentsTab).toHaveAttribute('aria-pressed', 'true');
+    expect(assignmentsTab).toHaveAttribute('aria-selected', 'true');
     expect(assignmentsTab).toHaveClass('kangur-segmented-control-item-active');
     await waitFor(() =>
       expect(screen.getByTestId('kangur-assignment-manager')).toBeInTheDocument()

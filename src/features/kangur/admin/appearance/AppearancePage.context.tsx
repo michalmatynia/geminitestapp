@@ -42,6 +42,8 @@ import {
   SLOT_CONFIG,
   ThemeSelectionId,
 } from './AppearancePage.constants';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type AppearancePageContextValue = {
   catalog: KangurThemeCatalogEntry[];
@@ -146,6 +148,7 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
         });
         toast('Domyślny motyw startowy zaktualizowany.', { variant: 'success' });
       } catch (error) {
+        logClientError(error);
         toast(error instanceof Error ? error.message : 'Nie udało się zapisać domyślnego motywu.', { variant: 'error' });
         setDefaultModeDraft(storedDefaultMode);
       } finally {
@@ -285,6 +288,7 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
         await updateSetting.mutateAsync({ key: KANGUR_SLOT_ASSIGNMENTS_KEY, value: serializeSetting(nextAssignments) });
         toast(`Motyw przypisany do slotu "${SLOT_CONFIG[slot].label}".`, { variant: 'success' });
       } catch (error) {
+        logClientError(error);
         toast(error instanceof Error ? error.message : 'Nie udało się przypisać motywu.', { variant: 'error' });
       }
     },
@@ -299,6 +303,7 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
         await updateSetting.mutateAsync({ key: KANGUR_SLOT_ASSIGNMENTS_KEY, value: serializeSetting(nextAssignments) });
         toast(`Slot "${SLOT_CONFIG[slot].label}" przywrócony do fabrycznego.`, { variant: 'success' });
       } catch (error) {
+        logClientError(error);
         toast(error instanceof Error ? error.message : 'Nie udało się odpisać motywu.', { variant: 'error' });
       }
     },
@@ -333,6 +338,7 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
       setIsDirty(false);
       toast('Motyw został zapisany.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Błąd zapisu motywu.', { variant: 'error' });
     } finally {
       setIsSaving(false);

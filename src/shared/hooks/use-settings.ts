@@ -30,6 +30,7 @@ const fetchSettingsWithFallback = async (
   try {
     return await fetchSettingsCached({ scope });
   } catch (error) {
+    logClientError(error);
     logClientError(error instanceof Error ? error : new Error(String(error)), {
       context: { source, action: 'fetchSettings', scope, level: 'warn' },
     });
@@ -41,6 +42,7 @@ const fetchLiteSettingsWithFallback = async (): Promise<SystemSetting[]> => {
   try {
     return await fetchLiteSettingsCached();
   } catch (error) {
+    logClientError(error);
     logClientError(error instanceof Error ? error : new Error(String(error)), {
       context: { source: 'useLiteSettingsMap', action: 'fetchLiteSettings', level: 'warn' },
     });

@@ -200,6 +200,7 @@ export type ParsedPromptHeading = {
   title: string;
 };
 
-export type PromptExploderBenchmarkCase = PromptExploderBenchmarkCaseContract;
-
-export type PromptExploderBenchmarkReport = PromptExploderBenchmarkReportContract;
+export type {
+  PromptExploderBenchmarkCaseContract as PromptExploderBenchmarkCase,
+  PromptExploderBenchmarkReportContract as PromptExploderBenchmarkReport,
+};

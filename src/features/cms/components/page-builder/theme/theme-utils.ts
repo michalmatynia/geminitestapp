@@ -1,5 +1,7 @@
 import type { CmsTheme } from '@/shared/contracts/cms';
 import type { ColorSchemeColors, ThemeSettings } from '@/shared/contracts/cms-theme';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const parseCssNumber = (value?: string | null): number | null => {
   if (!value) return null;
@@ -53,7 +55,8 @@ export const parseColorSchemeFromText = (
   try {
     const payload = JSON.parse(trimmed) as unknown;
     return parseColorSchemePayload(payload);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

@@ -6,7 +6,12 @@ import dynamic from 'next/dynamic';
 import { parseKangurLessonDocumentStore } from '@/features/kangur/lesson-documents';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
-import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
+import type {
+  KangurLesson,
+  KangurLessonComponentId,
+  KangurLessonDocument,
+  KangurLessonDocumentStore,
+} from '@/shared/contracts/kangur';
 
 import type { ComponentType, JSX, RefObject } from 'react';
 
@@ -199,9 +204,6 @@ export const getLessonMasteryPresentation = (
   };
 };
 
-export type KangurLessonDocumentStore = ReturnType<typeof parseKangurLessonDocumentStore>;
-export type KangurLessonDocument = KangurLessonDocumentStore[string] | null;
-
 export type KangurLessonsRuntimeStateContextValue = {
   orderedLessons: KangurLesson[];
   lessonDocuments: KangurLessonDocumentStore;
@@ -210,7 +212,7 @@ export type KangurLessonsRuntimeStateContextValue = {
   activeLesson: KangurLesson | null;
   prevLesson: KangurLesson | null;
   nextLesson: KangurLesson | null;
-  activeLessonDocument: KangurLessonDocument;
+  activeLessonDocument: KangurLessonDocument | null;
   ActiveLessonComponent: ComponentType<LessonProps> | null;
   shouldRenderLessonDocument: boolean;
   hasActiveLessonDocumentContent: boolean;

@@ -23,6 +23,8 @@ import type {
   PortablePathRunOptions,
   PortablePathRunResult,
 } from './portable-engine-runtime-types';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export { runPortablePathClient };
 export * from './sinks.server';
@@ -134,6 +136,7 @@ export const runPortablePathServer = async (
       reportAiPathsError: reportAiPathsError ?? (() => {}),
     });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     recordPortablePathRunExecutionFailure({
       runner: 'server',
       surface: telemetrySurface,

@@ -422,6 +422,7 @@ export async function buildPlanWithLLM({
           : {}),
     };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning('[chatbot][agent][engine] Planner fallback', {
       runId,
       error,

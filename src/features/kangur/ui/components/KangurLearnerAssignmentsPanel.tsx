@@ -184,6 +184,7 @@ export function KangurLearnerAssignmentsPanel({
         title='Aktualne sugestie od rodzica'
         emptyLabel='Brak aktualnych sugestii od rodzica.'
         compact
+        showTimeCountdown
       />
 
       <KangurAssignmentsList

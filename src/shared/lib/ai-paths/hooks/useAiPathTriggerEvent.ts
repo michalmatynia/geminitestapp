@@ -100,6 +100,7 @@ export function useAiPathTriggerEvent(): {
           settingsData = settingsLoad.settingsData;
           settingsLoadMode = settingsLoad.mode;
         } catch (settingsError) {
+          logClientError(settingsError);
           const errorMessage =
             settingsError instanceof Error ? settingsError.message : String(settingsError);
           const timeoutCode = isTimeoutMessage(errorMessage) ? 'settings_preload_timeout' : null;
@@ -155,6 +156,7 @@ export function useAiPathTriggerEvent(): {
           uiState = selection.uiState;
           missingPreferredPathId = selection.missingPreferredPathId;
         } catch (selectionError) {
+          logClientError(selectionError);
           const message =
             selectionError instanceof Error
               ? selectionError.message
@@ -238,6 +240,7 @@ export function useAiPathTriggerEvent(): {
           try {
             entityJson = args.getEntityJson();
           } catch (entityJsonError) {
+            logClientError(entityJsonError);
             logClientError(entityJsonError, {
               context: {
                 source: 'useAiPathTriggerEvent',
@@ -565,6 +568,7 @@ export function useAiPathTriggerEvent(): {
           });
         });
       } catch (error) {
+        logClientError(error);
         const message =
           error instanceof Error && error.message.trim().length > 0
             ? error.message

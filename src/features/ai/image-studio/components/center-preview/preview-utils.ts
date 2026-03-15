@@ -1,3 +1,4 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 export type VariantThumbnailInfo = {
   id: string;
   index: number;
@@ -81,7 +82,8 @@ export const normalizeImagePath = (value: string | null | undefined): string => 
     try {
       const parsed = new URL(trimmed);
       return parsed.pathname.replace(/\\/g, '/');
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return trimmed.replace(/\\/g, '/');
     }
   }

@@ -14,6 +14,8 @@ import {
 } from './prompt-extract-utils';
 
 import type { Dispatch, SetStateAction } from 'react';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type StudioPromptExtractionSettings = {
   promptExtraction: {
@@ -134,6 +136,7 @@ export const createPromptExtractionHandlers = (
         : '';
       deps.toast(`Programmatic extraction completed.${validationSuffix}`, { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Programmatic extraction failed';
       deps.setExtractError(message);
       deps.toast(message, { variant: 'error' });
@@ -204,6 +207,7 @@ export const createPromptExtractionHandlers = (
         { variant: 'success' }
       );
     } catch (error: unknown) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Smart extraction failed';
       deps.setExtractError(message);
       deps.toast(message, { variant: 'error' });
@@ -263,6 +267,7 @@ export const createPromptExtractionHandlers = (
         variant: 'success',
       });
     } catch (error: unknown) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'AI extraction failed';
       deps.setExtractError(message);
       deps.toast(message, { variant: 'error' });
@@ -318,6 +323,7 @@ export const createPromptExtractionHandlers = (
       deps.setExtractPreviewUiOverrides(nextControls);
       deps.toast('UI selector suggestions updated.', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Failed to suggest UI controls';
       deps.setExtractError(message);
       deps.toast(message, { variant: 'error' });
@@ -359,7 +365,8 @@ export const copyCardIdToClipboard = async (cardId: string, toast: Toast): Promi
   try {
     await navigator.clipboard.writeText(normalizedCardId);
     toast('Card ID copied to clipboard.', { variant: 'success' });
-  } catch {
+  } catch (error) {
+    logClientError(error);
     toast('Failed to copy Card ID.', { variant: 'error' });
   }
 };

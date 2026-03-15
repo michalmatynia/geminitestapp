@@ -1,7 +1,7 @@
 'use client';
 
 import { CopyIcon } from 'lucide-react';
-import { useMemo, type JSX } from 'react';
+import { useMemo, useId, type JSX } from 'react';
 
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button, Label, Textarea, Checkbox, Badge, SelectSimple } from '@/shared/ui';
@@ -31,6 +31,13 @@ interface PromptGenerationSectionProps {
   badgeVariant: 'info' | 'secondary';
   badgeTextColor: string;
   outputEnabledCheckboxId: string;
+  inputId?: string;
+  outputPromptId?: string;
+  modelSelectId?: string;
+  initialResultId?: string;
+  finalResultId?: string;
+  initialResultLabelId?: string;
+  finalResultLabelId?: string;
 }
 
 const resolvePromptRows = (pathNumber: number): number => (pathNumber === 1 ? 4 : 6);
@@ -66,33 +73,54 @@ function PromptGenerationSectionHeader(): JSX.Element {
 }
 
 function PromptGenerationInputPanel(): JSX.Element {
-  const { inputLabel, inputValue, onInputChange, pathNumber } = usePromptGenerationSectionRuntime();
+  const { inputLabel, inputValue, onInputChange, pathNumber, inputId } =
+    usePromptGenerationSectionRuntime();
   return (
     <div className='space-y-2'>
-      <Label>{inputLabel}</Label>
+      <Label htmlFor={inputId}>{inputLabel}</Label>
       <Textarea
+        id={inputId}
         rows={resolvePromptRows(pathNumber)}
         value={inputValue}
         onChange={(event) => onInputChange(event.target.value)}
         className='mt-1.5 bg-gray-900 border text-white font-mono text-sm'
-       aria-label='Textarea' title='Textarea'/>
+      />
     </div>
   );
 }
 
 function PromptGenerationInitialResultPanel(): JSX.Element {
-  const { initialResultLabel, initialResultValue, onCopyInitialResult, pathNumber } =
-    usePromptGenerationSectionRuntime();
+  const {
+    initialResultLabel,
+    initialResultValue,
+    onCopyInitialResult,
+    pathNumber,
+    initialResultId,
+    initialResultLabelId,
+  } = usePromptGenerationSectionRuntime();
   return (
     <div className='space-y-2'>
       <div className='flex items-center justify-between'>
-        <Label>{initialResultLabel}</Label>
-        <Button variant='ghost' size='sm' className='h-6 text-[10px]' onClick={onCopyInitialResult}>
-          <CopyIcon className='size-3 mr-1' />
+        <Label id={initialResultLabelId}>{initialResultLabel}</Label>
+        <Button
+          variant='ghost'
+          size='sm'
+          className='h-6 text-[10px]'
+          onClick={onCopyInitialResult}
+          aria-label={`Copy ${initialResultLabel}`}
+        >
+          <CopyIcon className='size-3 mr-1' aria-hidden='true' />
           Copy
         </Button>
       </div>
-      <div className={resolveResultClassName(pathNumber)}>
+      <div
+        id={initialResultId}
+        className={resolveResultClassName(pathNumber)}
+        role='status'
+        aria-live='polite'
+        aria-atomic='true'
+        aria-labelledby={initialResultLabelId}
+      >
         {initialResultValue ? (
           <div className='whitespace-pre-wrap'>{initialResultValue}</div>
         ) : (
@@ -104,17 +132,18 @@ function PromptGenerationInitialResultPanel(): JSX.Element {
 }
 
 function PromptGenerationModelPanel(): JSX.Element {
-  const { modelLabel, modelOptions, modelValue, onModelChange } =
+  const { modelLabel, modelOptions, modelValue, onModelChange, modelSelectId } =
     usePromptGenerationSectionRuntime();
   return (
     <div className='max-w-md'>
-      <Label>{modelLabel}</Label>
+      <Label htmlFor={modelSelectId}>{modelLabel}</Label>
       <SelectSimple
         size='sm'
         value={modelValue}
         onValueChange={onModelChange}
         options={modelOptions}
-       ariaLabel='Select option' title='Select option'/>
+        id={modelSelectId}
+      />
     </div>
   );
 }
@@ -148,34 +177,55 @@ function PromptGenerationOutputPromptPanel(): JSX.Element {
     outputPromptValue,
     onOutputPromptChange,
     pathNumber,
+    outputPromptId,
   } = usePromptGenerationSectionRuntime();
   return (
     <div className='space-y-2'>
-      <Label>{outputPromptLabel}</Label>
+      <Label htmlFor={outputPromptId}>{outputPromptLabel}</Label>
       <Textarea
+        id={outputPromptId}
         rows={resolvePromptRows(pathNumber)}
         value={outputPromptValue}
         onChange={(event) => onOutputPromptChange(event.target.value)}
         className='mt-1.5 bg-gray-900 border text-white font-mono text-sm'
         placeholder={outputPlaceholder}
-       aria-label={outputPlaceholder} title={outputPlaceholder}/>
+      />
     </div>
   );
 }
 
 function PromptGenerationFinalResultPanel(): JSX.Element {
-  const { finalResultLabel, finalResultValue, onCopyFinalResult, pathNumber } =
-    usePromptGenerationSectionRuntime();
+  const {
+    finalResultLabel,
+    finalResultValue,
+    onCopyFinalResult,
+    pathNumber,
+    finalResultId,
+    finalResultLabelId,
+  } = usePromptGenerationSectionRuntime();
   return (
     <div className='space-y-2'>
       <div className='flex items-center justify-between'>
-        <Label>{finalResultLabel}</Label>
-        <Button variant='ghost' size='sm' className='h-6 text-[10px]' onClick={onCopyFinalResult}>
-          <CopyIcon className='size-3 mr-1' />
+        <Label id={finalResultLabelId}>{finalResultLabel}</Label>
+        <Button
+          variant='ghost'
+          size='sm'
+          className='h-6 text-[10px]'
+          onClick={onCopyFinalResult}
+          aria-label={`Copy ${finalResultLabel}`}
+        >
+          <CopyIcon className='size-3 mr-1' aria-hidden='true' />
           Copy
         </Button>
       </div>
-      <div className={resolveResultClassName(pathNumber)}>
+      <div
+        id={finalResultId}
+        className={resolveResultClassName(pathNumber)}
+        role='status'
+        aria-live='polite'
+        aria-atomic='true'
+        aria-labelledby={finalResultLabelId}
+      >
         {finalResultValue ? (
           <div className='whitespace-pre-wrap'>{finalResultValue}</div>
         ) : (
@@ -220,11 +270,30 @@ function PromptGenerationSectionRuntime(): JSX.Element {
 }
 
 export function PromptGenerationSection(props: PromptGenerationSectionProps): JSX.Element {
+  const baseId = useId().replace(/:/g, '');
+
   const runtimeValue = useMemo<PromptGenerationSectionProps>(
     () => ({
       ...props,
+      inputId: props.inputId ?? `${baseId}-input`,
+      outputPromptId: props.outputPromptId ?? `${baseId}-output`,
+      modelSelectId: props.modelSelectId ?? `${baseId}-model`,
+      initialResultId: props.initialResultId ?? `${baseId}-initial-result`,
+      finalResultId: props.finalResultId ?? `${baseId}-final-result`,
+      initialResultLabelId: props.initialResultLabelId ?? `${baseId}-initial-label`,
+      finalResultLabelId: props.finalResultLabelId ?? `${baseId}-final-label`,
     }),
-    [props]
+    [
+      props,
+      baseId,
+      props.inputId,
+      props.outputPromptId,
+      props.modelSelectId,
+      props.initialResultId,
+      props.finalResultId,
+      props.initialResultLabelId,
+      props.finalResultLabelId,
+    ]
   );
 
   return (

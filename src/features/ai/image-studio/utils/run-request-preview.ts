@@ -2,6 +2,8 @@ import type { ImageStudioSlotRecord, RunStudioPayload } from '@/shared/contracts
 import type { VectorShape } from '@/shared/lib/vector-drawing';
 
 import type { ImageStudioSettings } from './studio-settings';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type BuildRunRequestPayloadInput = {
   projectId: string;
@@ -113,7 +115,8 @@ export function resolvePromptPlaceholders(
     }
     try {
       return JSON.stringify(value);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return '';
     }
   });

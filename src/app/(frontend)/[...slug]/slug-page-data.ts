@@ -15,6 +15,8 @@ import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 
 import type { Metadata } from 'next';
 import type { Session } from 'next-auth';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type SlugRenderData = {
   theme: CmsTheme | null;
@@ -60,7 +62,8 @@ const canPreviewDrafts = async (session: Session | null): Promise<boolean> => {
   try {
     const prefs = await getUserPreferences(userId);
     return prefs.cmsPreviewEnabled === true;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return false;
   }
 };
@@ -80,7 +83,8 @@ export async function resolveSlugToPage(slugSegments: string[]): Promise<Page | 
     const allowDrafts = await canPreviewDrafts(session);
     if (!allowDrafts) return null;
     return page;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 }

@@ -6,6 +6,8 @@ import {
   resolveSettingRecordFromSettingsPayload,
 } from './utils/workspace-settings-persistence-helpers';
 import { logCaseResolverWorkspaceEvent } from './workspace-observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const CASE_RESOLVER_NODE_FILE_SNAPSHOT_KEY_PREFIX = 'case_resolver_node_file_snapshot::';
 
@@ -61,6 +63,7 @@ export const fetchSettingRecordValue = async ({
       if (!record || typeof record.value !== 'string') continue;
       return record.value;
     } catch (error: unknown) {
+      logClientError(error);
       logCaseResolverWorkspaceEvent({
         source,
         action: 'node_file_snapshot_fetch_failed',
@@ -101,6 +104,7 @@ export const persistSettingValue = async ({
     }
     return true;
   } catch (error: unknown) {
+    logClientError(error);
     logCaseResolverWorkspaceEvent({
       source,
       action: 'node_file_snapshot_persist_failed',
@@ -139,6 +143,7 @@ export const fetchCaseResolverNodeFileSnapshot = async (
   try {
     return parseNodeFileSnapshot(rawValue);
   } catch (error: unknown) {
+    logClientError(error);
     logCaseResolverWorkspaceEvent({
       source,
       action: 'node_file_snapshot_validation_failed',

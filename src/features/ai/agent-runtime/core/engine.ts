@@ -455,6 +455,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
       },
     });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const errorId = randomUUID();
     const message = error instanceof Error ? error.message : 'Unknown error';
 
@@ -483,6 +484,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
         });
       }
     } catch (innerError) {
+      void ErrorSystem.captureException(innerError);
       try {
         const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
         void ErrorSystem.captureException(innerError, {
@@ -492,6 +494,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
           originalErrorId: errorId,
         });
       } catch (logError) {
+        void ErrorSystem.captureException(logError);
         if (DEBUG_CHATBOT) {
           const { logger } = await import('@/shared/utils/logger');
           logger.error(

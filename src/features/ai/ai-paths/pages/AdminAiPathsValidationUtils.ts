@@ -15,6 +15,8 @@ import {
   normalizeRemovedTriggerContextModesInDocument,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type ParsedAiPathsSettings = {
   pathMetas: PathMeta[];
@@ -36,7 +38,8 @@ export type {
 export const parseJson = (value: string): unknown | null => {
   try {
     return JSON.parse(value) as unknown;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -98,7 +101,8 @@ export const parseRulesDraft = (value: string): RuleParseResult => {
       return { ok: false, error: 'Validation rules JSON must be an array.' };
     }
     return { ok: true, value: parsed as AiPathsValidationRule[] };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return { ok: false, error: 'Invalid validation rules JSON.' };
   }
 };

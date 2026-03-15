@@ -44,6 +44,8 @@ import {
 
 import type { EditableAddress } from '../hooks/editable-address';
 import type { FilemakerEvent, FilemakerOrganization } from '../types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const createId = (prefix: string): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -415,6 +417,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
       toast('Event updated.', { variant: 'success' });
       router.push('/admin/filemaker/events');
     } catch (error: unknown) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to update event.', {
         variant: 'error',
       });

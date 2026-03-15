@@ -10,6 +10,8 @@ import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 import { KANGUR_DEFAULT_DAILY_THEME, normalizeKangurThemeSettings } from '@/features/kangur/theme-settings';
 import { useAppearancePage } from './AppearancePage.context';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function ThemeImportExport(): React.JSX.Element {
   const { toast } = useToast();
@@ -22,7 +24,8 @@ export function ThemeImportExport(): React.JSX.Element {
       const data = JSON.stringify(draft, null, 2);
       void navigator.clipboard.writeText(data);
       toast('Konfiguracja motywu skopiowana do schowka.', { variant: 'success' });
-    } catch {
+    } catch (error) {
+      logClientError(error);
       toast('Nie udało się skopiować konfiguracji.', { variant: 'error' });
     } finally {
       setIsExporting(false);
@@ -40,7 +43,8 @@ export function ThemeImportExport(): React.JSX.Element {
       const normalized = normalizeKangurThemeSettings(parsed, KANGUR_DEFAULT_DAILY_THEME);
       setDraft(normalized);
       toast('Motyw wczytany ze schowka. Pamiętaj o zapisaniu zmian.', { variant: 'success' });
-    } catch {
+    } catch (error) {
+      logClientError(error);
       toast('Nieprawidłowy format danych w schowku.', { variant: 'error' });
     }
   };

@@ -59,6 +59,8 @@ import {
 import { createNodeRuntimeHandlerCatalog } from './node-runtime-handler-catalog';
 import { createNodeRuntimeKernel, toNodeRuntimeResolutionTelemetry } from './node-runtime-kernel';
 import { buildPromptOutput, pollGraphJob } from './utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 // Re-export types from core
 export * from './engine-core';
@@ -208,6 +210,7 @@ const handleModel: NodeHandler = async ({
       debugPayload: payload,
     };
   } catch (error) {
+    logClientError(error);
     reportAiPathsError(error, { action: 'graphModel', nodeId: node.id }, 'AI model job failed:');
     executed.ai.add(node.id);
     return {

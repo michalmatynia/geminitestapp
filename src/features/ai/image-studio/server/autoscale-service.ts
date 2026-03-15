@@ -33,6 +33,8 @@ import {
 } from './image-handler-utils';
 
 import type { StudioSlotRecord } from './upscale/types';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;
 const STRICT_SERVER_AUTOSCALER_ENABLED =
@@ -135,6 +137,7 @@ export async function processAutoScalerPayload(input: {
       }
       sourceBuffer = source.buffer;
     } catch (error) {
+      void ErrorSystem.captureException(error);
       sourceLoadError = error;
     }
   }
@@ -146,6 +149,7 @@ export async function processAutoScalerPayload(input: {
         preferTargetCanvas: true,
       });
     } catch (error) {
+      void ErrorSystem.captureException(error);
       if (error instanceof Error && /No visible object pixels were detected/i.test(error.message)) {
         throw autoScaleBadRequest(
           IMAGE_STUDIO_AUTOSCALER_ERROR_CODES.SOURCE_OBJECT_NOT_FOUND,

@@ -78,6 +78,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
       setName('');
       toast('Notebook created', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'AdminNotesNotebooksPage',
@@ -109,6 +110,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
       toast('Notebook updated', { variant: 'success' });
       handleEditCancel();
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'AdminNotesNotebooksPage',
@@ -129,6 +131,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
       toast('Notebook deleted', { variant: 'success' });
       setNotebookToDelete(null);
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'AdminNotesNotebooksPage',
@@ -158,6 +161,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
       });
       toast('Notebook duplicated', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'AdminNotesNotebooksPage',

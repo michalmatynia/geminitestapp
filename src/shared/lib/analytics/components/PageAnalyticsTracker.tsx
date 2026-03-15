@@ -5,6 +5,8 @@ import { useEffect, useMemo } from 'react';
 
 import type { AnalyticsEventCreateInput, AnalyticsScope } from '@/shared/contracts';
 import { useTrackEventMutation } from '@/shared/lib/analytics/hooks/useAnalyticsQueries';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const VISITOR_COOKIE = 'pa_vid';
 const SESSION_STORAGE_KEY = 'pa_sid';
@@ -65,7 +67,8 @@ const getScopeFromPathname = (pathname: string): AnalyticsScope =>
 const getTimeZone = (): string | null => {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone ?? null;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

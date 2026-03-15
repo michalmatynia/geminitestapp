@@ -103,6 +103,7 @@ export function ControlPromptModal(): React.JSX.Element {
       try {
         serializedSession = serializeImageStudioProjectSession(projectSession);
       } catch (error: unknown) {
+        logClientError(error);
         throw new Error(
           error instanceof Error
             ? `Failed to serialize prompt session: ${error.message}`
@@ -112,7 +113,9 @@ export function ControlPromptModal(): React.JSX.Element {
       }
       try {
         saveImageStudioProjectSessionLocal(normalizedProjectId, projectSession);
-      } catch {
+      } catch (error) {
+        logClientError(error);
+      
         // Local cache is best-effort.
       }
 
@@ -128,7 +131,8 @@ export function ControlPromptModal(): React.JSX.Element {
         try {
           saveImageStudioProjectSessionLocal(normalizedProjectId, projectSession);
           localFallbackSaved = true;
-        } catch {
+        } catch (error) {
+          logClientError(error);
           localFallbackSaved = false;
         }
         if (localFallbackSaved) {
@@ -203,6 +207,7 @@ export function ControlPromptModal(): React.JSX.Element {
       );
       return nextPrompt;
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'ControlPromptModal',

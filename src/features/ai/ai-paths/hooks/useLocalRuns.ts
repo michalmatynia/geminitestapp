@@ -11,6 +11,8 @@ import {
 import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 
 const AI_PATHS_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);
@@ -108,6 +110,7 @@ export function useLocalRuns({ sourceFilter, sourceMode }: UseLocalRunsOptions =
           { variant: 'success' }
         );
       } catch (err) {
+        logClientError(err);
         toast(err instanceof Error ? err.message : 'Failed to clear local runs.', {
           variant: 'error',
         });

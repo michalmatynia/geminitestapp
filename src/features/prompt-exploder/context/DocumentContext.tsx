@@ -58,6 +58,8 @@ import type {
   PromptExploderParamUiControl,
   PromptExploderSegment,
 } from '../types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export { DocumentPromptContext, type DocumentPromptState };
 export { DocumentActionsContext };
@@ -82,7 +84,8 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     try {
       const parsed = new URL(returnTo, 'https://local.prompt-exploder');
       return parsed.pathname.startsWith('/admin/case-resolver');
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return false;
     }
   }, [returnTo]);

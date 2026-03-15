@@ -13,6 +13,7 @@ export const getProducerRepository = async (
     void providerOverride;
     return mongoProducerRepository;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await ErrorSystem.captureException(error, {
       service: 'producer-repository',
       action: 'getProducerRepository',

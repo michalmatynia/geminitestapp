@@ -125,13 +125,22 @@ export type AppErrorOptions = {
 };
 
 export type ResolvedError = {
+  errorId: string;
   message: string;
   code: string;
-  status: number;
-  details?: unknown;
+  httpStatus: number;
+  expected: boolean;
+  critical: boolean;
+  retryable: boolean;
+  category: string;
+  suggestedActions: unknown[];
+  retryAfterMs?: number;
+  meta?: Record<string, unknown>;
+  cause?: unknown;
 };
 
 export type MapStatusOptions = {
+  retryAfterMs?: number;
   defaultStatus?: number;
   fallbackCode?: string;
 };
@@ -143,14 +152,6 @@ export interface AppErrorContext {
   method?: string;
   timestamp: string;
 }
-
-export type ClientErrorPayload = {
-  message: string;
-  stack?: string;
-  url?: string;
-  componentStack?: string;
-  context?: Record<string, unknown>;
-};
 
 /**
  * Standard API response wrapper

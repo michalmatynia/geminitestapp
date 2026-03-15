@@ -38,6 +38,7 @@ export type KangurAssignmentListItem = {
   title: string;
   description: string;
   icon: string;
+  createdAt: string;
   priority: KangurAssignmentSnapshot['priority'];
   status: KangurAssignmentSnapshot['progress']['status'];
   priorityLabel: string;
@@ -49,6 +50,7 @@ export type KangurAssignmentListItem = {
   progressCountLabel: string;
   lastActivityLabel: string | null;
   timeLimitMinutes: number | null;
+  timeLimitStartsAt: string | null;
   timeLimitLabel: string | null;
   actionHref: string;
   actionLabel: string;
@@ -336,6 +338,55 @@ const formatKangurAssignmentTimeLimit = (
   };
 };
 
+const formatKangurAssignmentCountdown = (remainingSeconds: number): string => {
+  if (remainingSeconds <= 0) {
+    return 'Czas minął';
+  }
+
+  const normalized = Math.max(0, Math.round(remainingSeconds));
+  const hours = Math.floor(normalized / 3600);
+  const minutes = Math.floor((normalized % 3600) / 60);
+  const seconds = normalized % 60;
+
+  if (hours > 0) {
+    return `Pozostało: ${hours} godz. ${minutes} min`;
+  }
+  if (minutes > 0) {
+    return `Pozostało: ${minutes} min ${seconds} s`;
+  }
+  return `Pozostało: ${seconds} s`;
+};
+
+export const resolveKangurAssignmentCountdownLabel = (input: {
+  timeLimitMinutes?: number | null;
+  timeLimitStartsAt?: string | null;
+  createdAt: string;
+  status?: KangurAssignmentSnapshot['progress']['status'] | null;
+  now?: number;
+}): string | null => {
+  const minutes =
+    typeof input.timeLimitMinutes === 'number' && Number.isFinite(input.timeLimitMinutes)
+      ? input.timeLimitMinutes
+      : null;
+  if (!minutes || minutes <= 0) {
+    return null;
+  }
+  if (input.status === 'completed') {
+    return null;
+  }
+
+  const start = input.timeLimitStartsAt ?? input.createdAt;
+  const startMs = Date.parse(start);
+  if (Number.isNaN(startMs)) {
+    return null;
+  }
+
+  const now = input.now ?? Date.now();
+  const deadlineMs = startMs + minutes * 60 * 1000;
+  const remainingSeconds = Math.ceil((deadlineMs - now) / 1000);
+  return formatKangurAssignmentCountdown(remainingSeconds);
+};
+
 export const resolveKangurAssignmentPriorityAccent = (
   priority: KangurAssignmentSnapshot['priority']
 ): 'rose' | 'amber' | 'emerald' => {
@@ -363,6 +414,7 @@ export const buildKangurAssignmentListItem = (
     title: assignment.title,
     description: assignment.description,
     icon: assignment.target.type === 'lesson' ? '📚' : '🎯',
+    createdAt: assignment.createdAt,
     priority: assignment.priority,
     status: assignment.progress.status,
     priorityLabel: formatKangurAssignmentPriorityLabel(assignment.priority),
@@ -374,6 +426,7 @@ export const buildKangurAssignmentListItem = (
     progressCountLabel: `${assignment.progress.attemptsCompleted}/${assignment.progress.attemptsRequired}`,
     lastActivityLabel: formatKangurAssignmentTimestamp(assignment.progress.lastActivityAt),
     timeLimitMinutes: timeLimit.minutes,
+    timeLimitStartsAt: assignment.timeLimitStartsAt ?? null,
     timeLimitLabel: timeLimit.label,
     actionHref: buildKangurAssignmentHref(basePath, assignment),
     actionLabel: getKangurAssignmentActionLabel(assignment),

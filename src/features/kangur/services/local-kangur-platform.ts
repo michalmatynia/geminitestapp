@@ -57,6 +57,8 @@ import {
   type KangurProgressState,
 } from '@/shared/contracts/kangur';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const KANGUR_AUTH_ME_ENDPOINT = '/api/kangur/auth/me';
 const KANGUR_LOGOUT_ENDPOINT = '/api/kangur/auth/logout';
@@ -292,6 +294,7 @@ const syncGuestScoresToApiIfAuthenticated = async (): Promise<void> => {
   try {
     await resolveSessionUser();
   } catch (error: unknown) {
+    logClientError(error);
     if (isKangurAuthStatusError(error)) {
       return;
     }
@@ -322,6 +325,7 @@ const requestMergedScores = async (params: {
     try {
       await syncGuestScoresToApiIfAuthenticated();
     } catch (error: unknown) {
+      logClientError(error);
       syncError = error;
     }
   }
@@ -347,6 +351,7 @@ const requestMergedScores = async (params: {
       limit: params.limit,
     });
   } catch (error: unknown) {
+    logClientError(error);
     if (localRows.length > 0) {
       return localRows;
     }
@@ -396,6 +401,7 @@ const requestScoresFromApi = async (url: string): Promise<KangurScoreRecord[]> =
 
       return [...parsed.data];
     } catch (error: unknown) {
+      logClientError(error);
       trackReadFailure('score.list', error, {
         endpoint: url,
         method: 'GET',
@@ -456,6 +462,7 @@ const createScoreViaApi = async (input: KangurScoreCreateInput): Promise<KangurS
     });
     return parsed.data;
   } catch (error: unknown) {
+    logClientError(error);
     trackWriteFailure('score.create', error, {
       endpoint: KANGUR_SCORES_ENDPOINT,
       method: 'POST',
@@ -497,6 +504,7 @@ const requestProgressFromApi = async (): Promise<KangurProgressState> => {
 
     return parsed.data;
   } catch (error: unknown) {
+    logClientError(error);
     if (isKangurAuthStatusError(error)) {
       throw error;
     }
@@ -557,6 +565,7 @@ const requestAssignmentsFromApi = async (
 
     return parsed.data;
   } catch (error: unknown) {
+    logClientError(error);
     if (isKangurAuthStatusError(error)) {
       throw error;
     }
@@ -613,6 +622,7 @@ const createAssignmentViaApi = async (
     });
     return parsed.data;
   } catch (error: unknown) {
+    logClientError(error);
     trackWriteFailure('assignments.create', error, {
       endpoint: KANGUR_ASSIGNMENTS_ENDPOINT,
       method: 'POST',
@@ -668,6 +678,7 @@ const updateAssignmentViaApi = async (
     });
     return parsed.data;
   } catch (error: unknown) {
+    logClientError(error);
     trackWriteFailure('assignments.update', error, {
       endpoint,
       method: 'PATCH',
@@ -717,6 +728,7 @@ const reassignAssignmentViaApi = async (id: string): Promise<KangurAssignmentSna
     });
     return parsed.data;
   } catch (error: unknown) {
+    logClientError(error);
     trackWriteFailure('assignments.reassign', error, {
       endpoint,
       method: 'POST',
@@ -779,6 +791,7 @@ const updateProgressViaApi = async (
     });
     return parsed.data;
   } catch (error: unknown) {
+    logClientError(error);
     trackWriteFailure('progress.update', error, {
       endpoint: KANGUR_PROGRESS_ENDPOINT,
       method: 'PATCH',
@@ -802,6 +815,7 @@ const requestLearnerActivityStatus = async (): Promise<KangurLearnerActivityStat
       method: 'GET',
       headers: createActorAwareHeaders(),
       credentials: 'same-origin',
+      cache: 'no-store',
     });
 
     if (!response.ok) {
@@ -820,6 +834,7 @@ const requestLearnerActivityStatus = async (): Promise<KangurLearnerActivityStat
 
     return parsed.data;
   } catch (error: unknown) {
+    logClientError(error);
     if (isKangurAuthStatusError(error)) {
       throw error;
     }
@@ -873,6 +888,7 @@ const updateLearnerActivityViaApi = async (
     });
     return parsed.data;
   } catch (error: unknown) {
+    logClientError(error);
     trackWriteFailure('learnerActivity.update', error, {
       endpoint: KANGUR_LEARNER_ACTIVITY_ENDPOINT,
       method: 'POST',
@@ -935,6 +951,7 @@ const requestLearnerSessions = async (
 
     return parsed.data;
   } catch (error: unknown) {
+    logClientError(error);
     if (isKangurAuthStatusError(error)) {
       throw error;
     }
@@ -1003,6 +1020,7 @@ const requestLearnerInteractions = async (
 
     return parsed.data;
   } catch (error: unknown) {
+    logClientError(error);
     if (isKangurAuthStatusError(error)) {
       throw error;
     }
@@ -1058,13 +1076,16 @@ const createLearnerViaApi = async (
             if (payload['details'] !== undefined) {
               errorDetails = payload['details'];
             }
-          } catch {
+          } catch (error) {
+            logClientError(error);
             if (!looksLikeHtml(responseText)) {
               errorMessage = responseText.trim().slice(0, 240);
             }
           }
         }
-      } catch {
+      } catch (error) {
+        logClientError(error);
+      
         // Ignore response body parsing failures.
       }
 
@@ -1097,6 +1118,7 @@ const createLearnerViaApi = async (
     });
     return parsed.data;
   } catch (error: unknown) {
+    logClientError(error);
     trackWriteFailure('learners.create', error, {
       endpoint: KANGUR_LEARNERS_ENDPOINT,
       method: 'POST',
@@ -1151,6 +1173,7 @@ const updateLearnerViaApi = async (
     });
     return parsed.data;
   } catch (error: unknown) {
+    logClientError(error);
     trackWriteFailure('learners.update', error, {
       endpoint,
       method: 'PATCH',
@@ -1203,6 +1226,7 @@ const deleteLearnerViaApi = async (id: string): Promise<KangurLearnerProfile> =>
     });
     return parsed.data;
   } catch (error: unknown) {
+    logClientError(error);
     trackWriteFailure('learners.delete', error, {
       endpoint,
       method: 'DELETE',
@@ -1233,6 +1257,7 @@ const selectLearner = async (learnerId: string): Promise<KangurUser> => {
     });
     return user;
   } catch (error: unknown) {
+    logClientError(error);
     trackWriteFailure('learners.select', error, {
       learnerId,
     });
@@ -1282,6 +1307,7 @@ export const createLocalKangurPlatform = (): KangurPlatform => {
           await resolveSessionUser();
           return await createScoreViaApi(input);
         } catch (error: unknown) {
+          logClientError(error);
           if (!isKangurAuthStatusError(error)) {
             throw error;
           }

@@ -1,4 +1,6 @@
 import { runPlannerTask } from './core';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type PlannerSummarizationStep = {
   id?: string;
@@ -36,6 +38,7 @@ export async function summarizePlannerMemoryWithLLM({
     const parsed = JSON.parse(content) as { summary?: string };
     return parsed.summary?.trim() || content.trim() || null;
   } catch (_error) {
+    logClientError(_error);
     return null;
   }
 }
@@ -85,6 +88,7 @@ export async function buildCheckpointBriefWithLLM({
       risks: Array.isArray(parsed.risks) ? parsed.risks : [],
     };
   } catch (_error) {
+    logClientError(_error);
     return null;
   }
 }

@@ -79,6 +79,7 @@ export function useNoteTags(
       setTagInput('');
       setIsTagDropdownOpen(false);
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'useNoteTags',

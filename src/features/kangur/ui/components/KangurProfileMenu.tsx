@@ -55,7 +55,7 @@ export function KangurProfileMenu({
         transitionSourceId={transitionSource}
       >
         <User className='h-[18px] w-[18px] sm:h-5 sm:w-5' strokeWidth={2.15} />
-        <span>{label ?? 'Profil'}</span>
+        <span className='truncate'>{label ?? 'Profil'}</span>
       </Link>
     </KangurButton>
   );

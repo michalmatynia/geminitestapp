@@ -2,6 +2,8 @@ import {
   DEFAULT_PORTABLE_PAYLOAD_LIMITS,
   type PortablePayloadLimits,
 } from './portable-engine-resolution-types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const UNSAFE_OBJECT_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
 
@@ -33,6 +35,7 @@ export const decodePortablePayload = (
       payloadByteSize: getUtf8ByteSize(input),
     };
   } catch (error) {
+    logClientError(error);
     const message = error instanceof Error ? error.message : String(error);
     return { ok: false, error: `Invalid JSON payload: ${message}` };
   }
@@ -51,6 +54,7 @@ export const estimatePayloadByteSize = (
     }
     return { ok: true, value: getUtf8ByteSize(serialized) };
   } catch (error) {
+    logClientError(error);
     const message = error instanceof Error ? error.message : String(error);
     return {
       ok: false,

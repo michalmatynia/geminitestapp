@@ -9,6 +9,8 @@ import {
   optionalCsvQueryStringArray,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
 export const querySchema = z.object({
@@ -41,7 +43,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   let formData: FormData;
   try {
     formData = await req.formData();
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     throw badRequestError('Invalid form data');
   }
 

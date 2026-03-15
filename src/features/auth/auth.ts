@@ -196,6 +196,7 @@ const credentialsProvider = Credentials({
           : {}),
       };
     } catch (error) {
+      void ErrorSystem.captureException(error);
       void ErrorSystem.captureException(error, {
         service: 'auth',
         action: 'authorize',
@@ -259,6 +260,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
         databaseName: process.env['MONGODB_DB'] ?? 'app',
       });
     } catch (error) {
+      void ErrorSystem.captureException(error);
       await ErrorSystem.logWarning('[AUTH] Adapter initialization failed.', {
         service: 'auth',
         provider,
@@ -307,6 +309,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
             token.accountBanned = Boolean(security.bannedAt);
             tokenMeta.authRefreshedAt = now;
           } catch (error) {
+            void ErrorSystem.captureException(error);
             await ErrorSystem.captureException(error, {
               service: 'auth',
               action: 'jwt_callback',
@@ -383,6 +386,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
       },
     };
   } catch (error: unknown) {
+    void ErrorSystem.captureException(error);
     await ErrorSystem.captureException(error, {
       service: 'auth',
       action: 'configuration',

@@ -152,10 +152,14 @@ export function BindingsProvider({ children }: { children: React.ReactNode }): R
       formatSubsectionLabel: promptExploderFormatSubsectionLabel,
     });
     if (!builtBinding.ok) {
-      toast(builtBinding.message, { variant: builtBinding.variant });
+      const variant =
+        typeof builtBinding.details?.['variant'] === 'string'
+          ? (builtBinding.details['variant'] as 'info' | 'error' | 'success')
+          : 'error';
+      toast(builtBinding.error, { variant });
       return;
     }
-    syncManualBindings([...manualBindings, builtBinding.binding]);
+    syncManualBindings([...manualBindings, ...builtBinding.bindings]);
     setBindingDraft((previous) => ({
       ...previous,
       sourceLabel: '',

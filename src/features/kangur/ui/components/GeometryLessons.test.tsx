@@ -6,6 +6,13 @@ import type { ReactNode } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
+  useKangurAuth: () => ({
+    isAuthenticated: true,
+    user: { actorType: 'learner', ownerUserId: 'parent-1' },
+  }),
+}));
+
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 
 vi.mock('@/features/kangur/ui/components/GeometryDrawingGame', () => ({

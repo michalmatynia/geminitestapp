@@ -780,7 +780,7 @@ export default function GeometryPerimeterDrawingGame({
         </p>
 
         {drawingValidated ? (
-          <div className='grid w-full grid-cols-2 gap-2'>
+          <div className='grid w-full grid-cols-1 gap-2 min-[360px]:grid-cols-2'>
             {choices.map((choice, index) => {
               let accent: KangurAccent = 'amber';
               let emphasis: 'neutral' | 'accent' = 'neutral';

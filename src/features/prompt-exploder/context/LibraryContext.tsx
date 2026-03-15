@@ -34,6 +34,8 @@ import { useSegmentationRecordCapture } from './hooks/useSegmentationRecordCaptu
 import { useSettingsActions, useSettingsState } from './hooks/useSettings';
 
 import type { LibraryActions, LibraryState } from './LibraryContext.types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 // ── Contexts ─────────────────────────────────────────────────────────────────
 
@@ -180,6 +182,7 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
       setLibraryNameDraft(nextItem.name);
       toast(`Saved library entry: ${nextItem.name}`, { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(
         error instanceof Error ? error.message : 'Failed to save Prompt Exploder library entry.',
         { variant: 'error' }
@@ -254,6 +257,7 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
         }
         toast(`Deleted library entry: ${target.name}`, { variant: 'success' });
       } catch (error) {
+        logClientError(error);
         toast(
           error instanceof Error
             ? error.message
@@ -332,6 +336,7 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
         }
         toast('Deleted segmentation context record.', { variant: 'success' });
       } catch (error) {
+        logClientError(error);
         toast(
           error instanceof Error ? error.message : 'Failed to delete segmentation context record.',
           { variant: 'error' }

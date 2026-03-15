@@ -16,6 +16,7 @@ export interface ChipProps {
   activeClassName?: string;
   size?: 'xs' | 'sm';
   variant?: 'default' | 'cyan' | 'amber' | 'emerald';
+  ariaLabel?: string;
 }
 
 /**
@@ -32,6 +33,7 @@ export function Chip(props: ChipProps): React.JSX.Element {
     activeClassName,
     size = 'sm',
     variant = 'cyan',
+    ariaLabel,
   } = props;
 
   const sizeStyles = {
@@ -48,6 +50,8 @@ export function Chip(props: ChipProps): React.JSX.Element {
         : variant
     : 'outline';
 
+  const finalAriaLabel = ariaLabel || (typeof label === 'string' ? label : undefined);
+
   return (
     <button
       type='button'
@@ -56,8 +60,8 @@ export function Chip(props: ChipProps): React.JSX.Element {
         'group outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-full transition-all',
         !onClick && 'pointer-events-none'
       )}
-      aria-label={'Badge'}
-      title={'Badge'}>
+      aria-label={finalAriaLabel}
+      title={finalAriaLabel}>
       <Badge
         variant={badgeVariant}
         className={cn(

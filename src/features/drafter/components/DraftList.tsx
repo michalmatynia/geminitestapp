@@ -48,6 +48,7 @@ export function DraftList(): React.JSX.Element {
       await deleteDraftMutation.mutateAsync(draftToDelete);
       toast('Draft deleted successfully', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'DraftList', action: 'deleteDraft', draftId: draftToDelete },
       });

@@ -6,7 +6,7 @@ import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginMod
 import { useKangurLearnerProfileRuntime } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 
-export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
+export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
   const { user, progress } = useKangurLearnerProfileRuntime();
   const { openLoginModal } = useKangurLoginModal();
   const hasMeaningfulProgress =

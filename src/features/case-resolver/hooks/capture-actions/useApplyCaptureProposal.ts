@@ -32,6 +32,8 @@ import {
   resolveCaptureTargetFile,
   type CaseResolverFileMutationStage,
 } from '../useCaseResolverState.helpers';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const readCaptureApplyNowMs = (): number =>
   typeof performance !== 'undefined' && typeof performance.now === 'function'
@@ -275,6 +277,7 @@ export function useApplyCaptureProposal(args: {
             });
             args.refetchSettingsStore();
           } catch (_error: unknown) {
+            logClientError(_error);
             toast(
               _error instanceof Error
                 ? _error.message

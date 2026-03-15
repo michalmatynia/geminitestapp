@@ -100,6 +100,7 @@ export function AgentRunProvider({ children }: { children: ReactNode }): React.J
       try {
         setAgentStreamStatus('live');
       } catch (err: unknown) {
+        logClientError(err);
         logClientError(err, {
           context: { source: 'AgentRunContext', action: 'onmessage', runId: selectedAgentRunId },
         });

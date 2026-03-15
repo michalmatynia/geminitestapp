@@ -127,6 +127,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
       try {
         return parser();
       } catch (error) {
+        logClientError(error);
         const message =
           error instanceof Error ? error.message : `Invalid ${label} settings payload.`;
         errors.push(message);
@@ -248,6 +249,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
       setIsDirty(false);
       toast('Database engine settings saved', { variant: 'success' });
     } catch (_error) {
+      logClientError(_error);
       toast('Failed to save database engine settings', { variant: 'error' });
     }
   };

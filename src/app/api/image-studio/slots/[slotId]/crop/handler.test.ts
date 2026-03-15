@@ -3,6 +3,8 @@ import sharp from 'sharp';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { IMAGE_STUDIO_CROP_ERROR_CODES } from '@/features/ai/image-studio/contracts/crop';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const {
   mkdirMock,
@@ -414,6 +416,7 @@ describe('image-studio crop handler', () => {
         { slotId: 'source-slot' }
       );
     } catch (error) {
+      void ErrorSystem.captureException(error);
       thrown = error;
     }
 

@@ -70,6 +70,7 @@ export function useAdminAiPathsValidationState() {
         settingsParseError: null as Error | null,
       };
     } catch (error) {
+      logClientError(error);
       return {
         parsedSettings: {
           pathMetas: [],
@@ -640,6 +641,7 @@ export function useAdminAiPathsValidationState() {
         variant: combinedWarnings.length > 0 ? 'warning' : 'success',
       });
     } catch (error) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Failed to sync central docs.';
       updateDraft({
         docsSyncState: {
@@ -824,6 +826,7 @@ export function useAdminAiPathsValidationState() {
       await settingsQuery.refetch();
       toast('AI-Paths Node Validator settings saved.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(
         error instanceof Error ? error.message : 'Failed to save AI-Paths validator settings.',
         {

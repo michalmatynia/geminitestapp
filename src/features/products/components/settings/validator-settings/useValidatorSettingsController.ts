@@ -251,6 +251,7 @@ export function useValidatorSettingsController() {
       }
       setShowModal(false);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'useValidatorSettingsController',
@@ -275,6 +276,7 @@ export function useValidatorSettingsController() {
           variant: 'success',
         });
       } catch (error) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'useValidatorSettingsController',
@@ -296,6 +298,7 @@ export function useValidatorSettingsController() {
         await deletePattern.mutateAsync(id);
         toast('Pattern deleted.', { variant: 'success' });
       } catch (error) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'useValidatorSettingsController',
@@ -322,6 +325,7 @@ export function useValidatorSettingsController() {
       await updateSettings.mutateAsync(updates);
       toast('Settings updated.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'useValidatorSettingsController', action: 'updateSettings' },
       });
@@ -368,6 +372,7 @@ export function useValidatorSettingsController() {
       try {
         await reorderPatterns.mutateAsync({ updates });
       } catch (error) {
+        logClientError(error);
         logClientError(error, {
           context: { source: 'useValidatorSettingsController', action: 'reorder', patternId },
         });

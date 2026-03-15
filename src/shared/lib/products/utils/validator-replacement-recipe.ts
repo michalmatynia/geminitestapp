@@ -9,6 +9,8 @@ import type {
   DynamicReplacementRecipe,
   ProductValidationPattern,
 } from '@/shared/contracts/products';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type {
   DynamicReplacementSourceMode,
@@ -188,7 +190,8 @@ const normalizeRecipe = (raw: unknown): DynamicReplacementRecipe | null => {
 const parseRegex = (pattern: string, flags: string | null | undefined): RegExp | null => {
   try {
     return new RegExp(pattern, flags ?? undefined);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -319,7 +322,8 @@ export const parseDynamicReplacementRecipe = (
   try {
     const parsed = JSON.parse(payload) as unknown;
     return normalizeRecipe(parsed);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

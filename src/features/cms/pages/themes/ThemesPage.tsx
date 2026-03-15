@@ -42,6 +42,7 @@ export default function ThemesPage(): React.ReactNode {
       await deleteMutation.mutateAsync(id);
       setThemeToDelete(null);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           service: 'cms',

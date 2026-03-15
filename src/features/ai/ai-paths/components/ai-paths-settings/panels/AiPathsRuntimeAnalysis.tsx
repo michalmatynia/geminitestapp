@@ -19,6 +19,8 @@ import {
   statusToVariant,
 } from '../ai-paths-settings-view-utils';
 import { useAiPathsErrorState } from '../hooks/useAiPathsErrorState';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 
 export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
@@ -166,6 +168,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
         setRunFilter(focus);
         openRunDetail(runId);
       } catch (error: unknown) {
+        logClientError(error);
         reportAiPathsError(
           error,
           {

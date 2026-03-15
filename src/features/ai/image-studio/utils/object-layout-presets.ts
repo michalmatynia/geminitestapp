@@ -11,6 +11,8 @@ import {
   IMAGE_STUDIO_CENTER_LAYOUT_MIN_CHROMA_THRESHOLD,
   IMAGE_STUDIO_CENTER_LAYOUT_MIN_WHITE_THRESHOLD,
 } from '@/shared/contracts/image-studio';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type ObjectLayoutPresetId =
   | 'default_product'
@@ -264,7 +266,8 @@ const parsePersistedDefaults = (raw: string | null): ObjectLayoutAdvancedDefault
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
     const candidate = parsed as Partial<PersistedObjectLayoutAdvancedDefaults>;
     return normalizeAdvancedDefaults(candidate);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -313,7 +316,8 @@ const parsePersistedCustomPresets = (raw: string | null): ObjectLayoutCustomPres
       deduped.set(normalized.id, normalized);
     }
     return Array.from(deduped.values()).sort(compareCustomPresetsByRecency);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return [];
   }
 };

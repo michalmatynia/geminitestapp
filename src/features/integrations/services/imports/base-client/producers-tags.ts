@@ -10,6 +10,8 @@ import {
 import { fetchBaseInventories } from './inventory';
 
 import type { BaseInventoryScopeOptions } from './config';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type FetchBaseProducersOptions = BaseInventoryScopeOptions;
 
@@ -48,6 +50,7 @@ export async function fetchBaseProducers(
         return dedupeProducers(producers);
       }
     } catch (error: unknown) {
+      logClientError(error);
       lastError = error instanceof Error ? error : new Error('Base API error.');
     }
   }
@@ -60,6 +63,7 @@ export async function fetchBaseProducers(
       .map((inventory: BaseInventory): string => inventory.id)
       .filter((id: string): boolean => Boolean(id?.trim()));
   } catch (error: unknown) {
+    logClientError(error);
     lastError = error instanceof Error ? error : new Error('Base API error.');
   }
 
@@ -80,6 +84,7 @@ export async function fetchBaseProducers(
         aggregated.push(...producers);
       }
     } catch (error: unknown) {
+      logClientError(error);
       lastError = error instanceof Error ? error : new Error('Base API error.');
     }
   }
@@ -125,6 +130,7 @@ export async function fetchBaseTags(
         return dedupeTags(tags);
       }
     } catch (error: unknown) {
+      logClientError(error);
       lastError = error instanceof Error ? error : new Error('Base API error.');
     }
   }
@@ -137,6 +143,7 @@ export async function fetchBaseTags(
       .map((inventory: BaseInventory): string => inventory.id)
       .filter((id: string): boolean => Boolean(id?.trim()));
   } catch (error: unknown) {
+    logClientError(error);
     lastError = error instanceof Error ? error : new Error('Base API error.');
   }
 
@@ -157,6 +164,7 @@ export async function fetchBaseTags(
         aggregated.push(...tags);
       }
     } catch (error: unknown) {
+      logClientError(error);
       lastError = error instanceof Error ? error : new Error('Base API error.');
     }
   }

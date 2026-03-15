@@ -55,6 +55,8 @@ import { KangurAiTutorContentSettingsPanel } from './components/KangurAiTutorCon
 import { KangurAiTutorNativeGuideSettingsPanel } from './components/KangurAiTutorNativeGuideSettingsPanel';
 import { KangurClassOverridesSettingsPanel } from './components/KangurClassOverridesSettingsPanel';
 import { KangurPageContentSettingsPanel } from './components/KangurPageContentSettingsPanel';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const TEST_NARRATOR_TEMPLATE_TEXT =
   'A bright classroom welcomes curious minds. Here is a short narration sample to verify the chosen voice.';
@@ -142,7 +144,8 @@ const formatProbeTimestamp = (value: string): string => {
       dateStyle: 'medium',
       timeStyle: 'short',
     }).format(new Date(value));
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return value;
   }
 };
@@ -302,7 +305,8 @@ export function AdminKangurSettingsPage(): ReactElement {
         window.clearTimeout(copyTimeoutRef.current);
       }
       copyTimeoutRef.current = window.setTimeout(() => setCopyStatus('Copy text'), 1800);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       setCopyStatus('Copy failed');
     }
   };
@@ -336,6 +340,7 @@ export function AdminKangurSettingsPage(): ReactElement {
         });
       }
     } catch (error) {
+      logClientError(error);
       if (narratorProbeRequestIdRef.current !== probeRequestId) {
         return;
       }
@@ -474,6 +479,7 @@ export function AdminKangurSettingsPage(): ReactElement {
         });
       }
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save Kangur settings.', {
         variant: 'error',
       });

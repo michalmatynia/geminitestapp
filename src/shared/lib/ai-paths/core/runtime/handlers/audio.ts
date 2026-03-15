@@ -4,6 +4,8 @@ import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-path
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { coerceInput } from '../../utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type OscillatorSignal = {
   kind: 'oscillator';
@@ -145,7 +147,9 @@ const resolveAudioContext = async (): Promise<AudioContext | null> => {
   if (state.context.state === 'suspended') {
     try {
       await state.context.resume();
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Ignore; caller decides fallback status.
     }
   }
@@ -158,13 +162,17 @@ const stopActivePlayback = (nodeId: string): void => {
   if (!active) return;
   try {
     active.oscillator.stop();
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Oscillator might already be stopped.
   }
   try {
     active.oscillator.disconnect();
     active.gainNode.disconnect();
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Ignore disconnect errors on closed context.
   }
   state.activeByNode.delete(nodeId);
@@ -204,7 +212,9 @@ const playSignalOnMonoSpeaker = async (
     try {
       oscillator.disconnect();
       gainNode.disconnect();
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Ignore teardown errors.
     }
   };

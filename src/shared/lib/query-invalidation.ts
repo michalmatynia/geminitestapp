@@ -15,6 +15,8 @@ import {
 import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 
 import { QUERY_KEYS } from './query-keys';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const AI_PATHS_NODE_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);
 const RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY = 'ai-path-run-recent-enqueue';
@@ -43,7 +45,8 @@ const safeLocalStorageGetItem = (key: string): string | null => {
   if (!canUseLocalStorage()) return null;
   try {
     return window.localStorage.getItem(key);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -53,7 +56,8 @@ const safeLocalStorageSetItem = (key: string, value: string): boolean => {
   try {
     window.localStorage.setItem(key, value);
     return true;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return false;
   }
 };
@@ -62,7 +66,9 @@ const safeLocalStorageRemoveItem = (key: string): void => {
   if (!canUseLocalStorage()) return;
   try {
     window.localStorage.removeItem(key);
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Ignore storage cleanup failures.
   }
 };
@@ -156,7 +162,8 @@ export const getRecentAiPathRunEnqueue = (): {
     let parsed: unknown;
     try {
       parsed = JSON.parse(raw);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       safeLocalStorageRemoveItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
       parsed = null;
     }
@@ -788,7 +795,9 @@ export const notifyAiPathRunEnqueued = (
     const channel = new BroadcastChannelCtor(AI_PATH_RUN_QUEUE_CHANNEL);
     channel.postMessage(payload);
     channel.close();
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // best-effort notification channel
   }
 };

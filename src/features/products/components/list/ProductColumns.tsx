@@ -85,8 +85,6 @@ const TraderaStatusButton = dynamic(
   }
 );
 
-export type Product = ProductWithImages;
-
 const CircleIconButton = (props: {
   onClick?: () => void;
   onMouseEnter?: () => void;

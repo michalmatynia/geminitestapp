@@ -8,6 +8,8 @@ import { buildVariantThumbnails } from './variant-thumbnails';
 import type { GenerationLandingSlot } from '../../context/GenerationContext';
 import type { PendingSequenceThumbnailState } from '../../context/UiContext';
 import type { Dispatch, SetStateAction } from 'react';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type UseCenterPreviewVariantsArgs = {
   activeRunId: string | null;
@@ -92,7 +94,8 @@ export function useCenterPreviewVariants({
         .map((value: string) => value.trim())
         .filter(Boolean);
       setDismissedVariantKeys(new Set(keys));
-    } catch {
+    } catch (error) {
+      logClientError(error);
       setDismissedVariantKeys(new Set());
     }
   }, [dismissedVariantStorageKey]);

@@ -62,9 +62,9 @@ const GRID_CLASSNAME_BY_COLUMNS: Record<KangurLessonGridBlock['columns'], string
 
 const GRID_CLASSNAME_BY_COLUMNS_NO_STACK: Record<KangurLessonGridBlock['columns'], string> = {
   1: 'grid-cols-1',
-  2: 'grid-cols-2',
-  3: 'grid-cols-3',
-  4: 'grid-cols-4',
+  2: 'grid-cols-1 sm:grid-cols-2',
+  3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
+  4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
 };
 
 const GRID_ITEM_SPAN_CLASSNAME = {
@@ -76,9 +76,9 @@ const GRID_ITEM_SPAN_CLASSNAME = {
   },
   fixed: {
     1: 'col-span-1',
-    2: 'col-span-2',
-    3: 'col-span-3',
-    4: 'col-span-4',
+    2: 'col-span-1 sm:col-span-2',
+    3: 'col-span-1 sm:col-span-2 lg:col-span-3',
+    4: 'col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-4',
   },
 } as const;
 
@@ -91,11 +91,31 @@ const GRID_ITEM_ROW_SPAN_CLASSNAME = {
   },
   fixed: {
     1: 'row-span-1',
-    2: 'row-span-2',
-    3: 'row-span-3',
-    4: 'row-span-4',
+    2: 'row-span-1 sm:row-span-2',
+    3: 'row-span-1 sm:row-span-2 lg:row-span-3',
+    4: 'row-span-1 sm:row-span-2 lg:row-span-3 xl:row-span-4',
   },
 } as const;
+
+const GRID_ITEM_COLUMN_START_CLASSNAME_NO_STACK: Record<
+  KangurLessonGridBlock['columns'],
+  string
+> = {
+  1: '',
+  2: 'sm:[grid-column-start:var(--lesson-grid-column-start)]',
+  3: 'lg:[grid-column-start:var(--lesson-grid-column-start)]',
+  4: 'xl:[grid-column-start:var(--lesson-grid-column-start)]',
+};
+
+const GRID_ITEM_ROW_START_CLASSNAME_NO_STACK: Record<
+  KangurLessonGridBlock['columns'],
+  string
+> = {
+  1: '',
+  2: 'sm:[grid-row-start:var(--lesson-grid-row-start)]',
+  3: 'lg:[grid-row-start:var(--lesson-grid-row-start)]',
+  4: 'xl:[grid-row-start:var(--lesson-grid-row-start)]',
+};
 
 type GridPlacementStyle = React.CSSProperties & {
   '--lesson-grid-column-start'?: string;
@@ -351,8 +371,8 @@ function renderCalloutBlock(block: KangurLessonCalloutBlock, key: string): React
         <span aria-hidden>{style.icon}</span>
         {block.title?.trim() || style.label}
       </div>
-      <div
-        className='prose prose-sm max-w-none'
+      <KangurProse
+        className='text-sm leading-6'
         dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.html) }}
       />
     </div>
@@ -375,8 +395,8 @@ function KangurLessonQuizBlockView({ block }: { block: KangurLessonQuizBlock }):
       className='soft-card kangur-lesson-callout kangur-card-padding-md border shadow-sm'
       style={{ borderColor: 'var(--kangur-soft-card-border)' }}
     >
-      <div
-        className='prose prose-sm mb-4 max-w-none font-semibold [color:var(--kangur-page-text)]'
+      <KangurProse
+        className='mb-4 text-sm font-semibold leading-6 [color:var(--kangur-page-text)]'
         dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.question) }}
       />
       <div className='space-y-2'>
@@ -433,8 +453,8 @@ function KangurLessonQuizBlockView({ block }: { block: KangurLessonQuizBlock }):
         })}
       </div>
       {state.revealed && block.explanation?.trim() ? (
-        <div
-          className='prose prose-sm kangur-lesson-inset kangur-card-padding-sm mt-3 max-w-none [background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,#cbd5e1)] [color:var(--kangur-page-text)]'
+        <KangurProse
+          className='kangur-lesson-inset kangur-card-padding-sm mt-3 text-sm leading-6 [background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,#cbd5e1)] [color:var(--kangur-page-text)]'
           dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.explanation) }}
         />
       ) : null}
@@ -458,8 +478,8 @@ function renderQuizBlock(
         <KangurSectionEyebrow className='mb-2 text-xs tracking-wide'>
           Quiz
         </KangurSectionEyebrow>
-        <div
-          className='prose prose-sm mb-3 max-w-none font-semibold [color:var(--kangur-page-text)]'
+        <KangurProse
+          className='mb-3 text-sm font-semibold leading-6 [color:var(--kangur-page-text)]'
           dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.question) }}
         />
         <ul className='space-y-1'>
@@ -536,11 +556,11 @@ function renderGridBlock(block: KangurLessonGridBlock, key: string): React.JSX.E
               item.columnStart !== null &&
                 (block.stackOnMobile
                   ? 'md:[grid-column-start:var(--lesson-grid-column-start)]'
-                  : '[grid-column-start:var(--lesson-grid-column-start)]'),
+                  : GRID_ITEM_COLUMN_START_CLASSNAME_NO_STACK[block.columns]),
               item.rowStart !== null &&
                 (block.stackOnMobile
                   ? 'md:[grid-row-start:var(--lesson-grid-row-start)]'
-                  : '[grid-row-start:var(--lesson-grid-row-start)]')
+                  : GRID_ITEM_ROW_START_CLASSNAME_NO_STACK[block.columns])
             )}
             style={getGridItemPlacementStyle(item.columnStart, item.rowStart)}
           >

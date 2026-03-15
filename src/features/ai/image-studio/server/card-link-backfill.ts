@@ -6,6 +6,8 @@ import {
   listImageStudioSlotProjectIds,
   updateImageStudioSlot,
 } from './slot-repository';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type BackfillReason = 'slot-link' | 'mask-folder' | 'generation-inferred';
 
@@ -306,6 +308,7 @@ export async function runImageStudioCardLinkBackfill(
       projectResult.maskFolderBackfilled = touchedByReason['mask-folder'];
       projectResult.inferredGenerationBackfilled = touchedByReason['generation-inferred'];
     } catch (error) {
+      void ErrorSystem.captureException(error);
       projectResult.errors.push(error instanceof Error ? error.message : 'Backfill failed');
     }
 

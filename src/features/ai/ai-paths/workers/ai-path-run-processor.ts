@@ -224,6 +224,7 @@ export const processRun = async (
     debugQueueLog(`Run ${run.id} completed`, { runId: run.id });
     return;
   } catch (error: unknown) {
+    void ErrorSystem.captureException(error);
     const message = error instanceof Error ? error.message : 'Run failed.';
     await ErrorSystem.captureException(error, {
       service: 'ai-paths-queue',
@@ -405,6 +406,7 @@ export const processStaleRunRecovery = async (): Promise<void> => {
           await enqueuePathRunJob(run.id);
           revivedCount += 1;
         } catch (error) {
+          void ErrorSystem.captureException(error);
           const message = error instanceof Error ? error.message.toLowerCase() : '';
           const duplicateJob =
             message.includes('already exists') ||
@@ -436,6 +438,7 @@ export const processStaleRunRecovery = async (): Promise<void> => {
       }
     }
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning('Stale run recovery failed', {
       service: 'ai-paths-queue',
       action: 'staleRunRecovery',

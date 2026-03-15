@@ -8,6 +8,8 @@ import { getGsapFromVars } from '@/features/gsap';
 import { vectorShapesToPathWithBounds } from '@/shared/ui';
 
 import { useBlockSettings } from './sections/FrontendBlockRenderer';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type GSAPTweenVars = Record<string, unknown>;
 type GSAPStaggerVars = Record<string, unknown>;
@@ -26,7 +28,8 @@ const buildTargets = (root: HTMLElement, selector?: string): Element[] => {
   try {
     const matches = Array.from(root.querySelectorAll(normalized));
     return matches.length ? matches : [root];
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return [root];
   }
 };
@@ -63,7 +66,8 @@ const buildEase = (
   const name = `custom-${Math.abs(hash)}`;
   try {
     CustomEase.create(name, value);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return DEFAULT_ANIMATION_CONFIG.easing;
   }
   return name;
@@ -82,7 +86,8 @@ const buildEaseValue = (
   const name = `custom-${Math.abs(hash)}`;
   try {
     CustomEase.create(name, customEase);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return DEFAULT_ANIMATION_CONFIG.easing;
   }
   return name;

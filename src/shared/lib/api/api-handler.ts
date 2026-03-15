@@ -35,6 +35,8 @@ import {
 import { logger } from '@/shared/utils/logger';
 
 import type { ZodSchema } from 'zod';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const shouldSkipRateLimitInTestEnv = (request: NextRequest): boolean => {
   if (process.env['NODE_ENV'] !== 'test') return false;
@@ -42,7 +44,8 @@ const shouldSkipRateLimitInTestEnv = (request: NextRequest): boolean => {
   try {
     const hostname = new URL(request.url).hostname;
     return hostname === 'localhost' || hostname === '127.0.0.1';
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return true;
   }
 };
@@ -134,6 +137,7 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
       await import('@/shared/lib/observability/system-logger');
     await realLogSystemEvent(params);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     logger.error('Failed to log system event via observability feature', error, {
       service: 'api.handler',
       context: params,
@@ -147,6 +151,7 @@ const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<stri
       await import('@/shared/lib/observability/system-logger');
     return realGetFingerprint(params);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     logger.error('Failed to get error fingerprint via observability feature', error, {
       service: 'api.handler',
       context: params,
@@ -160,7 +165,8 @@ const getSessionUser = async (): Promise<{ id?: string | null } | null> => {
     const { auth } = await import('@/features/auth/auth');
     const session = await auth();
     return session?.user ?? null;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };
@@ -179,7 +185,8 @@ const shouldSkipCsrfInTestEnv = (request: NextRequest): boolean => {
   try {
     const hostname = new URL(request.url).hostname;
     return hostname === 'localhost' || hostname === '127.0.0.1';
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return true;
   }
 };
@@ -354,7 +361,8 @@ const parseJsonBody = async (
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     throw badRequestError('Invalid JSON payload');
   }
 
@@ -534,11 +542,8 @@ export function apiHandler(
           applyCorsHeaders(mutableResponse, request, options);
           return mutableResponse;
         } catch (error) {
-          const response = ensureCsrfBootstrapCookie(
-            await createErrorResponseWithTiming(error, request, context, options),
-            request,
-            options
-          );
+          void ErrorSystem.captureException(error);
+          const response = await createErrorResponseWithTiming(error, request, context, options);
           if (context.rateLimitHeaders) {
             Object.entries(context.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
               response.headers.set(key, value);
@@ -702,13 +707,9 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
           applyCorsHeaders(mutableResponse, request, options);
           return mutableResponse;
         } catch (error) {
-          const response = ensureCsrfBootstrapCookie(
-            await createErrorResponseWithTiming(
-              error,
-              request,
-              handlerContext,
-              options
-            ),
+          void ErrorSystem.captureException(error);
+          const response = await createErrorResponseWithTiming(
+            error,
             request,
             options
           );
@@ -764,7 +765,8 @@ function applyDefaultCacheHeaders(response: Response, method: string, override?:
 const getQueryKeys = (request: NextRequest): string[] => {
   try {
     return Array.from(new URL(request.url).searchParams.keys()).slice(0, MAX_QUERY_KEYS);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return [];
   }
 };
@@ -810,7 +812,8 @@ async function createErrorResponseWithTiming(
   const routePath = (() => {
     try {
       return new URL(request.url).pathname;
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       return null;
     }
   })();

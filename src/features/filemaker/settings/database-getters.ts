@@ -19,6 +19,8 @@ import {
   FilemakerOrganization,
   FilemakerPerson,
 } from '../types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const parseFilemakerDatabasePayload = (
   raw: string | null | undefined
@@ -30,7 +32,8 @@ const parseFilemakerDatabasePayload = (
   let parsed: unknown;
   try {
     parsed = JSON.parse(trimmedRaw);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     throw validationError('Invalid Filemaker database JSON payload.', {
       reason: 'invalid_json',
     });

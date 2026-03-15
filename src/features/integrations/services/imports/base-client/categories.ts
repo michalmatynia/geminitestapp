@@ -5,6 +5,8 @@ import { dedupeCategories, fetchBaseCategoriesFromPayload } from '../base-client
 import { fetchBaseInventories } from './inventory';
 
 import type { BaseInventoryScopeOptions } from './config';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type FetchBaseCategoriesOptions = BaseInventoryScopeOptions;
 
@@ -65,6 +67,7 @@ export async function fetchBaseCategories(
     const categories = fetchBaseCategoriesFromPayload(payload);
     considerCandidate(categories);
   } catch (error: unknown) {
+    logClientError(error);
     lastError = error instanceof Error ? error : new Error('Base API error.');
   }
 
@@ -76,6 +79,7 @@ export async function fetchBaseCategories(
       const categories = fetchBaseCategoriesFromPayload(payload);
       considerCandidate(categories);
     } catch (error: unknown) {
+      logClientError(error);
       lastError = error instanceof Error ? error : new Error('Base API error.');
     }
   }
@@ -92,6 +96,7 @@ export async function fetchBaseCategories(
       .map((inventory: BaseInventory): string => inventory.id)
       .filter((id: string): boolean => Boolean(id?.trim()));
   } catch (error: unknown) {
+    logClientError(error);
     lastError = error instanceof Error ? error : new Error('Base API error.');
   }
 
@@ -108,6 +113,7 @@ export async function fetchBaseCategories(
         aggregated.push(...categories);
       }
     } catch (error: unknown) {
+      logClientError(error);
       lastError = error instanceof Error ? error : new Error('Base API error.');
     }
   }

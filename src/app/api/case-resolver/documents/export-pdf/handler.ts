@@ -10,6 +10,8 @@ import {
   internalError,
   isAppError,
 } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type PlaywrightPage = {
   setContent: (
@@ -73,7 +75,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   let rawPayload: unknown;
   try {
     rawPayload = (await req.json()) as unknown;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     throw badRequestError('Invalid JSON payload.');
   }
   const parsedRequest = caseResolverPdfExportRequestSchema.safeParse(rawPayload);
@@ -113,6 +116,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       },
     });
   } catch (error: unknown) {
+    void ErrorSystem.captureException(error);
     if (isAppError(error)) {
       throw error;
     }

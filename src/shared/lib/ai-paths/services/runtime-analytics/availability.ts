@@ -30,6 +30,7 @@ export const resolveRuntimeAnalyticsCapabilityEnabled = async (): Promise<boolea
     };
     return enabled;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning('Failed to resolve Brain runtime analytics capability gate.', {
       service: 'ai-paths-analytics',
       error,

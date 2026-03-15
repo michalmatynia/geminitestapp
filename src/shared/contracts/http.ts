@@ -24,7 +24,8 @@ export type HttpResult<T> = { ok: true; data: T } | { ok: false; error: string }
 
 export type ApiPayloadResult<T> = {
   ok: boolean;
-  payload: T;
+  payload: T | unknown;
+  error?: string;
 };
 
 export const paginationSchema = z.object({

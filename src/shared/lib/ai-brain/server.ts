@@ -19,6 +19,8 @@ import {
   type BrainExecutionConfig,
   type AiPathsNodeExecutionInput,
 } from './settings';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const readMongoSettingValue = async (key: string): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
@@ -76,7 +78,8 @@ export const readStoredSettingValue = async (key: string): Promise<string | null
   const tryMongo = async () => {
     try {
       return await readMongoSettingValue(key);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       return null;
     }
   };
@@ -95,7 +98,8 @@ export const upsertStoredSettingValue = async (key: string, value: string): Prom
   const tryMongo = async (): Promise<boolean> => {
     try {
       return await writeMongoSettingValue(key, value);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       return false;
     }
   };
@@ -114,7 +118,8 @@ export const deleteStoredSettingValue = async (key: string): Promise<boolean> =>
   const tryMongo = async (): Promise<boolean> => {
     try {
       return await deleteMongoSettingValue(key);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       return false;
     }
   };

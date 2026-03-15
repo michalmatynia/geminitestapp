@@ -3,11 +3,14 @@ import {
   ArrowDown,
   ArrowUp,
   Copy,
+  Grid2x2,
   GripVertical,
+  Image as ImageIcon,
   Plus,
+  Sparkles,
   Trash2,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import {
   cloneKangurLessonGridItem,
@@ -21,13 +24,9 @@ import {
 } from '@/features/kangur/lesson-documents';
 import { KANGUR_LESSON_COMPONENT_OPTIONS } from '@/features/kangur/settings';
 import type {
-  KangurLessonComponentId,
   KangurLessonCalloutBlock,
-  KangurLessonGridBlock,
   KangurLessonGridItem,
-  KangurLessonPage,
   KangurLessonQuizBlock,
-  KangurLessonRootBlock,
 } from '@/shared/contracts/kangur';
 import { Badge, Button, FormField, Input, SelectSimple, Switch, Textarea } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -39,6 +38,7 @@ import { InlineEditorCard } from './components/InlineEditorCard';
 import { KangurAdminWorkspaceSectionCard } from './components/KangurAdminWorkspaceSectionCard';
 import { KangurLessonEmptyState } from './components/KangurLessonEmptyState';
 import { KangurLessonPreviewPanel } from './components/KangurLessonPreviewPanel';
+import { KangurLessonQuickInsert } from './components/KangurLessonQuickInsert';
 import { QuizEditorCard } from './components/QuizEditorCard';
 import {
   DOCUMENT_TEMPLATE_OPTIONS,
@@ -53,6 +53,8 @@ import { useKangurStarterRecipes } from './hooks/useKangurStarterRecipes';
 import {
   clamp,
   clampGridColumnStart,
+  insertAfterIndex,
+  moveItem,
   parseNumberInput,
 } from './utils';
 
@@ -68,7 +70,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
   const activePage = pages.find((page) => page.id === activePageId) ?? pages[0] ?? null;
   const activePageIndex = activePage ? pages.findIndex((page) => page.id === activePage.id) : -1;
   const {
-    applyPages,
     updatePage,
     updateDocument,
     updateRootBlock,
@@ -78,7 +79,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
     duplicateRootBlock,
     updateGridBlock,
     replaceWithDocumentTemplate,
-    insertPageAfterActive,
     addBlankPage,
     addPageFromTemplate,
     duplicateActivePage,
@@ -285,7 +285,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                 className='h-8 px-3'
                 onClick={(): void => addPageFromTemplate('image-gallery-page')}
               >
-                <Image className='mr-1 size-3.5' />
+                <ImageIcon className='mr-1 size-3.5' />
                 Add SVG image page
               </Button>
               <Button
@@ -295,7 +295,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                 className='h-8 px-3'
                 onClick={(): void => addPageFromTemplate('svg-gallery-page')}
               >
-                <Image className='mr-1 size-3.5' />
+                <ImageIcon className='mr-1 size-3.5' />
                 Add SVG page
               </Button>
             </div>

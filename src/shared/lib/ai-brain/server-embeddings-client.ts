@@ -7,6 +7,8 @@ import { configurationError, operationFailedError } from '@/shared/errors/app-er
 import { resolveOllamaBaseUrl } from './ollama-config';
 import { resolveBrainProviderCredential } from './provider-credentials';
 import { inferBrainRuntimeVendor, normalizeBrainRuntimeModelId } from './server-runtime-client';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const OLLAMA_BASE_URL = resolveOllamaBaseUrl();
 
@@ -102,6 +104,7 @@ export const generateBrainEmbedding = async (input: {
       }
       lastError = 'Embedding payload was empty.';
     } catch (error) {
+      void ErrorSystem.captureException(error);
       lastError = error instanceof Error ? error.message : String(error);
     }
   }

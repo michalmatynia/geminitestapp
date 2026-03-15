@@ -66,6 +66,7 @@ export default function CreatePagePage(): React.JSX.Element {
       await createPage.mutateAsync(input);
       router.push('/admin/cms/pages');
     } catch (submitError: unknown) {
+      logClientError(submitError);
       logClientError(submitError, {
         context: { source: 'CreatePagePage', action: 'createPage', name },
       });

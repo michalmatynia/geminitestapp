@@ -14,6 +14,8 @@ import { resolveVariantSlotIdForCenterPreview } from './variant-thumbnails';
 import type { VariantTooltipState } from './VariantTooltipPortal';
 import type { QueryClient } from '@tanstack/react-query';
 import type React from 'react';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type ToastVariant = 'error' | 'info' | 'success';
 type ToastFn = (message: string, options?: { variant?: ToastVariant }) => void;
@@ -367,11 +369,14 @@ export const deleteVariantFromCenterPreview = async ({
         setWorkingSlotId(nextFocusSlotId);
         setSelectedSlotId(nextFocusSlotId);
       }
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Best-effort cache refresh, fall back to invalidate below.
     }
     void invalidateImageStudioSlots(queryClient, projectId);
   } catch (error: unknown) {
+    logClientError(error);
     toast(error instanceof Error ? error.message : 'Failed to delete variant.', {
       variant: 'error',
     });

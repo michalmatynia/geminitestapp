@@ -26,6 +26,8 @@ import { cn } from '@/shared/utils';
 import { Button } from './button';
 import { EmptyState } from './empty-state';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 interface DataTableProps<TData> {
   columns: ColumnDef<TData>[];
@@ -134,7 +136,9 @@ export const DataTable = memo(function DataTable<TData>({
       if (Array.isArray(parsed)) {
         setSorting(parsed);
       }
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Ignore invalid localStorage values.
     }
   }, [sortingStorageKey]);
@@ -143,7 +147,9 @@ export const DataTable = memo(function DataTable<TData>({
     if (!sortingStorageKey) return;
     try {
       window.localStorage.setItem(sortingStorageKey, JSON.stringify(sorting));
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Ignore storage write errors.
     }
   }, [sorting, sortingStorageKey]);
@@ -204,6 +210,7 @@ export const DataTable = memo(function DataTable<TData>({
         'w-full min-w-0 max-w-none'
       )}
       style={resolvedContainerStyle}
+      {...(isLoading ? { 'aria-busy': true } : {})}
     >
       <div ref={parentRef} className={cn('flex-1 min-h-0', maxHeight && 'overflow-auto')}>
         <Table className='border-collapse' wrapperClassName={cn(maxHeight && 'overflow-visible')}>
@@ -211,6 +218,16 @@ export const DataTable = memo(function DataTable<TData>({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className='border-border'>
                 {headerGroup.headers.map((header) => {
+                  const sortState = header.column.getIsSorted();
+                  const canSort = header.column.getCanSort();
+                  const ariaSort =
+                    canSort && !header.isPlaceholder
+                      ? sortState === 'asc'
+                        ? 'ascending'
+                        : sortState === 'desc'
+                          ? 'descending'
+                          : 'none'
+                      : undefined;
                   return (
                     <TableHead
                       key={header.id}
@@ -218,6 +235,8 @@ export const DataTable = memo(function DataTable<TData>({
                         'text-foreground',
                         stickyHeader && 'sticky top-0 z-20 bg-background'
                       )}
+                      scope='col'
+                      aria-sort={ariaSort}
                     >
                       {header.isPlaceholder
                         ? null
@@ -233,7 +252,12 @@ export const DataTable = memo(function DataTable<TData>({
               skeletonRows || (
                 <TableRow>
                   <TableCell colSpan={columns.length} className='h-24'>
-                    <div className='flex flex-col items-center justify-center gap-2 text-muted-foreground'>
+                    <div
+                      className='flex flex-col items-center justify-center gap-2 text-muted-foreground'
+                      role='status'
+                      aria-live='polite'
+                      aria-atomic='true'
+                    >
                       <Loader2 className='h-6 w-6 animate-spin text-blue-500' />
                       <span className='text-xs'>Loading data...</span>
                     </div>

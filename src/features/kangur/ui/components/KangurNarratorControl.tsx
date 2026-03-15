@@ -15,6 +15,8 @@ import { KangurButton, KangurSummaryPanel } from '@/features/kangur/ui/design/pr
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import { api } from '@/shared/lib/api-client';
 import { cn } from '@/shared/utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type PlaybackStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'error';
 type PlaybackTransport = 'server' | 'client' | 'client-fallback' | null;
@@ -214,7 +216,8 @@ export function KangurNarratorControl({
       try {
         await audio.play();
         setStatus('playing');
-      } catch {
+      } catch (error) {
+        logClientError(error);
         setStatus('error');
         setErrorMessage('The browser blocked audio playback. Try the play button again.');
       }
@@ -304,6 +307,7 @@ export function KangurNarratorControl({
       setStatus('idle');
       return response;
     } catch (error) {
+      logClientError(error);
       setStatus('error');
       setErrorMessage(error instanceof Error ? error.message : 'Failed to prepare narration.');
       return null;
@@ -325,7 +329,8 @@ export function KangurNarratorControl({
           audio.playbackRate = DEFAULT_PLAYBACK_RATE;
           await audio.play();
           setStatus('playing');
-        } catch {
+        } catch (error) {
+          logClientError(error);
           setStatus('error');
           setErrorMessage('Audio playback could not resume.');
         }

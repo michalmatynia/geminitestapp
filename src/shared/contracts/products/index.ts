@@ -12,3 +12,4 @@ export * from './filters';
 export * from './validation';
 export * from './studio';
 export * from './drafts';
+export * from './errors';

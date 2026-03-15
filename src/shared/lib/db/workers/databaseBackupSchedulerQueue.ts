@@ -86,6 +86,7 @@ const unregisterRepeatScheduler = async (): Promise<void> => {
       );
     }
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.captureException(error, {
       service: 'database-backup-scheduler-queue',
       action: 'unregisterRepeatScheduler',
@@ -119,6 +120,7 @@ const syncRepeatSchedulerRegistration = (): void => {
       );
       queueState.schedulerRegistered = true;
     } catch (error) {
+      void ErrorSystem.captureException(error);
       queueState.schedulerRegistered = false;
       void ErrorSystem.captureException(error, {
         service: 'database-backup-scheduler-queue',

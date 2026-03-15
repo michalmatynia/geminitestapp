@@ -16,6 +16,8 @@ import type {
   ProcessItemResult,
   NormalizedMappedProduct,
 } from '@/shared/contracts/integrations';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type {
   BaseImportErrorClass,
@@ -124,7 +126,8 @@ export const extractFilename = (url: string, fallback: string): string => {
     const parsed = new URL(url);
     const base = path.basename(parsed.pathname);
     return base || fallback;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return fallback;
   }
 };

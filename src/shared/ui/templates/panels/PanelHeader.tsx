@@ -6,6 +6,8 @@ import { PanelAction } from '@/shared/contracts/ui';
 import { Button } from '@/shared/ui/button';
 import { RefreshButton } from '@/shared/ui/RefreshButton';
 import { cn } from '@/shared/utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 interface PanelHeaderProps {
   title: string;
@@ -72,6 +74,7 @@ function PanelHeaderRefreshAction(): React.JSX.Element | null {
     try {
       await onRefresh();
     } catch (error) {
+      logClientError(error);
       console.error('Refresh failed:', error);
     }
   };

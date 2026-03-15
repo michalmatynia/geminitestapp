@@ -18,6 +18,8 @@ import {
 } from '@/shared/contracts/ai-brain';
 import { validationError } from '@/shared/errors/app-error';
 import { catalogToEntries, sanitizeCatalogEntries } from '@/shared/lib/ai-brain/catalog-entries';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type {
   AiBrainCatalogEntry,
@@ -376,6 +378,7 @@ export const parseBrainSettings = (raw: string | null | undefined): AiBrainSetti
   try {
     parsed = JSON.parse(raw) as unknown;
   } catch (error: unknown) {
+    logClientError(error);
     throw validationError('Invalid AI Brain settings payload.', {
       source: 'ai_brain.settings',
       reason: 'invalid_json',
@@ -411,6 +414,7 @@ export const parseBrainProviderCatalog = (
   try {
     parsed = JSON.parse(raw) as unknown;
   } catch (error: unknown) {
+    logClientError(error);
     throw validationError('Invalid AI Brain provider catalog payload.', {
       source: 'ai_brain.provider_catalog',
       reason: 'invalid_json',

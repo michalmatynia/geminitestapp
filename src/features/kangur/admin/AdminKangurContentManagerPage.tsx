@@ -33,6 +33,8 @@ import { KangurAdminMetricCard } from './components/KangurAdminMetricCard';
 import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
 import { KangurAdminWorkspaceIntroCard } from './components/KangurAdminWorkspaceIntroCard';
 import { summarizeKangurContentCreator } from './content-creator-insights';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type ContentTab = 'lessons' | 'tests';
 
@@ -43,7 +45,8 @@ const readPersistedTab = (): ContentTab => {
   try {
     const v = window.localStorage.getItem(TAB_STORAGE_KEY);
     return v === 'tests' ? 'tests' : 'lessons';
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return 'lessons';
   }
 };
@@ -113,7 +116,9 @@ export function AdminKangurContentManagerPage(): React.JSX.Element {
     setActiveTab(tab);
     try {
       window.localStorage.setItem(TAB_STORAGE_KEY, tab);
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // ignore
     }
   };

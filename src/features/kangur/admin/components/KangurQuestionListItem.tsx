@@ -8,7 +8,7 @@ import {
   hasIllustration,
   hasRichChoiceContent,
   usesRichQuestionPresentation,
-} from '../test-questions';
+} from '../../test-questions';
 import { getQuestionWorkflowLabel } from '../question-authoring-insights';
 
 interface KangurQuestionListItemProps {

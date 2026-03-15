@@ -78,7 +78,8 @@ export const useProductValidatorIssues = ({
   const contextRegistryKey = useMemo((): string => {
     try {
       return JSON.stringify(contextRegistry ?? null);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return '';
     }
   }, [contextRegistry]);
@@ -104,7 +105,8 @@ export const useProductValidatorIssues = ({
         s: validationScope,
         c: contextRegistryKey,
       });
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return '';
     }
   }, [

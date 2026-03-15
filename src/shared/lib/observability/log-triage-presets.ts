@@ -5,7 +5,7 @@ import type {
 
 export type { SystemLogFilterFormValues };
 
-export type LogTriagePreset = LogTriagePresetBase & {
+export type LogTriagePresetDefinition = LogTriagePresetBase & {
   resolve: (now: Date) => Partial<SystemLogFilterFormValues>;
 };
 
@@ -40,7 +40,7 @@ const daysAgo = (now: Date, offset: number): string => {
   return formatDateInput(next);
 };
 
-export const SYSTEM_LOG_TRIAGE_PRESETS: LogTriagePreset[] = [
+export const SYSTEM_LOG_TRIAGE_PRESETS: LogTriagePresetDefinition[] = [
   {
     id: 'recent-errors-24h',
     label: 'Recent Errors',
@@ -148,7 +148,7 @@ export const SYSTEM_LOG_TRIAGE_PRESETS: LogTriagePreset[] = [
 ];
 
 export const resolveSystemLogPresetFilters = (
-  preset: LogTriagePreset,
+  preset: LogTriagePresetDefinition,
   now: Date = new Date()
 ): Partial<SystemLogFilterFormValues> => preset.resolve(now);
 

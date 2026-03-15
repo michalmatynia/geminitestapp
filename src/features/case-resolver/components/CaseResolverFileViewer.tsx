@@ -25,6 +25,8 @@ import {
   useCaseResolverPageActions,
   useCaseResolverPageState,
 } from '../context/CaseResolverPageContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const formatFileSize = (size: number | null): string => {
   if (size === null || size < 0 || !Number.isFinite(size)) return 'Unknown';
@@ -79,6 +81,7 @@ export function CaseResolverFileViewer(): React.JSX.Element {
       try {
         await onAttachAssetFile(selectedAsset.id, file, { expectedKind: 'image' });
       } catch (error: unknown) {
+        logClientError(error);
         toast(error instanceof Error ? error.message : 'Failed to attach image file.', {
           variant: 'error',
         });

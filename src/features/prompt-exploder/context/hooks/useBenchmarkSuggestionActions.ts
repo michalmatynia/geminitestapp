@@ -23,6 +23,8 @@ import type { PromptExploderBenchmarkSuggestion } from '../../types';
 import type { DocumentActions, DocumentState } from '../DocumentContext';
 import type { SettingsActions, SettingsState } from '../SettingsContext';
 import type { Dispatch, SetStateAction } from 'react';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type ToastFn = (
   message: string,
@@ -226,6 +228,7 @@ export function useBenchmarkSuggestionActions({
           toast(`${summary} ${templateSummary}`, { variant: 'success' });
         }
       } catch (error) {
+        logClientError(error);
         toast(
           error instanceof Error ? error.message : 'Failed to add benchmark suggestion rule(s).',
           { variant: 'error' }

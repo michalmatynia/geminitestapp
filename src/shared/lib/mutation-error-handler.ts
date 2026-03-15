@@ -6,17 +6,8 @@
  * reusable error extraction and wrapping functions.
  */
 
+import type { ApiPayloadResult } from '@/shared/contracts/http';
 import { ApiError } from '@/shared/lib/api-client';
-
-/**
- * API Payload Result Type
- * Represents the result wrapper used by API payload mutations
- */
-export type ApiPayloadResult<T> = {
-  ok: boolean;
-  payload?: T | unknown;
-  error?: string;
-};
 
 /**
  * Resolves error message from API payload result

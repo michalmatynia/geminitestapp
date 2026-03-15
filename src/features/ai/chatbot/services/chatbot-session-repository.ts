@@ -11,6 +11,8 @@ import type {
 } from '@/shared/contracts/chatbot';
 import { parseChatbotSettingsPayload } from '@/shared/contracts/chatbot';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const COLLECTION_NAME = 'chatbot_sessions';
 
@@ -108,7 +110,8 @@ const normalizeStoredSettings = (
   if (!record) return undefined;
   try {
     return parseChatbotSettingsPayload(record);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return undefined;
   }
 };

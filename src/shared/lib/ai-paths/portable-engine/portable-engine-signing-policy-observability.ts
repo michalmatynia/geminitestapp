@@ -4,6 +4,8 @@ import type {
   PortablePathSigningPolicyProfile,
   PortablePathSigningPolicySurface,
 } from './portable-engine-resolution-types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type PortablePathSigningPolicyUsageEvent = {
   at: string;
@@ -144,7 +146,9 @@ const emitPortablePathSigningPolicyUsageEvent = (
   for (const hook of portablePathSigningPolicyUsageHooks) {
     try {
       hook(event, snapshot);
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Observability hooks must not break portable path resolution flow.
     }
   }

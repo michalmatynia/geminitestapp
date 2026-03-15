@@ -6,6 +6,8 @@ import {
   type KangurAssignmentQuestMetric,
 } from './assignments';
 import { loadProgressOwnerKey } from './progress';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const KANGUR_DAILY_QUEST_STORAGE_KEY = 'kangur_daily_quest_v1';
 
@@ -114,7 +116,8 @@ const loadStoredDailyQuest = (): KangurDailyQuestStoredState | null => {
 
     const parsed = JSON.parse(raw) as unknown;
     return isStoredQuestState(parsed) ? parsed : null;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -126,7 +129,9 @@ const saveStoredDailyQuest = (quest: KangurDailyQuestStoredState): void => {
 
   try {
     window.localStorage.setItem(KANGUR_DAILY_QUEST_STORAGE_KEY, JSON.stringify(quest));
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Ignore local storage write failures so the widget stays non-blocking.
   }
 };

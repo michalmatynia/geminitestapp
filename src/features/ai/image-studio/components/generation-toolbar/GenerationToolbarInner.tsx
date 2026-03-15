@@ -30,6 +30,8 @@ import {
 } from './GenerationToolbarSectionContexts';
 import { GenerationToolbarUpscaleSection } from './GenerationToolbarUpscaleSection';
 import { useGenerationToolbarEffects } from './useGenerationToolbarEffects';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function GenerationToolbarInner(): React.JSX.Element {
   const brainGenerationModel = useBrainAssignment({
@@ -400,6 +402,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
         setCenterLayoutPresetDraftName(saved.savedPreset.name);
         toast(`Saved preset "${saved.savedPreset.name}".`, { variant: 'success' });
       } catch (error) {
+        logClientError(error);
         toast(error instanceof Error ? error.message : 'Failed to save custom preset.', {
           variant: 'error',
         });

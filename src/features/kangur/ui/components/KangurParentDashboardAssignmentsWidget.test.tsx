@@ -109,7 +109,7 @@ describe('KangurParentDashboardAssignmentsWidget', () => {
     expect(assignmentManagerMock).toHaveBeenCalledWith(
       expect.objectContaining({
         basePath: '/kangur',
-        view: 'catalog',
+        view: 'catalogWithLists',
       })
     );
   });

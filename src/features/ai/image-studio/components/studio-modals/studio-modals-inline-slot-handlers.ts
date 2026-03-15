@@ -7,6 +7,8 @@ import type {
   LinkedGeneratedVariantViewModel,
 } from './slot-inline-edit-tab-types';
 import type { Dispatch, SetStateAction } from 'react';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type Toast = (
   message: string,
@@ -80,6 +82,7 @@ export const createInlineSlotHandlers = (deps: InlineSlotHandlersDeps): InlineSl
       deps.setSlotInlineEditOpen(false);
       deps.toast('Card updated.', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       deps.toast(error instanceof Error ? error.message : 'Failed to update card', {
         variant: 'error',
       });
@@ -111,6 +114,7 @@ export const createInlineSlotHandlers = (deps: InlineSlotHandlersDeps): InlineSl
       deps.setSlotBase64Draft('');
       deps.toast('Card image cleared.', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       deps.toast(error instanceof Error ? error.message : 'Failed to clear card image', {
         variant: 'error',
       });
@@ -139,6 +143,7 @@ export const createInlineSlotHandlers = (deps: InlineSlotHandlersDeps): InlineSl
       deps.setSlotBase64Draft('');
       deps.toast('Linked variant applied to card.', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       deps.toast(error instanceof Error ? error.message : 'Failed to apply linked variant.', {
         variant: 'error',
       });

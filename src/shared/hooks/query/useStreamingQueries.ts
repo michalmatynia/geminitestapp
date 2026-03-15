@@ -42,6 +42,7 @@ export function useStreamingQuery<T>(
         config.onMessage?.(data);
         reconnectAttemptsRef.current = 0; // Reset on successful message
       } catch (error) {
+        logClientError(error);
         logClientError(error instanceof Error ? error : new Error(String(error)), {
           context: { source: 'useStreamingQuery', action: 'parseStreamingData', level: 'warn' },
         });
@@ -118,6 +119,7 @@ export function useWebSocketQuery<T>(
         queryClient.setQueryData(queryKey, data);
         options?.onMessage?.(data);
       } catch (error) {
+        logClientError(error);
         logClientError(error instanceof Error ? error : new Error(String(error)), {
           context: { source: 'useWebSocketQuery', action: 'parseWebSocketData', level: 'warn' },
         });

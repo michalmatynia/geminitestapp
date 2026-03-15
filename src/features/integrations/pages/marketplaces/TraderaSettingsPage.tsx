@@ -16,6 +16,8 @@ import {
   ToggleRow,
   FormActions,
 } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export default function TraderaSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -165,6 +167,7 @@ export default function TraderaSettingsPage(): React.JSX.Element {
       ]);
       toast('Tradera settings saved successfully.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save settings.', {
         variant: 'error',
       });

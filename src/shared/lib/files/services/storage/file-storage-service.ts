@@ -49,7 +49,8 @@ const normalizeUrl = (value: unknown): string => {
   try {
     const url = new URL(trimmed);
     return url.toString().replace(/\/$/, '');
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return '';
   }
 };
@@ -86,7 +87,8 @@ const readMongoSettingValue = async (key: string): Promise<string | null> => {
       $or: [{ key }, { _id: key }],
     });
     return typeof record?.value === 'string' ? record.value : null;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };
@@ -126,7 +128,8 @@ export const getPublicPathFromStoredPath = (filepath: string): string | null => 
       const url = new URL(trimmed);
       const pathname = decodeURIComponent(url.pathname || '/').trim();
       return pathname.startsWith('/') ? pathname : `/${pathname}`;
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       return null;
     }
   }
@@ -140,7 +143,8 @@ const toAbsoluteUrl = (value: string, baseUrl: string): string => {
   if (!baseUrl) return value;
   try {
     return new URL(value.startsWith('/') ? value : `/${value}`, `${baseUrl}/`).toString();
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return value;
   }
 };
@@ -411,6 +415,7 @@ export const deleteFromConfiguredStorage = async (params: {
       fastComet: settings.fastComet,
     });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await ErrorSystem.logWarning('FastComet delete failed; continuing.', {
       service: 'file-storage-service',
       filepath: params.filepath,

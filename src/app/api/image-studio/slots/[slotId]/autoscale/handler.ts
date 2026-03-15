@@ -43,6 +43,8 @@ import {
   parseAutoScaleResponsePayload,
   type ImageStudioAutoScaleMetadata,
 } from './helpers';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'autoscale');
 const AUTOSCALE_PIPELINE_VERSION =
@@ -351,6 +353,7 @@ export async function postAutoScaleSlotHandler(
 
     return NextResponse.json(responseBody, { status: 201 });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const err = error as Record<string, unknown> & { meta?: Record<string, unknown> };
     if (err.meta?.['autoScaleErrorCode'] || err['autoScaleErrorCode']) {
       throw error;

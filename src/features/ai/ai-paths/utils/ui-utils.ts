@@ -1,3 +1,4 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 const looksLikeImageUrl = (value: string): boolean =>
   /(\.png|\.jpe?g|\.webp|\.gif|\.svg|\/uploads\/|^https?:\/\/)/i.test(value);
 
@@ -9,7 +10,8 @@ const extractImageUrls = (value: unknown, seen: Set<object> = new Set<object>())
       try {
         const parsed = JSON.parse(trimmed) as unknown;
         return extractImageUrls(parsed, seen);
-      } catch {
+      } catch (error) {
+        logClientError(error);
         return looksLikeImageUrl(value) ? [value] : [];
       }
     }

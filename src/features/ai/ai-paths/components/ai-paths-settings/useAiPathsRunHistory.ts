@@ -28,6 +28,8 @@ import {
   normalizeRunNodes,
 } from '../job-queue-panel-utils';
 import { buildHistoryNodeOptions, type HistoryNodeOption } from '../run-history-utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type ToastFn = (
   message: string,
@@ -238,7 +240,9 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
       try {
         const payload = JSON.parse(event.data as string) as AiPathRunRecord;
         runHistoryActions.setRunDetail((prev) => (prev ? { ...prev, run: payload } : prev));
-      } catch {
+      } catch (error) {
+        logClientError(error);
+      
         // ignore parse errors
       }
     };
@@ -247,7 +251,9 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
         const payload = JSON.parse(event.data as string) as unknown;
         const nodes = normalizeRunNodes(payload);
         runHistoryActions.setRunDetail((prev) => (prev ? { ...prev, nodes } : prev));
-      } catch {
+      } catch (error) {
+        logClientError(error);
+      
         // ignore parse errors
       }
     };
@@ -272,7 +278,9 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
         } else {
           runHistoryActions.setRunEventsOverflow(false);
         }
-      } catch {
+      } catch (error) {
+        logClientError(error);
+      
         // ignore parse errors
       }
     };
@@ -410,6 +418,7 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
         }
         runHistoryActions.setRunDetail(data);
       } catch (error) {
+        logClientError(error);
         toast(error instanceof Error ? error.message : 'Failed to load run details.', {
           variant: 'error',
         });

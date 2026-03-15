@@ -5,6 +5,8 @@ import React, { useMemo, useState } from 'react';
 import type { Slug } from '@/shared/contracts/cms';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { FormModal, FormField, LoadingState, SearchableList, Button } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 interface AttachSlugModalProps extends EntityModalProps<Slug, Slug> {
   onAttach: (selectedIds: string[]) => Promise<void>;
@@ -93,6 +95,7 @@ export function AttachSlugModal({
       setSelectedIds([]);
       onClose();
     } catch (_err) {
+      logClientError(_err);
       setError('Failed to attach slugs. Please try again.');
     } finally {
       setIsAttaching(false);

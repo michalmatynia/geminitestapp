@@ -14,6 +14,8 @@ import {
 import { useCanvasBoardUI } from './CanvasBoardUIContext';
 
 import type { EdgePath } from '../context/hooks/useEdgePaths';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const MINIMAP_WIDTH_PX = 220;
 const MINIMAP_HEIGHT_PX = 132;
@@ -181,7 +183,9 @@ export const CanvasMinimap = React.memo(function CanvasMinimap(): React.JSX.Elem
           setDragState(null);
           try {
             event.currentTarget.releasePointerCapture(event.pointerId);
-          } catch {
+          } catch (error) {
+            logClientError(error);
+          
             // no-op for stale pointer captures
           }
         }}

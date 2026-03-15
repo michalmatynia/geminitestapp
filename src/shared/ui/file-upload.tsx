@@ -158,6 +158,7 @@ export function FileUploadButton(props: FileUploadButtonProps): React.JSX.Elemen
       helpers.setProgress(100);
       setStatusMessage(`${multiple ? 'Files' : 'File'} uploaded.`);
     } catch (error) {
+      logClientError(error);
       setStatusMessage(`Failed to upload ${multiple ? 'files' : 'file'}.`);
       if (onError) {
         onError(error);
@@ -344,6 +345,7 @@ export function FileUploadTrigger(props: FileUploadTriggerProps): React.JSX.Elem
       helpers.setProgress(100);
       setStatusMessage(`${multiple ? 'Files' : 'File'} uploaded.`);
     } catch (error) {
+      logClientError(error);
       setStatusMessage(`Failed to upload ${multiple ? 'files' : 'file'}.`);
       if (onError) {
         onError(error);

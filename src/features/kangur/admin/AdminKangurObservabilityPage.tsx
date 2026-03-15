@@ -50,6 +50,8 @@ import {
 import { SummaryContent } from './components/observability/SummaryContent';
 import { formatDateTime, formatNumber } from './components/observability/utils';
 import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const RANGE_OPTIONS: Array<{ value: KangurObservabilityRange; label: string }> = [
   { value: '24h', label: '24h' },
@@ -170,6 +172,7 @@ export function AdminKangurObservabilityPage(): JSX.Element {
 
         setKnowledgeGraphPreviewResult(parsed.data);
       } catch (error) {
+        logClientError(error);
         setKnowledgeGraphPreviewResult(null);
         setKnowledgeGraphPreviewError(
           error instanceof Error ? error.message : 'Failed to run the knowledge graph preview.'
@@ -264,6 +267,7 @@ export function AdminKangurObservabilityPage(): JSX.Element {
         void summaryQuery.refetch();
         void knowledgeGraphStatusQuery.refetch();
       } catch (error) {
+        logClientError(error);
         setKnowledgeGraphSyncFeedback({
           tone: 'error',
           message:

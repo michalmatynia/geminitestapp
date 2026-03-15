@@ -26,7 +26,8 @@ const extractRequestDiagnostics = <T extends unknown[]>(
       route: url.pathname,
       ...(queryKeys.length > 0 ? { queryKeys } : {}),
     };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return {
       requestId: request.headers.get('x-request-id') ?? undefined,
       method: request.method,
@@ -51,6 +52,7 @@ export function withErrorHandling<T extends unknown[]>(handler: (...args: T) => 
     try {
       return await handler(...args);
     } catch (error: unknown) {
+      void ErrorSystem.captureException(error);
       const requestDiagnostics = extractRequestDiagnostics(args);
       // Centralized error logging
       await ErrorSystem.captureException(error, {

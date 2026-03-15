@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const IMAGE_STUDIO_PROMPT_LIBRARY_KEY = 'image_studio_prompt_library';
 
@@ -28,7 +30,8 @@ export function parseImageStudioPromptLibrary(
     const json = JSON.parse(raw) as unknown;
     const parsed = promptEntryListSchema.safeParse(json);
     return parsed.success ? parsed.data : [];
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return [];
   }
 }

@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const STORAGE_KEY = 'queued-product-ids';
 const DEFAULT_QUEUED_PRODUCT_TTL_MS = 30_000;
@@ -216,7 +218,8 @@ const loadFromStorage = (): void => {
   if (!stored) return;
   try {
     hydrateQueuedProductStateFromStorage(JSON.parse(stored) as unknown);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     cachedSources = new Map<string, Map<string, QueuedSourceState>>();
   }
 };

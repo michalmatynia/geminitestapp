@@ -2,6 +2,8 @@ import type {
   PromptExploderBenchmarkSuggestion,
   BenchmarkSuggestionPreparation,
 } from '@/shared/contracts/prompt-exploder';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const benchmarkSuggestionRuleId = (
   suggestion: PromptExploderBenchmarkSuggestion
@@ -32,7 +34,8 @@ const isValidRegexPattern = (pattern: string, flags: string): boolean => {
   try {
     void new RegExp(pattern, flags);
     return true;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return false;
   }
 };

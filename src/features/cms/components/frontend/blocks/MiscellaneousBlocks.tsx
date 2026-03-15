@@ -5,6 +5,8 @@ import React from 'react';
 
 import { getBlockTypographyStyles } from '../theme-styles';
 import { useRequiredBlockSettings } from './BlockContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function AnnouncementBlock(): React.ReactNode {
   const settings = useRequiredBlockSettings();
@@ -70,7 +72,9 @@ export function SocialLinksBlock(): React.ReactNode {
         let label = 'Link';
         try {
           label = new URL(link).hostname.replace('www.', '').split('.')[0] ?? 'Link';
-        } catch {
+        } catch (error) {
+          logClientError(error);
+        
           // keep default
         }
         return (

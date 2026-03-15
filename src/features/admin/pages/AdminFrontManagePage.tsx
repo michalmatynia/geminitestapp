@@ -61,6 +61,7 @@ function AdminFrontManageContent({
       });
       toast('Front page updated', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminFrontManagePage', action: 'saveSettings' },
       });

@@ -4,6 +4,8 @@ import {
   readKangurUrlParam,
   resolveKangurPageKeyFromSlug,
 } from '@/features/kangur/config/routing';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type KangurRouteTransitionSkeletonVariant =
   | 'game-home'
@@ -74,7 +76,8 @@ const resolvePageKeyFromHref = (href: string, basePath: string): string | null =
 
     const slug = getSlugFromPathname(parsed.pathname, normalizedBasePath);
     return resolveKangurPageKeyFromSlug(slug[0] ?? null);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -92,7 +95,8 @@ export const resolveKangurRouteTransitionSkeletonVariant = ({
   if (href && isManagedLocalHref(href)) {
     try {
       searchParams = new URL(href, 'https://kangur.local').searchParams;
-    } catch {
+    } catch (error) {
+      logClientError(error);
       searchParams = null;
     }
   }

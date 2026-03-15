@@ -19,6 +19,8 @@ import {
 } from './config';
 import { type AiPathRunJobData } from './types';
 import { createDebugQueueLogger } from '../ai-path-run-queue-utils';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 
 const { log: debugQueueLog, warn: debugQueueWarn } = createDebugQueueLogger(
@@ -157,7 +159,8 @@ export const queue = createManagedQueue<AiPathRunJobData>({
         service: LOG_SOURCE,
         runId: data.runId,
       });
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       void logSystemEvent({
         level: 'error',
         source: LOG_SOURCE,

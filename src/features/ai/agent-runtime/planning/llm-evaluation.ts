@@ -155,6 +155,7 @@ export async function evaluatePlanWithLLM({
     }
     return { score, revisedSteps };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning('[chatbot][agent][engine] Plan evaluation failed', {
       ...(runId && { runId }),
       error,
@@ -235,6 +236,7 @@ export async function verifyPlanWithLLM({
     }
     return parsed;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning('[chatbot][agent][engine] Plan verification failed', {
       ...(runId && { runId }),
       error,
@@ -319,6 +321,7 @@ export async function buildSelfImprovementReviewWithLLM({
       confidence: typeof parsed.confidence === 'number' ? parsed.confidence : undefined,
     };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning('[chatbot][agent][engine] Self-improvement review failed', {
       ...(runId && { runId }),
       error,
@@ -401,6 +404,7 @@ export async function summarizePlannerMemoryWithLLM({
     }
     return packed;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning('[chatbot][agent][engine] Planner summary failed', {
       ...(runId && { runId }),
       error,
@@ -534,6 +538,7 @@ export async function buildMidRunAdaptationWithLLM({
     }
     return result;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning('[chatbot][agent][engine] Mid-run adaptation failed', {
       ...(runId && { runId }),
       error,

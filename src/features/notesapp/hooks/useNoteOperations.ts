@@ -84,6 +84,7 @@ export function useNoteOperations({
             }
             toast('Folder created successfully');
           } catch (error: unknown) {
+            logClientError(error);
             logClientError(error, {
               context: { source: 'useNoteOperations.handleCreateFolder' },
             });
@@ -108,6 +109,7 @@ export function useNoteOperations({
             await deleteCategoryMutation.mutateAsync(folderId);
             toast('Folder deleted successfully');
           } catch (error: unknown) {
+            logClientError(error);
             logClientError(error, {
               context: {
                 source: 'useNoteOperations.handleDeleteFolder',
@@ -148,6 +150,7 @@ export function useNoteOperations({
         }
         toast('Folder renamed successfully');
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'useNoteOperations.handleRenameFolder',
@@ -220,6 +223,7 @@ export function useNoteOperations({
 
         toast('Note duplicated successfully');
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error, {
           context: { source: 'useNoteOperations.handleDuplicateNote', noteId },
         });
@@ -244,6 +248,7 @@ export function useNoteOperations({
             }
             toast('Note deleted successfully');
           } catch (error: unknown) {
+            logClientError(error);
             logClientError(error, {
               context: {
                 source: 'useNoteOperations.handleDeleteNoteFromTree',
@@ -287,6 +292,7 @@ export function useNoteOperations({
         }
         toast('Note renamed successfully');
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'useNoteOperations.handleRenameNote',
@@ -325,6 +331,7 @@ export function useNoteOperations({
         }
         toast('Note moved successfully');
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'useNoteOperations.handleMoveNoteToFolder',
@@ -363,6 +370,7 @@ export function useNoteOperations({
         }
         toast('Folder moved successfully');
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'useNoteOperations.handleMoveFolderToFolder',
@@ -420,6 +428,7 @@ export function useNoteOperations({
         );
         toast('Folder reordered successfully');
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'useNoteOperations.handleReorderFolder',
@@ -507,6 +516,7 @@ export function useNoteOperations({
 
         toast('Notes linked');
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'useNoteOperations.handleRelateNotes',

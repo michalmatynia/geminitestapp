@@ -10,6 +10,8 @@ import {
   type RuntimeNodeResolutionTelemetry,
 } from './engine-types';
 import { buildInputLinks } from './engine-utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const buildRuntimeTelemetryFields = (
   telemetry: RuntimeNodeResolutionTelemetry | null
@@ -100,6 +102,7 @@ export const runRuntimeValidation = async (
       edges: sanitizedEdges,
     });
   } catch (error) {
+    logClientError(error);
     options.reportAiPathsError(error, {
       action: 'runtime_validation_middleware',
       stage,
@@ -141,6 +144,7 @@ export const runRuntimeValidation = async (
         ...buildRuntimeTelemetryFields(args.runtimeTelemetry ?? null),
       });
     } catch (error) {
+      logClientError(error);
       options.reportAiPathsError(error, {
         action: 'onRuntimeValidation',
         stage,

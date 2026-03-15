@@ -3,6 +3,8 @@ import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-path
 
 import { coerceInput, safeStringify } from '../../utils';
 import { buildPromptOutput } from '../utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const handleNotification: NodeHandler = ({
   node,
@@ -71,6 +73,7 @@ export const handleNotification: NodeHandler = ({
         derivedPromptMessage = derivedPrompt.promptOutput;
       }
     } catch (err) {
+      logClientError(err);
       reportAiPathsError(
         err,
         {

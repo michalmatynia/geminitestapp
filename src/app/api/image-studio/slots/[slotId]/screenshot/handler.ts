@@ -9,6 +9,8 @@ import { getImageFileRepository } from '@/features/files/server';
 import { imageStudioSlotScreenshotResponseSchema } from '@/shared/contracts/image-studio';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const payloadSchema = z.object({
   dataUrl: z.string().trim().min(1),
@@ -24,7 +26,8 @@ function parseDataUrl(dataUrl: string): { buffer: Buffer; mime: string } | null 
     const buffer = Buffer.from(match[2] ?? '', 'base64');
     const mime = match[1] ?? 'image/png';
     return { buffer, mime };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 }

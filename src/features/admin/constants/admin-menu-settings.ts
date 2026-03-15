@@ -1,3 +1,4 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 export const ADMIN_MENU_FAVORITES_KEY = 'admin_menu_favorites';
 export const ADMIN_MENU_SECTION_COLORS_KEY = 'admin_menu_section_colors';
 export const ADMIN_MENU_CUSTOM_ENABLED_KEY = 'admin_menu_custom_enabled';
@@ -7,7 +8,8 @@ export const parseAdminMenuJson = <T>(value: string | undefined, fallback: T): T
   if (value === undefined || value === null || value === '') return fallback;
   try {
     return JSON.parse(value) as T;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return fallback;
   }
 };
@@ -23,7 +25,8 @@ export const parseAdminMenuBoolean = (
   try {
     const parsed: unknown = JSON.parse(value);
     return typeof parsed === 'boolean' ? parsed : Boolean(parsed);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return fallback;
   }
 };

@@ -7,6 +7,8 @@ import {
   type MongoAiPathsSettingDoc,
 } from './settings-store.constants';
 import { assertMongoConfigured, withMongoOperationTimeout } from './settings-store.helpers';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 let mongoIndexesEnsured: Promise<void> | null = null;
 
@@ -23,6 +25,7 @@ export const ensureMongoIndexes = async (timeoutMs: number): Promise<void> => {
   try {
     await withMongoOperationTimeout(mongoIndexesEnsured, timeoutMs);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     mongoIndexesEnsured = null;
     throw error;
   }

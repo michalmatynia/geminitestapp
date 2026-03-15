@@ -7,6 +7,8 @@ import { z } from 'zod';
 import { getImageFileRepository } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
@@ -31,7 +33,8 @@ function normalizePublicPath(filepath: string | null | undefined): string | null
     try {
       const url = new URL(normalized);
       normalized = url.pathname;
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       return raw;
     }
   }

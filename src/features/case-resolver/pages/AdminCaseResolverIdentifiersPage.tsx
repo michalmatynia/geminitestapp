@@ -228,6 +228,7 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
       });
       setShowModal(false);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'AdminCaseResolverIdentifiersPage',
@@ -273,6 +274,7 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
       });
       toast('Case identifier deleted.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'AdminCaseResolverIdentifiersPage',

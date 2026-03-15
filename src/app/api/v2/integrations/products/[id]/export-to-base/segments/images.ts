@@ -60,6 +60,7 @@ export const logImageDiagnostics = async ({
       transform: transform ?? null,
     });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning('[export-to-base][images] Failed to gather base64 diagnostics', {
       ...context,
       error: error instanceof Error ? error.message : String(error),

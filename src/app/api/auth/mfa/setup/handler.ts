@@ -7,6 +7,8 @@ import { encryptAuthSecret } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { conflictError, authError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
@@ -39,7 +41,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   if (process.env['NEXT_PUBLIC_APP_URL']) {
     try {
       issuer = new URL(process.env['NEXT_PUBLIC_APP_URL']).hostname || issuer;
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       issuer = 'App';
     }
   }

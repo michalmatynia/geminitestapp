@@ -39,10 +39,10 @@ import {
   apiPost,
   apiPatch,
   apiDelete,
-  ApiResponse,
   resolveApiUrl,
   withApiCsrfHeaders,
 } from './client/base';
+import type { HttpResult } from '@/shared/contracts/http';
 import {
   DbActionPayload,
   DbQueryPayload,
@@ -68,7 +68,6 @@ import {
 export type { SchemaResponse };
 
 export type {
-  ApiResponse,
   DbActionPayload,
   DbQueryPayload,
   DbUpdatePayload,
@@ -114,14 +113,14 @@ export {
 // Specialized API Methods (Remaining)
 // ============================================================================
 
-export async function fetchAgentTeachingAgents(): Promise<ApiResponse<AgentTeachingAgentRecord[]>> {
+export async function fetchAgentTeachingAgents(): Promise<HttpResult<AgentTeachingAgentRecord[]>> {
   return apiFetch<AgentTeachingAgentRecord[]>('/api/ai/agent-creator/teaching/agents');
 }
 
 export async function fetchAgentTeachingChat(args: {
   agentId: string;
   source: AgentTeachingChatSource;
-}): Promise<ApiResponse<ChatMessage[]>> {
+}): Promise<HttpResult<ChatMessage[]>> {
   return apiFetch<ChatMessage[]>(
     `/api/ai/agent-creator/teaching/chat?agentId=${args.agentId}&source=${args.source}`
   );
@@ -146,7 +145,7 @@ export async function enqueueAiPathRun(
     contextRegistry?: ContextRegistryConsumerEnvelope | null;
   },
   options?: { timeoutMs?: number; signal?: AbortSignal }
-): Promise<ApiResponse<AiPathRunEnqueueResponse>> {
+): Promise<HttpResult<AiPathRunEnqueueResponse>> {
   const response = await apiPost<unknown>('/api/ai-paths/runs/enqueue', payload, {
     timeoutMs: options?.timeoutMs ?? 60_000,
     ...(options?.signal ? { signal: options.signal } : {}),
@@ -403,7 +402,7 @@ export async function listAiPathRuns(options?: {
   fresh?: boolean;
   timeoutMs?: number;
   signal?: AbortSignal;
-}): Promise<ApiResponse<{ runs: unknown[]; total: number }>> {
+}): Promise<HttpResult<{ runs: unknown[]; total: number }>> {
   const params = new URLSearchParams();
   if (options?.pathId) params.set('pathId', options.pathId);
   if (options?.nodeId) params.set('nodeId', options.nodeId);
@@ -431,7 +430,7 @@ export async function listAiPathRuns(options?: {
 export async function getAiPathRun(
   runId: string,
   options?: RequestInit & { timeoutMs?: number | undefined; signal?: AbortSignal | undefined }
-): Promise<ApiResponse<{ run: unknown; nodes: unknown[]; events: unknown[] }>> {
+): Promise<HttpResult<{ run: unknown; nodes: unknown[]; events: unknown[] }>> {
   return apiFetch<{ run: unknown; nodes: unknown[]; events: unknown[] }>(
     `/api/ai-paths/runs/${encodeURIComponent(runId)}`,
     {
@@ -463,7 +462,7 @@ export function streamAiPathRun(runId: string, options?: { since?: string | null
 
 export async function removeAiPathRun(
   runId: string
-): Promise<ApiResponse<{ deleted: boolean; runId: string }>> {
+): Promise<HttpResult<{ deleted: boolean; runId: string }>> {
   return apiDelete<{ deleted: boolean; runId: string }>(
     `/api/ai-paths/runs/${encodeURIComponent(runId)}`
   );
@@ -472,7 +471,7 @@ export async function removeAiPathRun(
 export async function getAiPathQueueStatus(options?: {
   visibility?: 'scoped' | 'global';
   fresh?: boolean;
-}): Promise<ApiResponse<{ status: unknown }>> {
+}): Promise<HttpResult<{ status: unknown }>> {
   const params = new URLSearchParams();
   if (options?.visibility) params.set('visibility', options.visibility);
   if (options?.fresh) params.set('fresh', '1');
@@ -488,7 +487,7 @@ export async function clearAiPathRuns(options?: {
   pathId?: string;
   source?: string;
   sourceMode?: 'include' | 'exclude';
-}): Promise<ApiResponse<{ deleted: number; scope: 'all' | 'terminal' }>> {
+}): Promise<HttpResult<{ deleted: number; scope: 'all' | 'terminal' }>> {
   const params = new URLSearchParams();
   if (options?.scope) params.set('scope', options.scope);
   if (options?.pathId) params.set('pathId', options.pathId);
@@ -502,7 +501,7 @@ export async function clearAiPathRuns(options?: {
 export async function resumeAiPathRun(
   runId: string,
   mode?: 'resume' | 'replay'
-): Promise<ApiResponse<{ run: unknown }>> {
+): Promise<HttpResult<{ run: unknown }>> {
   return apiPost<{ run: unknown }>(`/api/ai-paths/runs/${encodeURIComponent(runId)}/resume`, {
     mode,
   });
@@ -511,20 +510,20 @@ export async function resumeAiPathRun(
 export async function retryAiPathRunNode(
   runId: string,
   nodeId: string
-): Promise<ApiResponse<{ run: unknown }>> {
+): Promise<HttpResult<{ run: unknown }>> {
   return apiPost<{ run: unknown }>(`/api/ai-paths/runs/${encodeURIComponent(runId)}/retry-node`, {
     nodeId,
   });
 }
 
-export async function cancelAiPathRun(runId: string): Promise<ApiResponse<{ run: unknown }>> {
+export async function cancelAiPathRun(runId: string): Promise<HttpResult<{ run: unknown }>> {
   return apiPost<{ run: unknown }>(`/api/ai-paths/runs/${encodeURIComponent(runId)}/cancel`, {});
 }
 
 export async function handoffAiPathRun(
   runId: string,
   payload?: { reason?: string; checkpointLineageId?: string }
-): Promise<ApiResponse<{ run: unknown; handoffReady?: boolean; runId?: string }>> {
+): Promise<HttpResult<{ run: unknown; handoffReady?: boolean; runId?: string }>> {
   return apiPost<{ run: unknown; handoffReady?: boolean; runId?: string }>(
     `/api/ai-paths/runs/${encodeURIComponent(runId)}/handoff`,
     payload ?? {}
@@ -538,7 +537,7 @@ export async function requeueAiPathDeadLetterRuns(payload: {
   mode?: 'resume' | 'replay';
   limit?: number | null;
 }): Promise<
-  ApiResponse<{
+  HttpResult<{
     requeued: number;
     runIds: string[];
     errors?: Array<{ runId: string; error: string }>;
@@ -677,7 +676,7 @@ export const aiJobsApi = {
   poll: async (
     jobId: string,
     options?: { signal?: AbortSignal; timeoutMs?: number }
-  ): Promise<ApiResponse<{ status: string; result?: unknown; error?: string }>> => {
+  ): Promise<HttpResult<{ status: string; result?: unknown; error?: string }>> => {
     const { timeoutMs, ...fetchOptions } = options ?? {};
     const response = await apiFetch<AiJobsPollPayload>(`/api/v2/products/ai-jobs/${jobId}`, {
       ...fetchOptions,

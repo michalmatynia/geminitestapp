@@ -1,4 +1,5 @@
-import { createContext, useContext, useMemo } from 'react';
+import { Clock } from 'lucide-react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
@@ -8,6 +9,7 @@ import {
   KangurCardDescription,
   KangurCardTitle,
   KangurGlassPanel,
+  KangurMetaText,
   KangurProgressBar,
   KangurStatusChip,
   KangurSummaryPanel,
@@ -16,6 +18,7 @@ import {
 import {
   buildKangurAssignmentListItem,
   formatKangurAssignmentOperationLabel,
+  resolveKangurAssignmentCountdownLabel,
 } from '@/features/kangur/ui/services/delegated-assignments';
 
 type KangurPracticeAssignmentBannerProps = {
@@ -34,6 +37,10 @@ type KangurPracticeAssignmentBannerModel = {
   progressSummary: string;
   actionHref: string;
   actionLabel: string;
+  timeLimitMinutes: number | null;
+  timeLimitStartsAt: string | null;
+  createdAt: string;
+  status: KangurAssignmentSnapshot['progress']['status'];
 };
 
 const KangurPracticeAssignmentBannerContext =
@@ -76,11 +83,40 @@ const buildKangurPracticeAssignmentBannerModel = (
     progressSummary: item.progressSummary,
     actionHref: item.actionHref,
     actionLabel: item.actionLabel,
+    timeLimitMinutes: assignment.timeLimitMinutes ?? null,
+    timeLimitStartsAt: assignment.timeLimitStartsAt ?? null,
+    createdAt: assignment.createdAt,
+    status: assignment.progress.status,
   };
 };
 
 function KangurPracticeAssignmentBannerBody(): React.JSX.Element {
   const banner = useKangurPracticeAssignmentBannerModel();
+  const shouldTick = Boolean(banner.timeLimitMinutes) && banner.status !== 'completed';
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!shouldTick) {
+      return;
+    }
+
+    setNow(Date.now());
+    const timerId = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(timerId);
+    };
+  }, [shouldTick]);
+
+  const countdownLabel = resolveKangurAssignmentCountdownLabel({
+    timeLimitMinutes: banner.timeLimitMinutes,
+    timeLimitStartsAt: banner.timeLimitStartsAt,
+    createdAt: banner.createdAt,
+    status: banner.status,
+    now,
+  });
 
   return (
     <>
@@ -134,6 +170,12 @@ function KangurPracticeAssignmentBannerBody(): React.JSX.Element {
             value={banner.progressPercent}
           />
         </KangurSummaryPanel>
+        {countdownLabel ? (
+          <KangurMetaText className='mt-3 flex items-center gap-2 text-sm'>
+            <Clock className='h-4 w-4 text-slate-400' aria-hidden='true' />
+            {countdownLabel}
+          </KangurMetaText>
+        ) : null}
 
         <KangurButton asChild className='mt-4' fullWidth variant='primary'>
           <Link

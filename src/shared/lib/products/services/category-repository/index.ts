@@ -13,6 +13,7 @@ export const getCategoryRepository = async (
     void providerOverride;
     return mongoCategoryRepository;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await ErrorSystem.captureException(error, {
       service: 'category-repository',
       action: 'getCategoryRepository',

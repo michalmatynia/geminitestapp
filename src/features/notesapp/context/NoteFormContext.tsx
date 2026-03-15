@@ -251,6 +251,7 @@ export function NoteFormProvider({
         toast(note ? 'Note updated successfully' : 'Note created successfully');
         onSuccess();
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error, {
           context: { source: 'NoteForm', action: 'saveNote', noteId: note?.id },
         });

@@ -1,6 +1,8 @@
 import 'server-only';
 
 import { decryptSecret } from '@/shared/lib/security/encryption';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type BaseTokenCarrier = {
   baseApiToken?: string | null | undefined;
@@ -46,6 +48,7 @@ const resolveCandidate = (
     }
     return { token: decrypted, error: null };
   } catch (error: unknown) {
+    void ErrorSystem.captureException(error);
     const message =
       error instanceof Error && error.message.trim() ? error.message : 'Unknown decryption error';
     return {

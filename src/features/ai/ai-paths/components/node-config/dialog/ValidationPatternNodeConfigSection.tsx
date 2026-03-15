@@ -19,6 +19,8 @@ import {
 import { Badge, Button, Input, SelectSimple, Textarea, ToggleRow, FormField } from '@/shared/ui';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type ValidationPatternConfigDraft = {
   source: 'global_stack' | 'path_local';
@@ -126,7 +128,8 @@ const safeParseRuleArray = (
       return { ok: false, error: 'Rule array contains invalid rule shape.' };
     }
     return { ok: true, value: result.data };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return { ok: false, error: 'Invalid JSON.' };
   }
 };

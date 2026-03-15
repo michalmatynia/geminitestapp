@@ -1,22 +1,12 @@
 import 'server-only';
 
 import { ActivityTypes } from '@/shared/constants/observability';
+import type {
+  KangurLearnerSessionEntry,
+  KangurLearnerSessionHistory,
+} from '@/shared/contracts/kangur';
 import type { ActivityLog } from '@/shared/contracts/system';
 import { getActivityRepository } from '@/shared/lib/observability/activity-repository';
-
-export type KangurLearnerSessionEntry = {
-  id: string;
-  startedAt: string;
-  endedAt: string | null;
-  durationSeconds: number | null;
-};
-
-export type KangurLearnerSessionHistory = {
-  sessions: KangurLearnerSessionEntry[];
-  totalSessions: number;
-  nextOffset?: number | null;
-  hasMore?: boolean;
-};
 
 const SESSION_ACTIVITY_TYPES = new Set<string>([
   ActivityTypes.KANGUR.LEARNER_SIGNIN,

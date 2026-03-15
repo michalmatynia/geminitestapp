@@ -27,6 +27,7 @@ export default function CreateThemePage(): React.JSX.Element {
       await createTheme.mutateAsync(validation.data);
       router.push('/admin/cms/themes');
     } catch (submitError: unknown) {
+      logClientError(submitError);
       logClientError(submitError, {
         context: { source: 'CreateThemePage', action: 'createTheme', name: data.name },
       });

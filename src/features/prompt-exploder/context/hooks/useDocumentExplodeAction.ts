@@ -133,6 +133,7 @@ export const useDocumentExplodeAction = ({
         variant: 'success',
       });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'DocumentProvider',

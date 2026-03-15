@@ -10,6 +10,8 @@ import {
   AgentLeaseRecordSchema,
   AgentLeaseStateSchema,
 } from '../contracts/agent-leases';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const DEFAULT_LEASE_MS = 5 * 60 * 1000;
 const MAX_RECENT_EVENTS = 10;
@@ -207,7 +209,8 @@ async function isProcessAlive(pid: number | null) {
   try {
     process.kill(pid, 0);
     return true;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return false;
   }
 }
@@ -229,6 +232,7 @@ async function readPlaywrightBrokerLeaseStates(options?: {
   try {
     files = await fsPromises.readdir(leaseDir);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') {
       return options?.activeOnly
         ? []
@@ -264,6 +268,7 @@ async function readPlaywrightBrokerLeaseStates(options?: {
         parsed = candidate as Record<string, unknown>;
       }
     } catch (error) {
+      void ErrorSystem.captureException(error);
       if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') {
         continue;
       }

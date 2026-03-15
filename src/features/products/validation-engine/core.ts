@@ -18,6 +18,8 @@ import {
   evaluateStringCondition,
   parseDynamicReplacementRecipe,
 } from '@/shared/lib/products/utils/validator-replacement-recipe';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type { FieldValidatorIssue };
 
@@ -365,7 +367,8 @@ export const applyResolvedReplacement = ({
     return value.replace(regex, (match: string) =>
       match === replacement.value ? match : replacement.value
     );
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return value;
   }
 };
@@ -487,7 +490,8 @@ function applyPatternPlansToField({
     let compiledPatternRegex: RegExp;
     try {
       compiledPatternRegex = new RegExp(pattern.regex, pattern.flags ?? undefined);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       // Invalid pattern is blocked at API write time; skip defensively.
       continue;
     }
@@ -767,7 +771,8 @@ export const getIssueReplacementPreview = (value: string, issue: FieldValidatorI
     if (probe[0] === issue.replacementValue) return value;
     const nextRegex = new RegExp(issue.regex, issue.flags ?? undefined);
     return value.replace(nextRegex, issue.replacementValue);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return value;
   }
 };

@@ -13,6 +13,8 @@ import {
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { type AnalyticsRange } from '../api';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 interface AnalyticsFiltersContextValue {
   range: AnalyticsRange;
@@ -69,7 +71,8 @@ export function AnalyticsProvider({ children }: { children: ReactNode }): React.
       const from = new Date(summary.from).toLocaleString();
       const to = new Date(summary.to).toLocaleString();
       return `${from} → ${to}`;
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return null;
     }
   }, [summaryQuery.data]);

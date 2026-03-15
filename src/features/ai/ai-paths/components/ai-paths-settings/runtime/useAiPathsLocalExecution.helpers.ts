@@ -1,9 +1,10 @@
 import type { AiNode, RuntimePortValues } from '@/shared/lib/ai-paths';
+import type {
+  FetcherSourceMode,
+  SimulationRunBehavior,
+  TriggerContextMode,
+} from '@/shared/contracts/ai-paths-core/nodes-primitives';
 import { isObjectRecord } from '@/shared/utils/object-utils';
-
-export type TriggerContextMode = 'trigger_only';
-export type SimulationRunBehavior = 'before_connected_trigger' | 'manual_only';
-export type FetcherSourceMode = 'live_context' | 'simulation_id' | 'live_then_simulation';
 
 export const DEFAULT_TRIGGER_CONTEXT_MODE: TriggerContextMode = 'trigger_only';
 export const DEFAULT_SIMULATION_RUN_BEHAVIOR: SimulationRunBehavior = 'before_connected_trigger';

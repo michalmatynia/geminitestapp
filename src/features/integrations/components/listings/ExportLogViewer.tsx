@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 
 import { useProductListingsLogs } from '@/features/integrations/context/ProductListingsContext';
-import { CopyButton, CollapsibleSection, LogList, type LogEntry } from '@/shared/ui';
+import { CopyButton, CollapsibleSection, LogList, type LogListEntry } from '@/shared/ui';
 
 interface ExportLog {
   timestamp: string;
@@ -31,7 +31,7 @@ export function ExportLogViewer({
 
   const logsJson = useMemo(() => JSON.stringify(logs, null, 2), [logs]);
 
-  const logEntries = useMemo((): LogEntry[] => {
+  const logEntries = useMemo((): LogListEntry[] => {
     return logs.map((log, index) => ({
       id: `${log.timestamp}-${index}`,
       timestamp: log.timestamp,

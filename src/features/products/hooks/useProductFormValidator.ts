@@ -237,7 +237,8 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
         next['product_edit'] = normalizeProductValidationDenyBehavior(source['product_edit']);
       }
       return next;
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return {};
     }
   });
@@ -254,7 +255,8 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
           (entry: unknown): entry is string => typeof entry === 'string' && entry.length > 0
         )
       );
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return new Set<string>();
     }
   });
@@ -271,7 +273,8 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
           (entry: unknown): entry is string => typeof entry === 'string' && entry.length > 0
         )
       );
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return new Set<string>();
     }
   });

@@ -8,6 +8,8 @@ import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const linkToFileSchema = z.object({
   url: z.string().trim().url(),
@@ -33,7 +35,8 @@ const resolveFilename = (input: { url: string; preferred?: string; mimetype: str
         const parsed = new URL(input.url);
         const basename = path.basename(parsed.pathname).trim();
         return basename || '';
-      } catch {
+      } catch (error) {
+        void ErrorSystem.captureException(error);
         return '';
       }
     })();

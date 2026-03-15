@@ -29,6 +29,8 @@ import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurP
 import { buildKangurAssignmentListItems } from '@/features/kangur/ui/services/delegated-assignments';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const ACTIVE_ASSIGNMENTS_TITLE = 'Aktywne zadania';
 const ACTIVE_ASSIGNMENTS_EMPTY_LABEL = 'Brak aktywnych zadań dla ucznia.';
@@ -212,7 +214,8 @@ export function KangurParentDashboardProgressWidget({
     setArchiveError(null);
     try {
       await updateAssignment(assignmentId, { archived: true });
-    } catch {
+    } catch (error) {
+      logClientError(error);
       setArchiveError(ARCHIVE_ASSIGNMENT_ERROR_LABEL);
     }
   };
@@ -240,7 +243,7 @@ export function KangurParentDashboardProgressWidget({
             <KangurDailyQuestHighlightCardContent
               action={
                 dailyQuestHref ? (
-                  <KangurButton asChild className='shrink-0' size='sm' variant='surface'>
+                  <KangurButton asChild className='w-full sm:w-auto sm:shrink-0' size='sm' variant='surface'>
                     <Link
                       href={dailyQuestHref}
                       targetPageKey={dailyQuestTargetPage ?? undefined}
@@ -298,7 +301,7 @@ export function KangurParentDashboardProgressWidget({
                     </KangurMetaText>
                   </div>
                   {isLocalHref ? (
-                    <KangurButton asChild className='shrink-0' size='sm' variant='surface'>
+                    <KangurButton asChild className='w-full sm:w-auto sm:shrink-0' size='sm' variant='surface'>
                       <Link
                         href={task.href}
                         transitionAcknowledgeMs={110}

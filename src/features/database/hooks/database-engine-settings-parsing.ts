@@ -19,6 +19,8 @@ import {
   type DatabaseEngineProvider,
   type DatabaseEngineServiceRoute,
 } from '@/shared/lib/db/database-engine-constants';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const DATABASE_ENGINE_TIME_UTC_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
@@ -66,6 +68,7 @@ const parseNonEmptyJsonObject = (
   try {
     parsed = JSON.parse(trimmedRaw);
   } catch (error) {
+    logClientError(error);
     throw validationError(`Invalid ${key} settings payload.`, {
       source: 'database_engine.settings',
       key,

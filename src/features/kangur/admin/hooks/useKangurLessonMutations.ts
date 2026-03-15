@@ -1,16 +1,10 @@
 import { useCallback } from 'react';
 
 import {
-  cloneKangurLessonGridItem,
   cloneKangurLessonPage,
   cloneKangurLessonRootBlock,
   createKangurLessonDocumentFromTemplate,
-  createKangurLessonGridBlockFromTemplate,
-  createKangurLessonGridItem,
-  createKangurLessonImageBlock,
   createKangurLessonPage,
-  createKangurLessonSvgBlock,
-  createKangurLessonTextBlock,
   reorderKangurLessonBlocks,
   resolveKangurLessonDocumentPages,
   updateKangurLessonDocumentPages,
@@ -18,10 +12,9 @@ import {
 } from '@/features/kangur/lesson-documents';
 import type {
   KangurLessonDocument,
-  KangurLessonGridBlock,
-  KangurLessonGridItem,
-  KangurLessonPage,
   KangurLessonRootBlock,
+  KangurLessonPage,
+  KangurLessonGridBlock,
 } from '@/shared/contracts/kangur';
 
 import { insertAfterIndex, moveItem, resolvePageSectionOptions } from '../utils';

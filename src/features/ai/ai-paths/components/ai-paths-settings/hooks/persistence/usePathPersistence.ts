@@ -35,6 +35,8 @@ import {
 } from '../../useAiPathsPersistence.helpers';
 
 import type { PathSaveOptions, UseAiPathsPersistenceArgs } from '../../useAiPathsPersistence.types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function usePathPersistence(
   args: UseAiPathsPersistenceArgs,
@@ -103,7 +105,9 @@ export function usePathPersistence(
             return parsed as PathConfig;
           }
         }
-      } catch {
+      } catch (error) {
+        logClientError(error);
+      
         // Fallback to the client-side sanitized config when response payload parsing fails.
       }
       return sanitizedConfig;
@@ -392,6 +396,7 @@ export function usePathPersistence(
         }
         return true;
       } catch (error) {
+        logClientError(error);
         const rawMessage = error instanceof Error ? error.message.trim() : '';
         const shouldExposeRawMessage = shouldExposePathSaveRawMessage(rawMessage);
         args.reportAiPathsError(

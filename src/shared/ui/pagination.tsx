@@ -57,7 +57,7 @@ function PaginationInfo(): React.JSX.Element | null {
   if (!(showInfo || isPanel) || totalCount === undefined) return null;
 
   return (
-    <div className='text-sm text-gray-400'>
+    <div className='text-sm text-gray-400' aria-live='polite' aria-atomic='true'>
       {isLoading ? (
         <div className='flex items-center gap-2'>
           <Loader2 className='h-4 w-4 animate-spin text-blue-500' aria-hidden='true' />
@@ -227,12 +227,13 @@ export function Pagination(props: PaginationProps): React.JSX.Element | null {
 
   return (
     <PaginationContext.Provider value={contextValue}>
-      <div
+      <nav
         className={cn(
           'flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between',
           isPanel && 'rounded-lg border border-border/60 bg-card/40 px-4 py-3',
           className
         )}
+        aria-label='Pagination'
       >
         <PaginationInfo />
         <div
@@ -244,7 +245,7 @@ export function Pagination(props: PaginationProps): React.JSX.Element | null {
           <PaginationPageSize />
           <PaginationControls />
         </div>
-      </div>
+      </nav>
     </PaginationContext.Provider>
   );
 }

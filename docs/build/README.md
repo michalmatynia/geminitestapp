@@ -52,6 +52,8 @@ shared toolchain surfaces.
 
 ## Related Docs
 
+- High-memory build fallback when `npm run build` OOMs:
+  `npm run build:hi-mem`
 - Bun build/runtime lane overview:
   [`docs/build/bun.md`](./bun.md)
 - Bun support contract and local package-manager parity:

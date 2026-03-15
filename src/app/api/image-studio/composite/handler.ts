@@ -5,6 +5,8 @@ import { z } from 'zod';
 import { getImageStudioSlotById } from '@/features/ai/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 // ── Validation ──────────────────────────────────────────────────────────────
 
@@ -48,7 +50,9 @@ async function resolveSlotImage(slotId: string): Promise<Buffer | null> {
       if (res.ok) {
         return Buffer.from(await res.arrayBuffer());
       }
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // fall through
     }
   }
@@ -60,7 +64,9 @@ async function resolveSlotImage(slotId: string): Promise<Buffer | null> {
       if (res.ok) {
         return Buffer.from(await res.arrayBuffer());
       }
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // fall through
     }
   }

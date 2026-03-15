@@ -9,12 +9,13 @@ import type {
   ImageStudioCenterObjectBounds,
   ImageStudioAutoScalePlan,
 } from '@/features/ai/image-studio/analysis/shared';
+import type { MaskShapeForExport } from '@/shared/contracts/image-studio';
 import type {
   PositiveRectBoundsDto as CropRect,
   PositiveRectBoundsDto as ImageContentFrame,
 } from '@/shared/contracts/geometry';
 
-export type { CropRect, ImageContentFrame };
+export type { CropRect, ImageContentFrame, MaskShapeForExport };
 
 export type UpscaleSmoothingQuality = 'low' | 'medium' | 'high';
 
@@ -28,14 +29,6 @@ export type UpscaleRequestStrategyPayload =
       targetWidth: number;
       targetHeight: number;
     };
-
-export type MaskShapeForExport = {
-  id: string;
-  type: string;
-  points: Array<{ x: number; y: number }>;
-  closed?: boolean;
-  visible: boolean;
-};
 
 export type CropCanvasContext = {
   canvasWidth: number;
@@ -99,5 +92,6 @@ export type CenterMode =
   | 'client_alpha_bbox'
   | 'server_alpha_bbox'
   | 'client_object_layout'
-  | 'server_object_layout';
+  | 'server_object_layout'
+  | 'client_white_bg_bbox';
 export type AutoScalerMode = 'client_auto_scaler' | 'server_auto_scaler';

@@ -14,6 +14,8 @@ import type {
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { AppErrorCodes, isAppError } from '@/shared/errors/app-error';
 import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const RANGE_VALUES: readonly AiPathRuntimeAnalyticsRange[] = ['1h', '24h', '7d', '30d'];
 const RANGE_VALUE_SET = new Set<string>(RANGE_VALUES);
@@ -48,6 +50,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   try {
     await requireAiPathsAccess();
   } catch (error) {
+    void ErrorSystem.captureException(error);
     if (
       isAppError(error) &&
       (error.code === AppErrorCodes.unauthorized || error.code === AppErrorCodes.forbidden)

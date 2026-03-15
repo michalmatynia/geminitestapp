@@ -1,33 +1,19 @@
 import { useState, type ChangeEvent } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import type { TransientRecoverySettings } from '@/shared/contracts/observability';
 import {
-  AdminSettingsBreadcrumbs,
+  AdminSettingsPageLayout,
   Button,
   FormField,
   FormSection,
   Input,
-  PageLayout,
   ToggleRow,
   useToast,
 } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-export type TransientRecoverySettings = {
-  enabled: boolean;
-  retry: {
-    enabled: boolean;
-    maxAttempts: number;
-    initialDelayMs: number;
-    maxDelayMs: number;
-    timeoutMs: number | null;
-  };
-  circuit: {
-    enabled: boolean;
-    failureThreshold: number;
-    resetTimeoutMs: number;
-  };
-};
 
 const toNumber = (value: string, fallback: number, min: number = 0): number => {
   const parsed = Number(value);
@@ -98,6 +84,7 @@ export function TransientRecoverySettingsForm({
       setDirty(false);
       toast('Transient recovery settings saved.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save settings.', {
         variant: 'error',
       });
@@ -105,10 +92,10 @@ export function TransientRecoverySettingsForm({
   };
 
   return (
-    <PageLayout
+    <AdminSettingsPageLayout
       title='Transient Recovery'
+      current='Recovery'
       description='Configure retry and circuit-breaker policies for transient failures.'
-      eyebrow={<AdminSettingsBreadcrumbs current='Recovery' />}
     >
       <FormSection
         title='Global Controls'
@@ -270,6 +257,6 @@ export function TransientRecoverySettingsForm({
           </Button>
         </div>
       </FormSection>
-    </PageLayout>
+    </AdminSettingsPageLayout>
   );
 }

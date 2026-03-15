@@ -17,6 +17,8 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { cn } from '@/shared/utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export interface ConfirmModalProps {
   isOpen: boolean;
@@ -153,6 +155,7 @@ export function ConfirmModal({
       await Promise.resolve(onConfirm());
       onClose();
     } catch (error) {
+      logClientError(error);
       console.error('Confirmation error:', error);
     }
   };

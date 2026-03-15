@@ -13,6 +13,8 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { clearSettingsCache } from '@/shared/lib/settings-cache';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 const projectsRootResolved = path.resolve(projectsRoot);
@@ -219,7 +221,8 @@ const resolveProjectSummaryFromDirectory = async (
       canvasWidthPx: parseCanvasDimension(metadata['canvasWidthPx']),
       canvasHeightPx: parseCanvasDimension(metadata['canvasHeightPx']),
     };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return {
       createdAt: fallbackCreatedAt,
       updatedAt: fallbackUpdatedAt,
@@ -275,7 +278,8 @@ const normalizePublicPath = (filepath: string | null | undefined): string | null
   if (/^https?:\/\//i.test(normalized)) {
     try {
       normalized = new URL(normalized).pathname;
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       return raw;
     }
   }

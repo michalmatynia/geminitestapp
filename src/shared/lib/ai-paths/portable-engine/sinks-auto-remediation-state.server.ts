@@ -22,6 +22,8 @@ import {
 } from './sinks-settings-store.server';
 
 import type { PortablePathAuditSinkStartupHealthState } from './types';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export type { PortablePathAuditSinkStartupHealthState } from './types';
 
@@ -117,7 +119,8 @@ const parsePortablePathAuditSinkStartupHealthStateEnvelope = (
           ? state['lastStatus']
           : null,
     };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return createDefaultPortablePathAuditSinkStartupHealthState();
   }
 };
@@ -132,7 +135,8 @@ const stringifyPortablePathAuditSinkStartupHealthStateEnvelope = (
       state,
     };
     return JSON.stringify(envelope);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };

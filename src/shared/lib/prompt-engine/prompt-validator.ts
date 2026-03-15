@@ -15,6 +15,8 @@ import { recordPromptValidationTiming } from '@/shared/lib/prompt-core/runtime-o
 
 import { extractParamsFromPrompt } from './prompt-params';
 import { DEFAULT_PROMPT_VALIDATION_SCOPES } from './settings';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type { PromptValidationExecutionContext };
 
@@ -27,7 +29,8 @@ const DEFAULT_SEQUENCE_STEP = 10;
 function compileRegex(pattern: string, flags: string | undefined): RegExp | null {
   try {
     return new RegExp(pattern, flags);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 }

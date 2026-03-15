@@ -32,6 +32,8 @@ import { extractDatabaseRuntimeMetadata } from '../../components/ai-paths-settin
 
 import type { PathRunProfiling } from './profiling';
 import type { UpsertRuntimeTraceSpan } from './tracing';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type CallbackCtx = {
   run: AiPathRunRecord;
@@ -302,6 +304,7 @@ export const createCallbacks = (ctx: CallbackCtx) => {
             
         void throttledSaveIntermediateState();
       } catch (error) {
+        logClientError(error);
         reportAiPathsError(error, { nodeId: node.id, action: 'onNodeStart' });
       }
             
@@ -436,6 +439,7 @@ export const createCallbacks = (ctx: CallbackCtx) => {
         void throttledSaveIntermediateState();
         void recordRuntimeNodeStatus({ runId: run.id, nodeId: node.id, status }).catch(() => {});
       } catch (error) {
+        logClientError(error);
         reportAiPathsError(error, { nodeId: node.id, action: 'onNodeFinish' });
       }
             
@@ -550,6 +554,7 @@ export const createCallbacks = (ctx: CallbackCtx) => {
             
         void throttledSaveIntermediateState();
       } catch (error) {
+        logClientError(error);
         reportAiPathsError(error, { nodeId: node.id, action: 'onNodeBlocked' });
       }
             
@@ -661,6 +666,7 @@ export const createCallbacks = (ctx: CallbackCtx) => {
           () => {}
         );
       } catch (callbackError) {
+        logClientError(callbackError);
         reportAiPathsError(callbackError, { nodeId: node.id, action: 'onNodeError' });
       }
             
@@ -826,6 +832,7 @@ export const createCallbacks = (ctx: CallbackCtx) => {
           () => {}
         );
       } catch (error) {
+        logClientError(error);
         reportAiPathsError(error, { nodeId: input.node.id, action: 'recordNodeReuse' });
       }
             

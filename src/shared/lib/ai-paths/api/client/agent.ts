@@ -1,6 +1,7 @@
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
+import type { HttpResult } from '@/shared/contracts/http';
 
-import { apiPost, apiFetch, ApiResponse } from './base';
+import { apiPost, apiFetch } from './base';
 
 export type AgentEnqueuePayload = {
   prompt: string;
@@ -74,18 +75,18 @@ export type PlaywrightNodeRunSnapshot = {
 
 export async function enqueueAgentRun(
   payload: AgentEnqueuePayload
-): Promise<ApiResponse<{ runId: string }>> {
+): Promise<HttpResult<{ runId: string }>> {
   return apiPost<{ runId: string }>('/api/ai/agent-runtime/enqueue', payload);
 }
 
 export async function enqueuePlaywrightRun(
   payload: PlaywrightNodeEnqueuePayload
-): Promise<ApiResponse<{ run: PlaywrightNodeRunSnapshot }>> {
+): Promise<HttpResult<{ run: PlaywrightNodeRunSnapshot }>> {
   return apiPost<{ run: PlaywrightNodeRunSnapshot }>('/api/ai-paths/playwright', payload);
 }
 
 export async function fetchPlaywrightRun(
   runId: string
-): Promise<ApiResponse<{ run: PlaywrightNodeRunSnapshot }>> {
+): Promise<HttpResult<{ run: PlaywrightNodeRunSnapshot }>> {
   return apiFetch<{ run: PlaywrightNodeRunSnapshot }>(`/api/ai-paths/playwright/${runId}`);
 }

@@ -4,6 +4,8 @@ import path from 'path';
 import { Page } from 'playwright';
 
 import { TraderaFailureCategory } from './config';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const toRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
@@ -86,7 +88,8 @@ export const captureTraderaListingDebugArtifacts = async (
     await writeFile(htmlPath, html, 'utf8');
     return `Screenshot: ${screenshotPath}
 HTML: ${htmlPath}`;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

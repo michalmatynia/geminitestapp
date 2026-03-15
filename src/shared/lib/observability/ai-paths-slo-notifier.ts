@@ -172,6 +172,7 @@ const acquireRedisThrottle = async (
     );
     return result === 'OK';
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.captureException(error, {
       service: 'ai-paths-slo-notifier',
       action: 'acquireRedisThrottle',
@@ -187,6 +188,7 @@ const releaseRedisThrottle = async (signature: string): Promise<void> => {
   try {
     await redis.del(getThrottleKey(signature));
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.captureException(error, {
       service: 'ai-paths-slo-notifier',
       action: 'releaseRedisThrottle',
@@ -360,6 +362,7 @@ export const notifyAiPathsSloBreach = async (
       signature,
     };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     if (signature && throttleStorage !== 'none') {
       await releaseThrottleSlot(signature, throttleStorage);
     }

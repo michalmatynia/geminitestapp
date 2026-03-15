@@ -107,6 +107,7 @@ export function useEditorMode(
       onSuccess?.();
       return htmlContent;
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'useEditorMode',
@@ -149,6 +150,7 @@ export function useEditorMode(
       onSuccess?.();
       return markdownContent;
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'useEditorMode',

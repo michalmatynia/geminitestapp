@@ -45,6 +45,8 @@ import {
   ToggleRow,
   FormActions,
 } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type ProductSyncProfileDraft = {
   name: string;
@@ -262,6 +264,7 @@ export function ProductSyncSettings(): React.JSX.Element {
       setDraft(profileToDraft(created));
       toast('Sync profile created.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save profile.', {
         variant: 'error',
       });
@@ -283,6 +286,7 @@ export function ProductSyncSettings(): React.JSX.Element {
           setSelectedProfileId('');
           setDraft(defaultDraft(newProfileDefaults));
         } catch (error) {
+          logClientError(error);
           toast(error instanceof Error ? error.message : 'Failed to delete profile.', {
             variant: 'error',
           });
@@ -303,6 +307,7 @@ export function ProductSyncSettings(): React.JSX.Element {
       void runsQuery.refetch();
       void profilesQuery.refetch();
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to queue sync run.', {
         variant: 'error',
       });
@@ -323,6 +328,7 @@ export function ProductSyncSettings(): React.JSX.Element {
       const result = await relinkMutation.mutateAsync(payload);
       toast(`Backfill queued (${result.jobId}).`, { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to queue backfill.', {
         variant: 'error',
       });
@@ -363,6 +369,7 @@ export function ProductSyncSettings(): React.JSX.Element {
             { variant: 'success' }
           );
         } catch (error) {
+          logClientError(error);
           toast(error instanceof Error ? error.message : 'Failed to apply Base.com connection.', {
             variant: 'error',
           });

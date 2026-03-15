@@ -13,6 +13,7 @@ export const getValidationPatternRepository = async (
     void providerOverride;
     return mongoValidationPatternRepository;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await ErrorSystem.captureException(error, {
       service: 'validation-pattern-repository',
       action: 'getValidationPatternRepository',

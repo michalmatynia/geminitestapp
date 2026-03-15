@@ -2,6 +2,8 @@ import 'server-only';
 
 import { getAgentAuditLogDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type LLMContext = {
   model: string;
@@ -18,7 +20,8 @@ const parseJsonObject = (raw: string): unknown => {
   try {
     const parsed: unknown = JSON.parse(jsonText);
     return parsed;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };
@@ -134,6 +137,7 @@ export const validateExtractionWithLLM = async (
         : [],
     };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const fallbackAccepted = evidence.map((entry: { item: string; snippet: string }) => entry.item);
     return {
       valid: fallbackAccepted.length >= requiredCount,
@@ -175,7 +179,8 @@ export const normalizeExtractionItemsWithLLM = async (
       ? (parsed?.['items'] as unknown[]).filter((item: unknown) => typeof item === 'string')
       : [];
     return cleaned.length > 0 ? cleaned : items;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return items;
   }
 };
@@ -233,6 +238,7 @@ export const inferSelectorsFromLLM = async (
     });
     return selectors;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     if (log) {
       await log('warning', 'LLM selector inference failed.', {
         stepId: activeStepId ?? null,
@@ -315,6 +321,7 @@ export const buildExtractionPlan = async (
     });
     return plan;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     if (log) {
       await log('warning', 'LLM extraction plan failed.', {
         stepId: activeStepId ?? null,
@@ -413,6 +420,7 @@ export const buildFailureRecoveryPlan = async (
     });
     return plan;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     if (log) {
       await log('warning', 'LLM failure recovery plan failed.', {
         stepId: activeStepId ?? null,
@@ -440,6 +448,7 @@ export const buildSearchQueryWithLLM = async (
     const query = typeof parsed?.['query'] === 'string' ? parsed['query'].trim() : '';
     return query || null;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     if (log) {
       await log('warning', 'LLM search query inference failed.', {
         stepId: activeStepId ?? null,
@@ -467,6 +476,7 @@ export const pickSearchResultWithLLM = async (
     const url = typeof parsed?.['url'] === 'string' ? parsed['url'].trim() : '';
     return url || null;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     if (log) {
       await log('warning', 'LLM search result selection failed.', {
         stepId: activeStepId ?? null,
@@ -532,6 +542,7 @@ export const decideSearchFirstWithLLM = async (
     });
     return { useSearchFirst, query: query || null, reason: parsed?.['reason'] };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     if (log) {
       await log('warning', 'Tool selection decision failed.', {
         stepId: activeStepId ?? null,

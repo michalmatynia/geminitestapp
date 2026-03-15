@@ -17,6 +17,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   try {
     inventoryId = await getExportDefaultInventoryId();
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning(
       'Failed to read Base.com default inventory setting; returning null.',
       {

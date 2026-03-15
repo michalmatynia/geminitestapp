@@ -211,7 +211,7 @@ export function useDatabasePreview(input: {
         );
         throw new ApiError(message, 400);
       }
-      return result.payload;
+      return result.payload as DatabasePreviewPayload;
     },
     enabled: enabled && (!!backupName || mode === 'current'),
     meta: {

@@ -65,8 +65,8 @@ export function KangurLoginModal(): JSX.Element {
           <button
             aria-label='Zamknij logowanie'
             className={cn(
-              'absolute right-4 top-4 z-10 cursor-pointer rounded-full border border-amber-200/80',
-              'px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em]',
+              'absolute right-3 top-3 z-10 cursor-pointer rounded-full border border-amber-200/80 sm:right-4 sm:top-4',
+              'px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] sm:px-3 sm:py-1.5 sm:text-xs sm:tracking-[0.18em]',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
               'shadow-[0_16px_34px_-26px_rgba(249,115,22,0.5)] transition'
             )}

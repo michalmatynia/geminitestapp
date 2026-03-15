@@ -9,6 +9,8 @@ import {
   redactSensitiveText,
   truncateString,
 } from '@/shared/utils/observability/client-redaction';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const MAX_BATCH_SIZE = 100;
 const MAX_CONTEXT_BYTES = 12_000;
@@ -178,7 +180,8 @@ const sanitizeContext = (
         }
         : {}),
     };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return {
       value: { error: 'Failed to sanitize telemetry context.' },
     };
@@ -204,6 +207,7 @@ const logSystemTelemetryEvent = async (input: LogSystemEventInput): Promise<void
     const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
     await logSystemEvent(input);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     logger.error('query-telemetry failed to persist log event', error, {
       service: 'query.telemetry',
       source: input.source,
@@ -301,7 +305,8 @@ const persistTelemetryBatch = async ({
         critical: event.criticality === 'critical',
       });
       accepted += 1;
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       dropped += 1;
       persistError += 1;
     }

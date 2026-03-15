@@ -34,6 +34,8 @@ import {
   CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
   readWorkspaceFromSettingRecord,
 } from './workspace-persistence-shared';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type WorkspaceRecordFetchAttempt = {
   key: string;
@@ -174,6 +176,7 @@ const fetchWorkspaceRecordByKeyAttempts = async ({
         scope: attempt.scope,
       };
     } catch (error: unknown) {
+      logClientError(error);
       sawTransportFailure = true;
       lastFailureMessage =
         error instanceof Error ? error.message : `Unknown refresh error (${attempt.key}).`;
@@ -243,6 +246,7 @@ const fetchWorkspaceDetachedHistoryPayloadByKey = async ({
       if (!detachedHistoryPayload) continue;
       return detachedHistoryPayload;
     } catch (error: unknown) {
+      logClientError(error);
       logCaseResolverWorkspaceEvent({
         source,
         action: 'refresh_detached_history_failed',
@@ -304,6 +308,7 @@ const fetchWorkspaceDetachedDocumentsPayloadByKey = async ({
       if (!detachedDocumentsPayload) continue;
       return detachedDocumentsPayload;
     } catch (error: unknown) {
+      logClientError(error);
       logCaseResolverWorkspaceEvent({
         source,
         action: 'refresh_detached_documents_failed',
@@ -353,6 +358,7 @@ export const fetchCaseResolverWorkspaceMetadata = async (
     });
     return metadata;
   } catch (error: unknown) {
+    logClientError(error);
     logCaseResolverWorkspaceEvent({
       source,
       action: 'refresh_meta_failed',
@@ -668,6 +674,7 @@ export const fetchCaseResolverWorkspaceIfStale = async (
     });
     return { updated: true, workspace: workspaceWithDetachedHistory };
   } catch (error: unknown) {
+    logClientError(error);
     logCaseResolverWorkspaceEvent({
       source,
       action: 'conditional_fetch_error',

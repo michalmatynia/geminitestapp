@@ -8,6 +8,8 @@ import { PRODUCT_VALIDATOR_DECISION_LOG_SETTING_KEY } from '@/shared/lib/product
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 
 import type { Document, Filter } from 'mongodb';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type ProductValidationDecisionAction = 'deny' | 'replace' | 'accept';
 
@@ -57,7 +59,8 @@ const parseDecisionLog = (value: string | null): ProductValidationDecisionRecord
         )
       )
       .slice(0, DECISION_LOG_MAX_ENTRIES);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return [];
   }
 };

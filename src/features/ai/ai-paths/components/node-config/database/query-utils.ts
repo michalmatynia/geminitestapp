@@ -1,3 +1,4 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 export type QueryValidationStatus = 'empty' | 'valid' | 'warning' | 'error';
 
 export type QueryValidationIssue = {
@@ -29,7 +30,8 @@ export type QueryValidationResult = {
 const compileRegex = (pattern: string, flags?: string | undefined): RegExp | null => {
   try {
     return new RegExp(pattern, flags);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -189,14 +191,16 @@ export const formatAndFixMongoQuery = (value: string): string => {
   try {
     const parsed: unknown = JSON.parse(fixed);
     return JSON.stringify(parsed, null, 2);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     // If still invalid, return the partially fixed version with basic formatting
     try {
       // Try one more time with more aggressive fixes
       fixed = fixed.replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:/g, '$1"$2":');
       const parsed: unknown = JSON.parse(fixed);
       return JSON.stringify(parsed, null, 2);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return fixed;
     }
   }
@@ -212,6 +216,7 @@ export const buildMongoQueryValidation = (value: string): QueryValidationResult 
     JSON.parse(raw);
     return { status: 'valid', message: 'Valid JSON query.' };
   } catch (error) {
+    logClientError(error);
     const message = error instanceof Error ? error.message : 'Invalid JSON query.';
     const match = message.match(/position\s+(?<pos>\d+)/i);
     let line: number | undefined;
@@ -273,6 +278,7 @@ export const buildJsonQueryValidation = (value: string): QueryValidationResult =
     JSON.parse(raw);
     return { status: 'valid', message: 'Valid JSON query.' };
   } catch (error) {
+    logClientError(error);
     const message = error instanceof Error ? error.message : 'Invalid JSON query.';
     const match = message.match(/position\s+(?<pos>\d+)/i);
     let line: number | undefined;

@@ -3,6 +3,8 @@ import sharp from 'sharp';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { IMAGE_STUDIO_AUTOSCALER_ERROR_CODES } from '@/features/ai/image-studio/contracts/autoscaler';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const {
   mkdirMock,
@@ -888,6 +890,7 @@ describe('image-studio autoscale handler', () => {
         { slotId: 'source-slot' }
       );
     } catch (error) {
+      void ErrorSystem.captureException(error);
       thrown = error;
     }
 
@@ -912,6 +915,7 @@ describe('image-studio autoscale handler', () => {
         { slotId: 'source-slot' }
       );
     } catch (error) {
+      void ErrorSystem.captureException(error);
       thrown = error;
     }
 

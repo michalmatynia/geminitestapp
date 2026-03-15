@@ -4,6 +4,8 @@ import { aiPathRunStatusSchema, type AiPathRunRecord } from '@/shared/contracts/
 import { logger } from '@/shared/utils/logger';
 
 import { AI_PATHS_RUN_SOURCE_VALUES } from './run-sources';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const STORAGE_KEY = 'ai-paths-optimistic-run-queue';
 const DEFAULT_RUN_TTL_MS = 60_000;
@@ -186,7 +188,8 @@ export const aiPathRunMatchesFilters = (
 const safeLocalStorageGet = (key: string): string | null => {
   try {
     return window.localStorage.getItem(key);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -195,7 +198,8 @@ const safeLocalStorageSet = (key: string, value: string): boolean => {
   try {
     window.localStorage.setItem(key, value);
     return true;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return false;
   }
 };
@@ -203,7 +207,9 @@ const safeLocalStorageSet = (key: string, value: string): boolean => {
 const safeLocalStorageRemove = (key: string): void => {
   try {
     window.localStorage.removeItem(key);
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Ignore storage failures.
   }
 };
@@ -316,7 +322,8 @@ const readEntries = (): StoredOptimisticRun[] => {
           );
           safeLocalStorageRemove(STORAGE_KEY);
         }
-      } catch {
+      } catch (error) {
+        logClientError(error);
         logger.warn('[ai-paths-optimistic-run-queue] invalid stored payload (json parse failure)', {
           event: 'storage-invalid',
           source: 'invalid-json',

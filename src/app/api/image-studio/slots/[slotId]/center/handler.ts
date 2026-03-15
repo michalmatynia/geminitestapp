@@ -46,6 +46,8 @@ import {
   readCenterMetadataFromSlot,
   parseCenterResponsePayload,
 } from './helpers';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'center');
 const CENTER_PIPELINE_VERSION = process.env['IMAGE_STUDIO_CENTER_PIPELINE_VERSION']?.trim() || 'v2';
@@ -417,6 +419,7 @@ export async function postCenterSlotHandler(
 
     return NextResponse.json(responseBody, { status: 201 });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const normalizedError =
       error instanceof z.ZodError
         ? centerBadRequest(

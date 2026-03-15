@@ -43,6 +43,8 @@ import {
   DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT,
   DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
 } from './settings';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const AI_INSIGHTS_MODEL_MAX_RETRIES = Math.max(
   0,
@@ -125,6 +127,7 @@ async function callChatModel(params: {
         maxTokens: 1000,
       });
     } catch (error) {
+      void ErrorSystem.captureException(error);
       lastError = error;
       if (attempt < AI_INSIGHTS_MODEL_MAX_RETRIES) {
         const delay = AI_INSIGHTS_MODEL_RETRY_BASE_MS * Math.pow(2, attempt);
@@ -279,6 +282,7 @@ Analyze performance and success rates of AI Path executions. Include migration r
 
     return insight;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     if (type === 'runtime_analytics') {
       await recordBrainInsightAnalytics({
         type: 'analytics',

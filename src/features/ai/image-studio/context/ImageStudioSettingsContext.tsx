@@ -174,7 +174,8 @@ export function ImageStudioSettingsProvider({
           },
         },
       }));
-    } catch {
+    } catch (error) {
+      logClientError(error);
       setAdvancedOverridesError('Invalid JSON.');
     }
   }, []);
@@ -268,6 +269,7 @@ export function ImageStudioSettingsProvider({
       );
       onSaved?.();
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminImageStudioSettingsPage', action: 'saveSettings' },
       });

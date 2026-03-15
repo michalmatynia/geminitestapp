@@ -7,6 +7,8 @@ import {
   deleteFileFromStorage,
   getPublicPathFromStoredPath,
 } from '@/shared/lib/files/services/image-file-service';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
 const notesRoot = path.join(uploadsRoot, 'notes');
@@ -24,10 +26,14 @@ export async function cleanupNoteFile(noteId: string, filepath: string): Promise
       if (remaining.length === 0) {
         await fs.rmdir(noteDir);
       }
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // ignore cleanup errors
     }
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+  
     // ignore
   }
 }

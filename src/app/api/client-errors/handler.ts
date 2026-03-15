@@ -73,7 +73,8 @@ const sanitizeClientContext = (value: unknown): Record<string, unknown> | null =
       return parsed;
     }
     return { value: parsed };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return { error: 'Failed to sanitize context.' };
   }
 };

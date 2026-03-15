@@ -652,7 +652,7 @@ export function KangurAiTutorPanelChrome({
                     >
                       AI Tutor
                     </KangurAiTutorChromeKicker>
-                    <div className='mt-1 flex items-center gap-2'>
+                    <div className='mt-1 flex flex-wrap items-center gap-2 sm:flex-nowrap'>
                       <span
                         data-testid='kangur-ai-tutor-display-name'
                         className={cn(
@@ -726,6 +726,23 @@ export function KangurAiTutorPanelChrome({
                       ? 'ml-auto'
                       : 'w-full flex-wrap sm:ml-3 sm:w-auto sm:justify-end'
                   )}>
+                    {shouldUseMinimalPanelShell ? (
+                      <KangurNarratorControl
+                        className='w-auto'
+                        contextRegistry={tutorNarratorContextRegistry}
+                        displayMode='icon'
+                        docId='kangur_ai_tutor_narrator'
+                        engine={narratorSettings.engine}
+                        pauseLabel={tutorContent.narrator.pauseLabel}
+                        readLabel={tutorContent.narrator.readLabel}
+                        renderWhenEmpty
+                        resumeLabel={tutorContent.narrator.resumeLabel}
+                        script={tutorNarrationScript}
+                        shellTestId='kangur-ai-tutor-narrator-header'
+                        showFeedback={false}
+                        voice={narratorSettings.voice}
+                      />
+                    ) : null}
                     {!shouldUseMinimalPanelShell ? (
                       canDetachPanelFromContext && uiMode === 'freeform' ? (
                         <KangurAiTutorChromeTextButton

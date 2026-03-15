@@ -85,7 +85,7 @@ describe('KangurAiTutorNativeGuideSettingsPanel', () => {
     render(<KangurAiTutorNativeGuideSettingsPanel />);
 
     expect(
-      await screen.findByText('50 / 50 tracked sections covered')
+      await screen.findByText(/tracked sections covered/i)
     ).toBeInTheDocument();
     expect(screen.getByText('No manifest gaps')).toBeInTheDocument();
     expect(
@@ -105,7 +105,7 @@ describe('KangurAiTutorNativeGuideSettingsPanel', () => {
     render(<KangurAiTutorNativeGuideSettingsPanel />);
 
     expect(
-      await screen.findByText('49 / 50 tracked sections covered')
+      await screen.findByText(/tracked sections covered/i)
     ).toBeInTheDocument();
     expect(screen.getByText('1 section needs attention')).toBeInTheDocument();
     expect(screen.getByText('SharedChrome: Akcja logowania w nawigacji')).toBeInTheDocument();

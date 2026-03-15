@@ -47,6 +47,8 @@ import {
 import { toErrorMessage } from './sinks-shared.server';
 
 import type { PortablePathEnvelopeVerificationAuditSinkStartupHealthSummary } from './sinks-contracts.server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export {
   enqueuePortablePathAuditSinkAutoRemediationDeadLetter,
@@ -394,6 +396,7 @@ export const runPortablePathAuditSinkAutoRemediation = async (
             state,
           });
         } catch (error) {
+          void ErrorSystem.captureException(error);
           await writeLog({
             level: 'warn',
             source: PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_BOOTSTRAP_SOURCE,

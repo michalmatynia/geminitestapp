@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
 import { productParameterValueSchema, productSchema } from './product';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 /**
  * Product Input Contracts (Modular/API)
  */
@@ -39,7 +41,9 @@ const preprocessStringArrayField = (value: unknown): unknown => {
   try {
     const parsed = JSON.parse(trimmed) as unknown;
     if (Array.isArray(parsed)) return parsed;
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Fall through to CSV parsing.
   }
 
@@ -64,7 +68,8 @@ const optionalParameterValuesFromFormSchema = z.preprocess((value: unknown): unk
 
   try {
     return JSON.parse(trimmed) as unknown;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return value;
   }
 }, z.array(productParameterValueSchema).optional());

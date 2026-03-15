@@ -7,6 +7,7 @@ import type {
   PromptExploderSegmentType,
   PromptExploderSegment,
   PromptExploderBenchmarkSuggestion,
+  PromptExploderBenchmarkSuite,
   PromptExploderRuntimeValidationScope,
 } from '@/shared/contracts/prompt-exploder';
 
@@ -15,8 +16,6 @@ import { explodePromptText } from './parser';
 export const PROMPT_EXPLODER_BENCHMARK_RECALL_TARGET = 0.95;
 export const PROMPT_EXPLODER_DEFAULT_LOW_CONFIDENCE_THRESHOLD = 0.55;
 export const PROMPT_EXPLODER_DEFAULT_SUGGESTION_LIMIT = 4;
-
-export type PromptExploderBenchmarkSuite = 'default' | 'extended';
 
 export type {
   PromptExploderBenchmarkCase,

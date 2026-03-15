@@ -77,6 +77,7 @@ export function useNotesAppEntityHandlers({
         updateSettings({ selectedNoteId: noteId });
         setIsEditing(false);
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error, {
           context: { source: 'NotesAppProvider', action: 'fetchNote', noteId },
         });
@@ -127,6 +128,7 @@ export function useNotesAppEntityHandlers({
           setSelectedNote({ ...selectedNote, isFavorite: nextFavorite });
         }
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'NotesAppProvider',
@@ -170,6 +172,7 @@ export function useNotesAppEntityHandlers({
         await fetchNotes();
         void handleSelectNoteFromTree(selectedNote.id);
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'NotesAppProvider',
@@ -197,6 +200,7 @@ export function useNotesAppEntityHandlers({
           setSelectedNote(null);
           setIsEditing(false);
         } catch (error: unknown) {
+          logClientError(error);
           logClientError(error, {
             context: {
               source: 'NotesAppProvider',

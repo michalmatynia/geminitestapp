@@ -24,6 +24,8 @@ import {
   sanitizeBrainProviderCatalog,
   toPersistedBrainProviderCatalog,
 } from './settings';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const OLLAMA_BASE_URL = resolveOllamaBaseUrl();
 const OLLAMA_MODELS_TIMEOUT_MS = 4_500;
@@ -73,7 +75,9 @@ const buildOllamaBaseCandidates = (baseUrl: string): string[] => {
         dockerHostUrl.toString().replace(/\/+$/, '')
       );
     }
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+  
     // Keep only the raw configured value if URL parsing fails.
   }
 
@@ -143,7 +147,8 @@ const fetchModelsFromUrl = async (url: string): Promise<string[] | null> => {
     if (!response.ok) return null;
     const payload = (await response.json()) as unknown;
     return parseDiscoveredModelIds(payload);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   } finally {
     clearTimeout(timeoutId);
@@ -228,7 +233,8 @@ export const listBrainModels = async (
   if (providerCatalogRaw?.trim().length) {
     try {
       providerCatalog = parseBrainProviderCatalog(providerCatalogRaw);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       const repaired = await resetProviderCatalog();
       providerCatalog = repaired.catalog;
       providerCatalogRepairStatus = repaired.status;

@@ -7,6 +7,7 @@ import {
   type PromptExploderSubsection,
   type PromptExploderSegmentationRecord,
   type PromptExploderSegmentationReturnTarget,
+  type PromptExploderSegmentationLibraryState,
   type PromptExploderSegmentationAnalysisContext,
   type PromptExploderSegmentationOutline,
   type PromptExploderSegmentationSegmentOutline,
@@ -16,6 +17,8 @@ import {
 
 import { reassemblePromptSegments } from './parser';
 import { clonePromptExploderDocument } from './prompt-library';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const PROMPT_EXPLODER_SEGMENTATION_LIBRARY_KEY = 'prompt_exploder_segmentation_library';
 export const PROMPT_EXPLODER_SEGMENTATION_LIBRARY_VERSION = 1;
@@ -24,15 +27,17 @@ export const PROMPT_EXPLODER_SEGMENTATION_LIBRARY_MAX_RECORDS = 200;
 export const promptExploderSegmentationLibraryStateSchema = z.object({
   version: z.number().int().positive().default(PROMPT_EXPLODER_SEGMENTATION_LIBRARY_VERSION),
   records: z.array(promptExploderSegmentationRecordSchema).default([]),
+  lastCapturedAt: z.string().nullable().default(null),
+  totalCaptured: z.number().int().min(0).default(0),
 });
-export type PromptExploderSegmentationLibraryState = z.infer<
-  typeof promptExploderSegmentationLibraryStateSchema
->;
+export type { PromptExploderSegmentationLibraryState };
 
 export const defaultPromptExploderSegmentationLibraryState: PromptExploderSegmentationLibraryState =
   {
     version: PROMPT_EXPLODER_SEGMENTATION_LIBRARY_VERSION,
     records: [],
+    lastCapturedAt: null,
+    totalCaptured: 0,
   };
 
 const outlineSubsectionFromSnapshot = (
@@ -103,8 +108,24 @@ export const parsePromptExploderSegmentationLibrary = (
     const parsed: unknown = JSON.parse(rawValue);
     const result = promptExploderSegmentationLibraryStateSchema.safeParse(parsed);
     if (!result.success) return defaultPromptExploderSegmentationLibraryState;
-    return result.data;
-  } catch {
+    const records = result.data.records ?? [];
+    const totalCaptured = Math.max(result.data.totalCaptured ?? 0, records.length);
+    const lastCapturedAt =
+      result.data.lastCapturedAt ??
+      records
+        .map((record) => record.capturedAt)
+        .filter(Boolean)
+        .sort()
+        .at(-1) ??
+      null;
+    return {
+      ...result.data,
+      records,
+      totalCaptured,
+      lastCapturedAt,
+    };
+  } catch (error) {
+    logClientError(error);
     return defaultPromptExploderSegmentationLibraryState;
   }
 };

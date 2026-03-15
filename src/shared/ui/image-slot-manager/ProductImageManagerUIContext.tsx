@@ -16,6 +16,8 @@ import type {
   ProductImageManagerUIStateContextValue,
   SlotViewMode,
 } from './ProductImageManagerUIContext.types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type {
   ProductImageManagerUIActionsContextValue,
@@ -167,6 +169,7 @@ export function ProductImageManagerUIProvider({
         try {
           handleSlotImageChange(file, targetIndex);
         } catch (error: unknown) {
+          logClientError(error);
           const message = error instanceof Error ? error.message : String(error);
           pushDebug({ action: 'file-change', message, slotIndex: targetIndex });
         }
@@ -211,6 +214,7 @@ export function ProductImageManagerUIProvider({
         setImageBase64At(index, dataUrl);
         setSlotViewMode(index, 'base64');
       } catch (error: unknown) {
+        logClientError(error);
         const message = error instanceof Error ? error.message : String(error);
         pushDebug({ action: 'base64-convert', message, slotIndex: index });
       } finally {
@@ -255,6 +259,7 @@ export function ProductImageManagerUIProvider({
         setImageLinkAt(index, '');
         setSlotViewMode(index, 'upload');
       } catch (error: unknown) {
+        logClientError(error);
         const message = error instanceof Error ? error.message : String(error);
         pushDebug({ action: 'link-to-file', message, slotIndex: index });
       } finally {

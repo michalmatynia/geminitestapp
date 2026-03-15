@@ -1,6 +1,8 @@
 import 'server-only';
 
 import { Redis } from 'ioredis';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 let connection: Redis | null = null;
 
@@ -31,7 +33,9 @@ const captureException = async (
   try {
     const mod = await import('@/shared/lib/observability/system-logger');
     await mod.ErrorSystem.captureException(error, context);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+  
     // ignore
   }
 };

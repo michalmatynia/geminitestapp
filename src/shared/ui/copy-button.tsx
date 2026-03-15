@@ -56,6 +56,7 @@ export function CopyButton(props: CopyButtonProps): React.JSX.Element {
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), timeout);
     } catch (err) {
+      logClientError(err);
       logClientError(err, { context: { source: 'CopyButton', action: 'copyToClipboard' } });
     }
   };

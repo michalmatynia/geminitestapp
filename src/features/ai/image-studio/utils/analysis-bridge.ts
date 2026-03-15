@@ -5,6 +5,8 @@ import {
   type ImageStudioCenterDetectionMode,
   type ImageStudioCenterShadowPolicy,
 } from '@/shared/contracts/image-studio';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const IMAGE_STUDIO_ANALYSIS_PLAN_CHANGED_EVENT = 'image-studio:analysis-plan-changed';
 
@@ -259,7 +261,8 @@ const parseSnapshot = (raw: string | null): ImageStudioAnalysisPlanSnapshot | nu
       policyReason,
       fallbackApplied: Boolean(candidate.fallbackApplied),
     };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -291,7 +294,8 @@ const parseIntent = (raw: string | null): ImageStudioAnalysisApplyIntent | null 
       target,
       layout: normalizeLayout(candidate.layout),
     };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

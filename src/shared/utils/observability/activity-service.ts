@@ -6,6 +6,8 @@ import type { CreateActivityLog, ActivityLog, ActivityFilters } from '@/shared/c
 
 import { getActivityRepository } from '../../lib/observability/activity-repository';
 import { logSystemEvent } from '../../lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 /**
  * Logs a user activity event.
@@ -26,7 +28,8 @@ export async function logActivity(data: CreateActivityLog): Promise<ActivityLog>
   let activity: ActivityLog;
   try {
     activity = await repository.createActivity(data);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     const nowIso = new Date().toISOString();
     activity = {
       id: `activity-fallback-${randomUUID()}`,

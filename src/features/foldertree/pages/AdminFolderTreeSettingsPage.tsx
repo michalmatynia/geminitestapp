@@ -18,6 +18,8 @@ import {
 
 import { InstanceSettingsPanel } from './folder-tree-settings/InstanceSettingsPanel';
 import { INSTANCE_META } from './folder-tree-settings/utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function AdminFolderTreeSettingsPage(): React.JSX.Element {
   const parsedProfiles = useFolderTreeProfiles();
@@ -60,6 +62,7 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
       );
       toast('Folder tree profiles saved.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save folder tree profiles.', {
         variant: 'error',
       });

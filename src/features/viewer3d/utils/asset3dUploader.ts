@@ -11,6 +11,8 @@ import {
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { isValid3DAsset, validate3DFileAsync } from './validateAsset3d';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
 const assets3dRoot = path.join(uploadsRoot, 'assets3d');
@@ -78,6 +80,7 @@ export async function uploadAsset3D(
 
     return asset;
   } catch (error) {
+    logClientError(error);
     await ErrorSystem.captureException(error, {
       service: 'asset3dUploader',
       action: 'uploadAsset3D',
@@ -105,6 +108,7 @@ export async function deleteAsset3D(id: string): Promise<boolean> {
 
     return true;
   } catch (error) {
+    logClientError(error);
     await ErrorSystem.captureException(error, {
       service: 'asset3dUploader',
       action: 'deleteAsset3D',

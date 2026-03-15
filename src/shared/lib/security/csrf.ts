@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const CSRF_COOKIE_NAME = 'csrf-token';
 export const CSRF_HEADER_NAME = 'x-csrf-token';
@@ -55,7 +57,8 @@ const isEquivalentLoopbackOrigin = (candidateOrigin: string, requestOrigin: stri
       isLoopbackHostname(candidate.hostname) &&
       isLoopbackHostname(request.hostname)
     );
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return false;
   }
 };
@@ -89,20 +92,13 @@ const resolveCandidateOrigin = (request: NextRequest): string | null => {
   if (origin) {
     return normalizeOrigin(origin);
   }
-
-  const referer = request.headers.get('referer');
-  if (!referer) {
-    return null;
-  }
-
-  return normalizeOrigin(referer);
-};
-
-export const isSameOriginRequest = (request: NextRequest): boolean => {
-  const requestOrigin = getRequestOrigin(request);
-  const candidateOrigin = resolveCandidateOrigin(request);
-  if (candidateOrigin) {
-    return isAllowedOrigin(candidateOrigin, requestOrigin);
+  if (referer) {
+    try {
+      return isAllowedOrigin(new URL(referer).origin, requestOrigin);
+    } catch (error) {
+      logClientError(error);
+      return false;
+    }
   }
   return true;
 };

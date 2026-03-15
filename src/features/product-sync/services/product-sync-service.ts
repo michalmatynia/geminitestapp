@@ -498,6 +498,7 @@ export const processProductSyncRun = async (runId: string): Promise<ProductSyncR
   try {
     connectionContext = await resolveBaseConnectionContext(profile);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     return updateProductSyncRunStatus(runId, 'failed', {
       errorMessage: error instanceof Error ? error.message : 'Connection resolution failed.',
       summaryMessage: 'Run failed during connection preflight.',
@@ -621,6 +622,7 @@ export const processProductSyncRun = async (runId: string): Promise<ProductSyncR
             await putProductSyncRunItem(item);
             await flushRunProgress();
           } catch (error) {
+            void ErrorSystem.captureException(error);
             stats.processed += 1;
             stats.failed += 1;
 
@@ -672,6 +674,7 @@ export const processProductSyncRun = async (runId: string): Promise<ProductSyncR
 
     return updatedRun;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await ErrorSystem.captureException(error, {
       service: 'product-sync-service',
       action: 'processProductSyncRun',

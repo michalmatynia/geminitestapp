@@ -27,6 +27,8 @@ import type {
   LinkedGeneratedRunsResponse,
   LinkedGeneratedVariantViewModel as LinkedGeneratedVariant,
 } from '../components/studio-modals/slot-inline-edit-tab-types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 
 export function useStudioModalsState() {
@@ -156,6 +158,7 @@ export function useStudioModalsState() {
         setSlotBase64Draft('');
         toast('Linked variant applied to card.', { variant: 'success' });
       } catch (e: unknown) {
+        logClientError(e);
         const message = e instanceof Error ? e.message : String(e);
         toast(message || 'Failed to apply variant', { variant: 'error' });
       } finally {
@@ -199,6 +202,7 @@ export function useStudioModalsState() {
         toast('Created card from import.', { variant: 'success' });
       }
     } catch (e: unknown) {
+      logClientError(e);
       const message = e instanceof Error ? e.message : String(e);
       toast(message || 'Import failed', { variant: 'error' });
     }
@@ -215,6 +219,7 @@ export function useStudioModalsState() {
       ]);
       if (created[0]) setSelectedSlotId(created[0].id);
     } catch (e: unknown) {
+      logClientError(e);
       const message = e instanceof Error ? e.message : String(e);
       toast(message || 'Failed to create card', { variant: 'error' });
     }

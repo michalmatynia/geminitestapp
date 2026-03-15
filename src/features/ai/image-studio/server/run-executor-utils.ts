@@ -11,6 +11,8 @@ import { parsePersistedImageStudioSettings } from '@/features/ai/image-studio/ut
 import { imageStudioRunRequestSchema, type ImageFileRecord } from '@/shared/contracts/image-studio';
 import { badRequestError } from '@/shared/errors/app-error';
 import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 export const publicRoot = path.join(process.cwd(), 'public');
@@ -52,7 +54,8 @@ export const normalizePublicAssetPath = (filepath: string): string => {
     const [withoutQuery] = url.pathname.split(/[?#]/, 1);
     if (!withoutQuery) return '';
     return withoutQuery.startsWith('/') ? withoutQuery : `/${withoutQuery}`;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     const [withoutQuery] = trimmed.split(/[?#]/, 1);
     if (!withoutQuery) return '';
     return withoutQuery.startsWith('/') ? withoutQuery : `/${withoutQuery}`;
@@ -173,7 +176,8 @@ export function parseDataUrl(dataUrl: string): { buffer: Buffer; mime: string } 
     const buffer = Buffer.from(match[2] ?? '', 'base64');
     const mime = (match[1] ?? 'image/png').toLowerCase();
     return { buffer, mime };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 }
@@ -272,7 +276,8 @@ export async function createImageRecord(params: {
       height: height ?? undefined,
       tags: ['image-studio', 'output'],
     });
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return {
       id: randomUUID(),
       name: filename,

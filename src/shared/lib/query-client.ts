@@ -56,7 +56,8 @@ const toStableKey = (key: QueryKey | undefined): string => {
   if (!key) return '[]';
   try {
     return JSON.stringify(key);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return String(key);
   }
 };
@@ -103,7 +104,9 @@ const safeLogCacheError = (
       if (isLoggableObject(error)) {
         try {
           error.__logged = true;
-        } catch {
+        } catch (error) {
+          logClientError(error);
+        
           // ignore read-only errors
         }
       }
@@ -136,7 +139,9 @@ const safeLogCacheError = (
         },
       });
     }
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Cache callbacks must never throw.
   }
 };

@@ -12,6 +12,8 @@ import {
   useToast,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const marketplaces = [
   {
@@ -38,6 +40,7 @@ export default function MarketplacesPage(): React.JSX.Element {
       const response = await syncMutation.mutateAsync();
       toast(`Base.com image sync queued (job ${response.jobId}).`, { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to enqueue Base.com image sync', {
         variant: 'error',
       });

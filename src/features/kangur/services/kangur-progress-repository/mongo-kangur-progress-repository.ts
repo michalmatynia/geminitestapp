@@ -11,6 +11,8 @@ import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
 
 import type { KangurProgressRepository } from './types';
 import type { Filter } from 'mongodb';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const SETTINGS_COLLECTION = 'settings';
 const KANGUR_PROGRESS_SETTING_PREFIX = 'kangur_progress:';
@@ -31,7 +33,8 @@ const parseProgressValue = (value: string | undefined): KangurProgressState => {
 
   try {
     return normalizeKangurProgressState(JSON.parse(value) as unknown);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return createDefaultKangurProgressState();
   }
 };

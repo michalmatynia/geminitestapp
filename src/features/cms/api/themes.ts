@@ -4,6 +4,8 @@ import type {
   CmsThemeUpdateRequestDto,
 } from '@/shared/contracts/cms';
 import { api } from '@/shared/lib/api-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type ThemeMutationResult =
   | { ok: true; payload: CmsTheme }
@@ -24,6 +26,7 @@ export const createTheme = async (
     const payload = await api.post<CmsTheme>('/api/cms/themes', input);
     return { ok: true, payload };
   } catch (error) {
+    logClientError(error);
     return {
       ok: false,
       payload: null,
@@ -40,6 +43,7 @@ export const updateTheme = async (
     const payload = await api.put<CmsTheme>(`/api/cms/themes/${id}`, input);
     return { ok: true, payload };
   } catch (error) {
+    logClientError(error);
     return {
       ok: false,
       payload: null,
@@ -53,6 +57,7 @@ export const deleteTheme = async (id: string): Promise<{ ok: boolean }> => {
     await api.delete(`/api/cms/themes/${id}`);
     return { ok: true };
   } catch (_error) {
+    logClientError(_error);
     return { ok: false };
   }
 };

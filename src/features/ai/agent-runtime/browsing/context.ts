@@ -5,6 +5,8 @@ import {
   getAgentBrowserSnapshotDelegate,
 } from '@/features/ai/agent-runtime/store-delegates';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export async function getBrowserContextSummary(runId: string): Promise<{
   url: string;
@@ -57,6 +59,7 @@ export async function getBrowserContextSummary(runId: string): Promise<{
       uiInventory,
     };
   } catch (error) {
+    logClientError(error);
     if (DEBUG_CHATBOT) {
       void ErrorSystem.logWarning('Failed to load browser context', {
         service: 'agent-engine',

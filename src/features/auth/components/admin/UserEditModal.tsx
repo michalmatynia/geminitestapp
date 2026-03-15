@@ -10,6 +10,8 @@ import {
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useUsersData, useUsersDialogs } from '../../context/UsersContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function UserEditModal(): React.JSX.Element | null {
   const { toast } = useToast();
@@ -30,6 +32,7 @@ export function UserEditModal(): React.JSX.Element | null {
       setEditingUser(null);
       toast('Identity updated successfully', { variant: 'success' });
     } catch (_e) {
+      logClientError(_e);
       toast('Failed to update identity', { variant: 'error' });
     }
   };

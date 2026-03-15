@@ -16,6 +16,8 @@ import {
   type KangurAiTutorContent,
 } from '@/shared/contracts/kangur-ai-tutor-content';
 import { api } from '@/shared/lib/api-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type KangurAiTutorContentContextValue = {
   content: KangurAiTutorContent;
@@ -55,7 +57,8 @@ export function KangurAiTutorContentProvider({
           return;
         }
         setContent(parseKangurAiTutorContent(response));
-      } catch {
+      } catch (error) {
+        logClientError(error);
         if (!cancelled) {
           setContent({
             ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,

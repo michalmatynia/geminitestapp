@@ -11,6 +11,8 @@ import {
 } from '@/shared/contracts/agents';
 import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 // ---------------------------------------------------------------------------
 // Persona instruction resolution
@@ -30,7 +32,8 @@ export const resolvePersonaInstructions = async (
     if (persona.role) parts.push(`Role: ${persona.role}.`);
     if (persona.instructions) parts.push(persona.instructions.trim());
     return parts.join('\n');
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return '';
   }
 };

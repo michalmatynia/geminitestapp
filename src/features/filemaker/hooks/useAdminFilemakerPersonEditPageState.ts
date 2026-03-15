@@ -31,6 +31,8 @@ import type {
 } from '../types';
 import type { EditableAddress } from './editable-address';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type AdminFilemakerPersonEditPageContextValue = {
   person: FilemakerPerson | null;
@@ -118,6 +120,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
         });
         toast(message, { variant: 'success' });
       } catch (_error: unknown) {
+        logClientError(_error);
         toast('Failed to save changes.', { variant: 'error' });
       }
     },

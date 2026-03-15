@@ -1,6 +1,7 @@
 import type { DatabaseAction, DbQueryConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
-import { dbApi, ApiResponse } from '@/shared/lib/ai-paths/api';
+import type { HttpResult } from '@/shared/contracts/http';
+import { dbApi } from '@/shared/lib/ai-paths/api';
 
 interface DbActionResult {
   items?: unknown[];
@@ -78,7 +79,7 @@ export async function handleDatabaseMongoReadAction({
         aiPrompt,
       };
     }
-    const aggResult: ApiResponse<DbActionResult> = await dbApi.action<DbActionResult>({
+    const aggResult: HttpResult<DbActionResult> = await dbApi.action<DbActionResult>({
       ...(queryPayload['provider']
         ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' }
         : {}),
@@ -126,7 +127,7 @@ export async function handleDatabaseMongoReadAction({
       aiPrompt,
     };
   }
-  const readResult: ApiResponse<DbActionResult> = await dbApi.action<DbActionResult>({
+  const readResult: HttpResult<DbActionResult> = await dbApi.action<DbActionResult>({
     ...(queryPayload['provider']
       ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' }
       : {}),

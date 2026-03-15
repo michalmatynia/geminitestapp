@@ -1,45 +1,14 @@
 import type { ErrorCategory, SuggestedAction } from '@/shared/contracts/observability';
+import type {
+  ProductApiError,
+  ProductApiErrorCode,
+  ProductApiErrorDetail,
+} from '@/shared/contracts/products';
 import { classifyError, getSuggestedActions } from '@/shared/errors/error-classifier';
 
-export type ErrorCode =
-  | 'VALIDATION_ERROR'
-  | 'NOT_FOUND'
-  | 'UNAUTHORIZED'
-  | 'FORBIDDEN'
-  | 'RATE_LIMITED'
-  | 'DUPLICATE_RESOURCE'
-  | 'INVALID_REQUEST'
-  | 'SERVER_ERROR'
-  | 'SERVICE_UNAVAILABLE'
-  | 'UNSUPPORTED_VERSION'
-  | 'FILE_TOO_LARGE'
-  | 'INVALID_FILE_TYPE'
-  | 'QUOTA_EXCEEDED';
-
-export type ErrorDetail = {
-  field?: string;
-  message: string;
-  code: string;
-  value?: unknown;
-};
-
-export type ApiError = {
-  error: {
-    code: ErrorCode;
-    message: string;
-    category: ErrorCategory;
-    suggestedActions: SuggestedAction[];
-    details?: ErrorDetail[];
-    timestamp: string;
-    requestId?: string;
-    documentation?: string;
-  };
-  meta?: {
-    version: string;
-    endpoint: string;
-    method: string;
-  };
-};
+export type ErrorCode = ProductApiErrorCode;
+export type ErrorDetail = ProductApiErrorDetail;
+type ApiError = ProductApiError;
 
 export class ApiErrorBuilder {
   private error: ApiError['error'];

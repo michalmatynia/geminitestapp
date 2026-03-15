@@ -267,7 +267,21 @@ export const buildKangurLearnerLiveState = (
     monitoring: 1,
   };
 
-  const bestCandidate = candidates.reduce((best, current) => {
+  const [firstCandidate, ...remainingCandidates] = candidates;
+  if (!firstCandidate) {
+    return {
+      status: 'offline',
+      label: 'Uczeń offline',
+      description: 'Brak bieżącej aktywności w aplikacji.',
+      href: null,
+      showLink: false,
+      isOnline: false,
+      updatedAt: null,
+      source: 'none',
+    };
+  }
+
+  const bestCandidate = remainingCandidates.reduce((best, current) => {
     if (!best) {
       return current;
     }
@@ -275,7 +289,7 @@ export const buildKangurLearnerLiveState = (
       return current.updatedAtMs > best.updatedAtMs ? current : best;
     }
     return sourcePriority[current.source] > sourcePriority[best.source] ? current : best;
-  }, candidates[0]);
+  }, firstCandidate);
 
   const ageMs = Math.max(0, nowMs - bestCandidate.updatedAtMs);
   const withinOnlineWindow = ageMs <= ONLINE_THRESHOLD_MS;

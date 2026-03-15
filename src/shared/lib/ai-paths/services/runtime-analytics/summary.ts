@@ -203,6 +203,7 @@ export const getRuntimeAnalyticsSummaryBase = async (
       setCachedSummary(cacheKey, summary, Date.now());
       return summary;
     } catch (error) {
+      void ErrorSystem.captureException(error);
       void ErrorSystem.logWarning('Failed to load runtime analytics summary', {
         service: 'ai-paths-analytics',
         error,

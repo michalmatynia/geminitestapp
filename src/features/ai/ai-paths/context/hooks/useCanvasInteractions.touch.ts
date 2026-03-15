@@ -12,6 +12,8 @@ import {
   type MarqueeMode,
   type MarqueeSelectionState,
 } from './useCanvasInteractions.helpers';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export interface UseCanvasInteractionsTouchValue {
   clearTouchLongPressIndicator: () => void;
@@ -93,7 +95,9 @@ export function useCanvasInteractionsTouch({
       if (typeof window !== 'undefined' && 'vibrate' in navigator) {
         try {
           navigator.vibrate(TOUCH_LONG_PRESS_HAPTIC_MS);
-        } catch {
+        } catch (error) {
+          logClientError(error);
+        
           // Ignore vibration errors
         }
       }

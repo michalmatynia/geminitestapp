@@ -6,6 +6,8 @@ import type { TestConnectionResponse, TestLogEntry } from '@/shared/contracts/in
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { configurationError, externalServiceError } from '@/shared/errors/app-error';
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const PROD_BASE_URL = process.env['ALLEGRO_API_URL'] ?? 'https://api.allegro.pl';
 const SANDBOX_BASE_URL =
@@ -149,6 +151,7 @@ export async function POST_handler(
       pushStep('Refreshing token', 'ok', 'Allegro token refreshed');
       apiResponse = await buildRequest(accessToken);
     } catch (error) {
+      void ErrorSystem.captureException(error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       return await fail('Refreshing token', message);
     }
@@ -176,7 +179,8 @@ export async function POST_handler(
   let profile: unknown;
   try {
     profile = raw ? (JSON.parse(raw) as unknown) : null;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     profile = raw;
   }
 

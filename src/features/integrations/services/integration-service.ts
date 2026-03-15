@@ -25,6 +25,7 @@ async function repoCall<K extends keyof IntegrationRepository>(
     // @ts-expect-error - Higher order generic function call with spread parameters
     return await fn(...args);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.captureException(error, {
       service: 'integration-service',
       action: 'repoCall',

@@ -79,7 +79,8 @@ const scheduleErrorRecoveryRetry = (
 const getQueryKeyLabel = (query: Query<unknown, Error, unknown, readonly unknown[]>): string => {
   try {
     return JSON.stringify(query.queryKey);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return String((query as { queryHash?: string }).queryHash ?? 'unknown-query');
   }
 };
@@ -121,6 +122,7 @@ export function useQueryMiddleware(middlewares: QueryMiddleware[]): void {
               break;
           }
         } catch (error) {
+          logClientError(error);
           logClientError(error instanceof Error ? error : new Error(String(error)), {
             context: {
               source: 'QueryMiddleware',

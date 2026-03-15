@@ -10,6 +10,8 @@ import {
 } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const normalizeParameters = (value: unknown): Record<string, unknown> => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -161,6 +163,7 @@ export async function POST_handler(
       lastError = null;
       break;
     } catch (error) {
+      void ErrorSystem.captureException(error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       if (message.toLowerCase().includes('unknown method')) {
         sawUnknownMethod = true;

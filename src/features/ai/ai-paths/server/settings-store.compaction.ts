@@ -1,4 +1,6 @@
 import { type AiPathsSettingRecord } from './settings-store.constants';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export const trimLargeString = (value: string, maxLen: number = 1000): string =>
   value.length > maxLen ? `${value.slice(0, maxLen)}…` : value;
@@ -61,7 +63,8 @@ export const compactRuntimeStateField = (runtimeStateRaw: unknown): string | nul
       ? (() => {
         try {
           return JSON.parse(runtimeStateRaw) as Record<string, unknown>;
-        } catch {
+        } catch (error) {
+          void ErrorSystem.captureException(error);
           return null;
         }
       })()
@@ -143,7 +146,8 @@ export const compactPathConfigValue = (raw: string): string | null => {
       return null;
     }
     parsed = { ...(candidate as Record<string, unknown>) };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 

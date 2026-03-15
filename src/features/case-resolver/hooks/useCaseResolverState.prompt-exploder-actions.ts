@@ -30,6 +30,8 @@ import {
 } from './prompt-exploder-transfer-lifecycle';
 
 import type { CaseResolverFileEditDraft } from '../types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 
 const CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_KEY =
@@ -186,7 +188,9 @@ export function useCaseResolverPromptExploder({
         )
       );
       window.localStorage.setItem(CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_KEY, payload);
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Ignore storage persistence failures for idempotency cache.
     }
   }, []);
@@ -224,7 +228,9 @@ export function useCaseResolverPromptExploder({
         next.add(normalized);
       });
       appliedPromptExploderTransferIdsRef.current = next;
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Ignore idempotency cache restoration issues.
     }
   }, []);

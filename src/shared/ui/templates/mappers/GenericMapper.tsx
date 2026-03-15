@@ -135,6 +135,7 @@ export function GenericMapper<TInternal, TExternal, TMapping>({
       const result = await onFetch();
       toast(result.message, { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'GenericMapper', action: 'fetch', connectionId, title },
       });
@@ -162,6 +163,7 @@ export function GenericMapper<TInternal, TExternal, TMapping>({
       toast(result.message, { variant: 'success' });
       resetPendingMappings();
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'GenericMapper', action: 'save', connectionId, title },
       });

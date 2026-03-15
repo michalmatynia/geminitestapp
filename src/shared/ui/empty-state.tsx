@@ -29,7 +29,11 @@ export function EmptyState({
         className
       )}
     >
-      {icon && <div className={cn(isCompact ? 'mb-2' : 'mb-4', 'text-gray-500')}>{icon}</div>}
+      {icon && (
+        <div className={cn(isCompact ? 'mb-2' : 'mb-4', 'text-gray-500')} aria-hidden='true'>
+          {icon}
+        </div>
+      )}
       <h2 className={cn(isCompact ? 'text-sm' : 'text-lg', 'font-medium text-white')}>{title}</h2>
       {description && (
         <p
@@ -46,10 +50,10 @@ export function EmptyState({
   );
 }
 
-type CompactEmptyStateProps = Omit<CompactEmptyStateProps, 'variant'>;
+type CompactEmptyStateProps = Omit<EmptyStateProps, 'variant'>;
 
 export function CompactEmptyState(props: CompactEmptyStateProps): React.JSX.Element {
   return (
-    <EmptyState {...props}  />
+    <EmptyState {...props} variant='compact' />
   );
 }

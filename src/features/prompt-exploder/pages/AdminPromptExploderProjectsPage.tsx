@@ -42,6 +42,8 @@ import {
 } from '../prompt-library';
 
 import type { ColumnDef } from '@tanstack/react-table';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const MAX_PROMPT_PREVIEW = 120;
 
@@ -186,6 +188,7 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
       setDraftPrompt('');
       toast(existing ? 'Project updated.' : 'Project created.', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save Prompt Exploder project.', {
         variant: 'error',
       });
@@ -251,6 +254,7 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
       setProjectPendingDeleteId(null);
       toast(`Deleted project: ${target.name}`, { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to delete Prompt Exploder project.', {
         variant: 'error',
       });

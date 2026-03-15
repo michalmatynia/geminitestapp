@@ -37,6 +37,8 @@ import {
   normalizeProductValidationPatternScopes,
   normalizeProductValidationInstanceDenyBehaviorMap,
 } from '@/shared/lib/products/utils/validator-instance-behavior';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const COLLECTION = 'product_validation_patterns';
 const SETTINGS_COLLECTION = 'settings';
@@ -628,7 +630,8 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
     }
     try {
       return normalizeProductValidationInstanceDenyBehaviorMap(JSON.parse(raw) as unknown);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return normalizeProductValidationInstanceDenyBehaviorMap(null);
     }
   },

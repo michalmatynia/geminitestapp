@@ -133,6 +133,7 @@ export function KangurPriorityAssignments({
       title={assignmentsTitle}
       summary={assignmentsSummary}
       compact
+      showTimeCountdown
     />
   );
 }

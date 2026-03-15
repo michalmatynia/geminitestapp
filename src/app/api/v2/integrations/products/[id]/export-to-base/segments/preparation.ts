@@ -192,7 +192,8 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
         productProducerIds.map(async (producerId: string) => {
           try {
             return await producerRepository.getProducerById(producerId);
-          } catch {
+          } catch (error) {
+            void ErrorSystem.captureException(error);
             return null;
           }
         })
@@ -212,6 +213,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
         ]);
       }
     } catch (error) {
+      void ErrorSystem.captureException(error);
       await ErrorSystem.logWarning('[export-to-base] Failed to resolve producer names for export', {
         productId,
         producerCount: productProducerIds.length,
@@ -250,6 +252,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
         ]);
       }
     } catch (error) {
+      void ErrorSystem.captureException(error);
       await ErrorSystem.logWarning(
         '[export-to-base] Failed to resolve producer mappings for export',
         {
@@ -268,7 +271,8 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
         productTagIds.map(async (tagId: string) => {
           try {
             return await tagRepository.getTagById(tagId);
-          } catch {
+          } catch (error) {
+            void ErrorSystem.captureException(error);
             return null;
           }
         })
@@ -288,6 +292,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
         ]);
       }
     } catch (error) {
+      void ErrorSystem.captureException(error);
       await ErrorSystem.logWarning('[export-to-base] Failed to resolve tag names for export', {
         productId,
         tagCount: productTagIds.length,
@@ -320,6 +325,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
         ]);
       }
     } catch (error) {
+      void ErrorSystem.captureException(error);
       await ErrorSystem.logWarning('[export-to-base] Failed to resolve tag mappings for export', {
         productId,
         tagCount: productTagIds.length,

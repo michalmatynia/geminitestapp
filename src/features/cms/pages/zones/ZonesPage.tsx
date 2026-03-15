@@ -68,6 +68,7 @@ export default function ZonesPage(): React.JSX.Element {
         setDomain('');
         toast(`Zone ${validation.data.domain} added successfully.`, { variant: 'success' });
       } catch (err: unknown) {
+        logClientError(err);
         logClientError(err, { context: { source: 'ZonesPage', action: 'createDomain', domain } });
         setError(err instanceof Error ? err.message : 'Failed to create domain.');
       }
@@ -81,6 +82,7 @@ export default function ZonesPage(): React.JSX.Element {
       toast('Zone removed successfully.', { variant: 'success' });
       setZoneToDelete(null);
     } catch (err: unknown) {
+      logClientError(err);
       logClientError(err, {
         context: { source: 'ZonesPage', action: 'deleteDomain', domainId: id },
       });
@@ -106,6 +108,7 @@ export default function ZonesPage(): React.JSX.Element {
       await updateDomain.mutateAsync({ id, input });
       toast('Zone routing updated.', { variant: 'success' });
     } catch (err: unknown) {
+      logClientError(err);
       logClientError(err, {
         context: { source: 'ZonesPage', action: 'updateAlias', domainId: id, aliasOf },
       });

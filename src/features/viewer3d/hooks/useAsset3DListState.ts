@@ -69,6 +69,7 @@ export function useAsset3DListState(): UseAsset3DListStateReturn {
     try {
       await reindexMutation.mutateAsync();
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           service: 'viewer3d',

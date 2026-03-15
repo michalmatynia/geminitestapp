@@ -5,6 +5,8 @@ import {
   type UpscaleRequestStrategyPayload,
   type UpscaleSmoothingQuality,
 } from './GenerationToolbarImageUtils.types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const isClientUpscaleCrossOriginError = (error: unknown): boolean =>
   error instanceof Error && /cross-origin restrictions/i.test(error.message);
@@ -41,6 +43,7 @@ export const withUpscaleRetry = async <T>(
     try {
       return await run();
     } catch (error) {
+      logClientError(error);
       if (attempt >= retries || !isRetryableUpscaleError(error) || signal.aborted) {
         throw error;
       }
@@ -102,7 +105,9 @@ export const upscaleCanvasImage = async (
     (
       context2d as CanvasRenderingContext2D & { imageSmoothingQuality?: UpscaleSmoothingQuality }
     ).imageSmoothingQuality = smoothingQuality;
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // ignore browser incompatibility and continue with default smoothing
   }
   context2d.drawImage(image, 0, 0, canvas.width, canvas.height);
@@ -116,7 +121,8 @@ export const upscaleCanvasImage = async (
       sourceHeight,
       scale: Number(Math.max(outputWidth / sourceWidth, outputHeight / sourceHeight).toFixed(4)),
     };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     throw new Error(
       'Client upscale failed due to cross-origin restrictions. Use "Upscale Server: Sharp".'
     );

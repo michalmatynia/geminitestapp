@@ -9,7 +9,7 @@ import type {
 import type { ObjectLayoutCustomPreset } from '@/features/ai/image-studio/utils/object-layout-presets';
 import { internalError } from '@/shared/errors/app-error';
 
-import type { UpscaleSmoothingQuality, AutoScalerMode } from './GenerationToolbarImageUtils';
+import type { UpscaleSmoothingQuality, AutoScalerMode, CenterMode } from './GenerationToolbarImageUtils';
 import type {
   ImageStudioCenterDetectionMode,
   ImageStudioCenterShadowPolicy,
@@ -21,13 +21,6 @@ export type MaskAttachMode = 'client_canvas_polygon' | 'server_polygon';
 export type UpscaleMode = 'client_canvas' | 'server_sharp';
 export type UpscaleStrategy = 'scale' | 'target_resolution';
 export type CropMode = 'client_bbox' | 'server_bbox' | 'canvas_overflow';
-export type CenterMode =
-  | 'client_alpha_bbox'
-  | 'server_alpha_bbox'
-  | 'client_object_layout'
-  | 'server_object_layout'
-  | 'client_white_bg_bbox';
-
 export type ImageStudioOperationStatus =
   | 'idle'
   | 'resolving'

@@ -55,6 +55,7 @@ export async function postProductsImportCsvHandler(
       successful += createdCount;
       failed += pendingBatch.length - createdCount;
     } catch (error) {
+      void ErrorSystem.captureException(error);
       failed += pendingBatch.length;
       const message = error instanceof Error ? error.message : 'Batch creation failed';
       void ErrorSystem.logWarning(`Failed to import batch of ${pendingBatch.length} products`, {

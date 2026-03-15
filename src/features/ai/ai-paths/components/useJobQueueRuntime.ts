@@ -30,6 +30,8 @@ import {
 import { useJobQueueRealtime } from './useJobQueueRealtime';
 
 import type { JobQueueActionsValue, JobQueueStateValue } from './job-queue/types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const AUTO_REFRESH_ENABLED_KEY = 'ai-paths-job-queue-auto-refresh-enabled';
 const AUTO_REFRESH_INTERVAL_KEY = 'ai-paths-job-queue-auto-refresh-interval';
@@ -229,6 +231,7 @@ export function useJobQueueRuntime({
       if (!data) throw internalError('Failed to load run details.');
       setRunDetails((prev) => ({ ...prev, [runId]: data }));
     } catch (error) {
+      logClientError(error);
       setRunDetailErrors((prev) => ({
         ...prev,
         [runId]: error instanceof Error ? error.message : 'Failed to load run details.',

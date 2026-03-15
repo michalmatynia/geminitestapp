@@ -17,6 +17,8 @@ import {
 import { getDiskPathFromPublicPath, getImageFileRepository } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const pointSchema = z.object({
   x: z.number().finite().min(0).max(1),
@@ -46,7 +48,8 @@ function parseDataUrl(dataUrl: string): { buffer: Buffer; mime: string } | null 
     const buffer = Buffer.from(match[2] ?? '', 'base64');
     const mime = (match[1] ?? 'image/png').toLowerCase();
     return { buffer, mime };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 }

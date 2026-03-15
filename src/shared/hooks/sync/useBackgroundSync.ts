@@ -51,6 +51,7 @@ export function useBackgroundSync({
         previousDataRef.current = currentData;
       }
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error instanceof Error ? error : new Error(String(error)), {
         context: { source: 'useBackgroundSync', action: 'backgroundSyncFailed', level: 'warn' },
       });

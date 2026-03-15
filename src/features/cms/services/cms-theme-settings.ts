@@ -10,6 +10,8 @@ import {
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const toMongoId = (id: string): string | ObjectId => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
@@ -24,7 +26,8 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
       .collection<MongoStringSettingRecord<string | ObjectId>>('settings')
       .findOne({ $or: [{ _id: toMongoId(key) }, { key }] });
     return typeof doc?.value === 'string' ? doc.value : null;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };

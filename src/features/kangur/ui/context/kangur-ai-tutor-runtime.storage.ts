@@ -16,6 +16,8 @@ import {
 } from '@/shared/contracts/kangur-ai-tutor';
 
 import { normalizeMessageArtifacts } from './kangur-ai-tutor-runtime.helpers';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 // ---------------------------------------------------------------------------
 // Session state type (exported — re-exported from Runtime.shared.ts)
@@ -192,7 +194,8 @@ export const loadPersistedRuntimeState = (): PersistedKangurAiTutorRuntimeState 
           }, {})
           : {},
     };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return createEmptyPersistedRuntimeState();
   }
 };
@@ -212,7 +215,9 @@ export const persistRuntimeState = (
       KANGUR_AI_TUTOR_RUNTIME_STORAGE_KEY,
       JSON.stringify(state)
     );
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Ignore storage write failures so the tutor still works when storage is unavailable.
   }
 };
@@ -224,7 +229,9 @@ export const clearPersistedRuntimeState = (): void => {
 
   try {
     window.sessionStorage.removeItem(KANGUR_AI_TUTOR_RUNTIME_STORAGE_KEY);
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Ignore storage cleanup failures so the tutor remains functional.
   }
 };

@@ -7,6 +7,8 @@ import type {
   TraderaAddShopItemResult,
 } from '@/shared/contracts/integrations';
 import { configurationError, externalServiceError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export type {
   TraderaApiCredentials,
@@ -197,6 +199,7 @@ const callTraderaSoap = async ({
     }
     return text;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     if (error instanceof Error && error.name === 'AbortError') {
       throw externalServiceError(`Tradera API ${method} timed out after ${timeoutMs}ms.`);
     }

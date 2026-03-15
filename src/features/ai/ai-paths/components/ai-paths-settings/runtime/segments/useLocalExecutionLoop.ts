@@ -21,6 +21,8 @@ import {
 } from '../utils';
 
 import type { LocalExecutionArgs } from '../types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const toRecord = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === 'object' && !Array.isArray(value)
@@ -595,6 +597,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
           break;
         }
       } catch (error) {
+        logClientError(error);
         capturedError = error;
         if (error instanceof GraphExecutionCancelled) {
           const errorState = error.state ?? args.runtimeStateRef.current;

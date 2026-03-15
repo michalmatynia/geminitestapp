@@ -15,6 +15,8 @@ import {
   MIME_BY_EXTENSION,
   type ProductImageFileSource,
 } from './product-studio-service.images';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const parseDataUrlToBuffer = (
   value: string
@@ -26,7 +28,8 @@ export const parseDataUrlToBuffer = (
       mime: match[1] ?? null,
       buffer: Buffer.from(match[2] ?? '', 'base64'),
     };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

@@ -60,6 +60,8 @@ import {
   CenterPreviewHeaderSectionProvider,
   type CenterPreviewHeaderContextValue,
 } from './center-preview/sections/CenterPreviewHeaderContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const PREVIEW_CANVAS_MIN_HEIGHT_BY_SIZE: Record<PreviewCanvasSize, number> = {
   regular: 280,
@@ -479,6 +481,7 @@ export function CenterPreviewInner(): React.JSX.Element {
         };
         await loadVariantIntoCanvas(loadParams);
       } catch (error: unknown) {
+        logClientError(error);
         toast(error instanceof Error ? error.message : 'Failed to load variant into canvas.', {
           variant: 'error',
         });
@@ -678,6 +681,7 @@ export function CenterPreviewInner(): React.JSX.Element {
       void invalidateImageStudioSlots(queryClient, projectId);
       toast('Screenshot saved and attached to slot.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save screenshot.', {
         variant: 'error',
       });

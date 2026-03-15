@@ -17,6 +17,8 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { getRedisConnection } from '@/shared/lib/queue';
 
 import type { ObjectId } from 'mongodb';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const COLLECTION_NAME = 'analytics_events';
 const ANALYTICS_CACHE_PREFIX = 'analytics:cache:v1';
@@ -309,7 +311,9 @@ export async function listAnalyticsEvents(input: {
     if (cached) {
       try {
         return JSON.parse(cached) as { events: AnalyticsEvent[] };
-      } catch {
+      } catch (error) {
+        void ErrorSystem.captureException(error);
+      
         // ignore cache parse failures
       }
     }
@@ -353,7 +357,9 @@ export async function getAnalyticsSummary(input: {
     if (cached) {
       try {
         return JSON.parse(cached) as AnalyticsSummary;
-      } catch {
+      } catch (error) {
+        void ErrorSystem.captureException(error);
+      
         // ignore cache parse failures
       }
     }

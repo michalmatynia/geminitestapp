@@ -19,6 +19,8 @@ import {
   brainOperationsRangeSchema,
 } from '@/shared/contracts/ai-brain';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const CHATBOT_SAMPLE_SIZE = 200;
 const AGENT_SAMPLE_SIZE = 200;
@@ -339,7 +341,8 @@ const collectRuntimeInsightTelemetry = async (
       currentRiskEvents,
       previousRiskEvents,
     };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return fallback;
   }
 };

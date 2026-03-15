@@ -9,6 +9,8 @@ import {
   type KangurScoreLimit,
   type KangurScoreSort,
 } from '@/shared/contracts/kangur';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const KANGUR_GUEST_SCORES_STORAGE_KEY = 'kangur_guest_scores_v1';
 export const KANGUR_GUEST_SCORES_SESSION_STORAGE_KEY = 'kangur_guest_scores_session_v1';
@@ -113,7 +115,8 @@ const readStoredGuestScores = (): KangurScore[] => {
     }
 
     return dedupeScores(parsed.data);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return [];
   }
 };

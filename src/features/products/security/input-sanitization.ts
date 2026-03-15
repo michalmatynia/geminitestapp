@@ -1,3 +1,4 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 // import DOMPurify from 'isomorphic-dompurify';
 
 export type SanitizationOptions = {
@@ -100,7 +101,8 @@ export class InputSanitizer {
     try {
       const parsed = new URL(url);
       return ['http:', 'https:'].includes(parsed.protocol);
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return false;
     }
   }

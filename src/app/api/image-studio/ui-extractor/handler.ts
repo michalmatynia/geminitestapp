@@ -20,6 +20,8 @@ import {
   supportsBrainJsonMode,
 } from '@/shared/lib/ai-brain/server-runtime-client';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
@@ -91,7 +93,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   let json: unknown;
   try {
     json = JSON.parse(raw);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     throw internalError('Model did not return valid JSON.', { raw });
   }
 

@@ -10,6 +10,8 @@ import {
   normalizeJsonLikeValue,
   type JsonIntegrityDiagnostic,
 } from '../json-integrity';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const handleMapper: NodeHandler = ({
   node,
@@ -122,6 +124,7 @@ export const handleMapper: NodeHandler = ({
     }
     return mapped;
   } catch (error) {
+    logClientError(error);
     reportAiPathsError(
       error,
       {

@@ -6,6 +6,8 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 import type { NextRequest } from 'next/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type KangurRequestContext = Pick<ApiHandlerContext, 'requestId' | 'traceId' | 'correlationId'>;
 
@@ -58,7 +60,9 @@ export const logKangurServerEvent = async (
         ...(input.context ?? {}),
       },
     });
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+  
     // Never throw from feature telemetry helpers.
   }
 };

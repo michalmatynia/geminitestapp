@@ -13,6 +13,8 @@ import type {
   KangurAiTutorOnboardingRecord,
 } from '@/shared/contracts/kangur-ai-tutor';
 import type { TutorPanelPositionMode, TutorPanelSnapState } from './KangurAiTutorWidget.shared';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type KangurAiTutorGuestIntroRecord = KangurAiTutorOnboardingRecord<KangurAiTutorGuestIntroStatus>;
 type KangurAiTutorHomeOnboardingRecord =
@@ -116,7 +118,8 @@ const loadPersistedTutorWidgetState = (): KangurAiTutorWidgetStorageState | null
 
     const parsed = JSON.parse(raw) as KangurAiTutorWidgetStorageState | null;
     return parsed && typeof parsed === 'object' ? parsed : null;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -156,7 +159,9 @@ const persistTutorWidgetState = (state: KangurAiTutorWidgetStorageState): void =
       KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY,
       JSON.stringify(nextState)
     );
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Ignore storage write failures so the widget remains functional without storage.
   }
 };
@@ -558,7 +563,8 @@ export const loadPersistedGuestIntroRecord = (): KangurAiTutorGuestIntroRecord |
       version: 1,
       updatedAt: parsed.updatedAt,
     };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -581,7 +587,9 @@ export const persistGuestIntroRecord = (
       KANGUR_AI_TUTOR_GUEST_INTRO_STORAGE_KEY,
       JSON.stringify(nextRecord)
     );
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Ignore storage write failures so the widget stays non-blocking.
   }
 
@@ -615,7 +623,8 @@ export const loadPersistedHomeOnboardingRecord = (): KangurAiTutorHomeOnboarding
       version: 1,
       updatedAt: parsed.updatedAt,
     };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -638,7 +647,9 @@ export const persistHomeOnboardingRecord = (
       KANGUR_AI_TUTOR_HOME_ONBOARDING_STORAGE_KEY,
       JSON.stringify(nextRecord)
     );
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Ignore storage write failures so the widget stays non-blocking.
   }
 

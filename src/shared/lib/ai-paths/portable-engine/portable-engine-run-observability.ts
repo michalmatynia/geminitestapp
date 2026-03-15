@@ -3,6 +3,8 @@ import { toPortablePathRunExecutionErrorMessage } from './portable-engine-run-er
 import type { PortablePathInputSource } from './portable-engine-contract';
 import type { PortablePathSigningPolicySurface } from './portable-engine-resolution-types';
 import type { PortablePathValidationMode } from './portable-engine-runtime-types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type PortablePathRunExecutionRunner = 'client' | 'server';
 export type PortablePathRunExecutionFailureStage = 'resolve' | 'validation' | 'runtime';
@@ -105,7 +107,9 @@ const emitPortablePathRunExecutionEvent = (event: PortablePathRunExecutionEvent)
   for (const hook of portablePathRunExecutionHooks) {
     try {
       hook(event, snapshot);
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Observability hooks must not break runtime execution.
     }
   }

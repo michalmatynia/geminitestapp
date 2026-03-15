@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import { evaluateGraphInternal } from '@/shared/lib/ai-paths/core/runtime/engine-core';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const buildNode = (): AiNode =>
   ({
@@ -39,6 +41,7 @@ describe('engine-core runtime validation middleware', () => {
         reportAiPathsError: (): void => {},
       });
     } catch (error) {
+      logClientError(error);
       thrown = error;
     }
 
@@ -150,6 +153,7 @@ describe('engine-core runtime validation middleware', () => {
         reportAiPathsError: (): void => {},
       });
     } catch (error) {
+      logClientError(error);
       thrown = error;
     }
 

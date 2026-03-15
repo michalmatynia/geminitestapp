@@ -14,6 +14,8 @@ import {
   useDeleteChatbotSessions,
   useUpdateSessionTitle,
 } from '../hooks';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export interface UseChatbotSessionsStateReturn {
   sessions: ChatbotSessionListItem[];
@@ -107,6 +109,7 @@ export function useChatbotSessionsState(): UseChatbotSessionsStateReturn {
       setSelectedIds(new Set(ids));
       toast(ids.length ? `Selected ${ids.length} sessions` : 'No matching sessions found');
     } catch (error: unknown) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Failed to select sessions.';
       toast(message, { variant: 'error' });
     }
@@ -143,6 +146,7 @@ export function useChatbotSessionsState(): UseChatbotSessionsStateReturn {
       cancelEditing();
       toast('Session title updated', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Failed to update session title.';
       toast(message, { variant: 'error' });
     }
@@ -163,6 +167,7 @@ export function useChatbotSessionsState(): UseChatbotSessionsStateReturn {
       });
       toast('Session deleted', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Failed to delete session.';
       toast(message, { variant: 'error' });
     } finally {
@@ -187,6 +192,7 @@ export function useChatbotSessionsState(): UseChatbotSessionsStateReturn {
       clearSelection();
       toast('Selected sessions deleted', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Failed to delete sessions.';
       toast(message, { variant: 'error' });
     } finally {

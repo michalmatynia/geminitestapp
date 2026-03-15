@@ -34,6 +34,8 @@ import {
   VALIDATOR_SCOPE_DESCRIPTIONS,
   VALIDATOR_SCOPE_LABELS,
 } from './validator-scope';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const scopeOptions: Array<{ value: ValidatorScope; label: string }> = [
   { value: 'products', label: VALIDATOR_SCOPE_LABELS['products'] },
@@ -283,6 +285,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
       setLists(normalized);
       toast('Validation pattern lists saved.', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save validation pattern lists.', {
         variant: 'error',
       });

@@ -19,6 +19,8 @@ import {
   normalizeStringList,
 } from '../utils';
 import { runPlannerTask } from './core';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export async function buildAdaptivePlanReview({
   prompt,
@@ -115,6 +117,7 @@ export async function buildAdaptivePlanReview({
     }
     return result;
   } catch (error) {
+    logClientError(error);
     void ErrorSystem.logWarning('[chatbot][agent][engine] Planner review fallback', {
       ...(runId && { runId }),
       error,
@@ -250,6 +253,7 @@ export async function buildSelfCheckReview({
     }
     return result;
   } catch (error) {
+    logClientError(error);
     void ErrorSystem.logWarning('[chatbot][agent][engine] Self-check fallback', {
       ...(runId && { runId }),
       error,

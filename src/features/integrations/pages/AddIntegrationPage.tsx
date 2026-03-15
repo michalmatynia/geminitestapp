@@ -72,6 +72,7 @@ export default function AddIntegrationPage(): React.JSX.Element {
       });
       router.push('/admin/integrations');
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AddIntegrationPage', action: 'addIntegration', slug: integration.slug },
       });

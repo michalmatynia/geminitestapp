@@ -19,6 +19,8 @@ import type {
   KangurScore,
 } from '@/shared/contracts/kangur';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export const resolveAssignmentActor = async (
   request: NextRequest
@@ -55,7 +57,8 @@ export const readKangurJsonBody = async (
 
   try {
     return JSON.parse(rawBody) as unknown;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     throw badRequestError('Invalid JSON payload.');
   }
 };

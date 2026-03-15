@@ -32,6 +32,8 @@ import {
   ensureStarterWorkflowDefaults,
   refreshStarterWorkflowConfigs,
 } from './starter-workflows-settings';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const RUNTIME_KERNEL_SETTINGS_NORMALIZATION_ACTION_ID = 'normalize_runtime_kernel_settings';
 
@@ -86,7 +88,8 @@ const toCanonicalRuntimeKernelPathConfigEntryValue = (
     const record = asRecord(candidate);
     if (!record) return null;
     parsed = record;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 

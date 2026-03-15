@@ -14,6 +14,8 @@ import {
   externalServiceError,
   notFoundError,
 } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const PROD_BASE_URL = process.env['ALLEGRO_API_URL'] ?? 'https://api.allegro.pl';
 const SANDBOX_BASE_URL =
@@ -156,7 +158,8 @@ export async function POST_handler(
   if (contentType.includes('application/json') && raw) {
     try {
       apiResponseData = JSON.parse(raw) as unknown;
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       apiResponseData = raw;
     }
   }

@@ -33,6 +33,8 @@ import {
   executeBaseExport,
   verifySkuUniqueness,
 } from './segments';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 /**
  * POST /api/v2/integrations/products/[id]/export-to-base
@@ -434,6 +436,7 @@ export async function postExportToBaseHandler(
       logs,
     });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     logCapture.stop();
     const logs = logCapture.getLogs();
     const errorMessage =

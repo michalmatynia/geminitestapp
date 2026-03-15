@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 
 import { useCsvImportMutation } from '@/features/data-import-export/hooks/useImportMutations';
 import { Button, useToast, FileUploadButton, PanelHeader } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const CSVImportPage = (): React.JSX.Element => {
   const { toast } = useToast();
@@ -30,6 +32,7 @@ const CSVImportPage = (): React.JSX.Element => {
       toast('Import successful', { variant: 'success' });
       setFile(null);
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Import failed', { variant: 'error' });
     }
   };

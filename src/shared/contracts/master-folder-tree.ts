@@ -111,6 +111,21 @@ export const masterTreeMutationResultSchema = z.discriminatedUnion('ok', [
 
 export type MasterTreeMutationResultDto = z.infer<typeof masterTreeMutationResultSchema>;
 
+export type MasterTreeBulkOperationResult = {
+  succeeded: MasterTreeId[];
+  failed: Array<{ nodeId: MasterTreeId; reason: string }>;
+};
+
+export type MasterTreePasteResult =
+  | {
+      ok: true;
+      appliedMoves: Array<{ nodeId: MasterTreeId; targetParentId: MasterTreeId | null }>;
+    }
+  | {
+      ok: false;
+      reason: string;
+    };
+
 export const masterFolderTreePersistOperationSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('move'),

@@ -15,6 +15,8 @@ import type {
   ChatCompletionContentPart,
   ChatCompletionMessageParam,
 } from 'openai/resources/chat/completions';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export type BrainRuntimeVendor = BrainModelVendor;
 
@@ -311,6 +313,7 @@ export const streamBrainChatCompletion = async (input: {
         }
         controller.close();
       } catch (error) {
+        void ErrorSystem.captureException(error);
         controller.error(error);
       }
     },

@@ -220,6 +220,7 @@ function AuthPermissionsForm({
       await refetchSettings();
       toast('Permission settings saved', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, { context: { source: 'AuthPermissionsPage', action: 'saveSettings' } });
       toast('Failed to save permission settings', { variant: 'error' });
     }

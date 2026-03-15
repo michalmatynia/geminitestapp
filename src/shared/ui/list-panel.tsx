@@ -76,7 +76,10 @@ export function ListPanel(props: ListPanelProps) {
   } = props;
 
   return (
-    <section className={cn(variantStyles[variant], className)}>
+    <section
+      className={cn(variantStyles[variant], className)}
+      {...(isLoading ? { 'aria-busy': true } : {})}
+    >
       {header || title ? (
         <div className={cn('mb-6', headerClassName)}>
           {header || (
@@ -102,9 +105,14 @@ export function ListPanel(props: ListPanelProps) {
 
       <div className={cn('min-h-0', contentClassName)}>
         {isLoading ? (
-          <div className='flex flex-col items-center justify-center py-16 text-sm text-muted-foreground'>
-            <Loader2 className='mb-4 h-8 w-8 animate-spin text-blue-500' />
-            {loadingMessage}
+          <div
+            className='flex flex-col items-center justify-center py-16 text-sm text-muted-foreground'
+            role='status'
+            aria-live='polite'
+            aria-atomic='true'
+          >
+            <Loader2 className='mb-4 h-8 w-8 animate-spin text-blue-500' aria-hidden='true' />
+            <span>{loadingMessage}</span>
           </div>
         ) : children ? (
           children

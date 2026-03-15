@@ -7,6 +7,8 @@ import {
   OutboundUrlPolicyError,
 } from '@/shared/lib/security/outbound-url-policy';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const TOTAL_IMAGE_SLOTS = 15;
 
@@ -31,6 +33,7 @@ const fetchAsDataUrl = async (url: string): Promise<string | null> => {
     const contentType = res.headers.get('content-type') || 'image/jpeg';
     return toDataUrl(buffer, contentType);
   } catch (error) {
+    logClientError(error);
     if (error instanceof OutboundUrlPolicyError) {
       await ErrorSystem.logWarning('Blocked outbound image fetch by URL policy.', {
         service: 'product-image-base64',

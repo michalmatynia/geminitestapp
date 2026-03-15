@@ -6,6 +6,8 @@ import { resolveBrainProviderCredential } from '@/shared/lib/ai-brain/provider-c
 import { REMOTE_OCR_TIMEOUT_MS } from '../config';
 import { parseOpenAiResponseText } from '../response-parsers';
 import { buildOcrPromptContent, withPromiseTimeout } from '../utils';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export const runOpenAiOcrRequest = async (input: {
   model: string;
@@ -56,6 +58,7 @@ export const runOpenAiOcrRequest = async (input: {
     );
     return parseOpenAiResponseText(completion);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const errorMessage = error instanceof Error ? error.message : '';
     if (!/max_completion_tokens/i.test(errorMessage)) {
       throw error;

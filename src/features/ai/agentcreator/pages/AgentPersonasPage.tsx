@@ -116,6 +116,7 @@ export function AgentPersonasPage(): React.JSX.Element {
       ]);
       toast(existing ? 'Persona updated.' : 'Persona created.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AgentPersonasPage', action: 'savePersona', personaId: draft.id },
       });
@@ -136,6 +137,7 @@ export function AgentPersonasPage(): React.JSX.Element {
       ]);
       toast('Persona deleted.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AgentPersonasPage', action: 'deletePersona', personaId: persona.id },
       });

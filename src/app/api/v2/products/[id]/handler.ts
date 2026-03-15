@@ -20,6 +20,8 @@ import { badRequestError, notFoundError, payloadTooLargeError } from '@/shared/e
 import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 import { env } from '@/shared/lib/env';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export const getQuerySchema = z.object({
   fresh: optionalBooleanQuerySchema().default(false),
@@ -104,6 +106,7 @@ export async function PUT_handler(
     formData = await req.formData();
     timings['formData'] = performance.now() - formDataStart;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     timings['formData'] = performance.now() - formDataStart;
     timings['total'] = performance.now() - totalStart;
     if (isLikelyPayloadTooLarge(error)) {

@@ -96,6 +96,7 @@ export function AdminProductProducersPage(): React.JSX.Element {
       toast(editing ? 'Producer updated.' : 'Producer created.', { variant: 'success' });
       setOpen(false);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'AdminProductProducersPage',
@@ -124,6 +125,7 @@ export function AdminProductProducersPage(): React.JSX.Element {
           await deleteMutation.mutateAsync(producer.id);
           toast('Producer deleted.', { variant: 'success' });
         } catch (error) {
+          logClientError(error);
           logClientError(error, {
             context: {
               source: 'AdminProductProducersPage',

@@ -5,6 +5,8 @@ import type {
   PromptExploderLogicalJoin,
   PromptExploderLogicalOperator,
 } from './types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const LIST_ITEM_MARKER_RE = /^\s*(\d+[.)]|[A-Z]\)|[*-])\s+/;
 
@@ -26,7 +28,8 @@ const parseLogicalReferenceValue = (rawValue: string | null | undefined): unknow
   ) {
     try {
       return JSON.parse(trimmed) as unknown;
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return trimmed;
     }
   }
@@ -259,7 +262,8 @@ const formatLogicalReferenceValue = (value: unknown): string => {
   if (value === null || value === undefined) return 'null';
   try {
     return JSON.stringify(value);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return String(value);
   }
 };

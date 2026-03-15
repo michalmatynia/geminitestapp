@@ -12,6 +12,8 @@ import {
   type JsonIntegrityDiagnostic,
   type JsonIntegrityPolicy,
 } from '../json-integrity';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type RegexMatchRecord = {
   input: string;
@@ -185,7 +187,8 @@ export const handleRegex: NodeHandler = ({
   let compiled: RegExp;
   try {
     compiled = new RegExp(pattern, flags);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     const emptyGrouped = regexConfig.outputMode === 'array' ? [] : {};
     return {
       grouped: emptyGrouped,

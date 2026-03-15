@@ -3,6 +3,7 @@ import 'server-only';
 import { buildKangurAiTutorContextRegistryRefs } from '@/features/kangur/context-registry/refs';
 import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
 import type { ContextRuntimeDocument } from '@/shared/contracts/ai-context-registry';
+import type { KangurKnowledgeGraphPreviewSummary } from '@/shared/contracts/kangur-observability';
 
 import {
   previewKangurAiTutorSemanticGraphContext,
@@ -10,25 +11,6 @@ import {
 } from './retrieval';
 
 export type KangurKnowledgeGraphPreviewRuntimeResolution = 'live' | 'skipped';
-
-export type KangurKnowledgeGraphPreviewSummary = {
-  requestedRefCount: number;
-  runtimeDocumentCount: number;
-  retrievalStatus: KangurKnowledgeGraphRetrievalPreviewResult['status'];
-  queryMode: KangurKnowledgeGraphRetrievalPreviewResult['queryMode'];
-  recallStrategy: Extract<
-    KangurKnowledgeGraphRetrievalPreviewResult,
-    { status: 'hit' }
-  >['recallStrategy'] | null;
-  nodeCount: number;
-  sourceCount: number;
-  lexicalHitCount: number;
-  vectorHitCount: number;
-  vectorRecallAttempted: boolean;
-  tokenCount: number;
-  normalizedQuerySeed: string;
-  websiteHelpTargetNodeId: string | null;
-};
 
 export type KangurKnowledgeGraphPreviewResultEnvelope = {
   learnerId: string;

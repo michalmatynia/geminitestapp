@@ -27,6 +27,8 @@ import {
 } from '@/shared/contracts/image-studio';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type SequenceStepInputLike = {
   type?: unknown;
@@ -225,6 +227,7 @@ export async function startImageStudioSequenceRun(
     startImageStudioSequenceQueue();
     dispatchMode = await enqueueImageStudioSequenceJob(run.id);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const errorMessage =
       error instanceof Error ? error.message : 'Failed to dispatch Image Studio sequence run.';
 

@@ -67,6 +67,7 @@ export function useSettingsHydration({
     try {
       hydrated = parsePersistedImageStudioSettings(storedRaw);
     } catch (error) {
+      logClientError(error);
       parseError =
         error instanceof Error ? error : new Error('Invalid Image Studio settings payload.');
       logClientError(parseError, {

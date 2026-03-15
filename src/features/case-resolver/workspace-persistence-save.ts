@@ -36,6 +36,8 @@ import {
   isCaseResolverWorkspacePayloadTooLarge,
   readWorkspaceFromSettingRecord,
 } from './workspace-persistence-shared';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const CASE_RESOLVER_WORKSPACE_PERSISTED_HISTORY_LIMIT_DEFAULT = 12;
 const CASE_RESOLVER_WORKSPACE_PAYLOAD_PROFILE_WARN_BYTES_DEFAULT = 900_000;
@@ -265,6 +267,7 @@ export const persistCaseResolverWorkspaceSnapshot = async (
   try {
     normalizedWorkspace = normalizeCaseResolverWorkspace(input.workspace);
   } catch (error: unknown) {
+    logClientError(error);
     const message =
       error instanceof Error ? error.message : 'Invalid Case Resolver workspace payload.';
     logCaseResolverWorkspaceEvent({
@@ -308,6 +311,7 @@ export const persistCaseResolverWorkspaceSnapshot = async (
   try {
     workspaceForPersist = compactCaseResolverWorkspaceForPersist(workspaceForPersistPipeline);
   } catch (error: unknown) {
+    logClientError(error);
     const message =
       error instanceof Error ? error.message : 'Invalid Case Resolver workspace payload.';
     logCaseResolverWorkspaceEvent({
@@ -425,6 +429,7 @@ export const persistCaseResolverWorkspaceSnapshot = async (
         }),
       });
     } catch (error: unknown) {
+      logClientError(error);
       const message =
         error instanceof Error
           ? error.message
@@ -489,6 +494,7 @@ export const persistCaseResolverWorkspaceSnapshot = async (
         }),
       });
     } catch (error: unknown) {
+      logClientError(error);
       const message =
         error instanceof Error
           ? error.message
@@ -554,6 +560,7 @@ export const persistCaseResolverWorkspaceSnapshot = async (
       }),
     });
   } catch (error: unknown) {
+    logClientError(error);
     return {
       ok: false,
       conflict: false,

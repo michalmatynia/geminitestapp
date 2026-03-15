@@ -46,6 +46,8 @@ import {
   AdminMenuDepthContext,
   type AdminMenuTreeContextValue,
 } from './menu/NavTree';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export {
   buildAdminNav,
@@ -151,7 +153,9 @@ export default function Menu(): React.ReactNode {
           new Set(parsed.filter((id: unknown): id is string => typeof id === 'string'))
         );
       }
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // ignore
     } finally {
       setOpenIdsLoaded(true);
@@ -163,7 +167,9 @@ export default function Menu(): React.ReactNode {
     if (typeof window === 'undefined') return;
     try {
       window.localStorage.setItem(OPEN_KEY, JSON.stringify(Array.from(userOpenIds)));
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // ignore
     }
   }, [openIdsLoaded, userOpenIds]);
@@ -198,7 +204,8 @@ export default function Menu(): React.ReactNode {
           } else {
             router.push('/admin/chatbot');
           }
-        } catch {
+        } catch (error) {
+          logClientError(error);
           router.push('/admin/chatbot');
         }
       };

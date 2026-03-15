@@ -3,13 +3,14 @@ import type {
   AiTriggerButtonCreatePayload,
   AiTriggerButtonUpdatePayload,
 } from '@/shared/contracts/ai-trigger-buttons';
+import type { HttpResult } from '@/shared/contracts/http';
 
-import { apiPost, apiPatch, apiDelete, apiFetch, ApiResponse } from './base';
+import { apiPost, apiPatch, apiDelete, apiFetch } from './base';
 
 export async function fetchTriggerButtons(args?: {
   entityType?: string;
   entityId?: string;
-}): Promise<ApiResponse<AiTriggerButtonRecord[]>> {
+}): Promise<HttpResult<AiTriggerButtonRecord[]>> {
   const params = new URLSearchParams();
   if (args?.entityType) params.set('entityType', args.entityType);
   if (args?.entityId) params.set('entityId', args.entityId);
@@ -21,28 +22,30 @@ export async function fetchTriggerButtons(args?: {
 
 export async function createTriggerButton(
   payload: AiTriggerButtonCreatePayload
-): Promise<ApiResponse<AiTriggerButtonRecord>> {
+): Promise<HttpResult<AiTriggerButtonRecord>> {
   return apiPost<AiTriggerButtonRecord>('/api/ai-paths/trigger-buttons', payload);
 }
 
 export async function updateTriggerButton(
   id: string,
   payload: AiTriggerButtonUpdatePayload
-): Promise<ApiResponse<AiTriggerButtonRecord>> {
+): Promise<HttpResult<AiTriggerButtonRecord>> {
   return apiPatch<AiTriggerButtonRecord>(`/api/ai-paths/trigger-buttons/${id}`, payload);
 }
 
-export async function deleteTriggerButton(id: string): Promise<ApiResponse<{ success: boolean }>> {
+export async function deleteTriggerButton(
+  id: string
+): Promise<HttpResult<{ success: boolean }>> {
   return apiDelete<{ success: boolean }>(`/api/ai-paths/trigger-buttons/${id}`);
 }
 
 export async function reorderTriggerButtons(payload: {
   orderedIds: string[];
-}): Promise<ApiResponse<AiTriggerButtonRecord[]>> {
+}): Promise<HttpResult<AiTriggerButtonRecord[]>> {
   return apiPost<AiTriggerButtonRecord[]>('/api/ai-paths/trigger-buttons/reorder', payload);
 }
 
-export async function cleanupFixtureTriggerButtons(): Promise<ApiResponse<{
+export async function cleanupFixtureTriggerButtons(): Promise<HttpResult<{
   removedTriggerButtons: number;
   removedPathIndexEntries: number;
   removedPathConfigs: number;

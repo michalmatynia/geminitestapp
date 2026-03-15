@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { DatabaseInfo, DatabaseType } from '@/shared/contracts';
+import type {
+  DatabaseBackupResponse,
+  DatabaseInfo,
+  DatabaseRestoreResponse,
+  DatabaseType,
+} from '@/shared/contracts';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { isValidDatabaseEngineBackupTimeUtc } from '@/shared/lib/db/database-engine-backup-schedule';
 import {
@@ -54,6 +59,8 @@ export function useDatabaseBackupsState() {
   const uploadBackup = useUploadBackupMutation();
   const deleteBackup = useDeleteBackupMutation();
 
+  const readPayload = <T,>(result: { payload: T | unknown }): T => result.payload as T;
+
   const parsedSettings = useMemo(() => {
     const errors: string[] = [];
     const loggedErrors: unknown[] = [];
@@ -62,6 +69,7 @@ export function useDatabaseBackupsState() {
       try {
         return parser();
       } catch (error) {
+        logClientError(error);
         errors.push(error instanceof Error ? error.message : 'Invalid backup settings payload.');
         loggedErrors.push(error);
         return fallback;
@@ -189,7 +197,8 @@ export function useDatabaseBackupsState() {
         backupName,
         truncateBeforeRestore: truncate,
       });
-      const { ok, payload } = result;
+      const { ok } = result;
+      const payload = readPayload<DatabaseRestoreResponse>(result);
       const log = String(payload.log ?? 'No log available.');
 
       if (ok) {
@@ -222,6 +231,7 @@ ${log}`
         );
       }
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'DatabaseBackupsPanel',
@@ -239,7 +249,8 @@ ${String(error)}`);
   const handleBackup = async (): Promise<void> => {
     try {
       const result = await createBackup.mutateAsync(activeTab);
-      const { ok, payload } = result;
+      const { ok } = result;
+      const payload = readPayload<DatabaseBackupResponse>(result);
       const log = String(payload.log ?? 'No log available.');
       if (ok) {
         if (payload.jobId) {
@@ -267,6 +278,7 @@ ${log}`);
 ${log}`);
       }
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'DatabaseBackupsPanel', action: 'createBackup', dbType: activeTab },
       });
@@ -293,6 +305,7 @@ ${String(error)}`);
         toast('Failed to delete backup.', { variant: 'error' });
       }
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'DatabaseBackupsPanel',
@@ -323,6 +336,7 @@ ${String(error)}`);
         toast('Failed to upload backup.', { variant: 'error' });
       }
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'DatabaseBackupsPanel',
@@ -398,6 +412,7 @@ ${String(error)}`);
       });
       toast('Backup schedule saved.', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'DatabaseBackupsPanel',

@@ -4,7 +4,8 @@ import type {
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
-import { dbApi, ApiResponse } from '@/shared/lib/ai-paths/api';
+import type { HttpResult } from '@/shared/contracts/http';
+import { dbApi } from '@/shared/lib/ai-paths/api';
 
 import { coerceArrayLike } from './database-parameter-inference';
 import {
@@ -70,7 +71,7 @@ export async function executeMongoCollectionUpdate({
     }
   }
 
-  const updateResult: ApiResponse<unknown> = await dbApi.action({
+  const updateResult: HttpResult<unknown> = await dbApi.action({
     ...(queryPayload['provider']
       ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' }
       : {}),

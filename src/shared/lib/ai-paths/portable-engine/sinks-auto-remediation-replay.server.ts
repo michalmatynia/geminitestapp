@@ -13,6 +13,8 @@ import type {
   PortablePathAuditSinkAutoRemediationNotificationChannel,
   PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry,
 } from './sinks-auto-remediation-dead-letters.server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export type PortablePathAuditSinkAutoRemediationDeadLetterReplayAttempt = {
   replayedAt: string;
@@ -290,6 +292,7 @@ export const replayPortablePathAuditSinkAutoRemediationDeadLettersCore = async (
       indicesToRemove.add(index);
       attempts.push(attemptBase);
     } catch (error) {
+      void ErrorSystem.captureException(error);
       failedCount += 1;
       attemptBase.attempted = true;
       attemptBase.error = deps.toErrorMessage(error);

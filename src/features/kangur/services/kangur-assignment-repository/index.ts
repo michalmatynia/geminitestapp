@@ -19,6 +19,7 @@ export const getKangurAssignmentRepository = async (): Promise<KangurAssignmentR
       try {
         return await repository.createAssignment(input);
       } catch (error) {
+        void ErrorSystem.captureException(error);
         void ErrorSystem.captureException(error, {
           service: KANGUR_ASSIGNMENT_REPOSITORY_SERVICE,
           action: 'createAssignment',
@@ -33,6 +34,7 @@ export const getKangurAssignmentRepository = async (): Promise<KangurAssignmentR
       try {
         return await repository.getAssignment(learnerKey, assignmentId);
       } catch (error) {
+        void ErrorSystem.captureException(error);
         void ErrorSystem.captureException(error, {
           service: KANGUR_ASSIGNMENT_REPOSITORY_SERVICE,
           action: 'getAssignment',
@@ -47,6 +49,7 @@ export const getKangurAssignmentRepository = async (): Promise<KangurAssignmentR
       try {
         return await repository.listAssignments(input);
       } catch (error) {
+        void ErrorSystem.captureException(error);
         void ErrorSystem.captureException(error, {
           service: KANGUR_ASSIGNMENT_REPOSITORY_SERVICE,
           action: 'listAssignments',
@@ -61,6 +64,7 @@ export const getKangurAssignmentRepository = async (): Promise<KangurAssignmentR
       try {
         return await repository.updateAssignment(learnerKey, assignmentId, input);
       } catch (error) {
+        void ErrorSystem.captureException(error);
         void ErrorSystem.captureException(error, {
           service: KANGUR_ASSIGNMENT_REPOSITORY_SERVICE,
           action: 'updateAssignment',

@@ -22,6 +22,8 @@ import type {
 } from '@/shared/contracts/auth';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type CreateUserForm = {
   name: string;
@@ -182,6 +184,7 @@ export function useUsersState(): UseUsersStateReturn {
       setDirtyRoles(false);
       toast('User roles updated', { variant: 'success' });
     } catch (_e) {
+      logClientError(_e);
       toast('Failed to save roles', { variant: 'error' });
     }
   };
@@ -193,6 +196,7 @@ export function useUsersState(): UseUsersStateReturn {
       toast('User deleted', { variant: 'success' });
       setUserToDelete(null);
     } catch (_e) {
+      logClientError(_e);
       toast('Failed to delete user', { variant: 'error' });
     }
   };

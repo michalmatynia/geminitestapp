@@ -44,6 +44,8 @@ import type {
   PortablePathEnvelopeVerificationAuditSinkStartupHealthSummary,
   PortablePathEnvelopeVerificationAuditSinkWithHealthCheck,
 } from './sinks-contracts.server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const resolveDefaultProfileInclusion = (
   profile: PortablePathEnvelopeVerificationAuditSinkProfile
@@ -153,10 +155,13 @@ export const bootstrapPortablePathEnvelopeVerificationAuditSinks = (
       );
     }
   } catch (error) {
+    void ErrorSystem.captureException(error);
     for (const unregister of [...unregisterCallbacks].reverse()) {
       try {
         unregister();
-      } catch {
+      } catch (error) {
+        void ErrorSystem.captureException(error);
+      
         // Best-effort rollback; surfacing original registration error.
       }
     }
@@ -216,6 +221,7 @@ export const bootstrapPortablePathEnvelopeVerificationAuditSinks = (
                 error: null,
               };
             } catch (error) {
+              void ErrorSystem.captureException(error);
               return {
                 sinkId,
                 status: 'failed',
@@ -269,7 +275,9 @@ export const bootstrapPortablePathEnvelopeVerificationAuditSinks = (
       for (const unregister of [...unregisterCallbacks].reverse()) {
         try {
           unregister();
-        } catch {
+        } catch (error) {
+          void ErrorSystem.captureException(error);
+        
           // Best-effort unregister.
         }
       }
@@ -299,6 +307,7 @@ export const bootstrapPortablePathEnvelopeVerificationAuditSinksWithStartupHealt
       startupHealthSummary,
     };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     bootstrap.unregisterAll();
     throw error;
   }
@@ -388,7 +397,9 @@ export const bootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironment 
     for (const unregister of [...remediationUnregisterCallbacks].reverse()) {
       try {
         unregister();
-      } catch {
+      } catch (error) {
+        void ErrorSystem.captureException(error);
+      
         // Best-effort unregister for remediation replacement sinks.
       }
     }

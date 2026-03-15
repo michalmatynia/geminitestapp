@@ -36,6 +36,8 @@ import { useFolderTreeNavigationActions } from './folder-tree-instance/useFolder
 import { useFolderTreeTransaction } from './folder-tree-instance/useFolderTreeTransaction';
 
 import type { FolderTreeState, FolderTreeTransaction } from '../types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type UseFolderTreeInstanceV2Options = UseMasterFolderTreeOptions & {
   instanceId?: string | undefined;
@@ -183,6 +185,7 @@ export function useFolderTreeInstanceV2(
         next.version !== undefined && Number.isFinite(next.version) ? next.version : undefined
       );
     } catch (error) {
+      logClientError(error);
       const normalizedError = normalizeError('unknown', error);
       store.patchState((prev: FolderTreeState) => ({
         ...prev,

@@ -46,6 +46,7 @@ function loadHistory(): string[] {
     const raw = localStorage.getItem(HISTORY_KEY);
     return raw ? (JSON.parse(raw) as string[]) : [];
   } catch (error) {
+    logClientError(error);
     logClientError(error, { context: { source: 'SqlQueryConsole', action: 'loadHistory' } });
     return [];
   }
@@ -55,6 +56,7 @@ function saveHistory(history: string[]): void {
   try {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY)));
   } catch (error) {
+    logClientError(error);
     logClientError(error, { context: { source: 'SqlQueryConsole', action: 'saveHistory' } });
   }
 }
@@ -74,7 +76,8 @@ function parseMongoCommandInput(raw: string): MongoCommandInput {
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     throw new Error('Command must be valid JSON.');
   }
 
@@ -181,6 +184,7 @@ export function SqlQueryConsole({
       parsedCommand = parseMongoCommandInput(trimmed);
       setParseError(null);
     } catch (error) {
+      logClientError(error);
       setParseError(error instanceof Error ? error.message : 'Invalid MongoDB command.');
       return;
     }

@@ -1,4 +1,6 @@
 import type { CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const CASE_RESOLVER_EDITOR_DRAFT_STORAGE_PREFIX = 'case-resolver-editor-draft-v1';
 
@@ -26,7 +28,8 @@ export const readStoredEditorDraft = (fileId: string): StoredCaseResolverEditorD
     if (parsed.fileId !== fileId) return null;
     if (!parsed.draft || typeof parsed.draft !== 'object') return null;
     return parsed;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -124,7 +127,9 @@ const removeStoredEditorDraftsExcept = (storage: Storage, keepKey: string): void
   removableKeys.forEach((entryKey) => {
     try {
       storage.removeItem(entryKey);
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Ignore cleanup errors; we still attempt to persist the latest draft.
     }
   });
@@ -139,6 +144,7 @@ const tryWriteEditorDraftPayload = (
     storage.setItem(key, JSON.stringify(payload));
     return { ok: true };
   } catch (error) {
+    logClientError(error);
     if (isQuotaExceededStorageError(error)) {
       return { ok: false, reason: 'quota' };
     }
@@ -185,7 +191,9 @@ export const clearStoredEditorDraft = (fileId: string): void => {
   if (typeof window === 'undefined') return;
   try {
     window.localStorage.removeItem(buildEditorDraftStorageKey(fileId));
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Ignore storage cleanup errors.
   }
 };

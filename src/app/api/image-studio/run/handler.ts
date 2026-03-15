@@ -17,6 +17,8 @@ import {
 } from '@/features/ai/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const body = (await req.json().catch(() => null)) as unknown;
@@ -53,6 +55,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     startImageStudioRunQueue();
     dispatchMode = await enqueueImageStudioRunJob(run.id);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const errorMessage =
       error instanceof Error ? error.message : 'Failed to dispatch Image Studio run.';
     await updateImageStudioRun(run.id, {

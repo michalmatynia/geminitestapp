@@ -22,6 +22,8 @@ import { FolderTreeStore } from '../../store/createFolderTreeStore';
 import { FolderTreeAppliedTransaction, FolderTreeState, FolderTreeTransaction } from '../../types';
 
 import type { MasterFolderTreeShellRuntime } from '../../shell/useFolderTreeShellRuntime';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export function useFolderTreeTransaction(
   store: FolderTreeStore,
@@ -65,6 +67,7 @@ export function useFolderTreeTransaction(
           applied,
         };
       } catch (error) {
+        logClientError(error);
         if (isConflictError(error)) {
           runtime.recordMetric('transaction_conflict');
         } else {
@@ -72,7 +75,9 @@ export function useFolderTreeTransaction(
         }
         try {
           await adapter.rollback(tx, stage, error);
-        } catch {
+        } catch (error) {
+          logClientError(error);
+        
           // no-op
         }
         return {

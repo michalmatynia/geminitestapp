@@ -1,4 +1,6 @@
 import { DEFAULT_KANGUR_APP_EMBED_ENTRY_PAGE } from '@/shared/contracts/app-embeds';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const KANGUR_BASE_PATH = '/kangur';
 export const KANGUR_MAIN_PAGE_KEY = DEFAULT_KANGUR_APP_EMBED_ENTRY_PAGE;
@@ -114,7 +116,8 @@ export const normalizeKangurHostPath = (value: string | null | undefined): strin
     );
     const normalizedPathname = normalizeKangurHostPathname(parsed.pathname);
     return `${normalizedPathname}${parsed.search}${parsed.hash}`;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return normalizeKangurHostPathname(trimmed);
   }
 };
@@ -205,7 +208,8 @@ export const appendKangurUrlParams = (
     });
 
     return `${parsed.pathname}${parsed.search}${parsed.hash}`;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return href;
   }
 };
@@ -231,7 +235,8 @@ export const normalizeKangurBasePath = (basePath: string | null | undefined): st
       'https://kangur.local'
     );
     return normalizeKangurHostPathname(parsed.pathname);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return normalizeKangurHostPathname(trimmed);
   }
 };
@@ -281,7 +286,8 @@ export const resolveKangurPublicBasePathFromHref = (
       normalizedPathname.startsWith(`${KANGUR_BASE_PATH}/`)
       ? KANGUR_BASE_PATH
       : '/';
-  } catch {
+  } catch (error) {
+    logClientError(error);
     if (href.startsWith(`${KANGUR_BASE_PATH}/`) || href === KANGUR_BASE_PATH) {
       return KANGUR_BASE_PATH;
     }
@@ -395,7 +401,8 @@ export const getKangurLoginHref = (
     const parsed = new URL(loginPath, 'https://kangur.local');
     parsed.searchParams.set('callbackUrl', callbackUrl);
     return `${parsed.pathname}${parsed.search}${parsed.hash}`;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return loginPath;
   }
 };

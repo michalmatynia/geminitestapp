@@ -29,6 +29,8 @@ import { AppModal, Button, useToast } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { getMarketplaceButtonClass } from '../product-column-utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const INTEGRATION_SELECTION_STALE_TIME_MS = 5 * 60 * 1000;
 const defaultExportInventoryQueryKey = QUERY_KEYS.integrations.defaultExportInventory();
@@ -182,7 +184,8 @@ export function BaseQuickExportButton(props: {
         inventoryId,
         templateId,
       };
-    } catch {
+    } catch (error) {
+      logClientError(error);
       toast('Failed to load Base.com export defaults.', { variant: 'error' });
       return null;
     }
@@ -212,6 +215,7 @@ export function BaseQuickExportButton(props: {
       void invalidateProductListingsAndBadges(queryClient, product.id);
       toast('Base.com export started.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Failed to export to Base.com.';
       toast(message, { variant: 'error' });
     }
@@ -247,6 +251,7 @@ export function BaseQuickExportButton(props: {
               } satisfies BaseProductSkuCheckPayload
             );
           } catch (error) {
+            logClientError(error);
             const message =
               error instanceof Error
                 ? error.message
@@ -318,6 +323,7 @@ export function BaseQuickExportButton(props: {
       setExistingSkuDecision(null);
       toast('Linked to existing Base.com product.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       const message =
         error instanceof Error
           ? error.message

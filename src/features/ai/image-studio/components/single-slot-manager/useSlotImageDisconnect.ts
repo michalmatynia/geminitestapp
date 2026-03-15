@@ -19,6 +19,8 @@ import {
 import { studioKeys } from '../../hooks/useImageStudioQueries';
 
 import type { QueryClient } from '@tanstack/react-query';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 interface SlotImageDisconnectProps {
   lastConsumedTemporaryUploadIdRef: React.MutableRefObject<string | null>;
@@ -119,7 +121,8 @@ export function useSlotImageDisconnect({
                 )
               );
               return response.slot ?? null;
-            } catch {
+            } catch (error) {
+              logClientError(error);
               return null;
             }
           };
@@ -195,6 +198,7 @@ export function useSlotImageDisconnect({
           await invalidateImageStudioSlots(queryClient, projectId);
         }
       } catch (error) {
+        logClientError(error);
         setUploadError(error instanceof Error ? error.message : 'Failed to remove image');
         throw error;
       }

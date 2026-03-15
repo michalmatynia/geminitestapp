@@ -34,6 +34,8 @@ import {
   invalidateProducts,
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type { ExportToBaseVariables };
 
@@ -153,6 +155,7 @@ export function useGenericExportToBaseMutation(): UpdateMutation<
           options
         );
       } catch (error: unknown) {
+        logClientError(error);
         if (error && typeof error === 'object' && 'data' in error) {
           const payloadRes = (error as { data: ExportResponse }).data;
           if (payloadRes?.skuExists) {
@@ -382,6 +385,7 @@ export function useExportToBaseMutation(
           options
         );
       } catch (error: unknown) {
+        logClientError(error);
         if (error && typeof error === 'object' && 'data' in error) {
           const payloadRes = (error as { data: ExportResponse }).data;
           if (payloadRes?.skuExists) {

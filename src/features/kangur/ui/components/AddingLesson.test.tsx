@@ -5,6 +5,13 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
+  useKangurAuth: () => ({
+    isAuthenticated: true,
+    user: { actorType: 'learner', ownerUserId: 'parent-1' },
+  }),
+}));
+
 vi.mock('@/features/kangur/ui/components/AddingBallGame', () => ({
   default: ({ onFinish }: { onFinish: () => void }): React.JSX.Element => (
     <button type='button' onClick={onFinish}>

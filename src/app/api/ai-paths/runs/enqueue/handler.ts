@@ -43,6 +43,8 @@ import {
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 import { resolvePathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const enqueueSchema = z.object({
   pathId: z.string().trim().min(1),
@@ -127,7 +129,9 @@ const loadStoredPathConfig = async (pathId: string): Promise<PathConfig> => {
   if (resolved.changed) {
     try {
       await upsertAiPathsSettings([{ key: configKey, value: JSON.stringify(resolved.config) }]);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // Best-effort persistence only. The repaired config is still safe to execute for this request.
     }
   }
@@ -284,6 +288,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       );
     });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const message = error instanceof Error ? error.message : String(error);
     if (message.includes('queue_preflight_timeout')) {
       throw serviceUnavailableError(

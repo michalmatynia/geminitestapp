@@ -28,6 +28,8 @@ import { Asset3DPickerModal } from './Asset3DPickerModal';
 import { Asset3DPickerModalRuntimeContext } from './Asset3DPickerModalRuntimeContext';
 import { MediaLibraryPanel } from './MediaLibraryPanel';
 import { useUploadCmsMedia } from '../../hooks/useCmsQueries';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 interface FieldProps<T> {
   label?: string;
@@ -75,6 +77,7 @@ export function ImagePickerField(props: FieldProps<string>): React.JSX.Element {
         onChange(result.filepath);
         toast('Image uploaded successfully.', { variant: 'success' });
       } catch (error) {
+        logClientError(error);
         const message = error instanceof Error ? error.message : 'Upload failed';
         setUploadError(message);
         toast(message, { variant: 'error' });

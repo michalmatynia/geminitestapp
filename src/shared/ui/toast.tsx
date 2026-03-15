@@ -140,7 +140,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
         parsed.position in positionStyles ? parsed.position : defaultSettings.position;
       const accent = parsed.accent in accentStyles ? parsed.accent : defaultSettings.accent;
       return { ...defaultSettings, position, accent };
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return defaultSettings;
     }
   });

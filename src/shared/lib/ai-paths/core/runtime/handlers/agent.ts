@@ -14,6 +14,8 @@ import type { AgentEnqueuePayload } from '@/shared/lib/ai-paths/api';
 
 import { coerceInput, formatRuntimeValue, hashRuntimeValue, parseJsonSafe } from '../../utils';
 import { buildPromptOutput, coercePayloadObject } from '../utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 
 type AgentRunRecord = {
@@ -205,7 +207,8 @@ export const handleAgent: NodeHandler = async ({
   let personas: AgentPersona[];
   try {
     personas = await fetchAgentPersonas();
-  } catch {
+  } catch (error) {
+    logClientError(error);
     personas = [];
   }
   const persona = agentConfig.personaId
@@ -292,6 +295,7 @@ export const handleAgent: NodeHandler = async ({
       },
     };
   } catch (error) {
+    logClientError(error);
     reportAiPathsError(error, { action: 'agentRun', nodeId: node.id }, 'Agent run failed:');
     toast('Agent run failed.', { variant: 'error' });
     executed.ai.add(node.id);
@@ -426,6 +430,7 @@ export const handleLearnerAgent: NodeHandler = async ({
       payloadHash,
     };
   } catch (error) {
+    logClientError(error);
     reportAiPathsError(
       error,
       { action: 'learnerAgent', nodeId: node.id, agentId },

@@ -5,6 +5,8 @@ import type {
 } from '@/shared/contracts/ai-paths-runtime';
 
 import { coerceInput } from '../../utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const pickString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
@@ -38,6 +40,7 @@ export const handleSimulation: NodeHandler = async ({
         toast?.(`No ${entityType} found for simulation ID ${entityId}.`, { variant: 'error' });
       }
     } catch (error) {
+      logClientError(error);
       reportAiPathsError?.(
         error,
         {

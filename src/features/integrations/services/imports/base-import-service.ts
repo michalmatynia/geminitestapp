@@ -68,6 +68,8 @@ import { getProductRepository } from '@/shared/lib/products/services/product-rep
 import { buildPreflight } from './base-import/preflight';
 import { markRunItem, failRemainingItems } from './base-import/processor';
 import { resolveRunItems } from './base-import/run-items';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export type { StartBaseImportRunInput };
 
@@ -706,6 +708,7 @@ export const processBaseImportRun = async (
             await markRunItem(runId, item, result, { recompute: true });
           }
         } catch (error: unknown) {
+          void ErrorSystem.captureException(error);
           const delayMs = computeRetryDelayMs(attempt);
           const isRetryable = attempt < maxAttempts;
           const status: BaseImportItemStatus = isRetryable ? 'pending' : 'failed';

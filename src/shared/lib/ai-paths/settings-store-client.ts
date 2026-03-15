@@ -78,7 +78,8 @@ const readBackupSettings = (): AiPathsSettingRecord[] | null => {
     if (!parsedSettings.success) return null;
     const normalized = parsedSettings.data;
     return normalized.length > 0 ? normalized : null;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -90,7 +91,9 @@ const writeBackupSettings = (records: AiPathsSettingRecord[]): void => {
       AI_PATHS_SETTINGS_BACKUP_KEY,
       JSON.stringify({ savedAt: Date.now(), records })
     );
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Ignore storage failures in private mode/quota conditions.
   }
 };
@@ -173,6 +176,7 @@ const fetchAiPathsSettingsResponse = async (options?: {
       }
       return response;
     } catch (error) {
+      logClientError(error);
       clearTimeout(timeoutId);
       lastError = error;
       if (!shouldRetrySettingsFetch(error) || attempt >= AI_PATHS_SETTINGS_RETRY_DELAYS_MS.length) {
@@ -389,6 +393,7 @@ export const updateAiPathsSettingsBulk = async (
       }
     );
   } catch (error) {
+    logClientError(error);
     if (error instanceof ApiError) {
       throw new Error(`Failed to update AI Paths settings (${error.status})`, { cause: error });
     }
@@ -414,6 +419,7 @@ export const updateAiPathsSetting = async (
       }
     );
   } catch (error) {
+    logClientError(error);
     if (error instanceof ApiError) {
       throw new Error(`Failed to update AI Paths setting (${error.status})`, { cause: error });
     }
@@ -439,6 +445,7 @@ export const deleteAiPathsSettings = async (keys: string[]): Promise<number> => 
       body: JSON.stringify({ keys: normalizedKeys }),
     });
   } catch (error) {
+    logClientError(error);
     if (error instanceof ApiError) {
       throw new Error(`Failed to delete AI Paths settings (${error.status})`, { cause: error });
     }
@@ -454,6 +461,7 @@ export const fetchAiPathsMaintenanceReport = async (): Promise<AiPathsMaintenanc
   try {
     data = await api.get<AiPathsMaintenanceReport>('/api/ai-paths/settings/maintenance');
   } catch (error) {
+    logClientError(error);
     if (error instanceof ApiError) {
       throw new Error(`Failed to load AI Paths maintenance report (${error.status})`, {
         cause: error,
@@ -475,6 +483,7 @@ export const applyAiPathsMaintenanceActions = async (
       ...(normalizedActionIds ? { actionIds: normalizedActionIds } : {}),
     });
   } catch (error) {
+    logClientError(error);
     if (error instanceof ApiError) {
       throw new Error(`Failed to apply AI Paths maintenance (${error.status})`, {
         cause: error,

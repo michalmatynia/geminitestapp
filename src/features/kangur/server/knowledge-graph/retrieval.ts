@@ -60,6 +60,8 @@ import {
   resolveGraphQueryMode,
 } from './retrieval/retrieval.logic';
 import { GRAPH_QUERY, VECTOR_GRAPH_QUERY } from './retrieval/retrieval.queries';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export type {
   GraphFollowUpAction,
@@ -211,7 +213,8 @@ const fetchVectorKnowledgeGraphHits = async (input: {
     return ((result?.records ?? []) as Partial<KangurKnowledgeGraphHit>[]).map(
       normalizeKnowledgeGraphHit
     );
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return [];
   }
 };

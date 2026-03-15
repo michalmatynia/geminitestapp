@@ -4,6 +4,8 @@ import { useQueryClient, type QueryClient, type Query } from '@tanstack/react-qu
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type QueryDiagnosticsItem = {
   key: readonly unknown[];
@@ -44,7 +46,8 @@ const buildSnapshot = (queryClient: QueryClient): QueryDiagnosticsItem[] => {
         if (query.state.data !== undefined) {
           try {
             dataSize = JSON.stringify(query.state.data).length;
-          } catch {
+          } catch (error) {
+            logClientError(error);
             dataSize = null;
           }
         }

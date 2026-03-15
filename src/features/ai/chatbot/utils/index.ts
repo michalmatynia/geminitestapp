@@ -7,6 +7,8 @@ import {
   ChatbotTimelineEntryDto as TimelineEntry,
   ExtendedModelProfile,
 } from '@/shared/contracts/chatbot';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const parseModelSize = (normalized: string): number | null => {
   const mixMatch: RegExpMatchArray | null = normalized.match(/(\d+)\s*x\s*(\d+(?:\.\d+)?)b/);
@@ -133,7 +135,8 @@ export const pickBestModel = (
 export const safeLocalStorageGet = (key: string): string | null => {
   try {
     return window.localStorage.getItem(key);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -141,7 +144,9 @@ export const safeLocalStorageGet = (key: string): string | null => {
 export const safeLocalStorageSet = (key: string, value: string): void => {
   try {
     window.localStorage.setItem(key, value);
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // ignore storage failures
   }
 };
@@ -149,7 +154,9 @@ export const safeLocalStorageSet = (key: string, value: string): void => {
 export const safeLocalStorageRemove = (key: string): void => {
   try {
     window.localStorage.removeItem(key);
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // ignore storage failures
   }
 };
@@ -167,7 +174,8 @@ export const readCachedMessages = (sessionId: string): ChatMessage[] => {
         'content' in message &&
         typeof (message as { content: unknown }).content === 'string'
     );
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return [];
   }
 };
@@ -179,7 +187,9 @@ export const writeCachedMessages = (sessionId: string, messages: ChatMessage[]):
         message.role !== 'system' && message.content.trim().length > 0
     );
     window.localStorage.setItem(`chatbotSessionCache:${sessionId}`, JSON.stringify(safeMessages));
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // ignore cache failures
   }
 };

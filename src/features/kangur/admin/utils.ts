@@ -13,6 +13,8 @@ import { createKangurLessonDraft } from '../settings';
 import { TREE_MODE_STORAGE_KEY } from './constants';
 
 import type { LessonFormData, LessonTreeMode } from './types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const resolvePageSectionOptions = (
   page: KangurLessonPage | null
@@ -81,7 +83,8 @@ export const readPersistedTreeMode = (): LessonTreeMode => {
   try {
     const storedValue = window.localStorage.getItem(TREE_MODE_STORAGE_KEY);
     return storedValue === 'catalog' ? 'catalog' : 'ordered';
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return 'ordered';
   }
 };

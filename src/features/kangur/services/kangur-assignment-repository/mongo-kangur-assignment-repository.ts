@@ -15,6 +15,8 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
 
 import type { KangurAssignmentListInput, KangurAssignmentRepository } from './types';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const SETTINGS_COLLECTION = 'settings';
 const KANGUR_ASSIGNMENT_SETTING_PREFIX = 'kangur_assignment:';
@@ -40,7 +42,8 @@ const parseAssignmentValue = (value: string | undefined): KangurAssignment | nul
     const parsed = JSON.parse(value) as unknown;
     const result = kangurAssignmentSchema.safeParse(parsed);
     return result.success ? result.data : null;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };
@@ -60,6 +63,11 @@ export const mongoKangurAssignmentRepository: KangurAssignmentRepository = {
     const now = new Date().toISOString();
     const learnerKey = input.learnerKey.trim().toLowerCase();
     const assignmentId = randomUUID();
+    const timeLimitMinutes = input.timeLimitMinutes ?? null;
+    const hasTimeLimit =
+      typeof timeLimitMinutes === 'number' &&
+      Number.isFinite(timeLimitMinutes) &&
+      timeLimitMinutes > 0;
     const persistedAssignment: KangurAssignment = {
       id: assignmentId,
       learnerKey,
@@ -67,7 +75,8 @@ export const mongoKangurAssignmentRepository: KangurAssignmentRepository = {
       description: input.description,
       priority: input.priority,
       archived: input.archived ?? false,
-      timeLimitMinutes: input.timeLimitMinutes ?? null,
+      timeLimitMinutes,
+      timeLimitStartsAt: hasTimeLimit ? now : null,
       target: input.target,
       assignedByName: input.assignedByName ?? null,
       assignedByEmail: input.assignedByEmail ?? null,
@@ -136,6 +145,7 @@ export const mongoKangurAssignmentRepository: KangurAssignmentRepository = {
     input: KangurAssignmentUpdateInput
   ): Promise<KangurAssignment> {
     const db = await getMongoDb();
+    const now = new Date().toISOString();
     const settingKey = toSettingKey(learnerKey, assignmentId);
     const current = await db
       .collection<MongoAssignmentSettingDocument>(SETTINGS_COLLECTION)
@@ -148,14 +158,25 @@ export const mongoKangurAssignmentRepository: KangurAssignmentRepository = {
       throw notFoundError('Assignment not found.');
     }
 
+    const timeLimitPatch: Partial<KangurAssignment> = {};
+    if (input.timeLimitMinutes !== undefined) {
+      if (input.timeLimitMinutes === null) {
+        timeLimitPatch.timeLimitMinutes = null;
+        timeLimitPatch.timeLimitStartsAt = null;
+      } else {
+        const hasChanged = parsed.timeLimitMinutes !== input.timeLimitMinutes;
+        timeLimitPatch.timeLimitMinutes = input.timeLimitMinutes;
+        timeLimitPatch.timeLimitStartsAt =
+          hasChanged || !parsed.timeLimitStartsAt ? now : parsed.timeLimitStartsAt;
+      }
+    }
+
     const nextAssignment: KangurAssignment = {
       ...parsed,
       ...(input.archived !== undefined ? { archived: input.archived } : {}),
       ...(input.priority ? { priority: input.priority } : {}),
-      ...(input.timeLimitMinutes !== undefined
-        ? { timeLimitMinutes: input.timeLimitMinutes }
-        : {}),
-      updatedAt: new Date().toISOString(),
+      ...timeLimitPatch,
+      updatedAt: now,
     };
 
     await executeMongoWriteWithRetry(async () => {

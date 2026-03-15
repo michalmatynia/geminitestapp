@@ -24,6 +24,7 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
     const mod = await import('@/shared/lib/observability/system-logger');
     await mod.logSystemEvent(params);
   } catch (error) {
+    logClientError(error);
     logger.error('Failed to log system event via observability feature', error, {
       service: 'shared.retry',
     });
@@ -119,6 +120,8 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, operation: strin
 }
 
 import { delay } from './time-utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 /**
  * Executes an async operation with automatic retries on failure.
@@ -166,6 +169,7 @@ export async function withRetry<T>(
 
       return result;
     } catch (error) {
+      logClientError(error);
       lastError = error;
 
       // Check if we should retry
@@ -221,6 +225,7 @@ export async function withRetryAll<T>(
         const result = await withRetry(op, options);
         return { success: true as const, result };
       } catch (error) {
+        logClientError(error);
         return { success: false as const, error };
       }
     })
@@ -302,6 +307,7 @@ export async function withCircuitBreaker<T>(
     state.failures = 0;
     return result;
   } catch (error) {
+    logClientError(error);
     // Record failure
     state.failures++;
     state.lastFailure = Date.now();

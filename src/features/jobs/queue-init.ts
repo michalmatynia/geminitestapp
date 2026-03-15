@@ -5,6 +5,8 @@ import { Redis } from 'ioredis';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { isRedisAvailable } from '@/shared/lib/queue/redis-connection';
 import { startAllWorkers } from '@/shared/lib/queue/registry';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 let initialized = false;
 const REDIS_PING_TIMEOUT_MS = 1500;
@@ -28,6 +30,7 @@ const runStartupBackupSchedulerCatchup = (): void => {
         await import('@/shared/lib/db/services/database-backup-scheduler');
       await tickDatabaseBackupScheduler();
     } catch (error) {
+      void ErrorSystem.captureException(error);
       void logSystemEvent({
         level: 'warn',
         source: LOG_SOURCE,
@@ -56,7 +59,8 @@ const isRedisReachable = async (): Promise<boolean> => {
     await probe.connect();
     const response = await probe.ping();
     return response === 'PONG';
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return false;
   } finally {
     probe.disconnect();

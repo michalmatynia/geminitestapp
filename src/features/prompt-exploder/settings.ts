@@ -6,6 +6,8 @@ import {
   type PromptExploderSettings,
 } from '@/shared/contracts/prompt-exploder';
 import { VALIDATOR_PATTERN_LISTS_KEY } from '@/shared/contracts/validator';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export { PROMPT_EXPLODER_SETTINGS_KEY, VALIDATOR_PATTERN_LISTS_KEY };
 
@@ -126,7 +128,8 @@ const parsePersistedPayload = (raw: unknown): PersistedPayloadParseResult => {
     }
     try {
       return { hasPayload: true, payload: JSON.parse(trimmed), error: null };
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return { hasPayload: true, payload: null, error: invalidSettingsJsonError() };
     }
   }

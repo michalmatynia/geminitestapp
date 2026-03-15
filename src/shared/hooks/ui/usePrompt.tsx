@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 
 import { PromptModal } from '@/shared/ui/templates/modals/PromptModal';
 
-export interface PromptConfig {
+export interface PromptModalConfig {
   title: string;
   message?: string;
   label?: string;
@@ -18,7 +18,7 @@ export interface PromptConfig {
 }
 
 export interface UsePromptReturn {
-  prompt: (newConfig: PromptConfig) => Promise<string | null>;
+  prompt: (newConfig: PromptModalConfig) => Promise<string | null>;
   PromptInputModal: () => React.JSX.Element | null;
   isPending: boolean;
 }
@@ -29,11 +29,11 @@ export interface UsePromptReturn {
  */
 export function usePrompt(): UsePromptReturn {
   const [config, setPromptConfig] = useState<
-    (PromptConfig & { resolve: (value: string | null) => void }) | null
+    (PromptModalConfig & { resolve: (value: string | null) => void }) | null
       >(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const prompt = useCallback((newConfig: PromptConfig) => {
+  const prompt = useCallback((newConfig: PromptModalConfig) => {
     return new Promise<string | null>((resolve) => {
       setPromptConfig({
         ...newConfig,

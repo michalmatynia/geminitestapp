@@ -5,6 +5,8 @@ import React, { useCallback } from 'react';
 
 import { Button, Textarea } from '@/shared/ui';
 import { cn, sanitizeSvg } from '@/shared/utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 // ── Snippet helpers (60×60 viewBox — suitable for panels and inline blocks) ──
 
@@ -129,7 +131,9 @@ export function SvgCodeEditor({
     try {
       const text = await navigator.clipboard.readText();
       handleChange(text.trim());
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // clipboard unavailable — silent fallback; user can paste manually
     }
   }, [handleChange]);

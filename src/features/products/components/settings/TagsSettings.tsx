@@ -104,6 +104,7 @@ export function TagsSettings(): React.JSX.Element {
       setShowModal(false);
       onRefresh();
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'TagsSettings', action: 'saveTag', tagId: editingTag?.id },
       });
@@ -123,6 +124,7 @@ export function TagsSettings(): React.JSX.Element {
       toast('Tag deleted.', { variant: 'success' });
       onRefresh();
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'TagsSettings', action: 'deleteTag', tagId: tagToDelete.id },
       });

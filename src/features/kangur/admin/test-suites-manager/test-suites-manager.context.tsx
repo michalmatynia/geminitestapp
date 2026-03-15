@@ -5,13 +5,16 @@ import { createInitialTestSuiteFormData } from '../../test-suites';
 import type { KangurQuestionsManagerInitialView } from '../question-manager-view';
 import type { TreeMode } from './test-suites-manager.contracts';
 import { TREE_MODE_STORAGE_KEY } from './test-suites-manager.contracts';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const readPersistedTreeMode = (): TreeMode => {
   if (typeof window === 'undefined') return 'ordered';
   try {
     const v = window.localStorage.getItem(TREE_MODE_STORAGE_KEY);
     return v === 'catalog' ? 'catalog' : 'ordered';
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return 'ordered';
   }
 };
@@ -78,7 +81,9 @@ export function TestSuitesManagerProvider({ children }: { children: React.ReactN
     if (typeof window === 'undefined') return;
     try {
       window.localStorage.setItem(TREE_MODE_STORAGE_KEY, treeMode);
-    } catch { /* ignore */ }
+    } catch (error) {
+      logClientError(error);
+     /* ignore */ }
   }, [treeMode]);
 
   const value = useMemo(() => ({

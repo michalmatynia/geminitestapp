@@ -1,8 +1,4 @@
-export type ApprovalRequest = {
-  runId: string;
-  toolName: string;
-  reason: string;
-};
+import type { ApprovalRequest } from '@/shared/contracts/agent-runtime';
 
 export function requiresApproval(_request: ApprovalRequest): boolean {
   return true;

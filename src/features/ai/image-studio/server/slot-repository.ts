@@ -20,6 +20,8 @@ import {
 } from './slot-link-repository';
 
 import type { Collection } from 'mongodb';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export type { ImageStudioSlotRecord, SlotGenerationMetadata };
 
@@ -107,7 +109,9 @@ const ensureIndexesOnce = (() => {
             { name: 'image_studio_slots_projectId_folderPath_createdAt' }
           ),
       ]);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    
       // best-effort indexing
     }
   };
@@ -182,7 +186,8 @@ const normalizePublicUploadPath = (value: string | null | undefined): string | n
     try {
       const parsed = new URL(normalized);
       normalized = parsed.pathname;
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       return null;
     }
   }
@@ -217,7 +222,9 @@ const deletePublicUploadFileBestEffort = async (
       }
       throw error;
     });
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+  
     // Best-effort cleanup should not block slot deletion.
   }
 };

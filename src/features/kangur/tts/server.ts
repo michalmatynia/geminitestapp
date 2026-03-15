@@ -35,6 +35,8 @@ import type {
   KangurLessonTtsStatusResponse,
   KangurLessonTtsVoice,
 } from './contracts';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const resolveLocaleInstruction = (locale: string): string => {
   const normalizedLocale = locale.trim().toLowerCase();
@@ -154,7 +156,8 @@ const doesCachedAudioExist = async (entry: KangurLessonAudioCacheEntry): Promise
   try {
     await fs.stat(resolveLocalAudioDiskPath(entry.audioUrl));
     return true;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return false;
   }
 };
@@ -209,6 +212,7 @@ const synthesizeSegmentAudio = async (input: {
       response_format: 'mp3',
     });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     throw new KangurLessonTtsGenerationError('openai_speech', error);
   }
 
@@ -216,6 +220,7 @@ const synthesizeSegmentAudio = async (input: {
   try {
     audioBuffer = Buffer.from(await response.arrayBuffer());
   } catch (error) {
+    void ErrorSystem.captureException(error);
     throw new KangurLessonTtsGenerationError('audio_buffer', error);
   }
 
@@ -226,6 +231,7 @@ const synthesizeSegmentAudio = async (input: {
       buffer: audioBuffer,
     });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     throw new KangurLessonTtsGenerationError('storage_upload', error);
   }
 };
@@ -356,12 +362,14 @@ export const probeKangurLessonNarrationBackend = async (input: {
         response_format: 'mp3',
       });
     } catch (error) {
+      void ErrorSystem.captureException(error);
       throw new KangurLessonTtsGenerationError('openai_speech', error);
     }
 
     try {
       await response.arrayBuffer();
     } catch (error) {
+      void ErrorSystem.captureException(error);
       throw new KangurLessonTtsGenerationError('audio_buffer', error);
     }
 
@@ -377,6 +385,7 @@ export const probeKangurLessonNarrationBackend = async (input: {
       errorCode: null,
     };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     return {
       ok: false,
       stage: getKangurLessonTtsFailureStage(error),
@@ -486,6 +495,7 @@ export const ensureKangurLessonNarrationAudio = async (input: {
       segments,
     };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void logSystemEvent({
       level: 'warn',
       source: 'kangur.tts.generationFailed',

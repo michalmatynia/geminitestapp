@@ -305,6 +305,7 @@ export const loadRuntimeTraceAnalytics = async (input: {
       total: result.total,
     });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning('Failed to load runtime trace analytics sample', {
       service: 'ai-paths-analytics',
       error,

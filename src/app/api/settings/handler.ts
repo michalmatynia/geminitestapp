@@ -96,6 +96,7 @@ const syncTraderaRelistSchedulerWorker = async (key: string): Promise<void> => {
       await import('@/features/integrations/server');
     startTraderaRelistSchedulerQueue();
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await ErrorSystem.logWarning('[settings] Failed to sync Tradera relist scheduler worker.', {
       service: 'api/settings',
       key,
@@ -114,6 +115,7 @@ const ensureSettingsIndexes = async (): Promise<void> => {
           .collection(SETTINGS_COLLECTION)
           .createIndex({ key: 1 }, { name: 'settings_key' });
       } catch (error) {
+        void ErrorSystem.captureException(error);
         await ErrorSystem.logWarning('[settings] Failed to ensure settings indexes.', {
           service: 'api/settings',
           error,
@@ -165,7 +167,8 @@ const maybeFilterDetachedCaseResolverPayloadByFileId = ({
       ...parsed,
       files: filteredFiles,
     });
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return value;
   }
 };
@@ -287,6 +290,7 @@ const attachProviderHeader = async (response: Response): Promise<void> => {
     const provider = await getAppDbProvider();
     response.headers.set('X-App-Db-Provider', provider);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await ErrorSystem.logWarning('[settings] Failed to resolve app DB provider.', {
       service: 'api/settings',
       error,
@@ -506,6 +510,7 @@ export async function GET_handler(
       });
       return response;
     } catch (error) {
+      void ErrorSystem.captureException(error);
       if (isSettingsTimeoutError(error)) {
         return await buildTimeoutFallbackResponse(error.message);
       }
@@ -540,6 +545,7 @@ export async function GET_handler(
     try {
       data = await withSettingsScopeTimeout(scope, 'inflight fetch', inflight);
     } catch (error) {
+      void ErrorSystem.captureException(error);
       if (isSettingsTimeoutError(error)) {
         return await buildTimeoutFallbackResponse(error.message);
       }
@@ -599,6 +605,7 @@ export async function GET_handler(
   try {
     data = await withSettingsScopeTimeout(scope, 'cache miss fetch', inflightPromise);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     if (isSettingsTimeoutError(error)) {
       return await buildTimeoutFallbackResponse(error.message);
     }

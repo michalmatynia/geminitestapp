@@ -12,6 +12,8 @@ import { validateRegexSafety } from '@/shared/utils/regex-safety';
 
 import type { PromptExploderSegmentType } from './types';
 import type { PromptExploderRuntimeValidationScope } from './validation-stack';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const NEVER_MATCH_RE = /$a/;
 
@@ -59,7 +61,8 @@ const normalizeRegexFlags = (flags: string | null | undefined): string | undefin
 const compileSafeRegex = (pattern: string, flags: string | null | undefined): RegExp | null => {
   try {
     return new RegExp(pattern, normalizeRegexFlags(flags));
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

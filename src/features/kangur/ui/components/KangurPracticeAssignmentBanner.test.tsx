@@ -101,4 +101,27 @@ describe('KangurPracticeAssignmentBanner', () => {
       '/kangur/game?quickStart=operation&operation=division&difficulty=medium'
     );
   });
+
+  it('shows countdown when time limit is active', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-06T10:30:30.000Z'));
+
+    try {
+      render(
+        <KangurPracticeAssignmentBanner
+          assignment={{
+            ...assignment,
+            timeLimitMinutes: 60,
+            timeLimitStartsAt: '2026-03-06T10:00:00.000Z',
+          }}
+          basePath='/kangur'
+          mode='active'
+        />
+      );
+
+      expect(screen.getByText('Pozostało: 29 min 30 s')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

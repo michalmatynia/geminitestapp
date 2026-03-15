@@ -24,6 +24,8 @@ import {
   CASE_RESOLVER_OCR_JOB_TIMEOUT_MS,
   sleep,
 } from './useCaseResolverState.helpers';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 
 export function useCaseResolverStateOcrActions({
@@ -224,6 +226,7 @@ export function useCaseResolverStateOcrActions({
             });
             successfulSlots += 1;
           } catch (error: unknown) {
+            logClientError(error);
             const message = error instanceof Error ? error.message : 'OCR failed';
             nextSlots.push(slot);
             failedSlots.push(`${slot.name || `Slot ${index + 1}`}: ${message}`);

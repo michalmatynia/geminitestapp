@@ -20,6 +20,8 @@ import {
 import { collectNodeInputs } from './engine-modules/engine-utils';
 import { runRuntimeValidation } from './engine-modules/engine-validation-helpers';
 import { nowMs } from './execution-helpers';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export { GraphExecutionError, GraphExecutionCancelled };
 
@@ -95,6 +97,7 @@ export async function evaluateGraphInternal(
         nodeStatuses: snapshot.nodeStatuses,
       });
     } catch (error) {
+      logClientError(error);
       options.reportAiPathsError(error, {
         action: 'onHalt',
         reason,
@@ -116,6 +119,7 @@ export async function evaluateGraphInternal(
   try {
     validateTriggerProvenanceFeasibility(provenanceContext);
   } catch (error) {
+    logClientError(error);
     throw new GraphExecutionError(
       (error as Error).message,
       state.buildRuntimeStateSnapshot(state.inputs),

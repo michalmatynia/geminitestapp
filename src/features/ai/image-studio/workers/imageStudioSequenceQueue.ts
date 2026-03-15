@@ -318,6 +318,7 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
 
             completed = true;
           } catch (error) {
+            void ErrorSystem.captureException(error);
             const message = error instanceof Error ? error.message : `Step ${step.type} failed.`;
 
             if (attempt < attempts) {
@@ -477,6 +478,7 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
         outputCount: outputSlotIds.length,
       };
     } catch (error) {
+      void ErrorSystem.captureException(error);
       const message = error instanceof Error ? error.message : 'Image Studio sequence failed.';
       const finishedAt = new Date().toISOString();
 
@@ -560,6 +562,7 @@ export const startImageStudioSequenceQueue = (): void => {
     try {
       enabled = await isImageStudioEnabled();
     } catch (error) {
+      void ErrorSystem.captureException(error);
       await ErrorSystem.captureException(error, {
         service: LOG_SOURCE,
         action: 'validateBrainGate',
@@ -607,6 +610,7 @@ export const enqueueImageStudioSequenceJob = async (
     await queue.enqueue({ runId }, { jobId: runId });
     return 'queued';
   } catch (enqueueError) {
+    void ErrorSystem.captureException(enqueueError);
     await logSystemEvent({
       level: 'warn',
       source: LOG_SOURCE,
@@ -621,6 +625,7 @@ export const enqueueImageStudioSequenceJob = async (
       await queue.processInline({ runId });
       return 'inline';
     } catch (inlineError) {
+      void ErrorSystem.captureException(inlineError);
       await ErrorSystem.captureException(inlineError, {
         service: LOG_SOURCE,
         action: 'inline-fallback-failed',

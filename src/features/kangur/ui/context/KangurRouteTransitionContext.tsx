@@ -18,6 +18,8 @@ import {
   resolveKangurRouteTransitionSkeletonVariant,
   type KangurRouteTransitionSkeletonVariant,
 } from '../routing/route-transition-skeletons';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type KangurRouteTransitionPhase =
   | 'acknowledging'
@@ -111,7 +113,8 @@ const normalizeTransitionHref = (href: string | null | undefined): string | null
     const parsed = new URL(trimmed, 'https://kangur.local');
     const normalizedPathname = parsed.pathname.replace(/\/+$/, '') || '/';
     return `${normalizedPathname}${parsed.search}${parsed.hash}`;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return trimmed.replace(/\/+$/, '') || '/';
   }
 };

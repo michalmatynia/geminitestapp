@@ -23,6 +23,8 @@ import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { useProjectsState } from '../context/ProjectsContext';
 import { studioKeys } from '../hooks/useImageStudioQueries';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type RunTimelineEvent = {
   id: string;
@@ -62,7 +64,8 @@ const formatBytes = (value: number): string => {
 const toPrettyJson = (value: unknown): string => {
   try {
     return JSON.stringify(value, null, 2);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return String(value);
   }
 };

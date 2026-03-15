@@ -79,7 +79,8 @@ export const parseLocalRuns = (raw?: string | null): AiPathLocalRunRecord[] => {
       .filter((entry: AiPathLocalRunRecord | null): entry is AiPathLocalRunRecord =>
         Boolean(entry)
       );
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return [];
   }
 };
@@ -115,6 +116,7 @@ export const appendLocalRun = async (
     }
     return normalized;
   } catch (error) {
+    logClientError(error);
     logClientError(error, { context: { source: 'ai-paths-local-runs', action: 'appendLocalRun' } });
     return null;
   }

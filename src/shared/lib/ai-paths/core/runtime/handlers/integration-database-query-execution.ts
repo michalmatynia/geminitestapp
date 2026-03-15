@@ -1,6 +1,7 @@
 import type { DbQueryConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
-import { dbApi, ApiResponse } from '@/shared/lib/ai-paths/api';
+import type { HttpResult } from '@/shared/contracts/http';
+import { dbApi } from '@/shared/lib/ai-paths/api';
 import type { AiPathsCollectionMap } from '@/shared/lib/ai-paths/core/utils/collection-mapping';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
@@ -72,7 +73,7 @@ export async function executeDatabaseQuery({
     };
   }
 
-  const queryResult: ApiResponse<DbQueryResult> = await dbApi.query<DbQueryResult>({
+  const queryResult: HttpResult<DbQueryResult> = await dbApi.query<DbQueryResult>({
     provider: queryConfig.provider,
     collection: queryConfig.collection,
     filter: query,
@@ -150,7 +151,7 @@ export async function executeDatabaseQuery({
         $in: parameterIds,
       },
     };
-    const fallbackQueryResult: ApiResponse<DbQueryResult> = await dbApi.query<DbQueryResult>({
+    const fallbackQueryResult: HttpResult<DbQueryResult> = await dbApi.query<DbQueryResult>({
       provider: queryConfig.provider,
       collection: queryConfig.collection,
       filter: fallbackQuery,

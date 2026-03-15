@@ -1,3 +1,4 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 type NodeSdkConstructor = typeof import('@opentelemetry/sdk-node').NodeSDK;
 type NodeSdkInstance = InstanceType<NodeSdkConstructor>;
 type BatchLogRecordProcessorConstructor =
@@ -185,6 +186,7 @@ const registerShutdownHooks = (globalScope: OTelGlobal, sdk: NodeSdkInstance): v
     try {
       await sdk.shutdown();
     } catch (error) {
+      logClientError(error);
       console.error(`[otel] Failed to shutdown SDK on ${signal}`, error);
     }
   };
@@ -244,6 +246,7 @@ export const initializeNodeOtel = async (): Promise<void> => {
     globalScope.__otelNodeSdk = sdk;
     registerShutdownHooks(globalScope, sdk);
   } catch (error) {
+    logClientError(error);
     globalScope.__otelNodeInitialized = false;
     console.warn('[otel] Failed to initialize OpenTelemetry SDK', error);
   }

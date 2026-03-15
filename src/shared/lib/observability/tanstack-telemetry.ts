@@ -130,7 +130,8 @@ const toStableKey = (queryKey: QueryKey | undefined): string => {
   if (!queryKey) return '[]';
   try {
     return JSON.stringify(queryKey);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return String(queryKey);
   }
 };
@@ -197,7 +198,8 @@ const sanitizeContext = (
       const parsed = JSON.parse(serialized) as unknown;
       sanitized = toRecord(parsed) ?? { value: parsed };
     }
-  } catch {
+  } catch (error) {
+    logClientError(error);
     sanitized = { error: 'Failed to serialize telemetry context.' };
   }
 
@@ -302,7 +304,8 @@ export const getTanstackFactoryMetaFromBag = (
         ? storedMeta['tags'].filter((tag): tag is string => typeof tag === 'string')
         : [],
     });
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -372,7 +375,9 @@ const flushQueue = async (): Promise<void> => {
       const blob = new Blob([body], { type: 'application/json' });
       if (navigator.sendBeacon(TELEMETRY_ENDPOINT, blob)) return;
     }
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Fallback to fetch.
   }
 
@@ -386,7 +391,9 @@ const flushQueue = async (): Promise<void> => {
       body,
       keepalive: true,
     });
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Never throw from telemetry transport.
   }
 };

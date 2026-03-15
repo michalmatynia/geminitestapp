@@ -6,6 +6,13 @@ import type { ReactNode } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
+  useKangurAuth: () => ({
+    isAuthenticated: true,
+    user: { actorType: 'learner', ownerUserId: 'parent-1' },
+  }),
+}));
+
 import LogicalAnalogiesLesson from '@/features/kangur/ui/components/LogicalAnalogiesLesson';
 import LogicalClassificationLesson from '@/features/kangur/ui/components/LogicalClassificationLesson';
 import LogicalPatternsLesson from '@/features/kangur/ui/components/LogicalPatternsLesson';

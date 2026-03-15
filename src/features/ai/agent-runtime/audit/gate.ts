@@ -2,19 +2,23 @@ import { DEBUG_CHATBOT } from '@/features/ai/agent-runtime/core/config';
 import type { PlanStep } from '@/shared/contracts/agent-runtime';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const parseJsonObject = (content: string): unknown => {
   try {
     const parsed: unknown = JSON.parse(content);
     return parsed;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     const start = content.indexOf('{');
     const end = content.lastIndexOf('}');
     if (start === -1 || end <= start) return null;
     try {
       const parsed: unknown = JSON.parse(content.slice(start, end + 1));
       return parsed;
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return null;
     }
   }
@@ -104,6 +108,7 @@ export async function evaluateApprovalGateWithLLM({
       riskLevel: parsed.riskLevel ?? null,
     };
   } catch (error) {
+    logClientError(error);
     if (runId && DEBUG_CHATBOT) {
       void ErrorSystem.logWarning('Approval gate model failed', {
         service: 'agent-engine',

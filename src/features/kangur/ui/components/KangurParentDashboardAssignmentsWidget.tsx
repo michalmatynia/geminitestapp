@@ -41,7 +41,7 @@ export function KangurParentDashboardAssignmentsWidget({
       />
       <KangurAssignmentManager
         basePath={basePath}
-        view='catalog'
+        view='catalogWithLists'
         key={activeLearnerId ?? 'no-learner'}
       />
     </div>

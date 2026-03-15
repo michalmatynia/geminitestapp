@@ -4,6 +4,7 @@ import type {
   PromptExploderSegment,
   PromptExploderSubsection,
 } from './types';
+import type { ManualBindingBuildResult } from '@/shared/contracts/prompt-exploder';
 
 export type PromptExploderManualBindingDraft = {
   type: PromptExploderBindingType;
@@ -70,19 +71,6 @@ export const resolveManualBindingSubsectionIds = (args: {
   };
 };
 
-type ManualBindingBuildError = {
-  ok: false;
-  message: string;
-  variant: 'error' | 'info';
-};
-
-type ManualBindingBuildSuccess = {
-  ok: true;
-  binding: PromptExploderBinding;
-};
-
-export type ManualBindingBuildResult = ManualBindingBuildError | ManualBindingBuildSuccess;
-
 const findSubsectionById = (
   segment: PromptExploderSegment,
   subsectionId: string
@@ -110,8 +98,8 @@ export const buildManualBindingFromDraft = (args: {
   if (!fromSegment || !toSegment) {
     return {
       ok: false,
-      message: 'Select valid source and target segments.',
-      variant: 'error',
+      error: 'Select valid source and target segments.',
+      details: { variant: 'error' },
     };
   }
 
@@ -125,15 +113,15 @@ export const buildManualBindingFromDraft = (args: {
   if (args.draft.fromSubsectionId && !fromSubsection) {
     return {
       ok: false,
-      message: 'Selected source subsection no longer exists.',
-      variant: 'error',
+      error: 'Selected source subsection no longer exists.',
+      details: { variant: 'error' },
     };
   }
   if (args.draft.toSubsectionId && !toSubsection) {
     return {
       ok: false,
-      message: 'Selected target subsection no longer exists.',
-      variant: 'error',
+      error: 'Selected target subsection no longer exists.',
+      details: { variant: 'error' },
     };
   }
 
@@ -144,8 +132,8 @@ export const buildManualBindingFromDraft = (args: {
   ) {
     return {
       ok: false,
-      message: 'Source and target cannot be the exact same endpoint for depends_on bindings.',
-      variant: 'info',
+      error: 'Source and target cannot be the exact same endpoint for depends_on bindings.',
+      details: { variant: 'info' },
     };
   }
 
@@ -156,16 +144,19 @@ export const buildManualBindingFromDraft = (args: {
 
   return {
     ok: true,
-    binding: {
-      id: args.createManualBindingId(),
-      type: args.draft.type,
-      fromSegmentId: fromSegment.id,
-      toSegmentId: toSegment.id,
-      fromSubsectionId: fromSubsection?.id ?? null,
-      toSubsectionId: toSubsection?.id ?? null,
-      sourceLabel: (args.draft.sourceLabel || '').trim() || defaultSourceLabel || 'Source',
-      targetLabel: (args.draft.targetLabel || '').trim() || defaultTargetLabel || 'Target',
-      origin: 'manual',
-    },
+    bindings: [
+      {
+        id: args.createManualBindingId(),
+        type: args.draft.type,
+        fromSegmentId: fromSegment.id,
+        toSegmentId: toSegment.id,
+        fromSubsectionId: fromSubsection?.id ?? null,
+        toSubsectionId: toSubsection?.id ?? null,
+        sourceLabel: (args.draft.sourceLabel || '').trim() || defaultSourceLabel || 'Source',
+        targetLabel: (args.draft.targetLabel || '').trim() || defaultTargetLabel || 'Target',
+        origin: 'manual',
+      },
+    ],
+    warnings: [],
   };
 };

@@ -18,6 +18,8 @@ import type {
   UpdaterSampleState,
 } from '@/shared/lib/ai-paths';
 import { STORAGE_VERSION } from '@/shared/lib/ai-paths';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type ConfirmFn = (input: {
   title: string;
@@ -207,6 +209,7 @@ export function useAiPathsSettingsCleanupActions({
           await persistPathSettings(paths, activePathId, config);
           toast('Wires cleared.', { variant: 'success' });
         } catch (error) {
+          logClientError(error);
           reportAiPathsError(error, { action: 'clearWires' }, 'Failed to clear wires:');
           toast('Failed to clear wires.', { variant: 'error' });
         }
@@ -303,6 +306,7 @@ export function useAiPathsSettingsCleanupActions({
             variant: 'success',
           });
         } catch (error) {
+          logClientError(error);
           reportAiPathsError(
             error,
             { action: 'clearConnectorData', pathId: activePathId },
@@ -404,6 +408,7 @@ export function useAiPathsSettingsCleanupActions({
             variant: 'success',
           });
         } catch (error) {
+          logClientError(error);
           reportAiPathsError(
             error,
             { action: 'clearHistory', pathId: activePathId },
@@ -505,6 +510,7 @@ export function useAiPathsSettingsCleanupActions({
         await persistPathSettings(paths, activePathId, config);
         toast('Node history cleared.', { variant: 'success' });
       } catch (error) {
+        logClientError(error);
         reportAiPathsError(
           error,
           { action: 'clearNodeHistory', pathId: activePathId, nodeId },

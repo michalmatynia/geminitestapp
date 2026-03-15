@@ -229,6 +229,7 @@ export function useChatbotSettingsState(): UseChatbotSettingsStateReturn {
       setSettingsSnapshot(resolved);
       setSettingsDirty(false);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'useChatbotSettingsState.loadChatbotSettings',
@@ -283,6 +284,7 @@ export function useChatbotSettingsState(): UseChatbotSettingsStateReturn {
       setSettingsSnapshot(currentSettings);
       toast('Chatbot settings saved.', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       const message = error instanceof Error ? error.message : 'Failed to save settings.';
       toast(message, { variant: 'error' });
     }

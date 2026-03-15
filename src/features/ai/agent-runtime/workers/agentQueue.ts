@@ -36,7 +36,8 @@ const queue = createManagedQueue<AgentJobData>({
         service: 'agent-queue',
         runId: data.runId,
       });
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       const { logger } = await import('@/shared/utils/logger');
       logger.error('[chatbot][agent][queue] Fatal queue error', error, { runId: data.runId });
     }
@@ -103,6 +104,7 @@ export function startAgentQueue(): void {
     try {
       enabled = await isAgentRuntimeEnabled();
     } catch (error) {
+      void ErrorSystem.captureException(error);
       void ErrorSystem.captureException(error, {
         service: 'agent-queue',
         action: 'validateBrainGate',

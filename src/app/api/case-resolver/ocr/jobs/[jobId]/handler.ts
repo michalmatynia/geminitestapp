@@ -16,6 +16,8 @@ import { DEFAULT_CASE_RESOLVER_OCR_PROMPT } from '@/features/case-resolver/setti
 import { retryCaseResolverOcrJobSchema } from '@/shared/contracts/case-resolver';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const CASE_RESOLVER_OCR_DEFAULT_MAX_ATTEMPTS = 3;
 
@@ -89,6 +91,7 @@ export async function POST_handler(
       correlationId: runtimeCorrelationId,
     });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const message =
       error instanceof Error ? error.message : 'Failed to dispatch OCR runtime retry job.';
     await markCaseResolverOcrJobFailed(retriedJob.id, message);

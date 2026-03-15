@@ -167,6 +167,7 @@ export const syncBaseImagesForListing = async (
       added: urls.length,
     };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await ErrorSystem.captureException(error, {
       service: 'base-image-sync',
       action: 'syncBaseImagesForListing',

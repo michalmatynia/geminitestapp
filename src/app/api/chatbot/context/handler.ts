@@ -6,6 +6,8 @@ import {
 } from '@/shared/contracts/chatbot';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, configurationError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const chunkText = (text: string, maxChars: number): string[] => {
   const chunks: string[] = [];
@@ -47,7 +49,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       throw configurationError('PDF parser not installed. Run `npm install pdf-parse`.');
     }
     pdfParse = pdfParseCandidate;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     throw configurationError('PDF parser not installed. Run `npm install pdf-parse`.');
   }
 

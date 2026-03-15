@@ -64,7 +64,8 @@ const normalizeAssetPath = (value: unknown): string | null => {
 const toJsonSafe = <T>(value: T): T => {
   try {
     return JSON.parse(JSON.stringify(value)) as T;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return value;
   }
 };
@@ -225,7 +226,8 @@ const resolveGenerationModel = (
     const parsed = parsePersistedImageStudioSettings(JSON.stringify(run.request.studioSettings));
     const snapshotModelId = parsed.projectSequencing.snapshotModelId?.trim();
     return snapshotModelId ? snapshotModelId : null;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };
@@ -559,6 +561,7 @@ const queue = createManagedQueue<ImageStudioRunJobData>({
         createdSlotCount: createdSlotIds.length,
       };
     } catch (error) {
+      void ErrorSystem.captureException(error);
       const message = error instanceof Error ? error.message : 'Image Studio run failed.';
       const finishedAt = new Date().toISOString();
 
@@ -640,6 +643,7 @@ export const startImageStudioRunQueue = (): void => {
     try {
       enabled = await isImageStudioEnabled();
     } catch (error) {
+      void ErrorSystem.captureException(error);
       await ErrorSystem.captureException(error, {
         service: LOG_SOURCE,
         action: 'validateBrainGate',
@@ -701,6 +705,7 @@ export const enqueueImageStudioRunJob = async (
     await queue.enqueue({ runId }, { jobId: runId });
     return 'queued';
   } catch (enqueueError) {
+    void ErrorSystem.captureException(enqueueError);
     await logSystemEvent({
       level: 'warn',
       source: LOG_SOURCE,

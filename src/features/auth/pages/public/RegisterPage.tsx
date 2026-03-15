@@ -77,12 +77,14 @@ function RegisterForm(): React.JSX.Element {
           callbackUrl: '/admin',
         });
       } catch (signInErr) {
+        logClientError(signInErr);
         logClientError(signInErr, { context: { source: 'RegisterPage', action: 'signIn', email } });
         const message =
           signInErr instanceof Error ? signInErr.message : 'Sign-in failed. Please try again.';
         setError(message);
       }
     } catch (err) {
+      logClientError(err);
       logClientError(err, { context: { source: 'RegisterPage', action: 'handleSubmit', email } });
       const message = err instanceof Error ? err.message : 'Failed to create account.';
       setError(message);

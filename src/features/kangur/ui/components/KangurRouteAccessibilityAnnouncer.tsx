@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const KANGUR_PAGE_ACCESSIBILITY_LABELS: Record<string, string> = {
   Game: 'Strona główna',
@@ -25,7 +27,8 @@ const focusKangurMainRegion = (): void => {
 
   try {
     mainRegion.focus({ preventScroll: true });
-  } catch {
+  } catch (error) {
+    logClientError(error);
     mainRegion.focus();
   }
 };

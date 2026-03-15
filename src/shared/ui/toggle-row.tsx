@@ -28,7 +28,10 @@ export interface ToggleRowProps {
   controlWrapper?: (control: ReactNode) => ReactNode;
 }
 
-type ToggleRowContextValue = ToggleRowProps;
+type ToggleRowContextValue = ToggleRowProps & {
+  descriptionId?: string;
+  errorId?: string;
+};
 
 const ToggleRowContext = createContext<ToggleRowContextValue | null>(null);
 
@@ -36,7 +39,18 @@ function ToggleRowControl(): React.JSX.Element {
   const context = useContext(ToggleRowContext);
   if (!context) throw new Error('ToggleRowControl must be used within ToggleRow');
 
-  const { variant = 'checkbox', checked, onCheckedChange, disabled, id, loading } = context;
+  const {
+    variant = 'checkbox',
+    checked,
+    onCheckedChange,
+    disabled,
+    id,
+    loading,
+    descriptionId,
+    errorId,
+    error,
+  } = context;
+  const describedBy = [descriptionId, errorId].filter(Boolean).join(' ') || undefined;
 
   if (variant === 'switch') {
     return (
@@ -45,6 +59,9 @@ function ToggleRowControl(): React.JSX.Element {
         checked={checked}
         onCheckedChange={onCheckedChange}
         disabled={disabled || loading}
+        aria-describedby={describedBy}
+        aria-invalid={Boolean(error) || undefined}
+        aria-errormessage={errorId}
       />
     );
   }
@@ -55,6 +72,9 @@ function ToggleRowControl(): React.JSX.Element {
       checked={checked}
       onCheckedChange={(val): void => onCheckedChange(val === true)}
       disabled={disabled || loading}
+      aria-describedby={describedBy}
+      aria-invalid={Boolean(error) || undefined}
+      aria-errormessage={errorId}
     />
   );
 }
@@ -81,6 +101,8 @@ export function ToggleRow(props: ToggleRowProps): React.JSX.Element {
     controlWrapper,
   } = props;
   const controlId = id ?? generatedId;
+  const descriptionId = description ? `${controlId}-description` : undefined;
+  const errorId = error ? `${controlId}-error` : undefined;
 
   const contextValue = useMemo(
     () => ({
@@ -101,6 +123,8 @@ export function ToggleRow(props: ToggleRowProps): React.JSX.Element {
       children,
       showBorder,
       controlWrapper,
+      descriptionId,
+      errorId,
     }),
     [
       label,
@@ -120,6 +144,8 @@ export function ToggleRow(props: ToggleRowProps): React.JSX.Element {
       children,
       showBorder,
       controlWrapper,
+      descriptionId,
+      errorId,
     ]
   );
 
@@ -156,11 +182,16 @@ export function ToggleRow(props: ToggleRowProps): React.JSX.Element {
                   'text-[11px] leading-tight text-muted-foreground',
                   descriptionClassName
                 )}
+                id={descriptionId}
               >
                 {description}
               </div>
             )}
-            {error && <p className='text-[10px] font-medium text-destructive'>{error}</p>}
+            {error && (
+              <p className='text-[10px] font-medium text-destructive' id={errorId}>
+                {error}
+              </p>
+            )}
             {children}
           </div>
         </div>

@@ -15,6 +15,8 @@ import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-re
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import type { RuntimeContextProvider } from '../runtime-provider';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export const AI_PATH_RUN_RUNTIME_PROVIDER_ID = 'ai-path-run';
 export const AI_PATH_RUN_CONTEXT_ROOT_IDS = [
@@ -66,7 +68,8 @@ const toSampleString = (value: unknown): string | null => {
   try {
     if (value === null || value === undefined) return null;
     return truncate(JSON.stringify(value), MAX_SAMPLE_LENGTH);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
 };

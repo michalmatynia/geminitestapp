@@ -10,6 +10,8 @@ import {
 } from '@/shared/contracts/case-resolver';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const CASE_RESOLVER_UPLOAD_PREFIX = '/uploads/case-resolver/';
 const CASE_RESOLVER_UPLOAD_DISK_PREFIX = path.join(
@@ -44,6 +46,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   try {
     rawPayload = (await req.json()) as unknown;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     throw badRequestError('Invalid JSON payload', { error });
   }
 

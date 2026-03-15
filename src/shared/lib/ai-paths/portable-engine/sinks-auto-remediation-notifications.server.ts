@@ -18,6 +18,8 @@ import type {
   PortablePathAuditSinkStartupHealthState,
   PortablePathEnvelopeVerificationAuditSinkStartupHealthSummary,
 } from './types';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export {
   enqueuePortablePathAuditSinkAutoRemediationDeadLetterCore,
@@ -234,6 +236,7 @@ export const notifyPortablePathAuditSinkAutoRemediationCore = async (
       );
       result.webhook.delivered = true;
     } catch (error) {
+      void ErrorSystem.captureException(error);
       result.webhook.error = deps.toErrorMessage(error);
       result.webhook.statusCode =
         toPortablePathAuditSinkAutoRemediationNotificationStatusCode(error);
@@ -249,6 +252,7 @@ export const notifyPortablePathAuditSinkAutoRemediationCore = async (
           signature: request.signature,
         });
       } catch (deadLetterError) {
+        void ErrorSystem.captureException(deadLetterError);
         result.webhook.deadLetterQueued = false;
         await writeLog({
           level: 'warn',
@@ -311,6 +315,7 @@ export const notifyPortablePathAuditSinkAutoRemediationCore = async (
       );
       result.email.delivered = true;
     } catch (error) {
+      void ErrorSystem.captureException(error);
       result.email.error = deps.toErrorMessage(error);
       result.email.statusCode = toPortablePathAuditSinkAutoRemediationNotificationStatusCode(error);
       try {
@@ -325,6 +330,7 @@ export const notifyPortablePathAuditSinkAutoRemediationCore = async (
           signature: request.signature,
         });
       } catch (deadLetterError) {
+        void ErrorSystem.captureException(deadLetterError);
         result.email.deadLetterQueued = false;
         await writeLog({
           level: 'warn',

@@ -13,6 +13,7 @@ export const getTagRepository = async (
     void providerOverride;
     return mongoTagRepository;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await ErrorSystem.captureException(error, {
       service: 'tag-repository',
       action: 'getTagRepository',

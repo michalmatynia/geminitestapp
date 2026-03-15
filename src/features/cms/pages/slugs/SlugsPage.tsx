@@ -105,6 +105,7 @@ export default function SlugsPage(): React.JSX.Element {
     try {
       await deleteSlug.mutateAsync({ id: slugToDelete.id, domainId: activeDomainId });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'slugs-page', action: 'deleteSlug', slugId: slugToDelete.id },
       });

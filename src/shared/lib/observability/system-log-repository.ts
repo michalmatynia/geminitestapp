@@ -12,6 +12,7 @@ import type {
 } from '@/shared/contracts/observability';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
+import type { MongoSystemLogDoc } from '@/shared/lib/observability/system-log-types';
 
 type CreateSystemLogInput = Omit<CreateSystemLogInputDto, 'createdAt'> & {
   createdAt?: Date;
@@ -28,29 +29,6 @@ const toMongoId = (id: string): ObjectId | string => {
 };
 
 const SYSTEM_LOGS_COLLECTION = 'system_logs';
-
-type MongoSystemLogDoc = {
-  _id?: string | ObjectId | undefined;
-  id?: string | undefined;
-  level?: string | undefined;
-  message?: string | undefined;
-  category?: string | null | undefined;
-  source?: string | null | undefined;
-  service?: string | null | undefined;
-  context?: Record<string, unknown> | null | undefined;
-  stack?: string | null | undefined;
-  path?: string | null | undefined;
-  method?: string | null | undefined;
-  statusCode?: number | null | undefined;
-  requestId?: string | null | undefined;
-  traceId?: string | null | undefined;
-  correlationId?: string | null | undefined;
-  spanId?: string | null | undefined;
-  parentSpanId?: string | null | undefined;
-  userId?: string | null | undefined;
-  createdAt?: Date | undefined;
-  updatedAt?: Date | null | undefined;
-};
 
 const insertMongoSystemLog = async (payload: SystemLogRecord): Promise<void> => {
   const mongo = await getMongoDb();

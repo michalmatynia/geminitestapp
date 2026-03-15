@@ -19,6 +19,8 @@ import {
   readEnqueuedGraphModelJobId,
 } from '../graph-model-job';
 import { buildPromptOutput, extractImageUrls, pollGraphJob, resolveJobProductId } from '../utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const handleTemplate: NodeHandler = ({
   node,
@@ -65,7 +67,9 @@ const resolveImageUrlForOutboundPolicy = (rawUrl: string): string => {
   try {
     new URL(trimmed);
     return trimmed;
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Resolve relative URLs against a known app base when possible.
   }
 
@@ -97,7 +101,8 @@ const resolveImageUrlForOutboundPolicy = (rawUrl: string): string => {
         : `https://${baseCandidate.replace(/^\/+/, '')}`;
     try {
       return new URL(trimmed, normalizedBase).toString();
-    } catch {
+    } catch (error) {
+      logClientError(error);
       continue;
     }
   }
@@ -561,6 +566,7 @@ export const handleModel: NodeHandler = async ({
       payloadHash,
     };
   } catch (error) {
+    logClientError(error);
     if (abortSignal?.aborted || (error instanceof Error && error.name === 'AbortError')) {
       throw error;
     }

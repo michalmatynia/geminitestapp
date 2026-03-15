@@ -7,6 +7,8 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 
 import type { UseQueryResult } from '@tanstack/react-query';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 interface SearchConfig<T> {
   searchFn: (query: string) => Promise<T[]>;
@@ -59,7 +61,8 @@ export function useAutocomplete<T>(
   const getRecentSearches = useCallback((): string[] => {
     try {
       return JSON.parse(localStorage.getItem(storageKey) || '[]') as string[];
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return [];
     }
   }, [storageKey]);

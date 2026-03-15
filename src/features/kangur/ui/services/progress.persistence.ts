@@ -8,6 +8,8 @@ import {
   KANGUR_PROGRESS_OWNER_STORAGE_KEY,
   KANGUR_PROGRESS_EVENT_NAME,
 } from './progress.contracts';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const DEFAULT_PROGRESS: KangurProgressState = createDefaultKangurProgressState();
 const DEFAULT_PROGRESS_RAW = JSON.stringify(DEFAULT_PROGRESS);
@@ -115,7 +117,8 @@ export function loadProgress(): KangurProgressState {
       return updateCachedProgressSnapshotFromStorageRaw(raw);
     }
     return cachedProgressSnapshot;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return updateCachedProgressSnapshot(DEFAULT_PROGRESS);
   }
 }
@@ -154,7 +157,8 @@ export function loadProgressOwnerKey(): string | null {
   try {
     const raw = localStorage.getItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY)?.trim() ?? '';
     return raw.length > 0 ? raw : null;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 }

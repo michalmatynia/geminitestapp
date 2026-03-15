@@ -4,7 +4,8 @@ import type {
   DbQueryConfig,
 } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
-import { dbApi, entityApi, ApiResponse } from '@/shared/lib/ai-paths/api';
+import type { HttpResult } from '@/shared/contracts/http';
+import { dbApi, entityApi } from '@/shared/lib/ai-paths/api';
 
 import { buildDbQueryPayload, buildFormData } from '../utils';
 import {
@@ -110,7 +111,7 @@ export async function executeDatabaseInsert({
         collection,
         document: payload,
       };
-      const customInsertResult: ApiResponse<unknown> = await dbApi.action(customInsertPayload);
+      const customInsertResult: HttpResult<unknown> = await dbApi.action(customInsertPayload);
       executed.updater.add(node.id);
       if (!customInsertResult.ok) {
         reportAiPathsError(
@@ -136,7 +137,7 @@ export async function executeDatabaseInsert({
         }
       }
     } else if (entityType === 'product') {
-      const productResult: ApiResponse<unknown> = await entityApi.createProduct(
+      const productResult: HttpResult<unknown> = await entityApi.createProduct(
         buildFormData(payload)
       );
       executed.updater.add(node.id);
@@ -157,7 +158,7 @@ export async function executeDatabaseInsert({
         }
       }
     } else if (entityType === 'note') {
-      const noteResult: ApiResponse<unknown> = await entityApi.createNote(payload);
+      const noteResult: HttpResult<unknown> = await entityApi.createNote(payload);
       executed.updater.add(node.id);
       if (!noteResult.ok) {
         reportAiPathsError(
@@ -194,7 +195,7 @@ export async function executeDatabaseInsert({
         collection,
         document: payload,
       };
-      const customInsertResult: ApiResponse<unknown> = await dbApi.action(customInsertPayload);
+      const customInsertResult: HttpResult<unknown> = await dbApi.action(customInsertPayload);
       executed.updater.add(node.id);
       if (!customInsertResult.ok) {
         reportAiPathsError(

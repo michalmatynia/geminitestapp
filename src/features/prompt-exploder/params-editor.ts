@@ -11,6 +11,8 @@ import {
   flattenParams,
   inferParamSpecs,
 } from '@/shared/utils/prompt-params';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type {
   PromptExploderParamUiControl,
@@ -501,7 +503,8 @@ export function sanitizeParamJsonValue(raw: string, fallback: unknown): unknown 
   if (!raw.trim()) return fallback;
   try {
     return JSON.parse(raw) as unknown;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return fallback;
   }
 }

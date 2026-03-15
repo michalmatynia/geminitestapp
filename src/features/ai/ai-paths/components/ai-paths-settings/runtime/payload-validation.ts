@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 import { aiNodeSchema, edgeSchema } from '@/shared/contracts/ai-paths';
 import type { AiNode, Edge } from '@/shared/lib/ai-paths';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type RunNodePayloadIssue = {
   nodeId: string;
@@ -240,6 +242,7 @@ export const collectInvalidRunEnqueueSerializationIssues = (
   try {
     serialized = JSON.stringify(payload);
   } catch (error) {
+    logClientError(error);
     return [
       {
         path: '(root)',
@@ -256,7 +259,8 @@ export const collectInvalidRunEnqueueSerializationIssues = (
   let reparsed: unknown;
   try {
     reparsed = JSON.parse(serialized);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return [{ path: '(root)', message: 'Serialized enqueue payload is invalid JSON.' }];
   }
 

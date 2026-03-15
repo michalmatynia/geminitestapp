@@ -11,6 +11,8 @@ import {
   aiTriggerButtonReorderPayloadSchema as aiTriggerButtonReorderSchema,
 } from '@/shared/contracts/ai-trigger-buttons';
 import { validationError } from '@/shared/errors/app-error';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export {
   aiTriggerButtonLocationSchema,
@@ -111,6 +113,7 @@ export const parseAiTriggerButtonsRawWithReport = (
   try {
     parsed = JSON.parse(raw) as unknown;
   } catch (error) {
+    logClientError(error);
     throw validationError('Invalid AI trigger button settings payload.', {
       source: 'ai_paths.trigger_buttons',
       reason: 'invalid_json',

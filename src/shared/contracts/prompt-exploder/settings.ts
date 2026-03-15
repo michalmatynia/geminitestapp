@@ -9,7 +9,12 @@ import {
 } from '../validator';
 import { promptExploderSegmentTypeSchema, type PromptExploderSegmentType } from './base';
 
-import type { PromptExploderRuntimeValidationScope as PromptExploderRuntimeValidationScopeCore } from '../prompt-exploder-core';
+import {
+  promptExploderRuntimeValidationScopeSchema,
+  promptExploderValidationRuleStackSchema,
+  type PromptExploderRuntimeValidationScope,
+  type PromptExploderValidationRuleStack,
+} from '../prompt-exploder-core';
 
 export const PROMPT_EXPLODER_SETTINGS_KEY = 'prompt_exploder_settings';
 export const VALIDATOR_PATTERN_LISTS_KEY = 'validator_pattern_lists';
@@ -144,14 +149,8 @@ export const promptExploderSettingsSchema = z.object({
 
 export type PromptExploderSettings = z.infer<typeof promptExploderSettingsSchema>;
 
-export const promptExploderRuntimeValidationScopeSchema = z.enum([
-  'prompt_exploder',
-  'case_resolver_prompt_exploder',
-]);
-export type PromptExploderRuntimeValidationScope = PromptExploderRuntimeValidationScopeCore;
-
-export const promptExploderValidationRuleStackSchema = z.string().trim().min(1);
-export type PromptExploderValidationRuleStack = string;
+export { promptExploderRuntimeValidationScopeSchema, promptExploderValidationRuleStackSchema };
+export type { PromptExploderRuntimeValidationScope, PromptExploderValidationRuleStack };
 
 export type PromptExploderValidationRuleStackOption = {
   id: string;

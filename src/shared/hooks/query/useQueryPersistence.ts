@@ -54,6 +54,7 @@ export function useQueryPersistence(config: PersistenceConfig): { clearPersisted
         storage.setItem(key, serialized);
         mutedQuotaKeys.delete(key);
       } catch (error) {
+        logClientError(error);
         if (isQuotaExceededError(error)) {
           storage.removeItem(key);
           if (mutedQuotaKeys.has(key)) return;
@@ -90,6 +91,7 @@ export function useQueryPersistence(config: PersistenceConfig): { clearPersisted
 
         return parsed.data;
       } catch (error) {
+        logClientError(error);
         logClientError(error instanceof Error ? error : new Error(String(error)), {
           context: { source: 'useQueryPersistence', action: 'loadQueryFromStorage', level: 'warn' },
         });
@@ -168,6 +170,7 @@ export function useFormPersistence<T>(
         };
         storage.setItem(key, JSON.stringify(item));
       } catch (error) {
+        logClientError(error);
         logClientError(error instanceof Error ? error : new Error(String(error)), {
           context: { source: 'useFormPersistence', action: 'saveFormState', level: 'warn' },
         });
@@ -192,6 +195,7 @@ export function useFormPersistence<T>(
 
       return { ...defaultValues, ...parsed.data };
     } catch (error) {
+      logClientError(error);
       logClientError(error instanceof Error ? error : new Error(String(error)), {
         context: { source: 'useFormPersistence', action: 'loadFormState', level: 'warn' },
       });

@@ -12,6 +12,8 @@ import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import type { BrowserContextOptions } from 'playwright';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export type PersistedStorageState = NonNullable<
   Exclude<BrowserContextOptions['storageState'], string>
@@ -71,7 +73,8 @@ export const parsePersistedStorageState = (
     const raw = decryptSecret(encryptedValue);
     const parsed = playwrightStorageStateSchema.safeParse(JSON.parse(raw));
     if (parsed.success) return normalizeStorageState(parsed.data);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return null;
   }
   return null;

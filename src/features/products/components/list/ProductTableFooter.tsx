@@ -56,6 +56,7 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
       setRefreshTrigger((prev: number) => prev + 1); // Refresh the product list
       setShowDeleteConfirm(false);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'ProductTableFooter', action: 'handleMassDelete' },
       });
@@ -86,6 +87,7 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
       setRefreshTrigger((prev: number) => prev + 1);
       setShowBase64Confirm(false);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'ProductTableFooter', action: 'handleMassBase64' },
       });

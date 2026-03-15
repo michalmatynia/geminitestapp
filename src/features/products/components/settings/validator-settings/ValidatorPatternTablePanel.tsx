@@ -9,6 +9,8 @@ import { buildFullValidatorDocumentationClipboardText } from './validator-docume
 import { ValidatorPatternImportModal } from './ValidatorPatternImportModal';
 import { ValidatorPatternTree } from './ValidatorPatternTree';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 /**
  * Validator docs: see docs/validator/function-reference.md#ui.validatorpatterntablepanel
@@ -53,7 +55,8 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
       toast('Full validator documentation copied (including JSON snippets).', {
         variant: 'success',
       });
-    } catch {
+    } catch (error) {
+      logClientError(error);
       toast('Failed to copy full validator documentation.', { variant: 'error' });
     }
   };

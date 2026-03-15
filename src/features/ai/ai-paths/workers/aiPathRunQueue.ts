@@ -112,6 +112,7 @@ export const startAiPathRunQueue = (): void => {
     try {
       enabled = await getAiPathsEnabledCached();
     } catch (error) {
+      void ErrorSystem.captureException(error);
       void ErrorSystem.captureException(error, {
         service: LOG_SOURCE,
         action: 'validateBrainGate',
@@ -137,7 +138,9 @@ export const startAiPathRunQueue = (): void => {
         try {
           const { getMongoClient } = await import('@/shared/lib/db/mongo-client');
           await getMongoClient();
-        } catch {
+        } catch (error) {
+          void ErrorSystem.captureException(error);
+        
           // Advisory only
         }
       })();
@@ -272,6 +275,7 @@ export const scheduleLocalFallbackRun = (runId: string, delayMs: number): void =
         if (!run) return;
         await processRun(run);
       } catch (error) {
+        void ErrorSystem.captureException(error);
         void ErrorSystem.captureException(error, {
           service: LOG_SOURCE,
           action: 'localFallbackExecution',
@@ -326,6 +330,7 @@ export const removePathRunQueueEntries = async (
         await job.remove();
         removed += 1;
       } catch (error) {
+        void ErrorSystem.captureException(error);
         void ErrorSystem.logWarning(`Non-critical queue removal failure for run ${runId}`, {
           service: LOG_SOURCE,
           action: 'removePathRunQueueEntries',

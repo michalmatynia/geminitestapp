@@ -12,6 +12,8 @@ import {
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export const querySchema = z.object({
   fileId: optionalTrimmedQueryString(),
@@ -35,7 +37,9 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   let localPath: string | null = null;
   try {
     localPath = getDiskPathFromPublicPath(imageFile.filepath);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+  
     // Ignore error
   }
 
@@ -52,6 +56,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
         },
       });
     } catch (error) {
+      void ErrorSystem.captureException(error);
       if (error instanceof Error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
         throw error;
       }

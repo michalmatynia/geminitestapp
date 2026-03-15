@@ -36,6 +36,8 @@ import {
 } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export const requestSchema = baseImportInventoriesPayloadSchema.or(
   baseImportWarehousesPayloadSchema
@@ -113,7 +115,8 @@ export async function postBaseImportsHandler(
     if (data.includeAllWarehouses) {
       try {
         allWarehouses = await fetchBaseAllWarehouses(token);
-      } catch {
+      } catch (error) {
+        void ErrorSystem.captureException(error);
         allWarehouses = [];
       }
     }
@@ -128,7 +131,8 @@ export async function postBaseImportsHandler(
     if (data.includeAllWarehouses) {
       try {
         allResult = await fetchBaseAllWarehousesDebug(token);
-      } catch {
+      } catch (error) {
+        void ErrorSystem.captureException(error);
         allResult = null;
       }
     }

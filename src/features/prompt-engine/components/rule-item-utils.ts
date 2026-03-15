@@ -10,6 +10,8 @@ import {
   type PromptValidationSeverity,
   type PromptValidationLaunchOperator,
 } from '@/shared/lib/prompt-engine/settings';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const formatSeverityLabel = (severity: PromptValidationSeverity): string => {
   if (severity === 'error') return 'Error';
@@ -31,6 +33,7 @@ export const compileRegex = (
     void new RegExp(pattern, flags);
     return { ok: true };
   } catch (error) {
+    logClientError(error);
     return { ok: false, error: error instanceof Error ? error.message : 'Invalid regex' };
   }
 };

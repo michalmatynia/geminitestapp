@@ -21,6 +21,8 @@ import {
 } from '@/shared/lib/products/utils/validator-instance-behavior';
 import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { validateRegexSafety } from '@/shared/utils/regex-safety';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const assertValidRegex = (regexSource: string, flags: string | null | undefined): void => {
   const safety = validateRegexSafety(regexSource, flags);
@@ -37,6 +39,7 @@ const assertValidRegex = (regexSource: string, flags: string | null | undefined)
     // Compile once on write to avoid persisting invalid rules.
     void new RegExp(regexSource, normalizedFlags);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     throw badRequestError('Invalid regex or flags', {
       regex: regexSource,
       flags: flags ?? null,

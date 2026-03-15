@@ -26,6 +26,8 @@ import {
   resolveUploadBaseFolder,
   type CaseResolverUploadedFile,
 } from './useCaseResolverState.helpers';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 
 export interface UseCaseResolverStateUploadActionsValue {
@@ -149,6 +151,7 @@ export function useCaseResolverStateUploadActions({
           });
           createdFolders.add(normalizeFolderPath(uploaded.folder || normalizedFolder));
         } catch (error: unknown) {
+          logClientError(error);
           failedFiles.push(
             `${sourceFile.name || 'file'}: ${
               error instanceof Error ? error.message : 'Upload failed'
@@ -262,6 +265,7 @@ export function useCaseResolverStateUploadActions({
             })
           );
         } catch (error: unknown) {
+          logClientError(error);
           failedFiles.push(
             `${sourceFile.name || 'file'}: ${error instanceof Error ? error.message : 'Upload failed'}`
           );

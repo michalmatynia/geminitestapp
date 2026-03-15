@@ -7,11 +7,14 @@ import type {
   PromptValidationSeverity,
 } from '@/shared/contracts/prompt-engine';
 import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 function compileRegex(pattern: string, flags: string | undefined): RegExp | null {
   try {
     return new RegExp(pattern, flags);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 }

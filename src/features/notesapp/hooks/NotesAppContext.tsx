@@ -215,6 +215,7 @@ export function NotesAppProvider({ children }: { children: React.ReactNode }): R
           await applyUndoAction(action);
         }
       } catch (error: unknown) {
+        logClientError(error);
         logClientError(error, {
           context: {
             source: 'NotesAppProvider',

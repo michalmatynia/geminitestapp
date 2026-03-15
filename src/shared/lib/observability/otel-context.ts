@@ -1,4 +1,6 @@
 import { context, trace } from '@opentelemetry/api';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type OtelContextAttributes = {
   otelTraceId?: string | undefined;
@@ -23,7 +25,8 @@ export const getActiveOtelContextAttributes = (): OtelContextAttributes => {
         ? { otelTraceFlags: toTraceFlagsHex(spanContext.traceFlags) }
         : {}),
     };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return {};
   }
 };

@@ -292,6 +292,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
       await settingsQuery.refetch();
       brainModelOptions.refresh();
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to reset Prompt Exploder settings.', {
         variant: 'error',
       });
@@ -351,6 +352,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
       setDraft(toSettingsDraft(nextSettings));
       toast('Prompt Exploder settings saved.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save Prompt Exploder settings.', {
         variant: 'error',
       });

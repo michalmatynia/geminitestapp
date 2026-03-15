@@ -1,41 +1,25 @@
 'use client';
 
-import { ArrowDown, ArrowUp, Copy, Plus, Trash2 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
 import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
-import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Badge, Button, FormModal, Input, useToast } from '@/shared/ui';
+import { Button, FormModal } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
-  applyPublishedQuestionEditPolicy,
   KANGUR_TEST_QUESTIONS_SETTING_KEY,
-  createKangurTestQuestion,
-  createKangurTestQuestionId,
-  deleteKangurTestQuestion,
-  formDataToQuestion,
   getQuestionsForSuite,
   hasIllustration,
   hasRichChoiceContent,
   parseKangurTestQuestionStore,
-  publishReadyQuestions,
-  reorderQuestions,
-  toQuestionFormData,
-  upsertKangurTestQuestion,
   usesRichQuestionPresentation,
   type QuestionFormData,
 } from '../test-questions';
 import {
-  canonicalizeKangurTestSuites,
   KANGUR_TEST_SUITES_SETTING_KEY,
-  demoteKangurTestSuitesToDraft,
-  demoteInvalidLiveKangurTestSuites,
   parseKangurTestSuites,
-  promoteKangurTestSuitesLive,
 } from '../test-suites';
 import { KangurQuestionListItem } from './components/KangurQuestionListItem';
 import { KangurQuestionsFilterTriage } from './components/KangurQuestionsFilterTriage';
@@ -43,10 +27,7 @@ import { KangurQuestionsHeader } from './components/KangurQuestionsHeader';
 import { useKangurQuestionsManagerRuntimeContext } from './context/KangurQuestionsManagerRuntimeContext';
 import { KangurTestQuestionEditor } from './KangurTestQuestionEditor';
 import { useKangurQuestionsMutations } from './hooks/useKangurQuestionsMutations';
-import {
-  getQuestionAuthoringSummary,
-  getQuestionWorkflowLabel,
-} from './question-authoring-insights';
+import { getQuestionAuthoringSummary } from './question-authoring-insights';
 import {
   clearQuestionEditorDraft,
   QUESTION_EDITOR_NEW_DRAFT_SLOT,
@@ -54,7 +35,6 @@ import {
   writeQuestionEditorDraft,
 } from './question-editor-drafts';
 import { getKangurTestSuiteHealth } from './test-suite-health';
-import { moveItem } from './utils';
 
 import type { QuestionListFilter, QuestionListSort } from './question-manager-view';
 
@@ -95,7 +75,8 @@ const formatDraftTimestamp = (value: string | null): string | null => {
       dateStyle: 'medium',
       timeStyle: 'short',
     }).format(new Date(value));
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return value;
   }
 };
@@ -112,8 +93,6 @@ const buildQuestionEditorSnapshot = (
 export function KangurQuestionsManagerPanel(): React.JSX.Element {
   const { suite, onClose, initialView } = useKangurQuestionsManagerRuntimeContext();
   const settingsStore = useSettingsStore();
-  const updateSetting = useUpdateSetting();
-  const { toast } = useToast();
 
   const rawQuestions = settingsStore.get(KANGUR_TEST_QUESTIONS_SETTING_KEY);
   const rawSuites = settingsStore.get(KANGUR_TEST_SUITES_SETTING_KEY);
@@ -177,7 +156,9 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
     localDraftSavedAt,
     restorableDraftSavedAt,
     setRestorableDraftSavedAt,
+    setLocalDraftSavedAt,
     openCreate,
+    openEditor,
     openEdit,
     handlePublishReadyForCurrentSuite,
     handlePublishAndGoLiveCurrentSuite,
@@ -197,7 +178,6 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
     suites,
     questionStore,
     questions,
-    currentSuiteHealth,
     currentPublishableQuestionIds
   );
 

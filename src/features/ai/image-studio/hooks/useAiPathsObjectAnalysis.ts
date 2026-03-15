@@ -24,6 +24,8 @@ import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 
 import { useUiActions, useUiCanvasState } from '../context/UiContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 // ---------------------------------------------------------------------------
 // Types
@@ -393,7 +395,8 @@ export function useAiPathsObjectAnalysis(
             runData = await api.get<GetRunResponse>(
               `/api/ai-paths/runs/${encodeURIComponent(runId)}`
             );
-          } catch {
+          } catch (error) {
+            logClientError(error);
             if (abort.signal.aborted) return;
             // Transient fetch error — keep polling
             pollTimerRef.current = setTimeout(() => void poll(), POLL_INTERVAL_MS);
@@ -449,6 +452,7 @@ export function useAiPathsObjectAnalysis(
 
         pollTimerRef.current = setTimeout(() => void poll(), POLL_INTERVAL_MS);
       } catch (err) {
+        logClientError(err);
         if (abort.signal.aborted) return;
         const msg = err instanceof Error ? err.message : 'Failed to run AI path analysis.';
         setStatus('error');

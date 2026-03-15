@@ -18,6 +18,8 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const kangurPlatform = getKangurPlatform();
 
@@ -38,7 +40,8 @@ export function PageNotFound(): React.JSX.Element {
         return (
           readKangurUrlParam(parsed.searchParams, KANGUR_EMBED_QUERY_PARAM, basePath) || 'unknown'
         );
-      } catch {
+      } catch (error) {
+        logClientError(error);
         return requestedPath?.replace(/^\/+/, '') || 'unknown';
       }
     }
@@ -59,7 +62,8 @@ export function PageNotFound(): React.JSX.Element {
       try {
         const user = await kangurPlatform.auth.me();
         return { user, isAuthenticated: true };
-      } catch {
+      } catch (error) {
+        logClientError(error);
         return { user: null, isAuthenticated: false };
       }
     },

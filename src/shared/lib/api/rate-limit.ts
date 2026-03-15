@@ -5,6 +5,8 @@ import { getRedisClient } from '@/shared/lib/redis';
 import { logger } from '@/shared/utils/logger';
 
 import type { NextRequest } from 'next/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type RateLimitConfig = {
   windowMs: number;
@@ -84,6 +86,7 @@ class RateLimiter {
           totalHits: this.config.maxRequests - (remaining ?? 0),
         };
       } catch (error) {
+        void ErrorSystem.captureException(error);
         logger.warn('[rate-limit] Redis failure, falling back to memory', { error });
       }
     }

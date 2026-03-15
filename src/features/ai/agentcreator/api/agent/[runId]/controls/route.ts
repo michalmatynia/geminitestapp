@@ -8,6 +8,8 @@ import {
 } from '@/shared/lib/api/api-handler';
 import { getChatbotAgentRunDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
@@ -27,7 +29,8 @@ async function POST_handler(
   };
   try {
     body = (await req.json()) as typeof body;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     throw badRequestError('Invalid JSON payload');
   }
   const action = body.action as 'goto' | 'reload' | 'snapshot' | undefined;

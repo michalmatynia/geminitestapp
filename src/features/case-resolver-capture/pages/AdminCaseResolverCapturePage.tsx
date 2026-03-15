@@ -27,6 +27,8 @@ import {
   type CaseResolverCaptureRoleMapping,
   type CaseResolverCaptureSettings,
 } from '../settings';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const BOOLEAN_OPTIONS = [
   { value: 'true', label: 'Enabled' },
@@ -98,6 +100,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
       setLoadedFrom(hydrationSignature);
       toast('Case Resolver Capture settings saved.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(
         error instanceof Error ? error.message : 'Failed to save Case Resolver Capture settings.',
         { variant: 'error' }

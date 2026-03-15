@@ -1,4 +1,6 @@
 import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kangur';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const LESSON_CONTENT_EDITOR_DRAFT_STORAGE_PREFIX = 'kangur-lesson-editor-draft:v1:';
 
@@ -30,7 +32,8 @@ export const readLessonContentEditorDraft = (
       return null;
     }
     return parsed;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -57,7 +60,8 @@ export const writeLessonContentEditorDraft = ({
       } satisfies LessonContentEditorLocalDraft)
     );
     return savedAt;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };
@@ -67,7 +71,9 @@ export const clearLessonContentEditorDraft = (lessonId: string): void => {
 
   try {
     window.localStorage.removeItem(getLessonContentEditorDraftStorageKey(lessonId));
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Ignore storage failures.
   }
 };

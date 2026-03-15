@@ -4,6 +4,8 @@ import {
   type AiPathRunNodeRecord,
 } from '@/shared/lib/ai-paths';
 import { isObjectRecord } from '@/shared/utils/object-utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type RuntimeEventLevel = 'debug' | 'info' | 'warn' | 'error';
 export const SERVER_EXECUTION_ENQUEUE_TIMEOUT_MS = 90_000;
@@ -22,7 +24,8 @@ export const asNumber = (value: unknown): number | null => {
 export const parseSsePayload = (event: MessageEvent): unknown => {
   try {
     return JSON.parse(event.data as string) as unknown;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return null;
   }
 };

@@ -38,6 +38,8 @@ import { serializeSetting } from '@/shared/utils/settings-json';
 import { useProjectsActions, useProjectsState } from '../context/ProjectsContext';
 
 import type { ColumnDef } from '@tanstack/react-table';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 interface StudioProjectsListProps {
   onOpenProject?: (projectId: string) => void;
@@ -173,7 +175,8 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
             key: projectSettingsKey,
             value: serializeSetting(defaultImageStudioSettings),
           });
-        } catch {
+        } catch (error) {
+          logClientError(error);
           toast('Project created, but failed to initialize default settings.', {
             variant: 'warning',
           });
@@ -182,7 +185,8 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
       try {
         const nextLocks = setImageStudioProjectDeletionLock(projectLocks, createdProjectId, true);
         await persistProjectLocks(nextLocks);
-      } catch {
+      } catch (error) {
+        logClientError(error);
         toast('Project created, but failed to persist lock state.', {
           variant: 'warning',
         });
@@ -198,6 +202,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
         }
       );
     } catch (error: unknown) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to create project', {
         variant: 'error',
       });
@@ -235,6 +240,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
       await persistCanvasTemplates(nextTemplates);
       toast(`Saved canvas template "${label}".`, { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save canvas template.', {
         variant: 'error',
       });
@@ -257,6 +263,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
         await persistCanvasTemplates(nextTemplates);
         toast(`Deleted canvas template "${template.label}".`, { variant: 'success' });
       } catch (error: unknown) {
+        logClientError(error);
         toast(error instanceof Error ? error.message : 'Failed to delete canvas template.', {
           variant: 'error',
         });
@@ -291,14 +298,17 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
         ) {
           try {
             await persistProjectLocks(nextLocks);
-          } catch {
+          } catch (error) {
+            logClientError(error);
             toast('Project renamed, but lock state failed to update.', {
               variant: 'warning',
             });
           }
         }
         handleCancelEdit();
-      } catch {
+      } catch (error) {
+        logClientError(error);
+      
         // Toast is handled in context action.
       }
     },
@@ -322,6 +332,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
           variant: 'success',
         });
       } catch (error) {
+        logClientError(error);
         toast(error instanceof Error ? error.message : 'Failed to update project lock state.', {
           variant: 'error',
         });

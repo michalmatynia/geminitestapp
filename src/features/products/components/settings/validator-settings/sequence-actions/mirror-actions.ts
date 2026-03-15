@@ -41,6 +41,7 @@ export const handleCreateNameLengthMirrorPattern = async (args: {
       );
     }
   } catch (error) {
+    logClientError(error);
     logClientError(error, {
       context: {
         source: 'useValidatorSettingsController',
@@ -84,6 +85,7 @@ export const handleCreateNameCategoryMirrorPattern = async (args: {
       );
     }
   } catch (error) {
+    logClientError(error);
     logClientError(error, {
       context: {
         source: 'useValidatorSettingsController',
@@ -277,6 +279,7 @@ export const handleCreateNameMirrorPolishSequence = async (args: {
 
     notifySuccess('English -> Polish name mirror sequence created.');
   } catch (error) {
+    logClientError(error);
     logClientError(error, {
       context: {
         source: 'useValidatorSettingsController',

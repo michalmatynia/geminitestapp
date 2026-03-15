@@ -5,22 +5,14 @@ import { randomUUID } from 'crypto';
 import type { ImageStudioRunDispatchMode } from '@/shared/contracts/image-studio';
 import type {
   ProductStudioExecutionRoute,
+  ProductStudioRunAuditStatus,
+  ProductStudioRunAuditTimings,
   ProductStudioSequenceGenerationMode,
   ProductStudioSequencingDiagnosticsScope,
 } from '@/shared/contracts/products';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type { Collection } from 'mongodb';
-
-export type ProductStudioRunAuditStatus = 'completed' | 'failed';
-
-export type ProductStudioRunAuditTimings = {
-  importMs: number | null;
-  sourceSlotUpsertMs: number | null;
-  routeDecisionMs: number | null;
-  dispatchMs: number | null;
-  totalMs: number;
-};
 
 export type ProductStudioRunAuditEntry = {
   id: string;

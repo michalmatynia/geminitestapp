@@ -10,6 +10,8 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { normalizeCatalogLanguageSelection } from '@/shared/lib/products/services/catalog-language-normalization';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const catalogSchema = z.object({
   name: z.string().trim().min(1),
@@ -86,6 +88,7 @@ export async function getCatalogsHandler(
       }
       catalogs = updatedCatalogs;
     } catch (error: unknown) {
+      logClientError(error);
       void logSystemEvent({
         level: 'warn',
         message: 'Failed to normalize catalog language IDs',

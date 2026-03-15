@@ -7,6 +7,8 @@ import {
   DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD,
   DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_NATIVE_FIELD,
 } from './runtime-kernel-legacy-aliases';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type RuntimeKernelConfigNormalizedField =
   | 'mode'
@@ -67,7 +69,9 @@ export const parseRuntimeKernelListValue = ({
         );
         return normalized.length > 0 ? normalized : undefined;
       }
-    } catch {
+    } catch (error) {
+      logClientError(error);
+    
       // Fall through to tokenized parsing.
     }
   }

@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const captureException = async (
   error: unknown,
@@ -11,7 +13,9 @@ const captureException = async (
       ...context.context,
       critical: context.critical,
     });
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // ignore
   }
 };

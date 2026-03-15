@@ -97,6 +97,7 @@ export function useMaintenanceActions({
 
       setBackfillResultText(`${summary}\n\nPer project:\n${perProject || '- none'}`);
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'AdminImageStudioSettingsPage', action: 'runCardBackfill' },
       });

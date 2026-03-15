@@ -21,6 +21,7 @@ export default function ProductCard(props: ProductCardProps): React.JSX.Element 
   const name = product.name_en ?? product.name_pl ?? product.name_de ?? 'Product';
   const linkHref = `/products/${product.id}`;
   const cardClassName = className ? `h-full ${className}` : 'h-full';
+  const ariaLabel = name ? `View ${name}` : 'View product';
   const price =
     typeof product.price === 'number'
       ? new Intl.NumberFormat('en-US', {
@@ -33,8 +34,8 @@ export default function ProductCard(props: ProductCardProps): React.JSX.Element 
     <Link
       href={linkHref}
       className='group block h-full transition-transform duration-300 ease-out hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2'
-      aria-label={'Resource Card'}
-      title={'Resource Card'}>
+      aria-label={ariaLabel}
+      title={ariaLabel}>
       <ResourceCard
         title={name}
         className={cardClassName}

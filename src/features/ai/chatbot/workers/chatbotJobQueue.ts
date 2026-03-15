@@ -60,6 +60,7 @@ export const startChatbotJobQueue = (): void => {
     try {
       enabled = await isChatbotEnabled();
     } catch (error) {
+      void ErrorSystem.captureException(error);
       void ErrorSystem.captureException(error, {
         service: 'chatbot-job-queue',
         action: 'validateBrainGate',

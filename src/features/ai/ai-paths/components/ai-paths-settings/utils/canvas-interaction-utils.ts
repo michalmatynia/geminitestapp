@@ -1,4 +1,6 @@
 import type * as React from 'react';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const getPointerCaptureTarget = (
   event: React.PointerEvent<HTMLElement>
@@ -34,7 +36,9 @@ export const setPointerCaptureSafe = (
   if (!target || typeof target.setPointerCapture !== 'function') return;
   try {
     target.setPointerCapture(pointerId);
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Ignore pointer-capture errors from detached/non-capturing targets.
   }
 };
@@ -53,7 +57,9 @@ export const releasePointerCaptureSafe = (
     if (typeof target.hasPointerCapture !== 'function' || target.hasPointerCapture(pointerId)) {
       target.releasePointerCapture(pointerId);
     }
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // Ignore release failures for already-detached targets.
   }
 };

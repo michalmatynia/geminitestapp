@@ -15,6 +15,7 @@ export const getProductRepository = async (
     void (providerOverride ?? (await getProductDataProvider()));
     return mongoProductRepository;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     await ErrorSystem.captureException(error, {
       service: 'product-repository',
       action: 'getProductRepository',

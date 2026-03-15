@@ -132,6 +132,7 @@ export const handleMoveCaseImpl = async (args: {
       source: 'cases_page_move_case',
     });
   } catch (error) {
+    logClientError(error);
     logClientError(error, {
       context: {
         source: 'AdminCaseResolverCasesPage',
@@ -250,6 +251,7 @@ export const handleReorderCaseImpl = async (args: {
       source: 'cases_page_reorder_case',
     });
   } catch (error) {
+    logClientError(error);
     logClientError(error, {
       context: {
         source: 'AdminCaseResolverCasesPage',

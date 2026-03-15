@@ -10,7 +10,7 @@ import { Button, StatusBadge, Switch, StandardDataTablePanel } from '@/shared/ui
 import type { ColumnDef, Row } from '@tanstack/react-table';
 
 // Define the record type for clarity as it's used extensively
-export type AiTriggerButtonRecord = StoredAiTriggerButtonRecord & {
+export type AiTriggerButtonRow = StoredAiTriggerButtonRecord & {
   usedPaths?: Array<{
     id: string;
     name: string;
@@ -18,11 +18,11 @@ export type AiTriggerButtonRecord = StoredAiTriggerButtonRecord & {
 };
 
 type TriggerButtonListManagerProps = {
-  data: AiTriggerButtonRecord[];
-  onEdit: (item: AiTriggerButtonRecord) => void;
+  data: AiTriggerButtonRow[];
+  onEdit: (item: AiTriggerButtonRow) => void;
   onDelete: (id: string) => void;
   onOrderChange: (orderedIds: string[]) => void;
-  onToggleVisibility: (item: AiTriggerButtonRecord, enabled: boolean) => void;
+  onToggleVisibility: (item: AiTriggerButtonRow, enabled: boolean) => void;
   onOpenPath?: ((pathId: string) => void) | undefined;
   isLoading: boolean;
   isReordering?: boolean;
@@ -42,7 +42,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
     isReordering = false,
   } = props;
 
-  const [localRows, setLocalRows] = useState<AiTriggerButtonRecord[]>(data);
+  const [localRows, setLocalRows] = useState<AiTriggerButtonRow[]>(data);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
   const [pendingOrderedIds, setPendingOrderedIds] = useState<string[] | null>(null);
@@ -55,7 +55,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
     // Keep local order while reorder mutation is in-flight, otherwise sync to server state.
     if (draggingId) return;
     if (pendingOrderedIds) {
-      const incomingIds = data.map((row: AiTriggerButtonRecord) => row.id);
+      const incomingIds = data.map((row: AiTriggerButtonRow) => row.id);
       const isPendingOrderPersisted =
         incomingIds.length === pendingOrderedIds.length &&
         incomingIds.every((id: string, index: number) => id === pendingOrderedIds[index]);
@@ -74,10 +74,10 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
 
   const applyOrder = useCallback(
     (
-      rows: AiTriggerButtonRecord[],
+      rows: AiTriggerButtonRow[],
       sourceId: string,
       targetId: string
-    ): AiTriggerButtonRecord[] => {
+    ): AiTriggerButtonRow[] => {
       if (sourceId === targetId) return rows;
       const sourceIndex = rows.findIndex((row) => row.id === sourceId);
       const targetIndex = rows.findIndex((row) => row.id === targetId);
@@ -96,7 +96,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
     (sourceId: string, targetId: string): void => {
       const nextRows = applyOrder(localRows, sourceId, targetId);
       if (nextRows === localRows) return;
-      const orderedIds = nextRows.map((row: AiTriggerButtonRecord) => row.id);
+      const orderedIds = nextRows.map((row: AiTriggerButtonRow) => row.id);
       setLocalRows(nextRows);
       setPendingOrderedIds(orderedIds);
       onOrderChange(orderedIds);
@@ -176,24 +176,24 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
   }, [commitReorder]);
 
   const handleVisibilityToggle = useCallback(
-    (record: AiTriggerButtonRecord, enabled: boolean): void => {
+    (record: AiTriggerButtonRow, enabled: boolean): void => {
       setLocalRows((prev) => prev.map((row) => (row.id === record.id ? { ...row, enabled } : row)));
       onToggleVisibility(record, enabled);
     },
     [onToggleVisibility]
   );
 
-  const isVisible = useCallback((record: AiTriggerButtonRecord): boolean => {
+  const isVisible = useCallback((record: AiTriggerButtonRow): boolean => {
     return record.enabled !== false;
   }, []);
 
   const getRowClassName = useCallback(
-    (row: Row<AiTriggerButtonRecord>): string | undefined =>
+    (row: Row<AiTriggerButtonRow>): string | undefined =>
       overId === row.original.id && draggingId !== row.original.id ? 'bg-cyan-500/10' : undefined,
     [overId, draggingId]
   );
 
-  const columns = useMemo<ColumnDef<AiTriggerButtonRecord>[]>(
+  const columns = useMemo<ColumnDef<AiTriggerButtonRow>[]>(
     () => [
       {
         id: 'drag',

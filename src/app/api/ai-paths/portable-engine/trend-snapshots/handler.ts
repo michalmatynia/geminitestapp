@@ -28,6 +28,8 @@ import {
   resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironment,
 } from '@/shared/lib/ai-paths/portable-engine/server';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const DEFAULT_TREND_SNAPSHOT_LIMIT = 50;
 const MAX_TREND_SNAPSHOT_LIMIT = 500;
@@ -152,7 +154,8 @@ const parseTrendSnapshotCursor = (
       from: cursorFrom,
       to: cursorTo,
     };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     throw badRequestError('Trend snapshot cursor is invalid.');
   }
 };
@@ -309,7 +312,8 @@ const buildRunExecutionSummary = (): {
       topFailureErrors: toTopDeadLetterErrorBreakdown(failureErrorCounts),
       recentFailures,
     };
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return emptySummary;
   }
 };

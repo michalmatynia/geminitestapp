@@ -11,6 +11,8 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Alert, Button, Card, FormField, Textarea, useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const SETTINGS_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-card/40 shadow-sm';
 
@@ -31,7 +33,8 @@ const formatOverrides = (
       value: JSON.stringify(normalized, null, 2),
       invalid: false,
     };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return { value: raw, invalid: true };
   }
 };
@@ -41,7 +44,8 @@ const isDraftValid = (value: string): boolean => {
   try {
     JSON.parse(value);
     return true;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return false;
   }
 };
@@ -84,6 +88,7 @@ export function KangurClassOverridesSettingsPanel(): React.JSX.Element {
       });
       toast('Kangur class overrides saved.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to save class overrides.', {
         variant: 'error',
       });

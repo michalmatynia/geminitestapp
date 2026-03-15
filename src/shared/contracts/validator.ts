@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema } from './base';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const validatorScopeSchema = z.enum([
   'products',
@@ -268,7 +270,8 @@ export const parseValidatorPatternLists = (value: unknown): ValidatorPatternList
       );
     }
     return buildDefaultValidatorPatternLists();
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return buildDefaultValidatorPatternLists();
   }
 };

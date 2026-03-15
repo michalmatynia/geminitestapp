@@ -24,6 +24,8 @@ import {
   createDefaultKangurProgressState,
   type KangurProgressState,
 } from '@/shared/contracts/kangur';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const kangurPlatform = getKangurPlatform();
 
@@ -123,6 +125,7 @@ export function KangurProgressSyncProvider({
         });
         lastSyncedProgressRef.current = serializeProgress(mergedProgress);
       } catch (error: unknown) {
+        logClientError(error);
         if (cancelled) {
           return;
         }

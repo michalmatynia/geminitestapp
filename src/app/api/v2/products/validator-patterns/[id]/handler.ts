@@ -17,6 +17,8 @@ import {
 } from '@/shared/lib/products/utils/validator-instance-behavior';
 import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { validateRegexSafety } from '@/shared/utils/regex-safety';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const replacementFieldSchema = z.enum(PRODUCT_VALIDATION_REPLACEMENT_FIELDS);
 
@@ -114,6 +116,7 @@ const assertValidRegex = (regexSource: string, flags: string | null | undefined)
     const normalizedFlags = flags?.trim() || undefined;
     void new RegExp(regexSource, normalizedFlags);
   } catch (error) {
+    void ErrorSystem.captureException(error);
     throw badRequestError('Invalid regex or flags', {
       regex: regexSource,
       flags: flags ?? null,

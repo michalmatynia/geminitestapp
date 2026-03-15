@@ -4,6 +4,8 @@ import {
   normalizeJsonLikeValue,
   type JsonIntegrityPolicy,
 } from '@/shared/lib/ai-paths/core/runtime/handlers/json-integrity';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type RegexCandidate = {
   pattern: string;
@@ -109,7 +111,9 @@ export const parseRegexCandidate = (raw: string): RegexCandidate | null => {
         return { pattern: record['regex'].trim(), flags: '' };
       }
     }
-  } catch {
+  } catch (error) {
+    logClientError(error);
+  
     // ignore
   }
 
@@ -162,7 +166,8 @@ const stringifyRegexSelection = (value: unknown): string => {
   if (value === undefined || value === null) return '';
   try {
     return JSON.stringify(value);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return typeof value === 'object' ? '[Object]' : String(value as string | number | boolean);
   }
 };

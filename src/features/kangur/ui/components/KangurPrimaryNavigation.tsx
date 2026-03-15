@@ -212,8 +212,11 @@ export function KangurPrimaryNavigation({
     isParentAccount && activeLearnerName ? `Profil ${activeLearnerName}` : 'Profil';
   const shouldRenderProfileMenu =
     effectiveIsAuthenticated && (!isParentAccount || hasActiveLearner);
-  const mobileAuthActionClassName =
+  const mobileNavItemClassName =
     'max-sm:min-w-0 max-sm:flex-1 max-sm:justify-center max-sm:px-3';
+  const mobileWideNavItemClassName =
+    'max-sm:min-w-0 max-sm:basis-full max-sm:justify-center max-sm:px-3';
+  const mobileAuthActionClassName = mobileNavItemClassName;
   const { entry: createAccountActionContent } = useKangurPageContentEntry(
     'shared-nav-create-account-action'
   );
@@ -299,10 +302,11 @@ export function KangurPrimaryNavigation({
     content: (
       <>
         <LogOut className={ICON_CLASSNAME} strokeWidth={2.15} />
-        <span>Wyloguj</span>
+        <span className='truncate'>Wyloguj</span>
       </>
     ),
     docId: 'profile_logout',
+    className: mobileNavItemClassName,
     onClick: onLogout,
     testId: 'kangur-primary-nav-logout',
   };
@@ -355,7 +359,7 @@ export function KangurPrimaryNavigation({
           content: (
             <>
               <UserPlus className={ICON_CLASSNAME} strokeWidth={2.15} />
-              <span>{createAccountActionContent?.title ?? 'Utwórz konto'}</span>
+              <span className='truncate'>{createAccountActionContent?.title ?? 'Utwórz konto'}</span>
             </>
           ),
           docId: 'profile_create_account',
@@ -371,7 +375,7 @@ export function KangurPrimaryNavigation({
           content: (
             <>
               <LogIn className={ICON_CLASSNAME} strokeWidth={2.15} />
-              <span>{loginActionContent?.title ?? 'Zaloguj się'}</span>
+              <span className='truncate'>{loginActionContent?.title ?? 'Zaloguj się'}</span>
             </>
           ),
           docId: 'profile_login',
@@ -388,11 +392,11 @@ export function KangurPrimaryNavigation({
       renderNavAction({
         ariaLabel: tutorContent.navigation.restoreTutorLabel,
         className:
-          'border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] px-4 text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800',
+          `border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] px-4 text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800 ${mobileWideNavItemClassName}`,
         content: (
           <>
             <BrainCircuit className={ICON_CLASSNAME} strokeWidth={2.15} />
-            <span>{tutorContent.navigation.restoreTutorLabel}</span>
+            <span className='truncate'>{tutorContent.navigation.restoreTutorLabel}</span>
           </>
         ),
         docId: 'kangur-ai-tutor-restore',
@@ -410,7 +414,7 @@ export function KangurPrimaryNavigation({
     ) : null;
   const homeAction: KangurNavActionConfig = {
     active: homeActive,
-    className: 'px-3 sm:px-4',
+    className: `px-3 sm:px-4 ${mobileNavItemClassName}`,
     content: (
       <>
         <span
@@ -437,11 +441,11 @@ export function KangurPrimaryNavigation({
   };
   const lessonsAction: KangurNavActionConfig = {
     active: currentPage === 'Lessons',
-    className: 'max-sm:min-w-0 max-sm:flex-1 max-sm:justify-center',
+    className: mobileNavItemClassName,
     content: (
       <>
         <BookOpen className={ICON_CLASSNAME} strokeWidth={2.15} />
-        <span>Lekcje</span>
+        <span className='truncate'>Lekcje</span>
       </>
     ),
     docId: 'top_nav_lessons',
@@ -462,13 +466,13 @@ export function KangurPrimaryNavigation({
       content: (
         <>
           <LayoutGrid className={ICON_CLASSNAME} strokeWidth={2.15} />
-          <span>Rodzic</span>
+          <span className='truncate'>Rodzic</span>
         </>
       ),
       docId: 'top_nav_parent_dashboard',
       href: parentDashboardHref,
       targetPageKey: 'ParentDashboard',
-      className: 'max-sm:min-w-0 max-sm:flex-1 max-sm:justify-center max-sm:px-3',
+      className: mobileNavItemClassName,
       testId: 'kangur-primary-nav-parent-dashboard',
       transitionActive: isTransitionSourceActive({
         activeTransitionSourceId,
@@ -489,6 +493,7 @@ export function KangurPrimaryNavigation({
   const appearanceControls = storefrontAppearance ? (
     <CmsStorefrontAppearanceButtons
       tone={kangurAppearance.tone}
+      className='max-sm:w-full max-sm:justify-start'
       label='Kangur appearance'
       testId='kangur-primary-nav-appearance-controls'
       modes={[...kangurAppearanceModes]}
@@ -514,7 +519,7 @@ export function KangurPrimaryNavigation({
           profile={{ href: profileHref, isActive: learnerProfileIsActive }}
           transitionAcknowledgeMs={NAVIGATION_TRANSITION_ACKNOWLEDGE_MS}
           transitionSourceId={profileTransitionSourceId}
-          triggerClassName='max-sm:min-w-0 max-sm:flex-1 max-sm:justify-center'
+          triggerClassName={mobileNavItemClassName}
         />
       ) : null}
     </div>

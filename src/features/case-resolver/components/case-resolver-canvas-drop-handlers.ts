@@ -27,6 +27,8 @@ import {
   normalizeExtractedPdfText,
   resolvePromptConfig,
 } from './case-resolver-canvas-utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type ToastFn = (message: string, options?: { variant?: 'error' | 'warning' | 'success' }) => void;
 
@@ -126,7 +128,8 @@ export const createCaseResolverCanvasDropHandlers = ({
           } else if (payload.error && typeof payload.error.message === 'string') {
             detail = payload.error.message;
           }
-        } catch {
+        } catch (error) {
+          logClientError(error);
           detail = fallbackMessage;
         }
         throw new Error(detail);
@@ -134,6 +137,7 @@ export const createCaseResolverCanvasDropHandlers = ({
       const payload = (await response.json()) as CaseResolverPdfExtractResponse;
       return typeof payload.text === 'string' ? payload.text : '';
     } catch (error) {
+      logClientError(error);
       throw new Error(
         `PDF extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         { cause: error }
@@ -159,6 +163,7 @@ export const createCaseResolverCanvasDropHandlers = ({
         try {
           extractedText = normalizeExtractedPdfText(await extractPdfText(asset.filepath));
         } catch (error: unknown) {
+          logClientError(error);
           toast(
             error instanceof Error
               ? `${error.message}. PDF node will use file path only.`
@@ -326,6 +331,7 @@ export const createCaseResolverCanvasDropHandlers = ({
         documentSourceFileIdByNode: normalizedDocumentSourceFileIdByNode,
       });
     } catch (error) {
+      logClientError(error);
       toast(
         error instanceof Error
           ? `PDF pipeline creation failed: ${error.message}`

@@ -8,6 +8,8 @@ import {
 } from '@/shared/contracts/kangur-ai-tutor-native-guide';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type KangurAiTutorNativeGuideDoc = {
   locale: string;
@@ -98,7 +100,8 @@ export async function getKangurAiTutorNativeGuideStore(
       );
     }
     return parseKangurAiTutorNativeGuideStore(merged);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     await collection.updateOne(
       { locale },
       {

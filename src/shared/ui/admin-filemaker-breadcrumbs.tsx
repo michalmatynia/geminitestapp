@@ -1,7 +1,6 @@
 import * as React from 'react';
 
-import { Breadcrumbs } from './Breadcrumbs';
-import { buildAdminSectionBreadcrumbItems, type AdminBreadcrumbNode } from './admin-section-breadcrumbs';
+import { AdminSectionBreadcrumbs, type AdminBreadcrumbNode } from './admin-section-breadcrumbs';
 
 type AdminFilemakerBreadcrumbsProps = {
   current: string;
@@ -14,14 +13,12 @@ export function AdminFilemakerBreadcrumbs({
   parent,
   className,
 }: AdminFilemakerBreadcrumbsProps): React.JSX.Element {
-  const items = buildAdminSectionBreadcrumbItems({
-    section: { label: 'Filemaker', href: '/admin/filemaker' },
-    parent,
-    current,
-  });
-  const resolvedClassName = className;
-
   return (
-    <Breadcrumbs items={items} className={resolvedClassName} />
+    <AdminSectionBreadcrumbs
+      section={{ label: 'Filemaker', href: '/admin/filemaker' }}
+      parent={parent}
+      current={current}
+      className={className}
+    />
   );
 }

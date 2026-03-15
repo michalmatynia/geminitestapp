@@ -434,7 +434,9 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
             )
           );
           patchImageStudioSlotsCache(qc, normalizedProjectId, () => response);
-        } catch {
+        } catch (error) {
+          logClientError(error);
+        
           // Continue polling even if one refresh attempt fails.
         }
 
@@ -469,6 +471,7 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
         },
       });
     } catch (error) {
+      logClientError(error);
       cleanup();
       void invalidateImageStudioSlots(qc, normalizedProjectId);
       logClientError(error, {
@@ -507,6 +510,7 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
         deletedIdsByRequestRef.current.set(slotId, deletedSlotIds);
         deleteTimingsByRequestRef.current.set(slotId, response.timingsMs ?? null);
       } catch (error) {
+        logClientError(error);
         if (isDeleteTimeoutError(error)) {
           timeoutFallbackIdsRef.current.add(slotId);
           deletedIdsByRequestRef.current.set(slotId, []);

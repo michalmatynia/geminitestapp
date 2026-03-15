@@ -155,6 +155,7 @@ export const runTraderaListing = async (
       },
     };
   } catch (error: unknown) {
+    void ErrorSystem.captureException(error);
     const message = error instanceof Error ? error.message : String(error);
     const category = classifyTraderaFailure(message);
     const userMessage = toUserFacingTraderaFailure(category, message);

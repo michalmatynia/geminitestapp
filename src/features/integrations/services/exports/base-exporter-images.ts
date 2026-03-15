@@ -12,6 +12,8 @@ import {
 } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export type { ImageExportLogger, ImageBase64Mode, ImageTransformOptions };
 
@@ -439,6 +441,7 @@ const imageToBase64DataUri = async (
       metadataWidth = metadata.width ?? null;
       metadataHeight = metadata.height ?? null;
     } catch (error: unknown) {
+      void ErrorSystem.captureException(error);
       diagnostics?.log('Failed to read image metadata', {
         source: filepath,
         sourceType,
@@ -505,6 +508,7 @@ const imageToBase64DataUri = async (
           resized,
         });
       } catch (error: unknown) {
+        void ErrorSystem.captureException(error);
         diagnostics?.log('Failed to convert image to supported format', {
           source: filepath,
           sourceType,
@@ -573,6 +577,7 @@ const imageToBase64DataUri = async (
               break outer;
             }
           } catch (error: unknown) {
+            void ErrorSystem.captureException(error);
             diagnostics?.log('Image clamp candidate failed', {
               source: filepath,
               sourceType,
@@ -634,6 +639,7 @@ const imageToBase64DataUri = async (
     }
     return `data:${base64}`;
   } catch (error: unknown) {
+    void ErrorSystem.captureException(error);
     diagnostics?.log('Failed to convert image to base64', {
       source: filepath,
       sourceType,

@@ -20,6 +20,8 @@ import {
   getProductAiJobProvider,
   getProductAiJobRepository,
 } from '@/shared/lib/products/services/product-ai-job-repository';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const AI_PATH_STATUSES: AiPathRunStatus[] = [
   'queued',
@@ -109,6 +111,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
         latest,
       };
     } catch (error) {
+      void ErrorSystem.captureException(error);
       errors['aiPaths'] =
         error instanceof Error ? error.message : 'Failed to load AI Paths counts.';
       return {
@@ -179,6 +182,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
         latest: null,
       };
     } catch (error) {
+      void ErrorSystem.captureException(error);
       errors['aiJobs'] = error instanceof Error ? error.message : 'Failed to load AI Jobs counts.';
       return {
         provider: getProductAiJobProvider() ?? 'unknown',
@@ -193,6 +197,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     try {
       return await getAiPathRunQueueStatus();
     } catch (error) {
+      void ErrorSystem.captureException(error);
       errors['queue'] = error instanceof Error ? error.message : 'Failed to load queue health.';
       return null;
     }
@@ -203,6 +208,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
       const { from, to } = resolveRuntimeAnalyticsRangeWindow('24h');
       return await getRuntimeAnalyticsSummary({ from, to, range: '24h' });
     } catch (error) {
+      void ErrorSystem.captureException(error);
       errors['runtime24h'] =
         error instanceof Error ? error.message : 'Failed to load runtime analytics summary.';
       return null;

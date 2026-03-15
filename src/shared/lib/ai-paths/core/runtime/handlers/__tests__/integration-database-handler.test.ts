@@ -42,6 +42,8 @@ vi.mock('@/shared/lib/ai-paths/core/runtime/handlers/integration-schema-handler'
 
 import { handleDatabase } from '@/shared/lib/ai-paths/core/runtime/handlers/integration-database-handler';
 import type { AiNode, NodeHandlerContext } from '@/shared/contracts';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 describe('handleDatabase', () => {
   const reportAiPathsError = vi.fn();
@@ -131,6 +133,7 @@ describe('handleDatabase', () => {
         } as AiNode,
       } as NodeHandlerContext);
     } catch (error) {
+      logClientError(error);
       caughtError = error;
     }
 
@@ -226,6 +229,7 @@ describe('handleDatabase', () => {
         } as AiNode,
       } as NodeHandlerContext);
     } catch (error) {
+      logClientError(error);
       caughtError = error;
     }
 
@@ -275,6 +279,7 @@ describe('handleDatabase', () => {
         } as AiNode,
       } as NodeHandlerContext);
     } catch (error) {
+      logClientError(error);
       caughtError = error;
     }
 

@@ -19,6 +19,8 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;
 const ANALYSIS_PIPELINE_VERSION =
@@ -53,7 +55,8 @@ const parseJsonFormValue = <T>(value: FormDataEntryValue | null): T | undefined 
   if (!normalized) return undefined;
   try {
     return JSON.parse(normalized) as T;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return undefined;
   }
 };
@@ -142,6 +145,7 @@ async function resolveAnalysisSource(input: {
       sourceBuffer = loaded.buffer;
       sourceMimeHint = loaded.mimeHint;
     } catch (error) {
+      void ErrorSystem.captureException(error);
       sourceLoadError = error;
     }
   }
@@ -287,6 +291,7 @@ export async function postAnalyzeSlotHandler(
 
     return NextResponse.json(responseBody, { status: 200 });
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void logSystemEvent({
       level: 'warn',
       source: 'image-studio.analysis',

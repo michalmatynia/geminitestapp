@@ -207,6 +207,7 @@ export function useProductImages(
             imageFileId: slotToClear.data.id,
           });
         } catch (error) {
+          logClientError(error);
           logClientError(error, {
             context: {
               source: 'useProductImages',

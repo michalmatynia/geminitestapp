@@ -16,6 +16,8 @@ import { cmsSlugDomainsUpdateSchema, cmsSlugUpdateSchema } from '@/features/cms/
 import type { Slug } from '@/shared/contracts/cms';
 import { AdminCmsPageLayout, Alert, LoadingState, useToast } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export default function EditSlugPageLoader(): React.JSX.Element {
   const params = useParams();
@@ -108,6 +110,7 @@ function EditSlugForm({
         : '/admin/cms/slugs';
       router.push(next);
     } catch (err) {
+      logClientError(err);
       setError(err instanceof Error ? err.message : 'Update failed.');
     }
   };

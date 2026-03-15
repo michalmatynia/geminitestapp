@@ -7,6 +7,8 @@ import {
   type ImageStudioCenterMode,
 } from '@/features/ai/image-studio/contracts/center';
 import { badRequestError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export const isFileLike = (value: FormDataEntryValue | null): value is File => {
   if (!value || typeof value === 'string') return false;
@@ -61,7 +63,8 @@ export const parseJsonFormValue = <T>(value: FormDataEntryValue | null): T | und
   if (!normalized) return undefined;
   try {
     return JSON.parse(normalized) as T;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return undefined;
   }
 };

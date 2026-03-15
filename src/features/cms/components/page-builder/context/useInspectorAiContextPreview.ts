@@ -73,7 +73,8 @@ function stringifyContext(value: unknown, limit?: number | null): string {
     if (limit == null) return json;
     if (json.length <= limit) return json;
     return `${json.slice(0, limit)}\n...truncated...`;
-  } catch {
+  } catch (error) {
+    logClientError(error);
     const fallback =
       typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
         ? String(value)
@@ -234,6 +235,7 @@ export function useInspectorAiContextPreview({
         await navigator.clipboard.writeText(value);
         toast('Context copied.', { variant: 'success' });
       } catch (error) {
+        logClientError(error);
         toast('Failed to copy context.', { variant: 'error' });
         logClientError(error as Error, {
           context: { source: 'InspectorAiContext', action: 'copyContext' },

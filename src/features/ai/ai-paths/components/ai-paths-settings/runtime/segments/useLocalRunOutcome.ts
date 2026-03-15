@@ -33,6 +33,7 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
           [pathId]: snapshot,
         }));
       } catch (error) {
+        logClientError(error);
         logClientError(error, {
           context: { source: 'useAiPathsLocalExecution', action: 'persistDebugSnapshot', pathId },
         });

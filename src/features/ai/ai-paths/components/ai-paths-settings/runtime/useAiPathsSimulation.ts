@@ -17,6 +17,8 @@ import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { buildSimulationContext } from './utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type SimulationArgs = {
   normalizedNodes: AiNode[];
@@ -124,6 +126,7 @@ export function useAiPathsSimulation(args: SimulationArgs) {
             description: 'Loads products detail.'},
         })();
       } catch (error) {
+        logClientError(error);
         args.reportAiPathsError(
           error,
           { action: 'fetchProduct', productId },
@@ -156,6 +159,7 @@ export function useAiPathsSimulation(args: SimulationArgs) {
             description: 'Loads notes detail.'},
         })();
       } catch (error) {
+        logClientError(error);
         args.reportAiPathsError(error, { action: 'fetchNote', noteId }, 'Failed to fetch note:');
         return null;
       }

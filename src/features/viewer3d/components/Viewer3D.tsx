@@ -323,7 +323,8 @@ function ScreenshotCapture(props: {
     captureRef.current = (): string | null => {
       try {
         return gl.domElement.toDataURL('image/png');
-      } catch {
+      } catch (error) {
+        logClientError(error);
         return null;
       }
     };

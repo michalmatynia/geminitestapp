@@ -3,6 +3,8 @@ import crypto from 'crypto';
 import { NextRequest } from 'next/server';
 
 import { badRequestError } from '@/shared/errors/app-error';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const CONTROL_CHARACTERS_PATTERN = /\p{Cc}/gu;
 
@@ -118,7 +120,8 @@ export class SecureFileUpload {
         if (cfg.maxHeight && dimensions.height > cfg.maxHeight) {
           errors.push(`Image height ${dimensions.height}px exceeds ${cfg.maxHeight}px limit`);
         }
-      } catch {
+      } catch (error) {
+        logClientError(error);
         errors.push('Unable to read image dimensions');
       }
     }
@@ -338,7 +341,8 @@ export async function withSecureFileUpload(
       errors: [],
       sanitizedFiles,
     };
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return {
       isValid: false,
       errors: ['Failed to process file upload'],

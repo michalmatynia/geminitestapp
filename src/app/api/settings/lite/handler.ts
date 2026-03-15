@@ -14,6 +14,8 @@ import {
   setLiteSettingsInflight,
   type LiteSettingRecord,
 } from '@/shared/lib/settings-lite-server-cache';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type SettingRecord = LiteSettingRecord;
 
@@ -142,6 +144,7 @@ export const GET_handler = async (
     });
     return response;
   } catch (error: unknown) {
+    void ErrorSystem.captureException(error);
     if (staleCache) {
       const response = NextResponse.json(cloneLiteSettings(staleCache.data), {
         headers: { 'Cache-Control': 'no-store', 'X-Cache': 'stale' },
@@ -152,8 +155,10 @@ export const GET_handler = async (
       });
       return response;
     }
-    const { ErrorSystem } = await import('@/shared/utils/observability/error-system');
-    void ErrorSystem.captureException(error, {
+    const { ErrorSystem: ErrorSystemLogger } = await import(
+      '@/shared/utils/observability/error-system'
+    );
+    void ErrorSystemLogger.captureException(error, {
       service: 'api/settings/lite',
       action: 'GET_handler',
     });

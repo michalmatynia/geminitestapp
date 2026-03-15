@@ -39,6 +39,8 @@ import {
   type AiPathsDocAssertionConditionInput,
 } from './docs-registry-adapter.types';
 import { AI_PATHS_NODE_DOCS } from '../docs/node-docs';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const PROJECT_ROOT = process.cwd();
 const DOCS_AI_PATHS_ROOT = path.join(PROJECT_ROOT, 'docs', 'ai-paths');
@@ -198,7 +200,8 @@ export const extractAiPathsAssertionsFromMarkdown = (
     let parsed: unknown;
     try {
       parsed = JSON.parse(raw);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       warnings.push(`${sourcePath}: assertion block ${index + 1} is invalid JSON.`);
       return;
     }
@@ -387,7 +390,8 @@ export const readAiPathsDocsManifest = async (warnings: string[]): Promise<AiPat
     let parsed: unknown = null;
     try {
       parsed = JSON.parse(manifestText);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       warnings.push(`${DOCS_MANIFEST_PATH}: invalid JSON. Falling back to built-in sources.`);
       return BUILTIN_FALLBACK_MANIFEST;
     }
@@ -407,6 +411,7 @@ export const readAiPathsDocsManifest = async (warnings: string[]): Promise<AiPat
     }
     return normalized;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     warnings.push(
       `${DOCS_MANIFEST_PATH}: failed to read manifest (${error instanceof Error ? error.message : 'unknown error'}). Falling back to built-in sources.`
     );
@@ -430,6 +435,7 @@ export const buildMarkdownSourcePayload = async (args: {
       assertions: extracted.assertions,
     };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     warnings.push(
       `${source.path}: failed to read markdown source (${error instanceof Error ? error.message : 'unknown error'}).`
     );
@@ -625,6 +631,7 @@ export const buildSemanticNodesCatalogSourcePayload = async (args: {
 
     return { hash, assertions };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     warnings.push(
       `${source.path}: failed to read semantic nodes catalog (${error instanceof Error ? error.message : 'unknown error'}).`
     );
@@ -701,6 +708,7 @@ export const buildTooltipDocsCatalogSourcePayload = async (args: {
       ],
     };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     warnings.push(
       `${source.path}: failed to read tooltip catalog (${error instanceof Error ? error.message : 'unknown error'}).`
     );
@@ -979,6 +987,7 @@ export const buildCoverageMatrixSourcePayload = async (args: {
     });
     return { hash, assertions };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     warnings.push(
       `${source.path}: failed to read coverage matrix (${error instanceof Error ? error.message : 'unknown error'}).`
     );

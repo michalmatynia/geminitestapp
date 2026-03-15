@@ -1,3 +1,4 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 export function sanitizeHtml(html: string): string {
   if (!html) return '';
 
@@ -61,13 +62,16 @@ export function sanitizeHtml(html: string): string {
     sanitizeNode(doc.body);
     return doc.body.innerHTML;
   } catch (error) {
+    logClientError(error);
     void (async (): Promise<void> => {
       try {
         const { logClientError } = await import('@/shared/utils/observability/client-error-logger');
         logClientError(error instanceof Error ? error : new Error('HTML Sanitization failed'), {
           context: { source: 'sanitization', htmlLength: html.length },
         });
-      } catch {
+      } catch (error) {
+        logClientError(error);
+      
         /* ignore */
       }
     })();
@@ -171,13 +175,16 @@ export function sanitizeSvg(svg: string, options?: { viewBox?: string }): string
 
     return new XMLSerializer().serializeToString(root);
   } catch (error) {
+    logClientError(error);
     void (async (): Promise<void> => {
       try {
         const { logClientError } = await import('@/shared/utils/observability/client-error-logger');
         logClientError(error instanceof Error ? error : new Error('SVG Sanitization failed'), {
           context: { source: 'sanitization', svgLength: svg.length },
         });
-      } catch {
+      } catch (error) {
+        logClientError(error);
+      
         /* ignore */
       }
     })();

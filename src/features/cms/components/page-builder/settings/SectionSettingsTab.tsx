@@ -127,6 +127,7 @@ export function SectionSettingsTab(): React.JSX.Element | null {
       setSectionTemplateCategory('');
       toast('Section saved as template.', { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       logClientError(error, {
         context: { source: 'SectionSettingsTab', action: 'saveSectionTemplate' },
       });

@@ -15,6 +15,8 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { logActivity } from '@/shared/utils/observability/activity-service';
 import { parseKangurProgressUpdatePayload } from '@/shared/validations/kangur';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 const KANGUR_PROGRESS_SOURCE_HEADER = 'x-kangur-progress-source';
 const KANGUR_PROGRESS_CTA_HEADER = 'x-kangur-progress-cta';
@@ -28,7 +30,8 @@ const readBodyJson = async (request: NextRequest): Promise<unknown> => {
 
   try {
     return JSON.parse(rawBody) as unknown;
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     throw badRequestError('Invalid JSON payload.');
   }
 };

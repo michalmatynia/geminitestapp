@@ -10,6 +10,8 @@ import {
   getValueTypeLabel,
   isValueCompatibleWithTypes,
 } from '@/shared/lib/ai-paths';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 
 type ConnectionTypeMismatch = {
@@ -67,7 +69,8 @@ const stringifyForDiff = (value: unknown): string => {
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   try {
     return JSON.stringify(value, null, 2);
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return '[Complex Object]';
   }
 };

@@ -1,6 +1,7 @@
 import type { DatabaseBrowse, SchemaResponse } from '@/shared/contracts/database';
+import type { HttpResult } from '@/shared/contracts/http';
 
-import { apiFetch, apiPost, ApiResponse } from './base';
+import { apiFetch, apiPost } from './base';
 
 export type DbProvider = 'auto' | 'mongodb';
 export type DbSchemaProvider = DbProvider | 'all';
@@ -86,7 +87,7 @@ const resolveDbActionTimeoutMs = (timeoutMs?: number): number => {
 export async function databaseAction<T>(
   input: DbActionPayload,
   options?: DbRequestOptions
-): Promise<ApiResponse<T>> {
+): Promise<HttpResult<T>> {
   const provider = normalizeDbProvider(input.provider);
   const payload: DbActionPayload = {
     ...(provider ? { provider } : {}),
@@ -112,7 +113,7 @@ export async function databaseAction<T>(
   });
 }
 
-export async function databaseQuery<T>(payload: DbQueryPayload): Promise<ApiResponse<T>> {
+export async function databaseQuery<T>(payload: DbQueryPayload): Promise<HttpResult<T>> {
   const provider = normalizeDbProvider(payload.provider);
   return apiPost<T>('/api/ai-paths/db-action', {
     ...(provider ? { provider } : {}),
@@ -127,7 +128,7 @@ export async function databaseQuery<T>(payload: DbQueryPayload): Promise<ApiResp
   });
 }
 
-export async function databaseUpdate<T>(payload: DbUpdatePayload): Promise<ApiResponse<T>> {
+export async function databaseUpdate<T>(payload: DbUpdatePayload): Promise<HttpResult<T>> {
   const provider = normalizeDbProvider(payload.provider);
   return apiPost<T>('/api/ai-paths/db-action', {
     ...(provider ? { provider } : {}),
@@ -140,14 +141,14 @@ export async function databaseUpdate<T>(payload: DbUpdatePayload): Promise<ApiRe
   });
 }
 
-export async function entityUpdate<T>(payload: EntityUpdatePayload): Promise<ApiResponse<T>> {
+export async function entityUpdate<T>(payload: EntityUpdatePayload): Promise<HttpResult<T>> {
   return apiPost<T>('/api/ai-paths/update', payload);
 }
 
 export async function fetchSchema(args?: {
   provider?: DbSchemaProvider;
   includeCounts?: boolean;
-}): Promise<ApiResponse<SchemaResponse>> {
+}): Promise<HttpResult<SchemaResponse>> {
   const params = new URLSearchParams();
   if (args?.provider) params.set('provider', args.provider);
   if (args?.includeCounts) params.set('includeCounts', 'true');
@@ -162,7 +163,7 @@ export async function browseDatabase(args: {
   query?: string;
   limit?: number;
   skip?: number;
-}): Promise<ApiResponse<DatabaseBrowse>> {
+}): Promise<HttpResult<DatabaseBrowse>> {
   const params = new URLSearchParams();
   params.set('collection', args.collection);
   params.set('provider', args.provider ?? 'auto');

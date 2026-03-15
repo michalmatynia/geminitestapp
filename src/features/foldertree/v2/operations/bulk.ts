@@ -1,13 +1,9 @@
 import type {
   MasterFolderTreeActionResult,
   MasterFolderTreeController,
+  MasterTreeBulkOperationResult,
 } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeId } from '@/shared/utils/master-folder-tree-contract';
-
-export type BulkOperationResult = {
-  succeeded: MasterTreeId[];
-  failed: Array<{ nodeId: MasterTreeId; reason: string }>;
-};
 
 /**
  * Moves multiple nodes to a single target parent in sequence.
@@ -24,7 +20,7 @@ export const bulkMoveNodes = async ({
   targetParentId: MasterTreeId | null;
   controller: MasterFolderTreeController;
   stopOnFirstFailure?: boolean | undefined;
-}): Promise<BulkOperationResult> => {
+}): Promise<MasterTreeBulkOperationResult> => {
   const succeeded: MasterTreeId[] = [];
   const failed: Array<{ nodeId: MasterTreeId; reason: string }> = [];
 
@@ -59,7 +55,7 @@ export const bulkDeleteNodes = async ({
   controller: MasterFolderTreeController;
   onDeleteSingle: (nodeId: MasterTreeId) => Promise<MasterFolderTreeActionResult>;
   stopOnFirstFailure?: boolean | undefined;
-}): Promise<BulkOperationResult> => {
+}): Promise<MasterTreeBulkOperationResult> => {
   const succeeded: MasterTreeId[] = [];
   const failed: Array<{ nodeId: MasterTreeId; reason: string }> = [];
 

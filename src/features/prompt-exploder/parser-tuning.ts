@@ -10,6 +10,8 @@ import {
   type PromptExploderParserTuningRuleDraft,
 } from '@/shared/contracts/prompt-exploder';
 import { defaultPromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export type { PromptExploderParserTuningRuleId, PromptExploderParserTuningRuleDraft };
 export { PROMPT_EXPLODER_PARSER_TUNING_RULE_IDS };
@@ -200,6 +202,7 @@ export const validatePromptExploderParserTuningDrafts = (
       // Validate with provided flags to catch invalid regex configuration early.
       void new RegExp(draft.pattern, normalizeRuleFlags(draft.flags));
     } catch (error) {
+      logClientError(error);
       return {
         ok: false,
         error:

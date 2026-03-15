@@ -27,6 +27,8 @@ import type {
   ImportExportDataContextType,
   ImportExportStateContextType,
 } from './ImportExportContext.types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 interface ImportExportRuntimeResult {
   actionsValue: ImportExportActionsContextType;
@@ -239,6 +241,7 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
       });
       toast('Default Base.com connection saved.', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error);
       const message =
         error instanceof Error ? error.message : 'Failed to save default Base.com connection.';
       toast(message, { variant: 'error' });

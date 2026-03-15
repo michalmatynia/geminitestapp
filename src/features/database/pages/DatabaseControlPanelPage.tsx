@@ -47,7 +47,8 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
     if (!raw) return {};
     try {
       return JSON.parse(raw) as Record<string, 'mongodb' | 'redis'>;
-    } catch {
+    } catch (error) {
+      logClientError(error);
       return {};
     }
   }, [settingsQuery.data]);
@@ -100,6 +101,7 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
       const result = await createJsonBackup.mutateAsync();
       setLogModalContent(result.log ?? result.message ?? 'Backup created');
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, { context: { source: 'ControlPanel', action: 'createJsonBackup' } });
       toast('Failed to create JSON backup.', { variant: 'error' });
     }
@@ -112,6 +114,7 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
       const result = await restoreJsonBackup.mutateAsync(selectedJsonBackup);
       setLogModalContent(result.log ?? result.message ?? 'Backup restored');
     } catch (error: unknown) {
+      logClientError(error);
       logClientError(error, {
         context: {
           source: 'ControlPanel',

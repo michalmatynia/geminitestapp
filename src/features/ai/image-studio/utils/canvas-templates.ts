@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 export const IMAGE_STUDIO_CANVAS_TEMPLATES_KEY = 'image_studio_canvas_templates';
 
@@ -43,7 +45,8 @@ export function parseImageStudioCanvasTemplates(
       deduped.add(entry.id);
       return true;
     });
-  } catch {
+  } catch (error) {
+    logClientError(error);
     return [...DEFAULT_IMAGE_STUDIO_CANVAS_TEMPLATES];
   }
 }

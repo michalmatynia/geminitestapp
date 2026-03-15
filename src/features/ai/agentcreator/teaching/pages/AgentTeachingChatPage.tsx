@@ -33,6 +33,8 @@ import {
   buildAgentTeachingChatContextBundle,
 } from '../context-registry/chat-page';
 import { useTeachingChatMutation } from '../hooks/useAgentTeachingQueries';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 function AgentTeachingChatPageContent(): React.JSX.Element {
   const { toast } = useToast();
@@ -113,6 +115,7 @@ function AgentTeachingChatPageContent(): React.JSX.Element {
       ]);
       setLastSources(Array.isArray(data.sources) ? data.sources : []);
     } catch (error) {
+      logClientError(error);
       toast(error instanceof Error ? error.message : 'Chat failed.', { variant: 'error' });
       setMessages((prev: SimpleChatMessage[]) => [
         ...prev,

@@ -7,6 +7,8 @@ import { buildObservabilityExpectedByCollection } from '@/shared/lib/observabili
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 import type { IndexSpecification } from 'mongodb';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 type IndexInfo = {
   name?: string;
@@ -44,6 +46,7 @@ const buildDiagnostics = async (db: Awaited<ReturnType<typeof getMongoDb>>) => {
         };
       });
     } catch (error) {
+      void ErrorSystem.captureException(error);
       errorMessage = error instanceof Error ? error.message : 'Failed to load indexes';
     }
     const expectedSet = new Set(expected.map((item) => serializeKey(item.key)));
@@ -89,6 +92,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): 
         await db.collection(collectionName).createIndex(index.key);
         created.push({ collection: collectionName, key: index.key });
       } catch (error) {
+        void ErrorSystem.captureException(error);
         void logSystemEvent({
           source: 'system.diagnostics.mongo-indexes',
           message: 'Failed to create database index during diagnostic run',

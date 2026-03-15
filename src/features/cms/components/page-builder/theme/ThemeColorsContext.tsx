@@ -20,6 +20,8 @@ import type {
   ThemeColorsActionsContextValue,
   ThemeColorsStateContextValue,
 } from './ThemeColorsContext.types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 const ThemeColorsStateContext = createContext<ThemeColorsStateContextValue | undefined>(undefined);
 const ThemeColorsActionsContext = createContext<ThemeColorsActionsContextValue | undefined>(
@@ -279,7 +281,9 @@ ${schemeContext}`;
       if (doneSignal) {
         try {
           await reader.cancel();
-        } catch {
+        } catch (error) {
+          logClientError(error);
+        
           // ignore
         }
       }
@@ -351,6 +355,7 @@ ${schemeContext}`;
       applySchemeFromAi(parsed);
       toast(`Scheme generated from ${provider}.`, { variant: 'success' });
     } catch (error) {
+      logClientError(error);
       if (error instanceof Error && error.name === 'AbortError') {
         setSchemeAiError('Generation cancelled.');
         toast('Generation cancelled.', { variant: 'info' });

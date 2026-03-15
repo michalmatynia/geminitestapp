@@ -6,6 +6,8 @@ import type {
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { coerceInput } from '../../utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type FetcherSourceMode = 'live_context' | 'simulation_id' | 'live_then_simulation';
 type FetcherResolvedSource = 'live_context' | 'simulation_id' | 'live_context_override';
@@ -179,6 +181,7 @@ export const handleFetcher: NodeHandler = async ({
         toast(`No ${liveEntityType} data found for ID ${liveEntityId}.`, { variant: 'error' });
       }
     } catch (error) {
+      logClientError(error);
       reportAiPathsError(
         error,
         {
@@ -225,6 +228,7 @@ export const handleFetcher: NodeHandler = async ({
         entity,
       };
     } catch (error) {
+      logClientError(error);
       reportAiPathsError(
         error,
         {

@@ -8,6 +8,8 @@ import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 
 import { BASE_EXPORT_RUN_PATH_ID, BASE_EXPORT_RUN_PATH_NAME } from '../helpers';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export async function loadExportResources(productId: string, connectionId: string) {
   const [productRepo, integrationRepo, primaryListingRepo] = await Promise.all([
@@ -93,7 +95,9 @@ export async function updateRunStarted(
       message: 'Export to Base.com started.',
       metadata,
     });
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+  
     // Resilient
   }
 }

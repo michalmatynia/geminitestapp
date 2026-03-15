@@ -10,6 +10,8 @@ import { AnalyticsEventDetails } from './AnalyticsEventDetails';
 import { useAnalyticsSummaryData } from '../context/AnalyticsContext';
 
 import type { ColumnDef } from '@tanstack/react-table';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type AnalyticsEvent = NonNullable<AnalyticsSummary['recent']>[number];
 
@@ -32,7 +34,8 @@ export function RecentEventsTable(): React.JSX.Element {
                 {new Date(row.original.ts).toLocaleString()}
               </span>
             );
-          } catch {
+          } catch (error) {
+            logClientError(error);
             return <span className='text-xs text-gray-300'>{row.original.ts}</span>;
           }
         },

@@ -125,6 +125,7 @@ const buildPortableEngineAnalytics = (): AiPathRuntimePortableEngineAnalytics =>
       recentFailures,
     };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning('Failed to read portable engine runtime analytics snapshot', {
       service: 'ai-paths-analytics',
       error,
@@ -202,6 +203,7 @@ export const recordBrainInsightAnalytics = async (input: {
     }
     await multi.exec();
   } catch (error) {
+    void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning('Failed to record brain insight analytics', {
       service: 'ai-paths-analytics',
       error,

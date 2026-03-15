@@ -333,6 +333,9 @@ export default function CalendarInteractiveGame({
   const [selectedSeason, setSelectedSeason] = useState<Season | null>(null);
   const [selectedWeekdayIdx, setSelectedWeekdayIdx] = useState<number | null>(null);
   const trainingSectionContent = getCalendarInteractiveSectionContent(section);
+  const showCalendarError =
+    feedback === 'wrong' && (task.type === 'click_date' || task.type === 'click_all_weekends');
+  const showFlipMonthError = feedback === 'wrong' && task.type === 'flip_month';
   const handleFinishSession = (): void => {
     onFinish();
   };
@@ -513,145 +516,156 @@ export default function CalendarInteractiveGame({
       {(task.type === 'click_date' ||
         task.type === 'click_all_weekends' ||
         task.type === 'flip_month') && (
-        <KangurInfoCard
-          className='w-full rounded-[24px]'
-          data-testid='calendar-interactive-calendar-shell'
-          padding='sm'
-          tone='neutral'
-        >
-          <div className='flex items-center justify-between mb-2'>
-            <KangurButton
-              aria-label='Poprzedni miesiąc'
-              onClick={() => handleFlipMonth(-1)}
-              className='h-9 w-9 min-w-0 px-0'
-              size='sm'
-              type='button'
-              variant='surface'
-            >
-              <ChevronLeft className='w-4 h-4 [color:var(--kangur-page-muted-text)]' />
-            </KangurButton>
-            <p className='font-extrabold text-green-700 text-sm'>
-              {monthData.name} {YEAR}
-            </p>
-            <KangurButton
-              aria-label='Następny miesiąc'
-              onClick={() => handleFlipMonth(1)}
-              className='h-9 w-9 min-w-0 px-0'
-              size='sm'
-              type='button'
-              variant='surface'
-            >
-              <ChevronRight className='w-4 h-4 [color:var(--kangur-page-muted-text)]' />
-            </KangurButton>
-          </div>
-
-          <div className='grid grid-cols-7 gap-0.5 text-center mb-1'>
-            {DAY_LABELS_SHORT.map((dayLabel, idx) => (
-              <div
-                key={dayLabel}
-                className={`text-xs font-bold py-0.5 ${
-                  idx >= 5
-                    ? 'text-red-400'
-                    : '[color:var(--kangur-page-muted-text)]'
-                }`}
+        <>
+          <KangurInfoCard
+            className='w-full rounded-[24px]'
+            data-testid='calendar-interactive-calendar-shell'
+            padding='sm'
+            tone='neutral'
+          >
+            <div className='flex items-center justify-between mb-2'>
+              <KangurButton
+                aria-label='Poprzedni miesiąc'
+                onClick={() => handleFlipMonth(-1)}
+                className='h-9 w-9 min-w-0 px-0'
+                size='sm'
+                type='button'
+                variant='surface'
               >
-                {dayLabel}
-              </div>
-            ))}
-          </div>
+                <ChevronLeft className='w-4 h-4 [color:var(--kangur-page-muted-text)]' />
+              </KangurButton>
+              <p className='font-extrabold text-green-700 text-sm'>
+                {monthData.name} {YEAR}
+              </p>
+              <KangurButton
+                aria-label='Następny miesiąc'
+                onClick={() => handleFlipMonth(1)}
+                className='h-9 w-9 min-w-0 px-0'
+                size='sm'
+                type='button'
+                variant='surface'
+              >
+                <ChevronRight className='w-4 h-4 [color:var(--kangur-page-muted-text)]' />
+              </KangurButton>
+            </div>
 
-          <div className='grid grid-cols-7 gap-0.5 text-center'>
-            {cells.map((day, idx) => {
-              const isWeekend = idx % 7 >= 5;
-              const isNumberDay = typeof day === 'number';
-              const isClickable =
-                isNumberDay &&
-                feedback === null &&
-                (task.type === 'click_date' || task.type === 'click_all_weekends');
-              const isSelected = isNumberDay && selectedDays.includes(day);
-              const isTarget =
-                task.type === 'click_date' &&
-                isNumberDay &&
-                day === task.targetDay &&
-                feedback === 'correct';
-              const isWrongDateSelection =
-                task.type === 'click_date' && isSelected && feedback === 'wrong';
-              const isClicked =
-                task.type === 'click_all_weekends' &&
-                isNumberDay &&
-                isSelected &&
-                feedback === null;
-              const isWrongWeekendSelection =
-                task.type === 'click_all_weekends' &&
-                isNumberDay &&
-                isSelected &&
-                feedback === 'wrong' &&
-                !task.targets.includes(day);
-              const isCorrectWeekend =
-                task.type === 'click_all_weekends' &&
-                isNumberDay &&
-                task.targets.includes(day) &&
-                feedback !== null;
-              let dayAccent: KangurAccent = isWeekend ? 'rose' : 'slate';
-              let dayEmphasis: 'neutral' | 'accent' = 'neutral';
-              let dayClassName = cn(
-                'h-10 rounded-[16px] text-xs font-semibold',
-                'flex items-center justify-center leading-none !p-0 !text-center',
-                isWeekend ? 'text-rose-600' : '[color:var(--kangur-page-text)]',
-                !isClickable && 'cursor-default hover:translate-y-0'
-              );
-
-              if (isTarget) {
-                dayAccent = 'emerald';
-                dayEmphasis = 'accent';
-                dayClassName = cn(dayClassName, KANGUR_ACCENT_STYLES.emerald.activeText);
-              } else if (isWrongDateSelection) {
-                dayAccent = 'rose';
-                dayEmphasis = 'accent';
-                dayClassName = cn(dayClassName, KANGUR_ACCENT_STYLES.rose.activeText);
-              } else if (isClicked) {
-                dayAccent = 'teal';
-                dayEmphasis = 'accent';
-                dayClassName = cn(
-                  dayClassName,
-                  KANGUR_ACCENT_STYLES.teal.activeText,
-                  'scale-[1.02]'
-                );
-              } else if (isWrongWeekendSelection) {
-                dayAccent = 'rose';
-                dayEmphasis = 'accent';
-                dayClassName = cn(dayClassName, KANGUR_ACCENT_STYLES.rose.activeText);
-              } else if (isCorrectWeekend && !isSelected) {
-                dayAccent = 'emerald';
-                dayEmphasis = 'accent';
-                dayClassName = cn(dayClassName, KANGUR_ACCENT_STYLES.emerald.activeText);
-              }
-
-              return isNumberDay ? (
-                <KangurAnswerChoiceCard
-                  accent={dayAccent}
-                  buttonClassName={dayClassName}
-                  emphasis={dayEmphasis}
-                  hoverScale={1}
-                  interactive={isClickable}
-                  key={`${idx}-${day}`}
-                  onClick={() => {
-                    if (isClickable) {
-                      handleDateClick(day);
-                    }
-                  }}
-                  data-testid={`calendar-day-${day}`}
-                  tapScale={1}
-                  type='button'
+            <div className='grid grid-cols-7 gap-0.5 text-center mb-1'>
+              {DAY_LABELS_SHORT.map((dayLabel, idx) => (
+                <div
+                  key={dayLabel}
+                  className={`text-xs font-bold py-0.5 ${
+                    idx >= 5
+                      ? 'text-red-400'
+                      : '[color:var(--kangur-page-muted-text)]'
+                  }`}
                 >
-                  {day}
-                </KangurAnswerChoiceCard>
-              ) : (
-                <div key={`${idx}-empty`} aria-hidden='true' className='h-10 rounded-[16px]' />
-              );
-            })}
-          </div>
-        </KangurInfoCard>
+                  {dayLabel}
+                </div>
+              ))}
+            </div>
+
+            <div className='grid grid-cols-7 gap-0.5 text-center'>
+              {cells.map((day, idx) => {
+                const isWeekend = idx % 7 >= 5;
+                const isNumberDay = typeof day === 'number';
+                const isClickable =
+                  isNumberDay &&
+                  feedback === null &&
+                  (task.type === 'click_date' || task.type === 'click_all_weekends');
+                const isSelected = isNumberDay && selectedDays.includes(day);
+                const isTarget =
+                  task.type === 'click_date' &&
+                  isNumberDay &&
+                  day === task.targetDay &&
+                  feedback === 'correct';
+                const isWrongDateSelection =
+                  task.type === 'click_date' && isSelected && feedback === 'wrong';
+                const isClicked =
+                  task.type === 'click_all_weekends' &&
+                  isNumberDay &&
+                  isSelected &&
+                  feedback === null;
+                const isWrongWeekendSelection =
+                  task.type === 'click_all_weekends' &&
+                  isNumberDay &&
+                  isSelected &&
+                  feedback === 'wrong' &&
+                  !task.targets.includes(day);
+                const isCorrectWeekend =
+                  task.type === 'click_all_weekends' &&
+                  isNumberDay &&
+                  task.targets.includes(day) &&
+                  feedback !== null;
+                let dayAccent: KangurAccent = isWeekend ? 'rose' : 'slate';
+                let dayEmphasis: 'neutral' | 'accent' = 'neutral';
+                let dayClassName = cn(
+                  'h-10 rounded-[16px] text-xs font-semibold',
+                  'flex items-center justify-center leading-none !p-0 !text-center',
+                  isWeekend ? 'text-rose-600' : '[color:var(--kangur-page-text)]',
+                  !isClickable && 'cursor-default hover:translate-y-0'
+                );
+
+                if (isTarget) {
+                  dayAccent = 'emerald';
+                  dayEmphasis = 'accent';
+                  dayClassName = cn(dayClassName, KANGUR_ACCENT_STYLES.emerald.activeText);
+                } else if (isWrongDateSelection) {
+                  dayAccent = 'rose';
+                  dayEmphasis = 'accent';
+                  dayClassName = cn(dayClassName, KANGUR_ACCENT_STYLES.rose.activeText);
+                } else if (isClicked) {
+                  dayAccent = 'teal';
+                  dayEmphasis = 'accent';
+                  dayClassName = cn(
+                    dayClassName,
+                    KANGUR_ACCENT_STYLES.teal.activeText,
+                    'scale-[1.02]'
+                  );
+                } else if (isWrongWeekendSelection) {
+                  dayAccent = 'rose';
+                  dayEmphasis = 'accent';
+                  dayClassName = cn(dayClassName, KANGUR_ACCENT_STYLES.rose.activeText);
+                } else if (isCorrectWeekend && !isSelected) {
+                  dayAccent = 'emerald';
+                  dayEmphasis = 'accent';
+                  dayClassName = cn(dayClassName, KANGUR_ACCENT_STYLES.emerald.activeText);
+                }
+
+                return isNumberDay ? (
+                  <KangurAnswerChoiceCard
+                    accent={dayAccent}
+                    buttonClassName={dayClassName}
+                    emphasis={dayEmphasis}
+                    hoverScale={1}
+                    interactive={isClickable}
+                    key={`${idx}-${day}`}
+                    onClick={() => {
+                      if (isClickable) {
+                        handleDateClick(day);
+                      }
+                    }}
+                    data-testid={`calendar-day-${day}`}
+                    tapScale={1}
+                    type='button'
+                  >
+                    {day}
+                  </KangurAnswerChoiceCard>
+                ) : (
+                  <div key={`${idx}-empty`} aria-hidden='true' className='h-10 rounded-[16px]' />
+                );
+              })}
+            </div>
+          </KangurInfoCard>
+          {showCalendarError ? (
+            <div
+              className='mt-2 w-full text-center text-xs font-semibold text-rose-600'
+              data-testid='calendar-interactive-feedback'
+              role='status'
+            >
+              Ups, to nie to. Spróbuj jeszcze raz!
+            </div>
+          ) : null}
+        </>
       )}
 
       {task.type === 'flip_month' && (
@@ -671,6 +685,15 @@ export default function CalendarInteractiveGame({
           <p className='text-xs [color:var(--kangur-page-muted-text)]'>
             Kliknij, gdy uważasz, że jesteś na właściwym miesiącu.
           </p>
+          {showFlipMonthError ? (
+            <div
+              className='w-full text-center text-xs font-semibold text-rose-600'
+              data-testid='calendar-interactive-feedback'
+              role='status'
+            >
+              Ups, to nie to. Spróbuj jeszcze raz!
+            </div>
+          ) : null}
         </div>
       )}
 

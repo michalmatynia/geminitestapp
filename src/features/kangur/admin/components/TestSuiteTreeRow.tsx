@@ -91,7 +91,7 @@ export function TestSuiteTreeRow(props: {
           {input.hasChildren ? (
             <button
               type='button'
-              className='inline-flex size-5 shrink-0 items-center justify-center rounded text-gray-400 hover:bg-muted/40'
+              className='inline-flex size-5 shrink-0 items-center justify-center rounded text-gray-400 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 ring-offset-slate-950'
               onClick={(e): void => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -133,7 +133,7 @@ export function TestSuiteTreeRow(props: {
             <div className='inline-flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100'>
               <button
                 type='button'
-                className='inline-flex size-7 items-center justify-center rounded-md text-slate-300 transition hover:bg-slate-800/50 hover:text-white'
+                className='inline-flex size-7 items-center justify-center rounded-md text-slate-300 transition hover:bg-slate-800/50 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 ring-offset-slate-950'
                 onClick={(event): void => {
                   event.preventDefault();
                   event.stopPropagation();
@@ -146,7 +146,7 @@ export function TestSuiteTreeRow(props: {
               </button>
               <button
                 type='button'
-                className='inline-flex size-7 items-center justify-center rounded-md text-rose-300 transition hover:bg-rose-950/40 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-40'
+                className='inline-flex size-7 items-center justify-center rounded-md text-rose-300 transition hover:bg-rose-950/40 hover:text-rose-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 ring-offset-slate-950 disabled:cursor-not-allowed disabled:opacity-40'
                 onClick={(event): void => {
                   event.preventDefault();
                   event.stopPropagation();
@@ -320,7 +320,7 @@ export function TestSuiteTreeRow(props: {
           {suiteHealth?.isLive ? (
             <button
               type='button'
-              className='inline-flex items-center justify-center rounded p-1 text-slate-300 hover:bg-slate-500/20 hover:text-slate-200'
+              className='inline-flex items-center justify-center rounded p-1 text-slate-300 hover:bg-slate-500/20 hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 ring-offset-slate-950'
               onMouseDown={(e): void => e.stopPropagation()}
               onClick={(e): void => {
                 e.stopPropagation();
@@ -336,7 +336,7 @@ export function TestSuiteTreeRow(props: {
           {suiteHealth?.canGoLive ? (
             <button
               type='button'
-              className='inline-flex items-center justify-center rounded p-1 text-emerald-300 hover:bg-emerald-500/20 hover:text-emerald-200'
+              className='inline-flex items-center justify-center rounded p-1 text-emerald-300 hover:bg-emerald-500/20 hover:text-emerald-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 ring-offset-slate-950'
               onMouseDown={(e): void => e.stopPropagation()}
               onClick={(e): void => {
                 e.stopPropagation();
@@ -352,7 +352,7 @@ export function TestSuiteTreeRow(props: {
           {suiteHealth?.publishableQuestionCount ? (
             <button
               type='button'
-              className='inline-flex items-center justify-center rounded p-1 text-cyan-300 hover:bg-cyan-500/20 hover:text-cyan-200'
+              className='inline-flex items-center justify-center rounded p-1 text-cyan-300 hover:bg-cyan-500/20 hover:text-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 ring-offset-slate-950'
               onMouseDown={(e): void => e.stopPropagation()}
               onClick={(e): void => {
                 e.stopPropagation();
@@ -369,7 +369,7 @@ export function TestSuiteTreeRow(props: {
             <button
               type='button'
               className={cn(
-                'inline-flex items-center justify-center rounded p-1 hover:bg-amber-500/20',
+                'inline-flex items-center justify-center rounded p-1 hover:bg-amber-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 ring-offset-slate-950',
                 suiteHealth.status === 'needs-fix' ? 'text-rose-300 hover:text-rose-200' : 'text-amber-300 hover:text-amber-200'
               )}
               onMouseDown={(e): void => e.stopPropagation()}
@@ -386,7 +386,7 @@ export function TestSuiteTreeRow(props: {
           ) : null}
           <button
             type='button'
-            className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-violet-500/20 hover:text-violet-200'
+            className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-violet-500/20 hover:text-violet-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 ring-offset-slate-950'
             onMouseDown={(e): void => e.stopPropagation()}
             onClick={(e): void => {
               e.stopPropagation();
@@ -400,7 +400,7 @@ export function TestSuiteTreeRow(props: {
           </button>
           <button
             type='button'
-            className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-sky-500/20 hover:text-sky-200'
+            className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-sky-500/20 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 ring-offset-slate-950'
             onMouseDown={(e): void => e.stopPropagation()}
             onClick={(e): void => {
               e.stopPropagation();
@@ -414,7 +414,7 @@ export function TestSuiteTreeRow(props: {
           </button>
           <button
             type='button'
-            className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-gray-700/60 hover:text-white'
+            className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-gray-700/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 ring-offset-slate-950'
             onMouseDown={(e): void => e.stopPropagation()}
             onClick={(e): void => {
               e.stopPropagation();
@@ -428,7 +428,7 @@ export function TestSuiteTreeRow(props: {
           </button>
           <button
             type='button'
-            className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-red-500/20 hover:text-red-300'
+            className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-red-500/20 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 ring-offset-slate-950'
             onMouseDown={(e): void => e.stopPropagation()}
             onClick={(e): void => {
               e.stopPropagation();

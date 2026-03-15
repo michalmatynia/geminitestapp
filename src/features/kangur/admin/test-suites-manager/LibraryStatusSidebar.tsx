@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Badge } from '@/shared/ui';
 import { KangurAdminStatusCard } from '../components/KangurAdminStatusCard';
 import { useTestSuitesManager } from './test-suites-manager.context';

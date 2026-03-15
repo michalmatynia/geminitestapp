@@ -35,9 +35,8 @@ import {
 } from '@/features/kangur/ui/services/progress';
 import { cn } from '@/shared/utils';
 
-import ClockTrainingGame, {
-  type ClockTrainingSectionId,
-} from './ClockTrainingGame';
+import ClockTrainingGame from './ClockTrainingGame';
+import type { ClockTrainingSectionId } from './clock-training-utils';
 
 type AnalogClockProps = {
   hours: number;
@@ -654,17 +653,17 @@ export default function ClockLesson(): React.JSX.Element {
               section='hours'
               showTaskTitle
               showTimeDisplay
-            />
-          ),
-        },
-      ],
-      minutes: [
-        ...MINUTES_SLIDES,
-        {
-          title: 'Ćwiczenie: Minuty',
-          tts: 'Teraz przechodzisz do praktyki minut. Ustawiaj długą wskazówkę tak jak w pierwszym panelu ćwiczenia minut.',
-          content: (
-            <ClockTrainingGame
+              />
+              ),
+              },
+              ],
+              minutes: [
+              ...MINUTES_SLIDES,
+              {
+              title: 'Ćwiczenie: Minuty',
+              tts: 'Teraz przechodzisz do praktyki minut. Ustawiaj długą wskazówkę tak jak w pierwszym panelu ćwiczenia minut.',
+              content: (
+              <ClockTrainingGame
               completionPrimaryActionLabel='Wróć do tematów'
               enableAdaptiveRetry={false}
               hideModeSwitch
@@ -673,17 +672,17 @@ export default function ClockLesson(): React.JSX.Element {
               section='minutes'
               showTaskTitle
               showTimeDisplay
-            />
-          ),
-        },
-      ],
-      combined: [
-        ...COMBINED_SLIDES,
-        {
-          title: 'Ćwiczenie: Pełny czas',
-          tts: 'Teraz przechodzisz do praktyki pełnego czasu. Ustawiaj obie wskazówki tak jak w pierwszym panelu ćwiczenia pełnego czasu.',
-          content: (
-            <ClockTrainingGame
+              />
+              ),
+              },
+              ],
+              combined: [
+              ...COMBINED_SLIDES,
+              {
+              title: 'Ćwiczenie: Pełny czas',
+              tts: 'Teraz przechodzisz do praktyki pełnego czasu. Ustawiaj obie wskazówki tak jak w pierwszym panelu ćwiczenia pełnego czasu.',
+              content: (
+              <ClockTrainingGame
               completionPrimaryActionLabel='Wróć do tematów'
               enableAdaptiveRetry={false}
               hideModeSwitch
@@ -692,11 +691,10 @@ export default function ClockLesson(): React.JSX.Element {
               section='combined'
               showTaskTitle
               showTimeDisplay
-            />
-          ),
-        },
-      ],
-    };
+              />
+              ),
+              },
+              ],    };
   }
   const { markSectionOpened, markSectionViewedCount, sectionProgress } =
     useLessonHubProgress(runtimeSlides.current);
@@ -1041,8 +1039,7 @@ export default function ClockLesson(): React.JSX.Element {
           currentTrainingPanel === 'challenge'
             ? undefined
             : TRAINING_PANEL_TASKS[view.sectionId][currentTrainingPanel]
-        }
-        section={view.sectionId}
+        }        section={view.sectionId}
         showTaskTitle={trainingPanels.length === 1 || currentTrainingPanel === 'learn'}
         showTimeDisplay={false}
       />

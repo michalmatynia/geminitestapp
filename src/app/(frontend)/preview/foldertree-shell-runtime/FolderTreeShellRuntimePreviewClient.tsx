@@ -119,6 +119,7 @@ function RouteTreeHarness({ routeId }: { routeId: RuntimeRouteId }): React.JSX.E
         type='button'
         data-testid={`node-${input.node.id}`}
         data-selected={input.isSelected ? 'true' : 'false'}
+        aria-label={input.node.name}
         className={`w-full rounded px-2 py-1 text-left text-sm ${
           input.isSelected ? 'bg-blue-600 text-white' : 'bg-transparent text-gray-300'
         }`}

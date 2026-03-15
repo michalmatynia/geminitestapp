@@ -38,6 +38,8 @@ export function KangurTestSuitePlayer({
   learnerId,
   onFinish,
 }: Props): React.JSX.Element {
+  const suiteId = suite.id;
+  const suiteTitle = suite.title;
   const prefersReducedMotion = useReducedMotion();
   const questionMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const tutor = useOptionalKangurAiTutor();
@@ -70,12 +72,12 @@ export function KangurTestSuitePlayer({
       : null;
   const selectedChoiceFocusId =
     currentQuestion && selectedLabel
-      ? `kangur-test-selection:${suite.id}:${currentQuestion.id}:${selectedLabel}`
+      ? `kangur-test-selection:${suiteId}:${currentQuestion.id}:${selectedLabel}`
       : null;
   const selectedChoiceKnowledgeReference = selectedChoiceFocusId
     ? resolveKangurTutorSectionKnowledgeReference({
       anchorId: selectedChoiceFocusId,
-      contentId: suite.id,
+      contentId: suiteId,
       focusKind: 'selection',
     })
     : null;
@@ -107,8 +109,8 @@ export function KangurTestSuitePlayer({
   const activeTutorContext = useMemo(
     () => ({
       surface: 'test' as const,
-      contentId: suite.id,
-      title: suite.title,
+      contentId: suiteId,
+      title: suiteTitle,
       questionId: currentQuestion?.id,
       selectedChoiceLabel: selectedLabel ?? undefined,
       selectedChoiceText: selectedChoiceText ?? undefined,
@@ -128,48 +130,48 @@ export function KangurTestSuitePlayer({
       selectedChoiceText,
       selectedLabel,
       showAnswer,
-      suite.id,
-      suite.title,
+      suiteId,
+      suiteTitle,
       totalQuestions,
     ]
   );
   const summaryTutorContext = useMemo(
     () => ({
       surface: 'test' as const,
-      contentId: suite.id,
-      title: suite.title,
+      contentId: suiteId,
+      title: suiteTitle,
       description: `Wynik końcowy: ${score}/${maxScore} pkt (${scorePercent}%).`,
       questionProgressLabel:
         totalQuestions > 0 ? `Ukończono ${totalQuestions}/${totalQuestions}` : undefined,
       answerRevealed: true,
     }),
-    [maxScore, score, scorePercent, suite.id, suite.title, totalQuestions]
+    [maxScore, score, scorePercent, suiteId, suiteTitle, totalQuestions]
   );
   useKangurAiTutorSessionSync({
     learnerId: learnerId ?? null,
     sessionContext: finished ? summaryTutorContext : activeTutorContext,
   });
   useKangurTutorAnchor({
-    id: `kangur-test-empty-state:${suite.id}`,
+    id: `kangur-test-empty-state:${suiteId}`,
     kind: 'empty_state',
     ref: emptyStateAnchorRef,
     surface: 'test',
     enabled: totalQuestions === 0,
     priority: 76,
     metadata: {
-      contentId: suite.id,
+      contentId: suiteId,
       label: 'Pusty zestaw testowy',
     },
   });
   useKangurTutorAnchor({
-    id: `kangur-test-question:${suite.id}:${currentQuestion?.id ?? 'none'}`,
+    id: `kangur-test-question:${suiteId}:${currentQuestion?.id ?? 'none'}`,
     kind: showAnswer ? 'review' : 'question',
     ref: questionAnchorRef,
     surface: 'test',
     enabled: Boolean(currentQuestion) && !finished,
     priority: showAnswer ? 78 : 82,
     metadata: {
-      contentId: suite.id,
+      contentId: suiteId,
       label:
         totalQuestions > 0
           ? `Pytanie ${currentIndex + 1}/${totalQuestions}`
@@ -177,15 +179,15 @@ export function KangurTestSuitePlayer({
     },
   });
   useKangurTutorAnchor({
-    id: `kangur-test-summary:${suite.id}`,
+    id: `kangur-test-summary:${suiteId}`,
     kind: 'summary',
     ref: summaryAnchorRef,
     surface: 'test',
     enabled: finished,
     priority: 70,
     metadata: {
-      contentId: suite.id,
-      label: suite.title,
+      contentId: suiteId,
+      label: suiteTitle,
     },
   });
 
@@ -295,7 +297,7 @@ export function KangurTestSuitePlayer({
                 tone='accent'
               >
                 <div className='mt-1 text-lg font-semibold text-indigo-600'>{scorePercent}%</div>
-                <div className='mt-2 text-sm text-indigo-500'>{suite.title}</div>
+                <div className='mt-2 text-sm text-indigo-500'>{suiteTitle}</div>
               </KangurSummaryPanel>
 
               <div className='space-y-4'>
@@ -309,7 +311,7 @@ export function KangurTestSuitePlayer({
                       padding='md'
                     >
                       <KangurTestQuestionRenderer
-                        contentId={suite.id}
+                        contentId={suiteId}
                         question={question}
                         selectedLabel={selected}
                         onSelect={(): void => {}}
@@ -369,7 +371,7 @@ export function KangurTestSuitePlayer({
             >
               {currentQuestion ? (
                 <KangurTestQuestionRenderer
-                  contentId={suite.id}
+                  contentId={suiteId}
                   question={currentQuestion}
                   selectedLabel={selectedLabel}
                   onSelect={handleSelect}

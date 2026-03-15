@@ -41,6 +41,7 @@ export function FrontendContactFormSection(): React.ReactNode {
                     id={fieldId}
                     rows={4}
                     placeholder={label}
+                    aria-label={label}
                     className='cms-appearance-input w-full rounded-md border px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
                     readOnly
                   />
@@ -49,6 +50,7 @@ export function FrontendContactFormSection(): React.ReactNode {
                     id={fieldId}
                     type={field.toLowerCase() === 'email' ? 'email' : 'text'}
                     placeholder={label}
+                    aria-label={label}
                     className='cms-appearance-input w-full rounded-md border px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
                     readOnly
                   />
@@ -59,6 +61,7 @@ export function FrontendContactFormSection(): React.ReactNode {
           <button
             type='submit'
             className='cms-hover-button cms-appearance-button-primary w-full rounded-md border px-6 py-2.5 text-sm font-semibold transition'
+            aria-label={submitText}
           >
             {submitText}
           </button>

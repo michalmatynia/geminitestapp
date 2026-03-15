@@ -281,8 +281,6 @@ describe('KangurParentDashboardHeroWidget', () => {
   });
 
   it('hides learner progress details when no active learner is selected', () => {
-    const setCreateLearnerModalOpen = vi.fn();
-
     useKangurParentDashboardRuntimeMock.mockReturnValue({
       activeLearner: null,
       basePath: '/kangur',
@@ -306,7 +304,7 @@ describe('KangurParentDashboardHeroWidget', () => {
         activityStats: {},
         lessonMastery: {},
       },
-      setCreateLearnerModalOpen,
+      setCreateLearnerModalOpen: vi.fn(),
       viewerName: 'parent@example.com',
       viewerRoleLabel: 'Rodzic',
     });
@@ -316,8 +314,6 @@ describe('KangurParentDashboardHeroWidget', () => {
     expect(screen.queryByTestId('kangur-parent-dashboard-daily-quest')).toBeNull();
     expect(screen.queryByTestId('kangur-parent-dashboard-track-summary')).toBeNull();
     expect(screen.getByText('Brak profilu ucznia')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Dodaj ucznia' }));
-    expect(setCreateLearnerModalOpen).toHaveBeenCalledWith(true);
     expect(getCurrentKangurDailyQuestMock).not.toHaveBeenCalled();
   });
 });

@@ -91,6 +91,7 @@ type UseKangurAiTutorPanelActionsInput = {
     | 'setDismissedSelectedText'
     | 'setDrawingImageData'
     | 'setDrawingMode'
+    | 'setDrawingPanelOpen'
     | 'setHighlightedSection'
     | 'setInputValue'
     | 'setMessageFeedbackByKey'
@@ -141,6 +142,7 @@ export function useKangurAiTutorPanelActions({
     setDismissedSelectedText,
     setDrawingImageData,
     setDrawingMode,
+    setDrawingPanelOpen,
     setHighlightedSection,
     setInputValue,
     setMessageFeedbackByKey,
@@ -524,16 +526,27 @@ export function useKangurAiTutorPanelActions({
   );
 
   const handleToggleDrawing = useCallback((): void => {
+    setDrawingPanelOpen(false);
     setDrawingMode((prev) => !prev);
-  }, [setDrawingMode]);
+  }, [setDrawingMode, setDrawingPanelOpen]);
 
   const handleDrawingComplete = useCallback(
     (dataUrl: string): void => {
       setDrawingImageData(dataUrl);
       setDrawingMode(false);
+      setDrawingPanelOpen(false);
     },
-    [setDrawingImageData, setDrawingMode]
+    [setDrawingImageData, setDrawingMode, setDrawingPanelOpen]
   );
+
+  const handleOpenDrawingPanel = useCallback((): void => {
+    setDrawingMode(false);
+    setDrawingPanelOpen(true);
+  }, [setDrawingMode, setDrawingPanelOpen]);
+
+  const handleCloseDrawingPanel = useCallback((): void => {
+    setDrawingPanelOpen(false);
+  }, [setDrawingPanelOpen]);
 
   const handleClearDrawing = useCallback((): void => {
     setDrawingImageData(null);
@@ -544,6 +557,8 @@ export function useKangurAiTutorPanelActions({
     handleDetachHighlightedSection,
     handleDetachSelectedFragment,
     handleDrawingComplete,
+    handleOpenDrawingPanel,
+    handleCloseDrawingPanel,
     handleFocusHighlightedSection,
     handleFocusSelectedFragment,
     handleFollowUpClick,

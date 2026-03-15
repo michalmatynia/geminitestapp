@@ -251,15 +251,18 @@ function useWidgetInputState() {
   const [inputValue, setInputValue] = useState('');
   const [drawingMode, setDrawingMode] = useState(false);
   const [drawingImageData, setDrawingImageData] = useState<string | null>(null);
+  const [drawingPanelOpen, setDrawingPanelOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   return {
     drawingImageData,
     drawingMode,
+    drawingPanelOpen,
     inputRef,
     inputValue,
     setDrawingImageData,
     setDrawingMode,
+    setDrawingPanelOpen,
     setInputValue,
   };
 }

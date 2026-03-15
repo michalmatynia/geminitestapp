@@ -105,6 +105,9 @@ export function KangurLearnerAssignmentsPanel({
         description='Sprawdzamy aktywne i zakończone przydziały dla tego profilu.'
         padding='lg'
         title='Ładowanie przydzielonych zadań...'
+        role='status'
+        aria-live='polite'
+        aria-atomic='true'
       />
     );
   }
@@ -119,6 +122,9 @@ export function KangurLearnerAssignmentsPanel({
         padding='lg'
         title={error}
         tone='accent'
+        role='alert'
+        aria-live='assertive'
+        aria-atomic='true'
       />
     );
   }

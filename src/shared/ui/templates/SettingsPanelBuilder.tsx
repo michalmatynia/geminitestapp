@@ -114,7 +114,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
   };
   const parseRgbToHex = (value: string): string | null => {
     const match = value.match(/rgba?\(([^)]+)\)/i);
-    if (!match) return null;
+    if (!match?.[1]) return null;
     const parts = match[1].split(',').map((part) => part.trim());
     if (parts.length < 3) return null;
     const toChannel = (part: string): number => {
@@ -128,10 +128,9 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
       }
       return clampChannel(parsed);
     };
-    const r = toChannel(parts[0]);
-    const g = toChannel(parts[1]);
-    const b = toChannel(parts[2]);
-    return (
+    const r = toChannel(parts[0]!);
+    const g = toChannel(parts[1]!);
+    const b = toChannel(parts[2]!);    return (
       '#' +
       [r, g, b]
         .map((channel) => channel.toString(16).padStart(2, '0'))
@@ -177,13 +176,12 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
   };
   const parseHslToHex = (value: string): string | null => {
     const match = value.match(/hsla?\(([^)]+)\)/i);
-    if (!match) return null;
+    if (!match?.[1]) return null;
     const parts = match[1].split(',').map((part) => part.trim());
     if (parts.length < 3) return null;
-    const hue = parseFloat(parts[0]);
-    const saturationRaw = parts[1];
-    const lightnessRaw = parts[2];
-    if (Number.isNaN(hue)) return null;
+    const hue = parseFloat(parts[0]!);
+    const saturationRaw = parts[1]!;
+    const lightnessRaw = parts[2]!;    if (Number.isNaN(hue)) return null;
     const saturation = saturationRaw.endsWith('%')
       ? parseFloat(saturationRaw) / 100
       : parseFloat(saturationRaw);

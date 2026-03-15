@@ -33,7 +33,7 @@ import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 
 type MultiplicationArrayGameProps = {
-  finishLabel?: string;
+  finishLabelVariant?: 'done' | 'topics';
   onFinish: () => void;
 };
 
@@ -77,9 +77,10 @@ const ROW_GLOW = [
 ];
 
 export default function MultiplicationArrayGame({
-  finishLabel = 'Gotowe!',
+  finishLabelVariant = 'done',
   onFinish,
 }: MultiplicationArrayGameProps): React.JSX.Element {
+  const finishLabel = finishLabelVariant === 'topics' ? 'Wróć do tematów' : 'Gotowe!';
   const prefersReducedMotion = useReducedMotion();
   const roundMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const handleFinishGame = (): void => {

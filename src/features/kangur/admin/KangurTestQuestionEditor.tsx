@@ -358,7 +358,8 @@ function KangurTestQuestionEditorContent({
               <button
                 key={preset.id}
                 type='button'
-                className='rounded-2xl border border-border/50 bg-background/30 px-4 py-3 text-left transition hover:border-cyan-400/40 hover:bg-cyan-500/5'
+                aria-label={preset.label}
+                className='rounded-2xl border border-border/50 bg-background/30 px-4 py-3 text-left transition hover:border-cyan-400/40 hover:bg-cyan-500/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
                 onClick={(): void =>
                   updateFormData(applyQuestionPresentationPreset(formData, preset.id))
                 }
@@ -391,9 +392,11 @@ function KangurTestQuestionEditorContent({
                   type='button'
                   className={
                     isActive
-                      ? 'inline-flex items-center rounded-full border border-cyan-400/50 bg-cyan-500/15 px-3 py-1.5 text-xs font-semibold text-cyan-100'
-                      : 'inline-flex items-center rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                      ? 'inline-flex items-center rounded-full border border-cyan-400/50 bg-cyan-500/15 px-3 py-1.5 text-xs font-semibold text-cyan-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
+                      : 'inline-flex items-center rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:border-primary/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
                   }
+                  aria-pressed={isActive}
+                  aria-label={option.label}
                   onClick={(): void =>
                     updateFormData({
                       editorial: {
@@ -556,10 +559,12 @@ function KangurTestQuestionEditorContent({
                     type='button'
                     className={
                       previewMode === mode
-                        ? 'rounded-full bg-cyan-500/15 px-2.5 py-1 text-[11px] font-semibold text-cyan-100'
-                        : 'rounded-full px-2.5 py-1 text-[11px] font-semibold text-muted-foreground hover:text-foreground'
+                        ? 'rounded-full bg-cyan-500/15 px-2.5 py-1 text-[11px] font-semibold text-cyan-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
+                        : 'rounded-full px-2.5 py-1 text-[11px] font-semibold text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
                     }
                     onClick={(): void => setPreviewMode(mode)}
+                    aria-pressed={previewMode === mode}
+                    aria-label={label}
                   >
                     {label}
                   </button>
@@ -573,10 +578,12 @@ function KangurTestQuestionEditorContent({
                   type='button'
                   className={
                     previewFrame === frame
-                      ? 'rounded-full bg-cyan-500/15 px-2.5 py-1 text-[11px] font-semibold text-cyan-100'
-                      : 'rounded-full px-2.5 py-1 text-[11px] font-semibold text-muted-foreground hover:text-foreground'
+                      ? 'rounded-full bg-cyan-500/15 px-2.5 py-1 text-[11px] font-semibold text-cyan-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
+                      : 'rounded-full px-2.5 py-1 text-[11px] font-semibold text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
                   }
                   onClick={(): void => setPreviewFrame(frame)}
+                  aria-pressed={previewFrame === frame}
+                  aria-label={frame === 'desktop' ? 'Desktop' : 'Compact'}
                 >
                   {frame === 'desktop' ? 'Desktop' : 'Compact'}
                 </button>

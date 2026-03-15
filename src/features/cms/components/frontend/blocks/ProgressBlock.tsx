@@ -34,9 +34,11 @@ export function ProgressBlock(): React.ReactNode {
     <div className='w-full space-y-2'>
       <div
         role='progressbar'
+        aria-label='Progress'
         aria-valuemin={0}
         aria-valuemax={max}
         aria-valuenow={Math.round(normalizedValue)}
+        aria-valuetext={`${Math.round(percent)}%`}
         className='w-full overflow-hidden'
         style={{
           backgroundColor: trackColor,

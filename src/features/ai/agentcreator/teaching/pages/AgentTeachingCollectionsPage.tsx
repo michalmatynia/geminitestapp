@@ -5,7 +5,12 @@ import Link from 'next/link';
 import React, { useMemo } from 'react';
 
 import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
-import { AdminAgentTeachingPageLayout, Button, StandardDataTablePanel } from '@/shared/ui';
+import {
+  AdminAgentTeachingBreadcrumbs,
+  Button,
+  PageLayout,
+  StandardDataTablePanel,
+} from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { AgentTeachingCollectionModal } from '../components/AgentTeachingCollectionModal';
@@ -111,9 +116,9 @@ function AgentTeachingCollectionsContent(): React.JSX.Element {
   );
 
   return (
-    <AdminAgentTeachingPageLayout
+    <PageLayout
       title='Embedding School'
-      current='Collections'
+      eyebrow={<AdminAgentTeachingBreadcrumbs current='Collections' className='mb-2' />}
       description='Knowledge base management for AI agents. Upload documents to create searchable vector embeddings.'
       headerActions={
         <Button onClick={openCreate} className='h-8 text-xs'>
@@ -136,7 +141,7 @@ function AgentTeachingCollectionsContent(): React.JSX.Element {
       />
 
       <AgentTeachingCollectionModal />
-    </AdminAgentTeachingPageLayout>
+    </PageLayout>
   );
 }
 

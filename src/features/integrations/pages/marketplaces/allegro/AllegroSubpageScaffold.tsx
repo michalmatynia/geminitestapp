@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { AdminIntegrationsPageLayout, EmptyState } from '@/shared/ui';
+import { AdminIntegrationsBreadcrumbs, EmptyState, PageLayout } from '@/shared/ui';
 
 type AllegroSubpageScaffoldProps = {
   title: string;
@@ -19,11 +19,16 @@ export function AllegroSubpageScaffold({
   children,
 }: AllegroSubpageScaffoldProps): React.JSX.Element {
   return (
-    <AdminIntegrationsPageLayout
+    <PageLayout
       title={title}
-      current={title}
-      parent={{ label: 'Allegro', href: '/admin/integrations/marketplaces/allegro' }}
       description={description}
+      eyebrow={
+        <AdminIntegrationsBreadcrumbs
+          current={title}
+          parent={{ label: 'Allegro', href: '/admin/integrations/marketplaces/allegro' }}
+        />
+      }
+      containerClassName='container mx-auto max-w-5xl py-10'
     >
       {children ??
         (emptyState ? (
@@ -34,6 +39,6 @@ export function AllegroSubpageScaffold({
             className='border-dashed border-border/60 bg-card/40 py-8'
           />
         ) : null)}
-    </AdminIntegrationsPageLayout>
+    </PageLayout>
   );
 }

@@ -69,6 +69,9 @@ export function KangurPriorityAssignments({
           className='text-sm'
           description='Ładowanie priorytetowych zadań...'
           padding='lg'
+          role='status'
+          aria-live='polite'
+          aria-atomic='true'
         />
       </KangurGlassPanel>
     );
@@ -87,6 +90,9 @@ export function KangurPriorityAssignments({
           description={error}
           padding='lg'
           tone='accent'
+          role='alert'
+          aria-live='assertive'
+          aria-atomic='true'
         />
       </KangurGlassPanel>
     );

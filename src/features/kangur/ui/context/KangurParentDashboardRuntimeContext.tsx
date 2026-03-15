@@ -274,16 +274,15 @@ export function KangurParentDashboardRuntimeProvider({
               : null;
           const fieldErrors = details?.issues?.fieldErrors ?? null;
 
-          if (fieldErrors?.password?.length) {
+          if (fieldErrors?.['password']?.length) {
             setFeedback('Hasło musi mieć co najmniej 8 znaków');
-          } else if (fieldErrors?.age?.length) {
+          } else if (fieldErrors?.['age']?.length) {
             setFeedback('Wiek ucznia musi być w zakresie 3–99');
-          } else if (fieldErrors?.loginName?.length) {
+          } else if (fieldErrors?.['loginName']?.length) {
             setFeedback('Nick może zawierać tylko litery i cyfry');
-          } else if (fieldErrors?.displayName?.length) {
+          } else if (fieldErrors?.['displayName']?.length) {
             setFeedback('Wypełnij dane ucznia');
-          } else if (
-            error instanceof Error &&
+          } else if (            error instanceof Error &&
             /validation failed|invalid kangur learner payload/i.test(error.message)
           ) {
             setFeedback('Wypełnij dane ucznia');

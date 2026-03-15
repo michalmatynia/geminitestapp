@@ -927,7 +927,7 @@ export default function SubtractingLesson(): React.JSX.Element {
         title='Gra z odejmowaniem!'
       >
         <SubtractingGardenGame
-          finishLabel='Wróć do tematów'
+          finishLabelVariant='topics'
           onFinish={() => setActiveSection(null)}
         />
       </LessonActivityStage>

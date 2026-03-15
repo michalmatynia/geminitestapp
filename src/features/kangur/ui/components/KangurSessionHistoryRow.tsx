@@ -56,8 +56,11 @@ export function KangurSessionHistoryIcon({
   accent: KangurAccent;
   testId?: string;
 }): React.JSX.Element {
+  const badgeAccent = accent;
+  const badgeTestId = testId;
+
   return (
-    <KangurIconBadge accent={accent} data-testid={testId} size='sm'>
+    <KangurIconBadge accent={badgeAccent} data-testid={badgeTestId} size='sm'>
       <span aria-hidden='true'>{icon}</span>
     </KangurIconBadge>
   );

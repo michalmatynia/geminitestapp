@@ -249,7 +249,7 @@ export function LogicalReasoningAnimation(): React.JSX.Element {
       `}</style>
       <rect className='box' x='40' y='40' width='90' height='40' rx='10' />
       <rect className='box' x='230' y='40' width='90' height='40' rx='10' />
-      <text className='label' x='70' y='65'>JESLI</text>
+      <text className='label' x='70' y='65'>JEŚLI</text>
       <text className='label' x='255' y='65'>WTEDY</text>
       <line className='arrow' x1='140' y1='60' x2='220' y2='60' />
       <polyline className='arrow' points='210,52 220,60 210,68' fill='none' />
@@ -290,7 +290,7 @@ export function LogicalAnalogiesAnimation(): React.JSX.Element {
 export function LogicalAnalogyMapAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja: relacja przenosi się z jednej pary na druga.'
+      aria-label='Animacja: relacja przenosi się z jednej pary na drugą.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 360 130'

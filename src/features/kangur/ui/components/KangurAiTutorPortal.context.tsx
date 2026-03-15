@@ -84,6 +84,14 @@ export type KangurAiTutorPortalContextValue = {
     suppressPanelSurface: boolean;
     tutorSurfaceMode: string;
   };
+  drawingPanel: {
+    shouldRender: boolean;
+    style: CSSProperties | null;
+    prefersReducedMotion: boolean;
+    hint: string | undefined;
+    onClose: () => void;
+    onComplete: (dataUrl: string) => void;
+  };
   guestIntro: {
     guestIntroDescription: string;
     guestIntroHeadline: string;

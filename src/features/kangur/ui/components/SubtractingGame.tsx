@@ -41,7 +41,7 @@ type SubtractingQuestion = {
 };
 
 type SubtractingGameProps = {
-  finishLabel?: string;
+  finishLabelVariant?: 'lesson' | 'play';
   onFinish: () => void;
 };
 
@@ -96,9 +96,10 @@ function AppleVisual({ a, b }: { a: number; b: number }): React.JSX.Element | nu
 }
 
 export default function SubtractingGame({
-  finishLabel = 'Wróć do lekcji',
+  finishLabelVariant = 'lesson',
   onFinish,
 }: SubtractingGameProps): React.JSX.Element {
+  const finishLabel = finishLabelVariant === 'play' ? 'Wróć do Grajmy' : 'Wróć do lekcji';
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);

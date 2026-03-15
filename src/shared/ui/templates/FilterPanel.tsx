@@ -158,6 +158,7 @@ function FilterPanelPresets(): JSX.Element | null {
           key={index}
           onClick={() => onApplyPreset?.(preset.values)}
           className='inline-flex items-center rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100'
+          aria-label={preset.label}
         >
           {preset.label}
         </button>

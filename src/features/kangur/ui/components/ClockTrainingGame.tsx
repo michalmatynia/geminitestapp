@@ -33,6 +33,13 @@ import { persistKangurSessionScore } from '@/features/kangur/ui/services/session
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 
+import type {
+  ClockChallengeMedal,
+  ClockChallengeResult,
+  ClockGameMode,
+  ClockTask,
+  ClockTrainingTaskPoolId,
+} from './clock-training-utils';
 import { CLOCK_TRAINING_TASKS, getClockTrainingSectionContent } from './clock-training-data';
 
 import type { MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
@@ -54,24 +61,9 @@ type ClockTrainingGameProps = {
   showTimeDisplay?: boolean;
 };
 
-export type ClockTask = {
-  hours: number;
-  minutes: number;
-};
-
 type Feedback = 'correct' | 'wrong' | null;
 type Hand = 'hour' | 'minute';
 type MinuteSnapMode = '5min' | '1min';
-export type ClockGameMode = 'practice' | 'challenge';
-export type ClockTrainingSectionId = 'hours' | 'minutes' | 'combined';
-export type ClockTrainingTaskPoolId = ClockTrainingSectionId | 'mixed';
-export type ClockChallengeMedal = 'gold' | 'silver' | 'bronze';
-
-type ClockChallengeResult = {
-  correctCount: number;
-  medal: ClockChallengeMedal;
-  totalCount: number;
-};
 
 type ClockFeedback = {
   kind: Feedback;
@@ -92,14 +84,6 @@ type DraggableClockProps = {
   submitFeedbackTitle?: string | null;
   submitNextStep?: 'next-stage' | 'next-task' | 'summary' | null;
   submitLocked?: boolean;
-};
-
-export type ClockTrainingSectionContent = {
-  accent: 'amber' | 'emerald' | 'indigo' | 'rose';
-  guidance?: string;
-  guidanceTitle?: string;
-  legend?: string;
-  promptLabel: string;
 };
 
 function shuffle<T>(items: T[]): T[] {
@@ -950,6 +934,8 @@ function DraggableClock({
       {submitFeedbackTitle ? (
         <div
           aria-live='polite'
+          role='status'
+          aria-atomic='true'
           className={cn(
             'max-w-md rounded-3xl border px-4 py-3 text-center shadow-sm',
             submitFeedback === 'correct'
@@ -968,22 +954,23 @@ function DraggableClock({
   );
 }
 
-export default function ClockTrainingGame({
-  completionPrimaryActionLabel = 'Zakończ ćwiczenie ✅',
-  enableAdaptiveRetry = true,
-  hideModeSwitch = false,
-  initialMode = 'practice',
-  onCompletionPrimaryAction,
-  onFinish,
-  onPracticeCompleted,
-  onPracticeSuccess,
-  onModeChange,
-  onChallengeSuccess,
-  practiceTasks,
-  section = 'mixed',
-  showTaskTitle = true,
-  showTimeDisplay = true,
-}: ClockTrainingGameProps): React.JSX.Element {
+export default function ClockTrainingGame(props: ClockTrainingGameProps): React.JSX.Element {
+  const {
+    completionPrimaryActionLabel = 'Zakończ ćwiczenie ✅',
+    enableAdaptiveRetry = true,
+    hideModeSwitch = false,
+    initialMode = 'practice',
+    onCompletionPrimaryAction,
+    onFinish,
+    onPracticeCompleted,
+    onPracticeSuccess,
+    onModeChange,
+    onChallengeSuccess,
+    practiceTasks,
+    section = 'mixed',
+    showTaskTitle = true,
+    showTimeDisplay = true,
+  } = props;
   const [gameMode, setGameMode] = useState<ClockGameMode>(initialMode);
   const [tasks, setTasks] = useState<ClockTask[]>(() =>
     resolveClockPracticeTaskSet(section, practiceTasks)

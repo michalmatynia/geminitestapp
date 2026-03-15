@@ -395,6 +395,8 @@ function KangurLoginPageContent(): JSX.Element {
       ? 'Użyj adresu e-mail rodzica, na który wyślemy link potwierdzający konto.'
       : identifierFieldContent?.summary ??
         'Wpisz email rodzica lub login ucznia, aby przejść do właściwego trybu logowania.';
+  const passwordFieldLabel =
+    isParentFlowVisible && parentAuthMode === 'create-account' ? 'Ustaw hasło rodzica' : 'Hasło';
   const visibleNotice = createdParentEmail ? null : notice;
   const createAccountConfirmationDetail =
     notice?.trim() || 'Kliknij link potwierdzający w e-mailu. Potem zalogujesz się tym samym e-mailem i hasłem.';
@@ -1051,6 +1053,7 @@ function KangurLoginPageContent(): JSX.Element {
           <input
             autoComplete='username'
             aria-describedby={identifierInputDescribedBy || undefined}
+            aria-label={identifierFieldLabel}
             className={inputClassName}
             data-testid='kangur-login-identifier-input'
             data-tutor-anchor='login_identifier_field'
@@ -1074,9 +1077,7 @@ function KangurLoginPageContent(): JSX.Element {
         </div>
 
         <label className='flex flex-col gap-2 text-sm font-semibold [color:var(--kangur-page-text)]'>
-          {isParentFlowVisible && parentAuthMode === 'create-account'
-            ? 'Ustaw hasło rodzica'
-            : 'Hasło'}
+          {passwordFieldLabel}
           <input
             autoComplete={
               isParentFlowVisible && parentAuthMode === 'create-account'
@@ -1084,6 +1085,7 @@ function KangurLoginPageContent(): JSX.Element {
                 : 'current-password'
             }
             aria-describedby={formDescribedBy || undefined}
+            aria-label={passwordFieldLabel}
             className={inputClassName}
             disabled={!isHydrated || isSubmitting}
             id={passwordInputId}

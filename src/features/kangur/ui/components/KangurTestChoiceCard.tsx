@@ -5,18 +5,20 @@ import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
 import { sanitizeSvg } from '@/shared/utils';
 import { CheckCircle, XCircle } from 'lucide-react';
 import { KangurAnswerChoiceBadge } from '@/features/kangur/ui/components/KangurAnswerChoiceBadge';
+import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 
 // ── Test Choice Card Sub-components ──────────────────────────────────────────
 
 export function KangurTestChoiceCardBadge({
   label,
-  className,
+  accent = 'slate',
 }: {
   label: string;
-  className?: string;
+  accent?: KangurAccent;
 }): React.JSX.Element {
+  const badgeClassName = KANGUR_ACCENT_STYLES[accent].badge;
   return (
-    <KangurAnswerChoiceBadge className={className} size='xs'>
+    <KangurAnswerChoiceBadge className={badgeClassName} size='xs'>
       {label}
     </KangurAnswerChoiceBadge>
   );

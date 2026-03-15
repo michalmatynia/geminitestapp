@@ -205,7 +205,7 @@ export function ClassificationCategoryBinsAnimation(): React.JSX.Element {
 export function ClassificationParityAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja klasyfikacji parzyste i nieparzyste: liczby wchodza do odpowiednich kolumn.'
+      aria-label='Animacja klasyfikacji parzyste i nieparzyste: liczby wchodzą do odpowiednich kolumn.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 420 130'
@@ -386,7 +386,7 @@ export function ClassificationOddOneOutAnimation(): React.JSX.Element {
 export function ClassificationOddOneOutPatternAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja intruza w szeregu: jeden element lamie powtarzajacy się wzor.'
+      aria-label='Animacja intruza w szeregu: jeden element łamie powtarzający się wzór.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 420 120'
@@ -443,7 +443,7 @@ export function ClassificationHiddenRuleAnimation(): React.JSX.Element {
         }
       `}</style>
       <rect className='rule hint' height='28' rx='10' width='180' x='120' y='12' />
-      <text className='rule-text hint' x='150' y='31'>Regula: ma rogi</text>
+      <text className='rule-text hint' x='150' y='31'>Reguła: ma rogi</text>
       <rect className='item' height='30' rx='6' width='30' x='80' y='70' />
       <rect className='match' height='30' rx='6' width='30' x='150' y='70' />
       <rect className='item' height='30' rx='6' width='30' x='220' y='70' />
@@ -455,7 +455,7 @@ export function ClassificationHiddenRuleAnimation(): React.JSX.Element {
 export function ClassificationRecapSequenceAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja podsumowania: kolejne zasady pojawiaja się po sobie.'
+      aria-label='Animacja podsumowania: kolejne zasady pojawiają się po sobie.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 420 120'
@@ -618,8 +618,8 @@ export function ClassificationVennUnionAnimation(): React.JSX.Element {
       <circle className='fill-right union' cx='250' cy='80' r='48' />
       <circle className='ring-left' cx='170' cy='80' r='48' fill='none' />
       <circle className='ring-right' cx='250' cy='80' r='48' fill='none' />
-      <text x='118' y='30' fontSize='12' fontWeight='700' fill='#2563eb'>Zbior A</text>
-      <text x='258' y='30' fontSize='12' fontWeight='700' fill='#b45309'>Zbior B</text>
+      <text x='118' y='30' fontSize='12' fontWeight='700' fill='#2563eb'>Zbiór A</text>
+      <text x='258' y='30' fontSize='12' fontWeight='700' fill='#b45309'>Zbiór B</text>
     </svg>
   );
 }

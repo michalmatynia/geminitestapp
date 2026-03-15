@@ -417,7 +417,7 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
                 aria-label='Narration voice'
                 value={voice}
                 onChange={(event): void => handleVoiceChange(event.target.value)}
-                className='mt-2 h-10 w-full rounded-xl border border-border/60 bg-background px-3 text-sm font-normal tracking-normal text-foreground outline-none ring-0'
+                className='mt-2 h-10 w-full rounded-xl border border-border/60 bg-background px-3 text-sm font-normal tracking-normal text-foreground outline-none transition focus:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
               >
                 {KANGUR_TTS_VOICE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -434,7 +434,7 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
                 value={document.narration?.locale ?? ''}
                 onChange={(event): void => handleLocaleChange(event.target.value)}
                 placeholder='pl-PL'
-                className='mt-2 h-10 w-full rounded-xl border border-border/60 bg-background px-3 text-sm font-normal tracking-normal text-foreground outline-none ring-0'
+                className='mt-2 h-10 w-full rounded-xl border border-border/60 bg-background px-3 text-sm font-normal tracking-normal text-foreground outline-none transition focus:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
               />
             </label>
           </div>
@@ -446,7 +446,10 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
                 void handlePreparePreview(false);
               }}
               disabled={!hasScriptContent || status === 'loading'}
-              className='inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60'
+              aria-label={
+                response?.mode === 'audio' ? 'Refresh preview' : 'Generate audio preview'
+              }
+              className='inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background disabled:cursor-not-allowed disabled:opacity-60'
             >
               <Sparkles className='size-4' />
               {response?.mode === 'audio' ? 'Refresh preview' : 'Generate audio preview'}
@@ -457,7 +460,8 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
                 void handlePreparePreview(true);
               }}
               disabled={!hasScriptContent || status === 'loading'}
-              className='inline-flex items-center justify-center gap-2 rounded-2xl border border-border/60 bg-background px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-card disabled:cursor-not-allowed disabled:opacity-60'
+              aria-label='Regenerate audio'
+              className='inline-flex items-center justify-center gap-2 rounded-2xl border border-border/60 bg-background px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background disabled:cursor-not-allowed disabled:opacity-60'
             >
               <RefreshCw className={cn('size-4', status === 'loading' && 'animate-spin')} />
               Regenerate audio
@@ -632,7 +636,13 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
                     </div>
                   </div>
                   <div className='mt-2 text-sm leading-6 text-foreground'>{segment.text}</div>
-                  <audio controls preload='none' src={segment.audioUrl} className='mt-3 w-full'>
+                  <audio
+                    controls
+                    preload='none'
+                    src={segment.audioUrl}
+                    className='mt-3 w-full'
+                    aria-label={`Audio segment ${index + 1}`}
+                  >
                     <track
                       default
                       kind='captions'

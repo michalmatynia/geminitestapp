@@ -26,6 +26,7 @@ export function LoadingState({
       className={cn('flex flex-col items-center justify-center p-8 text-center', className)}
       role='status'
       aria-live='polite'
+      aria-atomic='true'
     >
       <Loader2 className={cn('animate-spin text-muted-foreground', iconSize)} aria-hidden='true' />
       {message && (

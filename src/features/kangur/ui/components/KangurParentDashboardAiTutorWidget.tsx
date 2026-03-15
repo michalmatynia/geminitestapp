@@ -122,6 +122,7 @@ function TutorToggleField({
           checked={checked}
           disabled={disabled}
           onChange={(event) => onChange(event.target.checked)}
+          aria-label={label}
         />
         <div
           className={`h-5 w-10 rounded-full transition-all ${
@@ -144,7 +145,7 @@ function TutorToggleField({
   );
 }
 
-function AiTutorConfigPanel(): React.JSX.Element {
+function AiTutorConfigPanel(): React.JSX.Element | null {
   const tutorContent = useKangurAiTutorContent();
   const { activeLearner, canAccessDashboard } = useKangurParentDashboardRuntime();
   const { entry: aiTutorSectionContent } = useKangurPageContentEntry('parent-dashboard-ai-tutor');
@@ -643,7 +644,13 @@ function AiTutorConfigPanel(): React.JSX.Element {
       </KangurButton>
 
       {feedback && (
-        <p className='text-xs text-center [color:var(--kangur-page-muted-text)]'>{feedback}</p>
+        <p
+          className='text-xs text-center [color:var(--kangur-page-muted-text)]'
+          role='status'
+          aria-live='polite'
+        >
+          {feedback}
+        </p>
       )}
     </KangurSurfacePanel>
   );

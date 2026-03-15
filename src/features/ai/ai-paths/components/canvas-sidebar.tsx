@@ -232,6 +232,8 @@ export function CanvasSidebar(): React.JSX.Element {
               type='button'
               className='rounded border px-2 py-1 text-[10px] text-gray-300 hover:bg-muted/60'
               onClick={() => setPaletteCollapsed(!paletteCollapsed)}
+              aria-label={paletteCollapsed ? 'Expand node palette' : 'Collapse node palette'}
+              aria-expanded={!paletteCollapsed}
             >
               {paletteCollapsed ? 'Expand' : 'Collapse'}
             </button>

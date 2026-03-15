@@ -73,11 +73,12 @@ export function QuizEditorCard(props: {
                   onClick={(): void => markCorrect(choice.id)}
                   title='Mark as correct'
                   className={cn(
-                    'flex size-5 shrink-0 items-center justify-center rounded-full border text-xs transition',
+                    'flex size-5 shrink-0 items-center justify-center rounded-full border text-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background',
                     isCorrect
                       ? 'border-emerald-500 bg-emerald-500 text-white'
                       : 'border-border/60 bg-card/20 text-muted-foreground hover:border-emerald-400'
                   )}
+                  aria-label={isCorrect ? 'Correct answer' : `Mark choice ${index + 1} as correct`}
                 >
                   {isCorrect ? '✓' : index + 1}
                 </button>

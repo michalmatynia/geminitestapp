@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn, getTextContent } from '@/shared/utils';
 
 export interface SkipToContentLinkProps {
   targetId?: string;
@@ -34,6 +34,7 @@ export function SkipToContentLink({
     event.stopPropagation();
     focusTarget(event);
   }, [focusTarget]);
+  const ariaLabel = getTextContent(children).trim() || 'Skip to content';
 
   return (
     <a
@@ -41,6 +42,7 @@ export function SkipToContentLink({
       className={cn('app-skip-link', className)}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
+      aria-label={ariaLabel}
     >
       {children}
     </a>

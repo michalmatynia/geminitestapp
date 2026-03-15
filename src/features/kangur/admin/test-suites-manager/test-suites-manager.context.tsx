@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useMemo } from 'react';
 import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
 import type { TestSuiteFormData } from '../../test-suites';
 import { createInitialTestSuiteFormData } from '../../test-suites';
@@ -38,7 +38,7 @@ type TestSuitesManagerContextValue = {
   managerInitialView: KangurQuestionsManagerInitialView | undefined;
   setManagerInitialView: (view: KangurQuestionsManagerInitialView | undefined) => void;
   formData: TestSuiteFormData;
-  setFormData: (data: TestSuiteFormData) => void;
+  setFormData: React.Dispatch<React.SetStateAction<TestSuiteFormData>>;
   groupTitle: string;
   setGroupTitle: (title: string) => void;
   groupDescription: string;

@@ -1,5 +1,6 @@
 import {
   KANGUR_TEST_GROUPS_SETTING_KEY,
+  KANGUR_TEST_QUESTIONS_SETTING_KEY,
   KANGUR_TEST_SUITES_SETTING_KEY,
   kangurTestGroupSchema,
   kangurTestGroupsSchema,
@@ -15,7 +16,11 @@ import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 
 import { hasFullyPublishedQuestionSetForSuite } from './test-questions';
 
-export { KANGUR_TEST_GROUPS_SETTING_KEY, KANGUR_TEST_SUITES_SETTING_KEY };
+export {
+  KANGUR_TEST_GROUPS_SETTING_KEY,
+  KANGUR_TEST_QUESTIONS_SETTING_KEY,
+  KANGUR_TEST_SUITES_SETTING_KEY,
+};
 
 export const KANGUR_TEST_GROUP_SORT_ORDER_GAP = 1000;
 export const KANGUR_TEST_SUITE_SORT_ORDER_GAP = 1000;

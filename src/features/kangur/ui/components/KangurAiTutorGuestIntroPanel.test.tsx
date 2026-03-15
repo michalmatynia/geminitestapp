@@ -110,13 +110,17 @@ const createPanelBodyContextValue = (
   canStartHomeOnboardingManually: false,
   drawingImageData: null,
   drawingMode: false,
+  drawingPanelOpen: false,
+  drawingPanelAvailable: false,
   guestAuthFormVisible: false,
   emptyStateMessage: '',
   focusChipLabel: null,
   handleClearDrawing: vi.fn(),
+  handleCloseDrawingPanel: vi.fn(),
   handleDetachHighlightedSection: vi.fn(),
   handleDetachSelectedFragment: vi.fn(),
   handleDrawingComplete: vi.fn(),
+  handleOpenDrawingPanel: vi.fn(),
   handleFocusHighlightedSection: vi.fn(),
   handleFocusSelectedFragment: vi.fn(),
   handleFollowUpClick: vi.fn(),
@@ -189,10 +193,10 @@ describe('KangurAiTutorGuestIntroPanel', () => {
     renderPanel({ isAnonymousVisitor: true });
 
     expect(screen.getByText('Janek')).toBeInTheDocument();
-    expect(screen.getByText('Cześć,')).toBeInTheDocument();
-    expect(screen.getByText('Jestem Janek.')).toBeInTheDocument();
+    expect(screen.getByText(/Cześć,/)).toBeInTheDocument();
+    expect(screen.getByText(/Jestem Janek\./)).toBeInTheDocument();
     expect(
-      screen.getByText('Jak chcesz, mogę pokazać Ci, jak odnaleźć się na Stronie.')
+      screen.getByText(/Jak chcesz, mogę pokazać Ci, jak odnaleźć się na Stronie\./)
     ).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-onboarding-accept')).toHaveTextContent('Tak');
     expect(screen.getByTestId('kangur-ai-tutor-onboarding-dismiss')).toHaveTextContent('Nie');

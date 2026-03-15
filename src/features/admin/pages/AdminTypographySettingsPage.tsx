@@ -10,13 +10,14 @@ import {
 } from '@/shared/constants/typography';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
-  AdminSettingsPageLayout,
+  AdminSettingsBreadcrumbs,
   FormActions,
   FormField,
   FormSection,
   Hint,
   LoadingState,
   MetadataItem,
+  PageLayout,
   SelectSimple,
   useToast,
 } from '@/shared/ui';
@@ -58,21 +59,21 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
 
   if (settingsQuery.isLoading || !settingsQuery.data) {
     return (
-      <AdminSettingsPageLayout
+      <PageLayout
         title='Typography'
-        current='Typography'
         description='Choose an app-wide font set. Fonts are served locally from public/fonts.'
+        eyebrow={<AdminSettingsBreadcrumbs current='Typography' />}
       >
         <LoadingState message='Loading typography settings...' />
-      </AdminSettingsPageLayout>
+      </PageLayout>
     );
   }
 
   return (
-    <AdminSettingsPageLayout
+    <PageLayout
       title='Typography'
-      current='Typography'
       description='Choose an app-wide font set. Fonts are served locally from public/fonts.'
+      eyebrow={<AdminSettingsBreadcrumbs current='Typography' />}
     >
       <div className='grid gap-6 lg:grid-cols-3'>
         <div className='lg:col-span-2 space-y-6'>
@@ -145,6 +146,6 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
           </FormSection>
         </div>
       </div>
-    </AdminSettingsPageLayout>
+    </PageLayout>
   );
 }

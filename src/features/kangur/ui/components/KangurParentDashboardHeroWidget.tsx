@@ -61,7 +61,6 @@ export function KangurParentDashboardHeroWidget({
     logout,
     navigateToLogin,
     progress,
-    setCreateLearnerModalOpen,
   } = useKangurParentDashboardRuntime();
   const { entry: guestHeroContent } = useKangurPageContentEntry('parent-dashboard-guest-hero');
   const { entry: dashboardHeroContent } = useKangurPageContentEntry('parent-dashboard-hero');
@@ -254,31 +253,22 @@ export function KangurParentDashboardHeroWidget({
             />
           </div>
         </>
-      ) : (
-        <div className='mb-3 text-left' data-testid='kangur-parent-dashboard-no-learner'>
-          <KangurEmptyState
-            align='left'
-            className='text-left'
-            padding='md'
-            title='Brak profilu ucznia'
-            description='Dodaj lub wybierz profil ucznia w sekcji poniżej, aby zobaczyć postęp i misje dnia.'
-          >
-            <KangurButton
-              className='w-full sm:w-auto'
-              size='sm'
-              variant='surface'
-              onClick={() => setCreateLearnerModalOpen(true)}
-              data-doc-id='parent_open_create_learner'
-            >
-              Dodaj ucznia
-            </KangurButton>
-          </KangurEmptyState>
-        </div>
-      )}
+      ) : null}
 
       {showLearnerManagement ? (
         <div className='mt-4 text-left' ref={learnerManagementAnchorRef}>
           <KangurParentDashboardLearnerManagementWidget />
+          {!hasActiveLearner ? (
+            <div className='mt-4'>
+              <KangurEmptyState
+                align='left'
+                className='text-left'
+                padding='md'
+                title='Brak profilu ucznia'
+                description='Dodaj lub wybierz profil ucznia w sekcji poniżej, aby zobaczyć postęp i misje dnia.'
+              />
+            </div>
+          ) : null}
         </div>
       ) : null}
 

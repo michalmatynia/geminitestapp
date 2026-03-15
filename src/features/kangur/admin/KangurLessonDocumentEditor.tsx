@@ -36,7 +36,6 @@ import {
   type KangurLessonDocumentTemplateId,
 } from '@/features/kangur/lesson-documents';
 import { KANGUR_LESSON_COMPONENT_OPTIONS } from '@/features/kangur/settings';
-import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/KangurLessonDocumentRenderer';
 import type {
   KangurLessonComponentId,
   KangurLessonCalloutBlock,
@@ -54,6 +53,8 @@ import { CalloutEditorCard } from './components/CalloutEditorCard';
 import { GridItemEditor } from './components/GridItemEditor';
 import { InlineEditorCard } from './components/InlineEditorCard';
 import { KangurAdminWorkspaceSectionCard } from './components/KangurAdminWorkspaceSectionCard';
+import { KangurLessonEmptyState } from './components/KangurLessonEmptyState';
+import { KangurLessonPreviewPanel } from './components/KangurLessonPreviewPanel';
 import { QuizEditorCard } from './components/QuizEditorCard';
 import {
   DOCUMENT_TEMPLATE_OPTIONS,
@@ -110,8 +111,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
   const pages = resolveKangurLessonDocumentPages(value);
   const [activePageId, setActivePageId] = useState<string | null>(pages[0]?.id ?? null);
   const [insertQuery, setInsertQuery] = useState('');
-  const [previewScope, setPreviewScope] = useState<'page' | 'lesson'>('page');
-  const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
   useEffect(() => {
     if (!pages.some((page) => page.id === activePageId)) {
       setActivePageId(pages[0]?.id ?? null);
@@ -417,13 +416,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
     }
     return Array.from(groups.entries());
   }, [filteredQuickInsertActions]);
-  const previewActivePageId = previewScope === 'page' ? activePageId : null;
-  const previewFrameClassName =
-    previewDevice === 'mobile' ? 'max-w-[390px]' : 'max-w-2xl';
-  const previewSummaryLabel =
-    previewScope === 'page'
-      ? `Current page preview on ${previewDevice === 'mobile' ? 'mobile' : 'desktop'}`
-      : `Full lesson preview on ${previewDevice === 'mobile' ? 'mobile' : 'desktop'}`;
   const pageDraftReviews = useMemo(
     () =>
       new Map(
@@ -585,7 +577,8 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                       key={recipe.id}
                       type='button'
                       onClick={recipe.onClick}
-                      className='flex cursor-pointer items-start gap-3 rounded-2xl border border-border/60 bg-background/70 px-3 py-3 text-left transition hover:border-primary/30 hover:bg-primary/5'
+                      aria-label={`Use ${recipe.label}`}
+                      className='flex cursor-pointer items-start gap-3 rounded-2xl border border-border/60 bg-background/70 px-3 py-3 text-left transition hover:border-primary/30 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
                     >
                       <div className='rounded-xl border border-primary/20 bg-primary/10 p-2 text-primary'>
                         <Sparkles className='size-4' />
@@ -628,8 +621,9 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     key={page.id}
                     type='button'
                     onClick={(): void => setActivePageId(page.id)}
+                    aria-pressed={isActive}
                     className={cn(
-                      'rounded-2xl border px-3 py-2 text-left transition',
+                      'rounded-2xl border px-3 py-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background',
                       isActive
                         ? 'border-primary/30 bg-primary/10 text-foreground shadow-sm'
                         : 'border-border/60 bg-background/60 text-muted-foreground hover:border-primary/20 hover:text-foreground'
@@ -935,7 +929,8 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                           type='button'
                           onClick={action.onClick}
                           disabled={!activePage}
-                          className='flex cursor-pointer items-start gap-3 rounded-2xl border border-border/60 bg-background/60 px-3 py-3 text-left transition hover:border-primary/25 hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50'
+                          aria-label={action.label}
+                          className='flex cursor-pointer items-start gap-3 rounded-2xl border border-border/60 bg-background/60 px-3 py-3 text-left transition hover:border-primary/25 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background disabled:pointer-events-none disabled:opacity-50'
                         >
                           <div className='rounded-xl border border-primary/20 bg-primary/10 p-2 text-primary'>
                             <action.Icon className='size-4' />
@@ -959,36 +954,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
             activities, and responsive layouts without switching tools.
           </div>
         </KangurAdminWorkspaceSectionCard>
-        {activePage?.blocks.length === 0 ? (
-          <div className='rounded-2xl border border-dashed border-border/70 bg-card/20 p-6'>
-            <div className='text-sm font-semibold text-foreground'>This page has no content yet.</div>
-            <div className='mt-2 text-sm text-muted-foreground'>
-              Start with a teaching explanation, a visual example, or a practice task.
-            </div>
-            <div className='mt-4 flex flex-wrap gap-2'>
-              {quickInsertActions
-                .filter((action) => ['text', 'svg', 'activity'].includes(action.id))
-                .map((action) => (
-                  <Button
-                    key={action.id}
-                    type='button'
-                    size='sm'
-                    variant='outline'
-                    className='h-8 px-3'
-                    onClick={action.onClick}
-                    disabled={!activePage}
-                  >
-                    <action.Icon className='mr-1 size-3.5' />
-                    {action.id === 'text'
-                      ? 'Start with text'
-                      : action.id === 'svg'
-                        ? 'Start with SVG'
-                        : 'Start with activity'}
-                  </Button>
-                ))}
-            </div>
-          </div>
-        ) : null}
+        <KangurLessonEmptyState activePage={activePage} updateDocument={updateDocument} />
         {activePage?.blocks.map((block, index) => {
           const handlers = getHandlers(block.id);
           const isDragged = dragState.draggedBlockId === block.id;
@@ -1355,87 +1321,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
           );
         })}
       </div>
-      <div className='sticky top-4 hidden h-[calc(100vh-2rem)] flex-col gap-4 overflow-hidden rounded-2xl border border-border/60 bg-card/35 shadow-sm xl:flex'>
-        <div className='flex items-center justify-between border-b border-border/60 bg-background/70 px-4 py-3 backdrop-blur-md'>
-          <div>
-            <div className='text-sm font-semibold text-foreground'>Preview</div>
-            <div className='text-xs text-muted-foreground'>{previewSummaryLabel}</div>
-          </div>
-          <div className='flex flex-col items-end gap-2'>
-            <div className='flex items-center gap-1 rounded-xl border border-border/60 bg-background/60 p-1'>
-              <Button
-                type='button'
-                size='sm'
-                variant='outline'
-                className={cn(
-                  'h-7 px-2 text-[11px]',
-                  previewScope === 'page'
-                    ? 'border-primary/30 bg-primary/10 text-foreground'
-                    : 'text-muted-foreground'
-                )}
-                onClick={(): void => setPreviewScope('page')}
-              >
-                Current page
-              </Button>
-              <Button
-                type='button'
-                size='sm'
-                variant='outline'
-                className={cn(
-                  'h-7 px-2 text-[11px]',
-                  previewScope === 'lesson'
-                    ? 'border-primary/30 bg-primary/10 text-foreground'
-                    : 'text-muted-foreground'
-                )}
-                onClick={(): void => setPreviewScope('lesson')}
-              >
-                Full lesson
-              </Button>
-            </div>
-            <div className='flex items-center gap-1 rounded-xl border border-border/60 bg-background/60 p-1'>
-              <Button
-                type='button'
-                size='sm'
-                variant='outline'
-                className={cn(
-                  'h-7 px-2 text-[11px]',
-                  previewDevice === 'desktop'
-                    ? 'border-primary/30 bg-primary/10 text-foreground'
-                    : 'text-muted-foreground'
-                )}
-                onClick={(): void => setPreviewDevice('desktop')}
-              >
-                Desktop
-              </Button>
-              <Button
-                type='button'
-                size='sm'
-                variant='outline'
-                className={cn(
-                  'h-7 px-2 text-[11px]',
-                  previewDevice === 'mobile'
-                    ? 'border-primary/30 bg-primary/10 text-foreground'
-                    : 'text-muted-foreground'
-                )}
-                onClick={(): void => setPreviewDevice('mobile')}
-              >
-                Mobile
-              </Button>
-            </div>
-          </div>
-        </div>
-        <div className='flex-1 overflow-y-auto p-4 scrollbar-thin'>
-          <div
-            className={cn(
-              'mx-auto overflow-hidden rounded-xl border border-border/40 bg-white shadow-sm transition-[max-width] duration-200',
-              previewFrameClassName
-            )}
-            data-testid='lesson-document-preview-frame'
-          >
-            <KangurLessonDocumentRenderer document={value} activePageId={previewActivePageId} />
-          </div>
-        </div>
-      </div>
+      <KangurLessonPreviewPanel document={value} activePageId={activePageId} />
     </div>
   );
 }

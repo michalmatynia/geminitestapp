@@ -104,6 +104,8 @@ export function RuleItemExecutionSettings(): React.JSX.Element | null {
               : 'border-red-500/50 bg-red-500/10 text-red-200'
           )}
           onClick={() => patchRule({ passOutputToNext: !passOutputToNext })}
+          aria-pressed={passOutputToNext}
+          aria-label='Pass Output To Next'
         >
           {passOutputToNext ? 'ON' : 'OFF'}
         </button>
@@ -120,6 +122,8 @@ export function RuleItemExecutionSettings(): React.JSX.Element | null {
                 : 'border-red-500/50 bg-red-500/10 text-red-200'
             )}
             onClick={() => patchRule({ launchEnabled: !launchEnabled })}
+            aria-pressed={launchEnabled}
+            aria-label='Launch'
           >
             {launchEnabled ? 'ON' : 'OFF'}
           </button>

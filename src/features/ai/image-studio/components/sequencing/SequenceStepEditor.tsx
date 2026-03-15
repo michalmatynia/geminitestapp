@@ -395,6 +395,7 @@ export function SequenceStepEditor(props: SequenceStepEditorProps): React.JSX.El
                   };
                 });
               }}
+              aria-label='Invert mask'
             />
             Invert
           </label>

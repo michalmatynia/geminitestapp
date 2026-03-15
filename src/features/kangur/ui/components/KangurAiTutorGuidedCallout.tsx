@@ -1,4 +1,4 @@
-import { useId, useMemo } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { AnimatePresence, motion, type Transition } from 'framer-motion';
 
 import { resolveKangurPageContentFragment } from '@/features/kangur/page-content-fragments';
@@ -90,7 +90,6 @@ export function KangurAiTutorGuidedCallout({
   reducedMotionTransitions,
   sectionGuidanceLabel,
   sectionResponsePendingKind,
-  selectionPreview,
   shouldRender,
   showSectionGuidanceCallout,
   showSelectionGuidanceCallout,
@@ -107,13 +106,16 @@ export function KangurAiTutorGuidedCallout({
     activeSelectedText,
     activeFocus,
     canSendMessages,
+    drawingPanelAvailable,
+    drawingPanelOpen,
+    handleOpenDrawingPanel,
     handleQuickAction,
+    handleToggleDrawing,
     isLoading,
     lastInteractionIntent,
     lastPromptMode,
     isSelectionExplainPendingMode,
     messages,
-    selectedTextPreview: contextualSelectionPreview,
     sessionSurface,
     visibleQuickActions,
   } = useKangurAiTutorPanelBodyContext();
@@ -142,26 +144,12 @@ export function KangurAiTutorGuidedCallout({
     activeSelectedText ??
     (isSelectionGuidedTutorTarget(guidedTutorTarget) ? guidedTutorTarget.selectedText : null) ??
     null;
-  const resolvedSelectedPreview =
-    contextualSelectionPreview ?? selectionPreview ?? resolvedSelectedText;
-
-  const selectionPreviewHasOverflow = Boolean(
-    resolvedSelectedPreview &&
-      isSelectionGuidedTutorTarget(guidedTutorTarget) &&
-      guidedTutorTarget.selectedText.length > resolvedSelectedPreview.length
-  );
   const sectionLabel =
     sectionGuidanceLabel ??
     (isSectionGuidedTutorTarget(guidedTutorTarget)
       ? guidedTutorTarget.kind
       : sectionResponsePendingKind);
   const homeOnboardingCanGoBack = homeOnboardingStepIndex !== null && homeOnboardingStepIndex > 0;
-  const selectionPreviewInsetClassName = cn(
-    avatarPlacement === 'bottom' && 'mb-4',
-    avatarPlacement === 'top' && 'mt-2',
-    avatarPlacement === 'left' && 'ml-5',
-    avatarPlacement === 'right' && 'mr-5'
-  );
   const selectionPreparingBadgeInsetClassName = cn(
     avatarPlacement === 'bottom' && 'mb-2',
     avatarPlacement === 'top' && 'mt-1',
@@ -258,11 +246,6 @@ export function KangurAiTutorGuidedCallout({
   const shouldShowSelectionPageContentBadge =
     resolvedSelectionAssistantMessage?.answerResolutionMode === 'page_content' &&
     !shouldHideResolvedSelectionAnswer;
-  const shouldShowSelectionPreview =
-    mode !== 'selection' &&
-    mode !== 'home_onboarding' &&
-    Boolean(resolvedSelectedPreview ?? selectionPreview) &&
-    (!isResolvedSelectionCallout || shouldShowSelectionPageContentBadge);
   const shouldShowSelectionPreparingBadge =
     mode === 'selection' && !isResolvedSelectionCallout && !shouldShowSelectedKnowledgeReference;
   const shouldAnnounceCallout =
@@ -271,6 +254,31 @@ export function KangurAiTutorGuidedCallout({
   const accessibleCalloutDescription = [stepLabel, resolvedSelectionDetail]
     .filter((value): value is string => Boolean(value))
     .join(' ');
+  const [showSketchHint, setShowSketchHint] = useState(false);
+  const canOpenDrawingPanel = Boolean(drawingPanelAvailable);
+  const shouldShowSketchCta =
+    isResolvedSelectionCallout &&
+    (Boolean(selectedKnowledgeSummary) || Boolean(resolvedSelectionAssistantMessage?.content));
+  const shouldShowSketchHint = showSketchHint || drawingPanelOpen;
+
+  useEffect(() => {
+    setShowSketchHint(false);
+  }, [calloutKey]);
+
+  useEffect(() => {
+    if (!shouldShowSketchCta) {
+      setShowSketchHint(false);
+    }
+  }, [shouldShowSketchCta]);
+
+  const handleSketchRequest = (): void => {
+    setShowSketchHint(true);
+    if (canOpenDrawingPanel) {
+      handleOpenDrawingPanel();
+      return;
+    }
+    handleToggleDrawing();
+  };
 
   return (
     <AnimatePresence mode='wait'>
@@ -380,20 +388,7 @@ export function KangurAiTutorGuidedCallout({
                   ) : null}
                 </>
               ) : null}
-              {shouldShowSelectionPreview ? (
-                <KangurAiTutorWarmInsetCard
-                  data-testid='kangur-ai-tutor-selection-preview'
-                  data-avatar-avoid-edge={avatarPlacement ?? 'none'}
-                  tone='guide'
-                  className={cn(
-                    'mt-3 px-3 py-2 text-xs italic leading-relaxed',
-                    selectionPreviewInsetClassName
-                  )}
-                >
-                  {resolvedSelectedPreview}
-                  {selectionPreviewHasOverflow ? '…' : ''}
-                </KangurAiTutorWarmInsetCard>
-              ) : showSectionGuidanceCallout ? (
+              {showSectionGuidanceCallout ? (
                 <KangurAiTutorWarmInsetCard tone='guide' className='mt-3 px-3 py-2 text-xs leading-relaxed'>
                   {tutorContent.guidedCallout.sectionPrefix}: {sectionLabel}
                 </KangurAiTutorWarmInsetCard>
@@ -441,6 +436,32 @@ export function KangurAiTutorGuidedCallout({
                         {resolvedSelectionAssistantMessage?.content}
                       </KangurAiTutorWarmInsetCard>
                     </>
+                  ) : null}
+                  {shouldShowSketchCta ? (
+                    <div
+                      data-testid='kangur-ai-tutor-selection-sketch-cta'
+                      className='soft-card kangur-chat-card kangur-chat-padding-md border kangur-chat-surface-warm kangur-chat-surface-warm-shadow'
+                    >
+                      <div className='flex flex-col items-start gap-2'>
+                        <KangurButton
+                          type='button'
+                          size='sm'
+                          variant='surface'
+                          disabled={
+                            isLoading || !canSendMessages || (drawingPanelOpen && canOpenDrawingPanel)
+                          }
+                          onClick={handleSketchRequest}
+                        >
+                          {tutorContent.guidedCallout.selectionSketchCtaLabel ?? 'Rozrysuj mi to, proszę'}
+                        </KangurButton>
+                        {shouldShowSketchHint ? (
+                          <div className='text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
+                            {tutorContent.guidedCallout.selectionSketchHint ??
+                              'Otwieram planszę do rysowania. Spróbuj rozrysować podziały i porównać kształty po obrocie lub odbiciu.'}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
                   ) : null}
                   {shouldShowHintFollowUp ? (
                     <div

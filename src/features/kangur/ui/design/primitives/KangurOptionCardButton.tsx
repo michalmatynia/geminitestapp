@@ -6,7 +6,7 @@ import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared
 import { KANGUR_ACCENT_STYLES, KANGUR_OPTION_CARD_CLASSNAME, type KangurAccent } from '../tokens';
 
 export const kangurOptionCardButtonVariants = cva(
-  `${KANGUR_OPTION_CARD_CLASSNAME} relative text-left disabled:pointer-events-none`,
+  `${KANGUR_OPTION_CARD_CLASSNAME} relative text-left disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white`,
   {
     variants: {
       emphasis: {

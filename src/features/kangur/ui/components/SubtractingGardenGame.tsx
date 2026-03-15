@@ -35,7 +35,7 @@ import { cn } from '@/shared/utils';
 import type { DropResult } from '@hello-pangea/dnd';
 
 type SubtractingGardenGameProps = {
-  finishLabel?: string;
+  finishLabelVariant?: 'lesson' | 'topics';
   onFinish: () => void;
 };
 
@@ -126,12 +126,16 @@ function DraggableToken({
   token,
   index,
   isDragDisabled,
+  isSelected,
   onClick,
+  onSelect,
 }: {
   token: TokenItem;
   index: number;
   isDragDisabled: boolean;
+  isSelected: boolean;
   onClick: () => void;
+  onSelect: () => void;
 }): React.ReactElement | React.ReactPortal {
   return (
     <Draggable draggableId={token.id} index={index} isDragDisabled={isDragDisabled}>
@@ -142,8 +146,9 @@ function DraggableToken({
             {...draggableProvided.draggableProps}
             {...draggableProvided.dragHandleProps}
             className={cn(
-              'flex h-11 w-11 items-center justify-center rounded-full text-lg transition-transform duration-150 sm:h-12 sm:w-12 sm:text-xl lg:h-14 lg:w-14',
+              'flex h-11 w-11 items-center justify-center rounded-full text-lg transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white sm:h-12 sm:w-12 sm:text-xl lg:h-14 lg:w-14',
               token.style,
+              isSelected && 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white',
               snapshot.isDragging ? 'scale-110' : null,
               isDragDisabled ? 'cursor-default opacity-80' : 'cursor-grab active:cursor-grabbing'
             )}
@@ -154,6 +159,16 @@ function DraggableToken({
             }}
             role='button'
             aria-label='Przenieś obiekt'
+            aria-pressed={isSelected}
+            aria-disabled={isDragDisabled}
+            tabIndex={isDragDisabled ? -1 : 0}
+            onKeyDown={(event) => {
+              if (isDragDisabled) return;
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onSelect();
+              }
+            }}
           >
             <span aria-hidden='true'>{token.emoji}</span>
           </div>
@@ -169,9 +184,11 @@ function DraggableToken({
 }
 
 export default function SubtractingGardenGame({
-  finishLabel = 'Wróć do lekcji',
+  finishLabelVariant = 'lesson',
   onFinish,
 }: SubtractingGardenGameProps): React.JSX.Element {
+  const finishLabel =
+    finishLabelVariant === 'topics' ? 'Wróć do tematów' : 'Wróć do lekcji';
   const prefersReducedMotion = useReducedMotion();
   const roundMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const [roundIndex, setRoundIndex] = useState(0);
@@ -182,6 +199,7 @@ export default function SubtractingGardenGame({
   const [round, setRound] = useState<Round>(() => createRound(0));
   const [basket, setBasket] = useState<TokenItem[]>(() => round.tokens);
   const [sky, setSky] = useState<TokenItem[]>([]);
+  const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'correct' | 'wrong'>('idle');
   const sessionStartedAtRef = useRef(Date.now());
   const isLocked = status === 'correct';
@@ -194,6 +212,7 @@ export default function SubtractingGardenGame({
     setBasket(nextRound.tokens);
     setSky([]);
     setStatus('idle');
+    setSelectedTokenId(null);
   };
 
   const handleFinishGame = (): void => {
@@ -203,6 +222,7 @@ export default function SubtractingGardenGame({
   const handleDragEnd = (result: DropResult): void => {
     if (isLocked) return;
     if (!result.destination) return;
+    setSelectedTokenId(null);
     if (!isZoneId(result.source.droppableId) || !isZoneId(result.destination.droppableId)) {
       return;
     }
@@ -238,6 +258,7 @@ export default function SubtractingGardenGame({
   const moveToken = (token: TokenItem, from: ZoneId): void => {
     if (isLocked) return;
     setStatus('idle');
+    setSelectedTokenId(null);
     if (from === 'basket') {
       setBasket((current) => current.filter((item) => item.id !== token.id));
       setSky((current) => [...current, token]);
@@ -245,6 +266,48 @@ export default function SubtractingGardenGame({
       setSky((current) => current.filter((item) => item.id !== token.id));
       setBasket((current) => [...current, token]);
     }
+  };
+
+  const selectedToken =
+    selectedTokenId
+      ? basket.find((item) => item.id === selectedTokenId) ??
+        sky.find((item) => item.id === selectedTokenId) ??
+        null
+      : null;
+
+  const moveSelectedToken = (destination: ZoneId): void => {
+    if (isLocked || !selectedTokenId) return;
+    setStatus('idle');
+
+    let token: TokenItem | null = null;
+    let nextBasket = basket;
+    let nextSky = sky;
+
+    const basketIndex = basket.findIndex((item) => item.id === selectedTokenId);
+    if (basketIndex !== -1) {
+      token = basket[basketIndex] ?? null;
+      nextBasket = basket.filter((item) => item.id !== selectedTokenId);
+    } else {
+      const skyIndex = sky.findIndex((item) => item.id === selectedTokenId);
+      if (skyIndex !== -1) {
+        token = sky[skyIndex] ?? null;
+        nextSky = sky.filter((item) => item.id !== selectedTokenId);
+      }
+    }
+
+    if (!token) {
+      setSelectedTokenId(null);
+      return;
+    }
+
+    if (destination === 'basket') {
+      setBasket([...nextBasket, token]);
+      setSky(nextSky);
+    } else {
+      setBasket(nextBasket);
+      setSky([...nextSky, token]);
+    }
+    setSelectedTokenId(null);
   };
 
   const handleCorrectRound = (): void => {
@@ -396,7 +459,13 @@ export default function SubtractingGardenGame({
                                 token={token}
                                 index={index}
                                 isDragDisabled={isLocked}
+                                isSelected={selectedTokenId === token.id}
                                 onClick={() => moveToken(token, 'basket')}
+                                onSelect={() =>
+                                  setSelectedTokenId((current) =>
+                                    current === token.id ? null : token.id
+                                  )
+                                }
                               />
                             ))}
                             {provided.placeholder}
@@ -462,7 +531,13 @@ export default function SubtractingGardenGame({
                                 token={token}
                                 index={index}
                                 isDragDisabled={isLocked}
+                                isSelected={selectedTokenId === token.id}
                                 onClick={() => moveToken(token, 'sky')}
+                                onSelect={() =>
+                                  setSelectedTokenId((current) =>
+                                    current === token.id ? null : token.id
+                                  )
+                                }
                               />
                             ))}
                             {provided.placeholder}
@@ -474,6 +549,45 @@ export default function SubtractingGardenGame({
                           </div>
                         )}
                       </Droppable>
+                    </KangurInfoCard>
+                    <KangurInfoCard
+                      accent='slate'
+                      className='rounded-[22px]'
+                      padding='sm'
+                      tone='neutral'
+                    >
+                      <div className='flex flex-col gap-2'>
+                        <p
+                          className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'
+                          role='status'
+                          aria-live='polite'
+                          aria-atomic='true'
+                        >
+                          {selectedToken
+                            ? `Wybrany obiekt: ${selectedToken.emoji}`
+                            : 'Wybierz obiekt, aby przenieść go klawiaturą.'}
+                        </p>
+                        <div className='flex flex-wrap gap-2'>
+                          <KangurButton
+                            size='sm'
+                            type='button'
+                            variant='surface'
+                            onClick={() => moveSelectedToken('basket')}
+                            disabled={!selectedToken || isLocked}
+                          >
+                            Do koszyka
+                          </KangurButton>
+                          <KangurButton
+                            size='sm'
+                            type='button'
+                            variant='surface'
+                            onClick={() => moveSelectedToken('sky')}
+                            disabled={!selectedToken || isLocked}
+                          >
+                            Do chmury
+                          </KangurButton>
+                        </div>
+                      </div>
                     </KangurInfoCard>
                   </div>
                   <div className='flex flex-col items-center gap-3 sm:flex-row sm:justify-between'>
@@ -496,6 +610,9 @@ export default function SubtractingGardenGame({
                             ? 'text-rose-500'
                             : 'text-slate-500'
                       )}
+                      role='status'
+                      aria-live='polite'
+                      aria-atomic='true'
                     >
                       {feedbackMessage}
                     </p>

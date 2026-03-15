@@ -343,6 +343,7 @@ function MenuBuilderSection(): React.JSX.Element {
             type='button'
             onClick={input.select}
             aria-pressed={input.isSelected}
+            aria-label={input.node.name}
             className='flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
           >
             <span className='min-w-0 flex-1 truncate'>{input.node.name}</span>

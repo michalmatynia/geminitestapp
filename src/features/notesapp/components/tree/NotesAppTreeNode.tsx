@@ -121,6 +121,7 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
           type='button'
           onClick={handleSelectNode}
           aria-pressed={isSelected}
+          aria-label={`Select ${node.name}`}
           className='flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
         >
           <Icon className='size-3.5 shrink-0' />

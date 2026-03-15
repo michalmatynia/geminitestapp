@@ -14,12 +14,12 @@ import {
   resolveKangurTestSuiteGroupTitle,
   canonicalizeKangurTestSuites,
   canonicalizeKangurTestGroups,
+  createKangurTestGroup,
   createKangurTestSuiteId,
   ensureKangurTestGroupForTitle,
   formDataToTestSuite,
-  upsertKangurTestSuite,
   normalizeKangurTestGroupTitle,
-  createKangurTestGroup,
+  upsertKangurTestSuite,
   upsertKangurTestGroup,
   toTestSuiteFormData,
   promoteKangurTestSuitesLive,
@@ -35,12 +35,12 @@ import {
 } from '../../test-questions';
 import { buildKangurTestSuiteHealthMap, getKangurTestLibraryHealthSummary } from '../test-suite-health';
 import { getQuestionAuthoringSummary } from '../question-authoring-insights';
-import { importLegacyKangurQuestions } from '../test-suites/import-legacy';
 import { useTestSuitesManager } from './test-suites-manager.context';
 import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
+import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
 import type { KangurQuestionsManagerInitialView } from '../question-manager-view';
 
-export function useTestSuitesManagerLogic(settingsStore: any) {
+export function useTestSuitesManagerLogic(settingsStore: SettingsStoreValue) {
   const { toast } = useToast();
   const updateSetting = useUpdateSetting();
   const state = useTestSuitesManager();
@@ -225,7 +225,7 @@ export function useTestSuitesManagerLogic(settingsStore: any) {
       const nextSuites = canonicalizeKangurTestSuites(
         suites.filter((s) => s.id !== state.suiteToDelete!.id)
       );
-      const nextQuestions = deleteKangurTestSuiteQuestions(questionStore, state.suiteToDelete!.id);
+      const nextQuestions = deleteKangurTestSuiteQuestions(questionStore, state.suiteToDelete.id);
       await updateSetting.mutateAsync({
         key: KANGUR_TEST_SUITES_SETTING_KEY,
         value: serializeSetting(nextSuites),
@@ -343,6 +343,85 @@ export function useTestSuitesManagerLogic(settingsStore: any) {
     [publishableQuestionIdsBySuiteId, questionStore, toast, updateSetting]
   );
 
+  const handleSaveGroup = async (): Promise<void> => {
+    try {
+      const nextGroup = createKangurTestGroup({
+        title: state.groupTitle,
+        description: state.groupDescription,
+      });
+      const nextGroups = upsertKangurTestGroup(groups, nextGroup);
+      await updateSetting.mutateAsync({
+        key: KANGUR_TEST_GROUPS_SETTING_KEY,
+        value: serializeSetting(canonicalizeKangurTestGroups(nextGroups)),
+      });
+      toast('Test group saved.', { variant: 'success' });
+      state.setShowGroupModal(false);
+      state.setGroupTitle('');
+      state.setGroupDescription('');
+    } catch (error) {
+      logClientError(error, {
+        context: { source: 'AdminKangurTestSuitesManagerPage', action: 'saveGroup' },
+      });
+      toast('Failed to save group.', { variant: 'error' });
+    }
+  };
+
+  const handleDeleteGroup = async (): Promise<void> => {
+    if (!state.groupToDeleteTitle) return;
+    try {
+      const normalizedToDelete = normalizeKangurTestGroupTitle(state.groupToDeleteTitle).toLowerCase();
+      const nextGroups = groups.filter(
+        (g) => normalizeKangurTestGroupTitle(g.title).toLowerCase() !== normalizedToDelete
+      );
+      await updateSetting.mutateAsync({
+        key: KANGUR_TEST_GROUPS_SETTING_KEY,
+        value: serializeSetting(canonicalizeKangurTestGroups(nextGroups)),
+      });
+      toast('Test group deleted.', { variant: 'success' });
+      state.setGroupToDeleteTitle(null);
+    } catch (error) {
+      logClientError(error, {
+        context: { source: 'AdminKangurTestSuitesManagerPage', action: 'deleteGroup' },
+      });
+      toast('Failed to delete group.', { variant: 'error' });
+    }
+  };
+
+  const handleMoveSuiteToGroup = async (): Promise<void> => {
+    if (!state.suiteToMove || !state.suiteMoveTargetGroupTitle) return;
+    try {
+      const ensuredGroup = ensureKangurTestGroupForTitle(groups, state.suiteMoveTargetGroupTitle);
+      const next = {
+        ...state.suiteToMove,
+        groupId: ensuredGroup.group.id,
+      };
+      const nextSuites = canonicalizeKangurTestSuites(upsertKangurTestSuite(suites, next));
+      
+      if (ensuredGroup.created) {
+        await updateSetting.mutateAsync({
+          key: KANGUR_TEST_GROUPS_SETTING_KEY,
+          value: serializeSetting(ensuredGroup.groups),
+        });
+      }
+      
+      await updateSetting.mutateAsync({
+        key: KANGUR_TEST_SUITES_SETTING_KEY,
+        value: serializeSetting(nextSuites),
+      });
+      
+      toast(`Suite ${state.suiteToMove.title} moved to ${state.suiteMoveTargetGroupTitle}.`, {
+        variant: 'success',
+      });
+      state.setSuiteToMove(null);
+      state.setSuiteMoveTargetGroupTitle('');
+    } catch (error) {
+      logClientError(error, {
+        context: { source: 'AdminKangurTestSuitesManagerPage', action: 'moveSuiteToGroup' },
+      });
+      toast('Failed to move suite.', { variant: 'error' });
+    }
+  };
+
   const handleBulkMoveQuestions = async (): Promise<void> => {
     if (!state.managingSuite) return;
     const targetSuite = suites.find((suite) => suite.id === state.questionMoveTargetSuiteId) ?? null;
@@ -417,6 +496,8 @@ export function useTestSuitesManagerLogic(settingsStore: any) {
   return {
     suites,
     groups,
+    resolvedGroups,
+    groupById,
     questionStore,
     groupTitleBySuiteId,
     suiteById,
@@ -440,6 +521,9 @@ export function useTestSuitesManagerLogic(settingsStore: any) {
     handleGoLiveSuite,
     handleTakeSuiteOffline,
     handlePublishReadyForSuite,
+    handleSaveGroup,
+    handleDeleteGroup,
+    handleMoveSuiteToGroup,
     handleBulkMoveQuestions,
     isUpdating: updateSetting.isPending,
   };

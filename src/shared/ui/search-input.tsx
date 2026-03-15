@@ -45,8 +45,18 @@ const SearchInputContent = React.forwardRef<HTMLInputElement>(function SearchInp
     runtime.inputProps;
   const resolvedAriaLabel =
     ariaLabel ?? (ariaLabelledBy || id ? undefined : placeholder ?? 'Search');
+  const resolvedContainerLabel =
+    ariaLabel ?? (ariaLabelledBy ? undefined : placeholder ?? 'Search');
   return (
-    <div className={cn('relative flex items-center', runtime.containerClassName)}>
+    <div
+      className={cn('relative flex items-center', runtime.containerClassName)}
+      role='search'
+      {...(ariaLabelledBy
+        ? { 'aria-labelledby': ariaLabelledBy }
+        : resolvedContainerLabel
+          ? { 'aria-label': resolvedContainerLabel }
+          : {})}
+    >
       <Search className='absolute left-3 size-4 text-gray-500' aria-hidden='true' />
       <Input
         ref={ref}

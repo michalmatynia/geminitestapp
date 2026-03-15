@@ -104,6 +104,18 @@ vi.mock('@/features/kangur/ui/components/KangurGameHomeActionsWidget', () => ({
   },
 }));
 
+vi.mock('@/features/kangur/ui/components/KangurTransitionLink', () => ({
+  KangurTransitionLink: ({
+    children,
+    href,
+    ...rest
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
+}));
+
 vi.mock('@/features/kangur/ui/components/KangurGameHomeQuestWidget', () => ({
   KangurGameHomeQuestWidget: () => <div data-testid='kangur-home-quest-widget' />,
 }));
@@ -214,6 +226,29 @@ describe('Game page', () => {
     );
     expect(homeActionsPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({ hideWhenScreenMismatch: false })
+    );
+  });
+
+  it('shows the parent add-learner prompt under the home actions when no learner is selected', () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildRuntime('home'),
+      user: {
+        actorType: 'parent',
+        activeLearner: null,
+      },
+    });
+
+    render(<Game />);
+
+    expect(screen.getByText('Brak profilu ucznia')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Dodaj lub wybierz profil ucznia w sekcji poniżej, aby zobaczyć postęp i misje dnia.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Dodaj ucznia' })).toHaveAttribute(
+      'href',
+      '/kangur/parent-dashboard'
     );
   });
 

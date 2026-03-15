@@ -230,6 +230,7 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
                 type='button'
                 className='cursor-pointer rounded-full border px-2 py-0.5 text-[10px] text-gray-200 transition hover:border-gray-500 hover:bg-muted/50'
                 onClick={() => insertPromptPlaceholder(`{{${key}}}`)}
+                aria-label={`Insert ${formatPlaceholderLabel(key)} placeholder`}
               >
                 {formatPlaceholderLabel(key)}
               </button>
@@ -250,6 +251,7 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
                   type='button'
                   className='cursor-pointer rounded-full border px-2 py-0.5 text-[10px] text-gray-200 transition hover:border-gray-500 hover:bg-muted/50'
                   onClick={() => insertPromptPlaceholder(`{{${port}}}`)}
+                  aria-label={`Insert ${formatPlaceholderLabel(port)} placeholder`}
                 >
                   {formatPlaceholderLabel(port)}
                 </button>

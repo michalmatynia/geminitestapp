@@ -24,6 +24,8 @@ export function KangurAppLoader({ visible }: KangurAppLoaderProps): React.JSX.El
           key='kangur-app-loader'
           aria-busy='true'
           aria-live='polite'
+          aria-atomic='true'
+          role='status'
           className='fixed inset-0 z-[90] flex items-center justify-center overflow-hidden px-4'
           data-testid='kangur-app-loader'
           initial={allowIntroAnimation ? { opacity: 0 } : { opacity: 1 }}

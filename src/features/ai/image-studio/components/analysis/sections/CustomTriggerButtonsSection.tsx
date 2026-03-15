@@ -255,6 +255,7 @@ function EditRow(props: EditRowProps): React.JSX.Element {
         onChange={(e) => onLabelChange(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder='Button label…'
+        aria-label='Button label'
         className={cn(
           'h-6 w-full rounded border border-border/60 bg-background/50 px-2',
           'text-xs text-gray-200 placeholder:text-gray-600',

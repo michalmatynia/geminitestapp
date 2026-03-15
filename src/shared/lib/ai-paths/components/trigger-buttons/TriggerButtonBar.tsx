@@ -190,6 +190,7 @@ function ErrorDetailDialog({
           type='button'
           onClick={handleCopy}
           className='self-start text-[11px] text-blue-300 hover:text-blue-200'
+          aria-label='Copy error'
         >
           {copied ? 'Copied!' : 'Copy error'}
         </button>

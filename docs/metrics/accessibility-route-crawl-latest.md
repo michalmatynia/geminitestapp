@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-14'
+last_reviewed: '2026-03-15'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Accessibility Route Crawl Report
 
-Generated at: 2026-03-14T15:15:11.222Z
+Generated at: 2026-03-15T07:45:47.230Z
 
 ## Summary
 
@@ -25,7 +25,7 @@ Generated at: 2026-03-14T15:15:11.222Z
 
 | Route | Audience | Status | Duration | Errors |
 | --- | --- | --- | ---: | ---: |
-| / | public | FAIL | 38.2s | 1 |
+| / | public | FAIL | 23.7s | 1 |
 | /auth/signin | public | FAIL | 0ms | 0 |
 | /auth/register | public | FAIL | 0ms | 0 |
 | /kangur/login | public | FAIL | 0ms | 0 |
@@ -70,16 +70,6 @@ Ensure landmarks are unique
 Fix any of the following:
   The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguishable
 https://dequeuniversity.com/rules/axe/4.11/landmark-unique?application=axeAPI
-
-[moderate] region: All page content should be contained by landmarks
-Ensure all page content is contained by landmarks
-- .\[color\:var\(--kangur-chat-kicker-text\,\#b45309\)\]
-Fix any of the following:
-  Some page content is not contained by landmarks
-- .focus\:border-amber-300
-Fix any of the following:
-  Some page content is not contained by landmarks
-https://dequeuniversity.com/rules/axe/4.11/region?application=axeAPI
 
    at support/accessibility.ts:100
 

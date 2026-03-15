@@ -196,6 +196,8 @@ export function AdminImageStudioPromptsPage(): React.JSX.Element {
                       type='button'
                       className='min-w-0 flex-1 px-2 py-2 text-left'
                       onClick={() => setSelectedPromptId(entry.id)}
+                      aria-pressed={isSelected}
+                      aria-label={`Select prompt ${entry.name}`}
                     >
                       <div className='truncate text-sm text-gray-100'>{entry.name}</div>
                       <div className='mt-0.5 truncate text-[11px] text-gray-500'>

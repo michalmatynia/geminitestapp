@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-03-15T06:13:52.584Z",
+  "generatedAt": "2026-03-15T06:32:50.488Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -9,19 +9,17 @@
     "scope": "src/**/*.{ts,tsx}"
   },
   "filters": {
-    "domains": [
-      "feature:ai"
-    ],
-    "minRisk": 10
+    "domains": [],
+    "minRisk": 0
   },
   "thresholds": {
     "minClusterSize": 2
   },
   "summary": {
     "filesScanned": 6016,
-    "exportedDeclarationsScanned": 4550,
-    "candidateDeclarationsScanned": 4523,
-    "exactShapeClusters": 9,
+    "exportedDeclarationsScanned": 4543,
+    "candidateDeclarationsScanned": 4516,
+    "exactShapeClusters": 0,
     "nearShapeClusters": 0,
     "clustersAfterFilters": 0,
     "declarationsInClusters": 0,

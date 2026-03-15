@@ -241,7 +241,7 @@ export default function LessonSlideSection({
                 aria-setsize={totalSlides}
                 className={cn(
                   KANGUR_STEP_PILL_CLASSNAME,
-                  'h-[14px] min-w-[14px] cursor-pointer',
+                  'h-[14px] min-w-[14px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
                   i === slide
                     ? ['w-8 scale-[1.04]', dotActiveClass]
                     : i < slide
@@ -258,7 +258,7 @@ export default function LessonSlideSection({
                 aria-label='Otwórz sekretny panel'
                 className={cn(
                   KANGUR_STEP_PILL_CLASSNAME,
-                  'h-[14px] min-w-[40px] cursor-pointer justify-center text-[10px] font-black shadow-sm'
+                  'h-[14px] min-w-[40px] cursor-pointer justify-center text-[10px] font-black shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white'
                 )}
                 style={{
                   background:

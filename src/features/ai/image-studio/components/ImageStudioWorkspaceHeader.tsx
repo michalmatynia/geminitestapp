@@ -35,6 +35,7 @@ export function ImageStudioWorkspaceHeader({
   onReturnToProductStudio,
   children,
 }: ImageStudioWorkspaceHeaderProps): React.JSX.Element {
+  const handleReturnToProductStudio = onReturnToProductStudio;
   const tabsList = (
     <TabsList className='bg-card' aria-label='Image studio workspace tabs'>
       <TabsTrigger value='studio'>Studio</TabsTrigger>
@@ -56,7 +57,7 @@ export function ImageStudioWorkspaceHeader({
             size='xs'
             variant='outline'
             className='h-7'
-            onClick={onReturnToProductStudio}
+            onClick={handleReturnToProductStudio}
           >
             Back To Product Studio
           </Button>

@@ -134,7 +134,13 @@ export function SectionBlockRenderer({ block }: { block: BlockInstance }): React
                   <style data-cms-custom-css={block.id}>{blockCustomCss}</style>
                 ) : null}
                 {linkUrl ? (
-                  <a href={linkUrl} target={linkTarget} rel={linkRel} className='block w-full'>
+                  <a
+                    href={linkUrl}
+                    target={linkTarget}
+                    rel={linkRel}
+                    className='block w-full'
+                    aria-label={linkUrl}
+                  >
                     {innerContent}
                   </a>
                 ) : (

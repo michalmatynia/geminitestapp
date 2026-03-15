@@ -41,6 +41,7 @@ export function FrontendNewsletterSection(): React.ReactNode {
           <button
             type='submit'
             className='cms-hover-button cms-appearance-button-primary rounded-md border px-6 py-3 text-sm font-semibold transition sm:rounded-l-none'
+            aria-label={buttonText}
           >
             {buttonText}
           </button>

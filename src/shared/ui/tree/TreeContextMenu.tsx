@@ -120,6 +120,7 @@ export function TreeContextMenu({
                   item.onSelect?.();
                   setOpen(false);
                 }}
+                aria-label={item.label}
                 className={cn(
                   'relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors',
                   item.disabled

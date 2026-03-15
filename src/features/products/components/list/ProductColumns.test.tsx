@@ -199,7 +199,7 @@ describe('ProductColumns queued badge', () => {
     render(cell);
 
     expect(
-      screen.getByRole('button', { name: 'Keychain | 13 cm | Faux Leather' })
+      screen.getByRole('button', { name: 'Open Keychain | 13 cm | Faux Leather' })
     ).toBeInTheDocument();
   });
 

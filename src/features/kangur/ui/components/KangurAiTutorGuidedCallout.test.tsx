@@ -37,7 +37,11 @@ const panelBodyContextMock = vi.hoisted(() => ({
     },
   },
   canSendMessages: true,
+  drawingPanelAvailable: false,
+  drawingPanelOpen: false,
+  handleOpenDrawingPanel: vi.fn(),
   handleQuickAction: vi.fn(),
+  handleToggleDrawing: vi.fn(),
   isLoading: false,
   lastInteractionIntent: null,
   lastPromptMode: null,
@@ -293,9 +297,6 @@ describe('KangurAiTutorGuidedCallout', () => {
     );
 
     expect(screen.getByText('Wyjaśniam ten fragment.')).toHaveClass('sr-only');
-    expect(screen.getByTestId('kangur-ai-tutor-selection-preview')).toHaveTextContent(
-      '🏗️ MISTRZOSTWO 67% 2/4 odznak'
-    );
     expect(
       screen.queryByText('🏗️ MISTRZOSTWO 67% 2/4 odznak Budowniczy mistrzostwa · 2/3 lekcje')
     ).not.toBeInTheDocument();
@@ -432,69 +433,6 @@ describe('KangurAiTutorGuidedCallout', () => {
     expect(screen.queryByRole('button', { name: 'Rozumiem' })).not.toBeInTheDocument();
   });
 
-  it('hides the quoted selection preview once a generic selection answer is fully resolved', () => {
-    widgetStateContextMock.guidedTutorTarget = {
-      kind: 'selection_excerpt',
-      mode: 'selection',
-      selectedText: '2 + 2',
-    };
-    widgetStateContextMock.selectionConversationContext = {
-      focusLabel: 'Dodawanie',
-      knowledgeReference: null,
-      messageStartIndex: 0,
-      selectedText: '2 + 2',
-    };
-    panelBodyContextMock.activeSelectedText = '2 + 2';
-    panelBodyContextMock.messages = [
-      {
-        content: 'Wyjaśnij zaznaczony fragment krok po kroku.',
-        role: 'user',
-      },
-      {
-        content: 'Nowe wyjaśnienie fragmentu.',
-        role: 'assistant',
-      },
-    ];
-
-    render(
-      <KangurAiTutorGuidedCallout
-        avatarPlacement='bottom'
-        calloutKey='selection-generic-resolved'
-        calloutTestId='kangur-ai-tutor-selection-guided-callout'
-        detail={null}
-        entryDirection='left'
-        headerLabel='Janek'
-        mode='selection'
-        onAction={vi.fn()}
-        placement='top'
-        prefersReducedMotion
-        reducedMotionTransitions={{
-          instant: { duration: 0 },
-          stableState: { opacity: 1, scale: 1, y: 0 },
-        }}
-        sectionGuidanceLabel={null}
-        sectionResponsePendingKind={null}
-        selectionPreview='2 + 2'
-        shouldRender
-        showSectionGuidanceCallout={false}
-        showSelectionGuidanceCallout
-        stepLabel={null}
-        style={{ left: 16, position: 'fixed', top: 24, width: 320 }}
-        title='Wyjaśniam ten fragment.'
-        transitionDuration={0}
-        transitionEase={[0.22, 1, 0.36, 1]}
-      />
-    );
-
-    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-answer')).toHaveTextContent(
-      'Nowe wyjaśnienie fragmentu.'
-    );
-    expect(screen.queryByTestId('kangur-ai-tutor-selection-preview')).not.toBeInTheDocument();
-    expect(
-      screen.queryByText('Za chwilę otworzę wyjaśnienie dokładnie dla zaznaczonego tekstu.')
-    ).not.toBeInTheDocument();
-  });
-
   it('shows the saved page-content fragment in the first guided modal before the answer resolves', () => {
     pageContentQueryMock.entry = {
       fragments: [
@@ -588,9 +526,6 @@ describe('KangurAiTutorGuidedCallout', () => {
     );
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-source')).toHaveTextContent(
       'Ta ścieżka zbiera odznaki mistrzostwa i pokazuje, ile lekcji zostało do ukończenia.'
-    );
-    expect(screen.getByTestId('kangur-ai-tutor-selection-preview')).toHaveTextContent(
-      '🏗️ MISTRZOSTWO 67% 2/4 odznak'
     );
     expect(
       screen.queryByText('🏗️ MISTRZOSTWO 67% 2/4 odznak Budowniczy mistrzostwa · 2/3 lekcje')

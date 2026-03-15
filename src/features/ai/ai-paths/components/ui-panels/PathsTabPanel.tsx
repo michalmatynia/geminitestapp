@@ -238,6 +238,7 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
                 isActive ? 'text-white hover:text-gray-200' : 'text-gray-400 hover:text-gray-300'
               )}
               onClick={() => handleOpenPath(path.id)}
+              aria-label={`Open ${path.name?.trim() || `Path ${path.id.slice(0, 6)}`}`}
             >
               {isLocked ? <Lock className='size-3 text-amber-300/90' /> : null}
               {path.name?.trim() || `Path ${path.id.slice(0, 6)}`}

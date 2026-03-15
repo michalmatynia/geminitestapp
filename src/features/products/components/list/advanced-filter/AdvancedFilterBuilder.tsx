@@ -436,7 +436,12 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
                 {valueOptions && valueOptions.length > 0 && fieldConfig.kind === 'string' ? (
                   <datalist id={dataListId}>
                     {valueOptions.map((option: AdvancedFilterValueOption) => (
-                      <option key={option.value} value={option.value} label={option.label} />
+                      <option
+                        key={option.value}
+                        value={option.value}
+                        label={option.label}
+                        aria-label={option.label || option.value}
+                      />
                     ))}
                   </datalist>
                 ) : null}

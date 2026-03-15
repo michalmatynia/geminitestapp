@@ -34,6 +34,7 @@ export function KangurAiTutorGuestIntroPanel({
   prefersReducedMotion,
 }: Props): JSX.Element | null {
   const [dismissed, setDismissed] = useState(false);
+  const handleClose = onClose;
   const shouldShowProposal = isAnonymousVisitor && !dismissed;
   const handleYes = (): void => {
     setDismissed(true);
@@ -83,7 +84,7 @@ export function KangurAiTutorGuestIntroPanel({
             </KangurAiTutorChromeKicker>
             <KangurAiTutorChromeCloseButton
               data-testid='kangur-ai-tutor-guest-intro-close'
-              onClick={onClose}
+              onClick={handleClose}
               aria-label='Zamknij'
             />
           </div>
@@ -100,7 +101,7 @@ export function KangurAiTutorGuestIntroPanel({
                 <button
                   type='button'
                   data-testid='kangur-ai-tutor-onboarding-accept'
-                  className='cursor-pointer transition-transform [color:var(--kangur-chat-panel-text,var(--kangur-page-text))] hover:scale-[1.02]'
+                  className='cursor-pointer transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white [color:var(--kangur-chat-panel-text,var(--kangur-page-text))] hover:scale-[1.02]'
                   onClick={handleYes}
                 >
                   Tak
@@ -108,7 +109,7 @@ export function KangurAiTutorGuestIntroPanel({
                 <button
                   type='button'
                   data-testid='kangur-ai-tutor-onboarding-dismiss'
-                  className='cursor-pointer transition-transform [color:var(--kangur-chat-panel-text,var(--kangur-page-text))] hover:scale-[1.02]'
+                  className='cursor-pointer transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white [color:var(--kangur-chat-panel-text,var(--kangur-page-text))] hover:scale-[1.02]'
                   onClick={() => {
                     setDismissed(true);
                     onDismiss();

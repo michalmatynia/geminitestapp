@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { AlertTriangle, ClipboardList, Folders, ListOrdered, Plus, Sparkles, WandSparkles } from 'lucide-react';
 import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils/ui-utils';

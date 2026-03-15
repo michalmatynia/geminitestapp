@@ -747,13 +747,16 @@ export default function AddingLesson(): React.JSX.Element {
         accent='amber'
         headerTestId='adding-lesson-game-header'
         icon='🎮'
-        maxWidthClassName='max-w-none'
+        maxWidthClassName='max-w-2xl'
         onBack={() => setActiveSection(null)}
         sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
         shellTestId='adding-lesson-game-shell'
         title='Gra z piłkami!'
       >
-        <AddingBallGame finishLabel='Wróć do tematów' onFinish={() => setActiveSection(null)} />
+        <AddingBallGame
+          finishLabelVariant='topics'
+          onFinish={() => setActiveSection(null)}
+        />
       </LessonActivityStage>
     );
   }

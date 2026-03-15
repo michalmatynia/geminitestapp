@@ -18,12 +18,11 @@ export function AdminCaseResolverPageLayout({
   parent,
   ...props
 }: AdminCaseResolverPageLayoutProps): React.JSX.Element {
+  const breadcrumbProps = { current, parent, className: 'mb-2' };
+  const eyebrow = <AdminCaseResolverBreadcrumbs {...breadcrumbProps} />;
+  const pageLayoutProps = { ...props, eyebrow };
+
   return (
-    <PageLayout
-      eyebrow={
-        <AdminCaseResolverBreadcrumbs current={current} parent={parent} className='mb-2' />
-      }
-      {...props}
-    />
+    <PageLayout {...pageLayoutProps} />
   );
 }

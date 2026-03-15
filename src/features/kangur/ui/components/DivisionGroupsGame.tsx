@@ -36,7 +36,7 @@ import { cn } from '@/shared/utils';
 import type { DropResult } from '@hello-pangea/dnd';
 
 type DivisionGroupsGameProps = {
-  finishLabel?: string;
+  finishLabelVariant?: 'lesson' | 'topics';
   onFinish: () => void;
 };
 
@@ -157,12 +157,16 @@ function DraggableToken({
   token,
   index,
   isDragDisabled,
+  isSelected,
   onClick,
+  onSelect,
 }: {
   token: TokenItem;
   index: number;
   isDragDisabled: boolean;
+  isSelected: boolean;
   onClick: () => void;
+  onSelect: () => void;
 }): React.ReactElement | React.ReactPortal {
   return (
     <Draggable draggableId={token.id} index={index} isDragDisabled={isDragDisabled}>
@@ -173,8 +177,9 @@ function DraggableToken({
             {...draggableProvided.draggableProps}
             {...draggableProvided.dragHandleProps}
             className={cn(
-              'flex h-10 w-10 items-center justify-center rounded-full text-base transition-transform duration-150 sm:h-12 sm:w-12 sm:text-lg lg:h-14 lg:w-14',
+              'flex h-10 w-10 items-center justify-center rounded-full text-base transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white sm:h-12 sm:w-12 sm:text-lg lg:h-14 lg:w-14',
               token.style,
+              isSelected && 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white',
               snapshot.isDragging ? 'scale-110' : null,
               isDragDisabled ? 'cursor-default opacity-80' : 'cursor-grab active:cursor-grabbing'
             )}
@@ -185,6 +190,16 @@ function DraggableToken({
             }}
             role='button'
             aria-label='Przenieś element'
+            aria-pressed={isSelected}
+            aria-disabled={isDragDisabled}
+            tabIndex={isDragDisabled ? -1 : 0}
+            onKeyDown={(event) => {
+              if (isDragDisabled) return;
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onSelect();
+              }
+            }}
           >
             <span aria-hidden='true'>{token.emoji}</span>
           </div>
@@ -200,9 +215,10 @@ function DraggableToken({
 }
 
 export default function DivisionGroupsGame({
-  finishLabel = 'Wróć do lekcji',
+  finishLabelVariant = 'lesson',
   onFinish,
 }: DivisionGroupsGameProps): React.JSX.Element {
+  const finishLabel = finishLabelVariant === 'topics' ? 'Wróć do tematów' : 'Wróć do lekcji';
   const prefersReducedMotion = useReducedMotion();
   const roundMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const [roundIndex, setRoundIndex] = useState(0);
@@ -214,6 +230,7 @@ export default function DivisionGroupsGame({
   const [pool, setPool] = useState<TokenItem[]>(() => round.tokens);
   const [groups, setGroups] = useState<TokenItem[][]>(() => buildGroups(round.divisor));
   const [remainder, setRemainder] = useState<TokenItem[]>([]);
+  const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'correct' | 'wrong'>('idle');
   const sessionStartedAtRef = useRef(Date.now());
   const isLocked = status === 'correct';
@@ -224,6 +241,7 @@ export default function DivisionGroupsGame({
     setGroups(buildGroups(nextRound.divisor));
     setRemainder([]);
     setStatus('idle');
+    setSelectedTokenId(null);
   };
 
   const handleFinishGame = (): void => {
@@ -262,6 +280,7 @@ export default function DivisionGroupsGame({
   const handleDragEnd = (result: DropResult): void => {
     if (isLocked) return;
     if (!result.destination) return;
+    setSelectedTokenId(null);
 
     const sourceId = result.source.droppableId;
     const destinationId = result.destination.droppableId;
@@ -396,6 +415,7 @@ export default function DivisionGroupsGame({
   const moveFromPool = (token: TokenItem): void => {
     if (isLocked) return;
     setStatus('idle');
+    setSelectedTokenId(null);
 
     const targetIndex = groups.findIndex((group) => group.length < round.quotient);
     setPool((current) => current.filter((item) => item.id !== token.id));
@@ -413,6 +433,7 @@ export default function DivisionGroupsGame({
   const moveFromGroup = (token: TokenItem, groupIndex: number): void => {
     if (isLocked) return;
     setStatus('idle');
+    setSelectedTokenId(null);
     setGroups((current) => {
       const next = [...current];
       next[groupIndex] = (next[groupIndex] ?? []).filter((item) => item.id !== token.id);
@@ -424,8 +445,79 @@ export default function DivisionGroupsGame({
   const moveFromRemainder = (token: TokenItem): void => {
     if (isLocked) return;
     setStatus('idle');
+    setSelectedTokenId(null);
     setRemainder((current) => current.filter((item) => item.id !== token.id));
     setPool((current) => [...current, token]);
+  };
+
+  const selectedToken = selectedTokenId
+    ? pool.find((item) => item.id === selectedTokenId) ??
+      remainder.find((item) => item.id === selectedTokenId) ??
+      groups.flat().find((item) => item.id === selectedTokenId) ??
+      null
+    : null;
+
+  const moveSelectedToken = (destination: ZoneId): void => {
+    if (isLocked || !selectedTokenId) return;
+    setStatus('idle');
+
+    let token: TokenItem | null = null;
+    let nextPool = pool;
+    let nextRemainder = remainder;
+    const nextGroups = groups.map((group) => {
+      const index = group.findIndex((item) => item.id === selectedTokenId);
+      if (index === -1) return group;
+      token = group[index] ?? null;
+      const updated = [...group];
+      updated.splice(index, 1);
+      return updated;
+    });
+
+    if (!token) {
+      const poolIndex = pool.findIndex((item) => item.id === selectedTokenId);
+      if (poolIndex !== -1) {
+        token = pool[poolIndex] ?? null;
+        nextPool = pool.filter((item) => item.id !== selectedTokenId);
+      }
+    }
+
+    if (!token) {
+      const remainderIndex = remainder.findIndex((item) => item.id === selectedTokenId);
+      if (remainderIndex !== -1) {
+        token = remainder[remainderIndex] ?? null;
+        nextRemainder = remainder.filter((item) => item.id !== selectedTokenId);
+      }
+    }
+
+    if (!token) {
+      setSelectedTokenId(null);
+      return;
+    }
+    const resolvedToken = token;
+
+    if (destination === 'pool') {
+      setPool([...nextPool, resolvedToken]);
+      setRemainder(nextRemainder);
+      setGroups(nextGroups);
+    } else if (destination === 'remainder') {
+      setPool(nextPool);
+      setRemainder([...nextRemainder, resolvedToken]);
+      setGroups(nextGroups);
+    } else {
+      const groupIndex = Number(destination.slice(6));
+      if (!Number.isFinite(groupIndex) || groupIndex >= nextGroups.length) {
+        return;
+      }
+      setPool(nextPool);
+      setRemainder(nextRemainder);
+      setGroups(
+        nextGroups.map((group, index) =>
+          index === groupIndex ? [...group, resolvedToken] : group
+        )
+      );
+    }
+
+    setSelectedTokenId(null);
   };
 
   const handleCheck = (): void => {
@@ -585,7 +677,13 @@ export default function DivisionGroupsGame({
                               token={token}
                               index={index}
                               isDragDisabled={isLocked}
+                              isSelected={selectedTokenId === token.id}
                               onClick={() => moveFromPool(token)}
+                              onSelect={() =>
+                                setSelectedTokenId((current) =>
+                                  current === token.id ? null : token.id
+                                )
+                              }
                             />
                           ))}
                           {provided.placeholder}
@@ -634,7 +732,13 @@ export default function DivisionGroupsGame({
                                   token={token}
                                   index={index}
                                   isDragDisabled={isLocked}
+                                  isSelected={selectedTokenId === token.id}
                                   onClick={() => moveFromGroup(token, groupIndex)}
+                                  onSelect={() =>
+                                    setSelectedTokenId((current) =>
+                                      current === token.id ? null : token.id
+                                    )
+                                  }
                                 />
                               ))}
                               {provided.placeholder}
@@ -682,7 +786,13 @@ export default function DivisionGroupsGame({
                               token={token}
                               index={index}
                               isDragDisabled={isLocked}
+                              isSelected={selectedTokenId === token.id}
                               onClick={() => moveFromRemainder(token)}
+                              onSelect={() =>
+                                setSelectedTokenId((current) =>
+                                  current === token.id ? null : token.id
+                                )
+                              }
                             />
                           ))}
                           {provided.placeholder}
@@ -694,6 +804,57 @@ export default function DivisionGroupsGame({
                         </div>
                       )}
                     </Droppable>
+                  </KangurInfoCard>
+                  <KangurInfoCard
+                    accent='slate'
+                    className='rounded-[22px]'
+                    padding='sm'
+                    tone='neutral'
+                  >
+                    <div className='flex flex-col gap-2'>
+                      <p
+                        className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'
+                        role='status'
+                        aria-live='polite'
+                        aria-atomic='true'
+                      >
+                        {selectedToken
+                          ? `Wybrany element: ${selectedToken.emoji}`
+                          : 'Wybierz element, aby przenieść go klawiaturą.'}
+                      </p>
+                      <div className='flex flex-wrap gap-2'>
+                        <KangurButton
+                          size='sm'
+                          type='button'
+                          variant='surface'
+                          onClick={() => moveSelectedToken('pool')}
+                          disabled={!selectedToken || isLocked}
+                        >
+                          Do puli
+                        </KangurButton>
+                        {groups.map((_, index) => (
+                          <KangurButton
+                            key={`division-group-move-${index}`}
+                            size='sm'
+                            type='button'
+                            variant='surface'
+                            onClick={() => moveSelectedToken(groupId(index))}
+                            disabled={!selectedToken || isLocked}
+                          >
+                            Do grupy {index + 1}
+                          </KangurButton>
+                        ))}
+                        <KangurButton
+                          size='sm'
+                          type='button'
+                          variant='surface'
+                          onClick={() => moveSelectedToken('remainder')}
+                          disabled={!selectedToken || isLocked}
+                        >
+                          Do reszty
+                        </KangurButton>
+                      </div>
+                    </div>
                   </KangurInfoCard>
                   <div className='flex flex-col items-center gap-3 sm:flex-row sm:justify-between'>
                     <KangurButton
@@ -715,6 +876,9 @@ export default function DivisionGroupsGame({
                             ? 'text-rose-500'
                             : 'text-slate-500'
                       )}
+                      role='status'
+                      aria-live='polite'
+                      aria-atomic='true'
                     >
                       {feedbackMessage}
                     </p>

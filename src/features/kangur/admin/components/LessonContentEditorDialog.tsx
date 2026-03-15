@@ -383,7 +383,7 @@ function LessonContentEditorDialogContent({
             <button
               type='button'
               onClick={handleRequestClose}
-              className='inline-flex size-8 cursor-pointer items-center justify-center rounded-lg text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+              className='inline-flex size-8 cursor-pointer items-center justify-center rounded-lg text-muted-foreground hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
               aria-label='Close editor'
               title={'Close editor'}>
               <X className='size-4' />
@@ -579,7 +579,8 @@ function LessonMetadataWorkspacePanel({
             value={lesson.title}
             onChange={(event): void => onLessonChange({ ...lesson, title: event.target.value })}
             placeholder='Lesson title'
-            className='h-10 w-full rounded-xl border border-border/60 bg-background/70 px-3 text-sm text-foreground outline-none transition focus:border-primary/40'
+            aria-label='Title'
+            className='h-10 w-full rounded-xl border border-border/60 bg-background/70 px-3 text-sm text-foreground outline-none transition focus:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
           />
         </div>
 
@@ -597,7 +598,8 @@ function LessonMetadataWorkspacePanel({
             onChange={(event): void => onLessonChange({ ...lesson, emoji: event.target.value })}
             placeholder='📚'
             maxLength={12}
-            className='h-10 w-full rounded-xl border border-border/60 bg-background/70 px-3 text-sm text-foreground outline-none transition focus:border-primary/40'
+            aria-label='Emoji'
+            className='h-10 w-full rounded-xl border border-border/60 bg-background/70 px-3 text-sm text-foreground outline-none transition focus:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
           />
         </div>
 
@@ -617,7 +619,7 @@ function LessonMetadataWorkspacePanel({
                 componentId: event.target.value as KangurLesson['componentId'],
               })
             }
-            className='h-10 w-full rounded-xl border border-border/60 bg-background/70 px-3 text-sm text-foreground outline-none transition focus:border-primary/40'
+            className='h-10 w-full rounded-xl border border-border/60 bg-background/70 px-3 text-sm text-foreground outline-none transition focus:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
           >
             {KANGUR_LESSON_COMPONENT_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -643,8 +645,9 @@ function LessonMetadataWorkspacePanel({
               onLessonChange({ ...lesson, description: event.target.value })
             }
             placeholder='Short lesson description'
+            aria-label='Description'
             rows={4}
-            className='w-full rounded-xl border border-border/60 bg-background/70 px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary/40'
+            className='w-full rounded-xl border border-border/60 bg-background/70 px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
           />
         </div>
 
@@ -669,6 +672,7 @@ function LessonMetadataWorkspacePanel({
               onChange={(event): void =>
                 onLessonChange({ ...lesson, enabled: event.target.checked })
               }
+              aria-label='Visible in learner app'
               className='size-4 rounded border-border/60 bg-background/70 accent-sky-400'
             />
           </label>

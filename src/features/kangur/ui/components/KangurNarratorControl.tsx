@@ -403,7 +403,7 @@ export function KangurNarratorControl({
       data-testid={shellTestId}
       className={cn(isIconMode ? 'w-auto' : 'w-full', className)}
     >
-      <audio ref={audioRef} preload='none' className='hidden'>
+      <audio ref={audioRef} preload='none' className='hidden' aria-label='Narration audio'>
         <track
           default
           kind='captions'

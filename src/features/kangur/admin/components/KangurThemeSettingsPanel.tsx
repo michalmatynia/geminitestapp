@@ -714,8 +714,10 @@ export function KangurThemeSettingsPanel({
               key={key}
               type='button'
               onClick={() => setMode(key)}
+              aria-pressed={mode === key}
+              aria-label={cfg.label}
               className={[
-                'flex-1 rounded-xl px-4 py-2 text-sm font-semibold transition-colors',
+                'flex-1 rounded-xl px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background',
                 mode === key
                   ? 'bg-card text-foreground shadow-sm ring-1 ring-border/60'
                   : 'text-muted-foreground hover:text-foreground',

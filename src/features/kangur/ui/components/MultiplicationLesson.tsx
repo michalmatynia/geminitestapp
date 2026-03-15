@@ -350,7 +350,7 @@ export default function MultiplicationLesson(): React.JSX.Element {
             </KangurLessonCaption>
           </KangurLessonCallout>
           <MultiplicationArrayGame
-            finishLabel='Wróć do tematów'
+            finishLabelVariant='topics'
             onFinish={() => setActiveSection(null)}
           />
         </KangurLessonStack>

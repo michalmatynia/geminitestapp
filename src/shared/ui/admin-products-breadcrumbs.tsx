@@ -1,15 +1,11 @@
 import * as React from 'react';
 
-import { AdminSectionBreadcrumbs } from './admin-section-breadcrumbs';
-
-type AdminProductsBreadcrumbsNode = {
-  label: string;
-  href?: string;
-};
+import { Breadcrumbs } from './Breadcrumbs';
+import { buildAdminSectionBreadcrumbItems, type AdminBreadcrumbNode } from './admin-section-breadcrumbs';
 
 type AdminProductsBreadcrumbsProps = {
   current: string;
-  parent?: AdminProductsBreadcrumbsNode;
+  parent?: AdminBreadcrumbNode;
   className?: string;
 };
 
@@ -18,12 +14,14 @@ export function AdminProductsBreadcrumbs({
   parent,
   className,
 }: AdminProductsBreadcrumbsProps): React.JSX.Element {
+  const items = buildAdminSectionBreadcrumbItems({
+    section: { label: 'Products', href: '/admin/products' },
+    parent,
+    current,
+  });
+  const resolvedClassName = className;
+
   return (
-    <AdminSectionBreadcrumbs
-      section={{ label: 'Products', href: '/admin/products' }}
-      parent={parent}
-      current={current}
-      className={className}
-    />
+    <Breadcrumbs items={items} className={resolvedClassName} />
   );
 }

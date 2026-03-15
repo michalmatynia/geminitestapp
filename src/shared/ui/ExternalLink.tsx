@@ -2,7 +2,7 @@ import { ExternalLink as ExternalLinkIcon } from 'lucide-react';
 import Link from 'next/link';
 import React, { type ReactNode } from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn, getTextContent } from '@/shared/utils';
 
 interface ExternalLinkProps {
   href: string;
@@ -24,6 +24,9 @@ export function ExternalLink({
   onClick,
 }: ExternalLinkProps): React.JSX.Element {
   const isExternal = href.startsWith('http') || href.startsWith('mailto:');
+  const inferredLabel = getTextContent(children).trim();
+  const ariaLabel =
+    inferredLabel || (isExternal ? `External link to ${href}` : `Link to ${href}`);
 
   const icon = showIcon ? (
     <ExternalLinkIcon
@@ -55,6 +58,7 @@ export function ExternalLink({
         rel='noopener noreferrer'
         className={finalClassName}
         onClick={onClick}
+        aria-label={ariaLabel}
       >
         {content}
       </a>
@@ -62,7 +66,12 @@ export function ExternalLink({
   }
 
   return (
-    <Link href={href} className={finalClassName} {...(onClick ? { onClick } : {})}>
+    <Link
+      href={href}
+      className={finalClassName}
+      aria-label={ariaLabel}
+      {...(onClick ? { onClick } : {})}
+    >
       {content}
     </Link>
   );

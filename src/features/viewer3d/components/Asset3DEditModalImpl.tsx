@@ -120,7 +120,7 @@ export function Asset3DEditModal(props: Asset3DEditModalProps): React.JSX.Elemen
            aria-label='Enter category...' title='Enter category...'/>
           <datalist id='categories-list'>
             {existingCategories.map((cat: string) => (
-              <option key={cat} value={cat} />
+              <option key={cat} value={cat} aria-label={cat} />
             ))}
           </datalist>
         </div>
@@ -150,7 +150,7 @@ export function Asset3DEditModal(props: Asset3DEditModalProps): React.JSX.Elemen
               {existingTags
                 .filter((t: string) => !tags.includes(t))
                 .map((tag: string) => (
-                  <option key={tag} value={tag} />
+                  <option key={tag} value={tag} aria-label={tag} />
                 ))}
             </datalist>
             <Button

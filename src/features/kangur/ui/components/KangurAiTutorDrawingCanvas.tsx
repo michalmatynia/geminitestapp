@@ -184,7 +184,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         <button
           type='button'
           onClick={onCancel}
-          className='cursor-pointer rounded-full p-1 [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
+          className='cursor-pointer rounded-full p-1 [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
           aria-label={tutorContent.common.closeAria}
           title={tutorContent.common.closeAria}>
           <X className='h-3.5 w-3.5' />
@@ -213,7 +213,8 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
               key={color}
               type='button'
               aria-label={`Kolor ${color}`}
-              className={`h-5 w-5 cursor-pointer rounded-full border-2 transition-transform ${
+              aria-pressed={selectedColor === color && !isEraser}
+              className={`h-5 w-5 cursor-pointer rounded-full border-2 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white ${
                 selectedColor === color && !isEraser
                   ? 'scale-110 kangur-chat-accent-border'
                   : '[border-color:var(--kangur-soft-card-border)] hover:scale-105'
@@ -235,7 +236,8 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
               key={w}
               type='button'
               aria-label={`Grubość ${w}px`}
-              className={`flex h-6 w-6 cursor-pointer items-center justify-center rounded-full transition-colors ${
+              aria-pressed={selectedWidth === w && !isEraser}
+              className={`flex h-6 w-6 cursor-pointer items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white ${
                 selectedWidth === w && !isEraser
                   ? '[background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'
                   : '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]'
@@ -258,7 +260,8 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         <button
           type='button'
           aria-label={drawingContent?.penLabel ?? 'Pióro'}
-          className={`flex h-6 w-6 cursor-pointer items-center justify-center rounded-full transition-colors ${
+          aria-pressed={!isEraser}
+          className={`flex h-6 w-6 cursor-pointer items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white ${
             !isEraser
               ? '[background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'
               : '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]'
@@ -270,7 +273,8 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         <button
           type='button'
           aria-label={drawingContent?.eraserLabel ?? 'Gumka'}
-          className={`flex h-6 w-6 cursor-pointer items-center justify-center rounded-full transition-colors ${
+          aria-pressed={isEraser}
+          className={`flex h-6 w-6 cursor-pointer items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white ${
             isEraser
               ? '[background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'
               : '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]'
@@ -285,7 +289,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         <button
           type='button'
           aria-label={drawingContent?.undoLabel ?? 'Cofnij'}
-          className='flex h-6 w-6 cursor-pointer items-center justify-center rounded-full [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))] disabled:opacity-30'
+          className='flex h-6 w-6 cursor-pointer items-center justify-center rounded-full [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))] disabled:opacity-30'
           disabled={strokes.length === 0}
           onClick={handleUndo}
           title={drawingContent?.undoLabel ?? 'Cofnij'}>
@@ -294,7 +298,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         <button
           type='button'
           aria-label={drawingContent?.clearLabel ?? 'Wyczyść'}
-          className='flex h-6 w-6 cursor-pointer items-center justify-center rounded-full [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors hover:[background:var(--kangur-chat-danger-background,#fff1f2)] hover:[color:var(--kangur-chat-danger-text,#ef4444)] disabled:opacity-30'
+          className='flex h-6 w-6 cursor-pointer items-center justify-center rounded-full [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white hover:[background:var(--kangur-chat-danger-background,#fff1f2)] hover:[color:var(--kangur-chat-danger-text,#ef4444)] disabled:opacity-30'
           disabled={strokes.length === 0}
           onClick={handleClear}
           title={drawingContent?.clearLabel ?? 'Wyczyść'}>
@@ -306,7 +310,8 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         <button
           type='button'
           onClick={onCancel}
-          className='cursor-pointer font-semibold transition-colors [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] hover:scale-[1.02] hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
+          aria-label={drawingContent?.cancelLabel ?? 'Anuluj'}
+          className='cursor-pointer font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] hover:scale-[1.02] hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
         >
           {drawingContent?.cancelLabel ?? 'Anuluj'}
         </button>
@@ -314,7 +319,8 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
           type='button'
           disabled={strokes.length === 0}
           onClick={handleDone}
-          className='cursor-pointer font-semibold transition-colors [color:var(--kangur-chat-panel-text,var(--kangur-page-text))] hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40'
+          aria-label={drawingContent?.doneLabel ?? 'Gotowe'}
+          className='cursor-pointer font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white [color:var(--kangur-chat-panel-text,var(--kangur-page-text))] hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40'
         >
           {drawingContent?.doneLabel ?? 'Gotowe'}
         </button>

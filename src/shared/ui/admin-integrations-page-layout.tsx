@@ -19,11 +19,16 @@ export function AdminIntegrationsPageLayout({
   containerClassName = 'container mx-auto max-w-5xl py-10',
   ...props
 }: AdminIntegrationsPageLayoutProps): React.JSX.Element {
+  const breadcrumbProps = { current, parent };
+  const eyebrow = <AdminIntegrationsBreadcrumbs {...breadcrumbProps} />;
+  const resolvedContainerClassName = containerClassName;
+  const pageLayoutProps = {
+    ...props,
+    eyebrow,
+    containerClassName: resolvedContainerClassName,
+  };
+
   return (
-    <PageLayout
-      eyebrow={<AdminIntegrationsBreadcrumbs current={current} parent={parent} />}
-      containerClassName={containerClassName}
-      {...props}
-    />
+    <PageLayout {...pageLayoutProps} />
   );
 }

@@ -663,15 +663,15 @@ function ShadowPreview(): React.JSX.Element {
   );
 }
 
-export function KangurThemePreviewPanel({
-  section,
-  theme,
-  mode,
-}: KangurThemePreviewPanelProps): React.JSX.Element {
+export function KangurThemePreviewPanel(
+  props: KangurThemePreviewPanelProps
+): React.JSX.Element {
+  const { section, theme, mode } = props;
+  const activeTheme = theme;
   const resolvedSection = section ?? 'Core Palette';
   const appearance = React.useMemo(
-    () => resolveKangurStorefrontAppearance(resolveAppearanceMode(mode), theme),
-    [mode, theme]
+    () => resolveKangurStorefrontAppearance(resolveAppearanceMode(mode), activeTheme),
+    [mode, activeTheme]
   );
   const appearanceVars = React.useMemo(
     () => appearance.vars as React.CSSProperties,
@@ -690,7 +690,7 @@ export function KangurThemePreviewPanel({
         <div className='text-xs text-gray-400 mt-1'>Editing: {resolvedSection}</div>
       </div>
       <div className='flex-1 overflow-y-auto p-4 space-y-3'>
-        {resolvedSection === 'Core Palette' && <CorePalettePreview theme={theme} />}
+        {resolvedSection === 'Core Palette' && <CorePalettePreview theme={activeTheme} />}
         {resolvedSection === 'Text Overrides' && <TextOverridesPreview />}
         {resolvedSection === 'Logo & Loader' && <LogoPreview />}
         {resolvedSection === 'Backgrounds and Surfaces' && <BackgroundPreview />}
@@ -717,7 +717,7 @@ export function KangurThemePreviewPanel({
           resolvedSection !== 'Typography and Layout' &&
           resolvedSection !== 'Shape and Spacing' &&
           resolvedSection !== 'Shadows and Depth' && (
-            <CorePalettePreview theme={theme} />
+            <CorePalettePreview theme={activeTheme} />
           )}
       </div>
     </div>

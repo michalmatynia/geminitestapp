@@ -47,22 +47,28 @@ export function SettingsStoreProvider({
   children,
   mode = 'lite',
   suppressOwnQuery = false,
+  canReadAdminSettings,
 }: {
   children: React.ReactNode;
   mode?: 'admin' | 'lite';
   suppressOwnQuery?: boolean;
+  canReadAdminSettings?: boolean;
 }): React.JSX.Element {
   const pathname = usePathname();
   const useAdmin = mode === 'admin';
+  const allowAdminSettings = canReadAdminSettings ?? true;
+  const shouldUseAdminSettings = useAdmin && allowAdminSettings;
   const isAdminRoute = pathname.startsWith('/admin');
-  const shouldSuppressLiteQuery = !useAdmin && (suppressOwnQuery || isAdminRoute);
-  const shouldSuppressAdminQuery = useAdmin && suppressOwnQuery;
+  const shouldSuppressLiteQuery = suppressOwnQuery || (!useAdmin && isAdminRoute);
+  const shouldSuppressAdminQuery = suppressOwnQuery;
   const adminQuery = useSettingsMap({
     scope: 'light',
-    enabled: useAdmin && !shouldSuppressAdminQuery,
+    enabled: shouldUseAdminSettings && !shouldSuppressAdminQuery,
   });
-  const liteQuery = useLiteSettingsMap({ enabled: !useAdmin && !shouldSuppressLiteQuery });
-  const settingsQuery = useAdmin ? adminQuery : liteQuery;
+  const liteQuery = useLiteSettingsMap({
+    enabled: !shouldUseAdminSettings && !shouldSuppressLiteQuery,
+  });
+  const settingsQuery = shouldUseAdminSettings ? adminQuery : liteQuery;
   const mapData = settingsQuery.data;
   const isLoading = settingsQuery.isLoading;
   const isFetching = settingsQuery.isFetching;

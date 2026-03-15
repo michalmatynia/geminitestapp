@@ -438,7 +438,7 @@ export function GeometryPerimeterSumAnimation(): React.JSX.Element {
 export function GeometryShapeBuildAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja: figura powstaje z odcinkow.'
+      aria-label='Animacja: figura powstaje z odcinków.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 240 160'
@@ -490,7 +490,7 @@ export function GeometryShapeBuildAnimation(): React.JSX.Element {
 export function GeometryShapeFillAnimation(): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja: wnetrze figury jest wypelnione.'
+      aria-label='Animacja: wnętrze figury jest wypełnione.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 240 160'

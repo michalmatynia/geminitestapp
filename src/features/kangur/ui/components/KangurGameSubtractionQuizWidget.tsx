@@ -20,7 +20,7 @@ export function KangurGameSubtractionQuizWidget(): React.JSX.Element | null {
       shellTestId='kangur-subtraction-quiz-top-section'
       title='Quiz odejmowania'
     >
-      <SubtractingGame finishLabel='Wróć do Grajmy' onFinish={handleHome} />
+      <SubtractingGame finishLabelVariant='play' onFinish={handleHome} />
     </LessonActivityStage>
   );
 }

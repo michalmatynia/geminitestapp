@@ -9,12 +9,13 @@ import { AGENT_PERSONA_MOOD_PRESETS } from '@/features/ai/agentcreator/utils/per
 import type { AgentPersona, AgentPersonaMoodId } from '@/shared/contracts/agents';
 import type { PersonaMemoryRecord, PersonaMemorySourceType } from '@/shared/contracts/persona-memory';
 import {
-  AdminAgentCreatorPageLayout,
+  AdminAgentCreatorBreadcrumbs,
   Button,
   Card,
   FormField,
   Hint,
   Input,
+  PageLayout,
   SelectSimple,
   StandardDataTablePanel,
   Tag,
@@ -172,10 +173,14 @@ export function AgentPersonaMemoryPage({
   );
 
   return (
-    <AdminAgentCreatorPageLayout
+    <PageLayout
       title={persona ? `${persona.name} Memory Bank` : 'Persona Memory Bank'}
-      current='Memory'
-      parent={{ label: 'Personas', href: '/admin/agentcreator/personas' }}
+      eyebrow={
+        <AdminAgentCreatorBreadcrumbs
+          current='Memory'
+          parent={{ label: 'Personas', href: '/admin/agentcreator/personas' }}
+        />
+      }
       description='Search durable persona memories and the chat history stored in the same bank.'
       headerActions={
         <Button
@@ -187,6 +192,7 @@ export function AgentPersonaMemoryPage({
           Refresh
         </Button>
       }
+      containerClassName='mx-auto w-full max-w-none py-10'
     >
       <div className='mb-6 grid gap-4 md:grid-cols-4'>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-black/30'>
@@ -368,6 +374,6 @@ export function AgentPersonaMemoryPage({
         )}
         expanded={expanded}
       />
-    </AdminAgentCreatorPageLayout>
+    </PageLayout>
   );
 }

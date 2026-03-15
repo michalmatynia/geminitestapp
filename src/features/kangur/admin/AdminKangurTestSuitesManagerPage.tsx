@@ -9,9 +9,9 @@ import {
   type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree';
 import { FolderTreeSearchBar, useMasterFolderTreeSearch } from '@/features/foldertree';
+import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
-  Badge,
   FolderTreePanel,
   Skeleton,
 } from '@/shared/ui';
@@ -41,6 +41,7 @@ import { GroupMetadataPanel } from './test-suites-manager/GroupMetadataPanel';
 import { ORDERED_TREE_INSTANCE, CATALOG_TREE_INSTANCE } from './test-suites-manager/test-suites-manager.contracts';
 
 function TestSuitesManagerInner({ standalone }: { standalone: boolean }) {
+  const isStandalone = standalone;
   const settingsStore = useSettingsStore();
   const state = useTestSuitesManager();
   const logic = useTestSuitesManagerLogic(settingsStore);
@@ -75,39 +76,44 @@ function TestSuitesManagerInner({ standalone }: { standalone: boolean }) {
                 KANGUR_TEST_SUITE_SORT_ORDER_GAP,
             }))
           );
-          // Note: updateSetting needs to be accessed from logic or passed
-          // For now I'll assume we can use it from logic if we export it
+          await updateSetting.mutateAsync({
+            key: KANGUR_TEST_SUITES_SETTING_KEY,
+            value: serializeSetting(nextSuites),
+          });
         },
       }),
-    [state.treeMode, logic.suiteById, logic.suites]
+    [state.treeMode, logic.suiteById, logic.suites, updateSetting]
   );
 
-  const {
-    controller,
-    capabilities,
-    appearance: { rootDropUi },
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({ instance: activeTreeInstance, nodes: masterNodes, adapter });
+          const {
+          controller,
+          capabilities,
+          appearance: { rootDropUi },
+          viewport: { scrollToNodeRef },
+          } = useMasterFolderTreeShell({ instance: activeTreeInstance, nodes: masterNodes, adapter });
 
-  const searchState = useMasterFolderTreeSearch(masterNodes, state.searchQuery, {
-    config: capabilities.search,
-  });
+          const searchState = useMasterFolderTreeSearch(masterNodes, state.searchQuery, {
+          config: capabilities.search,
+          });
 
-  const renderNode = useCallback(
-    (input: FolderTreeViewportRenderNodeInput): React.ReactNode => (
-      <TestSuiteTreeRow
-        input={input}
-        suiteById={logic.suiteById}
-        groupTitleBySuiteId={logic.groupTitleBySuiteId}
-        questionCountBySuiteId={logic.questionCountBySuiteId}
-        suiteHealthById={logic.suiteHealthById}
-        onEditGroup={(title) => {
-          // Logic for opening edit group modal
-        }}
-        onDeleteGroup={state.setGroupToDeleteTitle}
-        onMoveSuiteToGroup={(suite) => {
-          // Logic for opening move suite modal
-        }}
+          const renderNode = useCallback(
+          (input: FolderTreeViewportRenderNodeInput): React.ReactNode => (
+          <TestSuiteTreeRow
+          input={input}
+          suiteById={logic.suiteById}
+          groupTitleBySuiteId={logic.groupTitleBySuiteId}
+          questionCountBySuiteId={logic.questionCountBySuiteId}
+          suiteHealthById={logic.suiteHealthById}
+          onEditGroup={(title) => {
+            state.setEditingGroupOriginalTitle(title);
+            state.setGroupTitle(title);
+            state.setGroupDescription(logic.groupById.get(title)?.description ?? '');
+          }}
+          onDeleteGroup={state.setGroupToDeleteTitle}
+          onMoveSuiteToGroup={(suite) => {
+            state.setSuiteToMove(suite);
+            state.setSuiteMoveTargetGroupTitle(logic.groupTitleBySuiteId.get(suite.id) ?? '');
+          }}
         onEdit={logic.openEditModal}
         onManageQuestions={(suite) => logic.openQuestionsManager(suite)}
         onGoLive={(suite) => {
@@ -145,7 +151,7 @@ function TestSuitesManagerInner({ standalone }: { standalone: boolean }) {
   );
 
   if (state.managingSuite) {
-    return <QuestionsManagerWorkspace standalone={standalone} />;
+    return <QuestionsManagerWorkspace standalone={isStandalone} />;
   }
 
   const mainWorkspace = (
@@ -242,9 +248,11 @@ export function AdminKangurTestSuitesManagerPage({
 }: {
   standalone?: boolean;
 }): React.JSX.Element {
+  const isStandalone = standalone;
+
   return (
     <TestSuitesManagerProvider>
-      <TestSuitesManagerInner standalone={standalone} />
+      <TestSuitesManagerInner standalone={isStandalone} />
     </TestSuitesManagerProvider>
   );
 }

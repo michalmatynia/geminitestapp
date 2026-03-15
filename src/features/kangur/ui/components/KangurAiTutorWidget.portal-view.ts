@@ -2,12 +2,12 @@ import { useMemo } from 'react';
 
 import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
 
+import { getEstimatedBubbleHeight } from './KangurAiTutorGuidedLayout';
+import { getTutorBubblePlacement } from './KangurAiTutorWidget.focus-layout';
 import { getGuestIntroPanelStyle } from './KangurAiTutorWidget.storage';
-
-
 import type { KangurAiTutorPanelBodyContextValue } from './KangurAiTutorPanelBody.context';
 import type { KangurAiTutorPortalContextValue } from './KangurAiTutorPortal.context';
-import type { TutorMotionProfile, TutorQuickAction } from './KangurAiTutorWidget.shared';
+import { EDGE_GAP, type TutorMotionProfile, type TutorQuickAction } from './KangurAiTutorWidget.shared';
 import type {
   GuidedTutorTarget,
   TutorPanelShellMode,
@@ -31,11 +31,42 @@ const isGuidedCalloutAvatarPlacement = (
 ): value is GuidedCalloutAvatarPlacement =>
   value === 'top' || value === 'bottom' || value === 'left' || value === 'right';
 
+const DRAWING_PANEL_WIDTH = 360;
+const DRAWING_PANEL_HEIGHT = 360;
+
+const createRect = (left: number, top: number, width: number, height: number): DOMRect => {
+  if (typeof DOMRect === 'function') {
+    return new DOMRect(left, top, width, height);
+  }
+
+  return {
+    x: left,
+    y: top,
+    width,
+    height,
+    top,
+    right: left + width,
+    bottom: top + height,
+    left,
+    toJSON: () => ({
+      x: left,
+      y: top,
+      width,
+      height,
+      top,
+      right: left + width,
+      bottom: top + height,
+      left,
+    }),
+  } as DOMRect;
+};
+
 type UseKangurAiTutorPortalViewModelInput = {
   activeFocus: KangurAiTutorPanelBodyContextValue['activeFocus'];
   activeSectionRect: KangurAiTutorPanelBodyContextValue['activeSectionRect'];
   activeSelectedText: KangurAiTutorPanelBodyContextValue['activeSelectedText'];
   activeSelectionPageRect: KangurAiTutorPanelBodyContextValue['activeSelectionPageRect'];
+  activeSelectionProtectedRect: DOMRect | null;
   askModalHelperText: KangurAiTutorPanelBodyContextValue['askModalHelperText'];
   avatarAnchorKind: KangurAiTutorPortalContextValue['avatar']['avatarAnchorKind'];
   avatarAttachmentSide: KangurAiTutorPortalContextValue['panel']['avatarAttachmentSide'];
@@ -65,6 +96,7 @@ type UseKangurAiTutorPortalViewModelInput = {
   contextualTutorMode: 'selection_explain' | 'section_explain' | null;
   drawingImageData: KangurAiTutorPanelBodyContextValue['drawingImageData'];
   drawingMode: KangurAiTutorPanelBodyContextValue['drawingMode'];
+  drawingPanelOpen: boolean;
   emptyStateMessage: KangurAiTutorPanelBodyContextValue['emptyStateMessage'];
   floatingAvatarPlacement: KangurAiTutorPortalContextValue['avatar']['floatingAvatarPlacement'];
   focusChipLabel: KangurAiTutorPanelBodyContextValue['focusChipLabel'];
@@ -103,6 +135,8 @@ type UseKangurAiTutorPortalViewModelInput = {
   handleGuestIntroDismiss: KangurAiTutorPortalContextValue['guestIntro']['onDismiss'];
   handleCloseGuidedCallout: KangurAiTutorPortalContextValue['guidedCallout']['onClose'];
   handleDrawingComplete: KangurAiTutorPanelBodyContextValue['handleDrawingComplete'];
+  handleOpenDrawingPanel: () => void;
+  handleCloseDrawingPanel: () => void;
   handleDetachHighlightedSection: KangurAiTutorPanelBodyContextValue['handleDetachHighlightedSection'];
   handleDetachPanelFromContext: KangurAiTutorPortalContextValue['panel']['onDetachPanelFromContext'];
   handleDetachSelectedFragment: KangurAiTutorPanelBodyContextValue['handleDetachSelectedFragment'];
@@ -164,6 +198,7 @@ type UseKangurAiTutorPortalViewModelInput = {
   narratorSettings: KangurAiTutorPanelBodyContextValue['narratorSettings'];
   panelAvatarPlacement: KangurAiTutorPortalContextValue['panel']['panelAvatarPlacement'];
   panelEmptyStateMessage: KangurAiTutorPanelBodyContextValue['panelEmptyStateMessage'];
+  panelMeasuredHeight: number | null;
   panelOpenAnimation: KangurAiTutorPortalContextValue['panel']['panelOpenAnimation'];
   panelSnapState: KangurAiTutorPortalContextValue['panel']['panelSnapState'];
   panelShellMode: TutorPanelShellMode;
@@ -263,6 +298,84 @@ export function useKangurAiTutorPortalViewModel(
   )
     ? input.guidedAvatarLayout.placement
     : null;
+  const canShowDrawingSidePanel =
+    input.bubblePlacement.mode === 'bubble' &&
+    !input.isAskModalMode &&
+    input.viewport.width >= input.motionProfile.sheetBreakpoint &&
+    input.isOpen &&
+    !input.suppressPanelSurface;
+  const panelWidth = input.isCompactDockedTutorPanel
+    ? input.compactDockedTutorPanelWidth
+    : input.bubblePlacement.width ?? input.motionProfile.desktopBubbleWidth;
+  const panelLeft =
+    typeof input.bubblePlacement.style?.['left'] === 'number'
+      ? input.bubblePlacement.style['left']
+      : null;
+  const panelTop =
+    typeof input.bubblePlacement.style?.['top'] === 'number'
+      ? input.bubblePlacement.style['top']
+      : null;
+  const panelHeight = input.panelMeasuredHeight ?? getEstimatedBubbleHeight(input.viewport);
+  const panelRect = useMemo(
+    () =>
+      panelLeft !== null && panelTop !== null
+        ? createRect(panelLeft, panelTop, panelWidth, panelHeight)
+        : null,
+    [panelHeight, panelLeft, panelTop, panelWidth]
+  );
+  const drawingPanelAvailable = canShowDrawingSidePanel && Boolean(panelRect);
+  const drawingPanelLayout = useMemo(() => {
+    if (!input.drawingPanelOpen || !drawingPanelAvailable || !panelRect) {
+      return null;
+    }
+
+    const drawingWidth = Math.min(
+      DRAWING_PANEL_WIDTH,
+      Math.max(240, input.viewport.width - EDGE_GAP * 2)
+    );
+    const drawingHeight = Math.min(
+      DRAWING_PANEL_HEIGHT,
+      Math.max(220, input.viewport.height - EDGE_GAP * 2)
+    );
+    const placement = getTutorBubblePlacement(
+      panelRect,
+      input.viewport,
+      'bubble',
+      {
+        desktop: drawingWidth,
+        mobile: drawingWidth,
+      },
+      {
+        estimatedHeight: drawingHeight,
+        protectedRects: input.activeSelectionProtectedRect
+          ? [input.activeSelectionProtectedRect]
+          : [],
+      }
+    );
+
+    if (
+      typeof placement.style.left !== 'number' ||
+      typeof placement.style.top !== 'number'
+    ) {
+      return null;
+    }
+
+    return {
+      style: {
+        position: 'fixed' as const,
+        left: placement.style.left,
+        top: placement.style.top,
+        width: placement.width ?? drawingWidth,
+        zIndex: 66,
+      },
+    };
+  }, [
+    drawingPanelAvailable,
+    input.activeSelectionProtectedRect,
+    input.drawingPanelOpen,
+    input.viewport,
+    panelRect,
+  ]);
 
     const panelBodyContextValue = useMemo<KangurAiTutorPanelBodyContextValue>(
     () => ({
@@ -279,15 +392,19 @@ export function useKangurAiTutorPortalViewModel(
       canStartHomeOnboardingManually: input.canStartHomeOnboardingManually,
       drawingImageData: input.drawingImageData,
       drawingMode: input.drawingMode,
+      drawingPanelOpen: input.drawingPanelOpen,
+      drawingPanelAvailable,
       guestAuthFormVisible: input.guestAuthFormVisible,
       emptyStateMessage: input.emptyStateMessage,
       focusChipLabel: input.focusChipLabel,
       handleClearDrawing: input.handleClearDrawing,
+      handleCloseDrawingPanel: input.handleCloseDrawingPanel,
       handleDetachHighlightedSection: input.handleDetachHighlightedSection,
       handleDetachSelectedFragment: input.handleDetachSelectedFragment,
       handleFocusHighlightedSection: input.handleFocusHighlightedSection,
       handleFocusSelectedFragment: input.handleFocusSelectedFragment,
       handleDrawingComplete: input.handleDrawingComplete,
+      handleOpenDrawingPanel: input.handleOpenDrawingPanel,
       handleFollowUpClick: input.handleFollowUpClick,
       handleKeyDown: input.handleKeyDown,
       handleMessageFeedback: input.handleMessageFeedback,
@@ -338,13 +455,17 @@ export function useKangurAiTutorPortalViewModel(
       input.canStartHomeOnboardingManually,
       input.drawingImageData,
       input.drawingMode,
+      input.drawingPanelOpen,
+      drawingPanelAvailable,
       input.guestAuthFormVisible,
       input.emptyStateMessage,
       input.focusChipLabel,
       input.handleClearDrawing,
+      input.handleCloseDrawingPanel,
       input.handleDetachHighlightedSection,
       input.handleDetachSelectedFragment,
       input.handleDrawingComplete,
+      input.handleOpenDrawingPanel,
       input.handleFocusHighlightedSection,
       input.handleFocusSelectedFragment,
       input.handleFollowUpClick,
@@ -436,6 +557,14 @@ export function useKangurAiTutorPortalViewModel(
         panelShellMode: input.panelShellMode,
         suppressPanelSurface: input.suppressPanelSurface,
         tutorSurfaceMode: input.tutorSurfaceMode,
+      },
+      drawingPanel: {
+        shouldRender: Boolean(drawingPanelLayout?.style),
+        style: drawingPanelLayout?.style ?? null,
+        prefersReducedMotion: prefersReducedMotionEnabled,
+        hint: input.tutorContent.guidedCallout.selectionSketchHint,
+        onClose: input.handleCloseDrawingPanel,
+        onComplete: input.handleDrawingComplete,
       },
       guestIntro: {
         guestIntroDescription,
@@ -574,6 +703,7 @@ export function useKangurAiTutorPortalViewModel(
       input.avatarStyle,
       input.canonicalTutorModalVisible,
       input.bubblePlacement,
+      drawingPanelLayout,
       input.handleDetachPanelFromContext,
       input.compactDockedTutorPanelWidth,
       input.contextualTutorMode,
@@ -606,10 +736,12 @@ export function useKangurAiTutorPortalViewModel(
       input.handleAvatarMouseDown,
       input.handleAvatarMouseUp,
       input.handleCloseChat,
+      input.handleCloseDrawingPanel,
       input.handleGuestIntroClose,
       input.handleGuestIntroDismiss,
       input.handleCloseGuidedCallout,
       input.handleDisableTutor,
+      input.handleDrawingComplete,
       input.handlePanelHeaderPointerCancel,
       input.handlePanelHeaderPointerDown,
       input.handlePanelHeaderPointerMove,

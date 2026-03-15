@@ -554,6 +554,8 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                           docId = `doc-${idx}`;
                         }
                         const isExpanded = expandedDocId === docId;
+                        const safeDocId = docId.replace(/[^a-zA-Z0-9-_:.]/g, '-');
+                        const panelId = `doc-details-${safeDocId}`;
                         const displayNameValue =
                           doc['name'] ?? doc['title'] ?? doc['name_en'] ?? doc['sku'] ?? docId;
                         let displayName: string;
@@ -583,6 +585,9 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                               type='button'
                               className='flex w-full items-center justify-between px-3 py-2 text-left text-xs hover:bg-muted/50/50'
                               onClick={() => setExpandedDocId(isExpanded ? null : docId)}
+                              aria-expanded={isExpanded}
+                              aria-controls={panelId}
+                              aria-label={`Toggle document ${displayName || docId}`}
                             >
                               <div className='flex items-center gap-2'>
                                 <span className='text-cyan-300'>{displayName}</span>
@@ -603,7 +608,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                               </svg>
                             </button>
                             {isExpanded && (
-                              <div className='border-t border-border p-3'>
+                              <div id={panelId} className='border-t border-border p-3'>
                                 <pre className='max-h-[200px] overflow-auto whitespace-pre-wrap text-[10px] text-gray-300'>
                                   {JSON.stringify(doc, null, 2)}
                                 </pre>

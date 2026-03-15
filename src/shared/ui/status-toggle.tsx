@@ -45,6 +45,7 @@ function StatusToggleBadge(): React.JSX.Element {
       onClick={runtime.onClick}
       disabled={runtime.disabled}
       aria-pressed={runtime.pressed}
+      aria-label={runtime.label}
     >
       {runtime.label}
     </button>

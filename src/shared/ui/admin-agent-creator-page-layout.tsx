@@ -16,14 +16,13 @@ type AdminAgentCreatorPageLayoutProps = Omit<React.ComponentProps<typeof PageLay
 export function AdminAgentCreatorPageLayout({
   current,
   parent,
-  containerClassName = 'mx-auto w-full max-w-none py-10',
   ...props
 }: AdminAgentCreatorPageLayoutProps): React.JSX.Element {
+  const breadcrumbProps = { current, parent };
+  const eyebrow = <AdminAgentCreatorBreadcrumbs {...breadcrumbProps} />;
+  const pageLayoutProps = { ...props, eyebrow };
+
   return (
-    <PageLayout
-      eyebrow={<AdminAgentCreatorBreadcrumbs current={current} parent={parent} />}
-      containerClassName={containerClassName}
-      {...props}
-    />
+    <PageLayout {...pageLayoutProps} />
   );
 }

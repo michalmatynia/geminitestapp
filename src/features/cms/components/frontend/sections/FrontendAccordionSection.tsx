@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 
 import type { BlockInstance } from '@/features/cms/types/page-builder';
 import { EmptyState } from '@/shared/ui';
@@ -80,15 +80,24 @@ function AccordionItem({
   defaultOpen: boolean;
 }): React.ReactNode {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const buttonId = useId();
+  const panelId = `${buttonId}-panel`;
   const headingBlock = item.heading;
   const textBlock = item.text;
-
+  const headingLabel =
+    typeof headingBlock.settings?.['headingText'] === 'string'
+      ? headingBlock.settings['headingText']
+      : 'Accordion section';
   return (
     <div className='py-4'>
       <button
         type='button'
         onClick={() => setIsOpen(!isOpen)}
         className='flex w-full items-center justify-between text-left'
+        id={buttonId}
+        aria-expanded={isOpen}
+        aria-controls={panelId}
+        aria-label={headingLabel}
       >
         <FrontendBlockRenderer block={headingBlock} />
         <span className='cms-appearance-muted-text ml-4 shrink-0 text-xl'>
@@ -96,7 +105,7 @@ function AccordionItem({
         </span>
       </button>
       {isOpen && textBlock && (
-        <div className='mt-3'>
+        <div className='mt-3' id={panelId} role='region' aria-labelledby={buttonId}>
           <FrontendBlockRenderer block={textBlock} />
         </div>
       )}

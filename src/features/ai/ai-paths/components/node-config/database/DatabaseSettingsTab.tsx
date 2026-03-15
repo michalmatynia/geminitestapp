@@ -187,7 +187,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
               {targetPathSuggestions.length > 0 && (
                 <datalist id={targetPathDatalistId}>
                   {targetPathSuggestions.map((path) => (
-                    <option key={path} value={path} />
+                    <option key={path} value={path} aria-label={path} />
                   ))}
                 </datalist>
               )}

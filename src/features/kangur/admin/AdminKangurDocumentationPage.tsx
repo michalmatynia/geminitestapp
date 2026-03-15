@@ -48,7 +48,7 @@ export function AdminKangurDocumentationPage(): React.JSX.Element {
           tabIndex={-1}
           aria-labelledby={DOCUMENTATION_WORKSPACE_TITLE_ID}
           aria-describedby={DOCUMENTATION_WORKSPACE_DESCRIPTION_ID}
-          className='space-y-8 outline-none'
+          className='space-y-8 outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
         >
           <div className='grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)]'>
             <div className='space-y-6'>

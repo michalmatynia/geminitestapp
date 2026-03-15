@@ -191,6 +191,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                   className={cn(
                     'absolute right-4 top-4 z-10 cursor-pointer rounded-full border border-amber-200/80',
                     'px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em]',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
                     'shadow-[0_16px_34px_-26px_rgba(249,115,22,0.5)] transition'
                   )}
                   style={{
@@ -308,7 +309,12 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                     Dodaj ucznia
                   </KangurButton>
                   {feedback ? (
-                    <div className='text-sm [color:var(--kangur-page-muted-text)]'>
+                    <div
+                      className='text-sm [color:var(--kangur-page-muted-text)]'
+                      role='status'
+                      aria-live='polite'
+                      aria-atomic='true'
+                    >
                       {feedback}
                     </div>
                   ) : null}

@@ -42,20 +42,23 @@ const SkeletonBlock = ({
   />
 );
 
-const SkeletonChip = ({ className }: { className?: string }): React.JSX.Element => (
-  <SkeletonBlock
-    className={cn(
-      'rounded-full border border-white/70 bg-white/85 shadow-[0_18px_36px_-28px_rgba(91,106,170,0.24)]',
-      className
-    )}
-    style={{
-      background:
-        'color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 88%, transparent)',
-      borderColor: 'var(--kangur-glass-panel-border, rgba(255,255,255,0.78))',
-      boxShadow: '0 18px 36px -28px rgba(91,106,170,0.24)',
-    }}
-  />
-);
+const SkeletonChip = ({ className }: { className?: string }): React.JSX.Element => {
+  const chipClassName = className;
+  return (
+    <SkeletonBlock
+      className={cn(
+        'rounded-full border border-white/70 bg-white/85 shadow-[0_18px_36px_-28px_rgba(91,106,170,0.24)]',
+        chipClassName
+      )}
+      style={{
+        background:
+          'color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 88%, transparent)',
+        borderColor: 'var(--kangur-glass-panel-border, rgba(255,255,255,0.78))',
+        boxShadow: '0 18px 36px -28px rgba(91,106,170,0.24)',
+      }}
+    />
+  );
+};
 
 const SkeletonPanel = ({
   children,
@@ -80,9 +83,10 @@ const SkeletonPanel = ({
   </div>
 );
 
-const SkeletonLine = ({ className }: { className?: string }): React.JSX.Element => (
-  <SkeletonBlock className={cn('h-4 rounded-full', className)} />
-);
+const SkeletonLine = ({ className }: { className?: string }): React.JSX.Element => {
+  const lineClassName = className;
+  return <SkeletonBlock className={cn('h-4 rounded-full', lineClassName)} />;
+};
 
 const GameHomeSkeleton = (): React.JSX.Element => (
   <div className='flex w-full flex-col items-center gap-8 sm:gap-10'>

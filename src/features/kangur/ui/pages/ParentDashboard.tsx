@@ -9,7 +9,10 @@ import { KangurParentDashboardAssignmentsWidget } from '@/features/kangur/ui/com
 import { KangurParentDashboardHeroWidget } from '@/features/kangur/ui/components/KangurParentDashboardHeroWidget';
 import { KangurParentDashboardProgressWidget } from '@/features/kangur/ui/components/KangurParentDashboardProgressWidget';
 import { KangurParentDashboardScoresWidget } from '@/features/kangur/ui/components/KangurParentDashboardScoresWidget';
-import { KangurParentDashboardTabsWidget } from '@/features/kangur/ui/components/KangurParentDashboardTabsWidget';
+import {
+  KangurParentDashboardTabsWidget,
+  getParentDashboardTabIds,
+} from '@/features/kangur/ui/components/KangurParentDashboardTabsWidget';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
@@ -65,6 +68,10 @@ function ParentDashboardContent(): React.JSX.Element {
   const [reservedTabPanelHeight, setReservedTabPanelHeight] = useState<number | null>(null);
   const activeLearnerId = activeLearner?.id?.trim() || null;
   const hasActiveLearner = Boolean(activeLearnerId);
+  const progressTabIds = getParentDashboardTabIds('progress');
+  const scoresTabIds = getParentDashboardTabIds('scores');
+  const assignmentsTabIds = getParentDashboardTabIds('assign');
+  const aiTutorTabIds = getParentDashboardTabIds('ai-tutor');
   const dashboardContentId = canAccessDashboard
     ? `parent-dashboard:${activeLearnerId ?? 'none'}:${activeTab}`
     : 'parent-dashboard:guest';
@@ -393,16 +400,44 @@ function ParentDashboardContent(): React.JSX.Element {
               }
             >
               <div ref={tabPanelsContentRef}>
-                <div ref={progressAnchorRef}>
+                <div
+                  ref={progressAnchorRef}
+                  id={progressTabIds.panelId}
+                  role='tabpanel'
+                  aria-labelledby={progressTabIds.tabId}
+                  hidden={activeTab !== 'progress'}
+                  tabIndex={activeTab === 'progress' ? 0 : -1}
+                >
                   <KangurParentDashboardProgressWidget displayMode='active-tab' />
                 </div>
-                <div ref={scoresAnchorRef}>
+                <div
+                  ref={scoresAnchorRef}
+                  id={scoresTabIds.panelId}
+                  role='tabpanel'
+                  aria-labelledby={scoresTabIds.tabId}
+                  hidden={activeTab !== 'scores'}
+                  tabIndex={activeTab === 'scores' ? 0 : -1}
+                >
                   <KangurParentDashboardScoresWidget displayMode='active-tab' />
                 </div>
-                <div ref={assignmentsAnchorRef}>
+                <div
+                  ref={assignmentsAnchorRef}
+                  id={assignmentsTabIds.panelId}
+                  role='tabpanel'
+                  aria-labelledby={assignmentsTabIds.tabId}
+                  hidden={activeTab !== 'assign'}
+                  tabIndex={activeTab === 'assign' ? 0 : -1}
+                >
                   <KangurParentDashboardAssignmentsWidget displayMode='active-tab' />
                 </div>
-                <div ref={aiTutorAnchorRef}>
+                <div
+                  ref={aiTutorAnchorRef}
+                  id={aiTutorTabIds.panelId}
+                  role='tabpanel'
+                  aria-labelledby={aiTutorTabIds.tabId}
+                  hidden={activeTab !== 'ai-tutor'}
+                  tabIndex={activeTab === 'ai-tutor' ? 0 : -1}
+                >
                   <KangurParentDashboardAiTutorWidget displayMode='active-tab' />
                 </div>
               </div>

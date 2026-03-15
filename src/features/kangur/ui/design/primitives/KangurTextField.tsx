@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
 
 export const kangurTextFieldVariants = cva(
   'kangur-text-field soft-card w-full border outline-none transition disabled:cursor-not-allowed disabled:opacity-70',
@@ -34,14 +34,48 @@ export type KangurTextFieldProps = Omit<React.InputHTMLAttributes<HTMLInputEleme
   VariantProps<typeof kangurTextFieldVariants>;
 
 export const KangurTextField = React.forwardRef<HTMLInputElement, KangurTextFieldProps>(
-  ({ className, accent, size, type = 'text', ...props }, ref) => (
-    <input
-      ref={ref}
-      className={cn(kangurTextFieldVariants({ accent, size }), className)}
-      type={type}
-      {...props}
-    />
-  )
+  (
+    {
+      className,
+      accent,
+      size,
+      type = 'text',
+      id,
+      placeholder,
+      title,
+      'aria-label': ariaLabelProp,
+      'aria-labelledby': ariaLabelledByProp,
+      ...props
+    },
+    ref
+  ) => {
+    const allowFallbackLabel = !ariaLabelledByProp && !id;
+    const { ariaLabel: resolvedAriaLabel, hasAccessibleLabel } = resolveAccessibleLabel({
+      children: null,
+      ariaLabel: ariaLabelProp,
+      ariaLabelledBy: ariaLabelledByProp,
+      title: allowFallbackLabel ? title : undefined,
+      fallbackLabel: allowFallbackLabel ? placeholder : undefined,
+    });
+    const hasLabel = hasAccessibleLabel || Boolean(id);
+    if (!hasLabel) {
+      warnMissingAccessibleLabel({ componentName: 'KangurTextField', hasAccessibleLabel: hasLabel });
+    }
+
+    return (
+      <input
+        ref={ref}
+        className={cn(kangurTextFieldVariants({ accent, size }), className)}
+        type={type}
+        id={id}
+        placeholder={placeholder}
+        aria-label={resolvedAriaLabel}
+        aria-labelledby={ariaLabelledByProp}
+        title={title}
+        {...props}
+      />
+    );
+  }
 );
 KangurTextField.displayName = 'KangurTextField';
 
@@ -49,12 +83,45 @@ export type KangurSelectFieldProps = Omit<React.SelectHTMLAttributes<HTMLSelectE
   VariantProps<typeof kangurTextFieldVariants>;
 
 export const KangurSelectField = React.forwardRef<HTMLSelectElement, KangurSelectFieldProps>(
-  ({ className, accent, size, ...props }, ref) => (
-    <select
-      ref={ref}
-      className={cn(kangurTextFieldVariants({ accent, size }), className)}
-      {...props}
-    />
-  )
+  (
+    {
+      className,
+      accent,
+      size,
+      id,
+      title,
+      'aria-label': ariaLabelProp,
+      'aria-labelledby': ariaLabelledByProp,
+      ...props
+    },
+    ref
+  ) => {
+    const allowFallbackLabel = !ariaLabelledByProp && !id;
+    const { ariaLabel: resolvedAriaLabel, hasAccessibleLabel } = resolveAccessibleLabel({
+      children: null,
+      ariaLabel: ariaLabelProp,
+      ariaLabelledBy: ariaLabelledByProp,
+      title: allowFallbackLabel ? title : undefined,
+    });
+    const hasLabel = hasAccessibleLabel || Boolean(id);
+    if (!hasLabel) {
+      warnMissingAccessibleLabel({
+        componentName: 'KangurSelectField',
+        hasAccessibleLabel: hasLabel,
+      });
+    }
+
+    return (
+      <select
+        ref={ref}
+        className={cn(kangurTextFieldVariants({ accent, size }), className)}
+        id={id}
+        aria-label={resolvedAriaLabel}
+        aria-labelledby={ariaLabelledByProp}
+        title={title}
+        {...props}
+      />
+    );
+  }
 );
 KangurSelectField.displayName = 'KangurSelectField';

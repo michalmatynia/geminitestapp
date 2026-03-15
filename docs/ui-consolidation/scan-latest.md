@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-15'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,11 +8,11 @@ canonical: true
 ---
 # UI Consolidation Scan
 
-Generated at: 2026-03-09T12:19:13.253Z
+Generated at: 2026-03-15T07:04:58.479Z
 
 ## Snapshot
 
-- Scanned UI files: 1343
+- Scanned UI files: 1563
 - Duplicate-name clusters: 0
 - Prop-signature clusters: 0
 - Token-similarity clusters: 0
@@ -24,30 +24,30 @@ Generated at: 2026-03-09T12:19:13.253Z
 
 | Domain | Files |
 | --- | ---: |
-| `feature` | 1007 |
-| `app` | 176 |
-| `shared-ui` | 121 |
-| `shared` | 39 |
+| `feature` | 1191 |
+| `app` | 181 |
+| `shared-ui` | 151 |
+| `shared` | 40 |
 
 ## Top Families
 
 | Family | Files |
 | --- | ---: |
-| `Unknown` | 765 |
-| `Page` | 150 |
-| `Section` | 133 |
-| `Panel` | 85 |
-| `Modal` | 57 |
+| `Unknown` | 943 |
+| `Page` | 151 |
+| `Section` | 136 |
+| `Panel` | 99 |
+| `Modal` | 59 |
 | `Tab` | 38 |
-| `Card` | 20 |
+| `Card` | 35 |
+| `Header` | 21 |
 | `Settings` | 18 |
-| `Header` | 18 |
+| `List` | 17 |
 | `Form` | 15 |
-| `List` | 15 |
 | `Toolbar` | 7 |
 | `Picker` | 7 |
+| `Sidebar` | 6 |
 | `Dialog` | 5 |
-| `Sidebar` | 4 |
 
 ## Ranked Backlog
 

@@ -1,7 +1,7 @@
 import { Clock } from 'lucide-react';
 import { useId } from 'react';
 
-import KangurAnimatedOptionCard from '@/features/kangur/ui/components/KangurAnimatedOptionCard';
+import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import {
   KangurIconBadge,
   KangurSectionHeading,
@@ -71,7 +71,7 @@ export default function DifficultySelector({
           const isSelected = selected === difficulty.id;
           const accent = KANGUR_ACCENT_STYLES[difficulty.accent];
           return (
-            <KangurAnimatedOptionCard
+            <KangurAnswerChoiceCard
               key={difficulty.id}
               accent={difficulty.accent}
               animate={{ opacity: 1, y: 0 }}
@@ -114,7 +114,7 @@ export default function DifficultySelector({
               >
                 Zakres 1-{config.range}
               </span>
-            </KangurAnimatedOptionCard>
+            </KangurAnswerChoiceCard>
           );
         })}
       </div>

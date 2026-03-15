@@ -150,6 +150,7 @@ export function StudioSettingsContent(): React.JSX.Element {
                     },
                   }))
                 }
+                aria-label='Apply formatter before extract'
               />
               Apply formatter before extract
             </label>
@@ -167,6 +168,7 @@ export function StudioSettingsContent(): React.JSX.Element {
                     },
                   }))
                 }
+                aria-label='Auto-apply formatted prompt'
               />
               Auto-apply formatted prompt
             </label>
@@ -184,6 +186,7 @@ export function StudioSettingsContent(): React.JSX.Element {
                     },
                   }))
                 }
+                aria-label='Show validation summary'
               />
               Show validation summary
             </label>

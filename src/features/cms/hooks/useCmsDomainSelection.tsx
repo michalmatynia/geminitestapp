@@ -5,7 +5,6 @@ import { useCallback, useMemo } from 'react';
 import { useCmsDomains } from '@/features/cms/hooks/useCmsQueries';
 import type { CmsDomain } from '@/shared/contracts/cms';
 import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from '@/shared/contracts/cms';
-import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
@@ -32,7 +31,6 @@ export function useCmsDomainSelection(
   options: CmsDomainSelectionOptions = {}
 ): CmsDomainSelectionResult {
   const { initialDomainId = null, persist = true } = options;
-  const settingsQuery = useSettingsMap();
   const settingsStore = useSettingsStore();
   const domainSettingsRaw = settingsStore.get(CMS_DOMAIN_SETTINGS_KEY);
   const domainSettings = useMemo(
@@ -122,7 +120,7 @@ export function useCmsDomainSelection(
     sharedWithDomains,
     hostDomainId: zoningEnabled ? hostDomainId : null,
     zoningEnabled,
-    isLoading: domainsQuery.isLoading || settingsQuery.isLoading,
+    isLoading: domainsQuery.isLoading || settingsStore.isLoading,
     isSaving: updatePreferencesMutation.isPending,
     setActiveDomainId,
   };

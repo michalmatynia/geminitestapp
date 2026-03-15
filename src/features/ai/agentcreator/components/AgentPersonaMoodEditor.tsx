@@ -442,6 +442,8 @@ export function AgentPersonaMoodEditor({
                               [mood.id]: event.target.value,
                             }))
                           }
+                          aria-label='Base64 MIME'
+                          title='Base64 MIME'
                           className='h-10 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm text-foreground/90 focus:border-foreground/30 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:ring-offset-2'
                         >
                           {IMPORT_MIME_OPTIONS.map((option) => (
@@ -494,6 +496,8 @@ export function AgentPersonaMoodEditor({
                   <select
                     value={nextMoodId}
                     onChange={(event) => setNextMoodId(event.target.value)}
+                    aria-label='Add mood'
+                    title='Add mood'
                     className='h-10 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm text-foreground/90 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:ring-offset-2 focus:border-foreground/30 disabled:cursor-not-allowed disabled:opacity-50'
                   >
                     {missingMoodPresets.map((preset) => (

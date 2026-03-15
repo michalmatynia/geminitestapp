@@ -56,7 +56,7 @@ type DivisionRemainderQuestion = {
 type DivisionQuestion = DivisionQuotientQuestion | DivisionRemainderQuestion;
 
 type DivisionGameProps = {
-  finishLabel?: string;
+  finishLabelVariant?: 'lesson' | 'play';
   onFinish: () => void;
 };
 
@@ -158,9 +158,10 @@ function ShareVisual({
 }
 
 export default function DivisionGame({
-  finishLabel = 'Wróć do lekcji',
+  finishLabelVariant = 'lesson',
   onFinish,
 }: DivisionGameProps): React.JSX.Element {
+  const finishLabel = finishLabelVariant === 'play' ? 'Wróć do Grajmy' : 'Wróć do lekcji';
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);

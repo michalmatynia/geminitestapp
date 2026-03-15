@@ -1,18 +1,20 @@
 import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
+import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
 import type { KangurQuestionsManagerInitialView } from '../question-manager-view';
+import type { TreeMode } from '../types';
 
 export const ORDERED_TREE_INSTANCE = 'kangur_test_suites_manager';
 export const CATALOG_TREE_INSTANCE = 'kangur_test_suites_manager_catalog';
 export const TREE_MODE_STORAGE_KEY = 'kangur_test_suites_manager_tree_mode_v1';
 
-export type TreeMode = 'ordered' | 'catalog';
+export type { TreeMode };
 
 export type LoginModalState = {
-  authMode: any; // Using any for now to avoid deep import issues, will refine if needed
+  authMode: KangurAuthMode;
   isOpen: boolean;
   openLoginModal: (
     callbackUrl?: string | null,
-    options?: { authMode?: any }
+    options?: { authMode?: KangurAuthMode }
   ) => void;
 };
 

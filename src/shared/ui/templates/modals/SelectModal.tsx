@@ -141,6 +141,7 @@ function SelectModalRuntime(): React.JSX.Element {
                 type='button'
                 onClick={() => handleSelect(option)}
                 disabled={option.disabled || loading}
+                aria-label={option.label}
                 className={cn(
                   'w-full p-3 text-left rounded-md border transition-all duration-200',
                   selectedIds.has(option.id)

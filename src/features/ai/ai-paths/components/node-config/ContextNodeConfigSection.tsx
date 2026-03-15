@@ -452,6 +452,8 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
                     context: toggleContextTarget(contextConfig, field),
                   })
                 }
+                aria-pressed={active}
+                aria-label={`Toggle ${field}`}
                 className={`rounded-full border px-2 py-1 text-[10px] transition ${
                   active
                     ? 'border-emerald-400/50 bg-emerald-500/10 text-emerald-200'
@@ -474,6 +476,7 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
                 },
               })
             }
+            aria-label='Clear selected fields'
             className='rounded-full border px-2 py-1 text-[10px] text-gray-300 hover:bg-card/70'
           >
             Clear

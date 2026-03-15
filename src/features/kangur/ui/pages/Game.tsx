@@ -3,6 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useMemo, useRef, type RefObject } from 'react';
 
+import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurGameCalendarTrainingWidget } from '@/features/kangur/ui/components/KangurGameCalendarTrainingWidget';
 import { KangurGameDivisionQuizWidget } from '@/features/kangur/ui/components/KangurGameDivisionQuizWidget';
@@ -21,6 +22,7 @@ import { KangurGameSubtractionQuizWidget } from '@/features/kangur/ui/components
 import { KangurGameTrainingSetupWidget } from '@/features/kangur/ui/components/KangurGameTrainingSetupWidget';
 import { KangurAssignmentSpotlight } from '@/features/kangur/ui/components/KangurAssignmentSpotlight';
 import { KangurPriorityAssignments } from '@/features/kangur/ui/components/KangurPriorityAssignments';
+import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import Leaderboard from '@/features/kangur/ui/components/Leaderboard';
 import { PlayerProgressCard, XpToast } from '@/features/kangur/ui/components/progress';
 import { KangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
@@ -29,7 +31,12 @@ import {
   useKangurGameRuntime,
 } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
-import { KangurPageContainer, KangurPageShell } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurButton,
+  KangurEmptyState,
+  KangurPageContainer,
+  KangurPageShell,
+} from '@/features/kangur/ui/design/primitives';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
@@ -525,6 +532,34 @@ function GameContent(): React.JSX.Element {
                       </h3>
                       <KangurGameHomeActionsWidget hideWhenScreenMismatch={false} />
                     </div>
+                    {hideLearnerWidgetsForParent ? (
+                      <KangurEmptyState
+                        align='left'
+                        className='text-left'
+                        padding='md'
+                        title='Brak profilu ucznia'
+                        description='Dodaj lub wybierz profil ucznia w sekcji poniżej, aby zobaczyć postęp i misje dnia.'
+                      >
+                        <div className='flex w-full flex-col gap-2 sm:flex-row sm:items-center'>
+                          <KangurButton
+                            asChild
+                            className='w-full sm:w-auto'
+                            size='sm'
+                            variant='primary'
+                            data-doc-id='home_parent_add_learner'
+                          >
+                            <Link
+                              href={createPageUrl('ParentDashboard', basePath)}
+                              targetPageKey='ParentDashboard'
+                              transitionAcknowledgeMs={110}
+                              transitionSourceId='game-home-parent-add-learner'
+                            >
+                              Dodaj ucznia
+                            </Link>
+                          </KangurButton>
+                        </div>
+                      </KangurEmptyState>
+                    ) : null}
                   </section>
 
                   {!hideLearnerWidgetsForParent ? (

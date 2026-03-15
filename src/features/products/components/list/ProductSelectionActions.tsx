@@ -554,7 +554,7 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
             placeholder='Preset name'
             aria-label='Preset name'
             className='h-8'
-           title="Preset name"/>
+           title='Preset name'/>
         </div>
       </AppModal>
 

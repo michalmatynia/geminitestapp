@@ -195,7 +195,7 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
                     onClick={() => openEdit(item)}
                     disabled={isSaving}
                     title='Edit'
-                  >
+                    aria-label={'Edit'}>
                     <Pencil className='size-3.5' />
                   </Button>
                   <Button
@@ -206,7 +206,7 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
                     disabled={isSaving}
                     title='Delete'
                     className='text-destructive hover:text-destructive'
-                  >
+                    aria-label={'Delete'}>
                     <Trash2 className='size-3.5' />
                   </Button>
                 </div>
@@ -292,7 +292,7 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
                 }
                 placeholder='Optional description'
                 className='min-h-[90px]'
-               aria-label="Optional description" title="Optional description"/>
+               aria-label='Optional description' title='Optional description'/>
             </div>
           </div>
 

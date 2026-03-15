@@ -41,7 +41,7 @@ export function NavigationCard({
   const TitleTag = titleAs;
 
   return (
-    <Link href={href} className={cn('block', linkClassName)}>
+    <Link href={href} className={cn('block', linkClassName)} aria-label={'Card'} title={'Card'}>
       <Card variant={variant} padding={padding} className={cn('h-full transition-colors', className)}>
         <div className={cn('flex h-full items-start gap-4', contentClassName)}>
           {leading ? <div className='shrink-0'>{leading}</div> : null}

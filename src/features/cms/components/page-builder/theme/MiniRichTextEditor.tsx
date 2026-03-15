@@ -27,7 +27,7 @@ function RichTextToolbarButton(props: {
       disabled={disabled}
       title={title}
       className='size-8 rounded-md'
-    >
+      aria-label={title}>
       {children}
     </Button>
   );
@@ -140,7 +140,7 @@ export function MiniRichTextEditor(props: {
               ]}
               ariaLabel='Format'
               triggerClassName='h-7 w-32 bg-card/40 text-xs'
-             title="Select option"/>
+             title='Select option'/>
           </div>
         )}
         <RichTextToolbarButton

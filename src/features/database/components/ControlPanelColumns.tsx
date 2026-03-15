@@ -60,7 +60,7 @@ export function getControlPanelColumns(options: {
           size='sm'
           className='w-32'
           triggerClassName='h-8'
-         ariaLabel="Select option" title="Select option"/>
+         ariaLabel='Select option' title='Select option'/>
       ),
     },
   ];

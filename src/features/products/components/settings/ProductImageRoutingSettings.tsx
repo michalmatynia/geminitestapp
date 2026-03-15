@@ -352,7 +352,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
               disabled={updateSequenceGenerationModeSetting.isPending}
               triggerClassName='h-9'
               ariaLabel='Product Studio sequence generation mode'
-             title="Generation + Sequencing Mode"/>
+             title='Generation + Sequencing Mode'/>
           </FormField>
           <FormActions
             onSave={handleSaveSequenceGenerationMode}

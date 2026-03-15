@@ -271,7 +271,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
               }}
               options={modelOptions}
               placeholder='Select OCR model'
-             ariaLabel="Select OCR model" title="Select OCR model"/>{' '}
+             ariaLabel='Select OCR model' title='Select OCR model'/>{' '}
             {modelsQuery.data?.warning?.message ? (
               <div className='mt-1 text-[11px] text-amber-300'>
                 {modelsQuery.data.warning.message}
@@ -298,7 +298,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
               }}
               placeholder='e.g. gpt-4o-mini or llama3.2-vision'
               className='h-9'
-             aria-label="e.g. gpt-4o-mini or llama3.2-vision" title="e.g. gpt-4o-mini or llama3.2-vision"/>
+             aria-label='e.g. gpt-4o-mini or llama3.2-vision' title='e.g. gpt-4o-mini or llama3.2-vision'/>
           </FormField>
 
           <FormField
@@ -321,7 +321,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
               }}
               className='min-h-[88px] text-xs'
               placeholder='Instructions used for OCR extraction.'
-             aria-label="Instructions used for OCR extraction." title="Instructions used for OCR extraction."/>
+             aria-label='Instructions used for OCR extraction.' title='Instructions used for OCR extraction.'/>
           </FormField>
         </div>
       </FormSection>
@@ -353,7 +353,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
               options={CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_OPTIONS}
               placeholder='Select default document format'
               disabled
-             ariaLabel="Select default document format" title="Select default document format"/>
+             ariaLabel='Select default document format' title='Select default document format'/>
           </FormField>
           <FormField
             label='Confirm Document Delete'
@@ -373,7 +373,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
               }}
               options={CASE_RESOLVER_CONFIRM_DELETE_OPTIONS}
               placeholder='Choose confirmation behavior'
-             ariaLabel="Choose confirmation behavior" title="Choose confirmation behavior"/>
+             ariaLabel='Choose confirmation behavior' title='Choose confirmation behavior'/>
           </FormField>
           <FormField
             label='Default Addresser Lookup'
@@ -394,7 +394,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
               }}
               options={CASE_RESOLVER_PARTY_SEARCH_KIND_OPTIONS}
               placeholder='Choose default addresser lookup'
-             ariaLabel="Choose default addresser lookup" title="Choose default addresser lookup"/>
+             ariaLabel='Choose default addresser lookup' title='Choose default addresser lookup'/>
           </FormField>
           <FormField
             label='Default Addressee Lookup'
@@ -415,7 +415,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
               }}
               options={CASE_RESOLVER_PARTY_SEARCH_KIND_OPTIONS}
               placeholder='Choose default addressee lookup'
-             ariaLabel="Choose default addressee lookup" title="Choose default addressee lookup"/>
+             ariaLabel='Choose default addressee lookup' title='Choose default addressee lookup'/>
           </FormField>
         </div>
       </FormSection>

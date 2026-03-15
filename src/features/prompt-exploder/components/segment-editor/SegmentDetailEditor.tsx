@@ -118,7 +118,7 @@ export function SegmentDetailEditor(): React.JSX.Element {
               { value: 'conditional_list', label: 'Conditional List' },
               { value: 'qa_matrix', label: 'QA Matrix' },
             ]}
-           ariaLabel="Type" title="Type"/>
+           ariaLabel='Type' title='Type'/>
         </FormField>
         <FormField label='Include In Output'>
           <div className='flex h-9 items-center rounded border border-border/60 bg-card/30 px-3'>
@@ -173,7 +173,7 @@ export function SegmentDetailEditor(): React.JSX.Element {
                 raw: e.target.value,
               }))
             }
-           aria-label="Body" title="Body"/>
+           aria-label='Body' title='Body'/>
         </FormField>
       )}
 

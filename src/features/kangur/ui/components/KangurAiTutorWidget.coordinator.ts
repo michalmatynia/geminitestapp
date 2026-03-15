@@ -230,9 +230,9 @@ export function useKangurAiTutorWidgetCoordinator({
     visibleProactiveNudge,
     visibleQuickActions,
   } = displayState;
+  const _sessionSurface = sessionContext?.surface ?? null;
   const suppressPanelSurface =
-    tutorRuntime.isOpen &&
-    (tutorSurfaceMode === 'onboarding' ||
+    tutorRuntime.isOpen &&    (tutorSurfaceMode === 'onboarding' ||
       tutorSurfaceMode === 'auth_guided' ||
       displayState.guidedMode === 'home_onboarding' ||
       (tutorSurfaceMode === 'selection_guided' &&
@@ -736,6 +736,8 @@ export function useKangurAiTutorWidgetCoordinator({
     isSelectionExplainPendingMode,
     isTutorHidden: widgetState.isTutorHidden,
     isUsageLoading,
+    lastInteractionIntent: sessionContext?.interactionIntent ?? null,
+    lastPromptMode: sessionContext?.promptMode ?? null,
     messages: conversationMessages,
     motionProfile,
     narratorSettings,

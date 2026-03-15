@@ -54,7 +54,7 @@ function ActionMenuContent(): React.JSX.Element {
             runtime.triggerClassName
           )}
           aria-label={runtime.ariaLabel}
-        >
+          title={runtime.ariaLabel}>
           {runtime.trigger ?? <MoreVertical className='h-4 w-4' aria-hidden='true' />}
         </Button>
       </DropdownMenuTrigger>

@@ -119,7 +119,7 @@ export function IdentitySection(): React.JSX.Element | null {
               }))
             }
             aria-label='Native guide entry title'
-           title="Entry title"/>
+           title='Entry title'/>
         </FieldValidationWrapper>
       </FormField>
       <FormField label='Entry id'>
@@ -134,7 +134,7 @@ export function IdentitySection(): React.JSX.Element | null {
             }
             aria-label='Native guide entry id'
             className='font-mono text-xs'
-           title="Entry id"/>
+           title='Entry id'/>
         </FieldValidationWrapper>
       </FormField>
     </div>
@@ -206,7 +206,7 @@ export function SurfaceFocusSection(): React.JSX.Element | null {
             }))
           }
           aria-label='Native guide sort order'
-         title="Sort order"/>
+         title='Sort order'/>
       </FormField>
       <FormField label='Entry status'>
         <Button
@@ -246,7 +246,7 @@ export function DescriptionSection(): React.JSX.Element | null {
             }
             rows={3}
             aria-label='Native guide short description'
-           title="Short description"/>
+           title='Short description'/>
         </FieldValidationWrapper>
       </FormField>
 
@@ -262,7 +262,7 @@ export function DescriptionSection(): React.JSX.Element | null {
             }
             rows={7}
             aria-label='Native guide full description'
-           title="Full description"/>
+           title='Full description'/>
         </FieldValidationWrapper>
       </FormField>
     </>
@@ -287,7 +287,7 @@ export function KnowledgeSourceSection(): React.JSX.Element | null {
             }
             rows={6}
             aria-label='Native guide hints'
-           title="Hints"/>
+           title='Hints'/>
         </FieldValidationWrapper>
       </FormField>
       <FormField
@@ -305,7 +305,7 @@ export function KnowledgeSourceSection(): React.JSX.Element | null {
             }
             rows={6}
             aria-label='Native guide trigger phrases'
-           title="Trigger phrases"/>
+           title='Trigger phrases'/>
         </FieldValidationWrapper>
       </FormField>
     </div>
@@ -332,7 +332,7 @@ export function MatchingSection(): React.JSX.Element | null {
           }
           rows={4}
           aria-label='Native guide focus id prefixes'
-         title="Focus id prefixes"/>
+         title='Focus id prefixes'/>
       </FormField>
       <FormField
         label='Content id prefixes'
@@ -348,7 +348,7 @@ export function MatchingSection(): React.JSX.Element | null {
           }
           rows={4}
           aria-label='Native guide content id prefixes'
-         title="Content id prefixes"/>
+         title='Content id prefixes'/>
       </FormField>
     </div>
   );
@@ -372,7 +372,7 @@ export function RelatedContentSection(): React.JSX.Element | null {
             }
             rows={4}
             aria-label='Native guide related games'
-           title="Related games"/>
+           title='Related games'/>
         </FieldValidationWrapper>
       </FormField>
       <FormField label='Related tests' description='One test hint or test label per line.'>
@@ -387,7 +387,7 @@ export function RelatedContentSection(): React.JSX.Element | null {
             }
             rows={4}
             aria-label='Native guide related tests'
-           title="Related tests"/>
+           title='Related tests'/>
         </FieldValidationWrapper>
       </FormField>
     </div>
@@ -416,7 +416,7 @@ export function FollowUpActionsSection(): React.JSX.Element | null {
         rows={8}
         aria-label='Native guide follow-up actions'
         className='font-mono text-xs leading-6'
-       title="Follow-up actions"/>
+       title='Follow-up actions'/>
       <div className='mt-2 flex justify-end'>
         <Button
           type='button'

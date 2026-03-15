@@ -102,7 +102,7 @@ function CssAiSection(): React.JSX.Element {
             disabled
             aria-label='Provider'
             className='cursor-not-allowed'
-           title="Provider"/>
+           title='Provider'/>
         </FormField>
         <FormField label={brainAiProvider === 'agent' ? 'Deepthinking agent' : 'Model'}>
           <Input
@@ -151,7 +151,7 @@ function CssAiSection(): React.JSX.Element {
           readOnly
           aria-label='Context placeholders'
           className='min-h-[64px] text-xs font-mono text-gray-300'
-         title="Textarea"/>
+         title='Textarea'/>
         <div className='text-[11px] text-gray-500'>
           <span className='font-mono text-gray-300'>page_context</span> = full page UI context,{' '}
           <span className='font-mono text-gray-300'>element_context</span> = selected element
@@ -219,7 +219,7 @@ function CssAiSection(): React.JSX.Element {
                   readOnly
                   aria-label='Page context preview'
                   className='min-h-[160px] text-xs font-mono text-gray-300'
-                 title="Textarea"/>
+                 title='Textarea'/>
               </TabsContent>
               <TabsContent value='element' className='mt-2 space-y-2'>
                 <div className='flex items-center justify-between'>
@@ -238,7 +238,7 @@ function CssAiSection(): React.JSX.Element {
                   readOnly
                   aria-label='Element context preview'
                   className='min-h-[160px] text-xs font-mono text-gray-300'
-                 title="Textarea"/>
+                 title='Textarea'/>
               </TabsContent>
             </Tabs>
           ) : (
@@ -308,7 +308,7 @@ function CssAiSection(): React.JSX.Element {
               readOnly
               aria-label='Generated CSS'
               className='min-h-[120px] text-xs font-mono text-gray-300'
-             title="Textarea"/>
+             title='Textarea'/>
             <div className='rounded border border-border/40 bg-gray-900/40 p-2'>
               <div className='flex items-center justify-between text-[11px] text-gray-400'>
                 <div className='flex items-center gap-3'>

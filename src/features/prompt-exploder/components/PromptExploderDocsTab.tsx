@@ -52,7 +52,7 @@ export function PromptExploderDocsTab(): React.JSX.Element {
             }}
             aria-label='Search docs entries'
             placeholder='Search docs entries, actions, sections, aliases...'
-           title="Search docs entries, actions, sections, aliases..."/>
+           title='Search docs entries, actions, sections, aliases...'/>
           <div className='rounded border border-border/50 bg-card/20 px-3 py-2 text-xs text-gray-400'>
             Entries: <span className='text-gray-200'>{filtered.length}</span>
           </div>

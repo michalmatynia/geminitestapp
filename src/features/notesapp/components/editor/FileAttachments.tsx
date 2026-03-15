@@ -130,7 +130,7 @@ export function FileAttachments(): React.JSX.Element {
                   size='icon'
                   className='h-7 w-7'
                   title='Insert into content'
-                >
+                  aria-label={'Insert into content'}>
                   <Link2 size={12} />
                 </Button>
                 <Button
@@ -142,7 +142,7 @@ export function FileAttachments(): React.JSX.Element {
                   size='icon'
                   className='h-7 w-7'
                   title='Delete file'
-                >
+                  aria-label={'Delete file'}>
                   <Trash2 size={12} />
                 </Button>
               </div>

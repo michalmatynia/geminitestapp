@@ -71,7 +71,7 @@ function VectorToolbarToolButtons(): JSX.Element {
           aria-label='Select tool'
           aria-pressed={tool === 'select'}
           onClick={() => onSelectTool('select')}
-        >
+          title={'Select tool'}>
           <MousePointer2 className='size-4' />
         </Button>
       </Tooltip>
@@ -83,7 +83,7 @@ function VectorToolbarToolButtons(): JSX.Element {
           aria-label='Polygon tool'
           aria-pressed={tool === 'polygon'}
           onClick={() => onSelectTool('polygon')}
-        >
+          title={'Polygon tool'}>
           <Pentagon className='size-4' />
         </Button>
       </Tooltip>
@@ -95,7 +95,7 @@ function VectorToolbarToolButtons(): JSX.Element {
           aria-label='Lasso tool'
           aria-pressed={tool === 'lasso'}
           onClick={() => onSelectTool('lasso')}
-        >
+          title={'Lasso tool'}>
           <Lasso className='size-4' />
         </Button>
       </Tooltip>
@@ -107,7 +107,7 @@ function VectorToolbarToolButtons(): JSX.Element {
           aria-label='Rectangle tool'
           aria-pressed={tool === 'rect'}
           onClick={() => onSelectTool('rect')}
-        >
+          title={'Rectangle tool'}>
           <RectangleHorizontal className='size-4' />
         </Button>
       </Tooltip>
@@ -119,7 +119,7 @@ function VectorToolbarToolButtons(): JSX.Element {
           aria-label='Ellipse tool'
           aria-pressed={tool === 'ellipse'}
           onClick={() => onSelectTool('ellipse')}
-        >
+          title={'Ellipse tool'}>
           <Circle className='size-4' />
         </Button>
       </Tooltip>
@@ -131,7 +131,7 @@ function VectorToolbarToolButtons(): JSX.Element {
           aria-label='Brush tool'
           aria-pressed={tool === 'brush'}
           onClick={() => onSelectTool('brush')}
-        >
+          title={'Brush tool'}>
           <Brush className='size-4' />
         </Button>
       </Tooltip>
@@ -161,7 +161,7 @@ function VectorToolbarActionButtons(): JSX.Element {
             aria-label='Undo last point'
             onClick={onUndo}
             disabled={disableUndo}
-          >
+            title={'Undo last point'}>
             <RotateCcw className='size-4' />
           </Button>
         </Tooltip>
@@ -175,7 +175,7 @@ function VectorToolbarActionButtons(): JSX.Element {
             aria-label='Close polygon'
             onClick={onClose}
             disabled={disableClose}
-          >
+            title={'Close polygon'}>
             <Check className='size-4' />
           </Button>
         </Tooltip>
@@ -189,7 +189,7 @@ function VectorToolbarActionButtons(): JSX.Element {
             aria-label='Detach polygon'
             onClick={onDetach}
             disabled={disableDetach}
-          >
+            title={'Detach polygon'}>
             <Unlink className='size-4' />
           </Button>
         </Tooltip>
@@ -203,7 +203,7 @@ function VectorToolbarActionButtons(): JSX.Element {
             aria-label='Clear shapes'
             onClick={onClear}
             disabled={disableClear}
-          >
+            title={'Clear shapes'}>
             <Trash2 className='size-4' />
           </Button>
         </Tooltip>

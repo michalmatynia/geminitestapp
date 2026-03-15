@@ -498,6 +498,8 @@ export const kangurAiTutorContentSchema = z.object({
   }),
   messageList: z.object({
     followUpTitle: tutorCopySchema,
+    hintFollowUpQuestion: tutorCopySchema,
+    hintFollowUpActionLabel: tutorCopySchema,
     sourcesTitle: tutorCopySchema,
     helpfulPrompt: tutorCopySchema,
     helpfulYesLabel: tutorCopySchema,
@@ -1099,6 +1101,8 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
     },
     messageList: {
       followUpTitle: 'Kolejny krok',
+      hintFollowUpQuestion: 'Potrzebujesz kolejnej podpowiedzi?',
+      hintFollowUpActionLabel: 'Tak, pomóż mi',
       sourcesTitle: 'Źródła',
       helpfulPrompt: 'Pomogło?',
       helpfulYesLabel: 'Tak',

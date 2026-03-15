@@ -57,7 +57,7 @@ export function PlaywrightTabContent(): React.JSX.Element {
                 placeholder='Select persona'
                 variant='subtle'
                 size='sm'
-               ariaLabel="Select persona" title="Select persona"/>
+               ariaLabel='Select persona' title='Select persona'/>
             </FormField>
             <FormSection variant='subtle' className='p-3 text-xs text-gray-400'>
               {selectedPersona ? (

@@ -93,7 +93,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
                   ref={(node) => {
                     node?.focus();
                   }}
-                 aria-label="Input field" title="Input field"/>
+                 aria-label='Input field' title='Input field'/>
               ) : (
                 <span className='font-medium text-white'>
                   {session.title || `Session ${session.id.slice(0, 6)}`}
@@ -138,7 +138,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
                     className='h-7 w-7'
                     onClick={() => startEditing(session)}
                     title='Edit title'
-                  >
+                    aria-label={'Edit title'}>
                     <Eye className='size-3.5' />
                   </Button>
                   <Link href={`/admin/chatbot?session=${session.id}`}>

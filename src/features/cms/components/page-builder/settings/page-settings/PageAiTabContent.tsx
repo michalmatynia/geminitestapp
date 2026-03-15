@@ -42,7 +42,7 @@ export function PageAiTabContent({
           options={pageAiTaskOptions}
           placeholder='Select task'
           ariaLabel='Task'
-         title="Select task"/>
+         title='Select task'/>
       </div>
       <div className='space-y-2'>
         <Label className='text-xs text-gray-400'>Provider</Label>
@@ -53,7 +53,7 @@ export function PageAiTabContent({
           disabled
           aria-label='Provider'
           className='cursor-not-allowed'
-         title="Input field"/>
+         title='Input field'/>
       </div>
       <div className='space-y-2'>
         <Label className='text-xs text-gray-400'>
@@ -66,7 +66,7 @@ export function PageAiTabContent({
           disabled
           aria-label={ai.pageAiProvider === 'agent' ? 'Deepthinking agent' : 'Model'}
           className='cursor-not-allowed'
-         title="Input field"/>
+         title='Input field'/>
       </div>
       <div className='rounded border border-border/40 bg-gray-800/20 px-3 py-2 text-[11px] text-gray-400'>
         Routing for this assistant is managed in AI Brain via the CMS CSS Stream capability. Local
@@ -107,7 +107,7 @@ export function PageAiTabContent({
         readOnly
         aria-label='Context placeholders'
         className='min-h-[64px] text-xs font-mono text-gray-300'
-       title="Textarea"/>
+       title='Textarea'/>
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <Button
           type='button'
@@ -148,7 +148,7 @@ export function PageAiTabContent({
             readOnly
             aria-label='AI output'
             className='min-h-[140px] text-xs font-mono text-gray-300'
-           title="Textarea"/>
+           title='Textarea'/>
         </div>
       )}
     </div>

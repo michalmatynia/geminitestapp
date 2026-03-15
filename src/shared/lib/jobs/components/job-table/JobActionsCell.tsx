@@ -26,7 +26,7 @@ export function JobActionsCell(props: JobActionsCellProps): React.JSX.Element {
         className='h-8 w-8 text-blue-500 hover:text-blue-400'
         onClick={() => onViewDetails(jobId)}
         aria-label='View details'
-      >
+        title={'View details'}>
         <Eye className='h-4 w-4' />
       </Button>
       {(status === 'pending' ||
@@ -40,7 +40,7 @@ export function JobActionsCell(props: JobActionsCellProps): React.JSX.Element {
           onClick={() => onCancel(jobId)}
           loading={isCancelling(jobId)}
           aria-label='Cancel job'
-        >
+          title={'Cancel job'}>
           <XCircle className='h-4 w-4' />
         </Button>
       )}
@@ -52,7 +52,7 @@ export function JobActionsCell(props: JobActionsCellProps): React.JSX.Element {
           onClick={() => resolvedOnDelete(jobId)}
           loading={resolvedIsDeleting}
           aria-label='Delete job'
-        >
+          title={'Delete job'}>
           <Trash2 className='h-4 w-4' />
         </Button>
       )}

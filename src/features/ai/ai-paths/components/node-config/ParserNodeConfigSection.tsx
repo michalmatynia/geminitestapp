@@ -389,7 +389,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
           placeholder='Select preset'
           ariaLabel='Preset'
           variant='subtle'
-         title="Select preset"/>
+         title='Select preset'/>
         <div className='mt-3 flex flex-wrap gap-2'>
           <Button
             type='button'
@@ -432,7 +432,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
             placeholder='Entity type'
             ariaLabel='Sample entity type'
             variant='subtle'
-           title="Entity type"/>
+           title='Entity type'/>
           <div className='space-y-2'>
             <Input
               variant='subtle'
@@ -450,7 +450,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
               }
               aria-label='Sample entity id'
               placeholder='Entity ID'
-             title="Entity ID"/>
+             title='Entity ID'/>
             {simulationOptions.length > 0 && (
               <SelectSimple
                 size='sm'
@@ -478,7 +478,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
                 ariaLabel='Simulation id'
                 variant='subtle'
                 triggerClassName='h-8 text-[10px]'
-               title="Use simulation ID"/>
+               title='Use simulation ID'/>
             )}
           </div>
           <Button
@@ -513,7 +513,8 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
           }
           aria-label='Sample JSON'
           placeholder='{ "id": "123", "title": "Sample" }'
-         title="{ \"id\": \"123\", \"title\": \"Sample\" }"/>
+          title='{"id": "123", "title": "Sample"}'
+        />
         <div className='mt-2 flex flex-wrap gap-2'>
           <SelectSimple
             size='sm'
@@ -533,7 +534,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
             ]}
             ariaLabel='Sample mapping mode'
             className='w-[180px]'
-           title="Sample JSON"/>
+           title='Sample JSON'/>
           <SelectSimple
             size='sm'
             value={String(sampleState.depth)}
@@ -549,7 +550,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
             options={[1, 2, 3, 4].map((d: number) => ({ value: String(d), label: `Depth ${d}` }))}
             ariaLabel='Sample depth'
             className='w-[160px]'
-           title="Sample JSON"/>
+           title='Sample JSON'/>
           <Button
             type='button'
             className={`rounded-md border px-3 text-[10px] ${
@@ -588,7 +589,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
               ]}
               ariaLabel='Sample key style'
               className='w-[170px]'
-             title="Sample JSON"/>
+             title='Sample JSON'/>
           )}
         </div>
         {parsedSample.error ? (
@@ -639,7 +640,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
           ]}
           ariaLabel='Output mode'
           variant='subtle'
-         title="Output Mode"/>
+         title='Output Mode'/>
       </FormField>
 
       <div className='flex flex-wrap gap-2'>
@@ -695,7 +696,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
               }
               aria-label='Output key'
               placeholder='output key'
-             title="output key"/>
+             title='output key'/>
             <div className='space-y-2'>
               <Input
                 variant='subtle'
@@ -706,7 +707,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
                 }
                 aria-label='Output path'
                 placeholder='$.path.to.value'
-               title="$.path.to.value"/>
+               title='$.path.to.value'/>
               <SelectSimple
                 size='sm'
                 onValueChange={(value: string) => updateMappingPath(index, value)}
@@ -716,7 +717,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
                 variant='subtle'
                 triggerClassName='h-8 text-[10px]'
                 value=''
-               title="Pick a suggested path"/>
+               title='Pick a suggested path'/>
             </div>
             <Button
               type='button'

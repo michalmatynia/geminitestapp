@@ -124,7 +124,7 @@ function SignInPageLoader(): React.JSX.Element {
                 ref={focusOnMount}
                 autoComplete='email'
                 className='h-10 bg-gray-900/50'
-               aria-label="name@example.com" title="name@example.com"/>
+               aria-label='name@example.com' title='name@example.com'/>
             </FormField>
 
             <FormField id='password' label='Password'>
@@ -137,7 +137,7 @@ function SignInPageLoader(): React.JSX.Element {
                 required
                 autoComplete='current-password'
                 className='h-10 bg-gray-900/50'
-               aria-label="••••••••" title="••••••••"/>
+               aria-label='••••••••' title='••••••••'/>
             </FormField>
 
             <Button

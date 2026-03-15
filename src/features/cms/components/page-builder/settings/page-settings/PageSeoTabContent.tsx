@@ -48,7 +48,7 @@ export function PageSeoTabContent(): React.JSX.Element {
           }
           placeholder='Page description for search engines'
           className='h-8 text-xs'
-         aria-label="Page description for search engines" title="Page description for search engines"/>
+         aria-label='Page description for search engines' title='Page description for search engines'/>
       </div>
 
       <div className='space-y-1.5'>
@@ -63,7 +63,7 @@ export function PageSeoTabContent(): React.JSX.Element {
           }
           placeholder='https://example.com/page'
           className='h-8 text-xs'
-         aria-label="https://example.com/page" title="https://example.com/page"/>
+         aria-label='https://example.com/page' title='https://example.com/page'/>
       </div>
 
       <div className='space-y-1.5'>
@@ -78,7 +78,7 @@ export function PageSeoTabContent(): React.JSX.Element {
           }
           placeholder='https://example.com/image.png'
           className='h-8 text-xs'
-         aria-label="https://example.com/image.png" title="https://example.com/image.png"/>
+         aria-label='https://example.com/image.png' title='https://example.com/image.png'/>
       </div>
 
       <div className='space-y-1.5'>
@@ -93,7 +93,7 @@ export function PageSeoTabContent(): React.JSX.Element {
           }
           placeholder='index,follow'
           className='h-8 text-xs'
-         aria-label="index,follow" title="index,follow"/>
+         aria-label='index,follow' title='index,follow'/>
       </div>
 
       {/* SEO Preview */}

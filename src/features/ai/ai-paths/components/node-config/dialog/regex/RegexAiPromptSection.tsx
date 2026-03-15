@@ -75,7 +75,7 @@ export function RegexAiPromptSection(props: RegexAiPromptSectionProps): React.JS
           }
         }}
         placeholder='Ask the model to propose a regex. Use {{text}} / {{lines}} placeholders. (Ctrl+Enter to send)'
-       title="Ask the model to propose a regex. Use {{text}} / {{lines}} placeholders. (Ctrl+Enter to send)"/>
+       title='Ask the model to propose a regex. Use {{text}} / {{lines}} placeholders. (Ctrl+Enter to send)'/>
 
       <div className='flex flex-wrap items-center gap-2 text-[11px] text-gray-400'>
         <span>Placeholders:</span>

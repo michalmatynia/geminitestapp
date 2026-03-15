@@ -49,7 +49,7 @@ export function CompareNodeConfigSection(): React.JSX.Element | null {
           }
           options={operatorOptions}
           placeholder='Select operator'
-         ariaLabel="Select operator" title="Select operator"/>
+         ariaLabel='Select operator' title='Select operator'/>
       </FormField>
       <FormField label='Compare To'>
         <Input
@@ -64,7 +64,7 @@ export function CompareNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-         aria-label="Compare To" title="Compare To"/>
+         aria-label='Compare To' title='Compare To'/>
       </FormField>
       <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
         <span>Case Sensitive</span>
@@ -97,7 +97,7 @@ export function CompareNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-         aria-label="Error Message" title="Error Message"/>
+         aria-label='Error Message' title='Error Message'/>
       </FormField>
     </div>
   );

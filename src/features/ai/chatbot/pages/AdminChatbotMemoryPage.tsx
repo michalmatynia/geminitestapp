@@ -142,7 +142,7 @@ export default function AgentMemoryPage(): React.JSX.Element {
                 onChange={(e) => setMemoryKey(e.target.value)}
                 placeholder='run-id or key'
                 className='h-8'
-               aria-label="run-id or key" title="run-id or key"/>
+               aria-label='run-id or key' title='run-id or key'/>
             </FormField>
             <FormField label='Tag'>
               <Input
@@ -151,7 +151,7 @@ export default function AgentMemoryPage(): React.JSX.Element {
                 onChange={(e) => setTag(e.target.value)}
                 placeholder='tag name'
                 className='h-8'
-               aria-label="tag name" title="tag name"/>
+               aria-label='tag name' title='tag name'/>
             </FormField>
             <FormField label='Search content'>
               <Input
@@ -160,7 +160,7 @@ export default function AgentMemoryPage(): React.JSX.Element {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder='text search'
                 className='h-8'
-               aria-label="text search" title="text search"/>
+               aria-label='text search' title='text search'/>
             </FormField>
             <FormField label='Limit'>
               <Input
@@ -171,7 +171,7 @@ export default function AgentMemoryPage(): React.JSX.Element {
                 value={limit}
                 onChange={(e) => setLimit(Number(e.target.value))}
                 className='h-8'
-               aria-label="Limit" title="Limit"/>
+               aria-label='Limit' title='Limit'/>
             </FormField>
           </div>
         }

@@ -81,7 +81,7 @@ function Badge({
           }}
           className='ml-1.5 -mr-1 rounded-full p-0.5 hover:bg-black/10 focus:outline-none transition-colors'
           aria-label={removeLabel || 'Remove'}
-        >
+          title={removeLabel || 'Remove'}>
           <X className='size-3' />
         </button>
       )}
@@ -122,7 +122,7 @@ function Badge({
           }}
           className='mr-1 rounded-full p-0.5 hover:bg-black/10 focus:outline-none transition-colors'
           aria-label={removeLabel || 'Remove'}
-        >
+          title={removeLabel || 'Remove'}>
           <X className='size-3' />
         </button>
       </div>

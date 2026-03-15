@@ -94,7 +94,7 @@ export const getNodeFileDocumentColumns = ({
               e.stopPropagation();
               onAddDocument(row.original.file);
             }}
-          >
+            title={'Add to canvas center'}>
             <Plus className='size-3.5' />
           </Button>
         </Tooltip>
@@ -169,7 +169,7 @@ export const getNodeFileCaseColumns = ({
           className='size-7 p-0 text-gray-400 hover:bg-cyan-500/15 hover:text-cyan-300'
           aria-label='Browse case documents'
           onClick={() => onDrillInto(row.original.file.id)}
-        >
+          title={'Browse case documents'}>
           <ChevronRight className='size-3.5' />
         </Button>
       </Tooltip>

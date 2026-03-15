@@ -385,7 +385,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
                     handleCancelEdit();
                   }
                 }}
-               aria-label="Input field" title="Input field"/>
+               aria-label='Input field' title='Input field'/>
             );
           }
 
@@ -449,7 +449,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
                 }}
                 disabled={rowPending}
                 title={locked ? 'Unlock project' : 'Lock project'}
-              >
+                aria-label={locked ? 'Unlock project' : 'Lock project'}>
                 {locked ? <Lock className='size-3.5' /> : <Unlock className='size-3.5' />}
               </Button>
             </div>
@@ -478,7 +478,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
                     }}
                     disabled={!editingProjectValue.trim() || rowPending}
                     title='Save project id'
-                  >
+                    aria-label={'Save project id'}>
                     <Check className='size-3.5' />
                   </Button>
                   <Button
@@ -489,7 +489,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
                     onClick={handleCancelEdit}
                     disabled={rowPending}
                     title='Cancel edit'
-                  >
+                    aria-label={'Cancel edit'}>
                     <X className='size-3.5' />
                   </Button>
                 </>
@@ -527,7 +527,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
                     }}
                     disabled={locked || deleteProjectMutation.isPending}
                     title={locked ? 'Unlock project before removing' : 'Remove project'}
-                  >
+                    aria-label={locked ? 'Unlock project before removing' : 'Remove project'}>
                     <Trash2 className='size-3.5' />
                   </Button>
                 </>
@@ -587,7 +587,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
                 void handleCreate();
               }
             }}
-           aria-label="New project ID..." title="New project ID..."/>
+           aria-label='New project ID...' title='New project ID...'/>
         </div>
         <div className='w-[120px] space-y-1'>
           <div className='text-[11px] text-gray-500'>Canvas W (px)</div>
@@ -602,7 +602,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
               setNewProjectCanvasWidthPx(event.target.value);
             }}
             className={cn('h-9', !canvasWidthDraftValid && 'border-red-400/50')}
-           aria-label="Input field" title="Input field"/>
+           aria-label='Input field' title='Input field'/>
         </div>
         <div className='w-[120px] space-y-1'>
           <div className='text-[11px] text-gray-500'>Canvas H (px)</div>
@@ -617,7 +617,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
               setNewProjectCanvasHeightPx(event.target.value);
             }}
             className={cn('h-9', !canvasHeightDraftValid && 'border-red-400/50')}
-           aria-label="Input field" title="Input field"/>
+           aria-label='Input field' title='Input field'/>
         </div>
         <div className='flex w-full flex-wrap items-center gap-2'>
           <div className='text-[11px] text-gray-500'>Canvas Templates:</div>

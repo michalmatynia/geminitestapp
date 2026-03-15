@@ -85,7 +85,7 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
           }}
           className='size-4 p-0 text-gray-500 hover:bg-white/10 hover:text-gray-300'
           aria-label={isExpanded ? `Collapse ${node.name}` : `Expand ${node.name}`}
-        >
+          title={isExpanded ? `Collapse ${node.name}` : `Expand ${node.name}`}>
           {isExpanded ? <ChevronDown className='size-3' /> : <ChevronRight className='size-3' />}
         </Button>
       ) : (
@@ -115,7 +115,7 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
           }}
           onClick={(event: React.MouseEvent<HTMLInputElement>): void => event.stopPropagation()}
           className='h-7 min-w-0 flex-1 border-blue-500 bg-gray-800 px-1 py-0.5 text-sm text-white outline-none'
-         title="Input field"/>
+         title='Input field'/>
       ) : (
         <button
           type='button'
@@ -149,7 +149,7 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
                   }}
                   aria-label='Add note'
                   className='size-6 p-0 text-gray-400 hover:bg-white/10 hover:text-white'
-                >
+                  title={'Add note'}>
                   <FilePlus className='size-3' />
                 </Button>
               </Tooltip>
@@ -170,7 +170,7 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
                   }}
                   aria-label='Add subfolder'
                   className='size-6 p-0 text-gray-400 hover:bg-white/10 hover:text-white'
-                >
+                  title={'Add subfolder'}>
                   <FolderPlus className='size-3' />
                 </Button>
               </Tooltip>
@@ -194,7 +194,7 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
                 }}
                 aria-label='Duplicate note'
                 className='size-6 p-0 text-gray-400 hover:bg-white/10 hover:text-white'
-              >
+                title={'Duplicate note'}>
                 <Copy className='size-3' />
               </Button>
             </Tooltip>
@@ -214,7 +214,7 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
               }}
               aria-label='Rename'
               className='size-6 p-0 text-gray-400 hover:bg-white/10 hover:text-white'
-            >
+              title={'Rename'}>
               <Edit2 className='size-3' />
             </Button>
           </Tooltip>
@@ -239,7 +239,7 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
               }}
               aria-label='Delete'
               className='size-6 p-0 text-rose-400 hover:bg-red-500/20 hover:text-rose-300'
-            >
+              title={'Delete'}>
               <Trash2 className='size-3' />
             </Button>
           </Tooltip>

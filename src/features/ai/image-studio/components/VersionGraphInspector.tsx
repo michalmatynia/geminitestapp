@@ -177,7 +177,7 @@ export function VersionGraphInspector(): React.JSX.Element {
             disabled={compositeBusy || compositeLoading}
             onClick={() => onRefreshCompositePreview(selectedNode.id)}
             loading={compositeLoading}
-          >
+            aria-label={versionGraphTooltipsEnabled ? tooltipContent.refreshCompositePreview : undefined}>
             <RefreshCw className='size-3' />
           </Button>
         ) : null}

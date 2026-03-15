@@ -97,7 +97,7 @@ export function RuleItemAutofixSettings(): React.JSX.Element | null {
                       pattern: event.target.value,
                     });
                   }}
-                 aria-label="Pattern" title="Pattern"/>
+                 aria-label='Pattern' title='Pattern'/>
               </FormField>
               <FormField label='Flags'>
                 <Input
@@ -109,7 +109,7 @@ export function RuleItemAutofixSettings(): React.JSX.Element | null {
                       flags: event.target.value.trim() || undefined,
                     });
                   }}
-                 aria-label="Flags" title="Flags"/>
+                 aria-label='Flags' title='Flags'/>
               </FormField>
               <FormField label='Replacement'>
                 <Input
@@ -121,7 +121,7 @@ export function RuleItemAutofixSettings(): React.JSX.Element | null {
                       replacement: event.target.value,
                     });
                   }}
-                 aria-label="Replacement" title="Replacement"/>
+                 aria-label='Replacement' title='Replacement'/>
               </FormField>
               <FormField label='Comment' className='md:col-span-4'>
                 <Input
@@ -133,7 +133,7 @@ export function RuleItemAutofixSettings(): React.JSX.Element | null {
                       comment: event.target.value.trim() || null,
                     });
                   }}
-                 aria-label="Comment" title="Comment"/>
+                 aria-label='Comment' title='Comment'/>
               </FormField>
             </div>
           ) : (
@@ -147,7 +147,7 @@ export function RuleItemAutofixSettings(): React.JSX.Element | null {
                     comment: event.target.value.trim() || null,
                   });
                 }}
-               aria-label="Comment" title="Comment"/>
+               aria-label='Comment' title='Comment'/>
             </FormField>
           )}
         </Card>

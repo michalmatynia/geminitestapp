@@ -317,7 +317,7 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
                   }))}
                   placeholder='Select collection'
                   triggerClassName='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'
-                 ariaLabel="Select collection" title="Select collection"/>
+                 ariaLabel='Select collection' title='Select collection'/>
               )}
               <Input
                 size='sm'
@@ -343,7 +343,7 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
                 }}
                 placeholder='Entity ID (e.g. products/123 or product-uuid)'
                 className='h-7 flex-1 border-border bg-card/70 text-[11px] text-white'
-               aria-label="Entity ID (e.g. products/123 or product-uuid)" title="Entity ID (e.g. products/123 or product-uuid)"/>
+               aria-label='Entity ID (e.g. products/123 or product-uuid)' title='Entity ID (e.g. products/123 or product-uuid)'/>
               <Button
                 type='button'
                 className='h-7 rounded-md border border-border bg-card/70 px-3 text-[10px] text-gray-200 hover:bg-muted/60'
@@ -520,7 +520,7 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
                                     handleInsertPlaceholder(`{{${field.name}}}`, 'query')
                                   }
                                   title='Insert as placeholder'
-                                >
+                                  aria-label={'Insert as placeholder'}>
                                   <LayoutGrid className='size-2.5' />
                                 </Button>
                               </div>

@@ -177,7 +177,7 @@ function DraggableToken({
               }
             }}
             role='button'
-            aria-label='Przenies element'
+            aria-label='Przenieś element'
           >
             <span aria-hidden='true'>{token.emoji}</span>
           </div>

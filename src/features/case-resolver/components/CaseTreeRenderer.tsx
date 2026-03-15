@@ -154,7 +154,7 @@ export function CaseTreeRenderer({
                         value={editingCaseName}
                         onChange={(e) => setEditingCaseName(e.target.value)}
                         className='h-9 bg-black/40'
-                       aria-label="Case Name" title="Case Name"/>
+                       aria-label='Case Name' title='Case Name'/>
                     </FormField>
                     <div className='flex items-end gap-2'>
                       <Button size='sm' onClick={handleSaveCase}>
@@ -179,7 +179,7 @@ export function CaseTreeRenderer({
                           ...parentCaseOptions.filter((o) => o.value !== file.id),
                         ]}
                         triggerClassName='bg-black/40'
-                       ariaLabel="Parent Case" title="Parent Case"/>
+                       ariaLabel='Parent Case' title='Parent Case'/>
                     </FormField>
                     <FormField label='Tag'>
                       <SelectSimple
@@ -193,7 +193,7 @@ export function CaseTreeRenderer({
                           ...caseResolverTagOptions,
                         ]}
                         triggerClassName='bg-black/40'
-                       ariaLabel="Tag" title="Tag"/>
+                       ariaLabel='Tag' title='Tag'/>
                     </FormField>
                     <FormField label='Category'>
                       <SelectSimple
@@ -207,7 +207,7 @@ export function CaseTreeRenderer({
                           ...caseResolverCategoryOptions,
                         ]}
                         triggerClassName='bg-black/40'
-                       ariaLabel="Category" title="Category"/>
+                       ariaLabel='Category' title='Category'/>
                     </FormField>
                   </div>
                 </div>

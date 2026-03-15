@@ -89,7 +89,7 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
             label: event.label,
           }))}
           placeholder='Select action'
-         ariaLabel="Select action" title="Select action"/>
+         ariaLabel='Select action' title='Select action'/>
       </FormField>
 
       <FormField label='Context Source'>

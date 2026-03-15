@@ -427,7 +427,7 @@ export function AgentPersonaMoodEditor({
                       placeholder='data:image/png;base64,... or raw SVG markup'
                       className='min-h-[120px] font-mono text-xs'
                       spellCheck={false}
-                     aria-label="data:image/png;base64,... or raw SVG markup" title="data:image/png;base64,... or raw SVG markup"/>
+                     aria-label='data:image/png;base64,... or raw SVG markup' title='data:image/png;base64,... or raw SVG markup'/>
                     <div className='flex flex-wrap items-end gap-3'>
                       <FormField
                         label='Base64 MIME'

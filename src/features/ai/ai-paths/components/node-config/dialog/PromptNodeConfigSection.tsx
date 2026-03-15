@@ -209,7 +209,7 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
             })
           }
           placeholder='Describe the product: {{title}}'
-         aria-label="Describe the product: {{title}}" title="Describe the product: {{title}}"/>
+         aria-label='Describe the product: {{title}}' title='Describe the product: {{title}}'/>
       </FormField>
       <div className='rounded-md border border-border bg-card/50 p-3 text-[11px] text-gray-400'>
         <div className='flex items-center justify-between gap-2 text-gray-300'>
@@ -370,7 +370,7 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
             value={resolvedPrompt}
             readOnly
             placeholder='Run the graph to resolve placeholders.'
-           aria-label="Run the graph to resolve placeholders." title="Run the graph to resolve placeholders."/>
+           aria-label='Run the graph to resolve placeholders.' title='Run the graph to resolve placeholders.'/>
         </FormField>
       </div>
 
@@ -420,7 +420,7 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
                 value={displayValue}
                 readOnly
                 placeholder='No result received yet. Connect a node to the result input and run the graph.'
-               aria-label="No result received yet. Connect a node to the result input and run the graph." title="No result received yet. Connect a node to the result input and run the graph."/>
+               aria-label='No result received yet. Connect a node to the result input and run the graph.' title='No result received yet. Connect a node to the result input and run the graph.'/>
             </FormField>
             {!hasResult &&
               resultSourceNode?.type === 'model' &&

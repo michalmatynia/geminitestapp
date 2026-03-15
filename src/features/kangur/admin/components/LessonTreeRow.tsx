@@ -77,7 +77,7 @@ export function LessonTreeRow(props: {
                 input.isExpanded ? `Collapse ${input.node.name}` : `Expand ${input.node.name}`
               }
               aria-expanded={input.isExpanded}
-            >
+              title={input.isExpanded ? `Collapse ${input.node.name}` : `Expand ${input.node.name}`}>
               {input.isExpanded ? (
                 <ChevronDown className='size-3.5' />
               ) : (

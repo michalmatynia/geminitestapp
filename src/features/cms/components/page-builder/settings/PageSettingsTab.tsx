@@ -65,7 +65,7 @@ function PageSettingsTab(): React.ReactNode {
                 }}
                 placeholder='Page name'
                 className='h-7 flex-1 bg-transparent px-2 text-xs'
-               title="Page name"/>
+               title='Page name'/>
             ) : (
               <span className='flex-1 truncate text-xs text-gray-200'>
                 {page.name || 'Untitled page'}
@@ -80,7 +80,7 @@ function PageSettingsTab(): React.ReactNode {
                   onClick={() => setIsEditingName(false)}
                   className='h-6 w-6 text-emerald-300 hover:text-emerald-100'
                   aria-label='Save page name'
-                >
+                  title={'Save page name'}>
                   <Check className='size-3.5' />
                 </Button>
                 <Button
@@ -90,7 +90,7 @@ function PageSettingsTab(): React.ReactNode {
                   onClick={() => setIsEditingName(false)}
                   className='h-6 w-6 text-rose-300 hover:text-rose-100'
                   aria-label='Cancel editing page name'
-                >
+                  title={'Cancel editing page name'}>
                   <X className='size-3.5' />
                 </Button>
               </div>
@@ -102,7 +102,7 @@ function PageSettingsTab(): React.ReactNode {
                 onClick={() => setIsEditingName(true)}
                 className='h-6 w-6 text-gray-400 hover:text-white'
                 aria-label='Edit page name'
-              >
+                title={'Edit page name'}>
                 <Pencil className='size-3.5' />
               </Button>
             )}

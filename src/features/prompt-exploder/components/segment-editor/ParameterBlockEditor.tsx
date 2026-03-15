@@ -64,7 +64,7 @@ export function ParameterBlockEditor(): React.JSX.Element {
                               ? `Auto (${promptExploderParamUiControlLabel(entry.recommendation.recommended)})`
                               : promptExploderParamUiControlLabel(c),
                         }))}
-                       ariaLabel="Selector" title="Selector"/>
+                       ariaLabel='Selector' title='Selector'/>
                     </FormField>
                     <FormField label='Value'>
                       <Textarea
@@ -77,7 +77,7 @@ export function ParameterBlockEditor(): React.JSX.Element {
                             sanitizeParamJsonValue(e.target.value, entry.value)
                           )
                         }
-                       aria-label="Value" title="Value"/>
+                       aria-label='Value' title='Value'/>
                     </FormField>
                   </div>
                 </div>
@@ -125,7 +125,7 @@ export function ParameterBlockEditor(): React.JSX.Element {
               };
             });
           }}
-         aria-label="Parameters Text" title="Parameters Text"/>
+         aria-label='Parameters Text' title='Parameters Text'/>
       </FormField>
     </div>
   );

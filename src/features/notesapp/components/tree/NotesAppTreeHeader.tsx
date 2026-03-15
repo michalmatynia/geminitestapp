@@ -67,7 +67,7 @@ function NotesAppTreeHeaderActions(): React.JSX.Element {
         variant='outline'
         className='h-7 w-7 p-0 border text-gray-300 hover:bg-muted/50'
         title='Add folder'
-      >
+        aria-label={'Add folder'}>
         <FolderPlus className='size-4' />
       </Button>
       <Button
@@ -80,7 +80,7 @@ function NotesAppTreeHeaderActions(): React.JSX.Element {
         variant='outline'
         className='h-7 w-7 p-0 border text-gray-300 hover:bg-muted/50'
         title='Add note'
-      >
+        aria-label={'Add note'}>
         <FilePlus className='size-4' />
       </Button>
       <Button
@@ -103,7 +103,7 @@ function NotesAppTreeHeaderActions(): React.JSX.Element {
         variant='outline'
         className='h-7 w-7 p-0 border text-gray-300 hover:bg-muted/50'
         title='Collapse folder tree'
-      >
+        aria-label={'Collapse folder tree'}>
         <ChevronRight className='size-4' />
       </Button>
     </>

@@ -64,7 +64,7 @@ export function LearnedRuleItem(props: LearnedRuleItemProps): React.JSX.Element 
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
             handleLearnedRuleTextChange(draft.uid, event.target.value)
           }
-         aria-label="Textarea" title="Textarea"/>
+         aria-label='Textarea' title='Textarea'/>
         {draft.error ? (
           <Alert variant='error' className='text-xs'>
             {draft.error}

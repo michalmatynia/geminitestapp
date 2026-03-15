@@ -44,7 +44,7 @@ export function MathNodeConfigSection(): React.JSX.Element | null {
           }
           options={operationOptions}
           placeholder='Select operation'
-         ariaLabel="Select operation" title="Select operation"/>
+         ariaLabel='Select operation' title='Select operation'/>
       </FormField>
       <FormField label='Operand'>
         <Input
@@ -61,7 +61,7 @@ export function MathNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-         aria-label="Operand" title="Operand"/>
+         aria-label='Operand' title='Operand'/>
       </FormField>
     </div>
   );

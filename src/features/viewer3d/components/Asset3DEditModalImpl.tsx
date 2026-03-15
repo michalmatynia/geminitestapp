@@ -117,7 +117,7 @@ export function Asset3DEditModal(props: Asset3DEditModalProps): React.JSX.Elemen
             placeholder='Enter category...'
             list='categories-list'
             className='flex-1 h-9'
-           aria-label="Enter category..." title="Enter category..."/>
+           aria-label='Enter category...' title='Enter category...'/>
           <datalist id='categories-list'>
             {existingCategories.map((cat: string) => (
               <option key={cat} value={cat} />
@@ -145,7 +145,7 @@ export function Asset3DEditModal(props: Asset3DEditModalProps): React.JSX.Elemen
               placeholder='Add tag...'
               list='tags-list'
               className='flex-1 h-9'
-             aria-label="Add tag..." title="Add tag..."/>
+             aria-label='Add tag...' title='Add tag...'/>
             <datalist id='tags-list'>
               {existingTags
                 .filter((t: string) => !tags.includes(t))
@@ -160,7 +160,7 @@ export function Asset3DEditModal(props: Asset3DEditModalProps): React.JSX.Elemen
               aria-label='Add tag'
               onClick={handleAddTag}
               className='h-9 w-9'
-            >
+              title={'Add tag'}>
               <Plus className='h-4 w-4' />
             </Button>
           </div>

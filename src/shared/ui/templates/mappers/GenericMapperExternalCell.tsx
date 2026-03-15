@@ -23,6 +23,6 @@ export function GenericMapperExternalCell(
       variant='subtle'
       size='sm'
       triggerClassName='w-full max-w-md'
-     ariaLabel="Select option" title="Select option"/>
+     ariaLabel='Select option' title='Select option'/>
   );
 }

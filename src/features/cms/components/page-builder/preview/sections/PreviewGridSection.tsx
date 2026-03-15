@@ -248,7 +248,7 @@ export function PreviewGridSection() {
                               disabled={!canRemoveRow}
                               className='size-7 p-0 text-gray-300 hover:bg-red-500/20 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-40 transition-colors'
                               title={canRemoveRow ? 'Remove row' : 'At least one row is required'}
-                            >
+                              aria-label={canRemoveRow ? 'Remove row' : 'At least one row is required'}>
                               <Trash2 className='size-3.5' />
                             </Button>
                           </div>

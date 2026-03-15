@@ -314,7 +314,7 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
                   className='inline-flex size-4 items-center justify-center rounded hover:bg-muted/50'
                   onClick={(): void => toggleCollapsed(node.id)}
                   aria-label={isCollapsed ? `Expand ${node.name}` : `Collapse ${node.name}`}
-                >
+                  title={isCollapsed ? `Expand ${node.name}` : `Collapse ${node.name}`}>
                   {isCollapsed ? (
                     <ChevronRight className='size-3.5' />
                   ) : (
@@ -362,7 +362,7 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
                     void handleMoveCategory(node.id, -1);
                   }}
                   title='Move up'
-                >
+                  aria-label={'Move up'}>
                   <ArrowUp className='size-3' />
                 </Button>
                 <Button
@@ -374,7 +374,7 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
                     void handleMoveCategory(node.id, 1);
                   }}
                   title='Move down'
-                >
+                  aria-label={'Move down'}>
                   <ArrowDown className='size-3' />
                 </Button>
                 <Button
@@ -385,7 +385,7 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
                     setCategoryToDelete(node);
                   }}
                   title='Delete category'
-                >
+                  aria-label={'Delete category'}>
                   <Trash2 className='size-3' />
                 </Button>
               </div>

@@ -22,7 +22,7 @@ export function AppearanceModeSelector(): React.JSX.Element {
           options={KANGUR_STOREFRONT_THEME_OPTIONS}
           onValueChange={(val) => void handleDefaultModeChange(val as KangurStorefrontAppearanceMode)}
           disabled={isDefaultModeSaving}
-         ariaLabel="Select option" title="Select option"/>
+         ariaLabel='Select option' title='Select option'/>
       </div>
     </FormSection>
   );

@@ -234,7 +234,7 @@ export function PromptExploderLibraryTab(): React.JSX.Element {
                 value={selectedSegmentationRecord.sourcePrompt}
                 readOnly
                 aria-label='Pre-segmentation text'
-               title="Textarea"/>
+               title='Textarea'/>
             </div>
 
             <div className='space-y-1'>
@@ -246,7 +246,7 @@ export function PromptExploderLibraryTab(): React.JSX.Element {
                 value={selectedSegmentationRecord.reassembledPrompt}
                 readOnly
                 aria-label='Post-segmentation reassembled output'
-               title="Textarea"/>
+               title='Textarea'/>
             </div>
 
             <div className='space-y-2'>

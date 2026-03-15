@@ -13,7 +13,7 @@ import {
 } from './KangurAiTutorWidget.helpers';
 import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
 
-import { type JSX } from 'react';
+import { type JSX, useMemo } from 'react';
 
 const AI_TUTOR_FOLLOW_UP_ROUTE_ACKNOWLEDGE_MS = 110;
 
@@ -66,18 +66,23 @@ export function KangurAiTutorMessageList({
   const {
     askModalHelperText,
     basePath,
+    canSendMessages,
     emptyStateMessage,
     handleFollowUpClick,
+    handleQuickAction,
     handleMessageFeedback,
     handleWebsiteHelpTargetClick,
     isAskModalMode,
     isLoading,
+    lastInteractionIntent,
+    lastPromptMode,
     isSectionExplainPendingMode,
     isSelectionExplainPendingMode,
     messages,
     panelEmptyStateMessage,
     showSources,
     tutorSessionKey,
+    visibleQuickActions,
   } = useKangurAiTutorPanelBodyContext();
   const {
     messageFeedbackByKey,
@@ -86,6 +91,28 @@ export function KangurAiTutorMessageList({
   const shouldSuppressConversationHistory =
     isSelectionExplainPendingMode || isSectionExplainPendingMode;
   const visibleMessages = shouldSuppressConversationHistory ? [] : messages;
+  const hintQuickAction = useMemo(() => {
+    const action = visibleQuickActions.find((candidate) => candidate.id === 'hint');
+    if (action) {
+      return action;
+    }
+    return {
+      id: 'hint',
+      label: tutorContent.quickActions.hint.defaultLabel,
+      prompt: tutorContent.quickActions.hint.defaultPrompt,
+      promptMode: 'hint',
+      interactionIntent: 'hint',
+    };
+  }, [tutorContent.quickActions.hint.defaultLabel, tutorContent.quickActions.hint.defaultPrompt, visibleQuickActions]);
+  const lastAssistantMessageIndex = useMemo(() => {
+    let lastIndex = -1;
+    visibleMessages.forEach((message, index) => {
+      if (message.role === 'assistant') {
+        lastIndex = index;
+      }
+    });
+    return lastIndex;
+  }, [visibleMessages]);
   const introCopy = typeof introMessage === 'string' ? introMessage.trim() : '';
   const hasIntroMessage = introCopy.length > 0;
   const emptyStateCopy =
@@ -174,6 +201,12 @@ export function KangurAiTutorMessageList({
           const assistantDrawingArtifacts = messageArtifacts.filter(
             (artifact) => artifact.type === 'assistant_drawing'
           );
+          const isHintResponseCandidate =
+            msg.coachingFrame?.mode === 'hint_ladder' ||
+            lastPromptMode === 'hint' ||
+            lastInteractionIntent === 'hint';
+          const shouldShowHintFollowUp =
+            Boolean(hintQuickAction) && index === lastAssistantMessageIndex && isHintResponseCandidate;
 
           return (
             <div key={index} className='flex justify-start'>
@@ -236,6 +269,28 @@ export function KangurAiTutorMessageList({
                 <div className='tutor-assistant-bubble kangur-chat-padding-sm text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
                   {msg.content}
                 </div>
+                {shouldShowHintFollowUp ? (
+                  <div
+                    data-testid='kangur-ai-tutor-hint-followup'
+                    className='soft-card kangur-chat-card kangur-chat-padding-md border kangur-chat-surface-warm kangur-chat-surface-warm-shadow'
+                  >
+                    <div className='text-xs font-medium leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
+                      {tutorContent.messageList.hintFollowUpQuestion}
+                    </div>
+                    <div className='mt-2'>
+                      <KangurButton
+                        data-testid='kangur-ai-tutor-hint-followup-cta'
+                        type='button'
+                        size='sm'
+                        variant='primary'
+                        disabled={isLoading || !canSendMessages}
+                        onClick={() => void handleQuickAction(hintQuickAction)}
+                      >
+                        {tutorContent.messageList.hintFollowUpActionLabel}
+                      </KangurButton>
+                    </div>
+                  </div>
+                ) : null}
                 {msg.answerResolutionMode === 'page_content' ? (
                   <div
                     data-testid='kangur-ai-tutor-page-content-answer-badge'

@@ -116,7 +116,7 @@ export function CanvasResizeModal(): React.JSX.Element {
                   void handleSubmit();
                 }
               }}
-             aria-label="Input field" title="Input field"/>
+             aria-label='Input field' title='Input field'/>
           </div>
           <div className='space-y-1'>
             <Label className='text-xs text-gray-400'>Height (px)</Label>
@@ -135,7 +135,7 @@ export function CanvasResizeModal(): React.JSX.Element {
                   void handleSubmit();
                 }
               }}
-             aria-label="Input field" title="Input field"/>
+             aria-label='Input field' title='Input field'/>
           </div>
         </div>
 

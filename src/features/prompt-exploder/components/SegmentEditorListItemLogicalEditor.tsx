@@ -195,7 +195,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
             value: option.value,
             label: option.label,
           }))}
-         title="Select option"/>
+         title='Select option'/>
       </div>
 
       {operatorValue !== 'none' ? (
@@ -247,7 +247,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
                         value: option.value,
                         label: option.label,
                       }))}
-                     title="Select option"/>
+                     title='Select option'/>
                   )}
                 </div>
 
@@ -267,7 +267,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
                         ? paramOptions
                         : [{ value: '', label: 'No parameters available' }]
                     }
-                   title="Select option"/>
+                   title='Select option'/>
                 </div>
 
                 <div className='space-y-1'>
@@ -288,7 +288,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
                       value: option.value,
                       label: option.label,
                     }))}
-                   title="Select option"/>
+                   title='Select option'/>
                 </div>
 
                 <div className='space-y-1'>
@@ -308,7 +308,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
                           { value: 'true', label: 'true' },
                           { value: 'false', label: 'false' },
                         ]}
-                       title="Select option"/>
+                       title='Select option'/>
                     ) : selectedParamEntry?.spec?.kind === 'enum' &&
                       selectedParamEntry.spec.enumOptions ? (
                         <SelectSimple
@@ -326,7 +326,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
                             value,
                             label: value,
                           }))}
-                         title="Select option"/>
+                         title='Select option'/>
                       ) : selectedParamEntry?.spec?.kind === 'number' ? (
                         <Input
                           type='number'
@@ -339,7 +339,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
                               value: next,
                             });
                           }}
-                         title="Input field"/>
+                         title='Input field'/>
                       ) : (
                         <Input
                           value={
@@ -364,7 +364,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
                               value: rawValue,
                             });
                           }}
-                         title="Input field"/>
+                         title='Input field'/>
                       )
                   ) : (
                     <Card
@@ -388,7 +388,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
                       removeCondition(conditionIndex);
                     }}
                     disabled={logicalConditions.length <= 1}
-                  >
+                    title={'Remove condition'}>
                     <Trash2 className='size-3.5' />
                   </Button>
                 </div>

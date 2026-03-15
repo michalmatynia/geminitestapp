@@ -182,7 +182,7 @@ export function SequencePresetsCard(): React.JSX.Element {
             placeholder='Select sequence preset'
             triggerClassName='h-7 text-[11px]'
             ariaLabel='Sequence preset'
-           title="Select sequence preset"/>
+           title='Select sequence preset'/>
           <Button
             size='xs'
             type='button'

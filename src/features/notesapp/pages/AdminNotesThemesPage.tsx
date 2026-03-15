@@ -169,7 +169,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                 value={form.name}
                 onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
                 placeholder='Enter theme name'
-               aria-label="Enter theme name" title="Enter theme name"/>
+               aria-label='Enter theme name' title='Enter theme name'/>
             </FormField>
             <FormField label='Text Color'>
               <Input
@@ -177,7 +177,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                 value={form.textColor}
                 onChange={(e) => setForm((prev) => ({ ...prev, textColor: e.target.value }))}
                 className='h-10 p-1'
-               aria-label="Text Color" title="Text Color"/>
+               aria-label='Text Color' title='Text Color'/>
             </FormField>
             <FormField label='Background Color'>
               <Input
@@ -190,7 +190,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                   }))
                 }
                 className='h-10 p-1'
-               aria-label="Background Color" title="Background Color"/>
+               aria-label='Background Color' title='Background Color'/>
             </FormField>
             <FormField label='Markdown Heading'>
               <Input
@@ -203,7 +203,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                   }))
                 }
                 className='h-10 p-1'
-               aria-label="Markdown Heading" title="Markdown Heading"/>
+               aria-label='Markdown Heading' title='Markdown Heading'/>
             </FormField>
             <FormField label='Markdown Link'>
               <Input
@@ -216,7 +216,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                   }))
                 }
                 className='h-10 p-1'
-               aria-label="Markdown Link" title="Markdown Link"/>
+               aria-label='Markdown Link' title='Markdown Link'/>
             </FormField>
             <FormField label='Code Background'>
               <Input
@@ -229,7 +229,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                   }))
                 }
                 className='h-10 p-1'
-               aria-label="Code Background" title="Code Background"/>
+               aria-label='Code Background' title='Code Background'/>
             </FormField>
             <FormField label='Code Text'>
               <Input
@@ -242,7 +242,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                   }))
                 }
                 className='h-10 p-1'
-               aria-label="Code Text" title="Code Text"/>
+               aria-label='Code Text' title='Code Text'/>
             </FormField>
             <FormField label='Related Border Width'>
               <Input
@@ -256,7 +256,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                     relatedNoteBorderWidth: Number(e.target.value),
                   }))
                 }
-               aria-label="Related Border Width" title="Related Border Width"/>
+               aria-label='Related Border Width' title='Related Border Width'/>
             </FormField>
             <FormField label='Related Border Color'>
               <Input
@@ -269,7 +269,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                   }))
                 }
                 className='h-10 p-1'
-               aria-label="Related Border Color" title="Related Border Color"/>
+               aria-label='Related Border Color' title='Related Border Color'/>
             </FormField>
             <FormField label='Related Background'>
               <Input
@@ -282,7 +282,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                   }))
                 }
                 className='h-10 p-1'
-               aria-label="Related Background" title="Related Background"/>
+               aria-label='Related Background' title='Related Background'/>
             </FormField>
             <FormField label='Related Text Color'>
               <Input
@@ -295,7 +295,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                   }))
                 }
                 className='h-10 p-1'
-               aria-label="Related Text Color" title="Related Text Color"/>
+               aria-label='Related Text Color' title='Related Text Color'/>
             </FormField>
           </div>
           <FormActions
@@ -381,7 +381,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                             }))
                           }
                           className='h-8 text-sm'
-                         aria-label="Theme Name" title="Theme Name"/>
+                         aria-label='Theme Name' title='Theme Name'/>
                       </FormField>
                       <FormField label='Text'>
                         <Input
@@ -395,7 +395,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                             }))
                           }
                           className='h-8 p-1'
-                         aria-label="Text" title="Text"/>
+                         aria-label='Text' title='Text'/>
                       </FormField>
                       <FormField label='Background'>
                         <Input
@@ -409,7 +409,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                             }))
                           }
                           className='h-8 p-1'
-                         aria-label="Background" title="Background"/>
+                         aria-label='Background' title='Background'/>
                       </FormField>
                       <FormField label='Heading'>
                         <Input
@@ -423,7 +423,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                             }))
                           }
                           className='h-8 p-1'
-                         aria-label="Heading" title="Heading"/>
+                         aria-label='Heading' title='Heading'/>
                       </FormField>
                       <FormField label='Link'>
                         <Input
@@ -437,7 +437,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                             }))
                           }
                           className='h-8 p-1'
-                         aria-label="Link" title="Link"/>
+                         aria-label='Link' title='Link'/>
                       </FormField>
                       <FormField label='Code Bg'>
                         <Input
@@ -451,7 +451,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                             }))
                           }
                           className='h-8 p-1'
-                         aria-label="Code Bg" title="Code Bg"/>
+                         aria-label='Code Bg' title='Code Bg'/>
                       </FormField>
                       <FormField label='Code Text'>
                         <Input
@@ -465,7 +465,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                             }))
                           }
                           className='h-8 p-1'
-                         aria-label="Code Text" title="Code Text"/>
+                         aria-label='Code Text' title='Code Text'/>
                       </FormField>
                       <FormField label='Border Width'>
                         <Input
@@ -481,7 +481,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                             }))
                           }
                           className='h-8'
-                         aria-label="Border Width" title="Border Width"/>
+                         aria-label='Border Width' title='Border Width'/>
                       </FormField>
                     </div>
                   </div>

@@ -203,7 +203,7 @@ export function VectorOverlay({
             variant='ghost'
             onClick={handleCancel}
             aria-label='Close'
-          >
+            title={'Close'}>
             <X className='size-4' />
           </Button>
         </div>

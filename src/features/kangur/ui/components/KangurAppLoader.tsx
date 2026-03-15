@@ -1,4 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
 
@@ -8,6 +9,13 @@ type KangurAppLoaderProps = {
 
 export function KangurAppLoader({ visible }: KangurAppLoaderProps): React.JSX.Element {
   const prefersReducedMotion = useReducedMotion();
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  const allowIntroAnimation = hasMounted && !prefersReducedMotion;
 
   return (
     <AnimatePresence>
@@ -18,7 +26,7 @@ export function KangurAppLoader({ visible }: KangurAppLoaderProps): React.JSX.El
           aria-live='polite'
           className='fixed inset-0 z-[90] flex items-center justify-center overflow-hidden px-4'
           data-testid='kangur-app-loader'
-          initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+          initial={allowIntroAnimation ? { opacity: 0 } : { opacity: 1 }}
           animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1 }}
           exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
           transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: 'easeOut' }}
@@ -39,7 +47,11 @@ export function KangurAppLoader({ visible }: KangurAppLoaderProps): React.JSX.El
             className='relative flex flex-col items-center justify-center gap-4 rounded-[40px] border px-12 py-11 backdrop-blur-xl'
             data-loader-layout='expanded-card'
             data-testid='kangur-app-loader-panel'
-            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0.94, scale: 0.98 }}
+            initial={
+              allowIntroAnimation
+                ? { opacity: 0.94, scale: 0.98 }
+                : { opacity: 1, scale: 1 }
+            }
             animate={
               prefersReducedMotion
                 ? { opacity: 1, scale: 1 }

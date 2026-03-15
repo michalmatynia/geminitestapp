@@ -82,7 +82,7 @@ function Asset3DPreviewModalContent(): React.JSX.Element {
             onClick={resetSettings}
             title='Reset settings'
             className='h-8 w-8 p-0'
-          >
+            aria-label={'Reset settings'}>
             <RotateCcw className='h-4 w-4' />
           </Button>
           <Button

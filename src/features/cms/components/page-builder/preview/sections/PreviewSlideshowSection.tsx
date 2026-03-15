@@ -291,7 +291,7 @@ export function PreviewSlideshowSection() {
                   }}
                   className='size-8 rounded-full border-gray-600 bg-transparent p-0 text-gray-400 hover:bg-white/10 hover:text-white transition'
                   aria-label='Previous slide'
-                >
+                  title={'Previous slide'}>
                   <svg className='size-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
                     <path
                       strokeLinecap='round'
@@ -331,7 +331,7 @@ export function PreviewSlideshowSection() {
                   }}
                   className='size-8 rounded-full border-gray-600 bg-transparent p-0 text-gray-400 hover:bg-white/10 hover:text-white transition'
                   aria-label='Next slide'
-                >
+                  title={'Next slide'}>
                   <svg className='size-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
                     <path
                       strokeLinecap='round'

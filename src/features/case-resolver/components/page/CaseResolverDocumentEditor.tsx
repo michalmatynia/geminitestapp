@@ -218,7 +218,7 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                   }
                 }}
                 className='h-7 w-full border-blue-500/60 bg-card/30 text-sm font-semibold'
-               aria-label="Input field" title="Input field"/>
+               aria-label='Input field' title='Input field'/>
             ) : (
               <Button
                 variant='ghost'
@@ -392,7 +392,7 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                   placeholder='City...'
                   disabled={isEditingDocumentLocked}
                   className='bg-card/20 border-border/60'
-                 aria-label="City..." title="City..."/>
+                 aria-label='City...' title='City...'/>
                 <Input
                   type='date'
                   value={draft.documentDate?.isoDate ?? ''}
@@ -413,7 +413,7 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                   }}
                   disabled={isEditingDocumentLocked}
                   className='bg-card/20 border-border/60'
-                 aria-label="Input field" title="Input field"/>
+                 aria-label='Input field' title='Input field'/>
                 <CaseResolverPartyFieldRuntimeProvider value={partyFieldRuntimeValue}>
                   <CaseResolverPartySelectField
                     label='From'
@@ -580,7 +580,7 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                     options={caseTagOptions}
                     disabled={isEditingDocumentLocked}
                     triggerClassName='bg-card/20 border-border/60'
-                   ariaLabel="Document Tag" title="Document Tag"/>
+                   ariaLabel='Document Tag' title='Document Tag'/>
                 </FormField>
                 <FormField label='Case Identifier'>
                   <SelectSimple
@@ -591,7 +591,7 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                     options={caseIdentifierOptions}
                     disabled={isEditingDocumentLocked}
                     triggerClassName='bg-card/20 border-border/60'
-                   ariaLabel="Case Identifier" title="Case Identifier"/>
+                   ariaLabel='Case Identifier' title='Case Identifier'/>
                 </FormField>
                 <FormField label='Category'>
                   <SelectSimple
@@ -602,7 +602,7 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                     options={caseCategoryOptions}
                     disabled={isEditingDocumentLocked}
                     triggerClassName='bg-card/20 border-border/60'
-                   ariaLabel="Category" title="Category"/>
+                   ariaLabel='Category' title='Category'/>
                 </FormField>
               </div>
             </FormSection>

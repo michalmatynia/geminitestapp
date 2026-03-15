@@ -423,6 +423,8 @@ function KangurLessonQuizBlockView({ block }: { block: KangurLessonQuizBlock }):
               }}
               onClick={(): void => handleSelect(choice.id)}
               disabled={state.revealed}
+              aria-label={`Odpowiedź: ${choice.text}`}
+              aria-pressed={isSelected}
             >
               {choice.text}
             </button>

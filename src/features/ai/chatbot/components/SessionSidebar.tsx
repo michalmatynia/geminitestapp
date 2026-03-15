@@ -68,7 +68,7 @@ export function SessionSidebar(): React.JSX.Element {
                     }}
                     className='opacity-0 group-hover:opacity-100 transition h-7 w-7 text-red-400 hover:text-red-300 hover:bg-red-500/10'
                     aria-label='Delete session'
-                  >
+                    title={'Delete session'}>
                     <Trash2 className='size-3.5' />
                   </Button>
                 </div>

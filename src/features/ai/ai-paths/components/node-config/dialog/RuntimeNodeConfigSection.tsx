@@ -131,7 +131,7 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
           options={cacheModeOptions}
           placeholder='Cache mode'
           className='mt-2'
-         ariaLabel="Cache mode" title="Cache mode"/>
+         ariaLabel='Cache mode' title='Cache mode'/>
       </FormField>
       {cacheMode !== 'disabled' && (
         <FormField
@@ -156,7 +156,7 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
               });
             }}
             className='mt-1 w-full border-border bg-card/70 text-sm text-white'
-           aria-label="No expiry" title="No expiry"/>
+           aria-label='No expiry' title='No expiry'/>
         </FormField>
       )}
       {cacheMode !== 'disabled' && (
@@ -180,7 +180,7 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
             }
             options={cacheScopeOptions}
             className='mt-2'
-           ariaLabel="Cache scope" title="Cache scope"/>
+           ariaLabel='Cache scope' title='Cache scope'/>
         </FormField>
       )}
       {cacheMode !== 'disabled' && clearNodeCache && (
@@ -218,7 +218,7 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
             }
             options={sideEffectPolicyOptions}
             className='mt-2'
-           ariaLabel="Side-effect policy" title="Side-effect policy"/>
+           ariaLabel='Side-effect policy' title='Side-effect policy'/>
         </FormField>
       )}
       <ToggleRow
@@ -292,7 +292,7 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
             });
           }}
           className='mt-1 w-full border-border bg-card/70 text-sm text-white'
-         aria-label="No timeout" title="No timeout"/>
+         aria-label='No timeout' title='No timeout'/>
       </FormField>
       <div className='grid gap-3 sm:grid-cols-2'>
         <FormField label='Retry attempts' description='Total attempts including first execution.'>
@@ -317,7 +317,7 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
               });
             }}
             className='mt-1 w-full border-border bg-card/70 text-sm text-white'
-           aria-label="1" title="1"/>
+           aria-label='1' title='1'/>
         </FormField>
         <FormField label='Retry backoff (ms)' description='Delay before each retry attempt.'>
           <Input
@@ -341,7 +341,7 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
               });
             }}
             className='mt-1 w-full border-border bg-card/70 text-sm text-white'
-           aria-label="0" title="0"/>
+           aria-label='0' title='0'/>
         </FormField>
       </div>
     </div>

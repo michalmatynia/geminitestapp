@@ -66,7 +66,7 @@ export function AnimationConfigPanel(): React.JSX.Element {
               options={ANIMATION_PRESETS}
               value={config.preset}
               onValueChange={(val) => onChange({ preset: val as AnimationPreset })}
-             ariaLabel="Animation Preset" title="Animation Preset"/>
+             ariaLabel='Animation Preset' title='Animation Preset'/>
           </FormField>
 
           <div className='grid grid-cols-2 gap-4'>
@@ -78,7 +78,7 @@ export function AnimationConfigPanel(): React.JSX.Element {
                 step={0.1}
                 value={config.duration}
                 onChange={(e) => onChange({ duration: Number(e.target.value) })}
-               aria-label="Duration (s)" title="Duration (s)"/>
+               aria-label='Duration (s)' title='Duration (s)'/>
             </FormField>
             <FormField label='Delay (s)'>
               <Input
@@ -88,7 +88,7 @@ export function AnimationConfigPanel(): React.JSX.Element {
                 step={0.1}
                 value={config.delay}
                 onChange={(e) => onChange({ delay: Number(e.target.value) })}
-               aria-label="Delay (s)" title="Delay (s)"/>
+               aria-label='Delay (s)' title='Delay (s)'/>
             </FormField>
           </div>
 
@@ -97,7 +97,7 @@ export function AnimationConfigPanel(): React.JSX.Element {
               options={ANIMATION_EASINGS}
               value={config.easing}
               onValueChange={(val) => onChange({ easing: val })}
-             ariaLabel="Easing" title="Easing"/>
+             ariaLabel='Easing' title='Easing'/>
           </FormField>
 
           <FormField label='Trigger' description='When should the animation start?'>

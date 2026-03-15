@@ -129,7 +129,7 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
           options={modelOptions}
           placeholder='Select a model'
           disabled={brainModelOptions.isLoading}
-         ariaLabel="Select a model" title="Select a model"/>
+         ariaLabel='Select a model' title='Select a model'/>
       </FormField>
       <FormField label='System Prompt'>
         <Textarea
@@ -139,7 +139,7 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             updateModelConfig({ systemPrompt: event.target.value })
           }
-         aria-label="Leave blank to inherit the AI Brain default system prompt." title="Leave blank to inherit the AI Brain default system prompt."/>
+         aria-label='Leave blank to inherit the AI Brain default system prompt.' title='Leave blank to inherit the AI Brain default system prompt.'/>
         <p className='text-[11px] text-gray-500 mt-1'>
           A non-empty node prompt overrides AI Brain. Leave blank to inherit the AI Paths default.
         </p>
@@ -157,7 +157,7 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               updateTemperature(event.target.value)
             }
-           aria-label="Temperature" title="Temperature"/>
+           aria-label='Temperature' title='Temperature'/>
         </FormField>
         <FormField label='Max Tokens'>
           <Input
@@ -170,7 +170,7 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               updateMaxTokens(event.target.value)
             }
-           aria-label="Max Tokens" title="Max Tokens"/>
+           aria-label='Max Tokens' title='Max Tokens'/>
         </FormField>
       </div>
       {routingMisconfigured ? (

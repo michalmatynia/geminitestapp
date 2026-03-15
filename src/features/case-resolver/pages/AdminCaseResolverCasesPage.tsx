@@ -175,7 +175,7 @@ function AdminCaseResolverCasesInner(): React.JSX.Element {
               }}
               placeholder='Optional date (e.g. 2026-02-25)'
               disabled={Boolean(disabled)}
-             aria-label="Optional date (e.g. 2026-02-25)" title="Optional date (e.g. 2026-02-25)"/>
+             aria-label='Optional date (e.g. 2026-02-25)' title='Optional date (e.g. 2026-02-25)'/>
           );
         },
       },

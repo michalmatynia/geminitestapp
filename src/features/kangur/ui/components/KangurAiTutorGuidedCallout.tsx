@@ -106,10 +106,16 @@ export function KangurAiTutorGuidedCallout({
   const {
     activeSelectedText,
     activeFocus,
+    canSendMessages,
+    handleQuickAction,
     isLoading,
+    lastInteractionIntent,
+    lastPromptMode,
     isSelectionExplainPendingMode,
     messages,
     selectedTextPreview: contextualSelectionPreview,
+    sessionSurface,
+    visibleQuickActions,
   } = useKangurAiTutorPanelBodyContext();
   const {
     guidedTutorTarget,
@@ -194,15 +200,44 @@ export function KangurAiTutorGuidedCallout({
     () => (mode === 'selection' ? getLatestAssistantMessage(messages) : null),
     [messages, mode]
   );
+  const isTestSurface =
+    sessionSurface === 'test' || activeFocus.conversationFocus.surface === 'test';
+  const hintQuickAction = useMemo(() => {
+    const action = visibleQuickActions.find((candidate) => candidate.id === 'hint');
+    if (action) {
+      return action;
+    }
+    return {
+      id: 'hint',
+      label: tutorContent.quickActions.hint.defaultLabel,
+      prompt: tutorContent.quickActions.hint.defaultPrompt,
+      promptMode: 'hint',
+      interactionIntent: 'hint',
+    };
+  }, [
+    tutorContent.quickActions.hint.defaultLabel,
+    tutorContent.quickActions.hint.defaultPrompt,
+    visibleQuickActions,
+  ]);
   const isResolvedSelectionCallout =
     mode === 'selection' &&
     showSelectionGuidanceCallout &&
     !isSelectionExplainPendingMode &&
     !isLoading &&
     resolvedSelectionAssistantMessage !== null;
+  const shouldHideResolvedSelectionAnswer = isResolvedSelectionCallout && isTestSurface;
+  const isHintResponseCandidate =
+    resolvedSelectionAssistantMessage?.coachingFrame?.mode === 'hint_ladder' ||
+    lastPromptMode === 'hint' ||
+    lastInteractionIntent === 'hint';
+  const shouldShowHintFollowUp =
+    Boolean(hintQuickAction) &&
+    isResolvedSelectionCallout &&
+    (isHintResponseCandidate || shouldHideResolvedSelectionAnswer);
   const shouldShowSelectedKnowledgeReference =
     mode === 'selection' &&
     showSelectionGuidanceCallout &&
+    !isTestSurface &&
     (
       resolvedSelectedKnowledgeReference?.sourceCollection === KANGUR_PAGE_CONTENT_COLLECTION ||
       resolvedSelectionAssistantMessage?.answerResolutionMode === 'page_content'
@@ -221,7 +256,8 @@ export function KangurAiTutorGuidedCallout({
     !(mode === 'selection' && isResolvedSelectionCallout);
   const shouldShowSelectionDetail = Boolean(resolvedSelectionDetail);
   const shouldShowSelectionPageContentBadge =
-    resolvedSelectionAssistantMessage?.answerResolutionMode === 'page_content';
+    resolvedSelectionAssistantMessage?.answerResolutionMode === 'page_content' &&
+    !shouldHideResolvedSelectionAnswer;
   const shouldShowSelectionPreview =
     mode !== 'selection' &&
     Boolean(resolvedSelectedPreview ?? selectionPreview) &&
@@ -386,21 +422,47 @@ export function KangurAiTutorGuidedCallout({
               ) : null}
               {isResolvedSelectionCallout ? (
                 <div className='mt-3 space-y-2'>
-                  {shouldShowSelectionPageContentBadge ? (
-                    <KangurAiTutorChromeBadge
-                      data-testid='kangur-ai-tutor-selection-guided-page-content-badge'
-                      className='w-fit max-w-full px-3 py-1 text-[10px]'
-                    >
-                      Zapisana treść strony
-                    </KangurAiTutorChromeBadge>
+                  {!shouldHideResolvedSelectionAnswer ? (
+                    <>
+                      {shouldShowSelectionPageContentBadge ? (
+                        <KangurAiTutorChromeBadge
+                          data-testid='kangur-ai-tutor-selection-guided-page-content-badge'
+                          className='w-fit max-w-full px-3 py-1 text-[10px]'
+                        >
+                          Zapisana treść strony
+                        </KangurAiTutorChromeBadge>
+                      ) : null}
+                      <KangurAiTutorWarmInsetCard
+                        data-testid='kangur-ai-tutor-selection-guided-answer'
+                        tone='panel'
+                        className='px-3 py-3 text-sm leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
+                      >
+                        {resolvedSelectionAssistantMessage?.content}
+                      </KangurAiTutorWarmInsetCard>
+                    </>
                   ) : null}
-                  <KangurAiTutorWarmInsetCard
-                    data-testid='kangur-ai-tutor-selection-guided-answer'
-                    tone='panel'
-                    className='px-3 py-3 text-sm leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
-                  >
-                    {resolvedSelectionAssistantMessage?.content}
-                  </KangurAiTutorWarmInsetCard>
+                  {shouldShowHintFollowUp ? (
+                    <div
+                      data-testid='kangur-ai-tutor-selection-hint-followup'
+                      className='soft-card kangur-chat-card kangur-chat-padding-md border kangur-chat-surface-warm kangur-chat-surface-warm-shadow'
+                    >
+                      <div className='text-xs font-medium leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
+                        {tutorContent.messageList.hintFollowUpQuestion}
+                      </div>
+                      <div className='mt-2'>
+                        <KangurButton
+                          data-testid='kangur-ai-tutor-selection-hint-followup-cta'
+                          type='button'
+                          size='sm'
+                          variant='primary'
+                          disabled={isLoading || !canSendMessages}
+                          onClick={() => void handleQuickAction(hintQuickAction)}
+                        >
+                          {tutorContent.messageList.hintFollowUpActionLabel}
+                        </KangurButton>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
               <div
@@ -443,6 +505,7 @@ export function KangurAiTutorGuidedCallout({
                   </>
                 ) : mode === 'selection' ? (
                   isResolvedSelectionCallout ? (
+                    shouldHideResolvedSelectionAnswer ? null : (
                     <KangurButton
                       type='button'
                       size='sm'
@@ -452,6 +515,7 @@ export function KangurAiTutorGuidedCallout({
                     >
                       {tutorContent.guidedCallout.buttons.understand}
                     </KangurButton>
+                    )
                   ) : shouldShowSelectionPreparingBadge ? (
                     <KangurAiTutorChromeBadge
                       className={cn(

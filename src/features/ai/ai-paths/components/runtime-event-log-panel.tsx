@@ -98,7 +98,7 @@ export function RuntimeEventLogPanel(): React.JSX.Element {
             className='text-xs text-gray-400 hover:text-white'
             onClick={() => setCollapsed((p) => !p)}
             title={collapsed ? 'Expand event log' : 'Collapse event log'}
-          >
+            aria-label={collapsed ? 'Expand event log' : 'Collapse event log'}>
             <svg
               className={`h-3 w-3 transition-transform ${collapsed ? '' : 'rotate-90'}`}
               viewBox='0 0 16 16'
@@ -137,7 +137,7 @@ export function RuntimeEventLogPanel(): React.JSX.Element {
             options={LEVEL_OPTIONS}
             ariaLabel='Event level filter'
             triggerClassName='h-6 min-w-[70px] px-2 bg-transparent border-border/40 text-[10px]'
-           title="Select option"/>
+           title='Select option'/>
           {/* Export */}
           <Button
             type='button'

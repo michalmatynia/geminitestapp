@@ -561,7 +561,7 @@ export function PagePreviewPanel(): React.ReactNode {
                   placeholder='Preview slug'
                   ariaLabel='Preview slug'
                   triggerClassName='h-8 w-[200px] text-xs'
-                 title="Preview slug"/>
+                 title='Preview slug'/>
               ) : zoneSlugValues.length === 1 ? (
                 <Badge
                   variant='info'
@@ -599,7 +599,7 @@ export function PagePreviewPanel(): React.ReactNode {
                 className='text-gray-400 hover:text-white'
                 disabled={state.history.past.length === 0}
                 aria-label='Undo'
-              >
+                title={'Undo'}>
                 <Undo2 className='size-4' />
               </Button>
               <Button
@@ -609,7 +609,7 @@ export function PagePreviewPanel(): React.ReactNode {
                 className='text-gray-400 hover:text-white'
                 disabled={state.history.future.length === 0}
                 aria-label='Redo'
-              >
+                title={'Redo'}>
                 <Redo2 className='size-4' />
               </Button>
               <Button

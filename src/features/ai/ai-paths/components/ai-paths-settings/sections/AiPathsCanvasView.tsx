@@ -834,7 +834,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                 className='w-[240px]'
                 triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
                 disabled={pathOptions.length === 0}
-               title="Select path"/>
+               title='Select path'/>
             </div>
           </div>,
           document.getElementById('ai-paths-name') ?? document.body

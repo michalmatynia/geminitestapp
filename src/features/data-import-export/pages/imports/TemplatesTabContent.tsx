@@ -346,7 +346,7 @@ export function TemplatesTabContent(): React.JSX.Element {
                 }
                 placeholder='e.g. Default Producer Import'
                 className='h-9'
-               aria-label="e.g. Default Producer Import" title="e.g. Default Producer Import"/>
+               aria-label='e.g. Default Producer Import' title='e.g. Default Producer Import'/>
             </div>
             <div className='space-y-1.5'>
               <Label className='text-xs text-gray-400'>Description</Label>
@@ -361,7 +361,7 @@ export function TemplatesTabContent(): React.JSX.Element {
                 }
                 placeholder='Optional notes...'
                 className='h-9'
-               aria-label="Optional notes..." title="Optional notes..."/>
+               aria-label='Optional notes...' title='Optional notes...'/>
             </div>
           </div>
 
@@ -440,7 +440,7 @@ export function TemplatesTabContent(): React.JSX.Element {
                       },
                     ]}
                     triggerClassName='w-full h-8 bg-gray-900 border-border text-xs'
-                   ariaLabel="Select option" title="Select option"/>
+                   ariaLabel='Select option' title='Select option'/>
                 </div>
                 <div className='space-y-1'>
                   <Label className='text-[11px] text-gray-400'>Matching</Label>
@@ -464,7 +464,7 @@ export function TemplatesTabContent(): React.JSX.Element {
                       },
                     ]}
                     triggerClassName='w-full h-8 bg-gray-900 border-border text-xs'
-                   ariaLabel="Select option" title="Select option"/>
+                   ariaLabel='Select option' title='Select option'/>
                 </div>
               </div>
 
@@ -526,7 +526,7 @@ export function TemplatesTabContent(): React.JSX.Element {
                         placeholder='Source (e.g. category_id or custom_color)'
                         list='export-source-field-options'
                         className='flex-1 h-9'
-                       aria-label="Source (e.g. category_id or custom_color)" title="Source (e.g. category_id or custom_color)"/>
+                       aria-label='Source (e.g. category_id or custom_color)' title='Source (e.g. category_id or custom_color)'/>
                     ) : (
                       <div className='flex-1'>
                         <SelectSimple
@@ -556,7 +556,7 @@ export function TemplatesTabContent(): React.JSX.Element {
                           ]}
                           triggerClassName='w-full h-9 bg-card/40'
                           placeholder='Select source field'
-                         ariaLabel="Select source field" title="Select source field"/>
+                         ariaLabel='Select source field' title='Select source field'/>
                       </div>
                     )}
                     <div className='flex-1'>
@@ -585,7 +585,7 @@ export function TemplatesTabContent(): React.JSX.Element {
                         ]}
                         triggerClassName='w-full h-9 bg-card/40'
                         placeholder='Target Field'
-                       ariaLabel="Target Field" title="Target Field"/>
+                       ariaLabel='Target Field' title='Target Field'/>
                     </div>
                     <Button
                       variant='ghost'

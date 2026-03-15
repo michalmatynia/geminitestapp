@@ -484,7 +484,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
                 }}
                 options={OPERATION_MODE_OPTIONS}
                 size='sm'
-               ariaLabel="Operation Mode" title="Operation Mode"/>
+               ariaLabel='Operation Mode' title='Operation Mode'/>
             </FormField>
             <FormField
               label='Brain Assignment'
@@ -496,7 +496,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
                 disabled
                 className='cursor-not-allowed'
                 placeholder='Not configured in AI Brain'
-               aria-label="Not configured in AI Brain" title="Not configured in AI Brain"/>
+               aria-label='Not configured in AI Brain' title='Not configured in AI Brain'/>
             </FormField>
           </div>
         </FormSection>

@@ -72,7 +72,7 @@ export function GenerationToolbarMaskSection(): React.JSX.Element {
           options={maskAttachModeOptions}
           triggerClassName='h-8 text-xs'
           ariaLabel='Mask attach mode'
-         title="Select option"/>
+         title='Select option'/>
         <Button
           size='xs'
           type='button'

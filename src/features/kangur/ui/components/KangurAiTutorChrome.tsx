@@ -125,7 +125,7 @@ export function KangurAiTutorChromeCloseButton({
       type={type}
       aria-label={ariaLabel ?? 'Close'}
       {...props}
-    >
+      title={ariaLabel ?? 'Close'}>
       <X className={cn('h-3.5 w-3.5', iconClassName)} />
     </button>
   );

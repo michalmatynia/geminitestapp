@@ -82,7 +82,7 @@ export function PlaceholderMatrixDialog(props: PlaceholderMatrixDialogProps): Re
               placeholder='Pick target'
               ariaLabel='Insert target'
               triggerClassName='h-7 w-[160px] border-border bg-card/70 text-xs text-white'
-             title="Pick target"/>
+             title='Pick target'/>
           ) : (
             <div className='rounded-md border border-border bg-card/70 px-2 py-1 text-[10px] text-gray-200'>
               {selectedTarget?.label ?? 'Target'}

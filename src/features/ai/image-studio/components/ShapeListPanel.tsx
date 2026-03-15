@@ -148,7 +148,7 @@ export function ShapeListPanel({ className }: ShapeListPanelProps): React.JSX.El
                     }}
                     className='h-5 px-1 text-xs'
                     onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                   aria-label="Input field" title="Input field"/>
+                   aria-label='Input field' title='Input field'/>
                 </div>
               </>
             ) : (
@@ -207,7 +207,7 @@ export function ShapeListPanel({ className }: ShapeListPanelProps): React.JSX.El
                       label: option.label,
                     })),
                   ]}
-                 ariaLabel="Select option" title="Select option"/>
+                 ariaLabel='Select option' title='Select option'/>
               </div>
             )}
 
@@ -222,7 +222,7 @@ export function ShapeListPanel({ className }: ShapeListPanelProps): React.JSX.El
                 handleUpdateShape(shape.id, { visible: !shape.visible });
               }}
               title={shape.visible ? 'Hide shape' : 'Show shape'}
-            >
+              aria-label={shape.visible ? 'Hide shape' : 'Show shape'}>
               {shape.visible ? <Eye className='size-3.5' /> : <EyeOff className='size-3.5' />}
             </Button>
 
@@ -237,7 +237,7 @@ export function ShapeListPanel({ className }: ShapeListPanelProps): React.JSX.El
                 handleDeleteShape(shape.id);
               }}
               title='Delete shape'
-            >
+              aria-label={'Delete shape'}>
               <Trash2 className='size-3.5' />
             </Button>
           </div>

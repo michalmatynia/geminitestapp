@@ -268,7 +268,7 @@ function EditRow(props: EditRowProps): React.JSX.Element {
         options={pathOptions}
         placeholder='Select AI Path…'
         ariaLabel='AI Path for this trigger button'
-       title="Select AI Path…"/>
+       title='Select AI Path…'/>
       <div className='flex items-center gap-1.5'>
         <Button size='xs' type='button' variant='default' disabled={!canSave} onClick={onSave}>
           Save

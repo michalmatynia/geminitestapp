@@ -259,7 +259,7 @@ export function CaseResolverTreeNode(props: CaseResolverTreeNodeProps): React.JS
             ? `cursor-grab border-0 bg-transparent p-0 active:cursor-grabbing ${hoverOnlyControlClass}`
             : 'cursor-default border-0 bg-transparent p-0'
         }`}
-      >
+        title={isDraggableFileNode ? 'Drag file node' : 'Drag unavailable'}>
         <DragHandleIcon
           className={`size-3 ${
             isDraggableFileNode
@@ -281,7 +281,7 @@ export function CaseResolverTreeNode(props: CaseResolverTreeNodeProps): React.JS
             toggleExpand();
           }}
           aria-label={isExpanded ? 'Collapse folder' : 'Expand folder'}
-        >
+          title={isExpanded ? 'Collapse folder' : 'Expand folder'}>
           {isExpanded ? <ChevronDown className='size-3' /> : <ChevronRight className='size-3' />}
         </Button>
       ) : (
@@ -336,7 +336,7 @@ export function CaseResolverTreeNode(props: CaseResolverTreeNodeProps): React.JS
                 event.stopPropagation();
               }}
               className='h-7 min-w-0 flex-1 border-blue-500 bg-gray-800 text-sm text-white'
-             aria-label="Input field" title="Input field"/>
+             aria-label='Input field' title='Input field'/>
           </div>
         </div>
       ) : (
@@ -406,7 +406,11 @@ export function CaseResolverTreeNode(props: CaseResolverTreeNodeProps): React.JS
               event.stopPropagation();
               onToggleFolderLock(folderPath);
             }}
-          >
+            aria-label={!folderHasCaseFiles
+                ? 'No case files in folder'
+                : isFolderLocked
+                  ? 'Unlock folder files'
+                  : 'Lock folder files'}>
             {isFolderLocked ? <Unlock className='size-3.5' /> : <Lock className='size-3.5' />}
           </Button>
           <Button
@@ -420,7 +424,7 @@ export function CaseResolverTreeNode(props: CaseResolverTreeNodeProps): React.JS
               event.stopPropagation();
               onDeleteFolder(folderPath);
             }}
-          >
+            aria-label={folderHasLockedFiles ? 'Unlock folder files before removing' : 'Remove folder'}>
             <Trash2 className='size-3.5' />
           </Button>
         </div>
@@ -443,7 +447,7 @@ export function CaseResolverTreeNode(props: CaseResolverTreeNodeProps): React.JS
               event.stopPropagation();
               onToggleFileLock(fileId);
             }}
-          >
+            aria-label={isFileLocked ? 'Unlock file' : 'Lock file'}>
             {isFileLocked ? <Lock className='size-3.5' /> : <Unlock className='size-3.5' />}
           </Button>
           <Button
@@ -457,7 +461,7 @@ export function CaseResolverTreeNode(props: CaseResolverTreeNodeProps): React.JS
               event.stopPropagation();
               onDeleteFile(fileId);
             }}
-          >
+            aria-label={isFileLocked ? 'Unlock file before removing' : 'Remove file'}>
             <Trash2 className='size-3.5' />
           </Button>
         </div>
@@ -475,7 +479,7 @@ export function CaseResolverTreeNode(props: CaseResolverTreeNodeProps): React.JS
               event.stopPropagation();
               onDeleteAsset(assetId);
             }}
-          >
+            aria-label={'Remove node file'}>
             <Trash2 className='size-3.5' />
           </Button>
         </div>

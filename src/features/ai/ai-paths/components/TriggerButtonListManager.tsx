@@ -311,7 +311,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
                           onClick={() => {
                             onOpenPath(entry.id);
                           }}
-                        >
+                          aria-label={`Open AI Path: ${entry.name}`}>
                           <StatusBadge
                             status={entry.name}
                             variant='neutral'

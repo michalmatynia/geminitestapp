@@ -382,7 +382,7 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
             onValueChange={handleFieldChange}
             options={FIELD_OPTIONS}
             ariaLabel='Condition field'
-           title="Select option"/>
+           title='Select option'/>
         </div>
 
         <div className='space-y-1'>
@@ -395,7 +395,7 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
             onValueChange={handleOperatorChange}
             options={operatorOptions}
             ariaLabel='Condition operator'
-           title="Select option"/>
+           title='Select option'/>
         </div>
 
         {isValueRequired(condition.operator) ? (
@@ -417,7 +417,7 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
                 options={ADVANCED_BOOLEAN_OPTIONS}
                 placeholder='Select value'
                 ariaLabel='Condition boolean value'
-               title="Select value"/>
+               title='Select value'/>
             ) : (
               <>
                 <Input
@@ -464,7 +464,7 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
               className='h-8'
               placeholder='Second value'
               aria-label='Condition value to'
-             title="Second value"/>
+             title='Second value'/>
           </div>
         ) : (
           <div className='space-y-1'>
@@ -484,7 +484,7 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
             disabled={!canMoveUp}
             className='h-8 px-2'
             aria-label='Move rule up'
-          >
+            title={'Move rule up'}>
             <ArrowUp className='h-3.5 w-3.5' />
           </Button>
           <Button
@@ -495,7 +495,7 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
             disabled={!canMoveDown}
             className='h-8 px-2'
             aria-label='Move rule down'
-          >
+            title={'Move rule down'}>
             <ArrowDown className='h-3.5 w-3.5' />
           </Button>
           <Button
@@ -505,7 +505,7 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
             onClick={() => handleDuplicateRule(condition.id, parentGroup, updateParent)}
             className='h-8 px-2'
             aria-label='Duplicate rule'
-          >
+            title={'Duplicate rule'}>
             <Copy className='h-3.5 w-3.5' />
           </Button>
           <Button
@@ -516,7 +516,7 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
             disabled={disableRemove}
             className='h-8 px-2'
             aria-label='Remove rule'
-          >
+            title={'Remove rule'}>
             <Trash2 className='h-3.5 w-3.5' />
           </Button>
         </div>
@@ -608,7 +608,7 @@ const AdvancedFilterGroupEditor = memo(function AdvancedFilterGroupEditor(props:
             }
             options={COMBINATOR_OPTIONS}
             ariaLabel='Group combinator'
-           title="Select option"/>
+           title='Select option'/>
         </div>
 
         <div className='inline-flex items-center gap-2 text-xs text-muted-foreground'>
@@ -635,7 +635,7 @@ const AdvancedFilterGroupEditor = memo(function AdvancedFilterGroupEditor(props:
               disabled={!canMoveUp}
               className='h-8 px-2'
               aria-label='Move group up'
-            >
+              title={'Move group up'}>
               <ArrowUp className='h-3.5 w-3.5' />
             </Button>
             <Button
@@ -646,7 +646,7 @@ const AdvancedFilterGroupEditor = memo(function AdvancedFilterGroupEditor(props:
               disabled={!canMoveDown}
               className='h-8 px-2'
               aria-label='Move group down'
-            >
+              title={'Move group down'}>
               <ArrowDown className='h-3.5 w-3.5' />
             </Button>
             <Button
@@ -656,7 +656,7 @@ const AdvancedFilterGroupEditor = memo(function AdvancedFilterGroupEditor(props:
               onClick={onDuplicate}
               className='h-8 px-2'
               aria-label='Duplicate group'
-            >
+              title={'Duplicate group'}>
               <Copy className='h-3.5 w-3.5' />
             </Button>
             {onRemove ? (
@@ -667,7 +667,7 @@ const AdvancedFilterGroupEditor = memo(function AdvancedFilterGroupEditor(props:
                 onClick={onRemove}
                 className='h-8 px-2'
                 aria-label='Remove group'
-              >
+                title={'Remove group'}>
                 <Trash2 className='h-3.5 w-3.5' />
               </Button>
             ) : null}

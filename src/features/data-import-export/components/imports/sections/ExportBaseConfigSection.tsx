@@ -118,7 +118,7 @@ export function ExportBaseConfigSection(): React.JSX.Element {
             ]}
             placeholder='No template (use defaults)'
             triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
-           ariaLabel="No template (use defaults)" title="No template (use defaults)"/>
+           ariaLabel='No template (use defaults)' title='No template (use defaults)'/>
         </div>
         <p className='mt-1 text-xs text-gray-500'>Template for field mapping on export</p>
       </div>

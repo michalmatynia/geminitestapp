@@ -96,7 +96,7 @@ export function NoteListView(): React.JSX.Element {
             onClick={onCreateNote}
             className='size-11 rounded-full bg-primary p-0 text-primary-foreground hover:bg-primary/90'
             aria-label='Create note'
-          >
+            title={'Create note'}>
             <Plus className='size-5' />
           </Button>
         </>

@@ -232,7 +232,7 @@ export function AdminImageStudioPromptsPage(): React.JSX.Element {
                     }
                     placeholder='Prompt name'
                     className='h-9'
-                   aria-label="Prompt name" title="Prompt name"/>
+                   aria-label='Prompt name' title='Prompt name'/>
                 </div>
                 <div className='space-y-1'>
                   <Label className='text-xs text-gray-400'>Prompt text</Label>
@@ -244,7 +244,7 @@ export function AdminImageStudioPromptsPage(): React.JSX.Element {
                     }
                     placeholder='Write your prompt here...'
                     className='min-h-[280px] font-mono text-[12px]'
-                   aria-label="Write your prompt here..." title="Write your prompt here..."/>
+                   aria-label='Write your prompt here...' title='Write your prompt here...'/>
                 </div>
                 <div className='text-[11px] text-gray-500'>
                   Last updated: {formatPromptTimestamp(activePrompt.updatedAt)}

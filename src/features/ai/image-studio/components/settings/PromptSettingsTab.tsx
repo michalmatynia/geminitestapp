@@ -79,7 +79,7 @@ export function PromptSettingsTab(): React.JSX.Element {
                 disabled
                 className='cursor-not-allowed'
                 placeholder='Not configured in AI Brain'
-               aria-label="Not configured in AI Brain" title="Not configured in AI Brain"/>
+               aria-label='Not configured in AI Brain' title='Not configured in AI Brain'/>
             </FormField>
             <div className='grid grid-cols-2 gap-4'>
               <FormField label='Temperature'>
@@ -98,7 +98,7 @@ export function PromptSettingsTab(): React.JSX.Element {
                       },
                     }))
                   }
-                 aria-label="Temperature" title="Temperature"/>
+                 aria-label='Temperature' title='Temperature'/>
               </FormField>
               <FormField label='Max Tokens'>
                 <Input
@@ -116,7 +116,7 @@ export function PromptSettingsTab(): React.JSX.Element {
                       },
                     }))
                   }
-                 aria-label="Max Tokens" title="Max Tokens"/>
+                 aria-label='Max Tokens' title='Max Tokens'/>
               </FormField>
             </div>
           </div>
@@ -136,7 +136,7 @@ export function PromptSettingsTab(): React.JSX.Element {
                   { value: 'ai', label: 'AI Only' },
                   { value: 'both', label: 'Both (AI + Heuristic)' },
                 ]}
-               ariaLabel="Extractor Mode" title="Extractor Mode"/>
+               ariaLabel='Extractor Mode' title='Extractor Mode'/>
             </FormField>
             {(studioSettings.uiExtractor.mode === 'ai' ||
               studioSettings.uiExtractor.mode === 'both') && (
@@ -150,7 +150,7 @@ export function PromptSettingsTab(): React.JSX.Element {
                   disabled
                   className='cursor-not-allowed'
                   placeholder='Not configured in AI Brain'
-                 aria-label="Not configured in AI Brain" title="Not configured in AI Brain"/>
+                 aria-label='Not configured in AI Brain' title='Not configured in AI Brain'/>
               </FormField>
             )}
           </div>

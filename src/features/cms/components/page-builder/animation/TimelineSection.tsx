@@ -218,7 +218,7 @@ export function TimelineSection(): React.ReactNode {
             value={timelineModeValue}
             onValueChange={handleTimelineModeChange}
             options={timelineModeOptions}
-           ariaLabel="Mode" title="Mode"/>
+           ariaLabel='Mode' title='Mode'/>
         </FormField>
 
         {timelineModeValue !== 'none' && (
@@ -233,7 +233,7 @@ export function TimelineSection(): React.ReactNode {
                   value={timelineGapValue}
                   onChange={handleTimelineGapChange}
                   className='h-9'
-                 aria-label="Gap (seconds)" title="Gap (seconds)"/>
+                 aria-label='Gap (seconds)' title='Gap (seconds)'/>
               </FormField>
             )}
 
@@ -247,7 +247,7 @@ export function TimelineSection(): React.ReactNode {
                   value={timelineOverlapValue}
                   onChange={handleTimelineOverlapChange}
                   className='h-9'
-                 aria-label="Overlap (seconds)" title="Overlap (seconds)"/>
+                 aria-label='Overlap (seconds)' title='Overlap (seconds)'/>
               </FormField>
             )}
 
@@ -261,7 +261,7 @@ export function TimelineSection(): React.ReactNode {
                   value={timelineResponseOffsetValue}
                   onChange={handleTimelineResponseOffsetChange}
                   className='h-9'
-                 aria-label="Response offset (seconds)" title="Response offset (seconds)"/>
+                 aria-label='Response offset (seconds)' title='Response offset (seconds)'/>
               </FormField>
             )}
 
@@ -277,7 +277,7 @@ export function TimelineSection(): React.ReactNode {
                   value={timelineStaggerEachValue}
                   onChange={handleTimelineStaggerEachChange}
                   className='h-9'
-                 aria-label="Stagger each (seconds)" title="Stagger each (seconds)"/>
+                 aria-label='Stagger each (seconds)' title='Stagger each (seconds)'/>
               </FormField>
             )}
 
@@ -291,7 +291,7 @@ export function TimelineSection(): React.ReactNode {
                   value={timelineWaveAmountValue}
                   onChange={handleTimelineWaveAmountChange}
                   className='h-9'
-                 aria-label="Wave amount (seconds)" title="Wave amount (seconds)"/>
+                 aria-label='Wave amount (seconds)' title='Wave amount (seconds)'/>
               </FormField>
             )}
 
@@ -327,7 +327,7 @@ export function TimelineSection(): React.ReactNode {
                     value={timelineRepeatValue}
                     onChange={handleTimelineRepeatChange}
                     className='h-9'
-                   aria-label="Repeat (-1 = infinite)" title="Repeat (-1 = infinite)"/>
+                   aria-label='Repeat (-1 = infinite)' title='Repeat (-1 = infinite)'/>
                 </FormField>
                 <FormField label='Repeat delay (seconds)'>
                   <Input
@@ -338,7 +338,7 @@ export function TimelineSection(): React.ReactNode {
                     value={timelineRepeatDelayValue}
                     onChange={handleTimelineRepeatDelayChange}
                     className='h-9'
-                   aria-label="Repeat delay (seconds)" title="Repeat delay (seconds)"/>
+                   aria-label='Repeat delay (seconds)' title='Repeat delay (seconds)'/>
                 </FormField>
               </div>
             )}
@@ -359,7 +359,7 @@ export function TimelineSection(): React.ReactNode {
             value={scrollModeValue}
             onValueChange={handleScrollModeChange}
             options={scrollModeOptions}
-           ariaLabel="Mode" title="Mode"/>
+           ariaLabel='Mode' title='Mode'/>
         </FormField>
 
         {scrollModeValue !== 'none' && (
@@ -371,7 +371,7 @@ export function TimelineSection(): React.ReactNode {
                   onChange={handleScrollStartChange}
                   placeholder='top 85%'
                   className='h-9'
-                 aria-label="top 85%" title="top 85%"/>
+                 aria-label='top 85%' title='top 85%'/>
               </FormField>
               <FormField label='End'>
                 <Input
@@ -379,7 +379,7 @@ export function TimelineSection(): React.ReactNode {
                   onChange={handleScrollEndChange}
                   placeholder='bottom top'
                   className='h-9'
-                 aria-label="bottom top" title="bottom top"/>
+                 aria-label='bottom top' title='bottom top'/>
               </FormField>
             </div>
 
@@ -390,7 +390,7 @@ export function TimelineSection(): React.ReactNode {
                   value={revealStyleValue}
                   onValueChange={handleRevealStyleChange}
                   options={revealStyleOptions}
-                 ariaLabel="Reveal style" title="Reveal style"/>
+                 ariaLabel='Reveal style' title='Reveal style'/>
               </FormField>
             )}
 
@@ -408,7 +408,7 @@ export function TimelineSection(): React.ReactNode {
                       value={scrollScrubValue}
                       onChange={handleScrollScrubChange}
                       className='h-9'
-                     aria-label="Scrub" title="Scrub"/>
+                     aria-label='Scrub' title='Scrub'/>
                   </FormField>
                   <ToggleRow
                     label='Pin section'
@@ -439,7 +439,7 @@ export function TimelineSection(): React.ReactNode {
                       value={scrollSnapDurationValue}
                       onChange={handleScrollSnapDurationChange}
                       className='h-9'
-                     aria-label="Snap duration" title="Snap duration"/>
+                     aria-label='Snap duration' title='Snap duration'/>
                   </FormField>
                 </div>
               </>

@@ -128,7 +128,7 @@ export function MapperNodeConfigSection(): React.JSX.Element | null {
               }
               readOnly
               placeholder='Run the path or simulation to see the latest context input.'
-             aria-label="Run the path or simulation to see the latest context input." title="Run the path or simulation to see the latest context input."/>
+             aria-label='Run the path or simulation to see the latest context input.' title='Run the path or simulation to see the latest context input.'/>
           </FormField>
           <FormField label='Mapped Output'>
             <Textarea
@@ -173,7 +173,7 @@ export function MapperNodeConfigSection(): React.JSX.Element | null {
             { value: 'strict', label: 'Strict (no repair)' },
             { value: 'repair', label: 'Repair malformed JSON' },
           ]}
-         ariaLabel="Select policy" title="Select policy"/>
+         ariaLabel='Select policy' title='Select policy'/>
       </FormField>
 
       <FormField
@@ -206,7 +206,7 @@ export function MapperNodeConfigSection(): React.JSX.Element | null {
               },
             });
           }}
-         aria-label="Outputs (one per line)" title="Outputs (one per line)"/>
+         aria-label='Outputs (one per line)' title='Outputs (one per line)'/>
       </FormField>
       <div className='space-y-3 pt-2 border-t border-border/20'>
         <div className='text-xs font-semibold text-gray-400 uppercase tracking-wider'>

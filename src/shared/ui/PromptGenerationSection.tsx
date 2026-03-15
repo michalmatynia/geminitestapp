@@ -75,7 +75,7 @@ function PromptGenerationInputPanel(): JSX.Element {
         value={inputValue}
         onChange={(event) => onInputChange(event.target.value)}
         className='mt-1.5 bg-gray-900 border text-white font-mono text-sm'
-       aria-label="Textarea" title="Textarea"/>
+       aria-label='Textarea' title='Textarea'/>
     </div>
   );
 }
@@ -114,7 +114,7 @@ function PromptGenerationModelPanel(): JSX.Element {
         value={modelValue}
         onValueChange={onModelChange}
         options={modelOptions}
-       ariaLabel="Select option" title="Select option"/>
+       ariaLabel='Select option' title='Select option'/>
     </div>
   );
 }

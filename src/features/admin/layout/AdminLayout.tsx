@@ -153,7 +153,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
                 aria-controls='admin-sidebar'
                 aria-expanded={!isMenuCollapsed}
                 aria-label={isMenuCollapsed ? 'Expand admin sidebar' : 'Collapse admin sidebar'}
-              >
+                title={isMenuCollapsed ? 'Expand admin sidebar' : 'Collapse admin sidebar'}>
                 <ChevronLeftIcon
                   className={`transition-transform duration-300 ${
                     isMenuCollapsed ? 'rotate-180' : ''

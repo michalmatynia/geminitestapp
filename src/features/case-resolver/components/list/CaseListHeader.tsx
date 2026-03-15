@@ -73,7 +73,7 @@ function CaseListHeaderSearchBar(): React.JSX.Element | null {
 function CaseListHeaderCreateButton(): React.JSX.Element {
   const { onCreateCase } = useCaseListHeaderRuntime();
   return (
-    <Button onClick={onCreateCase} size='icon-lg' variant='outline' aria-label='Create new case'>
+    <Button onClick={onCreateCase} size='icon-lg' variant='outline' aria-label='Create new case' title={'Create new case'}>
       <PlusIcon className='h-6 w-6' />
     </Button>
   );

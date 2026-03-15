@@ -79,7 +79,7 @@ export function ExportImageRetryPresetsSection(): React.JSX.Element {
                       });
                     }}
                     className='h-8'
-                   aria-label="Max dimension (px)" title="Max dimension (px)"/>
+                   aria-label='Max dimension (px)' title='Max dimension (px)'/>
                 </FormField>
                 <FormField label='JPEG quality'>
                   <Input
@@ -95,7 +95,7 @@ export function ExportImageRetryPresetsSection(): React.JSX.Element {
                       });
                     }}
                     className='h-8'
-                   aria-label="JPEG quality" title="JPEG quality"/>
+                   aria-label='JPEG quality' title='JPEG quality'/>
                 </FormField>
               </div>
               <ToggleRow

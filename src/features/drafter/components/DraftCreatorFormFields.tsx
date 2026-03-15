@@ -84,7 +84,7 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
           value={name}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setName(e.target.value)}
           placeholder='e.g., Standard Product Template'
-         aria-label="e.g., Standard Product Template" title="e.g., Standard Product Template"/>
+         aria-label='e.g., Standard Product Template' title='e.g., Standard Product Template'/>
       </FormField>
 
       <FormField label='Draft Description' id='description'>
@@ -96,7 +96,7 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
           }
           placeholder='Describe what this draft is for...'
           rows={2}
-         aria-label="Describe what this draft is for..." title="Describe what this draft is for..."/>
+         aria-label='Describe what this draft is for...' title='Describe what this draft is for...'/>
       </FormField>
 
       <FormField
@@ -115,7 +115,7 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
             setOpenProductFormTab(value as ProductDraftOpenFormTab)
           }
           placeholder='Select tab'
-         ariaLabel="Select tab" title="Select tab"/>
+         ariaLabel='Select tab' title='Select tab'/>
       </FormField>
 
       <FormField
@@ -187,7 +187,7 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
                 setIconColorMode(value === 'custom' ? 'custom' : 'theme')
               }
               placeholder='Select color mode'
-             ariaLabel="Select color mode" title="Select color mode"/>
+             ariaLabel='Select color mode' title='Select color mode'/>
           </FormField>
           {iconColorMode === 'custom' ? (
             <FormField label='Custom Icon Color' id='iconColor'>
@@ -201,7 +201,7 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
                   }
                   className='h-10 w-14 cursor-pointer p-1'
                   aria-label='Pick icon color'
-                 title="Custom Icon Color"/>
+                 title='Custom Icon Color'/>
                 <Input
                   id='iconColor'
                   value={iconColor}
@@ -213,7 +213,7 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
                   }
                   placeholder='#60a5fa'
                   className='font-mono uppercase'
-                 aria-label="#60a5fa" title="#60a5fa"/>
+                 aria-label='#60a5fa' title='#60a5fa'/>
               </div>
             </FormField>
           ) : null}
@@ -267,7 +267,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
               value={sku}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSku(e.target.value)}
               placeholder='Product SKU'
-             aria-label="Product SKU" title="Product SKU"/>
+             aria-label='Product SKU' title='Product SKU'/>
           </FormField>
           <FormField label='Product Identifier'>
             <div className='flex gap-2'>
@@ -284,7 +284,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
                 }
                 placeholder='Select type'
                 className='w-[100px]'
-               ariaLabel="Select type" title="Select type"/>
+               ariaLabel='Select type' title='Select type'/>
               {identifierType === 'ean' ? (
                 <Input
                   id='ean'
@@ -293,7 +293,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
                     setEan(e.target.value)
                   }
                   placeholder='Enter EAN'
-                 aria-label="Enter EAN" title="Enter EAN"/>
+                 aria-label='Enter EAN' title='Enter EAN'/>
               ) : null}
               {identifierType === 'gtin' ? (
                 <Input
@@ -303,7 +303,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
                     setGtin(e.target.value)
                   }
                   placeholder='Enter GTIN'
-                 aria-label="Enter GTIN" title="Enter GTIN"/>
+                 aria-label='Enter GTIN' title='Enter GTIN'/>
               ) : null}
               {identifierType === 'asin' ? (
                 <Input
@@ -313,7 +313,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
                     setAsin(e.target.value)
                   }
                   placeholder='Enter ASIN'
-                 aria-label="Enter ASIN" title="Enter ASIN"/>
+                 aria-label='Enter ASIN' title='Enter ASIN'/>
               ) : null}
             </div>
           </FormField>
@@ -328,7 +328,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
               value={weight}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setWeight(e.target.value)}
               placeholder='0.00'
-             aria-label="0.00" title="0.00"/>
+             aria-label='0.00' title='0.00'/>
           </FormField>
           <FormField label='Length (cm)' id='sizeLength'>
             <Input
@@ -340,7 +340,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
                 setSizeLength(e.target.value)
               }
               placeholder='0.00'
-             aria-label="0.00" title="0.00"/>
+             aria-label='0.00' title='0.00'/>
           </FormField>
           <FormField label='Width (cm)' id='sizeWidth'>
             <Input
@@ -352,7 +352,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
                 setSizeWidth(e.target.value)
               }
               placeholder='0.00'
-             aria-label="0.00" title="0.00"/>
+             aria-label='0.00' title='0.00'/>
           </FormField>
           <FormField label='Height (cm)' id='length'>
             <Input
@@ -362,7 +362,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
               value={length}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setLength(e.target.value)}
               placeholder='0.00'
-             aria-label="0.00" title="0.00"/>
+             aria-label='0.00' title='0.00'/>
           </FormField>
         </div>
 
@@ -373,7 +373,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
               value={nameEn}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNameEn(e.target.value)}
               placeholder='Product name'
-             aria-label="Product name" title="Product name"/>
+             aria-label='Product name' title='Product name'/>
           </FormField>
           <FormField label='Name (Polish)' id='namePl'>
             <Input
@@ -381,7 +381,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
               value={namePl}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNamePl(e.target.value)}
               placeholder='Nazwa produktu'
-             aria-label="Nazwa produktu" title="Nazwa produktu"/>
+             aria-label='Nazwa produktu' title='Nazwa produktu'/>
           </FormField>
           <FormField label='Name (German)' id='nameDe'>
             <Input
@@ -389,7 +389,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
               value={nameDe}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNameDe(e.target.value)}
               placeholder='Produktname'
-             aria-label="Produktname" title="Produktname"/>
+             aria-label='Produktname' title='Produktname'/>
           </FormField>
         </div>
 
@@ -403,7 +403,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
               }
               placeholder='Product description'
               rows={3}
-             aria-label="Product description" title="Product description"/>
+             aria-label='Product description' title='Product description'/>
           </FormField>
           <FormField label='Description (Polish)' id='descPl'>
             <Textarea
@@ -414,7 +414,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
               }
               placeholder='Opis produktu'
               rows={3}
-             aria-label="Opis produktu" title="Opis produktu"/>
+             aria-label='Opis produktu' title='Opis produktu'/>
           </FormField>
           <FormField label='Description (German)' id='descDe'>
             <Textarea
@@ -425,7 +425,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
               }
               placeholder='Produktbeschreibung'
               rows={3}
-             aria-label="Produktbeschreibung" title="Produktbeschreibung"/>
+             aria-label='Produktbeschreibung' title='Produktbeschreibung'/>
           </FormField>
         </div>
       </div>
@@ -458,7 +458,7 @@ export function DraftCreatorPricingSupplierSection(): React.JSX.Element {
             value={price}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setPrice(e.target.value)}
             placeholder='0.00'
-           aria-label="0.00" title="0.00"/>
+           aria-label='0.00' title='0.00'/>
         </FormField>
         <FormField label='Stock' id='stock'>
           <Input
@@ -467,7 +467,7 @@ export function DraftCreatorPricingSupplierSection(): React.JSX.Element {
             value={stock}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setStock(e.target.value)}
             placeholder='0'
-           aria-label="0" title="0"/>
+           aria-label='0' title='0'/>
         </FormField>
       </div>
 
@@ -479,7 +479,7 @@ export function DraftCreatorPricingSupplierSection(): React.JSX.Element {
             setSupplierName(e.target.value)
           }
           placeholder='Supplier name'
-         aria-label="Supplier name" title="Supplier name"/>
+         aria-label='Supplier name' title='Supplier name'/>
       </FormField>
 
       <FormField label='Supplier Link' id='supplierLink'>
@@ -490,7 +490,7 @@ export function DraftCreatorPricingSupplierSection(): React.JSX.Element {
             setSupplierLink(e.target.value)
           }
           placeholder='https://...'
-         aria-label="https://..." title="https://..."/>
+         aria-label='https://...' title='https://...'/>
       </FormField>
 
       <FormField label='Price Comment' id='priceComment'>
@@ -501,7 +501,7 @@ export function DraftCreatorPricingSupplierSection(): React.JSX.Element {
             setPriceComment(e.target.value)
           }
           placeholder='Additional price information'
-         aria-label="Additional price information" title="Additional price information"/>
+         aria-label='Additional price information' title='Additional price information'/>
       </FormField>
     </FormSection>
   );
@@ -524,7 +524,7 @@ export function DraftCreatorImportInfoSection(): React.JSX.Element {
             setBaseProductId(e.target.value)
           }
           placeholder='Imported from Base.com'
-         aria-label="Imported from Base.com" title="Imported from Base.com"/>
+         aria-label='Imported from Base.com' title='Imported from Base.com'/>
       </FormField>
     </FormSection>
   );
@@ -704,7 +704,7 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
                     value={entry.parameterId}
                     onValueChange={(value: string): void => updateParameterId(index, value)}
                     placeholder='Select parameter'
-                   ariaLabel="Select parameter" title="Select parameter"/>
+                   ariaLabel='Select parameter' title='Select parameter'/>
                 </div>
                 <div className='flex-1'>
                   <Input
@@ -714,7 +714,7 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
                     }
                     placeholder='Value'
                     disabled={!entry.parameterId}
-                   aria-label="Value" title="Value"/>
+                   aria-label='Value' title='Value'/>
                 </div>
                 <Button
                   type='button'

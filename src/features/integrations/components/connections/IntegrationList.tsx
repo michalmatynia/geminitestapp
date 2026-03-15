@@ -104,7 +104,7 @@ export function IntegrationList(): React.JSX.Element {
                       }}
                       className='h-6 w-6 rounded-full border border-white/20 bg-white/10 p-0 text-white hover:bg-white/20'
                       aria-label={`Manage ${item.label} settings`}
-                    >
+                      title={`Manage ${item.label} settings`}>
                       <SettingsIcon className='size-3' />
                     </Button>
                   </Badge>

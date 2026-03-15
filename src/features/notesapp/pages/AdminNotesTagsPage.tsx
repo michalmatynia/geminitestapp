@@ -173,7 +173,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
                   ref={(node) => {
                     node?.focus();
                   }}
-                 title="Input field"/>
+                 title='Input field'/>
                 <div className='flex items-center gap-2'>
                   <Input
                     type='color'
@@ -183,7 +183,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
                       setEditingColor(event.target.value)
                     }
                     className='h-8 w-12 p-1'
-                   title="Input field"/>
+                   title='Input field'/>
                   <span className='text-[10px] font-mono text-gray-500 uppercase'>
                     {editingColor}
                   </span>
@@ -232,7 +232,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
                     onClick={(): void => setToDelete(tag)}
                     className='text-red-300 hover:text-red-200'
                     aria-label={`Delete ${tag.name}`}
-                  >
+                    title={`Delete ${tag.name}`}>
                     <Trash2 size={14} />
                   </Button>
                 </>
@@ -277,7 +277,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
                 }
                 className='w-full'
                 placeholder='Enter tag name'
-               aria-label="Enter tag name" title="Enter tag name"/>
+               aria-label='Enter tag name' title='Enter tag name'/>
             </FormField>
             <FormField label='Color'>
               <div className='flex items-center gap-2'>
@@ -288,7 +288,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
                     setColor(event.target.value)
                   }
                   className='h-10 w-16 p-1'
-                 aria-label="Color" title="Color"/>
+                 aria-label='Color' title='Color'/>
                 <span className='text-xs font-mono text-gray-500 uppercase'>{color}</span>
               </div>
             </FormField>

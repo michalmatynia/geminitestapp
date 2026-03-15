@@ -346,7 +346,7 @@ export const RightSidebarControlsTab = React.memo(
                   placeholder='Select canvas size'
                   disabled={resizeCanvasDisabled}
                   ariaLabel='Canvas size preset'
-                 title="Select canvas size"/>
+                 title='Select canvas size'/>
                 <Button
                   size='xs'
                   type='button'

@@ -214,7 +214,7 @@ export function PreviewCarouselBlock({
             disabled={!loop && currentIndex === 0}
             className='absolute left-2 top-1/2 -translate-y-1/2 z-10 size-10 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed border-none'
             aria-label='Previous slide'
-          >
+            title={'Previous slide'}>
             <ChevronLeft className='w-6 h-6' />
           </Button>
           <Button
@@ -224,7 +224,7 @@ export function PreviewCarouselBlock({
             disabled={!loop && currentIndex === frameCount - 1}
             className='absolute right-2 top-1/2 -translate-y-1/2 z-10 size-10 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed border-none'
             aria-label='Next slide'
-          >
+            title={'Next slide'}>
             <ChevronRight className='w-6 h-6' />
           </Button>
         </>
@@ -476,7 +476,7 @@ export function PreviewSlideshowBlock({
                   }}
                   className='size-8 rounded-full border-gray-600 bg-transparent p-0 text-gray-400 hover:bg-white/10 hover:text-white transition'
                   aria-label='Previous slide'
-                >
+                  title={'Previous slide'}>
                   <svg className='size-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
                     <path
                       strokeLinecap='round'
@@ -516,7 +516,7 @@ export function PreviewSlideshowBlock({
                   }}
                   className='size-8 rounded-full border-gray-600 bg-transparent p-0 text-gray-400 hover:bg-white/10 hover:text-white transition'
                   aria-label='Next slide'
-                >
+                  title={'Next slide'}>
                   <svg className='size-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
                     <path
                       strokeLinecap='round'

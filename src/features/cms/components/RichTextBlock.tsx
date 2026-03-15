@@ -26,7 +26,7 @@ export default function RichTextBlock(props: RichTextBlockProps): React.JSX.Elem
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               onChange({ ...content, heading: e.target.value })
             }
-           aria-label="Input field" title="Input field"/>
+           aria-label='Input field' title='Input field'/>
         </div>
         <div>
           <Label className='block mb-1'>Text</Label>
@@ -35,7 +35,7 @@ export default function RichTextBlock(props: RichTextBlockProps): React.JSX.Elem
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
               onChange({ ...content, text: e.target.value })
             }
-           aria-label="Textarea" title="Textarea"/>
+           aria-label='Textarea' title='Textarea'/>
         </div>
         <div>
           <Label className='block mb-1'>Button Text</Label>
@@ -44,7 +44,7 @@ export default function RichTextBlock(props: RichTextBlockProps): React.JSX.Elem
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               onChange({ ...content, buttonText: e.target.value })
             }
-           aria-label="Input field" title="Input field"/>
+           aria-label='Input field' title='Input field'/>
         </div>
         <div>
           <Label className='block mb-1'>Button Link</Label>
@@ -53,7 +53,7 @@ export default function RichTextBlock(props: RichTextBlockProps): React.JSX.Elem
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               onChange({ ...content, buttonLink: e.target.value })
             }
-           aria-label="Input field" title="Input field"/>
+           aria-label='Input field' title='Input field'/>
         </div>
       </div>
     </div>

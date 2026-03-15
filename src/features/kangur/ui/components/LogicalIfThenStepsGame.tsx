@@ -167,6 +167,11 @@ export default function LogicalIfThenStepsGame(): React.JSX.Element {
           const cardId = slots[slot];
           const card = cardId ? cardMap.get(cardId) : null;
           const slotStatus = checked ? (cardId === slot ? 'correct' : 'wrong') : 'neutral';
+          const slotLabel = SLOT_LABELS[slot];
+          const slotHint = SLOT_HINTS[slot];
+          const slotAriaLabel = card
+            ? `${slotLabel}: ${card.text}`
+            : `${slotLabel}: ${slotHint}`;
 
           return (
             <button
@@ -180,9 +185,10 @@ export default function LogicalIfThenStepsGame(): React.JSX.Element {
                 slotStatus === 'neutral' && 'border-slate-200/80 bg-white/70',
                 card ? 'cursor-pointer' : 'cursor-default'
               )}
+              aria-label={slotAriaLabel}
             >
               <span className='text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500'>
-                {SLOT_LABELS[slot]}
+                {slotLabel}
               </span>
               {card ? (
                 <span className='text-sm font-semibold [color:var(--kangur-page-text)]'>
@@ -190,7 +196,7 @@ export default function LogicalIfThenStepsGame(): React.JSX.Element {
                 </span>
               ) : (
                 <span className='text-xs [color:var(--kangur-page-muted-text)]'>
-                  {SLOT_HINTS[slot]}
+                  {slotHint}
                 </span>
               )}
             </button>
@@ -208,6 +214,7 @@ export default function LogicalIfThenStepsGame(): React.JSX.Element {
               onClick={() => handleCardClick(card.id)}
               className='rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-left text-xs font-semibold [color:var(--kangur-page-text)] shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md'
               disabled={checked}
+              aria-label={`Karta: ${card.text}`}
             >
               {card.text}
             </button>

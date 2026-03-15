@@ -68,7 +68,7 @@ const SearchInputContent = React.forwardRef<HTMLInputElement>(function SearchInp
           onClick={runtime.onClear}
           className='absolute right-1 size-7 text-gray-500 hover:text-gray-300'
           aria-label='Clear search'
-        >
+          title={'Clear search'}>
           <X className='size-3.5' aria-hidden='true' />
         </Button>
       )}

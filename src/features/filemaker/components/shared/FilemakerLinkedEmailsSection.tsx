@@ -52,7 +52,7 @@ export function FilemakerLinkedEmailsSection(
             }}
             placeholder='Paste document content, headers, or any text here...'
             className='min-h-[120px] text-xs font-mono'
-           aria-label="Paste document content, headers, or any text here..." title="Paste document content, headers, or any text here..."/>
+           aria-label='Paste document content, headers, or any text here...' title='Paste document content, headers, or any text here...'/>
         </FormField>
         <div className='flex justify-end'>
           <Button

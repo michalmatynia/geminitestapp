@@ -11,13 +11,19 @@ import {
   usePageBuilder,
 } from '@/features/cms/public';
 import type { SectionInstance } from '@/shared/contracts/cms';
+import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useAdminLayoutActions } from '@/shared/providers/AdminLayoutProvider';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
-import { KANGUR_DEFAULT_THEME } from '@/features/kangur/theme-settings';
+import {
+  KANGUR_DEFAULT_DAILY_THEME,
+  KANGUR_DEFAULT_DAWN_THEME,
+  KANGUR_DEFAULT_SUNSET_THEME,
+  KANGUR_DEFAULT_THEME,
+} from '@/features/kangur/theme-settings';
 import { KangurCmsBuilderLeftPanel } from './KangurCmsBuilderLeftPanel';
 import { KangurCmsBuilderRightPanel } from './KangurCmsBuilderRightPanel';
 import { KangurCmsBuilderStatusSidebar } from './KangurCmsBuilderStatusSidebar';
@@ -32,6 +38,8 @@ import {
   type KangurCmsProject,
   type KangurCmsScreenKey,
 } from './project';
+import type { LeftPanelMode } from '@/features/cms/components/page-builder/CmsBuilderLeftPanel';
+import type { KangurThemeMode } from '@/features/kangur/admin/components/KangurThemeSettingsPanel';
 
 
 const commitScreenSections = (
@@ -64,6 +72,22 @@ function KangurCmsBuilderInner(): React.JSX.Element {
       return true;
     }
   });
+  const [leftPanelMode, setLeftPanelMode] = useState<LeftPanelMode>('structure');
+  const [themePreviewSection, setThemePreviewSection] = useState<string | null>(null);
+  const [themePreviewTheme, setThemePreviewTheme] = useState<ThemeSettings | null>(null);
+  const [themePreviewMode, setThemePreviewMode] = useState<KangurThemeMode>('daily');
+
+  const handleThemeModeChange = useCallback((mode: KangurThemeMode): void => {
+    setThemePreviewMode(mode);
+    setThemePreviewTheme(null);
+  }, []);
+
+  const themeFallbackByMode = useMemo((): ThemeSettings => {
+    if (themePreviewMode === 'dawn') return KANGUR_DEFAULT_DAWN_THEME;
+    if (themePreviewMode === 'sunset') return KANGUR_DEFAULT_SUNSET_THEME;
+    if (themePreviewMode === 'nightly') return KANGUR_DEFAULT_THEME;
+    return KANGUR_DEFAULT_DAILY_THEME;
+  }, [themePreviewMode]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -125,12 +149,17 @@ function KangurCmsBuilderInner(): React.JSX.Element {
             variant='outline'
             className='absolute left-1 top-1 z-10 h-8 w-8 border p-0 text-gray-300 hover:bg-muted/50'
             aria-label='Show left panel'
-          >
+            title={'Show left panel'}>
             <PanelLeftClose className='size-4' />
           </Button>
         ) : null}
 
-        <KangurCmsBuilderLeftPanel />
+        <KangurCmsBuilderLeftPanel
+          onModeChange={setLeftPanelMode}
+          onThemeSectionChange={setThemePreviewSection}
+          onThemeChange={setThemePreviewTheme}
+          onThemeModeChange={handleThemeModeChange}
+        />
 
         <KangurCmsPreviewPanel
           statusSidebarOpen={statusSidebarOpen}
@@ -144,12 +173,17 @@ function KangurCmsBuilderInner(): React.JSX.Element {
             variant='outline'
             className='absolute right-1 top-1 z-10 h-8 w-8 border p-0 text-gray-300 hover:bg-muted/50'
             aria-label='Show right panel'
-          >
+            title={'Show right panel'}>
             <PanelRightClose className='size-4' />
           </Button>
         ) : null}
 
-        <KangurCmsBuilderRightPanel />
+        <KangurCmsBuilderRightPanel
+          showThemePreview={leftPanelMode === 'theme'}
+          themePreviewSection={themePreviewSection}
+          themePreviewTheme={themePreviewTheme ?? themeFallbackByMode}
+          themePreviewMode={themePreviewMode}
+        />
         <KangurCmsBuilderStatusSidebar visible={statusSidebarOpen} />
       </div>
     </div>

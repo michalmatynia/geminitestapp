@@ -147,7 +147,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
                     { value: 'all', label: 'All' },
                   ]}
                   className='w-20'
-                 ariaLabel="Inventory & Limits" title="Inventory & Limits"/>
+                 ariaLabel='Inventory & Limits' title='Inventory & Limits'/>
               </div>
               <div className='flex gap-2'>
                 <Button
@@ -211,7 +211,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
                 })),
               ]}
               placeholder='No template'
-             ariaLabel="No template" title="No template"/>
+             ariaLabel='No template' title='No template'/>
           </FormField>
         </Card>
 
@@ -226,7 +226,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
                 { value: 'links', label: 'Import image links' },
                 { value: 'download', label: 'Download product images' },
               ]}
-             ariaLabel="Image Handling" title="Image Handling"/>
+             ariaLabel='Image Handling' title='Image Handling'/>
             <Hint className='mt-2'>Download stores images locally in your uploads folder.</Hint>
           </FormField>
 
@@ -242,7 +242,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
                 { value: 'upsert_on_sku', label: 'Upsert by SKU' },
                 { value: 'create_only', label: 'Create only' },
               ]}
-             ariaLabel="Import Strategy" title="Import Strategy"/>
+             ariaLabel='Import Strategy' title='Import Strategy'/>
             <div className='mt-3'>
               <ToggleRow
                 label='Dry-run mode'

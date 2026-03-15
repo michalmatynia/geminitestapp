@@ -273,7 +273,7 @@ export function AdminFilemakerEmailEditPage(): React.JSX.Element {
               }}
               placeholder='name@example.com'
               className='h-9'
-             aria-label="name@example.com" title="name@example.com"/>
+             aria-label='name@example.com' title='name@example.com'/>
           </FormField>
           <FormField label='Status'>
             <SelectSimple
@@ -284,7 +284,7 @@ export function AdminFilemakerEmailEditPage(): React.JSX.Element {
               options={EMAIL_STATUS_OPTIONS}
               placeholder='Select status'
               size='sm'
-             ariaLabel="Select status" title="Select status"/>
+             ariaLabel='Select status' title='Select status'/>
           </FormField>
         </div>
       </FormSection>

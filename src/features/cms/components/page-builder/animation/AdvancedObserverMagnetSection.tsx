@@ -135,7 +135,7 @@ export function AdvancedObserverMagnetSection(): React.JSX.Element {
                   }
                   placeholder='wheel,touch,pointer'
                   className='h-9'
-                 aria-label="wheel,touch,pointer" title="wheel,touch,pointer"/>
+                 aria-label='wheel,touch,pointer' title='wheel,touch,pointer'/>
                 <div className='flex flex-wrap gap-1.5'>
                   {OBSERVER_TYPES.map((option: { label: string; value: string }) => (
                     <Tooltip key={option.label} content={option.label}>
@@ -155,7 +155,7 @@ export function AdvancedObserverMagnetSection(): React.JSX.Element {
                         }}
                         className='h-7 w-9 p-0'
                         aria-label={option.label}
-                      >
+                        title={option.label}>
                         {observerTypeIcons[option.value] ?? <MousePointer2 className='size-3.5' />}
                       </Button>
                     </Tooltip>
@@ -171,7 +171,7 @@ export function AdvancedObserverMagnetSection(): React.JSX.Element {
                   value={observerAxisValue}
                   onValueChange={handleObserverAxisChange}
                   options={DRAG_AXES}
-                 ariaLabel="Axis" title="Axis"/>
+                 ariaLabel='Axis' title='Axis'/>
               </FormField>
               <FormField label='Speed'>
                 <Input
@@ -182,7 +182,7 @@ export function AdvancedObserverMagnetSection(): React.JSX.Element {
                   value={observerSpeedValue}
                   onChange={handleObserverSpeedChange}
                   className='h-9'
-                 aria-label="Speed" title="Speed"/>
+                 aria-label='Speed' title='Speed'/>
               </FormField>
             </div>
           </div>
@@ -209,7 +209,7 @@ export function AdvancedObserverMagnetSection(): React.JSX.Element {
                   value={magnetStrengthValue}
                   onChange={handleMagnetStrengthChange}
                   className='h-9'
-                 aria-label="Strength" title="Strength"/>
+                 aria-label='Strength' title='Strength'/>
               </FormField>
               <FormField label='Radius (px)'>
                 <Input
@@ -220,7 +220,7 @@ export function AdvancedObserverMagnetSection(): React.JSX.Element {
                   value={magnetRadiusValue}
                   onChange={handleMagnetRadiusChange}
                   className='h-9'
-                 aria-label="Radius (px)" title="Radius (px)"/>
+                 aria-label='Radius (px)' title='Radius (px)'/>
               </FormField>
             </div>
 
@@ -231,7 +231,7 @@ export function AdvancedObserverMagnetSection(): React.JSX.Element {
                   value={magnetAxisValue}
                   onValueChange={handleMagnetAxisChange}
                   options={DRAG_AXES}
-                 ariaLabel="Axis" title="Axis"/>
+                 ariaLabel='Axis' title='Axis'/>
               </FormField>
               <FormField label='Return speed'>
                 <Input
@@ -242,7 +242,7 @@ export function AdvancedObserverMagnetSection(): React.JSX.Element {
                   value={magnetReturnValue}
                   onChange={handleMagnetReturnChange}
                   className='h-9'
-                 aria-label="Return speed" title="Return speed"/>
+                 aria-label='Return speed' title='Return speed'/>
               </FormField>
             </div>
           </div>

@@ -73,7 +73,7 @@ export function PromptExploderParserTuningPanel(): React.JSX.Element {
                       title: event.target.value,
                     });
                   }}
-                 title="Input field"/>
+                 title='Input field'/>
               </div>
               <div className='space-y-1'>
                 <Label className='text-[10px] text-gray-500'>Type Hint</Label>
@@ -91,7 +91,7 @@ export function PromptExploderParserTuningPanel(): React.JSX.Element {
                     label: option.label,
                   }))}
                   ariaLabel='Type hint'
-                 title="Select option"/>
+                 title='Select option'/>
               </div>
             </div>
 
@@ -106,7 +106,7 @@ export function PromptExploderParserTuningPanel(): React.JSX.Element {
                     description: event.target.value.trim() || null,
                   });
                 }}
-               title="Textarea"/>
+               title='Textarea'/>
             </div>
 
             <div className='grid gap-2 md:grid-cols-[minmax(0,1fr)_120px]'>
@@ -121,7 +121,7 @@ export function PromptExploderParserTuningPanel(): React.JSX.Element {
                       pattern: event.target.value,
                     });
                   }}
-                 title="Textarea"/>
+                 title='Textarea'/>
               </div>
               <div className='space-y-1'>
                 <Label className='text-[10px] text-gray-500'>Flags</Label>
@@ -134,7 +134,7 @@ export function PromptExploderParserTuningPanel(): React.JSX.Element {
                       flags: event.target.value,
                     });
                   }}
-                 title="Input field"/>
+                 title='Input field'/>
               </div>
             </div>
 
@@ -155,7 +155,7 @@ export function PromptExploderParserTuningPanel(): React.JSX.Element {
                       promptExploderPriority: Math.min(50, Math.max(-50, Math.floor(value))),
                     });
                   }}
-                 title="Input field"/>
+                 title='Input field'/>
               </div>
               <div className='space-y-1'>
                 <Label className='text-[10px] text-gray-500'>Confidence Boost</Label>
@@ -173,7 +173,7 @@ export function PromptExploderParserTuningPanel(): React.JSX.Element {
                       promptExploderConfidenceBoost: Math.min(0.5, Math.max(0, value)),
                     });
                   }}
-                 title="Input field"/>
+                 title='Input field'/>
               </div>
               <div className='space-y-1'>
                 <Label className='text-[10px] text-gray-500'>Treat As Heading</Label>

@@ -69,7 +69,8 @@ export function UserNav(): React.ReactNode {
           id={triggerId}
           variant='ghost'
           className='relative z-[95] h-10 w-10 rounded-full opacity-60 transition-opacity hover:opacity-100'
-        >
+          aria-label={'Avatar'}
+          title={'Avatar'}>
           <Avatar className='h-10 w-10'>
             <AvatarImage src={session.user?.image ?? ''} alt={session.user?.name ?? ''} />
             <AvatarFallback>{session.user?.name?.[0]?.toUpperCase() ?? 'U'}</AvatarFallback>

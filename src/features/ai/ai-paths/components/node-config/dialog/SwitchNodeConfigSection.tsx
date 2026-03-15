@@ -54,7 +54,7 @@ export function SwitchNodeConfigSection(): React.JSX.Element | null {
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateConfig({ inputPort: event.target.value || 'value' })
           }
-         aria-label="value" title="value"/>
+         aria-label='value' title='value'/>
         <p className='mt-1 text-[11px] text-gray-500'>
           Port whose value will be compared against each case&apos;s match value (string compare).
         </p>
@@ -94,7 +94,7 @@ export function SwitchNodeConfigSection(): React.JSX.Element | null {
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   updateCase(index, { id: event.target.value || createCaseId() })
                 }
-               aria-label="e.g. equals_foo" title="e.g. equals_foo"/>
+               aria-label='e.g. equals_foo' title='e.g. equals_foo'/>
             </FormField>
             <FormField label='Match value'>
               <Input
@@ -105,7 +105,7 @@ export function SwitchNodeConfigSection(): React.JSX.Element | null {
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   updateCase(index, { matchValue: event.target.value })
                 }
-               aria-label="e.g. foo" title="e.g. foo"/>
+               aria-label='e.g. foo' title='e.g. foo'/>
             </FormField>
           </div>
         ))}

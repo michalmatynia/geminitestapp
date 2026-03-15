@@ -47,7 +47,7 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
                 }))
               }
               options={[SOURCE_FIELD_PLACEHOLDER_OPTION, ...sourceFieldOptions]}
-             ariaLabel="Source Field" title="Source Field"/>
+             ariaLabel='Source Field' title='Source Field'/>
           </FormField>
         )}
 
@@ -63,7 +63,7 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
                 }))
               }
               placeholder='(\d+)$'
-             aria-label="(\\d+)$" title="(\\d+)$"/>
+             aria-label='(\\d+)$' title='(\\d+)$'/>
           </FormField>
           <FormField label='Source Flags'>
             <Input
@@ -76,7 +76,7 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
                 }))
               }
               placeholder='i'
-             aria-label="i" title="i"/>
+             aria-label='i' title='i'/>
           </FormField>
           <FormField label='Group Index'>
             <Input
@@ -89,7 +89,7 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
                 }))
               }
               placeholder='1'
-             aria-label="1" title="1"/>
+             aria-label='1' title='1'/>
           </FormField>
         </div>
 
@@ -105,7 +105,7 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
                 }))
               }
               options={MATH_OPERATION_OPTIONS}
-             ariaLabel="Math Operation" title="Math Operation"/>
+             ariaLabel='Math Operation' title='Math Operation'/>
           </FormField>
           <FormField label='Math Operand'>
             <Input
@@ -118,7 +118,7 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
                 }))
               }
               placeholder='1'
-             aria-label="1" title="1"/>
+             aria-label='1' title='1'/>
           </FormField>
           <FormField label='Round Mode'>
             <SelectSimple
@@ -131,7 +131,7 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
                 }))
               }
               options={ROUND_MODE_OPTIONS}
-             ariaLabel="Round Mode" title="Round Mode"/>
+             ariaLabel='Round Mode' title='Round Mode'/>
           </FormField>
         </div>
 
@@ -146,7 +146,7 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
               }))
             }
             options={LOGIC_OPERATOR_OPTIONS}
-           ariaLabel="Logic Operator" title="Logic Operator"/>
+           ariaLabel='Logic Operator' title='Logic Operator'/>
         </FormField>
 
         {formData.logicOperator !== 'none' && (
@@ -162,7 +162,7 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
                   }))
                 }
                 placeholder='Value to compare against'
-               aria-label="Value to compare against" title="Value to compare against"/>
+               aria-label='Value to compare against' title='Value to compare against'/>
             </FormField>
             <FormField label='Logic Flags (regex only)'>
               <Input
@@ -175,7 +175,7 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
                   }))
                 }
                 placeholder='i'
-               aria-label="i" title="i"/>
+               aria-label='i' title='i'/>
             </FormField>
           </div>
         )}
@@ -194,7 +194,7 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
                     }))
                   }
                   options={LOGIC_ACTION_OPTIONS}
-                 ariaLabel="Select option" title="Select option"/>
+                 ariaLabel='Select option' title='Select option'/>
                 {formData.logicWhenTrueAction === 'set_value' && (
                   <Input
                     className='h-9 font-mono'
@@ -206,7 +206,7 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
                       }))
                     }
                     placeholder='Replacement value when TRUE'
-                   aria-label="Replacement value when TRUE" title="Replacement value when TRUE"/>
+                   aria-label='Replacement value when TRUE' title='Replacement value when TRUE'/>
                 )}
               </div>
             </FormSection>
@@ -223,7 +223,7 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
                     }))
                   }
                   options={LOGIC_ACTION_OPTIONS}
-                 ariaLabel="Select option" title="Select option"/>
+                 ariaLabel='Select option' title='Select option'/>
                 {formData.logicWhenFalseAction === 'set_value' && (
                   <Input
                     className='h-9 font-mono'
@@ -235,7 +235,7 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
                       }))
                     }
                     placeholder='Replacement value when FALSE'
-                   aria-label="Replacement value when FALSE" title="Replacement value when FALSE"/>
+                   aria-label='Replacement value when FALSE' title='Replacement value when FALSE'/>
                 )}
               </div>
             </FormSection>
@@ -254,7 +254,7 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
                 }))
               }
               options={RESULT_ASSEMBLY_OPTIONS}
-             ariaLabel="Result Assembly" title="Result Assembly"/>
+             ariaLabel='Result Assembly' title='Result Assembly'/>
           </FormField>
           <FormField label='Apply To Target'>
             <SelectSimple
@@ -267,7 +267,7 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
                 }))
               }
               options={TARGET_APPLY_OPTIONS}
-             ariaLabel="Apply To Target" title="Apply To Target"/>
+             ariaLabel='Apply To Target' title='Apply To Target'/>
           </FormField>
         </div>
 
@@ -283,7 +283,7 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
                 }))
               }
               placeholder='3'
-             aria-label="3" title="3"/>
+             aria-label='3' title='3'/>
           </FormField>
           <FormField label='Pad Character'>
             <Input
@@ -296,7 +296,7 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
                 }))
               }
               placeholder='0'
-             aria-label="0" title="0"/>
+             aria-label='0' title='0'/>
           </FormField>
         </div>
       </div>

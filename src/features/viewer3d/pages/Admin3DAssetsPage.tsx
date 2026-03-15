@@ -89,7 +89,7 @@ function Admin3DAssetsContent(): React.JSX.Element {
               className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border bg-muted/40 hover:bg-muted/60 transition-colors'
               onClick={() => setPreviewAsset(row.original)}
               aria-label={`Preview ${row.original.name || row.original.filename}`}
-            >
+              title={`Preview ${row.original.name || row.original.filename}`}>
               <Box className='h-4 w-4 text-muted-foreground' />
             </button>
             <span className='text-sm font-medium text-foreground truncate'>
@@ -309,7 +309,7 @@ function Admin3DAssetsContent(): React.JSX.Element {
                   ...categories.map((cat) => ({ value: cat, label: cat })),
                 ]}
                 placeholder='All categories'
-               ariaLabel="All categories" title="All categories"/>
+               ariaLabel='All categories' title='All categories'/>
             </FormField>
 
             <FormField label='Tags'>

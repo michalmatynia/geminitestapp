@@ -81,7 +81,7 @@ export function AudioSpeakerNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-         aria-label="Speaker Gain (0-1)" title="Speaker Gain (0-1)"/>
+         aria-label='Speaker Gain (0-1)' title='Speaker Gain (0-1)'/>
       </FormField>
 
       <Hint italic>

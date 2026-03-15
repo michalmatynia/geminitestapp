@@ -32,7 +32,8 @@ export default function ProductCard({ product, className }: ProductCardProps): R
     <Link
       href={linkHref}
       className='group block h-full transition-transform duration-300 ease-out hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2'
-    >
+      aria-label={'Resource Card'}
+      title={'Resource Card'}>
       <ResourceCard
         title={name}
         className={cardClassName}

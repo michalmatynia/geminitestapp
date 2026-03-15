@@ -36,7 +36,7 @@ export function GateNodeConfigSection(): React.JSX.Element | null {
             { value: 'pass', label: 'Pass-through' },
           ]}
           placeholder='Select mode'
-         ariaLabel="Select mode" title="Select mode"/>
+         ariaLabel='Select mode' title='Select mode'/>
       </FormField>
 
       <FormField label='Fail Message'>
@@ -49,7 +49,7 @@ export function GateNodeConfigSection(): React.JSX.Element | null {
               gate: { ...gateConfig, failMessage: event.target.value },
             })
           }
-         aria-label="Fail Message" title="Fail Message"/>
+         aria-label='Fail Message' title='Fail Message'/>
       </FormField>
     </div>
   );

@@ -204,7 +204,7 @@ export function CrudPanel(props: {
             onClick={() => setEditingRow(row.original)}
             className='rounded p-1 text-gray-400 hover:bg-white/10 hover:text-blue-300'
             title='Edit row'
-          >
+            aria-label={'Edit row'}>
             <EditIcon className='size-3.5' />
           </Button>
           <Button
@@ -213,7 +213,7 @@ export function CrudPanel(props: {
             onClick={() => setDeletingRow(row.original)}
             className='rounded p-1 text-gray-400 hover:bg-white/10 hover:text-rose-300'
             title='Delete row'
-          >
+            aria-label={'Delete row'}>
             <Trash2Icon className='size-3.5' />
           </Button>
         </div>

@@ -177,7 +177,7 @@ export function PageSettingsTabContent({ allSlugs }: { allSlugs: Slug[] }): Reac
           aria-label='Search slugs'
           placeholder='Search slugs...'
           className='h-8 text-xs'
-         title="Search slugs..."/>
+         title='Search slugs...'/>
         <div className='max-h-48 space-y-2 overflow-y-auto rounded border border-border/40 bg-gray-900/40 p-2'>
           {filteredDomainSlugs.length === 0 ? (
             <p className='py-4 text-center text-xs text-gray-500'>

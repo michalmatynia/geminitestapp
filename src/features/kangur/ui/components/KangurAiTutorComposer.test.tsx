@@ -26,11 +26,20 @@ const createPanelBodyContextValue = (
   overrides: Partial<KangurAiTutorPanelBodyContextValue> = {}
 ): KangurAiTutorPanelBodyContextValue => ({
   activeFocus: {
+    assignmentId: null,
+    conversationFocus: {
+      assignmentId: null,
+      contentId: null,
+      id: null,
+      kind: null,
+      knowledgeReference: null,
+      label: null,
+      surface: null,
+    },
     rect: null,
     kind: null,
     id: null,
     label: null,
-    assignmentId: null,
   },
   activeSectionRect: null,
   activeSelectedText: null,
@@ -65,6 +74,8 @@ const createPanelBodyContextValue = (
   inputPlaceholder: 'Pytaj…',
   isAskModalMode: false,
   isLoading: false,
+  lastInteractionIntent: null,
+  lastPromptMode: null,
   isSectionExplainPendingMode: false,
   isSelectionExplainPendingMode: false,
   isUsageLoading: false,
@@ -76,6 +87,7 @@ const createPanelBodyContextValue = (
   panelEmptyStateMessage: 'Czekaj chwilę…',
   remainingMessages: null,
   selectedTextPreview: null,
+  sessionSurface: null,
   showToolboxLayout: false,
   shouldRenderAuxiliaryPanelControls: true,
   showSectionExplainCompleteState: false,

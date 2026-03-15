@@ -162,7 +162,7 @@ export function GenerationToolbarCenterSection(): React.JSX.Element {
             options={centerModeOptions}
             triggerClassName='h-8 text-xs'
             ariaLabel='Center object mode'
-           title="Select option"/>,
+           title='Select option'/>,
           'inline-flex w-full'
         )}
         <Button
@@ -210,7 +210,7 @@ export function GenerationToolbarCenterSection(): React.JSX.Element {
               options={centerLayoutShadowPolicyOptions}
               triggerClassName='h-8 text-xs'
               ariaLabel='Object layout shadow policy'
-             title="Select option"/>,
+             title='Select option'/>,
             'inline-flex w-full'
           )}
           <div className='grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
@@ -297,7 +297,7 @@ export function GenerationToolbarCenterSection(): React.JSX.Element {
                   options={centerLayoutPresetOptions}
                   triggerClassName='h-8 text-xs'
                   ariaLabel='Object layout preset'
-                 title="Select option"/>,
+                 title='Select option'/>,
                 'inline-flex w-full'
               )}
               {maybeWrapTooltip(
@@ -312,7 +312,7 @@ export function GenerationToolbarCenterSection(): React.JSX.Element {
                   options={centerLayoutDetectionOptions}
                   triggerClassName='h-8 text-xs'
                   ariaLabel='Object layout detection mode'
-                 title="Select option"/>,
+                 title='Select option'/>,
                 'inline-flex w-full'
               )}
               <div className='grid gap-2 sm:grid-cols-2'>

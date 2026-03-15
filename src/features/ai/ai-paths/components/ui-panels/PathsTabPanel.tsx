@@ -377,7 +377,7 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
               }
               aria-label='Import path JSON'
               placeholder='Paste AI Path JSON payload here...'
-             title="Paste AI Path JSON payload here..."/>
+             title='Paste AI Path JSON payload here...'/>
             <div className='flex items-center justify-end gap-2'>
               <Button
                 type='button'

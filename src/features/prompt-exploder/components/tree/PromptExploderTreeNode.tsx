@@ -98,7 +98,7 @@ export function PromptExploderTreeNode(props: PromptExploderTreeNodeProps): Reac
         }}
         onMouseUp={releaseDragHandle}
         className='inline-flex size-5 shrink-0 items-center justify-center rounded cursor-grab text-gray-400 transition hover:bg-white/10 hover:text-gray-100 active:cursor-grabbing'
-      >
+        title={'Drag node'}>
         <GripVertical className='size-3.5' />
       </button>
       {hasChildren ? (
@@ -112,7 +112,7 @@ export function PromptExploderTreeNode(props: PromptExploderTreeNodeProps): Reac
             toggleExpand();
           }}
           aria-label={isExpanded ? 'Collapse' : 'Expand'}
-        >
+          title={isExpanded ? 'Collapse' : 'Expand'}>
           {isExpanded ? <ChevronDown className='size-3' /> : <ChevronRight className='size-3' />}
         </Button>
       ) : (

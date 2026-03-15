@@ -210,7 +210,7 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
                     e.stopPropagation();
                     void clearVisibleImage(index);
                   }}
-                >
+                  title={`Clear image from slot ${index + 1}`}>
                   <XIcon className='h-4 w-4' />
                 </Button>
               )}
@@ -238,7 +238,7 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
                         }}
                         className='h-5 w-6 rounded-none border-l border-gray-700 p-0 text-gray-300 hover:bg-white/10 hover:text-white'
                         aria-label={`Open full preview for image slot ${index + 1} in new tab`}
-                      >
+                        title={`Open full preview for image slot ${index + 1} in new tab`}>
                         <Eye className='size-3' />
                       </Button>
                     </Tooltip>
@@ -373,7 +373,7 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
               ? `h-7 ${minimalLayoutWidthClass} px-2 text-[10px]`
               : 'h-7 w-full px-2 text-[10px]'
           }
-         title="Paste image link"/>
+         title='Paste image link'/>
       )}
       {!!base64Value.trim() && (
         <div

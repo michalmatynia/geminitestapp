@@ -125,7 +125,7 @@ export function CatalogLanguagesSection(): React.JSX.Element {
                 };
               })}
               triggerClassName='w-full bg-gray-900 border-border text-xs text-white h-9'
-             title="Select default language"/>
+             title='Select default language'/>
           </div>
         </div>
       )}

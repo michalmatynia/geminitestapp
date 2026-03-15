@@ -142,7 +142,7 @@ export function ProductListingActions(): React.JSX.Element {
                 }
                 placeholder='Enter inventory ID'
                 className='h-7 border bg-card/60 text-gray-200'
-               aria-label="Enter inventory ID" title="Enter inventory ID"/>
+               aria-label='Enter inventory ID' title='Enter inventory ID'/>
               <Button
                 type='button'
                 variant='outline'

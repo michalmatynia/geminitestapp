@@ -565,7 +565,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
                 { value: 'asin', label: 'ASIN' },
               ]}
               className='w-[100px]'
-             title="Product Identifier"/>
+             title='Product Identifier'/>
             <Input
               id={identifierType}
               {...register(identifierType)}

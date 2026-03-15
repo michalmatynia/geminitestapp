@@ -54,7 +54,7 @@ export function ValidationEnginePanel(): React.JSX.Element {
             options={ENABLE_OPTIONS}
             className='mt-2'
             ariaLabel='Status'
-           title="Select option"/>
+           title='Select option'/>
         </div>
         <div>
           <Label className='text-xs text-gray-400'>Policy</Label>
@@ -74,7 +74,7 @@ export function ValidationEnginePanel(): React.JSX.Element {
             options={VALIDATION_POLICY_OPTIONS}
             className='mt-2'
             ariaLabel='Policy'
-           title="Select option"/>
+           title='Select option'/>
         </div>
         <div>
           <Label htmlFor={baseScoreId} className='text-xs text-gray-400'>

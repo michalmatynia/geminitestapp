@@ -80,7 +80,7 @@ export function PriceGroupsSettings(): React.JSX.Element {
             }))}
             placeholder='Select default price group'
             ariaLabel='Default price group'
-           title="Select default price group"/>
+           title='Select default price group'/>
           {defaultGroupSaving ? (
             <p className='mt-2 text-xs text-gray-500'>Saving default...</p>
           ) : null}

@@ -77,6 +77,8 @@ export function GenerationHistoryPanel({
                         target='_blank'
                         rel='noopener noreferrer'
                         className='block overflow-hidden rounded border border-border/40 hover:border-primary/60 transition-colors'
+                        aria-label={output.filename ?? 'Output image'}
+                        title={output.filename ?? 'Output image'}
                       >
                         <Image
                           src={output.filepath}

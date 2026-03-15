@@ -20,11 +20,20 @@ const createPanelBodyContextValue = (
   overrides: Partial<KangurAiTutorPanelBodyContextValue> = {}
 ): KangurAiTutorPanelBodyContextValue => ({
   activeFocus: {
+    assignmentId: null,
+    conversationFocus: {
+      assignmentId: null,
+      contentId: null,
+      id: null,
+      kind: null,
+      knowledgeReference: null,
+      label: null,
+      surface: null,
+    },
     rect: null,
     kind: null,
     id: null,
     label: null,
-    assignmentId: null,
   },
   activeSectionRect: null,
   activeSelectedText: null,
@@ -59,6 +68,8 @@ const createPanelBodyContextValue = (
   inputPlaceholder: 'Pytaj…',
   isAskModalMode: false,
   isLoading: false,
+  lastInteractionIntent: null,
+  lastPromptMode: null,
   isSectionExplainPendingMode: false,
   isSelectionExplainPendingMode: false,
   isUsageLoading: false,
@@ -70,6 +81,7 @@ const createPanelBodyContextValue = (
   panelEmptyStateMessage: 'Czekaj chwilę…',
   remainingMessages: null,
   selectedTextPreview: null,
+  sessionSurface: null,
   showToolboxLayout: false,
   shouldRenderAuxiliaryPanelControls: false,
   showSectionExplainCompleteState: false,
@@ -109,6 +121,15 @@ function MessageListHarness({
 
 describe('KangurAiTutorMessageList', () => {
   it('renders assistant coaching, follow-up cards, and sources', () => {
+    const hintQuickAction = {
+      id: 'hint',
+      label: 'Podpowiedź',
+      prompt: 'Daj mi małą podpowiedź, ale bez gotowej odpowiedzi.',
+      promptMode: 'hint',
+      interactionIntent: 'hint',
+    };
+    const handleQuickAction = vi.fn().mockResolvedValue(undefined);
+
     render(
       <MessageListHarness
         bodyValue={createPanelBodyContextValue({
@@ -149,6 +170,8 @@ describe('KangurAiTutorMessageList', () => {
               ],
             },
           ],
+          visibleQuickActions: [hintQuickAction],
+          handleQuickAction,
         })}
       />
     );
@@ -170,6 +193,11 @@ describe('KangurAiTutorMessageList', () => {
       'kangur-chat-surface-warm',
       'kangur-chat-surface-warm-shadow'
     );
+    expect(screen.getByText('Potrzebujesz kolejnej podpowiedzi?')).toBeInTheDocument();
+    const hintCta = screen.getByTestId('kangur-ai-tutor-hint-followup-cta');
+    expect(hintCta).toHaveTextContent('Tak, pomóż mi');
+    fireEvent.click(hintCta);
+    expect(handleQuickAction).toHaveBeenCalledWith(hintQuickAction);
     expect(screen.getByRole('link', { name: 'Otwórz lekcję' })).toHaveAttribute(
       'href',
       '/kangur/lessons?focus=adding'

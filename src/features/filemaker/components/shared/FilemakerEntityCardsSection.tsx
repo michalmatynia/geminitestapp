@@ -75,7 +75,7 @@ export function FilemakerEntityCardsSection<TItem extends { id: string }>(
                     onClick={(): void => {
                       onEdit(item);
                     }}
-                  >
+                    title={'Edit item'}>
                     <Edit2 className='size-3.5' />
                   </Button>
                   <Button
@@ -87,7 +87,7 @@ export function FilemakerEntityCardsSection<TItem extends { id: string }>(
                       onDelete(item);
                     }}
                     disabled={isPending}
-                  >
+                    title={'Delete item'}>
                     <Trash2 className='size-3.5' />
                   </Button>
                 </div>

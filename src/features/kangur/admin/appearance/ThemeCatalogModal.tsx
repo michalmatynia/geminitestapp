@@ -102,7 +102,7 @@ export function ThemeCatalogModal(): React.JSX.Element {
                 placeholder='Nazwa motywu...'
                 value={newThemeName}
                 onChange={(e) => setNewThemeName(e.target.value)}
-               aria-label="Nazwa motywu..." title="Nazwa motywu..."/>
+               aria-label='Nazwa motywu...' title='Nazwa motywu...'/>
             </div>
             <Button
               onClick={() => void handleCreateTheme()}

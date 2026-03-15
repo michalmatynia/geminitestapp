@@ -336,7 +336,7 @@ function CaseAccordionRow(props: {
             onToggle();
           }}
           aria-label={isExpanded ? 'Collapse case' : 'Expand case'}
-        >
+          title={isExpanded ? 'Collapse case' : 'Expand case'}>
           {isExpanded ? (
             <ChevronDown className='size-3.5' />
           ) : (

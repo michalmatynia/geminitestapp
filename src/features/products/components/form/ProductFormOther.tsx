@@ -225,7 +225,7 @@ export default function ProductFormOther(): React.JSX.Element {
               }))}
               placeholder='Select default price group'
               triggerClassName={isPriceGroupAutoAssigned ? 'cursor-not-allowed opacity-60' : ''}
-             title="Select default price group"/>
+             title='Select default price group'/>
           </FormField>
 
           {selectedDefaultPriceGroupId && filteredPriceGroups.length > 0 && (

@@ -190,7 +190,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                     }}
                     options={CASE_RESOLVER_NODE_ROLE_OPTIONS}
                     triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
-                   ariaLabel="Node Role" title="Node Role"/>
+                   ariaLabel='Node Role' title='Node Role'/>
                 </FormField>
 
                 <FormField label='Quotation Wrapper'>
@@ -204,7 +204,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                     }}
                     options={CASE_RESOLVER_QUOTE_MODE_OPTIONS}
                     triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
-                   ariaLabel="Quotation Wrapper" title="Quotation Wrapper"/>
+                   ariaLabel='Quotation Wrapper' title='Quotation Wrapper'/>
                 </FormField>
 
                 <div className='grid grid-cols-2 gap-2'>
@@ -216,7 +216,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                       }}
                       className='h-8 border-border bg-card/60 text-xs text-white'
                       placeholder='e.g. <<'
-                     aria-label="e.g. <<" title="e.g. <<"/>
+                     aria-label='e.g. <<' title='e.g. <<'/>
                   </FormField>
                   <FormField label='Surround Suffix'>
                     <Input
@@ -226,7 +226,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                       }}
                       className='h-8 border-border bg-card/60 text-xs text-white'
                       placeholder='e.g. >>'
-                     aria-label="e.g. >>" title="e.g. >>"/>
+                     aria-label='e.g. >>' title='e.g. >>'/>
                   </FormField>
                 </div>
                 <div className='flex items-center justify-between rounded border border-border/60 bg-card/30 px-3 py-2'>
@@ -264,7 +264,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                         onUpdateSelectedNodeMeta?.({ textColor: nextColor });
                       }}
                       className='h-9 w-14 p-1'
-                     aria-label="Text Color (Content Output)" title="Text Color (Content Output)"/>
+                     aria-label='Text Color (Content Output)' title='Text Color (Content Output)'/>
                     <Button
                       type='button'
                       variant='ghost'
@@ -326,7 +326,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                           }}
                           options={plainTextPatternStackOptions}
                           triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
-                         ariaLabel="Select option" title="Select option"/>
+                         ariaLabel='Select option' title='Select option'/>
                       </div>
                     ) : (
                       <p className='text-[11px] text-amber-200'>
@@ -378,7 +378,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                         rows={5}
                         className='border-border bg-card/60 text-xs text-white'
                         placeholder='Write note text to append/merge with incoming input.'
-                       aria-label="Write note text to append/merge with incoming input." title="Write note text to append/merge with incoming input."/>
+                       aria-label='Write note text to append/merge with incoming input.' title='Write note text to append/merge with incoming input.'/>
                     )}
                   </FormField>
                 ) : null}
@@ -482,7 +482,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                 }}
                 options={CASE_RESOLVER_JOIN_MODE_OPTIONS}
                 triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
-               ariaLabel="Edge join operator" title="Edge join operator"/>
+               ariaLabel='Edge join operator' title='Edge join operator'/>
             </FormField>
           </div>
         ) : (

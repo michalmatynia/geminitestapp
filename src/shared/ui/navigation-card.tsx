@@ -23,21 +23,22 @@ export type NavigationCardProps = {
   padding?: CardProps['padding'];
 };
 
-export function NavigationCard({
-  description,
-  href,
-  leading,
-  linkClassName,
-  title,
-  titleAs = 'h2',
-  titleClassName,
-  descriptionClassName,
-  contentClassName,
-  trailing,
-  className,
-  variant = 'default',
-  padding = 'md',
-}: NavigationCardProps): React.JSX.Element {
+export function NavigationCard(props: NavigationCardProps): React.JSX.Element {
+  const {
+    description,
+    href,
+    leading,
+    linkClassName,
+    title,
+    titleAs = 'h2',
+    titleClassName,
+    descriptionClassName,
+    contentClassName,
+    trailing,
+    className,
+    variant = 'default',
+    padding = 'md',
+  } = props;
   const TitleTag = titleAs;
 
   return (

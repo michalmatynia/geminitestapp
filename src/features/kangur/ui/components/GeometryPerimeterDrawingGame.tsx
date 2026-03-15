@@ -158,13 +158,36 @@ const computeBoundingBox = (points: Point2d[]): {
 const toGridUnits = (value: number): number =>
   Math.max(1, Math.round(value / GRID_STEP));
 
-const withinTolerance = (value: number, target: number, tolerance = 1): boolean =>
+const withinTolerance = (value: number, target: number, tolerance = 0): boolean =>
   Math.abs(value - target) <= tolerance;
+
+const GRID_SNAP_TOLERANCE = 6;
+const MIN_GRID_ALIGNMENT_RATIO = 0.8;
+
+const distanceToNearestGridLine = (value: number): number => {
+  const snapped = Math.round(value / GRID_STEP) * GRID_STEP;
+  return Math.abs(value - snapped);
+};
+
+const gridAlignmentRatio = (points: Point2d[]): number => {
+  if (points.length === 0) return 0;
+  let aligned = 0;
+  for (const point of points) {
+    const xDist = distanceToNearestGridLine(point.x);
+    const yDist = distanceToNearestGridLine(point.y);
+    if (Math.min(xDist, yDist) <= GRID_SNAP_TOLERANCE) {
+      aligned += 1;
+    }
+  }
+  return aligned / points.length;
+};
 
 export default function GeometryPerimeterDrawingGame({
   finishLabel = 'Wróć do lekcji',
   onFinish,
 }: GeometryPerimeterDrawingGameProps): React.JSX.Element {
+  const summaryFinishLabel = finishLabel;
+  const handleFinish = onFinish;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isDrawingRef = useRef(false);
   const advanceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -497,14 +520,31 @@ export default function GeometryPerimeterDrawingGame({
       return { accepted: false, message: 'Narysuj większą figurę na kratkach.' };
     }
 
+    const alignmentRatio = gridAlignmentRatio(points);
+    if (alignmentRatio < MIN_GRID_ALIGNMENT_RATIO) {
+      return {
+        accepted: false,
+        message: 'Rysuj dokładnie po liniach kratki.',
+      };
+    }
+
     if (currentRound.shape === 'square') {
       const matches =
         withinTolerance(widthUnits, currentRound.a) &&
         withinTolerance(heightUnits, currentRound.a);
+      const pixelMatch =
+        Math.abs(width - currentRound.a * GRID_STEP) <= GRID_SNAP_TOLERANCE &&
+        Math.abs(height - currentRound.a * GRID_STEP) <= GRID_SNAP_TOLERANCE;
       if (!matches) {
         return {
           accepted: false,
           message: `Spróbuj narysować kwadrat o boku ${currentRound.a} kratek.`,
+        };
+      }
+      if (!pixelMatch) {
+        return {
+          accepted: false,
+          message: 'Dopasuj boki dokładniej do linii kratki.',
         };
       }
     } else {
@@ -513,10 +553,21 @@ export default function GeometryPerimeterDrawingGame({
       const matches =
         (withinTolerance(widthUnits, a) && withinTolerance(heightUnits, b)) ||
         (withinTolerance(widthUnits, b) && withinTolerance(heightUnits, a));
+      const pixelMatch =
+        (Math.abs(width - a * GRID_STEP) <= GRID_SNAP_TOLERANCE &&
+          Math.abs(height - b * GRID_STEP) <= GRID_SNAP_TOLERANCE) ||
+        (Math.abs(width - b * GRID_STEP) <= GRID_SNAP_TOLERANCE &&
+          Math.abs(height - a * GRID_STEP) <= GRID_SNAP_TOLERANCE);
       if (!matches) {
         return {
           accepted: false,
           message: `Spróbuj narysować prostokąt ${a} × ${b} kratek.`,
+        };
+      }
+      if (!pixelMatch) {
+        return {
+          accepted: false,
+          message: 'Dopasuj boki dokładniej do linii kratki.',
         };
       }
     }
@@ -619,8 +670,8 @@ export default function GeometryPerimeterDrawingGame({
         <KangurPracticeGameSummaryActions
           className='flex-col sm:flex-row'
           finishButtonClassName='w-full sm:flex-1'
-          finishLabel={finishLabel}
-          onFinish={onFinish}
+          finishLabel={summaryFinishLabel}
+          onFinish={handleFinish}
           onRestart={handleRestart}
           restartButtonClassName='w-full sm:flex-1'
         />
@@ -779,24 +830,6 @@ export default function GeometryPerimeterDrawingGame({
           </div>
         ) : null}
 
-        {feedback && (
-          <p
-            className={cn(
-              'text-sm font-semibold text-center',
-              feedback.kind === 'success'
-                ? 'text-emerald-600'
-                : feedback.kind === 'error'
-                  ? 'text-rose-600'
-                  : 'text-amber-600'
-            )}
-            role='status'
-            aria-live='polite'
-            aria-atomic='true'
-          >
-            {feedback.text}
-          </p>
-        )}
-
         <div className='flex w-full flex-col gap-3 sm:flex-row'>
           <KangurButton
             className='w-full sm:flex-1'
@@ -833,6 +866,24 @@ export default function GeometryPerimeterDrawingGame({
             {drawingValidated ? 'Sprawdź obwód' : 'Sprawdź rysunek'}
           </KangurButton>
         </div>
+
+        {feedback && (
+          <p
+            className={cn(
+              'text-sm font-semibold text-center',
+              feedback.kind === 'success'
+                ? 'text-emerald-600'
+                : feedback.kind === 'error'
+                  ? 'text-rose-600'
+                  : 'text-amber-600'
+            )}
+            role='status'
+            aria-live='polite'
+            aria-atomic='true'
+          >
+            {feedback.text}
+          </p>
+        )}
       </KangurGlassPanel>
     </KangurPracticeGameStage>
   );

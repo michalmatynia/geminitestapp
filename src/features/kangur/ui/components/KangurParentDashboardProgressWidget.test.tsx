@@ -9,6 +9,7 @@ const runtimeState = vi.hoisted(() => ({
   value: {
     activeLearner: { id: 'learner-1', displayName: 'Maja' },
     activeTab: 'progress',
+    basePath: '/kangur',
     canAccessDashboard: true,
     progress: {
       totalXp: 480,
@@ -75,6 +76,7 @@ describe('KangurParentDashboardProgressWidget', () => {
     runtimeState.value = {
       activeLearner: { id: 'learner-1', displayName: 'Maja' },
       activeTab: 'progress',
+      basePath: '/kangur',
       canAccessDashboard: true,
       progress: {
         totalXp: 480,

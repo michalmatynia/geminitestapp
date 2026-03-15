@@ -169,7 +169,12 @@ function DraggableToken({
   onSelect: () => void;
 }): React.ReactElement | React.ReactPortal {
   return (
-    <Draggable draggableId={token.id} index={index} isDragDisabled={isDragDisabled}>
+    <Draggable
+      draggableId={token.id}
+      index={index}
+      isDragDisabled={isDragDisabled}
+      disableInteractiveElementBlocking
+    >
       {(draggableProvided, snapshot) => {
         const content = (
           <div

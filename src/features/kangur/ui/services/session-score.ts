@@ -56,7 +56,7 @@ export async function persistKangurSessionScore({
     }
   }
 
-  if (user?.actorType === 'parent') {
+  if (user?.actorType === 'parent' && !user?.activeLearner?.id) {
     return;
   }
 

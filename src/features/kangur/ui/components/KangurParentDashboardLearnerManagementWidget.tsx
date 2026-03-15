@@ -39,6 +39,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
     'parent-dashboard-learner-management'
   );
   const [isCreatePasswordVisible, setIsCreatePasswordVisible] = useState(false);
+  const [isEditLearnerModalOpen, setIsEditLearnerModalOpen] = useState(false);
   const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
   const activeLearnerId = activeLearner?.id ?? null;
   const isRemovalPending = Boolean(activeLearnerId && pendingRemovalId === activeLearnerId);
@@ -54,6 +55,33 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
       setIsCreatePasswordVisible(false);
     }
   }, [isCreateLearnerModalOpen]);
+
+  useEffect(() => {
+    if (!activeLearnerId) {
+      setIsEditLearnerModalOpen(false);
+      setPendingRemovalId(null);
+    }
+  }, [activeLearnerId]);
+
+  useEffect(() => {
+    if (!isEditLearnerModalOpen) {
+      setPendingRemovalId(null);
+    }
+  }, [isEditLearnerModalOpen]);
+
+  const handleEditSave = async (): Promise<void> => {
+    const saved = await handleSaveLearner();
+    if (saved) {
+      setIsEditLearnerModalOpen(false);
+    }
+  };
+
+  const handleEditDelete = async (learnerId: string): Promise<void> => {
+    const removed = await handleDeleteLearner(learnerId);
+    if (removed) {
+      setIsEditLearnerModalOpen(false);
+    }
+  };
 
   if (!canAccessDashboard) {
     return null;
@@ -153,6 +181,16 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
             data-doc-id='parent_open_create_learner'
           >
             Dodaj ucznia
+          </KangurButton>
+          <KangurButton
+            className='w-full sm:w-auto'
+            disabled={isSubmitting || !activeLearner}
+            onClick={() => setIsEditLearnerModalOpen(true)}
+            size='sm'
+            variant='surface'
+            data-doc-id='parent_open_edit_learner'
+          >
+            Edytuj Profil
           </KangurButton>
         </div>
 
@@ -325,127 +363,189 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
         </DialogPrimitive.Root>
       </KangurGlassPanel>
 
-      {activeLearner ? (
-        <KangurGlassPanel className='flex flex-col gap-4' padding='lg' surface='mistSoft' variant='soft'>
-          <KangurPanelIntro
-            eyebrow='Wybrany profil'
-            description={
-              <>
-                Aktualizujesz dane ucznia{' '}
-                <span className='font-semibold [color:var(--kangur-page-text)]'>
-                  {activeLearner.displayName}
-                </span>
-                .
-              </>
-            }
+      <DialogPrimitive.Root
+        open={isEditLearnerModalOpen}
+        onOpenChange={setIsEditLearnerModalOpen}
+      >
+        <DialogPrimitive.Portal>
+          <DialogPrimitive.Overlay
+            className={cn(
+              'fixed inset-0 z-50 backdrop-blur-[2px]',
+              'data-[state=open]:animate-in data-[state=closed]:animate-out',
+              'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0'
+            )}
+            style={{
+              background:
+                'color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 16%, rgba(2,6,23,0.7))',
+            }}
           />
-          <div className='grid gap-3 min-[420px]:grid-cols-2'>
-            <KangurTextField
-              accent='indigo'
-              maxLength={120}
-              value={editForm.displayName}
-              onChange={(event) => updateEditField('displayName', event.target.value)}
-              placeholder='Imie ucznia'
-              aria-label='Imie ucznia'
-              title='Imie ucznia'
-            />
-            <KangurTextField
-              accent='indigo'
-              maxLength={80}
-              value={editForm.loginName}
-              onChange={(event) => updateEditField('loginName', event.target.value)}
-              placeholder='Login ucznia'
-              aria-label='Login ucznia'
-              title='Login ucznia'
-            />
-            <KangurTextField
-              accent='indigo'
-              type='password'
-              minLength={8}
-              maxLength={160}
-              value={editForm.password}
-              onChange={(event) => updateEditField('password', event.target.value)}
-              placeholder='Nowe hasło (opcjonalnie)'
-              aria-label='Nowe hasło (opcjonalnie)'
-              title='Nowe hasło (opcjonalnie)'
-            />
-            <KangurSelectField
-              accent='indigo'
-              value={editForm.status}
-              onChange={(event) =>
-                updateEditField(
-                  'status',
-                  event.target.value === 'disabled' ? 'disabled' : 'active'
-                )
-              }
-              aria-label='Status ucznia'
-              title='Status ucznia'
-            >
-              <option value='active'>Aktywny</option>
-              <option value='disabled'>Wyłączony</option>
-            </KangurSelectField>
-          </div>
-          <div className='flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center'>
-            <KangurButton
-              className='w-full sm:w-auto'
-              disabled={isSubmitting}
-              onClick={() => void handleSaveLearner()}
-              size='sm'
-              variant='surface'
-              data-doc-id='parent_save_learner'
-            >
-              Zapisz ucznia
-            </KangurButton>
-            <KangurButton
-              className='w-full sm:w-auto text-rose-600 hover:text-rose-700'
-              disabled={isSubmitting}
-              onClick={() => setPendingRemovalId(activeLearner.id)}
-              size='sm'
-              variant='surface'
-              data-doc-id='parent_remove_learner'
-            >
-              Usuń profil ucznia
-            </KangurButton>
-            <div className='text-xs [color:var(--kangur-page-muted-text)]'>
-              Login i hasło należą do ucznia, ale konto pozostaje własnością rodzica.
-            </div>
-          </div>
-          {isRemovalPending ? (
-            <div
-              className='rounded-[20px] border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-700'
-              role='alert'
-            >
-              <p className='font-semibold'>
-                Uwaga: usunięcie profilu ucznia usuwa jego login i dostęp do danych. Tej operacji nie
-                da się cofnąć.
-              </p>
-              <div className='mt-3 flex flex-col gap-2 sm:flex-row sm:items-center'>
-                <KangurButton
-                  className='w-full sm:w-auto'
-                  disabled={isSubmitting}
-                  onClick={() => setPendingRemovalId(null)}
-                  size='sm'
-                  variant='surface'
-                >
-                  Anuluj
-                </KangurButton>
-                <KangurButton
-                  className='w-full sm:w-auto border-rose-500 bg-rose-500 text-white hover:bg-rose-600 hover:border-rose-600'
-                  disabled={isSubmitting}
-                  onClick={() => {
-                    setPendingRemovalId(null);
-                    void handleDeleteLearner(activeLearner.id);
-                  }}
-                  size='sm'
-                  variant='primary'
-                >
-                  Potwierdź usunięcie
-                </KangurButton>
-              </div>
-            </div>
-          ) : null}
-        </KangurGlassPanel>
-      ) : null}
+          <DialogPrimitive.Content
+            className={cn(
+              'fixed left-1/2 top-1/2 z-50 w-[min(calc(100vw-2rem),42rem)]',
+              'max-h-[calc(100vh-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto',
+              'outline-none'
+            )}
+            data-testid='parent-edit-learner-modal'
+            onEscapeKeyDown={() => setIsEditLearnerModalOpen(false)}
+            onInteractOutside={() => setIsEditLearnerModalOpen(false)}
+            onPointerDownOutside={() => setIsEditLearnerModalOpen(false)}
+          >
+            <DialogPrimitive.Title className='sr-only'>
+              Edytuj profil ucznia
+            </DialogPrimitive.Title>
+            <DialogPrimitive.Description className='sr-only'>
+              Zmieniaj dane profilu ucznia, login, hasło oraz status aktywności.
+            </DialogPrimitive.Description>
+
+            <DialogPrimitive.Close asChild>
+              <button
+                aria-label='Zamknij edycję profilu'
+                className={cn(
+                  'absolute right-4 top-4 z-10 cursor-pointer rounded-full border border-amber-200/80',
+                  'px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em]',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+                  'shadow-[0_16px_34px_-26px_rgba(249,115,22,0.5)] transition'
+                )}
+                style={{
+                  background:
+                    'linear-gradient(180deg, color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 88%, rgba(254,243,199,0.95)) 0%, color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 82%, rgba(255,237,213,0.9)) 100%)',
+                  color: '#9a5418',
+                }}
+                type='button'
+              >
+                Zamknij
+              </button>
+            </DialogPrimitive.Close>
+
+            {activeLearner ? (
+              <KangurGlassPanel
+                className='flex flex-col gap-4'
+                padding='lg'
+                surface='mistSoft'
+                variant='soft'
+              >
+                <KangurPanelIntro
+                  eyebrow='Wybrany profil'
+                  description={
+                    <>
+                      Aktualizujesz dane ucznia{' '}
+                      <span className='font-semibold [color:var(--kangur-page-text)]'>
+                        {activeLearner.displayName}
+                      </span>
+                      .
+                    </>
+                  }
+                />
+                <div className='grid gap-3 min-[420px]:grid-cols-2'>
+                  <KangurTextField
+                    accent='indigo'
+                    maxLength={120}
+                    value={editForm.displayName}
+                    onChange={(event) => updateEditField('displayName', event.target.value)}
+                    placeholder='Imie ucznia'
+                    aria-label='Imie ucznia'
+                    title='Imie ucznia'
+                  />
+                  <KangurTextField
+                    accent='indigo'
+                    maxLength={80}
+                    value={editForm.loginName}
+                    onChange={(event) => updateEditField('loginName', event.target.value)}
+                    placeholder='Login ucznia'
+                    aria-label='Login ucznia'
+                    title='Login ucznia'
+                  />
+                  <KangurTextField
+                    accent='indigo'
+                    type='password'
+                    minLength={8}
+                    maxLength={160}
+                    value={editForm.password}
+                    onChange={(event) => updateEditField('password', event.target.value)}
+                    placeholder='Nowe hasło (opcjonalnie)'
+                    aria-label='Nowe hasło (opcjonalnie)'
+                    title='Nowe hasło (opcjonalnie)'
+                  />
+                  <KangurSelectField
+                    accent='indigo'
+                    value={editForm.status}
+                    onChange={(event) =>
+                      updateEditField(
+                        'status',
+                        event.target.value === 'disabled' ? 'disabled' : 'active'
+                      )
+                    }
+                    aria-label='Status ucznia'
+                    title='Status ucznia'
+                  >
+                    <option value='active'>Aktywny</option>
+                    <option value='disabled'>Wyłączony</option>
+                  </KangurSelectField>
+                </div>
+                <div className='flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center'>
+                  <KangurButton
+                    className='w-full sm:w-auto'
+                    disabled={isSubmitting}
+                    onClick={() => void handleEditSave()}
+                    size='sm'
+                    variant='surface'
+                    data-doc-id='parent_save_learner'
+                  >
+                    Zapisz ucznia
+                  </KangurButton>
+                  <KangurButton
+                    className='w-full sm:w-auto text-rose-600 hover:text-rose-700'
+                    disabled={isSubmitting}
+                    onClick={() => setPendingRemovalId(activeLearner.id)}
+                    size='sm'
+                    variant='surface'
+                    data-doc-id='parent_remove_learner'
+                  >
+                    Usuń profil ucznia
+                  </KangurButton>
+                  <div className='text-xs [color:var(--kangur-page-muted-text)]'>
+                    Login i hasło należą do ucznia, ale konto pozostaje własnością rodzica.
+                  </div>
+                </div>
+                {isRemovalPending ? (
+                  <div
+                    className='rounded-[20px] border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-700'
+                    role='alert'
+                  >
+                    <p className='font-semibold'>
+                      Uwaga: usunięcie profilu ucznia usuwa jego login i dostęp do danych. Tej
+                      operacji nie da się cofnąć.
+                    </p>
+                    <div className='mt-3 flex flex-col gap-2 sm:flex-row sm:items-center'>
+                      <KangurButton
+                        className='w-full sm:w-auto'
+                        disabled={isSubmitting}
+                        onClick={() => setPendingRemovalId(null)}
+                        size='sm'
+                        variant='surface'
+                      >
+                        Anuluj
+                      </KangurButton>
+                      <KangurButton
+                        className='w-full sm:w-auto border-rose-500 bg-rose-500 text-white hover:bg-rose-600 hover:border-rose-600'
+                        disabled={isSubmitting}
+                        onClick={() => {
+                          setPendingRemovalId(null);
+                          void handleEditDelete(activeLearner.id);
+                        }}
+                        size='sm'
+                        variant='primary'
+                      >
+                        Potwierdź usunięcie
+                      </KangurButton>
+                    </div>
+                  </div>
+                ) : null}
+              </KangurGlassPanel>
+            ) : null}
+          </DialogPrimitive.Content>
+        </DialogPrimitive.Portal>
+      </DialogPrimitive.Root>
     </div>
   );
 }

@@ -27,52 +27,62 @@ export function KangurLessonNavigationWidget({
   const prevLesson = overridePrevLesson ?? runtime?.prevLesson ?? null;
   const nextLesson = overrideNextLesson ?? runtime?.nextLesson ?? null;
   const handleSelectLesson = onSelectLesson ?? runtime?.selectLesson;
+  const panelDescription = sectionSummary;
+  const panelTitle = sectionTitle;
 
-  if (isSubsectionNavigationActive || !handleSelectLesson || (!prevLesson && !nextLesson)) {
+  if (isSubsectionNavigationActive || !handleSelectLesson) {
     return null;
   }
 
   return (
     <nav
-      className='mx-auto mt-2 flex w-full max-w-[44rem] flex-col gap-3'
+      className='flex w-full flex-col gap-2'
       aria-label='Nawigacja między lekcjami'
     >
       {sectionTitle || sectionSummary ? (
         <KangurPanelIntro
-          description={sectionSummary}
-          title={sectionTitle}
+          description={panelDescription}
+          title={panelTitle}
           titleAs='h3'
           titleClassName='text-base font-bold tracking-[-0.02em]'
         />
       ) : null}
-      <div className='flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-between'>
-        {prevLesson ? (
-          <KangurButton
-            onClick={() => handleSelectLesson(prevLesson.id)}
-            className='w-full justify-between [background:color-mix(in_srgb,var(--kangur-soft-card-background)_72%,var(--kangur-page-background))] [color:var(--kangur-page-text)] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-page-text)] sm:max-w-[21rem] sm:flex-1 sm:basis-[19rem] sm:justify-start'
-            size='lg'
-            variant='surface'
-            data-doc-id='lessons_prev_next'
-            aria-label={`Poprzednia lekcja: ${prevLesson.title}`}
-          >
-            <ChevronLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
-            <span className='min-w-0 truncate'>{prevLesson.title}</span>
-          </KangurButton>
-        ) : null}
+      <div
+        className='flex w-full items-center justify-center gap-2'
+        role='group'
+        aria-label='Nawigacja między lekcjami'
+      >
+        <KangurButton
+          onClick={prevLesson ? () => handleSelectLesson(prevLesson.id) : undefined}
+          disabled={!prevLesson}
+          className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-35'
+          size='sm'
+          variant='surface'
+          data-doc-id='lessons_prev_next'
+          aria-label={
+            prevLesson ? `Poprzednia lekcja: ${prevLesson.title}` : 'Brak poprzedniej lekcji'
+          }
+          title={prevLesson ? `Poprzednia lekcja: ${prevLesson.title}` : 'Brak poprzedniej lekcji'}
+        >
+          <ChevronLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
+          <span className='sr-only'>{prevLesson?.title ?? 'Brak poprzedniej lekcji'}</span>
+        </KangurButton>
 
-        {nextLesson ? (
-          <KangurButton
-            onClick={() => handleSelectLesson(nextLesson.id)}
-            className='w-full justify-between [background:color-mix(in_srgb,var(--kangur-soft-card-background)_72%,var(--kangur-page-background))] [color:var(--kangur-page-text)] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-page-text)] sm:ml-auto sm:max-w-[21rem] sm:flex-1 sm:basis-[19rem] sm:justify-end'
-            size='lg'
-            variant='surface'
-            data-doc-id='lessons_prev_next'
-            aria-label={`Następna lekcja: ${nextLesson.title}`}
-          >
-            <span className='min-w-0 truncate'>{nextLesson.title}</span>
-            <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
-          </KangurButton>
-        ) : null}
+        <KangurButton
+          onClick={nextLesson ? () => handleSelectLesson(nextLesson.id) : undefined}
+          disabled={!nextLesson}
+          className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-35'
+          size='sm'
+          variant='surface'
+          data-doc-id='lessons_prev_next'
+          aria-label={
+            nextLesson ? `Następna lekcja: ${nextLesson.title}` : 'Brak następnej lekcji'
+          }
+          title={nextLesson ? `Następna lekcja: ${nextLesson.title}` : 'Brak następnej lekcji'}
+        >
+          <span className='sr-only'>{nextLesson?.title ?? 'Brak następnej lekcji'}</span>
+          <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
+        </KangurButton>
       </div>
     </nav>
   );

@@ -29,6 +29,10 @@ export default function TrainingSetup({
   suggestionLabel,
   suggestionTitle,
 }: TrainingSetupProps): React.JSX.Element {
+  const recommendationDescription = suggestionDescription;
+  const recommendationLabel = suggestionLabel ?? 'Polecamy teraz';
+  const recommendationTitle = suggestionTitle;
+
   const {
     categoryOptions,
     countOptions,
@@ -83,11 +87,11 @@ export default function TrainingSetup({
           <KangurRecommendationCard
             accent='indigo'
             dataTestId='training-setup-suggestion-card'
-            description={suggestionDescription}
+            description={recommendationDescription}
             descriptionTestId='training-setup-suggestion-description'
-            label={suggestionLabel ?? 'Polecamy teraz'}
+            label={recommendationLabel}
             labelTestId='training-setup-suggestion-label'
-            title={suggestionTitle}
+            title={recommendationTitle}
             titleTestId='training-setup-suggestion-title'
           />
         ) : null}

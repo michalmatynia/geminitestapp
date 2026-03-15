@@ -28,13 +28,17 @@ export function KangurSessionHistoryAside({
   durationText?: ReactNode;
   durationClassName?: string;
 }): React.JSX.Element {
+  const scoreChipAccent = scoreAccent;
+  const scoreChipTestId = scoreTestId;
+  const xpChipTestId = xpTestId;
+
   return (
     <div className='flex flex-wrap items-center gap-2 text-left sm:flex-col sm:items-end sm:gap-1 sm:text-right'>
-      <KangurStatusChip accent={scoreAccent} data-testid={scoreTestId} size='sm'>
+      <KangurStatusChip accent={scoreChipAccent} data-testid={scoreChipTestId} size='sm'>
         {scoreText}
       </KangurStatusChip>
       {xpText ? (
-        <KangurStatusChip accent='indigo' data-testid={xpTestId} size='sm'>
+        <KangurStatusChip accent='indigo' data-testid={xpChipTestId} size='sm'>
           {xpText}
         </KangurStatusChip>
       ) : null}

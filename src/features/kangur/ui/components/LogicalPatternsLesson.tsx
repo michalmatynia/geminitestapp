@@ -245,7 +245,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Gdy iloraz jest stały, każdy wyraz rośnie szybciej od poprzedniego.
           </KangurLessonLead>
           <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
-            <div className='mx-auto h-28 w-72'>
+            <div className='mx-auto w-72 max-w-full'>
               <GeometricGrowthAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -263,7 +263,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Każdy wyraz to suma dwóch poprzednich.
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' className='w-full text-center' padding='sm'>
-            <div className='mx-auto h-24 w-72'>
+            <div className='mx-auto w-72 max-w-full'>
               <FibonacciSumAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -281,7 +281,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Geometria liczb może być widoczna jako rosnąca liczba kropek.
           </KangurLessonLead>
           <KangurLessonCallout accent='emerald' className='w-full text-center' padding='sm'>
-            <div className='mx-auto h-24 w-72'>
+            <div className='mx-auto w-72 max-w-full'>
               <GeometricDotsAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>

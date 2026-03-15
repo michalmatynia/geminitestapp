@@ -27,20 +27,27 @@ export function KangurActivitySummaryCard({
   eyebrow,
   eyebrowClassName,
 }: KangurActivitySummaryCardProps): React.JSX.Element {
+  const summaryTestId = dataTestId;
+  const summaryEyebrowClassName = eyebrowClassName;
+  const summaryDescriptionClassName = descriptionClassName;
+
   return (
     <KangurInfoCard
       className='flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between'
-      data-testid={dataTestId}
+      data-testid={summaryTestId}
       padding='md'
     >
       <div className='min-w-0'>
         {eyebrow ? (
-          <KangurSectionEyebrow as='p' className={cn('tracking-[0.18em]', eyebrowClassName)}>
+          <KangurSectionEyebrow
+            as='p'
+            className={cn('tracking-[0.18em]', summaryEyebrowClassName)}
+          >
             {eyebrow}
           </KangurSectionEyebrow>
         ) : null}
         <KangurCardTitle as='p'>{activity.label}</KangurCardTitle>
-        <KangurCardDescription as='p' className={descriptionClassName} size='xs'>
+        <KangurCardDescription as='p' className={summaryDescriptionClassName} size='xs'>
           {description}
         </KangurCardDescription>
       </div>

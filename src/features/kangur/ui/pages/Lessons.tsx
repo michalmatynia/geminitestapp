@@ -27,6 +27,7 @@ import { KangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiT
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
+import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
@@ -298,7 +299,8 @@ export default function Lessons() {
   const routeNavigator = useKangurRouteNavigator();
   const { basePath } = useKangurRouting();
   const auth = useKangurAuth();
-  const { user, navigateToLogin, logout } = auth;
+  const { user, logout } = auth;
+  const { openLoginModal } = useKangurLoginModal();
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const canAccessParentAssignments =
@@ -634,7 +636,7 @@ export default function Lessons() {
     priority: 60,
     metadata: {
       contentId: activeLesson?.id ?? null,
-      label: activeLesson?.title ?? 'Brak zawartosci lekcji',
+      label: activeLesson?.title ?? 'Brak zawartości lekcji',
     },
   });
   useKangurTutorAnchor({
@@ -668,12 +670,12 @@ export default function Lessons() {
       currentPage: 'Lessons' as const,
       guestPlayerName: user ? undefined : guestPlayerName,
       isAuthenticated: Boolean(user),
-      onCreateAccount: () => navigateToLogin({ authMode: 'create-account' }),
+      onCreateAccount: () => openLoginModal(null, { authMode: 'create-account' }),
       onGuestPlayerNameChange: user ? undefined : setGuestPlayerName,
-      onLogin: navigateToLogin,
+      onLogin: openLoginModal,
       onLogout: () => logout(false),
     }),
-    [basePath, guestPlayerName, logout, navigateToLogin, setGuestPlayerName, user]
+    [basePath, guestPlayerName, logout, openLoginModal, setGuestPlayerName, user]
   );
   const lessonPageMotionProps = useMemo(
     () => createKangurPageTransitionMotionProps(prefersReducedMotion),
@@ -706,7 +708,7 @@ export default function Lessons() {
   const lessonListIntroDescription = isDeferredContentReady
     ? (lessonListIntroContent?.summary ??
       'Wybierz temat i przejdź od razu do praktyki lub powtórki.')
-    : 'Lekcje zaraz beda gotowe.';
+    : 'Lekcje zaraz będą gotowe.';
 
   return (
     <>
@@ -851,6 +853,13 @@ export default function Lessons() {
                       onBack={(): void => handleSelectLesson(null)}
                       titleOverride={activeLessonHeaderContent?.title ?? 'Aktywna lekcja'}
                     />
+                    <div ref={activeLessonNavigationRef} className='mt-3 w-full'>
+                      <KangurLessonNavigationWidget
+                        nextLesson={next}
+                        onSelectLesson={handleSelectLesson}
+                        prevLesson={prev}
+                      />
+                    </div>
                   </div>
                   <div
                     ref={activeLessonContentRef}
@@ -940,13 +949,6 @@ export default function Lessons() {
                         />
                       ) : null}
 
-                    <div ref={activeLessonNavigationRef} className='w-full'>
-                      <KangurLessonNavigationWidget
-                        nextLesson={next}
-                        onSelectLesson={handleSelectLesson}
-                        prevLesson={prev}
-                      />
-                    </div>
                   </div>
                 </KangurLessonNavigationProvider>
               </motion.div>

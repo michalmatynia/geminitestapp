@@ -16,6 +16,7 @@ import {
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
+import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import {
   KangurParentDashboardRuntimeBoundary,
   type KangurParentDashboardTabId,
@@ -44,8 +45,8 @@ function ParentDashboardContent(): React.JSX.Element {
     canManageLearners,
     isAuthenticated,
     logout,
-    navigateToLogin,
   } = useKangurParentDashboardRuntime();
+  const { openLoginModal } = useKangurLoginModal();
   useKangurRoutePageReady({
     pageKey: 'ParentDashboard',
     ready: true,
@@ -319,9 +320,9 @@ function ParentDashboardContent(): React.JSX.Element {
       currentPage: 'ParentDashboard' as const,
       guestPlayerName: isAuthenticated ? undefined : guestPlayerName,
       isAuthenticated,
-      onCreateAccount: () => navigateToLogin({ authMode: 'create-account' }),
+      onCreateAccount: () => openLoginModal(null, { authMode: 'create-account' }),
       onGuestPlayerNameChange: isAuthenticated ? undefined : setGuestPlayerName,
-      onLogin: navigateToLogin,
+      onLogin: openLoginModal,
       onLogout: () => logout(false),
     }),
     [
@@ -330,7 +331,7 @@ function ParentDashboardContent(): React.JSX.Element {
       guestPlayerName,
       isAuthenticated,
       logout,
-      navigateToLogin,
+      openLoginModal,
       setGuestPlayerName,
     ]
   );

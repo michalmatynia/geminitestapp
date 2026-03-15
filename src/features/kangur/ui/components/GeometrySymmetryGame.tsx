@@ -111,6 +111,39 @@ const mirrorShape = (shape: TemplateShape, axis: SymmetryAxis): TemplateShape =>
 const flattenPaths = (shape: TemplateShape): Point2d[] =>
   shape.paths.flatMap((path) => path.points);
 
+type ShapeBounds = {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+};
+
+const computeShapeBounds = (shape: TemplateShape): ShapeBounds => {
+  const points = flattenPaths(shape);
+  if (points.length === 0) {
+    return { minX: 16, maxX: CANVAS_WIDTH - 16, minY: 16, maxY: CANVAS_HEIGHT - 16 };
+  }
+  let minX = Number.POSITIVE_INFINITY;
+  let maxX = Number.NEGATIVE_INFINITY;
+  let minY = Number.POSITIVE_INFINITY;
+  let maxY = Number.NEGATIVE_INFINITY;
+  for (const point of points) {
+    minX = Math.min(minX, point.x);
+    maxX = Math.max(maxX, point.x);
+    minY = Math.min(minY, point.y);
+    maxY = Math.max(maxY, point.y);
+  }
+  const padding = 10;
+  const clamp = (value: number, min: number, max: number): number =>
+    Math.max(min, Math.min(max, value));
+  return {
+    minX: clamp(minX - padding, 8, CANVAS_WIDTH - 8),
+    maxX: clamp(maxX + padding, 8, CANVAS_WIDTH - 8),
+    minY: clamp(minY - padding, 8, CANVAS_HEIGHT - 8),
+    maxY: clamp(maxY + padding, 8, CANVAS_HEIGHT - 8),
+  };
+};
+
 const BUTTERFLY_LEFT: TemplateShape = {
   paths: [
     {
@@ -211,7 +244,7 @@ const ROUNDS: SymmetryRound[] = [
     type: 'axis',
     title: 'Oś motyla',
     prompt: 'Narysuj oś symetrii motyla.',
-    hint: 'To pionowa linia przechodząca przez środek.',
+    hint: 'To pionowa linia przechodząca przez środek — kieruj się zielonym pasem.',
     emoji: '🦋',
     axis: VERTICAL_AXIS,
     template: BUTTERFLY_FULL,
@@ -221,7 +254,7 @@ const ROUNDS: SymmetryRound[] = [
     type: 'mirror',
     title: 'Serce w lustrze',
     prompt: 'Dorysuj brakującą połowę serca.',
-    hint: 'Odbij kształt po osi.',
+    hint: 'Odbij kształt po osi, rysując po zielonej stronie.',
     emoji: '❤️',
     axis: VERTICAL_AXIS,
     template: HEART_LEFT,
@@ -232,7 +265,7 @@ const ROUNDS: SymmetryRound[] = [
     type: 'axis',
     title: 'Oś kwadratu',
     prompt: 'Narysuj oś symetrii kwadratu.',
-    hint: 'To pionowa linia pośrodku kwadratu.',
+    hint: 'To pionowa linia pośrodku kwadratu — zielony pas pokazuje oś.',
     emoji: '🟦',
     axis: VERTICAL_AXIS,
     template: SQUARE_FULL,
@@ -242,7 +275,7 @@ const ROUNDS: SymmetryRound[] = [
     type: 'mirror',
     title: 'Listek',
     prompt: 'Dorysuj dolną połowę listka.',
-    hint: 'Symetria względem osi poziomej.',
+    hint: 'Symetria względem osi poziomej — rysuj w zielonej strefie.',
     emoji: '🍃',
     axis: HORIZONTAL_AXIS,
     template: LEAF_TOP,
@@ -253,7 +286,7 @@ const ROUNDS: SymmetryRound[] = [
     type: 'mirror',
     title: 'Zygzak w lustrze',
     prompt: 'Dorysuj odbicie zygzaka.',
-    hint: 'Uważaj, aby rysować po prawej stronie osi.',
+    hint: 'Rysuj tylko w zielonej strefie po prawej stronie osi.',
     emoji: '⚡',
     axis: VERTICAL_AXIS,
     template: ZIGZAG_LEFT,
@@ -264,7 +297,7 @@ const ROUNDS: SymmetryRound[] = [
     type: 'axis',
     title: 'Oś oka',
     prompt: 'Narysuj oś symetrii oka.',
-    hint: 'To pozioma linia pośrodku.',
+    hint: 'To pozioma linia pośrodku — zielony pas wskazuje oś.',
     emoji: '👁️',
     axis: HORIZONTAL_AXIS,
     template: EYE_FULL,
@@ -342,27 +375,134 @@ const drawAxis = (ctx: CanvasRenderingContext2D, axis: SymmetryAxis): void => {
   ctx.restore();
 };
 
+const drawAxisCorridor = (
+  ctx: CanvasRenderingContext2D,
+  axis: SymmetryAxis,
+  bounds: ShapeBounds
+): void => {
+  const corridorWidth = 12;
+  const half = corridorWidth / 2;
+  ctx.save();
+  ctx.fillStyle = 'rgba(16, 185, 129, 0.12)';
+  if (axis.orientation === 'vertical') {
+    ctx.fillRect(
+      axis.position - half,
+      bounds.minY,
+      corridorWidth,
+      bounds.maxY - bounds.minY
+    );
+  } else {
+    ctx.fillRect(
+      bounds.minX,
+      axis.position - half,
+      bounds.maxX - bounds.minX,
+      corridorWidth
+    );
+  }
+
+  const drawMarker = (x: number, y: number): void => {
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  };
+
+  ctx.fillStyle = 'rgba(16, 185, 129, 0.25)';
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 2;
+  if (axis.orientation === 'vertical') {
+    drawMarker(axis.position, bounds.minY);
+    drawMarker(axis.position, bounds.maxY);
+  } else {
+    drawMarker(bounds.minX, axis.position);
+    drawMarker(bounds.maxX, axis.position);
+  }
+  ctx.restore();
+};
+
 const drawTargetZone = (
   ctx: CanvasRenderingContext2D,
   axis: SymmetryAxis,
-  expectedSide: SymmetryExpectedSide
+  expectedSide: SymmetryExpectedSide,
+  { shadeOpposite = true }: { shadeOpposite?: boolean } = {}
 ): void => {
   ctx.save();
-  ctx.fillStyle = 'rgba(16, 185, 129, 0.08)';
+  const drawZone = (x: number, y: number, width: number, height: number): void => {
+    ctx.fillRect(x, y, width, height);
+  };
+  const drawHatch = (x: number, y: number, width: number, height: number): void => {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.06)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([6, 6]);
+    const step = 14;
+    for (let offset = -height; offset < width; offset += step) {
+      ctx.beginPath();
+      ctx.moveTo(x + offset, y + height);
+      ctx.lineTo(x + offset + height, y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  };
+
+  if (axis.orientation === 'vertical') {
+    const leftWidth = axis.position;
+    const rightWidth = CANVAS_WIDTH - axis.position;
+    if (shadeOpposite) {
+      ctx.fillStyle = 'rgba(148, 163, 184, 0.016)';
+      if (expectedSide === 'right') {
+        drawZone(0, 0, leftWidth, CANVAS_HEIGHT);
+        drawHatch(0, 0, leftWidth, CANVAS_HEIGHT);
+      } else {
+        drawZone(axis.position, 0, rightWidth, CANVAS_HEIGHT);
+        drawHatch(axis.position, 0, rightWidth, CANVAS_HEIGHT);
+      }
+    }
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.1)';
+    if (expectedSide === 'right') {
+      drawZone(axis.position, 0, rightWidth, CANVAS_HEIGHT);
+    } else {
+      drawZone(0, 0, leftWidth, CANVAS_HEIGHT);
+    }
+    ctx.restore();
+    return;
+  }
+
+  const topHeight = axis.position;
+  const bottomHeight = CANVAS_HEIGHT - axis.position;
+  if (shadeOpposite) {
+    ctx.fillStyle = 'rgba(148, 163, 184, 0.016)';
+    if (expectedSide === 'bottom') {
+      drawZone(0, 0, CANVAS_WIDTH, topHeight);
+      drawHatch(0, 0, CANVAS_WIDTH, topHeight);
+    } else {
+      drawZone(0, axis.position, CANVAS_WIDTH, bottomHeight);
+      drawHatch(0, axis.position, CANVAS_WIDTH, bottomHeight);
+    }
+  }
+  ctx.fillStyle = 'rgba(16, 185, 129, 0.1)';
   if (axis.orientation === 'vertical') {
     if (expectedSide === 'right') {
-      ctx.fillRect(axis.position, 0, CANVAS_WIDTH - axis.position, CANVAS_HEIGHT);
+      drawZone(axis.position, 0, CANVAS_WIDTH - axis.position, CANVAS_HEIGHT);
     } else {
-      ctx.fillRect(0, 0, axis.position, CANVAS_HEIGHT);
+      drawZone(0, 0, axis.position, CANVAS_HEIGHT);
     }
   } else {
     if (expectedSide === 'bottom') {
-      ctx.fillRect(0, axis.position, CANVAS_WIDTH, CANVAS_HEIGHT - axis.position);
+      drawZone(0, axis.position, CANVAS_WIDTH, CANVAS_HEIGHT - axis.position);
     } else {
-      ctx.fillRect(0, 0, CANVAS_WIDTH, axis.position);
+      drawZone(0, 0, CANVAS_WIDTH, axis.position);
     }
   }
   ctx.restore();
+};
+
+const drawGhostShape = (
+  ctx: CanvasRenderingContext2D,
+  shape: TemplateShape,
+  axis: SymmetryAxis
+): void => {
+  drawShape(ctx, mirrorShape(shape, axis), '#34d399', 3, true);
 };
 
 export default function GeometrySymmetryGame({
@@ -380,6 +520,7 @@ export default function GeometrySymmetryGame({
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
   const [strokes, setStrokes] = useState<Point2d[][]>([]);
+  const [showMirrorHint, setShowMirrorHint] = useState(false);
   const [keyboardCursor, setKeyboardCursor] = useState<Point2d>(KEYBOARD_CURSOR_START);
   const [keyboardDrawing, setKeyboardDrawing] = useState(false);
   const [keyboardStatus, setKeyboardStatus] = useState('Plansza gotowa do rysowania.');
@@ -403,10 +544,14 @@ export default function GeometrySymmetryGame({
 
       if (round) {
         if (round.type === 'mirror' && round.expectedSide) {
-          drawTargetZone(ctx, round.axis, round.expectedSide);
+          drawTargetZone(ctx, round.axis, round.expectedSide, { shadeOpposite: true });
+          if (showMirrorHint) {
+            drawGhostShape(ctx, round.template, round.axis);
+          }
           drawAxis(ctx, round.axis);
           drawShape(ctx, round.template, '#6ee7b7', 4);
         } else {
+          drawAxisCorridor(ctx, round.axis, computeShapeBounds(round.template));
           drawShape(ctx, round.template, '#a7f3d0', 4);
         }
       }
@@ -429,7 +574,7 @@ export default function GeometrySymmetryGame({
         ctx.stroke();
       }
     },
-    []
+    [showMirrorHint]
   );
 
   useEffect(() => {
@@ -597,6 +742,7 @@ export default function GeometrySymmetryGame({
       window.setTimeout((): void => {
         setFeedback(null);
         clearDrawing();
+        setShowMirrorHint(false);
         if (isLastRound) {
           const progress = loadProgress();
           const reward = createTrainingReward(progress, {
@@ -668,6 +814,7 @@ export default function GeometrySymmetryGame({
     setXpEarned(0);
     setXpBreakdown([]);
     setFeedback(null);
+    setShowMirrorHint(false);
     setKeyboardCursor(KEYBOARD_CURSOR_START);
     setKeyboardDrawing(false);
     setKeyboardStatus('Rozpoczęto nową rundę symetrii.');
@@ -790,6 +937,29 @@ export default function GeometrySymmetryGame({
               {currentRound?.prompt}
             </p>
             <p className='text-xs text-center text-emerald-700'>{currentRound?.hint}</p>
+            {currentRound?.type === 'mirror' ? (
+              <p className='text-[11px] text-center text-emerald-700/80'>
+                Rysuj tylko w zielonej strefie. Szara strefa jest bez rysowania.
+              </p>
+            ) : null}
+            {currentRound?.type === 'mirror' ? (
+              <div className='mt-1 flex flex-wrap items-center justify-center gap-2'>
+                <KangurButton
+                  size='sm'
+                  type='button'
+                  variant='surface'
+                  disabled={feedback !== null}
+                  onClick={() => setShowMirrorHint((current) => !current)}
+                >
+                  {showMirrorHint ? 'Ukryj podpowiedź' : 'Pokaż podpowiedź'}
+                </KangurButton>
+                {showMirrorHint ? (
+                  <span className='text-[11px] font-semibold text-emerald-700'>
+                    Przerywana linia pokazuje brakujące odbicie.
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
           </KangurInfoCard>
 
           <KangurInfoCard
@@ -829,12 +999,6 @@ export default function GeometrySymmetryGame({
               )}
               style={{ left: `${keyboardCursor.x}px`, top: `${keyboardCursor.y}px` }}
             />
-            {points.length === 0 && (
-              <div className='pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-semibold [color:var(--kangur-page-muted-text)]'>
-                <PencilRuler className='w-4 h-4 mr-2' />
-                Rysuj tutaj
-              </div>
-            )}
           </KangurInfoCard>
           <p
             id='geometry-symmetry-input-help'

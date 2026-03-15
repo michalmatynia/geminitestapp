@@ -9,12 +9,11 @@ export type KangurFeatureHeaderProps = Omit<KangurSectionHeadingProps, 'layout' 
   accent?: KangurAccent;
 };
 
-export function KangurFeatureHeader({
-  accent = 'slate',
-  className,
-  iconSize = 'xl',
-  ...props
-}: KangurFeatureHeaderProps): React.JSX.Element {
+export function KangurFeatureHeader(
+  props: KangurFeatureHeaderProps
+): React.JSX.Element {
+  const { accent = 'slate', className, iconSize = 'xl', ...restProps } = props;
+
   return (
     <KangurSectionHeading
       accent={accent}
@@ -22,7 +21,7 @@ export function KangurFeatureHeader({
       className={cn('items-center text-center', className)}
       iconSize={iconSize}
       layout='stacked'
-      {...props}
+      {...restProps}
     />
   );
 }

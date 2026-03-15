@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-
 import KangurAssignmentManager from '@/features/kangur/ui/components/KangurAssignmentManager';
 import {
   type KangurParentDashboardPanelDisplayMode,
@@ -8,21 +6,16 @@ import {
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import { KangurPanelIntro } from '@/features/kangur/ui/design/primitives';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
-import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 
 export function KangurParentDashboardAssignmentsWidget({
   displayMode = 'always',
 }: {
   displayMode?: KangurParentDashboardPanelDisplayMode;
 }): React.JSX.Element | null {
-  const { activeLearner, activeTab, basePath, canAccessDashboard, progress } =
+  const { activeLearner, activeTab, basePath, canAccessDashboard } =
     useKangurParentDashboardRuntime();
   const { entry: assignmentsContent } = useKangurPageContentEntry('parent-dashboard-assignments');
   const activeLearnerId = activeLearner?.id ?? null;
-  const dailyQuest = useMemo(
-    () => (activeLearnerId ? getCurrentKangurDailyQuest(progress) : null),
-    [activeLearnerId, progress]
-  );
 
   if (!canAccessDashboard) {
     return null;
@@ -47,7 +40,7 @@ export function KangurParentDashboardAssignmentsWidget({
         titleAs='h2'
         titleClassName='text-lg font-bold tracking-[-0.02em]'
       />
-      <KangurAssignmentManager basePath={basePath} featuredDailyQuest={dailyQuest} />
+      <KangurAssignmentManager basePath={basePath} />
     </div>
   );
 }

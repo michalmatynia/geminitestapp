@@ -39,19 +39,23 @@ export function KangurBadgeTrackCardHeader({
   statusChipClassName?: string;
   className?: string;
 }): React.JSX.Element {
+  const headerAccent = accent;
+  const headerLabelClassName = labelClassName;
+  const headerStatusChipClassName = statusChipClassName;
+
   return (
     <div className={cn('flex w-full items-start justify-between gap-3', className)}>
       <KangurSectionEyebrow
         as='p'
-        className={cn('min-w-0 flex-1 pt-1 tracking-[0.18em]', labelClassName)}
+        className={cn('min-w-0 flex-1 pt-1 tracking-[0.18em]', headerLabelClassName)}
       >
         {track.emoji} {track.label}
       </KangurSectionEyebrow>
       <KangurStatusChip
-        accent={accent}
+        accent={headerAccent}
         className={cn(
           'shrink-0 self-start whitespace-nowrap px-2 py-0.5 text-[10px] leading-none sm:px-2.5 sm:py-1 sm:text-[11px]',
-          statusChipClassName
+          headerStatusChipClassName
         )}
         size='sm'
       >
@@ -93,13 +97,18 @@ export function KangurBadgeTrackCardBar({
   testId: string;
   className?: string;
 }): React.JSX.Element {
+  const barAccent = accent;
+  const barValue = value;
+  const barTestId = testId;
+  const barClassName = className;
+
   return (
     <KangurProgressBar
-      accent={accent}
-      className={cn('mt-3', className)}
-      data-testid={testId}
+      accent={barAccent}
+      className={cn('mt-3', barClassName)}
+      data-testid={barTestId}
       size='sm'
-      value={value}
+      value={barValue}
     />
   );
 }
@@ -117,10 +126,13 @@ export function KangurBadgeTrackSummaryCard({
   dataTestId,
   children,
 }: KangurBadgeTrackSummaryCardProps): React.JSX.Element {
+  const summaryCardClassName = cardClassName;
+  const summaryCardTestId = dataTestId;
+
   return (
     <KangurInfoCard
-      className={cardClassName}
-      data-testid={dataTestId}
+      className={summaryCardClassName}
+      data-testid={summaryCardTestId}
       padding='md'
     >
       {children}

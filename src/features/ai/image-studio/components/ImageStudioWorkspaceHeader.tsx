@@ -79,13 +79,16 @@ export function ImageStudioWorkspaceStudioControls({
   previewCanvasSize: PreviewCanvasSize;
   onPreviewCanvasSizeChange: (value: PreviewCanvasSize) => void;
 }): React.JSX.Element {
+  const canvasSize = previewCanvasSize;
+  const handleCanvasSizeChange = onPreviewCanvasSizeChange;
+
   return (
     <div className='flex min-w-0 items-center justify-end gap-2'>
       <div className='flex items-center gap-2'>
         <span className='text-[10px] uppercase tracking-wide text-muted-foreground'>Canvas</span>
         <ToggleButtonGroup
-          value={previewCanvasSize}
-          onChange={onPreviewCanvasSizeChange}
+          value={canvasSize}
+          onChange={handleCanvasSizeChange}
           options={PREVIEW_CANVAS_SIZE_OPTIONS}
           className='text-[11px] text-muted-foreground'
           size='xs'
@@ -105,8 +108,14 @@ export function ImageStudioWorkspaceSlotInfo({
   copyCardNameTooltip: string;
   selectCardFirstTooltip: string;
 }): React.JSX.Element {
-  const selectedSlotLabel = selectedSlot
-    ? selectedSlot.name || selectedSlot.id
+  const slot = selectedSlot;
+  const copyTooltip = copyCardNameTooltip;
+  const selectTooltip = selectCardFirstTooltip;
+  const tooltipContent = slot ? copyTooltip : selectTooltip;
+  const copyValue = slot?.name?.trim() || slot?.id || '';
+  const copyDisabled = !slot?.id;
+  const selectedSlotLabel = slot
+    ? slot.name || slot.id
     : 'No active card selected. Pick a card from the tree.';
 
   return (
@@ -114,13 +123,13 @@ export function ImageStudioWorkspaceSlotInfo({
       <span className='w-[280px] shrink-0 truncate text-left text-xs text-muted-foreground'>
         {selectedSlotLabel}
       </span>
-      <Tooltip content={selectedSlot ? copyCardNameTooltip : selectCardFirstTooltip}>
+      <Tooltip content={tooltipContent}>
         <CopyButton
-          value={selectedSlot?.name?.trim() || selectedSlot?.id || ''}
+          value={copyValue}
           variant='ghost'
           size='sm'
           className='size-7 shrink-0'
-          disabled={!selectedSlot?.id}
+          disabled={copyDisabled}
         />
       </Tooltip>
     </div>

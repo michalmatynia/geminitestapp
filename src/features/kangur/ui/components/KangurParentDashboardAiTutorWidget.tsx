@@ -249,11 +249,6 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
     learnerMood.lastComputedAt,
     tutorContent.parentDashboard.updatedFallback
   );
-  const [settingsManagedNoticeBefore, settingsManagedNoticeAfter] = useMemo(() => {
-    const [before, after = ''] =
-      tutorContent.parentDashboard.settingsManagedNotice.split('{highlight}');
-    return [before, after] as const;
-  }, [tutorContent.parentDashboard.settingsManagedNotice]);
   const learnerHeaderTitle = activeLearner
     ? formatKangurAiTutorTemplate(tutorContent.parentDashboard.titleTemplate, {
       learnerName: activeLearner.displayName,
@@ -445,14 +440,6 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
           </KangurCardDescription>
         </div>
       ) : null}
-
-      <div className='rounded-2xl border [border-color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_84%,var(--kangur-page-background))] px-4 py-3 text-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
-        {settingsManagedNoticeBefore}
-        <span className='font-semibold [color:var(--kangur-page-text)]'>
-          {tutorContent.parentDashboard.settingsManagedHighlight}
-        </span>
-        {settingsManagedNoticeAfter}
-      </div>
 
       <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
         <span className='text-sm font-medium [color:var(--kangur-page-text)]'>

@@ -522,14 +522,8 @@ function GameContent(): React.JSX.Element {
                       />
                     </section>
                   ) : null}
-                  <section
-                    className='w-full max-w-[560px] space-y-4 sm:space-y-5'
-                    aria-labelledby='kangur-home-actions-heading'
-                  >
-                    <div ref={homeActionsRef} aria-labelledby='kangur-home-actions-heading'>
-                      <h3 id='kangur-home-actions-heading' className='sr-only'>
-                        Rozpocznij grę
-                      </h3>
+                  <div className='w-full max-w-[560px] space-y-4 sm:space-y-5'>
+                    <div ref={homeActionsRef}>
                       <KangurGameHomeActionsWidget hideWhenScreenMismatch={false} />
                     </div>
                     {hideLearnerWidgetsForParent ? (
@@ -560,7 +554,7 @@ function GameContent(): React.JSX.Element {
                         </div>
                       </KangurEmptyState>
                     ) : null}
-                  </section>
+                  </div>
 
                   {!hideLearnerWidgetsForParent ? (
                     <section

@@ -526,6 +526,9 @@ function SlotZone({
   onSelectBall,
 }: SlotZoneProps): React.JSX.Element {
   const slotZoneTestId = `adding-ball-${id}`;
+  const dragDisabled = checked;
+  const selectedId = selectedBallId;
+  const handleSelectBall = onSelectBall;
 
   return (
     <Droppable droppableId={id} direction='horizontal'>
@@ -558,10 +561,10 @@ function SlotZone({
                   key={ball.id}
                   ball={ball}
                   index={i}
-                  isDragDisabled={checked}
+                  isDragDisabled={dragDisabled}
                   small
-                  isSelected={selectedBallId === ball.id}
-                  onSelect={onSelectBall ? () => onSelectBall(ball.id) : undefined}
+                  isSelected={selectedId === ball.id}
+                  onSelect={handleSelectBall ? () => handleSelectBall(ball.id) : undefined}
                 />
               ))}
               {provided.placeholder}
@@ -978,11 +981,16 @@ function DraggableBall({
   isSelected = false,
   onSelect,
 }: DraggableBallProps): React.ReactElement | React.ReactPortal {
+  const draggableBall = ball;
+  const dragDisabled = isDragDisabled;
+  const selected = isSelected;
+  const compact = small;
+
   return (
     <Draggable
-      draggableId={ball.id}
+      draggableId={draggableBall.id}
       index={index}
-      isDragDisabled={isDragDisabled}
+      isDragDisabled={dragDisabled}
       disableInteractiveElementBlocking
     >
       {(draggableProvided, snapshot) => {
@@ -994,19 +1002,19 @@ function DraggableBall({
             {...draggableProvided.dragHandleProps}
             className={cn(
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
-              isSelected && 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white',
-              isDragDisabled ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'
+              selected && 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white',
+              dragDisabled ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'
             )}
-            aria-label={`Piłka: ${ball.num}`}
-            aria-pressed={isSelected}
-            disabled={isDragDisabled}
+            aria-label={`Piłka: ${draggableBall.num}`}
+            aria-pressed={selected}
+            disabled={dragDisabled}
             onClick={(event) => {
               event.preventDefault();
-              if (isDragDisabled || !onSelect) return;
+              if (dragDisabled || !onSelect) return;
               onSelect();
             }}
           >
-            <Ball ball={ball} small={small} isSelected={isSelected} />
+            <Ball ball={draggableBall} small={compact} isSelected={selected} />
           </button>
         );
 

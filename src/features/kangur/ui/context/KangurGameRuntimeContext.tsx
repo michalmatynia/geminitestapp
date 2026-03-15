@@ -68,6 +68,7 @@ export function KangurGameRuntimeProvider({
   const { basePath } = useKangurRouting();
   const auth = useKangurAuth();
   const { isAuthenticated, isLoadingAuth, logout, navigateToLogin, user } = auth;
+  const canEarnRewards = !(user?.actorType === 'parent' && !user?.activeLearner?.id);
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
   const canAccessParentAssignments =
     auth.canAccessParentAssignments ?? (isAuthenticated && Boolean(user?.activeLearner?.id));
@@ -113,6 +114,21 @@ export function KangurGameRuntimeProvider({
     },
     []
   );
+
+  useEffect(() => {
+    if (canEarnRewards) {
+      return;
+    }
+    setXpToast({
+      visible: false,
+      xpGained: 0,
+      newBadges: [],
+      breakdown: [],
+      nextBadge: null,
+      dailyQuest: null,
+      recommendation: null,
+    });
+  }, [canEarnRewards]);
 
   useEffect(() => {
     const fullName = user?.full_name?.trim();
@@ -239,23 +255,26 @@ export function KangurGameRuntimeProvider({
         operation,
         taken,
         totalQuestions,
+        allowRewards: canEarnRewards,
       });
 
-      void kangurPlatform.score
-        .create({
-          player_name: nextPlayerName,
-          score: nextScore,
-          operation: selectedOperation,
-          total_questions: totalQuestions,
-          correct_answers: nextScore,
-          time_taken: taken,
-          xp_earned: awardedXp,
-        })
-        .finally(() => {
-          if (canAccessParentAssignments) {
-            void refreshAssignments();
-          }
-        });
+      if (canEarnRewards) {
+        void kangurPlatform.score
+          .create({
+            player_name: nextPlayerName,
+            score: nextScore,
+            operation: selectedOperation,
+            total_questions: totalQuestions,
+            correct_answers: nextScore,
+            time_taken: taken,
+            xp_earned: awardedXp,
+          })
+          .finally(() => {
+            if (canAccessParentAssignments) {
+              void refreshAssignments();
+            }
+          });
+      }
 
       trackKangurClientEvent('kangur_game_completed', {
         operation: selectedOperation,
@@ -270,14 +289,16 @@ export function KangurGameRuntimeProvider({
         xpAwarded: awardedXp,
         playerNamePresent: nextPlayerName.length > 0,
       });
-      showXpToast(
-        awardedXp,
-        awardedBadges,
-        awardedBreakdown,
-        nextBadgeToastHint,
-        dailyQuestToastHint,
-        recommendationToastHint
-      );
+      if (canEarnRewards) {
+        showXpToast(
+          awardedXp,
+          awardedBadges,
+          awardedBreakdown,
+          nextBadgeToastHint,
+          dailyQuestToastHint,
+          recommendationToastHint
+        );
+      }
 
       window.setTimeout(() => setScreen('result'), 1000);
       return;

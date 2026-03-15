@@ -460,6 +460,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                           draggableId={token.id}
                           index={tokenIndex}
                           isDragDisabled={patternChecked}
+                          disableInteractiveElementBlocking
                         >
                           {(dragProvided) => (
                             <button
@@ -511,6 +512,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                       draggableId={token.id}
                       index={index}
                       isDragDisabled={patternChecked}
+                      disableInteractiveElementBlocking
                     >
                       {(dragProvided) => (
                         <button
@@ -632,6 +634,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                             draggableId={item.id}
                             index={index}
                             isDragDisabled={classifyChecked}
+                            disableInteractiveElementBlocking
                           >
                             {(dragProvided) => (
                               <button
@@ -683,6 +686,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                       draggableId={item.id}
                       index={index}
                       isDragDisabled={classifyChecked}
+                      disableInteractiveElementBlocking
                     >
                       {(dragProvided) => (
                         <button

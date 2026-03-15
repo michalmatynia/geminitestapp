@@ -14,10 +14,7 @@ import {
   KangurEmptyState,
   KangurGlassPanel,
 } from '@/features/kangur/ui/design/primitives';
-import {
-  KANGUR_PENDING_STEP_PILL_CLASSNAME,
-  KANGUR_STEP_PILL_CLASSNAME,
-} from '@/features/kangur/ui/design/tokens';
+import { KANGUR_STEP_PILL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { cn } from '@/shared/utils';
 
@@ -25,6 +22,7 @@ export type LessonSlide = {
   title: string;
   content: React.JSX.Element;
   panelClassName?: string;
+  containerClassName?: string;
 };
 
 type LessonSlideSectionProps = {
@@ -66,6 +64,7 @@ export default function LessonSlideSection({
   const slideStatusId = `lesson-slide-status-${slideInstanceId}`;
   const slideKeyboardHintId = `lesson-slide-keyboard-${slideInstanceId}`;
   const shouldRenderNavigationPills = totalSlides > 1 || Boolean(secretLessonPill?.isUnlocked);
+  const shouldRenderArrowNavigation = totalSlides > 1;
   const handlePreviousSlide = (): void => {
     setSlide((currentSlide) => Math.max(0, currentSlide - 1));
   };
@@ -171,10 +170,10 @@ export default function LessonSlideSection({
 
   return (
     <div
-      className='flex w-full max-w-md flex-col items-center gap-4'
+      className={cn('flex w-full max-w-md flex-col items-center gap-4', activeSlide.containerClassName)}
       onKeyDownCapture={handleKeyDownCapture}
     >
-      <div className='flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center'>
+      <div className='flex w-full flex-col gap-3 sm:grid sm:grid-cols-[auto_1fr_auto] sm:items-center'>
         <KangurButton
           onClick={handleBack}
           size='sm'
@@ -185,47 +184,51 @@ export default function LessonSlideSection({
           Wróć do tematów
         </KangurButton>
 
-        <div
-          className='flex w-full items-center justify-center gap-2 sm:w-auto sm:justify-start'
-          role='group'
-          aria-label='Nawigacja paneli'
-        >
-          <KangurButton
-            onClick={handlePreviousSlide}
-            disabled={isPrevDisabled}
-            aria-label='Poprzedni panel'
-            aria-keyshortcuts='ArrowLeft PageUp'
-            aria-controls={slidePanelId}
-            className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-20'
-            data-testid='lesson-slide-prev-button'
-            size='sm'
-            type='button'
-            title='Poprzedni panel'
-            variant='surface'
+        {shouldRenderArrowNavigation ? (
+          <div
+            className='flex w-full items-center justify-center gap-2 sm:justify-center'
+            role='group'
+            aria-label='Nawigacja paneli'
           >
-            <ChevronLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
-          </KangurButton>
+            <KangurButton
+              onClick={handlePreviousSlide}
+              disabled={isPrevDisabled}
+              aria-label='Poprzedni panel'
+              aria-keyshortcuts='ArrowLeft PageUp'
+              aria-controls={slidePanelId}
+              className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-20'
+              data-testid='lesson-slide-prev-button'
+              size='sm'
+              type='button'
+              title='Poprzedni panel'
+              variant='surface'
+            >
+              <ChevronLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
+            </KangurButton>
 
-          <KangurButton
-            onClick={handleNextSlide}
-            disabled={isNextDisabled}
-            aria-label='Następny panel'
-            aria-keyshortcuts='ArrowRight PageDown'
-            aria-controls={slidePanelId}
-            className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-20'
-            data-testid='lesson-slide-next-button'
-            size='sm'
-            type='button'
-            title='Następny panel'
-            variant='surface'
-          >
-            <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
-          </KangurButton>
-        </div>
+            <KangurButton
+              onClick={handleNextSlide}
+              disabled={isNextDisabled}
+              aria-label='Następny panel'
+              aria-keyshortcuts='ArrowRight PageDown'
+              aria-controls={slidePanelId}
+              className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-20'
+              data-testid='lesson-slide-next-button'
+              size='sm'
+              type='button'
+              title='Następny panel'
+              variant='surface'
+            >
+              <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
+            </KangurButton>
+          </div>
+        ) : (
+          <div className='hidden sm:block' />
+        )}
 
         {shouldRenderNavigationPills ? (
           <nav
-            className='flex w-full flex-wrap items-center justify-center gap-2 sm:ml-auto sm:w-auto sm:justify-end'
+            className='flex w-full flex-wrap items-center justify-center gap-2 sm:justify-end'
             aria-label='Nawigacja slajdów'
             aria-describedby={slideKeyboardHintId}
           >
@@ -241,12 +244,12 @@ export default function LessonSlideSection({
                 aria-setsize={totalSlides}
                 className={cn(
                   KANGUR_STEP_PILL_CLASSNAME,
-                  'h-[14px] min-w-[14px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+                  'h-[14px] w-6 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
                   i === slide
-                    ? ['w-8 scale-[1.04]', dotActiveClass]
+                    ? ['scale-[1.04]', dotActiveClass]
                     : i < slide
-                      ? ['w-6', dotDoneClass]
-                      : KANGUR_PENDING_STEP_PILL_CLASSNAME
+                      ? dotDoneClass
+                      : 'kangur-step-pill-pending'
                 )}
                 data-testid={`lesson-slide-indicator-${i}`}
               />

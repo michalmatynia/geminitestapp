@@ -238,6 +238,11 @@ export function KangurAiTutorPanelChrome({
   const chatTitleSuffix = tutorContent.narrator?.chatTitleSuffix ?? '';
   const dialogLabel = `${tutorDisplayName} ${chatTitleSuffix}`.trim();
   const tutorMoodId = tutor?.tutorMoodId ?? 'default';
+  const handleDetachPanelFromContext = onDetachPanelFromContext;
+  const handleMovePanelToContext = onMovePanelToContext;
+  const handleResetPanelPosition = onResetPanelPosition;
+  const handleDisableTutor = onDisableTutor;
+  const handleClosePanel = onClose;
   const tutorBehaviorMoodId = tutor?.tutorBehaviorMoodId ?? tutorMoodId;
   const tutorBehaviorMoodLabel = repairKangurPolishCopy(
     tutor?.tutorBehaviorMoodLabel ?? tutorBehaviorMoodId
@@ -725,7 +730,7 @@ export function KangurAiTutorPanelChrome({
                       canDetachPanelFromContext && uiMode === 'freeform' ? (
                         <KangurAiTutorChromeTextButton
                           data-testid='kangur-ai-tutor-detach-from-context'
-                          onClick={onDetachPanelFromContext}
+                          onClick={handleDetachPanelFromContext}
                           aria-label={tutorContent.panelChrome.detachFromContextAria}
                         >
                           {tutorContent.panelChrome.detachFromContextLabel}
@@ -736,7 +741,7 @@ export function KangurAiTutorPanelChrome({
                       canMovePanelToContext && uiMode === 'freeform' ? (
                         <KangurAiTutorChromeTextButton
                           data-testid='kangur-ai-tutor-move-to-context'
-                          onClick={onMovePanelToContext}
+                          onClick={handleMovePanelToContext}
                           aria-label={tutorContent.panelChrome.moveToContextAria}
                         >
                           {tutorContent.panelChrome.moveToContextLabel}
@@ -747,7 +752,7 @@ export function KangurAiTutorPanelChrome({
                       canResetPanelPosition && uiMode === 'freeform' ? (
                         <KangurAiTutorChromeTextButton
                           data-testid='kangur-ai-tutor-reset-position'
-                          onClick={onResetPanelPosition}
+                          onClick={handleResetPanelPosition}
                           aria-label={tutorContent.panelChrome.resetPositionAria}
                         >
                           {tutorContent.panelChrome.resetPositionLabel}
@@ -756,14 +761,14 @@ export function KangurAiTutorPanelChrome({
                     ) : null}
                     {!shouldUseMinimalPanelShell && !isContextualResultChrome ? (
                       <KangurAiTutorChromeTextButton
-                        onClick={onDisableTutor}
+                        onClick={handleDisableTutor}
                         aria-label={tutorContent.common.disableTutorAria}
                       >
                         {tutorContent.common.disableTutorLabel}
                       </KangurAiTutorChromeTextButton>
                     ) : null}
                     <KangurAiTutorChromeCloseButton
-                      onClick={onClose}
+                      onClick={handleClosePanel}
                       iconClassName='h-4 w-4'
                       aria-label={tutorContent.common.closeAria}
                     />

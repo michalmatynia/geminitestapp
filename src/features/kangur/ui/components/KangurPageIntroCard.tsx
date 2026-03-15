@@ -18,7 +18,9 @@ type KangurPageIntroCardProps = {
   headingAs?: 'h1' | 'h2' | 'h3';
   headingSize?: 'xs' | 'sm' | 'md' | 'lg';
   headingTestId?: string;
+  showDescription?: boolean;
   showBackButton?: boolean;
+  showHeading?: boolean;
   testId?: string;
   title: string;
   titleId?: string;
@@ -34,7 +36,9 @@ type KangurPageIntroCardContextValue = {
   headingAs: 'h1' | 'h2' | 'h3';
   headingSize: 'xs' | 'sm' | 'md' | 'lg';
   headingTestId?: string;
+  showDescription: boolean;
   showBackButton: boolean;
+  showHeading: boolean;
   title: string;
   titleId?: string;
   visualTitle?: ReactNode;
@@ -57,10 +61,15 @@ function KangurPageIntroHeading(): React.JSX.Element {
     headingAs,
     headingSize,
     headingTestId,
+    showHeading,
     title,
     titleId,
     visualTitle,
   } = useKangurPageIntroCardContext();
+
+  if (!showHeading) {
+    return null;
+  }
 
   return (
     <KangurHeadline
@@ -84,10 +93,14 @@ function KangurPageIntroHeading(): React.JSX.Element {
 }
 
 function KangurPageIntroDescription(): React.JSX.Element | null {
-  const { description } = useKangurPageIntroCardContext();
-  return description ? (
+  const { description, showDescription } = useKangurPageIntroCardContext();
+  if (!showDescription || !description) {
+    return null;
+  }
+
+  return (
     <p className='mt-3 text-sm [color:var(--kangur-page-muted-text)]'>{description}</p>
-  ) : null;
+  );
 }
 
 function KangurPageIntroBackButton(): React.JSX.Element | null {
@@ -122,7 +135,9 @@ export function KangurPageIntroCard({
   headingAs = 'h2',
   headingSize = 'lg',
   headingTestId,
+  showDescription = true,
   showBackButton = true,
+  showHeading = true,
   testId,
   title,
   titleId,
@@ -139,7 +154,9 @@ export function KangurPageIntroCard({
     headingAs,
     headingSize,
     headingTestId,
+    showDescription,
     showBackButton,
+    showHeading,
     title,
     titleId,
     visualTitle,

@@ -14,15 +14,15 @@ type KangurAssignmentPriorityChipProps = Omit<
   priority: KangurAssignmentSnapshot['priority'];
 };
 
-export function KangurAssignmentPriorityChip({
-  accent,
-  priority,
-  ...props
-}: KangurAssignmentPriorityChipProps): React.JSX.Element {
+export function KangurAssignmentPriorityChip(
+  props: KangurAssignmentPriorityChipProps
+): React.JSX.Element {
+  const { accent, priority, ...restProps } = props;
+
   return (
     <KangurStatusChip
       accent={accent ?? resolveKangurAssignmentPriorityAccent(priority)}
-      {...props}
+      {...restProps}
     >
       {formatKangurAssignmentPriorityLabel(priority)}
     </KangurStatusChip>

@@ -64,7 +64,6 @@ vi.mock('@/features/kangur/ui/components/KangurTransitionLink', () => ({
 }));
 
 import KangurAssignmentManager from '@/features/kangur/ui/components/KangurAssignmentManager';
-import type { KangurDailyQuestState } from '@/features/kangur/ui/services/daily-quests';
 
 const progress = {
   totalXp: 480,
@@ -93,46 +92,6 @@ const progress = {
   },
 };
 
-const featuredDailyQuest: KangurDailyQuestState = {
-  assignment: {
-    id: 'mixed-practice',
-    title: 'Trening mieszany',
-    description: 'Podtrzymaj rytm nauki krotszym treningiem mieszanym.',
-    target: '12 pytań',
-    priority: 'medium',
-    action: {
-      label: 'Uruchom trening',
-      page: 'Game',
-      query: {
-        quickStart: 'training',
-      },
-    },
-    questLabel: 'Misja dnia',
-    rewardXp: 36,
-    progressLabel: 'Rytm dnia: 1 gra',
-    questMetric: {
-      kind: 'games_played',
-      targetDelta: 1,
-    },
-  },
-  createdAt: '2026-03-10T08:00:00.000Z',
-  dateKey: '2026-03-10',
-  expiresAt: '2026-03-10T23:59:59.999Z',
-  expiresLabel: 'Wygasa dzisiaj',
-  progress: {
-    current: 1,
-    target: 1,
-    percent: 100,
-    summary: '1/1 runda dzisiaj',
-    status: 'completed',
-  },
-  reward: {
-    xp: 36,
-    status: 'ready',
-    label: 'Nagroda gotowa +36 XP',
-  },
-};
-
 describe('KangurAssignmentManager', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -150,25 +109,10 @@ describe('KangurAssignmentManager', () => {
     });
   });
 
-  it('renders the featured daily quest card with progress and action', () => {
-    render(<KangurAssignmentManager basePath='/kangur' featuredDailyQuest={featuredDailyQuest} />);
+  it('renders active and completed assignment lists', () => {
+    render(<KangurAssignmentManager basePath='/kangur' />);
 
-    expect(screen.getByTestId('assignment-manager-daily-quest')).toHaveTextContent('Misja dnia ucznia');
-    expect(screen.getByTestId('assignment-manager-daily-quest')).toHaveTextContent('Trening mieszany');
-    expect(screen.getByTestId('assignment-manager-daily-quest')).toHaveTextContent('1/1 runda dzisiaj');
-    expect(screen.getByTestId('assignment-manager-daily-quest')).toHaveTextContent(
-      'Nagroda gotowa +36 XP'
-    );
-    expect(screen.getByRole('link', { name: 'Uruchom trening' })).toHaveAttribute(
-      'href',
-      '/kangur/game?quickStart=training'
-    );
-    expect(screen.getByTestId('assignment-manager-track-summary')).toHaveTextContent(
-      'Ścieżki postępu ucznia'
-    );
-    expect(screen.getByTestId('assignment-manager-track-quest')).toHaveTextContent('Misje');
-    expect(screen.getByTestId('assignment-manager-track-quest')).toHaveTextContent('1/4 odznak');
-    expect(screen.getByTestId('assignment-manager-track-onboarding')).toHaveTextContent('Start');
-    expect(screen.getByTestId('assignment-manager-track-challenge')).toHaveTextContent('Wyzwania');
+    expect(screen.getByTestId('assignment-list-Aktywne zadania')).toBeInTheDocument();
+    expect(screen.getByTestId('assignment-list-Ukończone zadania')).toBeInTheDocument();
   });
 });

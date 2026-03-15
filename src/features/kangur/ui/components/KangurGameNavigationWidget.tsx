@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
+import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 
@@ -9,11 +10,11 @@ export function KangurGameNavigationWidget(): React.JSX.Element {
     basePath,
     handleHome,
     logout,
-    navigateToLogin,
     screen,
     user,
   } = useKangurGameRuntime();
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
+  const { openLoginModal } = useKangurLoginModal();
   const navigation = useMemo(
     () => ({
       basePath,
@@ -24,9 +25,9 @@ export function KangurGameNavigationWidget(): React.JSX.Element {
       homeActive: screen === 'home',
       isAuthenticated: Boolean(user),
       onHomeClick: handleHome,
-      onCreateAccount: () => navigateToLogin({ authMode: 'create-account' }),
+      onCreateAccount: () => openLoginModal(null, { authMode: 'create-account' }),
       onGuestPlayerNameChange: user ? undefined : setGuestPlayerName,
-      onLogin: navigateToLogin,
+      onLogin: openLoginModal,
       onLogout: () => logout(false),
     }),
     [
@@ -34,7 +35,7 @@ export function KangurGameNavigationWidget(): React.JSX.Element {
       guestPlayerName,
       handleHome,
       logout,
-      navigateToLogin,
+      openLoginModal,
       screen,
       setGuestPlayerName,
       user,

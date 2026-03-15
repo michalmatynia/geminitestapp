@@ -42,14 +42,18 @@ export function KangurPracticeGameProgress({
   dataTestId,
   totalRounds,
 }: KangurPracticeGameProgressProps): React.JSX.Element {
+  const progressAccent = accent;
+  const progressTestId = dataTestId;
+  const progressValue = (currentRound / totalRounds) * 100;
+
   return (
     <div className='flex items-center gap-2 w-full'>
       <KangurProgressBar
-        accent={accent}
+        accent={progressAccent}
         className='flex-1'
-        data-testid={dataTestId}
+        data-testid={progressTestId}
         size='sm'
-        value={(currentRound / totalRounds) * 100}
+        value={progressValue}
       />
       <span className='text-xs font-bold [color:var(--kangur-page-muted-text)]'>
         {currentRound + 1}/{totalRounds}
@@ -69,8 +73,11 @@ export function KangurPracticeGameSummaryEmoji({
   dataTestId: string;
   ariaHidden?: boolean;
 }): React.JSX.Element {
+  const emojiTestId = dataTestId;
+  const emojiAriaHidden = ariaHidden;
+
   return (
-    <KangurDisplayEmoji aria-hidden={ariaHidden} data-testid={dataTestId} size='lg'>
+    <KangurDisplayEmoji aria-hidden={emojiAriaHidden} data-testid={emojiTestId} size='lg'>
       {emoji}
     </KangurDisplayEmoji>
   );
@@ -129,14 +136,18 @@ export function KangurPracticeGameSummaryBreakdown({
   dataTestId: string;
   itemDataTestIdPrefix: string;
 }): React.JSX.Element | null {
-  if (breakdown.length === 0) return null;
+  const breakdownItems = breakdown;
+  const summaryTestId = dataTestId;
+  const summaryItemPrefix = itemDataTestIdPrefix;
+
+  if (breakdownItems.length === 0) return null;
   return (
     <KangurRewardBreakdownChips
       accent='slate'
-      breakdown={breakdown}
+      breakdown={breakdownItems}
       className='justify-center'
-      dataTestId={dataTestId}
-      itemDataTestIdPrefix={itemDataTestIdPrefix}
+      dataTestId={summaryTestId}
+      itemDataTestIdPrefix={summaryItemPrefix}
     />
   );
 }
@@ -156,16 +167,23 @@ export function KangurPracticeGameSummaryProgress({
   ariaValueText?: string;
   className?: string;
 }): React.JSX.Element {
+  const summaryPercent = percent;
+  const summaryAccent = accent;
+  const summaryTestId = dataTestId;
+  const summaryAriaLabel = ariaLabel;
+  const summaryAriaValueText = ariaValueText;
+  const summaryClassName = className;
+
   return (
     <KangurProgressBar
-      accent={accent}
+      accent={summaryAccent}
       animated
-      aria-label={ariaLabel}
-      aria-valuetext={ariaValueText}
-      className={className}
-      data-testid={dataTestId}
+      aria-label={summaryAriaLabel}
+      aria-valuetext={summaryAriaValueText}
+      className={summaryClassName}
+      data-testid={summaryTestId}
       size='md'
-      value={percent}
+      value={summaryPercent}
     />
   );
 }
@@ -187,19 +205,25 @@ export function KangurPracticeGameSummaryActions({
   finishButtonClassName?: string;
   className?: string;
 }): React.JSX.Element {
+  const handleRestart = onRestart;
+  const handleFinish = onFinish;
+  const restartClassName = restartButtonClassName;
+  const finishClassName = finishButtonClassName;
+  const wrapperClassName = className;
+
   return (
-    <div className={cn('flex gap-3 w-full', className)}>
+    <div className={cn('flex gap-3 w-full', wrapperClassName)}>
       <KangurButton
-        className={cn('flex-1', restartButtonClassName)}
-        onClick={onRestart}
+        className={cn('flex-1', restartClassName)}
+        onClick={handleRestart}
         size='lg'
         variant='surface'
       >
         <RefreshCw className='w-4 h-4' /> {restartLabel}
       </KangurButton>
       <KangurButton
-        className={cn('flex-1', finishButtonClassName)}
-        onClick={onFinish}
+        className={cn('flex-1', finishClassName)}
+        onClick={handleFinish}
         size='lg'
         variant='primary'
       >
@@ -244,6 +268,9 @@ export function KangurPracticeGameSummary({
   panelClassName,
   wrapperClassName,
 }: KangurPracticeGameSummaryProps): React.JSX.Element {
+  const summaryPanelClassName = panelClassName;
+  const summaryTestId = dataTestId;
+
   return (
     <motion.div
       animate={{ opacity: 1, scale: 1 }}
@@ -251,8 +278,8 @@ export function KangurPracticeGameSummary({
       initial={{ opacity: 0, scale: 0.9 }}
     >
       <KangurGlassPanel
-        className={cn('flex flex-col items-center gap-4 text-center', panelClassName)}
-        data-testid={dataTestId}
+        className={cn('flex flex-col items-center gap-4 text-center', summaryPanelClassName)}
+        data-testid={summaryTestId}
         padding='xl'
         surface='solid'
         variant='soft'

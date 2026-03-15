@@ -30,7 +30,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
         accent='indigo'
         className='w-full'
         description={
-          emptyStateContent?.summary ?? 'Włącz lekcje w panelu admina, aby pojawily się tutaj.'
+          emptyStateContent?.summary ?? 'Włącz lekcje w panelu admina, aby pojawiły się tutaj.'
         }
         padding='xl'
         title={emptyStateContent?.title ?? 'Brak aktywnych lekcji'}

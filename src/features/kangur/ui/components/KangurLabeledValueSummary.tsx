@@ -29,9 +29,13 @@ export function KangurLabeledValueSummary({
   valueClassName,
   valueTestId,
 }: KangurLabeledValueSummaryProps): React.JSX.Element {
+  const labelClass = labelClassName;
+  const summaryDescriptionClass = descriptionClassName;
+  const summaryDescriptionSize = descriptionSize;
+
   return (
     <div className={className}>
-      <KangurSectionEyebrow className={cn('tracking-[0.2em]', labelClassName)}>
+      <KangurSectionEyebrow className={cn('tracking-[0.2em]', labelClass)}>
         {label}
       </KangurSectionEyebrow>
       <div
@@ -43,8 +47,8 @@ export function KangurLabeledValueSummary({
       {description ? (
         <KangurCardDescription
           as='p'
-          className={cn('mt-1', descriptionClassName)}
-          size={descriptionSize}
+          className={cn('mt-1', summaryDescriptionClass)}
+          size={summaryDescriptionSize}
         >
           {description}
         </KangurCardDescription>

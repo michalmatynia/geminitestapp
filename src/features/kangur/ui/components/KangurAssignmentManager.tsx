@@ -1,9 +1,5 @@
 import { useMemo, useState, type ComponentProps, type ReactNode } from 'react';
 
-import {
-  appendKangurUrlParams,
-  getKangurPageHref as createPageUrl,
-} from '@/features/kangur/config/routing';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import {
   KANGUR_LESSONS_SETTING_KEY,
@@ -12,8 +8,6 @@ import {
 } from '@/features/kangur/settings';
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
-import KangurBadgeTrackHighlights from '@/features/kangur/ui/components/KangurBadgeTrackHighlights';
-import KangurDailyQuestHighlightCardContent from '@/features/kangur/ui/components/KangurDailyQuestHighlightCardContent';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurButton,
@@ -31,7 +25,6 @@ import {
 import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
-import type { KangurDailyQuestState } from '@/features/kangur/ui/services/daily-quests';
 import {
   buildKangurAssignmentCatalog,
   buildKangurAssignmentListItems,
@@ -42,7 +35,6 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 type KangurAssignmentManagerProps = {
   basePath: string;
-  featuredDailyQuest?: KangurDailyQuestState | null;
 };
 
 type KangurAssignmentManagerItemCardProps = {
@@ -56,8 +48,11 @@ function KangurAssignmentManagerItemCard({
   children,
   testId,
 }: KangurAssignmentManagerItemCardProps): React.JSX.Element {
+  const cardAccent = accent;
+  const cardTestId = testId;
+
   return (
-    <KangurInfoCard accent={accent} data-testid={testId} padding='lg'>
+    <KangurInfoCard accent={cardAccent} data-testid={cardTestId} padding='lg'>
       {children}
     </KangurInfoCard>
   );
@@ -193,7 +188,6 @@ const buildTrackerSummary = (
 
 export function KangurAssignmentManager({
   basePath,
-  featuredDailyQuest = null,
 }: KangurAssignmentManagerProps): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const progress = useKangurProgressState();
@@ -211,8 +205,7 @@ export function KangurAssignmentManager({
   const [activeFilter, setActiveFilter] = useState<FilterOption>('all');
   const [pendingActionId, setPendingActionId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
-  const { assignments, isLoading, error, createAssignment, updateAssignment, refresh } =
-    useKangurAssignments({
+  const { assignments, isLoading, error, createAssignment, updateAssignment } = useKangurAssignments({
       enabled: true,
       query: {
         includeArchived: false,
@@ -266,10 +259,6 @@ export function KangurAssignmentManager({
   const recommendedCatalog = useMemo(
     () =>
       suggestedCatalog.filter((item) => {
-        if (item.id === featuredDailyQuest?.assignment.id) {
-          return false;
-        }
-
         const lessonTarget =
           item.createInput.target.type === 'lesson'
             ? item.createInput.target.lessonComponentId
@@ -288,38 +277,8 @@ export function KangurAssignmentManager({
           return false;
         });
       }),
-    [activeAssignments, featuredDailyQuest, suggestedCatalog]
+    [activeAssignments, suggestedCatalog]
   );
-  const featuredQuestHref = useMemo(() => {
-    if (!featuredDailyQuest) {
-      return null;
-    }
-
-    const href = createPageUrl(featuredDailyQuest.assignment.action.page, basePath);
-    return featuredDailyQuest.assignment.action.query
-      ? appendKangurUrlParams(href, featuredDailyQuest.assignment.action.query, basePath)
-      : href;
-  }, [basePath, featuredDailyQuest]);
-  const featuredQuestTargetPage = featuredDailyQuest?.assignment.action.page ?? null;
-  const featuredQuestAccent =
-    featuredDailyQuest?.reward.status === 'claimed'
-      ? 'emerald'
-      : featuredDailyQuest?.progress.status === 'completed'
-        ? 'amber'
-        : featuredDailyQuest?.progress.status === 'in_progress'
-          ? 'indigo'
-          : 'slate';
-  const featuredQuestRewardAccent =
-    featuredDailyQuest?.reward.status === 'claimed' ? 'emerald' : featuredQuestAccent;
-  const featuredQuestActionLabel = featuredDailyQuest?.assignment.action.label ?? '';
-  const featuredQuestDescription = featuredDailyQuest?.assignment.description ?? '';
-  const featuredQuestProgressSummary = featuredDailyQuest?.progress.summary ?? '';
-  const featuredQuestProgressLabel = featuredDailyQuest
-    ? `${featuredDailyQuest.progress.percent}%`
-    : '';
-  const featuredQuestLabel = featuredDailyQuest?.assignment.questLabel ?? 'Misja dnia';
-  const featuredQuestRewardLabel = featuredDailyQuest?.reward.label ?? '';
-  const featuredQuestTitle = featuredDailyQuest?.assignment.title ?? '';
 
   const resolveActionErrorMessage = (error: unknown, fallback: string): string => {
     const status =
@@ -386,10 +345,6 @@ export function KangurAssignmentManager({
               Wyszukaj lekcje i zadania treningowe, a potem przypisz je uczniowi jako priorytet.
             </KangurCardDescription>
           </div>
-
-          <KangurButton type='button' onClick={() => void refresh()} size='sm' variant='surface'>
-            Odśwież postęp
-          </KangurButton>
         </div>
 
         {recommendedCatalog.length > 0 ? (
@@ -437,68 +392,6 @@ export function KangurAssignmentManager({
             </div>
           </KangurSummaryPanel>
         ) : null}
-
-        {featuredDailyQuest ? (
-          <KangurSummaryPanel
-            accent='violet'
-            className='mt-5'
-            data-testid='assignment-manager-daily-quest'
-            description='To aktualna misja dnia ucznia, zsynchronizowana z widokiem gry i profilu.'
-            label='Misja dnia ucznia'
-        >
-            <div className='mt-3 flex flex-col gap-3 rounded-[28px] border border-violet-200/80 bg-white/82 px-4 py-4'>
-              <KangurDailyQuestHighlightCardContent
-                action={
-                  featuredQuestHref ? (
-                    <KangurButton asChild className='shrink-0' size='sm' variant='surface'>
-                      <Link
-                        href={featuredQuestHref}
-                        targetPageKey={featuredQuestTargetPage ?? undefined}
-                        transitionAcknowledgeMs={110}
-                        transitionSourceId='assignment-manager:featured-daily-quest'
-                      >
-                        {featuredQuestActionLabel}
-                      </Link>
-                    </KangurButton>
-                  ) : null
-                }
-                chipLabelStyle='compact'
-                description={featuredQuestDescription}
-                descriptionClassName='mt-1 text-slate-600'
-                descriptionRelaxed
-                descriptionSize='sm'
-                footer={
-                  <KangurMetaText caps className='mt-2' tone='slate'>
-                    {featuredQuestProgressSummary}
-                  </KangurMetaText>
-                }
-                progressAccent={featuredQuestAccent}
-                progressLabel={featuredQuestProgressLabel}
-                questLabel={featuredQuestLabel}
-                rewardAccent={featuredQuestRewardAccent}
-                rewardLabel={featuredQuestRewardLabel}
-                title={featuredQuestTitle}
-                titleClassName='text-slate-900'
-              />
-            </div>
-          </KangurSummaryPanel>
-        ) : null}
-
-        <KangurSummaryPanel
-          accent='indigo'
-          className='mt-5'
-          data-testid='assignment-manager-track-summary'
-          description='Najważniejsze ścieżki odznak, które aktualnie buduje uczeń.'
-          label='Ścieżki postępu ucznia'
-        >
-          <div className='mt-3'>
-            <KangurBadgeTrackHighlights
-              dataTestIdPrefix='assignment-manager-track'
-              limit={3}
-              progress={progress}
-            />
-          </div>
-        </KangurSummaryPanel>
 
         <KangurTextField
           accent='indigo'

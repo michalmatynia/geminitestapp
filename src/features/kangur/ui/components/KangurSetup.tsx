@@ -129,6 +129,9 @@ export default function KangurSetup({
   recommendedMode,
   recommendedTitle,
 }: KangurSetupProps): React.JSX.Element {
+  const recommendationDescription = recommendedDescription;
+  const recommendationLabel = recommendedLabel ?? 'Polecamy teraz';
+  const recommendationTitle = recommendedTitle;
   const [selectedEdition, setSelectedEdition] = useState<KangurEdition | null>(null);
   const editionsHeadingId = useId();
   const setsHeadingId = useId();
@@ -253,11 +256,11 @@ export default function KangurSetup({
           <KangurRecommendationCard
             accent='amber'
             dataTestId='kangur-setup-recommendation-card'
-            description={recommendedDescription}
+            description={recommendationDescription}
             descriptionTestId='kangur-setup-recommendation-description'
-            label={recommendedLabel ?? 'Polecamy teraz'}
+            label={recommendationLabel}
             labelTestId='kangur-setup-recommendation-label'
-            title={recommendedTitle}
+            title={recommendationTitle}
             titleTestId='kangur-setup-recommendation-title'
           />
         ) : null}

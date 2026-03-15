@@ -23,6 +23,8 @@ export function KangurAiTutorDrawingSidePanel({
   shouldRender,
   style,
 }: Props): JSX.Element {
+  const handleClose = onClose;
+  const handleComplete = onComplete;
   const panelTransition: Transition = prefersReducedMotion
     ? { duration: 0 }
     : { duration: 0.2, ease: [0.22, 1, 0.36, 1] };
@@ -50,7 +52,7 @@ export function KangurAiTutorDrawingSidePanel({
                 {hint}
               </div>
             ) : null}
-            <KangurAiTutorDrawingCanvas onCancel={onClose} onComplete={onComplete} />
+            <KangurAiTutorDrawingCanvas onCancel={handleClose} onComplete={handleComplete} />
           </div>
         </motion.div>
       ) : null}

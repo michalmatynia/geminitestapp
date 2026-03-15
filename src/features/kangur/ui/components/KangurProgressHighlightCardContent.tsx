@@ -34,23 +34,30 @@ export function KangurProgressHighlightHeader({
   descriptionStyle?: CSSProperties;
   className?: string;
 }): React.JSX.Element {
+  const headerClassName = className;
+  const eyebrowClass = eyebrowClassName;
+  const eyebrowStyles = eyebrowStyle;
+  const titleClass = titleClassName;
+  const descriptionClass = descriptionClassName;
+  const descriptionStyles = descriptionStyle;
+
   return (
-    <div className={cn('min-w-0', className)}>
+    <div className={cn('min-w-0', headerClassName)}>
       <KangurSectionEyebrow
         as='p'
-        className={cn('tracking-[0.18em]', eyebrowClassName)}
-        style={eyebrowStyle}
+        className={cn('tracking-[0.18em]', eyebrowClass)}
+        style={eyebrowStyles}
       >
         {eyebrow}
       </KangurSectionEyebrow>
-      <KangurCardTitle as='p' className={cn('mt-1', titleClassName)}>
+      <KangurCardTitle as='p' className={cn('mt-1', titleClass)}>
         {title}
       </KangurCardTitle>
       <KangurCardDescription
         as='p'
-        className={cn('mt-1 leading-5', descriptionClassName)}
+        className={cn('mt-1 leading-5', descriptionClass)}
         size='xs'
-        style={descriptionStyle}
+        style={descriptionStyles}
       >
         {description}
       </KangurCardDescription>
@@ -67,8 +74,14 @@ export function KangurProgressHighlightChip({
   label: ReactNode;
   className?: string;
 }): React.JSX.Element {
+  const chipAccent = accent;
+  const chipClassName = className;
+
   return (
-    <KangurStatusChip accent={accent} className={cn('self-start sm:shrink-0', className)}>
+    <KangurStatusChip
+      accent={chipAccent}
+      className={cn('self-start sm:shrink-0', chipClassName)}
+    >
       {label}
     </KangurStatusChip>
   );
@@ -85,13 +98,18 @@ export function KangurProgressHighlightBar({
   testId: string;
   className?: string;
 }): React.JSX.Element {
+  const barAccent = accent;
+  const barValue = value;
+  const barTestId = testId;
+  const barClassName = className;
+
   return (
     <KangurProgressBar
-      accent={accent}
-      className={cn('mt-3', className)}
-      data-testid={testId}
+      accent={barAccent}
+      className={cn('mt-3', barClassName)}
+      data-testid={barTestId}
       size='sm'
-      value={value}
+      value={barValue}
     />
   );
 }

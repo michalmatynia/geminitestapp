@@ -15,8 +15,11 @@ export function KangurBadgeTrackSectionHeader({
   headingAs?: 'div' | 'p' | 'span';
   className?: string;
 }): React.JSX.Element {
+  const headerClassName = className;
+  const headerAs = headingAs;
+
   return (
-    <KangurSectionEyebrow as={headingAs} className={className}>
+    <KangurSectionEyebrow as={headerAs} className={headerClassName}>
       {heading}
     </KangurSectionEyebrow>
   );

@@ -55,6 +55,7 @@ type BuildKangurCompletedGameOutcomeInput = {
   operation: KangurOperation | null;
   taken: number;
   totalQuestions: number;
+  allowRewards?: boolean;
 };
 
 type BuildKangurCompletedGameOutcomeResult = {
@@ -164,9 +165,27 @@ export const buildKangurCompletedGameOutcome = ({
   operation,
   taken,
   totalQuestions,
+  allowRewards = true,
 }: BuildKangurCompletedGameOutcomeInput): BuildKangurCompletedGameOutcomeResult => {
   const selectedOperation = operation ?? 'mixed';
   const greatThreshold = Math.max(1, Math.ceil(totalQuestions * 0.8));
+  const isPerfect = nextScore === totalQuestions;
+  const isGreat = nextScore >= greatThreshold;
+
+  if (!allowRewards) {
+    return {
+      awardedXp: 0,
+      awardedBadges: [],
+      awardedBreakdown: [],
+      dailyQuestToastHint: null,
+      nextBadgeToastHint: null,
+      recommendationToastHint: null,
+      selectedOperation,
+      isPerfect,
+      isGreat,
+    };
+  }
+
   const storedProgress = loadProgress();
   const sessionReward = createGameSessionReward(storedProgress, {
     operation: selectedOperation,
@@ -177,8 +196,6 @@ export const buildKangurCompletedGameOutcome = ({
     durationSeconds: taken,
   });
 
-  const isPerfect = nextScore === totalQuestions;
-  const isGreat = nextScore >= greatThreshold;
   const dailyQuestBefore = getCurrentKangurDailyQuest(storedProgress, { persist: false });
   const sessionRewardResult = addXp(sessionReward.xp, sessionReward.progressUpdates);
   let awardedXp = sessionReward.xp;

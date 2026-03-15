@@ -14,6 +14,7 @@ import {
 } from '@/features/kangur/config/routing';
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeaturePageShell } from '@/features/kangur/ui/KangurFeaturePage';
+import { KangurMainRoleProvider } from '@/features/kangur/ui/design/primitives';
 import { useKangurClassOverrides } from '@/features/kangur/ui/useKangurClassOverrides';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { cn } from '@/shared/utils';
@@ -114,7 +115,9 @@ export function KangurFeatureRouteShell({
         basePath={normalizedBasePath}
         embedded={isEmbedded}
       >
-        <KangurFeaturePageShell />
+        <KangurMainRoleProvider suppressMainRole>
+          <KangurFeaturePageShell />
+        </KangurMainRoleProvider>
       </KangurRoutingProvider>
     </div>
   );

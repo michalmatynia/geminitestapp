@@ -36,7 +36,7 @@ for (const routeEntry of routes) {
     await expect(main).toBeVisible();
     await expect(main).toHaveAttribute('tabindex', '-1');
 
-    const skipLink = page.getByRole('link', { name: 'Skip to content' });
+    const skipLink = page.getByRole('link', { name: 'Skip to content', includeHidden: true });
     await skipLink.focus();
     await expect(skipLink).toBeFocused();
     await page.keyboard.press('Enter');

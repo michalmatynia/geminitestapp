@@ -147,7 +147,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             Dedukcja prowadzi od ogólnej reguły do konkretnego wniosku.
           </KangurLessonLead>
           <KangurLessonInset accent='indigo' className='w-full text-center' padding='sm'>
-            <div className='mx-auto h-28 w-72'>
+            <div className='mx-auto w-72 max-w-full'>
               <DeductionFlowAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -410,6 +410,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
   gra: [
     {
       title: 'Gra: Czy wniosek wynika?',
+      containerClassName: 'max-w-[min(760px,90vw)]',
       panelClassName: 'w-full mx-auto lg:w-[min(760px,90vw)]',
       content: (
         <KangurLessonStack>

@@ -146,6 +146,17 @@ export function KangurTestQuestionRenderer({
           {illustrationContent}
         </>
       );
+  const answerRevealed = showAnswer;
+  const sectionDescription =
+    sectionContent?.summary ??
+    (answerRevealed
+      ? 'Porównaj swój wybór z poprawną odpowiedzią i przeczytaj krótkie wyjaśnienie.'
+      : 'Wybierz jedną odpowiedź, a potem sprawdź omówienie i poprawny tok myślenia.');
+  const sectionTitle =
+    sectionContent?.title ?? (answerRevealed ? 'Omówienie odpowiedzi' : 'Pytanie testowe');
+  const choiceInteractive = !answerRevealed;
+  const questionContentId = contentId;
+  const questionValue = question;
 
   return (
     <div className='space-y-4'>
@@ -155,13 +166,8 @@ export function KangurTestQuestionRenderer({
       {showSectionIntro ? (
         <KangurPanelIntro
           data-testid='kangur-test-question-copy'
-          description={
-            sectionContent?.summary ??
-            (showAnswer
-              ? 'Porównaj swój wybór z poprawną odpowiedzią i przeczytaj krótkie wyjaśnienie.'
-              : 'Wybierz jedną odpowiedź, a potem sprawdź omówienie i poprawny tok myślenia.')
-          }
-          title={sectionContent?.title ?? (showAnswer ? 'Omówienie odpowiedzi' : 'Pytanie testowe')}
+          description={sectionDescription}
+          title={sectionTitle}
           titleAs='h2'
           titleClassName='text-lg font-bold tracking-[-0.02em]'
         />
@@ -219,11 +225,11 @@ export function KangurTestQuestionRenderer({
             <KangurTestChoiceCard
               choice={choice}
               choiceGrid={choiceGrid}
-              contentId={contentId}
+              contentId={questionContentId}
               isSelected={isSelected}
               key={choice.label}
-              question={question}
-              showAnswer={showAnswer}
+              question={questionValue}
+              showAnswer={answerRevealed}
             >
               <KangurAnswerChoiceCard
                 accent={accent}
@@ -234,7 +240,7 @@ export function KangurTestQuestionRenderer({
                 )}
                 data-testid={`kangur-test-question-choice-${index}`}
                 emphasis={emphasis}
-                interactive={!showAnswer}
+                interactive={choiceInteractive}
                 onClick={(): void => handleChoiceSelect(choice.label)}
                 type='button'
               >
@@ -243,7 +249,7 @@ export function KangurTestQuestionRenderer({
                 <KangurTestChoiceCardFeedback
                   isChoiceCorrect={isChoiceCorrect}
                   isSelected={isSelected}
-                  showAnswer={showAnswer}
+                  showAnswer={answerRevealed}
                 />
               </KangurAnswerChoiceCard>
             </KangurTestChoiceCard>

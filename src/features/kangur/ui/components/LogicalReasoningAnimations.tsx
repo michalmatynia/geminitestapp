@@ -8,7 +8,7 @@ export function DeductionFlowAnimation(): React.JSX.Element {
     >
       <style>{`
         .node { fill: #eef2ff; stroke: #818cf8; stroke-width: 2; }
-        .label { font: 700 11px/1 system-ui, sans-serif; fill: #4338ca; }
+        .label { font: 700 13px/1 system-ui, sans-serif; fill: #4338ca; }
         .arrow { stroke: #6366f1; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 12 10; animation: flow 4.8s ease-in-out infinite; }
         @keyframes flow {
           0%, 20% { stroke-dashoffset: 22; opacity: 0.35; }

@@ -42,8 +42,10 @@ export function KangurLessonNavigationWidget({
     align === 'start' ? 'kangur-lesson-nav-inline' : null
   );
   const buttonGroupClassName = cn(
-    'flex w-full items-center gap-2',
-    align === 'start' ? 'justify-start' : 'justify-center'
+    'flex items-center gap-2',
+    align === 'start'
+      ? 'w-full justify-start'
+      : 'w-fit justify-center self-center'
   );
 
   return (

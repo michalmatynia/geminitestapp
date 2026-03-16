@@ -57,6 +57,7 @@ vi.mock('@/shared/lib/observability/system-logger', () => ({
   logSystemEvent: vi.fn().mockResolvedValue(undefined),
 }));
 
+
 describe('Auth Register API', () => {
   beforeEach(() => {
     vi.clearAllMocks();

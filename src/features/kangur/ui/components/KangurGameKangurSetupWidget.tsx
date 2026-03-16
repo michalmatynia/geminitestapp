@@ -10,9 +10,16 @@ import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRun
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { getRecommendedKangurMode } from '@/features/kangur/ui/services/game-setup-recommendations';
 
-export function KangurGameKangurSetupWidget(): React.JSX.Element | null {
+type KangurGameKangurSetupWidgetProps = {
+  onBack?: () => void;
+};
+
+export function KangurGameKangurSetupWidget({
+  onBack,
+}: KangurGameKangurSetupWidgetProps = {}): React.JSX.Element | null {
   const { handleHome, handleStartKangur, progress, screen } = useKangurGameRuntime();
   const recommendedMode = useMemo(() => getRecommendedKangurMode(progress), [progress]);
+  const resolvedOnBack = onBack ?? handleHome;
 
   if (screen !== 'kangur_setup') {
     return null;
@@ -24,7 +31,7 @@ export function KangurGameKangurSetupWidget(): React.JSX.Element | null {
         className='max-w-md'
         description='Wybierz edycję konkursu i zestaw zadań do rozwiązania.'
         headingSize='lg'
-        onBack={handleHome}
+        onBack={resolvedOnBack}
         testId='kangur-game-kangur-setup-top-section'
         title='Kangur'
         visualTitle={

@@ -12,8 +12,9 @@ import {
   useDeleteAuthUser,
   useUpdateAuthUser,
   useUpdateAuthUserSecurity,
+  useUpdateAuthUserRoles,
 } from '@/features/auth/hooks/useAuthQueries';
-import { AUTH_SETTINGS_KEYS, type AuthUserRoleMap } from '@/features/auth/utils/auth-management';
+import { type AuthUserRoleMap } from '@/features/auth/utils/auth-management';
 import type {
   RegisterResponse,
   AuthUserSecurityProfile,
@@ -21,7 +22,6 @@ import type {
   AuthRole,
 } from '@/shared/contracts/auth';
 import { useToast } from '@/shared/ui';
-import { serializeSetting } from '@/shared/utils/settings-json';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -117,12 +117,12 @@ export interface UseUsersStateReturn {
 export function useUsersState(): UseUsersStateReturn {
   const { toast } = useToast();
   const {
+    session,
     roles,
     userRoles,
     canReadUsers,
     canManageSecurity,
     isLoading: authLoading,
-    updateSetting,
     refetchSettings,
   } = useAuth();
 
@@ -147,6 +147,7 @@ export function useUsersState(): UseUsersStateReturn {
   const deleteAuthUserMutation = useDeleteAuthUser();
   const registerUserMutation = useRegisterUser();
   const mockSignInMutation = useMockSignIn();
+  const updateUserRolesMutation = useUpdateAuthUserRoles();
 
   useEffect(() => {
     setLocalUserRoles(userRoles);
@@ -177,10 +178,7 @@ export function useUsersState(): UseUsersStateReturn {
 
   const saveRoles = async () => {
     try {
-      await updateSetting.mutateAsync({
-        key: AUTH_SETTINGS_KEYS.userRoles,
-        value: serializeSetting(localUserRoles),
-      });
+      await updateUserRolesMutation.mutateAsync({ userRoles: localUserRoles });
       setDirtyRoles(false);
       toast('User roles updated', { variant: 'success' });
     } catch (_e) {
@@ -191,13 +189,21 @@ export function useUsersState(): UseUsersStateReturn {
 
   const deleteUser = async () => {
     if (!userToDelete) return;
+    if (session?.user?.id && userToDelete.id === session.user.id) {
+      toast('You cannot delete your own account while signed in.', { variant: 'error' });
+      return;
+    }
     try {
       await deleteAuthUserMutation.mutateAsync({ userId: userToDelete.id });
       toast('User deleted', { variant: 'success' });
       setUserToDelete(null);
-    } catch (_e) {
-      logClientError(_e);
-      toast('Failed to delete user', { variant: 'error' });
+    } catch (error) {
+      logClientError(error);
+      const message =
+        error instanceof Error && error.message.trim()
+          ? error.message
+          : 'Failed to delete user';
+      toast(message, { variant: 'error' });
     }
   };
 

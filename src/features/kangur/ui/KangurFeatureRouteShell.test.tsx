@@ -91,21 +91,39 @@ describe('KangurFeatureRouteShell', () => {
     });
   });
 
-  it('keeps removed tests slugs unresolved while normalizing trailing slashes', () => {
+  it('maps the tests slug while normalizing trailing slashes', () => {
     usePathnameMock.mockReturnValue('/kangur/tests/');
 
     render(<KangurFeatureRouteShell />);
 
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
-      pageKey: null,
+      pageKey: 'Tests',
       requestedPath: '/kangur/tests',
       requestedHref: '/kangur/tests',
       basePath: '/kangur',
       embedded: false,
     });
     expect(setKangurClientObservabilityContextMock).toHaveBeenCalledWith({
-      pageKey: null,
+      pageKey: 'Tests',
       requestedPath: '/kangur/tests',
+    });
+  });
+
+  it('maps competition routes into Kangur routing', () => {
+    usePathnameMock.mockReturnValue('/kangur/competition');
+
+    render(<KangurFeatureRouteShell />);
+
+    expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+      pageKey: 'Competition',
+      requestedPath: '/kangur/competition',
+      requestedHref: '/kangur/competition',
+      basePath: '/kangur',
+      embedded: false,
+    });
+    expect(setKangurClientObservabilityContextMock).toHaveBeenCalledWith({
+      pageKey: 'Competition',
+      requestedPath: '/kangur/competition',
     });
   });
 

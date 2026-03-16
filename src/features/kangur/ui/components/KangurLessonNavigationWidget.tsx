@@ -37,14 +37,18 @@ export function KangurLessonNavigationWidget({
     return null;
   }
 
+  const navClassName = cn(
+    'flex w-full flex-col gap-2',
+    align === 'start' ? 'kangur-lesson-nav-inline' : null
+  );
   const buttonGroupClassName = cn(
     'flex w-full items-center gap-2',
-    align === 'start' ? 'justify-start pl-4 sm:pl-5' : 'justify-center'
+    align === 'start' ? 'justify-start' : 'justify-center'
   );
 
   return (
     <nav
-      className='flex w-full flex-col gap-2'
+      className={navClassName}
       aria-label='Nawigacja między lekcjami'
     >
       {sectionTitle || sectionSummary ? (

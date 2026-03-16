@@ -26,6 +26,7 @@ declare module 'next-auth' {
       isElevated?: boolean;
       role?: string | null;
       roleLevel?: number | null;
+      roleAssigned?: boolean;
       permissions?: string[];
       accountDisabled?: boolean;
       accountBanned?: boolean;
@@ -36,6 +37,7 @@ declare module 'next-auth' {
     isElevated?: boolean;
     role?: string | null;
     roleLevel?: number | null;
+    roleAssigned?: boolean;
     permissions?: string[];
     accountDisabled?: boolean;
     accountBanned?: boolean;
@@ -48,6 +50,7 @@ declare module 'next-auth/jwt' {
     isElevated?: boolean;
     role?: string | null;
     roleLevel?: number | null;
+    roleAssigned?: boolean;
     permissions?: string[];
     accountDisabled?: boolean;
     accountBanned?: boolean;

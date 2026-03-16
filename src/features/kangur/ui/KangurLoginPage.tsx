@@ -418,7 +418,7 @@ function KangurLoginPageContent(): JSX.Element {
   const requestedParentAuthMode =
     parentAuthModeProp ??
     parseKangurAuthMode(searchParams.get(KANGUR_PARENT_AUTH_MODE_PARAM));
-  const [identifier, setIdentifier] = useState('');
+  const [identifier, setIdentifier] = useState<string>('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -497,7 +497,7 @@ function KangurLoginPageContent(): JSX.Element {
     : 'Wyślij e-mail ponownie';
   const isParentSubmitDisabled =
     !isHydrated || isSubmitting || (isCaptchaRequired && !captchaToken);
-  const loginKind = useMemo(() => resolveKangurLoginKind(identifier), [identifier]);
+  const loginKind = resolveKangurLoginKind(typeof identifier === 'string' ? identifier : '');
   const inputClassName =
     'kangur-text-field rounded-[24px] px-4 py-3 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.76)] outline-none transition focus:border-amber-200 focus-visible:ring-2 focus-visible:ring-amber-200/70 disabled:cursor-not-allowed disabled:opacity-60';
   const formDescribedBy = [visibleNotice ? noticeId : null, error ? errorId : null]
@@ -1262,7 +1262,7 @@ function KangurLoginPageContent(): JSX.Element {
           aria-describedby={formDescribedBy || undefined}
           className='flex flex-col kangur-panel-gap'
           data-hydrated={isHydrated ? 'true' : 'false'}
-          data-login-kind={loginKind}
+          data-login-kind={loginKind || 'unknown'}
           data-tutor-anchor='login_form'
           data-testid='kangur-login-form'
           onSubmit={handleSubmit}

@@ -3306,6 +3306,10 @@
     gap: var(--kangur-lesson-panel-gap);
   }
 
+  .kangur-lesson-nav-inline {
+    padding-inline: var(--kangur-panel-padding-md, 20px);
+  }
+
   .kangur-lesson-nav-offset {
     margin-top: calc(var(--kangur-lesson-panel-gap, 1rem) * -0.5);
   }

@@ -136,12 +136,18 @@ export const authConfig = {
           isElevated?: boolean;
           accountDisabled?: boolean;
           accountBanned?: boolean;
+          roleAssigned?: boolean;
         };
         const role = authUser?.role ?? 'unknown';
         const isElevated = authUser?.isElevated ?? elevatedRoles.has(role);
         if (authUser?.accountBanned || authUser?.accountDisabled) {
           const redirectUrl = new URL('/auth/signin', nextUrl);
           redirectUrl.searchParams.set('error', 'AccountDisabled');
+          return Response.redirect(redirectUrl);
+        }
+        if (!authUser?.roleAssigned) {
+          const redirectUrl = new URL('/auth/signin', nextUrl);
+          redirectUrl.searchParams.set('error', 'AccessDenied');
           return Response.redirect(redirectUrl);
         }
         if (adminOnlyPrefixes.some((prefix: string) => nextUrl.pathname.startsWith(prefix))) {
@@ -175,6 +181,7 @@ export const authConfig = {
         session.user.permissions = (token as { permissions?: string[] }).permissions ?? [];
         session.user.roleLevel = (token as { roleLevel?: number }).roleLevel ?? null;
         session.user.isElevated = (token as { isElevated?: boolean }).isElevated ?? false;
+        session.user.roleAssigned = (token as { roleAssigned?: boolean }).roleAssigned ?? false;
         session.user.accountDisabled =
           (token as { accountDisabled?: boolean }).accountDisabled ?? false;
         session.user.accountBanned = (token as { accountBanned?: boolean }).accountBanned ?? false;

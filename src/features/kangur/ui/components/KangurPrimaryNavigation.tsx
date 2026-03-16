@@ -45,8 +45,10 @@ import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorA
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 
 type KangurPrimaryNavigationPage =
+  | 'Competition'
   | 'Game'
   | 'Lessons'
+  | 'Tests'
   | 'LearnerProfile'
   | 'ParentDashboard'
   | 'Duels';

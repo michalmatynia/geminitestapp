@@ -21,11 +21,13 @@ export const KANGUR_INTERNAL_QUERY_PARAM_KEYS = KANGUR_EMBED_STATE_QUERY_PARAM_K
 export type KangurInternalQueryParamKey = (typeof KANGUR_INTERNAL_QUERY_PARAM_KEYS)[number];
 
 export const KANGUR_PAGE_TO_SLUG: Record<string, string> = Object.freeze({
+  Competition: 'competition',
   Game: 'game',
   LearnerProfile: 'profile',
   Lessons: 'lessons',
   ParentDashboard: 'parent-dashboard',
   Duels: 'duels',
+  Tests: 'tests',
 });
 
 export const KANGUR_SLUG_TO_PAGE: Record<string, string> = Object.freeze(

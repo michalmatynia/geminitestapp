@@ -7,8 +7,10 @@ import { logClientError } from '@/features/kangur/shared/utils/observability/cli
 
 
 const KANGUR_PAGE_ACCESSIBILITY_LABELS: Record<string, string> = {
+  Competition: 'Kangur Matematyczny',
   Game: 'Strona główna',
   Lessons: 'Lekcje',
+  Tests: 'Testy',
   LearnerProfile: 'Profil ucznia',
   ParentDashboard: 'Panel rodzica',
   Duels: 'Pojedynki',

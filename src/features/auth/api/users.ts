@@ -9,6 +9,17 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 export type { AuthUsersResponse, AuthUserSecurityProfile, AuthUserSummary };
 
+const normalizeUserId = (userId: string): string => {
+  if (typeof userId !== 'string') {
+    throw new Error('Missing user id.');
+  }
+  const trimmed = userId.trim();
+  if (!trimmed) {
+    throw new Error('Missing user id.');
+  }
+  return encodeURIComponent(trimmed);
+};
+
 export const fetchAuthUsers = async (): Promise<AuthUsersResponse> => {
   return api.get<AuthUsersResponse>('/api/auth/users');
 };
@@ -22,7 +33,10 @@ export const updateAuthUser = async (
   }
 ): Promise<{ ok: boolean; payload: AuthUserSummary }> => {
   try {
-    const payload = await api.patch<AuthUserSummary>(`/api/auth/users/${userId}`, input);
+    const payload = await api.patch<AuthUserSummary>(
+      `/api/auth/users/${normalizeUserId(userId)}`,
+      input
+    );
     return { ok: true, payload };
   } catch (_error: unknown) {
     logClientError(_error);
@@ -34,7 +48,7 @@ export const updateAuthUser = async (
 };
 
 export const fetchAuthUserSecurity = async (userId: string): Promise<AuthUserSecurityProfile> => {
-  return api.get<AuthUserSecurityProfile>(`/api/auth/users/${userId}/security`);
+  return api.get<AuthUserSecurityProfile>(`/api/auth/users/${normalizeUserId(userId)}/security`);
 };
 
 export const updateAuthUserSecurity = async (
@@ -48,7 +62,7 @@ export const updateAuthUserSecurity = async (
 ): Promise<{ ok: boolean; payload: AuthUserSecurityProfile }> => {
   try {
     const payload = await api.patch<AuthUserSecurityProfile>(
-      `/api/auth/users/${userId}/security`,
+      `/api/auth/users/${normalizeUserId(userId)}/security`,
       input
     );
     return { ok: true, payload };
@@ -62,7 +76,9 @@ export const updateAuthUserSecurity = async (
 };
 
 export const deleteAuthUser = async (userId: string): Promise<{ id: string; deleted: boolean }> => {
-  return api.delete<{ id: string; deleted: boolean }>(`/api/auth/users/${userId}`);
+  return api.delete<{ id: string; deleted: boolean }>(
+    `/api/auth/users/${normalizeUserId(userId)}`
+  );
 };
 
 export const mockSignIn = async (input: {

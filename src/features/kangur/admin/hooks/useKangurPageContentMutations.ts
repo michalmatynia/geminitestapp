@@ -6,10 +6,10 @@ import {
   type KangurPageContentEntry,
   type KangurPageContentFragment,
   type KangurPageContentStore,
-} from '@/shared/contracts/kangur-page-content';
+} from '@/features/kangur/shared/contracts/kangur-page-content';
 import { api } from '@/shared/lib/api-client';
-import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { useToast } from '@/features/kangur/shared/ui';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 const AI_TUTOR_PAGE_CONTENT_EDITOR_LOCALE = 'pl';
 
 const stringifyPageContentStore = (store: KangurPageContentStore): string =>

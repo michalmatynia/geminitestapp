@@ -54,12 +54,12 @@ vi.mock('@/shared/hooks/use-settings', () => ({
   }),
 }));
 
-vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
+vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => settingsStoreMock,
 }));
 
-vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/shared/ui')>();
+vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/shared/ui')>();
   return {
   ...actual,
   Badge: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
@@ -100,11 +100,11 @@ vi.mock('@/shared/ui', async (importOriginal) => {
   };
 });
 
-vi.mock('@/shared/ui/templates/modals', () => ({
+vi.mock('@/features/kangur/shared/ui/templates/modals', () => ({
   ConfirmModal: () => null,
 }));
 
-vi.mock('@/shared/utils/observability/client-error-logger', () => ({
+vi.mock('@/features/kangur/shared/utils/observability/client-error-logger', () => ({
   logClientError: vi.fn(),
 }));
 

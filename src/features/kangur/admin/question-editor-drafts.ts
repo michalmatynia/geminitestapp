@@ -1,7 +1,7 @@
-import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
+import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
 
 import type { QuestionFormData } from '../test-questions';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const QUESTION_EDITOR_DRAFT_STORAGE_PREFIX = 'kangur-question-editor-draft:v1:';

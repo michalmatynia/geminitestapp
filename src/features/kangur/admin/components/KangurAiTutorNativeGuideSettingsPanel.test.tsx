@@ -19,8 +19,8 @@ vi.mock('@/shared/lib/api-client', () => ({
   },
 }));
 
-vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/shared/ui')>();
+vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/shared/ui')>();
   return {
     ...actual,
     useToast: () => ({
@@ -32,7 +32,7 @@ vi.mock('@/shared/ui', async (importOriginal) => {
 import {
   DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE,
   type KangurAiTutorNativeGuideStore,
-} from '@/shared/contracts/kangur-ai-tutor-native-guide';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 
 import { KangurAiTutorNativeGuideSettingsPanel } from './KangurAiTutorNativeGuideSettingsPanel';
 

@@ -2,9 +2,9 @@ import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/Ka
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { useOptionalKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
-import { cn, sanitizeSvg } from '@/shared/utils';
+import { cn, sanitizeSvg } from '@/features/kangur/shared/utils';
 
-import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import { useKangurAiTutorPanelBodyContext } from './KangurAiTutorPanelBody.context';
 import {
   getAssistantMessageFeedbackKey,

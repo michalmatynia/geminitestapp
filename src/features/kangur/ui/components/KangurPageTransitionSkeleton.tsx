@@ -4,7 +4,7 @@ import {
   resolveKangurRouteTransitionSkeletonVariant,
   type KangurRouteTransitionSkeletonVariant,
 } from '@/features/kangur/ui/routing/route-transition-skeletons';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 type KangurSkeletonPageKey =
   | 'Game'

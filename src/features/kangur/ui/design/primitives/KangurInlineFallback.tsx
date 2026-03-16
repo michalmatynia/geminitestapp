@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 import { KANGUR_ACCENT_STYLES } from '../tokens';
 import { kangurInfoCardVariants } from './KangurInfoCard';

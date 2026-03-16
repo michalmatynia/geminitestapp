@@ -6,7 +6,7 @@ import {
   KANGUR_TTS_DEFAULT_VOICE,
   kangurLessonNarrationVoiceSchema,
   type KangurLessonNarrationVoice,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 
 const nonEmptyTrimmedString = z.string().trim().min(1);
 

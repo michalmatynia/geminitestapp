@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import React from 'react';
 
-import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
+import { SettingsFieldsRenderer } from '@/features/kangur/shared/ui/templates/SettingsPanelBuilder';
 import {
   Badge,
   Button,
@@ -11,7 +11,7 @@ import {
   FormSection,
   SelectSimple,
   Alert,
-} from '@/shared/ui';
+} from '@/features/kangur/shared/ui';
 
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
 import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';

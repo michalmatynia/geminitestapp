@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 
 import { buildKangurLessonNarrationScriptFromText } from '@/features/kangur/tts/script';
-import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
+import type { KangurAiTutorContent } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 
 import { isAuthGuidedTutorTarget } from './KangurAiTutorWidget.helpers';
 import { getTutorSurfaceLabel } from './KangurAiTutorWidget.coordinator.helpers';
 
-import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type { TutorProactiveNudge } from './KangurAiTutorPanelBody.context';
 import type { ActiveTutorFocus } from './KangurAiTutorWidget.shared';
 import type {

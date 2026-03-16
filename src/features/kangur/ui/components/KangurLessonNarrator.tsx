@@ -11,14 +11,14 @@ import {
   buildKangurLessonNarrationScriptFromText,
   hasKangurLessonNarrationContent,
 } from '@/features/kangur/tts/script';
-import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kangur';
+import type { KangurLesson, KangurLessonDocument } from '@/features/kangur/shared/contracts/kangur';
 import {
   useOptionalContextRegistryPageEnvelope,
   useRegisterContextRegistryPageSource,
 } from '@/shared/lib/ai-context-registry/page-context';
 import { buildContextRegistryConsumerEnvelope } from '@/shared/lib/ai-context-registry/page-context-shared';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { cn } from '@/shared/utils';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
+import { cn } from '@/features/kangur/shared/utils';
 
 import { extractNarrationTextFromElement } from './kangur-narrator-utils';
 import { KangurNarratorControl } from './KangurNarratorControl';

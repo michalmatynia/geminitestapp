@@ -1,5 +1,3 @@
-'use client';
-
 import {
   ArrowUpRightIcon,
   BotIcon,
@@ -10,7 +8,7 @@ import {
 } from 'lucide-react';
 import { type JSX } from 'react';
 
-import { FormSection } from '@/shared/ui';
+import { FormSection } from '@/features/kangur/shared/ui';
 
 import { useObservabilitySummaryContext } from '../../AdminKangurObservabilityPage';
 import { formatNumber, formatPercent } from './utils';

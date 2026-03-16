@@ -8,7 +8,7 @@ import {
   Card,
   Input,
   useToast,
-} from '@/shared/ui';
+} from '@/features/kangur/shared/ui';
 import { resolveKangurStorefrontAppearance } from '@/features/cms/public';
 import {
   KANGUR_THEME_CATALOG_KEY,
@@ -18,9 +18,9 @@ import {
 } from '@/features/kangur/theme-settings';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { serializeSetting } from '@/shared/utils/settings-json';
+import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 import { useAppearancePage } from './AppearancePage.context';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 export function ThemeCatalogModal(): React.JSX.Element {

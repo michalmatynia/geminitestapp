@@ -3,8 +3,8 @@
 import React from 'react';
 
 import { useQuickInsertActions } from '../hooks/useQuickInsertActions';
-import type { KangurLessonPage, KangurLessonRootBlock } from '@/shared/contracts/kangur';
-import { Button } from '@/shared/ui';
+import type { KangurLessonPage, KangurLessonRootBlock } from '@/features/kangur/shared/contracts/kangur';
+import { Button } from '@/features/kangur/shared/ui';
 
 interface KangurLessonEmptyStateProps {
   activePage: KangurLessonPage | null;

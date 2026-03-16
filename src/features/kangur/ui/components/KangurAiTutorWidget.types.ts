@@ -2,8 +2,8 @@ import type { KangurTutorAnchorKind } from '@/features/kangur/ui/context/kangur-
 import type {
   KangurAiTutorKnowledgeReference,
   KangurAiTutorSurface,
-} from '@/shared/contracts/kangur-ai-tutor';
-import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 import type { Point2d } from '@/shared/contracts/geometry';
 
 export type TutorSurface = KangurAiTutorSurface;

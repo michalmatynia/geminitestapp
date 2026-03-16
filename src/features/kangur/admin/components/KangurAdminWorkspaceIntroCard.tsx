@@ -1,5 +1,5 @@
 import { cn } from '@/features/kangur/utils/cn';
-import { Badge, Card } from '@/shared/ui';
+import { Badge, Card } from '@/features/kangur/shared/ui';
 
 import type { ReactNode } from 'react';
 

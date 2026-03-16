@@ -13,12 +13,11 @@ export function AdminNotesBreadcrumbs({
   parent,
   className,
 }: AdminNotesBreadcrumbsProps): React.JSX.Element {
+  const breadcrumbProps = { current, parent, className };
   return (
     <AdminSectionBreadcrumbs
       section={{ label: 'Notes', href: '/admin/notes' }}
-      parent={parent}
-      current={current}
-      className={className}
+      {...breadcrumbProps}
     />
   );
 }

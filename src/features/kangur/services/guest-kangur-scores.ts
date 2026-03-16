@@ -8,8 +8,8 @@ import {
   type KangurScoreFilters,
   type KangurScoreLimit,
   type KangurScoreSort,
-} from '@/shared/contracts/kangur';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+} from '@/features/kangur/shared/contracts/kangur';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const KANGUR_GUEST_SCORES_STORAGE_KEY = 'kangur_guest_scores_v1';

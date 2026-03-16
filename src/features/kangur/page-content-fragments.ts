@@ -1,8 +1,8 @@
-import type { KangurAiTutorKnowledgeReference } from '@/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorKnowledgeReference } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type {
   KangurPageContentEntry,
   KangurPageContentFragment,
-} from '@/shared/contracts/kangur-page-content';
+} from '@/features/kangur/shared/contracts/kangur-page-content';
 
 const FRAGMENT_SOURCE_PATH_PATTERN = /#fragment:([^#]+)$/u;
 

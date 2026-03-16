@@ -1,4 +1,4 @@
-import { KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY } from '@/shared/contracts/kangur';
+import { KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY } from '@/features/kangur/shared/contracts/kangur';
 
 export { KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY };
 

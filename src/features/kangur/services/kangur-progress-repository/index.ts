@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 import { mongoKangurProgressRepository } from './mongo-kangur-progress-repository';
 

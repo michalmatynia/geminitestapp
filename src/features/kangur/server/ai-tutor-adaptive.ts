@@ -20,15 +20,15 @@ import type {
   KangurLessonComponentId,
   KangurPracticeAssignmentOperation,
   KangurRoutePage,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 import type {
   KangurAiTutorConversationContext,
   KangurAiTutorCoachingFrame,
   KangurAiTutorCoachingMode,
   KangurAiTutorFollowUpAction,
   KangurAiTutorLearnerMemory,
-} from '@/shared/contracts/kangur-ai-tutor';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 import {
   appendCoachingFrameInstructions,

@@ -205,6 +205,16 @@ export const KANGUR_TOOLTIP_CATALOG: KangurTooltipDocEntry[] = [
     uiTargets: ['home.quick-practice'],
   },
   {
+    id: 'home_duels_action',
+    title: 'Duels Action',
+    summary: 'Opens the multiplayer duels lobby from the Kangur home surface.',
+    section: 'Home',
+    aliases: ['pojedynki', 'duels', 'lobby'],
+    docPath: '/docs/kangur/learner-navigation.md',
+    tags: ['kangur', 'home', 'multiplayer'],
+    uiTargets: ['home.duels'],
+  },
+  {
     id: 'home_lessons_action',
     title: 'Lessons Action',
     summary: 'Jumps from the home surface into the Kangur lesson library.',

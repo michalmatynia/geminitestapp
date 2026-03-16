@@ -5,7 +5,7 @@ import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/Ka
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 type HomeActionTone = 'neutral' | 'violet' | 'sky' | 'mist' | 'sand';
 
@@ -87,6 +87,8 @@ const resolveHomeActionDocId = (actionId: string): string => {
       return 'home_lessons_action';
     case 'kangur':
       return 'home_kangur_exam_action';
+    case 'duels':
+      return 'home_duels_action';
     default:
       return 'home_quick_practice_action';
   }
@@ -284,12 +286,15 @@ export function KangurGameHomeActionsWidget({
       disabled: !canStartFromHome,
     },
     {
-      id: 'training',
-      label: 'Trening mieszany',
-      symbol: '🤸',
+      id: 'duels',
+      label: 'Pojedynki',
+      symbol: '⚔️',
+      trailingSymbol: '🏆',
       tone: 'sky',
-      onClick: () => setScreen('training'),
-      disabled: !canStartFromHome,
+      href: createPageUrl('Duels', basePath),
+      targetPageKey: 'Duels',
+      transitionAcknowledgeMs: 110,
+      transitionSourceId: 'game-home-action:duels',
     },
     {
       id: 'kangur',

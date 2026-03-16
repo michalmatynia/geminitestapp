@@ -41,19 +41,19 @@ import {
   type KangurAiTutorSurface,
   type KangurAiTutorUsageResponse,
   type KangurAiTutorUsageSummary,
-} from '@/shared/contracts/kangur-ai-tutor';
-import { getKangurAiTutorMoodCopy } from '@/shared/contracts/kangur-ai-tutor-content';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import { getKangurAiTutorMoodCopy } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import {
   createDefaultKangurAiTutorLearnerMood,
   type KangurAiTutorLearnerMood,
   type KangurTutorMoodId,
-} from '@/shared/contracts/kangur-ai-tutor-mood';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor-mood';
 import {
   useOptionalContextRegistryPageEnvelope,
   useRegisterContextRegistryPageSource,
 } from '@/shared/lib/ai-context-registry/page-context';
 import { ApiError, api } from '@/shared/lib/api-client';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 
 import { useKangurAiTutorContent } from './KangurAiTutorContentContext';
 import {
@@ -85,7 +85,7 @@ import {
   useKangurTutorPersonaVisuals,
   useKangurTutorSettingsState,
 } from './kangur-ai-tutor-runtime.sub-hooks';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 // ---------------------------------------------------------------------------

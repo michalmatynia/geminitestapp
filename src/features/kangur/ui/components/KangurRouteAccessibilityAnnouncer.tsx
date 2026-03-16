@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const KANGUR_PAGE_ACCESSIBILITY_LABELS: Record<string, string> = {
@@ -10,6 +10,7 @@ const KANGUR_PAGE_ACCESSIBILITY_LABELS: Record<string, string> = {
   Tests: 'Testy',
   LearnerProfile: 'Profil ucznia',
   ParentDashboard: 'Panel rodzica',
+  Duels: 'Pojedynki',
 };
 
 const focusKangurMainRegion = (): void => {

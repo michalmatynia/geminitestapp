@@ -31,7 +31,7 @@ import {
 } from '@/features/kangur/ui/services/delegated-assignments';
 import { BADGES, getCurrentLevel, getNextLevel } from '@/features/kangur/ui/services/progress';
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
-import type { KangurPracticeAssignmentOperation } from '@/shared/contracts/kangur';
+import type { KangurPracticeAssignmentOperation } from '@/features/kangur/shared/contracts/kangur';
 
 const resolveResultStars = (percent: number): number =>
   percent >= 90 ? 3 : percent >= 60 ? 2 : 1;

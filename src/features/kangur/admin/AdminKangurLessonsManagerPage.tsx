@@ -10,13 +10,13 @@ import {
   type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree';
 import { FolderTreeSearchBar, useMasterFolderTreeSearch } from '@/features/foldertree';
-import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
+import type { KangurLesson, KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
   ContextRegistryPageProvider,
   useRegisterContextRegistryPageSource,
 } from '@/shared/lib/ai-context-registry/page-context';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import {
   Badge,
   Button,
@@ -24,11 +24,11 @@ import {
   FormModal,
   Skeleton,
   useToast,
-} from '@/shared/ui';
-import { ConfirmModal } from '@/shared/ui/templates/modals';
-import { cn } from '@/shared/utils';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { serializeSetting } from '@/shared/utils/settings-json';
+} from '@/features/kangur/shared/ui';
+import { ConfirmModal } from '@/features/kangur/shared/ui/templates/modals';
+import { cn } from '@/features/kangur/shared/utils';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 
 import {
   buildKangurLessonCatalogMasterNodes,

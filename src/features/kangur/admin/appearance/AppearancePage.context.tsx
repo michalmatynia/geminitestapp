@@ -1,12 +1,12 @@
 'use client';
 
 import React, { createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/features/kangur/shared/ui';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { fetchSettingValue } from '@/shared/api/settings-client';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import { serializeSetting } from '@/shared/utils/settings-json';
+import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 import {
   KANGUR_DAILY_THEME_SETTINGS_KEY,
   KANGUR_DAWN_THEME_SETTINGS_KEY,
@@ -42,7 +42,7 @@ import {
   SLOT_CONFIG,
   ThemeSelectionId,
 } from './AppearancePage.constants';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 type AppearancePageContextValue = {

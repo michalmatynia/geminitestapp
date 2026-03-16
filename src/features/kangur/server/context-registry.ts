@@ -31,13 +31,13 @@ import type {
 } from '@/shared/contracts/ai-context-registry';
 import type {
   KangurLessonMasteryEntry,
-} from '@/shared/contracts/kangur';
-import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
+} from '@/features/kangur/shared/contracts/kangur';
+import type { KangurAiTutorConversationContext } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import {
   KANGUR_TEST_QUESTIONS_SETTING_KEY,
   KANGUR_TEST_SUITES_SETTING_KEY,
-} from '@/shared/contracts/kangur-tests';
-import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
+} from '@/features/kangur/shared/contracts/kangur-tests';
+import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
 import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
 
 import {

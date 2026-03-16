@@ -8,10 +8,12 @@ const {
   buildKangurParentAccountCreateDebugPayloadMock,
   createKangurParentAccountMock,
   getKangurAiTutorContentMock,
+  verifyKangurParentCaptchaMock,
 } = vi.hoisted(() => ({
   buildKangurParentAccountCreateDebugPayloadMock: vi.fn(),
   createKangurParentAccountMock: vi.fn(),
   getKangurAiTutorContentMock: vi.fn(),
+  verifyKangurParentCaptchaMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/server/parent-email-auth', () => ({
@@ -21,6 +23,10 @@ vi.mock('@/features/kangur/server/parent-email-auth', () => ({
 
 vi.mock('@/features/kangur/server/ai-tutor-content-repository', () => ({
   getKangurAiTutorContent: getKangurAiTutorContentMock,
+}));
+
+vi.mock('@/features/kangur/server/parent-account-captcha', () => ({
+  verifyKangurParentCaptcha: verifyKangurParentCaptchaMock,
 }));
 
 import { postKangurParentAccountCreateHandler } from './handler';
@@ -38,6 +44,7 @@ describe('kangur parent account create handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getKangurAiTutorContentMock.mockResolvedValue(DEFAULT_KANGUR_AI_TUTOR_CONTENT);
+    verifyKangurParentCaptchaMock.mockResolvedValue({ ok: true, required: false });
   });
 
   it('stages parent account creation and returns the verification response', async () => {
@@ -69,6 +76,10 @@ describe('kangur parent account create handler', () => {
       requestContext
     );
 
+    expect(verifyKangurParentCaptchaMock).toHaveBeenCalledWith({
+      token: undefined,
+      request: expect.any(NextRequest),
+    });
     expect(createKangurParentAccountMock).toHaveBeenCalledWith({
       email: 'parent@example.com',
       password: 'Strong123!',
@@ -132,5 +143,61 @@ describe('kangur parent account create handler', () => {
         verificationUrl: 'https://example.com/kangur/login?verifyEmailToken=verify-custom',
       },
     });
+  });
+
+  it('rejects when captcha is required but missing', async () => {
+    const requestContext = createRequestContext();
+    requestContext.body = {
+      email: 'parent@example.com',
+      password: 'Strong123!',
+      callbackUrl: '/tests?focus=division',
+    };
+
+    verifyKangurParentCaptchaMock.mockResolvedValue({
+      ok: false,
+      required: true,
+      reason: 'missing-token',
+    });
+
+    await expect(
+      postKangurParentAccountCreateHandler(
+        new NextRequest('http://localhost/api/kangur/auth/parent-account/create', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(requestContext.body),
+        }),
+        requestContext
+      )
+    ).rejects.toThrow('Potwierdź, że nie jesteś botem.');
+
+    expect(createKangurParentAccountMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects when captcha verification fails', async () => {
+    const requestContext = createRequestContext();
+    requestContext.body = {
+      email: 'parent@example.com',
+      password: 'Strong123!',
+      callbackUrl: '/tests?focus=division',
+    };
+
+    verifyKangurParentCaptchaMock.mockResolvedValue({
+      ok: false,
+      required: true,
+      reason: 'invalid-input-response',
+    });
+
+    await expect(
+      postKangurParentAccountCreateHandler(
+        new NextRequest('http://localhost/api/kangur/auth/parent-account/create', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(requestContext.body),
+        }),
+        requestContext
+      )
+    ).rejects.toThrow('Nie udało się zweryfikować Captcha. Spróbuj ponownie.');
+
+    expect(createKangurParentAccountMock).not.toHaveBeenCalled();
   });
 });

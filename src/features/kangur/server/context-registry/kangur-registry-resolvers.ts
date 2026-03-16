@@ -6,10 +6,10 @@ import type {
   KangurAssignmentSnapshot,
   KangurLesson,
   KangurLessonDocument,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 import type {
   KangurAiTutorConversationContext,
-} from '@/shared/contracts/kangur-ai-tutor';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type {
   ContextRuntimeDocument,
 } from '@/shared/contracts/ai-context-registry';

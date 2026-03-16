@@ -146,25 +146,64 @@ describe('kangur lesson settings', () => {
   it('parses parent verification settings with defaults', () => {
     expect(parseKangurParentVerificationEmailSettings(undefined)).toEqual({
       resendCooldownSeconds: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS,
+      notificationsEnabled: true,
+      notificationsDisabledUntil: null,
     });
     expect(parseKangurParentVerificationEmailSettings('null')).toEqual({
       resendCooldownSeconds: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS,
+      notificationsEnabled: true,
+      notificationsDisabledUntil: null,
     });
     expect(parseKangurParentVerificationEmailSettings(JSON.stringify({}))).toEqual({
       resendCooldownSeconds: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS,
+      notificationsEnabled: true,
+      notificationsDisabledUntil: null,
     });
   });
 
   it('parses and clamps parent verification cooldown values', () => {
     expect(
       parseKangurParentVerificationEmailSettings(JSON.stringify({ resendCooldownSeconds: 15 }))
-    ).toEqual({ resendCooldownSeconds: 15 });
+    ).toEqual({
+      resendCooldownSeconds: 15,
+      notificationsEnabled: true,
+      notificationsDisabledUntil: null,
+    });
     expect(
       parseKangurParentVerificationEmailSettings(JSON.stringify({ resendCooldownSeconds: -5 }))
-    ).toEqual({ resendCooldownSeconds: 1 });
+    ).toEqual({
+      resendCooldownSeconds: 1,
+      notificationsEnabled: true,
+      notificationsDisabledUntil: null,
+    });
     expect(
       parseKangurParentVerificationEmailSettings(JSON.stringify({ resendCooldownSeconds: 5000 }))
-    ).toEqual({ resendCooldownSeconds: 3600 });
+    ).toEqual({
+      resendCooldownSeconds: 3600,
+      notificationsEnabled: true,
+      notificationsDisabledUntil: null,
+    });
+  });
+
+  it('parses parent verification notification settings', () => {
+    expect(
+      parseKangurParentVerificationEmailSettings(
+        JSON.stringify({ notificationsEnabled: false })
+      )
+    ).toEqual({
+      resendCooldownSeconds: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS,
+      notificationsEnabled: false,
+      notificationsDisabledUntil: null,
+    });
+    expect(
+      parseKangurParentVerificationEmailSettings(
+        JSON.stringify({ notificationsDisabledUntil: '2026-03-20T10:00:00.000Z' })
+      )
+    ).toEqual({
+      resendCooldownSeconds: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS,
+      notificationsEnabled: true,
+      notificationsDisabledUntil: '2026-03-20T10:00:00.000Z',
+    });
   });
 
   it('appends missing geometry lessons to an existing legacy-like list', () => {

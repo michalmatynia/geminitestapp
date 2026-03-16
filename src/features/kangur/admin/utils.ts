@@ -1,9 +1,9 @@
-import type { KangurLessonInlineBlock } from '@/shared/contracts/kangur';
+import type { KangurLessonInlineBlock } from '@/features/kangur/shared/contracts/kangur';
 import type {
   KangurLesson,
   KangurLessonComponentId,
   KangurLessonPage,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 
 import {
   hasKangurLessonDocumentContent,
@@ -13,7 +13,7 @@ import { createKangurLessonDraft } from '../settings';
 import { TREE_MODE_STORAGE_KEY } from './constants';
 
 import type { LessonFormData, LessonTreeMode } from './types';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 export const resolvePageSectionOptions = (

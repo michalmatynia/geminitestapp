@@ -20,10 +20,10 @@ import {
 } from '@/features/kangur/theme-settings';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Alert, Button, FormSection, Input, useToast } from '@/shared/ui';
-import type { SettingsPanelField } from '@/shared/ui/templates/SettingsPanelBuilder';
-import { serializeSetting } from '@/shared/utils/settings-json';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { Alert, Button, FormSection, Input, useToast } from '@/features/kangur/shared/ui';
+import type { SettingsPanelField } from '@/features/kangur/shared/ui/templates/SettingsPanelBuilder';
+import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 type ThemeMode = 'daily' | 'dawn' | 'sunset' | 'nightly';

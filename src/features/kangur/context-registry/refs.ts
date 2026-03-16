@@ -1,5 +1,5 @@
 import type { ContextRegistryRef } from '@/shared/contracts/ai-context-registry';
-import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorConversationContext } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
 export const KANGUR_RUNTIME_PROVIDER_ID = 'kangur';
 export const KANGUR_RUNTIME_REF_PREFIX = 'runtime:kangur:';

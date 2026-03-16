@@ -3,8 +3,8 @@ import 'server-only';
 import type {
   KangurAiTutorConversationContext,
   KangurAiTutorFollowUpAction,
-} from '@/shared/contracts/kangur-ai-tutor';
-import type { KangurAiTutorNativeGuideEntry } from '@/shared/contracts/kangur-ai-tutor-native-guide';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorNativeGuideEntry } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 
 import { getKangurAiTutorNativeGuideStore } from './ai-tutor-native-guide-repository';
 import { getKangurPageContentEntry } from './page-content-repository';

@@ -8,7 +8,7 @@ import {
   toKangurTestSuiteNodeId,
 } from '@/features/kangur/admin/kangur-test-suites-master-tree';
 import { KANGUR_TEST_SUITE_SORT_ORDER_GAP } from '@/features/kangur/test-suites';
-import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
+import type { KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
 
 const makeSuite = (overrides: Partial<KangurTestSuite> = {}): KangurTestSuite => ({
   id: 's1',

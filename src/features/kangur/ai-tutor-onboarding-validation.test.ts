@@ -5,8 +5,8 @@ import {
   validateKangurAiTutorOnboardingContent,
   validateKangurAiTutorOnboardingStore,
 } from '@/features/kangur/ai-tutor-onboarding-validation';
-import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
-import { DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE } from '@/shared/contracts/kangur-ai-tutor-native-guide';
+import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import { DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 import { parseValidatorPatternLists } from '@/shared/contracts/validator';
 import { parsePromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
 

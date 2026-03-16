@@ -1,7 +1,7 @@
 import React from 'react';
 
-import type { KangurLessonGridItem } from '@/shared/contracts/kangur';
-import { cn } from '@/shared/utils';
+import type { KangurLessonGridItem } from '@/features/kangur/shared/contracts/kangur';
+import { cn } from '@/features/kangur/shared/utils';
 
 // Distinct pastel colours for up to 8 items (cycles if more).
 const ITEM_COLORS = [

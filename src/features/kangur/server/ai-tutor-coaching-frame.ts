@@ -4,7 +4,7 @@ import type {
   KangurAiTutorCoachingFrame,
   KangurAiTutorCoachingMode,
   KangurAiTutorConversationContext,
-} from '@/shared/contracts/kangur-ai-tutor';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
 // ---------------------------------------------------------------------------
 // Coaching mode instruction map

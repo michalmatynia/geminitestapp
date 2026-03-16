@@ -13,12 +13,11 @@ export function AdminAgentCreatorBreadcrumbs({
   parent,
   className,
 }: AdminAgentCreatorBreadcrumbsProps): React.JSX.Element {
+  const breadcrumbProps = { current, parent, className };
   return (
     <AdminSectionBreadcrumbs
       section={{ label: 'Agent Creator', href: '/admin/agentcreator' }}
-      parent={parent}
-      current={current}
-      className={className}
+      {...breadcrumbProps}
     />
   );
 }

@@ -1,11 +1,11 @@
 
-import { FormModal, Input } from '@/shared/ui';
-import { ConfirmModal } from '@/shared/ui/templates/modals';
+import { FormModal, Input } from '@/features/kangur/shared/ui';
+import { ConfirmModal } from '@/features/kangur/shared/ui/templates/modals';
 import { TestSuiteMetadataForm } from '../components/TestSuiteMetadataForm';
 import { useTestSuitesManager } from './test-suites-manager.context';
 import { useTestSuitesManagerLogic } from './test-suites-manager.logic';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import type { KangurTestGroup } from '@/shared/contracts/kangur-tests';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
+import type { KangurTestGroup } from '@/features/kangur/shared/contracts/kangur-tests';
 
 export function TestSuitesModals() {
   const settingsStore = useSettingsStore();

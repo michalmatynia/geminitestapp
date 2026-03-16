@@ -5,9 +5,9 @@ import { createKangurLessonBlockId } from '@/features/kangur/lesson-documents';
 import type {
   KangurLessonQuizBlock,
   KangurLessonQuizChoice,
-} from '@/shared/contracts/kangur';
-import { Button, FormField, Input, Textarea } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+} from '@/features/kangur/shared/contracts/kangur';
+import { Button, FormField, Input, Textarea } from '@/features/kangur/shared/ui';
+import { cn } from '@/features/kangur/shared/utils';
 
 export function QuizEditorCard(props: {
   block: KangurLessonQuizBlock;

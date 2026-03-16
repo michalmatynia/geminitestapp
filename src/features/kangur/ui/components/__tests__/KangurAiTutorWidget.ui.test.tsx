@@ -4,7 +4,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
+import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import { persistTutorVisibilityHidden } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
 
 import type {
   AnchorHTMLAttributes,
@@ -164,7 +165,7 @@ vi.mock('../KangurAiTutorMoodAvatar', () => ({
   ),
 }));
 
-vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
+vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => settingsStoreMock,
 }));
 
@@ -246,6 +247,7 @@ describe('KangurAiTutorWidget - UI', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.localStorage.clear();
+    persistTutorVisibilityHidden(false);
     settingsStoreMock.get.mockImplementation((key: string) =>
       key === 'kangur_narrator_settings_v1' ? JSON.stringify({ engine: 'client' }) : undefined
     );

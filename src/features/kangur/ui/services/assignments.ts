@@ -3,7 +3,7 @@ import type {
   KangurAssignmentPriority,
   KangurProgressState,
   KangurRouteAction,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 
 export type KangurAssignmentQuestMetric =
   | {

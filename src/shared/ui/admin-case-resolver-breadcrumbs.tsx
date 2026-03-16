@@ -13,12 +13,11 @@ export function AdminCaseResolverBreadcrumbs({
   parent,
   className,
 }: AdminCaseResolverBreadcrumbsProps): React.JSX.Element {
+  const breadcrumbProps = { current, parent, className };
   return (
     <AdminSectionBreadcrumbs
       section={{ label: 'Case Resolver', href: '/admin/case-resolver' }}
-      parent={parent}
-      current={current}
-      className={className}
+      {...breadcrumbProps}
     />
   );
 }

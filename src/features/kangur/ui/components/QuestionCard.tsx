@@ -7,15 +7,30 @@ import {
   KangurProgressBar,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
-import type { KangurQuestion, KangurQuestionChoice } from '@/features/kangur/ui/types';
-import { cn } from '@/shared/utils';
+import type { KangurQuestionChoice } from '@/features/kangur/ui/types';
+import { cn } from '@/features/kangur/shared/utils';
+
+export type QuestionCardQuestion = {
+  id?: string;
+  question: string;
+  choices: KangurQuestionChoice[];
+  answer?: KangurQuestionChoice;
+};
+
+export type QuestionCardServerResult = {
+  correct: boolean;
+  timedOut?: boolean;
+};
 
 export type QuestionCardProps = {
-  question: KangurQuestion;
+  question: QuestionCardQuestion;
   onAnswer: (correct: boolean) => void;
+  onAnswerChoice?: (choice: KangurQuestionChoice | null, correct?: boolean) => void;
   questionNumber: number;
   total: number;
   timeLimit: number;
+  answerMode?: 'client' | 'server';
+  serverResult?: QuestionCardServerResult | null;
 };
 
 type AnalogClockSmallProps = {
@@ -107,22 +122,31 @@ function AnalogClockSmall({
 export default function QuestionCard({
   question,
   onAnswer,
+  onAnswerChoice,
   questionNumber,
   total,
   timeLimit,
+  answerMode = 'client',
+  serverResult = null,
 }: QuestionCardProps): React.JSX.Element {
   const questionHeadingId = useId();
   const questionDescriptionId = useId();
   const choicesGroupId = useId();
+  const resultMessageId = useId();
   const [selected, setSelected] = useState<KangurQuestionChoice | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [timeLeft, setTimeLeft] = useState(timeLimit);
+  const isServerMode = answerMode === 'server';
+  const resolvedServerResult = isServerMode ? serverResult : null;
+  const isCheckingAnswer = isServerMode && showResult && !resolvedServerResult;
+
+  const questionKey = question.id ?? question.question;
 
   useEffect(() => {
     setSelected(null);
     setShowResult(false);
     setTimeLeft(timeLimit);
-  }, [question, timeLimit]);
+  }, [questionKey, timeLimit]);
 
   useEffect(() => {
     if (showResult) {
@@ -130,13 +154,17 @@ export default function QuestionCard({
     }
     if (timeLeft <= 0) {
       setShowResult(true);
-      const timeoutId = setTimeout(() => onAnswer(false), 900);
-      return () => clearTimeout(timeoutId);
+      onAnswerChoice?.(null, isServerMode ? undefined : false);
+      if (!isServerMode) {
+        const timeoutId = setTimeout(() => onAnswer(false), 900);
+        return () => clearTimeout(timeoutId);
+      }
+      return;
     }
 
     const timeoutId = setTimeout(() => setTimeLeft((remaining) => remaining - 1), 1000);
     return () => clearTimeout(timeoutId);
-  }, [onAnswer, showResult, timeLeft]);
+  }, [isServerMode, onAnswer, onAnswerChoice, showResult, timeLeft]);
 
   const handleChoice = (choice: KangurQuestionChoice): void => {
     if (showResult) {
@@ -144,8 +172,12 @@ export default function QuestionCard({
     }
     setSelected(choice);
     setShowResult(true);
-    const isCorrect = choice === question.answer;
-    setTimeout(() => onAnswer(isCorrect), 900);
+    const resolvedAnswer = question.answer;
+    const isCorrect = !isServerMode && resolvedAnswer !== undefined ? choice === resolvedAnswer : undefined;
+    onAnswerChoice?.(choice, isCorrect);
+    if (!isServerMode) {
+      setTimeout(() => onAnswer(Boolean(isCorrect)), 900);
+    }
   };
 
   const timerPercent = timeLimit > 0 ? (timeLeft / timeLimit) * 100 : 0;
@@ -161,10 +193,16 @@ export default function QuestionCard({
     normalizedClockMinutes
   ).padStart(2, '0')}.`;
 
+  const choicesDescriptionId = showResult
+    ? `${questionDescriptionId} ${resultMessageId}`
+    : questionDescriptionId;
+
   return (
     <motion.section
       aria-labelledby={questionHeadingId}
-      key={question.question}
+      aria-describedby={questionDescriptionId}
+      aria-busy={isCheckingAnswer}
+      key={questionKey}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
@@ -182,6 +220,7 @@ export default function QuestionCard({
         accent={timerAccent}
         aria-label='Pozostały czas'
         aria-valuetext={`${timeLeft} sekund pozostało`}
+        aria-live='off'
         data-testid='question-card-timer-bar'
         size='lg'
         value={timerPercent}
@@ -220,7 +259,7 @@ export default function QuestionCard({
           <>
             <h3
               id={questionHeadingId}
-              className='mb-2 text-3xl font-extrabold [color:var(--kangur-page-text)] sm:text-5xl'
+              className='mb-2 break-words text-2xl font-extrabold [color:var(--kangur-page-text)] sm:text-4xl md:text-5xl'
             >
               {question.question}
             </h3>
@@ -232,11 +271,12 @@ export default function QuestionCard({
       </KangurGlassPanel>
 
       <div
-        aria-describedby={questionDescriptionId}
+        aria-describedby={choicesDescriptionId}
         aria-labelledby={questionHeadingId}
         className='grid w-full grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4'
         id={choicesGroupId}
         role='group'
+        aria-label='Odpowiedzi'
       >
         {question.choices.map((choice) => {
           let accent: KangurAccent = 'indigo';
@@ -244,31 +284,67 @@ export default function QuestionCard({
           let state: 'default' | 'muted' = 'default';
           let cardClass = '[color:var(--kangur-page-text)]';
           if (showResult) {
-            if (choice === question.answer) {
-              accent = 'emerald';
-              emphasis = 'accent';
-              cardClass = KANGUR_ACCENT_STYLES.emerald.activeText;
-            } else if (choice === selected) {
-              accent = 'rose';
-              emphasis = 'accent';
-              cardClass = KANGUR_ACCENT_STYLES.rose.activeText;
+            if (isServerMode) {
+              if (resolvedServerResult) {
+                if (choice === selected) {
+                  accent = resolvedServerResult.correct ? 'emerald' : 'rose';
+                  emphasis = 'accent';
+                  cardClass = resolvedServerResult.correct
+                    ? KANGUR_ACCENT_STYLES.emerald.activeText
+                    : KANGUR_ACCENT_STYLES.rose.activeText;
+                } else {
+                  accent = 'slate';
+                  state = 'muted';
+                  cardClass = 'opacity-60';
+                }
+              } else if (choice === selected) {
+                accent = 'amber';
+                emphasis = 'accent';
+                cardClass = KANGUR_ACCENT_STYLES.amber.activeText;
+              } else {
+                accent = 'slate';
+                state = 'muted';
+                cardClass = 'opacity-60';
+              }
             } else {
-              accent = 'slate';
-              state = 'muted';
-              cardClass = 'opacity-60';
+              if (choice === question.answer) {
+                accent = 'emerald';
+                emphasis = 'accent';
+                cardClass = KANGUR_ACCENT_STYLES.emerald.activeText;
+              } else if (choice === selected) {
+                accent = 'rose';
+                emphasis = 'accent';
+                cardClass = KANGUR_ACCENT_STYLES.rose.activeText;
+              } else {
+                accent = 'slate';
+                state = 'muted';
+                cardClass = 'opacity-60';
+              }
             }
           }
           return (
             <KangurAnswerChoiceCard
               accent={accent}
               aria-disabled={showResult}
-              aria-label={`Odpowiedź ${String(choice)}`}
+              aria-label={`Odpowiedź ${String(choice)}${
+                showResult && resolvedServerResult
+                  ? resolvedServerResult.correct && selected === choice
+                    ? ', poprawna'
+                    : resolvedServerResult.correct && selected !== choice
+                      ? ', nie wybrano'
+                      : resolvedServerResult.correct === false && selected === choice
+                        ? ', niepoprawna'
+                        : ', nie wybrano'
+                  : ''
+              }`}
+              aria-pressed={selected === choice}
               buttonClassName={cn(
                 'flex items-center justify-center px-4 py-4 text-center text-xl font-bold shadow sm:text-2xl',
                 cardClass,
                 showResult ? 'cursor-default' : 'cursor-pointer'
               )}
               data-testid={`question-card-choice-${String(choice)}`}
+              disabled={showResult}
               emphasis={emphasis}
               hoverScale={1.05}
               interactive={!showResult}
@@ -289,17 +365,39 @@ export default function QuestionCard({
           <motion.div
             aria-atomic='true'
             aria-live='assertive'
+            id={resultMessageId}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             role='status'
-            className={`text-2xl font-bold ${selected === question.answer ? 'text-green-500' : 'text-red-500'}`}
+            className={cn(
+              'text-2xl font-bold',
+              isServerMode
+                ? resolvedServerResult
+                  ? resolvedServerResult.correct
+                    ? 'text-green-500'
+                    : resolvedServerResult.timedOut
+                      ? 'text-amber-500'
+                      : 'text-red-500'
+                  : 'text-amber-500'
+                : selected === question.answer
+                  ? 'text-green-500'
+                  : 'text-red-500'
+            )}
           >
-            {selected === question.answer
-              ? '🎉 Dobrze!'
-              : timeLeft <= 0
-                ? `⏰ Czas minął! Odpowiedź: ${question.answer}`
-                : `❌ Odpowiedź to ${question.answer}`}
+            {isServerMode
+              ? resolvedServerResult
+                ? resolvedServerResult.correct
+                  ? '🎉 Dobrze!'
+                  : resolvedServerResult.timedOut
+                    ? '⏰ Czas minął!'
+                    : '❌ Nie tym razem.'
+                : 'Sprawdzamy odpowiedź…'
+              : selected === question.answer
+                ? '🎉 Dobrze!'
+                : timeLeft <= 0
+                  ? `⏰ Czas minął! Odpowiedź: ${question.answer}`
+                  : `❌ Odpowiedź to ${question.answer}`}
           </motion.div>
         )}
       </AnimatePresence>

@@ -3,7 +3,7 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
 import { KANGUR_BASE_PATH, normalizeKangurBasePath } from '@/features/kangur/config/routing';
-import { internalError } from '@/shared/errors/app-error';
+import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 type KangurRoutingContextValue = {
   pageKey?: string | null;

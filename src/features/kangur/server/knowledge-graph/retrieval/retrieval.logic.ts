@@ -5,7 +5,7 @@ import {
   WEBSITE_HELP_PATTERNS,
 } from './retrieval.contracts';
 import { normalizeText, tokenizeQuery } from './retrieval.utils';
-import { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
+import { KangurAiTutorConversationContext } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
 export const buildKnowledgeGraphQueryIntent = (value: string): KangurKnowledgeGraphQueryIntent => {
   const normalized = normalizeText(value);

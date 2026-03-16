@@ -1,9 +1,9 @@
 import { Plus } from 'lucide-react';
 import React from 'react';
 
-import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
-import { Badge, Button } from '@/shared/ui';
-import type { KangurTestSuiteHealth } from '../test-suite-health';
+import type { KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
+import { Badge, Button } from '@/features/kangur/shared/ui';
+import type { KangurTestSuiteHealth } from '../test-currentSuite-health';
 
 interface KangurQuestionsHeaderProps {
   currentSuite: KangurTestSuite;
@@ -29,29 +29,32 @@ interface KangurQuestionsHeaderProps {
   onBack: () => void;
 }
 
-export function KangurQuestionsHeader({
-  currentSuite,
-  questionCount,
-  readyCount,
-  richQuestionCount,
-  needsReviewCount,
-  needsFixCount,
-  illustratedCount,
-  reviewQueueCount,
-  draftCount,
-  readyToPublishCount,
-  publishedCount,
-  currentSuiteHealth,
-  canPublishAndGoLive,
-  canPublishReady,
-  isSaving,
-  onPublishAndGoLive,
-  onPublishReady,
-  onGoLive,
-  onTakeOffline,
-  onAddQuestion,
-  onBack,
-}: KangurQuestionsHeaderProps): React.JSX.Element {
+export function KangurQuestionsHeader(
+  props: KangurQuestionsHeaderProps
+): React.JSX.Element {
+  const {
+    currentSuite,
+    questionCount,
+    readyCount,
+    richQuestionCount,
+    needsReviewCount,
+    needsFixCount,
+    illustratedCount,
+    reviewQueueCount,
+    draftCount,
+    readyToPublishCount,
+    publishedCount,
+    currentSuiteHealth,
+    canPublishAndGoLive,
+    canPublishReady,
+    isSaving,
+    onPublishAndGoLive,
+    onPublishReady,
+    onGoLive,
+    onTakeOffline,
+    onAddQuestion,
+    onBack,
+  } = props;
   return (
     <div className='overflow-hidden rounded-[28px] border border-border/60 bg-[linear-gradient(135deg,rgba(9,16,32,0.96),rgba(10,30,55,0.88))] p-5 sm:p-6 shadow-[0_24px_80px_-44px_rgba(14,165,233,0.42)]'>
       <div className='flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between'>
@@ -209,7 +212,7 @@ export function KangurQuestionsHeader({
             onClick={onTakeOffline}
             disabled={isSaving || !currentSuiteHealth.isLive}
           >
-            Take suite offline
+            Take currentSuite offline
           </Button>
           <Button
             type='button'

@@ -60,7 +60,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLearnerActivity', () => ({
   useKangurLearnerActivityStatus: useKangurLearnerActivityStatusMock,
 }));
 
-vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
+vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => settingsStoreMock,
 }));
 

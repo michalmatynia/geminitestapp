@@ -1,6 +1,6 @@
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
-import { formatKangurAiTutorTemplate } from '@/shared/contracts/kangur-ai-tutor-content';
+import { formatKangurAiTutorTemplate } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import { useKangurAiTutorPanelBodyContext } from './KangurAiTutorPanelBody.context';
 
 import type { JSX } from 'react';

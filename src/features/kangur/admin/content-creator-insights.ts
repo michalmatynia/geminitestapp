@@ -5,8 +5,8 @@ import type {
   KangurLessonDocumentStore,
   KangurLessonPage,
   KangurLessonRootBlock,
-} from '@/shared/contracts/kangur';
-import type { KangurTestQuestionStore } from '@/shared/contracts/kangur-tests';
+} from '@/features/kangur/shared/contracts/kangur';
+import type { KangurTestQuestionStore } from '@/features/kangur/shared/contracts/kangur-tests';
 
 import { countLessonsRequiringLegacyImport } from './utils';
 import { hasKangurLessonDocumentContent, resolveKangurLessonDocumentPages } from '../lesson-documents';

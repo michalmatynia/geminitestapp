@@ -1,6 +1,17 @@
-import type { KangurQuestionChoice, KangurProgressState } from '@/shared/contracts/kangur';
-export type { KangurExamQuestion, KangurQuestionChoice } from '@/shared/contracts/kangur';
-export type { KangurLessonMasteryEntry, KangurProgressState } from '@/shared/contracts/kangur';
+import type {
+  KangurDifficulty,
+  KangurOperation,
+} from '@/features/kangur/shared/math-types';
+import type { KangurProgressState } from '@/features/kangur/shared/contracts/kangur';
+export type { KangurExamQuestion, KangurQuestionChoice } from '@/features/kangur/shared/contracts/kangur';
+export type { KangurLessonMasteryEntry, KangurProgressState } from '@/features/kangur/shared/contracts/kangur';
+export type {
+  KangurDifficulty,
+  KangurDifficultyConfig,
+  KangurDifficultyConfigEntry,
+  KangurOperation,
+  KangurQuestion,
+} from '@/features/kangur/shared/math-types';
 
 export type KangurGameScreen =
   | 'home'
@@ -16,8 +27,6 @@ export type KangurGameScreen =
   | 'playing'
   | 'result';
 
-export type KangurDifficulty = 'easy' | 'medium' | 'hard';
-
 export type KangurDifficultyOption = {
   displayLabel: string;
   id: KangurDifficulty;
@@ -26,33 +35,6 @@ export type KangurDifficultyOption = {
   selected: boolean;
   select: () => void;
 };
-
-export type KangurOperation =
-  | 'addition'
-  | 'subtraction'
-  | 'multiplication'
-  | 'division'
-  | 'decimals'
-  | 'powers'
-  | 'roots'
-  | 'clock'
-  | 'mixed';
-
-export type KangurQuestion = {
-  question: string;
-  answer: KangurQuestionChoice;
-  choices: KangurQuestionChoice[];
-  category?: KangurOperation;
-};
-
-export type KangurDifficultyConfigEntry = {
-  label: string;
-  emoji: string;
-  range: number;
-  timeLimit: number;
-};
-
-export type KangurDifficultyConfig = Record<KangurDifficulty, KangurDifficultyConfigEntry>;
 
 export type KangurXpRewards = {
   correct_answer: number;

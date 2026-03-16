@@ -11,7 +11,7 @@ import {
   useKangurAiTutorWidgetState,
 } from './KangurAiTutorWidget.state';
 
-import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
+import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 
 import type { ReactNode } from 'react';
 

@@ -41,7 +41,7 @@ vi.mock('../../KangurLessonNarrationPanel', () => ({
   KangurLessonNarrationPanel: () => <div data-testid='lesson-narration-panel' />,
 }));
 
-vi.mock('@/shared/ui/templates/modals', () => ({
+vi.mock('@/features/kangur/shared/ui/templates/modals', () => ({
   ConfirmModal: ({
     isOpen,
     title,
@@ -67,7 +67,7 @@ vi.mock('@/shared/ui/templates/modals', () => ({
 }));
 
 import { LessonContentEditorDialog } from '../LessonContentEditorDialog';
-import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kangur';
+import type { KangurLesson, KangurLessonDocument } from '@/features/kangur/shared/contracts/kangur';
 import { buildKangurLessonDocumentNarrationSignature } from '@/features/kangur/tts/script';
 
 const lesson: KangurLesson = {

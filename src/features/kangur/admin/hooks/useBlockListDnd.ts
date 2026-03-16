@@ -4,7 +4,7 @@ import {
   getDragValue,
   resolveVerticalDropPosition,
   setDragData,
-} from '@/shared/utils/drag-drop';
+} from '@/features/kangur/shared/utils/drag-drop';
 
 const DND_KEY = 'application/x-kangur-block-id';
 

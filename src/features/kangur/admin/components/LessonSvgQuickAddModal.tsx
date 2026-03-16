@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { useLessonSvgQuickAddRuntimeContext } from '@/features/kangur/admin/context/LessonSvgQuickAddRuntimeContext';
-import { FormModal } from '@/shared/ui';
+import { FormModal } from '@/features/kangur/shared/ui';
 
 import { SvgCodeEditor, extractSvgViewBox } from './SvgCodeEditor';
 

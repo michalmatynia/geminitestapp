@@ -15,8 +15,8 @@ vi.mock('./kangur-learner-session', () => ({
   readKangurLearnerSession: vi.fn(),
 }));
 
-import { createDefaultKangurAiTutorLearnerMood } from '@/shared/contracts/kangur-ai-tutor-mood';
-import { kangurAuthUserSchema } from '@/shared/contracts/kangur';
+import { createDefaultKangurAiTutorLearnerMood } from '@/features/kangur/shared/contracts/kangur-ai-tutor-mood';
+import { kangurAuthUserSchema } from '@/features/kangur/shared/contracts/kangur';
 
 import { toKangurAuthUser, type KangurParentActor } from './kangur-actor';
 

@@ -1,18 +1,18 @@
-import { DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE } from '@/shared/contracts/kangur-ai-tutor-native-guide';
+import { DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 import {
   kangurPageContentStoreSchema,
   type KangurPageContentEntry,
   type KangurPageContentFragment,
   type KangurPageContentPageKey,
   type KangurPageContentStore,
-} from '@/shared/contracts/kangur-page-content';
+} from '@/features/kangur/shared/contracts/kangur-page-content';
 
 import {
   KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO,
   type KangurAiTutorPageCoverageEntry,
 } from './ai-tutor-page-coverage-manifest';
 import { getKangurHomeHref, getKangurPageSlug } from './config/routing';
-import type { KangurLessonComponentId } from '@/shared/contracts/kangur';
+import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 import { KANGUR_LESSON_COMPONENT_OPTIONS, KANGUR_LESSON_LIBRARY } from './settings';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 

@@ -12,9 +12,9 @@ import {
 import React from 'react';
 
 import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree';
-import type { KangurLesson } from '@/shared/contracts/kangur';
-import { Badge, TreeRow } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
+import { Badge, TreeRow } from '@/features/kangur/shared/ui';
+import { cn } from '@/features/kangur/shared/utils';
 
 import { fromKangurLessonNodeId } from '../kangur-lessons-master-tree';
 import { readLessonGroupCount } from '../utils';

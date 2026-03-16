@@ -12,7 +12,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { buildKangurLessonNarrationScriptFromText } from '@/features/kangur/tts/script';
 import { KANGUR_TTS_DEFAULT_VOICE } from '@/features/kangur/tts/contracts';
-import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
+import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 
 import { KangurAiTutorPanelChrome } from './KangurAiTutorPanelChrome';
 import { KangurAiTutorWidgetStateProvider } from './KangurAiTutorWidget.state';

@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, type Transition } from 'framer-motion';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 import { KangurAiTutorDrawingCanvas } from './KangurAiTutorDrawingCanvas';
 

@@ -8,7 +8,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { kangurKeys } from '@/shared/lib/query-key-exports';
-import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/shared/contracts/kangur-knowledge-graph';
+import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/features/kangur/shared/contracts/kangur-knowledge-graph';
 
 const { apiGetMock } = vi.hoisted(() => ({
   apiGetMock: vi.fn(),

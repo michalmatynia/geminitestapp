@@ -1,5 +1,3 @@
-'use client';
-
 import { type JSX } from 'react';
 
 import {
@@ -12,9 +10,9 @@ import {
   MetadataItem,
   StatusBadge,
   Textarea,
-} from '@/shared/ui';
+} from '@/features/kangur/shared/ui';
 import { KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO } from '@/features/kangur/ai-tutor-page-coverage-manifest';
-import type { KangurAiTutorPromptMode, KangurAiTutorSurface } from '@/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorPromptMode, KangurAiTutorSurface } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
 import { useKnowledgeGraphObservability } from './KnowledgeGraphObservabilityContext';
 import {

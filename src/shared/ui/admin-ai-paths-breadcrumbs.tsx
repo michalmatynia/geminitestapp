@@ -13,12 +13,11 @@ export function AdminAiPathsBreadcrumbs({
   parent,
   className,
 }: AdminAiPathsBreadcrumbsProps): React.JSX.Element {
+  const breadcrumbProps = { current, parent, className };
   return (
     <AdminSectionBreadcrumbs
       section={{ label: 'AI Paths', href: '/admin/ai-paths' }}
-      parent={parent}
-      current={current}
-      className={className}
+      {...breadcrumbProps}
     />
   );
 }

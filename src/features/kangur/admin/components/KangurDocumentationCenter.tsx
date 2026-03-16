@@ -6,8 +6,8 @@ import {
   KANGUR_DOC_CATALOG,
   KANGUR_DOCUMENTATION_LIBRARY,
 } from '@/shared/lib/documentation/catalogs/kangur';
-import { Badge, Card, CompactEmptyState, ListPanel, PanelStats, SearchInput } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Badge, Card, CompactEmptyState, ListPanel, PanelStats, SearchInput } from '@/features/kangur/shared/ui';
+import { cn } from '@/features/kangur/shared/utils';
 
 type GroupedTooltipDocs = {
   section: string;

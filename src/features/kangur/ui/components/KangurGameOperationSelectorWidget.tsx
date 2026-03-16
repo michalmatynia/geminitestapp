@@ -1,12 +1,15 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';
+import KangurGameSetupMomentumCard from '@/features/kangur/ui/components/KangurGameSetupMomentumCard';
 import { KangurGrajmyWordmark } from '@/features/kangur/ui/components/KangurGrajmyWordmark';
 import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
 import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
 import OperationSelector from '@/features/kangur/ui/components/OperationSelector';
+import { KangurTreningWordmark } from '@/features/kangur/ui/components/KangurTreningWordmark';
+import TrainingSetup from '@/features/kangur/ui/components/TrainingSetup';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import {
   KangurButton,
@@ -18,6 +21,7 @@ import {
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import type { KangurDailyQuestState } from '@/features/kangur/ui/services/daily-quests';
+import { getRecommendedTrainingSetup } from '@/features/kangur/ui/services/game-setup-recommendations';
 import {
   getProgressAverageAccuracy,
   getProgressBadgeTrackSummaries,
@@ -29,8 +33,9 @@ import type {
   KangurGameScreen,
   KangurOperation,
   KangurProgressState,
+  KangurTrainingSelection,
 } from '@/features/kangur/ui/types';
-import type { KangurLessonComponentId, KangurRouteAction } from '@/shared/contracts/kangur';
+import type { KangurLessonComponentId, KangurRouteAction } from '@/features/kangur/shared/contracts/kangur';
 
 const QUICK_PRACTICE_OPTIONS = [
   {
@@ -77,7 +82,6 @@ type KangurRecommendedSelectorScreen = Extract<
   | 'subtraction_quiz'
   | 'division_quiz'
   | 'multiplication_quiz'
-  | 'training'
 >;
 
 type KangurOperationSelectorRecommendationTarget =
@@ -85,6 +89,9 @@ type KangurOperationSelectorRecommendationTarget =
       kind: 'operation';
       difficulty: KangurDifficulty;
       operation: KangurOperation;
+    }
+  | {
+      kind: 'training';
     }
   | {
       kind: 'screen';
@@ -97,9 +104,27 @@ type KangurOperationSelectorRecommendation = {
   description: string;
   label: string;
   recommendedOperation: KangurOperation | null;
-  recommendedScreen: Exclude<KangurRecommendedSelectorScreen, 'training'> | null;
+  recommendedScreen: KangurRecommendedSelectorScreen | null;
   target: KangurOperationSelectorRecommendationTarget;
   title: string;
+};
+
+const hasMatchingTrainingSelection = (
+  selection: KangurTrainingSelection,
+  suggestedSelection: KangurTrainingSelection | null
+): boolean => {
+  if (!suggestedSelection) {
+    return false;
+  }
+
+  const selectedCategories = [...selection.categories].sort();
+  const suggestedCategories = [...suggestedSelection.categories].sort();
+  return (
+    selection.count === suggestedSelection.count &&
+    selection.difficulty === suggestedSelection.difficulty &&
+    selectedCategories.length === suggestedCategories.length &&
+    selectedCategories.every((category, index) => category === suggestedCategories[index])
+  );
 };
 
 const resolveRecommendationDifficulty = (accuracy: number): KangurDifficulty => {
@@ -141,7 +166,7 @@ const resolveLessonRecommendationTarget = (
     case 'geometry_perimeter':
       return { kind: 'screen', screen: 'geometry_quiz' };
     default:
-      return { kind: 'screen', screen: 'training' };
+      return { kind: 'training' };
   }
 };
 
@@ -180,11 +205,14 @@ const resolveActionRecommendationTarget = (
   if (action.page === 'Game') {
     const quickStart = action.query?.['quickStart'];
     if (quickStart === 'training') {
-      return { kind: 'screen', screen: 'training' };
+      return { kind: 'training' };
     }
     if (quickStart === 'operation') {
       const requestedOperation = action.query?.['operation'] ?? null;
       const difficulty = action.query?.['difficulty'];
+      if (requestedOperation === 'mixed') {
+        return { kind: 'training' };
+      }
       if (
         requestedOperation &&
         [
@@ -196,7 +224,6 @@ const resolveActionRecommendationTarget = (
           'powers',
           'roots',
           'clock',
-          'mixed',
         ].includes(requestedOperation)
       ) {
         return {
@@ -233,6 +260,10 @@ const getRecommendationActionLabel = (
     roots: 'Zagraj w pierwiastki',
   };
 
+  if (target.kind === 'training') {
+    return 'Uruchom trening mieszany';
+  }
+
   if (target.kind === 'screen') {
     if (target.screen === 'calendar_quiz') {
       return 'Ćwicz kalendarz';
@@ -261,8 +292,7 @@ const finalizeRecommendation = (
   ...draft,
   actionLabel: getRecommendationActionLabel(draft.target),
   recommendedOperation: draft.target.kind === 'operation' ? draft.target.operation : null,
-  recommendedScreen:
-    draft.target.kind === 'screen' && draft.target.screen !== 'training' ? draft.target.screen : null,
+  recommendedScreen: draft.target.kind === 'screen' ? draft.target.screen : null,
 });
 
 const getQuestRecommendation = (
@@ -338,7 +368,7 @@ const getTrackRecommendation = (
     resolveActivityRecommendationTarget(
       topActivity?.key,
       topActivity?.averageAccuracy ?? getProgressAverageAccuracy(progress)
-    ) ?? { kind: 'screen', screen: 'training' as const };
+    ) ?? ({ kind: 'training' } as const);
 
   return finalizeRecommendation({
     accent: 'violet',
@@ -364,7 +394,7 @@ const getGuidedRecommendation = (
     resolveActivityRecommendationTarget(
       topActivity?.key,
       topActivity?.averageAccuracy ?? getProgressAverageAccuracy(progress)
-    ) ?? { kind: 'screen', screen: 'training' as const };
+    ) ?? ({ kind: 'training' } as const);
 
   return finalizeRecommendation({
     accent: 'sky',
@@ -387,7 +417,7 @@ const getFallbackRecommendation = (
 
   const target =
     resolveActivityRecommendationTarget(topActivity.key, topActivity.averageAccuracy) ??
-    ({ kind: 'screen', screen: 'training' } as const);
+    ({ kind: 'training' } as const);
 
   return finalizeRecommendation({
     accent: 'indigo',
@@ -414,23 +444,50 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
     basePath,
     handleHome,
     handleSelectOperation,
+    handleStartTraining,
     practiceAssignmentsByOperation,
     progress,
     screen,
     setScreen,
   } = useKangurGameRuntime();
+  const trainingSectionRef = useRef<HTMLElement | null>(null);
   const dailyQuest = useMemo(() => getCurrentKangurDailyQuest(progress), [progress]);
   const recommendation = useMemo(
     () => getOperationSelectorRecommendation(progress, dailyQuest),
     [dailyQuest, progress]
   );
+  const suggestedTraining = useMemo(() => getRecommendedTrainingSetup(progress), [progress]);
+  const mixedPracticeAssignment =
+    practiceAssignmentsByOperation.mixed ??
+    (activePracticeAssignment?.target.operation === 'mixed' ? activePracticeAssignment : null);
+  const operationPracticeAssignment =
+    activePracticeAssignment && activePracticeAssignment.target.operation !== 'mixed'
+      ? activePracticeAssignment
+      : null;
 
-  if (screen !== 'operation') {
+  if (screen !== 'operation' && screen !== 'training') {
     return null;
   }
 
+  useEffect(() => {
+    if (screen !== 'training') {
+      return;
+    }
+
+    trainingSectionRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+  }, [screen]);
+
   const handleRecommendationSelect = (): void => {
     if (!recommendation) {
+      return;
+    }
+
+    if (recommendation.target.kind === 'training') {
+      if (screen === 'training') {
+        trainingSectionRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+      } else {
+        setScreen('training');
+      }
       return;
     }
 
@@ -466,10 +523,10 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
           />
         }
       />
-      {activePracticeAssignment ? (
+      {operationPracticeAssignment ? (
         <div className='flex w-full justify-center px-4'>
           <KangurPracticeAssignmentBanner
-            assignment={activePracticeAssignment}
+            assignment={operationPracticeAssignment}
             basePath={basePath}
             mode='queue'
           />
@@ -592,6 +649,58 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
             );
           })}
         </div>
+      </section>
+      <section
+        aria-labelledby='kangur-game-training-heading'
+        className='w-full max-w-3xl space-y-4'
+        ref={trainingSectionRef}
+      >
+        <KangurPageIntroCard
+          className='w-full'
+          description='Dobierz poziom, kategorie i liczbę pytań do jednej sesji.'
+          headingAs='h3'
+          headingSize='md'
+          onBack={handleHome}
+          showBackButton={false}
+          testId='kangur-game-training-top-section'
+          title='Trening mieszany'
+          titleId='kangur-game-training-heading'
+          visualTitle={
+            <KangurTreningWordmark
+              className='mx-auto'
+              data-testid='kangur-training-heading-art'
+              idPrefix='kangur-game-training-heading'
+            />
+          }
+        />
+        {mixedPracticeAssignment ? (
+          <div className='flex w-full justify-center px-4'>
+            <KangurPracticeAssignmentBanner
+              assignment={mixedPracticeAssignment}
+              basePath={basePath}
+              mode='active'
+            />
+          </div>
+        ) : null}
+        <KangurGameSetupMomentumCard mode='training' progress={progress} />
+        <TrainingSetup
+          onStart={(selection) =>
+            handleStartTraining(selection, {
+              recommendation: hasMatchingTrainingSelection(selection, suggestedTraining.selection)
+                ? {
+                    description: suggestedTraining.description,
+                    label: suggestedTraining.label,
+                    source: 'training_setup',
+                    title: suggestedTraining.title,
+                  }
+                : null,
+            })
+          }
+          suggestedSelection={suggestedTraining.selection}
+          suggestionDescription={suggestedTraining.description}
+          suggestionLabel={suggestedTraining.label}
+          suggestionTitle={suggestedTraining.title}
+        />
       </section>
     </div>
   );

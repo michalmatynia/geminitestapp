@@ -2,8 +2,8 @@
 
 import React from 'react';
 
-import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
-import { Badge, Button, SelectSimple, Textarea } from '@/shared/ui';
+import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
+import { Badge, Button, SelectSimple, Textarea } from '@/features/kangur/shared/ui';
 
 
 import { hasIllustration } from '../test-questions';

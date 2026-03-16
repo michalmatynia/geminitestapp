@@ -1,4 +1,4 @@
-import type { KangurLessonActivityBlock, KangurLessonActivityId } from '@/shared/contracts/kangur';
+import type { KangurLessonActivityBlock, KangurLessonActivityId } from '@/features/kangur/shared/contracts/kangur';
 
 type KangurLessonActivityDefinition = {
   id: KangurLessonActivityId;

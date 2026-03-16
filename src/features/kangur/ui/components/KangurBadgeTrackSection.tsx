@@ -2,7 +2,7 @@ import React, { type ReactNode } from 'react';
 import KangurBadgeTrackGrid from '@/features/kangur/ui/components/KangurBadgeTrackGrid';
 import { KangurSectionEyebrow } from '@/features/kangur/ui/design/primitives';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 // ── Badge Track Section Sub-components ───────────────────────────────────────
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { KangurLesson } from '@/shared/contracts/kangur';
+import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 
 import {
   buildKangurLessonCatalogMasterNodes,

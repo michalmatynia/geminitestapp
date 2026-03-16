@@ -11,7 +11,7 @@ import {
   type KangurLesson,
   type KangurLessonComponentId,
   type KangurLessonContentMode,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 
 export { KANGUR_LESSONS_SETTING_KEY, KANGUR_LESSON_DOCUMENTS_SETTING_KEY };
@@ -23,10 +23,13 @@ export const KANGUR_PARENT_VERIFICATION_SETTINGS_KEY = 'kangur_parent_verificati
 export const KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS = 60;
 export const KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS =
   KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS * 1000;
+export const KANGUR_PARENT_VERIFICATION_DEFAULT_NOTIFICATIONS_ENABLED = true;
 
 export type KangurNarratorEngine = 'server' | 'client';
 export type KangurParentVerificationEmailSettings = {
   resendCooldownSeconds: number;
+  notificationsEnabled: boolean;
+  notificationsDisabledUntil: string | null;
 };
 
 export type KangurNarratorSettings = {
@@ -300,6 +303,35 @@ const resolveKangurParentVerificationResendCooldownSeconds = (
   );
 };
 
+const resolveKangurParentVerificationNotificationsEnabled = (
+  value: unknown,
+  fallback: boolean
+): boolean => (typeof value === 'boolean' ? value : fallback);
+
+const resolveKangurParentVerificationNotificationsDisabledUntil = (
+  value: unknown
+): string | null => {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const parsed = new Date(trimmed);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return parsed.toISOString();
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return parsed.toISOString();
+  }
+
+  if (value instanceof Date && Number.isFinite(value.getTime())) {
+    return value.toISOString();
+  }
+
+  return null;
+};
+
 const resolveKangurLessonComponentId = (value: unknown): KangurLessonComponentId | null => {
   if (typeof value !== 'string') return null;
   const normalized = value.trim().toLowerCase();
@@ -428,6 +460,8 @@ export const normalizeKangurNarratorSettings = (value: unknown): KangurNarratorS
 
 export const createDefaultKangurParentVerificationEmailSettings = (): KangurParentVerificationEmailSettings => ({
   resendCooldownSeconds: KANGUR_PARENT_VERIFICATION_COOLDOWN_FALLBACK_SECONDS,
+  notificationsEnabled: KANGUR_PARENT_VERIFICATION_DEFAULT_NOTIFICATIONS_ENABLED,
+  notificationsDisabledUntil: null,
 });
 
 export const normalizeKangurParentVerificationEmailSettings = (
@@ -442,7 +476,28 @@ export const normalizeKangurParentVerificationEmailSettings = (
       value['resendCooldownSeconds'],
       KANGUR_PARENT_VERIFICATION_COOLDOWN_FALLBACK_SECONDS
     ),
+    notificationsEnabled: resolveKangurParentVerificationNotificationsEnabled(
+      value['notificationsEnabled'],
+      KANGUR_PARENT_VERIFICATION_DEFAULT_NOTIFICATIONS_ENABLED
+    ),
+    notificationsDisabledUntil: resolveKangurParentVerificationNotificationsDisabledUntil(
+      value['notificationsDisabledUntil']
+    ),
   };
+};
+
+export const isKangurParentVerificationNotificationsSuppressed = (
+  settings: KangurParentVerificationEmailSettings,
+  now: number = Date.now()
+): boolean => {
+  if (!settings.notificationsEnabled) {
+    return true;
+  }
+  if (!settings.notificationsDisabledUntil) {
+    return false;
+  }
+  const untilMs = Date.parse(settings.notificationsDisabledUntil);
+  return Number.isFinite(untilMs) && untilMs > now;
 };
 
 export const normalizeKangurLessons = (value: unknown): KangurLesson[] => {

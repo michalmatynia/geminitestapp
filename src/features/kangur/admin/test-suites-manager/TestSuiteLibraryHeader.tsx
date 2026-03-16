@@ -1,10 +1,10 @@
 
 import { AlertTriangle, ClipboardList, Folders, ListOrdered, Plus, Sparkles, WandSparkles } from 'lucide-react';
-import { Button } from '@/shared/ui';
-import { cn } from '@/shared/utils/ui-utils';
+import { Button } from '@/features/kangur/shared/ui';
+import { cn } from '@/features/kangur/shared/utils/ui-utils';
 import { useTestSuitesManager } from './test-suites-manager.context';
 import { useTestSuitesManagerLogic } from './test-suites-manager.logic';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 
 export function TestSuiteLibraryHeader() {
   const settingsStore = useSettingsStore();

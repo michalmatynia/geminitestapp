@@ -1,10 +1,8 @@
-'use client';
-
 import { ArrowUpRightIcon } from 'lucide-react';
 import Link from 'next/link';
 import { type JSX, type ReactNode } from 'react';
 
-import { Button, Card, MetadataItem, StatusBadge } from '@/shared/ui';
+import { Button, Card, MetadataItem, StatusBadge } from '@/features/kangur/shared/ui';
 import type { KangurObservabilitySummary, KangurRouteHealth } from '@/shared/contracts';
 
 import { useObservabilitySummaryContext } from '../../AdminKangurObservabilityPage';

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE } from '@/shared/contracts/kangur-ai-tutor-native-guide';
+import { DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 
 const { getKangurAiTutorNativeGuideStoreMock, getKangurPageContentEntryMock } = vi.hoisted(() => ({
   getKangurAiTutorNativeGuideStoreMock: vi.fn(),

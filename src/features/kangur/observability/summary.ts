@@ -23,11 +23,11 @@ import type {
   KangurRouteMetrics,
   SystemLogMetricsDto as SystemLogMetrics,
 } from '@/shared/contracts';
-import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/shared/contracts/kangur-knowledge-graph';
+import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/features/kangur/shared/contracts/kangur-knowledge-graph';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { getSystemLogMetrics, listSystemLogs } from '@/shared/lib/observability/system-logger';
 import { SYSTEM_LOG_SLOW_REQUEST_THRESHOLD_MS } from '@/shared/lib/observability/workers/system-log-alerts/config';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 type AnalyticsEventMongoDoc = {
   _id?: { toString(): string } | string;

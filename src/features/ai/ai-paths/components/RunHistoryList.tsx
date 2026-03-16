@@ -34,26 +34,27 @@ interface RunHistoryListProps {
   onRetryRunNode: (id: string, nodeId: string) => void;
 }
 
-export function RunHistoryList({
-  runs,
-  emptyFilterLabel = 'No runs yet',
-  compareMode,
-  primaryRunId,
-  secondaryRunId,
-  onSetPrimaryRunId,
-  onSetSecondaryRunId,
-  onOpenRunDetail,
-  onExpandedRunHistory,
-  expandedRunHistory,
-  runHistorySelection,
-  onSetRunHistorySelection,
-  onResumeRun,
-  onHandoffRun,
-  handoffStateByRunId,
-  onCancelRun,
-  onRequeueDeadLetter,
-  onRetryRunNode,
-}: RunHistoryListProps): React.JSX.Element {
+export function RunHistoryList(props: RunHistoryListProps): React.JSX.Element {
+  const {
+    runs,
+    emptyFilterLabel = 'No runs yet',
+    compareMode,
+    primaryRunId,
+    secondaryRunId,
+    onSetPrimaryRunId,
+    onSetSecondaryRunId,
+    onOpenRunDetail,
+    onExpandedRunHistory,
+    expandedRunHistory,
+    runHistorySelection,
+    onSetRunHistorySelection,
+    onResumeRun,
+    onHandoffRun,
+    handoffStateByRunId,
+    onCancelRun,
+    onRequeueDeadLetter,
+    onRetryRunNode,
+  } = props;
   if (runs.length === 0) {
     return (
       <CompactEmptyState

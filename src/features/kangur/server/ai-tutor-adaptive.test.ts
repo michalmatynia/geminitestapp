@@ -4,7 +4,7 @@ import {
   createDefaultKangurProgressState,
   type KangurAssignment,
   type KangurScore,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 import type { ContextRegistryResolutionBundle } from '@/shared/contracts/ai-context-registry';
 
 const {
@@ -25,7 +25,7 @@ vi.mock('@/features/kangur/server', () => ({
   getKangurAssignmentRepository: getKangurAssignmentRepositoryMock,
 }));
 
-vi.mock('@/shared/utils/observability/error-system', () => ({
+vi.mock('@/features/kangur/shared/utils/observability/error-system', () => ({
   ErrorSystem: {
     captureException: captureExceptionMock,
   },

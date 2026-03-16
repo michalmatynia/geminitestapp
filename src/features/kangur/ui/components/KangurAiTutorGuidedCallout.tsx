@@ -5,8 +5,8 @@ import { resolveKangurPageContentFragment } from '@/features/kangur/page-content
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
-import { KANGUR_PAGE_CONTENT_COLLECTION } from '@/shared/contracts/kangur-page-content';
-import { cn } from '@/shared/utils';
+import { KANGUR_PAGE_CONTENT_COLLECTION } from '@/features/kangur/shared/contracts/kangur-page-content';
+import { cn } from '@/features/kangur/shared/utils';
 
 import {
   KangurAiTutorChromeBadge,
@@ -20,7 +20,7 @@ import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state'
 
 import type { TutorHorizontalSide } from './KangurAiTutorWidget.shared';
 import type { GuidedTutorTarget } from './KangurAiTutorWidget.types';
-import type { KangurAiTutorRuntimeMessage } from '@/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorRuntimeMessage } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type { CSSProperties, JSX } from 'react';
 
 type ReducedMotionTransitions = {

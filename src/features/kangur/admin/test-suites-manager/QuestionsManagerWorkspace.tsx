@@ -1,13 +1,13 @@
 
-import { Button, FormModal } from '@/shared/ui';
+import { Button, FormModal } from '@/features/kangur/shared/ui';
 import { KangurAdminContentShell } from '../components/KangurAdminContentShell';
 import { KangurQuestionsManagerRuntimeProvider } from '../context/KangurQuestionsManagerRuntimeContext';
 import { KangurQuestionsManagerPanel } from '../KangurQuestionsManagerPanel';
 import { useTestSuitesManager } from './test-suites-manager.context';
 import { useTestSuitesManagerLogic } from './test-suites-manager.logic';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { resolveKangurTestSuiteGroupTitle } from '../../test-suites';
-import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
+import type { KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
 
 export function QuestionsManagerWorkspace({ standalone }: { standalone: boolean }) {
   const settingsStore = useSettingsStore();

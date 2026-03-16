@@ -6,8 +6,8 @@ import {
   buildKangurTestContextRuntimeDocument,
   resolveKangurAiTutorRuntimeDocuments,
 } from '@/features/kangur/server/context-registry';
-import type { KangurLesson } from '@/shared/contracts/kangur';
-import type { KangurTestQuestion, KangurTestSuite } from '@/shared/contracts/kangur-tests';
+import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurTestQuestion, KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
 
 const makeSuite = (overrides: Partial<KangurTestSuite> = {}): KangurTestSuite => ({
   id: 'suite-1',

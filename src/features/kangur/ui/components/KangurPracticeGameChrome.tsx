@@ -13,7 +13,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 type KangurPracticeGameStageProps = React.HTMLAttributes<HTMLDivElement>;
 

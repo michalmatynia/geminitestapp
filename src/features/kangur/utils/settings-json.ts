@@ -1,1 +1,1 @@
-export { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
+export { parseJsonSetting, serializeSetting } from '@/features/kangur/shared/utils/settings-json';

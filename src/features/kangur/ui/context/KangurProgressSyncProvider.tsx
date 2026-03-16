@@ -23,8 +23,8 @@ import {
 import {
   createDefaultKangurProgressState,
   type KangurProgressState,
-} from '@/shared/contracts/kangur';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+} from '@/features/kangur/shared/contracts/kangur';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const kangurPlatform = getKangurPlatform();

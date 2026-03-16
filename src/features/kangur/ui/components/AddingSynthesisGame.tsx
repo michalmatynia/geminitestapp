@@ -1,6 +1,7 @@
 import { Gauge, Music2, RefreshCw, Sparkles, Target, Zap } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
 import {
@@ -32,7 +33,7 @@ import {
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 type AddingSynthesisGameProps = {
   onFinish: () => void;
@@ -152,7 +153,6 @@ export default function AddingSynthesisGame({
   };
 
   const noteStartedAtRef = useRef<number | null>(null);
-  const noteIntervalRef = useRef<number | null>(null);
   const noteDeadlineRef = useRef<number | null>(null);
   const noteAdvanceRef = useRef<number | null>(null);
   const sessionStartedAtRef = useRef(Date.now());
@@ -171,11 +171,6 @@ export default function AddingSynthesisGame({
   const upcomingNotes = currentNote ? notes.slice(currentIndex + 1, currentIndex + 4) : [];
 
   const stopCurrentNoteTimers = (): void => {
-    if (noteIntervalRef.current !== null) {
-      window.clearInterval(noteIntervalRef.current);
-      noteIntervalRef.current = null;
-    }
-
     if (noteDeadlineRef.current !== null) {
       window.clearTimeout(noteDeadlineRef.current);
       noteDeadlineRef.current = null;
@@ -324,16 +319,6 @@ export default function AddingSynthesisGame({
     noteStartedAtRef.current = Date.now();
     setNoteElapsedMs(0);
 
-    noteIntervalRef.current = window.setInterval(() => {
-      if (!noteStartedAtRef.current) {
-        return;
-      }
-
-      setNoteElapsedMs(
-        Math.min(Date.now() - noteStartedAtRef.current, ADDING_SYNTHESIS_NOTE_DURATION_MS)
-      );
-    }, 40);
-
     noteDeadlineRef.current = window.setTimeout(() => {
       resolveChoice(null);
     }, ADDING_SYNTHESIS_NOTE_DURATION_MS);
@@ -342,6 +327,16 @@ export default function AddingSynthesisGame({
       stopCurrentNoteTimers();
     };
   }, [currentIndex, currentNote, feedback, phase]);
+
+  useInterval(() => {
+    if (!noteStartedAtRef.current) {
+      return;
+    }
+
+    setNoteElapsedMs(
+      Math.min(Date.now() - noteStartedAtRef.current, ADDING_SYNTHESIS_NOTE_DURATION_MS)
+    );
+  }, phase === 'playing' && currentNote && !feedback ? 40 : null);
 
   useEffect(() => {
     if (phase !== 'playing' || !currentNote || feedback) {

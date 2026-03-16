@@ -3,9 +3,9 @@
 import { createContext, type ReactNode, useContext } from 'react';
 
 import { KangurAdminMenuToggle } from '@/features/kangur/admin/KangurAdminMenuToggle';
-import { Breadcrumbs, ListPanel, SectionHeader } from '@/shared/ui';
-import type { BreadcrumbItem } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Breadcrumbs, ListPanel, SectionHeader } from '@/features/kangur/shared/ui';
+import type { BreadcrumbItem } from '@/features/kangur/shared/ui';
+import { cn } from '@/features/kangur/shared/utils';
 
 type KangurAdminRefresh = {
   onRefresh: () => void;

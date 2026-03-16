@@ -4,7 +4,7 @@ import { ActivityTypes } from '@/shared/constants/observability';
 import type {
   KangurLearnerSessionEntry,
   KangurLearnerSessionHistory,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 import type { ActivityLog } from '@/shared/contracts/system';
 import { getActivityRepository } from '@/shared/lib/observability/activity-repository';
 

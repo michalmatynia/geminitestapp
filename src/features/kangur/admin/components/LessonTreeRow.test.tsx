@@ -6,7 +6,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/features/kangur/shared/ui', () => ({
   Badge: ({
     children,
     className,
@@ -19,7 +19,7 @@ vi.mock('@/shared/ui', () => ({
 
 import { LessonTreeRow } from './LessonTreeRow';
 import { toKangurLessonNodeId } from '../kangur-lessons-master-tree';
-import type { KangurLesson } from '@/shared/contracts/kangur';
+import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 
 const lesson: KangurLesson = {
   id: 'lesson-1',

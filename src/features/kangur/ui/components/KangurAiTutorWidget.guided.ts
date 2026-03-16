@@ -14,8 +14,8 @@ import {
 import {
   formatKangurAiTutorTemplate,
   type KangurAiTutorContent,
-} from '@/shared/contracts/kangur-ai-tutor-content';
-import { getMotionSafeScrollBehavior } from '@/shared/utils';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import { getMotionSafeScrollBehavior } from '@/features/kangur/shared/utils';
 
 import {
   getPageRect,

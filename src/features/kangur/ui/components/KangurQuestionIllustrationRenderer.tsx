@@ -1,8 +1,8 @@
 import React from 'react';
 
 import { KangurMediaFrame, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
-import type { KangurQuestionIllustration } from '@/shared/contracts/kangur-tests';
-import { cn, sanitizeSvg } from '@/shared/utils';
+import type { KangurQuestionIllustration } from '@/features/kangur/shared/contracts/kangur-tests';
+import { cn, sanitizeSvg } from '@/features/kangur/shared/utils';
 
 /**
  * Renders a KangurQuestionIllustration (none | single | panels).

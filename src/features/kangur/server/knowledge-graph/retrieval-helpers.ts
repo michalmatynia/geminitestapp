@@ -1,6 +1,6 @@
 import type { ContextRuntimeDocument } from '@/shared/contracts/ai-context-registry';
-import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
-import type { KangurAiTutorNativeGuideEntry } from '@/shared/contracts/kangur-ai-tutor-native-guide';
+import type { KangurAiTutorContent } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import type { KangurAiTutorNativeGuideEntry } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 
 export type KnowledgeGraphRelation = {
   kind: string | null;

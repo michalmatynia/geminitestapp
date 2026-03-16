@@ -11,21 +11,23 @@ import {
   kangurLearnerProfilesSchema,
   type KangurLearnerStatus,
   type KangurLearnerUpdateInput,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 import {
   createDefaultKangurAiTutorLearnerMood,
   type KangurAiTutorLearnerMood,
-} from '@/shared/contracts/kangur-ai-tutor-mood';
-import { conflictError, notFoundError } from '@/shared/errors/app-error';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor-mood';
+import { conflictError, notFoundError } from '@/features/kangur/shared/errors/app-error';
 import { readStoredSettingValue, upsertStoredSettingValue } from '@/shared/lib/ai-brain/server';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
+import { parseJsonSetting, serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 
 import type { Filter } from 'mongodb';
 
 const KANGUR_LEARNERS_SETTINGS_KEY = 'kangur_learners.v1';
 const KANGUR_LEARNERS_COLLECTION = 'kangur_learners';
+const DEFAULT_DUEL_SEARCH_CONTAINS_CAP = 3;
+const MAX_DUEL_SEARCH_CONTAINS_CAP = 20;
 
 type StoredKangurLearnerProfile = KangurLearnerProfile & {
   passwordHash: string;
@@ -47,6 +49,19 @@ type MongoKangurLearnerDocument = {
 };
 
 const normalizeLoginName = (value: string): string => value.trim().toLowerCase();
+const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const resolveDuelSearchContainsCap = (): number => {
+  const raw = process.env['KANGUR_DUEL_SEARCH_CONTAINS_CAP'];
+  if (!raw) {
+    return DEFAULT_DUEL_SEARCH_CONTAINS_CAP;
+  }
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed)) {
+    return DEFAULT_DUEL_SEARCH_CONTAINS_CAP;
+  }
+  return Math.max(0, Math.min(MAX_DUEL_SEARCH_CONTAINS_CAP, parsed));
+};
+const DUEL_SEARCH_CONTAINS_CAP = resolveDuelSearchContainsCap();
 
 const normalizeLegacyUserKey = (value: string | null | undefined): string | null => {
   if (typeof value !== 'string') return null;
@@ -76,6 +91,22 @@ const toPublicLearnerProfile = (stored: StoredKangurLearnerProfile): KangurLearn
     age: stored.age,
   };
 };
+
+const toStoredLearnerFromMongo = (
+  doc: MongoKangurLearnerDocument
+): StoredKangurLearnerProfile => ({
+  id: doc.id ?? doc._id,
+  ownerUserId: doc.ownerUserId,
+  displayName: doc.displayName,
+  ...(doc.age !== undefined ? { age: doc.age } : {}),
+  loginName: normalizeLoginName(doc.loginName),
+  status: doc.status,
+  legacyUserKey: normalizeLegacyUserKey(doc.legacyUserKey),
+  aiTutor: doc.aiTutor ?? createDefaultKangurAiTutorLearnerMood(),
+  createdAt: doc.createdAt,
+  updatedAt: doc.updatedAt,
+  passwordHash: doc.passwordHash,
+});
 
 const sortPublicLearners = (profiles: KangurLearnerProfile[]): KangurLearnerProfile[] =>
   [...profiles].sort((left, right) => left.displayName.localeCompare(right.displayName, 'pl'));
@@ -357,6 +388,109 @@ export const listKangurLearnersByOwner = async (
   return sortPublicLearners(
     mergeStoredLearners(mongoProfiles, legacyOwnedProfiles).map(toPublicLearnerProfile)
   );
+};
+
+export const searchKangurLearners = async (
+  query: string,
+  options?: { limit?: number; excludeLearnerId?: string }
+): Promise<KangurLearnerProfile[]> => {
+  const trimmed = query.trim();
+  if (trimmed.length === 0) {
+    return [];
+  }
+
+  const limit =
+    typeof options?.limit === 'number' && Number.isFinite(options.limit)
+      ? Math.max(1, Math.min(20, Math.floor(options.limit)))
+      : 8;
+  const excludeLearnerId = options?.excludeLearnerId ?? null;
+  const normalizedLogin = normalizeLoginName(trimmed);
+  const normalizedDisplay = trimmed.toLowerCase();
+  const maxContainsMatches = DUEL_SEARCH_CONTAINS_CAP;
+  const rankMatch = (profile: KangurLearnerProfile): number => {
+    const loginName = normalizeLoginName(profile.loginName);
+    const displayName = profile.displayName.toLowerCase();
+    if (loginName === normalizedLogin) return 0;
+    if (loginName.startsWith(normalizedLogin)) return 1;
+    if (displayName.startsWith(normalizedDisplay)) return 2;
+    if (loginName.includes(normalizedLogin)) return 3;
+    if (displayName.includes(normalizedDisplay)) return 4;
+    return 5;
+  };
+  const applyContainsCap = (profiles: KangurLearnerProfile[]): KangurLearnerProfile[] => {
+    const capped: KangurLearnerProfile[] = [];
+    let containsCount = 0;
+    for (const profile of profiles) {
+      const rank = rankMatch(profile);
+      const isContains = rank === 3 || rank === 4;
+      if (isContains) {
+        if (containsCount >= maxContainsMatches) {
+          continue;
+        }
+        containsCount += 1;
+      }
+      capped.push(profile);
+      if (capped.length >= limit) {
+        break;
+      }
+    }
+    return capped;
+  };
+  const matchesQuery = (profile: KangurLearnerProfile): boolean => {
+    if (excludeLearnerId && profile.id === excludeLearnerId) {
+      return false;
+    }
+    if (profile.status !== 'active') {
+      return false;
+    }
+    const loginMatch =
+      profile.loginName.startsWith(normalizedLogin) ||
+      profile.loginName.includes(normalizedLogin);
+    const displayName = profile.displayName.toLowerCase();
+    const displayMatch =
+      displayName.startsWith(normalizedDisplay) || displayName.includes(normalizedDisplay);
+    return loginMatch || displayMatch;
+  };
+
+  const sortMatches = (profiles: KangurLearnerProfile[]): KangurLearnerProfile[] =>
+    [...profiles].sort((left, right) => {
+      const rankDiff = rankMatch(left) - rankMatch(right);
+      if (rankDiff !== 0) {
+        return rankDiff;
+      }
+      return left.displayName.localeCompare(right.displayName, 'pl');
+    });
+
+  if (!(await shouldUseMongoLearnerCollection())) {
+    const profiles = (await readLegacyStoredLearners())
+      .map(toPublicLearnerProfile)
+      .filter(matchesQuery);
+    return applyContainsCap(sortMatches(profiles));
+  }
+
+  const collection = await getMongoLearnerCollection();
+  const loginRegex = new RegExp(`${escapeRegex(normalizedLogin)}`, 'i');
+  const displayRegex = new RegExp(`${escapeRegex(trimmed)}`, 'i');
+  const rows = await collection
+    .find({
+      status: 'active',
+      $or: [{ loginName: loginRegex }, { displayName: displayRegex }],
+    })
+    .limit(limit * 6)
+    .toArray();
+
+  const byId = new Map<string, KangurLearnerProfile>();
+  rows
+    .map(toStoredLearnerFromMongo)
+    .map(toPublicLearnerProfile)
+    .filter(matchesQuery)
+    .forEach((profile) => {
+      if (!byId.has(profile.id)) {
+        byId.set(profile.id, profile);
+      }
+    });
+
+  return applyContainsCap(sortMatches([...byId.values()]));
 };
 
 export const getKangurLearnerById = async (

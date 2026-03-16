@@ -10,8 +10,8 @@ import type {
   KangurAiTutorRuntimeMessage as TutorRenderedMessage,
   KangurAiTutorUsageSummary,
   KangurAiTutorWebsiteHelpTarget,
-} from '@/shared/contracts/kangur-ai-tutor';
-import { internalError } from '@/shared/errors/app-error';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 import type { ActiveTutorFocus, TutorQuickAction } from './KangurAiTutorWidget.shared';
 import type { TutorSurface } from './KangurAiTutorWidget.types';

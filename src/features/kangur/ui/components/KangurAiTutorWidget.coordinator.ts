@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import type { KangurAiTutorContextValue } from '@/features/kangur/ui/context/KangurAiTutorRuntime.shared';
 import type { KangurAuthContextValue } from '@/features/kangur/ui/context/KangurAuthContext';
-import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
-import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
+import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
+import type { KangurAiTutorContent } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 
 import { useKangurAiTutorAvatarDrag } from './KangurAiTutorWidget.avatar-drag';
 import { useKangurAiTutorAvatarShellActions } from './KangurAiTutorWidget.avatar-shell';

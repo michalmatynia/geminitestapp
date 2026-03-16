@@ -5,6 +5,7 @@ import { signOut } from 'next-auth/react';
 import {
   createContext,
   Suspense,
+  useCallback,
   useEffect,
   useId,
   useMemo,
@@ -12,10 +13,10 @@ import {
   useState,
   useContext,
   type FormEvent,
-  type CSSProperties,
   type JSX,
 } from 'react';
 
+import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import {
   clearStoredActiveLearnerId,
@@ -28,7 +29,6 @@ import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthCo
 import {
   KangurButton,
   KangurGlassPanel,
-  KangurGradientHeading,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
@@ -39,9 +39,9 @@ import {
   parseKangurAuthMode,
   parseKangurParentAccountActionResponse,
   parseKangurParentEmailVerifyResponse,
-} from '@/shared/contracts/kangur-auth';
+} from '@/features/kangur/shared/contracts/kangur-auth';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 type KangurLoginPageProps = {
@@ -49,6 +49,7 @@ type KangurLoginPageProps = {
   defaultCallbackUrl: string;
   onClose?: () => void;
   parentAuthMode?: KangurAuthMode;
+  showParentAuthModeTabs?: boolean;
 };
 
 const LOGIN_ROUTE_ACKNOWLEDGE_MS = 110;
@@ -69,6 +70,64 @@ type KangurLoginKind = 'parent' | 'student' | 'unknown';
 const KANGUR_LEARNER_LOGIN_PATTERN = /^[a-zA-Z0-9]+$/;
 const KANGUR_PARENT_AUTH_MODE_PARAM = 'authMode';
 const KangurLoginPagePropsContext = createContext<KangurLoginPageProps | null>(null);
+const KANGUR_PARENT_CAPTCHA_SITE_KEY =
+  process.env['NEXT_PUBLIC_KANGUR_PARENT_CAPTCHA_SITE_KEY']?.trim() ?? '';
+const TURNSTILE_SCRIPT_ID = 'kangur-turnstile-script';
+const TURNSTILE_SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+let turnstileScriptPromise: Promise<void> | null = null;
+
+type TurnstileRenderOptions = {
+  sitekey: string;
+  callback?: (token: string) => void;
+  'error-callback'?: () => void;
+  'expired-callback'?: () => void;
+  theme?: 'light' | 'dark' | 'auto';
+};
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (container: HTMLElement, options: TurnstileRenderOptions) => string;
+      reset: (widgetId?: string) => void;
+      remove: (widgetId: string) => void;
+    };
+  }
+}
+
+const ensureTurnstileScript = (): Promise<void> => {
+  if (typeof window === 'undefined') {
+    return Promise.resolve();
+  }
+  if (window.turnstile) {
+    return Promise.resolve();
+  }
+  if (turnstileScriptPromise) {
+    return turnstileScriptPromise;
+  }
+
+  turnstileScriptPromise = new Promise<void>((resolve, reject) => {
+    const existing = document.getElementById(TURNSTILE_SCRIPT_ID) as HTMLScriptElement | null;
+    if (existing) {
+      existing.addEventListener('load', () => resolve(undefined));
+      existing.addEventListener('error', () => reject(new Error('Turnstile script failed.')));
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.id = TURNSTILE_SCRIPT_ID;
+    script.async = true;
+    script.defer = true;
+    script.src = TURNSTILE_SCRIPT_SRC;
+    script.onload = () => resolve(undefined);
+    script.onerror = () => reject(new Error('Turnstile script failed.'));
+    document.head.appendChild(script);
+  }).catch((error) => {
+    turnstileScriptPromise = null;
+    throw error;
+  });
+
+  return turnstileScriptPromise;
+};
 
 const useKangurLoginPageProps = (): KangurLoginPageProps => {
   const value = useContext(KangurLoginPagePropsContext);
@@ -295,6 +354,7 @@ function KangurLoginPageContent(): JSX.Element {
     defaultCallbackUrl,
     onClose,
     parentAuthMode: parentAuthModeProp,
+    showParentAuthModeTabs = true,
   } = useKangurLoginPageProps();
   const router = useRouter();
   const routeNavigator = useKangurRouteNavigator();
@@ -343,47 +403,16 @@ function KangurLoginPageContent(): JSX.Element {
   );
   const [verificationDebugUrl, setVerificationDebugUrl] = useState<string | null>(null);
   const [resendCountdownNowMs, setResendCountdownNowMs] = useState(() => Date.now());
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaError, setCaptchaError] = useState<string | null>(null);
+  const [captchaStatus, setCaptchaStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(
+    'idle'
+  );
   const processedVerificationTokenRef = useRef<string | null>(null);
+  const captchaContainerRef = useRef<HTMLDivElement | null>(null);
+  const captchaWidgetIdRef = useRef<string | null>(null);
   const loginKind = resolveKangurLoginKind(identifier);
   const isParentFlowVisible = true;
-  const audienceLabel =
-    parentAuthMode === 'create-account'
-      ? 'Nowe konto rodzica'
-      : loginKind === 'student'
-        ? 'Uczeń'
-        : loginKind === 'parent'
-          ? 'Rodzic'
-          : 'Rodzic lub uczeń';
-  const audienceBadgeClassName =
-    'inline-flex max-w-full items-center justify-center self-start rounded-full border px-3.5 py-2 text-center text-[10px] font-black uppercase leading-tight tracking-[0.14em] shadow-[0_14px_30px_-26px_rgba(15,23,42,0.22)] sm:self-auto sm:px-4 sm:text-[11px] sm:tracking-[0.18em]';
-  const audienceBadgeStyle: CSSProperties =
-    parentAuthMode === 'create-account'
-      ? {
-          background:
-            'color-mix(in srgb, var(--kangur-soft-card-background) 86%, rgba(245,158,11,0.22))',
-          borderColor: 'rgba(251,191,36,0.52)',
-          color: '#9a5418',
-        }
-      : loginKind === 'student'
-        ? {
-            background:
-              'color-mix(in srgb, var(--kangur-soft-card-background) 86%, rgba(56,189,248,0.2))',
-            borderColor: 'rgba(125,211,252,0.5)',
-            color: '#0369a1',
-          }
-        : loginKind === 'parent'
-          ? {
-              background:
-                'color-mix(in srgb, var(--kangur-soft-card-background) 86%, rgba(99,102,241,0.2))',
-              borderColor: 'rgba(165,180,252,0.5)',
-              color: '#4338ca',
-            }
-          : {
-              background:
-                'color-mix(in srgb, var(--kangur-soft-card-background) 86%, rgba(245,158,11,0.18))',
-              borderColor: 'rgba(251,191,36,0.48)',
-              color: '#9a5418',
-            };
   const introDescription =
     parentAuthMode === 'create-account'
       ? 'Zakładasz konto rodzica emailem i hasłem. Po potwierdzeniu adresu zalogujesz się tak samo za każdym razem.'
@@ -391,17 +420,24 @@ function KangurLoginPageContent(): JSX.Element {
         ? 'Uczeń loguje się nickiem i hasłem. Rodzic może wejść emailem i hasłem.'
         : loginFormContent?.summary ??
           'Rodzic loguje się emailem i hasłem. Uczeń loguje się nickiem i hasłem.';
-  const identifierFieldLabel =
-    isParentFlowVisible && parentAuthMode === 'create-account'
-      ? 'Email rodzica'
-      : identifierFieldContent?.title ?? 'Email rodzica albo nick ucznia';
-  const identifierFieldHelpText =
-    parentAuthMode === 'create-account'
-      ? 'Użyj adresu e-mail rodzica, na który wyślemy link potwierdzający konto.'
-      : identifierFieldContent?.summary ??
-        'Wpisz email rodzica lub login ucznia, aby przejść do właściwego trybu logowania.';
-  const passwordFieldLabel =
-    isParentFlowVisible && parentAuthMode === 'create-account' ? 'Ustaw hasło rodzica' : 'Hasło';
+  const isCreateAccountMode = isParentFlowVisible && parentAuthMode === 'create-account';
+  const isCaptchaConfigured = KANGUR_PARENT_CAPTCHA_SITE_KEY.length > 0;
+  const isCaptchaRequired = isCreateAccountMode && isCaptchaConfigured;
+  const showIdentifierLabel = false;
+  const showIdentifierHelp = false;
+  const identifierFieldLabel = isCreateAccountMode
+    ? null
+    : identifierFieldContent?.title ?? 'Email rodzica albo nick ucznia';
+  const identifierFieldAriaLabel = isCreateAccountMode
+    ? 'Email'
+    : identifierFieldLabel ?? 'Email lub nick';
+  const identifierFieldHelpText = isCreateAccountMode
+    ? null
+    : identifierFieldContent?.summary ??
+      'Wpisz email rodzica lub login ucznia, aby przejść do właściwego trybu logowania.';
+  const showPasswordLabel = false;
+  const passwordFieldLabel = 'Hasło';
+  const passwordFieldAriaLabel = passwordFieldLabel;
   const visibleNotice = createdParentEmail ? null : notice;
   const createAccountConfirmationDetail =
     notice?.trim() || 'Kliknij link potwierdzający w e-mailu. Potem zalogujesz się tym samym e-mailem i hasłem.';
@@ -416,12 +452,17 @@ function KangurLoginPageContent(): JSX.Element {
   const resendButtonLabel = isResendCoolingDown
     ? `Wyślij e-mail ponownie za ${formatRetryAfterLabel(resendRetryAfterMs)}`
     : 'Wyślij e-mail ponownie';
+  const isParentSubmitDisabled =
+    !isHydrated || isSubmitting || (isCaptchaRequired && !captchaToken);
   const inputClassName =
     'kangur-text-field rounded-[24px] px-4 py-3 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.76)] outline-none transition focus:border-amber-200 focus:ring-2 focus:ring-amber-200/70 disabled:cursor-not-allowed disabled:opacity-60';
   const formDescribedBy = [visibleNotice ? noticeId : null, error ? errorId : null]
     .filter(Boolean)
     .join(' ');
-  const identifierInputDescribedBy = [identifierHelpId, formDescribedBy || null]
+  const identifierInputDescribedBy = [
+    showIdentifierHelp && identifierFieldHelpText ? identifierHelpId : null,
+    formDescribedBy || null,
+  ]
     .filter(Boolean)
     .join(' ');
   const identifierAnchorLabel =
@@ -444,6 +485,79 @@ function KangurLoginPageContent(): JSX.Element {
         : loginKind === 'parent'
           ? 'auth:login:parent'
           : 'auth:login:sign-in';
+
+  const resetCaptcha = useCallback((options?: { keepError?: boolean }): void => {
+    setCaptchaToken(null);
+    if (!options?.keepError) {
+      setCaptchaError(null);
+    }
+    setCaptchaStatus('idle');
+    if (typeof window !== 'undefined' && window.turnstile && captchaWidgetIdRef.current) {
+      window.turnstile.reset(captchaWidgetIdRef.current);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isCaptchaRequired) {
+      if (typeof window !== 'undefined' && window.turnstile && captchaWidgetIdRef.current) {
+        window.turnstile.remove(captchaWidgetIdRef.current);
+      }
+      captchaWidgetIdRef.current = null;
+      setCaptchaToken(null);
+      setCaptchaError(null);
+      setCaptchaStatus('idle');
+      return;
+    }
+
+    if (!captchaContainerRef.current || captchaWidgetIdRef.current) {
+      return;
+    }
+
+    let cancelled = false;
+    setCaptchaStatus('loading');
+
+    void ensureTurnstileScript()
+      .then(() => {
+        if (cancelled) return;
+        if (!window.turnstile || !captchaContainerRef.current) {
+          setCaptchaStatus('error');
+          setCaptchaError('Captcha jest chwilowo niedostępna. Spróbuj ponownie.');
+          return;
+        }
+
+        const widgetId = window.turnstile.render(captchaContainerRef.current, {
+          sitekey: KANGUR_PARENT_CAPTCHA_SITE_KEY,
+          callback: (token) => {
+            setCaptchaToken(token);
+            setCaptchaError(null);
+            setCaptchaStatus('ready');
+          },
+          'expired-callback': () => {
+            setCaptchaToken(null);
+            setCaptchaError('Captcha wygasła. Zatwierdź ponownie.');
+            setCaptchaStatus('ready');
+          },
+          'error-callback': () => {
+            setCaptchaToken(null);
+            setCaptchaError('Nie udało się zweryfikować Captcha. Spróbuj ponownie.');
+            setCaptchaStatus('error');
+          },
+          theme: 'light',
+        });
+
+        captchaWidgetIdRef.current = widgetId;
+        setCaptchaStatus('ready');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setCaptchaStatus('error');
+        setCaptchaError('Captcha jest chwilowo niedostępna. Spróbuj ponownie.');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isCaptchaRequired]);
 
   useKangurAiTutorSessionSync({
     learnerId: auth?.user?.activeLearner?.id ?? null,
@@ -493,20 +607,18 @@ function KangurLoginPageContent(): JSX.Element {
     setParentAuthMode(requestedParentAuthMode);
   }, [requestedParentAuthMode]);
 
+  const shouldTickResend =
+    typeof resendAvailableAtMs === 'number' && resendAvailableAtMs > Date.now();
+
   useEffect(() => {
-    if (!(typeof resendAvailableAtMs === 'number' && resendAvailableAtMs > Date.now())) {
-      return;
-    }
-
-    setResendCountdownNowMs(Date.now());
-    const intervalId = window.setInterval(() => {
+    if (shouldTickResend) {
       setResendCountdownNowMs(Date.now());
-    }, 1_000);
+    }
+  }, [shouldTickResend]);
 
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, [resendAvailableAtMs]);
+  useInterval(() => {
+    setResendCountdownNowMs(Date.now());
+  }, shouldTickResend ? 1000 : null);
 
   useEffect(() => {
     if (typeof resendAvailableAtMs === 'number' && resendAvailableAtMs <= resendCountdownNowMs) {
@@ -515,7 +627,7 @@ function KangurLoginPageContent(): JSX.Element {
   }, [resendAvailableAtMs, resendCountdownNowMs]);
 
   useEffect(() => {
-    if (loginKind !== 'student') {
+    if (loginKind !== 'student' || parentAuthMode === 'create-account') {
       return;
     }
 
@@ -524,7 +636,7 @@ function KangurLoginPageContent(): JSX.Element {
     setNotice(null);
     setVerificationDebugUrl(null);
     setResendAvailableAtMs(null);
-  }, [loginKind]);
+  }, [loginKind, parentAuthMode]);
 
   const clearLearnerSession = async (): Promise<void> => {
     clearStoredActiveLearnerId();
@@ -625,6 +737,14 @@ function KangurLoginPageContent(): JSX.Element {
   };
 
   const handleParentAccountCreate = async (email: string): Promise<void> => {
+    let keepCaptchaError = false;
+    if (isCaptchaRequired && !captchaToken) {
+      const message = 'Potwierdź, że nie jesteś botem.';
+      setError(message);
+      setCaptchaError(message);
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
     setNotice(null);
@@ -643,15 +763,22 @@ function KangurLoginPageContent(): JSX.Element {
           email,
           password,
           callbackUrl,
+          captchaToken: captchaToken ?? undefined,
         }),
       });
 
       if (!response.ok) {
         const { message, retryAfterMs } = await readApiErrorDetails(response);
+        const isCaptchaMessage =
+          typeof message === 'string' && message.toLowerCase().includes('captcha');
         trackKangurClientEvent('kangur_parent_account_create_failed', {
           callbackUrl,
           statusCode: response.status,
         });
+        if (isCaptchaMessage) {
+          setCaptchaError(message);
+          keepCaptchaError = true;
+        }
         if (response.status === 429) {
           setCreatedParentEmail(email);
           setPassword('');
@@ -699,6 +826,9 @@ function KangurLoginPageContent(): JSX.Element {
       setError('Nie udało się utworzyć konta rodzica. Spróbuj ponownie.');
     } finally {
       setIsSubmitting(false);
+      if (isCaptchaRequired) {
+        resetCaptcha({ keepError: keepCaptchaError });
+      }
     }
   };
 
@@ -913,6 +1043,12 @@ function KangurLoginPageContent(): JSX.Element {
       }
 
       if (parentAuthMode === 'create-account') {
+        if (isCaptchaRequired && !captchaToken) {
+          const message = 'Potwierdź, że nie jesteś botem.';
+          setError(message);
+          setCaptchaError(message);
+          return;
+        }
         void handleParentAccountCreate(normalizedIdentifier);
         return;
       }
@@ -964,47 +1100,20 @@ function KangurLoginPageContent(): JSX.Element {
       surface='playField'
       variant='soft'
     >
-      <KangurGlassPanel
-        className='relative mb-6 overflow-hidden !p-4 sm:!p-6'
-        data-testid='kangur-login-hero'
-        padding='lg'
-        surface='warmGlow'
-        variant='soft'
-      >
-        <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_16%,rgba(251,191,36,0.22),transparent_28%),radial-gradient(circle_at_88%_0%,rgba(99,102,241,0.16),transparent_34%),radial-gradient(circle_at_50%_100%,rgba(45,212,191,0.12),transparent_32%)]' />
-        <div className='relative flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4'>
-          <div className='max-w-2xl'>
-            <div className='flex items-center gap-3'>
-              <div
-                className='soft-card inline-flex items-center rounded-full border px-4 py-2 text-sm font-black tracking-[-0.03em] text-indigo-700 shadow-[0_18px_38px_-30px_rgba(99,102,241,0.28)]'
-                data-testid='kangur-login-hero-logo'
-              >
-                <KangurHomeLogo
-                  className='h-[22px] sm:h-[24px]'
-                  idPrefix='kangur-login-page-logo'
-                />
-              </div>
-              <div className='text-[10px] font-black uppercase tracking-[0.28em] text-[#9a5418]'>
-                Konto StudiQ
-              </div>
-            </div>
-            <KangurGradientHeading
-              className='mt-3 text-[1.9rem] leading-tight tracking-[-0.05em] sm:text-[2.65rem]'
-              gradientClass='kangur-gradient-hero'
-              id={titleId}
-              size='lg'
-            >
-              {loginFormContent?.title ?? 'Zaloguj się'}
-            </KangurGradientHeading>
-            <p className='mt-3 max-w-xl text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
-              {introDescription}
-            </p>
-          </div>
-          <div className={audienceBadgeClassName} style={audienceBadgeStyle}>
-            {audienceLabel}
-          </div>
+      <div className='mb-4 flex justify-center sm:mb-5'>
+        <div
+          className='soft-card inline-flex items-center rounded-full border px-4 py-2 text-sm font-black tracking-[-0.03em] text-indigo-700 shadow-[0_18px_38px_-30px_rgba(99,102,241,0.28)]'
+          data-testid='kangur-login-hero-logo'
+        >
+          <KangurHomeLogo
+            className='h-[22px] sm:h-[24px]'
+            idPrefix='kangur-login-page-logo'
+          />
         </div>
-      </KangurGlassPanel>
+        <span id={titleId} className='sr-only'>
+          {loginFormContent?.title ?? 'Zaloguj się'}
+        </span>
+      </div>
 
       <form
         aria-busy={isSubmitting ? 'true' : 'false'}
@@ -1017,7 +1126,7 @@ function KangurLoginPageContent(): JSX.Element {
         onSubmit={handleSubmit}
         ref={loginFormRef}
       >
-        {isParentFlowVisible ? (
+        {isParentFlowVisible && showParentAuthModeTabs ? (
           <div className='glass-panel rounded-[28px] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.78)]'>
             <div className='grid gap-2 sm:grid-cols-2'>
               <KangurButton
@@ -1052,18 +1161,20 @@ function KangurLoginPageContent(): JSX.Element {
                 type='button'
                 variant={parentAuthMode === 'create-account' ? 'segmentActive' : 'segment'}
               >
-                Tworzę konto rodzica
+                Utwórz konto
               </KangurButton>
             </div>
           </div>
         ) : null}
 
         <div className='flex flex-col gap-2 text-sm font-semibold [color:var(--kangur-page-text)]'>
-          <label htmlFor={identifierInputId}>{identifierFieldLabel}</label>
+          {showIdentifierLabel && identifierFieldLabel ? (
+            <label htmlFor={identifierInputId}>{identifierFieldLabel}</label>
+          ) : null}
           <input
             autoComplete='username'
             aria-describedby={identifierInputDescribedBy || undefined}
-            aria-label={identifierFieldLabel}
+            aria-label={identifierFieldAriaLabel}
             className={inputClassName}
             data-testid='kangur-login-identifier-input'
             data-tutor-anchor='login_identifier_field'
@@ -1081,13 +1192,18 @@ function KangurLoginPageContent(): JSX.Element {
             type='text'
             value={identifier}
           />
-          <span className='text-xs font-normal leading-5 [color:var(--kangur-page-muted-text)]' id={identifierHelpId}>
-            {identifierFieldHelpText}
-          </span>
+          {showIdentifierHelp && identifierFieldHelpText ? (
+            <span
+              className='text-xs font-normal leading-5 [color:var(--kangur-page-muted-text)]'
+              id={identifierHelpId}
+            >
+              {identifierFieldHelpText}
+            </span>
+          ) : null}
         </div>
 
         <label className='flex flex-col gap-2 text-sm font-semibold [color:var(--kangur-page-text)]'>
-          {passwordFieldLabel}
+          {showPasswordLabel ? <span>{passwordFieldLabel}</span> : null}
           <input
             autoComplete={
               isParentFlowVisible && parentAuthMode === 'create-account'
@@ -1095,7 +1211,7 @@ function KangurLoginPageContent(): JSX.Element {
                 : 'current-password'
             }
             aria-describedby={formDescribedBy || undefined}
-            aria-label={passwordFieldLabel}
+            aria-label={passwordFieldAriaLabel}
             className={inputClassName}
             disabled={!isHydrated || isSubmitting}
             id={passwordInputId}
@@ -1103,7 +1219,7 @@ function KangurLoginPageContent(): JSX.Element {
             onChange={(event) => setPassword(event.target.value)}
             placeholder={
               isParentFlowVisible && parentAuthMode === 'create-account'
-                ? 'Ustaw hasło rodzica'
+                ? 'Hasło'
                 : loginKind === 'parent'
                   ? 'Hasło rodzica'
                   : loginKind === 'student'
@@ -1115,6 +1231,22 @@ function KangurLoginPageContent(): JSX.Element {
             value={password}
           />
         </label>
+        {isCaptchaRequired ? (
+          <div className='flex flex-col gap-2 text-xs font-semibold [color:var(--kangur-page-text)]'>
+            <span>Potwierdź, że nie jesteś botem</span>
+            <div className='rounded-[22px] bg-white/70 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]'>
+              <div ref={captchaContainerRef} data-testid='kangur-parent-captcha' />
+            </div>
+            {captchaStatus === 'loading' ? (
+              <span className='text-[11px] font-medium [color:var(--kangur-page-muted-text)]'>
+                Ładowanie Captcha...
+              </span>
+            ) : null}
+            {captchaError ? (
+              <span className='text-[11px] font-medium text-rose-700'>{captchaError}</span>
+            ) : null}
+          </div>
+        ) : null}
         {visibleNotice ? (
           <KangurGlassPanel
             aria-atomic='true'
@@ -1184,7 +1316,7 @@ function KangurLoginPageContent(): JSX.Element {
 
         {isParentFlowVisible ? (
           <KangurButton
-            disabled={!isHydrated || isSubmitting}
+            disabled={isParentSubmitDisabled}
             fullWidth
             size='lg'
             type='submit'
@@ -1197,8 +1329,10 @@ function KangurLoginPageContent(): JSX.Element {
               : parentAuthMode === 'create-account'
                 ? 'Utwórz konto rodzica'
                 : loginKind === 'parent'
-                  ? 'Zaloguj rodzica'
-                  : 'Zaloguj się'}
+                  ? showParentAuthModeTabs
+                    ? 'Zaloguj rodzica'
+                    : 'Zaloguj'
+                  : 'Zaloguj'}
           </KangurButton>
         ) : (
           <KangurButton

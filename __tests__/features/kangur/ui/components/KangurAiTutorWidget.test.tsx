@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
+import { persistTutorVisibilityHidden } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
 
 import type {
   AnchorHTMLAttributes,
@@ -452,6 +453,7 @@ describe('KangurAiTutorWidget', () => {
     vi.unstubAllGlobals();
     window.localStorage.clear();
     window.sessionStorage.clear();
+    persistTutorVisibilityHidden(false);
     resetTutorAuthAnchorRects();
     vi.doUnmock('@/features/kangur/ui/components/KangurAiTutorWidget');
     ({ KangurAiTutorWidget } = await import('@/features/kangur/ui/components/KangurAiTutorWidget'));

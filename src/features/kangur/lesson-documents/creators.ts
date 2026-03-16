@@ -15,7 +15,7 @@ import {
   type KangurLessonRootBlock,
   type KangurLessonSvgBlock,
   type KangurLessonTextBlock,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 
 import { applyKangurLessonActivityDefaults } from '../lesson-activities';
 import {

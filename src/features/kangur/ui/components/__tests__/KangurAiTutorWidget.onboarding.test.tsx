@@ -7,7 +7,8 @@ import React from 'react';
 
 import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 import type { TutorHomeOnboardingStepKind } from '@/features/kangur/ui/components/KangurAiTutorWidget.types';
-import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
+import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import { persistTutorVisibilityHidden } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
 
 import {
   createTutorMocks,
@@ -61,7 +62,7 @@ vi.mock('../KangurAiTutorMoodAvatar', () => ({
   ),
 }));
 
-vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
+vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => mocks.settingsStoreMock,
 }));
 
@@ -199,6 +200,7 @@ describe('KangurAiTutorWidget - Onboarding', () => {
     vi.unstubAllGlobals();
     window.localStorage.clear();
     window.sessionStorage.clear();
+    persistTutorVisibilityHidden(false);
     resetTutorAuthAnchorRects();
     vi.doUnmock('../KangurAiTutorWidget');
     const mod = await import('../KangurAiTutorWidget');

@@ -48,8 +48,8 @@ import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRou
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
-import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import type { KangurLesson, KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 
 import type { ComponentType } from 'react';
 

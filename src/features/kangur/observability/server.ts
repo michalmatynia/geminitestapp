@@ -6,7 +6,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 import type { NextRequest } from 'next/server';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 
 type KangurRequestContext = Pick<ApiHandlerContext, 'requestId' | 'traceId' | 'correlationId'>;

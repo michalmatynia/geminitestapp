@@ -1,5 +1,5 @@
 import { KangurSectionEyebrow } from '@/features/kangur/ui/design/primitives';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 type KangurPanelSectionHeadingProps = React.ComponentProps<typeof KangurSectionEyebrow>;
 

@@ -13,7 +13,7 @@ import {
   KangurHeadline,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kangur';
+import type { KangurLesson, KangurLessonDocument } from '@/features/kangur/shared/contracts/kangur';
 
 type KangurActiveLessonHeaderProps = {
   lesson: KangurLesson;

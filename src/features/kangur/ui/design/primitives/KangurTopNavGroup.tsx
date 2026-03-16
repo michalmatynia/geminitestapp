@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 import { KANGUR_TOP_NAV_GROUP_CLASSNAME } from '../tokens';
 

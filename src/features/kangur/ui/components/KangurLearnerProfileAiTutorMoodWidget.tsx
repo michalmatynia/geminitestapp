@@ -17,11 +17,11 @@ import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurP
 import {
   formatKangurAiTutorTemplate,
   getKangurAiTutorMoodCopy,
-} from '@/shared/contracts/kangur-ai-tutor-content';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import {
   createDefaultKangurAiTutorLearnerMood,
   type KangurTutorMoodId,
-} from '@/shared/contracts/kangur-ai-tutor-mood';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor-mood';
 
 const KANGUR_TUTOR_MOOD_ACCENTS: Record<KangurTutorMoodId, KangurAccent> = {
   neutral: 'slate',

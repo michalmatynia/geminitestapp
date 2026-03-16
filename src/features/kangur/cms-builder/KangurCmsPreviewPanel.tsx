@@ -52,8 +52,8 @@ import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutin
 import { KangurScoreSyncProvider } from '@/features/kangur/ui/context/KangurScoreSyncProvider';
 import type { PageZone } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
-import { Badge, Button } from '@/shared/ui';
-import { serializeSetting } from '@/shared/utils/settings-json';
+import { Badge, Button } from '@/features/kangur/shared/ui';
+import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 
 import { useKangurCmsBuilderRuntime } from './KangurCmsBuilderRuntimeContext';
 import { KangurCmsRuntimeDataProvider } from './KangurCmsRuntimeDataProvider';

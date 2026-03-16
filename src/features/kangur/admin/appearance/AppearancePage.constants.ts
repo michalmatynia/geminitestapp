@@ -11,8 +11,8 @@ import {
   KANGUR_NIGHTLY_CRYSTAL_THEME,
 } from '@/features/kangur/theme-settings';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import type { SettingsPanelField } from '@/shared/ui/templates/SettingsPanelBuilder';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import type { SettingsPanelField } from '@/features/kangur/shared/ui/templates/SettingsPanelBuilder';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 export type AppearanceSlot = 'daily' | 'dawn' | 'sunset' | 'nightly';

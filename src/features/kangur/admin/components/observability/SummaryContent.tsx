@@ -1,5 +1,3 @@
-'use client';
-
 import {
   ArrowUpRightIcon,
   AudioLinesIcon,
@@ -13,7 +11,7 @@ import {
 import Link from 'next/link';
 import { type JSX } from 'react';
 
-import { Button, Card, CompactEmptyState, FormSection, MetadataItem, StatusBadge } from '@/shared/ui';
+import { Button, Card, CompactEmptyState, FormSection, MetadataItem, StatusBadge } from '@/features/kangur/shared/ui';
 import type { KangurRouteMetrics } from '@/shared/contracts';
 
 import {

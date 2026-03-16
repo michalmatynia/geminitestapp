@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
 
-import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
+import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { serializeSetting } from '@/shared/utils/settings-json';
+import { useToast } from '@/features/kangur/shared/ui';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 
 import {
   applyPublishedQuestionEditPolicy,
@@ -32,7 +32,7 @@ import {
   QUESTION_EDITOR_NEW_DRAFT_SLOT,
 } from '../question-editor-drafts';
 import { moveItem } from '../utils';
-import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
+import type { KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
 
 const buildQuestionEditorSnapshot = (
   question: KangurTestQuestion,

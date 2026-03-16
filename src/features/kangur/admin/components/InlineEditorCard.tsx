@@ -7,9 +7,9 @@ import {
   isSvgImageSource,
   normalizeSvgImageSource,
 } from '@/features/kangur/lesson-documents/utils';
-import type { KangurLessonInlineBlock } from '@/shared/contracts/kangur';
-import { Badge, Button, FormField, Input, SelectSimple, Textarea } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import type { KangurLessonInlineBlock } from '@/features/kangur/shared/contracts/kangur';
+import { Badge, Button, FormField, Input, SelectSimple, Textarea } from '@/features/kangur/shared/ui';
+import { cn } from '@/features/kangur/shared/utils';
 
 import { ALIGNMENT_OPTIONS, MEDIA_FIT_OPTIONS } from '../constants';
 import { clamp, parseNumberInput } from '../utils';

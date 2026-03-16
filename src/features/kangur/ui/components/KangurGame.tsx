@@ -52,7 +52,7 @@ import type {
   KangurQuestionChoice,
   KangurRewardBreakdownEntry,
 } from '@/features/kangur/ui/types';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 type IllustrationComponent = () => React.JSX.Element;
 

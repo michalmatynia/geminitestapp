@@ -12,7 +12,7 @@ import type {
   KangurAssignmentPriority,
   KangurProgressState,
   KangurRouteAction,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 
 const OPERATION_LABELS: Record<string, { label: string; emoji: string }> = {
   addition: { label: 'Dodawanie', emoji: '➕' },

@@ -6,14 +6,14 @@ import { KANGUR_CLASS_OVERRIDES_SETTING_KEY } from '@/features/kangur/class-over
 import { KANGUR_THEME_SETTINGS_KEY } from '@/features/kangur/theme-settings';
 import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
 import { DEFAULT_THEME } from '@/shared/contracts/cms-theme';
-import { serializeSetting } from '@/shared/utils/settings-json';
+import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 
 const settingsStoreMock = vi.hoisted(() => ({
   get: vi.fn<(key: string) => string | undefined>(),
 }));
 
-vi.mock('@/shared/providers/SettingsStoreProvider', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/shared/providers/SettingsStoreProvider')>();
+vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/shared/providers/SettingsStoreProvider')>();
   return {
     ...actual,
     useSettingsStore: () => settingsStoreMock,

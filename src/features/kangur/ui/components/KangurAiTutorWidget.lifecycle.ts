@@ -1,9 +1,9 @@
 import { useEffect, useLayoutEffect } from 'react';
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
-import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
-import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
-import { getMotionSafeScrollBehavior } from '@/shared/utils';
+import type { KangurAiTutorConversationContext } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorContent } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import { getMotionSafeScrollBehavior } from '@/features/kangur/shared/utils';
 
 import {
   AVATAR_SIZE,

@@ -1,5 +1,5 @@
-import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
-import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+import type { KangurLesson, KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
+import type { MasterTreeNode } from '@/features/kangur/shared/utils/master-folder-tree-contract';
 
 import { KANGUR_LESSON_COMPONENT_OPTIONS, KANGUR_LESSON_SORT_ORDER_GAP } from '../settings';
 

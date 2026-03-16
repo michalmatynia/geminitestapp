@@ -4,7 +4,7 @@ import React from 'react';
 
 import { resolveKangurStorefrontAppearance } from '@/features/cms/public';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import { Badge } from '@/shared/ui';
+import { Badge } from '@/features/kangur/shared/ui';
 import type { KangurThemeMode } from '@/features/kangur/admin/components/KangurThemeSettingsPanel';
 
 type KangurThemePreviewPanelProps = {

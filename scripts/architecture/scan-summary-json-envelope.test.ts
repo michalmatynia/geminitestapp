@@ -1021,6 +1021,9 @@ describe('scanner summary-json envelope', () => {
     const baseUrl = await startFixtureServer();
     const reportPath = seedAccessibilityRouteCrawlReport(root);
     const env = seedAccessibilityCommandHarness(root, { baseUrl, routeCrawlReportPath: reportPath });
+    const expectedRouteCount = normalizeAccessibilityRouteEntries(
+      accessibilityRouteCrawlRoutes
+    ).length;
 
     const accessibilityRouteCrawl = await runSummaryJsonAsync(
       root,
@@ -1036,8 +1039,8 @@ describe('scanner summary-json envelope', () => {
     });
     expect(accessibilityRouteCrawl.status).toBe('ok');
     expect(accessibilityRouteCrawl.summary).toMatchObject({
-      totalRoutes: 18,
-      passedRoutes: 18,
+      totalRoutes: expectedRouteCount,
+      passedRoutes: expectedRouteCount,
       failedRoutes: 0,
       playwrightDurationMs: 1250,
       totalDurationMs: expect.any(Number),

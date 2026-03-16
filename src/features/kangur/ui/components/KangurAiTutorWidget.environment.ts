@@ -22,15 +22,15 @@ import { useKangurTextHighlight } from '@/features/kangur/ui/hooks/useKangurText
 import type {
   KangurAiTutorConversationContext,
   KangurAiTutorMotionPresetKind,
-} from '@/shared/contracts/kangur-ai-tutor';
-import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
-import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorContent } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 import {
   useOptionalContextRegistryPageEnvelope,
   useRegisterContextRegistryPageSource,
 } from '@/shared/lib/ai-context-registry/page-context';
 import { buildContextRegistryConsumerEnvelope } from '@/shared/lib/ai-context-registry/page-context-shared';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 
 import { isSelectionWithinTutorUi } from './KangurAiTutorWidget.coordinator.helpers';
 import {

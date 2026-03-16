@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button, Input } from '@/shared/ui';
+import { Button, Input } from '@/features/kangur/shared/ui';
 
 import type { QuestionListFilter, QuestionListSort } from '../question-manager-view';
 
@@ -15,16 +15,19 @@ interface KangurQuestionsFilterTriageProps {
   sortOptions: Array<{ value: QuestionListSort; label: string }>;
 }
 
-export function KangurQuestionsFilterTriage({
-  searchQuery,
-  onSearchChange,
-  sortMode,
-  onSortChange,
-  listFilter,
-  onFilterChange,
-  filterOptions,
-  sortOptions,
-}: KangurQuestionsFilterTriageProps): React.JSX.Element {
+export function KangurQuestionsFilterTriage(
+  props: KangurQuestionsFilterTriageProps
+): React.JSX.Element {
+  const {
+    searchQuery,
+    onSearchChange,
+    sortMode,
+    onSortChange,
+    listFilter,
+    onFilterChange,
+    filterOptions,
+    sortOptions,
+  } = props;
   return (
     <div className='rounded-[28px] border border-border/60 bg-card/25 p-4 sm:p-5'>
       <div className='mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground'>

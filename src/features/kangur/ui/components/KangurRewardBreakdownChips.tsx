@@ -1,7 +1,7 @@
 import { KangurStatusChip } from '@/features/kangur/ui/design/primitives';
 import { type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 type KangurRewardBreakdownChipsProps = {
   accent?: KangurAccent;

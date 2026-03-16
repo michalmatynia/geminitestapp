@@ -11,7 +11,7 @@ import {
   type KangurBadgeTrackKey,
 } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 type KangurHeroMilestoneSummaryProps = {
   className?: string;

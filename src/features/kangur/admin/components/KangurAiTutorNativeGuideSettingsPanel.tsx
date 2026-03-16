@@ -6,24 +6,24 @@ import { KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO } from '@/features/kangur
 import {
   validateKangurAiTutorOnboardingStore,
 } from '@/features/kangur/ai-tutor-onboarding-validation';
-import type { KangurAiTutorFollowUpAction } from '@/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorFollowUpAction } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import {
   DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE,
   parseKangurAiTutorNativeGuideStore,
   type KangurAiTutorNativeGuideEntry,
   type KangurAiTutorNativeGuideStore,
-} from '@/shared/contracts/kangur-ai-tutor-native-guide';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 import { PROMPT_ENGINE_SETTINGS_KEY } from '@/shared/contracts/prompt-engine';
 import { VALIDATOR_PATTERN_LISTS_KEY, parseValidatorPatternLists } from '@/shared/contracts/validator';
 import { api } from '@/shared/lib/api-client';
 import { parsePromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Badge, Button, Card, FormField, FormSection, Textarea, useToast } from '@/shared/ui';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
+import { Badge, Button, Card, FormField, FormSection, Textarea, useToast } from '@/features/kangur/shared/ui';
 
 import { KangurAiTutorNativeGuideEntryEditor } from './KangurAiTutorNativeGuideEntryEditor';
 import { KangurAiTutorNativeGuideEntryList } from './KangurAiTutorNativeGuideEntryList';
 import { KangurAiTutorNativeGuideValidationSummary } from './KangurAiTutorNativeGuideValidationSummary';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const AI_TUTOR_NATIVE_GUIDE_EDITOR_LOCALE = 'pl';

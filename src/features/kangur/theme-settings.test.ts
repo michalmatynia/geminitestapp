@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { DEFAULT_THEME } from '@/shared/contracts/cms-theme';
-import { serializeSetting } from '@/shared/utils/settings-json';
+import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 
 import {
   KANGUR_DEFAULT_DAILY_THEME,

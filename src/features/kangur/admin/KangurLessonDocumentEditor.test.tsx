@@ -48,7 +48,7 @@ vi.mock('@/features/cms/public', async (importOriginal) => {
 
 import { KangurLessonDocumentEditor } from '@/features/kangur/admin/KangurLessonDocumentEditor';
 import { LessonContentEditorProvider } from '@/features/kangur/admin/context/LessonContentEditorContext';
-import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kangur';
+import type { KangurLesson, KangurLessonDocument } from '@/features/kangur/shared/contracts/kangur';
 
 const arithmeticLesson: KangurLesson = {
   id: 'lesson-adding',

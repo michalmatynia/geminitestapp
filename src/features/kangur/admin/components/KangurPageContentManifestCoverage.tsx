@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 
 import { KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO } from '@/features/kangur/ai-tutor-page-coverage-manifest';
-import type { KangurPageContentStore } from '@/shared/contracts/kangur-page-content';
-import { Alert, Badge } from '@/shared/ui';
+import type { KangurPageContentStore } from '@/features/kangur/shared/contracts/kangur-page-content';
+import { Alert, Badge } from '@/features/kangur/shared/ui';
 
 interface KangurPageContentManifestCoverageProps {
   store: KangurPageContentStore;

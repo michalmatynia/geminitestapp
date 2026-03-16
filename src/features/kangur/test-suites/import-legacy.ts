@@ -14,7 +14,7 @@ import type {
   KangurTestQuestion,
   KangurTestQuestionStore,
   KangurTestSuite,
-} from '@/shared/contracts/kangur-tests';
+} from '@/features/kangur/shared/contracts/kangur-tests';
 
 import { createKangurTestQuestionId, KANGUR_QUESTION_SORT_ORDER_GAP } from '../test-questions';
 import { createKangurTestSuiteId } from '../test-suites';

@@ -1,9 +1,9 @@
 import 'server-only';
 
 import { buildKangurAiTutorContextRegistryRefs } from '@/features/kangur/context-registry/refs';
-import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorConversationContext } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type { ContextRuntimeDocument } from '@/shared/contracts/ai-context-registry';
-import type { KangurKnowledgeGraphPreviewSummary } from '@/shared/contracts/kangur-observability';
+import type { KangurKnowledgeGraphPreviewSummary } from '@/features/kangur/shared/contracts/kangur-observability';
 
 import {
   previewKangurAiTutorSemanticGraphContext,

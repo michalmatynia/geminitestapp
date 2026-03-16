@@ -1,4 +1,5 @@
 export { KangurFeaturePage } from '@/features/kangur/ui/KangurFeaturePage';
+export { KangurPublicApp } from '@/features/kangur/ui/KangurPublicApp';
 export * from '@/features/kangur/config/routing';
 export * from '@/features/kangur/cms-builder/project';
 export * from '@/features/kangur/context-registry/refs';
@@ -32,6 +33,7 @@ export * from '@/features/kangur/ui/components/KangurLearnerProfilePerformanceWi
 export * from '@/features/kangur/ui/components/KangurLearnerProfileRecommendationsWidget';
 export * from '@/features/kangur/ui/components/KangurLearnerProfileSessionsWidget';
 export * from '@/features/kangur/ui/components/KangurParentDashboardAssignmentsWidget';
+export * from '@/features/kangur/ui/components/KangurParentDashboardAssignmentsMonitoringWidget';
 export * from '@/features/kangur/ui/components/KangurParentDashboardHeroWidget';
 export * from '@/features/kangur/ui/components/KangurParentDashboardLearnerManagementWidget';
 export * from '@/features/kangur/ui/components/KangurParentDashboardProgressWidget';

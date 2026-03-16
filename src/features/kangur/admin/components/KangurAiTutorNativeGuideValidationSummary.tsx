@@ -1,5 +1,5 @@
 import type { KangurAiTutorOnboardingValidationIssue } from '@/features/kangur/ai-tutor-onboarding-validation';
-import { Badge } from '@/shared/ui';
+import { Badge } from '@/features/kangur/shared/ui';
 
 type Props = {
   listName: string;

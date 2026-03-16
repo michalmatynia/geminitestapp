@@ -10,7 +10,7 @@ import {
   KangurSummaryPanel,
   KangurSurfacePanel,
 } from '@/features/kangur/ui/design/primitives';
-import type { KangurLessonActivityBlock as KangurLessonActivityBlockType } from '@/shared/contracts/kangur';
+import type { KangurLessonActivityBlock as KangurLessonActivityBlockType } from '@/features/kangur/shared/contracts/kangur';
 
 import AddingBallGame from './AddingBallGame';
 import AddingSynthesisGame from './AddingSynthesisGame';

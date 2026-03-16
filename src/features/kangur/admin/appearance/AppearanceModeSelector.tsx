@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { FormSection, SelectSimple } from '@/shared/ui';
+import { FormSection, SelectSimple } from '@/features/kangur/shared/ui';
 import {
   KANGUR_STOREFRONT_THEME_OPTIONS,
   type KangurStorefrontAppearanceMode,

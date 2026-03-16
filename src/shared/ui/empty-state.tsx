@@ -53,7 +53,8 @@ export function EmptyState({
 type CompactEmptyStateProps = Omit<EmptyStateProps, 'variant'>;
 
 export function CompactEmptyState(props: CompactEmptyStateProps): React.JSX.Element {
+  const resolvedProps = { ...props, variant: 'compact' as const };
   return (
-    <EmptyState {...props} variant='compact' />
+    <EmptyState {...resolvedProps} />
   );
 }

@@ -13,12 +13,11 @@ export function AdminSettingsBreadcrumbs({
   parent,
   className,
 }: AdminSettingsBreadcrumbsProps): React.JSX.Element {
+  const breadcrumbProps = { current, parent, className };
   return (
     <AdminSectionBreadcrumbs
       section={{ label: 'Settings', href: '/admin/settings' }}
-      current={current}
-      parent={parent}
-      className={className}
+      {...breadcrumbProps}
       baseClassName='mb-2'
     />
   );

@@ -7,14 +7,14 @@ import {
   DEFAULT_KANGUR_AI_TUTOR_CONTENT,
   parseKangurAiTutorContent,
   type KangurAiTutorContent,
-} from '@/shared/contracts/kangur-ai-tutor-content';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import { PROMPT_ENGINE_SETTINGS_KEY } from '@/shared/contracts/prompt-engine';
 import { VALIDATOR_PATTERN_LISTS_KEY, parseValidatorPatternLists } from '@/shared/contracts/validator';
 import { api } from '@/shared/lib/api-client';
 import { parsePromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Alert, Badge, Button, Card, FormField, FormSection, Input, Textarea, useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
+import { Alert, Badge, Button, Card, FormField, FormSection, Input, Textarea, useToast } from '@/features/kangur/shared/ui';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const AI_TUTOR_CONTENT_EDITOR_LOCALE = 'pl';

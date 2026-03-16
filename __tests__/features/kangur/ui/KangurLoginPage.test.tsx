@@ -230,11 +230,10 @@ describe('KangurLoginPage', () => {
   it('renders a single unified login form with explicit parent account actions', () => {
     render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
-    expect(screen.getByRole('heading', { name: 'Zaloguj się' })).toBeInTheDocument();
+    expect(screen.getByText('Zaloguj się')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-login-shell')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-login-hero')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-login-hero-logo').querySelector('svg')).not.toBeNull();
-    expect(screen.getByText('Konto StudiQ')).toBeVisible();
+    expect(screen.queryByText('Konto StudiQ')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-login-form')).toHaveAttribute('data-hydrated', 'true');
     expect(screen.getByTestId('kangur-login-form')).toHaveAttribute('data-login-kind', 'unknown');
     expect(screen.getByTestId('kangur-login-form')).toHaveAttribute(
@@ -242,17 +241,13 @@ describe('KangurLoginPage', () => {
       'login_form'
     );
     expect(screen.getByTestId('kangur-login-form')).toHaveAttribute('aria-busy', 'false');
-    expect(
-      screen.getByText('Rodzic loguje się emailem i hasłem. Uczeń loguje się nickiem i hasłem.')
-    ).toBeVisible();
-    expect(screen.getByText('Rodzic lub uczeń')).toBeVisible();
-    expect(screen.getByLabelText('Email rodzica albo nick ucznia')).toHaveAttribute(
+    expect(screen.getByTestId('kangur-login-identifier-input')).toHaveAttribute(
       'data-tutor-anchor',
       'login_identifier_field'
     );
     expect(screen.getByLabelText('Hasło')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Mam konto' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Tworzę konto rodzica' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Utwórz konto' })).toBeInTheDocument();
     expect(screen.queryByText('Jeśli loguje się rodzic')).not.toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Rodzic' })).not.toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Uczeń' })).not.toBeInTheDocument();
@@ -272,11 +267,11 @@ describe('KangurLoginPage', () => {
   it('has no obvious accessibility violations in the login shell', async () => {
     const { container } = render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
-    await screen.findByRole('heading', { name: 'Zaloguj się' });
+    await screen.findByText('Zaloguj się');
     await expectNoAxeViolations(container);
   });
 
-  it('uses Mongo-backed login form and identifier copy when available', () => {
+  it('uses Mongo-backed login form copy while keeping the identifier helper hidden', () => {
     useKangurPageContentEntryMock.mockImplementation((entryId: string) => ({
       data: undefined,
       entry:
@@ -288,7 +283,7 @@ describe('KangurLoginPage', () => {
             }
           : {
               id: 'login-page-identifier-field',
-              title: 'Email rodzica albo nick ucznia',
+              title: 'Email albo nick ucznia',
               summary:
                 'Wpisz email rodzica lub login ucznia, aby uruchomić właściwy tryb logowania.',
             },
@@ -305,12 +300,20 @@ describe('KangurLoginPage', () => {
 
     render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
+    expect(useKangurAiTutorSessionSyncMock).toHaveBeenCalledWith({
+      learnerId: null,
+      sessionContext: {
+        surface: 'auth',
+        contentId: 'auth:login:sign-in',
+        title: 'Zaloguj się',
+        description: 'Wejdź do Kangur jako rodzic albo uczeń z jednego formularza.',
+      },
+    });
     expect(
-      screen.getByText('Wejdź do Kangur jako rodzic albo uczeń z jednego formularza.')
-    ).toBeVisible();
-    expect(
-      screen.getByText('Wpisz email rodzica lub login ucznia, aby uruchomić właściwy tryb logowania.')
-    ).toBeVisible();
+      screen.queryByText(
+        'Wpisz email rodzica lub login ucznia, aby uruchomić właściwy tryb logowania.'
+      )
+    ).not.toBeInTheDocument();
   });
 
   it('switches the parent form into explicit create-account mode with a minimal create-account layout', async () => {
@@ -318,18 +321,14 @@ describe('KangurLoginPage', () => {
 
     render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
-    await user.click(screen.getByRole('button', { name: 'Tworzę konto rodzica' }));
+    await user.click(screen.getByRole('button', { name: 'Utwórz konto' }));
 
-    expect(
-      screen.getByText(
-        'Zakładasz konto rodzica emailem i hasłem. Po potwierdzeniu adresu zalogujesz się tak samo za każdym razem.'
-      )
-    ).toBeVisible();
-    expect(
-      screen.queryByText('Po potwierdzeniu e-maila zalogujesz się tym samym e-mailem i hasłem.')
-    ).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Email rodzica')).toBeInTheDocument();
-    expect(screen.getByLabelText('Ustaw hasło rodzica')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-login-identifier-input')).toHaveAttribute(
+      'placeholder',
+      'rodzic@example.com'
+    );
+    expect(screen.getByLabelText('Email')).toBeInTheDocument();
+    expect(screen.getByLabelText('Hasło')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Utwórz konto rodzica' })).toBeInTheDocument();
     expect(screen.queryByText('Jak założyć konto rodzica')).not.toBeInTheDocument();
   });
@@ -343,13 +342,15 @@ describe('KangurLoginPage', () => {
 
     render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
-    expect(
-      screen.getByText(
-        'Zakładasz konto rodzica emailem i hasłem. Po potwierdzeniu adresu zalogujesz się tak samo za każdym razem.'
-      )
-    ).toBeVisible();
+    expect(screen.getByTestId('kangur-login-identifier-input')).toHaveAttribute(
+      'placeholder',
+      'rodzic@example.com'
+    );
     expect(screen.getByRole('button', { name: 'Utwórz konto rodzica' })).toBeInTheDocument();
-    expect(screen.getByText('Nowe konto rodzica')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Utwórz konto' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
   });
 
   it('submits parent email credentials through the shared login form', async () => {
@@ -358,7 +359,7 @@ describe('KangurLoginPage', () => {
 
     render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
-    await user.type(screen.getByLabelText('Email rodzica albo nick ucznia'), 'parent@example.com');
+    await user.type(screen.getByTestId('kangur-login-identifier-input'), 'parent@example.com');
     await user.type(screen.getByLabelText('Hasło'), 'secret123');
     await user.click(screen.getByRole('button', { name: 'Zaloguj rodzica' }));
 
@@ -463,7 +464,7 @@ describe('KangurLoginPage', () => {
 
     render(<KangurLoginPage defaultCallbackUrl='/kangur' onClose={onClose} />);
 
-    await user.type(screen.getByLabelText('Email rodzica albo nick ucznia'), 'parent@example.com');
+    await user.type(screen.getByTestId('kangur-login-identifier-input'), 'parent@example.com');
     await user.type(screen.getByLabelText('Hasło'), 'secret123');
     await user.click(screen.getByRole('button', { name: 'Zaloguj rodzica' }));
 
@@ -482,15 +483,10 @@ describe('KangurLoginPage', () => {
 
     render(<KangurLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
 
-    expect(
-      screen.getByText(
-        'Zakładasz konto rodzica emailem i hasłem. Po potwierdzeniu adresu zalogujesz się tak samo za każdym razem.'
-      )
-    ).toBeVisible();
     fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
       target: { value: 'parent@example.com' },
     });
-    await user.type(screen.getByLabelText('Ustaw hasło rodzica'), 'Strong123!');
+    await user.type(screen.getByLabelText('Hasło'), 'Strong123!');
     await user.click(screen.getByRole('button', { name: 'Utwórz konto rodzica' }));
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -528,6 +524,76 @@ describe('KangurLoginPage', () => {
     expect(screen.getByText('Nowy e-mail będzie można wysłać za 1 min.')).toBeVisible();
   });
 
+  it('submits the captcha token when Turnstile is enabled for parent account creation', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.mocked(fetch);
+    const originalSiteKey = process.env['NEXT_PUBLIC_KANGUR_PARENT_CAPTCHA_SITE_KEY'];
+    const originalTurnstile = window.turnstile;
+
+    try {
+      process.env['NEXT_PUBLIC_KANGUR_PARENT_CAPTCHA_SITE_KEY'] = 'turnstile-site-key';
+
+      const renderSpy = vi.fn(
+        (_container: HTMLElement, options: { callback?: (token: string) => void }) => {
+          options.callback?.('turnstile-token-1');
+          return 'widget-1';
+        }
+      );
+      window.turnstile = {
+        render: renderSpy,
+        reset: vi.fn(),
+        remove: vi.fn(),
+      };
+
+      vi.resetModules();
+      const { KangurLoginPage: CaptchaLoginPage } = await import(
+        '@/features/kangur/ui/KangurLoginPage'
+      );
+
+      render(<CaptchaLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
+
+      fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
+        target: { value: 'parent@example.com' },
+      });
+      await user.type(screen.getByLabelText('Hasło'), 'Strong123!');
+
+      const submitButton = screen.getByRole('button', { name: 'Utwórz konto rodzica' });
+      await waitFor(() => {
+        expect(renderSpy).toHaveBeenCalledTimes(1);
+        expect(submitButton).toBeEnabled();
+      });
+
+      await user.click(submitButton);
+
+      const createCall = fetchMock.mock.calls.find(
+        ([url]) => url === '/api/kangur/auth/parent-account/create'
+      );
+      expect(createCall).toBeTruthy();
+      const body = JSON.parse((createCall?.[1] as RequestInit).body as string) as Record<
+        string,
+        unknown
+      >;
+
+      expect(body).toEqual({
+        email: 'parent@example.com',
+        password: 'Strong123!',
+        callbackUrl: '/tests?focus=division',
+        captchaToken: 'turnstile-token-1',
+      });
+    } finally {
+      if (originalSiteKey === undefined) {
+        delete process.env['NEXT_PUBLIC_KANGUR_PARENT_CAPTCHA_SITE_KEY'];
+      } else {
+        process.env['NEXT_PUBLIC_KANGUR_PARENT_CAPTCHA_SITE_KEY'] = originalSiteKey;
+      }
+      if (originalTurnstile) {
+        window.turnstile = originalTurnstile;
+      } else {
+        delete window.turnstile;
+      }
+    }
+  });
+
   it('uses a custom retryAfterMs value from the create response', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
@@ -562,7 +628,7 @@ describe('KangurLoginPage', () => {
     fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
       target: { value: 'parent@example.com' },
     });
-    await user.type(screen.getByLabelText('Ustaw hasło rodzica'), 'Strong123!');
+    await user.type(screen.getByLabelText('Hasło'), 'Strong123!');
     await user.click(screen.getByRole('button', { name: 'Utwórz konto rodzica' }));
 
     expect(await screen.findByText('Sprawdź skrzynkę: parent@example.com')).toBeVisible();
@@ -579,7 +645,7 @@ describe('KangurLoginPage', () => {
       fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
         target: { value: 'parent@example.com' },
       });
-      fireEvent.change(screen.getByLabelText('Ustaw hasło rodzica'), {
+      fireEvent.change(screen.getByLabelText('Hasło'), {
         target: { value: 'Strong123!' },
       });
       await act(async () => {
@@ -659,7 +725,7 @@ describe('KangurLoginPage', () => {
       fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
         target: { value: 'parent@example.com' },
       });
-      fireEvent.change(screen.getByLabelText('Ustaw hasło rodzica'), {
+      fireEvent.change(screen.getByLabelText('Hasło'), {
         target: { value: 'Strong123!' },
       });
       await act(async () => {
@@ -746,7 +812,7 @@ describe('KangurLoginPage', () => {
       fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
         target: { value: 'parent@example.com' },
       });
-      fireEvent.change(screen.getByLabelText('Ustaw hasło rodzica'), {
+      fireEvent.change(screen.getByLabelText('Hasło'), {
         target: { value: 'Strong123!' },
       });
       await act(async () => {
@@ -787,7 +853,7 @@ describe('KangurLoginPage', () => {
       fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
         target: { value: 'parent@example.com' },
       });
-      fireEvent.change(screen.getByLabelText('Ustaw hasło rodzica'), {
+      fireEvent.change(screen.getByLabelText('Hasło'), {
         target: { value: 'Strong123!' },
       });
       await act(async () => {
@@ -880,7 +946,7 @@ describe('KangurLoginPage', () => {
       fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
         target: { value: 'parent@example.com' },
       });
-      fireEvent.change(screen.getByLabelText('Ustaw hasło rodzica'), {
+      fireEvent.change(screen.getByLabelText('Hasło'), {
         target: { value: 'Strong123!' },
       });
       await act(async () => {
@@ -939,7 +1005,7 @@ describe('KangurLoginPage', () => {
     fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
       target: { value: 'parent@example.com' },
     });
-    await user.type(screen.getByLabelText('Ustaw hasło rodzica'), 'Strong123!');
+    await user.type(screen.getByLabelText('Hasło'), 'Strong123!');
     await user.click(screen.getByRole('button', { name: 'Utwórz konto rodzica' }));
 
     expect(
@@ -961,7 +1027,7 @@ describe('KangurLoginPage', () => {
     fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
       target: { value: 'parent@example.com' },
     });
-    await user.type(screen.getByLabelText('Ustaw hasło rodzica'), 'Strong123!');
+    await user.type(screen.getByLabelText('Hasło'), 'Strong123!');
     await user.click(screen.getByRole('button', { name: 'Utwórz konto rodzica' }));
 
     expect(await screen.findByText('Sprawdź skrzynkę: parent@example.com')).toBeVisible();
@@ -974,7 +1040,6 @@ describe('KangurLoginPage', () => {
         'Kliknij link potwierdzający w e-mailu. Potem zalogujesz się tym samym e-mailem i hasłem.'
       )
     ).not.toBeInTheDocument();
-    expect(screen.getByText('Rodzic')).toBeVisible();
   });
 
   it('blocks parent login until the email is verified', async () => {
@@ -1025,7 +1090,7 @@ describe('KangurLoginPage', () => {
 
     render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
-    await user.type(screen.getByLabelText('Email rodzica albo nick ucznia'), 'parent@example.com');
+    await user.type(screen.getByTestId('kangur-login-identifier-input'), 'parent@example.com');
     await user.type(screen.getByLabelText('Hasło'), 'secret123');
     await user.click(screen.getByRole('button', { name: 'Zaloguj rodzica' }));
 
@@ -1091,7 +1156,7 @@ describe('KangurLoginPage', () => {
 
     render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
-    await user.type(screen.getByLabelText('Email rodzica albo nick ucznia'), 'parent@example.com');
+    await user.type(screen.getByTestId('kangur-login-identifier-input'), 'parent@example.com');
     await user.type(screen.getByLabelText('Hasło'), 'secret123');
     await user.click(screen.getByRole('button', { name: 'Zaloguj rodzica' }));
 
@@ -1100,13 +1165,12 @@ describe('KangurLoginPage', () => {
         'To starsze konto rodzica nie ma jeszcze hasła. Ustaw hasło poniżej, a wyślemy e-mail potwierdzający.'
       )
     ).toBeVisible();
-    expect(
-      screen.getByText(
-        'Zakładasz konto rodzica emailem i hasłem. Po potwierdzeniu adresu zalogujesz się tak samo za każdym razem.'
-      )
-    ).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Utwórz konto' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
     expect(screen.getByRole('textbox', { name: /email/i })).toHaveValue('parent@example.com');
-    expect(screen.getByLabelText('Ustaw hasło rodzica')).toHaveValue('');
+    expect(screen.getByLabelText('Hasło')).toHaveValue('');
     expect(screen.getByRole('button', { name: 'Utwórz konto rodzica' })).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalledWith(
       '/api/auth/callback/credentials',
@@ -1176,9 +1240,9 @@ describe('KangurLoginPage', () => {
 
     render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
-    await user.type(screen.getByLabelText('Email rodzica albo nick ucznia'), 'janek123');
+    await user.type(screen.getByTestId('kangur-login-identifier-input'), 'janek123');
     await user.type(screen.getByLabelText('Hasło'), 'tajnehaslo');
-    await user.click(screen.getByRole('button', { name: 'Zaloguj się' }));
+    await user.click(screen.getByRole('button', { name: 'Zaloguj' }));
 
     expect(signOutMock).toHaveBeenCalledWith({ redirect: false });
     expect(fetchMock).toHaveBeenNthCalledWith(
@@ -1207,9 +1271,9 @@ describe('KangurLoginPage', () => {
 
     render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
-    await user.type(screen.getByLabelText('Email rodzica albo nick ucznia'), 'janek-123');
+    await user.type(screen.getByTestId('kangur-login-identifier-input'), 'janek-123');
     await user.type(screen.getByLabelText('Hasło'), 'tajnehaslo');
-    await user.click(screen.getByRole('button', { name: 'Zaloguj się' }));
+    await user.click(screen.getByRole('button', { name: 'Zaloguj' }));
 
     expect(await screen.findByText('Nick ucznia może zawierać tylko litery i cyfry.')).toBeVisible();
     expect(signOutMock).not.toHaveBeenCalled();

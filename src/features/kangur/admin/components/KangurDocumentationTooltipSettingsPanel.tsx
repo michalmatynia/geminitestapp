@@ -10,10 +10,10 @@ import {
   type KangurHelpSettings,
 } from '@/features/kangur/help-settings';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Badge, Button, Card, FormSection, Switch, useToast } from '@/shared/ui';
-import { serializeSetting } from '@/shared/utils/settings-json';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
+import { Badge, Button, Card, FormSection, Switch, useToast } from '@/features/kangur/shared/ui';
+import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const DOCS_TOOLTIP_SURFACES: Array<{

@@ -1,8 +1,8 @@
 import 'server-only';
 
 import { runNeo4jStatements, type Neo4jCypherStatement } from '@/shared/lib/neo4j/client';
-import type { KangurKnowledgeCanonicalSourceCollection, KangurKnowledgeGraphSnapshot } from '@/shared/contracts/kangur-knowledge-graph';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import type { KangurKnowledgeCanonicalSourceCollection, KangurKnowledgeGraphSnapshot } from '@/features/kangur/shared/contracts/kangur-knowledge-graph';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 
 type Neo4jSyncPayload = {

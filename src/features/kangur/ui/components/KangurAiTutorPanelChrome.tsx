@@ -11,7 +11,7 @@ import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTu
 import { useKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 import {
   KangurAiTutorChromeBadge,

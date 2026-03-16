@@ -2,7 +2,7 @@ import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
   type KangurAiTutorConversationContext,
   type KangurAiTutorMotionPresetKind,
-} from '@/shared/contracts/kangur-ai-tutor';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 
 export const KANGUR_AI_TUTOR_SETTINGS_KEY = 'kangur_ai_tutor_settings';

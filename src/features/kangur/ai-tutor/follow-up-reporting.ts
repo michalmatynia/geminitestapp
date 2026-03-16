@@ -1,4 +1,4 @@
-import type { KangurAiTutorFollowUpAction } from '@/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorFollowUpAction } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
 export type KangurAiTutorBridgeFollowUpDirection =
   | 'lesson_to_game'

@@ -3,9 +3,9 @@
 import { Clipboard, X } from 'lucide-react';
 import React, { useCallback } from 'react';
 
-import { Button, Textarea } from '@/shared/ui';
-import { cn, sanitizeSvg } from '@/shared/utils';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { Button, Textarea } from '@/features/kangur/shared/ui';
+import { cn, sanitizeSvg } from '@/features/kangur/shared/utils';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 // ── Snippet helpers (60×60 viewBox — suitable for panels and inline blocks) ──

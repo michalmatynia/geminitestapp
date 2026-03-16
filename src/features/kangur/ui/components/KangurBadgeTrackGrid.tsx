@@ -8,7 +8,7 @@ import {
 import { KangurCardDescription } from '@/features/kangur/ui/design/primitives';
 import { getProgressBadgeTrackSummaries } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 type KangurBadgeTrackGridProps = {
   className?: string;

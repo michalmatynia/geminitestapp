@@ -20,9 +20,9 @@ import {
 import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { ActivityTypes } from '@/shared/constants/observability';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { KangurLessonComponentId } from '@/shared/contracts/kangur';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 
 
 const kangurPlatform = getKangurPlatform();

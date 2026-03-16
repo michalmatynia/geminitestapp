@@ -6,7 +6,7 @@ import {
   KangurSectionEyebrow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 type KangurBadgeTrackPlaceholderCardProps = {
   cardClassName?: string;

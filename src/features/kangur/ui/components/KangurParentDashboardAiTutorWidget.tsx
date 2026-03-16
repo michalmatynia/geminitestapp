@@ -33,21 +33,21 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
-import type { KangurAiTutorUsageResponse } from '@/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorUsageResponse } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import {
   formatKangurAiTutorTemplate,
   getKangurAiTutorMoodCopy,
-} from '@/shared/contracts/kangur-ai-tutor-content';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import {
   createDefaultKangurAiTutorLearnerMood,
   type KangurTutorMoodId,
-} from '@/shared/contracts/kangur-ai-tutor-mood';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor-mood';
 import { api } from '@/shared/lib/api-client';
 import { invalidateAllSettings } from '@/shared/lib/query-invalidation';
 import { kangurKeys } from '@/shared/lib/query-key-exports';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { serializeSetting } from '@/shared/utils/settings-json';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
+import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const KANGUR_PARENT_TUTOR_MOOD_ACCENTS: Record<KangurTutorMoodId, 'slate' | 'indigo' | 'sky' | 'violet' | 'amber' | 'teal' | 'emerald' | 'rose'> = {

@@ -2,11 +2,11 @@ import type {
   KangurAssignmentSnapshot,
   KangurLesson,
   KangurLessonDocument,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 import type {
   KangurTestQuestionStore,
   KangurTestSuite,
-} from '@/shared/contracts/kangur-tests';
+} from '@/features/kangur/shared/contracts/kangur-tests';
 import type {
   KangurLearnerProfileSnapshot,
   buildLessonMasteryInsights,

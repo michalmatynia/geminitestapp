@@ -1,14 +1,14 @@
 import { useEffect, useLayoutEffect, type MutableRefObject, type RefObject } from 'react';
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
-import type { KangurAiTutorUsageSummary } from '@/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorUsageSummary } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
 import { extractNarrationTextFromElement } from './kangur-narrator-utils';
 import { areTutorSelectionTextsEquivalent } from './KangurAiTutorWidget.helpers';
 
 import type { ActiveTutorFocus, TutorMotionProfile, TutorQuickAction } from './KangurAiTutorWidget.shared';
 import type { PendingSelectionResponse, SectionExplainContext } from './KangurAiTutorWidget.types';
-import type { KangurAiTutorRuntimeMessage } from '@/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorRuntimeMessage } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
 type TelemetryContext = {
   surface: string | null;

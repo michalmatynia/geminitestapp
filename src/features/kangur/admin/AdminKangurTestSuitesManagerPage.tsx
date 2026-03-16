@@ -10,13 +10,13 @@ import {
 } from '@/features/foldertree';
 import { FolderTreeSearchBar, useMasterFolderTreeSearch } from '@/features/foldertree';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import {
   FolderTreePanel,
   Skeleton,
-} from '@/shared/ui';
-import { serializeSetting } from '@/shared/utils/settings-json';
-import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
+} from '@/features/kangur/shared/ui';
+import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
+import type { KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
 import {
   KANGUR_TEST_SUITES_SETTING_KEY,
   canonicalizeKangurTestSuites,

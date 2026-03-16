@@ -2,8 +2,8 @@
 
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
-import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kangur';
-import { internalError } from '@/shared/errors/app-error';
+import type { KangurLesson, KangurLessonDocument } from '@/features/kangur/shared/contracts/kangur';
+import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 type LessonContentEditorContextValue = {
   lesson: KangurLesson | null;

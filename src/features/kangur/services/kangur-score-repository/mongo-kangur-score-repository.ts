@@ -2,13 +2,13 @@ import 'server-only';
 
 import { ObjectId, type Filter, type SortDirection } from 'mongodb';
 
-import type { KangurScore, KangurScoreRepositoryCreateInput } from '@/shared/contracts/kangur';
+import type { KangurScore, KangurScoreRepositoryCreateInput } from '@/features/kangur/shared/contracts/kangur';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import { normalizeSort } from './shared';
 
 import type { KangurScoreListInput, KangurScoreRepository } from './types';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 
 const KANGUR_SCORES_COLLECTION = 'kangur_scores';

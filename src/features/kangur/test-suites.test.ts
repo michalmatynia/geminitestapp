@@ -20,7 +20,7 @@ import {
   toTestSuiteFormData,
   upsertKangurTestSuite,
 } from '@/features/kangur/test-suites';
-import type { KangurTestGroup, KangurTestSuite } from '@/shared/contracts/kangur-tests';
+import type { KangurTestGroup, KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
 
 const makeSuite = (overrides: Partial<KangurTestSuite> = {}): KangurTestSuite => ({
   id: 's1',

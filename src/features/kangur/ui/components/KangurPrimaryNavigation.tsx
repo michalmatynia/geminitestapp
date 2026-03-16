@@ -1,4 +1,4 @@
-import { BookOpen, BrainCircuit, LayoutGrid, LogIn, LogOut, UserPlus } from 'lucide-react';
+import { BookOpen, BrainCircuit, LayoutGrid, LogIn, LogOut, Trophy, UserPlus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import {
@@ -35,7 +35,8 @@ type KangurPrimaryNavigationPage =
   | 'Game'
   | 'Lessons'
   | 'LearnerProfile'
-  | 'ParentDashboard';
+  | 'ParentDashboard'
+  | 'Duels';
 
 type KangurNavActionConfig = {
   active?: boolean;
@@ -208,14 +209,14 @@ export function KangurPrimaryNavigation({
   const hasActiveLearner = activeLearnerId.length > 0;
   const activeLearnerName =
     activeLearner?.displayName?.trim() || activeLearner?.loginName?.trim() || null;
-  const profileLabel =
-    isParentAccount && activeLearnerName ? `Profil ${activeLearnerName}` : 'Profil';
+  const profileDisplayName = activeLearnerName || authUser?.full_name?.trim() || null;
+  const profileLabel = profileDisplayName ? `Profil ${profileDisplayName}` : 'Profil';
   const shouldRenderProfileMenu =
     effectiveIsAuthenticated && (!isParentAccount || hasActiveLearner);
   const mobileNavItemClassName =
-    'max-sm:min-w-0 max-sm:flex-1 max-sm:justify-center max-sm:px-3';
+    'max-sm:col-span-1 max-sm:min-w-0 max-sm:w-full max-sm:justify-center max-sm:px-3';
   const mobileWideNavItemClassName =
-    'max-sm:min-w-0 max-sm:basis-full max-sm:justify-center max-sm:px-3';
+    'max-sm:col-span-2 max-sm:min-w-0 max-sm:w-full max-sm:justify-center max-sm:px-3';
   const mobileAuthActionClassName = mobileNavItemClassName;
   const { entry: createAccountActionContent } = useKangurPageContentEntry(
     'shared-nav-create-account-action'
@@ -224,7 +225,9 @@ export function KangurPrimaryNavigation({
   const createAccountActionRef = useRef<HTMLButtonElement | null>(null);
   const loginActionRef = useRef<HTMLButtonElement | null>(null);
   const [isTutorHidden, setIsTutorHidden] = useState(() => loadPersistedTutorVisibilityHidden());
-  const isTutorExplicitlyDisabled = tutor?.tutorSettings?.enabled === false;
+  const enableTutorLabel =
+    tutorContent.common.enableTutorLabel ?? tutorContent.navigation.restoreTutorLabel;
+  const disableTutorLabel = tutorContent.common.disableTutorAria ?? 'Wyłącz AI Tutora';
   const [isEditingGuestPlayerName, setIsEditingGuestPlayerName] = useState(
     !(guestPlayerName?.trim() ?? '')
   );
@@ -235,12 +238,14 @@ export function KangurPrimaryNavigation({
   const hasGuestPlayerName = (guestPlayerName?.trim() ?? '').length > 0;
   const homeHref = getKangurHomeHref(basePath);
   const lessonsHref = createPageUrl('Lessons', basePath);
+  const duelsHref = createPageUrl('Duels', basePath);
   const parentDashboardHref = createPageUrl('ParentDashboard', basePath);
   const profileHref = createPageUrl('LearnerProfile', basePath);
   const transitionPhase = routeTransitionState?.transitionPhase ?? 'idle';
   const activeTransitionSourceId = routeTransitionState?.activeTransitionSourceId ?? null;
   const homeTransitionSourceId = 'kangur-primary-nav:home';
   const lessonsTransitionSourceId = 'kangur-primary-nav:lessons';
+  const duelsTransitionSourceId = 'kangur-primary-nav:duels';
   const profileTransitionSourceId = 'kangur-primary-nav:profile';
   const parentDashboardTransitionSourceId = 'kangur-primary-nav:parent-dashboard';
 
@@ -387,31 +392,28 @@ export function KangurPrimaryNavigation({
       ) : null}
     </>
   ) : null;
-  const tutorRestoreAction =
-    isTutorHidden ? (
-      renderNavAction({
-        ariaLabel: tutorContent.navigation.restoreTutorLabel,
-        className:
-          `border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] px-4 text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800 ${mobileWideNavItemClassName}`,
-        content: (
-          <>
-            <BrainCircuit className={ICON_CLASSNAME} strokeWidth={2.15} />
-            <span className='truncate'>{tutorContent.navigation.restoreTutorLabel}</span>
-          </>
-        ),
-        docId: 'kangur-ai-tutor-restore',
-        onClick: (): void => {
-          persistTutorVisibilityHidden(false);
-          if (tutor?.enabled) {
-            tutor.openChat();
-          }
-        },
-        testId: 'kangur-ai-tutor-restore',
-        title: isTutorExplicitlyDisabled
-          ? tutorContent.navigation.restoreTutorLabel
-          : tutorContent.navigation.restoreTutorLabel,
-      })
-    ) : null;
+  const tutorToggleAction = renderNavAction({
+    ariaLabel: isTutorHidden ? enableTutorLabel : disableTutorLabel,
+    className: isTutorHidden
+      ? `border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] px-4 text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800 ${mobileWideNavItemClassName}`
+      : mobileNavItemClassName,
+    content: (
+      <>
+        <BrainCircuit className={ICON_CLASSNAME} strokeWidth={2.15} />
+        <span className='truncate'>{isTutorHidden ? enableTutorLabel : disableTutorLabel}</span>
+      </>
+    ),
+    docId: isTutorHidden ? 'kangur-ai-tutor-enable' : 'kangur-ai-tutor-disable',
+    onClick: (): void => {
+      const nextHidden = !isTutorHidden;
+      persistTutorVisibilityHidden(nextHidden);
+      if (!nextHidden && tutor?.enabled) {
+        tutor.openChat();
+      }
+    },
+    testId: 'kangur-ai-tutor-toggle',
+    title: isTutorHidden ? enableTutorLabel : disableTutorLabel,
+  });
   const homeAction: KangurNavActionConfig = {
     active: homeActive,
     className: `px-3 sm:px-4 ${mobileNavItemClassName}`,
@@ -460,6 +462,27 @@ export function KangurPrimaryNavigation({
     transitionAcknowledgeMs: NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
     transitionSourceId: lessonsTransitionSourceId,
   };
+  const duelsAction: KangurNavActionConfig = {
+    active: currentPage === 'Duels',
+    className: mobileNavItemClassName,
+    content: (
+      <>
+        <Trophy className={ICON_CLASSNAME} strokeWidth={2.15} />
+        <span className='truncate'>Pojedynki</span>
+      </>
+    ),
+    docId: 'top_nav_duels',
+    href: duelsHref,
+    targetPageKey: 'Duels',
+    testId: 'kangur-primary-nav-duels',
+    transitionActive: isTransitionSourceActive({
+      activeTransitionSourceId,
+      transitionPhase,
+      transitionSourceId: duelsTransitionSourceId,
+    }),
+    transitionAcknowledgeMs: NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
+    transitionSourceId: duelsTransitionSourceId,
+  };
   const parentDashboardAction: KangurNavActionConfig | null = effectiveShowParentDashboard
     ? {
       active: currentPage === 'ParentDashboard',
@@ -502,37 +525,42 @@ export function KangurPrimaryNavigation({
   ) : null;
   const primaryActions = (
     <div
-      className='flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap'
+      className='grid w-full min-w-0 grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-nowrap sm:items-center'
       data-testid='kangur-primary-nav-primary-actions'
     >
       {renderNavAction(homeAction)}
       {renderNavAction(lessonsAction)}
-      {tutorRestoreAction}
-      {shouldRenderProfileMenu ? (
-        <KangurProfileMenu
-          isTransitionActive={isTransitionSourceActive({
-            activeTransitionSourceId,
-            transitionPhase,
-            transitionSourceId: profileTransitionSourceId,
-          })}
-          label={profileLabel}
-          profile={{ href: profileHref, isActive: learnerProfileIsActive }}
-          transitionAcknowledgeMs={NAVIGATION_TRANSITION_ACKNOWLEDGE_MS}
-          transitionSourceId={profileTransitionSourceId}
-          triggerClassName={mobileNavItemClassName}
-        />
-      ) : null}
+      {renderNavAction(duelsAction)}
+      {tutorToggleAction}
     </div>
   );
   const utilityActions =
-    appearanceControls || rightAccessory || parentDashboardAction || authAction ? (
+    appearanceControls ||
+    rightAccessory ||
+    parentDashboardAction ||
+    shouldRenderProfileMenu ||
+    authAction ? (
       <div
-        className='ml-auto flex w-full flex-wrap items-center justify-end gap-2 max-sm:ml-0 max-sm:justify-start sm:w-auto'
+        className='ml-auto flex w-full flex-col items-stretch justify-end gap-2 max-sm:ml-0 max-sm:justify-start sm:w-auto sm:flex-row sm:flex-wrap sm:items-center'
         data-testid='kangur-primary-nav-utility-actions'
       >
         {appearanceControls}
         {rightAccessory}
         {parentDashboardAction ? renderNavAction(parentDashboardAction) : null}
+        {shouldRenderProfileMenu ? (
+          <KangurProfileMenu
+            isTransitionActive={isTransitionSourceActive({
+              activeTransitionSourceId,
+              transitionPhase,
+              transitionSourceId: profileTransitionSourceId,
+            })}
+            label={profileLabel}
+            profile={{ href: profileHref, isActive: learnerProfileIsActive }}
+            transitionAcknowledgeMs={NAVIGATION_TRANSITION_ACKNOWLEDGE_MS}
+            transitionSourceId={profileTransitionSourceId}
+            triggerClassName={mobileNavItemClassName}
+          />
+        ) : null}
         {authAction}
       </div>
     ) : null;

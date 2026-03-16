@@ -13,7 +13,7 @@ import {
   KangurHeadline,
   KangurIconBadge,
 } from '@/features/kangur/ui/design/primitives';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 type LessonActivityStageProps = {
   accent: 'amber' | 'emerald' | 'indigo' | 'rose' | 'sky' | 'teal' | 'violet';

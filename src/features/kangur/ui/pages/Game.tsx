@@ -19,7 +19,6 @@ import { KangurGameOperationSelectorWidget } from '@/features/kangur/ui/componen
 import { KangurGameQuestionWidget } from '@/features/kangur/ui/components/KangurGameQuestionWidget';
 import { KangurGameResultWidget } from '@/features/kangur/ui/components/KangurGameResultWidget';
 import { KangurGameSubtractionQuizWidget } from '@/features/kangur/ui/components/KangurGameSubtractionQuizWidget';
-import { KangurGameTrainingSetupWidget } from '@/features/kangur/ui/components/KangurGameTrainingSetupWidget';
 import { KangurAssignmentSpotlight } from '@/features/kangur/ui/components/KangurAssignmentSpotlight';
 import { KangurPriorityAssignments } from '@/features/kangur/ui/components/KangurPriorityAssignments';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
@@ -42,8 +41,8 @@ import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRou
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
-import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import type { KangurAiTutorConversationContext } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const GAME_BRAND_NAME = 'Sprycio';
@@ -647,15 +646,6 @@ function GameContent(): React.JSX.Element {
               )
             ) : null}
 
-            {screen === 'training' ? (
-              renderScreen(
-                'training',
-                'w-full flex flex-col items-center',
-                <KangurGameTrainingSetupWidget />,
-                trainingSetupRef
-              )
-            ) : null}
-
             {screen === 'kangur_setup' ? (
               renderScreen(
                 'kangur_setup',
@@ -719,12 +709,12 @@ function GameContent(): React.JSX.Element {
               )
             ) : null}
 
-            {screen === 'operation' ? (
+            {screen === 'operation' || screen === 'training' ? (
               renderScreen(
-                'operation',
+                screen,
                 'w-full flex flex-col items-center',
                 <KangurGameOperationSelectorWidget />,
-                operationSelectorRef
+                screen === 'training' ? trainingSetupRef : operationSelectorRef
               )
             ) : null}
 

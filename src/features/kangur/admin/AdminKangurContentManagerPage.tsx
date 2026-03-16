@@ -22,9 +22,9 @@ import {
   parseKangurTestQuestionStore,
 } from '@/features/kangur/test-questions';
 import { KANGUR_TEST_SUITES_SETTING_KEY, parseKangurTestSuites } from '@/features/kangur/test-suites';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Badge, Card } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
+import { Badge, Card } from '@/features/kangur/shared/ui';
+import { cn } from '@/features/kangur/shared/utils';
 
 import { AdminKangurLessonsManagerPage } from './AdminKangurLessonsManagerPage';
 import { AdminKangurTestSuitesManagerPage } from './AdminKangurTestSuitesManagerPage';
@@ -33,7 +33,7 @@ import { KangurAdminMetricCard } from './components/KangurAdminMetricCard';
 import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
 import { KangurAdminWorkspaceIntroCard } from './components/KangurAdminWorkspaceIntroCard';
 import { summarizeKangurContentCreator } from './content-creator-insights';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 type ContentTab = 'lessons' | 'tests';

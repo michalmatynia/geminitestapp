@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 export const kangurGradientIconTileVariants = cva(
   'inline-flex shrink-0 items-center justify-center bg-gradient-to-br shadow-sm',

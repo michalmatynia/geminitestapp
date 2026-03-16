@@ -12,7 +12,7 @@ import type {
   KangurBadgeTrackKey,
   KangurBadgeTrackSummary,
 } from '@/features/kangur/ui/services/progress';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 export const KANGUR_BADGE_TRACK_ACCENTS: Record<KangurBadgeTrackKey, KangurAccent> = {
   onboarding: 'indigo',

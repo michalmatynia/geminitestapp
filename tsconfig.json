@@ -102,7 +102,11 @@
     ".next-dev-playwright-broker-web-dev-019cf114-5b87-75d0-8359-f61aefb3bc55/types/**/*.ts",
     ".next-dev-playwright-broker-web-dev-019cf114-5b87-75d0-8359-f61aefb3bc55/dev/types/**/*.ts",
     ".next-dev-playwright-broker-web-dev-019cf114-5b87-75d0-8359-f61aefb3bc55-route-crawl/types/**/*.ts",
-    ".next-dev-playwright-broker-web-dev-019cf114-5b87-75d0-8359-f61aefb3bc55-route-crawl/dev/types/**/*.ts"
+    ".next-dev-playwright-broker-web-dev-019cf114-5b87-75d0-8359-f61aefb3bc55-route-crawl/dev/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-019cf259-a755-7f90-b793-077cb4d50ddf/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-019cf259-a755-7f90-b793-077cb4d50ddf/dev/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-019cf259-a755-7f90-b793-077cb4d50ddf-route-crawl/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-019cf259-a755-7f90-b793-077cb4d50ddf-route-crawl/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

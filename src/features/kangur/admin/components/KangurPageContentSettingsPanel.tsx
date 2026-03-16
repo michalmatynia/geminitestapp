@@ -7,7 +7,7 @@ import {
   FormField,
   FormSection,
   Textarea,
-} from '@/shared/ui';
+} from '@/features/kangur/shared/ui';
 import { useKangurPageContentMutations } from '../hooks/useKangurPageContentMutations';
 import { KangurPageContentEntryEditor } from './KangurPageContentEntryEditor';
 import { KangurPageContentEntryList } from './KangurPageContentEntryList';

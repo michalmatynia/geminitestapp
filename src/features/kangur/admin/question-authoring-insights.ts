@@ -4,7 +4,7 @@ import type {
   KangurTestQuestion,
   KangurTestQuestionEditorial,
   KangurTestQuestionWorkflowStatus,
-} from '@/shared/contracts/kangur-tests';
+} from '@/features/kangur/shared/contracts/kangur-tests';
 
 import type { QuestionFormData } from '../test-questions';
 

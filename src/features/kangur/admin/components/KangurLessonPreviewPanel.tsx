@@ -3,9 +3,9 @@
 import React, { useState } from 'react';
 
 import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/KangurLessonDocumentRenderer';
-import type { KangurLessonDocument } from '@/shared/contracts/kangur';
-import { Button } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import type { KangurLessonDocument } from '@/features/kangur/shared/contracts/kangur';
+import { Button } from '@/features/kangur/shared/ui';
+import { cn } from '@/features/kangur/shared/utils';
 
 interface KangurLessonPreviewPanelProps {
   document: KangurLessonDocument;

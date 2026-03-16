@@ -8,10 +8,10 @@ import {
   normalizeKangurClassOverrides,
 } from '@/features/kangur/class-overrides';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Alert, Button, Card, FormField, Textarea, useToast } from '@/shared/ui';
-import { serializeSetting } from '@/shared/utils/settings-json';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
+import { Alert, Button, Card, FormField, Textarea, useToast } from '@/features/kangur/shared/ui';
+import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const SETTINGS_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-card/40 shadow-sm';

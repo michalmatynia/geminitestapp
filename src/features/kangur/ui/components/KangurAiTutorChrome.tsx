@@ -1,7 +1,7 @@
-import { X } from 'lucide-react';
-
 import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
-import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
+import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/features/kangur/shared/utils';
+
+import { KangurPanelCloseButton } from './KangurPanelCloseButton';
 
 import type {
   ButtonHTMLAttributes,
@@ -20,8 +20,6 @@ const badgeClassName =
   'inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase';
 const textButtonClassName =
   'cursor-pointer rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white max-sm:px-2 max-sm:py-0.5 max-sm:text-[10px] [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-page-text))] hover:[background:var(--kangur-chat-control-hover-background,var(--kangur-soft-card-background))]';
-const iconButtonClassName =
-  'shrink-0 cursor-pointer rounded-full border p-1 transition-[background-color,box-shadow,transform,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))] hover:-translate-y-[1px] hover:scale-[1.03] hover:[background:var(--kangur-chat-control-hover-background,var(--kangur-soft-card-background))] hover:shadow-[0_10px_20px_-14px_rgba(180,83,9,0.42)]';
 const warmOverlayPanelBaseClassName = 'kangur-chat-warm-overlay';
 const warmOverlayShadowClassNameByTone = {
   callout: 'kangur-chat-warm-overlay-shadow-callout',
@@ -108,27 +106,13 @@ export function KangurAiTutorChromeTextButton({
   );
 }
 
-type ChromeCloseButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & {
-  iconClassName?: string;
-};
+type ChromeCloseButtonProps = Omit<ComponentPropsWithoutRef<typeof KangurPanelCloseButton>, 'variant'>;
 
 export function KangurAiTutorChromeCloseButton({
-  className,
-  iconClassName,
-  type = 'button',
-  'aria-label': ariaLabel,
   ...props
 }: ChromeCloseButtonProps): JSX.Element {
-  return (
-    <button
-      className={cn(iconButtonClassName, className)}
-      type={type}
-      aria-label={ariaLabel ?? 'Close'}
-      {...props}
-      title={ariaLabel ?? 'Close'}>
-      <X className={cn('h-3.5 w-3.5', iconClassName)} />
-    </button>
-  );
+  const closeButtonProps = props;
+  return <KangurPanelCloseButton variant='chat' {...closeButtonProps} />;
 }
 
 type WarmOverlayPanelProps = ComponentPropsWithoutRef<typeof KangurGlassPanel> & {

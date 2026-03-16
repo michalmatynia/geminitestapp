@@ -1,7 +1,7 @@
 import type { AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
 import type { ContextRuntimeDocument } from '@/shared/contracts/ai-context-registry';
-import type { KangurAiTutorWebsiteHelpTarget } from '@/shared/contracts/kangur-ai-tutor';
-import type { KangurKnowledgeCanonicalSourceCollection } from '@/shared/contracts/kangur-knowledge-graph';
+import type { KangurAiTutorWebsiteHelpTarget } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import type { KangurKnowledgeCanonicalSourceCollection } from '@/features/kangur/shared/contracts/kangur-knowledge-graph';
 
 export type GraphFollowUpAction = {
   id: string;

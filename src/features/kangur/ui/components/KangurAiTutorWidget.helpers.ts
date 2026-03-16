@@ -3,7 +3,7 @@ import { buildKangurRecommendationHref } from '@/features/kangur/ui/context/Kang
 import type {
   KangurAiTutorFollowUpAction,
   KangurAiTutorWebsiteHelpTarget,
-} from '@/shared/contracts/kangur-ai-tutor';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
 import type { GuidedTutorSectionKind, GuidedTutorTarget, TutorSurface } from './KangurAiTutorWidget.types';
 

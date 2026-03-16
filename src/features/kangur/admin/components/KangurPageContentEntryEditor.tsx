@@ -3,16 +3,19 @@ import React from 'react';
 import type {
   KangurAiTutorFocusKind,
   KangurAiTutorSurface,
-} from '@/shared/contracts/kangur-ai-tutor';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import {
   kangurPageContentPageKeySchema,
   type KangurPageContentEntry,
   type KangurPageContentFragment,
   type KangurPageContentPageKey,
-} from '@/shared/contracts/kangur-page-content';
-import { Badge, Button, Card, FormField, Input, SelectSimple, Switch, Textarea } from '@/shared/ui';
+} from '@/features/kangur/shared/contracts/kangur-page-content';
+import { Badge, Button, Card, FormField, Input, SelectSimple, Switch, Textarea } from '@/features/kangur/shared/ui';
 
-import { KangurPageContentFragmentEditor } from './KangurPageContentFragmentEditor';
+import {
+  KangurPageContentFragmentEditor,
+  KangurPageContentFragmentEditorProvider,
+} from './KangurPageContentFragmentEditor';
 
 interface KangurPageContentEntryEditorProps {
   entry: KangurPageContentEntry;
@@ -131,24 +134,27 @@ const parseList = (value: string): string[] => {
   return normalized;
 };
 
-export function KangurPageContentEntryEditor({
-  entry,
-  onUpdateEntry,
-  onDuplicateEntry,
-  onDeleteEntry,
-  onMoveEntry,
-  isSaving,
-  canDelete,
-  selectedFragmentId,
-  onSelectFragment,
-  onUpdateFragment,
-  onAddFragment,
-  onDuplicateFragment,
-  onDeleteFragment,
-  onMoveFragment,
-  className,
-  insetCardClassName,
-}: KangurPageContentEntryEditorProps): React.JSX.Element {
+export function KangurPageContentEntryEditor(
+  props: KangurPageContentEntryEditorProps
+): React.JSX.Element {
+  const {
+    entry,
+    onUpdateEntry,
+    onDuplicateEntry,
+    onDeleteEntry,
+    onMoveEntry,
+    isSaving,
+    canDelete,
+    selectedFragmentId,
+    onSelectFragment,
+    onUpdateFragment,
+    onAddFragment,
+    onDuplicateFragment,
+    onDeleteFragment,
+    onMoveFragment,
+    className,
+    insetCardClassName,
+  } = props;
   return (
     <Card variant='subtle' padding='md' className={className}>
       <div className='space-y-4'>
@@ -486,18 +492,22 @@ export function KangurPageContentEntryEditor({
           </FormField>
         </div>
 
-        <KangurPageContentFragmentEditor
-          fragments={entry.fragments}
-          selectedFragmentId={selectedFragmentId}
-          onSelectFragment={onSelectFragment}
-          onUpdateFragment={onUpdateFragment}
-          onAddFragment={onAddFragment}
-          onDuplicateFragment={onDuplicateFragment}
-          onDeleteFragment={onDeleteFragment}
-          onMoveFragment={onMoveFragment}
-          isSaving={isSaving}
-          className={insetCardClassName}
-        />
+        <KangurPageContentFragmentEditorProvider
+          value={{
+            fragments: entry.fragments,
+            selectedFragmentId,
+            onSelectFragment,
+            onUpdateFragment,
+            onAddFragment,
+            onDuplicateFragment,
+            onDeleteFragment,
+            onMoveFragment,
+            isSaving,
+            insetCardClassName,
+          }}
+        >
+          <KangurPageContentFragmentEditor />
+        </KangurPageContentFragmentEditorProvider>
 
         <div className='flex items-center justify-between rounded-2xl border border-border/60 bg-card/30 px-4 py-3'>
           <div>

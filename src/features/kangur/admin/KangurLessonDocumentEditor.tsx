@@ -27,9 +27,9 @@ import type {
   KangurLessonCalloutBlock,
   KangurLessonGridItem,
   KangurLessonQuizBlock,
-} from '@/shared/contracts/kangur';
-import { Badge, Button, FormField, Input, SelectSimple, Switch, Textarea } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+} from '@/features/kangur/shared/contracts/kangur';
+import { Badge, Button, FormField, Input, SelectSimple, Switch, Textarea } from '@/features/kangur/shared/ui';
+import { cn } from '@/features/kangur/shared/utils';
 
 import { ActivityEditorCard } from './components/ActivityEditorCard';
 import { CalloutEditorCard } from './components/CalloutEditorCard';

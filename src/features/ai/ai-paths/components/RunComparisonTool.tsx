@@ -27,16 +27,17 @@ interface RunComparisonToolProps {
   onSetCompareInspectorRowKey: (rowKey: string | null) => void;
 }
 
-export function RunComparisonTool({
-  primaryRun,
-  secondaryRun,
-  traceComparison,
-  displayedComparisonRows,
-  compareResumeChangesOnly,
-  onToggleResumeChangesOnly,
-  compareInspectorRowKey,
-  onSetCompareInspectorRowKey,
-}: RunComparisonToolProps): React.JSX.Element {
+export function RunComparisonTool(props: RunComparisonToolProps): React.JSX.Element {
+  const {
+    primaryRun,
+    secondaryRun,
+    traceComparison,
+    displayedComparisonRows,
+    compareResumeChangesOnly,
+    onToggleResumeChangesOnly,
+    compareInspectorRowKey,
+    onSetCompareInspectorRowKey,
+  } = props;
 
   const getRuntimeSummary = (run: AiPathRunRecord | null) => {
     return readRuntimeTraceSummary(run?.meta ?? null);

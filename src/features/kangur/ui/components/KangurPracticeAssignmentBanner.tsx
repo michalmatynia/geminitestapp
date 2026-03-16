@@ -2,6 +2,7 @@ import { Clock } from 'lucide-react';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
+import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
@@ -101,14 +102,11 @@ function KangurPracticeAssignmentBannerBody(): React.JSX.Element {
     }
 
     setNow(Date.now());
-    const timerId = window.setInterval(() => {
-      setNow(Date.now());
-    }, 1000);
-
-    return () => {
-      window.clearInterval(timerId);
-    };
   }, [shouldTick]);
+
+  useInterval(() => {
+    setNow(Date.now());
+  }, shouldTick ? 1000 : null);
 
   const countdownLabel = resolveKangurAssignmentCountdownLabel({
     timeLimitMinutes: banner.timeLimitMinutes,

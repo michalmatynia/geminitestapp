@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { KANGUR_LESSON_COMPONENT_OPTIONS } from '@/features/kangur/settings';
-import { FormField, Input, SelectSimple, Switch, Textarea } from '@/shared/ui';
+import { FormField, Input, SelectSimple, Switch, Textarea } from '@/features/kangur/shared/ui';
 
 import { LESSON_CONTENT_MODE_OPTIONS } from '../constants';
 

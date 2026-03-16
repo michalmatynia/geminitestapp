@@ -13,7 +13,7 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { Badge, Button, Card, FormSection, Switch, useToast } from '@/features/kangur/shared/ui';
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientError } from '@/features/kangur/observability/client';
 
 
 const DOCS_TOOLTIP_SURFACES: Array<{
@@ -96,22 +96,35 @@ export function KangurDocumentationTooltipSettingsPanel(): React.JSX.Element {
     }
 
     setIsSaving(true);
-    try {
-      await updateSetting.mutateAsync({
-        key: KANGUR_HELP_SETTINGS_KEY,
-        value: serializeSetting(helpSettings),
-      });
+    const didSave = await withKangurClientError(
+      {
+        source: 'kangur.admin.docs-tooltips',
+        action: 'save-settings',
+        description: 'Saves documentation tooltip settings.',
+      },
+      async () => {
+        await updateSetting.mutateAsync({
+          key: KANGUR_HELP_SETTINGS_KEY,
+          value: serializeSetting(helpSettings),
+        });
+        return true;
+      },
+      {
+        fallback: false,
+        onError: (error) => {
+          toast(error instanceof Error ? error.message : 'Failed to save Kangur tooltip settings.', {
+            variant: 'error',
+          });
+        },
+      }
+    );
+
+    if (didSave) {
       toast('Kangur documentation tooltip settings saved.', {
         variant: 'success',
       });
-    } catch (error) {
-      logClientError(error);
-      toast(error instanceof Error ? error.message : 'Failed to save Kangur tooltip settings.', {
-        variant: 'error',
-      });
-    } finally {
-      setIsSaving(false);
     }
+    setIsSaving(false);
   };
 
   return (

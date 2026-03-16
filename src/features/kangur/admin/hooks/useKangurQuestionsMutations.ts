@@ -5,8 +5,8 @@ import { useCallback, useState } from 'react';
 import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useToast } from '@/features/kangur/shared/ui';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
+import { withKangurClientError } from '@/features/kangur/observability/client';
 
 import {
   applyPublishedQuestionEditPolicy,
@@ -120,150 +120,203 @@ export function useKangurQuestionsMutations(
   );
 
   const handlePublishReadyForCurrentSuite = useCallback(async (): Promise<void> => {
-    try {
-      const { store: nextStore, publishedQuestionIds } = publishReadyQuestions(questionStore, {
-        suiteId: suite.id,
-        questionIds: currentPublishableQuestionIds,
-      });
-      await updateSetting.mutateAsync({
-        key: KANGUR_TEST_QUESTIONS_SETTING_KEY,
-        value: serializeSetting(nextStore),
-      });
-      const questionCount = publishedQuestionIds.length;
+    const publishResult = await withKangurClientError(
+      {
+        source: 'kangur.admin.questions',
+        action: 'publish-ready-questions',
+        description: 'Publishes ready questions for the current test suite.',
+        context: { suiteId: suite.id },
+      },
+      async () => {
+        const { store: nextStore, publishedQuestionIds } = publishReadyQuestions(questionStore, {
+          suiteId: suite.id,
+          questionIds: currentPublishableQuestionIds,
+        });
+        await updateSetting.mutateAsync({
+          key: KANGUR_TEST_QUESTIONS_SETTING_KEY,
+          value: serializeSetting(nextStore),
+        });
+        return { questionCount: publishedQuestionIds.length };
+      },
+      {
+        fallback: null,
+        onError: () => {
+          toast('Failed to publish ready questions.', { variant: 'error' });
+        },
+      }
+    );
+
+    if (publishResult) {
+      const questionCount = publishResult.questionCount;
       toast(
         `Published ${questionCount} ready question${questionCount === 1 ? '' : 's'} in ${suite.title}.`,
         { variant: 'success' }
       );
-    } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'KangurQuestionsManagerPanel',
-          action: 'publishReadyForCurrentSuite',
-          suiteId: suite.id,
-        },
-      });
-      toast('Failed to publish ready questions.', { variant: 'error' });
     }
   }, [currentPublishableQuestionIds, questionStore, suite.id, toast, updateSetting]);
 
   const handlePublishAndGoLiveCurrentSuite = useCallback(async (): Promise<void> => {
-    try {
-      const { store: nextStore, publishedQuestionIds } = publishReadyQuestions(questionStore, {
-        suiteId: suite.id,
-        questionIds: currentPublishableQuestionIds,
-      });
-      await updateSetting.mutateAsync({
-        key: KANGUR_TEST_QUESTIONS_SETTING_KEY,
-        value: serializeSetting(nextStore),
-      });
+    const publishResult = await withKangurClientError(
+      {
+        source: 'kangur.admin.questions',
+        action: 'publish-and-go-live',
+        description: 'Publishes ready questions and marks the suite live.',
+        context: { suiteId: suite.id },
+      },
+      async () => {
+        const { store: nextStore, publishedQuestionIds } = publishReadyQuestions(questionStore, {
+          suiteId: suite.id,
+          questionIds: currentPublishableQuestionIds,
+        });
+        await updateSetting.mutateAsync({
+          key: KANGUR_TEST_QUESTIONS_SETTING_KEY,
+          value: serializeSetting(nextStore),
+        });
 
-      const { suites: nextSuites } = promoteKangurTestSuitesLive(suites, {
-        suiteIds: [suite.id],
-      });
-      await updateSetting.mutateAsync({
-        key: KANGUR_TEST_SUITES_SETTING_KEY,
-        value: serializeSetting(canonicalizeKangurTestSuites(nextSuites)),
-      });
-      const questionCount = publishedQuestionIds.length;
+        const { suites: nextSuites } = promoteKangurTestSuitesLive(suites, {
+          suiteIds: [suite.id],
+        });
+        await updateSetting.mutateAsync({
+          key: KANGUR_TEST_SUITES_SETTING_KEY,
+          value: serializeSetting(canonicalizeKangurTestSuites(nextSuites)),
+        });
+
+        return { questionCount: publishedQuestionIds.length };
+      },
+      {
+        fallback: null,
+        onError: () => {
+          toast('Failed to publish and go live.', { variant: 'error' });
+        },
+      }
+    );
+
+    if (publishResult) {
+      const questionCount = publishResult.questionCount;
       toast(
         `Published ${questionCount} ready question${questionCount === 1 ? '' : 's'} and marked ${suite.title} live for learners (1 suite updated).`,
         { variant: 'success' }
       );
-    } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'KangurQuestionsManagerPanel',
-          action: 'publishAndGoLiveCurrentSuite',
-          suiteId: suite.id,
-        },
-      });
-      toast('Failed to publish and go live.', { variant: 'error' });
     }
   }, [currentPublishableQuestionIds, questionStore, suite.id, suites, toast, updateSetting]);
 
   const handleGoLiveCurrentSuite = useCallback(async (): Promise<void> => {
-    try {
-      const { suites: nextSuites } = promoteKangurTestSuitesLive(suites, {
-        suiteIds: [suite.id],
-      });
-      await updateSetting.mutateAsync({
-        key: KANGUR_TEST_SUITES_SETTING_KEY,
-        value: serializeSetting(canonicalizeKangurTestSuites(nextSuites)),
-      });
+    const didGoLive = await withKangurClientError(
+      {
+        source: 'kangur.admin.questions',
+        action: 'go-live-suite',
+        description: 'Marks the current suite as live.',
+        context: { suiteId: suite.id },
+      },
+      async () => {
+        const { suites: nextSuites } = promoteKangurTestSuitesLive(suites, {
+          suiteIds: [suite.id],
+        });
+        await updateSetting.mutateAsync({
+          key: KANGUR_TEST_SUITES_SETTING_KEY,
+          value: serializeSetting(canonicalizeKangurTestSuites(nextSuites)),
+        });
+        return true;
+      },
+      {
+        fallback: false,
+        onError: () => {
+          toast('Failed to mark suite live.', { variant: 'error' });
+        },
+      }
+    );
+
+    if (didGoLive) {
       toast(`Suite ${suite.title} is now live for learners (1 suite updated).`, {
         variant: 'success',
       });
-    } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'KangurQuestionsManagerPanel',
-          action: 'goLiveCurrentSuite',
-          suiteId: suite.id,
-        },
-      });
-      toast('Failed to mark suite live.', { variant: 'error' });
     }
   }, [suite.id, suites, toast, updateSetting]);
 
   const handleTakeCurrentSuiteOffline = useCallback(async (): Promise<void> => {
-    try {
-      const { suites: nextSuites } = demoteKangurTestSuitesToDraft(suites, {
-        suiteIds: [suite.id],
-      });
-      await updateSetting.mutateAsync({
-        key: KANGUR_TEST_SUITES_SETTING_KEY,
-        value: serializeSetting(canonicalizeKangurTestSuites(nextSuites)),
-      });
+    const didTakeOffline = await withKangurClientError(
+      {
+        source: 'kangur.admin.questions',
+        action: 'take-suite-offline',
+        description: 'Demotes the current suite to draft status.',
+        context: { suiteId: suite.id },
+      },
+      async () => {
+        const { suites: nextSuites } = demoteKangurTestSuitesToDraft(suites, {
+          suiteIds: [suite.id],
+        });
+        await updateSetting.mutateAsync({
+          key: KANGUR_TEST_SUITES_SETTING_KEY,
+          value: serializeSetting(canonicalizeKangurTestSuites(nextSuites)),
+        });
+        return true;
+      },
+      {
+        fallback: false,
+        onError: () => {
+          toast('Failed to take suite offline.', { variant: 'error' });
+        },
+      }
+    );
+
+    if (didTakeOffline) {
       toast(`Suite ${suite.title} is now offline for learners (1 suite updated).`, {
         variant: 'success',
       });
-    } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'KangurQuestionsManagerPanel',
-          action: 'takeCurrentSuiteOffline',
-          suiteId: suite.id,
-        },
-      });
-      toast('Failed to take suite offline.', { variant: 'error' });
     }
   }, [suite.id, suites, toast, updateSetting]);
 
   const handleSave = async (): Promise<void> => {
     if (!editingQuestion || !formData) return;
-    try {
-      const savedDraft = formDataToQuestion(
-        formData,
-        editingQuestion.id,
-        suite.id,
-        editingQuestion.sortOrder
-      );
-      const wasDemotedByPolicy = shouldDemotePublishedQuestionAfterEdit(
-        editingQuestion,
-        savedDraft
-      );
-      const saved = applyPublishedQuestionEditPolicy(
-        isNewQuestion ? null : editingQuestion,
-        savedDraft
-      );
-      const nextStore = upsertKangurTestQuestion(questionStore, saved);
-      await updateSetting.mutateAsync({
-        key: KANGUR_TEST_QUESTIONS_SETTING_KEY,
-        value: serializeSetting(nextStore),
-      });
-      const activeDraftQuestionId = isNewQuestion ? QUESTION_EDITOR_NEW_DRAFT_SLOT : editingQuestion.id;
-      clearQuestionEditorDraft(suite.id, activeDraftQuestionId);
-      const suiteWasDemoted = await maybeTakeSuiteOfflineAfterQuestionMutation(nextStore);
-      if (wasDemotedByPolicy) {
+    const saveResult = await withKangurClientError(
+      {
+        source: 'kangur.admin.questions',
+        action: 'save-question',
+        description: 'Saves the current test question draft.',
+        context: { suiteId: suite.id, questionId: editingQuestion.id, isNewQuestion },
+      },
+      async () => {
+        const savedDraft = formDataToQuestion(
+          formData,
+          editingQuestion.id,
+          suite.id,
+          editingQuestion.sortOrder
+        );
+        const wasDemotedByPolicy = shouldDemotePublishedQuestionAfterEdit(
+          editingQuestion,
+          savedDraft
+        );
+        const saved = applyPublishedQuestionEditPolicy(
+          isNewQuestion ? null : editingQuestion,
+          savedDraft
+        );
+        const nextStore = upsertKangurTestQuestion(questionStore, saved);
+        await updateSetting.mutateAsync({
+          key: KANGUR_TEST_QUESTIONS_SETTING_KEY,
+          value: serializeSetting(nextStore),
+        });
+        const activeDraftQuestionId = isNewQuestion
+          ? QUESTION_EDITOR_NEW_DRAFT_SLOT
+          : editingQuestion.id;
+        clearQuestionEditorDraft(suite.id, activeDraftQuestionId);
+        const suiteWasDemoted = await maybeTakeSuiteOfflineAfterQuestionMutation(nextStore);
+        return { wasDemotedByPolicy, suiteWasDemoted };
+      },
+      {
+        fallback: null,
+        onError: () => {
+          toast('Failed to save question.', { variant: 'error' });
+        },
+      }
+    );
+
+    if (saveResult) {
+      if (saveResult.wasDemotedByPolicy) {
         toast(
           'Question updated. Learner-facing changes moved this published question back to draft.',
           { variant: 'warning' }
         );
-      } else if (suiteWasDemoted) {
+      } else if (saveResult.suiteWasDemoted) {
         toast(
           'Question saved. The live suite was taken offline because its published question set changed.',
           { variant: 'warning' }
@@ -272,24 +325,38 @@ export function useKangurQuestionsMutations(
         toast('Question saved.', { variant: 'success' });
       }
       closeEditor();
-    } catch (error) {
-      logClientError(error);
-      logClientError(error, { context: { source: 'KangurQuestionsManagerPanel', action: 'save' } });
-      toast('Failed to save question.', { variant: 'error' });
     }
   };
 
   const handleDelete = async (): Promise<void> => {
     if (!questionToDelete) return;
-    try {
-      const nextStore = deleteKangurTestQuestion(questionStore, questionToDelete.id);
-      await updateSetting.mutateAsync({
-        key: KANGUR_TEST_QUESTIONS_SETTING_KEY,
-        value: serializeSetting(nextStore),
-      });
-      clearQuestionEditorDraft(suite.id, questionToDelete.id);
-      const suiteWasDemoted = await maybeTakeSuiteOfflineAfterQuestionMutation(nextStore);
-      if (suiteWasDemoted) {
+    const deleteResult = await withKangurClientError(
+      {
+        source: 'kangur.admin.questions',
+        action: 'delete-question',
+        description: 'Deletes the selected test question.',
+        context: { suiteId: suite.id, questionId: questionToDelete.id },
+      },
+      async () => {
+        const nextStore = deleteKangurTestQuestion(questionStore, questionToDelete.id);
+        await updateSetting.mutateAsync({
+          key: KANGUR_TEST_QUESTIONS_SETTING_KEY,
+          value: serializeSetting(nextStore),
+        });
+        clearQuestionEditorDraft(suite.id, questionToDelete.id);
+        const suiteWasDemoted = await maybeTakeSuiteOfflineAfterQuestionMutation(nextStore);
+        return { suiteWasDemoted };
+      },
+      {
+        fallback: null,
+        onError: () => {
+          toast('Failed to delete question.', { variant: 'error' });
+        },
+      }
+    );
+
+    if (deleteResult) {
+      if (deleteResult.suiteWasDemoted) {
         toast(
           'Question deleted. The live suite was taken offline because its published question set changed.',
           { variant: 'warning' }
@@ -298,35 +365,47 @@ export function useKangurQuestionsMutations(
         toast('Question deleted.', { variant: 'success' });
       }
       setQuestionToDelete(null);
-    } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'KangurQuestionsManagerPanel', action: 'delete' },
-      });
-      toast('Failed to delete question.', { variant: 'error' });
     }
   };
 
   const handleDuplicate = async (q: KangurTestQuestion): Promise<void> => {
-    try {
-      const duped: KangurTestQuestion = {
-        ...q,
-        id: Math.random().toString(36).slice(2, 9), // Fallback if no helper
-        sortOrder: q.sortOrder + 500,
-        prompt: `${q.prompt} (copy)`,
-        editorial: {
-          ...q.editorial,
-          workflowStatus: 'draft',
-          publishedAt: undefined,
+    const duplicateResult = await withKangurClientError(
+      {
+        source: 'kangur.admin.questions',
+        action: 'duplicate-question',
+        description: 'Creates a duplicate of the selected test question.',
+        context: { suiteId: suite.id, questionId: q.id },
+      },
+      async () => {
+        const duped: KangurTestQuestion = {
+          ...q,
+          id: Math.random().toString(36).slice(2, 9), // Fallback if no helper
+          sortOrder: q.sortOrder + 500,
+          prompt: `${q.prompt} (copy)`,
+          editorial: {
+            ...q.editorial,
+            workflowStatus: 'draft',
+            publishedAt: undefined,
+          },
+        };
+        const nextStore = upsertKangurTestQuestion(questionStore, duped);
+        await updateSetting.mutateAsync({
+          key: KANGUR_TEST_QUESTIONS_SETTING_KEY,
+          value: serializeSetting(nextStore),
+        });
+        const suiteWasDemoted = await maybeTakeSuiteOfflineAfterQuestionMutation(nextStore);
+        return { suiteWasDemoted };
+      },
+      {
+        fallback: null,
+        onError: () => {
+          toast('Failed to duplicate question.', { variant: 'error' });
         },
-      };
-      const nextStore = upsertKangurTestQuestion(questionStore, duped);
-      await updateSetting.mutateAsync({
-        key: KANGUR_TEST_QUESTIONS_SETTING_KEY,
-        value: serializeSetting(nextStore),
-      });
-      const suiteWasDemoted = await maybeTakeSuiteOfflineAfterQuestionMutation(nextStore);
-      if (suiteWasDemoted) {
+      }
+    );
+
+    if (duplicateResult) {
+      if (duplicateResult.suiteWasDemoted) {
         toast(
           'Question duplicated. The live suite was taken offline because its published question set changed.',
           { variant: 'warning' }
@@ -334,31 +413,35 @@ export function useKangurQuestionsMutations(
       } else {
         toast('Question duplicated.', { variant: 'success' });
       }
-    } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'KangurQuestionsManagerPanel', action: 'duplicate' },
-      });
-      toast('Failed to duplicate question.', { variant: 'error' });
     }
   };
 
   const handleMove = async (fromIndex: number, toIndex: number): Promise<void> => {
-    try {
-      const moved = reorderQuestions(moveItem(questions, fromIndex, toIndex));
-      let nextStore = { ...questionStore };
-      for (const q of moved) {
-        nextStore = upsertKangurTestQuestion(nextStore, q);
+    await withKangurClientError(
+      {
+        source: 'kangur.admin.questions',
+        action: 'reorder-questions',
+        description: 'Reorders test questions within the suite.',
+        context: { suiteId: suite.id, fromIndex, toIndex },
+      },
+      async () => {
+        const moved = reorderQuestions(moveItem(questions, fromIndex, toIndex));
+        let nextStore = { ...questionStore };
+        for (const q of moved) {
+          nextStore = upsertKangurTestQuestion(nextStore, q);
+        }
+        await updateSetting.mutateAsync({
+          key: KANGUR_TEST_QUESTIONS_SETTING_KEY,
+          value: serializeSetting(nextStore),
+        });
+      },
+      {
+        fallback: undefined,
+        onError: () => {
+          toast('Failed to reorder questions.', { variant: 'error' });
+        },
       }
-      await updateSetting.mutateAsync({
-        key: KANGUR_TEST_QUESTIONS_SETTING_KEY,
-        value: serializeSetting(nextStore),
-      });
-    } catch (error) {
-      logClientError(error);
-      logClientError(error, { context: { source: 'KangurQuestionsManagerPanel', action: 'move' } });
-      toast('Failed to reorder questions.', { variant: 'error' });
-    }
+    );
   };
 
   return {

@@ -25,10 +25,13 @@ import { buildContextRegistryConsumerEnvelope } from '@/shared/lib/ai-context-re
 import { api } from '@/shared/lib/api-client';
 import { Badge } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/shared/utils';
+import {
+  withKangurClientError,
+  withKangurClientErrorSync,
+} from '@/features/kangur/observability/client';
 
 import { validateKangurLessonPageDraft } from './content-creator-insights';
 import { useLessonContentEditorContext } from './context/LessonContentEditorContext';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 type RequestStatus = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -39,16 +42,20 @@ const KANGUR_LESSON_NARRATION_PANEL_CONTEXT_ROOT_IDS = [
 
 const formatDateTime = (value: string | null): string | null => {
   if (!value) return null;
-
-  try {
-    return new Intl.DateTimeFormat('pl-PL', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value));
-  } catch (error) {
-    logClientError(error);
-    return value;
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.admin.lesson-narration',
+      action: 'format-date',
+      description: 'Formats narration timestamps for the lesson narration panel.',
+      context: { value },
+    },
+    () =>
+      new Intl.DateTimeFormat('pl-PL', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }).format(new Date(value)),
+    { fallback: value }
+  );
 };
 
 const getLatestAudioCreatedAt = (response: KangurLessonTtsResponse | null): string | null => {
@@ -316,36 +323,51 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
     setStatus('loading');
     setErrorMessage(null);
 
-    try {
-      const nextResponse = await api.post<KangurLessonTtsResponse>('/api/kangur/tts', {
-        script,
-        voice,
-        forceRegenerate,
-        ...(requestContextRegistry ? { contextRegistry: requestContextRegistry } : {}),
-      });
-      setResponse(nextResponse);
-      if (nextResponse.mode === 'audio') {
-        const latestCreatedAt = nextResponse.segments.reduce<string | null>(
-          (latest, segment) => (!latest || segment.createdAt > latest ? segment.createdAt : latest),
-          null
-        );
-        setCacheStatus({
-          state: 'ready',
-          voice: nextResponse.voice,
-          latestCreatedAt,
-          message: 'Cached audio is available for this lesson draft.',
-          segments: nextResponse.segments,
-        });
-        stampNarrationPreviewMetadata(latestCreatedAt);
+    const nextResponse = await withKangurClientError(
+      {
+        source: 'kangur.admin.lesson-narration',
+        action: 'prepare-preview',
+        description: 'Generates a narration preview for the lesson.',
+        context: { lessonId: lesson.id, forceRegenerate },
+      },
+      async () =>
+        await api.post<KangurLessonTtsResponse>('/api/kangur/tts', {
+          script,
+          voice,
+          forceRegenerate,
+          ...(requestContextRegistry ? { contextRegistry: requestContextRegistry } : {}),
+        }),
+      {
+        fallback: null,
+        onError: (error) => {
+          setStatus('error');
+          setErrorMessage(
+            error instanceof Error ? error.message : 'Failed to prepare lesson narration preview.'
+          );
+        },
       }
-      setStatus('ready');
-    } catch (error) {
-      logClientError(error);
-      setStatus('error');
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Failed to prepare lesson narration preview.'
-      );
+    );
+
+    if (!nextResponse) {
+      return;
     }
+
+    setResponse(nextResponse);
+    if (nextResponse.mode === 'audio') {
+      const latestCreatedAt = nextResponse.segments.reduce<string | null>(
+        (latest, segment) => (!latest || segment.createdAt > latest ? segment.createdAt : latest),
+        null
+      );
+      setCacheStatus({
+        state: 'ready',
+        voice: nextResponse.voice,
+        latestCreatedAt,
+        message: 'Cached audio is available for this lesson draft.',
+        segments: nextResponse.segments,
+      });
+      stampNarrationPreviewMetadata(latestCreatedAt);
+    }
+    setStatus('ready');
   };
 
   const latestAudioCreatedAt = formatDateTime(getLatestAudioCreatedAt(response));

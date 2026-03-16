@@ -172,7 +172,8 @@ describe('KangurParentDashboardHeroWidget', () => {
       'text-center'
     );
     expect(screen.getByRole('heading', { name: 'Panel Rodzica / Nauczyciela' })).toHaveClass(
-      'text-3xl'
+      'text-2xl',
+      'sm:text-3xl'
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Zaloguj się' }));
@@ -228,7 +229,10 @@ describe('KangurParentDashboardHeroWidget', () => {
     render(<KangurParentDashboardHeroWidget showActions={false} />);
 
     expect(screen.getByTestId('kangur-parent-dashboard-hero')).toHaveClass('text-center');
-    expect(screen.getByRole('heading', { name: 'Panel Rodzica' })).toHaveClass('text-3xl');
+    expect(screen.getByRole('heading', { name: 'Panel Rodzica' })).toHaveClass(
+      'text-2xl',
+      'sm:text-3xl'
+    );
     expect(screen.getByText('parent@example.com')).toBeInTheDocument();
     expect(screen.getByText('Maja')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-parent-dashboard-daily-quest')).toBeNull();

@@ -4,9 +4,9 @@ import * as server from './server';
 describe('ai-paths server entrypoint', () => {
   it('should export expected members', () => {
     expect(server).toBeDefined();
-    expect(typeof server.getAiPathConfig).toBe('function');
-    expect(typeof server.getAiPathRun).toBe('function');
-    expect(typeof server.listAiPathRuns).toBe('function');
-    expect(typeof server.executeAiPathRun).toBe('function');
+    expect(typeof server.enqueuePathRun).toBe('function');
+    expect(typeof server.cancelPathRun).toBe('function');
+    expect(typeof server.resumePathRun).toBe('function');
+    expect(typeof server.getAiPathsSettings).toBe('function');
   });
 });

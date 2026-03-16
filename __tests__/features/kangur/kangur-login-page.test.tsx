@@ -6,7 +6,6 @@ import { render, screen, waitFor } from '@/__tests__/test-utils';
 import userEvent from '@testing-library/user-event';
 import type { AnchorHTMLAttributes, ReactNode } from 'react';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-
 const {
   useRouterMock,
   useSearchParamsMock,
@@ -14,57 +13,18 @@ const {
   routerPushMock,
   trackKangurClientEventMock,
   setStoredActiveLearnerIdMock,
-} = vi.hoisted(() => ({
-  useRouterMock: vi.fn(),
-  useSearchParamsMock: vi.fn(),
-  usePathnameMock: vi.fn(),
-  routerPushMock: vi.fn(),
-  trackKangurClientEventMock: vi.fn(),
-  setStoredActiveLearnerIdMock: vi.fn(),
-}));
-
-type KangurClientErrorHandlingOptions<T> = {
-  fallback: T | (() => T);
-  onError?: (error: unknown) => void;
-  shouldReport?: (error: unknown) => boolean;
-  shouldRethrow?: (error: unknown) => boolean;
-};
-
-const withKangurClientError = async <T,>(
-  _report: unknown,
-  task: () => Promise<T>,
-  options: KangurClientErrorHandlingOptions<T>
-): Promise<T> => {
-  try {
-    return await task();
-  } catch (error) {
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
-      throw error;
-    }
-    return typeof options.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : options.fallback;
-  }
-};
-
-const withKangurClientErrorSync = <T,>(
-  _report: unknown,
-  task: () => T,
-  options: KangurClientErrorHandlingOptions<T>
-): T => {
-  try {
-    return task();
-  } catch (error) {
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
-      throw error;
-    }
-    return typeof options.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : options.fallback;
-  }
-};
+  withKangurClientError,
+  withKangurClientErrorSync,
+} = vi.hoisted(() => {
+  return {
+    useRouterMock: vi.fn(),
+    useSearchParamsMock: vi.fn(),
+    usePathnameMock: vi.fn(),
+    routerPushMock: vi.fn(),
+    setStoredActiveLearnerIdMock: vi.fn(),
+    ...globalThis.__kangurClientErrorMocks(),
+  };
+});
 
 vi.mock('next/link', () => ({
   default: ({

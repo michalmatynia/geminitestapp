@@ -7,6 +7,7 @@ import { KANGUR_AVATAR_OPTIONS, getKangurAvatarById } from '@/features/kangur/ui
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import { useKangurAuthActions } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurLearnerProfileRuntime } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import {
   KangurGlassPanel,
   KangurMetricCard,
@@ -19,13 +20,14 @@ import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurP
 import type { KangurDailyQuestState } from '@/features/kangur/shared/contracts/kangur-quests';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import { getNextLockedBadge } from '@/features/kangur/ui/services/progress';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientError } from '@/features/kangur/observability/client';
 
 const kangurPlatform = getKangurPlatform();
 
 export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
   const { progress, snapshot, user } = useKangurLearnerProfileRuntime();
   const { checkAppState } = useKangurAuthActions();
+  const { subject } = useKangurSubjectFocus();
   const { entry: overviewContent } = useKangurPageContentEntry('learner-profile-overview');
   const nextBadge = getNextLockedBadge(progress);
   const [dailyQuest, setDailyQuest] = useState<KangurDailyQuestState | null | undefined>(undefined);
@@ -35,8 +37,8 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
   const selectedAvatar = getKangurAvatarById(activeLearner?.avatarId);
 
   useEffect(() => {
-    setDailyQuest(getCurrentKangurDailyQuest(progress));
-  }, [progress]);
+    setDailyQuest(getCurrentKangurDailyQuest(progress, { subject }));
+  }, [progress, subject]);
 
   const dailyQuestAccent =
     dailyQuest?.reward.status === 'claimed'
@@ -56,15 +58,28 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
     }
     setIsSavingAvatar(true);
     setAvatarError(null);
-    try {
-      await kangurPlatform.learners.update(activeLearner.id, { avatarId });
-      await checkAppState();
-    } catch (error) {
-      logClientError(error);
-      setAvatarError('Nie udalo sie zapisac avatara.');
-    } finally {
-      setIsSavingAvatar(false);
-    }
+    await withKangurClientError(
+      {
+        source: 'kangur-learner-profile',
+        action: 'update-avatar',
+        description: 'Update learner avatar selection.',
+        context: {
+          learnerId: activeLearner.id,
+          avatarId,
+        },
+      },
+      async () => {
+        await kangurPlatform.learners.update(activeLearner.id, { avatarId });
+        await checkAppState();
+      },
+      {
+        fallback: undefined,
+        onError: () => {
+          setAvatarError('Nie udalo sie zapisac avatara.');
+        },
+      }
+    );
+    setIsSavingAvatar(false);
   };
 
   return (

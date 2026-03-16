@@ -50,7 +50,7 @@ import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorA
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
 import type { KangurAiTutorConversationContext } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 
 const GAME_BRAND_NAME = 'Sprycio';
@@ -124,12 +124,23 @@ const focusGameScreenHeading = (heading: HTMLHeadingElement | null): void => {
     return;
   }
 
-  try {
-    heading.focus({ preventScroll: true });
-  } catch (error) {
-    logClientError(error);
-    heading.focus();
-  }
+  withKangurClientErrorSync(
+    {
+      source: 'kangur-game',
+      action: 'focus-screen-heading',
+      description: 'Focus the active game screen heading.',
+    },
+    () => {
+      heading.focus({ preventScroll: true });
+      return true;
+    },
+    {
+      fallback: () => {
+        heading.focus();
+        return false;
+      },
+    }
+  );
 };
 
 function GameContent(): React.JSX.Element {
@@ -653,7 +664,7 @@ function GameContent(): React.JSX.Element {
           'data-kangur-route-main': true,
           id: GAME_MAIN_ID,
           'aria-labelledby': `${GAME_TITLE_ID} ${GAME_SCREEN_TITLE_ID}`,
-          className: `flex flex-col items-center pt-8 sm:pt-10 ${KANGUR_PANEL_GAP_CLASSNAME}`,
+          className: `flex flex-col items-center px-4 pb-[calc(env(safe-area-inset-bottom)+32px)] pt-8 sm:px-6 sm:pt-10 lg:px-8 ${KANGUR_PANEL_GAP_CLASSNAME}`,
         }}
       >
           <h1 id={GAME_TITLE_ID} className='sr-only'>

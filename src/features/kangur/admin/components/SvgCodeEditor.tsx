@@ -5,7 +5,7 @@ import React, { useCallback } from 'react';
 
 import { Button, Textarea } from '@/features/kangur/shared/ui';
 import { cn, sanitizeSvg } from '@/features/kangur/shared/utils';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientError } from '@/features/kangur/observability/client';
 
 
 // ── Snippet helpers (60×60 viewBox — suitable for panels and inline blocks) ──
@@ -128,13 +128,22 @@ export function SvgCodeEditor({
   );
 
   const handlePasteFromClipboard = useCallback(async (): Promise<void> => {
-    try {
-      const text = await navigator.clipboard.readText();
+    const text = await withKangurClientError(
+      {
+        source: 'kangur.admin.svg-editor',
+        action: 'paste-clipboard',
+        description: 'Pastes SVG markup from the clipboard into the editor.',
+      },
+      async () => await navigator.clipboard.readText(),
+      {
+        fallback: '',
+        onError: () => {
+          // clipboard unavailable — silent fallback; user can paste manually
+        },
+      }
+    );
+    if (text) {
       handleChange(text.trim());
-    } catch (error) {
-      logClientError(error);
-    
-      // clipboard unavailable — silent fallback; user can paste manually
     }
   }, [handleChange]);
 

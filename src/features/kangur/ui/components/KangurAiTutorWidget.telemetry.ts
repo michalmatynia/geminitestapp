@@ -9,25 +9,11 @@ import {
 
 import type { TutorProactiveNudge } from './KangurAiTutorPanelBody.context';
 import type { ActiveTutorFocus, TutorMotionProfile } from './KangurAiTutorWidget.shared';
-
-type TelemetryContext = {
-  surface: string | null;
-  contentId: string | null;
-  title: string | null;
-};
-
-type TutorUsageSummary = {
-  dateKey: string;
-  messageCount: number;
-  dailyMessageLimit: number | null;
-  remainingMessages: number | null;
-} | null | undefined;
-
-type SessionContextTelemetry = {
-  surface: string | null | undefined;
-  contentId: string | null | undefined;
-  title: string | null | undefined;
-};
+import type {
+  KangurAiTutorSessionContextTelemetryDto,
+  KangurAiTutorTelemetryContextDto,
+  KangurAiTutorUsageSummary,
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
 const getFocusTelemetryKey = (
   sessionKey: string | null,
@@ -54,11 +40,11 @@ export function useKangurAiTutorTelemetryBridge(input: {
   motionTimeoutRef: MutableRefObject<number | null>;
   prefersReducedMotion: boolean;
   proactiveNudges: 'off' | 'gentle' | 'coach';
-  sessionContext: SessionContextTelemetry;
+  sessionContext: KangurAiTutorSessionContextTelemetryDto;
   setPanelMotionState: (value: 'animating' | 'settled') => void;
-  telemetryContext: TelemetryContext;
+  telemetryContext: KangurAiTutorTelemetryContextDto;
   tutorSessionKey: string | null;
-  usageSummary: TutorUsageSummary;
+  usageSummary: KangurAiTutorUsageSummary | null | undefined;
   visibleProactiveNudge: TutorProactiveNudge | null;
 }) {
   const {

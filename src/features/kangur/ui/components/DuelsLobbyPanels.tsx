@@ -149,7 +149,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
           role='region'
           aria-labelledby={inviteHeadingId}
         >
-          <div className='flex flex-wrap items-center justify-between kangur-panel-gap'>
+          <div className='flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between kangur-panel-gap'>
             <div className='space-y-1'>
               <div className='flex flex-wrap items-center gap-2'>
                 <h3 id={inviteHeadingId} className='text-xl font-semibold text-slate-900'>
@@ -401,14 +401,14 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
           </KangurInfoCard>
         ) : null}
 
-        <div className='flex flex-col items-stretch kangur-panel-gap rounded-2xl border border-slate-200/70 bg-white/70 p-3 sm:flex-row sm:flex-wrap sm:items-end'>
-          <div className='w-full sm:min-w-[180px] space-y-1'>
+        <div className='grid w-full kangur-panel-gap rounded-2xl border border-slate-200/70 bg-white/70 p-3 sm:grid-cols-2 lg:grid-cols-4'>
+          <div className='min-w-0 space-y-1'>
             <div className='text-xs font-semibold uppercase tracking-[0.08em] text-slate-500'>
               Tryb
             </div>
             <KangurSelectField
               value={lobbyModeFilter}
-              onChange={(event) => {
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
                 const nextValue = event.target.value as 'all' | KangurDuelMode;
                 trackKangurClientEvent('kangur_duels_lobby_filter_changed', {
                   modeFilter: nextValue,
@@ -427,13 +427,13 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
               <option value='quick_match'>Szybkie pojedynki</option>
             </KangurSelectField>
           </div>
-          <div className='w-full sm:min-w-[200px] space-y-1'>
+          <div className='min-w-0 space-y-1'>
             <div className='text-xs font-semibold uppercase tracking-[0.08em] text-slate-500'>
               Działanie
             </div>
             <KangurSelectField
               value={lobbyOperationFilter}
-              onChange={(event) => {
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
                 const nextValue = event.target.value as 'all' | KangurDuelOperation;
                 trackKangurClientEvent('kangur_duels_lobby_filter_changed', {
                   modeFilter: lobbyModeFilter,
@@ -455,13 +455,13 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
               ))}
             </KangurSelectField>
           </div>
-          <div className='w-full sm:min-w-[180px] space-y-1'>
+          <div className='min-w-0 space-y-1'>
             <div className='text-xs font-semibold uppercase tracking-[0.08em] text-slate-500'>
               Poziom
             </div>
             <KangurSelectField
               value={lobbyDifficultyFilter}
-              onChange={(event) => {
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
                 const nextValue = event.target.value as 'all' | KangurDuelDifficulty;
                 trackKangurClientEvent('kangur_duels_lobby_filter_changed', {
                   modeFilter: lobbyModeFilter,
@@ -483,13 +483,13 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
               ))}
             </KangurSelectField>
           </div>
-          <div className='w-full sm:min-w-[200px] space-y-1'>
+          <div className='min-w-0 space-y-1'>
             <div className='text-xs font-semibold uppercase tracking-[0.08em] text-slate-500'>
               Sortowanie
             </div>
             <KangurSelectField
               value={lobbySort}
-              onChange={(event) => {
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
                 const nextValue = event.target.value as
                   | 'recent'
                   | 'time_fast'
@@ -514,7 +514,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
             </KangurSelectField>
           </div>
           {publicLobbyEntries.length > 0 ? (
-            <div className='text-xs text-slate-500'>
+            <div className='text-xs text-slate-500 sm:col-span-2 sm:text-right lg:col-span-4'>
               Widocznych: {filteredPublicLobbyEntries.length}
             </div>
           ) : null}

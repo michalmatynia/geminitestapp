@@ -19,11 +19,14 @@ import { api } from '@/shared/lib/api-client';
 import { parsePromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { Badge, Button, Card, FormField, FormSection, Textarea, useToast } from '@/features/kangur/shared/ui';
+import {
+  withKangurClientError,
+  withKangurClientErrorSync,
+} from '@/features/kangur/observability/client';
 
 import { KangurAiTutorNativeGuideEntryEditor } from './KangurAiTutorNativeGuideEntryEditor';
 import { KangurAiTutorNativeGuideEntryList } from './KangurAiTutorNativeGuideEntryList';
 import { KangurAiTutorNativeGuideValidationSummary } from './KangurAiTutorNativeGuideValidationSummary';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const AI_TUTOR_NATIVE_GUIDE_EDITOR_LOCALE = 'pl';
@@ -99,18 +102,23 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
   const isDirty = editorValue !== persistedEditorValue;
 
   const parsedState = useMemo<ParsedEditorState>(() => {
-    try {
-      return {
+    return withKangurClientErrorSync(
+      {
+        source: 'kangur.admin.native-guides',
+        action: 'parse-editor-json',
+        description: 'Parses the native guide editor JSON payload.',
+      },
+      () => ({
         store: parseKangurAiTutorNativeGuideStore(JSON.parse(editorValue)),
         error: null,
-      };
-    } catch (error) {
-      logClientError(error);
-      return {
-        store: null,
-        error: error instanceof Error ? error.message : 'Invalid native guide JSON.',
-      };
-    }
+      }),
+      {
+        fallback: {
+          store: null,
+          error: 'Invalid native guide JSON.',
+        } as ParsedEditorState,
+      }
+    );
   }, [editorValue]);
 
   useEffect(() => {
@@ -212,33 +220,46 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
 
   const loadStore = async (): Promise<void> => {
     setIsLoading(true);
-    try {
-      const store = await api.get<KangurAiTutorNativeGuideStore>(
-        `/api/kangur/ai-tutor/native-guide?locale=${encodeURIComponent(
-          AI_TUTOR_NATIVE_GUIDE_EDITOR_LOCALE
-        )}`,
-        {
-          cache: 'no-store',
-        }
-      );
-      const parsed = parseKangurAiTutorNativeGuideStore(store);
-      const serialized = stringifyNativeGuideStore(parsed);
+    const store = await withKangurClientError(
+      {
+        source: 'kangur.admin.native-guides',
+        action: 'load-store',
+        description: 'Loads AI Tutor native guides for the admin editor.',
+        context: { locale: AI_TUTOR_NATIVE_GUIDE_EDITOR_LOCALE },
+      },
+      async () => {
+        const response = await api.get<KangurAiTutorNativeGuideStore>(
+          `/api/kangur/ai-tutor/native-guide?locale=${encodeURIComponent(
+            AI_TUTOR_NATIVE_GUIDE_EDITOR_LOCALE
+          )}`,
+          {
+            cache: 'no-store',
+          }
+        );
+        return parseKangurAiTutorNativeGuideStore(response);
+      },
+      {
+        fallback: null,
+        onError: (error) => {
+          toast(
+            error instanceof Error
+              ? error.message
+              : 'Failed to load Kangur AI Tutor native guides.',
+            {
+              variant: 'error',
+            }
+          );
+        },
+      }
+    );
+
+    if (store) {
+      const serialized = stringifyNativeGuideStore(store);
       setEditorValue(serialized);
       setPersistedEditorValue(serialized);
-      setSelectedEntryId(parsed.entries[0]?.id ?? null);
-    } catch (error) {
-      logClientError(error);
-      toast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to load Kangur AI Tutor native guides.',
-        {
-          variant: 'error',
-        }
-      );
-    } finally {
-      setIsLoading(false);
+      setSelectedEntryId(store.entries[0]?.id ?? null);
     }
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -355,31 +376,44 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
       return;
     }
     setIsSaving(true);
-    try {
-      const parsed = parseKangurAiTutorNativeGuideStore(JSON.parse(editorValue));
-      const saved = await api.post<KangurAiTutorNativeGuideStore>(
-        '/api/kangur/ai-tutor/native-guide',
-        parsed
-      );
-      const normalized = stringifyNativeGuideStore(parseKangurAiTutorNativeGuideStore(saved));
+    const savedStore = await withKangurClientError(
+      {
+        source: 'kangur.admin.native-guides',
+        action: 'save-store',
+        description: 'Saves AI Tutor native guides from the admin editor.',
+      },
+      async () => {
+        const parsed = parseKangurAiTutorNativeGuideStore(JSON.parse(editorValue));
+        const saved = await api.post<KangurAiTutorNativeGuideStore>(
+          '/api/kangur/ai-tutor/native-guide',
+          parsed
+        );
+        return parseKangurAiTutorNativeGuideStore(saved);
+      },
+      {
+        fallback: null,
+        onError: (error) => {
+          toast(
+            error instanceof Error
+              ? error.message
+              : 'Failed to save Kangur AI Tutor native guides.',
+            {
+              variant: 'error',
+            }
+          );
+        },
+      }
+    );
+
+    if (savedStore) {
+      const normalized = stringifyNativeGuideStore(savedStore);
       setEditorValue(normalized);
       setPersistedEditorValue(normalized);
       toast('Kangur AI Tutor native guides saved.', {
         variant: 'success',
       });
-    } catch (error) {
-      logClientError(error);
-      toast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to save Kangur AI Tutor native guides.',
-        {
-          variant: 'error',
-        }
-      );
-    } finally {
-      setIsSaving(false);
     }
+    setIsSaving(false);
   };
 
   const handleApplyFollowUpActions = (): void => {
@@ -387,39 +421,54 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
       return;
     }
 
-    try {
-      const nextValue = followUpActionsEditorValue.trim();
-      const parsedActions = nextValue.length > 0
-        ? (JSON.parse(nextValue) as KangurAiTutorFollowUpAction[])
-        : [];
+    const parsedActions = withKangurClientErrorSync(
+      {
+        source: 'kangur.admin.native-guides',
+        action: 'apply-followup-actions',
+        description: 'Applies follow-up actions JSON to the selected entry.',
+      },
+      () => {
+        const nextValue = followUpActionsEditorValue.trim();
+        const actions =
+          nextValue.length > 0 ? (JSON.parse(nextValue) as KangurAiTutorFollowUpAction[]) : [];
 
-      const invalidPage = parsedActions.find(
-        (action) =>
-          typeof action?.page !== 'string' ||
-          !ROUTE_PAGE_OPTIONS.some((page) => page === action.page)
-      );
-      if (invalidPage) {
-        throw new Error('Each follow-up action must use a supported Kangur page.');
-      }
-
-      updateSelectedEntry((entry) => ({
-        ...entry,
-        followUpActions: parsedActions,
-      }));
-      toast('Follow-up actions updated for this native guide entry.', {
-        variant: 'success',
-      });
-    } catch (error) {
-      logClientError(error);
-      toast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to parse follow-up actions JSON.',
-        {
-          variant: 'error',
+        const invalidPage = actions.find(
+          (action) =>
+            typeof action?.page !== 'string' ||
+            !ROUTE_PAGE_OPTIONS.some((page) => page === action.page)
+        );
+        if (invalidPage) {
+          throw new Error('Each follow-up action must use a supported Kangur page.');
         }
-      );
+
+        return actions;
+      },
+      {
+        fallback: null,
+        onError: (error) => {
+          toast(
+            error instanceof Error
+              ? error.message
+              : 'Failed to parse follow-up actions JSON.',
+            {
+              variant: 'error',
+            }
+          );
+        },
+      }
+    );
+
+    if (!parsedActions) {
+      return;
     }
+
+    updateSelectedEntry((entry) => ({
+      ...entry,
+      followUpActions: parsedActions,
+    }));
+    toast('Follow-up actions updated for this native guide entry.', {
+      variant: 'success',
+    });
   };
 
   return (

@@ -1,8 +1,7 @@
 import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
 
 import type { QuestionFormData } from '../test-questions';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
-
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 const QUESTION_EDITOR_DRAFT_STORAGE_PREFIX = 'kangur-question-editor-draft:v1:';
 
@@ -27,26 +26,32 @@ export const readQuestionEditorDraft = (
 ): QuestionEditorLocalDraft | null => {
   if (typeof window === 'undefined') return null;
 
-  try {
-    const raw = window.localStorage.getItem(getQuestionEditorDraftStorageKey(suiteId, questionId));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as QuestionEditorLocalDraft;
-    if (
-      parsed?.version !== 1 ||
-      parsed.suiteId !== suiteId ||
-      parsed.questionId !== questionId ||
-      typeof parsed.isNewQuestion !== 'boolean' ||
-      !parsed.question ||
-      !parsed.formData ||
-      typeof parsed.savedAt !== 'string'
-    ) {
-      return null;
-    }
-    return parsed;
-  } catch (error) {
-    logClientError(error);
-    return null;
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.admin.question-editor-drafts',
+      action: 'read',
+      description: 'Reads the question editor draft from local storage.',
+      context: { suiteId, questionId },
+    },
+    () => {
+      const raw = window.localStorage.getItem(getQuestionEditorDraftStorageKey(suiteId, questionId));
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as QuestionEditorLocalDraft;
+      if (
+        parsed?.version !== 1 ||
+        parsed.suiteId !== suiteId ||
+        parsed.questionId !== questionId ||
+        typeof parsed.isNewQuestion !== 'boolean' ||
+        !parsed.question ||
+        !parsed.formData ||
+        typeof parsed.savedAt !== 'string'
+      ) {
+        return null;
+      }
+      return parsed;
+    },
+    { fallback: null }
+  );
 };
 
 export const writeQuestionEditorDraft = ({
@@ -66,34 +71,45 @@ export const writeQuestionEditorDraft = ({
 }): string | null => {
   if (typeof window === 'undefined') return null;
 
-  try {
-    window.localStorage.setItem(
-      getQuestionEditorDraftStorageKey(suiteId, questionId),
-      JSON.stringify({
-        version: 1,
-        suiteId,
-        questionId,
-        isNewQuestion,
-        question,
-        formData,
-        savedAt,
-      } satisfies QuestionEditorLocalDraft)
-    );
-    return savedAt;
-  } catch (error) {
-    logClientError(error);
-    return null;
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.admin.question-editor-drafts',
+      action: 'write',
+      description: 'Persists the question editor draft in local storage.',
+      context: { suiteId, questionId, isNewQuestion },
+    },
+    () => {
+      window.localStorage.setItem(
+        getQuestionEditorDraftStorageKey(suiteId, questionId),
+        JSON.stringify({
+          version: 1,
+          suiteId,
+          questionId,
+          isNewQuestion,
+          question,
+          formData,
+          savedAt,
+        } satisfies QuestionEditorLocalDraft)
+      );
+      return savedAt;
+    },
+    { fallback: null }
+  );
 };
 
 export const clearQuestionEditorDraft = (suiteId: string, questionId: string): void => {
   if (typeof window === 'undefined') return;
 
-  try {
-    window.localStorage.removeItem(getQuestionEditorDraftStorageKey(suiteId, questionId));
-  } catch (error) {
-    logClientError(error);
-  
-    // Ignore storage failures.
-  }
+  withKangurClientErrorSync(
+    {
+      source: 'kangur.admin.question-editor-drafts',
+      action: 'clear',
+      description: 'Clears the question editor draft from local storage.',
+      context: { suiteId, questionId },
+    },
+    () => {
+      window.localStorage.removeItem(getQuestionEditorDraftStorageKey(suiteId, questionId));
+    },
+    { fallback: undefined }
+  );
 };

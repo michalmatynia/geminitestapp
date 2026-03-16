@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { BrainCircuit } from 'lucide-react';
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 
@@ -28,12 +28,12 @@ import {
   KangurCardDescription,
   KangurCardTitle,
   KangurPanelIntro,
+  KangurPanelStack,
   KangurSelectField,
   KangurSectionEyebrow,
   KangurStatusChip,
   KangurSurfacePanel,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import type { KangurAiTutorUsageResponse } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
@@ -52,11 +52,12 @@ import {
   type KangurTutorMoodId,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-mood';
 import { api } from '@/shared/lib/api-client';
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateAllSettings } from '@/shared/lib/query-invalidation';
 import { kangurKeys } from '@/shared/lib/query-key-exports';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientError } from '@/features/kangur/observability/client';
 
 
 const KANGUR_PARENT_TUTOR_MOOD_ACCENTS: Record<KangurTutorMoodId, 'slate' | 'indigo' | 'sky' | 'violet' | 'amber' | 'teal' | 'emerald' | 'rose'> = {
@@ -239,7 +240,8 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
     data: tutorUsageResponse,
     isLoading: isUsageLoading,
     isError: hasUsageError,
-  } = useQuery({
+  } = createSingleQueryV2<KangurAiTutorUsageResponse>({
+    id: activeLearnerId,
     queryKey: kangurKeys.aiTutor.usage(activeLearnerId),
     queryFn: async () => {
       if (!activeLearnerId) {
@@ -256,8 +258,47 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
     staleTime: 10_000,
     refetchInterval: shouldLoadUsage ? 30_000 : false,
     refetchOnWindowFocus: true,
+    meta: {
+      source: 'kangur.ui.KangurParentDashboardAiTutorWidget.usage',
+      operation: 'detail',
+      resource: 'kangur.ai-tutor.usage',
+      domain: 'kangur',
+      queryKey: kangurKeys.aiTutor.usage(activeLearnerId),
+      tags: ['kangur', 'ai-tutor', 'usage'],
+      description: 'Loads AI tutor usage for the active learner.',
+    },
   });
   const usageSummary = tutorUsageResponse?.usage ?? null;
+  const usageSummaryText = (() => {
+    if (isUsageLoading) return tutorContent.parentDashboard.usageLoading;
+    if (hasUsageError || !usageSummary) return tutorContent.parentDashboard.usageError;
+    if (usageSummary.dailyMessageLimit === null) {
+      return formatKangurAiTutorTemplate(
+        tutorContent.parentDashboard.usageUnlimitedTemplate,
+        { messageCount: usageSummary.messageCount }
+      );
+    }
+    return formatKangurAiTutorTemplate(
+      tutorContent.parentDashboard.usageLimitedTemplate,
+      {
+        messageCount: usageSummary.messageCount,
+        dailyMessageLimit: usageSummary.dailyMessageLimit,
+      }
+    );
+  })();
+  const usageBadgeText = (() => {
+    if (!usageSummary) return null;
+    if (usageSummary.dailyMessageLimit === null) {
+      return tutorContent.parentDashboard.usageUnlimitedBadge;
+    }
+    if (usageSummary.remainingMessages === 0) {
+      return tutorContent.parentDashboard.usageExhaustedBadge;
+    }
+    return formatKangurAiTutorTemplate(
+      tutorContent.parentDashboard.usageRemainingBadgeTemplate,
+      { remainingMessages: usageSummary.remainingMessages }
+    );
+  })();
   const learnerMood = activeLearner?.aiTutor ?? createDefaultKangurAiTutorLearnerMood();
   const currentMoodPreset = getKangurAiTutorMoodCopy(tutorContent, learnerMood.currentMoodId);
   const baselineMoodPreset = getKangurAiTutorMoodCopy(tutorContent, learnerMood.baselineMoodId);
@@ -305,25 +346,37 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
       [activeLearner.id]: next,
     };
 
-    try {
-      await api.post('/api/settings', {
-        key: KANGUR_AI_TUTOR_SETTINGS_KEY,
-        value: serializeSetting(nextStore),
-      });
-      invalidateSettingsCache();
-      await invalidateAllSettings(queryClient);
-      if (next.enabled) {
-        await queryClient.invalidateQueries({
-          queryKey: kangurKeys.aiTutor.usage(activeLearner.id),
+    await withKangurClientError(
+      {
+        source: 'kangur-parent-dashboard',
+        action: 'save-ai-tutor-settings',
+        description: 'Save AI tutor settings for a learner.',
+        context: {
+          learnerId: activeLearner.id,
+        },
+      },
+      async () => {
+        await api.post('/api/settings', {
+          key: KANGUR_AI_TUTOR_SETTINGS_KEY,
+          value: serializeSetting(nextStore),
         });
+        invalidateSettingsCache();
+        await invalidateAllSettings(queryClient);
+        if (next.enabled) {
+          await queryClient.invalidateQueries({
+            queryKey: kangurKeys.aiTutor.usage(activeLearner.id),
+          });
+        }
+        setFeedback(tutorContent.parentDashboard.saveSuccess);
+      },
+      {
+        fallback: undefined,
+        onError: () => {
+          setFeedback(tutorContent.parentDashboard.saveError);
+        },
       }
-      setFeedback(tutorContent.parentDashboard.saveSuccess);
-    } catch (error) {
-      logClientError(error);
-      setFeedback(tutorContent.parentDashboard.saveError);
-    } finally {
-      setIsSaving(false);
-    }
+    );
+    setIsSaving(false);
   }, [
     activeLearner,
     canAccessDashboard,
@@ -350,36 +403,38 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
       <KangurSurfacePanel
         accent='amber'
         padding='lg'
-        className={`w-full flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
+        className='w-full'
       >
-        <div className='flex flex-col items-start sm:flex-row sm:items-center kangur-panel-gap'>
-          <BrainCircuit className='h-5 w-5 text-orange-500' />
-          <KangurPanelIntro
-            className='min-w-0'
-            description={sectionSummary}
-            descriptionClassName='text-xs'
-            eyebrow={sectionTitle}
-            eyebrowClassName='tracking-[0.18em]'
-            title={tutorContent.parentDashboard.noActiveLearner}
-            titleClassName='mt-1 text-sm font-bold'
-          />
-        </div>
-        {isTutorHidden ? (
-          <KangurButton
-            className='w-full border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800 sm:w-auto'
-            onClick={() => {
-              persistTutorVisibilityHidden(false);
-              if (tutor?.enabled) {
-                tutor.openChat();
-              }
-            }}
-            size='sm'
-            variant='surface'
-            data-testid='parent-dashboard-ai-tutor-enable'
-          >
-            {enableTutorLabel}
-          </KangurButton>
-        ) : null}
+        <KangurPanelStack>
+          <div className='flex flex-col items-start sm:flex-row sm:items-center kangur-panel-gap'>
+            <BrainCircuit className='h-5 w-5 text-orange-500' />
+            <KangurPanelIntro
+              className='min-w-0'
+              description={sectionSummary}
+              descriptionClassName='text-xs'
+              eyebrow={sectionTitle}
+              eyebrowClassName='tracking-[0.18em]'
+              title={tutorContent.parentDashboard.noActiveLearner}
+              titleClassName='mt-1 text-sm font-bold'
+            />
+          </div>
+          {isTutorHidden ? (
+            <KangurButton
+              className='w-full border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800 sm:w-auto'
+              onClick={() => {
+                persistTutorVisibilityHidden(false);
+                if (tutor?.enabled) {
+                  tutor.openChat();
+                }
+              }}
+              size='sm'
+              variant='surface'
+              data-testid='parent-dashboard-ai-tutor-enable'
+            >
+              {enableTutorLabel}
+            </KangurButton>
+          ) : null}
+        </KangurPanelStack>
       </KangurSurfacePanel>
     );
   }
@@ -388,73 +443,74 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
     <KangurSurfacePanel
       accent='amber'
       padding='lg'
-      className={`w-full flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
+      className='w-full'
     >
-      <div className='flex flex-col items-start sm:flex-row sm:items-center kangur-panel-gap'>
-        <BrainCircuit className='h-5 w-5 text-orange-500' />
-        <KangurPanelIntro
-          className='min-w-0'
-          description={sectionSummary}
-          descriptionClassName='text-xs'
-          eyebrow={sectionTitle}
-          eyebrowClassName='tracking-[0.18em]'
-          title={learnerHeaderTitle}
-          titleClassName='mt-1 text-sm font-bold'
-        />
-      </div>
+      <KangurPanelStack>
+        <div className='flex flex-col items-start sm:flex-row sm:items-center kangur-panel-gap'>
+          <BrainCircuit className='h-5 w-5 text-orange-500' />
+          <KangurPanelIntro
+            className='min-w-0'
+            description={sectionSummary}
+            descriptionClassName='text-xs'
+            eyebrow={sectionTitle}
+            eyebrowClassName='tracking-[0.18em]'
+            title={learnerHeaderTitle}
+            titleClassName='mt-1 text-sm font-bold'
+          />
+        </div>
 
-      <div
-        className='rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3'
-        data-testid='parent-dashboard-ai-tutor-mood'
-      >
-        <div className='flex flex-col kangur-panel-gap sm:flex-row sm:items-start sm:justify-between'>
-          <div className='min-w-0'>
-            <KangurSectionEyebrow className='text-xs tracking-wide text-emerald-700'>
-              {tutorContent.parentDashboard.moodTitle}
-            </KangurSectionEyebrow>
-            <KangurCardDescription
-              as='p'
-              className='mt-1 leading-relaxed'
-              data-testid='parent-dashboard-ai-tutor-mood-description'
-              size='sm'
+        <div
+          className='rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3'
+          data-testid='parent-dashboard-ai-tutor-mood'
+        >
+          <div className='flex flex-col kangur-panel-gap sm:flex-row sm:items-start sm:justify-between'>
+            <div className='min-w-0'>
+              <KangurSectionEyebrow className='text-xs tracking-wide text-emerald-700'>
+                {tutorContent.parentDashboard.moodTitle}
+              </KangurSectionEyebrow>
+              <KangurCardDescription
+                as='p'
+                className='mt-1 leading-relaxed'
+                data-testid='parent-dashboard-ai-tutor-mood-description'
+                size='sm'
+              >
+                {currentMoodPreset.description}
+              </KangurCardDescription>
+            </div>
+            <KangurStatusChip
+              accent={currentMoodAccent}
+              className='w-fit self-start sm:self-auto'
+              data-mood-id={learnerMood.currentMoodId}
+              data-testid='parent-dashboard-ai-tutor-mood-current'
             >
-              {currentMoodPreset.description}
-            </KangurCardDescription>
+              {currentMoodPreset.label}
+            </KangurStatusChip>
           </div>
-          <KangurStatusChip
-            accent={currentMoodAccent}
-            className='w-fit self-start sm:self-auto'
-            data-mood-id={learnerMood.currentMoodId}
-            data-testid='parent-dashboard-ai-tutor-mood-current'
-          >
-            {currentMoodPreset.label}
-          </KangurStatusChip>
-        </div>
 
-        <div className='mt-3 grid kangur-panel-gap text-xs [color:var(--kangur-page-muted-text)] min-[360px]:grid-cols-2 lg:grid-cols-3'>
-          <KangurLabeledValueSummary
-            label={tutorContent.parentDashboard.baselineLabel}
-            labelClassName='text-xs tracking-wide'
-            value={baselineMoodPreset.label}
-            valueClassName='mt-1'
-            valueTestId='parent-dashboard-ai-tutor-mood-baseline'
-          />
-          <KangurLabeledValueSummary
-            label={tutorContent.parentDashboard.confidenceLabel}
-            labelClassName='text-xs tracking-wide'
-            value={moodConfidence}
-            valueClassName='mt-1'
-            valueTestId='parent-dashboard-ai-tutor-mood-confidence'
-          />
-          <KangurLabeledValueSummary
-            label={tutorContent.parentDashboard.updatedLabel}
-            labelClassName='text-xs tracking-wide'
-            value={moodUpdatedAt}
-            valueClassName='mt-1'
-            valueTestId='parent-dashboard-ai-tutor-mood-updated'
-          />
+          <div className='mt-3 grid kangur-panel-gap text-xs [color:var(--kangur-page-muted-text)] min-[360px]:grid-cols-2 lg:grid-cols-3'>
+            <KangurLabeledValueSummary
+              label={tutorContent.parentDashboard.baselineLabel}
+              labelClassName='text-xs tracking-wide'
+              value={baselineMoodPreset.label}
+              valueClassName='mt-1'
+              valueTestId='parent-dashboard-ai-tutor-mood-baseline'
+            />
+            <KangurLabeledValueSummary
+              label={tutorContent.parentDashboard.confidenceLabel}
+              labelClassName='text-xs tracking-wide'
+              value={moodConfidence}
+              valueClassName='mt-1'
+              valueTestId='parent-dashboard-ai-tutor-mood-confidence'
+            />
+            <KangurLabeledValueSummary
+              label={tutorContent.parentDashboard.updatedLabel}
+              labelClassName='text-xs tracking-wide'
+              value={moodUpdatedAt}
+              valueClassName='mt-1'
+              valueTestId='parent-dashboard-ai-tutor-mood-updated'
+            />
+          </div>
         </div>
-      </div>
 
       {isUsageEnabled ? (
         <div className='rounded-2xl border border-amber-100 bg-amber-50/75 px-4 py-3'>
@@ -463,35 +519,11 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
               <KangurSectionEyebrow className='text-xs tracking-wide text-amber-700'>
                 {tutorContent.parentDashboard.usageTitle}
               </KangurSectionEyebrow>
-              <KangurCardTitle className='mt-1'>
-                {isUsageLoading
-                  ? tutorContent.parentDashboard.usageLoading
-                  : hasUsageError || !usageSummary
-                    ? tutorContent.parentDashboard.usageError
-                    : usageSummary.dailyMessageLimit === null
-                      ? formatKangurAiTutorTemplate(
-                        tutorContent.parentDashboard.usageUnlimitedTemplate,
-                        { messageCount: usageSummary.messageCount }
-                      )
-                      : formatKangurAiTutorTemplate(
-                        tutorContent.parentDashboard.usageLimitedTemplate,
-                        {
-                          messageCount: usageSummary.messageCount,
-                          dailyMessageLimit: usageSummary.dailyMessageLimit,
-                        }
-                      )}
-              </KangurCardTitle>
+              <KangurCardTitle className='mt-1'>{usageSummaryText}</KangurCardTitle>
             </div>
             {!isUsageLoading && !hasUsageError && usageSummary ? (
               <div className='rounded-full [background:color-mix(in_srgb,var(--kangur-soft-card-background)_90%,#ffffff)] px-3 py-1 text-xs font-semibold text-amber-700 sm:shrink-0'>
-                {usageSummary.dailyMessageLimit === null
-                  ? tutorContent.parentDashboard.usageUnlimitedBadge
-                  : usageSummary.remainingMessages === 0
-                    ? tutorContent.parentDashboard.usageExhaustedBadge
-                    : formatKangurAiTutorTemplate(
-                      tutorContent.parentDashboard.usageRemainingBadgeTemplate,
-                      { remainingMessages: usageSummary.remainingMessages }
-                    )}
+                {usageBadgeText}
               </div>
             ) : null}
           </div>
@@ -700,6 +732,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
           {feedback}
         </p>
       )}
+      </KangurPanelStack>
     </KangurSurfacePanel>
   );
 }

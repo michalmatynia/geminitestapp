@@ -18,7 +18,7 @@ import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingCont
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientError } from '@/features/kangur/observability/client';
 import {
   KANGUR_LEARNER_PASSWORD_MAX_LENGTH,
   KANGUR_LEARNER_PASSWORD_MIN_LENGTH,
@@ -277,60 +277,73 @@ export function KangurParentDashboardRuntimeProvider({
         setIsSubmitting(true);
         setFeedback(null);
 
-        try {
-          const created = await kangurPlatform.learners.create({
-            displayName,
-            loginName: normalizedLoginName,
-            password,
-            ...(parsedAge !== null ? { age: parsedAge } : {}),
-          });
-          await selectLearner(created.id);
-          setCreateForm({
-            displayName: '',
-            age: '',
-            loginName: '',
-            password: '',
-          });
-          setCreateLearnerModalOpen(false);
-          setFeedback(null);
-        } catch (error: unknown) {
-          logClientError(error);
-          const status =
-            error && typeof error === 'object' && 'status' in error
-              ? (error as { status?: number }).status
-              : null;
-          const details =
-            error && typeof error === 'object'
-              ? (error as { details?: { issues?: { fieldErrors?: Record<string, string[]> } } })
-                  .details
-              : null;
-          const fieldErrors = details?.issues?.fieldErrors ?? null;
+        await withKangurClientError(
+          {
+            source: 'kangur-parent-dashboard',
+            action: 'create-learner',
+            description: 'Create a new learner profile from the parent dashboard.',
+            context: {
+              loginName: normalizedLoginName,
+            },
+          },
+          async () => {
+            const created = await kangurPlatform.learners.create({
+              displayName,
+              loginName: normalizedLoginName,
+              password,
+              ...(parsedAge !== null ? { age: parsedAge } : {}),
+            });
+            await selectLearner(created.id);
+            setCreateForm({
+              displayName: '',
+              age: '',
+              loginName: '',
+              password: '',
+            });
+            setCreateLearnerModalOpen(false);
+            setFeedback(null);
+          },
+          {
+            fallback: undefined,
+            onError: (error) => {
+              const status =
+                error && typeof error === 'object' && 'status' in error
+                  ? (error as { status?: number }).status
+                  : null;
+              const details =
+                error && typeof error === 'object'
+                  ? (error as {
+                      details?: { issues?: { fieldErrors?: Record<string, string[]> } };
+                    }).details
+                  : null;
+              const fieldErrors = details?.issues?.fieldErrors ?? null;
 
-          if (status === 409) {
-            setFeedback('Ten nick jest już zajęty.');
-          } else if (fieldErrors?.['password']?.length) {
-            setFeedback(
-              `Hasło ucznia musi mieć co najmniej ${KANGUR_LEARNER_PASSWORD_MIN_LENGTH} znaków i zawierać tylko litery oraz cyfry.`
-            );
-          } else if (fieldErrors?.['age']?.length) {
-            setFeedback('Wiek ucznia musi być w zakresie 3–99');
-          } else if (fieldErrors?.['loginName']?.length) {
-            setFeedback('Nick może zawierać tylko litery i cyfry');
-          } else if (fieldErrors?.['displayName']?.length) {
-            setFeedback('Wypełnij dane ucznia');
-          } else if (
-            error instanceof Error &&
-            /validation failed|invalid kangur learner payload/i.test(error.message)
-          ) {
-            setFeedback('Wypełnij dane ucznia');
-          } else {
-            setFeedback(
-              error instanceof Error ? error.message : 'Nie udało się dodać ucznia.'
-            );
+              if (status === 409) {
+                setFeedback('Ten nick jest już zajęty.');
+              } else if (fieldErrors?.['password']?.length) {
+                setFeedback(
+                  `Hasło ucznia musi mieć co najmniej ${KANGUR_LEARNER_PASSWORD_MIN_LENGTH} znaków i zawierać tylko litery oraz cyfry.`
+                );
+              } else if (fieldErrors?.['age']?.length) {
+                setFeedback('Wiek ucznia musi być w zakresie 3–99');
+              } else if (fieldErrors?.['loginName']?.length) {
+                setFeedback('Nick może zawierać tylko litery i cyfry');
+              } else if (fieldErrors?.['displayName']?.length) {
+                setFeedback('Wypełnij dane ucznia');
+              } else if (
+                error instanceof Error &&
+                /validation failed|invalid kangur learner payload/i.test(error.message)
+              ) {
+                setFeedback('Wypełnij dane ucznia');
+              } else {
+                setFeedback(
+                  error instanceof Error ? error.message : 'Nie udało się dodać ucznia.'
+                );
+              }
+            },
           }
-        } finally {
-          setIsSubmitting(false);
-        }
+        );
+        setIsSubmitting(false);
       },
       handleSaveLearner: async () => {
         if (!canAccessDashboard || !activeLearner) {
@@ -358,26 +371,38 @@ export function KangurParentDashboardRuntimeProvider({
         setIsSubmitting(true);
         setFeedback(null);
 
-        try {
-          await kangurPlatform.learners.update(activeLearner.id, {
-            displayName: editForm.displayName,
-            loginName: editForm.loginName,
-            ...(trimmedPassword.length > 0 ? { password: trimmedPassword } : {}),
-            status: editForm.status === 'disabled' ? 'disabled' : 'active',
-          });
-          await checkAppState();
-          setEditForm((current) => ({ ...current, password: '' }));
-          setFeedback('Zapisano dane ucznia.');
-          return true;
-        } catch (error: unknown) {
-          logClientError(error);
-          setFeedback(
-            error instanceof Error ? error.message : 'Nie udało się zapisać zmian.'
-          );
-          return false;
-        } finally {
-          setIsSubmitting(false);
-        }
+        const didSave = await withKangurClientError(
+          {
+            source: 'kangur-parent-dashboard',
+            action: 'save-learner',
+            description: 'Save learner profile changes from the parent dashboard.',
+            context: {
+              learnerId: activeLearner.id,
+            },
+          },
+          async () => {
+            await kangurPlatform.learners.update(activeLearner.id, {
+              displayName: editForm.displayName,
+              loginName: editForm.loginName,
+              ...(trimmedPassword.length > 0 ? { password: trimmedPassword } : {}),
+              status: editForm.status === 'disabled' ? 'disabled' : 'active',
+            });
+            await checkAppState();
+            setEditForm((current) => ({ ...current, password: '' }));
+            setFeedback('Zapisano dane ucznia.');
+            return true;
+          },
+          {
+            fallback: false,
+            onError: (error) => {
+              setFeedback(
+                error instanceof Error ? error.message : 'Nie udało się zapisać zmian.'
+              );
+            },
+          }
+        );
+        setIsSubmitting(false);
+        return didSave;
       },
       handleDeleteLearner: async (learnerId: string) => {
         if (!canAccessDashboard) {
@@ -387,20 +412,32 @@ export function KangurParentDashboardRuntimeProvider({
         setIsSubmitting(true);
         setFeedback(null);
 
-        try {
-          const removed = await kangurPlatform.learners.delete(learnerId);
-          await checkAppState();
-          setFeedback(`Usunięto profil ucznia: ${removed.displayName}.`);
-          return true;
-        } catch (error: unknown) {
-          logClientError(error);
-          setFeedback(
-            error instanceof Error ? error.message : 'Nie udało się usunąć profilu ucznia.'
-          );
-          return false;
-        } finally {
-          setIsSubmitting(false);
-        }
+        const didDelete = await withKangurClientError(
+          {
+            source: 'kangur-parent-dashboard',
+            action: 'delete-learner',
+            description: 'Delete a learner profile from the parent dashboard.',
+            context: {
+              learnerId,
+            },
+          },
+          async () => {
+            const removed = await kangurPlatform.learners.delete(learnerId);
+            await checkAppState();
+            setFeedback(`Usunięto profil ucznia: ${removed.displayName}.`);
+            return true;
+          },
+          {
+            fallback: false,
+            onError: (error) => {
+              setFeedback(
+                error instanceof Error ? error.message : 'Nie udało się usunąć profilu ucznia.'
+              );
+            },
+          }
+        );
+        setIsSubmitting(false);
+        return didDelete;
       },
     }),
     [

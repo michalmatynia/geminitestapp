@@ -280,13 +280,13 @@ describe('acquireRuntimeLease', () => {
     expect(spawnCount).toBe(1);
     expect(left.baseUrl).toBe(right.baseUrl);
     expect([left.reused, right.reused].filter(Boolean)).toHaveLength(1);
-    expect(left.bundler).toBeNull();
-    expect(right.bundler).toBeNull();
+    expect(left.bundler).toBe('webpack');
+    expect(right.bundler).toBe('webpack');
     expect(left.runtimeTmpDir).toBe(resolveBrokerManagedRuntimeTmpDir({ leaseKey: left.leaseKey }));
     expect(right.runtimeTmpDir).toBe(resolveBrokerManagedRuntimeTmpDir({ leaseKey: right.leaseKey }));
     expect(spawnedEnvs).toHaveLength(1);
     expect(spawnedArgs).toEqual([['run', 'dev:playwright-broker']]);
-    expect(spawnedEnvs[0]?.NEXT_DEV_BUNDLER).toBeUndefined();
+    expect(spawnedEnvs[0]?.NEXT_DEV_BUNDLER).toBe('webpack');
     expect(spawnedEnvs[0]?.TMPDIR).toBe(path.join(rootDir, left.runtimeTmpDir));
     expect(spawnedEnvs[0]?.TMP).toBe(path.join(rootDir, left.runtimeTmpDir));
     expect(spawnedEnvs[0]?.TEMP).toBe(path.join(rootDir, left.runtimeTmpDir));
@@ -359,10 +359,12 @@ describe('acquireRuntimeLease', () => {
     const appId = 'web';
     const mode = 'dev';
     const agentId = 'agent-eperm';
+    const bundler = 'webpack';
     const leaseKey = buildRuntimeLeaseKey({
       rootDir,
       appId,
       mode,
+      bundler,
       agentId,
     });
     const brokerDir = path.join(rootDir, 'tmp', 'playwright-runtime-broker');
@@ -375,12 +377,13 @@ describe('acquireRuntimeLease', () => {
       rootDir,
       appId,
       mode,
+      bundler,
       agentId,
       host: '127.0.0.1',
       port: 43175,
       baseUrl: 'http://127.0.0.1:43175',
       pid: 43210,
-      distDir: resolveBrokerManagedDistDir({ appId, mode, agentId }),
+      distDir: resolveBrokerManagedDistDir({ appId, mode, bundler, agentId }),
       runtimeTmpDir: resolveBrokerManagedRuntimeTmpDir({ leaseKey }),
       managedRuntimeTmpDir: true,
       leaseKey,
@@ -427,7 +430,7 @@ describe('acquireRuntimeLease', () => {
         env: {},
         fetchImpl,
         spawnImpl,
-        startupTimeoutMs: 25,
+        startupTimeoutMs: 500,
         reuseTimeoutMs: 0,
       });
 

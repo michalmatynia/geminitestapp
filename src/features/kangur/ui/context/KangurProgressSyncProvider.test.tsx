@@ -4,7 +4,6 @@
 
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
 import { createDefaultKangurProgressState } from '@/features/kangur/shared/contracts/kangur';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import {
@@ -19,59 +18,14 @@ const {
   progressUpdateMock,
   logKangurClientErrorMock,
   trackKangurClientEventMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
 } = vi.hoisted(() => ({
   useKangurAuthMock: vi.fn(),
   progressGetMock: vi.fn(),
   progressUpdateMock: vi.fn(),
-  logKangurClientErrorMock: vi.fn(),
-  trackKangurClientEventMock: vi.fn(),
+  ...globalThis.__kangurClientErrorMocks(),
 }));
-
-const withKangurClientError = async <T,>(
-  _report: unknown,
-  task: () => Promise<T>,
-  options: {
-    fallback: T | (() => T);
-    onError?: (error: unknown) => void;
-    shouldReport?: (error: unknown) => boolean;
-    shouldRethrow?: (error: unknown) => boolean;
-  }
-): Promise<T> => {
-  try {
-    return await task();
-  } catch (error) {
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
-      throw error;
-    }
-    return typeof options.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : options.fallback;
-  }
-};
-
-const withKangurClientErrorSync = <T,>(
-  _report: unknown,
-  task: () => T,
-  options: {
-    fallback: T | (() => T);
-    onError?: (error: unknown) => void;
-    shouldReport?: (error: unknown) => boolean;
-    shouldRethrow?: (error: unknown) => boolean;
-  }
-): T => {
-  try {
-    return task();
-  } catch (error) {
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
-      throw error;
-    }
-    return typeof options.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : options.fallback;
-  }
-};
 
 const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
   useKangurSubjectFocusMock: vi.fn(),

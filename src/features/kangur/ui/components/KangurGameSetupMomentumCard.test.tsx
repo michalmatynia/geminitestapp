@@ -10,6 +10,11 @@ import type { KangurProgressState } from '@/features/kangur/ui/types';
 const getCurrentKangurDailyQuestMock = vi.hoisted(() => vi.fn());
 const getNextLockedBadgeMock = vi.hoisted(() => vi.fn());
 const getProgressAverageXpPerSessionMock = vi.hoisted(() => vi.fn());
+const useKangurSubjectFocusMock = vi.hoisted(() => vi.fn());
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+}));
 
 vi.mock('@/features/kangur/ui/services/daily-quests', () => ({
   getCurrentKangurDailyQuest: getCurrentKangurDailyQuestMock,
@@ -56,6 +61,11 @@ describe('KangurGameSetupMomentumCard', () => {
     getCurrentKangurDailyQuestMock.mockReturnValue(null);
     getNextLockedBadgeMock.mockReturnValue(null);
     getProgressAverageXpPerSessionMock.mockReturnValue(36);
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
   });
 
   it('prioritizes a games-played daily quest on training setup', () => {

@@ -5,7 +5,7 @@
  * direct setInterval calls in feature code.
  */
 
-export type SafeTimerId = any;
+export type SafeTimerId = ReturnType<typeof globalThis.setTimeout>;
 export type IntervalTaskHandle = {
   id: SafeTimerId;
   cancel: () => void;
@@ -15,9 +15,9 @@ export type IntervalTaskHandle = {
  * Sets a recurring interval.
  */
 export const safeSetInterval = (
-  callback: (...args: any[]) => void,
+  callback: (...args: unknown[]) => void,
   ms?: number,
-  ...args: any[]
+  ...args: unknown[]
 ): SafeTimerId => {
   const method = globalThis['setInterval'];
   return method(callback, ms, ...args);
@@ -36,9 +36,9 @@ export const safeClearInterval = (id: SafeTimerId | undefined | null): void => {
  * Sets a one-off timeout.
  */
 export const safeSetTimeout = (
-  callback: (...args: any[]) => void,
+  callback: (...args: unknown[]) => void,
   ms?: number,
-  ...args: any[]
+  ...args: unknown[]
 ): SafeTimerId => {
   const method = globalThis['setTimeout'];
   return method(callback, ms, ...args);
@@ -57,9 +57,9 @@ export const safeClearTimeout = (id: SafeTimerId | undefined | null): void => {
  * Starts an interval and returns a handle that can cancel it.
  */
 export const startIntervalTask = (
-  callback: (...args: any[]) => void,
+  callback: (...args: unknown[]) => void,
   ms?: number,
-  ...args: any[]
+  ...args: unknown[]
 ): IntervalTaskHandle => {
   const id = safeSetInterval(callback, ms, ...args);
   return {

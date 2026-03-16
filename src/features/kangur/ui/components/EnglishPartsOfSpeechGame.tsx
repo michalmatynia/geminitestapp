@@ -228,10 +228,10 @@ const buildTokenClassName = ({
   isCorrect: boolean;
 }): string =>
   cn(
-    'inline-flex items-center gap-2 rounded-[18px] border px-3 py-2 text-base font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+    'inline-flex items-center gap-2 rounded-[18px] border px-3 py-2 text-base font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white cursor-grab select-none',
     KANGUR_ACCENT_STYLES.slate.badge,
     KANGUR_ACCENT_STYLES.slate.hoverCard,
-    isDragging && 'scale-[1.02] shadow-[0_18px_40px_-26px_rgba(15,23,42,0.2)]',
+    isDragging && 'scale-[1.02] shadow-[0_18px_40px_-26px_rgba(15,23,42,0.2)] cursor-grabbing',
     showStatus &&
       (isCorrect
         ? 'ring-2 ring-emerald-400/80 ring-offset-1 ring-offset-transparent'

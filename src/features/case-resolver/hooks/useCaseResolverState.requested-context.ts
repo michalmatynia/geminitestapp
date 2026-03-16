@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
 import type {
   CaseResolverWorkspace,
   CaseResolverRequestedCaseIssue,
@@ -665,7 +666,7 @@ export function useCaseResolverStateRequestedContext({
       requestedContextRetryTick
     );
 
-    const watchdogTimer = window.setInterval((): void => {
+    const watchdogTimer = safeSetInterval((): void => {
       const currentStatus = requestedCaseStatusRef.current;
       if (currentStatus !== 'loading') return;
       const hasValidInFlightRequest = hasValidRequestedContextInFlight({
@@ -715,7 +716,7 @@ export function useCaseResolverStateRequestedContext({
     }, 500);
 
     return (): void => {
-      window.clearInterval(watchdogTimer);
+      safeClearInterval(watchdogTimer);
     };
   }, [
     applyRequestedContextEvent,

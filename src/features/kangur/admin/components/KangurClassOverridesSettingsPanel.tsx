@@ -11,7 +11,10 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { Alert, Button, Card, FormField, Textarea, useToast } from '@/features/kangur/shared/ui';
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import {
+  withKangurClientError,
+  withKangurClientErrorSync,
+} from '@/features/kangur/observability/client';
 
 
 const SETTINGS_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-card/40 shadow-sm';
@@ -26,28 +29,39 @@ const formatOverrides = (
     };
   }
 
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    const normalized = normalizeKangurClassOverrides(parsed);
-    return {
-      value: JSON.stringify(normalized, null, 2),
-      invalid: false,
-    };
-  } catch (error) {
-    logClientError(error);
-    return { value: raw, invalid: true };
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.admin.class-overrides',
+      action: 'format-overrides',
+      description: 'Normalizes the class overrides JSON payload.',
+      context: { rawLength: raw.length },
+    },
+    () => {
+      const parsed = JSON.parse(raw) as unknown;
+      const normalized = normalizeKangurClassOverrides(parsed);
+      return {
+        value: JSON.stringify(normalized, null, 2),
+        invalid: false,
+      };
+    },
+    { fallback: { value: raw, invalid: true } }
+  );
 };
 
 const isDraftValid = (value: string): boolean => {
   if (value.trim().length === 0) return true;
-  try {
-    JSON.parse(value);
-    return true;
-  } catch (error) {
-    logClientError(error);
-    return false;
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.admin.class-overrides',
+      action: 'validate-overrides',
+      description: 'Validates the class overrides JSON payload.',
+    },
+    () => {
+      JSON.parse(value);
+      return true;
+    },
+    { fallback: false }
+  );
 };
 
 export function KangurClassOverridesSettingsPanel(): React.JSX.Element {
@@ -81,20 +95,33 @@ export function KangurClassOverridesSettingsPanel(): React.JSX.Element {
     }
 
     setIsSaving(true);
-    try {
-      await updateSetting.mutateAsync({
-        key: KANGUR_CLASS_OVERRIDES_SETTING_KEY,
-        value: serializeSetting(payload),
-      });
+    const didSave = await withKangurClientError(
+      {
+        source: 'kangur.admin.class-overrides',
+        action: 'save-overrides',
+        description: 'Saves class overrides settings.',
+      },
+      async () => {
+        await updateSetting.mutateAsync({
+          key: KANGUR_CLASS_OVERRIDES_SETTING_KEY,
+          value: serializeSetting(payload),
+        });
+        return true;
+      },
+      {
+        fallback: false,
+        onError: (error) => {
+          toast(error instanceof Error ? error.message : 'Failed to save class overrides.', {
+            variant: 'error',
+          });
+        },
+      }
+    );
+
+    if (didSave) {
       toast('Kangur class overrides saved.', { variant: 'success' });
-    } catch (error) {
-      logClientError(error);
-      toast(error instanceof Error ? error.message : 'Failed to save class overrides.', {
-        variant: 'error',
-      });
-    } finally {
-      setIsSaving(false);
     }
+    setIsSaving(false);
   };
 
   return (

@@ -199,7 +199,10 @@ describe('Kangur game entry top sections', () => {
       'bg-white/68',
       'text-center'
     );
-    expect(screen.getByRole('heading', { name: 'Grajmy!' })).toHaveClass('text-3xl');
+    expect(screen.getByRole('heading', { name: 'Grajmy!' })).toHaveClass(
+      'text-2xl',
+      'sm:text-3xl'
+    );
     expect(screen.getByTestId('kangur-grajmy-heading-art')).toBeInTheDocument();
     expect(
       screen.getByText('Wybierz rodzaj gry i przejdź od razu do matematycznej zabawy.')
@@ -286,7 +289,10 @@ describe('Kangur game entry top sections', () => {
       'bg-white/68',
       'text-center'
     );
-    expect(screen.getByRole('heading', { name: 'Kangur' })).toHaveClass('text-3xl');
+    expect(screen.getByRole('heading', { name: 'Kangur' })).toHaveClass(
+      'text-2xl',
+      'sm:text-3xl'
+    );
     expect(screen.getByTestId('kangur-kangur-heading-art')).toBeInTheDocument();
     expect(
       screen.getByText('Wybierz edycję konkursu i zestaw zadań do rozwiązania.')

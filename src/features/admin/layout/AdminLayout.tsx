@@ -1,9 +1,9 @@
 'use client';
 
-import { ChevronLeftIcon } from 'lucide-react';
+import { ChevronLeftIcon, Menu as MenuIcon, X as CloseIcon } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { SessionProvider, useSession } from 'next-auth/react';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { AiInsightsNotificationsDrawer } from '@/features/admin/components/AiInsightsNotificationsDrawer';
 import Menu from '@/features/admin/components/Menu';
@@ -28,13 +28,16 @@ const ADMIN_MENU_COLLAPSED_COOKIE_KEY = 'admin_menu_collapsed';
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }): React.ReactNode {
   const { isMenuCollapsed, isMenuHidden, isProgrammaticallyCollapsed } = useAdminLayoutState();
-  const { setIsMenuCollapsed, setIsProgrammaticallyCollapsed } = useAdminLayoutActions();
+  const { setIsMenuCollapsed, setIsMenuHidden, setIsProgrammaticallyCollapsed } =
+    useAdminLayoutActions();
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const didUserToggleRef = useRef(false);
   const preferredMenuCollapsedRef = useRef(isMenuCollapsed);
   const programmaticCollapsedRef = useRef(false);
   const hydratedUserRef = useRef<string | null>(null);
+  const lastDesktopMenuHiddenRef = useRef(isMenuHidden);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
 
   const { data: preferences } = useUserPreferences();
   const updatePreferencesMutation = useUpdateUserPreferences();
@@ -95,6 +98,50 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
   }, [isProgrammaticallyCollapsed]);
 
   useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return;
+    }
+
+    const media = window.matchMedia('(max-width: 1023px)');
+    const applyMatch = (matches: boolean): void => {
+      setIsMobileViewport(matches);
+    };
+
+    applyMatch(media.matches);
+
+    const handler = (event: MediaQueryListEvent): void => {
+      applyMatch(event.matches);
+    };
+
+    if (typeof media.addEventListener === 'function') {
+      media.addEventListener('change', handler);
+      return (): void => {
+        media.removeEventListener('change', handler);
+      };
+    }
+
+    media.addListener(handler);
+    return (): void => {
+      media.removeListener(handler);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isMobileViewport) {
+      lastDesktopMenuHiddenRef.current = isMenuHidden;
+    }
+  }, [isMobileViewport, isMenuHidden]);
+
+  useEffect(() => {
+    if (isMobileViewport) {
+      setIsMenuHidden(true);
+      return;
+    }
+
+    setIsMenuHidden(lastDesktopMenuHiddenRef.current);
+  }, [isMobileViewport, setIsMenuHidden]);
+
+  useEffect(() => {
     const userId = session?.user?.id ?? null;
     if (status !== 'authenticated' || !userId || hydratedUserRef.current === userId) return;
 
@@ -122,17 +169,21 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
     void persistMenuCollapsed(nextCollapsed);
   };
 
+  const isOverlayMenu = isMobileViewport;
   const sidebarClassName = isMenuHidden
     ? 'w-0 p-0 opacity-0 pointer-events-none overflow-hidden'
-    : isMenuCollapsed
-      ? 'w-16 p-2 sm:w-20 sm:p-4'
-      : 'w-56 p-3 xl:w-64 xl:p-4';
+    : isOverlayMenu
+      ? 'w-[min(85vw,20rem)] p-3 md:w-[22rem] md:p-4'
+      : isMenuCollapsed
+        ? 'w-16 p-2 sm:w-20 sm:p-4'
+        : 'w-56 p-3 xl:w-64 xl:p-4';
 
-  const contentClassName = isMenuHidden
-    ? 'pl-0'
-    : isMenuCollapsed
-      ? 'pl-16 sm:pl-20'
-      : 'pl-56 xl:pl-64';
+  const contentClassName =
+    isMenuHidden || isOverlayMenu
+      ? 'pl-0'
+      : isMenuCollapsed
+        ? 'pl-16 sm:pl-20'
+        : 'pl-56 xl:pl-64';
   const isEmbeddedKangurRoute =
     pathname === '/admin/kangur' ||
     (pathname.startsWith('/admin/kangur/') &&
@@ -140,8 +191,31 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
   const mainPaddingClassName = isEmbeddedKangurRoute ? 'pt-6' : 'p-4 pt-16';
   const mainClassName = `min-h-0 flex-1 min-w-0 max-w-full overflow-x-hidden overflow-y-auto ${mainPaddingClassName}`;
 
+  const mobileMenuToggleLabel = isMenuHidden ? 'Open admin menu' : 'Close admin menu';
+  const mobileMenuToggle = isOverlayMenu ? (
+    <Button
+      variant='ghost'
+      onClick={() => setIsMenuHidden(!isMenuHidden)}
+      className='h-9 w-9 rounded-full border border-border/60 bg-muted/40 hover:bg-muted/60'
+      aria-controls='admin-sidebar'
+      aria-expanded={!isMenuHidden}
+      aria-label={mobileMenuToggleLabel}
+      title={mobileMenuToggleLabel}
+    >
+      {isMenuHidden ? <MenuIcon className='h-4 w-4' /> : <CloseIcon className='h-4 w-4' />}
+    </Button>
+  ) : null;
+
   return (
     <div className='dark relative h-screen w-full max-w-full overflow-hidden bg-background text-white'>
+      {isOverlayMenu && !isMenuHidden ? (
+        <button
+          type='button'
+          aria-label='Close admin menu'
+          onClick={() => setIsMenuHidden(true)}
+          className='fixed inset-0 z-20 bg-black/50'
+        />
+      ) : null}
       <aside
         id='admin-sidebar'
         aria-label='Admin sidebar'
@@ -185,6 +259,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
           <div className='pointer-events-auto'>
             <div className='flex items-center gap-2'>
               <div id='ai-paths-header-actions' className='flex items-center gap-2' />
+              {mobileMenuToggle}
               <UserNav />
             </div>
           </div>
@@ -194,6 +269,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
           tabIndex={-1}
           className={`${mainClassName} focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background`}
         >
+          <span tabIndex={0} className='sr-only focus:not-sr-only'>
+            Admin content start
+          </span>
           <QueryErrorBoundary>
             <div className='min-w-0 max-w-full'>{children}</div>
           </QueryErrorBoundary>

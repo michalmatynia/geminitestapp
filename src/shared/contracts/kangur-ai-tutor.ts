@@ -190,6 +190,21 @@ export const kangurAiTutorUsageSummarySchema = z.object({
 });
 export type KangurAiTutorUsageSummary = z.infer<typeof kangurAiTutorUsageSummarySchema>;
 
+export type KangurAiTutorTelemetryContextDto = {
+  surface: KangurAiTutorSurface | null;
+  contentId: string | null;
+  title: string | null;
+};
+export type KangurAiTutorTelemetryContext = KangurAiTutorTelemetryContextDto;
+
+export type KangurAiTutorSessionContextTelemetryDto = {
+  surface?: KangurAiTutorSurface | null;
+  contentId?: string | null;
+  title?: string | null;
+};
+export type KangurAiTutorSessionContextTelemetry =
+  KangurAiTutorSessionContextTelemetryDto;
+
 export const kangurAiTutorFollowUpActionSchema = z.object({
   id: nonEmptyTrimmedString.max(120),
   label: nonEmptyTrimmedString.max(80),

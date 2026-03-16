@@ -18,6 +18,7 @@ import {
   KangurLessonInset,
   KangurLessonLead,
   KangurLessonStack,
+  KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import {
   KangurEquationDisplay,
@@ -68,14 +69,16 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             <strong>A / an</strong> używamy, gdy mówimy o jednym, niekonkretnym przykładzie.
           </KangurLessonLead>
-          <KangurLessonCallout accent='amber' className='text-center' padding='sm'>
-            <div className='mx-auto w-full max-w-sm'>
-              <EnglishArticleVowelAnimation />
-            </div>
-            <KangurLessonCaption className='mt-2'>
-              Liczy się dźwięk: <strong>an equation</strong>, <strong>a graph</strong>.
-            </KangurLessonCaption>
-          </KangurLessonCallout>
+          <KangurLessonVisual
+            accent='amber'
+            caption={
+              <>
+                Liczy się dźwięk: <strong>an equation</strong>, <strong>a graph</strong>.
+              </>
+            }
+          >
+            <EnglishArticleVowelAnimation />
+          </KangurLessonVisual>
           <div className='grid gap-2 sm:grid-cols-2 text-sm'>
             {[
               'a unit (brzmi jak “yoo”)',
@@ -98,14 +101,15 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             Gdy nie wiemy jeszcze, które to równanie, używamy <strong>a / an</strong>.
           </KangurLessonLead>
-          <KangurLessonCallout accent='amber' className='text-center' padding='sm'>
+          <KangurLessonVisual
+            accent='amber'
+            caption='To dowolne równanie, jeszcze nie wiadomo które.'
+            maxWidthClassName='max-w-full'
+          >
             <KangurEquationDisplay accent='amber' size='sm'>
               Solve an equation with two variables.
             </KangurEquationDisplay>
-            <KangurLessonCaption className='mt-2'>
-              To dowolne równanie, jeszcze nie wiadomo które.
-            </KangurLessonCaption>
-          </KangurLessonCallout>
+          </KangurLessonVisual>
         </KangurLessonStack>
       ),
     },
@@ -119,14 +123,12 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
             <strong>The</strong> oznacza coś znanego obu stronom rozmowy: już to widzimy,
             omawialiśmy albo wskazaliśmy.
           </KangurLessonLead>
-          <KangurLessonCallout accent='indigo' className='text-center' padding='sm'>
-            <div className='mx-auto w-full max-w-sm'>
-              <EnglishArticleFocusAnimation />
-            </div>
-            <KangurLessonCaption className='mt-2'>
-              The triangle = ten konkretny trójkąt z tablicy.
-            </KangurLessonCaption>
-          </KangurLessonCallout>
+          <KangurLessonVisual
+            accent='indigo'
+            caption='The triangle = ten konkretny trójkąt z tablicy.'
+          >
+            <EnglishArticleFocusAnimation />
+          </KangurLessonVisual>
           <div className='grid gap-2 text-sm'>
             {[
               'The graph on the screen shows the parabola.',
@@ -151,14 +153,12 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
             Czasem nie używamy żadnego przedimka, zwłaszcza przy rzeczownikach
             niepoliczalnych i liczbie mnogiej.
           </KangurLessonLead>
-          <KangurLessonCallout accent='slate' className='text-center' padding='sm'>
-            <div className='mx-auto w-full max-w-sm'>
-              <EnglishZeroArticleAnimation />
-            </div>
-            <KangurLessonCaption className='mt-2'>
-              Math, homework, graphs – bez a/an/the.
-            </KangurLessonCaption>
-          </KangurLessonCallout>
+          <KangurLessonVisual
+            accent='slate'
+            caption='Math, homework, graphs – bez a/an/the.'
+          >
+            <EnglishZeroArticleAnimation />
+          </KangurLessonVisual>
           <div className='grid gap-2 text-sm'>
             {[
               'We study math after class.',

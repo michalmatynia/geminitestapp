@@ -10,9 +10,14 @@ const { useKangurGameRuntimeMock } = vi.hoisted(() => ({
 }));
 const getCurrentKangurDailyQuestMock = vi.hoisted(() => vi.fn());
 const getNextLockedBadgeMock = vi.hoisted(() => vi.fn());
+const useKangurSubjectFocusMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
   useKangurGameRuntime: useKangurGameRuntimeMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
 vi.mock('@/features/kangur/ui/components/ResultScreen', () => ({
@@ -91,6 +96,11 @@ describe('KangurGameResultWidget', () => {
     vi.clearAllMocks();
     getCurrentKangurDailyQuestMock.mockReturnValue(null);
     getNextLockedBadgeMock.mockReturnValue(null);
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
   });
 
   it('stays hidden outside the result screen', () => {

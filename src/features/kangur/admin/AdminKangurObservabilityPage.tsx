@@ -50,8 +50,8 @@ import {
 import { SummaryContent } from './components/observability/SummaryContent';
 import { formatDateTime, formatNumber } from './components/observability/utils';
 import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
+import { withKangurClientError } from '@/features/kangur/observability/client';
 
 
 const RANGE_OPTIONS: Array<LabeledOptionDto<KangurObservabilityRange>> = [
@@ -152,35 +152,56 @@ export function AdminKangurObservabilityPage(): JSX.Element {
       setIsKnowledgeGraphPreviewRunning(true);
       setKnowledgeGraphPreviewError(null);
 
-      try {
-        const payload = buildKnowledgeGraphPreviewRequest({
-          draft,
-          locale:
-            (knowledgeGraphStatus?.mode === 'status' ? knowledgeGraphStatus.locale : null) ??
-            summaryKnowledgeGraphLocale ??
-            'pl',
-        });
-        const response = await api.post(
-          '/api/kangur/ai-tutor/knowledge-graph/preview',
-          payload,
-          { timeout: 120000 }
-        );
-        const parsed = kangurKnowledgeGraphPreviewResponseSchema.safeParse(response);
+      const previewResult = await withKangurClientError(
+        {
+          source: 'kangur.admin.observability',
+          action: 'preview-knowledge-graph',
+          description: 'Runs a knowledge graph preview request for the admin observability panel.',
+          context: {
+            locale:
+              (knowledgeGraphStatus?.mode === 'status' ? knowledgeGraphStatus.locale : null) ??
+              summaryKnowledgeGraphLocale ??
+              'pl',
+          },
+        },
+        async () => {
+          const payload = buildKnowledgeGraphPreviewRequest({
+            draft,
+            locale:
+              (knowledgeGraphStatus?.mode === 'status' ? knowledgeGraphStatus.locale : null) ??
+              summaryKnowledgeGraphLocale ??
+              'pl',
+          });
+          const response = await api.post(
+            '/api/kangur/ai-tutor/knowledge-graph/preview',
+            payload,
+            { timeout: 120000 }
+          );
+          const parsed = kangurKnowledgeGraphPreviewResponseSchema.safeParse(response);
 
-        if (!parsed.success) {
-          throw new Error('Invalid knowledge graph preview response');
+          if (!parsed.success) {
+            throw new Error('Invalid knowledge graph preview response');
+          }
+
+          return parsed.data;
+        },
+        {
+          fallback: null,
+          onError: (error) => {
+            setKnowledgeGraphPreviewResult(null);
+            setKnowledgeGraphPreviewError(
+              error instanceof Error
+                ? error.message
+                : 'Failed to run the knowledge graph preview.'
+            );
+          },
         }
+      );
 
-        setKnowledgeGraphPreviewResult(parsed.data);
-      } catch (error) {
-        logClientError(error);
-        setKnowledgeGraphPreviewResult(null);
-        setKnowledgeGraphPreviewError(
-          error instanceof Error ? error.message : 'Failed to run the knowledge graph preview.'
-        );
-      } finally {
-        setIsKnowledgeGraphPreviewRunning(false);
+      if (previewResult) {
+        setKnowledgeGraphPreviewResult(previewResult);
       }
+      setIsKnowledgeGraphPreviewRunning(false);
     },
     [knowledgeGraphStatus, summaryKnowledgeGraphLocale]
   );
@@ -243,42 +264,58 @@ export function AdminKangurObservabilityPage(): JSX.Element {
 
       setIsKnowledgeGraphSyncing(true);
       setKnowledgeGraphSyncFeedback(null);
-
-      try {
-        const withEmbeddings =
-          knowledgeGraphStatus.embeddingNodeCount > 0 || knowledgeGraphStatus.vectorIndexPresent;
-        const response = await api.post(
-          '/api/kangur/knowledge-graph/sync',
-          {
+      const syncResult = await withKangurClientError(
+        {
+          source: 'kangur.admin.observability',
+          action: 'sync-knowledge-graph',
+          description: 'Triggers a knowledge graph sync from the admin observability panel.',
+          context: {
             locale: knowledgeGraphStatus.locale ?? summaryKnowledgeGraphLocale ?? 'pl',
-            withEmbeddings,
           },
-          { timeout: 120000 }
-        );
-        const parsed = kangurKnowledgeGraphSyncResponseSchema.safeParse(response);
+        },
+        async () => {
+          const withEmbeddings =
+            knowledgeGraphStatus.embeddingNodeCount > 0 || knowledgeGraphStatus.vectorIndexPresent;
+          const response = await api.post(
+            '/api/kangur/knowledge-graph/sync',
+            {
+              locale: knowledgeGraphStatus.locale ?? summaryKnowledgeGraphLocale ?? 'pl',
+              withEmbeddings,
+            },
+            { timeout: 120000 }
+          );
+          const parsed = kangurKnowledgeGraphSyncResponseSchema.safeParse(response);
 
-        if (!parsed.success) {
-          throw new Error('Invalid Kangur knowledge graph sync response');
+          if (!parsed.success) {
+            throw new Error('Invalid Kangur knowledge graph sync response');
+          }
+
+          return parsed.data;
+        },
+        {
+          fallback: null,
+          onError: (error) => {
+            setKnowledgeGraphSyncFeedback({
+              tone: 'error',
+              message:
+                error instanceof Error
+                  ? error.message
+                  : 'Failed to sync the Kangur knowledge graph.',
+            });
+          },
         }
+      );
 
+      if (syncResult) {
         setKnowledgeGraphSyncFeedback({
           tone: 'success',
-          message: `Synced ${new Intl.NumberFormat().format(parsed.data.sync.nodeCount)} nodes and ${new Intl.NumberFormat().format(parsed.data.sync.edgeCount)} edges${parsed.data.sync.withEmbeddings ? ' with embeddings preserved.' : '.'}`,
+          message: `Synced ${new Intl.NumberFormat().format(syncResult.sync.nodeCount)} nodes and ${new Intl.NumberFormat().format(syncResult.sync.edgeCount)} edges${syncResult.sync.withEmbeddings ? ' with embeddings preserved.' : '.'}`,
         });
         void summaryQuery.refetch();
         void knowledgeGraphStatusQuery.refetch();
-      } catch (error) {
-        logClientError(error);
-        setKnowledgeGraphSyncFeedback({
-          tone: 'error',
-          message:
-            error instanceof Error
-              ? error.message
-              : 'Failed to sync the Kangur knowledge graph.',
-        });
-      } finally {
-        setIsKnowledgeGraphSyncing(false);
       }
+
+      setIsKnowledgeGraphSyncing(false);
     })();
   }, [knowledgeGraphStatus, knowledgeGraphStatusQuery, summaryKnowledgeGraphLocale, summaryQuery]);
   const runKnowledgeGraphPreview = useCallback((): void => {

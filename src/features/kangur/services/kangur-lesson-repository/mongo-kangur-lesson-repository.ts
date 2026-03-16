@@ -3,11 +3,7 @@ import 'server-only';
 import type { Db, Document, Filter } from 'mongodb';
 
 import { canonicalizeKangurLessons, createDefaultKangurLessons } from '@/features/kangur/settings';
-import type {
-  KangurLesson,
-  KangurLessonComponentId,
-  KangurLessonSubject,
-} from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type { KangurLessonListInput, KangurLessonRepository } from './types';
@@ -57,7 +53,7 @@ const buildFilter = (input?: KangurLessonListInput): Filter<MongoKangurLessonDoc
   if (!input) return {};
   const filter: Filter<MongoKangurLessonDocument> = {};
   if (input.subject) {
-    filter.subject = input.subject as KangurLessonSubject;
+    filter.subject = input.subject;
   }
   if (input.enabledOnly) {
     filter.enabled = true;
@@ -67,9 +63,9 @@ const buildFilter = (input?: KangurLessonListInput): Filter<MongoKangurLessonDoc
 
 const toLesson = (doc: MongoKangurLessonDocument): KangurLesson => ({
   id: doc.id,
-  componentId: doc.componentId as KangurLessonComponentId,
+  componentId: doc.componentId,
   contentMode: doc.contentMode,
-  subject: doc.subject as KangurLessonSubject,
+  subject: doc.subject,
   title: doc.title,
   description: doc.description,
   emoji: doc.emoji,
@@ -88,7 +84,7 @@ export const mongoKangurLessonRepository: KangurLessonRepository = {
     if (docs.length === 0) {
       const fallbackFilter: Filter<MongoKangurLessonDocument> = {};
       if (input?.subject) {
-        fallbackFilter.subject = input.subject as KangurLessonSubject;
+        fallbackFilter.subject = input.subject;
       }
       const existingCount = await collection.countDocuments(fallbackFilter);
       if (existingCount === 0) {

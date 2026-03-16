@@ -8,27 +8,27 @@ canonical: true
 ---
 # Kangur Performance Baseline
 
-Generated at: 2026-03-16T17:56:40.799Z
+Generated at: 2026-03-16T20:07:36.482Z
 
 ## Execution Summary
 
 - Unit test suite status: FAIL
-- Unit test suite duration: 21.5s
+- Unit test suite duration: 43.4s
 - E2E suite: skipped
 
 ## Bundle Risk Snapshot
 
 | File | Lines | Bytes |
 | --- | ---: | ---: |
-| `src/features/kangur/ui/pages/Lessons.tsx` | 1239 | 49966 |
-| `src/features/kangur/ui/pages/Game.tsx` | 967 | 36204 |
+| `src/features/kangur/ui/pages/Lessons.tsx` | 1022 | 41663 |
+| `src/features/kangur/ui/pages/Game.tsx` | 978 | 36480 |
 | `src/features/kangur/ui/services/kangur-questions-data.js` | 329 | 21289 |
 | `src/features/kangur/ui/pages/LearnerProfile.tsx` | 423 | 14808 |
 | `src/features/kangur/ui/components/KangurGame.tsx` | 428 | 13515 |
 | `src/features/kangur/ui/components/KangurIllustrations.ts` | 14 | 853 |
 
-- Total bytes (tracked files): 136635
-- Total lines (tracked files): 3400
+- Total bytes (tracked files): 128608
+- Total lines (tracked files): 3194
 
 ## Commands
 

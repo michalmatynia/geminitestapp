@@ -1,6 +1,7 @@
 import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
 import { KangurStatusChip } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import {
   getNextLockedBadge,
@@ -8,6 +9,7 @@ import {
   getRecommendedSessionMomentum,
 } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
+import type { KangurLessonSubject } from '@/shared/contracts/kangur';
 
 type KangurGameSetupMomentumCardProps = {
   mode: 'training' | 'kangur';
@@ -23,9 +25,10 @@ type KangurGameSetupFocus = {
 
 const getSetupFocus = (
   mode: 'training' | 'kangur',
-  progress: KangurProgressState
+  progress: KangurProgressState,
+  subject: KangurLessonSubject
 ): KangurGameSetupFocus | null => {
-  const quest = getCurrentKangurDailyQuest(progress);
+  const quest = getCurrentKangurDailyQuest(progress, { subject });
   const nextBadge = getNextLockedBadge(progress);
   const guidedMomentum = getRecommendedSessionMomentum(progress);
   const averageXpPerSession = getProgressAverageXpPerSession(progress);
@@ -111,8 +114,9 @@ export default function KangurGameSetupMomentumCard({
   mode,
   progress,
 }: KangurGameSetupMomentumCardProps): React.JSX.Element | null {
+  const { subject } = useKangurSubjectFocus();
   const modeKey = mode;
-  const focus = getSetupFocus(mode, progress);
+  const focus = getSetupFocus(mode, progress, subject);
   const averageXpPerSession = getProgressAverageXpPerSession(progress);
   const streak = progress.currentWinStreak ?? 0;
 

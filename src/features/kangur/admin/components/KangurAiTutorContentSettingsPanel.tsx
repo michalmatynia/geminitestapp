@@ -14,7 +14,10 @@ import { api } from '@/shared/lib/api-client';
 import { parsePromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { Alert, Badge, Button, Card, FormField, FormSection, Input, Textarea, useToast } from '@/features/kangur/shared/ui';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import {
+  withKangurClientError,
+  withKangurClientErrorSync,
+} from '@/features/kangur/observability/client';
 
 
 const AI_TUTOR_CONTENT_EDITOR_LOCALE = 'pl';
@@ -50,28 +53,40 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
 
     void (async () => {
       setIsAiTutorContentLoading(true);
-      try {
-        const content = await api.get<KangurAiTutorContent>('/api/kangur/ai-tutor/content', {
-          params: { locale: AI_TUTOR_CONTENT_EDITOR_LOCALE },
-          logError: false,
-        });
-        if (cancelled) {
-          return;
+      const content = await withKangurClientError(
+        {
+          source: 'kangur.admin.ai-tutor-content',
+          action: 'load-content',
+          description: 'Loads AI Tutor content for the admin editor.',
+          context: { locale: AI_TUTOR_CONTENT_EDITOR_LOCALE },
+        },
+        async () => {
+          const response = await api.get<KangurAiTutorContent>('/api/kangur/ai-tutor/content', {
+            params: { locale: AI_TUTOR_CONTENT_EDITOR_LOCALE },
+            logError: false,
+          });
+          return parseKangurAiTutorContent(response);
+        },
+        {
+          fallback: null,
+          onError: (error) => {
+            if (!cancelled) {
+              toast(error instanceof Error ? error.message : 'Failed to load AI Tutor content.', {
+                variant: 'error',
+              });
+            }
+          },
         }
-        const nextValue = stringifyAiTutorContent(parseKangurAiTutorContent(content));
+      );
+
+      if (!cancelled && content) {
+        const nextValue = stringifyAiTutorContent(content);
         setAiTutorContentEditorValue(nextValue);
         setPersistedAiTutorContentEditorValue(nextValue);
-      } catch (error) {
-        logClientError(error);
-        if (!cancelled) {
-          toast(error instanceof Error ? error.message : 'Failed to load AI Tutor content.', {
-            variant: 'error',
-          });
-        }
-      } finally {
-        if (!cancelled) {
-          setIsAiTutorContentLoading(false);
-        }
+      }
+
+      if (!cancelled) {
+        setIsAiTutorContentLoading(false);
       }
     })();
 
@@ -83,18 +98,23 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
   const parsedAiTutorContentState = useMemo<
     { content: KangurAiTutorContent | null; error: string | null }
   >(() => {
-    try {
-      return {
+    return withKangurClientErrorSync(
+      {
+        source: 'kangur.admin.ai-tutor-content',
+        action: 'parse-content-json',
+        description: 'Parses AI Tutor content JSON from the editor.',
+      },
+      () => ({
         content: parseKangurAiTutorContent(JSON.parse(aiTutorContentEditorValue) as unknown),
         error: null,
-      };
-    } catch (error) {
-      logClientError(error);
-      return {
-        content: null,
-        error: error instanceof Error ? error.message : 'Invalid AI Tutor content JSON.',
-      };
-    }
+      }),
+      {
+        fallback: {
+          content: null,
+          error: 'Invalid AI Tutor content JSON.',
+        } as { content: KangurAiTutorContent | null; error: string | null },
+      }
+    );
   }, [aiTutorContentEditorValue]);
 
   const aiTutorContentValidation = useMemo(
@@ -155,23 +175,37 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
 
   const handleReloadAiTutorContent = async (): Promise<void> => {
     setIsAiTutorContentLoading(true);
-    try {
-      const content = await api.get<KangurAiTutorContent>('/api/kangur/ai-tutor/content', {
-        params: { locale: AI_TUTOR_CONTENT_EDITOR_LOCALE },
-        logError: false,
-      });
-      const nextValue = stringifyAiTutorContent(parseKangurAiTutorContent(content));
+    const content = await withKangurClientError(
+      {
+        source: 'kangur.admin.ai-tutor-content',
+        action: 'reload-content',
+        description: 'Reloads AI Tutor content from the server.',
+        context: { locale: AI_TUTOR_CONTENT_EDITOR_LOCALE },
+      },
+      async () => {
+        const response = await api.get<KangurAiTutorContent>('/api/kangur/ai-tutor/content', {
+          params: { locale: AI_TUTOR_CONTENT_EDITOR_LOCALE },
+          logError: false,
+        });
+        return parseKangurAiTutorContent(response);
+      },
+      {
+        fallback: null,
+        onError: (error) => {
+          toast(error instanceof Error ? error.message : 'Failed to reload AI Tutor content.', {
+            variant: 'error',
+          });
+        },
+      }
+    );
+
+    if (content) {
+      const nextValue = stringifyAiTutorContent(content);
       setAiTutorContentEditorValue(nextValue);
       setPersistedAiTutorContentEditorValue(nextValue);
       toast('Kangur AI Tutor content reloaded.', { variant: 'success' });
-    } catch (error) {
-      logClientError(error);
-      toast(error instanceof Error ? error.message : 'Failed to reload AI Tutor content.', {
-        variant: 'error',
-      });
-    } finally {
-      setIsAiTutorContentLoading(false);
     }
+    setIsAiTutorContentLoading(false);
   };
 
   const handleSaveAiTutorContent = async (): Promise<void> => {
@@ -190,24 +224,37 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
       return;
     }
     setIsAiTutorContentSaving(true);
-    try {
-      const saved = await api.post<KangurAiTutorContent>(
-        '/api/kangur/ai-tutor/content',
-        parsedAiTutorContentState.content,
-        { logError: false }
-      );
-      const nextValue = stringifyAiTutorContent(parseKangurAiTutorContent(saved));
+    const savedContent = await withKangurClientError(
+      {
+        source: 'kangur.admin.ai-tutor-content',
+        action: 'save-content',
+        description: 'Saves AI Tutor content from the admin editor.',
+      },
+      async () => {
+        const saved = await api.post<KangurAiTutorContent>(
+          '/api/kangur/ai-tutor/content',
+          parsedAiTutorContentState.content,
+          { logError: false }
+        );
+        return parseKangurAiTutorContent(saved);
+      },
+      {
+        fallback: null,
+        onError: (error) => {
+          toast(error instanceof Error ? error.message : 'Failed to save AI Tutor content.', {
+            variant: 'error',
+          });
+        },
+      }
+    );
+
+    if (savedContent) {
+      const nextValue = stringifyAiTutorContent(savedContent);
       setAiTutorContentEditorValue(nextValue);
       setPersistedAiTutorContentEditorValue(nextValue);
       toast('Kangur AI Tutor content saved.', { variant: 'success' });
-    } catch (error) {
-      logClientError(error);
-      toast(error instanceof Error ? error.message : 'Failed to save AI Tutor content.', {
-        variant: 'error',
-      });
-    } finally {
-      setIsAiTutorContentSaving(false);
     }
+    setIsAiTutorContentSaving(false);
   };
 
   return (

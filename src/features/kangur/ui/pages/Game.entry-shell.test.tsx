@@ -7,8 +7,9 @@ import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultKangurProgressState } from '@/features/kangur/shared/contracts/kangur';
-const { useKangurGameRuntimeMock } = vi.hoisted(() => ({
+const { useKangurGameRuntimeMock, useKangurSubjectFocusMock } = vi.hoisted(() => ({
   useKangurGameRuntimeMock: vi.fn(),
+  useKangurSubjectFocusMock: vi.fn(),
 }));
 
 vi.mock('framer-motion', () => ({
@@ -35,6 +36,10 @@ vi.mock('framer-motion', () => ({
 vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
   KangurGameRuntimeBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useKangurGameRuntime: useKangurGameRuntimeMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
@@ -122,6 +127,16 @@ vi.mock('@/features/kangur/ui/components/KangurPracticeAssignmentBanner', () => 
   default: () => <div data-testid='mock-practice-assignment-banner'>Mock assignment banner</div>,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: () => ({
+    data: [],
+    isLoading: false,
+    isFetching: false,
+    refetch: vi.fn(),
+    error: null,
+  }),
+}));
+
 import Game from '@/features/kangur/ui/pages/Game';
 
 type EntryScreenCase = {
@@ -177,6 +192,11 @@ const buildRuntime = (screenKey: 'operation' | 'training' | 'kangur_setup'): Rec
 describe('Game page entry shells', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'guest',
+    });
   });
 
   it.each(ENTRY_SCREEN_CASES)(

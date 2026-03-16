@@ -3,12 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
 import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/features/kangur/shared/utils';
-
-type DataAttributes = {
-  'data-testid'?: string;
-  'data-doc-id'?: string;
-  'data-doc-alias'?: string;
-};
+import type { DataAttributesDto } from '@/shared/contracts/ui';
 
 import {
   KANGUR_SEGMENTED_CONTROL_ITEM_ACTIVE_CLASSNAME,
@@ -71,7 +66,7 @@ export const kangurButtonVariants = cva(
 
 export type KangurButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
   VariantProps<typeof kangurButtonVariants> &
-  DataAttributes & {
+  DataAttributesDto & {
     asChild?: boolean;
   };
 

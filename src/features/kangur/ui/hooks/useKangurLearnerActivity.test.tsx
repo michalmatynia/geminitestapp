@@ -4,15 +4,15 @@
 
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
 const {
   learnerActivityGetMock,
   logKangurClientErrorMock,
   reportKangurClientErrorMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
 } = vi.hoisted(() => ({
   learnerActivityGetMock: vi.fn(),
-  logKangurClientErrorMock: vi.fn(),
-  reportKangurClientErrorMock: vi.fn(),
+  ...globalThis.__kangurClientErrorMocks(),
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
@@ -23,62 +23,6 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
     },
   }),
 }));
-
-const withKangurClientError = async <T,>(
-  report: unknown,
-  task: () => Promise<T>,
-  options: {
-    fallback: T | (() => T);
-    onError?: (error: unknown) => void;
-    shouldReport?: (error: unknown) => boolean;
-    shouldRethrow?: (error: unknown) => boolean;
-  }
-): Promise<T> => {
-  try {
-    return await task();
-  } catch (error) {
-    const shouldReport = options.shouldReport?.(error) ?? true;
-    if (shouldReport) {
-      reportKangurClientErrorMock(error, report);
-      logKangurClientErrorMock(error);
-    }
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
-      throw error;
-    }
-    return typeof options.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : options.fallback;
-  }
-};
-
-const withKangurClientErrorSync = <T,>(
-  report: unknown,
-  task: () => T,
-  options: {
-    fallback: T | (() => T);
-    onError?: (error: unknown) => void;
-    shouldReport?: (error: unknown) => boolean;
-    shouldRethrow?: (error: unknown) => boolean;
-  }
-): T => {
-  try {
-    return task();
-  } catch (error) {
-    const shouldReport = options.shouldReport?.(error) ?? true;
-    if (shouldReport) {
-      reportKangurClientErrorMock(error, report);
-      logKangurClientErrorMock(error);
-    }
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
-      throw error;
-    }
-    return typeof options.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : options.fallback;
-  }
-};
 
 vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: logKangurClientErrorMock,

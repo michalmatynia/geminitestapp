@@ -3,7 +3,11 @@
 import { useEffect, useLayoutEffect, type MutableRefObject, type RefObject } from 'react';
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
-import type { KangurAiTutorUsageSummary } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import type {
+  KangurAiTutorSessionContextTelemetryDto,
+  KangurAiTutorTelemetryContextDto,
+  KangurAiTutorUsageSummary,
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
 import { extractNarrationTextFromElement } from './kangur-narrator-utils';
 import { areTutorSelectionTextsEquivalent } from './KangurAiTutorWidget.helpers';
@@ -12,23 +16,11 @@ import type { ActiveTutorFocus, TutorMotionProfile, TutorQuickAction } from './K
 import type { PendingSelectionResponse, SectionExplainContext } from './KangurAiTutorWidget.types';
 import type { KangurAiTutorRuntimeMessage } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
-type TelemetryContext = {
-  surface: string | null;
-  contentId: string | null;
-  title: string | null;
-};
-
 type TutorProactiveNudge = {
   mode: 'gentle' | 'coach';
   title: string;
   description: string;
   action: TutorQuickAction;
-};
-
-type SessionContextTelemetry = {
-  surface: string | null | undefined;
-  contentId: string | null | undefined;
-  title: string | null | undefined;
 };
 
 export function useKangurAiTutorGuidanceCompletionEffects(input: {
@@ -55,7 +47,7 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
   setSelectionGuidanceCalloutVisibleText: (value: string | null) => void;
   setSelectionResponseComplete: (value: PendingSelectionResponse | null) => void;
   setSelectionResponsePending: (value: PendingSelectionResponse | null) => void;
-  telemetryContext: TelemetryContext;
+  telemetryContext: KangurAiTutorTelemetryContextDto;
 }): void {
   const {
     activeSelectedText,
@@ -261,7 +253,7 @@ export function useKangurAiTutorFocusTelemetryEffect(input: {
   motionProfile: Pick<TutorMotionProfile, 'motionCompletedDelayMs'>;
   motionTimeoutRef: MutableRefObject<number | null>;
   prefersReducedMotion: boolean;
-  sessionContext: SessionContextTelemetry;
+  sessionContext: KangurAiTutorSessionContextTelemetryDto;
   setPanelMotionState: (value: 'animating' | 'settled') => void;
 }): void {
   const {
@@ -355,8 +347,8 @@ export function useKangurAiTutorSupplementalTelemetryEffects(input: {
   proactiveNudgeTelemetryKey: string | null;
   proactiveNudges: 'off' | 'gentle' | 'coach';
   quotaExhaustedTelemetryKey: string | null;
-  sessionContext: SessionContextTelemetry;
-  telemetryContext: TelemetryContext;
+  sessionContext: KangurAiTutorSessionContextTelemetryDto;
+  telemetryContext: KangurAiTutorTelemetryContextDto;
   usageSummary: KangurAiTutorUsageSummary | null | undefined;
   visibleProactiveNudge: TutorProactiveNudge | null;
 }): void {

@@ -40,6 +40,7 @@ const { runtimeState, useKangurPageContentEntryMock } = vi.hoisted(() => ({
 const scoreHistoryMock = vi.hoisted(() => vi.fn());
 const progressOverviewMock = vi.hoisted(() => vi.fn());
 const getCurrentKangurDailyQuestMock = vi.hoisted(() => vi.fn());
+const useKangurSubjectFocusMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () => ({
   shouldRenderKangurParentDashboardPanel: (displayMode: string, activeTab: string, targetTab: string) =>
@@ -53,6 +54,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
 
 vi.mock('@/features/kangur/ui/services/daily-quests', () => ({
   getCurrentKangurDailyQuest: getCurrentKangurDailyQuestMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
 vi.mock('@/features/kangur/ui/components/ProgressOverview', () => ({
@@ -105,6 +110,11 @@ describe('KangurParentDashboardScoresWidget', () => {
       scoreViewerName: 'Ada',
     };
     getCurrentKangurDailyQuestMock.mockReturnValue(null);
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
     useKangurPageContentEntryMock.mockReturnValue({
       data: undefined,
       entry: null,
@@ -125,7 +135,9 @@ describe('KangurParentDashboardScoresWidget', () => {
 
     expect(screen.getByTestId('score-history-stub')).toBeInTheDocument();
     expect(screen.getByTestId('progress-overview-stub')).toBeInTheDocument();
-    expect(getCurrentKangurDailyQuestMock).toHaveBeenCalledWith(runtimeState.value.progress);
+    expect(getCurrentKangurDailyQuestMock).toHaveBeenCalledWith(runtimeState.value.progress, {
+      subject: 'maths',
+    });
     expect(scoreHistoryMock).toHaveBeenCalledWith(
       expect.objectContaining({
         basePath: '/kangur',

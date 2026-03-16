@@ -9,15 +9,16 @@ import {
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import {
   KangurButton,
   KangurCardDescription,
   KangurCardTitle,
   KangurGlassPanel,
+  KangurPanelStack,
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import type { KangurAssignmentPlan } from '@/features/kangur/shared/contracts/kangur-quests';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import {
@@ -57,7 +58,11 @@ export function KangurGameHomeQuestWidget({
 }: KangurGameHomeQuestWidgetProps = {}): React.JSX.Element | null {
   const runtime = useKangurGameRuntime();
   const { basePath, progress, screen } = runtime;
-  const quest = useMemo(() => getCurrentKangurDailyQuest(progress), [progress]);
+  const { subject } = useKangurSubjectFocus();
+  const quest = useMemo(
+    () => getCurrentKangurDailyQuest(progress, { subject }),
+    [progress, subject]
+  );
   const averageXpPerSession = useMemo(() => getProgressAverageXpPerSession(progress), [progress]);
   const guidedMomentum = useMemo(() => getRecommendedSessionMomentum(progress), [progress]);
   const leadingTrack = useMemo(
@@ -89,7 +94,7 @@ export function KangurGameHomeQuestWidget({
       surface='mistStrong'
       variant='soft'
     >
-      <div className={`flex flex-col lg:flex-row lg:items-start lg:justify-between ${KANGUR_PANEL_GAP_CLASSNAME}`}>
+      <KangurPanelStack className='lg:flex-row lg:items-start lg:justify-between'>
         <div className='min-w-0 flex-1'>
           <div className='flex flex-wrap items-center gap-2'>
             <KangurStatusChip
@@ -238,7 +243,7 @@ export function KangurGameHomeQuestWidget({
             </Link>
           </KangurButton>
         </div>
-      </div>
+      </KangurPanelStack>
     </KangurGlassPanel>
   );
 }

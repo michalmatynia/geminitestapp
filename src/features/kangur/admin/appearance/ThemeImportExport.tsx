@@ -10,7 +10,7 @@ import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { parseJsonSetting } from '@/features/kangur/shared/utils/settings-json';
 import { KANGUR_DEFAULT_DAILY_THEME, normalizeKangurThemeSettings } from '@/features/kangur/theme-settings';
 import { useAppearancePage } from './AppearancePage.context';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientError } from '@/features/kangur/observability/client';
 
 
 export function ThemeImportExport(): React.JSX.Element {
@@ -18,34 +18,61 @@ export function ThemeImportExport(): React.JSX.Element {
   const { draft, setDraft } = useAppearancePage();
   const [isExporting, setIsExporting] = useState(false);
 
-  const handleExport = () => {
+  const handleExport = async () => {
     setIsExporting(true);
-    try {
-      const data = JSON.stringify(draft, null, 2);
-      void navigator.clipboard.writeText(data);
+    const didExport = await withKangurClientError(
+      {
+        source: 'kangur.admin.theme-import-export',
+        action: 'export-theme',
+        description: 'Copies theme configuration to clipboard.',
+      },
+      async () => {
+        const data = JSON.stringify(draft, null, 2);
+        await navigator.clipboard.writeText(data);
+        return true;
+      },
+      {
+        fallback: false,
+        onError: () => {
+          toast('Nie udało się skopiować konfiguracji.', { variant: 'error' });
+        },
+      }
+    );
+
+    if (didExport) {
       toast('Konfiguracja motywu skopiowana do schowka.', { variant: 'success' });
-    } catch (error) {
-      logClientError(error);
-      toast('Nie udało się skopiować konfiguracji.', { variant: 'error' });
-    } finally {
-      setIsExporting(false);
     }
+    setIsExporting(false);
   };
 
   const handleImport = async (): Promise<void> => {
-    try {
-      const text = await navigator.clipboard.readText();
-      const parsed = parseJsonSetting<Partial<ThemeSettings> | null>(text, null);
-      if (!parsed) {
-        toast('Nieprawidłowy format danych w schowku.', { variant: 'error' });
-        return;
+    const didImport = await withKangurClientError(
+      {
+        source: 'kangur.admin.theme-import-export',
+        action: 'import-theme',
+        description: 'Imports theme configuration from clipboard.',
+      },
+      async () => {
+        const text = await navigator.clipboard.readText();
+        const parsed = parseJsonSetting<Partial<ThemeSettings> | null>(text, null);
+        if (!parsed) {
+          toast('Nieprawidłowy format danych w schowku.', { variant: 'error' });
+          return false;
+        }
+        const normalized = normalizeKangurThemeSettings(parsed, KANGUR_DEFAULT_DAILY_THEME);
+        setDraft(normalized);
+        return true;
+      },
+      {
+        fallback: false,
+        onError: () => {
+          toast('Nieprawidłowy format danych w schowku.', { variant: 'error' });
+        },
       }
-      const normalized = normalizeKangurThemeSettings(parsed, KANGUR_DEFAULT_DAILY_THEME);
-      setDraft(normalized);
+    );
+
+    if (didImport) {
       toast('Motyw wczytany ze schowka. Pamiętaj o zapisaniu zmian.', { variant: 'success' });
-    } catch (error) {
-      logClientError(error);
-      toast('Nieprawidłowy format danych w schowku.', { variant: 'error' });
     }
   };
 
@@ -55,7 +82,7 @@ export function ThemeImportExport(): React.JSX.Element {
       description='Przenoś konfigurację motywu między środowiskami za pomocą schowka.'
     >
       <div className='flex gap-3'>
-        <Button variant='outline' size='sm' onClick={handleExport} disabled={isExporting}>
+        <Button variant='outline' size='sm' onClick={() => void handleExport()} disabled={isExporting}>
           Eksportuj do schowka
         </Button>
         <Button variant='outline' size='sm' onClick={() => void handleImport()}>

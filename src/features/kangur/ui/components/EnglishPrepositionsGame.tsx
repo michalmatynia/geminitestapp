@@ -125,6 +125,26 @@ const ROUNDS: ClickRound[] = [
     hint: 'P leży pomiędzy punktami A i B.',
     visual: 'relation',
   },
+  {
+    id: 'relation-above',
+    accent: 'violet',
+    prompt: 'Wybierz przyimek relacji.',
+    question: 'The lamp is ___ the table.',
+    answer: 'above',
+    options: ['above', 'below', 'between'],
+    hint: 'Lampa znajduje się nad stołem.',
+    visual: 'relation',
+  },
+  {
+    id: 'relation-below',
+    accent: 'violet',
+    prompt: 'Wybierz przyimek relacji.',
+    question: 'The box is ___ the desk.',
+    answer: 'below',
+    options: ['below', 'above', 'between'],
+    hint: 'Pudełko jest pod biurkiem.',
+    visual: 'relation',
+  },
 ];
 
 const TOTAL_ROUNDS = ROUNDS.length;

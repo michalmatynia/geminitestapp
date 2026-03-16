@@ -18,10 +18,9 @@ import { KangurMainRoleProvider } from '@/features/kangur/ui/design/primitives';
 import { useKangurClassOverrides } from '@/features/kangur/ui/useKangurClassOverrides';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { cn } from '@/features/kangur/shared/utils';
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 import type { CSSProperties, JSX } from 'react';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
-
 
 const getSlugFromPathname = (
   pathname: string | null,
@@ -83,15 +82,24 @@ export function KangurFeatureRouteShell({
     const search = searchParams?.toString() || '';
     const baseHref = pathname || requestedPath;
 
-    try {
-      const parsed = new URL(baseHref, 'https://kangur.local');
-      const normalizedPathname = parsed.pathname.replace(/\/+$/, '') || '/';
-      return search ? `${normalizedPathname}?${search}` : normalizedPathname;
-    } catch (error) {
-      logClientError(error);
-      const normalizedHref = baseHref.replace(/\/+$/, '') || '/';
-      return search ? `${normalizedHref}?${search}` : normalizedHref;
-    }
+    const fallbackHref = baseHref.replace(/\/+$/, '') || '/';
+    return withKangurClientErrorSync(
+      {
+        source: 'kangur-feature-route-shell',
+        action: 'resolve-requested-href',
+        description: 'Resolve the requested href for the Kangur route shell.',
+        context: {
+          baseHref,
+          requestedPath,
+        },
+      },
+      () => {
+        const parsed = new URL(baseHref, 'https://kangur.local');
+        const normalizedPathname = parsed.pathname.replace(/\/+$/, '') || '/';
+        return search ? `${normalizedPathname}?${search}` : normalizedPathname;
+      },
+      { fallback: search ? `${fallbackHref}?${search}` : fallbackHref }
+    );
   }, [pathname, requestedPath, searchParams]);
   const isEmbedded = embedded;
   const shellStyle: CSSProperties = {

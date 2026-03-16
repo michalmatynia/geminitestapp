@@ -5,6 +5,8 @@ const {
   createIndexMock,
   findOneMock,
   insertOneMock,
+  findMock,
+  toArrayMock,
   getMongoDbMock,
 } = vi.hoisted(() => {
   const createIndexMock = vi.fn();
@@ -28,6 +30,8 @@ const {
     createIndexMock,
     findOneMock,
     insertOneMock,
+    findMock,
+    toArrayMock,
     getMongoDbMock,
   };
 });
@@ -42,6 +46,7 @@ describe('mongoKangurScoreRepository', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     createIndexMock.mockResolvedValue('kangur_scores_client_mutation_id_unique');
+    toArrayMock.mockResolvedValue([]);
   });
 
   it('returns the existing score when insert races on a duplicate client mutation id', async () => {
@@ -103,6 +108,43 @@ describe('mongoKangurScoreRepository', () => {
       created_by: 'ada@example.com',
       learner_id: 'learner-1',
       owner_user_id: 'parent-1',
+    });
+  });
+
+  it('applies subject-aware filters for maths scores', async () => {
+    toArrayMock.mockResolvedValue([]);
+
+    await mongoKangurScoreRepository.listScores({
+      sort: '-score',
+      limit: 10,
+      filters: { subject: 'maths' },
+    });
+
+    expect(findMock).toHaveBeenCalledWith({
+      $and: [
+        {
+          $or: [
+            { subject: 'maths' },
+            { subject: { $exists: false } },
+            { subject: null },
+          ],
+        },
+        { operation: { $not: /^english_/i } },
+      ],
+    });
+  });
+
+  it('applies subject-aware filters for english scores', async () => {
+    toArrayMock.mockResolvedValue([]);
+
+    await mongoKangurScoreRepository.listScores({
+      sort: '-score',
+      limit: 10,
+      filters: { subject: 'english' },
+    });
+
+    expect(findMock).toHaveBeenCalledWith({
+      $or: [{ subject: 'english' }, { operation: { $regex: /^english_/i } }],
     });
   });
 });

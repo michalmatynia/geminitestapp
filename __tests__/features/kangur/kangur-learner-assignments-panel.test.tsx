@@ -18,6 +18,14 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => ({
+    subject: 'maths',
+    subjectKey: 'learner-1',
+    setSubject: vi.fn(),
+  }),
+}));
+
 import KangurLearnerAssignmentsPanel from '@/features/kangur/ui/components/KangurLearnerAssignmentsPanel';
 
 describe('KangurLearnerAssignmentsPanel', () => {

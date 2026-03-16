@@ -16,7 +16,7 @@ import {
   type KangurAiTutorContent,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import { api } from '@/shared/lib/api-client';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientError } from '@/features/kangur/observability/client';
 
 
 type KangurAiTutorContentContextValue = {
@@ -46,29 +46,41 @@ export function KangurAiTutorContentProvider({
 
     const load = async (): Promise<void> => {
       setIsLoading(true);
-      try {
-        const response = await api.get<KangurAiTutorContent>(
-          `/api/kangur/ai-tutor/content?locale=${encodeURIComponent(locale)}`,
-          {
-            cache: 'no-store',
-          }
-        );
-        if (cancelled) {
-          return;
-        }
-        setContent(parseKangurAiTutorContent(response));
-      } catch (error) {
-        logClientError(error);
-        if (!cancelled) {
-          setContent({
-            ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+      await withKangurClientError(
+        {
+          source: 'kangur-ai-tutor-content',
+          action: 'load',
+          description: 'Load AI tutor content for the selected locale.',
+          context: {
             locale,
-          });
+          },
+        },
+        async () => {
+          const response = await api.get<KangurAiTutorContent>(
+            `/api/kangur/ai-tutor/content?locale=${encodeURIComponent(locale)}`,
+            {
+              cache: 'no-store',
+            }
+          );
+          if (cancelled) {
+            return;
+          }
+          setContent(parseKangurAiTutorContent(response));
+        },
+        {
+          fallback: undefined,
+          onError: () => {
+            if (!cancelled) {
+              setContent({
+                ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+                locale,
+              });
+            }
+          },
         }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
+      );
+      if (!cancelled) {
+        setIsLoading(false);
       }
     };
 

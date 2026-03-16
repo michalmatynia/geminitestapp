@@ -42,8 +42,8 @@ import {
   SLOT_CONFIG,
   ThemeSelectionId,
 } from './AppearancePage.constants';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
+import { withKangurClientError } from '@/features/kangur/observability/client';
 
 
 type AppearancePageContextValue = {
@@ -161,19 +161,38 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
       if (next === defaultModeDraft) return;
       setDefaultModeDraft(next);
       setIsDefaultModeSaving(true);
-      try {
-        await updateSetting.mutateAsync({
-          key: KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
-          value: next,
-        });
+      const didSave = await withKangurClientError(
+        {
+          source: 'kangur.admin.appearance',
+          action: 'update-default-mode',
+          description: 'Updates the default storefront appearance mode.',
+          context: { mode: next },
+        },
+        async () => {
+          await updateSetting.mutateAsync({
+            key: KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
+            value: next,
+          });
+          return true;
+        },
+        {
+          fallback: false,
+          onError: (error) => {
+            toast(
+              error instanceof Error
+                ? error.message
+                : 'Nie udało się zapisać domyślnego motywu.',
+              { variant: 'error' }
+            );
+            setDefaultModeDraft(storedDefaultMode);
+          },
+        }
+      );
+
+      if (didSave) {
         toast('Domyślny motyw startowy zaktualizowany.', { variant: 'success' });
-      } catch (error) {
-        logClientError(error);
-        toast(error instanceof Error ? error.message : 'Nie udało się zapisać domyślnego motywu.', { variant: 'error' });
-        setDefaultModeDraft(storedDefaultMode);
-      } finally {
-        setIsDefaultModeSaving(false);
       }
+      setIsDefaultModeSaving(false);
     },
     [defaultModeDraft, storedDefaultMode, toast, updateSetting]
   );
@@ -302,14 +321,43 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
 
   const handleAssignToSlot = useCallback(
     async (slot: AppearanceSlot): Promise<void> => {
-      try {
-        await updateSetting.mutateAsync({ key: slotSettingsKey(slot), value: serializeSetting(draft) });
-        const nextAssignments = { ...slotAssignments, [slot]: { id: selectedId, name: resolveThemeName(selectedId) } };
-        await updateSetting.mutateAsync({ key: KANGUR_SLOT_ASSIGNMENTS_KEY, value: serializeSetting(nextAssignments) });
-        toast(`Motyw przypisany do slotu "${SLOT_CONFIG[slot].label}".`, { variant: 'success' });
-      } catch (error) {
-        logClientError(error);
-        toast(error instanceof Error ? error.message : 'Nie udało się przypisać motywu.', { variant: 'error' });
+      const didAssign = await withKangurClientError(
+        {
+          source: 'kangur.admin.appearance',
+          action: 'assign-theme-slot',
+          description: 'Assigns the selected theme to a storefront slot.',
+          context: { slot, selectionId: selectedId },
+        },
+        async () => {
+          await updateSetting.mutateAsync({
+            key: slotSettingsKey(slot),
+            value: serializeSetting(draft),
+          });
+          const nextAssignments = {
+            ...slotAssignments,
+            [slot]: { id: selectedId, name: resolveThemeName(selectedId) },
+          };
+          await updateSetting.mutateAsync({
+            key: KANGUR_SLOT_ASSIGNMENTS_KEY,
+            value: serializeSetting(nextAssignments),
+          });
+          return true;
+        },
+        {
+          fallback: false,
+          onError: (error) => {
+            toast(
+              error instanceof Error ? error.message : 'Nie udało się przypisać motywu.',
+              { variant: 'error' }
+            );
+          },
+        }
+      );
+
+      if (didAssign) {
+        toast(`Motyw przypisany do slotu "${SLOT_CONFIG[slot].label}".`, {
+          variant: 'success',
+        });
       }
     },
     [draft, resolveThemeName, selectedId, slotAssignments, toast, updateSetting]
@@ -317,14 +365,37 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
 
   const handleUnassignFromSlot = useCallback(
     async (slot: AppearanceSlot): Promise<void> => {
-      try {
-        await updateSetting.mutateAsync({ key: slotSettingsKey(slot), value: '' });
-        const nextAssignments = { ...slotAssignments, [slot]: null };
-        await updateSetting.mutateAsync({ key: KANGUR_SLOT_ASSIGNMENTS_KEY, value: serializeSetting(nextAssignments) });
-        toast(`Slot "${SLOT_CONFIG[slot].label}" przywrócony do fabrycznego.`, { variant: 'success' });
-      } catch (error) {
-        logClientError(error);
-        toast(error instanceof Error ? error.message : 'Nie udało się odpisać motywu.', { variant: 'error' });
+      const didUnassign = await withKangurClientError(
+        {
+          source: 'kangur.admin.appearance',
+          action: 'unassign-theme-slot',
+          description: 'Unassigns a theme from the storefront slot.',
+          context: { slot },
+        },
+        async () => {
+          await updateSetting.mutateAsync({ key: slotSettingsKey(slot), value: '' });
+          const nextAssignments = { ...slotAssignments, [slot]: null };
+          await updateSetting.mutateAsync({
+            key: KANGUR_SLOT_ASSIGNMENTS_KEY,
+            value: serializeSetting(nextAssignments),
+          });
+          return true;
+        },
+        {
+          fallback: false,
+          onError: (error) => {
+            toast(
+              error instanceof Error ? error.message : 'Nie udało się odpisać motywu.',
+              { variant: 'error' }
+            );
+          },
+        }
+      );
+
+      if (didUnassign) {
+        toast(`Slot "${SLOT_CONFIG[slot].label}" przywrócony do fabrycznego.`, {
+          variant: 'success',
+        });
       }
     },
     [slotAssignments, toast, updateSetting]
@@ -338,31 +409,50 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
     }
 
     setIsSaving(true);
-    try {
-      if (isBuiltin) {
-        const key =
-          selectedId === BUILTIN_DAWN_ID
-            ? KANGUR_DAWN_THEME_SETTINGS_KEY
-            : selectedId === BUILTIN_SUNSET_ID
-              ? KANGUR_SUNSET_THEME_SETTINGS_KEY
-              : selectedId === BUILTIN_NIGHTLY_ID
-                ? KANGUR_NIGHTLY_THEME_SETTINGS_KEY
-                : KANGUR_DAILY_THEME_SETTINGS_KEY;
+    const didSave = await withKangurClientError(
+      {
+        source: 'kangur.admin.appearance',
+        action: 'save-theme',
+        description: 'Saves the current theme draft to settings or catalog.',
+        context: { selectionId: selectedId, isBuiltin },
+      },
+      async () => {
+        if (isBuiltin) {
+          const key =
+            selectedId === BUILTIN_DAWN_ID
+              ? KANGUR_DAWN_THEME_SETTINGS_KEY
+              : selectedId === BUILTIN_SUNSET_ID
+                ? KANGUR_SUNSET_THEME_SETTINGS_KEY
+                : selectedId === BUILTIN_NIGHTLY_ID
+                  ? KANGUR_NIGHTLY_THEME_SETTINGS_KEY
+                  : KANGUR_DAILY_THEME_SETTINGS_KEY;
 
-        await updateSetting.mutateAsync({ key, value: serializeSetting(draft) });
-      } else {
-        const nextCatalog = catalog.map((entry) => (entry.id === selectedId ? { ...entry, settings: draft } : entry));
-        await updateSetting.mutateAsync({ key: KANGUR_THEME_CATALOG_KEY, value: serializeSetting(nextCatalog) });
-        setCatalogOverrideRaw(serializeSetting(nextCatalog));
+          await updateSetting.mutateAsync({ key, value: serializeSetting(draft) });
+        } else {
+          const nextCatalog = catalog.map((entry) =>
+            entry.id === selectedId ? { ...entry, settings: draft } : entry
+          );
+          const serialized = serializeSetting(nextCatalog);
+          await updateSetting.mutateAsync({ key: KANGUR_THEME_CATALOG_KEY, value: serialized });
+          setCatalogOverrideRaw(serialized);
+        }
+        return true;
+      },
+      {
+        fallback: false,
+        onError: (error) => {
+          toast(error instanceof Error ? error.message : 'Błąd zapisu motywu.', {
+            variant: 'error',
+          });
+        },
       }
+    );
+
+    if (didSave) {
       setIsDirty(false);
       toast('Motyw został zapisany.', { variant: 'success' });
-    } catch (error) {
-      logClientError(error);
-      toast(error instanceof Error ? error.message : 'Błąd zapisu motywu.', { variant: 'error' });
-    } finally {
-      setIsSaving(false);
     }
+    setIsSaving(false);
   }, [catalog, draft, selectedId, toast, updateSetting]);
 
   const updateCatalog = useCallback((nextRaw: string) => {

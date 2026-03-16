@@ -3,6 +3,7 @@
 import { useCallback, useEffect, type MouseEvent as ReactMouseEvent } from 'react';
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
+import type { KangurAiTutorTelemetryContextDto } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
 import {
   clearPersistedTutorAvatarPosition,
@@ -13,12 +14,6 @@ import {
 
 import type { KangurAiTutorWidgetState } from './KangurAiTutorWidget.state';
 import type { TutorPanelShellMode } from './KangurAiTutorWidget.types';
-
-type TelemetryContext = {
-  contentId: string | null;
-  surface: string | null;
-  title: string | null;
-};
 
 type UseKangurAiTutorPanelInteractionsInput = {
   activeSelectedText: string | null;
@@ -37,7 +32,7 @@ type UseKangurAiTutorPanelInteractionsInput = {
   selectionRect: DOMRect | null;
   setHighlightedText: (value: string | null) => void;
   setInputValue: (value: string) => void;
-  telemetryContext: TelemetryContext;
+  telemetryContext: KangurAiTutorTelemetryContextDto;
   widgetState: Pick<
     KangurAiTutorWidgetState,
     | 'askModalReturnStateRef'

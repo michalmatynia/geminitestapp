@@ -609,7 +609,7 @@ export default function SubtractingGardenGame({
                   </div>
                   <div className='flex flex-col items-center kangur-panel-gap sm:flex-row sm:justify-between'>
                     <KangurButton
-                      className='min-w-[160px] sm:min-w-[180px]'
+                      className='w-full sm:w-auto sm:min-w-[180px]'
                       onClick={handleCheck}
                       size='md'
                       type='button'

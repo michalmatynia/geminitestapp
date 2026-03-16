@@ -22,7 +22,7 @@ import {
   formatDuelOperationLabel,
   formatRelativeAge,
 } from '@/features/kangur/ui/pages/duels/duels-helpers';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientError } from '@/features/kangur/observability/client';
 
 const kangurPlatform = getKangurPlatform();
 const HOME_DUELS_INVITE_LIMIT = 4;
@@ -61,27 +61,53 @@ export function KangurGameHomeDuelsInvitesWidget({
     setIsLoading(true);
     setError(null);
 
-    kangurPlatform.duels
-      .lobby({ limit: HOME_DUELS_INVITE_LIMIT, signal: controller.signal })
-      .then((response) => {
+    void withKangurClientError(
+      {
+        source: 'kangur-home-duels-invites',
+        action: 'load-invites',
+        description: 'Load duel invite entries for the home screen.',
+        context: {
+          limit: HOME_DUELS_INVITE_LIMIT,
+        },
+      },
+      async () => {
+        const response = await kangurPlatform.duels.lobby({
+          limit: HOME_DUELS_INVITE_LIMIT,
+          signal: controller.signal,
+        });
         if (!isActive) {
           return;
         }
         const invites = response.entries.filter((entry) => entry.visibility === 'private');
         setInviteEntries(invites);
         setIsLoading(false);
-      })
-      .catch((err: unknown) => {
-        if (!isActive) {
-          return;
-        }
-        if (err && typeof err === 'object' && 'name' in err && err.name === 'AbortError') {
-          return;
-        }
-        logClientError(err);
-        setError('Nie udało się pobrać zaproszeń do pojedynków.');
-        setIsLoading(false);
-      });
+      },
+      {
+        fallback: undefined,
+        shouldReport: (err) =>
+          !(
+            err &&
+            typeof err === 'object' &&
+            'name' in err &&
+            (err as { name?: string }).name === 'AbortError'
+          ),
+        onError: (err) => {
+          if (!isActive) {
+            return;
+          }
+          if (
+            err &&
+            typeof err === 'object' &&
+            'name' in err &&
+            (err as { name?: string }).name === 'AbortError'
+          ) {
+            return;
+          }
+          setError('Nie udało się pobrać zaproszeń do pojedynków.');
+          setIsLoading(false);
+        },
+      }
+    );
 
     return () => {
       isActive = false;

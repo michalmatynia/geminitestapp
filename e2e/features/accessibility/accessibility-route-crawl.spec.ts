@@ -12,22 +12,27 @@ const routes = normalizeAccessibilityRouteEntries(accessibilityRouteCrawlRoutes)
 
 test.describe.configure({ mode: 'serial' });
 
+const PUBLIC_ROUTE_TIMEOUT_MS = 180_000;
+const ADMIN_ROUTE_TIMEOUT_MS = 240_000;
+const ADMIN_NAV_TIMEOUT_MS = 180_000;
+const ADMIN_TRANSITION_TIMEOUT_MS = 90_000;
+
 for (const routeEntry of routes) {
   test(buildAccessibilityRouteCrawlTitle(routeEntry), async ({ page }) => {
-    test.setTimeout(routeEntry.audience === 'admin' ? 240_000 : 120_000);
+    test.setTimeout(routeEntry.audience === 'admin' ? ADMIN_ROUTE_TIMEOUT_MS : PUBLIC_ROUTE_TIMEOUT_MS);
 
     if (routeEntry.audience === 'admin') {
       await ensureAdminSession(page, routeEntry.route, {
-        initialNavigationTimeoutMs: 120_000,
-        destinationNavigationTimeoutMs: 120_000,
-        transitionTimeoutMs: 60_000,
+        initialNavigationTimeoutMs: ADMIN_NAV_TIMEOUT_MS,
+        destinationNavigationTimeoutMs: ADMIN_NAV_TIMEOUT_MS,
+        transitionTimeoutMs: ADMIN_TRANSITION_TIMEOUT_MS,
       });
       await page.waitForLoadState('domcontentloaded');
       await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
     } else {
       await page.goto(routeEntry.route, {
         waitUntil: 'domcontentloaded',
-        timeout: 120_000,
+        timeout: PUBLIC_ROUTE_TIMEOUT_MS,
       });
       await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
     }

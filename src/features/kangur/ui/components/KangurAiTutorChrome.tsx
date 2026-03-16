@@ -1,5 +1,6 @@
 import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
 import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/features/kangur/shared/utils';
+import type { DataAttributesDto } from '@/shared/contracts/ui';
 
 import { KangurPanelCloseButton } from './KangurPanelCloseButton';
 
@@ -70,12 +71,10 @@ export function KangurAiTutorChromeBadge({
   );
 }
 
-type ChromeTextButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  children: ReactNode;
-  'data-testid'?: string;
-  'data-doc-id'?: string;
-  'data-doc-alias'?: string;
-};
+type ChromeTextButtonProps = ButtonHTMLAttributes<HTMLButtonElement> &
+  DataAttributesDto & {
+    children: ReactNode;
+  };
 
 export function KangurAiTutorChromeTextButton({
   children,

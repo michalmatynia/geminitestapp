@@ -23,7 +23,8 @@ describe('ResultScreen', () => {
 
     expect(screen.getByRole('heading', { name: 'Świetna robota, Maja!' })).toBeInTheDocument();
     expect(screen.getByTestId('result-screen-title')).toHaveClass(
-      'text-3xl',
+      'text-2xl',
+      'sm:text-3xl',
       '[color:var(--kangur-page-text)]'
     );
     expect(screen.getByText('Dodawanie')).toBeInTheDocument();

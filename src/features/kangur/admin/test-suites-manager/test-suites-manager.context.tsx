@@ -7,19 +7,24 @@ import { createInitialTestSuiteFormData } from '../../test-suites';
 import type { KangurQuestionsManagerInitialView } from '../question-manager-view';
 import type { TreeMode } from './test-suites-manager.contracts';
 import { TREE_MODE_STORAGE_KEY } from './test-suites-manager.contracts';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 
 const readPersistedTreeMode = (): TreeMode => {
   if (typeof window === 'undefined') return 'ordered';
-  try {
-    const v = window.localStorage.getItem(TREE_MODE_STORAGE_KEY);
-    return v === 'catalog' ? 'catalog' : 'ordered';
-  } catch (error) {
-    logClientError(error);
-    return 'ordered';
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.admin.test-suites',
+      action: 'read-tree-mode',
+      description: 'Reads the test suites tree mode from local storage.',
+    },
+    () => {
+      const v = window.localStorage.getItem(TREE_MODE_STORAGE_KEY);
+      return v === 'catalog' ? 'catalog' : 'ordered';
+    },
+    { fallback: 'ordered' }
+  );
 };
 
 type TestSuitesManagerContextValue = {
@@ -112,11 +117,18 @@ export function TestSuitesManagerProvider({ children }: { children: React.ReactN
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
-    try {
-      window.localStorage.setItem(TREE_MODE_STORAGE_KEY, treeMode);
-    } catch (error) {
-      logClientError(error);
-     /* ignore */ }
+    withKangurClientErrorSync(
+      {
+        source: 'kangur.admin.test-suites',
+        action: 'persist-tree-mode',
+        description: 'Persists the test suites tree mode in local storage.',
+        context: { treeMode },
+      },
+      () => {
+        window.localStorage.setItem(TREE_MODE_STORAGE_KEY, treeMode);
+      },
+      { fallback: undefined }
+    );
   }, [treeMode]);
 
   const stateValue = useMemo<TestSuitesManagerStateContextValue>(

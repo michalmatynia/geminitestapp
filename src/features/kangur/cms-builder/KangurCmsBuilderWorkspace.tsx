@@ -18,6 +18,10 @@ import { useAdminLayoutActions } from '@/shared/providers/AdminLayoutProvider';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { Button, useToast } from '@/features/kangur/shared/ui';
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
+import {
+  withKangurClientError,
+  withKangurClientErrorSync,
+} from '@/features/kangur/observability/client';
 
 import {
   KANGUR_DEFAULT_DAILY_THEME,
@@ -40,9 +44,6 @@ import {
   type KangurCmsScreenKey,
 } from './project';
 import type { KangurThemeMode } from '@/features/kangur/admin/components/KangurThemeSettingsPanel';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
-
-
 
 const commitScreenSections = (
   project: KangurCmsProject,
@@ -67,13 +68,18 @@ function KangurCmsBuilderInner(): React.JSX.Element {
   const wasNarrowRef = React.useRef<boolean | null>(null);
   const [statusSidebarOpen, setStatusSidebarOpen] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
-    try {
-      const stored = window.localStorage.getItem('kangur_cms_builder_status_sidebar');
-      return stored !== '0';
-    } catch (error) {
-      logClientError(error);
-      return true;
-    }
+    return withKangurClientErrorSync(
+      {
+        source: 'kangur.cms-builder',
+        action: 'read-status-sidebar',
+        description: 'Reads the persisted CMS builder status sidebar state.',
+      },
+      () => {
+        const stored = window.localStorage.getItem('kangur_cms_builder_status_sidebar');
+        return stored !== '0';
+      },
+      { fallback: true }
+    );
   });
   const [leftPanelMode, setLeftPanelMode] = useState<LeftPanelMode>('structure');
   const [themePreviewSection, setThemePreviewSection] = useState<string | null>(null);
@@ -94,16 +100,21 @@ function KangurCmsBuilderInner(): React.JSX.Element {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    try {
-      window.localStorage.setItem(
-        'kangur_cms_builder_status_sidebar',
-        statusSidebarOpen ? '1' : '0'
-      );
-    } catch (error) {
-      logClientError(error);
-    
-      // ignore storage failures
-    }
+    withKangurClientErrorSync(
+      {
+        source: 'kangur.cms-builder',
+        action: 'persist-status-sidebar',
+        description: 'Persists the CMS builder status sidebar state.',
+        context: { statusSidebarOpen },
+      },
+      () => {
+        window.localStorage.setItem(
+          'kangur_cms_builder_status_sidebar',
+          statusSidebarOpen ? '1' : '0'
+        );
+      },
+      { fallback: undefined }
+    );
   }, [statusSidebarOpen]);
 
   useEffect((): (() => void) => {
@@ -239,21 +250,34 @@ export function KangurCmsBuilderWorkspace(): React.JSX.Element {
       const nextDraftProject = commitScreenSections(draftProject, activeScreenKey, sections);
       setDraftProject(nextDraftProject);
       setIsSaving(true);
-      try {
-        await updateSetting.mutateAsync({
-          key: KANGUR_CMS_PROJECT_SETTING_KEY,
-          value: serializeSetting(nextDraftProject),
-        });
+      const didSave = await withKangurClientError(
+        {
+          source: 'kangur.cms-builder',
+          action: 'save-project',
+          description: 'Saves the Kangur CMS project to settings storage.',
+          context: { screenKey: activeScreenKey },
+        },
+        async () => {
+          await updateSetting.mutateAsync({
+            key: KANGUR_CMS_PROJECT_SETTING_KEY,
+            value: serializeSetting(nextDraftProject),
+          });
+          return true;
+        },
+        {
+          fallback: false,
+          onError: (error) => {
+            toast(error instanceof Error ? error.message : 'Failed to save Kangur CMS project.', {
+              variant: 'error',
+            });
+          },
+        }
+      );
+      if (didSave) {
         setSavedProject(nextDraftProject);
         toast('Kangur CMS project saved.', { variant: 'success' });
-      } catch (error) {
-        logClientError(error);
-        toast(error instanceof Error ? error.message : 'Failed to save Kangur CMS project.', {
-          variant: 'error',
-        });
-      } finally {
-        setIsSaving(false);
       }
+      setIsSaving(false);
     },
     [activeScreenKey, draftProject, toast, updateSetting]
   );

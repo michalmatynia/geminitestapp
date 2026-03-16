@@ -35,6 +35,15 @@ const kangurLessonCalloutVariants = cva(
 type KangurLessonCalloutProps = React.HTMLAttributes<HTMLDivElement> &
   VariantProps<typeof kangurLessonCalloutVariants>;
 
+type KangurLessonVisualProps = Omit<KangurLessonCalloutProps, 'children'> & {
+  caption?: React.ReactNode;
+  captionClassName?: string;
+  center?: boolean;
+  maxWidthClassName?: string;
+  visualClassName?: string;
+  children: React.ReactNode;
+};
+
 const kangurLessonStackVariants = cva('flex flex-col', {
   variants: {
     align: {
@@ -147,6 +156,41 @@ export function KangurLessonCallout({
 }: KangurLessonCalloutProps): React.JSX.Element {
   return (
     <div className={cn(kangurLessonCalloutVariants({ accent, padding }), className)} {...props} />
+  );
+}
+
+export function KangurLessonVisual({
+  accent,
+  padding = 'sm',
+  caption,
+  captionClassName,
+  center = true,
+  className,
+  maxWidthClassName = 'max-w-sm',
+  visualClassName,
+  children,
+  ...props
+}: KangurLessonVisualProps): React.JSX.Element {
+  const resolvedCaptionClassName = captionClassName ?? 'mt-2';
+
+  return (
+    <KangurLessonCallout
+      accent={accent}
+      padding={padding}
+      className={cn(center ? 'text-center' : 'text-left', className)}
+      {...props}
+    >
+      <div
+        className={cn(center ? 'mx-auto w-full' : 'w-full', maxWidthClassName, visualClassName)}
+      >
+        {children}
+      </div>
+      {caption ? (
+        <KangurLessonCaption className={resolvedCaptionClassName}>
+          {caption}
+        </KangurLessonCaption>
+      ) : null}
+    </KangurLessonCallout>
   );
 }
 

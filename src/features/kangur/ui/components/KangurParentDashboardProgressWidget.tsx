@@ -16,23 +16,24 @@ import {
   shouldRenderKangurParentDashboardPanel,
   useKangurParentDashboardRuntime,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import {
   KangurButton,
   KangurEmptyState,
   KangurGlassPanel,
   KangurInfoCard,
   KangurMetaText,
-  KangurPanelIntro,
+  KangurPanelStack,
   KangurProgressBar,
   KangurSummaryPanel,
+  KangurWidgetIntro,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { buildKangurAssignmentListItems } from '@/features/kangur/ui/services/delegated-assignments';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import type { KangurRouteAction } from '@/features/kangur/shared/contracts/kangur';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientError } from '@/features/kangur/observability/client';
 
 
 const ACTIVE_ASSIGNMENTS_TITLE = 'Aktywne zadania';
@@ -88,6 +89,7 @@ export function KangurParentDashboardProgressWidget({
 }): React.JSX.Element | null {
   const { activeLearner, activeTab, basePath, canAccessDashboard, progress } =
     useKangurParentDashboardRuntime();
+  const { subject } = useKangurSubjectFocus();
   const { entry: progressContent } = useKangurPageContentEntry('parent-dashboard-progress');
   const lessonsQuery = useKangurLessons({ enabledOnly: true });
   const lessons = useMemo(() => lessonsQuery.data ?? [], [lessonsQuery.data]);
@@ -184,7 +186,7 @@ export function KangurParentDashboardProgressWidget({
     return null;
   }
 
-  const dailyQuest = getCurrentKangurDailyQuest(progress);
+  const dailyQuest = getCurrentKangurDailyQuest(progress, { subject });
   const dailyQuestAction = dailyQuest?.assignment.action ?? null;
   const dailyQuestHref = dailyQuestAction ? buildAssignmentHref(basePath, dailyQuestAction) : null;
   const dailyQuestTargetPage = dailyQuestAction?.page ?? null;
@@ -208,24 +210,35 @@ export function KangurParentDashboardProgressWidget({
 
   const handleArchiveAssignment = async (assignmentId: string): Promise<void> => {
     setArchiveError(null);
-    try {
-      await updateAssignment(assignmentId, { archived: true });
-    } catch (error) {
-      logClientError(error);
-      setArchiveError(ARCHIVE_ASSIGNMENT_ERROR_LABEL);
-    }
+    await withKangurClientError(
+      {
+        source: 'kangur-parent-dashboard',
+        action: 'archive-assignment',
+        description: 'Archive a learner assignment from the parent dashboard.',
+        context: {
+          assignmentId,
+        },
+      },
+      async () => {
+        await updateAssignment(assignmentId, { archived: true });
+      },
+      {
+        fallback: undefined,
+        onError: () => {
+          setArchiveError(ARCHIVE_ASSIGNMENT_ERROR_LABEL);
+        },
+      }
+    );
   };
 
   return (
-    <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-      <KangurPanelIntro
+    <KangurPanelStack>
+      <KangurWidgetIntro
         description={
           progressContent?.summary ??
           'Sprawdź rytm nauki, poziom, misje dnia i główny kierunek dalszej pracy.'
         }
         title={progressContent?.title ?? 'Postęp ucznia'}
-        titleAs='h2'
-        titleClassName='text-lg font-bold tracking-[-0.02em]'
       />
       {dailyQuest ? (
         <KangurSummaryPanel
@@ -441,6 +454,6 @@ export function KangurParentDashboardProgressWidget({
           </div>
         )}
       </KangurSummaryPanel>
-    </div>
+    </KangurPanelStack>
   );
 }

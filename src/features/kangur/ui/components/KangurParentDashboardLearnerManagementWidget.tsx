@@ -15,16 +15,16 @@ import {
   KangurGlassPanel,
   KangurIconBadge,
   KangurMetaText,
-  KangurPanelIntro,
+  KangurPanelStack,
   KangurSelectField,
   KangurStatusChip,
   KangurSummaryPanel,
   KangurTextField,
+  KangurWidgetIntro,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { cn } from '@/features/kangur/shared/utils';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientError } from '@/features/kangur/observability/client';
 
 
 const kangurPlatform = getKangurPlatform();
@@ -127,40 +127,52 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
 
     setIsLoadingMoreSessions(true);
     setSessionsLoadMoreError(null);
-    try {
-      const history = await kangurPlatform.learnerSessions.list(activeLearnerId, {
-        limit: SESSION_PAGE_LIMIT,
-        offset: nextSessionOffset,
-      });
-      setSessionHistory((current) => {
-        if (!current) {
-          return history;
-        }
-        const existingIds = new Set(current.sessions.map((entry) => entry.id));
-        const mergedSessions = [
-          ...current.sessions,
-          ...history.sessions.filter((entry) => !existingIds.has(entry.id)),
-        ];
-        const totalSessions = Math.max(current.totalSessions, history.totalSessions);
-        const resolvedHasMore =
-          history.hasMore ?? mergedSessions.length < totalSessions;
-        const resolvedNextOffset = resolvedHasMore
-          ? history.nextOffset ?? mergedSessions.length
-          : null;
-        return {
-          ...history,
-          sessions: mergedSessions,
-          totalSessions,
-          hasMore: resolvedHasMore,
-          nextOffset: resolvedNextOffset,
-        };
-      });
-    } catch (error) {
-      logClientError(error);
-      setSessionsLoadMoreError('Nie udało się wczytać starszych sesji.');
-    } finally {
-      setIsLoadingMoreSessions(false);
-    }
+    await withKangurClientError(
+      {
+        source: 'kangur-parent-dashboard',
+        action: 'load-more-sessions',
+        description: 'Load more learner sessions in parent dashboard.',
+        context: {
+          learnerId: activeLearnerId,
+          offset: nextSessionOffset,
+        },
+      },
+      async () => {
+        const history = await kangurPlatform.learnerSessions.list(activeLearnerId, {
+          limit: SESSION_PAGE_LIMIT,
+          offset: nextSessionOffset,
+        });
+        setSessionHistory((current) => {
+          if (!current) {
+            return history;
+          }
+          const existingIds = new Set(current.sessions.map((entry) => entry.id));
+          const mergedSessions = [
+            ...current.sessions,
+            ...history.sessions.filter((entry) => !existingIds.has(entry.id)),
+          ];
+          const totalSessions = Math.max(current.totalSessions, history.totalSessions);
+          const resolvedHasMore = history.hasMore ?? mergedSessions.length < totalSessions;
+          const resolvedNextOffset = resolvedHasMore
+            ? history.nextOffset ?? mergedSessions.length
+            : null;
+          return {
+            ...history,
+            sessions: mergedSessions,
+            totalSessions,
+            hasMore: resolvedHasMore,
+            nextOffset: resolvedNextOffset,
+          };
+        });
+      },
+      {
+        fallback: undefined,
+        onError: () => {
+          setSessionsLoadMoreError('Nie udało się wczytać starszych sesji.');
+        },
+      }
+    );
+    setIsLoadingMoreSessions(false);
   };
 
   useEffect(() => {
@@ -245,21 +257,15 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
   }
 
   return (
-    <div className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}>
-      <KangurGlassPanel
-        className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
-        padding='lg'
-        surface='mistStrong'
-        variant='soft'
-      >
-        <KangurPanelIntro
+    <KangurPanelStack>
+      <KangurGlassPanel className='w-full' padding='lg' surface='mistStrong' variant='soft'>
+        <KangurPanelStack>
+          <KangurWidgetIntro
           className='gap-1.5'
           eyebrow='Profile uczniów'
           title={
             learnerManagementContent?.title ?? 'Zarządzaj profilami bez opuszczania panelu'
           }
-          titleAs='h2'
-          titleClassName='text-lg font-bold tracking-[-0.02em]'
           description={
             learnerManagementContent?.summary ??
             'Rodzic loguje się emailem, a uczniowie dostają osobne nazwy logowania i hasła.'
@@ -405,16 +411,12 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                 </button>
               </DialogPrimitive.Close>
 
-              <KangurGlassPanel
-                className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
-                padding='lg'
-                surface='mistStrong'
-                variant='soft'
-              >
-                <KangurPanelIntro
-                  eyebrow='Nowy profil'
-                  description='Dodaj dziecko i od razu ustaw jego login oraz hasło do gry.'
-                />
+              <KangurGlassPanel className='w-full' padding='lg' surface='mistStrong' variant='soft'>
+                <KangurPanelStack>
+                  <KangurWidgetIntro
+                    eyebrow='Nowy profil'
+                    description='Dodaj dziecko i od razu ustaw jego login oraz hasło do gry.'
+                  />
 
                 <div className='grid kangur-panel-gap min-[420px]:grid-cols-2 xl:grid-cols-3'>
                   <KangurTextField
@@ -522,10 +524,12 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                     </div>
                   ) : null}
                 </div>
+                </KangurPanelStack>
               </KangurGlassPanel>
             </DialogPrimitive.Content>
           </DialogPrimitive.Portal>
         </DialogPrimitive.Root>
+        </KangurPanelStack>
       </KangurGlassPanel>
 
       <DialogPrimitive.Root
@@ -583,13 +587,9 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
             </DialogPrimitive.Close>
 
             {activeLearner ? (
-              <KangurGlassPanel
-                className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
-                padding='lg'
-                surface='mistSoft'
-                variant='soft'
-              >
-                <KangurSummaryPanel
+              <KangurGlassPanel className='w-full' padding='lg' surface='mistSoft' variant='soft'>
+                <KangurPanelStack>
+                  <KangurSummaryPanel
                   accent='indigo'
                   description='Szybkie dane o aktywnym profilu ucznia, w tym ostatnia aktywność.'
                   label='Szczegóły profilu'
@@ -746,7 +746,8 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                       ) : null}
                     </div>
                   )}
-                </KangurSummaryPanel>
+                  </KangurSummaryPanel>
+                </KangurPanelStack>
               </KangurGlassPanel>
             ) : null}
           </DialogPrimitive.Content>
@@ -808,25 +809,21 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
             </DialogPrimitive.Close>
 
             {activeLearner ? (
-              <KangurGlassPanel
-                className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
-                padding='lg'
-                surface='mistSoft'
-                variant='soft'
-              >
-                <KangurPanelIntro
-                  eyebrow='Wybrany profil'
-                  description={
-                    <>
-                      Aktualizujesz dane ucznia{' '}
-                      <span className='break-words font-semibold [color:var(--kangur-page-text)]'>
-                        {activeLearner.displayName}
-                      </span>
-                      .
-                    </>
-                  }
-                />
-                <div className='grid kangur-panel-gap min-[420px]:grid-cols-2'>
+              <KangurGlassPanel className='w-full' padding='lg' surface='mistSoft' variant='soft'>
+                <KangurPanelStack>
+                  <KangurWidgetIntro
+                    eyebrow='Wybrany profil'
+                    description={
+                      <>
+                        Aktualizujesz dane ucznia{' '}
+                        <span className='break-words font-semibold [color:var(--kangur-page-text)]'>
+                          {activeLearner.displayName}
+                        </span>
+                        .
+                      </>
+                    }
+                  />
+                  <div className='grid kangur-panel-gap min-[420px]:grid-cols-2'>
                   <KangurTextField
                     accent='indigo'
                     maxLength={120}
@@ -871,7 +868,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                     <option value='active'>Aktywny</option>
                     <option value='disabled'>Wyłączony</option>
                   </KangurSelectField>
-                </div>
+                  </div>
                 <div className='flex flex-col kangur-panel-gap sm:flex-row sm:flex-wrap sm:items-center'>
                   <KangurButton
                     className='w-full sm:w-auto'
@@ -931,11 +928,12 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                     </div>
                   </div>
                 ) : null}
+                </KangurPanelStack>
               </KangurGlassPanel>
             ) : null}
           </DialogPrimitive.Content>
         </DialogPrimitive.Portal>
       </DialogPrimitive.Root>
-    </div>
+    </KangurPanelStack>
   );
 }

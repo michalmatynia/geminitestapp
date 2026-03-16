@@ -11,9 +11,16 @@ import {
 } from '@/features/kangur/ui/context/KangurTopNavigationContext';
 
 const useKangurPageContentEntryMock = vi.hoisted(() => vi.fn());
+const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
+  useKangurSubjectFocusMock: vi.fn(),
+}));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
 import { KangurTopNavigationController } from './KangurTopNavigationController';
@@ -48,6 +55,11 @@ describe('KangurTopNavigationController', () => {
       isSuccess: true,
       refetch: vi.fn(),
       status: 'success',
+    });
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'guest',
     });
   });
 

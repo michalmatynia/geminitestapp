@@ -11,7 +11,10 @@ import {
 } from '@/features/kangur/shared/contracts/kangur-page-content';
 import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/features/kangur/shared/ui';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import {
+  withKangurClientError,
+  withKangurClientErrorSync,
+} from '@/features/kangur/observability/client';
 const AI_TUTOR_PAGE_CONTENT_EDITOR_LOCALE = 'pl';
 
 const stringifyPageContentStore = (store: KangurPageContentStore): string =>
@@ -96,18 +99,23 @@ export function useKangurPageContentMutations() {
   const isDirty = editorValue !== persistedEditorValue;
 
   const parsedState = useMemo<ParsedEditorState>(() => {
-    try {
-      return {
+    return withKangurClientErrorSync(
+      {
+        source: 'kangur.admin.page-content',
+        action: 'parse-editor-json',
+        description: 'Parses the admin page content editor JSON payload.',
+      },
+      () => ({
         store: parseKangurPageContentStore(JSON.parse(editorValue)),
         error: null,
-      };
-    } catch (error) {
-      logClientError(error);
-      return {
-        store: null,
-        error: error instanceof Error ? error.message : 'Invalid page-content JSON.',
-      };
-    }
+      }),
+      {
+        fallback: {
+          store: null,
+          error: 'Invalid page-content JSON.',
+        } as ParsedEditorState,
+      }
+    );
   }, [editorValue]);
 
   const selectedEntry = useMemo(
@@ -122,31 +130,45 @@ export function useKangurPageContentMutations() {
 
   const loadStore = useCallback(async (): Promise<void> => {
     setIsLoading(true);
-    try {
-      const store = await api.get<KangurPageContentStore>(
-        `/api/kangur/ai-tutor/page-content?locale=${encodeURIComponent(
-          AI_TUTOR_PAGE_CONTENT_EDITOR_LOCALE
-        )}`,
-        {
-          cache: 'no-store',
-        }
-      );
-      const parsed = parseKangurPageContentStore(store);
-      const serialized = stringifyPageContentStore(parsed);
-      setEditorValue(serialized);
-      setPersistedEditorValue(serialized);
-      setSelectedEntryId(parsed.entries[0]?.id ?? null);
-    } catch (error) {
-      logClientError(error);
-      toast(
-        error instanceof Error ? error.message : 'Failed to load Kangur page content.',
-        {
-          variant: 'error',
-        }
-      );
-    } finally {
-      setIsLoading(false);
+    const didLoad = await withKangurClientError(
+      {
+        source: 'kangur.admin.page-content',
+        action: 'load-store',
+        description: 'Loads the Kangur page content store for the admin editor.',
+        context: { locale: AI_TUTOR_PAGE_CONTENT_EDITOR_LOCALE },
+      },
+      async () => {
+        const store = await api.get<KangurPageContentStore>(
+          `/api/kangur/ai-tutor/page-content?locale=${encodeURIComponent(
+            AI_TUTOR_PAGE_CONTENT_EDITOR_LOCALE
+          )}`,
+          {
+            cache: 'no-store',
+          }
+        );
+        const parsed = parseKangurPageContentStore(store);
+        const serialized = stringifyPageContentStore(parsed);
+        setEditorValue(serialized);
+        setPersistedEditorValue(serialized);
+        setSelectedEntryId(parsed.entries[0]?.id ?? null);
+        return true;
+      },
+      {
+        fallback: false,
+        onError: (error) => {
+          toast(
+            error instanceof Error ? error.message : 'Failed to load Kangur page content.',
+            {
+              variant: 'error',
+            }
+          );
+        },
+      }
+    );
+    if (!didLoad) {
+      // keep existing editor state
     }
+    setIsLoading(false);
   }, [toast]);
 
   useEffect(() => {
@@ -364,23 +386,36 @@ export function useKangurPageContentMutations() {
     }
 
     setIsSaving(true);
-    try {
-      const saved = await api.post<KangurPageContentStore>(
-        '/api/kangur/ai-tutor/page-content',
-        parsedState.store
-      );
-      const serialized = stringifyPageContentStore(parseKangurPageContentStore(saved));
-      setEditorValue(serialized);
-      setPersistedEditorValue(serialized);
+    const didSave = await withKangurClientError(
+      {
+        source: 'kangur.admin.page-content',
+        action: 'save-store',
+        description: 'Saves the Kangur page content store from the admin editor.',
+      },
+      async () => {
+        const saved = await api.post<KangurPageContentStore>(
+          '/api/kangur/ai-tutor/page-content',
+          parsedState.store
+        );
+        const serialized = stringifyPageContentStore(parseKangurPageContentStore(saved));
+        setEditorValue(serialized);
+        setPersistedEditorValue(serialized);
+        return true;
+      },
+      {
+        fallback: false,
+        onError: (error) => {
+          toast(error instanceof Error ? error.message : 'Failed to save Kangur page content.', {
+            variant: 'error',
+          });
+        },
+      }
+    );
+
+    if (didSave) {
       toast('Kangur page content saved.', { variant: 'success' });
-    } catch (error) {
-      logClientError(error);
-      toast(error instanceof Error ? error.message : 'Failed to save Kangur page content.', {
-        variant: 'error',
-      });
-    } finally {
-      setIsSaving(false);
     }
+    setIsSaving(false);
   }, [parsedState.error, parsedState.store, toast]);
 
   return {

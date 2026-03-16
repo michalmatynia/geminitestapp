@@ -8,13 +8,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const { useKangurGameRuntimeMock } = vi.hoisted(() => ({
   useKangurGameRuntimeMock: vi.fn(),
 }));
+const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
+  useKangurSubjectFocusMock: vi.fn(),
+}));
 
 vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
   useKangurGameRuntime: useKangurGameRuntimeMock,
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+}));
+
 import { KangurGameHomeQuestWidget } from '@/features/kangur/ui/components/KangurGameHomeQuestWidget';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
+import { getKangurDailyQuestStorageKey } from '@/features/kangur/ui/services/daily-quests';
 
 const RealDate = Date;
 const FIXED_NOW = '2026-03-10T09:00:00.000Z';
@@ -84,6 +92,11 @@ describe('KangurGameHomeQuestWidget', () => {
     vi.clearAllMocks();
     stubSystemDate(FIXED_NOW);
     window.localStorage.clear();
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
   });
 
   afterEach(() => {
@@ -153,7 +166,7 @@ describe('KangurGameHomeQuestWidget', () => {
 
   it('shows claimed reward state once the stored daily quest was already completed and paid out', () => {
     window.localStorage.setItem(
-      'kangur_daily_quest_v1',
+      getKangurDailyQuestStorageKey('maths'),
       JSON.stringify({
         version: 1,
         dateKey: FIXED_LOCAL_DATE_KEY,
@@ -163,6 +176,7 @@ describe('KangurGameHomeQuestWidget', () => {
         claimedAt: `${FIXED_LOCAL_DATE_KEY}T10:15:00.000Z`,
         baselineGamesPlayed: 12,
         baselineLessonsCompleted: 7,
+        subject: 'maths',
         assignment: {
           id: 'lesson-retry-division',
           title: '➗ Powtórka: Dzielenie',

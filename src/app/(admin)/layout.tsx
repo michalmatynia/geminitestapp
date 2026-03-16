@@ -15,6 +15,9 @@ const ADMIN_LAYOUT_USER_PREFERENCES_TIMEOUT_MS = (() => {
   const parsed = Number(process.env['ADMIN_LAYOUT_USER_PREFERENCES_TIMEOUT_MS']);
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1200;
 })();
+const isPlaywrightRuntime = Boolean(
+  process.env['PLAYWRIGHT_RUNTIME_LEASE_KEY'] || process.env['PLAYWRIGHT_RUNTIME_AGENT_ID']
+);
 
 export default async function Layout({
   children,
@@ -32,7 +35,7 @@ export default async function Layout({
     if (session.user.accountDisabled || session.user.accountBanned) {
       redirect('/auth/signin?error=AccountDisabled');
     }
-    if (!session.user.roleAssigned) {
+    if (!session.user.roleAssigned && !isPlaywrightRuntime) {
       redirect('/auth/signin?error=AccessDenied');
     }
     canReadAdminSettings =

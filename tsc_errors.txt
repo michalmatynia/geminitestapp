@@ -2,16 +2,35 @@
 > libapp2@0.1.0 typecheck
 > tsc --noEmit --incremental false
 
-src/app/api/kangur/[[...path]]/route.ts(203,38): error TS1135: Argument expression expected.
-src/app/api/kangur/[[...path]]/route.ts(221,38): error TS1135: Argument expression expected.
-src/app/api/kangur/[[...path]]/route.ts(239,38): error TS1135: Argument expression expected.
-src/app/api/kangur/[[...path]]/route.ts(871,38): error TS1135: Argument expression expected.
-src/app/api/kangur/[[...path]]/route.ts(875,38): error TS1135: Argument expression expected.
-src/app/api/kangur/[[...path]]/route.ts(881,36): error TS1135: Argument expression expected.
-src/app/api/kangur/[[...path]]/route.ts(896,38): error TS1135: Argument expression expected.
-src/app/api/kangur/[[...path]]/route.ts(900,38): error TS1135: Argument expression expected.
-src/app/api/kangur/[[...path]]/route.ts(904,38): error TS1135: Argument expression expected.
-src/app/api/kangur/[[...path]]/route.ts(911,36): error TS1135: Argument expression expected.
-src/app/api/kangur/[[...path]]/route.ts(924,36): error TS1135: Argument expression expected.
-src/app/api/kangur/[[...path]]/route.ts(937,36): error TS1135: Argument expression expected.
-src/app/api/kangur/[[...path]]/route.ts(950,36): error TS1135: Argument expression expected.
+src/features/kangur/admin/components/KangurAiTutorContentSettingsPanel.tsx(113,11): error TS2322: Type 'null' is not assignable to type '{ locale: string; version: number; common: { defaultTutorName: string; openTutorAria: string; closeTutorAria: string; closeAria: string; closeWindowAria: string; disableTutorAria: string; disableTutorLabel: string; ... 7 more ...; sessionRegistryLabel: string; }; ... 23 more ...; drawing?: { ...; } | undefined; }'.
+src/features/kangur/admin/components/KangurAiTutorContentSettingsPanel.tsx(114,11): error TS2322: Type 'string' is not assignable to type 'null'.
+src/features/kangur/admin/components/KangurAiTutorNativeGuideSettingsPanel.tsx(117,11): error TS2322: Type 'null' is not assignable to type '{ locale: string; version: number; entries: { id: string; surface: "test" | "auth" | "profile" | "game" | "lesson" | "parent_dashboard" | null; focusKind: "summary" | "progress" | "document" | ... 18 more ... | null; ... 11 more ...; sortOrder: number; }[]; }'.
+src/features/kangur/admin/components/KangurAiTutorNativeGuideSettingsPanel.tsx(118,11): error TS2322: Type 'string' is not assignable to type 'null'.
+src/features/kangur/admin/components/KangurClassOverridesSettingsPanel.tsx(47,31): error TS2322: Type 'true' is not assignable to type 'false'.
+src/features/kangur/ui/components/DuelsLobbyPanels.tsx(411,26): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/features/kangur/ui/components/DuelsLobbyPanels.tsx(436,26): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/features/kangur/ui/components/DuelsLobbyPanels.tsx(464,26): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/features/kangur/ui/components/DuelsLobbyPanels.tsx(492,26): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/features/kangur/ui/components/KangurAiTutorWidget.telemetry.ts(135,5): error TS2322: Type 'SessionContextTelemetry' is not assignable to type 'KangurAiTutorSessionContextTelemetryDto'.
+  Types of property 'surface' are incompatible.
+    Type 'string | null | undefined' is not assignable to type '"test" | "auth" | "profile" | "game" | "lesson" | "parent_dashboard" | null | undefined'.
+      Type 'string' is not assignable to type '"test" | "auth" | "profile" | "game" | "lesson" | "parent_dashboard" | null | undefined'.
+src/features/kangur/ui/components/KangurAiTutorWidget.telemetry.ts(136,5): error TS2322: Type 'TelemetryContext' is not assignable to type 'KangurAiTutorTelemetryContextDto'.
+  Types of property 'surface' are incompatible.
+    Type 'string | null' is not assignable to type '"test" | "auth" | "profile" | "game" | "lesson" | "parent_dashboard" | null'.
+      Type 'string' is not assignable to type '"test" | "auth" | "profile" | "game" | "lesson" | "parent_dashboard" | null'.
+src/features/kangur/ui/components/KangurAiTutorWidget.telemetry.ts(151,5): error TS2322: Type 'SessionContextTelemetry' is not assignable to type 'KangurAiTutorSessionContextTelemetryDto'.
+  Types of property 'surface' are incompatible.
+    Type 'string | null | undefined' is not assignable to type '"test" | "auth" | "profile" | "game" | "lesson" | "parent_dashboard" | null | undefined'.
+      Type 'string' is not assignable to type '"test" | "auth" | "profile" | "game" | "lesson" | "parent_dashboard" | null | undefined'.
+src/features/kangur/ui/components/KangurParentDashboardAiTutorWidget.tsx(577,24): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/features/kangur/ui/components/KangurParentDashboardAiTutorWidget.tsx(603,26): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/features/kangur/ui/components/KangurParentDashboardAiTutorWidget.tsx(628,26): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/features/kangur/ui/components/KangurParentDashboardAiTutorWidget.tsx(692,22): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/features/kangur/ui/components/KangurParentDashboardLearnerManagementWidget.tsx(859,32): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/features/kangur/ui/design/primitives/KangurTextField.tsx(103,3): error TS2552: Cannot find name 'DataAttributes'. Did you mean 'DataAttributesDto'?
+src/features/kangur/ui/pages/Duels.tsx(2849,36): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/features/kangur/ui/pages/Duels.tsx(2872,36): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/features/kangur/ui/pages/Duels.tsx(2895,36): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/features/kangur/ui/pages/duels/DuelsLobbyPanel.tsx(143,24): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/features/kangur/ui/pages/duels/DuelsLobbyPanel.tsx(159,24): error TS7006: Parameter 'event' implicitly has an 'any' type.

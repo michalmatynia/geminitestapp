@@ -112,9 +112,12 @@ const ACTIVITY_PRIMARY_TO_OPERATION: Record<string, string> = {
   logical_analogies: 'logical',
   english_pronoun_remix: 'english_basics',
   english_parts_of_speech_sort: 'english_parts_of_speech',
+  english_pronouns_warmup: 'english_parts_of_speech',
   english_sentence_structure_quiz: 'english_sentence_structure',
   english_subject_verb_agreement_quiz: 'english_subject_verb_agreement',
   english_prepositions_quiz: 'english_prepositions_time_place',
+  english_prepositions_sort: 'english_prepositions_time_place',
+  english_prepositions_order: 'english_prepositions_time_place',
 };
 
 const resolvePracticeDifficulty = (averageAccuracy: number): 'easy' | 'medium' | 'hard' => {

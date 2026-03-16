@@ -3,6 +3,8 @@
 import { useState } from 'react';
 
 import EnglishPrepositionsGame from '@/features/kangur/ui/components/EnglishPrepositionsGame';
+import EnglishPrepositionsOrderGame from '@/features/kangur/ui/components/EnglishPrepositionsOrderGame';
+import EnglishPrepositionsSortGame from '@/features/kangur/ui/components/EnglishPrepositionsSortGame';
 import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
@@ -21,6 +23,7 @@ import {
   KangurLessonInset,
   KangurLessonLead,
   KangurLessonStack,
+  KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
@@ -39,9 +42,14 @@ type SectionId =
   | 'traps'
   | 'practice'
   | 'summary'
-  | 'game_prepositions';
+  | 'game_prepositions'
+  | 'game_prepositions_sort'
+  | 'game_prepositions_order';
 
-type SlideSectionId = Exclude<SectionId, 'game_prepositions'>;
+type SlideSectionId = Exclude<
+  SectionId,
+  'game_prepositions' | 'game_prepositions_sort' | 'game_prepositions_order'
+>;
 
 const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   intro: [
@@ -82,12 +90,9 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Zasada jest prosta: <strong>at</strong> = punkt w czasie, <strong>on</strong> =
             dzień/data, <strong>in</strong> = miesiąc/rok/pora dnia.
           </KangurLessonLead>
-          <KangurLessonCallout accent='rose' className='text-center' padding='sm'>
-            <div className='mx-auto w-full max-w-sm'>
-              <EnglishPrepositionsTimeAnimation />
-            </div>
-            <KangurLessonCaption className='mt-2'>at 7:30 · on Tuesday · in July</KangurLessonCaption>
-          </KangurLessonCallout>
+          <KangurLessonVisual accent='rose' caption='at 7:30 · on Tuesday · in July'>
+            <EnglishPrepositionsTimeAnimation />
+          </KangurLessonVisual>
           <div className='grid gap-2 sm:grid-cols-3 text-sm'>
             {[
               { title: 'AT', items: ['at 7:30', 'at noon', 'at midnight'] },
@@ -116,14 +121,12 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             <strong>after</strong>. Do granic czasu dodaj <strong>until</strong> i
             <strong>since</strong>.
           </KangurLessonLead>
-          <KangurLessonCallout accent='rose' className='text-center' padding='sm'>
-            <div className='mx-auto w-full max-w-sm'>
-              <EnglishPrepositionsTimelineAnimation />
-            </div>
-            <KangurLessonCaption className='mt-2'>
-              before class · during the test · after school
-            </KangurLessonCaption>
-          </KangurLessonCallout>
+          <KangurLessonVisual
+            accent='rose'
+            caption='before class · during the test · after school'
+          >
+            <EnglishPrepositionsTimelineAnimation />
+          </KangurLessonVisual>
           <div className='grid gap-2 text-sm'>
             {[
               'Finish the homework before class.',
@@ -174,12 +177,12 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Miejsce też ma trzy poziomy: <strong>at</strong> = punkt, <strong>in</strong> =
             wnętrze, <strong>on</strong> = powierzchnia.
           </KangurLessonLead>
-          <KangurLessonCallout accent='rose' className='text-center' padding='sm'>
-            <div className='mx-auto w-full max-w-sm'>
-              <EnglishPrepositionsPlaceAnimation />
-            </div>
-            <KangurLessonCaption className='mt-2'>at school · in the classroom · on the board</KangurLessonCaption>
-          </KangurLessonCallout>
+          <KangurLessonVisual
+            accent='rose'
+            caption='at school · in the classroom · on the board'
+          >
+            <EnglishPrepositionsPlaceAnimation />
+          </KangurLessonVisual>
           <div className='grid gap-2 text-sm'>
             {[
               'Meet me at the bus stop.',
@@ -225,12 +228,9 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             Gdy opisujesz położenie punktów lub kształtów, używaj przyimków relacji.
           </KangurLessonLead>
-          <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-            <div className='mx-auto w-full max-w-sm'>
-              <EnglishPrepositionsRelationsDiagram />
-            </div>
-            <KangurLessonCaption className='mt-2'>between · above · below</KangurLessonCaption>
-          </KangurLessonCallout>
+          <KangurLessonVisual accent='violet' caption='between · above · below'>
+            <EnglishPrepositionsRelationsDiagram />
+          </KangurLessonVisual>
           <div className='grid gap-2 text-sm'>
             {[
               'Point P is between A and B.',
@@ -290,22 +290,23 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   practice: [
     {
-      title: 'Szybka praktyka',
+      title: 'Szybka rozgrzewka',
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Uzupełnij zdania: at / on / in / between.
+            Rozgrzewkę przenieśliśmy do gry z układaniem słów.
           </KangurLessonLead>
           <KangurLessonCallout accent='rose' padding='sm'>
-            <div className='space-y-2 text-sm text-slate-700'>
-              <p>1) We start ___ 8:00. (at)</p>
-              <p>2) The quiz is ___ Friday. (on)</p>
-              <p>3) She studies ___ September. (in)</p>
-              <p>4) The notes are ___ the desk. (on)</p>
-              <p>5) Point P is ___ A and B. (between)</p>
+            <div className='space-y-3 text-sm text-slate-700'>
+              <p>Przykładowe rozsypanki:</p>
+              <div className='flex flex-wrap gap-2 text-xs font-semibold'>
+                <KangurLessonChip accent='rose'>at · We · 8:00 · start</KangurLessonChip>
+                <KangurLessonChip accent='amber'>desk · the · notes · are · on · The</KangurLessonChip>
+                <KangurLessonChip accent='violet'>between · P · A · and · Point · is · B</KangurLessonChip>
+              </div>
             </div>
             <KangurLessonCaption className='mt-3'>
-              Odpowiedzi: at · on · in · on · between
+              Wejdź do gry <strong>Word Order Warm-up</strong> w sekcji gier.
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -376,7 +377,7 @@ const HUB_SECTIONS = [
     id: 'practice',
     emoji: '✅',
     title: 'Practice',
-    description: 'Szybkie uzupełnianie',
+    description: 'Szybka rozgrzewka',
   },
   {
     id: 'summary',
@@ -389,6 +390,20 @@ const HUB_SECTIONS = [
     emoji: '🎯',
     title: 'Prepositions Sprint',
     description: 'Krótka gra z wyborem',
+    isGame: true,
+  },
+  {
+    id: 'game_prepositions_sort',
+    emoji: '🧲',
+    title: 'Sort: Time + Place + Relations',
+    description: 'Przeciągnij zwroty do właściwych relacji',
+    isGame: true,
+  },
+  {
+    id: 'game_prepositions_order',
+    emoji: '🧩',
+    title: 'Word Order Warm-up',
+    description: 'Układanie zdań z przyimkami',
     isGame: true,
   },
 ];
@@ -428,6 +443,40 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
     );
   }
 
+  if (activeSection === 'game_prepositions_sort') {
+    const gameSection = HUB_SECTIONS.find((section) => section.id === activeSection) ?? null;
+    return (
+      <LessonActivityStage
+        accent='rose'
+        icon='🧲'
+        maxWidthClassName='max-w-3xl'
+        onBack={() => setActiveSection(null)}
+        sectionHeader={gameSection}
+        shellTestId='english-prepositions-sort-game-shell'
+        title='Sort: Time + Place + Relations'
+      >
+        <EnglishPrepositionsSortGame onFinish={() => setActiveSection(null)} />
+      </LessonActivityStage>
+    );
+  }
+
+  if (activeSection === 'game_prepositions_order') {
+    const gameSection = HUB_SECTIONS.find((section) => section.id === activeSection) ?? null;
+    return (
+      <LessonActivityStage
+        accent='rose'
+        icon='🧩'
+        maxWidthClassName='max-w-3xl'
+        onBack={() => setActiveSection(null)}
+        sectionHeader={gameSection}
+        shellTestId='english-prepositions-order-game-shell'
+        title='Word Order Warm-up'
+      >
+        <EnglishPrepositionsOrderGame onFinish={() => setActiveSection(null)} />
+      </LessonActivityStage>
+    );
+  }
+
   if (activeSection) {
     return (
       <LessonSlideSection
@@ -463,7 +512,7 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
           }
       )}
       onSelect={(id) => {
-        if (id !== 'game_prepositions') {
+        if (id !== 'game_prepositions' && id !== 'game_prepositions_sort' && id !== 'game_prepositions_order') {
           markSectionOpened(id as SlideSectionId);
         }
         setActiveSection(id as SectionId);

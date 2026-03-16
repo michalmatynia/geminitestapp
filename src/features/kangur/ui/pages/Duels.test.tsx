@@ -13,6 +13,8 @@ const {
   trackKangurClientEventMock,
   logKangurClientErrorMock,
   reportKangurClientErrorMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
   authState,
   guestState,
   openLoginModalMock,
@@ -37,14 +39,75 @@ const {
     list: vi.fn(),
     send: vi.fn(),
   };
+  const trackKangurClientEventMock = vi.fn();
+  const logKangurClientErrorMock = vi.fn();
+  const reportKangurClientErrorMock = vi.fn();
+
+  const withKangurClientError = async <T,>(
+    report: unknown,
+    task: () => Promise<T>,
+    options: {
+      fallback: T | (() => T);
+      onError?: (error: unknown) => void;
+      shouldReport?: (error: unknown) => boolean;
+      shouldRethrow?: (error: unknown) => boolean;
+    }
+  ): Promise<T> => {
+    try {
+      return await task();
+    } catch (error) {
+      const shouldReport = options.shouldReport?.(error) ?? true;
+      if (shouldReport) {
+        reportKangurClientErrorMock(error, report);
+        logKangurClientErrorMock(error);
+      }
+      options.onError?.(error);
+      if (options.shouldRethrow?.(error)) {
+        throw error;
+      }
+      return typeof options.fallback === 'function'
+        ? (options.fallback as () => T)()
+        : options.fallback;
+    }
+  };
+
+  const withKangurClientErrorSync = <T,>(
+    report: unknown,
+    task: () => T,
+    options: {
+      fallback: T | (() => T);
+      onError?: (error: unknown) => void;
+      shouldReport?: (error: unknown) => boolean;
+      shouldRethrow?: (error: unknown) => boolean;
+    }
+  ): T => {
+    try {
+      return task();
+    } catch (error) {
+      const shouldReport = options.shouldReport?.(error) ?? true;
+      if (shouldReport) {
+        reportKangurClientErrorMock(error, report);
+        logKangurClientErrorMock(error);
+      }
+      options.onError?.(error);
+      if (options.shouldRethrow?.(error)) {
+        throw error;
+      }
+      return typeof options.fallback === 'function'
+        ? (options.fallback as () => T)()
+        : options.fallback;
+    }
+  };
 
   return {
     duelsMock: duels,
     lobbyChatMock: lobbyChat,
     platformMock: { duels, lobbyChat },
-    trackKangurClientEventMock: vi.fn(),
-    logKangurClientErrorMock: vi.fn(),
-    reportKangurClientErrorMock: vi.fn(),
+    trackKangurClientEventMock,
+    logKangurClientErrorMock,
+    reportKangurClientErrorMock,
+    withKangurClientError,
+    withKangurClientErrorSync,
     authState: {
       user: null as unknown,
       isAuthenticated: false,
@@ -65,62 +128,6 @@ const {
     openLoginModalMock: vi.fn(),
   };
 });
-
-const withKangurClientError = async <T,>(
-  report: unknown,
-  task: () => Promise<T>,
-  options: {
-    fallback: T | (() => T);
-    onError?: (error: unknown) => void;
-    shouldReport?: (error: unknown) => boolean;
-    shouldRethrow?: (error: unknown) => boolean;
-  }
-): Promise<T> => {
-  try {
-    return await task();
-  } catch (error) {
-    const shouldReport = options.shouldReport?.(error) ?? true;
-    if (shouldReport) {
-      reportKangurClientErrorMock(error, report);
-      logKangurClientErrorMock(error);
-    }
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
-      throw error;
-    }
-    return typeof options.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : options.fallback;
-  }
-};
-
-const withKangurClientErrorSync = <T,>(
-  report: unknown,
-  task: () => T,
-  options: {
-    fallback: T | (() => T);
-    onError?: (error: unknown) => void;
-    shouldReport?: (error: unknown) => boolean;
-    shouldRethrow?: (error: unknown) => boolean;
-  }
-): T => {
-  try {
-    return task();
-  } catch (error) {
-    const shouldReport = options.shouldReport?.(error) ?? true;
-    if (shouldReport) {
-      reportKangurClientErrorMock(error, report);
-      logKangurClientErrorMock(error);
-    }
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
-      throw error;
-    }
-    return typeof options.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : options.fallback;
-  }
-};
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
   getKangurPlatform: () => platformMock,
@@ -269,6 +276,7 @@ const buildUser = () =>
 describe('Duels page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal('WebSocket', undefined);
     window.history.pushState({}, '', '/kangur/duels');
     Object.defineProperty(document, 'hasFocus', {
       configurable: true,
@@ -307,6 +315,7 @@ describe('Duels page', () => {
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     window.history.pushState({}, '', '/kangur/duels');
   });
 

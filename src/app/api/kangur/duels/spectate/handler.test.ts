@@ -93,6 +93,6 @@ describe('kangur duels spectate handler', () => {
         createGetRequest('http://localhost/api/kangur/duels/spectate'),
         createRequestContext()
       )
-    ).rejects.toThrow('sessionId query param is required.');
+    ).rejects.toThrow('Invalid query parameters');
   });
 });

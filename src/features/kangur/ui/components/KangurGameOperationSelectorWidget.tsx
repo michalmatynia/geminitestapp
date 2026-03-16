@@ -567,8 +567,8 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
     };
   }, [progress]);
   const dailyQuest = useMemo(
-    () => getCurrentKangurDailyQuest(normalizedProgress),
-    [normalizedProgress]
+    () => getCurrentKangurDailyQuest(normalizedProgress, { subject }),
+    [normalizedProgress, subject]
   );
   const recommendation = useMemo(
     () => getOperationSelectorRecommendation(normalizedProgress, dailyQuest),

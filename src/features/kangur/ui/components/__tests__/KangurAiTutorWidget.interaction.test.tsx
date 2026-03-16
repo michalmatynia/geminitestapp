@@ -8,7 +8,6 @@ import React from 'react';
 import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import { persistTutorVisibilityHidden } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
-
 import {
   createTutorMocks,
   MockSpeechSynthesisUtterance,
@@ -16,49 +15,9 @@ import {
 } from './KangurAiTutorWidget.test-utils';
 
 const mocks = createTutorMocks();
-
-type KangurClientErrorHandlingOptions<T> = {
-  fallback: T | (() => T);
-  onError?: (error: unknown) => void;
-  shouldReport?: (error: unknown) => boolean;
-  shouldRethrow?: (error: unknown) => boolean;
-};
-
-const withKangurClientError = async <T,>(
-  _report: unknown,
-  task: () => Promise<T>,
-  options: KangurClientErrorHandlingOptions<T>
-): Promise<T> => {
-  try {
-    return await task();
-  } catch (error) {
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
-      throw error;
-    }
-    return typeof options.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : options.fallback;
-  }
-};
-
-const withKangurClientErrorSync = <T,>(
-  _report: unknown,
-  task: () => T,
-  options: KangurClientErrorHandlingOptions<T>
-): T => {
-  try {
-    return task();
-  } catch (error) {
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
-      throw error;
-    }
-    return typeof options.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : options.fallback;
-  }
-};
+const { withKangurClientError, withKangurClientErrorSync } = vi.hoisted(() =>
+  globalThis.__kangurClientErrorMocks()
+);
 
 vi.mock('framer-motion', () => ({
   useReducedMotion: mocks.useReducedMotionMock,

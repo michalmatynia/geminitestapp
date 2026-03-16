@@ -13,7 +13,7 @@ import {
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import type { SettingsPanelField } from '@/features/kangur/shared/ui/templates/SettingsPanelBuilder';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 
 export type AppearanceSlot = 'daily' | 'dawn' | 'sunset' | 'nightly';
@@ -123,22 +123,28 @@ const parseSlotAssignmentEntry = (
 export const parseSlotAssignments = (raw: string | null | undefined): SlotAssignments => {
   const fallback: SlotAssignments = { daily: null, dawn: null, sunset: null, nightly: null };
   if (!raw?.trim()) return fallback;
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      return fallback;
-    }
-    const record = parsed as Record<string, unknown>;
-    return {
-      daily: parseSlotAssignmentEntry(record['daily']),
-      dawn: parseSlotAssignmentEntry(record['dawn']),
-      sunset: parseSlotAssignmentEntry(record['sunset']),
-      nightly: parseSlotAssignmentEntry(record['nightly']),
-    };
-  } catch (error) {
-    logClientError(error);
-    return fallback;
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.admin.appearance',
+      action: 'parse-slot-assignments',
+      description: 'Parses serialized slot assignments for appearance presets.',
+      context: { rawLength: raw.length },
+    },
+    () => {
+      const parsed: unknown = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return fallback;
+      }
+      const record = parsed as Record<string, unknown>;
+      return {
+        daily: parseSlotAssignmentEntry(record['daily']),
+        dawn: parseSlotAssignmentEntry(record['dawn']),
+        sunset: parseSlotAssignmentEntry(record['sunset']),
+        nightly: parseSlotAssignmentEntry(record['nightly']),
+      };
+    },
+    { fallback }
+  );
 };
 
 export const FONT_WEIGHT_OPTIONS = [

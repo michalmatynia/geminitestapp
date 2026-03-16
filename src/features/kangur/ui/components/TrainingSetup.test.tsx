@@ -20,7 +20,8 @@ describe('TrainingSetup', () => {
     expect(categoryGroup).toHaveClass('kangur-segmented-control', 'rounded-[28px]', 'border');
     expect(countGroup).toHaveClass('kangur-segmented-control', 'rounded-[28px]', 'border');
     expect(within(heading).getByRole('heading', { name: 'Dobierz trening' })).toHaveClass(
-      'text-2xl',
+      'text-xl',
+      'sm:text-2xl',
       '[color:var(--kangur-accent-indigo-start,#a855f7)]'
     );
     expect(screen.queryByRole('heading', { name: 'Wybierz poziom trudności' })).not.toBeInTheDocument();

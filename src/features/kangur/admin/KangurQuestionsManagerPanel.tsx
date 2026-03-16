@@ -7,7 +7,7 @@ import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kang
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { Button, FormModal } from '@/features/kangur/shared/ui';
 import { ConfirmModal } from '@/features/kangur/shared/ui/templates/modals';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 import {
   KANGUR_TEST_QUESTIONS_SETTING_KEY,
@@ -65,15 +65,20 @@ const QUESTION_STATUS_PRIORITY: Record<'ready' | 'needs-review' | 'needs-fix', n
 const formatDraftTimestamp = (value: string | null): string | null => {
   if (!value) return null;
 
-  try {
-    return new Intl.DateTimeFormat('pl-PL', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value));
-  } catch (error) {
-    logClientError(error);
-    return value;
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.admin.questions',
+      action: 'format-draft-timestamp',
+      description: 'Formats question draft timestamps for the questions manager.',
+      context: { value },
+    },
+    () =>
+      new Intl.DateTimeFormat('pl-PL', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }).format(new Date(value)),
+    { fallback: value }
+  );
 };
 
 const buildQuestionEditorSnapshot = (

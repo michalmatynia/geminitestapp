@@ -8,33 +8,20 @@ import type { KangurAiTutorContent } from '@/features/kangur/shared/contracts/ka
 import { isAuthGuidedTutorTarget } from './KangurAiTutorWidget.helpers';
 import { getTutorSurfaceLabel } from './KangurAiTutorWidget.coordinator.helpers';
 
-import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import type {
+  KangurAiTutorRuntimeMessage as TutorRenderedMessage,
+  KangurAiTutorSessionContextTelemetryDto,
+  KangurAiTutorUsageSummary,
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type { TutorProactiveNudge } from './KangurAiTutorPanelBody.context';
 import type { ActiveTutorFocus } from './KangurAiTutorWidget.shared';
-import type {
-  GuidedTutorTarget,
-  SectionExplainContext,
-  TutorSurface,
-} from './KangurAiTutorWidget.types';
-
-type TutorUsageSummary = {
-  dateKey: string;
-  dailyMessageLimit: number | null;
-  messageCount: number;
-  remainingMessages: number | null;
-} | null | undefined;
+import type { GuidedTutorTarget, SectionExplainContext } from './KangurAiTutorWidget.types';
 
 type TutorContextSwitchNotice = {
   title: string;
   target: string;
   detail: string | null;
 } | null;
-
-type TutorSessionContext = {
-  contentId: string | null | undefined;
-  surface: TutorSurface | null | undefined;
-  title: string | null | undefined;
-};
 
 type UseKangurAiTutorPanelDerivedStateInput = {
   activeFocus: Pick<ActiveTutorFocus, 'kind' | 'label'>;
@@ -55,7 +42,7 @@ type UseKangurAiTutorPanelDerivedStateInput = {
   isSectionExplainPendingMode: boolean;
   isSelectionExplainPendingMode: boolean;
   messages: TutorRenderedMessage[];
-  sessionContext: TutorSessionContext;
+  sessionContext: KangurAiTutorSessionContextTelemetryDto;
   showSectionExplainCompleteState: boolean;
   showSelectionExplainCompleteState: boolean;
   showSources: boolean;
@@ -63,7 +50,7 @@ type UseKangurAiTutorPanelDerivedStateInput = {
   tutorContent: KangurAiTutorContent;
   tutorName: string;
   tutorNarrationObservedText: string;
-  usageSummary: TutorUsageSummary;
+  usageSummary: KangurAiTutorUsageSummary | null | undefined;
   viewportWidth: number;
   visibleProactiveNudge: TutorProactiveNudge | null;
 };

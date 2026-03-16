@@ -4,58 +4,13 @@
 
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
 import type { KangurDuelLobbyEntry } from '@/features/kangur/shared/contracts/kangur-duels';
 
-const { trackKangurClientEventMock } = vi.hoisted(() => ({
-  trackKangurClientEventMock: vi.fn(),
-}));
-
-const withKangurClientError = async <T,>(
-  _report: unknown,
-  task: () => Promise<T>,
-  options: {
-    fallback: T | (() => T);
-    onError?: (error: unknown) => void;
-    shouldReport?: (error: unknown) => boolean;
-    shouldRethrow?: (error: unknown) => boolean;
-  }
-): Promise<T> => {
-  try {
-    return await task();
-  } catch (error) {
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
-      throw error;
-    }
-    return typeof options.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : options.fallback;
-  }
-};
-
-const withKangurClientErrorSync = <T,>(
-  _report: unknown,
-  task: () => T,
-  options: {
-    fallback: T | (() => T);
-    onError?: (error: unknown) => void;
-    shouldReport?: (error: unknown) => boolean;
-    shouldRethrow?: (error: unknown) => boolean;
-  }
-): T => {
-  try {
-    return task();
-  } catch (error) {
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
-      throw error;
-    }
-    return typeof options.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : options.fallback;
-  }
-};
+const {
+  trackKangurClientEventMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
+} = vi.hoisted(() => globalThis.__kangurClientErrorMocks());
 
 vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: trackKangurClientEventMock,

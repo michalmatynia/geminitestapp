@@ -4,7 +4,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useLayoutEffect, useRef } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
 import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
@@ -40,6 +39,8 @@ const {
   audioPlayMock,
   audioPauseMock,
   useKangurPageContentEntryMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
 } = vi.hoisted(() => ({
   settingsStoreMock: {
     get: vi.fn<(key: string) => string | undefined>(),
@@ -59,7 +60,6 @@ const {
   activateSelectionGlowMock: vi.fn().mockReturnValue(false),
   clearSelectionMock: vi.fn(),
   clearSelectionGlowMock: vi.fn(),
-  trackKangurClientEventMock: vi.fn(),
   useKangurPageContentEntryMock: vi.fn(),
   speechSynthesisMock: {
     speak: vi.fn(),
@@ -71,50 +71,8 @@ const {
   },
   audioPlayMock: vi.fn().mockResolvedValue(undefined),
   audioPauseMock: vi.fn(),
+  ...globalThis.__kangurClientErrorMocks(),
 }));
-
-type KangurClientErrorHandlingOptions<T> = {
-  fallback: T | (() => T);
-  onError?: (error: unknown) => void;
-  shouldReport?: (error: unknown) => boolean;
-  shouldRethrow?: (error: unknown) => boolean;
-};
-
-const withKangurClientError = async <T,>(
-  _report: unknown,
-  task: () => Promise<T>,
-  options: KangurClientErrorHandlingOptions<T>
-): Promise<T> => {
-  try {
-    return await task();
-  } catch (error) {
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
-      throw error;
-    }
-    return typeof options.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : options.fallback;
-  }
-};
-
-const withKangurClientErrorSync = <T,>(
-  _report: unknown,
-  task: () => T,
-  options: KangurClientErrorHandlingOptions<T>
-): T => {
-  try {
-    return task();
-  } catch (error) {
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
-      throw error;
-    }
-    return typeof options.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : options.fallback;
-  }
-};
 
 vi.mock('framer-motion', () => ({
   useReducedMotion: useReducedMotionMock,

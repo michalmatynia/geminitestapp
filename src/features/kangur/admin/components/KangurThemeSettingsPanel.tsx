@@ -24,7 +24,7 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { Alert, Button, FormSection, Input, useToast } from '@/features/kangur/shared/ui';
 import type { SettingsPanelField } from '@/features/kangur/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientError } from '@/features/kangur/observability/client';
 
 
 type ThemeMode = 'daily' | 'dawn' | 'sunset' | 'nightly';
@@ -794,20 +794,34 @@ function KangurThemeSettingsEditor({
 
   const handleReset = async (): Promise<void> => {
     setIsResetting(true);
-    try {
-      await updateSetting.mutateAsync({
-        key: storageKey,
-        value: serializeSetting(defaultTheme),
-      });
+    const didReset = await withKangurClientError(
+      {
+        source: 'kangur.admin.theme-settings',
+        action: 'reset-theme',
+        description: 'Resets a theme section to defaults.',
+        context: { mode, storageKey },
+      },
+      async () => {
+        await updateSetting.mutateAsync({
+          key: storageKey,
+          value: serializeSetting(defaultTheme),
+        });
+        return true;
+      },
+      {
+        fallback: false,
+        onError: (error) => {
+          toast(error instanceof Error ? error.message : 'Nie udało się przywrócić motywu.', {
+            variant: 'error',
+          });
+        },
+      }
+    );
+
+    if (didReset) {
       toast(MODE_CONFIG[mode].toastMessage, { variant: 'success' });
-    } catch (error) {
-      logClientError(error);
-      toast(error instanceof Error ? error.message : 'Nie udało się przywrócić motywu.', {
-        variant: 'error',
-      });
-    } finally {
-      setIsResetting(false);
     }
+    setIsResetting(false);
   };
 
   return (

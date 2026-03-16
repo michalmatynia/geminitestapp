@@ -93,7 +93,7 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
       aria-describedby={lobbyDescriptionId}
       aria-busy={isLobbyLoading}
     >
-      <div className='flex flex-wrap items-center justify-between kangur-panel-gap'>
+      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between kangur-panel-gap'>
         <div className='space-y-1'>
           <div className='flex flex-wrap items-center gap-2' aria-live='polite' aria-atomic='true'>
             <h3 id={lobbyHeadingId} className='text-xl font-semibold text-slate-900'>
@@ -126,14 +126,15 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
             aria-label='Odśwież lobby pojedynków'
             aria-busy={isLobbyLoading}
             aria-live='polite'
+            className='w-full sm:w-auto'
           >
             {isLobbyLoading ? 'Odświeżamy…' : 'Odśwież'}
           </KangurButton>
         </div>
       </div>
 
-      <div className='flex flex-col items-stretch kangur-panel-gap rounded-2xl border border-slate-200/70 bg-white/70 p-3 sm:flex-row sm:flex-wrap sm:items-end'>
-        <div className='w-full space-y-1 sm:min-w-[180px]'>
+      <div className='grid w-full kangur-panel-gap rounded-2xl border border-slate-200/70 bg-white/70 p-3 sm:grid-cols-2'>
+        <div className='min-w-0 space-y-1'>
           <div className='text-xs font-semibold uppercase tracking-[0.08em] text-slate-500'>
             Tryb
           </div>
@@ -149,7 +150,7 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
             <option value='quick_match'>Szybkie pojedynki</option>
           </KangurSelectField>
         </div>
-        <div className='w-full space-y-1 sm:min-w-[200px]'>
+        <div className='min-w-0 space-y-1'>
           <div className='text-xs font-semibold uppercase tracking-[0.08em] text-slate-500'>
             Sortowanie
           </div>
@@ -177,7 +178,9 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
           </KangurSelectField>
         </div>
         {publicLobbyCount > 0 ? (
-          <div className='text-xs text-slate-500'>Widocznych: {visibleLobbyCount}</div>
+          <div className='text-xs text-slate-500 sm:col-span-2 sm:text-right'>
+            Widocznych: {visibleLobbyCount}
+          </div>
         ) : null}
       </div>
 
@@ -221,7 +224,12 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
         <KangurInfoCard accent='slate' padding='md' tone='accent' role='status' aria-live='polite'>
           <div className='flex flex-col kangur-panel-gap'>
             <div className='text-sm text-slate-700'>Brak uczniów oczekujących na pojedynek.</div>
-            <KangurButton onClick={onCreateChallenge} variant='secondary' disabled={isBusy}>
+            <KangurButton
+              onClick={onCreateChallenge}
+              variant='secondary'
+              disabled={isBusy}
+              className='w-full sm:w-auto'
+            >
               Stwórz własne wyzwanie
             </KangurButton>
           </div>
@@ -232,7 +240,12 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
             <div className='text-sm text-slate-700'>
               Brak wyzwań dla wybranego filtra.
             </div>
-            <KangurButton onClick={onResetFilters} variant='ghost' disabled={isBusy}>
+            <KangurButton
+              onClick={onResetFilters}
+              variant='ghost'
+              disabled={isBusy}
+              className='w-full sm:w-auto'
+            >
               Pokaż wszystkie
             </KangurButton>
           </div>
@@ -284,6 +297,7 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
                       variant='secondary'
                       disabled={isBusy}
                       aria-label={`Dołącz do pojedynku z ${entry.host.displayName}`}
+                      className='w-full sm:w-auto'
                     >
                       Dołącz
                     </KangurButton>

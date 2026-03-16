@@ -25,11 +25,15 @@ export function EnglishPronounSwapAnimation(): React.JSX.Element {
           fill: #64748b;
           font: 600 12px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
         }
-        .swap-a { animation: swapFade 4.4s ease-in-out infinite; }
-        .swap-b { animation: swapFade 4.4s ease-in-out infinite; animation-delay: 2.2s; }
-        @keyframes swapFade {
+        .swap-a { animation: swapA 4.4s ease-in-out infinite; }
+        .swap-b { animation: swapB 4.4s ease-in-out infinite; }
+        @keyframes swapA {
           0%, 45% { opacity: 1; }
-          55%, 100% { opacity: 0.1; }
+          55%, 100% { opacity: 0; }
+        }
+        @keyframes swapB {
+          0%, 55% { opacity: 0; }
+          65%, 100% { opacity: 1; }
         }
         @media (prefers-reduced-motion: reduce) {
           .swap-a, .swap-b { animation: none; opacity: 1; }

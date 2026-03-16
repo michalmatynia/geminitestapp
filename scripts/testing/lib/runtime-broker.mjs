@@ -897,6 +897,7 @@ export const acquireRuntimeLease = async ({
   const resolvedBundler = resolveBrokerDevBundler({
     env,
     mode: resolvedMode,
+    fallback: 'webpack',
   });
   const brokerDir = resolveRuntimeBrokerDir({ rootDir: resolvedRootDir, env });
   const leaseKey = buildRuntimeLeaseKey({
@@ -1131,7 +1132,7 @@ export const cleanupBrokerRuntimeLeases = async ({
       resolveBrokerDevBundler({
         env,
         mode: safeMode,
-        fallback: null,
+        fallback: 'webpack',
       }),
     ]);
 

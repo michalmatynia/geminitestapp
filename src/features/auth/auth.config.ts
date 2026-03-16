@@ -143,7 +143,7 @@ export const authConfig = {
         };
         const role = authUser?.role ?? 'unknown';
         const isElevated =
-          authUser?.isElevated ?? elevatedRoles.has(role) || isPlaywrightRuntime;
+          Boolean(authUser?.isElevated) || elevatedRoles.has(role) || isPlaywrightRuntime;
         const hasRoleAssigned = Boolean(authUser?.roleAssigned) || isPlaywrightRuntime;
         if (authUser?.accountBanned || authUser?.accountDisabled) {
           const redirectUrl = new URL('/auth/signin', nextUrl);

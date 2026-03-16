@@ -11,8 +11,7 @@ import { createKangurLessonDraft } from '../settings';
 import { TREE_MODE_STORAGE_KEY } from './constants';
 
 import type { LessonFormData, LessonTreeMode } from './types';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
-
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 export const resolvePageSectionOptions = (
   page: KangurLessonPage | null
@@ -82,13 +81,18 @@ export const upsertLesson = (lessons: KangurLesson[], nextLesson: KangurLesson):
 
 export const readPersistedTreeMode = (): LessonTreeMode => {
   if (typeof window === 'undefined') return 'ordered';
-  try {
-    const storedValue = window.localStorage.getItem(TREE_MODE_STORAGE_KEY);
-    return storedValue === 'catalog' ? 'catalog' : 'ordered';
-  } catch (error) {
-    logClientError(error);
-    return 'ordered';
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.admin.utils',
+      action: 'read-tree-mode',
+      description: 'Reads the persisted lesson tree mode from local storage.',
+    },
+    () => {
+      const storedValue = window.localStorage.getItem(TREE_MODE_STORAGE_KEY);
+      return storedValue === 'catalog' ? 'catalog' : 'ordered';
+    },
+    { fallback: 'ordered' }
+  );
 };
 
 export const countLessonsRequiringLegacyImport = (

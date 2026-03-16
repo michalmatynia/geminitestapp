@@ -13,6 +13,7 @@ const {
   useKangurAuthMock,
   useKangurProgressStateMock,
   useKangurPageContentEntryMock,
+  useKangurSubjectFocusMock,
   openLoginModalMock,
   navigateToLoginMock,
   logoutMock,
@@ -24,6 +25,7 @@ const {
   useKangurAuthMock: vi.fn(),
   useKangurProgressStateMock: vi.fn(),
   useKangurPageContentEntryMock: vi.fn(),
+  useKangurSubjectFocusMock: vi.fn(),
   openLoginModalMock: vi.fn(),
   navigateToLoginMock: vi.fn(),
   logoutMock: vi.fn(),
@@ -42,6 +44,10 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
   useOptionalKangurAuth: useKangurAuthMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
@@ -126,6 +132,11 @@ describe('ParentDashboard page', () => {
       isLoading: false,
       isError: false,
       error: null,
+    });
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'guest',
     });
     lessonsState.value = [];
     useKangurAuthMock.mockReturnValue({

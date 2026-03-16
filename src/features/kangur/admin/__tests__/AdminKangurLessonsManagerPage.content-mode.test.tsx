@@ -5,7 +5,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 import { useLessonContentEditorContext } from '../context/LessonContentEditorContext';
@@ -19,22 +18,27 @@ const {
   lessonDocumentsState,
   useMasterFolderTreeShellMock,
   latestNodesState,
-} = vi.hoisted(() => ({
-  updateLessonsMock: vi.fn(),
-  updateLessonDocumentsMock: vi.fn(),
-  apiPostMock: vi.fn(),
-  toastMock: vi.fn(),
-  lessonsState: {
-    value: [] as Array<Record<string, unknown>>,
-  },
-  lessonDocumentsState: {
-    value: {} as Record<string, unknown>,
-  },
-  useMasterFolderTreeShellMock: vi.fn(),
-  latestNodesState: {
-    value: [] as Array<Record<string, unknown>>,
-  },
-}));
+  withKangurClientError,
+  withKangurClientErrorSync,
+} = vi.hoisted(() => {
+  return {
+    updateLessonsMock: vi.fn(),
+    updateLessonDocumentsMock: vi.fn(),
+    apiPostMock: vi.fn(),
+    toastMock: vi.fn(),
+    lessonsState: {
+      value: [] as Array<Record<string, unknown>>,
+    },
+    lessonDocumentsState: {
+      value: {} as Record<string, unknown>,
+    },
+    useMasterFolderTreeShellMock: vi.fn(),
+    latestNodesState: {
+      value: [] as Array<Record<string, unknown>>,
+    },
+    ...globalThis.__kangurClientErrorMocks(),
+  };
+});
 
 vi.mock('@/features/foldertree', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/foldertree')>();
@@ -262,8 +266,9 @@ vi.mock('@/features/kangur/shared/ui/templates/modals', () => ({
   ConfirmModal: () => null,
 }));
 
-vi.mock('@/features/kangur/shared/utils/observability/client-error-logger', () => ({
-  logClientError: vi.fn(),
+vi.mock('@/features/kangur/observability/client', () => ({
+  withKangurClientError,
+  withKangurClientErrorSync,
 }));
 
 vi.mock('@/features/kangur/admin/components/KangurAdminContentShell', () => ({

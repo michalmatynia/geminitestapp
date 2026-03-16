@@ -1,21 +1,21 @@
 {
-  "generatedAt": "2026-03-16T19:21:43.563Z",
+  "generatedAt": "2026-03-16T20:55:53.128Z",
   "status": "failed",
   "runtime": {
     "source": "broker",
     "reused": false,
-    "baseUrl": "http://127.0.0.1:63940",
+    "baseUrl": "http://127.0.0.1:58607",
     "agentId": "019cf7c7-96e6-7c60-8268-9ad505dd0c53-route-crawl",
-    "leaseKey": "web-dev-019cf7c7-96e6-7c60-8268-9ad505dd0c53-route-crawl-ed58ad7e"
+    "leaseKey": "web-dev-webpack-019cf7c7-96e6-7c60-8268-9ad505dd0c53-route-crawl-ed58ad7e"
   },
   "summary": {
     "total": 28,
-    "passed": 9,
-    "failed": 19,
-    "durationMs": 124084.764,
+    "passed": 15,
+    "failed": 13,
+    "durationMs": 710554.444,
     "unexpected": 1,
     "flaky": 0,
-    "skipped": 18,
+    "skipped": 12,
     "errorCount": 1
   },
   "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/accessibility-route-crawl.spec.ts --reporter=json",
@@ -30,7 +30,7 @@
       "contextSelector": null,
       "title": "[public-home] / passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 23746,
+      "durationMs": 66782,
       "errors": []
     },
     {
@@ -42,7 +42,7 @@
       "contextSelector": null,
       "title": "[auth-signin] /auth/signin passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 1925,
+      "durationMs": 8556,
       "errors": []
     },
     {
@@ -54,7 +54,7 @@
       "contextSelector": null,
       "title": "[auth-register] /auth/register passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 2474,
+      "durationMs": 7110,
       "errors": []
     },
     {
@@ -66,7 +66,7 @@
       "contextSelector": null,
       "title": "[kangur-login] /kangur/login passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 6297,
+      "durationMs": 30089,
       "errors": []
     },
     {
@@ -78,7 +78,7 @@
       "contextSelector": null,
       "title": "[kangur-home] /kangur passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 9956,
+      "durationMs": 36892,
       "errors": []
     },
     {
@@ -90,7 +90,7 @@
       "contextSelector": null,
       "title": "[kangur-game] /kangur/game passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 5675,
+      "durationMs": 54679,
       "errors": []
     },
     {
@@ -102,7 +102,7 @@
       "contextSelector": null,
       "title": "[kangur-lessons] /kangur/lessons passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 5010,
+      "durationMs": 16204,
       "errors": []
     },
     {
@@ -114,7 +114,7 @@
       "contextSelector": null,
       "title": "[kangur-profile] /kangur/profile passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 3076,
+      "durationMs": 12935,
       "errors": []
     },
     {
@@ -126,7 +126,7 @@
       "contextSelector": null,
       "title": "[kangur-parent-dashboard] /kangur/parent-dashboard passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 2964,
+      "durationMs": 18694,
       "errors": []
     },
     {
@@ -137,11 +137,9 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-dashboard] /admin passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 61111,
-      "errors": [
-        "TimeoutError: page.waitForURL: Timeout 60000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n  navigated to \"http://127.0.0.1:63940/auth/signin?error=AccessDenied\"\n  navigated to \"http://127.0.0.1:63940/auth/signin?error=AccessDenied\"\n  navigated to \"http://127.0.0.1:63940/auth/signin?error=AccessDenied\"\n============================================================\n\n   at support/admin-auth.ts:100\n\n   98 |\n   99 |     if (!matchesDestination(getCurrentUrl())) {\n> 100 |       await page.waitForURL(\n      |                  ^\n  101 |         (url) =>\n  102 |           url.pathname === destinationUrl.pathname &&\n  103 |           (destinationUrl.search ? url.search === destinationUrl.search : true),\n    at navigateToDestination (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:100:18)\n    at ensureAdminSession (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:168:7)\n    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/accessibility-route-crawl.spec.ts:20:7"
-      ]
+      "status": "pass",
+      "durationMs": 84612,
+      "errors": []
     },
     {
       "id": "admin-products",
@@ -151,8 +149,8 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-products] /admin/products passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 0,
+      "status": "pass",
+      "durationMs": 56632,
       "errors": []
     },
     {
@@ -163,8 +161,8 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-notes] /admin/notes passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 0,
+      "status": "pass",
+      "durationMs": 17273,
       "errors": []
     },
     {
@@ -175,8 +173,8 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-integrations] /admin/integrations passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 0,
+      "status": "pass",
+      "durationMs": 36420,
       "errors": []
     },
     {
@@ -187,8 +185,8 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-case-resolver] /admin/case-resolver passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 0,
+      "status": "pass",
+      "durationMs": 51278,
       "errors": []
     },
     {
@@ -199,8 +197,8 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[admin-cms] /admin/cms passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 0,
+      "status": "pass",
+      "durationMs": 19704,
       "errors": []
     },
     {
@@ -212,8 +210,10 @@
       "contextSelector": null,
       "title": "[admin-ai-paths] /admin/ai-paths passes the route-crawl accessibility scan",
       "status": "fail",
-      "durationMs": 0,
-      "errors": []
+      "durationMs": 190153,
+      "errors": [
+        "Error: Accessibility violations detected:\n\n[serious] scrollable-region-focusable: Scrollable region must have keyboard access\nEnsure elements that have scrollable content are accessible by keyboard\n- #app-content\nFix any of the following:\n  Element should have focusable content\n  Element should be focusable\nhttps://dequeuniversity.com/rules/axe/4.11/scrollable-region-focusable?application=axeAPI\n\n   at support/accessibility.ts:100\n\n   98 |   if (violations.length === 0) return;\n   99 |\n> 100 |   throw new Error(`Accessibility violations detected:\\n\\n${formatViolations(violations)}`);\n      |         ^\n  101 | }\n  102 |\n    at expectPageToHaveNoAxeViolations (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/accessibility.ts:100:9)\n    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/accessibility-route-crawl.spec.ts:55:5"
+      ]
     },
     {
       "id": "admin-image-studio",
@@ -361,6 +361,6 @@
     }
   ],
   "stderr": "",
-  "durationMs": 141961,
+  "durationMs": 759474,
   "exitCode": 1
 }

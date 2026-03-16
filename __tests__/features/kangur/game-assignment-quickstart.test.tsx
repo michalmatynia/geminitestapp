@@ -14,6 +14,7 @@ const {
   useKangurAssignmentsMock,
   useKangurAuthMock,
   useKangurPageContentEntryMock,
+  useKangurSubjectFocusMock,
   authMeMock,
   redirectToLoginMock,
   logoutMock,
@@ -23,6 +24,7 @@ const {
   useKangurAssignmentsMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
   useKangurPageContentEntryMock: vi.fn(),
+  useKangurSubjectFocusMock: vi.fn(),
   authMeMock: vi.fn(),
   redirectToLoginMock: vi.fn(),
   logoutMock: vi.fn(),
@@ -44,6 +46,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
   useOptionalKangurAuth: useKangurAuthMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
@@ -78,6 +84,7 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
     },
     score: {
       create: vi.fn().mockResolvedValue(undefined),
+      filter: vi.fn().mockResolvedValue([]),
       list: vi.fn().mockResolvedValue([]),
       top: vi.fn().mockResolvedValue([]),
     },
@@ -153,6 +160,11 @@ describe('Game delegated quick starts', () => {
       logout: logoutMock,
       navigateToLogin: redirectToLoginMock,
       user: null,
+    });
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'guest',
     });
     useKangurPageContentEntryMock.mockReturnValue({
       entry: null,

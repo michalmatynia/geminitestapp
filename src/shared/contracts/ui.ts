@@ -15,6 +15,13 @@ export interface ModalStateProps {
   onSuccess?: () => void;
 }
 
+export type DataAttributesDto = {
+  'data-testid'?: string;
+  'data-doc-id'?: string;
+  'data-doc-alias'?: string;
+};
+export type DataAttributes = DataAttributesDto;
+
 export interface EntityModalProps<T, TList = T> extends ModalStateProps {
   item?: T | null;
   items?: TList[];

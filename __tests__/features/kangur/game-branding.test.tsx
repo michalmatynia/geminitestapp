@@ -13,17 +13,23 @@ const {
   useKangurProgressStateMock,
   useKangurAssignmentsMock,
   useKangurAuthMock,
+  useKangurSubjectFocusMock,
   authMeMock,
   redirectToLoginMock,
   logoutMock,
+  lessonsState,
 } = vi.hoisted(() => ({
   useKangurRoutingMock: vi.fn(),
   useKangurProgressStateMock: vi.fn(),
   useKangurAssignmentsMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
+  useKangurSubjectFocusMock: vi.fn(),
   authMeMock: vi.fn(),
   redirectToLoginMock: vi.fn(),
   logoutMock: vi.fn(),
+  lessonsState: {
+    value: [] as Array<Record<string, unknown>>,
+  },
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
@@ -39,9 +45,32 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: useKangurAssignmentsMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: (options: { subject?: string; enabledOnly?: boolean } = {}) => {
+    let data = lessonsState.value;
+    if (options.enabledOnly) {
+      data = data.filter((lesson) => lesson.enabled !== false);
+    }
+    if (options.subject) {
+      data = data.filter((lesson) => (lesson.subject ?? 'maths') === options.subject);
+    }
+    return {
+      data,
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+      error: null,
+    };
+  },
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
   useOptionalKangurAuth: useKangurAuthMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
@@ -174,6 +203,37 @@ describe('Game branding', () => {
       navigateToLogin: redirectToLoginMock,
       user: null,
     });
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'guest',
+    });
+    lessonsState.value = [
+      {
+        id: 'kangur-lesson-calendar',
+        componentId: 'calendar',
+        title: 'Nauka kalendarza',
+        description: 'Dni i miesiące',
+        emoji: '📅',
+        color: 'kangur-gradient-accent-emerald',
+        activeBg: 'bg-emerald-500',
+        sortOrder: 2000,
+        enabled: true,
+        subject: 'maths',
+      },
+      {
+        id: 'kangur-lesson-geometry-shapes',
+        componentId: 'geometry_shapes',
+        title: 'Figury geometryczne',
+        description: 'Rozpoznawaj figury',
+        emoji: '🔷',
+        color: 'kangur-gradient-accent-violet',
+        activeBg: 'bg-violet-500',
+        sortOrder: 3000,
+        enabled: true,
+        subject: 'maths',
+      },
+    ];
     authMeMock.mockImplementation(() => new Promise<null>(() => undefined));
     logoutMock.mockResolvedValue(undefined);
   });

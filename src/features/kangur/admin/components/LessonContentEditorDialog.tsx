@@ -26,7 +26,7 @@ import {
   writeLessonContentEditorDraft,
 } from '../lesson-content-editor-drafts';
 import { KangurAdminWorkspaceSectionCard } from './KangurAdminWorkspaceSectionCard';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 
 type Props = {
@@ -45,15 +45,20 @@ type Props = {
 const formatDraftTimestamp = (value: string | null): string | null => {
   if (!value) return null;
 
-  try {
-    return new Intl.DateTimeFormat('pl-PL', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value));
-  } catch (error) {
-    logClientError(error);
-    return value;
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.admin.lesson-editor',
+      action: 'format-draft-timestamp',
+      description: 'Formats lesson editor draft timestamps.',
+      context: { value },
+    },
+    () =>
+      new Intl.DateTimeFormat('pl-PL', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }).format(new Date(value)),
+    { fallback: value }
+  );
 };
 
 export function LessonContentEditorDialog(props: Props): React.JSX.Element {

@@ -1,7 +1,9 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-import { NextRequest, NextResponse } from 'next/server';
+// Force re-parse
+import { type NextRequest, NextResponse } from 'next/server';
+
 
 import { auth } from '@/features/auth/server';
 import { methodNotAllowedError, notFoundError } from '@/shared/errors/app-error';

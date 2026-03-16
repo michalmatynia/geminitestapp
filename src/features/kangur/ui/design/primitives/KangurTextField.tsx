@@ -2,12 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
 import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/features/kangur/shared/utils';
-
-type DataAttributes = {
-  'data-testid'?: string;
-  'data-doc-id'?: string;
-  'data-doc-alias'?: string;
-};
+import type { DataAttributesDto } from '@/shared/contracts/ui';
 
 export const kangurTextFieldVariants = cva(
   'kangur-text-field soft-card w-full border outline-none transition disabled:cursor-not-allowed disabled:opacity-70',
@@ -38,7 +33,7 @@ export const kangurTextFieldVariants = cva(
 
 export type KangurTextFieldProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> &
   VariantProps<typeof kangurTextFieldVariants> &
-  DataAttributes;
+  DataAttributesDto;
 
 export const KangurTextField = React.forwardRef<HTMLInputElement, KangurTextFieldProps>(
   (

@@ -1,6 +1,5 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { NetworkIcon, SearchIcon, WorkflowIcon, WrenchIcon } from 'lucide-react';
 import React, { useDeferredValue, useEffect, useMemo, useState } from 'react';
 
@@ -15,6 +14,7 @@ import type {
   ContextSearchResponse,
 } from '@/shared/contracts/ai-context-registry';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   Alert,
@@ -124,7 +124,7 @@ export function AdminAiContextRegistryPage(): React.JSX.Element {
     [deferredRuntimeRefsText]
   );
 
-  const searchQuery = useQuery({
+  const searchQuery = createListQueryV2<ContextSearchResponse, ContextSearchResponse>({
     queryKey: QUERY_KEYS.ai.contextRegistry.search(deferredQuery, kindFilter),
     queryFn: async () =>
       await postJson<ContextSearchResponse>('/api/ai/context/search', {
@@ -132,6 +132,15 @@ export function AdminAiContextRegistryPage(): React.JSX.Element {
         kinds: kindFilter === 'all' ? undefined : [kindFilter],
         limit: 24,
       }),
+    meta: {
+      source: 'ai-context-registry.page.search',
+      operation: 'list',
+      resource: 'ai.context-registry.search',
+      domain: 'ai',
+      queryKey: QUERY_KEYS.ai.contextRegistry.search(deferredQuery, kindFilter),
+      tags: ['ai', 'context-registry', 'search'],
+      description: 'Searches AI context registry nodes.',
+    },
   });
 
   const selectedNode = useMemo(
@@ -150,7 +159,7 @@ export function AdminAiContextRegistryPage(): React.JSX.Element {
     }
   }, [searchQuery.data?.nodes, selectedId]);
 
-  const relatedQuery = useQuery({
+  const relatedQuery = createListQueryV2<ContextRelatedResponse, ContextRelatedResponse>({
     queryKey: QUERY_KEYS.ai.contextRegistry.related(selectedId),
     queryFn: async () => {
       if (!selectedId) {
@@ -161,9 +170,18 @@ export function AdminAiContextRegistryPage(): React.JSX.Element {
       );
     },
     enabled: Boolean(selectedId),
+    meta: {
+      source: 'ai-context-registry.page.related',
+      operation: 'detail',
+      resource: 'ai.context-registry.related',
+      domain: 'ai',
+      queryKey: QUERY_KEYS.ai.contextRegistry.related(selectedId),
+      tags: ['ai', 'context-registry', 'related'],
+      description: 'Loads related AI context registry nodes.',
+    },
   });
 
-  const schemaQuery = useQuery({
+  const schemaQuery = createListQueryV2<ContextSchemaResponse, ContextSchemaResponse>({
     queryKey: QUERY_KEYS.ai.contextRegistry.schema(selectedNode?.id ?? null),
     queryFn: async () => {
       if (!selectedNode) {
@@ -174,6 +192,15 @@ export function AdminAiContextRegistryPage(): React.JSX.Element {
       );
     },
     enabled: selectedNode?.kind === 'collection',
+    meta: {
+      source: 'ai-context-registry.page.schema',
+      operation: 'detail',
+      resource: 'ai.context-registry.schema',
+      domain: 'ai',
+      queryKey: QUERY_KEYS.ai.contextRegistry.schema(selectedNode?.id ?? null),
+      tags: ['ai', 'context-registry', 'schema'],
+      description: 'Loads AI context registry collection schema.',
+    },
   });
 
   const bundleRequest = useMemo<ContextBundleRequest | null>(() => {
@@ -189,7 +216,10 @@ export function AdminAiContextRegistryPage(): React.JSX.Element {
     };
   }, [runtimeRefs, selectedId]);
 
-  const bundleQuery = useQuery({
+  const bundleQuery = createListQueryV2<
+    ContextRegistryResolutionBundle,
+    ContextRegistryResolutionBundle
+  >({
     queryKey: QUERY_KEYS.ai.contextRegistry.bundle(JSON.stringify(bundleRequest ?? null)),
     queryFn: async () => {
       if (!bundleRequest) {
@@ -201,6 +231,15 @@ export function AdminAiContextRegistryPage(): React.JSX.Element {
       );
     },
     enabled: Boolean(bundleRequest),
+    meta: {
+      source: 'ai-context-registry.page.bundle',
+      operation: 'detail',
+      resource: 'ai.context-registry.bundle',
+      domain: 'ai',
+      queryKey: QUERY_KEYS.ai.contextRegistry.bundle(JSON.stringify(bundleRequest ?? null)),
+      tags: ['ai', 'context-registry', 'bundle'],
+      description: 'Resolves AI context registry bundles.',
+    },
   });
 
   const envelopePreview = useMemo(

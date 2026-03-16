@@ -18,6 +18,7 @@ import {
   KangurLessonInset,
   KangurLessonLead,
   KangurLessonStack,
+  KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurEquationDisplay } from '@/features/kangur/ui/design/primitives';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
@@ -44,12 +45,9 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             Najczęstszy układ zdania to <strong>Subject → Verb → Object</strong>.
           </KangurLessonLead>
-          <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-            <div className='mx-auto w-full max-w-sm'>
-              <EnglishSentenceBlueprintAnimation />
-            </div>
-            <KangurLessonCaption className='mt-2'>Subject + Verb + Object</KangurLessonCaption>
-          </KangurLessonCallout>
+          <KangurLessonVisual accent='violet' caption='Subject + Verb + Object'>
+            <EnglishSentenceBlueprintAnimation />
+          </KangurLessonVisual>
           <KangurLessonInset accent='violet' className='text-left'>
             <p className='text-sm font-semibold text-violet-700'>The student solves the equation.</p>
           </KangurLessonInset>
@@ -97,12 +95,9 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             W Present Simple pytania tworzymy przez <strong>Do/Does + subject + verb</strong>.
           </KangurLessonLead>
-          <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-            <div className='mx-auto w-full max-w-sm'>
-              <EnglishQuestionFlipAnimation />
-            </div>
-            <KangurLessonCaption className='mt-2'>Do you? / Does she?</KangurLessonCaption>
-          </KangurLessonCallout>
+          <KangurLessonVisual accent='violet' caption='Do you? / Does she?'>
+            <EnglishQuestionFlipAnimation />
+          </KangurLessonVisual>
           <div className='grid gap-2 text-sm'>
             {[
               'Do you understand the graph?',
@@ -126,12 +121,9 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             Używaj spójników, żeby połączyć myśli w jedno zdanie.
           </KangurLessonLead>
-          <KangurLessonCallout accent='amber' className='text-center' padding='sm'>
-            <div className='mx-auto w-full max-w-sm'>
-              <EnglishConnectorBridgeAnimation />
-            </div>
-            <KangurLessonCaption className='mt-2'>and / but / so / because</KangurLessonCaption>
-          </KangurLessonCallout>
+          <KangurLessonVisual accent='amber' caption='and / but / so / because'>
+            <EnglishConnectorBridgeAnimation />
+          </KangurLessonVisual>
           <div className='grid gap-2 text-sm'>
             {[
               'I solved the equation, so I checked the graph.',

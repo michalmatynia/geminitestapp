@@ -3,7 +3,7 @@
  */
 
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { useKangurGameRuntimeMock } = vi.hoisted(() => ({
   useKangurGameRuntimeMock: vi.fn(),
@@ -11,9 +11,14 @@ const { useKangurGameRuntimeMock } = vi.hoisted(() => ({
 const getCurrentKangurDailyQuestMock = vi.hoisted(() => vi.fn());
 const getNextLockedBadgeMock = vi.hoisted(() => vi.fn());
 const getRecommendedSessionProjectionMock = vi.hoisted(() => vi.fn());
+const useKangurSubjectFocusMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
   useKangurGameRuntime: useKangurGameRuntimeMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
 vi.mock('@/features/kangur/ui/services/daily-quests', () => ({
@@ -54,6 +59,14 @@ vi.mock('@/features/kangur/ui/components/KangurPracticeAssignmentBanner', () => 
 import { KangurGameQuestionWidget } from '@/features/kangur/ui/components/KangurGameQuestionWidget';
 
 describe('KangurGameQuestionWidget', () => {
+  beforeEach(() => {
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+  });
+
   it('uses the lighter status-strip copy palette while rendering the active question', () => {
     getCurrentKangurDailyQuestMock.mockReturnValue({
       progress: {

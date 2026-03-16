@@ -13,6 +13,7 @@ import type { KangurAiTutorContextValue } from '@/features/kangur/ui/context/Kan
 import {
   resolveKangurTutorSectionKnowledgeReference,
 } from '@/features/kangur/ai-tutor-section-knowledge';
+import type { KangurAiTutorTelemetryContextDto } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import {
   formatKangurAiTutorTemplate,
   type KangurAiTutorContent,
@@ -36,12 +37,6 @@ import type {
   SectionExplainContext,
   TutorSurface,
 } from './KangurAiTutorWidget.types';
-
-type TelemetryContext = {
-  surface: string | null;
-  contentId: string | null;
-  title: string | null;
-};
 
 type SectionAnchor = KangurTutorAnchorRegistration & {
   kind: GuidedTutorSectionKind;
@@ -112,7 +107,7 @@ export function useKangurAiTutorGuidedFlow(input: {
   setSelectionResponsePending: (value: PendingSelectionResponse | null) => void;
   setViewportTick: Dispatch<SetStateAction<number>>;
   suppressAvatarClickRef: MutableRefObject<boolean>;
-  telemetryContext: TelemetryContext;
+  telemetryContext: KangurAiTutorTelemetryContextDto;
   tutorContent: KangurAiTutorContent;
   viewportHeight: number;
 }) {

@@ -25,7 +25,10 @@ import {
 } from '@/features/kangur/shared/ui';
 import { ConfirmModal } from '@/features/kangur/shared/ui/templates/modals';
 import { cn } from '@/features/kangur/shared/utils';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import {
+  withKangurClientError,
+  withKangurClientErrorSync,
+} from '@/features/kangur/observability/client';
 import {
   useKangurLessonDocuments,
   useKangurLessons,
@@ -166,13 +169,18 @@ export function AdminKangurLessonsManagerPage({
   );
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    try {
-      window.localStorage.setItem(TREE_MODE_STORAGE_KEY, treeMode);
-    } catch (error) {
-      logClientError(error);
-    
-      // Ignore storage errors.
-    }
+    withKangurClientErrorSync(
+      {
+        source: 'kangur.admin.lessons-manager',
+        action: 'persist-tree-mode',
+        description: 'Persists the lessons manager tree mode selection.',
+        context: { treeMode },
+      },
+      () => {
+        window.localStorage.setItem(TREE_MODE_STORAGE_KEY, treeMode);
+      },
+      { fallback: undefined }
+    );
   }, [treeMode]);
 
   const filteredLessons = useMemo(
@@ -280,44 +288,60 @@ export function AdminKangurLessonsManagerPage({
 
   const handleSaveLessonSvg = async (markup: string, viewBox: string): Promise<void> => {
     if (!svgModalLesson) return;
-    try {
-      const sanitized = sanitizeSvgMarkup(markup);
-      const existingDoc = lessonDocuments[svgModalLesson.id] ?? createDefaultKangurLessonDocument();
-      const pages = resolveKangurLessonDocumentPages(existingDoc);
-      const firstPage = pages[0];
-      if (!firstPage) {
-        toast('No pages in lesson document.', { variant: 'error' });
-        return;
+    const didSave = await withKangurClientError(
+      {
+        source: 'kangur.admin.lessons-manager',
+        action: 'save-lesson-svg',
+        description: 'Saves the SVG block into the lesson document.',
+        context: { lessonId: svgModalLesson.id },
+      },
+      async () => {
+        const sanitized = sanitizeSvgMarkup(markup);
+        const existingDoc =
+          lessonDocuments[svgModalLesson.id] ?? createDefaultKangurLessonDocument();
+        const pages = resolveKangurLessonDocumentPages(existingDoc);
+        const firstPage = pages[0];
+        if (!firstPage) {
+          toast('No pages in lesson document.', { variant: 'error' });
+          return false;
+        }
+
+        const svgBlockIndex = firstPage.blocks.findIndex((b) => b.type === 'svg');
+        const nextBlocks =
+          svgBlockIndex !== -1
+            ? firstPage.blocks.map((b, i) =>
+              i === svgBlockIndex && b.type === 'svg' ? { ...b, markup: sanitized, viewBox } : b
+            )
+            : [
+              { ...createKangurLessonSvgBlock(), markup: sanitized, viewBox },
+              ...firstPage.blocks,
+            ];
+
+        const nextPages = pages.map((p, i) => (i === 0 ? { ...p, blocks: nextBlocks } : p));
+        const nextDoc = updateKangurLessonDocumentPages(existingDoc, nextPages);
+        const nextStore = { ...lessonDocuments, [svgModalLesson.id]: nextDoc };
+
+        await updateLessonDocuments.mutateAsync(nextStore);
+
+        if (svgModalLesson.contentMode !== 'document') {
+          const nextLessonRecord: KangurLesson = { ...svgModalLesson, contentMode: 'document' };
+          const nextLessons = canonicalizeKangurLessons(upsertLesson(lessons, nextLessonRecord));
+          await updateLessons.mutateAsync(nextLessons);
+        }
+
+        return true;
+      },
+      {
+        fallback: false,
+        onError: () => {
+          toast('Failed to save SVG.', { variant: 'error' });
+        },
       }
+    );
 
-      const svgBlockIndex = firstPage.blocks.findIndex((b) => b.type === 'svg');
-      const nextBlocks =
-        svgBlockIndex !== -1
-          ? firstPage.blocks.map((b, i) =>
-            i === svgBlockIndex && b.type === 'svg' ? { ...b, markup: sanitized, viewBox } : b
-          )
-          : [{ ...createKangurLessonSvgBlock(), markup: sanitized, viewBox }, ...firstPage.blocks];
-
-      const nextPages = pages.map((p, i) => (i === 0 ? { ...p, blocks: nextBlocks } : p));
-      const nextDoc = updateKangurLessonDocumentPages(existingDoc, nextPages);
-      const nextStore = { ...lessonDocuments, [svgModalLesson.id]: nextDoc };
-
-      await updateLessonDocuments.mutateAsync(nextStore);
-
-      if (svgModalLesson.contentMode !== 'document') {
-        const nextLessonRecord: KangurLesson = { ...svgModalLesson, contentMode: 'document' };
-        const nextLessons = canonicalizeKangurLessons(upsertLesson(lessons, nextLessonRecord));
-        await updateLessons.mutateAsync(nextLessons);
-      }
-
+    if (didSave) {
       toast('SVG image saved.', { variant: 'success' });
       setSvgModalLesson(null);
-    } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'AdminKangurLessonsManagerPage', action: 'saveLessonSvg' },
-      });
-      toast('Failed to save SVG.', { variant: 'error' });
     }
   };
 
@@ -337,17 +361,38 @@ export function AdminKangurLessonsManagerPage({
   }, []);
 
   const handleSaveLesson = async (): Promise<void> => {
-    try {
-      const lessonId = editingLesson?.id ?? createKangurLessonId();
-      const nextLesson: KangurLesson = {
-        ...formData,
-        id: lessonId,
-        sortOrder: editingLesson?.sortOrder ?? lessons.length * KANGUR_LESSON_SORT_ORDER_GAP,
-      };
+    const lessonId = editingLesson?.id ?? createKangurLessonId();
+    const nextLesson: KangurLesson = {
+      ...formData,
+      id: lessonId,
+      sortOrder: editingLesson?.sortOrder ?? lessons.length * KANGUR_LESSON_SORT_ORDER_GAP,
+    };
 
-      const nextLessons = canonicalizeKangurLessons(upsertLesson(lessons, nextLesson));
-      await updateLessons.mutateAsync(nextLessons);
+    const didSave = await withKangurClientError(
+      {
+        source: 'kangur.admin.lessons-manager',
+        action: 'save-lesson',
+        description: 'Creates or updates a Kangur lesson entry.',
+        context: {
+          lessonId,
+          isEdit: Boolean(editingLesson),
+          contentMode: nextLesson.contentMode,
+        },
+      },
+      async () => {
+        const nextLessons = canonicalizeKangurLessons(upsertLesson(lessons, nextLesson));
+        await updateLessons.mutateAsync(nextLessons);
+        return true;
+      },
+      {
+        fallback: false,
+        onError: () => {
+          toast('Failed to save lesson.', { variant: 'error' });
+        },
+      }
+    );
 
+    if (didSave) {
       toast(editingLesson ? 'Lesson updated.' : 'Lesson created.', { variant: 'success' });
       setShowModal(false);
 
@@ -356,165 +401,239 @@ export function AdminKangurLessonsManagerPage({
       }
 
       setEditingLesson(null);
-    } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'AdminKangurLessonsManagerPage', action: 'saveLesson' },
-      });
-      toast('Failed to save lesson.', { variant: 'error' });
     }
   };
 
   const handleDeleteLesson = async (): Promise<void> => {
     if (!lessonToDelete) return;
-    try {
-      const nextLessons = canonicalizeKangurLessons(
-        lessons.filter((lesson) => lesson.id !== lessonToDelete.id)
-      );
-      await updateLessons.mutateAsync(nextLessons);
+    const lessonId = lessonToDelete.id;
+    const didDelete = await withKangurClientError(
+      {
+        source: 'kangur.admin.lessons-manager',
+        action: 'delete-lesson',
+        description: 'Deletes a Kangur lesson entry and related documents.',
+        context: { lessonId },
+      },
+      async () => {
+        const nextLessons = canonicalizeKangurLessons(
+          lessons.filter((lesson) => lesson.id !== lessonId)
+        );
+        await updateLessons.mutateAsync(nextLessons);
 
-      const nextLessonDocuments = removeKangurLessonDocument(lessonDocuments, lessonToDelete.id);
-      if (nextLessonDocuments !== lessonDocuments) {
-        await updateLessonDocuments.mutateAsync(nextLessonDocuments);
+        const nextLessonDocuments = removeKangurLessonDocument(lessonDocuments, lessonId);
+        if (nextLessonDocuments !== lessonDocuments) {
+          await updateLessonDocuments.mutateAsync(nextLessonDocuments);
+        }
+        clearLessonContentEditorDraft(lessonId);
+        return true;
+      },
+      {
+        fallback: false,
+        onError: () => {
+          toast('Failed to delete lesson.', { variant: 'error' });
+        },
       }
-      clearLessonContentEditorDraft(lessonToDelete.id);
+    );
 
+    if (didDelete) {
       toast('Lesson deleted.', { variant: 'success' });
       setLessonToDelete(null);
-    } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'AdminKangurLessonsManagerPage', action: 'deleteLesson' },
-      });
-      toast('Failed to delete lesson.', { variant: 'error' });
     }
   };
 
   const handleSaveLessonContent = async (): Promise<void> => {
     if (!editingContentLesson) return;
-    try {
-      const nextDocument = updateKangurLessonDocumentTimestamp(contentDraft);
-      const nextStore = {
-        ...lessonDocuments,
-        [editingContentLesson.id]: nextDocument,
-      };
-      await updateLessonDocuments.mutateAsync(nextStore);
+    const lessonId = editingContentLesson.id;
+    const didSave = await withKangurClientError(
+      {
+        source: 'kangur.admin.lessons-manager',
+        action: 'save-lesson-content',
+        description: 'Saves the lesson document content for the editor.',
+        context: { lessonId },
+      },
+      async () => {
+        const nextDocument = updateKangurLessonDocumentTimestamp(contentDraft);
+        const nextStore = {
+          ...lessonDocuments,
+          [lessonId]: nextDocument,
+        };
+        await updateLessonDocuments.mutateAsync(nextStore);
 
-      const nextLesson: KangurLesson = { ...editingContentLesson, contentMode: 'document' };
-      const nextLessons = canonicalizeKangurLessons(upsertLesson(lessons, nextLesson));
-      await updateLessons.mutateAsync(nextLessons);
-      clearLessonContentEditorDraft(editingContentLesson.id);
+        const nextLesson: KangurLesson = { ...editingContentLesson, contentMode: 'document' };
+        const nextLessons = canonicalizeKangurLessons(upsertLesson(lessons, nextLesson));
+        await updateLessons.mutateAsync(nextLessons);
+        clearLessonContentEditorDraft(lessonId);
+        return true;
+      },
+      {
+        fallback: false,
+        onError: () => {
+          toast('Failed to save lesson content.', { variant: 'error' });
+        },
+      }
+    );
 
+    if (didSave) {
       toast('Lesson content saved.', { variant: 'success' });
       setShowContentModal(false);
       setEditingContentLesson(null);
-    } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'AdminKangurLessonsManagerPage', action: 'saveContent' },
-      });
-      toast('Failed to save lesson content.', { variant: 'error' });
     }
   };
 
   const handleClearLessonContent = async (): Promise<void> => {
     if (!editingContentLesson) return;
-    try {
-      const nextLesson: KangurLesson = { ...editingContentLesson, contentMode: 'component' };
-      const nextLessons = canonicalizeKangurLessons(upsertLesson(lessons, nextLesson));
-      await updateLessons.mutateAsync(nextLessons);
+    const lessonId = editingContentLesson.id;
+    const didClear = await withKangurClientError(
+      {
+        source: 'kangur.admin.lessons-manager',
+        action: 'clear-lesson-content',
+        description: 'Clears custom lesson content and restores component mode.',
+        context: { lessonId },
+      },
+      async () => {
+        const nextLesson: KangurLesson = { ...editingContentLesson, contentMode: 'component' };
+        const nextLessons = canonicalizeKangurLessons(upsertLesson(lessons, nextLesson));
+        await updateLessons.mutateAsync(nextLessons);
 
-      const nextStore = { ...lessonDocuments };
-      delete nextStore[editingContentLesson.id];
-      await updateLessonDocuments.mutateAsync(nextStore);
-      clearLessonContentEditorDraft(editingContentLesson.id);
+        const nextStore = { ...lessonDocuments };
+        delete nextStore[lessonId];
+        await updateLessonDocuments.mutateAsync(nextStore);
+        clearLessonContentEditorDraft(lessonId);
+        return true;
+      },
+      {
+        fallback: false,
+        onError: () => {
+          toast('Failed to clear content.', { variant: 'error' });
+        },
+      }
+    );
 
+    if (didClear) {
       toast('Custom content cleared.', { variant: 'success' });
       setContentDraft(createDefaultKangurLessonDocument());
-    } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'AdminKangurLessonsManagerPage', action: 'clearContent' },
-      });
-      toast('Failed to clear content.', { variant: 'error' });
     }
   };
 
   const handleImportLegacyLesson = (): void => {
     if (!editingContentLesson) return;
-    try {
-      const result = importLegacyKangurLessonDocument(editingContentLesson.componentId);
-      if (!result) {
-        toast('No legacy importer available for this lesson type.', { variant: 'warning' });
-        return;
+    let didError = false;
+    const result = withKangurClientErrorSync(
+      {
+        source: 'kangur.admin.lessons-manager',
+        action: 'import-legacy-lesson',
+        description: 'Imports a legacy lesson document into the editor.',
+        context: { componentId: editingContentLesson.componentId },
+      },
+      () => importLegacyKangurLessonDocument(editingContentLesson.componentId),
+      {
+        fallback: null,
+        onError: () => {
+          didError = true;
+          toast('Failed to import legacy lesson.', { variant: 'error' });
+        },
       }
-      setContentDraft(result.document);
-      toast('Legacy lesson imported. Review and save to apply.', { variant: 'success' });
-      } catch (error) {
-        logClientError(error);      logClientError(error, {
-        context: { source: 'AdminKangurLessonsManagerPage', action: 'importLegacy' },
-      });
-      toast('Failed to import legacy lesson.', { variant: 'error' });
+    );
+    if (!result) {
+      if (!didError) {
+        toast('No legacy importer available for this lesson type.', { variant: 'warning' });
+      }
+      return;
     }
+    setContentDraft(result.document);
+    toast('Legacy lesson imported. Review and save to apply.', { variant: 'success' });
   };
 
   const handleAddGeometryPack = async (): Promise<void> => {
-    try {
-      const result = appendMissingGeometryKangurLessons(lessons);
-      const nextLessons = canonicalizeKangurLessons(result.lessons);
-      await updateLessons.mutateAsync(nextLessons);
+    const didAdd = await withKangurClientError(
+      {
+        source: 'kangur.admin.lessons-manager',
+        action: 'add-geometry-pack',
+        description: 'Appends missing geometry lessons to the catalog.',
+      },
+      async () => {
+        const result = appendMissingGeometryKangurLessons(lessons);
+        const nextLessons = canonicalizeKangurLessons(result.lessons);
+        await updateLessons.mutateAsync(nextLessons);
+        return true;
+      },
+      {
+        fallback: false,
+        onError: () => {
+          toast('Failed to add geometry pack.', { variant: 'error' });
+        },
+      }
+    );
+
+    if (didAdd) {
       toast('Geometry lesson pack added.', { variant: 'success' });
-    } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'AdminKangurLessonsManagerPage', action: 'addGeometryPack' },
-      });
-      toast('Failed to add geometry pack.', { variant: 'error' });
     }
   };
 
   const handleAddLogicalThinkingPack = async (): Promise<void> => {
-    try {
-      const result = appendMissingLogicalThinkingKangurLessons(lessons);
-      const nextLessons = canonicalizeKangurLessons(result.lessons);
-      await updateLessons.mutateAsync(nextLessons);
+    const didAdd = await withKangurClientError(
+      {
+        source: 'kangur.admin.lessons-manager',
+        action: 'add-logic-pack',
+        description: 'Appends missing logical thinking lessons to the catalog.',
+      },
+      async () => {
+        const result = appendMissingLogicalThinkingKangurLessons(lessons);
+        const nextLessons = canonicalizeKangurLessons(result.lessons);
+        await updateLessons.mutateAsync(nextLessons);
+        return true;
+      },
+      {
+        fallback: false,
+        onError: () => {
+          toast('Failed to add logic pack.', { variant: 'error' });
+        },
+      }
+    );
+
+    if (didAdd) {
       toast('Logical thinking lesson pack added.', { variant: 'success' });
-    } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'AdminKangurLessonsManagerPage', action: 'addLogicPack' },
-      });
-      toast('Failed to add logic pack.', { variant: 'error' });
     }
   };
 
   const handleImportAllLessonsToEditor = async (): Promise<void> => {
-    try {
-      let updatedCount = 0;
-      const nextStore = { ...lessonDocuments };
-      lessons.forEach((lesson) => {
-        if (!hasKangurLessonDocumentContent(nextStore[lesson.id])) {
-          const result = importLegacyKangurLessonDocument(lesson.componentId);
-          if (result) {
-            nextStore[lesson.id] = result.document;
-            updatedCount += 1;
+    let updatedCount = 0;
+    const didImport = await withKangurClientError(
+      {
+        source: 'kangur.admin.lessons-manager',
+        action: 'import-all-lessons',
+        description: 'Imports all legacy lessons into the modular editor.',
+      },
+      async () => {
+        const nextStore = { ...lessonDocuments };
+        lessons.forEach((lesson) => {
+          if (!hasKangurLessonDocumentContent(nextStore[lesson.id])) {
+            const result = importLegacyKangurLessonDocument(lesson.componentId);
+            if (result) {
+              nextStore[lesson.id] = result.document;
+              updatedCount += 1;
+            }
           }
+        });
+
+        if (updatedCount === 0) {
+          toast('All lessons already have editor content.', { variant: 'info' });
+          return false;
         }
-      });
 
-      if (updatedCount === 0) {
-        toast('All lessons already have editor content.', { variant: 'info' });
-        return;
+        await updateLessonDocuments.mutateAsync(nextStore);
+        return true;
+      },
+      {
+        fallback: false,
+        onError: () => {
+          toast('Failed to import all lessons.', { variant: 'error' });
+        },
       }
+    );
 
-      await updateLessonDocuments.mutateAsync(nextStore);
+    if (didImport) {
       toast(`Imported ${updatedCount} lessons to modular editor.`, { variant: 'success' });
-    } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'AdminKangurLessonsManagerPage', action: 'importAll' },
-      });
-      toast('Failed to import all lessons.', { variant: 'error' });
     }
   };
 

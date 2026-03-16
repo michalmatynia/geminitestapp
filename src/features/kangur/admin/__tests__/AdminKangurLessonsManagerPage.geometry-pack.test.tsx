@@ -4,7 +4,6 @@
 
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
 const {
   mutateAsyncMock,
   updateLessonDocumentsMock,
@@ -15,24 +14,29 @@ const {
   useMasterFolderTreeShellMock,
   folderTreeViewportMock,
   folderTreeSearchBarMock,
-} = vi.hoisted(() => ({
-  mutateAsyncMock: vi.fn(),
-  updateLessonDocumentsMock: vi.fn(),
-  toastMock: vi.fn(),
-  lessonsState: {
-    value: [] as Array<Record<string, unknown>>,
-  },
-  lessonDocumentsState: {
-    value: {} as Record<string, unknown>,
-  },
-  searchStateMock: {
-    isActive: false,
-    results: [],
-  },
-  useMasterFolderTreeShellMock: vi.fn(),
-  folderTreeViewportMock: vi.fn(),
-  folderTreeSearchBarMock: vi.fn(),
-}));
+  withKangurClientError,
+  withKangurClientErrorSync,
+} = vi.hoisted(() => {
+  return {
+    mutateAsyncMock: vi.fn(),
+    updateLessonDocumentsMock: vi.fn(),
+    toastMock: vi.fn(),
+    lessonsState: {
+      value: [] as Array<Record<string, unknown>>,
+    },
+    lessonDocumentsState: {
+      value: {} as Record<string, unknown>,
+    },
+    searchStateMock: {
+      isActive: false,
+      results: [],
+    },
+    useMasterFolderTreeShellMock: vi.fn(),
+    folderTreeViewportMock: vi.fn(),
+    folderTreeSearchBarMock: vi.fn(),
+    ...globalThis.__kangurClientErrorMocks(),
+  };
+});
 
 vi.mock('@/features/foldertree', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/foldertree')>();
@@ -119,8 +123,9 @@ vi.mock('@/features/kangur/shared/ui/templates/modals', () => ({
   ConfirmModal: () => null,
 }));
 
-vi.mock('@/features/kangur/shared/utils/observability/client-error-logger', () => ({
-  logClientError: vi.fn(),
+vi.mock('@/features/kangur/observability/client', () => ({
+  withKangurClientError,
+  withKangurClientErrorSync,
 }));
 
 vi.mock('@/features/kangur/admin/components/KangurAdminContentShell', () => ({

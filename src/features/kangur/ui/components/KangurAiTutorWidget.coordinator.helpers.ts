@@ -8,7 +8,7 @@ import { KANGUR_AI_TUTOR_UI_ROOT_SELECTOR } from './KangurAiTutorUiBoundary.shar
 
 import type { ActiveTutorFocus } from './KangurAiTutorWidget.shared';
 import type { TutorSurface } from './KangurAiTutorWidget.types';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 
 export const HOME_ONBOARDING_ELIGIBLE_CONTENT_ID = 'game:home';
@@ -77,20 +77,28 @@ export const normalizeConversationFocusKind = (
 export const resolveTutorFollowUpLocation = (
   href: string
 ): { pathname: string; search: string } | null => {
-  try {
-    const resolved = new URL(
-      href,
-      typeof window === 'undefined' ? 'https://kangur.local' : window.location.origin
-    );
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur-ai-tutor-coordinator',
+      action: 'resolve-follow-up-location',
+      description: 'Resolve follow-up link location for the AI tutor.',
+      context: {
+        href,
+      },
+    },
+    () => {
+      const resolved = new URL(
+        href,
+        typeof window === 'undefined' ? 'https://kangur.local' : window.location.origin
+      );
 
-    return {
-      pathname: resolved.pathname,
-      search: resolved.search,
-    };
-  } catch (error) {
-    logClientError(error);
-    return null;
-  }
+      return {
+        pathname: resolved.pathname,
+        search: resolved.search,
+      };
+    },
+    { fallback: null }
+  );
 };
 
 export const getCurrentTutorLocation = (): { pathname: string; search: string } | null => {
@@ -205,12 +213,17 @@ export const isSelectionWithinTutorUi = (): boolean => {
 
   const nodes: Array<Node | null> = [selection.anchorNode, selection.focusNode];
   for (let index = 0; index < selection.rangeCount; index += 1) {
-    try {
-      nodes.push(selection.getRangeAt(index).commonAncestorContainer);
-    } catch (error) {
-      logClientError(error);
-    
-      // Ignore stale browser ranges and fall back to anchor/focus nodes.
+    const ancestor = withKangurClientErrorSync(
+      {
+        source: 'kangur-ai-tutor-coordinator',
+        action: 'read-selection-range',
+        description: 'Read selection range container for tutor UI detection.',
+      },
+      () => selection.getRangeAt(index).commonAncestorContainer,
+      { fallback: null }
+    );
+    if (ancestor) {
+      nodes.push(ancestor);
     }
   }
 

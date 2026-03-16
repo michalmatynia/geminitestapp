@@ -1,5 +1,6 @@
 export * from './KangurButton';
 export * from './KangurPanel';
+export * from './KangurPanelStack';
 export * from './KangurOptionCardButton';
 export * from './KangurStatusChip';
 export * from './KangurResultBadge';
@@ -31,6 +32,7 @@ export * from './KangurPageContainer';
 export * from './KangurTopNavGroup';
 export * from './KangurSectionEyebrow';
 export * from './KangurPanelIntro';
+export * from './KangurWidgetIntro';
 export * from './KangurSectionHeading';
 export * from './KangurGradientHeading';
 export * from './KangurFeatureHeader';

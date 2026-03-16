@@ -102,9 +102,11 @@ describe('getCurrentKangurDailyQuest', () => {
 
     const firstQuest = getCurrentKangurDailyQuest(progressWithWeakLesson, {
       ownerKey: 'learner-1',
+      subject: 'maths',
     });
     const updatedQuest = getCurrentKangurDailyQuest(progressAfterRecovery, {
       ownerKey: 'learner-1',
+      subject: 'maths',
     });
 
     expect(firstQuest?.assignment.id).toBe('lesson-retry-division');
@@ -119,17 +121,19 @@ describe('getCurrentKangurDailyQuest', () => {
 
     const firstQuest = getCurrentKangurDailyQuest(progressWithWeakLesson, {
       ownerKey: 'learner-1',
+      subject: 'maths',
     });
 
     vi.setSystemTime(new Date('2026-03-11T09:00:00.000Z'));
     const nextDayQuest = getCurrentKangurDailyQuest(progressWithoutHighPriority, {
       ownerKey: 'learner-1',
+      subject: 'maths',
     });
 
     expect(firstQuest?.dateKey).toBe('2026-03-10');
     expect(nextDayQuest?.dateKey).toBe('2026-03-11');
     expect(nextDayQuest?.assignment.id).not.toBe(firstQuest?.assignment.id);
-    expect(window.localStorage.getItem(getKangurDailyQuestStorageKey())).toContain('2026-03-11');
+    expect(window.localStorage.getItem(getKangurDailyQuestStorageKey('maths'))).toContain('2026-03-11');
   });
 
   it('awards the daily quest bonus only once after completion', () => {
@@ -137,13 +141,16 @@ describe('getCurrentKangurDailyQuest', () => {
 
     getCurrentKangurDailyQuest(progressWithWeakLesson, {
       ownerKey: 'learner-1',
+      subject: 'maths',
     });
 
     const firstClaim = claimCurrentKangurDailyQuestReward(progressAfterRecovery, {
       ownerKey: 'learner-1',
+      subject: 'maths',
     });
     const secondClaim = claimCurrentKangurDailyQuestReward(progressAfterRecovery, {
       ownerKey: 'learner-1',
+      subject: 'maths',
     });
 
     expect(firstClaim.xpAwarded).toBe(55);

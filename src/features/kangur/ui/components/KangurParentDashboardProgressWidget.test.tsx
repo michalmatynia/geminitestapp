@@ -35,6 +35,7 @@ const useKangurPageContentEntryMock = vi.hoisted(() => vi.fn());
 const useKangurAssignmentsMock = vi.hoisted(() => vi.fn());
 const assignmentsListMock = vi.hoisted(() => vi.fn());
 const assignmentManagerMock = vi.hoisted(() => vi.fn());
+const useKangurSubjectFocusMock = vi.hoisted(() => vi.fn());
 const lessonsState = vi.hoisted(() => ({
   value: [] as Array<Record<string, unknown>>,
 }));
@@ -47,6 +48,10 @@ vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () =
 
 vi.mock('@/features/kangur/ui/services/daily-quests', () => ({
   getCurrentKangurDailyQuest: getCurrentKangurDailyQuestMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
@@ -106,6 +111,11 @@ describe('KangurParentDashboardProgressWidget', () => {
       createAssignment: vi.fn(),
       updateAssignment: vi.fn(),
     });
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
     runtimeState.value = {
       activeLearner: { id: 'learner-1', displayName: 'Maja' },
       activeTab: 'progress',
@@ -145,7 +155,9 @@ describe('KangurParentDashboardProgressWidget', () => {
     render(<KangurParentDashboardProgressWidget />);
 
     expect(screen.getByTestId('parent-dashboard-daily-quest')).toBeInTheDocument();
-    expect(getCurrentKangurDailyQuestMock).toHaveBeenCalledWith(runtimeState.value.progress);
+    expect(getCurrentKangurDailyQuestMock).toHaveBeenCalledWith(runtimeState.value.progress, {
+      subject: 'maths',
+    });
     expect(screen.getAllByTestId('assignments-list-stub')).toHaveLength(2);
     expect(assignmentsListMock).toHaveBeenCalledWith(
       expect.objectContaining({

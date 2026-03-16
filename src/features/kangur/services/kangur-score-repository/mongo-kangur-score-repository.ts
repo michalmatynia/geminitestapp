@@ -35,6 +35,8 @@ type KangurScoreDocument = {
   owner_user_id?: string | null;
 };
 
+const ENGLISH_OPERATION_REGEX = /^english_/i;
+
 const toDto = (doc: KangurScoreDocument): KangurScore => ({
   id: doc._id.toString(),
   player_name: doc.player_name,
@@ -72,10 +74,23 @@ const toMongoFilters = (input?: KangurScoreListInput): Filter<KangurScoreDocumen
   }
   if (filters.subject) {
     if (filters.subject === 'maths') {
+      const subjectMatch: Filter<KangurScoreDocument> = {
+        $or: [
+          { subject: filters.subject },
+          { subject: { $exists: false } },
+          { subject: null },
+        ],
+      };
+      const operationMatch: Filter<KangurScoreDocument> = {
+        operation: { $not: ENGLISH_OPERATION_REGEX },
+      };
+      query.$and = Array.isArray(query.$and)
+        ? [...query.$and, subjectMatch, operationMatch]
+        : [subjectMatch, operationMatch];
+    } else if (filters.subject === 'english') {
       query.$or = [
         { subject: filters.subject },
-        { subject: { $exists: false } },
-        { subject: null },
+        { operation: { $regex: ENGLISH_OPERATION_REGEX } },
       ];
     } else {
       query.subject = filters.subject;

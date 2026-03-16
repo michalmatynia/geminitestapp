@@ -46,7 +46,8 @@ export type TanstackFactoryDomain =
   | 'analytics'
   | 'internationalization'
   | 'viewer3d'
-  | 'analytics';
+  | 'analytics'
+  | 'ai';
 
 export type TanstackFactoryMeta = {
   source: string;

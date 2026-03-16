@@ -1,6 +1,5 @@
 import type { KangurLesson, KangurLessonDocument } from '@/features/kangur/shared/contracts/kangur';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
-
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 const LESSON_CONTENT_EDITOR_DRAFT_STORAGE_PREFIX = 'kangur-lesson-editor-draft:v1:';
 
@@ -19,23 +18,29 @@ export const readLessonContentEditorDraft = (
 ): LessonContentEditorLocalDraft | null => {
   if (typeof window === 'undefined') return null;
 
-  try {
-    const raw = window.localStorage.getItem(getLessonContentEditorDraftStorageKey(lessonId));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as LessonContentEditorLocalDraft;
-    if (
-      parsed?.version !== 1 ||
-      !parsed.lesson ||
-      !parsed.document ||
-      typeof parsed.savedAt !== 'string'
-    ) {
-      return null;
-    }
-    return parsed;
-  } catch (error) {
-    logClientError(error);
-    return null;
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.admin.lesson-content-editor-drafts',
+      action: 'read',
+      description: 'Reads the lesson content editor draft from local storage.',
+      context: { lessonId },
+    },
+    () => {
+      const raw = window.localStorage.getItem(getLessonContentEditorDraftStorageKey(lessonId));
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as LessonContentEditorLocalDraft;
+      if (
+        parsed?.version !== 1 ||
+        !parsed.lesson ||
+        !parsed.document ||
+        typeof parsed.savedAt !== 'string'
+      ) {
+        return null;
+      }
+      return parsed;
+    },
+    { fallback: null }
+  );
 };
 
 export const writeLessonContentEditorDraft = ({
@@ -49,31 +54,42 @@ export const writeLessonContentEditorDraft = ({
 }): string | null => {
   if (typeof window === 'undefined') return null;
 
-  try {
-    window.localStorage.setItem(
-      getLessonContentEditorDraftStorageKey(lesson.id),
-      JSON.stringify({
-        version: 1,
-        lesson,
-        document,
-        savedAt,
-      } satisfies LessonContentEditorLocalDraft)
-    );
-    return savedAt;
-  } catch (error) {
-    logClientError(error);
-    return null;
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.admin.lesson-content-editor-drafts',
+      action: 'write',
+      description: 'Persists the lesson content editor draft in local storage.',
+      context: { lessonId: lesson.id },
+    },
+    () => {
+      window.localStorage.setItem(
+        getLessonContentEditorDraftStorageKey(lesson.id),
+        JSON.stringify({
+          version: 1,
+          lesson,
+          document,
+          savedAt,
+        } satisfies LessonContentEditorLocalDraft)
+      );
+      return savedAt;
+    },
+    { fallback: null }
+  );
 };
 
 export const clearLessonContentEditorDraft = (lessonId: string): void => {
   if (typeof window === 'undefined') return;
 
-  try {
-    window.localStorage.removeItem(getLessonContentEditorDraftStorageKey(lessonId));
-  } catch (error) {
-    logClientError(error);
-  
-    // Ignore storage failures.
-  }
+  withKangurClientErrorSync(
+    {
+      source: 'kangur.admin.lesson-content-editor-drafts',
+      action: 'clear',
+      description: 'Clears the lesson content editor draft from local storage.',
+      context: { lessonId },
+    },
+    () => {
+      window.localStorage.removeItem(getLessonContentEditorDraftStorageKey(lessonId));
+    },
+    { fallback: undefined }
+  );
 };

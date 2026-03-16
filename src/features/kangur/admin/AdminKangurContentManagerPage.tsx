@@ -30,7 +30,7 @@ import { KangurAdminMetricCard } from './components/KangurAdminMetricCard';
 import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
 import { KangurAdminWorkspaceIntroCard } from './components/KangurAdminWorkspaceIntroCard';
 import { summarizeKangurContentCreator } from './content-creator-insights';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 
 type ContentTab = 'lessons' | 'tests';
@@ -39,13 +39,18 @@ const TAB_STORAGE_KEY = 'kangur_content_manager_tab_v1';
 
 const readPersistedTab = (): ContentTab => {
   if (typeof window === 'undefined') return 'lessons';
-  try {
-    const v = window.localStorage.getItem(TAB_STORAGE_KEY);
-    return v === 'tests' ? 'tests' : 'lessons';
-  } catch (error) {
-    logClientError(error);
-    return 'lessons';
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.admin.content-manager',
+      action: 'read-tab',
+      description: 'Reads the persisted content manager tab from local storage.',
+    },
+    () => {
+      const v = window.localStorage.getItem(TAB_STORAGE_KEY);
+      return v === 'tests' ? 'tests' : 'lessons';
+    },
+    { fallback: 'lessons' }
+  );
 };
 
 const TABS: Array<IdLabelOptionDto<ContentTab> & { Icon: LucideIcon }> = [
@@ -111,13 +116,18 @@ export function AdminKangurContentManagerPage(): React.JSX.Element {
 
   const handleTabChange = (tab: ContentTab): void => {
     setActiveTab(tab);
-    try {
-      window.localStorage.setItem(TAB_STORAGE_KEY, tab);
-    } catch (error) {
-      logClientError(error);
-    
-      // ignore
-    }
+    withKangurClientErrorSync(
+      {
+        source: 'kangur.admin.content-manager',
+        action: 'persist-tab',
+        description: 'Persists the content manager tab selection.',
+        context: { tab },
+      },
+      () => {
+        window.localStorage.setItem(TAB_STORAGE_KEY, tab);
+      },
+      { fallback: undefined }
+    );
   };
 
   return (

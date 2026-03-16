@@ -5,7 +5,6 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
 const {
   settingsStoreMock,
   apiGetMock,
@@ -14,6 +13,8 @@ const {
   useOptionalKangurAuthMock,
   trackKangurClientEventMock,
   logKangurClientErrorMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
 } = vi.hoisted(() => ({
   settingsStoreMock: {
     get: vi.fn<(key: string) => string | undefined>(),
@@ -22,52 +23,8 @@ const {
   apiPostMock: vi.fn(),
   useAgentPersonasMock: vi.fn(),
   useOptionalKangurAuthMock: vi.fn(),
-  trackKangurClientEventMock: vi.fn(),
-  logKangurClientErrorMock: vi.fn(),
+  ...globalThis.__kangurClientErrorMocks(),
 }));
-
-type KangurClientErrorHandlingOptions<T> = {
-  fallback: T | (() => T);
-  onError?: (error: unknown) => void;
-  shouldReport?: (error: unknown) => boolean;
-  shouldRethrow?: (error: unknown) => boolean;
-};
-
-const withKangurClientError = async <T,>(
-  _report: unknown,
-  task: () => Promise<T>,
-  options: KangurClientErrorHandlingOptions<T>
-): Promise<T> => {
-  try {
-    return await task();
-  } catch (error) {
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
-      throw error;
-    }
-    return typeof options.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : options.fallback;
-  }
-};
-
-const withKangurClientErrorSync = <T,>(
-  _report: unknown,
-  task: () => T,
-  options: KangurClientErrorHandlingOptions<T>
-): T => {
-  try {
-    return task();
-  } catch (error) {
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
-      throw error;
-    }
-    return typeof options.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : options.fallback;
-  }
-};
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => settingsStoreMock,

@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server';
 
+import { safeSetInterval } from '@/shared/lib/timers';
+
 type RateLimitConfig = {
   windowMs: number;
   maxRequests: number;
@@ -209,7 +211,7 @@ export function withRateLimit(limiter: RateLimiter): (req: NextRequest) => Promi
 
 // Cleanup task (run periodically)
 if (typeof setInterval !== 'undefined') {
-  setInterval(
+  safeSetInterval(
     (): void => {
       Object.values(rateLimiters).forEach((limiter: RateLimiter): void => limiter.cleanup());
     },

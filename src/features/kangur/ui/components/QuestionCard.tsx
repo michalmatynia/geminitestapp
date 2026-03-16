@@ -279,7 +279,7 @@ export default function QuestionCard({
       <div
         aria-describedby={choicesDescriptionId}
         aria-labelledby={questionHeadingId}
-        className='grid w-full grid-cols-1 kangur-panel-gap sm:grid-cols-2'
+        className='grid w-full grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2'
         id={choicesGroupId}
         role='group'
         aria-label='Odpowiedzi'
@@ -345,7 +345,7 @@ export default function QuestionCard({
               }`}
               aria-pressed={selected === choice}
               buttonClassName={cn(
-                'flex items-center justify-center px-4 py-4 text-center text-xl font-bold shadow sm:text-2xl',
+                'flex items-center justify-center px-3 py-3 text-center text-lg font-bold shadow sm:px-4 sm:py-4 sm:text-xl md:text-2xl',
                 cardClass,
                 showResult ? 'cursor-default' : 'cursor-pointer'
               )}

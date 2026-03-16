@@ -6,6 +6,7 @@ import KangurRecommendationCard from '@/features/kangur/ui/components/KangurReco
 import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
 import ResultScreen from '@/features/kangur/ui/components/ResultScreen';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import {
   KangurCardDescription,
   KangurCardTitle,
@@ -64,12 +65,13 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
     totalQuestions,
     xpToast,
   } = useKangurGameRuntime();
+  const { subject } = useKangurSubjectFocus();
 
   if (screen !== 'result') {
     return null;
   }
 
-  const currentQuest = getCurrentKangurDailyQuest(progress);
+  const currentQuest = getCurrentKangurDailyQuest(progress, { subject });
   const nextBadge = getNextLockedBadge(progress);
   const unlockedBadgeDetails = (xpToast.newBadges ?? [])
     .map((badgeId) => BADGES.find((badge) => badge.id === badgeId))

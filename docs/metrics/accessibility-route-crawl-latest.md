@@ -8,39 +8,39 @@ canonical: true
 ---
 # Accessibility Route Crawl Report
 
-Generated at: 2026-03-16T19:21:43.563Z
+Generated at: 2026-03-16T20:55:53.128Z
 
 ## Summary
 
 - Status: FAILED
 - Routes: 28
-- Passed: 9
-- Failed: 19
+- Passed: 15
+- Failed: 13
 - Unexpected Playwright failures: 1
 - Flaky results: 0
-- Skipped: 18
+- Skipped: 12
 - Error messages captured: 1
 
 ## Route Status
 
 | Route | Audience | Status | Duration | Errors |
 | --- | --- | --- | ---: | ---: |
-| / | public | PASS | 23.7s | 0 |
-| /auth/signin | public | PASS | 1.9s | 0 |
-| /auth/register | public | PASS | 2.5s | 0 |
-| /kangur/login | public | PASS | 6.3s | 0 |
-| /kangur | public | PASS | 10.0s | 0 |
-| /kangur/game | public | PASS | 5.7s | 0 |
-| /kangur/lessons | public | PASS | 5.0s | 0 |
-| /kangur/profile | public | PASS | 3.1s | 0 |
-| /kangur/parent-dashboard | public | PASS | 3.0s | 0 |
-| /admin | admin | FAIL | 1.0m | 1 |
-| /admin/products | admin | FAIL | 0ms | 0 |
-| /admin/notes | admin | FAIL | 0ms | 0 |
-| /admin/integrations | admin | FAIL | 0ms | 0 |
-| /admin/case-resolver | admin | FAIL | 0ms | 0 |
-| /admin/cms | admin | FAIL | 0ms | 0 |
-| /admin/ai-paths | admin | FAIL | 0ms | 0 |
+| / | public | PASS | 1.1m | 0 |
+| /auth/signin | public | PASS | 8.6s | 0 |
+| /auth/register | public | PASS | 7.1s | 0 |
+| /kangur/login | public | PASS | 30.1s | 0 |
+| /kangur | public | PASS | 36.9s | 0 |
+| /kangur/game | public | PASS | 54.7s | 0 |
+| /kangur/lessons | public | PASS | 16.2s | 0 |
+| /kangur/profile | public | PASS | 12.9s | 0 |
+| /kangur/parent-dashboard | public | PASS | 18.7s | 0 |
+| /admin | admin | PASS | 1.4m | 0 |
+| /admin/products | admin | PASS | 56.6s | 0 |
+| /admin/notes | admin | PASS | 17.3s | 0 |
+| /admin/integrations | admin | PASS | 36.4s | 0 |
+| /admin/case-resolver | admin | PASS | 51.3s | 0 |
+| /admin/cms | admin | PASS | 19.7s | 0 |
+| /admin/ai-paths | admin | FAIL | 3.2m | 1 |
 | /admin/image-studio | admin | FAIL | 0ms | 0 |
 | /admin/chatbot | admin | FAIL | 0ms | 0 |
 | /admin/agentcreator | admin | FAIL | 0ms | 0 |
@@ -56,28 +56,28 @@ Generated at: 2026-03-16T19:21:43.563Z
 
 ## Errors
 
-### Admin Dashboard
+### Admin AI Paths
 
-- TimeoutError: page.waitForURL: Timeout 60000ms exceeded.
-=========================== logs ===========================
-waiting for navigation until "load"
-  navigated to "http://127.0.0.1:63940/auth/signin?error=AccessDenied"
-  navigated to "http://127.0.0.1:63940/auth/signin?error=AccessDenied"
-  navigated to "http://127.0.0.1:63940/auth/signin?error=AccessDenied"
-============================================================
+- Error: Accessibility violations detected:
 
-   at support/admin-auth.ts:100
+[serious] scrollable-region-focusable: Scrollable region must have keyboard access
+Ensure elements that have scrollable content are accessible by keyboard
+- #app-content
+Fix any of the following:
+  Element should have focusable content
+  Element should be focusable
+https://dequeuniversity.com/rules/axe/4.11/scrollable-region-focusable?application=axeAPI
 
-   98 |
-   99 |     if (!matchesDestination(getCurrentUrl())) {
-> 100 |       await page.waitForURL(
-      |                  ^
-  101 |         (url) =>
-  102 |           url.pathname === destinationUrl.pathname &&
-  103 |           (destinationUrl.search ? url.search === destinationUrl.search : true),
-    at navigateToDestination (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:100:18)
-    at ensureAdminSession (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:168:7)
-    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/accessibility-route-crawl.spec.ts:20:7
+   at support/accessibility.ts:100
+
+   98 |   if (violations.length === 0) return;
+   99 |
+> 100 |   throw new Error(`Accessibility violations detected:\n\n${formatViolations(violations)}`);
+      |         ^
+  101 | }
+  102 |
+    at expectPageToHaveNoAxeViolations (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/accessibility.ts:100:9)
+    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/accessibility-route-crawl.spec.ts:55:5
 
 ## Notes
 

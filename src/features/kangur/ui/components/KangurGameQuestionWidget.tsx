@@ -5,6 +5,7 @@ import { useRef } from 'react';
 import { QuestionCard } from '@/features/kangur/ui/components/game';
 import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { KangurStatusChip } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
@@ -31,13 +32,14 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
     screen,
     totalQuestions,
   } = useKangurGameRuntime();
+  const { subject } = useKangurSubjectFocus();
   const assignmentBannerRef = useRef<HTMLDivElement | null>(null);
   const questionAnchorRef = useRef<HTMLDivElement | null>(null);
   const answeredQuestions = Math.max(0, currentQuestionIndex);
   const roundAccuracy =
     answeredQuestions > 0 ? Math.round((score / answeredQuestions) * 100) : null;
   const perfectRunInProgress = answeredQuestions > 0 && score === answeredQuestions;
-  const currentQuest = getCurrentKangurDailyQuest(progress);
+  const currentQuest = getCurrentKangurDailyQuest(progress, { subject });
   const nextBadge = getNextLockedBadge(progress);
   const guidedProjection = activeSessionRecommendation
     ? getRecommendedSessionProjection(progress, true)

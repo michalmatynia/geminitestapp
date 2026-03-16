@@ -2,12 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
 import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/features/kangur/shared/utils';
-
-type DataAttributes = {
-  'data-testid'?: string;
-  'data-doc-id'?: string;
-  'data-doc-alias'?: string;
-};
+import type { DataAttributesDto } from '@/shared/contracts/ui';
 
 import { KANGUR_ACCENT_STYLES, KANGUR_OPTION_CARD_CLASSNAME, type KangurAccent } from '../tokens';
 
@@ -35,7 +30,7 @@ export const kangurOptionCardButtonVariants = cva(
 
 export type KangurOptionCardButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
   VariantProps<typeof kangurOptionCardButtonVariants> &
-  DataAttributes & {
+  DataAttributesDto & {
     accent?: KangurAccent;
   };
 

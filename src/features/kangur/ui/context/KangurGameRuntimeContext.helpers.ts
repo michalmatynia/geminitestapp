@@ -17,6 +17,7 @@ import {
   addXp,
   createGameSessionReward,
   getNextLockedBadge,
+  getProgressSubject,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import type {
@@ -200,6 +201,7 @@ export const buildKangurCompletedGameOutcome = ({
   }
 
   const storedProgress = loadProgress();
+  const subject = getProgressSubject();
   const sessionReward = createGameSessionReward(storedProgress, {
     operation: selectedOperation,
     difficulty,
@@ -209,12 +211,15 @@ export const buildKangurCompletedGameOutcome = ({
     durationSeconds: taken,
   });
 
-  const dailyQuestBefore = getCurrentKangurDailyQuest(storedProgress, { persist: false });
+  const dailyQuestBefore = getCurrentKangurDailyQuest(storedProgress, {
+    persist: false,
+    subject,
+  });
   const sessionRewardResult = addXp(sessionReward.xp, sessionReward.progressUpdates);
   let awardedXp = sessionReward.xp;
   const awardedBreakdown = [...(sessionReward.breakdown ?? [])];
   let finalProgress = sessionRewardResult.updated;
-  const questClaim = claimCurrentKangurDailyQuestReward(finalProgress);
+  const questClaim = claimCurrentKangurDailyQuestReward(finalProgress, { subject });
   let awardedBadges = [...sessionRewardResult.newBadges];
   let dailyQuestAfter = questClaim.quest;
 

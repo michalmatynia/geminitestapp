@@ -8,6 +8,7 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import EnglishPartsOfSpeechGame from '@/features/kangur/ui/components/EnglishPartsOfSpeechGame';
+import EnglishPronounsWarmupGame from '@/features/kangur/ui/components/EnglishPronounsWarmupGame';
 import {
   EnglishPossessiveAdjectiveAnimation,
   EnglishPossessivePronounAnimation,
@@ -20,6 +21,7 @@ import {
   KangurLessonInset,
   KangurLessonLead,
   KangurLessonStack,
+  KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurEquationDisplay } from '@/features/kangur/ui/design/primitives';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
@@ -35,9 +37,10 @@ type SectionId =
   | 'possessive_pronouns'
   | 'practice'
   | 'summary'
-  | 'game_parts_of_speech';
+  | 'game_parts_of_speech'
+  | 'game_pronouns_warmup';
 
-type SlideSectionId = Exclude<SectionId, 'game_parts_of_speech'>;
+type SlideSectionId = Exclude<SectionId, 'game_parts_of_speech' | 'game_pronouns_warmup'>;
 
 const SUBJECT_PRONOUNS = [
   { pronoun: 'I', meaning: 'ja', example: 'I solve the equation.' },
@@ -106,17 +109,16 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             Dla <strong>he / she / it</strong> czasownik dostaje końcówkę <strong>-s</strong>.
           </KangurLessonLead>
-          <KangurLessonCallout accent='sky' className='text-center' padding='sm'>
-            <div className='mx-auto w-full max-w-sm'>
-              <EnglishPronounSwapAnimation />
-            </div>
+          <KangurLessonVisual
+            accent='sky'
+            caption='Maya solves… → She solves…'
+            captionClassName='mt-1'
+          >
+            <EnglishPronounSwapAnimation />
             <KangurEquationDisplay accent='sky' className='mt-2' size='sm'>
               x + 4 = 10
             </KangurEquationDisplay>
-            <KangurLessonCaption className='mt-1'>
-              Maya solves… → She solves…
-            </KangurLessonCaption>
-          </KangurLessonCallout>
+          </KangurLessonVisual>
           <div className='flex flex-wrap gap-2 text-xs font-semibold'>
             <KangurLessonChip accent='sky'>I solve</KangurLessonChip>
             <KangurLessonChip accent='sky'>He solves</KangurLessonChip>
@@ -135,14 +137,12 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Possessive adjectives stoją <strong>przed rzeczownikiem</strong>. Pokazują, do kogo
             coś należy.
           </KangurLessonLead>
-          <KangurLessonCallout accent='indigo' className='text-center' padding='sm'>
-            <div className='mx-auto w-full max-w-sm'>
-              <EnglishPossessiveAdjectiveAnimation />
-            </div>
-            <KangurLessonCaption className='mt-2'>
-              my solution, your calculator, their graph
-            </KangurLessonCaption>
-          </KangurLessonCallout>
+          <KangurLessonVisual
+            accent='indigo'
+            caption='my solution, your calculator, their graph'
+          >
+            <EnglishPossessiveAdjectiveAnimation />
+          </KangurLessonVisual>
           <div className='grid gap-2 sm:grid-cols-2 text-sm'>
             {POSSESSIVE_ADJECTIVES.map((item) => (
               <KangurLessonInset key={item.word} accent='indigo' className='text-left'>
@@ -208,12 +208,9 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             Gdy porównujesz rozwiązania, zaimek mówi, czyje jest które.
           </KangurLessonLead>
-          <KangurLessonCallout accent='teal' className='text-center' padding='sm'>
-            <div className='mx-auto w-full max-w-sm'>
-              <EnglishPossessivePronounAnimation />
-            </div>
-            <KangurLessonCaption className='mt-2'>mine / yours / theirs</KangurLessonCaption>
-          </KangurLessonCallout>
+          <KangurLessonVisual accent='teal' caption='mine / yours / theirs'>
+            <EnglishPossessivePronounAnimation />
+          </KangurLessonVisual>
           <div className='flex flex-wrap gap-2 text-xs font-semibold'>
             {POSSESSIVE_PRONOUNS.slice(0, 6).map((item) => (
               <KangurLessonChip key={item.word} accent='teal'>
@@ -232,20 +229,20 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   practice: [
     {
-      title: 'Szybka praktyka',
+      title: 'Krótka rozgrzewka',
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Uzupełnij zdania właściwym zaimkiem.
+            Rozgrzewkę przenieśliśmy do mini gry z wyborem zaimków.
           </KangurLessonLead>
           <KangurLessonCallout accent='sky' padding='sm'>
             <div className='space-y-2 text-sm text-slate-700'>
-              <p>1) ___ graph shows the quadratic function. (our)</p>
-              <p>2) The red calculator is ___. (mine)</p>
-              <p>3) You solved it, but ___ solution is different. (your)</p>
+              <p>1) ___ graph shows the quadratic function.</p>
+              <p>2) The red calculator is ___.</p>
+              <p>3) You solved it, but ___ solution is different.</p>
             </div>
             <KangurLessonCaption className='mt-3'>
-              Odpowiedzi: our · mine · your
+              Wejdź do gry <strong>Pronoun Warm-up</strong> i uzupełnij zdania.
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -328,6 +325,13 @@ const HUB_SECTIONS = [
     description: 'Krótka rozgrzewka z przykładami',
   },
   {
+    id: 'game_pronouns_warmup',
+    emoji: '⚡',
+    title: 'Pronoun Warm-up',
+    description: 'Mini gra z wyborem zaimków',
+    isGame: true,
+  },
+  {
     id: 'summary',
     emoji: '🧠',
     title: 'Summary',
@@ -381,6 +385,26 @@ export default function EnglishPartsOfSpeechLesson(): React.JSX.Element {
     );
   }
 
+  if (activeSection === 'game_pronouns_warmup') {
+    return (
+      <LessonActivityStage
+        accent='sky'
+        headerTestId='english-pronouns-warmup-game-header'
+        icon='⚡'
+        onBack={() => setActiveSection(null)}
+        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        shellTestId='english-pronouns-warmup-game-shell'
+        title='Gra: Pronoun Warm-up'
+        description='Szybka rozgrzewka z zaimkami w matematycznych zdaniach.'
+      >
+        <EnglishPronounsWarmupGame
+          finishLabel='Wróć do tematów'
+          onFinish={() => setActiveSection(null)}
+        />
+      </LessonActivityStage>
+    );
+  }
+
   if (activeSection) {
     return (
       <LessonSlideSection
@@ -405,12 +429,18 @@ export default function EnglishPartsOfSpeechLesson(): React.JSX.Element {
       lessonTitle='English: Pronouns'
       gradientClass='kangur-gradient-accent-sky'
       progressDotClassName='bg-sky-300'
-      sections={HUB_SECTIONS.map((section) => ({
-        ...section,
-        progress: sectionProgress[section.id as SectionId],
-      }))}
+      sections={HUB_SECTIONS.map((section) =>
+        section.isGame
+          ? section
+          : {
+            ...section,
+            progress: sectionProgress[section.id as SlideSectionId],
+          }
+      )}
       onSelect={(id) => {
-        markSectionOpened(id as SectionId);
+        if (id !== 'game_parts_of_speech' && id !== 'game_pronouns_warmup') {
+          markSectionOpened(id as SlideSectionId);
+        }
         setActiveSection(id as SectionId);
       }}
     />

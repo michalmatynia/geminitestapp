@@ -17,7 +17,7 @@ import { KangurButton, KangurSummaryPanel } from '@/features/kangur/ui/design/pr
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import { api } from '@/shared/lib/api-client';
 import { cn } from '@/features/kangur/shared/utils';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientError } from '@/features/kangur/observability/client';
 
 
 type PlaybackStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'error';
@@ -217,14 +217,24 @@ export function KangurNarratorControl({
       audio.src = nextSegment.audioUrl;
       audio.playbackRate = DEFAULT_PLAYBACK_RATE;
 
-      try {
-        await audio.play();
-        setStatus('playing');
-      } catch (error) {
-        logClientError(error);
-        setStatus('error');
-        setErrorMessage('The browser blocked audio playback. Try the play button again.');
-      }
+      await withKangurClientError(
+        {
+          source: 'kangur-narrator',
+          action: 'play-audio-segment',
+          description: 'Start playback for a narration audio segment.',
+        },
+        async () => {
+          await audio.play();
+          setStatus('playing');
+        },
+        {
+          fallback: undefined,
+          onError: () => {
+            setStatus('error');
+            setErrorMessage('The browser blocked audio playback. Try the play button again.');
+          },
+        }
+      );
     },
     []
   );
@@ -277,45 +287,57 @@ export function KangurNarratorControl({
     setStatus('loading');
     setErrorMessage(null);
 
-    try {
-      const response = await api.post<KangurLessonTtsResponse>('/api/kangur/tts', {
-        script,
-        voice,
-        forceRegenerate: false,
-        ...(contextRegistry ? { contextRegistry } : {}),
-      });
+    return withKangurClientError(
+      {
+        source: 'kangur-narrator',
+        action: 'prepare-server-narration',
+        description: 'Prepare server-side narration for a lesson script.',
+        context: {
+          scriptId: script.lessonId,
+        },
+      },
+      async () => {
+        const response = await api.post<KangurLessonTtsResponse>('/api/kangur/tts', {
+          script,
+          voice,
+          forceRegenerate: false,
+          ...(contextRegistry ? { contextRegistry } : {}),
+        });
 
-      if (response.mode !== 'audio') {
-        setManifest(null);
-        const canUseBrowserFallback =
-          typeof window !== 'undefined' && Boolean(window.speechSynthesis);
-        const combinedMessage = diagnosticsVisible
-          ? `${response.message} ${SERVER_MODE_FALLBACK_HINT}`
-          : GENERIC_SERVER_MODE_FAILURE_MESSAGE;
+        if (response.mode !== 'audio') {
+          setManifest(null);
+          const canUseBrowserFallback =
+            typeof window !== 'undefined' && Boolean(window.speechSynthesis);
+          const combinedMessage = diagnosticsVisible
+            ? `${response.message} ${SERVER_MODE_FALLBACK_HINT}`
+            : GENERIC_SERVER_MODE_FAILURE_MESSAGE;
 
-        if (canUseBrowserFallback && response.segments.length > 0) {
-          setFallbackMessage(diagnosticsVisible ? combinedMessage : null);
-          speakClientSegments(response.segments, 0, 'client-fallback');
-          return 'client-fallback';
+          if (canUseBrowserFallback && response.segments.length > 0) {
+            setFallbackMessage(diagnosticsVisible ? combinedMessage : null);
+            speakClientSegments(response.segments, 0, 'client-fallback');
+            return 'client-fallback';
+          }
+
+          setFallbackMessage(null);
+          setStatus('error');
+          setErrorMessage(combinedMessage);
+          return null;
         }
 
+        responseCacheRef.current.set(scriptCacheKey, response);
+        setManifest(response);
         setFallbackMessage(null);
-        setStatus('error');
-        setErrorMessage(combinedMessage);
-        return null;
+        setStatus('idle');
+        return response;
+      },
+      {
+        fallback: null,
+        onError: (error) => {
+          setStatus('error');
+          setErrorMessage(error instanceof Error ? error.message : 'Failed to prepare narration.');
+        },
       }
-
-      responseCacheRef.current.set(scriptCacheKey, response);
-      setManifest(response);
-      setFallbackMessage(null);
-      setStatus('idle');
-      return response;
-    } catch (error) {
-      logClientError(error);
-      setStatus('error');
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to prepare narration.');
-      return null;
-    }
+    );
   }, [
     contextRegistry,
     diagnosticsVisible,
@@ -329,15 +351,25 @@ export function KangurNarratorControl({
     if (status === 'paused') {
       const audio = audioRef.current;
       if (audioQueueRef.current.length > 0 && audio) {
-        try {
-          audio.playbackRate = DEFAULT_PLAYBACK_RATE;
-          await audio.play();
-          setStatus('playing');
-        } catch (error) {
-          logClientError(error);
-          setStatus('error');
-          setErrorMessage('Audio playback could not resume.');
-        }
+        await withKangurClientError(
+          {
+            source: 'kangur-narrator',
+            action: 'resume-audio',
+            description: 'Resume narrator audio playback.',
+          },
+          async () => {
+            audio.playbackRate = DEFAULT_PLAYBACK_RATE;
+            await audio.play();
+            setStatus('playing');
+          },
+          {
+            fallback: undefined,
+            onError: () => {
+              setStatus('error');
+              setErrorMessage('Audio playback could not resume.');
+            },
+          }
+        );
         return;
       }
 

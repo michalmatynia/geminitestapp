@@ -50,13 +50,16 @@ import {
 } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/shared/utils';
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
+import {
+  withKangurClientError,
+  withKangurClientErrorSync,
+} from '@/features/kangur/observability/client';
 
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
 import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
 import { KangurAiTutorNativeGuideSettingsPanel } from './components/KangurAiTutorNativeGuideSettingsPanel';
 import { KangurClassOverridesSettingsPanel } from './components/KangurClassOverridesSettingsPanel';
 import { KangurPageContentSettingsPanel } from './components/KangurPageContentSettingsPanel';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const TEST_NARRATOR_TEMPLATE_TEXT =
@@ -136,15 +139,20 @@ const parseParentVerificationCooldownInput = (value: string): number | null => {
 };
 
 const formatShortTimestamp = (value: string): string => {
-  try {
-    return new Intl.DateTimeFormat('pl-PL', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value));
-  } catch (error) {
-    logClientError(error);
-    return value;
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.admin.settings',
+      action: 'format-timestamp',
+      description: 'Formats a timestamp for settings display.',
+      context: { value },
+    },
+    () =>
+      new Intl.DateTimeFormat('pl-PL', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }).format(new Date(value)),
+    { fallback: value }
+  );
 };
 
 const formatParentVerificationDisabledUntilInput = (value: string | null): string => {
@@ -342,16 +350,30 @@ export function AdminKangurSettingsPage(): ReactElement {
       return;
     }
 
-    try {
-      await navigator.clipboard.writeText(TEST_NARRATOR_TEMPLATE_TEXT);
+    const didCopy = await withKangurClientError(
+      {
+        source: 'kangur.admin.settings',
+        action: 'copy-narrator-template',
+        description: 'Copies the narrator template text to clipboard.',
+      },
+      async () => {
+        await navigator.clipboard.writeText(TEST_NARRATOR_TEMPLATE_TEXT);
+        return true;
+      },
+      {
+        fallback: false,
+        onError: () => {
+          setCopyStatus('Copy failed');
+        },
+      }
+    );
+
+    if (didCopy) {
       setCopyStatus('Copied!');
       if (copyTimeoutRef.current) {
         window.clearTimeout(copyTimeoutRef.current);
       }
       copyTimeoutRef.current = window.setTimeout(() => setCopyStatus('Copy text'), 1800);
-    } catch (error) {
-      logClientError(error);
-      setCopyStatus('Copy failed');
     }
   };
 
@@ -364,39 +386,48 @@ export function AdminKangurSettingsPage(): ReactElement {
     narratorProbeRequestIdRef.current = probeRequestId;
     setNarratorProbe(null);
     setIsProbingNarrator(true);
-    try {
-      const response = await api.post<KangurLessonTtsProbeResponse>(
-        '/api/kangur/tts/probe',
-        {
-          voice,
-          locale: 'pl-PL',
-          text: TEST_NARRATOR_PROBE_TEXT,
+    const probeResult = await withKangurClientError(
+      {
+        source: 'kangur.admin.settings',
+        action: 'probe-narrator',
+        description: 'Runs a narrator TTS probe for the selected voice.',
+        context: { voice },
+      },
+      async () =>
+        await api.post<KangurLessonTtsProbeResponse>(
+          '/api/kangur/tts/probe',
+          {
+            voice,
+            locale: 'pl-PL',
+            text: TEST_NARRATOR_PROBE_TEXT,
+          },
+          { logError: false }
+        ),
+      {
+        fallback: null,
+        onError: (error) => {
+          if (narratorProbeRequestIdRef.current !== probeRequestId) {
+            return;
+          }
+          if (notify) {
+            toast(error instanceof Error ? error.message : 'Failed to próbę the server narrator.', {
+              variant: 'error',
+            });
+          }
         },
-        { logError: false }
-      );
-      if (narratorProbeRequestIdRef.current !== probeRequestId) {
-        return;
       }
-      setNarratorProbe(response);
+    );
+
+    if (narratorProbeRequestIdRef.current === probeRequestId && probeResult) {
+      setNarratorProbe(probeResult);
       if (notify) {
-        toast(response.ok ? 'Server narrator is ready.' : 'Server narrator próbę found an issue.', {
-          variant: response.ok ? 'success' : 'error',
+        toast(probeResult.ok ? 'Server narrator is ready.' : 'Server narrator próbę found an issue.', {
+          variant: probeResult.ok ? 'success' : 'error',
         });
       }
-    } catch (error) {
-      logClientError(error);
-      if (narratorProbeRequestIdRef.current !== probeRequestId) {
-        return;
-      }
-      if (notify) {
-        toast(error instanceof Error ? error.message : 'Failed to próbę the server narrator.', {
-          variant: 'error',
-        });
-      }
-    } finally {
-      if (narratorProbeRequestIdRef.current === probeRequestId) {
-        setIsProbingNarrator(false);
-      }
+    }
+    if (narratorProbeRequestIdRef.current === probeRequestId) {
+      setIsProbingNarrator(false);
     }
   };
 
@@ -517,56 +548,65 @@ export function AdminKangurSettingsPage(): ReactElement {
 
   const handleSave = async (): Promise<void> => {
     setIsSaving(true);
-    try {
-      const savedSections: Array<'narrator' | 'ai-tutor' | 'parent-verification'> = [];
+    const saveResult = await withKangurClientError(
+      {
+        source: 'kangur.admin.settings',
+        action: 'save-settings',
+        description: 'Saves Kangur settings sections.',
+      },
+      async () => {
+        const savedSections: Array<'narrator' | 'ai-tutor' | 'parent-verification'> = [];
 
-      if (narratorDirty) {
-        await updateSetting.mutateAsync({
-          key: KANGUR_NARRATOR_SETTINGS_KEY,
-          value: serializeSetting({ engine, voice }),
-        });
-        savedSections.push('narrator');
+        if (narratorDirty) {
+          await updateSetting.mutateAsync({
+            key: KANGUR_NARRATOR_SETTINGS_KEY,
+            value: serializeSetting({ engine, voice }),
+          });
+          savedSections.push('narrator');
+        }
+
+        if (aiTutorSettingsDirty) {
+          await updateSetting.mutateAsync({
+            key: KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
+            value: serializeSetting(draftAiTutorSettings),
+          });
+          savedSections.push('ai-tutor');
+        }
+
+        if (parentVerificationEmailSettingsDirty) {
+          await updateSetting.mutateAsync({
+            key: KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
+            value: serializeSetting(parentVerificationEmailDraft),
+          });
+          savedSections.push('parent-verification');
+        }
+
+        return savedSections;
+      },
+      {
+        fallback: null,
+        onError: (error) => {
+          toast(error instanceof Error ? error.message : 'Failed to save Kangur settings.', {
+            variant: 'error',
+          });
+        },
       }
+    );
 
-      if (aiTutorSettingsDirty) {
-        await updateSetting.mutateAsync({
-          key: KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
-          value: serializeSetting(draftAiTutorSettings),
-        });
-        savedSections.push('ai-tutor');
-      }
-
-      if (parentVerificationEmailSettingsDirty) {
-        await updateSetting.mutateAsync({
-          key: KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
-          value: serializeSetting(parentVerificationEmailDraft),
-        });
-        savedSections.push('parent-verification');
-      }
-
-      if (savedSections.length === 0) {
-        return;
-      }
-
-      if (savedSections.length > 1) {
+    if (saveResult && saveResult.length > 0) {
+      if (saveResult.length > 1) {
         toast('Kangur settings saved.', { variant: 'success' });
-      } else if (savedSections[0] === 'narrator') {
+      } else if (saveResult[0] === 'narrator') {
         toast('Kangur narrator settings saved.', { variant: 'success' });
-      } else if (savedSections[0] === 'ai-tutor') {
+      } else if (saveResult[0] === 'ai-tutor') {
         toast('Kangur AI Tutor settings saved.', { variant: 'success' });
-      } else if (savedSections[0] === 'parent-verification') {
+      } else if (saveResult[0] === 'parent-verification') {
         toast('Kangur parent verification email settings saved.', {
           variant: 'success',
         });
       }
-    } catch (error) {
-      logClientError(error);
-      toast(error instanceof Error ? error.message : 'Failed to save Kangur settings.', {
-        variant: 'error',
-      });
-    } finally {
-      setIsSaving(false);
     }
+    setIsSaving(false);
   };
 
   return (

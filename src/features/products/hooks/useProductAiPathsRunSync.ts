@@ -20,6 +20,7 @@ import {
   subscribeToTrackedAiPathRun,
 } from '@/shared/lib/ai-paths/client-run-tracker';
 import { getRecentAiPathRunEnqueue } from '@/shared/lib/query-invalidation';
+import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

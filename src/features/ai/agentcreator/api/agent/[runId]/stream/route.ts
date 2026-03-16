@@ -65,7 +65,9 @@ async function GET_handler(
       };
 
       await sendSnapshot();
-      timer = startIntervalTask(sendSnapshot, 2000);
+      timer = startIntervalTask(() => {
+        void sendSnapshot();
+      }, 2000);
 
       req.signal.addEventListener('abort', () => {
         if (timer) {

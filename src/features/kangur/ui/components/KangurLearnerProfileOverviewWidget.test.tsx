@@ -20,6 +20,9 @@ const {
   useKangurPageContentEntryMock: vi.fn(),
   useKangurAuthActionsMock: vi.fn(),
 }));
+const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
+  useKangurSubjectFocusMock: vi.fn(),
+}));
 
 vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', () => ({
   useKangurLearnerProfileRuntime: useKangurLearnerProfileRuntimeMock,
@@ -27,6 +30,10 @@ vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', () =>
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuthActions: useKangurAuthActionsMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
@@ -162,6 +169,11 @@ describe('KangurLearnerProfileOverviewWidget', () => {
     useKangurAuthActionsMock.mockReturnValue({
       checkAppState: vi.fn(),
     });
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
     useKangurPageContentEntryMock.mockReturnValue({
       entry: null,
       data: undefined,
@@ -213,7 +225,7 @@ describe('KangurLearnerProfileOverviewWidget', () => {
   });
 
   it('shows a ready daily quest reward when today progress completes the stored quest', () => {
-    getCurrentKangurDailyQuest(progressWithWeakLesson);
+    getCurrentKangurDailyQuest(progressWithWeakLesson, { subject: 'maths' });
 
     useKangurLearnerProfileRuntimeMock.mockReturnValue(
       buildRuntimeValue({
@@ -236,8 +248,8 @@ describe('KangurLearnerProfileOverviewWidget', () => {
   });
 
   it('shows a claimed daily quest reward after the quest bonus was already collected', () => {
-    getCurrentKangurDailyQuest(progressWithWeakLesson);
-    claimCurrentKangurDailyQuestReward(progressAfterRecovery);
+    getCurrentKangurDailyQuest(progressWithWeakLesson, { subject: 'maths' });
+    claimCurrentKangurDailyQuestReward(progressAfterRecovery, { subject: 'maths' });
 
     useKangurLearnerProfileRuntimeMock.mockReturnValue(
       buildRuntimeValue({

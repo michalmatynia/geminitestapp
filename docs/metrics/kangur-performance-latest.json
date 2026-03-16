@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-16T17:56:40.799Z",
+  "generatedAt": "2026-03-16T20:07:36.482Z",
   "strictMode": true,
   "includeE2E": false,
   "allowInfraE2EFail": false,
@@ -9,21 +9,21 @@
     "command": "npx vitest run __tests__/features/kangur/learner-profile.page.test.tsx __tests__/features/kangur/lessons-focus-routing.test.tsx __tests__/features/kangur/kangur-feature-app.shell.test.tsx __tests__/features/kangur/kangur-admin-menu-toggle.test.tsx src/features/kangur/ui/services/profile.test.ts src/features/kangur/settings.test.ts",
     "status": "fail",
     "exitCode": 1,
-    "durationMs": 21472,
-    "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/kangur/lessons-focus-routing.test.tsx (2 tests) 691ms\n     ✓ auto-opens the focused lesson when focus query maps to operation  550ms\n ❯ |unit| __tests__/features/kangur/learner-profile.page.test.tsx (4 tests | 1 failed) 476ms\n     × loads user scores and renders profile metrics 124ms\n     ✓ keeps profile in local mode when user is not authenticated 222ms\n     ✓ shows scores loading error when score provider fails 63ms\n     ✓ treats score authorization errors as expected local-mode fallback 64ms\n ✓ |unit| __tests__/features/kangur/kangur-admin-menu-toggle.test.tsx (2 tests) 141ms\n ✓ |unit| __tests__/features/kangur/kangur-feature-app.shell.test.tsx (10 tests) 130ms\n ✓ |unit| src/features/kangur/settings.test.ts (16 tests) 17ms\n ✓ |unit| src/features/kangur/ui/services/profile.test.ts (9 tests) 14ms\n\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  |unit| __tests__/features/kangur/learner-profile.page.test.tsx > LearnerProfile page > loads user scores and renders profile metrics\nAssertionError: expected \"vi.fn()\" to be called with arguments: [ …(3) ]\n\nReceived: \n\n  1st vi.fn() call:\n\n  [\n    {\n      \"created_by\": \"jan@example.com\",\n+     \"subject\": \"maths\",\n    },\n    \"-created_date\",\n    120,\n  ]\n\n  2nd vi.fn() call:\n\n  [\n    {\n-     \"created_by\": \"jan@example.com\",\n+     \"player_name\": \"Jan\",\n+     \"subject\": \"maths\",\n    },\n    \"-created_date\",\n    120,\n  ]\n\n\nNumber of calls: 2\n\n ❯ __tests__/features/kangur/learner-profile.page.test.tsx:226:29\n    224| \n    225|     await waitFor(() => expect(scoreFilterMock).toHaveBeenCalledTimes(…\n    226|     expect(scoreFilterMock).toHaveBeenCalledWith({ created_by: 'jan@ex…\n       |                             ^\n    227|     expect(scoreFilterMock).toHaveBeenCalledWith({ player_name: 'Jan' …\n    228| \n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 5 passed (6)\n      Tests  1 failed | 42 passed (43)\n   Start at  18:56:20\n   Duration  20.46s (transform 6.01s, setup 729ms, import 15.70s, tests 1.47s, environment 2.02s)"
+    "durationMs": 43384,
+    "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/kangur/lessons-focus-routing.test.tsx (2 tests) 1727ms\n     ✓ auto-opens the focused lesson when focus query maps to operation  1254ms\n     ✓ keeps lessons list view when focus query does not map to a lesson  469ms\n ❯ |unit| __tests__/features/kangur/learner-profile.page.test.tsx (0 test)\n ✓ |unit| __tests__/features/kangur/kangur-admin-menu-toggle.test.tsx (2 tests) 288ms\n ✓ |unit| __tests__/features/kangur/kangur-feature-app.shell.test.tsx (10 tests) 148ms\n ✓ |unit| src/features/kangur/ui/services/profile.test.ts (9 tests) 23ms\n ✓ |unit| src/features/kangur/settings.test.ts (16 tests) 21ms\n\n⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  |unit| __tests__/features/kangur/learner-profile.page.test.tsx [ __tests__/features/kangur/learner-profile.page.test.tsx ]\nError: [vitest] There was an error when mocking a module. If you are using \"vi.mock\" factory, make sure there are no top level variables inside, since this call is hoisted to top of the file. Read more: https://vitest.dev/api/vi.html#vi-mock\n ❯ src/features/kangur/ui/context/KangurAiTutorContentContext.tsx:19:1\n     17| } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';\n     18| import { api } from '@/shared/lib/api-client';\n     19| import { withKangurClientError } from '@/features/kangur/observability…\n       | ^\n     20| \n     21| \n\nCaused by: ReferenceError: Cannot access 'withKangurClientError' before initialization\n ❯ __tests__/features/kangur/learner-profile.page.test.tsx:142:3\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 5 passed (6)\n      Tests  39 passed (39)\n   Start at  21:06:54\n   Duration  41.74s (transform 17.26s, setup 1.46s, import 31.09s, tests 2.21s, environment 3.24s)"
   },
   "e2e": null,
   "bundleRisk": {
     "files": [
       {
         "path": "src/features/kangur/ui/pages/Lessons.tsx",
-        "lines": 1239,
-        "bytes": 49966
+        "lines": 1022,
+        "bytes": 41663
       },
       {
         "path": "src/features/kangur/ui/pages/Game.tsx",
-        "lines": 967,
-        "bytes": 36204
+        "lines": 978,
+        "bytes": 36480
       },
       {
         "path": "src/features/kangur/ui/services/kangur-questions-data.js",
@@ -46,8 +46,8 @@
         "bytes": 853
       }
     ],
-    "totalBytes": 136635,
-    "totalLines": 3400
+    "totalBytes": 128608,
+    "totalLines": 3194
   },
   "summary": {
     "failedRuns": 1,

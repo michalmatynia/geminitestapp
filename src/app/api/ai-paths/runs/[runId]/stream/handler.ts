@@ -11,7 +11,7 @@ import {
 } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { getRedisSubscriber, isSubscriberConnected } from '@/shared/lib/redis-pubsub';
-import { safeSetInterval } from '@/shared/lib/timers';
+import { safeClearInterval, safeSetInterval } from '@/shared/lib/timers';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
@@ -391,7 +391,7 @@ export async function getAiPathRunStreamHandler(
 
         controller.close();
       } finally {
-        clearInterval(keepAliveTimer);
+        safeClearInterval(keepAliveTimer);
       }
     },
     cancel() {

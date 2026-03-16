@@ -43,7 +43,8 @@ describe('DifficultySelector', () => {
       'text-center'
     );
     expect(screen.getByRole('heading', { name: 'Wybierz poziom trudności' })).toHaveClass(
-      'text-xl',
+      'text-lg',
+      'sm:text-xl',
       '[color:var(--kangur-page-text)]'
     );
 

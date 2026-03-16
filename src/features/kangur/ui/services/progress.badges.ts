@@ -32,9 +32,12 @@ export const getMasteredLessonCount = (
 const ENGLISH_ACTIVITY_KEYS = [
   'english_pronoun_remix',
   'english_parts_of_speech_sort',
+  'english_pronouns_warmup',
   'english_sentence_structure_quiz',
   'english_subject_verb_agreement_quiz',
   'english_prepositions_quiz',
+  'english_prepositions_sort',
+  'english_prepositions_order',
 ];
 
 const createEmptyActivityStatsEntry = () => ({

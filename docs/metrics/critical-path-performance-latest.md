@@ -8,7 +8,7 @@ canonical: true
 ---
 # Critical Path Performance Report
 
-Generated at: 2026-03-16T11:23:58.933Z
+Generated at: 2026-03-16T20:05:22.952Z
 
 ## Summary
 
@@ -86,29 +86,29 @@ Generated at: 2026-03-16T11:23:58.933Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/kangur/ui/pages/Duels.tsx` | 1795 |
-| `src/features/kangur/observability/summary.ts` | 1548 |
-| `src/features/kangur/ui/KangurLoginPage.tsx` | 1514 |
+| `src/features/kangur/ui/pages/Duels.tsx` | 3738 |
+| `src/features/kangur/duels/server.ts` | 1672 |
+| `src/features/kangur/ui/KangurLoginPage.tsx` | 1648 |
+| `src/features/kangur/observability/summary.ts` | 1550 |
 | `src/shared/contracts/kangur-ai-tutor-native-guide-entries.ts` | 1459 |
 | `src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts` | 1414 |
-| `src/features/kangur/server/ai-tutor-adaptive.ts` | 1224 |
-| `src/features/kangur/ui/components/AddingBallGame.tsx` | 1191 |
+| `src/features/kangur/server/ai-tutor-adaptive.ts` | 1226 |
+| `src/features/kangur/admin/AdminKangurSettingsPage.tsx` | 1219 |
+| `src/features/kangur/ui/components/AddingBallGame.tsx` | 1196 |
 | `src/shared/contracts/kangur-ai-tutor-content.ts` | 1189 |
-| `src/features/kangur/cms-builder/defaults/game-defaults.ts` | 1188 |
-| `src/features/kangur/admin/AdminKangurSettingsPage.tsx` | 1179 |
 
 ## Top API Route Hotspots (Reference)
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/kangur/[[...path]]/route.ts` | 874 |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 357 |
-| `src/app/api/v2/integrations/[[...path]]/route.ts` | 275 |
-| `src/app/api/image-studio/[[...path]]/route.ts` | 254 |
-| `src/app/api/ai-paths/[[...path]]/route.ts` | 232 |
-| `src/app/api/databases/[[...path]]/route.ts` | 189 |
-| `src/app/api/agentcreator/[[...path]]/route.ts` | 187 |
-| `src/app/api/chatbot/[[...path]]/route.ts` | 148 |
+| `src/app/api/kangur/[[...path]]/route.ts` | 1045 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 383 |
+| `src/app/api/v2/integrations/[[...path]]/route.ts` | 325 |
+| `src/app/api/image-studio/[[...path]]/route.ts` | 289 |
+| `src/app/api/ai-paths/[[...path]]/route.ts` | 256 |
+| `src/app/api/databases/[[...path]]/route.ts` | 229 |
+| `src/app/api/agentcreator/[[...path]]/route.ts` | 214 |
+| `src/app/api/chatbot/[[...path]]/route.ts` | 172 |
 | `src/app/api/agent/leases/route.ts` | 122 |
 | `src/app/api/agent/resources/route.ts` | 59 |
 

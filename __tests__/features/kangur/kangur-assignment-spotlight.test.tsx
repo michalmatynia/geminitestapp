@@ -5,12 +5,17 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { useKangurAssignmentsMock } = vi.hoisted(() => ({
+const { useKangurAssignmentsMock, useKangurSubjectFocusMock } = vi.hoisted(() => ({
   useKangurAssignmentsMock: vi.fn(),
+  useKangurSubjectFocusMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: useKangurAssignmentsMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
 import KangurAssignmentSpotlight from '@/features/kangur/ui/components/KangurAssignmentSpotlight';
@@ -18,6 +23,11 @@ import KangurAssignmentSpotlight from '@/features/kangur/ui/components/KangurAss
 describe('KangurAssignmentSpotlight', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'guest',
+    });
   });
 
   it('shows the highest-priority active assignment as the home spotlight', () => {

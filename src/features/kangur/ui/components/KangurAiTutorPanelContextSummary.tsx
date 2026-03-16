@@ -1,5 +1,5 @@
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
-import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import { KangurButton, KangurPanelStack } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PAGE_CONTENT_COLLECTION } from '@/features/kangur/shared/contracts/kangur-page-content';
 
 import { KangurAiTutorWarmInsetCard } from './KangurAiTutorChrome';
@@ -73,7 +73,7 @@ function KangurAiTutorPanelContextCard({
       tone='panel'
       className='mt-2 kangur-chat-padding-md'
     >
-      <div className='flex flex-col kangur-panel-gap sm:flex-row sm:items-start sm:justify-between'>
+      <KangurPanelStack className='sm:flex-row sm:items-start sm:justify-between'>
         <div className='min-w-0 flex-1'>
           <div className='text-[10px] font-bold uppercase tracking-[0.16em] [color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'>
             {title}
@@ -104,7 +104,7 @@ function KangurAiTutorPanelContextCard({
             {secondaryActionConfig.label}
           </KangurButton>
         </div>
-      </div>
+      </KangurPanelStack>
       <div className='mt-2 text-[11px] leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
         {detail}
       </div>

@@ -20,6 +20,7 @@ import {
   KangurLessonInset,
   KangurLessonLead,
   KangurLessonStack,
+  KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurIconBadge } from '@/features/kangur/ui/design/primitives';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
@@ -51,14 +52,12 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Subject-verb agreement to prosta zasada: <strong>czasownik zgadza się z liczbą
             podmiotu</strong>. W Present Simple najczęściej chodzi o końcówkę <strong>-s</strong>.
           </KangurLessonLead>
-          <KangurLessonCallout accent='teal' className='text-center' padding='sm'>
-            <div className='mx-auto w-full max-w-sm'>
-              <EnglishAgreementBalanceAnimation />
-            </div>
-            <KangurLessonCaption className='mt-2'>
-              Singular → verb + -s. Plural → base verb.
-            </KangurLessonCaption>
-          </KangurLessonCallout>
+          <KangurLessonVisual
+            accent='teal'
+            caption='Singular → verb + -s. Plural → base verb.'
+          >
+            <EnglishAgreementBalanceAnimation />
+          </KangurLessonVisual>
           <div className='grid gap-2 sm:grid-cols-2 text-sm w-full'>
             <KangurLessonInset accent='teal' className='text-left'>
               <p className='text-xs uppercase tracking-wide text-teal-600'>Singular</p>
@@ -141,14 +140,12 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             Dla <strong>he / she / it</strong> dodajemy końcówkę <strong>-s</strong> lub <strong>-es</strong>.
           </KangurLessonLead>
-          <KangurLessonCallout accent='teal' className='text-center' padding='sm'>
-            <div className='mx-auto w-full max-w-sm'>
-              <EnglishThirdPersonSAnimation />
-            </div>
-            <KangurLessonCaption className='mt-2'>
-              She plays, he watches, it goes.
-            </KangurLessonCaption>
-          </KangurLessonCallout>
+          <KangurLessonVisual
+            accent='teal'
+            caption='She plays, he watches, it goes.'
+          >
+            <EnglishThirdPersonSAnimation />
+          </KangurLessonVisual>
           <div className='flex flex-wrap gap-2 text-xs font-semibold'>
             <KangurLessonChip accent='teal'>I play</KangurLessonChip>
             <KangurLessonChip accent='teal'>She plays</KangurLessonChip>
@@ -199,14 +196,12 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             Czasownik <strong>be</strong> ma trzy formy w Present Simple. Trzeba je zapamiętać.
           </KangurLessonLead>
-          <KangurLessonCallout accent='teal' className='text-center' padding='sm'>
-            <div className='mx-auto w-full max-w-sm'>
-              <EnglishBeVerbSwitchAnimation />
-            </div>
-            <KangurLessonCaption className='mt-2'>
-              I am • he/she/it is • we/you/they are
-            </KangurLessonCaption>
-          </KangurLessonCallout>
+          <KangurLessonVisual
+            accent='teal'
+            caption='I am • he/she/it is • we/you/they are'
+          >
+            <EnglishBeVerbSwitchAnimation />
+          </KangurLessonVisual>
         </KangurLessonStack>
       ),
     },

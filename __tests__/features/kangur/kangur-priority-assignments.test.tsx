@@ -5,9 +5,14 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { useKangurAssignmentsMock, useKangurPageContentEntryMock } = vi.hoisted(() => ({
+const {
+  useKangurAssignmentsMock,
+  useKangurPageContentEntryMock,
+  useKangurSubjectFocusMock,
+} = vi.hoisted(() => ({
   useKangurAssignmentsMock: vi.fn(),
   useKangurPageContentEntryMock: vi.fn(),
+  useKangurSubjectFocusMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
@@ -16,6 +21,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
 import KangurPriorityAssignments from '@/features/kangur/ui/components/KangurPriorityAssignments';
@@ -29,6 +38,11 @@ describe('KangurPriorityAssignments', () => {
       isLoading: false,
       isError: false,
       error: null,
+    });
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'guest',
     });
   });
 

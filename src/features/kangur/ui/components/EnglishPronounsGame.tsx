@@ -36,16 +36,12 @@ import { persistKangurSessionScore } from '@/features/kangur/ui/services/session
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
-import { EnglishPronounsPulseAnimation } from './EnglishPronounsAnimations';
-
 type ClickRound = {
   id: string;
   accent: KangurAccent;
-  prompt: string;
   question: string;
   answer: string;
   options: string[];
-  hint: string;
 };
 
 const PRONOUN_ACCENTS: Record<string, KangurAccent> = {
@@ -73,38 +69,30 @@ const ROUNDS: ClickRound[] = [
   {
     id: 'subject-pronoun',
     accent: 'emerald',
-    prompt: 'Kliknij prawidłowy zaimek podmiotowy.',
     question: 'Taylor posted: ___ just aced the test.',
     answer: 'they',
     options: ['he', 'she', 'they', 'we'],
-    hint: 'Podpowiedź: Taylor to neutralna osoba — wybierz they.',
   },
   {
     id: 'object-pronoun',
     accent: 'indigo',
-    prompt: 'Kliknij prawidłowy zaimek dopełnienia.',
     question: 'I met Mia and Jordan after school. I texted ___ later.',
     answer: 'them',
     options: ['they', 'them', 'their', 'we'],
-    hint: 'To dopełnienie — potrzebujesz them.',
   },
   {
     id: 'possessive-pronoun',
     accent: 'violet',
-    prompt: 'Kliknij prawidłowy zaimek dzierżawczy.',
     question: 'That hoodie is ___, not mine.',
     answer: 'hers',
     options: ['her', 'hers', 'their', 'she'],
-    hint: 'Po "is" używamy zaimka dzierżawczego: hers.',
   },
   {
     id: 'reflexive-pronoun',
     accent: 'amber',
-    prompt: 'Kliknij prawidłowy zaimek zwrotny.',
     question: 'The twins finished the project by ____.',
     answer: 'themselves',
     options: ['their', 'them', 'themselves', 'herself'],
-    hint: 'Oni zrobili to sami — wybierz themselves.',
   },
 ];
 
@@ -260,15 +248,6 @@ export default function EnglishPronounsGame({
             Click
           </KangurStatusChip>
         </div>
-
-        <div className='rounded-[24px] border border-white/70 bg-white/70 p-3'>
-          <EnglishPronounsPulseAnimation />
-        </div>
-
-        <KangurInfoCard accent={round.accent} tone='accent' padding='sm' className='text-sm'>
-          <p className='font-semibold'>{round.prompt}</p>
-          <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>{round.hint}</p>
-        </KangurInfoCard>
 
         <div className='flex flex-col gap-3'>
           <div className='rounded-[20px] border border-slate-200/80 bg-white px-4 py-3 text-sm font-semibold text-slate-700'>

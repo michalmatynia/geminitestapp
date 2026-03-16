@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 
-import EnglishPronounsGame from '@/features/kangur/ui/components/EnglishPronounsGame';
-import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
+import { EnglishPronounsPulseAnimation } from '@/features/kangur/ui/components/EnglishPronounsAnimations';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
@@ -14,6 +13,7 @@ import {
   KangurLessonInset,
   KangurLessonLead,
   KangurLessonStack,
+  KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
@@ -22,8 +22,8 @@ import {
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 
-type SectionId = 'greetings' | 'phrases' | 'summary' | 'game_pronouns';
-type SlideSectionId = Exclude<SectionId, 'game_pronouns'>;
+type SectionId = 'greetings' | 'phrases' | 'summary' | 'pronoun_remix';
+type SlideSectionId = SectionId;
 
 const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   greetings: [
@@ -128,6 +128,42 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       ),
     },
   ],
+  pronoun_remix: [
+    {
+      title: 'Pronoun Remix: Zasady',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            W tej grze wybierasz formę, która pasuje do roli w zdaniu: kto robi, kogo
+            dotyczy, czyja to rzecz, albo kto robi coś sam.
+          </KangurLessonLead>
+          <KangurLessonVisual
+            accent='emerald'
+            caption='Klikaj poprawne formy: podmiotowe, dopełnienia, dzierżawcze, zwrotne.'
+            maxWidthClassName='max-w-xs'
+          >
+            <EnglishPronounsPulseAnimation />
+          </KangurLessonVisual>
+          <KangurLessonCallout accent='emerald' className='text-sm' padding='sm'>
+            <ul className='space-y-2'>
+              <li>
+                <strong>Subject</strong>: kto robi? (I, you, he, she, we, they)
+              </li>
+              <li>
+                <strong>Object</strong>: kogo/co? (me, him, her, us, them)
+              </li>
+              <li>
+                <strong>Possessive</strong>: czyje? (mine, his, hers, ours, theirs)
+              </li>
+              <li>
+                <strong>Reflexive</strong>: sam/a (myself, himself, herself, ourselves, themselves)
+              </li>
+            </ul>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+  ],
 };
 
 const HUB_SECTIONS = [
@@ -150,11 +186,10 @@ const HUB_SECTIONS = [
     description: 'Krótka powtórka najważniejszych zwrotów',
   },
   {
-    id: 'game_pronouns',
-    emoji: '🧩',
-    title: 'Pronoun Remix',
-    description: 'Gra z zaimkami: szybkie kliknięcia w poprawne formy',
-    isGame: true,
+    id: 'pronoun_remix',
+    emoji: '🧠',
+    title: 'Pronoun Remix: Zasady',
+    description: 'Jak rozpoznać typ zaimka w zdaniu',
   },
 ];
 
@@ -176,22 +211,6 @@ export default function EnglishLesson(): React.JSX.Element {
     const reward = createLessonCompletionReward(progress, 'english_basics', 100);
     addXp(reward.xp, reward.progressUpdates);
   };
-
-  if (activeSection === 'game_pronouns') {
-    return (
-      <LessonActivityStage
-        accent='emerald'
-        headerTestId='english-pronouns-game-header'
-        icon='🧩'
-        onBack={() => setActiveSection(null)}
-        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
-        shellTestId='english-pronouns-game-shell'
-        title='Gra: Pronoun Remix'
-      >
-        <EnglishPronounsGame finishLabel='Wróć do tematów' onFinish={() => setActiveSection(null)} />
-      </LessonActivityStage>
-    );
-  }
 
   if (activeSection) {
     return (

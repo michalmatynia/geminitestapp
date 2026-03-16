@@ -2460,7 +2460,7 @@ function DuelsContent(): React.JSX.Element {
               role='region'
               aria-labelledby={duelHeadingId}
             >
-              <div className='flex flex-wrap items-center justify-between kangur-panel-gap'>
+              <div className='flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between kangur-panel-gap'>
                 <div className='space-y-1'>
                   <h3 id={duelHeadingId} className='text-xl font-semibold text-slate-900'>
                     Podgląd pojedynku
@@ -2532,8 +2532,8 @@ function DuelsContent(): React.JSX.Element {
                           className='rounded-2xl border border-slate-200 bg-white/70 p-4'
                           role='listitem'
                         >
-                          <div className='flex items-center justify-between'>
-                            <div className='space-y-1'>
+                          <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+                            <div className='min-w-0 space-y-1'>
                               <div className='text-sm font-semibold text-slate-800'>
                                 {entry.displayName}
                               </div>
@@ -2542,7 +2542,7 @@ function DuelsContent(): React.JSX.Element {
                               </div>
                             </div>
                             {isLeader ? (
-                              <KangurStatusChip accent='emerald' size='sm'>
+                              <KangurStatusChip accent='emerald' size='sm' className='self-start sm:self-auto'>
                                 Prowadzi
                               </KangurStatusChip>
                             ) : null}
@@ -2600,7 +2600,7 @@ function DuelsContent(): React.JSX.Element {
             role='region'
             aria-labelledby={leaderboardHeadingId}
           >
-            <div className='flex flex-wrap items-center justify-between kangur-panel-gap'>
+            <div className='flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between kangur-panel-gap'>
               <div className='space-y-1'>
                 <h3 id={leaderboardHeadingId} className='text-xl font-semibold text-slate-900'>
                   Ranking pojedynków
@@ -2641,9 +2641,9 @@ function DuelsContent(): React.JSX.Element {
                 {leaderboardEntries.map((entry, index) => (
                   <li
                     key={entry.learnerId}
-                    className='flex items-center justify-between rounded-2xl border border-slate-200 bg-white/70 p-4'
+                    className='flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white/70 p-4 sm:flex-row sm:items-center sm:justify-between'
                   >
-                    <div className='space-y-1'>
+                    <div className='min-w-0 space-y-1'>
                       <div className='text-sm font-semibold text-slate-800'>
                         {index + 1}. {entry.displayName}
                       </div>
@@ -2651,7 +2651,7 @@ function DuelsContent(): React.JSX.Element {
                         Wygrane: {entry.wins} • Przegrane: {entry.losses} • Remisy: {entry.ties}
                       </div>
                     </div>
-                    <KangurStatusChip accent='indigo' size='sm'>
+                    <KangurStatusChip accent='indigo' size='sm' className='self-start sm:self-auto'>
                       {Math.round(entry.winRate * 100)}%
                     </KangurStatusChip>
                   </li>
@@ -2800,7 +2800,7 @@ function DuelsContent(): React.JSX.Element {
                             variant={duelOperation === option.value ? 'segmentActive' : 'segment'}
                             size='sm'
                             aria-pressed={duelOperation === option.value}
-                            className='flex-1 min-w-[120px] text-xs sm:text-sm'
+                            className='flex-1 min-w-0 text-xs sm:min-w-[120px] sm:text-sm'
                           >
                             <span className='text-base'>{option.symbol}</span>
                             <span>{option.label}</span>
@@ -2827,7 +2827,7 @@ function DuelsContent(): React.JSX.Element {
                             variant={duelDifficulty === option.value ? 'segmentActive' : 'segment'}
                             size='sm'
                             aria-pressed={duelDifficulty === option.value}
-                            className='flex-1 min-w-[110px] text-xs sm:text-sm'
+                            className='flex-1 min-w-0 text-xs sm:min-w-[110px] sm:text-sm'
                           >
                             <span>{option.emoji}</span>
                             <span>{option.label}</span>
@@ -2842,7 +2842,7 @@ function DuelsContent(): React.JSX.Element {
                       <KangurSelectField
                         id={challengeQuestionsSelectId}
                         name='challengeQuestionCount'
-                        className='min-w-[140px]'
+                        className='w-full sm:min-w-[140px] sm:w-auto'
                         accent='indigo'
                         size='md'
                         value={String(challengeQuestionCount)}
@@ -2865,7 +2865,7 @@ function DuelsContent(): React.JSX.Element {
                       <KangurSelectField
                         id={challengeTimeSelectId}
                         name='challengeTimePerQuestion'
-                        className='min-w-[160px]'
+                        className='w-full sm:min-w-[160px] sm:w-auto'
                         accent='indigo'
                         size='md'
                         value={String(challengeTimePerQuestionSec)}
@@ -2888,7 +2888,7 @@ function DuelsContent(): React.JSX.Element {
                       <KangurSelectField
                         id={challengeBestOfSelectId}
                         name='challengeBestOf'
-                        className='min-w-[140px]'
+                        className='w-full sm:min-w-[140px] sm:w-auto'
                         accent='indigo'
                         size='md'
                         value={String(challengeBestOf)}
@@ -2965,13 +2965,13 @@ function DuelsContent(): React.JSX.Element {
                     </div>
                   ) : (
                     <ul
-                      className='flex flex-wrap gap-2'
+                      className='flex flex-col sm:flex-row sm:flex-wrap gap-2'
                       role='list'
                       aria-label='Ostatni rywale'
                       id={recentOpponentsListId}
                     >
                       {recentOpponents.map((opponent) => (
-                        <li key={opponent.learnerId}>
+                        <li key={opponent.learnerId} className='w-full sm:w-auto'>
                           <KangurButton
                             onClick={() => {
                               void handleInviteOpponent(opponent);
@@ -3138,7 +3138,7 @@ function DuelsContent(): React.JSX.Element {
                   role='region'
                   aria-labelledby={lobbyPresenceHeadingId}
                 >
-                  <div className='flex flex-wrap items-center justify-between kangur-panel-gap'>
+                  <div className='flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between kangur-panel-gap'>
                     <div className='space-y-1'>
                       <div className='flex flex-wrap items-center gap-2'>
                         <h3
@@ -3211,7 +3211,7 @@ function DuelsContent(): React.JSX.Element {
                       {lobbyPresenceEntries.map((entry) => (
                         <li
                           key={entry.learnerId}
-                          className='flex items-center justify-between rounded-2xl border border-slate-200 bg-white/70 p-4'
+                          className='flex items-center gap-3 rounded-2xl border border-slate-200 bg-white/70 p-4'
                         >
                           <div className='flex items-center kangur-panel-gap'>
                             <div
@@ -3262,7 +3262,7 @@ function DuelsContent(): React.JSX.Element {
               role='region'
               aria-labelledby={waitingHeadingId}
             >
-              <div className='flex flex-wrap items-center justify-between kangur-panel-gap'>
+              <div className='flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between kangur-panel-gap'>
                 <div className='space-y-1'>
                   <h3
                     id={waitingHeadingId}
@@ -3374,7 +3374,7 @@ function DuelsContent(): React.JSX.Element {
               aria-labelledby={duelHeadingId}
               aria-describedby={duelSummaryId}
             >
-              <div className='flex flex-wrap items-center justify-between kangur-panel-gap'>
+              <div className='flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between kangur-panel-gap'>
                 <div>
                   <h3 id={duelHeadingId} className='text-xl font-semibold text-slate-900'>
                     Pojedynek
@@ -3520,8 +3520,8 @@ function DuelsContent(): React.JSX.Element {
                       role='listitem'
                       aria-label={`${entry.displayName}, wynik ${entry.score}, status ${PLAYER_STATUS_LABELS[entry.status]}`}
                     >
-                      <div className='flex items-center justify-between kangur-panel-gap'>
-                        <div className='space-y-1'>
+                      <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between kangur-panel-gap'>
+                        <div className='min-w-0 space-y-1'>
                           <div className='text-sm font-semibold text-slate-800'>
                             {entry.displayName}
                           </div>
@@ -3535,7 +3535,7 @@ function DuelsContent(): React.JSX.Element {
                             {seriesLabel ? <span>{seriesLabel}</span> : null}
                           </div>
                         </div>
-                        <div className='flex items-center gap-2'>
+                        <div className='flex items-center gap-2 self-start sm:self-auto'>
                           {isLeader ? (
                             <KangurStatusChip accent='emerald' size='sm'>
                               Prowadzi
@@ -3689,8 +3689,8 @@ function DuelsContent(): React.JSX.Element {
                 </div>
               )}
 
-              <div className='flex flex-wrap justify-between kangur-panel-gap'>
-                <div className='flex flex-wrap gap-2'>
+              <div className='flex w-full flex-col sm:flex-row sm:flex-wrap sm:justify-between kangur-panel-gap'>
+                <div className='flex w-full flex-col sm:flex-row sm:flex-wrap gap-2'>
                   {canLeaveSession ? (
                     <KangurButton
                       onClick={() => {
@@ -3699,6 +3699,7 @@ function DuelsContent(): React.JSX.Element {
                       variant='ghost'
                       disabled={isBusy}
                       aria-label='Opuść pojedynek'
+                      className='w-full sm:w-auto'
                     >
                       Opuść pojedynek
                     </KangurButton>
@@ -3714,6 +3715,7 @@ function DuelsContent(): React.JSX.Element {
                       }}
                       variant='secondary'
                       disabled={spectateCopyStatus === 'success'}
+                      className='w-full sm:w-auto'
                     >
                       {spectateCopyStatus === 'success'
                         ? 'Skopiowano link'

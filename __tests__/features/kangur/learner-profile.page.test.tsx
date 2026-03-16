@@ -5,7 +5,6 @@
 import { render, screen, waitFor } from '@/__tests__/test-utils';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
 import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
@@ -20,8 +19,10 @@ const {
   navigateToLoginMock,
   logoutMock,
   checkAppStateMock,
-  logKangurClientErrorMock,
   useKangurSubjectFocusMock,
+  logKangurClientErrorMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
 } = vi.hoisted(() => ({
   useKangurRoutingMock: vi.fn(),
   useOptionalKangurRoutingMock: vi.fn(),
@@ -32,52 +33,9 @@ const {
   navigateToLoginMock: vi.fn(),
   logoutMock: vi.fn(),
   checkAppStateMock: vi.fn(),
-  logKangurClientErrorMock: vi.fn(),
   useKangurSubjectFocusMock: vi.fn(),
+  ...globalThis.__kangurClientErrorMocks(),
 }));
-
-type KangurClientErrorHandlingOptions<T> = {
-  fallback: T | (() => T);
-  onError?: (error: unknown) => void;
-  shouldReport?: (error: unknown) => boolean;
-  shouldRethrow?: (error: unknown) => boolean;
-};
-
-const withKangurClientError = async <T,>(
-  _report: unknown,
-  task: () => Promise<T>,
-  options: KangurClientErrorHandlingOptions<T>
-): Promise<T> => {
-  try {
-    return await task();
-  } catch (error) {
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
-      throw error;
-    }
-    return typeof options.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : options.fallback;
-  }
-};
-
-const withKangurClientErrorSync = <T,>(
-  _report: unknown,
-  task: () => T,
-  options: KangurClientErrorHandlingOptions<T>
-): T => {
-  try {
-    return task();
-  } catch (error) {
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
-      throw error;
-    }
-    return typeof options.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : options.fallback;
-  }
-};
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,

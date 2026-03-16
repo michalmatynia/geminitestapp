@@ -45,7 +45,10 @@ describe('Kangur game training widgets', () => {
       'border-white/88',
       'bg-white/94'
     );
-    expect(screen.getByRole('heading', { name: /ćwiczenia z kalendarzem/i })).toHaveClass('text-xl');
+    expect(screen.getByRole('heading', { name: /ćwiczenia z kalendarzem/i })).toHaveClass(
+      'text-lg',
+      'sm:text-xl'
+    );
     expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
     expect(screen.getByTestId('mock-calendar-training-game')).toBeInTheDocument();
 
@@ -80,7 +83,10 @@ describe('Kangur game training widgets', () => {
       'border-white/88',
       'bg-white/94'
     );
-    expect(screen.getByRole('heading', { name: /ćwiczenia z figurami/i })).toHaveClass('text-xl');
+    expect(screen.getByRole('heading', { name: /ćwiczenia z figurami/i })).toHaveClass(
+      'text-lg',
+      'sm:text-xl'
+    );
     expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
     expect(screen.getByTestId('mock-geometry-training-game')).toBeInTheDocument();
 

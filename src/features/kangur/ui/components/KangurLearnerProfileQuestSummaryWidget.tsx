@@ -11,6 +11,7 @@ import KangurDailyQuestHighlightCardContent from '@/features/kangur/ui/component
 import KangurHeroMilestoneSummary from '@/features/kangur/ui/components/KangurHeroMilestoneSummary';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { useKangurLearnerProfileRuntime } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import {
   KangurButton,
   KangurSectionEyebrow,
@@ -31,8 +32,12 @@ const buildAssignmentHref = (
 
 export function KangurLearnerProfileQuestSummaryWidget(): React.JSX.Element {
   const { basePath, progress, user } = useKangurLearnerProfileRuntime();
+  const { subject } = useKangurSubjectFocus();
   const activeLearner = user?.activeLearner ?? null;
-  const dailyQuest = useMemo(() => getCurrentKangurDailyQuest(progress), [progress]);
+  const dailyQuest = useMemo(
+    () => getCurrentKangurDailyQuest(progress, { subject }),
+    [progress, subject]
+  );
   const dailyQuestAccent =
     dailyQuest?.reward.status === 'claimed'
       ? 'emerald'

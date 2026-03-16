@@ -8,7 +8,11 @@ import {
   type KangurParentDashboardTabId,
   useKangurParentDashboardRuntime,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
-import { KangurButton, KangurPanelIntro } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurButton,
+  KangurPanelStack,
+  KangurWidgetIntro,
+} from '@/features/kangur/ui/design/primitives';
 import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { cn } from '@/features/kangur/shared/utils';
@@ -134,15 +138,13 @@ export function KangurParentDashboardTabsWidget({
   }
 
   return (
-    <div className='flex flex-col kangur-panel-gap'>
-      <KangurPanelIntro
+    <KangurPanelStack>
+      <KangurWidgetIntro
         description={
           tabsContent?.summary ??
           'Przełączaj między wynikami, postępem, zadaniami, monitoringiem i ustawieniami Tutor-AI.'
         }
         title={tabsContent?.title ?? 'Zakładki panelu'}
-        titleAs='h2'
-        titleClassName='text-lg font-bold tracking-[-0.02em]'
       />
       <div
         className={cn(
@@ -194,6 +196,6 @@ export function KangurParentDashboardTabsWidget({
           );
         })}
       </div>
-    </div>
+    </KangurPanelStack>
   );
 }

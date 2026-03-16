@@ -3431,6 +3431,14 @@
     gap: 1rem;
   }
 
+  @media (pointer: coarse) {
+    [data-rbd-draggable-id] {
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+  }
+
   @media (max-width: 420px) {
     .kangur-panel-gap {
       gap: 1.25rem;

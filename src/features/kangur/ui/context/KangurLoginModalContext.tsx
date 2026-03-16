@@ -15,7 +15,7 @@ import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRou
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { type KangurAuthMode, parseKangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 
 type KangurLoginModalOpenOptions = {
@@ -80,12 +80,18 @@ const toNonEmptyString = (value: string | null | undefined, fallback: string): s
 };
 
 const getPathnameFromHref = (href: string): string => {
-  try {
-    return new URL(href, 'https://kangur.local').pathname;
-  } catch (error) {
-    logClientError(error);
-    return href.split('?')[0] ?? href;
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur-login-modal',
+      action: 'resolve-login-pathname',
+      description: 'Resolve login pathname from href.',
+      context: {
+        href,
+      },
+    },
+    () => new URL(href, 'https://kangur.local').pathname,
+    { fallback: href.split('?')[0] ?? href }
+  );
 };
 
 export const KangurLoginModalProvider = ({

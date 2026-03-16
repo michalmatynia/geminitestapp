@@ -5,7 +5,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
 import { KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS } from '@/features/kangur/settings';
 import { expectNoAxeViolations } from '@/testing/accessibility/axe';
 
@@ -22,63 +21,24 @@ const {
   usePathnameMock,
   useRouterMock,
   useSearchParamsMock,
-} = vi.hoisted(() => ({
-  checkAppStateMock: vi.fn(),
-  locationAssignMock: vi.fn(),
-  routerPushMock: vi.fn(),
-  routerRefreshMock: vi.fn(),
-  signOutMock: vi.fn(),
-  trackKangurClientEventMock: vi.fn(),
-  useKangurAiTutorSessionSyncMock: vi.fn(),
-  useOptionalKangurAuthMock: vi.fn(),
-  useKangurPageContentEntryMock: vi.fn(),
-  usePathnameMock: vi.fn(),
-  useRouterMock: vi.fn(),
-  useSearchParamsMock: vi.fn(),
-}));
-
-type KangurClientErrorHandlingOptions<T> = {
-  fallback: T | (() => T);
-  onError?: (error: unknown) => void;
-  shouldReport?: (error: unknown) => boolean;
-  shouldRethrow?: (error: unknown) => boolean;
-};
-
-const withKangurClientError = async <T,>(
-  _report: unknown,
-  task: () => Promise<T>,
-  options: KangurClientErrorHandlingOptions<T>
-): Promise<T> => {
-  try {
-    return await task();
-  } catch (error) {
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
-      throw error;
-    }
-    return typeof options.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : options.fallback;
-  }
-};
-
-const withKangurClientErrorSync = <T,>(
-  _report: unknown,
-  task: () => T,
-  options: KangurClientErrorHandlingOptions<T>
-): T => {
-  try {
-    return task();
-  } catch (error) {
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
-      throw error;
-    }
-    return typeof options.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : options.fallback;
-  }
-};
+  withKangurClientError,
+  withKangurClientErrorSync,
+} = vi.hoisted(() => {
+  return {
+    checkAppStateMock: vi.fn(),
+    locationAssignMock: vi.fn(),
+    routerPushMock: vi.fn(),
+    routerRefreshMock: vi.fn(),
+    signOutMock: vi.fn(),
+    useKangurAiTutorSessionSyncMock: vi.fn(),
+    useOptionalKangurAuthMock: vi.fn(),
+    useKangurPageContentEntryMock: vi.fn(),
+    usePathnameMock: vi.fn(),
+    useRouterMock: vi.fn(),
+    useSearchParamsMock: vi.fn(),
+    ...globalThis.__kangurClientErrorMocks(),
+  };
+});
 
 vi.mock('next/navigation', () => ({
   usePathname: usePathnameMock,

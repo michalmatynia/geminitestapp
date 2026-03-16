@@ -2,12 +2,16 @@
 
 import { useCallback, type KeyboardEvent } from 'react';
 
-import { trackKangurClientEvent } from '@/features/kangur/observability/client';
+import {
+  trackKangurClientEvent,
+  withKangurClientErrorSync,
+} from '@/features/kangur/observability/client';
 import type {
   KangurAiTutorFocusKind,
   KangurAiTutorFollowUpAction,
   KangurAiTutorKnowledgeReference,
   KangurAiTutorPromptMode,
+  KangurAiTutorTelemetryContextDto,
   KangurAiTutorSurface,
   KangurAiTutorWebsiteHelpTarget,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
@@ -21,14 +25,7 @@ import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/feat
 import type { ActiveTutorFocus, TutorQuickAction } from './KangurAiTutorWidget.shared';
 import type { KangurAiTutorWidgetState } from './KangurAiTutorWidget.state';
 import type { SectionExplainContext, TutorMessageFeedback } from './KangurAiTutorWidget.types';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
-
-type TelemetryContext = {
-  contentId: string | null;
-  surface: string | null;
-  title: string | null;
-};
 
 type UseKangurAiTutorPanelActionsInput = {
   activeFocus: ActiveTutorFocus;
@@ -88,7 +85,7 @@ type UseKangurAiTutorPanelActionsInput = {
     intent: KangurAuthMode,
     source: 'chat_message'
   ) => void;
-  telemetryContext: TelemetryContext;
+  telemetryContext: KangurAiTutorTelemetryContextDto;
   tutorSessionKey: string | null;
   widgetState: Pick<
     KangurAiTutorWidgetState,
@@ -260,14 +257,26 @@ export function useKangurAiTutorPanelActions({
 
       let targetPathname: string;
       let targetHash = '';
-      try {
-        const parsed = new URL(href, window.location.origin);
+      const fallbackPathname = href.split('#')[0] ?? href;
+      const fallbackHash = href.includes('#') ? `#${href.split('#')[1]}` : '';
+      const parsed = withKangurClientErrorSync(
+        {
+          source: 'kangur-ai-tutor-panel-actions',
+          action: 'parse-website-help-target',
+          description: 'Parse AI tutor website help target href.',
+          context: {
+            href,
+          },
+        },
+        () => new URL(href, window.location.origin),
+        { fallback: null }
+      );
+      if (parsed) {
         targetPathname = parsed.pathname;
         targetHash = parsed.hash;
-      } catch (error) {
-        logClientError(error);
-        targetPathname = href.split('#')[0] ?? href;
-        targetHash = href.includes('#') ? `#${href.split('#')[1]}` : '';
+      } else {
+        targetPathname = fallbackPathname;
+        targetHash = fallbackHash;
       }
 
       const isSamePage = currentLocation.pathname === targetPathname;

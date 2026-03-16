@@ -44,7 +44,8 @@ export const getKangurLessonDocumentRepository =
       },
       saveLessonDocument: async (lessonId, document) => {
         try {
-          return await repository.saveLessonDocument(lessonId, document);
+          await repository.saveLessonDocument(lessonId, document);
+          return;
         } catch (error) {
           void ErrorSystem.captureException(error);
           void ErrorSystem.captureException(error, {
@@ -58,7 +59,8 @@ export const getKangurLessonDocumentRepository =
       },
       removeLessonDocument: async (lessonId) => {
         try {
-          return await repository.removeLessonDocument(lessonId);
+          await repository.removeLessonDocument(lessonId);
+          return;
         } catch (error) {
           void ErrorSystem.captureException(error);
           void ErrorSystem.captureException(error, {

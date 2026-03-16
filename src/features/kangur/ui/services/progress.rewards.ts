@@ -101,12 +101,7 @@ const getEnglishAccuracyBonus = (scorePercent: number): number => {
 };
 
 const hasEnglishToken = (value?: string | null): boolean =>
-  Boolean(
-    value &&
-      value
-        .split(':')
-        .some((token) => token.trim().toLowerCase().startsWith('english_'))
-  );
+  value?.split(':').some((token) => token.trim().toLowerCase().startsWith('english_')) ?? false;
 
 export const getDifficultyBonus = (difficulty?: string | null): number => {
   if (!difficulty) {

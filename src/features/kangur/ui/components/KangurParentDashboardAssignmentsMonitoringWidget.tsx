@@ -16,17 +16,17 @@ import {
   KangurEmptyState,
   KangurInfoCard,
   KangurMetaText,
-  KangurPanelIntro,
+  KangurPanelStack,
   KangurSummaryPanel,
   KangurTextField,
+  KangurWidgetIntro,
 } from '@/features/kangur/ui/design/primitives';
 import {
-  KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { ActivityTypes } from '@/shared/constants/observability';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientError } from '@/features/kangur/observability/client';
 import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 
 
@@ -371,35 +371,48 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
 
     setIsLoadingMoreInteractions(true);
     setInteractionsLoadMoreError(null);
-    try {
-      const history = await kangurPlatform.learnerInteractions.list(activeLearnerId, {
-        limit: INTERACTIONS_PAGE_LIMIT,
-        offset: nextInteractionOffset,
-      });
-      setInteractionHistory((current) => {
-        if (!current) {
-          return history;
-        }
-        const existingIds = new Set(current.items.map((entry) => entry.id));
-        const mergedItems = [
-          ...current.items,
-          ...history.items.filter((entry) => !existingIds.has(entry.id)),
-        ];
-        const total = Math.max(current.total, history.total);
-        return {
-          ...history,
-          items: mergedItems,
-          total,
-          offset: current.offset,
-          limit: current.limit,
-        };
-      });
-    } catch (error) {
-      logClientError(error);
-      setInteractionsLoadMoreError('Nie udało się wczytać starszych interakcji.');
-    } finally {
-      setIsLoadingMoreInteractions(false);
-    }
+    await withKangurClientError(
+      {
+        source: 'kangur-parent-dashboard',
+        action: 'load-more-interactions',
+        description: 'Load more learner interactions in parent dashboard.',
+        context: {
+          learnerId: activeLearnerId,
+          offset: nextInteractionOffset,
+        },
+      },
+      async () => {
+        const history = await kangurPlatform.learnerInteractions.list(activeLearnerId, {
+          limit: INTERACTIONS_PAGE_LIMIT,
+          offset: nextInteractionOffset,
+        });
+        setInteractionHistory((current) => {
+          if (!current) {
+            return history;
+          }
+          const existingIds = new Set(current.items.map((entry) => entry.id));
+          const mergedItems = [
+            ...current.items,
+            ...history.items.filter((entry) => !existingIds.has(entry.id)),
+          ];
+          const total = Math.max(current.total, history.total);
+          return {
+            ...history,
+            items: mergedItems,
+            total,
+            offset: current.offset,
+            limit: current.limit,
+          };
+        });
+      },
+      {
+        fallback: undefined,
+        onError: () => {
+          setInteractionsLoadMoreError('Nie udało się wczytać starszych interakcji.');
+        },
+      }
+    );
+    setIsLoadingMoreInteractions(false);
   };
 
   useEffect(() => {
@@ -453,15 +466,13 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
   }
 
   return (
-    <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-      <KangurPanelIntro
+    <KangurPanelStack>
+      <KangurWidgetIntro
         description={
           monitoringContent?.summary ??
           'Monitoruj postęp przypisanych zadań, w tym sugestii StudiQ, aby utrzymać stały rytm nauki.'
         }
         title={monitoringContent?.title ?? 'Monitorowanie zadań'}
-        titleAs='h2'
-        titleClassName='text-lg font-bold tracking-[-0.02em]'
       />
       <KangurSummaryPanel
         accent='sky'
@@ -673,6 +684,6 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
           </div>
         )}
       </KangurSummaryPanel>
-    </div>
+    </KangurPanelStack>
   );
 }

@@ -20,7 +20,7 @@ import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 import { useAppearancePage } from './AppearancePage.context';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientError } from '@/features/kangur/observability/client';
 
 
 export function ThemeCatalogModal(): React.JSX.Element {
@@ -87,46 +87,96 @@ export function ThemeCatalogModal(): React.JSX.Element {
   const handleCreateTheme = async () => {
     if (!newThemeName.trim()) return;
     setIsSavingNew(true);
-    try {
-      await createCatalogEntry(newThemeName.trim(), draft);
+    const didCreate = await withKangurClientError(
+      {
+        source: 'kangur.admin.theme-catalog',
+        action: 'create-theme',
+        description: 'Creates a new theme catalog entry.',
+        context: { name: newThemeName.trim() },
+      },
+      async () => {
+        await createCatalogEntry(newThemeName.trim(), draft);
+        return true;
+      },
+      {
+        fallback: false,
+        onError: (error) => {
+          toast(error instanceof Error ? error.message : 'Błąd zapisu motywu.', {
+            variant: 'error',
+          });
+        },
+      }
+    );
+
+    if (didCreate) {
       setNewThemeName('');
       toast('Nowy motyw został dodany do katalogu.', { variant: 'success' });
-    } catch (error) {
-      logClientError(error);
-      toast(error instanceof Error ? error.message : 'Błąd zapisu motywu.', { variant: 'error' });
-    } finally {
-      setIsSavingNew(false);
     }
+    setIsSavingNew(false);
   };
 
   const handleDuplicateTheme = async (entry: KangurThemeCatalogEntry) => {
     setDuplicatingId(entry.id);
-    try {
-      const nextName = buildUniqueName(`${entry.name} (kopia)`);
-      await createCatalogEntry(nextName, entry.settings);
+    const didDuplicate = await withKangurClientError(
+      {
+        source: 'kangur.admin.theme-catalog',
+        action: 'duplicate-theme',
+        description: 'Duplicates a theme catalog entry.',
+        context: { themeId: entry.id },
+      },
+      async () => {
+        const nextName = buildUniqueName(`${entry.name} (kopia)`);
+        await createCatalogEntry(nextName, entry.settings);
+        return true;
+      },
+      {
+        fallback: false,
+        onError: (error) => {
+          toast(
+            error instanceof Error ? error.message : 'Nie udało się zduplikować motywu.',
+            { variant: 'error' }
+          );
+        },
+      }
+    );
+
+    if (didDuplicate) {
       toast('Motyw został zduplikowany.', { variant: 'success' });
-    } catch (error) {
-      logClientError(error);
-      toast(error instanceof Error ? error.message : 'Nie udało się zduplikować motywu.', { variant: 'error' });
-    } finally {
-      setDuplicatingId(null);
     }
+    setDuplicatingId(null);
   };
 
   const handleDeleteFromCatalog = async (id: string) => {
     if (!confirm('Czy na pewno chcesz usunąć ten motyw z katalogu?')) return;
-    try {
-      const nextCatalog = catalog.filter((e) => e.id !== id);
-      const serialized = serializeSetting(nextCatalog);
-      await updateSetting.mutateAsync({
-        key: KANGUR_THEME_CATALOG_KEY,
-        value: serialized,
-      });
-      updateCatalog(serialized);
+    const didDelete = await withKangurClientError(
+      {
+        source: 'kangur.admin.theme-catalog',
+        action: 'delete-theme',
+        description: 'Deletes a theme catalog entry.',
+        context: { themeId: id },
+      },
+      async () => {
+        const nextCatalog = catalog.filter((e) => e.id !== id);
+        const serialized = serializeSetting(nextCatalog);
+        await updateSetting.mutateAsync({
+          key: KANGUR_THEME_CATALOG_KEY,
+          value: serialized,
+        });
+        updateCatalog(serialized);
+        return true;
+      },
+      {
+        fallback: false,
+        onError: (error) => {
+          toast(error instanceof Error ? error.message : 'Błąd usuwania motywu.', {
+            variant: 'error',
+          });
+        },
+      }
+    );
+
+    if (didDelete) {
       toast('Motyw został usunięty.', { variant: 'success' });
-    } catch (error) {
-      logClientError(error);
-      toast(error instanceof Error ? error.message : 'Błąd usuwania motywu.', { variant: 'error' });
     }
   };
 

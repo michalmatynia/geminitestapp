@@ -17,8 +17,7 @@ import { KANGUR_DEFAULT_DAWN_THEME } from './themes/dawn';
 import { KANGUR_DEFAULT_SUNSET_THEME } from './themes/sunset';
 import { KANGUR_NIGHTLY_THEME } from './themes/nightly';
 import { KANGUR_DAILY_CRYSTAL_THEME, KANGUR_NIGHTLY_CRYSTAL_THEME } from './themes/others';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
-
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 export const KANGUR_DEFAULT_THEME = KANGUR_NIGHTLY_THEME;
 
@@ -329,18 +328,24 @@ export const parseKangurThemeCatalog = (
   raw: string | null | undefined
 ): KangurThemeCatalogEntry[] => {
   if (typeof raw !== 'string' || !raw.trim()) return [];
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (e): e is KangurThemeCatalogEntry =>
-        e !== null &&
-        typeof e === 'object' &&
-        typeof (e as Record<string, unknown>)['id'] === 'string' &&
-        typeof (e as Record<string, unknown>)['name'] === 'string'
-    );
-  } catch (error) {
-    logClientError(error);
-    return [];
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.theme-settings',
+      action: 'parse-theme-catalog',
+      description: 'Parses the Kangur theme catalog payload.',
+      context: { rawLength: raw.length },
+    },
+    () => {
+      const parsed: unknown = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter(
+        (e): e is KangurThemeCatalogEntry =>
+          e !== null &&
+          typeof e === 'object' &&
+          typeof (e as Record<string, unknown>)['id'] === 'string' &&
+          typeof (e as Record<string, unknown>)['name'] === 'string'
+      );
+    },
+    { fallback: [] }
+  );
 };

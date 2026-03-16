@@ -197,7 +197,7 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
       role='region'
       aria-labelledby='kangur-lobby-chat-heading'
     >
-      <div className='flex flex-wrap items-center justify-between kangur-panel-gap'>
+      <div className='flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between kangur-panel-gap'>
         <div className='space-y-1'>
           <div className='flex flex-wrap items-center gap-2'>
             <h3 id='kangur-lobby-chat-heading' className='text-xl font-semibold text-slate-900'>
@@ -251,6 +251,7 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
             disabled={isLoading}
             aria-busy={isLoading}
             aria-label='Odśwież czat lobby'
+            className='w-full sm:w-auto'
           >
             {isLoading ? 'Odświeżamy…' : 'Odśwież'}
           </KangurButton>
@@ -265,7 +266,7 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
 
       <div
         ref={scrollContainerRef}
-        className='max-h-[320px] overflow-y-auto rounded-2xl border border-slate-200/70 bg-white/70 p-4'
+        className='max-h-[52vh] overflow-y-auto rounded-2xl border border-slate-200/70 bg-white/70 p-3 sm:max-h-[320px] sm:p-4'
         role='log'
         aria-live='polite'
         aria-busy={isLoading}
@@ -333,7 +334,7 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
                     )}
                     <div
                       className={cn(
-                        'flex-1',
+                        'min-w-0 flex-1',
                         isGrouped ? 'pt-1' : '',
                         isOwn ? 'flex flex-col items-end' : null
                       )}
@@ -430,7 +431,7 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
             {isSending ? 'Wysyłamy…' : 'Wyślij'}
           </KangurButton>
         </div>
-        <div className='flex flex-wrap items-center justify-between text-xs text-slate-500'>
+        <div className='flex flex-col gap-2 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between'>
           <span
             className={cn(
               remainingChars === 0

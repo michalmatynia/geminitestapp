@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 
+import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
+
 /**
  * A custom hook that sets up an interval and clears it on unmount.
  *
@@ -19,12 +21,12 @@ export function useInterval(callback: () => void, delay: number | null): void {
   // Set up the interval.
   useEffect(() => {
     if (delay !== null) {
-      const id = setInterval(() => {
+      const id = safeSetInterval(() => {
         if (savedCallback.current) {
           savedCallback.current();
         }
       }, delay);
-      return () => clearInterval(id);
+      return () => safeClearInterval(id);
     }
     return undefined;
   }, [delay]);

@@ -2,5 +2,16 @@
 > libapp2@0.1.0 typecheck
 > tsc --noEmit --incremental false
 
-src/features/integrations/pages/marketplaces/allegro/AllegroSubpageScaffold.tsx(42,13): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
+src/app/api/kangur/[[...path]]/route.ts(203,38): error TS1135: Argument expression expected.
+src/app/api/kangur/[[...path]]/route.ts(221,38): error TS1135: Argument expression expected.
+src/app/api/kangur/[[...path]]/route.ts(239,38): error TS1135: Argument expression expected.
+src/app/api/kangur/[[...path]]/route.ts(871,38): error TS1135: Argument expression expected.
+src/app/api/kangur/[[...path]]/route.ts(875,38): error TS1135: Argument expression expected.
+src/app/api/kangur/[[...path]]/route.ts(881,36): error TS1135: Argument expression expected.
+src/app/api/kangur/[[...path]]/route.ts(896,38): error TS1135: Argument expression expected.
+src/app/api/kangur/[[...path]]/route.ts(900,38): error TS1135: Argument expression expected.
+src/app/api/kangur/[[...path]]/route.ts(904,38): error TS1135: Argument expression expected.
+src/app/api/kangur/[[...path]]/route.ts(911,36): error TS1135: Argument expression expected.
+src/app/api/kangur/[[...path]]/route.ts(924,36): error TS1135: Argument expression expected.
+src/app/api/kangur/[[...path]]/route.ts(937,36): error TS1135: Argument expression expected.
+src/app/api/kangur/[[...path]]/route.ts(950,36): error TS1135: Argument expression expected.

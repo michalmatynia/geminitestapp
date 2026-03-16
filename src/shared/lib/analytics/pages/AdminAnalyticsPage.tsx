@@ -56,7 +56,7 @@ function AnalyticsContextRegistrySource(): React.JSX.Element {
 
 function AnalyticsPageContent(): React.JSX.Element {
   return (
-    <div className='container mx-auto py-10'>
+    <div className='page-section'>
       <AnalyticsContextRegistrySource />
       <AnalyticsDashboardHeader />
       <AnalyticsAiInsights />

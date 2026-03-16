@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-11T04:30:47.103Z",
+  "generatedAt": "2026-03-16T18:13:42.065Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -10,7 +10,6 @@
   },
   "environment": {
     "nodeEnv": "development",
-    "hasDatabaseUrl": true,
     "hasMongoUri": true,
     "appDbProvider": "mongodb",
     "hasAuthSecret": true,

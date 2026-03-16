@@ -359,19 +359,27 @@ function ParentDashboardContent(): React.JSX.Element {
         tone='dashboard'
         className='justify-center px-4'
         id='kangur-parent-dashboard-page'
+        skipLinkTargetId='kangur-parent-dashboard-guest-main'
       >
         <KangurDocsTooltipEnhancer
           enabled={docsTooltipsEnabled}
           rootId='kangur-parent-dashboard-page'
         />
-        <motion.div
-          ref={guestHeroAnchorRef}
-          initial={false}
-          animate={{ opacity: 1, y: 0 }}
-          className='w-full max-w-lg'
+        <KangurPageContainer
+          as='section'
+          data-kangur-route-main='true'
+          id='kangur-parent-dashboard-guest-main'
+          className='flex w-full flex-1 items-center justify-center py-12'
         >
-          <KangurParentDashboardHeroWidget />
-        </motion.div>
+          <motion.div
+            ref={guestHeroAnchorRef}
+            initial={false}
+            animate={{ opacity: 1, y: 0 }}
+            className='w-full max-w-lg'
+          >
+            <KangurParentDashboardHeroWidget />
+          </motion.div>
+        </KangurPageContainer>
       </KangurPageShell>
     );
   }

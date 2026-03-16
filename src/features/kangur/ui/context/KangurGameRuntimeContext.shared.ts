@@ -86,3 +86,24 @@ export const isKangurOperation = (value: string | null): value is KangurOperatio
 
 export const isKangurDifficulty = (value: string | null): value is KangurDifficulty =>
   Boolean(value && KANGUR_DIFFICULTIES.includes(value as KangurDifficulty));
+
+export const isKangurGameScreen = (value: string | null | undefined): value is KangurGameScreen =>
+  value === 'home' ||
+  value === 'training' ||
+  value === 'kangur_setup' ||
+  value === 'kangur' ||
+  value === 'calendar_quiz' ||
+  value === 'geometry_quiz' ||
+  value === 'clock_quiz' ||
+  value === 'addition_quiz' ||
+  value === 'subtraction_quiz' ||
+  value === 'multiplication_quiz' ||
+  value === 'division_quiz' ||
+  value === 'logical_patterns_quiz' ||
+  value === 'logical_classification_quiz' ||
+  value === 'logical_analogies_quiz' ||
+  value === 'english_sentence_quiz' ||
+  value === 'english_parts_of_speech_quiz' ||
+  value === 'operation' ||
+  value === 'playing' ||
+  value === 'result';

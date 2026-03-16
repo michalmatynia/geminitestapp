@@ -3,25 +3,36 @@
 import { Award, BarChart2, Compass, Flame, Sparkles, Target } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import { KANGUR_AVATAR_OPTIONS, getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';
+import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
+import { useKangurAuthActions } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurLearnerProfileRuntime } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import {
+  KangurGlassPanel,
   KangurMetricCard,
+  KangurMetaText,
   KangurPanelIntro,
   KangurProgressBar,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
-import {
-  getCurrentKangurDailyQuest,
-  type KangurDailyQuestState,
-} from '@/features/kangur/ui/services/daily-quests';
+import type { KangurDailyQuestState } from '@/features/kangur/shared/contracts/kangur-quests';
+import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import { getNextLockedBadge } from '@/features/kangur/ui/services/progress';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+
+const kangurPlatform = getKangurPlatform();
 
 export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
-  const { progress, snapshot } = useKangurLearnerProfileRuntime();
+  const { progress, snapshot, user } = useKangurLearnerProfileRuntime();
+  const { checkAppState } = useKangurAuthActions();
   const { entry: overviewContent } = useKangurPageContentEntry('learner-profile-overview');
   const nextBadge = getNextLockedBadge(progress);
   const [dailyQuest, setDailyQuest] = useState<KangurDailyQuestState | null | undefined>(undefined);
+  const [isSavingAvatar, setIsSavingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const activeLearner = user?.activeLearner ?? null;
+  const selectedAvatar = getKangurAvatarById(activeLearner?.avatarId);
 
   useEffect(() => {
     setDailyQuest(getCurrentKangurDailyQuest(progress));
@@ -36,6 +47,26 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
           ? 'indigo'
           : 'slate';
 
+  const handleAvatarSelect = async (avatarId: string): Promise<void> => {
+    if (!activeLearner || isSavingAvatar) {
+      return;
+    }
+    if (activeLearner.avatarId === avatarId) {
+      return;
+    }
+    setIsSavingAvatar(true);
+    setAvatarError(null);
+    try {
+      await kangurPlatform.learners.update(activeLearner.id, { avatarId });
+      await checkAppState();
+    } catch (error) {
+      logClientError(error);
+      setAvatarError('Nie udalo sie zapisac avatara.');
+    } finally {
+      setIsSavingAvatar(false);
+    }
+  };
+
   return (
     <section className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <KangurPanelIntro
@@ -46,6 +77,71 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         }
         eyebrow={overviewContent?.title ?? 'Przegląd wyników'}
       />
+      <KangurGlassPanel
+        className='flex w-full flex-col gap-4'
+        padding='lg'
+        surface='mist'
+      >
+        <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+          <div className='flex items-center gap-4'>
+            <div className='h-16 w-16 overflow-hidden rounded-full border border-white/80 bg-white/80 shadow-sm'>
+              {selectedAvatar ? (
+                <img
+                  src={selectedAvatar.src}
+                  alt={selectedAvatar.label}
+                  className='h-full w-full object-cover'
+                />
+              ) : (
+                <div className='flex h-full w-full items-center justify-center text-xl font-black text-slate-400'>
+                  ?
+                </div>
+              )}
+            </div>
+            <div>
+              <h3 className='text-base font-bold text-slate-800'>Avatar ucznia</h3>
+              <KangurMetaText className='mt-1'>
+                Wybierz bohatera, ktory bedzie widoczny w profilu ucznia.
+              </KangurMetaText>
+            </div>
+          </div>
+          {avatarError ? (
+            <KangurMetaText className='text-rose-600'>{avatarError}</KangurMetaText>
+          ) : null}
+        </div>
+        <div
+          className='grid grid-cols-5 gap-3 sm:grid-cols-8'
+          role='radiogroup'
+          aria-label='Wybierz avatar'
+        >
+          {KANGUR_AVATAR_OPTIONS.map((option) => {
+            const isSelected = activeLearner?.avatarId === option.id;
+            return (
+              <button
+                key={option.id}
+                type='button'
+                role='radio'
+                aria-checked={isSelected}
+                aria-label={option.label}
+                disabled={!activeLearner || isSavingAvatar}
+                onClick={() => {
+                  void handleAvatarSelect(option.id);
+                }}
+                className={`relative h-12 w-12 overflow-hidden rounded-full border transition ${
+                  isSelected
+                    ? 'border-amber-400 shadow-[0_0_0_3px_rgba(251,191,36,0.25)]'
+                    : 'border-white/80 hover:border-amber-200'
+                } ${!activeLearner || isSavingAvatar ? 'opacity-60' : 'cursor-pointer'}`}
+              >
+                <img
+                  src={option.src}
+                  alt={option.label}
+                  className='h-full w-full object-cover'
+                />
+              </button>
+            );
+          })}
+        </div>
+      </KangurGlassPanel>
       <div
         className={`grid grid-cols-1 ${KANGUR_PANEL_GAP_CLASSNAME} min-[360px]:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6`}
       >

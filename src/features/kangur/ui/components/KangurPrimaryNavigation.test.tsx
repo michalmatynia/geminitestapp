@@ -24,6 +24,10 @@ const { useKangurPageContentEntryMock } = vi.hoisted(() => ({
   useKangurPageContentEntryMock: vi.fn(),
 }));
 
+const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
+  useKangurSubjectFocusMock: vi.fn(),
+}));
+
 const { sessionMock } = vi.hoisted(() => ({
   sessionMock: vi.fn(),
 }));
@@ -100,6 +104,10 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: () => optionalAuthMock(),
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useOptionalKangurAiTutor: () => optionalTutorMock(),
 }));
@@ -173,6 +181,11 @@ describe('KangurPrimaryNavigation', () => {
     vi.clearAllMocks();
     optionalAuthMock.mockReturnValue(null);
     optionalTutorMock.mockReturnValue(null);
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
     sessionMock.mockReturnValue({
       data: null,
       status: 'unauthenticated',
@@ -607,11 +620,10 @@ describe('KangurPrimaryNavigation', () => {
     );
   });
 
-  it('shows a visible toggle action when the tutor is hidden locally and reopens it on click', () => {
-    const openChatMock = vi.fn();
+  it('hides the toggle action in the primary nav when the tutor is hidden locally', () => {
     optionalTutorMock.mockReturnValue({
       enabled: true,
-      openChat: openChatMock,
+      openChat: vi.fn(),
     });
     persistTutorVisibilityHidden(true);
 
@@ -624,19 +636,10 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
-    const toggleButton = screen.getByTestId('kangur-ai-tutor-toggle');
-
-    expect(toggleButton).toBeVisible();
-    expect(toggleButton).toHaveTextContent('Włącz AI Tutora');
-    expect(toggleButton.className).toContain('bg-[linear-gradient');
-
-    fireEvent.click(toggleButton);
-
-    expect(openChatMock).toHaveBeenCalledTimes(1);
-    expect(loadPersistedTutorVisibilityHidden()).toBe(false);
+    expect(screen.queryByTestId('kangur-ai-tutor-toggle')).toBeNull();
   });
 
-  it('still shows the toggle action when the current tutor surface is unavailable but tutoring is not globally disabled', () => {
+  it('keeps the toggle action hidden even when the current tutor surface is unavailable', () => {
     optionalTutorMock.mockReturnValue({
       enabled: false,
       openChat: vi.fn(),
@@ -656,10 +659,10 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
-    expect(screen.getByTestId('kangur-ai-tutor-toggle')).toBeVisible();
+    expect(screen.queryByTestId('kangur-ai-tutor-toggle')).toBeNull();
   });
 
-  it('renders the toggle action inside the main nav group when the tutor is hidden locally', () => {
+  it('does not render the toggle action inside the main nav group when the tutor is hidden locally', () => {
     optionalTutorMock.mockReturnValue({
       enabled: true,
       openChat: vi.fn(),
@@ -679,9 +682,7 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
-    expect(screen.getByRole('navigation', { name: /główna nawigacja kangur/i })).toContainElement(
-      screen.getByTestId('kangur-ai-tutor-toggle')
-    );
+    expect(screen.queryByTestId('kangur-ai-tutor-toggle')).toBeNull();
   });
 
   it('collapses the guest name input on blur and reopens it on click', () => {

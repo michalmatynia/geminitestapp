@@ -1,5 +1,7 @@
 import type {
+  KangurDuelDifficulty,
   KangurDuelMode,
+  KangurDuelOperation,
   KangurDuelPlayer,
   KangurDuelPlayerStatus,
   KangurDuelQuestion,
@@ -9,7 +11,7 @@ import type { QuestionCardQuestion } from '@/features/kangur/ui/components/Quest
 
 export const SESSION_STATUS_LABELS: Record<KangurDuelStatus, string> = {
   created: 'Utworzony',
-  waiting: 'Czeka na gracza',
+  waiting: 'Czeka na graczy',
   ready: 'Gotowy do startu',
   in_progress: 'W trakcie',
   completed: 'Zakończony',
@@ -33,6 +35,38 @@ export const LOBBY_MODE_ACCENTS: Record<KangurDuelMode, 'indigo' | 'sky'> = {
   challenge: 'indigo',
   quick_match: 'sky',
 };
+
+export const DUEL_OPERATION_LABELS: Record<KangurDuelOperation, string> = {
+  addition: 'Dodawanie',
+  subtraction: 'Odejmowanie',
+  multiplication: 'Mnożenie',
+  division: 'Dzielenie',
+};
+
+export const DUEL_OPERATION_SYMBOLS: Record<KangurDuelOperation, string> = {
+  addition: '+',
+  subtraction: '−',
+  multiplication: '×',
+  division: '÷',
+};
+
+export const DUEL_DIFFICULTY_LABELS: Record<KangurDuelDifficulty, string> = {
+  easy: 'Łatwy',
+  medium: 'Średni',
+  hard: 'Trudny',
+};
+
+export const DUEL_DIFFICULTY_EMOJIS: Record<KangurDuelDifficulty, string> = {
+  easy: '🟢',
+  medium: '🟡',
+  hard: '🔴',
+};
+
+export const formatDuelOperationLabel = (operation: KangurDuelOperation): string =>
+  `${DUEL_OPERATION_SYMBOLS[operation]} ${DUEL_OPERATION_LABELS[operation]}`;
+
+export const formatDuelDifficultyLabel = (difficulty: KangurDuelDifficulty): string =>
+  `${DUEL_DIFFICULTY_EMOJIS[difficulty]} ${DUEL_DIFFICULTY_LABELS[difficulty]}`;
 
 export const resolveSessionAccent = (
   status: KangurDuelStatus
@@ -71,16 +105,55 @@ export const buildWinnerSummary = (players: KangurDuelPlayer[]): string => {
     const onlyPlayer = players[0];
     return onlyPlayer ? `Wynik: ${onlyPlayer.displayName}` : 'Pojedynek zakończony.';
   }
-  const sorted = [...players].sort((a, b) => b.score - a.score);
-  const first = sorted[0];
-  const second = sorted[1];
-  if (!first || !second) {
-    return 'Pojedynek zakończony.';
+  const scores = players.map((player) => player.score + (player.bonusPoints ?? 0));
+  const topScore = Math.max(...scores);
+  const topPlayers = players.filter(
+    (player) => player.score + (player.bonusPoints ?? 0) === topScore
+  );
+  if (topPlayers.length === 1) {
+    return `Wygrywa ${topPlayers[0]!.displayName}!`;
   }
-  if (first.score === second.score) {
-    return 'Remis!';
+  const fastest = resolveFastestPlayer(topPlayers);
+  if (fastest) {
+    return `Wygrywa ${fastest.displayName}!`;
   }
-  return `Wygrywa ${first.displayName}!`;
+  return 'Remis!';
+};
+
+export const formatElapsedTime = (
+  startedAt: string | null | undefined,
+  completedAt: string | null | undefined
+): string | null => {
+  if (!startedAt || !completedAt) {
+    return null;
+  }
+  const startMs = Date.parse(startedAt);
+  const endMs = Date.parse(completedAt);
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs < startMs) {
+    return null;
+  }
+  const diffSec = Math.round((endMs - startMs) / 1000);
+  return formatDurationLabel(diffSec);
+};
+
+const resolveFastestPlayer = (players: KangurDuelPlayer[]): KangurDuelPlayer | null => {
+  if (players.length <= 1) {
+    return players[0] ?? null;
+  }
+  const ranked = players
+    .map((player) => ({
+      player,
+      completedAtMs: player.completedAt ? Date.parse(player.completedAt) : null,
+    }))
+    .filter((entry) => typeof entry.completedAtMs === 'number' && Number.isFinite(entry.completedAtMs));
+  if (!ranked.length) {
+    return null;
+  }
+  ranked.sort((left, right) => (left.completedAtMs ?? 0) - (right.completedAtMs ?? 0));
+  if (ranked.length >= 2 && ranked[0]?.completedAtMs === ranked[1]?.completedAtMs) {
+    return null;
+  }
+  return ranked[0]?.player ?? null;
 };
 
 export const resolveLobbyHostInitial = (name: string): string =>

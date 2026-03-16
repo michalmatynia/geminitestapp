@@ -9,6 +9,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const useKangurProgressStateMock = vi.hoisted(() => vi.fn());
 const useKangurAssignmentsMock = vi.hoisted(() => vi.fn());
 const useSettingsStoreMock = vi.hoisted(() => vi.fn());
+const lessonsState = vi.hoisted(() => ({
+  value: [] as Array<Record<string, unknown>>,
+}));
 const delegatedAssignmentsState = vi.hoisted(() => ({
   catalog: [] as Array<{
     id: string;
@@ -46,6 +49,14 @@ vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: useKangurAssignmentsMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: () => ({
+    data: lessonsState.value,
+    isLoading: false,
+    error: null,
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/services/delegated-assignments', () => ({
@@ -139,6 +150,7 @@ const progress = {
 describe('KangurAssignmentManager', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    lessonsState.value = [];
     useSettingsStoreMock.mockReturnValue({
       get: vi.fn(),
     });
@@ -235,7 +247,10 @@ describe('KangurAssignmentManager', () => {
     );
   });
 
-  it('marks assigned catalog items as already assigned', () => {
+  it('allows unassigning catalog items that are already assigned', () => {
+    const updateAssignment = vi.fn().mockResolvedValue({
+      id: 'assignment-1',
+    });
     delegatedAssignmentsState.catalog = [
       {
         id: 'practice-addition',
@@ -293,12 +308,14 @@ describe('KangurAssignmentManager', () => {
       error: null,
       refresh: vi.fn(),
       createAssignment: vi.fn(),
-      updateAssignment: vi.fn(),
+      updateAssignment,
+      reassignAssignment: vi.fn(),
     });
 
     render(<KangurAssignmentManager basePath='/kangur' view='catalog' />);
 
-    const assignedButton = screen.getByRole('button', { name: 'Przypisane' });
-    expect(assignedButton).toBeDisabled();
+    const unassignButton = screen.getByRole('button', { name: 'Cofnij przydział' });
+    fireEvent.click(unassignButton);
+    expect(updateAssignment).toHaveBeenCalledWith('assignment-1', { archived: true });
   });
 });

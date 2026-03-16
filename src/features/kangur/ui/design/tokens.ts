@@ -3,10 +3,10 @@ import { cn } from '@/features/kangur/shared/utils';
 export type KangurPageTone = 'play' | 'learn' | 'profile' | 'dashboard';
 
 export const KANGUR_PAGE_TONE_CLASSNAMES: Record<KangurPageTone, string> = {
-  play: 'min-h-screen kangur-premium-bg',
-  learn: 'min-h-screen kangur-premium-bg',
-  profile: 'min-h-screen kangur-premium-bg',
-  dashboard: 'min-h-screen kangur-premium-bg',
+  play: 'min-h-screen min-h-[100svh] min-h-[100dvh] kangur-premium-bg',
+  learn: 'min-h-screen min-h-[100svh] min-h-[100dvh] kangur-premium-bg',
+  profile: 'min-h-screen min-h-[100svh] min-h-[100dvh] kangur-premium-bg',
+  dashboard: 'min-h-screen min-h-[100svh] min-h-[100dvh] kangur-premium-bg',
 };
 
 export const KANGUR_TOP_BAR_CLASSNAME =
@@ -14,7 +14,7 @@ export const KANGUR_TOP_BAR_CLASSNAME =
 export const KANGUR_TOP_BAR_INNER_CLASSNAME =
   'flex w-full flex-col items-stretch kangur-panel-gap sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap';
 export const KANGUR_PAGE_CONTAINER_CLASSNAME =
-  'kangur-page-container w-full';
+  'kangur-page-container w-full min-w-0 mx-auto';
 export const KANGUR_PANEL_GAP_CLASSNAME = 'kangur-panel-gap';
 export const KANGUR_LESSON_PANEL_GAP_CLASSNAME = 'kangur-lesson-panel-gap';
 

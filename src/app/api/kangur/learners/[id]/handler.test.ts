@@ -78,7 +78,7 @@ describe('kangur learner [id] handler', () => {
     const response = await patchKangurLearnerHandler(
       createPatchRequest(
         JSON.stringify({
-          password: 'KangurParentReset2026!',
+          password: 'KangurParentReset2026',
         })
       ),
       createRequestContext(),
@@ -86,7 +86,7 @@ describe('kangur learner [id] handler', () => {
     );
 
     expect(updateKangurLearnerMock).toHaveBeenCalledWith('learner-1', {
-      password: 'KangurParentReset2026!',
+      password: 'KangurParentReset2026',
     });
     expect(logKangurServerEventMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -123,12 +123,56 @@ describe('kangur learner [id] handler', () => {
       patchKangurLearnerHandler(
         createPatchRequest(
           JSON.stringify({
-            password: 'KangurParentReset2026!',
+            password: 'KangurParentReset2026',
           })
         ),
         createRequestContext(),
         { id: 'learner-1' }
       )
     ).rejects.toThrow('This learner does not belong to the current parent account.');
+  });
+
+  it('lets a learner update their own avatar', async () => {
+    resolveKangurActorMock.mockResolvedValue({
+      ownerUserId: 'parent-1',
+      canManageLearners: false,
+      actorType: 'learner',
+      activeLearner: {
+        id: 'learner-1',
+        ownerUserId: 'parent-1',
+        displayName: 'Michal',
+        loginName: 'mmatynia',
+        status: 'active',
+        legacyUserKey: 'mmatynia@gmail.com',
+        createdAt: '2026-03-06T13:50:38.968Z',
+        updatedAt: '2026-03-06T13:50:38.968Z',
+      },
+    });
+    updateKangurLearnerMock.mockResolvedValue({
+      id: 'learner-1',
+      ownerUserId: 'parent-1',
+      displayName: 'Michal',
+      loginName: 'mmatynia',
+      status: 'active',
+      legacyUserKey: 'mmatynia@gmail.com',
+      avatarId: 'star-fox',
+      createdAt: '2026-03-06T13:50:38.968Z',
+      updatedAt: '2026-03-06T14:13:48.034Z',
+    });
+
+    const response = await patchKangurLearnerHandler(
+      createPatchRequest(
+        JSON.stringify({
+          avatarId: 'star-fox',
+        })
+      ),
+      createRequestContext(),
+      { id: 'learner-1' }
+    );
+
+    expect(updateKangurLearnerMock).toHaveBeenCalledWith('learner-1', {
+      avatarId: 'star-fox',
+    });
+    expect(response.status).toBe(200);
   });
 });

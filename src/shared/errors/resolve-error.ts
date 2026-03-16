@@ -12,6 +12,11 @@ import {
   isAppError,
   type AppErrorCode,
 } from '@/shared/errors/app-error';
+import {
+  resolveErrorCatalogMessage,
+  resolveErrorUserMessage,
+  resolveUnexpectedFallbackMessage,
+} from '@/shared/errors/error-catalog';
 import { classifyError, getSuggestedActions } from '@/shared/errors/error-classifier';
 import { mapErrorToAppError } from '@/shared/errors/error-mapper';
 
@@ -65,7 +70,10 @@ export const resolveError = (error: unknown, options?: ResolveOptions): Resolved
   if (error instanceof z.ZodError) {
     return {
       errorId,
-      message: 'Invalid request payload',
+      message: resolveErrorCatalogMessage(
+        AppErrorCodes.validation,
+        'Invalid request payload'
+      ),
       code: AppErrorCodes.validation,
       httpStatus: 400,
       expected: true,
@@ -87,7 +95,10 @@ export const resolveError = (error: unknown, options?: ResolveOptions): Resolved
   if (error instanceof TypeError && error.message.includes('fetch')) {
     return {
       errorId,
-      message: 'Network request failed',
+      message: resolveErrorCatalogMessage(
+        AppErrorCodes.externalService,
+        'Network request failed'
+      ),
       code: AppErrorCodes.externalService,
       httpStatus: 502,
       expected: false,
@@ -99,7 +110,7 @@ export const resolveError = (error: unknown, options?: ResolveOptions): Resolved
     };
   }
 
-  const fallback = options?.fallbackMessage ?? 'Unexpected error occurred';
+  const fallback = options?.fallbackMessage ?? resolveUnexpectedFallbackMessage();
   const internal = internalError(fallback);
   return {
     errorId,
@@ -152,7 +163,10 @@ function resolveDatabaseClientError(
   if (code === 'P2002') {
     return {
       errorId,
-      message: 'A record with this value already exists',
+      message: resolveErrorCatalogMessage(
+        AppErrorCodes.duplicateEntry,
+        'A record with this value already exists'
+      ),
       code: AppErrorCodes.duplicateEntry,
       httpStatus: 409,
       expected: true,
@@ -176,7 +190,7 @@ function resolveDatabaseClientError(
   if (code === 'P2001' || code === 'P2025') {
     return {
       errorId,
-      message: 'Record not found',
+      message: resolveErrorCatalogMessage(AppErrorCodes.notFound, 'Record not found'),
       code: AppErrorCodes.notFound,
       httpStatus: 404,
       expected: true,
@@ -199,7 +213,10 @@ function resolveDatabaseClientError(
   if (code === 'P2003') {
     return {
       errorId,
-      message: 'Referenced record not found',
+      message: resolveErrorCatalogMessage(
+        AppErrorCodes.badRequest,
+        'Referenced record not found'
+      ),
       code: AppErrorCodes.badRequest,
       httpStatus: 400,
       expected: true,
@@ -222,7 +239,10 @@ function resolveDatabaseClientError(
   if (code === 'P1001' || code === 'P1002' || code?.includes('ECONN')) {
     return {
       errorId,
-      message: 'Database connection failed',
+      message: resolveErrorCatalogMessage(
+        AppErrorCodes.databaseError,
+        'Database connection failed'
+      ),
       code: AppErrorCodes.databaseError,
       httpStatus: 503,
       expected: false,
@@ -251,7 +271,10 @@ function resolveDatabaseClientError(
   if (code === 'P1008' || code === 'P2024') {
     return {
       errorId,
-      message: 'Database operation timed out',
+      message: resolveErrorCatalogMessage(
+        AppErrorCodes.timeout,
+        'Database operation timed out'
+      ),
       code: AppErrorCodes.timeout,
       httpStatus: 504,
       expected: false,
@@ -279,7 +302,10 @@ function resolveDatabaseClientError(
   if (error.constructor.name === 'ValidationError') {
     return {
       errorId,
-      message: 'Invalid request payload',
+      message: resolveErrorCatalogMessage(
+        AppErrorCodes.validation,
+        'Invalid request payload'
+      ),
       code: AppErrorCodes.validation,
       httpStatus: 400,
       expected: true,
@@ -301,7 +327,10 @@ function resolveDatabaseClientError(
   // Generic database error
   return {
     errorId,
-    message: options?.fallbackMessage ?? 'Database operation failed',
+    message: resolveErrorCatalogMessage(
+      AppErrorCodes.databaseError,
+      options?.fallbackMessage ?? 'Database operation failed'
+    ),
     code: AppErrorCodes.databaseError,
     httpStatus: 500,
     expected: false,
@@ -329,11 +358,7 @@ function resolveDatabaseClientError(
  * Creates a user-friendly error message from a resolved error.
  */
 export const getUserMessage = (resolved: ResolvedError): string => {
-  if (resolved.expected) {
-    return resolved.message;
-  }
-  // For unexpected errors, return a generic message
-  return 'An unexpected error occurred. Please try again later.';
+  return resolveErrorUserMessage(resolved);
 };
 
 /**

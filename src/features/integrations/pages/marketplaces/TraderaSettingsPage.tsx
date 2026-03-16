@@ -175,7 +175,7 @@ export default function TraderaSettingsPage(): React.JSX.Element {
   };
 
   return (
-    <div className='container mx-auto py-10 max-w-4xl space-y-6'>
+    <div className='page-section max-w-4xl space-y-6'>
       <SectionHeader
         title='Tradera Automation'
         description='Manage global listing behaviors, relist scheduling, and browser automation profiles.'

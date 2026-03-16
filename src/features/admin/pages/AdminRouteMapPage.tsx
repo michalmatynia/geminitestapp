@@ -225,7 +225,7 @@ export function AdminRouteMapPage(): React.JSX.Element {
   }, [filtered]);
 
   return (
-    <div className='container mx-auto space-y-6 py-10'>
+    <div className='page-section space-y-6'>
       <PanelHeader
         title='Admin Route Map'
         description='Reference of admin routes with clear descriptions for each destination.'

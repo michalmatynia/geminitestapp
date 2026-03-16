@@ -14,7 +14,7 @@ export default function AuthUserPagesPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className='container mx-auto py-10'>
+      <div className='page-section'>
         <LoadingState message='Loading user page settings...' />
       </div>
     );

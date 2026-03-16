@@ -1,37 +1,19 @@
 {
-  "generatedAt": "2026-03-15T14:44:53.411Z",
-  "status": "warn",
+  "generatedAt": "2026-03-16T18:25:02.216Z",
+  "status": "passed",
   "summary": {
-    "total": 1,
+    "total": 0,
     "errorCount": 0,
-    "warningCount": 1,
+    "warningCount": 0,
     "infoCount": 0,
-    "status": "warn",
-    "routeFileCount": 354,
-    "handlerFileCount": 339
+    "status": "passed",
+    "routeFileCount": 280,
+    "handlerFileCount": 364
   },
   "scope": {
     "root": "src/app/api"
   },
-  "issues": [
-    {
-      "severity": "warn",
-      "ruleId": "unchecked-req-json",
-      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
-      "file": "src/app/api/kangur/learner-activity/handler.ts",
-      "line": 49,
-      "column": null,
-      "snippet": null,
-      "context": null
-    }
-  ],
-  "rules": [
-    {
-      "ruleId": "unchecked-req-json",
-      "errorCount": 0,
-      "warningCount": 1,
-      "infoCount": 0
-    }
-  ],
-  "durationMs": 105
+  "issues": [],
+  "rules": [],
+  "durationMs": 67
 }

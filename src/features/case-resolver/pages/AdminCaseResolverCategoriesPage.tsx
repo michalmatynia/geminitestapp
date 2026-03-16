@@ -414,7 +414,7 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
           Add Category
         </Button>
       }
-      containerClassName='container mx-auto py-8'
+      containerClassName='page-section-compact'
     >
 
       <FormSection title='Category Tree' className='p-4'>

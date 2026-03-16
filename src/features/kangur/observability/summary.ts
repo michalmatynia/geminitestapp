@@ -61,6 +61,8 @@ const KANGUR_ANALYTICS_EVENT_NAMES = [
   'kangur_duels_lobby_fetch_succeeded',
   'kangur_duels_lobby_fetch_failed',
   'kangur_duels_lobby_fetch_skipped',
+  'kangur_duels_lobby_chat_sent',
+  'kangur_duels_lobby_chat_send_failed',
   'kangur_duels_action_started',
   'kangur_duels_action_succeeded',
   'kangur_duels_action_failed',

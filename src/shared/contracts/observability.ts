@@ -211,6 +211,8 @@ export const logTriagePresetSchema = z.object({
     'http-500-last7d',
     'client-errors-last7d',
     'auth-anomalies-last3d',
+    'validation-errors-last7d',
+    'integration-errors-last7d',
     'system-alerts-last24h',
     'kangur-source-last7d',
     'kangur-auth-last3d',

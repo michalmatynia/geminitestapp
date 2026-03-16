@@ -30,6 +30,11 @@ import {
   evaluateGeometryDrawing,
   type GeometryShapeId,
 } from '@/features/kangur/ui/services/geometry-drawing';
+import {
+  resolveKangurCanvasPoint,
+  syncKangurCanvasContext,
+} from '@/features/kangur/ui/services/drawing-canvas';
+import { loosenMinInt } from '@/features/kangur/ui/services/drawing-leniency';
 import type { Point2d } from '@/shared/contracts/geometry';
 import {
   addXp,
@@ -37,6 +42,7 @@ import {
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
+import { useKangurCanvasRedraw } from '@/features/kangur/ui/hooks/useKangurCanvasRedraw';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -177,6 +183,7 @@ const KEYBOARD_CURSOR_START = {
   x: Math.round(CANVAS_WIDTH / 2),
   y: Math.round(CANVAS_HEIGHT / 2),
 } as const;
+const MIN_DRAWING_POINTS = loosenMinInt(14);
 
 const flattenPoints = (strokes: Point2d[][]): Point2d[] =>
   strokes.flatMap((stroke) => stroke);
@@ -195,6 +202,7 @@ export default function GeometryDrawingGame({
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
   const [strokes, setStrokes] = useState<Point2d[][]>([]);
+  const [isPointerDrawing, setIsPointerDrawing] = useState(false);
   const [keyboardCursor, setKeyboardCursor] = useState<Point2d>(KEYBOARD_CURSOR_START);
   const [keyboardDrawing, setKeyboardDrawing] = useState(false);
   const [keyboardStatus, setKeyboardStatus] = useState(
@@ -216,7 +224,7 @@ export default function GeometryDrawingGame({
   const redrawCanvas = useCallback((nextStrokes: Point2d[][]): void => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = syncKangurCanvasContext(canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
     if (!ctx) return;
 
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -257,6 +265,11 @@ export default function GeometryDrawingGame({
     }
   }, []);
 
+  useKangurCanvasRedraw({
+    canvasRef,
+    redraw: () => redrawCanvas(strokes),
+  });
+
   const updateStrokes = useCallback(
     (updater: (current: Point2d[][]) => Point2d[][]): void => {
       setStrokes((current) => {
@@ -281,11 +294,7 @@ export default function GeometryDrawingGame({
     (event: React.PointerEvent<HTMLCanvasElement>): Point2d => {
       const canvas = canvasRef.current;
       if (!canvas) return { x: 0, y: 0 };
-      const rect = canvas.getBoundingClientRect();
-      return {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top,
-      };
+      return resolveKangurCanvasPoint(event, canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
     },
     []
   );
@@ -297,6 +306,7 @@ export default function GeometryDrawingGame({
     if (!canvas) return;
     const point = resolvePoint(event);
     isDrawingRef.current = true;
+    setIsPointerDrawing(true);
     canvas.setPointerCapture(event.pointerId);
     updateStrokes((current) => [...current, [point]]);
   };
@@ -317,6 +327,7 @@ export default function GeometryDrawingGame({
   const handlePointerUp = (event: React.PointerEvent<HTMLCanvasElement>): void => {
     if (!isDrawingRef.current) return;
     isDrawingRef.current = false;
+    setIsPointerDrawing(false);
     const canvas = canvasRef.current;
     if (canvas) {
       canvas.releasePointerCapture(event.pointerId);
@@ -482,7 +493,7 @@ export default function GeometryDrawingGame({
 
   const handleCheck = (): void => {
     if (done || feedback || !currentRound) return;
-    if (points.length < 14) {
+    if (points.length < MIN_DRAWING_POINTS) {
       setFeedback({
         kind: 'info',
         text: 'Narysuj figurę trochę dłużej, żeby można było ją ocenić.',
@@ -672,15 +683,16 @@ export default function GeometryDrawingGame({
               >
                 <canvas
                   aria-describedby='geometry-drawing-hint geometry-drawing-input-help'
-                aria-label={`Plansza do rysowania figury ${currentRound?.label}. Użyj myszy lub dotyku, aby narysować figurę.`}
+                  aria-label={`Plansza do rysowania figury ${currentRound?.label}. Użyj myszy lub dotyku, aby narysować figurę.`}
                   aria-keyshortcuts='Enter Space ArrowUp ArrowDown ArrowLeft ArrowRight Escape'
                   data-testid='geometry-drawing-canvas'
+                  data-drawing-active={isPointerDrawing ? 'true' : 'false'}
                   role='img'
                   ref={canvasRef}
                   tabIndex={0}
                   width={CANVAS_WIDTH}
                   height={CANVAS_HEIGHT}
-                  className='w-full rounded-[20px] touch-none'
+                  className='kangur-drawing-canvas w-full rounded-[20px] touch-none'
                   style={{ background: 'var(--kangur-soft-card-background)' }}
                   onKeyDown={handleCanvasKeyDown}
                   onPointerDown={handlePointerDown}
@@ -695,7 +707,10 @@ export default function GeometryDrawingGame({
                     'pointer-events-none absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-emerald-400/80 bg-emerald-100/70 shadow-[0_0_0_3px_rgba(16,185,129,0.12)] transition-transform duration-75',
                     keyboardDrawing ? 'scale-110' : 'scale-100'
                   )}
-                  style={{ left: `${keyboardCursor.x}px`, top: `${keyboardCursor.y}px` }}
+                  style={{
+                    left: `${(keyboardCursor.x / CANVAS_WIDTH) * 100}%`,
+                    top: `${(keyboardCursor.y / CANVAS_HEIGHT) * 100}%`,
+                  }}
                 />
                 {points.length === 0 && (
                   <div className='pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-semibold [color:var(--kangur-page-muted-text)]'>

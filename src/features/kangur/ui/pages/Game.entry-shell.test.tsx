@@ -62,6 +62,12 @@ vi.mock('@/features/kangur/ui/components/KangurGameHomeActionsWidget', () => ({
   KangurGameHomeActionsWidget: () => <div data-testid='kangur-home-actions-widget' />,
 }));
 
+vi.mock('@/features/kangur/ui/components/KangurGameHomeDuelsInvitesWidget', () => ({
+  KangurGameHomeDuelsInvitesWidget: () => (
+    <div data-testid='kangur-home-duels-invites-widget' />
+  ),
+}));
+
 vi.mock('@/features/kangur/ui/components/KangurGameHomeQuestWidget', () => ({
   KangurGameHomeQuestWidget: () => <div data-testid='kangur-home-quest-widget' />,
 }));
@@ -186,7 +192,10 @@ describe('Game page entry shells', () => {
         'bg-white/68',
         'text-center'
       );
-      expect(screen.getByRole('heading', { name: heading })).toHaveClass('text-3xl');
+      expect(screen.getByRole('heading', { name: heading })).toHaveClass(
+        'text-2xl',
+        'sm:text-3xl'
+      );
       expect(screen.getByTestId(artTestId)).toBeInTheDocument();
       expect(screen.getByTestId(widgetTestId)).toBeInTheDocument();
     }

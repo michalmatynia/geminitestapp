@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { logKangurClientError } from '@/features/kangur/observability/client';
+import { withKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type {
   KangurAssignmentCreateInput,
@@ -12,7 +12,6 @@ import type {
 } from '@/features/kangur/services/ports';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { KANGUR_PROGRESS_EVENT_NAME } from '@/features/kangur/ui/services/progress';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const kangurPlatform = getKangurPlatform();
@@ -56,20 +55,30 @@ export const useKangurAssignments = (
     setError(null);
 
     try {
-      const nextAssignments = await kangurPlatform.assignments.list(query);
-      setAssignments(nextAssignments);
-    } catch (loadError: unknown) {
-      logClientError(loadError);
-      if (isKangurAuthStatusError(loadError)) {
-        setAssignments([]);
-        setError(null);
-      } else {
-        logKangurClientError(loadError, {
-          source: 'useKangurAssignments',
+      const nextAssignments = await withKangurClientError(
+        () => ({
+          source: 'kangur.hooks.useKangurAssignments',
           action: 'refresh',
-          includeArchived: query?.includeArchived ?? false,
-        });
-        setError('Nie udało się pobrać zadań.');
+          description: 'Loads learner assignments from the Kangur API.',
+          context: {
+            includeArchived: query?.includeArchived ?? false,
+          },
+        }),
+        async () => await kangurPlatform.assignments.list(query),
+        {
+          fallback: null,
+          onError: (error) => {
+            if (isKangurAuthStatusError(error)) {
+              setAssignments([]);
+              setError(null);
+              return;
+            }
+            setError('Nie udało się pobrać zadań.');
+          },
+        }
+      );
+      if (nextAssignments) {
+        setAssignments(nextAssignments);
       }
     } finally {
       setIsLoading(false);

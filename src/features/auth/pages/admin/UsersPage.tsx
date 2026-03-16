@@ -141,7 +141,7 @@ function AuthUsersPageContent(): React.JSX.Element {
 
   if (!canReadUsers) {
     return (
-      <div className='container mx-auto py-20'>
+      <div className='page-section-tall'>
         <EmptyState
           icon={<ShieldAlertIcon className='size-12 text-rose-500' />}
           title='Access Restricted'

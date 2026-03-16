@@ -11,8 +11,39 @@ const { kangurSetupPropsMock, trainingSetupPropsMock, useKangurGameRuntimeMock }
   useKangurGameRuntimeMock: vi.fn(),
 }));
 
+const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
+  useKangurSubjectFocusMock: vi.fn(),
+}));
+
+const lessonsState = vi.hoisted(() => ({
+  value: [] as Array<Record<string, unknown>>,
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
   useKangurGameRuntime: useKangurGameRuntimeMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: (options: { subject?: string; enabledOnly?: boolean } = {}) => {
+    let data = lessonsState.value;
+    if (options.enabledOnly) {
+      data = data.filter((lesson) => lesson.enabled !== false);
+    }
+    if (options.subject) {
+      data = data.filter((lesson) => (lesson.subject ?? 'maths') === options.subject);
+    }
+    return {
+      data,
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+      error: null,
+    };
+  },
 }));
 
 vi.mock('@/features/kangur/ui/components/OperationSelector', () => ({
@@ -84,6 +115,49 @@ import { KangurGameOperationSelectorWidget } from '@/features/kangur/ui/componen
 describe('Kangur game entry top sections', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+    lessonsState.value = [
+      {
+        id: 'kangur-lesson-clock',
+        componentId: 'clock',
+        title: 'Nauka zegara',
+        description: 'Odczytuj godziny',
+        emoji: '🕐',
+        color: 'kangur-gradient-accent-indigo-reverse',
+        activeBg: 'bg-indigo-500',
+        sortOrder: 1000,
+        enabled: true,
+        subject: 'maths',
+      },
+      {
+        id: 'kangur-lesson-calendar',
+        componentId: 'calendar',
+        title: 'Nauka kalendarza',
+        description: 'Dni i miesiące',
+        emoji: '📅',
+        color: 'kangur-gradient-accent-emerald',
+        activeBg: 'bg-emerald-500',
+        sortOrder: 2000,
+        enabled: true,
+        subject: 'maths',
+      },
+      {
+        id: 'kangur-lesson-geometry-shapes',
+        componentId: 'geometry_shapes',
+        title: 'Figury geometryczne',
+        description: 'Rozpoznawaj figury',
+        emoji: '🔷',
+        color: 'kangur-gradient-accent-violet',
+        activeBg: 'bg-violet-500',
+        sortOrder: 3000,
+        enabled: true,
+        subject: 'maths',
+      },
+    ];
   });
 
   it('renders the shared top section for the Grajmy flow', () => {

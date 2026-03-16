@@ -42,6 +42,12 @@ import {
   getKangurAiTutorMoodCopy,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import {
+  loadPersistedTutorVisibilityHidden,
+  persistTutorVisibilityHidden,
+  subscribeToTutorVisibilityChanges,
+} from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
+import { useOptionalKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
+import {
   createDefaultKangurAiTutorLearnerMood,
   type KangurTutorMoodId,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-mood';
@@ -155,12 +161,14 @@ function TutorToggleField({
 
 function AiTutorConfigPanel(): React.JSX.Element | null {
   const tutorContent = useKangurAiTutorContent();
+  const tutor = useOptionalKangurAiTutor();
   const { activeLearner, canAccessDashboard } = useKangurParentDashboardRuntime();
   const { entry: aiTutorSectionContent } = useKangurPageContentEntry('parent-dashboard-ai-tutor');
   const settingsStore = useSettingsStore();
   const queryClient = useQueryClient();
   const activeLearnerId = activeLearner?.id ?? null;
   const isTemporarilyDisabled = PARENT_DASHBOARD_AI_TUTOR_TEMPORARILY_DISABLED;
+  const [isTutorHidden, setIsTutorHidden] = useState(() => loadPersistedTutorVisibilityHidden());
 
   const rawSettings = settingsStore.get(KANGUR_AI_TUTOR_SETTINGS_KEY);
   const rawAppSettings = settingsStore.get(KANGUR_AI_TUTOR_APP_SETTINGS_KEY);
@@ -267,6 +275,10 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
   const sectionTitle = aiTutorSectionContent?.title ?? 'Tutor-AI dla rodzica';
   const sectionSummary = aiTutorSectionContent?.summary ?? tutorContent.parentDashboard.subtitle;
   const controlsDisabled = isTemporarilyDisabled || !enabled;
+  const enableTutorLabel =
+    tutorContent.common.enableTutorLabel ?? tutorContent.navigation.restoreTutorLabel;
+
+  useEffect(() => subscribeToTutorVisibilityChanges(setIsTutorHidden), []);
 
   const handleSave = useCallback(async (): Promise<void> => {
     if (!activeLearner || !canAccessDashboard || isTemporarilyDisabled) return;
@@ -334,7 +346,42 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
   ]);
 
   if (!activeLearner) {
-    return null;
+    return (
+      <KangurSurfacePanel
+        accent='amber'
+        padding='lg'
+        className={`w-full flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
+      >
+        <div className='flex flex-col items-start sm:flex-row sm:items-center kangur-panel-gap'>
+          <BrainCircuit className='h-5 w-5 text-orange-500' />
+          <KangurPanelIntro
+            className='min-w-0'
+            description={sectionSummary}
+            descriptionClassName='text-xs'
+            eyebrow={sectionTitle}
+            eyebrowClassName='tracking-[0.18em]'
+            title={tutorContent.parentDashboard.noActiveLearner}
+            titleClassName='mt-1 text-sm font-bold'
+          />
+        </div>
+        {isTutorHidden ? (
+          <KangurButton
+            className='w-full border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800 sm:w-auto'
+            onClick={() => {
+              persistTutorVisibilityHidden(false);
+              if (tutor?.enabled) {
+                tutor.openChat();
+              }
+            }}
+            size='sm'
+            variant='surface'
+            data-testid='parent-dashboard-ai-tutor-enable'
+          >
+            {enableTutorLabel}
+          </KangurButton>
+        ) : null}
+      </KangurSurfacePanel>
+    );
   }
 
   return (

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { getImageStudioSequenceRunById } from '@/features/ai/image-studio/server/sequence-run-repository';
 import {
@@ -7,17 +8,24 @@ import {
 } from '@/features/ai/image-studio/utils/sequence-slot-resolution';
 import { getImageStudioSlotById } from '@/features/ai/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { notFoundError, validationError } from '@/shared/errors/app-error';
+
+const paramsSchema = z.object({
+  runId: z.string().trim().min(1, 'Run id is required'),
+});
 
 export async function GET_handler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }
 ): Promise<Response> {
-  const runId = params.runId?.trim();
-  if (!runId) {
-    throw badRequestError('Run id is required.');
+  const parsedParams = paramsSchema.safeParse(params);
+  if (!parsedParams.success) {
+    throw validationError('Invalid route parameters', {
+      issues: parsedParams.error.flatten(),
+    });
   }
+  const { runId } = parsedParams.data;
 
   const run = await getImageStudioSequenceRunById(runId);
   if (!run) {

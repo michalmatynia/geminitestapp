@@ -15,6 +15,22 @@ type SettingsDoc = {
   value?: string | null;
 };
 
+type UserPreferencesDoc = {
+  _id?: ObjectId | string;
+  userId?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  [key: string]: unknown;
+};
+
+type AuthSecurityProfileDoc = {
+  _id: ObjectId | string;
+  userId?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  [key: string]: unknown;
+};
+
 const SOURCE_EMAIL = process.env['SOURCE_EMAIL'] ?? 'admin@example.com';
 const TARGET_EMAIL = process.env['TARGET_EMAIL'] ?? 'mmatynia@gmail.com';
 
@@ -32,7 +48,7 @@ const findUserByEmail = async (email: string): Promise<UserDoc | null> => {
 
 const copyUserPreferences = async (sourceUserId: string, targetUserId: string): Promise<void> => {
   const db = await getMongoDb();
-  const collection = db.collection('user_preferences');
+  const collection = db.collection<UserPreferencesDoc>('user_preferences');
   const sourceIdCandidates = [toMongoId(sourceUserId), sourceUserId];
   const source = await collection.findOne({
     $or: [{ _id: { $in: sourceIdCandidates } }, { userId: sourceUserId }],
@@ -42,7 +58,8 @@ const copyUserPreferences = async (sourceUserId: string, targetUserId: string): 
     return;
   }
 
-  const { _id, userId, createdAt, updatedAt, ...rest } = source as Record<string, unknown>;
+  const { _id, userId: _userId, createdAt: _createdAt, updatedAt: _updatedAt, ...rest } =
+    source as Record<string, unknown>;
   const now = new Date();
   const targetMongoId = toMongoId(targetUserId);
 
@@ -65,14 +82,15 @@ const copyUserPreferences = async (sourceUserId: string, targetUserId: string): 
 
 const copySecurityProfile = async (sourceUserId: string, targetUserId: string): Promise<void> => {
   const db = await getMongoDb();
-  const collection = db.collection('auth_security_profiles');
+  const collection = db.collection<AuthSecurityProfileDoc>('auth_security_profiles');
   const source = await collection.findOne({ _id: sourceUserId });
   if (!source) {
     console.warn('No auth_security_profiles entry found for source user.');
     return;
   }
 
-  const { _id, userId, createdAt, updatedAt, ...rest } = source as Record<string, unknown>;
+  const { _id, userId: _userId, createdAt: _createdAt, updatedAt: _updatedAt, ...rest } =
+    source as Record<string, unknown>;
   const now = new Date();
 
   await collection.updateOne(

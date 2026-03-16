@@ -10,15 +10,60 @@ import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/p
 
 const {
   authMeMock,
-  scoreListMock,
+  scoreFilterMock,
   logKangurClientErrorMock,
   useKangurPageContentEntryMock,
+  useKangurSubjectFocusMock,
 } = vi.hoisted(() => ({
   authMeMock: vi.fn<() => Promise<KangurUser>>(),
-  scoreListMock: vi.fn<() => Promise<KangurScoreRecord[]>>(),
+  scoreFilterMock: vi.fn<() => Promise<KangurScoreRecord[]>>(),
   logKangurClientErrorMock: vi.fn(),
   useKangurPageContentEntryMock: vi.fn(),
+  useKangurSubjectFocusMock: vi.fn(),
 }));
+
+type KangurClientErrorHandlingOptions<T> = {
+  fallback: T | (() => T);
+  onError?: (error: unknown) => void;
+  shouldReport?: (error: unknown) => boolean;
+  shouldRethrow?: (error: unknown) => boolean;
+};
+
+const withKangurClientError = async <T,>(
+  _report: unknown,
+  task: () => Promise<T>,
+  options: KangurClientErrorHandlingOptions<T>
+): Promise<T> => {
+  try {
+    return await task();
+  } catch (error) {
+    options.onError?.(error);
+    if (options.shouldRethrow?.(error)) {
+      throw error;
+    }
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : options.fallback;
+  }
+};
+
+const withKangurClientErrorSync = <T,>(
+  _report: unknown,
+  task: () => T,
+  options: KangurClientErrorHandlingOptions<T>
+): T => {
+  try {
+    return task();
+  } catch (error) {
+    options.onError?.(error);
+    if (options.shouldRethrow?.(error)) {
+      throw error;
+    }
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : options.fallback;
+  }
+};
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
   getKangurPlatform: () => ({
@@ -26,17 +71,23 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
       me: authMeMock,
     },
     score: {
-      list: scoreListMock,
+      filter: scoreFilterMock,
     },
   }),
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: logKangurClientErrorMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
 let Leaderboard: typeof import('@/features/kangur/ui/components/Leaderboard').default;
@@ -52,6 +103,7 @@ const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord =
   xp_earned: 24,
   created_date: '2026-03-07T12:00:00.000Z',
   created_by: 'ada@example.com',
+  subject: 'maths',
   ...overrides,
 });
 
@@ -72,7 +124,7 @@ describe('Leaderboard', () => {
       role: 'student',
       display_name: 'Ada',
     });
-    scoreListMock.mockResolvedValue([
+    scoreFilterMock.mockResolvedValue([
       createScore({
         id: 'score-1',
         player_name: 'Ada',
@@ -96,6 +148,11 @@ describe('Leaderboard', () => {
         created_by: null,
       }),
     ]);
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
   });
 
   it('uses shared segmented styling for filters and still narrows leaderboard results', async () => {
@@ -169,7 +226,7 @@ describe('Leaderboard', () => {
   });
 
   it('uses the shared empty-state surface when no scores match filters', async () => {
-    scoreListMock.mockResolvedValue([]);
+    scoreFilterMock.mockResolvedValue([]);
 
     render(<Leaderboard />);
 

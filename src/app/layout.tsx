@@ -16,7 +16,7 @@ import { SkipToContentLink } from '@/shared/ui/SkipToContentLink';
 import { ToastProvider } from '@/shared/ui/toast';
 import { cn } from '@/shared/utils';
 
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 
 import './fonts.css';
 import './globals.css';
@@ -28,6 +28,12 @@ export const metadata: Metadata = {
   },
   description: 'StudiQ admin workspace and storefront.',
   applicationName: 'StudiQ',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({

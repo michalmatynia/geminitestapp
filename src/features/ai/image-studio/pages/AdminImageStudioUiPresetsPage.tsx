@@ -87,7 +87,7 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
   );
 
   return (
-    <div className='container mx-auto max-w-5xl py-6'>
+    <div className='page-section-tight max-w-5xl'>
       <div className='mb-4 flex flex-wrap items-center justify-between gap-3'>
         <div>
           <div className='text-lg text-gray-100'>Image Studio UI Presets</div>

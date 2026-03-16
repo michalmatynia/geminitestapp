@@ -14,6 +14,7 @@ const {
   useKangurAuthMock,
   useKangurAssignmentsMock,
   useSessionMock,
+  lessonsState,
 } = vi.hoisted(() => ({
     useKangurRoutingMock: vi.fn(),
     settingsStoreGetMock: vi.fn(),
@@ -21,7 +22,14 @@ const {
     useKangurAuthMock: vi.fn(),
     useKangurAssignmentsMock: vi.fn(),
     useSessionMock: vi.fn(),
+    lessonsState: {
+      value: [] as Array<Record<string, unknown>>,
+    },
   }));
+
+const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
+  useKangurSubjectFocusMock: vi.fn(),
+}));
 
 let requestAnimationFrameMock: ReturnType<typeof vi.spyOn> | null = null;
 let cancelAnimationFrameMock: ReturnType<typeof vi.spyOn> | null = null;
@@ -36,6 +44,10 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: useKangurAuthMock,
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+}));
+
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => ({
     get: settingsStoreGetMock,
@@ -48,6 +60,28 @@ vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: useKangurAssignmentsMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: (options: { subject?: string; enabledOnly?: boolean } = {}) => {
+    let data = lessonsState.value;
+    if (options.enabledOnly) {
+      data = data.filter((lesson) => lesson.enabled !== false);
+    }
+    if (options.subject) {
+      data = data.filter((lesson) => (lesson.subject ?? 'maths') === options.subject);
+    }
+    return {
+      data,
+      isLoading: false,
+      error: null,
+    };
+  },
+  useKangurLessonDocuments: () => ({
+    data: {},
+    isLoading: false,
+    error: null,
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
@@ -76,6 +110,7 @@ const lessonsSettingsValue = JSON.stringify([
   {
     id: 'kangur-lesson-adding',
     componentId: 'adding',
+    subject: 'maths',
     title: 'Dodawanie',
     description: 'Opis',
     emoji: '➕',
@@ -87,6 +122,7 @@ const lessonsSettingsValue = JSON.stringify([
   {
     id: 'kangur-lesson-division',
     componentId: 'division',
+    subject: 'maths',
     title: 'Dzielenie',
     description: 'Opis',
     emoji: '➗',
@@ -115,11 +151,17 @@ describe('Lessons page focus query support', () => {
       navigateToLogin: vi.fn(),
       logout: vi.fn(),
     });
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
     useSessionMock.mockReturnValue({
       data: null,
       status: 'unauthenticated',
     });
-    settingsStoreGetMock.mockReturnValue(lessonsSettingsValue);
+    lessonsState.value = JSON.parse(lessonsSettingsValue) as Array<Record<string, unknown>>;
+    settingsStoreGetMock.mockReturnValue(undefined);
     useKangurAssignmentsMock.mockReturnValue({
       assignments: [
         {

@@ -176,6 +176,7 @@ export default function NumberBalanceRushGame(
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [clockNowMs, setClockNowMs] = useState(() => Date.now());
   const [serverOffsetMs, setServerOffsetMs] = useState(0);
   const solveTimesRef = useRef<number[]>([]);
@@ -185,6 +186,8 @@ export default function NumberBalanceRushGame(
   const lastServerTimeRef = useRef<number>(0);
   const activeMatchIdRef = useRef<string | null>(null);
   const activeMatchStatusRef = useRef<MatchStatus | null>(null);
+  const copyStatusTimeoutRef = useRef<number | null>(null);
+  const celebrateTimeoutRef = useRef<number | null>(null);
 
   const initMatch = useCallback(
     async (requestedMatchId?: string) => {
@@ -243,6 +246,50 @@ export default function NumberBalanceRushGame(
   const handleRetryMatch = useCallback(() => {
     void initMatch(requestedMatchId);
   }, [initMatch, requestedMatchId]);
+
+  const handleCopyMatchId = useCallback(async () => {
+    if (!match?.matchId) {
+      return;
+    }
+    const text = match.matchId;
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else if (typeof document !== 'undefined') {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', 'true');
+        textarea.style.position = 'absolute';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      setCopyStatus('success');
+    } catch {
+      setCopyStatus('error');
+    } finally {
+      if (copyStatusTimeoutRef.current !== null) {
+        window.clearTimeout(copyStatusTimeoutRef.current);
+      }
+      copyStatusTimeoutRef.current = window.setTimeout(() => {
+        copyStatusTimeoutRef.current = null;
+        setCopyStatus('idle');
+      }, 2000);
+    }
+  }, [match?.matchId]);
+
+  useEffect(() => {
+    return () => {
+      if (copyStatusTimeoutRef.current !== null) {
+        window.clearTimeout(copyStatusTimeoutRef.current);
+      }
+      if (celebrateTimeoutRef.current !== null) {
+        window.clearTimeout(celebrateTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     void initMatch(matchId);
@@ -311,6 +358,44 @@ export default function NumberBalanceRushGame(
   const activePlayerId = player?.playerId ?? null;
   const shouldPoll =
     Boolean(activeMatchId && activePlayerId) && !isTerminalMatchStatus(activeMatchStatus);
+  const sortedScores = useMemo(() => {
+    if (!scores.length) {
+      return [];
+    }
+    return [...scores].sort((left, right) => right.score - left.score);
+  }, [scores]);
+  const selfScoreEntry = useMemo(
+    () => (activePlayerId ? sortedScores.find((entry) => entry.playerId === activePlayerId) : null),
+    [activePlayerId, sortedScores]
+  );
+  const leaderScore = sortedScores.length > 0 ? sortedScores[0]?.score ?? 0 : null;
+  const playerRank = useMemo(() => {
+    if (!selfScoreEntry) {
+      return null;
+    }
+    const rankIndex = sortedScores.findIndex((entry) => entry.score === selfScoreEntry.score);
+    return rankIndex >= 0 ? rankIndex + 1 : null;
+  }, [selfScoreEntry, sortedScores]);
+  const scoreGap =
+    selfScoreEntry && typeof leaderScore === 'number'
+      ? Math.max(0, leaderScore - selfScoreEntry.score)
+      : null;
+  const leaderboardEntries = useMemo(
+    () =>
+      sortedScores.map((entry, index) => {
+        const rankIndex = sortedScores.findIndex((item) => item.score === entry.score);
+        const rank = rankIndex >= 0 ? rankIndex + 1 : index + 1;
+        const isSelf = entry.playerId === activePlayerId;
+        return {
+          ...entry,
+          rank,
+          isSelf,
+          isLeader: leaderScore !== null && entry.score === leaderScore,
+          label: isSelf ? 'Ty' : `Gracz ${index + 1}`,
+        };
+      }),
+    [activePlayerId, leaderScore, sortedScores]
+  );
 
   useEffect(() => {
     activeMatchIdRef.current = activeMatchId;
@@ -431,7 +516,13 @@ export default function NumberBalanceRushGame(
         solveTimesRef.current.push(solveTimeMs);
         setSolves((prev) => prev + 1);
         setCelebrating(true);
-        window.setTimeout(() => setCelebrating(false), 300);
+        if (celebrateTimeoutRef.current !== null) {
+          window.clearTimeout(celebrateTimeoutRef.current);
+        }
+        celebrateTimeoutRef.current = window.setTimeout(() => {
+          celebrateTimeoutRef.current = null;
+          setCelebrating(false);
+        }, 300);
       }
     } catch (_err) {
       setError('Nie udało się zapisać ruchu. Spróbuj ponownie.');
@@ -497,6 +588,21 @@ export default function NumberBalanceRushGame(
           </div>
           <div className='mt-2 text-xs font-semibold text-amber-900/80'>
             Kod meczu: {match.matchId}
+          </div>
+          <div className='mt-3 flex flex-wrap justify-center gap-2'>
+            <KangurButton
+              size='sm'
+              variant='ghost'
+              onClick={() => {
+                void handleCopyMatchId();
+              }}
+            >
+              {copyStatus === 'success'
+                ? 'Skopiowano!'
+                : copyStatus === 'error'
+                  ? 'Nie udało się skopiować'
+                  : 'Kopiuj kod'}
+            </KangurButton>
           </div>
           <div className='mt-4 flex flex-wrap justify-center gap-2'>
             <KangurStatusChip className='px-3 py-1 text-xs font-bold' accent='amber'>
@@ -567,6 +673,9 @@ export default function NumberBalanceRushGame(
         <KangurPracticeGameSummaryMessage>
           Rozwiązane: {solves} • Średni czas: {avgSolveLabel}
           {hasOpponent ? ` • Rywal: ${safeOpponentScore} pkt` : ''}
+          {playerRank
+            ? ` • Miejsce: ${playerRank}/${Math.max(playerCount, leaderboardEntries.length)}`
+            : ''}
           {outcomeLabel ? ` • ${outcomeLabel}` : ''}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
@@ -616,6 +725,46 @@ export default function NumberBalanceRushGame(
             </div>
           </KangurGlassPanel>
         </div>
+
+        {leaderboardEntries.length > 0 ? (
+          <div className='flex flex-wrap items-center gap-2 text-xs font-semibold text-amber-900/80'>
+            {playerRank ? (
+              <KangurStatusChip className='px-3 py-1 text-xs font-bold' accent='slate'>
+                Miejsce: {playerRank}/{Math.max(playerCount, leaderboardEntries.length)}
+              </KangurStatusChip>
+            ) : null}
+            {scoreGap !== null ? (
+              <KangurStatusChip className='px-3 py-1 text-xs font-bold' accent='slate'>
+                {scoreGap === 0 ? 'Liderujesz' : `Strata do lidera: ${scoreGap}`}
+              </KangurStatusChip>
+            ) : null}
+          </div>
+        ) : null}
+
+        {leaderboardEntries.length > 1 ? (
+          <div className='grid gap-2 sm:grid-cols-2'>
+            {leaderboardEntries.map((entry) => (
+              <div
+                key={entry.playerId}
+                className={cn(
+                  'flex items-center justify-between rounded-2xl border border-amber-200/70 bg-white/70 px-4 py-2 text-xs font-semibold text-amber-900/90',
+                  entry.isSelf ? 'ring-2 ring-amber-200' : ''
+                )}
+              >
+                <div className='flex items-center gap-2'>
+                  <span className='text-amber-900/70'>{entry.rank}.</span>
+                  <span>{entry.label}</span>
+                  {entry.isLeader ? (
+                    <span className='rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800'>
+                      Lider
+                    </span>
+                  ) : null}
+                </div>
+                <span>{entry.score} pkt</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
 
         {error ? (
           <div className='text-xs font-semibold text-rose-600'>{error}</div>

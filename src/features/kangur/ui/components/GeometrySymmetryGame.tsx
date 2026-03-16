@@ -34,11 +34,17 @@ import {
   type SymmetryExpectedSide,
 } from '@/features/kangur/ui/services/geometry-symmetry';
 import {
+  resolveKangurCanvasPoint,
+  syncKangurCanvasContext,
+} from '@/features/kangur/ui/services/drawing-canvas';
+import { loosenMinInt } from '@/features/kangur/ui/services/drawing-leniency';
+import {
   addXp,
   createTrainingReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
+import { useKangurCanvasRedraw } from '@/features/kangur/ui/hooks/useKangurCanvasRedraw';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import type { Point2d } from '@/shared/contracts/geometry';
 import { cn } from '@/features/kangur/shared/utils';
@@ -83,6 +89,7 @@ const KEYBOARD_CURSOR_START = {
   x: Math.round(CANVAS_WIDTH / 2),
   y: Math.round(CANVAS_HEIGHT / 2),
 } as const;
+const MIN_DRAWING_POINTS = loosenMinInt(10);
 
 const VERTICAL_AXIS: SymmetryAxis = { orientation: 'vertical', position: CANVAS_WIDTH / 2 };
 const HORIZONTAL_AXIS: SymmetryAxis = { orientation: 'horizontal', position: CANVAS_HEIGHT / 2 };
@@ -509,6 +516,7 @@ export default function GeometrySymmetryGame({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isDrawingRef = useRef(false);
   const sessionStartedAtRef = useRef(Date.now());
+  const nextRoundTimeoutRef = useRef<number | null>(null);
 
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -517,6 +525,8 @@ export default function GeometrySymmetryGame({
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
   const [strokes, setStrokes] = useState<Point2d[][]>([]);
+  const strokesRef = useRef<Point2d[][]>([]);
+  const [isPointerDrawing, setIsPointerDrawing] = useState(false);
   const [showMirrorHint, setShowMirrorHint] = useState(false);
   const [keyboardCursor, setKeyboardCursor] = useState<Point2d>(KEYBOARD_CURSOR_START);
   const [keyboardDrawing, setKeyboardDrawing] = useState(false);
@@ -530,7 +540,7 @@ export default function GeometrySymmetryGame({
     (nextStrokes: Point2d[][], round: SymmetryRound | undefined): void => {
       const canvas = canvasRef.current;
       if (!canvas) return;
-      const ctx = canvas.getContext('2d');
+      const ctx = syncKangurCanvasContext(canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
       if (!ctx) return;
 
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -575,8 +585,25 @@ export default function GeometrySymmetryGame({
   );
 
   useEffect(() => {
-    redrawCanvas(strokes, currentRound);
-  }, [currentRound, redrawCanvas, strokes]);
+    strokesRef.current = strokes;
+  }, [strokes]);
+
+  useEffect(() => {
+    return () => {
+      if (nextRoundTimeoutRef.current !== null) {
+        window.clearTimeout(nextRoundTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    redrawCanvas(strokesRef.current, currentRound);
+  }, [currentRound, redrawCanvas]);
+
+  useKangurCanvasRedraw({
+    canvasRef,
+    redraw: () => redrawCanvas(strokes, currentRound),
+  });
 
   const updateStrokes = useCallback(
     (updater: (current: Point2d[][]) => Point2d[][]): void => {
@@ -602,11 +629,7 @@ export default function GeometrySymmetryGame({
     (event: React.PointerEvent<HTMLCanvasElement>): Point2d => {
       const canvas = canvasRef.current;
       if (!canvas) return { x: 0, y: 0 };
-      const rect = canvas.getBoundingClientRect();
-      return {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top,
-      };
+      return resolveKangurCanvasPoint(event, canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
     },
     []
   );
@@ -618,6 +641,7 @@ export default function GeometrySymmetryGame({
     if (!canvas) return;
     const point = resolvePoint(event);
     isDrawingRef.current = true;
+    setIsPointerDrawing(true);
     canvas.setPointerCapture(event.pointerId);
     updateStrokes((current) => [...current, [point]]);
   };
@@ -638,6 +662,7 @@ export default function GeometrySymmetryGame({
   const handlePointerUp = (event: React.PointerEvent<HTMLCanvasElement>): void => {
     if (!isDrawingRef.current) return;
     isDrawingRef.current = false;
+    setIsPointerDrawing(false);
     const canvas = canvasRef.current;
     if (canvas) {
       canvas.releasePointerCapture(event.pointerId);
@@ -736,7 +761,11 @@ export default function GeometrySymmetryGame({
       }
 
       const isLastRound = roundIndex + 1 >= totalRounds;
-      window.setTimeout((): void => {
+      if (nextRoundTimeoutRef.current !== null) {
+        window.clearTimeout(nextRoundTimeoutRef.current);
+      }
+      nextRoundTimeoutRef.current = window.setTimeout((): void => {
+        nextRoundTimeoutRef.current = null;
         setFeedback(null);
         clearDrawing();
         setShowMirrorHint(false);
@@ -772,7 +801,7 @@ export default function GeometrySymmetryGame({
 
   const handleCheck = (): void => {
     if (done || feedback || !currentRound) return;
-    if (points.length < 10) {
+    if (points.length < MIN_DRAWING_POINTS) {
       setFeedback({
         kind: 'info',
         text: 'Zrób kilka ruchów, żeby powstała linia do sprawdzenia.',
@@ -974,12 +1003,13 @@ export default function GeometrySymmetryGame({
               aria-label='Plansza do rysowania osi i odbić symetrii.'
               aria-keyshortcuts='Enter Space ArrowUp ArrowDown ArrowLeft ArrowRight Escape'
               data-testid='geometry-symmetry-canvas'
+              data-drawing-active={isPointerDrawing ? 'true' : 'false'}
               role='img'
               ref={canvasRef}
               tabIndex={0}
               width={CANVAS_WIDTH}
               height={CANVAS_HEIGHT}
-              className='w-full rounded-[20px] touch-none'
+              className='kangur-drawing-canvas w-full rounded-[20px] touch-none'
               style={{ background: 'var(--kangur-soft-card-background)' }}
               onKeyDown={handleCanvasKeyDown}
               onPointerDown={handlePointerDown}
@@ -994,7 +1024,10 @@ export default function GeometrySymmetryGame({
                 'pointer-events-none absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-emerald-400/80 bg-emerald-100/70 shadow-[0_0_0_3px_rgba(16,185,129,0.12)] transition-transform duration-75',
                 keyboardDrawing ? 'scale-110' : 'scale-100'
               )}
-              style={{ left: `${keyboardCursor.x}px`, top: `${keyboardCursor.y}px` }}
+              style={{
+                left: `${(keyboardCursor.x / CANVAS_WIDTH) * 100}%`,
+                top: `${(keyboardCursor.y / CANVAS_HEIGHT) * 100}%`,
+              }}
             />
           </KangurInfoCard>
           <p

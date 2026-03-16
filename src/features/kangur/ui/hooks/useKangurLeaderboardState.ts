@@ -7,6 +7,8 @@ import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
+import { resolveKangurScoreSubject, type KangurLessonSubject } from '@/shared/contracts/kangur';
 
 const MEDALS = ['🥇', '🥈', '🥉'] as const;
 const kangurPlatform = getKangurPlatform();
@@ -71,7 +73,7 @@ type UseKangurLeaderboardStateResult = {
   visibleScores: KangurScoreRecord[];
 };
 
-const OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> = {
+const MATH_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> = {
   all: { label: 'Wszystkie', emoji: '🏆' },
   addition: { label: 'Dodawanie', emoji: '➕' },
   subtraction: { label: 'Odejmowanie', emoji: '➖' },
@@ -86,12 +88,34 @@ const OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> = {
   mixed: { label: 'Mieszane', emoji: '🎲' },
 };
 
-const OPERATION_OPTIONS: KangurLeaderboardOperationOption[] = Object.entries(OPERATION_LABELS).map(
-  ([id, info]) => ({
+const ENGLISH_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> = {
+  all: { label: 'Wszystkie', emoji: '🏆' },
+  english_basics: { label: 'Podstawy', emoji: '🗣️' },
+  english_parts_of_speech: { label: 'Części mowy', emoji: '🔤' },
+  english_sentence_structure: { label: 'Szyk zdania', emoji: '🧩' },
+  english_subject_verb_agreement: { label: 'Zgoda podmiotu', emoji: '🤝' },
+  english_articles: { label: 'Przedimki', emoji: '📰' },
+  english_prepositions_time_place: { label: 'Przyimki czasu i miejsca', emoji: '🧭' },
+};
+
+const OPERATION_LABELS_BY_SUBJECT: Record<
+  KangurLessonSubject,
+  Record<string, KangurLeaderboardOperationLabel>
+> = {
+  maths: MATH_OPERATION_LABELS,
+  english: ENGLISH_OPERATION_LABELS,
+};
+
+const ALL_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> = {
+  ...MATH_OPERATION_LABELS,
+  ...ENGLISH_OPERATION_LABELS,
+};
+
+const buildOperationOptions = (subject: KangurLessonSubject): KangurLeaderboardOperationOption[] =>
+  Object.entries(OPERATION_LABELS_BY_SUBJECT[subject]).map(([id, info]) => ({
     id,
     ...info,
-  })
-);
+  }));
 
 const USER_OPTIONS: Array<IdLabelOptionDto<KangurLeaderboardUserFilter> & { icon: KangurLeaderboardUserFilterIcon }> = [
   { id: 'all', label: 'Wszyscy', icon: null },
@@ -100,7 +124,7 @@ const USER_OPTIONS: Array<IdLabelOptionDto<KangurLeaderboardUserFilter> & { icon
 ];
 
 const getOperationInfo = (operation: string): KangurLeaderboardOperationLabel =>
-  OPERATION_LABELS[operation] ?? { emoji: '❓', label: operation };
+  ALL_OPERATION_LABELS[operation] ?? { emoji: '❓', label: operation };
 
 const normalizeXpEarned = (value: unknown): number | null =>
   typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.round(value)) : null;
@@ -116,6 +140,7 @@ export const useKangurLeaderboardState = (
   const [userFilter, setUserFilter] = useState<KangurLeaderboardUserFilter>('all');
   const [currentUser, setCurrentUser] = useState<KangurUser | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { subject } = useKangurSubjectFocus();
 
   useEffect(() => {
     let isActive = true;
@@ -137,7 +162,7 @@ export const useKangurLeaderboardState = (
       try {
         const [userResult, scoreRows] = await Promise.allSettled([
           kangurPlatform.auth.me(),
-          kangurPlatform.score.list('-score', 100),
+          kangurPlatform.score.filter({ subject }, '-score', 100),
         ]);
 
         if (!isActive) {
@@ -179,10 +204,24 @@ export const useKangurLeaderboardState = (
     return () => {
       isActive = false;
     };
-  }, [enabled]);
+  }, [enabled, subject]);
+
+  const operationOptions = useMemo(
+    () => buildOperationOptions(subject),
+    [subject]
+  );
+
+  useEffect(() => {
+    if (operationOptions.some((option) => option.id === operationFilter)) {
+      return;
+    }
+    setOperationFilter('all');
+  }, [operationFilter, operationOptions]);
 
   const visibleScores = useMemo(() => {
     const filteredScores = scores.filter((score) => {
+      const scoreSubject = resolveKangurScoreSubject(score);
+      const subjectMatch = scoreSubject === subject;
       const operationMatch = operationFilter === 'all' || score.operation === operationFilter;
       const isRegistered = Boolean(score.created_by);
       const userMatch =
@@ -190,11 +229,11 @@ export const useKangurLeaderboardState = (
         (userFilter === 'registered' && isRegistered) ||
         (userFilter === 'anonymous' && !isRegistered);
 
-      return operationMatch && userMatch;
+      return subjectMatch && operationMatch && userMatch;
     });
 
     return filteredScores.slice(0, limit);
-  }, [limit, operationFilter, scores, userFilter]);
+  }, [limit, operationFilter, scores, subject, userFilter]);
 
   const items = useMemo(
     () =>
@@ -230,7 +269,7 @@ export const useKangurLeaderboardState = (
 
   const operationFilters = useMemo(
     () =>
-      OPERATION_OPTIONS.map((option) => ({
+      operationOptions.map((option) => ({
         displayLabel: `${option.emoji} ${option.label}`,
         id: option.id,
         label: option.label,
@@ -239,7 +278,7 @@ export const useKangurLeaderboardState = (
           setOperationFilter(option.id);
         },
       })),
-    [operationFilter]
+    [operationFilter, operationOptions]
   );
 
   const userFilters = useMemo(

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import {
   enforceAiPathsActionRateLimit,
@@ -9,7 +10,7 @@ import {
   type PlaywrightNodeRunRecord,
 } from '@/features/ai/ai-paths/services/playwright-node-runner';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { notFoundError, validationError } from '@/shared/errors/app-error';
 
 import { assertPlaywrightRunAccess } from '../access';
 
@@ -19,6 +20,10 @@ const toPublicRun = (
   const { ownerUserId: _ownerUserId, ...rest } = run;
   return rest;
 };
+
+const paramsSchema = z.object({
+  runId: z.string().trim().min(1, 'Run id is required'),
+});
 
 export async function GET_handler(
   req: NextRequest,
@@ -30,10 +35,13 @@ export async function GET_handler(
     await enforceAiPathsActionRateLimit(access, 'playwright-poll');
   }
 
-  const runId = params.runId?.trim();
-  if (!runId) {
-    throw badRequestError('Run id is required.');
+  const parsedParams = paramsSchema.safeParse(params);
+  if (!parsedParams.success) {
+    throw validationError('Invalid route parameters', {
+      issues: parsedParams.error.flatten(),
+    });
   }
+  const { runId } = parsedParams.data;
 
   const run = await readPlaywrightNodeRun(runId);
   if (!run) {

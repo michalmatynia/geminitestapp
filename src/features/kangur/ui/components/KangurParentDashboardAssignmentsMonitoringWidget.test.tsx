@@ -37,6 +37,9 @@ const runtimeState = vi.hoisted(() => ({
 }));
 const useKangurPageContentEntryMock = vi.hoisted(() => vi.fn());
 const learnerInteractionsListMock = vi.hoisted(() => vi.fn());
+const lessonsState = vi.hoisted(() => ({
+  value: [] as Array<Record<string, unknown>>,
+}));
 
 vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () => ({
   useKangurParentDashboardRuntime: () => runtimeState.value,
@@ -55,6 +58,14 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: () => ({
+    data: lessonsState.value,
+    isLoading: false,
+    error: null,
+  }),
+}));
+
 vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => ({
     get: () => null,
@@ -66,6 +77,7 @@ import { KangurParentDashboardAssignmentsMonitoringWidget } from './KangurParent
 describe('KangurParentDashboardAssignmentsMonitoringWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    lessonsState.value = [];
     useKangurPageContentEntryMock.mockReturnValue({
       data: undefined,
       entry: null,

@@ -78,6 +78,23 @@ export const QUERY_KEYS = {
     scope: (scope: string) => [...QUERY_KEYS.settings.all, scope] as const,
     composed: () => [...QUERY_KEYS.settings.all, 'composed'] as const,
   },
+  kangur: {
+    all: ['kangur'] as const,
+    lessons: () => [...QUERY_KEYS.kangur.all, 'lessons'] as const,
+    lessonDocuments: () => [...QUERY_KEYS.kangur.all, 'lesson-documents'] as const,
+    observability: {
+      all: ['kangur', 'observability'] as const,
+      summary: (range: '24h' | '7d' | '30d') =>
+        [...QUERY_KEYS.kangur.observability.all, 'summary', { range }] as const,
+      knowledgeGraphStatus: (graphKey: string) =>
+        [...QUERY_KEYS.kangur.observability.all, 'knowledge-graph-status', { graphKey }] as const,
+    },
+    aiTutor: {
+      all: ['kangur', 'ai-tutor'] as const,
+      usage: (learnerId: string | null) =>
+        [...QUERY_KEYS.kangur.aiTutor.all, 'usage', { learnerId }] as const,
+    },
+  },
   notes: {
     all: ['notes'] as const,
     lists: () => [...QUERY_KEYS.notes.all, 'list'] as const,
@@ -392,21 +409,6 @@ export const QUERY_KEYS = {
     summary: (range: string, scope: string) =>
       [...QUERY_KEYS.analytics.all, 'summary', range, scope] as const,
     insights: (limit?: number) => [...QUERY_KEYS.analytics.all, 'insights', { limit }] as const,
-  },
-  kangur: {
-    all: ['kangur'] as const,
-    observability: {
-      all: ['kangur', 'observability'] as const,
-      summary: (range: '24h' | '7d' | '30d') =>
-        [...QUERY_KEYS.kangur.observability.all, 'summary', { range }] as const,
-      knowledgeGraphStatus: (graphKey: string) =>
-        [...QUERY_KEYS.kangur.observability.all, 'knowledge-graph-status', { graphKey }] as const,
-    },
-    aiTutor: {
-      all: ['kangur', 'ai-tutor'] as const,
-      usage: (learnerId: string | null) =>
-        [...QUERY_KEYS.kangur.aiTutor.all, 'usage', { learnerId }] as const,
-    },
   },
   playwright: {
     all: ['playwright'] as const,

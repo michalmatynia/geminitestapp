@@ -35,6 +35,9 @@ const useKangurPageContentEntryMock = vi.hoisted(() => vi.fn());
 const useKangurAssignmentsMock = vi.hoisted(() => vi.fn());
 const assignmentsListMock = vi.hoisted(() => vi.fn());
 const assignmentManagerMock = vi.hoisted(() => vi.fn());
+const lessonsState = vi.hoisted(() => ({
+  value: [] as Array<Record<string, unknown>>,
+}));
 
 vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () => ({
   shouldRenderKangurParentDashboardPanel: (displayMode: string, activeTab: string, targetTab: string) =>
@@ -52,6 +55,14 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: useKangurAssignmentsMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: () => ({
+    data: lessonsState.value,
+    isLoading: false,
+    error: null,
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurAssignmentsList', () => ({
@@ -73,6 +84,7 @@ import { KangurParentDashboardProgressWidget } from './KangurParentDashboardProg
 describe('KangurParentDashboardProgressWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    lessonsState.value = [];
     useKangurPageContentEntryMock.mockReturnValue({
       data: undefined,
       entry: null,

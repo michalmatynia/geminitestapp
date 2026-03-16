@@ -122,7 +122,7 @@ function EditSlugForm({
       current='Edit'
       parent={{ label: 'Slugs', href: '/admin/cms/slugs' }}
       description='Configure path behavior and cross-domain assignments.'
-      containerClassName='container mx-auto max-w-2xl space-y-6 py-10'
+      containerClassName='page-section max-w-2xl space-y-6'
     >
 
       {error && (

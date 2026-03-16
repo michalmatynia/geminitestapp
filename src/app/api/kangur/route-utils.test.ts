@@ -56,6 +56,15 @@ describe('resolveKangurApiPathSegments', () => {
     expect(segments).toEqual(['duels', 'lobby']);
   });
 
+  it('handles nested duels lobby stream paths', () => {
+    const request = {
+      url: 'http://localhost/api/kangur/duels/lobby/stream',
+      nextUrl: new URL('http://localhost/api/kangur/duels/lobby/stream'),
+    } as Request;
+    const segments = resolveKangurApiPathSegments(request, { params: {} });
+    expect(segments).toEqual(['duels', 'lobby', 'stream']);
+  });
+
   it('returns an empty array when URL does not match the API prefix', () => {
     const request = {
       url: 'http://localhost/health',

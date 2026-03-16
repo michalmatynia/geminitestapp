@@ -93,14 +93,16 @@ function KangurActiveLessonHeaderActions(): React.JSX.Element {
         </KangurButton>
       ) : null}
       <KangurLessonNarrator
-        className='w-full shrink-0 sm:w-auto'
+        className='shrink-0'
         lesson={lesson}
         lessonDocument={lessonDocument}
         lessonContentRef={lessonContentRef}
+        displayMode='icon'
         loadingLabel='Przygotowywanie...'
         pauseLabel='Pauza'
         readLabel='Czytaj'
         resumeLabel='Wznów'
+        showFeedback
       />
       <KangurActiveLessonHeaderBody />
       <KangurActiveLessonHeaderIcon />

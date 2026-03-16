@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurLearnerInteractionHistory } from '@/features/kangur/services/ports';
-import { KANGUR_LESSONS_SETTING_KEY, parseKangurLessons } from '@/features/kangur/settings';
+import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
 import {
   type KangurParentDashboardPanelDisplayMode,
   shouldRenderKangurParentDashboardPanel,
@@ -26,7 +26,6 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { ActivityTypes } from '@/shared/constants/observability';
-import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 
@@ -157,12 +156,8 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
     progress,
   } = useKangurParentDashboardRuntime();
   const { entry: monitoringContent } = useKangurPageContentEntry('parent-dashboard-monitoring');
-  const settingsStore = useSettingsStore();
-  const rawLessons = settingsStore.get(KANGUR_LESSONS_SETTING_KEY);
-  const lessons = useMemo(
-    () => parseKangurLessons(rawLessons).filter((lesson) => lesson.enabled),
-    [rawLessons]
-  );
+  const lessonsQuery = useKangurLessons({ enabledOnly: true });
+  const lessons = useMemo(() => lessonsQuery.data ?? [], [lessonsQuery.data]);
   const activeLearnerId = activeLearner?.id ?? null;
   const lessonPanelProgress = progress.lessonPanelProgress ?? {};
   const [interactionHistory, setInteractionHistory] =

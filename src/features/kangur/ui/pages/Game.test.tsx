@@ -11,6 +11,7 @@ const {
   homeHeroPropsMock,
   assignmentSpotlightPropsMock,
   homeActionsPropsMock,
+  homeDuelsInvitesPropsMock,
   tutorSessionSyncPropsMock,
   xpToastPropsMock,
 } = vi.hoisted(() => ({
@@ -18,6 +19,7 @@ const {
   homeHeroPropsMock: vi.fn(),
   assignmentSpotlightPropsMock: vi.fn(),
   homeActionsPropsMock: vi.fn(),
+  homeDuelsInvitesPropsMock: vi.fn(),
   tutorSessionSyncPropsMock: vi.fn(),
   xpToastPropsMock: vi.fn(),
 }));
@@ -101,6 +103,13 @@ vi.mock('@/features/kangur/ui/components/KangurGameHomeActionsWidget', () => ({
   KangurGameHomeActionsWidget: (props: { hideWhenScreenMismatch?: boolean }) => {
     homeActionsPropsMock(props);
     return <div data-testid='kangur-home-actions-widget' />;
+  },
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurGameHomeDuelsInvitesWidget', () => ({
+  KangurGameHomeDuelsInvitesWidget: (props: { hideWhenScreenMismatch?: boolean }) => {
+    homeDuelsInvitesPropsMock(props);
+    return <div data-testid='kangur-home-duels-invites-widget' />;
   },
 }));
 

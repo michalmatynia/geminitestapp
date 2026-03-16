@@ -298,11 +298,13 @@ describe('Kangur shared primitives', () => {
       'kangur-gradient-accent-indigo'
     );
     expect(screen.getByTestId('kangur-headline')).toHaveClass(
-      'text-2xl',
+      'text-xl',
+      'sm:text-2xl',
       '[color:var(--kangur-accent-emerald-start,#10b981)]'
     );
     expect(screen.getByTestId('kangur-headline-xs')).toHaveClass(
-      'text-lg',
+      'text-base',
+      'sm:text-lg',
       '[color:var(--kangur-accent-indigo-start,#a855f7)]'
     );
     expect(screen.getByTestId('kangur-card-title')).toHaveClass(
@@ -341,7 +343,8 @@ describe('Kangur shared primitives', () => {
       'text-center'
     );
     expect(screen.getByText('Gra z piłkami!')).toHaveClass(
-      'text-xl',
+      'text-lg',
+      'sm:text-xl',
       '[color:var(--kangur-accent-amber-start,#f59e0b)]'
     );
     expect(screen.getByText('🎮')).toHaveClass(
@@ -357,7 +360,8 @@ describe('Kangur shared primitives', () => {
       'text-left'
     );
     expect(screen.getByText('Shared section')).toHaveClass(
-      'text-2xl',
+      'text-xl',
+      'sm:text-2xl',
       '[color:var(--kangur-accent-indigo-start,#a855f7)]'
     );
     expect(screen.getByText('🧭')).toHaveClass(
@@ -566,7 +570,7 @@ describe('Kangur shared primitives', () => {
 
     const container = screen.getByText('Embedded Kangur');
     expect(container.tagName).toBe('DIV');
-    expect(container).toHaveClass('kangur-page-container', 'w-full');
+    expect(container).toHaveClass('kangur-page-container', 'w-full', 'min-w-0', 'mx-auto');
     expect(container).toHaveAttribute('id', 'embedded-kangur-main');
     expect(container).toHaveAttribute('tabindex', '-1');
   });

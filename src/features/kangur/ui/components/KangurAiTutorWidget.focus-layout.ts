@@ -503,9 +503,16 @@ const getAnchorKindsForSurface = (
       contentId === 'game:operation-selector' ||
       contentId === 'game:calendar_quiz' ||
       contentId === 'game:geometry_quiz' ||
+      contentId === 'game:clock_quiz' ||
+      contentId === 'game:addition_quiz' ||
       contentId === 'game:subtraction_quiz' ||
       contentId === 'game:division_quiz' ||
       contentId === 'game:multiplication_quiz' ||
+      contentId === 'game:logical_patterns_quiz' ||
+      contentId === 'game:logical_classification_quiz' ||
+      contentId === 'game:logical_analogies_quiz' ||
+      contentId === 'game:english_sentence_quiz' ||
+      contentId === 'game:english_parts_of_speech_quiz' ||
       contentId?.startsWith('game:kangur:')
     ) {
       return ['screen'];

@@ -2,6 +2,7 @@
 
 import {
   BookOpen,
+  BookCheck,
   BrainCircuit,
   LayoutGrid,
   LogIn,
@@ -11,6 +12,7 @@ import {
   UserPlus,
   X,
 } from 'lucide-react';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { useEffect, useRef, useState } from 'react';
 
 import {
@@ -26,6 +28,8 @@ import {
   persistTutorVisibilityHidden,
   subscribeToTutorVisibilityChanges,
 } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
+import { getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
 import { KangurPanelCloseButton } from '@/features/kangur/ui/components/KangurPanelCloseButton';
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
@@ -36,10 +40,17 @@ import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthCo
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import {
   KangurButton,
+  KangurGlassPanel,
+  KangurHeadline,
   KangurPageTopBar,
   KangurTextField,
   KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
+import {
+  KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
+import { getKangurSubjectLabel } from '@/features/kangur/lessons/lesson-catalog';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
@@ -227,6 +238,7 @@ export function KangurPrimaryNavigation({
     activeLearner?.displayName?.trim() || activeLearner?.loginName?.trim() || null;
   const profileDisplayName = activeLearnerName || authUser?.full_name?.trim() || null;
   const profileLabel = profileDisplayName ? `Profil ${profileDisplayName}` : 'Profil';
+  const profileAvatar = getKangurAvatarById(activeLearner?.avatarId);
   const shouldRenderProfileMenu =
     effectiveIsAuthenticated && (!isParentAccount || hasActiveLearner);
   const mobileNavItemClassName =
@@ -240,9 +252,13 @@ export function KangurPrimaryNavigation({
   const { entry: loginActionContent } = useKangurPageContentEntry('shared-nav-login-action');
   const createAccountActionRef = useRef<HTMLButtonElement | null>(null);
   const loginActionRef = useRef<HTMLButtonElement | null>(null);
+  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
+  const mobileMenuPreviousFocusRef = useRef<HTMLElement | null>(null);
   const [isTutorHidden, setIsTutorHidden] = useState(() => loadPersistedTutorVisibilityHidden());
   const [isMobile, setIsMobile] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
+  const { subject, setSubject } = useKangurSubjectFocus();
   const enableTutorLabel =
     tutorContent.common.enableTutorLabel ?? tutorContent.navigation.restoreTutorLabel;
   const disableTutorLabel = tutorContent.common.disableTutorAria ?? 'Wyłącz AI Tutora';
@@ -266,6 +282,9 @@ export function KangurPrimaryNavigation({
   const duelsTransitionSourceId = 'kangur-primary-nav:duels';
   const profileTransitionSourceId = 'kangur-primary-nav:profile';
   const parentDashboardTransitionSourceId = 'kangur-primary-nav:parent-dashboard';
+  const subjectChoiceLabel = getKangurSubjectLabel(subject);
+  const yellowPillActionClassName =
+    `border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] px-4 text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800 ${mobileWideNavItemClassName}`;
   const closeMobileMenu = (): void => setIsMobileMenuOpen(false);
   const toggleMobileMenu = (): void => setIsMobileMenuOpen((prev) => !prev);
 
@@ -326,6 +345,69 @@ export function KangurPrimaryNavigation({
     window.addEventListener('keydown', handleKeyDown);
     return (): void => {
       window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (isMobileMenuOpen) {
+      mobileMenuPreviousFocusRef.current = document.activeElement as HTMLElement | null;
+      return;
+    }
+    if (mobileMenuPreviousFocusRef.current) {
+      mobileMenuPreviousFocusRef.current.focus();
+      mobileMenuPreviousFocusRef.current = null;
+    }
+  }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen || typeof document === 'undefined') return;
+    const closeButton = document.getElementById('kangur-mobile-menu-close');
+    if (closeButton instanceof HTMLElement) {
+      closeButton.focus();
+    }
+  }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const menu = mobileMenuRef.current;
+    if (!menu || typeof document === 'undefined') return;
+    const selector = [
+      'a[href]',
+      'button:not([disabled])',
+      'textarea:not([disabled])',
+      'input:not([disabled])',
+      'select:not([disabled])',
+      '[tabindex]:not([tabindex="-1"])',
+    ].join(', ');
+    const getFocusable = (): HTMLElement[] =>
+      Array.from(menu.querySelectorAll<HTMLElement>(selector)).filter(
+        (element) => !element.hasAttribute('disabled') && !element.getAttribute('aria-hidden')
+      );
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.key !== 'Tab') return;
+      const focusable = getFocusable();
+      const first = focusable.at(0);
+      const last = focusable.at(-1);
+      if (!first || !last) return;
+      const firstElement = first;
+      const lastElement = last;
+      const active = document.activeElement;
+      if (event.shiftKey) {
+        if (active === firstElement || active === menu) {
+          event.preventDefault();
+          lastElement.focus();
+        }
+        return;
+      }
+      if (active === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
+      }
+    };
+    menu.addEventListener('keydown', handleKeyDown);
+    return (): void => {
+      menu.removeEventListener('keydown', handleKeyDown);
     };
   }, [isMobileMenuOpen]);
 
@@ -511,7 +593,7 @@ export function KangurPrimaryNavigation({
   const tutorToggleActionConfig: KangurNavActionConfig = {
     ariaLabel: isTutorHidden ? enableTutorLabel : disableTutorLabel,
     className: isTutorHidden
-      ? `border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] px-4 text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800 ${mobileWideNavItemClassName}`
+      ? yellowPillActionClassName
       : mobileNavItemClassName,
     content: (
       <>
@@ -577,6 +659,20 @@ export function KangurPrimaryNavigation({
     }),
     transitionAcknowledgeMs: NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
     transitionSourceId: lessonsTransitionSourceId,
+  };
+  const subjectAction: KangurNavActionConfig = {
+    ariaLabel: 'Wybierz przedmiot',
+    className: yellowPillActionClassName,
+    content: (
+      <>
+        <BookCheck className={ICON_CLASSNAME} strokeWidth={2.15} />
+        <span className='truncate'>Przedmiot: {subjectChoiceLabel}</span>
+      </>
+    ),
+    docId: 'top_nav_subject_choice',
+    onClick: () => setIsSubjectModalOpen(true),
+    testId: 'kangur-primary-nav-subject',
+    title: `Aktualny przedmiot: ${subjectChoiceLabel}`,
   };
   const duelsAction: KangurNavActionConfig = {
     active: currentPage === 'Duels',
@@ -672,14 +768,16 @@ export function KangurPrimaryNavigation({
       buildActionWithClose(tutorToggleActionConfig, onActionClick)
     );
     const tutorRow =
-      inlineAppearanceWithTutor && appearanceControlsInline ? (
-        <div className='flex w-full items-center justify-center gap-2'>
-          {tutorInlineAction}
-          <div className='flex shrink-0 items-center'>{appearanceControlsInline}</div>
-        </div>
-      ) : (
-        tutorDefaultAction
-      );
+      isTutorHidden
+        ? null
+        : inlineAppearanceWithTutor && appearanceControlsInline
+          ? (
+            <div className='flex w-full items-center justify-center gap-2'>
+              {tutorInlineAction}
+              <div className='flex shrink-0 items-center'>{appearanceControlsInline}</div>
+            </div>
+          )
+          : tutorDefaultAction;
     return (
       <div
         className={
@@ -692,6 +790,7 @@ export function KangurPrimaryNavigation({
         {renderNavAction(buildActionWithClose(homeAction, onActionClick))}
         {renderNavAction(buildActionWithClose(lessonsAction, onActionClick))}
         {renderNavAction(buildActionWithClose(duelsAction, onActionClick))}
+        {renderNavAction(buildActionWithClose(subjectAction, onActionClick))}
         {tutorRow}
       </div>
     );
@@ -731,6 +830,7 @@ export function KangurPrimaryNavigation({
           : null}
         {shouldRenderProfileMenu ? (
           <KangurProfileMenu
+            avatar={profileAvatar}
             isTransitionActive={isTransitionSourceActive({
               activeTransitionSourceId,
               transitionPhase,
@@ -750,9 +850,15 @@ export function KangurPrimaryNavigation({
 
   const mobileMenuLabel = isMobileMenuOpen ? 'Zamknij menu' : 'Otwórz menu';
   const mobileMenuId = 'kangur-mobile-menu';
+  const mobileMenuTitleId = 'kangur-mobile-menu-title';
   const mobileMenuCloseButton = (
     <div className='flex w-full justify-end'>
-      <KangurPanelCloseButton aria-label='Zamknij menu' onClick={closeMobileMenu} variant='chat' />
+      <KangurPanelCloseButton
+        id='kangur-mobile-menu-close'
+        aria-label='Zamknij menu'
+        onClick={closeMobileMenu}
+        variant='chat'
+      />
     </div>
   );
   const mobileNav = (
@@ -760,6 +866,7 @@ export function KangurPrimaryNavigation({
       <KangurButton
         aria-label={mobileMenuLabel}
         aria-controls={mobileMenuId}
+        aria-haspopup='dialog'
         aria-expanded={isMobileMenuOpen}
         className='glass-panel w-full justify-center rounded-[30px] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]'
         data-testid='kangur-primary-nav-mobile-toggle'
@@ -794,14 +901,18 @@ export function KangurPrimaryNavigation({
       <div
         role='dialog'
         aria-modal='true'
-        aria-label='Menu'
+        aria-labelledby={mobileMenuTitleId}
         id={mobileMenuId}
-        className={`relative flex h-full w-full flex-col kangur-panel-gap overflow-y-auto px-5 pb-8 pt-[calc(env(safe-area-inset-top)+20px)] transition-transform duration-200 ${
+        className={`relative flex h-full w-full flex-col kangur-panel-gap overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+32px)] pt-[calc(env(safe-area-inset-top)+20px)] transition-transform duration-200 ${
           isMobileMenuOpen ? 'translate-y-0' : 'translate-y-4'
         }`}
         style={{ backgroundColor: kangurAppearance.tone.background, color: kangurAppearance.tone.text }}
         onClick={(event) => event.stopPropagation()}
+        ref={mobileMenuRef}
       >
+        <h2 id={mobileMenuTitleId} className='sr-only'>
+          Menu Kangur
+        </h2>
         <KangurTopNavGroup label={navigationLabel} className='w-full flex-col'>
           {renderPrimaryActions({
             onActionClick: closeMobileMenu,
@@ -818,6 +929,78 @@ export function KangurPrimaryNavigation({
       </div>
     </div>
   ) : null;
+  const subjectModal = (
+    <DialogPrimitive.Root open={isSubjectModalOpen} onOpenChange={setIsSubjectModalOpen}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className='fixed inset-0 z-50 bg-black/60 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0' />
+        <DialogPrimitive.Content className='fixed left-[50%] top-[50%] z-50 w-[92vw] max-w-sm translate-x-[-50%] translate-y-[-50%] border-0 bg-transparent p-0 shadow-none outline-none duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95'>
+          <DialogPrimitive.Title className='sr-only'>Wybierz przedmiot</DialogPrimitive.Title>
+          <DialogPrimitive.Description className='sr-only'>
+            Wybierz, czy chcesz pracować z matematyką czy angielskim.
+          </DialogPrimitive.Description>
+          <KangurGlassPanel
+            className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
+            padding='lg'
+            surface='playField'
+          >
+            <div className='flex items-start justify-between gap-3'>
+              <div className='min-w-0'>
+                <KangurHeadline accent='indigo' as='h2' size='sm'>
+                  Wybierz przedmiot
+                </KangurHeadline>
+                <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
+                  Domyślnie: Matematyka.
+                </p>
+              </div>
+              <KangurPanelCloseButton
+                aria-label='Zamknij wybór przedmiotu'
+                onClick={() => setIsSubjectModalOpen(false)}
+                variant='chat'
+              />
+            </div>
+            <div
+              className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} w-full items-center justify-center`}
+              role='group'
+              aria-label='Wybór przedmiotu'
+            >
+              <KangurButton
+                className='h-10 flex-1 text-xs sm:text-sm'
+                onClick={() => setSubject('maths')}
+                size='sm'
+                type='button'
+                variant={subject === 'maths' ? 'segmentActive' : 'segment'}
+                aria-pressed={subject === 'maths'}
+              >
+                Matematyka
+              </KangurButton>
+              <KangurButton
+                className='h-10 flex-1 text-xs sm:text-sm'
+                onClick={() => setSubject('english')}
+                size='sm'
+                type='button'
+                variant={subject === 'english' ? 'segmentActive' : 'segment'}
+                aria-pressed={subject === 'english'}
+              >
+                Angielski
+              </KangurButton>
+            </div>
+            <div className='flex w-full flex-col gap-2 text-xs [color:var(--kangur-page-muted-text)]'>
+              <span>Aktualny wybór: {subjectChoiceLabel}.</span>
+              <KangurButton
+                className='w-full'
+                onClick={() => setIsSubjectModalOpen(false)}
+                size='sm'
+                type='button'
+                variant='surface'
+              >
+                Gotowe
+              </KangurButton>
+            </div>
+          </KangurGlassPanel>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
+  );
 
   return (
     <>
@@ -827,6 +1010,7 @@ export function KangurPrimaryNavigation({
         left={leftContent}
       />
       {mobileMenuOverlay}
+      {subjectModal}
     </>
   );
 }

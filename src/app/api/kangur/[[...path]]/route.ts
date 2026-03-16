@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/features/auth/server';
+import { methodNotAllowedError, notFoundError } from '@/shared/errors/app-error';
 import {
   kangurLearnerSignInInputSchema,
   kangurAssignmentCreateInputSchema,
@@ -13,6 +14,7 @@ import {
   kangurLearnerActivityUpdateInputSchema,
   kangurProgressStateSchema,
   kangurScoreCreateInputSchema,
+  kangurSubjectFocusSchema,
 } from '@/shared/contracts/kangur';
 import {
   kangurParentAccountCreateSchema,
@@ -25,7 +27,9 @@ import {
   kangurDuelHeartbeatInputSchema,
   kangurDuelJoinInputSchema,
   kangurDuelLeaveInputSchema,
+  kangurDuelReactionInputSchema,
 } from '@/shared/contracts/kangur-duels';
+import { kangurDuelLobbyChatCreateInputSchema } from '@/shared/contracts/kangur-duels-chat';
 import {
   numberBalanceMatchCreateInputSchema,
   numberBalanceMatchJoinInputSchema,
@@ -40,6 +44,7 @@ import {
   kangurKnowledgeGraphSyncRequestSchema,
 } from '@/shared/contracts';
 import { apiHandler, apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 
 import { postKangurAiTutorChatHandler } from '../ai-tutor/chat/handler';
 import {
@@ -83,9 +88,22 @@ import { postKangurDuelCreateHandler } from '../duels/create/handler';
 import { postKangurDuelHeartbeatHandler } from '../duels/heartbeat/handler';
 import { postKangurDuelJoinHandler } from '../duels/join/handler';
 import { postKangurDuelLeaveHandler } from '../duels/leave/handler';
+import { postKangurDuelReactionHandler } from '../duels/reaction/handler';
+import { getKangurDuelLeaderboardHandler } from '../duels/leaderboard/handler';
 import { getKangurDuelLobbyHandler } from '../duels/lobby/handler';
+import { GET_handler as getKangurDuelLobbyStreamHandler } from '../duels/lobby/stream/handler';
+import {
+  getKangurDuelLobbyChatHandler,
+  postKangurDuelLobbyChatHandler,
+} from '../duels/lobby-chat/handler';
+import { GET_handler as getKangurDuelLobbyChatStreamHandler } from '../duels/lobby-chat/stream/handler';
+import {
+  getKangurDuelLobbyPresenceHandler,
+  postKangurDuelLobbyPresenceHandler,
+} from '../duels/lobby-presence/handler';
 import { getKangurDuelOpponentsHandler } from '../duels/opponents/handler';
 import { getKangurDuelSearchHandler } from '../duels/search/handler';
+import { getKangurDuelSpectateHandler } from '../duels/spectate/handler';
 import { getKangurDuelStateHandler } from '../duels/state/handler';
 import {
   getKangurLearnerActivityHandler,
@@ -102,6 +120,15 @@ import {
 } from '../learners/[id]/handler';
 import { getKangurLearnerInteractionsHandler } from '../learners/[id]/interactions/handler';
 import { getKangurLearnerSessionsHandler } from '../learners/[id]/sessions/handler';
+import {
+  getKangurLessonsHandler,
+  postKangurLessonsHandler,
+  querySchema as lessonsQuerySchema,
+} from '../lessons/handler';
+import {
+  getKangurLessonDocumentsHandler,
+  postKangurLessonDocumentsHandler,
+} from '../lesson-documents/handler';
 import { GET_handler as getKangurKnowledgeGraphStatusHandler, querySchema as knowledgeGraphQuerySchema } from '../knowledge-graph/status/handler';
 import { POST_handler as postKangurKnowledgeGraphSyncHandler } from '../knowledge-graph/sync/handler';
 import { postNumberBalanceCreateHandler } from '../number-balance/create/handler';
@@ -110,6 +137,7 @@ import { postNumberBalanceSolveHandler } from '../number-balance/solve/handler';
 import { postNumberBalanceStateHandler } from '../number-balance/state/handler';
 import { GET_handler as getKangurObservabilitySummaryHandler, querySchema as observabilityQuerySchema } from '../observability/summary/handler';
 import { getKangurProgressHandler, patchKangurProgressHandler } from '../progress/handler';
+import { getKangurSubjectFocusHandler, patchKangurSubjectFocusHandler } from '../subject-focus/handler';
 import {
   getKangurScoresHandler,
   postKangurScoresHandler,
@@ -125,21 +153,29 @@ import {
 } from '@/features/kangur/tts/contracts';
 import { resolveKangurApiPathSegments } from '../route-utils';
 
-type RouteContext = {
-  params: {
-    path?: string[] | string;
-  };
+type RouteParams = {
+  path?: string[] | string;
 };
 
 type SimpleRouteHandler = (request: NextRequest) => Promise<Response>;
 type ParamRouteHandler = (request: NextRequest, context: { params: { id: string } }) => Promise<Response>;
 
-const notFound = (): Response => new Response('Not Found', { status: 404 });
-const methodNotAllowed = (allowed: string[]): Response =>
-  new Response('Method Not Allowed', {
-    status: 405,
-    headers: { Allow: allowed.join(', ') },
-  });
+const buildSource = (method: string): string => `kangur.[[...path]].${method}`;
+
+const notFound = async (request: NextRequest, method: string): Promise<Response> =>
+  createErrorResponse(notFoundError('Not Found'), { request, source: buildSource(method) });
+const methodNotAllowed = async (
+  request: NextRequest,
+  allowed: string[],
+  method: string
+): Promise<Response> => {
+  const response = await createErrorResponse(
+    methodNotAllowedError('Method not allowed', { allowedMethods: allowed }),
+    { request, source: buildSource(method) }
+  );
+  response.headers.set('Allow', allowed.join(', '));
+  return response;
+};
 
 const handleGetPost = (
   method: string,
@@ -164,9 +200,9 @@ const handleGetPost = (
   if (getHandlers[key]) allowed.push('GET');
   if (postHandlers[key]) allowed.push('POST');
   if (allowed.length > 0) {
-    return Promise.resolve(methodNotAllowed(allowed));
+    return methodNotAllowed(request, allowed, method);
   }
-  return Promise.resolve(notFound());
+  return notFound(request, method);
 };
 
 const handleGetOnly = (
@@ -182,9 +218,9 @@ const handleGetOnly = (
     }
   }
   if (getHandlers[key]) {
-    return Promise.resolve(methodNotAllowed(['GET']));
+    return methodNotAllowed(request, ['GET'], method);
   }
-  return Promise.resolve(notFound());
+  return notFound(request, method);
 };
 
 const handlePostOnly = (
@@ -200,9 +236,9 @@ const handlePostOnly = (
     }
   }
   if (postHandlers[key]) {
-    return Promise.resolve(methodNotAllowed(['POST']));
+    return methodNotAllowed(request, ['POST'], method);
   }
-  return Promise.resolve(notFound());
+  return notFound(request, method);
 };
 
 const createMagicLinkHandler = (source: string): SimpleRouteHandler =>
@@ -294,13 +330,41 @@ const duelsGetHandlers: Record<string, SimpleRouteHandler> = {
     source: 'kangur.duels.lobby.GET',
     service: 'kangur.api',
   }),
+  'lobby/stream': apiHandler(getKangurDuelLobbyStreamHandler, {
+    source: 'kangur.duels.lobby.stream.GET',
+    service: 'kangur.api',
+    successLogging: 'off',
+  }),
+  'lobby-chat': apiHandler(getKangurDuelLobbyChatHandler, {
+    source: 'kangur.duels.lobby-chat.GET',
+    service: 'kangur.api',
+  }),
+  'lobby-presence': apiHandler(getKangurDuelLobbyPresenceHandler, {
+    source: 'kangur.duels.lobby-presence.GET',
+    service: 'kangur.api',
+    requireAuth: true,
+  }),
+  'lobby-chat/stream': apiHandler(getKangurDuelLobbyChatStreamHandler, {
+    source: 'kangur.duels.lobby-chat.stream.GET',
+    service: 'kangur.api',
+    successLogging: 'off',
+  }),
   opponents: apiHandler(getKangurDuelOpponentsHandler, {
     source: 'kangur.duels.opponents.GET',
+    service: 'kangur.api',
+  }),
+  leaderboard: apiHandler(getKangurDuelLeaderboardHandler, {
+    source: 'kangur.duels.leaderboard.GET',
     service: 'kangur.api',
   }),
   search: apiHandler(getKangurDuelSearchHandler, {
     source: 'kangur.duels.search.GET',
     service: 'kangur.api',
+  }),
+  spectate: apiHandler(getKangurDuelSpectateHandler, {
+    source: 'kangur.duels.spectate.GET',
+    service: 'kangur.api',
+    successLogging: 'off',
   }),
   state: apiHandler(getKangurDuelStateHandler, {
     source: 'kangur.duels.state.GET',
@@ -331,6 +395,13 @@ const duelsPostHandlers: Record<string, SimpleRouteHandler> = {
     parseJsonBody: true,
     bodySchema: kangurDuelJoinInputSchema,
   }),
+  reaction: apiHandler(postKangurDuelReactionHandler, {
+    source: 'kangur.duels.reaction.POST',
+    service: 'kangur.api',
+    successLogging: 'off',
+    parseJsonBody: true,
+    bodySchema: kangurDuelReactionInputSchema,
+  }),
   leave: apiHandler(postKangurDuelLeaveHandler, {
     source: 'kangur.duels.leave.POST',
     service: 'kangur.api',
@@ -344,6 +415,19 @@ const duelsPostHandlers: Record<string, SimpleRouteHandler> = {
     successLogging: 'off',
     parseJsonBody: true,
     bodySchema: kangurDuelHeartbeatInputSchema,
+  }),
+  'lobby-chat': apiHandler(postKangurDuelLobbyChatHandler, {
+    source: 'kangur.duels.lobby-chat.POST',
+    service: 'kangur.api',
+    successLogging: 'off',
+    parseJsonBody: true,
+    bodySchema: kangurDuelLobbyChatCreateInputSchema,
+  }),
+  'lobby-presence': apiHandler(postKangurDuelLobbyPresenceHandler, {
+    source: 'kangur.duels.lobby-presence.POST',
+    service: 'kangur.api',
+    successLogging: 'off',
+    requireAuth: true,
   }),
 };
 
@@ -613,6 +697,20 @@ const progressPatchHandler: SimpleRouteHandler = apiHandler(patchKangurProgressH
   bodySchema: kangurProgressStateSchema,
 });
 
+const subjectFocusGetHandler: SimpleRouteHandler = apiHandler(getKangurSubjectFocusHandler, {
+  source: 'kangur.subject-focus.GET',
+  service: 'kangur.api',
+  successLogging: 'all',
+});
+
+const subjectFocusPatchHandler: SimpleRouteHandler = apiHandler(patchKangurSubjectFocusHandler, {
+  source: 'kangur.subject-focus.PATCH',
+  service: 'kangur.api',
+  successLogging: 'all',
+  parseJsonBody: true,
+  bodySchema: kangurSubjectFocusSchema,
+});
+
 const scoresGetHandler: SimpleRouteHandler = apiHandler(getKangurScoresHandler, {
   source: 'kangur.scores.GET',
   service: 'kangur.api',
@@ -627,6 +725,35 @@ const scoresPostHandler: SimpleRouteHandler = apiHandler(postKangurScoresHandler
   parseJsonBody: true,
   bodySchema: kangurScoreCreateInputSchema,
 });
+
+const lessonsGetHandler: SimpleRouteHandler = apiHandler(getKangurLessonsHandler, {
+  source: 'kangur.lessons.GET',
+  service: 'kangur.api',
+  querySchema: lessonsQuerySchema,
+});
+
+const lessonsPostHandler: SimpleRouteHandler = apiHandler(postKangurLessonsHandler, {
+  source: 'kangur.lessons.POST',
+  service: 'kangur.api',
+  parseJsonBody: true,
+});
+
+const lessonDocumentsGetHandler: SimpleRouteHandler = apiHandler(
+  getKangurLessonDocumentsHandler,
+  {
+    source: 'kangur.lesson-documents.GET',
+    service: 'kangur.api',
+  }
+);
+
+const lessonDocumentsPostHandler: SimpleRouteHandler = apiHandler(
+  postKangurLessonDocumentsHandler,
+  {
+    source: 'kangur.lesson-documents.POST',
+    service: 'kangur.api',
+    parseJsonBody: true,
+  }
+);
 
 const observabilitySummaryHandler: SimpleRouteHandler = apiHandler(
   getKangurObservabilitySummaryHandler,
@@ -643,7 +770,7 @@ const handleAuth = (
   segments: string[]
 ): Promise<Response> => {
   if (segments.length === 0 || segments.length > 2) {
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
   return handleGetPost(method, request, segments.join('/'), authGetHandlers, authPostHandlers);
 };
@@ -653,10 +780,10 @@ const handleDuels = (
   request: NextRequest,
   segments: string[]
 ): Promise<Response> => {
-  if (segments.length !== 1) {
-    return Promise.resolve(notFound());
+  if (segments.length === 0 || segments.length > 2) {
+    return notFound(request, method);
   }
-  return handleGetPost(method, request, segments[0] ?? '', duelsGetHandlers, duelsPostHandlers);
+  return handleGetPost(method, request, segments.join('/'), duelsGetHandlers, duelsPostHandlers);
 };
 
 const handleKnowledgeGraph = (
@@ -665,7 +792,7 @@ const handleKnowledgeGraph = (
   segments: string[]
 ): Promise<Response> => {
   if (segments.length !== 1) {
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
   return handleGetPost(
     method,
@@ -682,7 +809,7 @@ const handleNumberBalance = (
   segments: string[]
 ): Promise<Response> => {
   if (segments.length !== 1) {
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
   return handlePostOnly(method, request, segments[0] ?? '', numberBalancePostHandlers);
 };
@@ -693,7 +820,7 @@ const handleTts = (
   segments: string[]
 ): Promise<Response> => {
   if (segments.length > 1) {
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
   const key = segments[0] ?? '';
   return handlePostOnly(method, request, key, ttsPostHandlers);
@@ -705,7 +832,7 @@ const handleLearnerActivity = (
   segments: string[]
 ): Promise<Response> => {
   if (segments.length > 1) {
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
   const key = segments[0] ?? '';
   return handleGetPost(
@@ -723,7 +850,7 @@ const handleAiTutor = (
   segments: string[]
 ): Promise<Response> => {
   if (segments.length === 0 || segments.length > 2) {
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
   const key = segments.join('/');
   return handleGetPost(method, request, key, aiTutorGetHandlers, aiTutorPostHandlers);
@@ -736,22 +863,22 @@ const handleAssignments = (
 ): Promise<Response> => {
   const [id, action, ...rest] = segments;
   if (rest.length > 0) {
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
   if (!id) {
     if (method === 'GET') return assignmentsGetHandler(request);
     if (method === 'POST') return assignmentsPostHandler(request);
-    return Promise.resolve(methodNotAllowed(['GET', 'POST']));
+    return methodNotAllowed(request, ['GET', 'POST'], method);
   }
   if (action === 'reassign') {
     if (method === 'POST') return assignmentReassignHandler(request, { params: { id } });
-    return Promise.resolve(methodNotAllowed(['POST']));
+    return methodNotAllowed(request, ['POST'], method);
   }
   if (action) {
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
   if (method === 'PATCH') return assignmentPatchHandler(request, { params: { id } });
-  return Promise.resolve(methodNotAllowed(['PATCH']));
+  return methodNotAllowed(request, ['PATCH'], method);
 };
 
 const handleLearners = (
@@ -761,27 +888,27 @@ const handleLearners = (
 ): Promise<Response> => {
   const [id, action, ...rest] = segments;
   if (rest.length > 0) {
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
   if (!id) {
     if (method === 'GET') return learnersGetHandler(request);
     if (method === 'POST') return learnersPostHandler(request);
-    return Promise.resolve(methodNotAllowed(['GET', 'POST']));
+    return methodNotAllowed(request, ['GET', 'POST'], method);
   }
   if (action === 'interactions') {
     if (method === 'GET') return learnerInteractionsHandler(request, { params: { id } });
-    return Promise.resolve(methodNotAllowed(['GET']));
+    return methodNotAllowed(request, ['GET'], method);
   }
   if (action === 'sessions') {
     if (method === 'GET') return learnerSessionsHandler(request, { params: { id } });
-    return Promise.resolve(methodNotAllowed(['GET']));
+    return methodNotAllowed(request, ['GET'], method);
   }
   if (action) {
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
   if (method === 'PATCH') return learnerPatchHandler(request, { params: { id } });
   if (method === 'DELETE') return learnerDeleteHandler(request, { params: { id } });
-  return Promise.resolve(methodNotAllowed(['PATCH', 'DELETE']));
+  return methodNotAllowed(request, ['PATCH', 'DELETE'], method);
 };
 
 const handleProgress = (
@@ -790,11 +917,24 @@ const handleProgress = (
   segments: string[]
 ): Promise<Response> => {
   if (segments.length !== 0) {
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
   if (method === 'GET') return progressGetHandler(request);
   if (method === 'PATCH') return progressPatchHandler(request);
-  return Promise.resolve(methodNotAllowed(['GET', 'PATCH']));
+  return methodNotAllowed(request, ['GET', 'PATCH'], method);
+};
+
+const handleSubjectFocus = (
+  method: string,
+  request: NextRequest,
+  segments: string[]
+): Promise<Response> => {
+  if (segments.length !== 0) {
+    return notFound(request, method);
+  }
+  if (method === 'GET') return subjectFocusGetHandler(request);
+  if (method === 'PATCH') return subjectFocusPatchHandler(request);
+  return methodNotAllowed(request, ['GET', 'PATCH'], method);
 };
 
 const handleScores = (
@@ -803,11 +943,11 @@ const handleScores = (
   segments: string[]
 ): Promise<Response> => {
   if (segments.length !== 0) {
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
   if (method === 'GET') return scoresGetHandler(request);
   if (method === 'POST') return scoresPostHandler(request);
-  return Promise.resolve(methodNotAllowed(['GET', 'POST']));
+  return methodNotAllowed(request, ['GET', 'POST'], method);
 };
 
 const handleObservability = (
@@ -816,7 +956,7 @@ const handleObservability = (
   segments: string[]
 ): Promise<Response> => {
   if (segments.length !== 1 || segments[0] !== 'summary') {
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
   return handleGetOnly(method, request, 'summary', { summary: observabilitySummaryHandler });
 };
@@ -827,7 +967,7 @@ const routeKangur = (
   segments: string[]
 ): Promise<Response> => {
   if (segments.length === 0) {
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
   const [section, ...rest] = segments;
   switch (section) {
@@ -853,21 +993,52 @@ const routeKangur = (
       return handleObservability(method, request, rest);
     case 'progress':
       return handleProgress(method, request, rest);
+    case 'subject-focus':
+      return handleSubjectFocus(method, request, rest);
     case 'scores':
       return handleScores(method, request, rest);
+    case 'lessons':
+      return handleGetPost(method, request, rest.join('/'), { '': lessonsGetHandler }, { '': lessonsPostHandler });
+    case 'lesson-documents':
+      return handleGetPost(
+        method,
+        request,
+        rest.join('/'),
+        { '': lessonDocumentsGetHandler },
+        { '': lessonDocumentsPostHandler }
+      );
     default:
-      return Promise.resolve(notFound());
+      return notFound(request, method);
   }
 };
 
-export const GET = (request: NextRequest, context: RouteContext): Promise<Response> =>
-  routeKangur('GET', request, resolveKangurApiPathSegments(request, context));
+const ROUTER_OPTIONS = {
+  successLogging: 'off',
+  requireCsrf: false,
+  resolveSessionUser: false,
+  rateLimitKey: false,
+} as const;
 
-export const POST = (request: NextRequest, context: RouteContext): Promise<Response> =>
-  routeKangur('POST', request, resolveKangurApiPathSegments(request, context));
+export const GET = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, params) =>
+    routeKangur('GET', request, resolveKangurApiPathSegments(request, { params })),
+  { ...ROUTER_OPTIONS, source: 'kangur.[[...path]].GET' }
+);
 
-export const PATCH = (request: NextRequest, context: RouteContext): Promise<Response> =>
-  routeKangur('PATCH', request, resolveKangurApiPathSegments(request, context));
+export const POST = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, params) =>
+    routeKangur('POST', request, resolveKangurApiPathSegments(request, { params })),
+  { ...ROUTER_OPTIONS, source: 'kangur.[[...path]].POST' }
+);
 
-export const DELETE = (request: NextRequest, context: RouteContext): Promise<Response> =>
-  routeKangur('DELETE', request, resolveKangurApiPathSegments(request, context));
+export const PATCH = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, params) =>
+    routeKangur('PATCH', request, resolveKangurApiPathSegments(request, { params })),
+  { ...ROUTER_OPTIONS, source: 'kangur.[[...path]].PATCH' }
+);
+
+export const DELETE = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, params) =>
+    routeKangur('DELETE', request, resolveKangurApiPathSegments(request, { params })),
+  { ...ROUTER_OPTIONS, source: 'kangur.[[...path]].DELETE' }
+);

@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import {
   KangurEmptyState,
   KangurGlassPanel,
@@ -12,7 +13,9 @@ import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurP
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import {
   buildKangurAssignmentListItems,
+  filterKangurAssignmentsBySubject,
   selectKangurPriorityAssignments,
+  type KangurAssignmentListItem,
 } from '@/features/kangur/ui/services/delegated-assignments';
 
 type KangurPriorityAssignmentsProps = {
@@ -38,6 +41,7 @@ export function KangurPriorityAssignments({
   const assignmentsTitle = title ?? assignmentsContent?.title ?? PRIORITY_ASSIGNMENTS_TITLE;
   const assignmentsSummary = assignmentsContent?.summary ?? undefined;
   const emptyDescription = emptyLabel ?? PRIORITY_ASSIGNMENTS_EMPTY_DESCRIPTION;
+  const { subject, setSubject } = useKangurSubjectFocus();
   const { assignments, isLoading, error } = useKangurAssignments({
     enabled,
     query: {
@@ -45,13 +49,25 @@ export function KangurPriorityAssignments({
     },
   });
 
+  const subjectAssignments = useMemo(
+    () => filterKangurAssignmentsBySubject(assignments, subject),
+    [assignments, subject]
+  );
   const visibleAssignments = useMemo(
-    () => selectKangurPriorityAssignments(assignments, limit),
-    [assignments, limit]
+    () => selectKangurPriorityAssignments(subjectAssignments, limit),
+    [subjectAssignments, limit]
   );
   const visibleItems = useMemo(
     () => buildKangurAssignmentListItems(basePath, visibleAssignments),
     [basePath, visibleAssignments]
+  );
+  const handleAssignmentOpen = useCallback(
+    (item: KangurAssignmentListItem) => {
+      if (item.subject !== subject) {
+        setSubject(item.subject);
+      }
+    },
+    [setSubject, subject]
   );
 
   if (!enabled) {
@@ -136,6 +152,7 @@ export function KangurPriorityAssignments({
       summary={assignmentsSummary}
       compact
       showTimeCountdown
+      onItemActionClick={handleAssignmentOpen}
     />
   );
 }

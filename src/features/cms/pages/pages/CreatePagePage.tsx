@@ -75,7 +75,7 @@ export default function CreatePagePage(): React.JSX.Element {
   };
 
   return (
-    <div className='container mx-auto py-10 max-w-3xl space-y-6'>
+    <div className='page-section max-w-3xl space-y-6'>
       <SectionHeader
         title='Create Page'
         description='Provision a new content page and map it to URL routes.'

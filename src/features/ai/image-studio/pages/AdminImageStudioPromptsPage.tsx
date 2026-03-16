@@ -139,7 +139,7 @@ export function AdminImageStudioPromptsPage(): React.JSX.Element {
   }, [promptEntries, toast, updateSetting]);
 
   return (
-    <div className='container mx-auto max-w-6xl py-2'>
+    <div className='page-section-slim max-w-6xl'>
       <Card variant='subtle' padding='md' className='space-y-4 bg-card/40'>
         <div className='flex flex-wrap items-center justify-between gap-3'>
           <div>

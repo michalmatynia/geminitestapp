@@ -139,6 +139,7 @@ const readObjectOptions = (objectLiteral) => {
 const extractRouteExports = ({ root, filePath, sourceFile }) => {
   const routeIssues = [];
   const exports = [];
+  const reExports = [];
 
   for (const statement of sourceFile.statements) {
     if (ts.isFunctionDeclaration(statement) && hasExportModifier(statement) && statement.name) {
@@ -155,6 +156,28 @@ const extractRouteExports = ({ root, filePath, sourceFile }) => {
           message: `Route exports ${method} as a function. Use apiHandler/apiHandlerWithParams wrapper exports instead.`,
         })
       );
+      continue;
+    }
+
+    if (
+      ts.isExportDeclaration(statement) &&
+      statement.moduleSpecifier &&
+      ts.isStringLiteral(statement.moduleSpecifier) &&
+      !statement.isTypeOnly
+    ) {
+      const moduleSpecifier = statement.moduleSpecifier.text;
+      let names = null;
+      if (statement.exportClause && ts.isNamedExports(statement.exportClause)) {
+        if (!statement.exportClause.isTypeOnly) {
+          names = statement.exportClause.elements
+            .map((element) => element.name.text)
+            .filter((name) => HTTP_METHODS.has(name));
+        }
+      }
+      reExports.push({
+        moduleSpecifier,
+        names,
+      });
       continue;
     }
 
@@ -186,6 +209,8 @@ const extractRouteExports = ({ root, filePath, sourceFile }) => {
           hasTypeArguments: false,
           options: null,
           node: declaration.name,
+          filePath,
+          sourceFile,
         });
         continue;
       }
@@ -234,11 +259,67 @@ const extractRouteExports = ({ root, filePath, sourceFile }) => {
         hasTypeArguments: Array.isArray(callExpression.typeArguments) && callExpression.typeArguments.length > 0,
         options,
         node: declaration.name,
+        filePath,
+        sourceFile,
       });
     }
   }
 
-  return { exports, routeIssues };
+  return { exports, routeIssues, reExports };
+};
+
+const resolveModuleFile = (baseFilePath, specifier) => {
+  if (!specifier.startsWith('.')) return null;
+  const base = path.resolve(path.dirname(baseFilePath), specifier);
+  const candidates = [
+    base,
+    `${base}.ts`,
+    `${base}.tsx`,
+    `${base}.js`,
+    `${base}.jsx`,
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+      return candidate;
+    }
+  }
+  return null;
+};
+
+const collectRouteExports = ({ root, filePath, visited }) => {
+  if (visited.has(filePath)) {
+    return { exports: [], routeIssues: [] };
+  }
+  visited.add(filePath);
+
+  const text = fs.readFileSync(filePath, 'utf8');
+  const sourceFile = createSourceFile(filePath, text);
+  const { exports, routeIssues, reExports } = extractRouteExports({ root, filePath, sourceFile });
+  const resolvedExports = [...exports];
+  const resolvedIssues = [...routeIssues];
+
+  for (const reExport of reExports) {
+    const resolvedPath = resolveModuleFile(filePath, reExport.moduleSpecifier);
+    if (!resolvedPath) continue;
+    const nested = collectRouteExports({ root, filePath: resolvedPath, visited });
+    resolvedIssues.push(...nested.routeIssues);
+    const filtered = reExport.names
+      ? nested.exports.filter((entry) => reExport.names.includes(entry.method))
+      : nested.exports;
+    for (const entry of filtered) {
+      resolvedExports.push(entry);
+    }
+  }
+
+  const deduped = [];
+  const seen = new Set();
+  for (const entry of resolvedExports) {
+    if (seen.has(entry.method)) continue;
+    seen.add(entry.method);
+    deduped.push(entry);
+  }
+
+  return { exports: deduped, routeIssues: resolvedIssues };
 };
 
 export const analyzeRoutePolicies = ({ root = process.cwd() } = {}) => {
@@ -256,9 +337,11 @@ export const analyzeRoutePolicies = ({ root = process.cwd() } = {}) => {
       const repoRelativeFile = toRepoRelativePath(root, filePath);
       const routePath = normalizeRoutePath(path.relative(absoluteRouteRoot, filePath));
       const dynamicRoute = routePath.includes('[');
-      const text = fs.readFileSync(filePath, 'utf8');
-      const sourceFile = createSourceFile(filePath, text);
-      const { exports, routeIssues } = extractRouteExports({ root, filePath, sourceFile });
+      const { exports, routeIssues } = collectRouteExports({
+        root,
+        filePath,
+        visited: new Set(),
+      });
 
       issues.push(...routeIssues);
 
@@ -277,7 +360,8 @@ export const analyzeRoutePolicies = ({ root = process.cwd() } = {}) => {
       methodCount += exports.length;
 
       for (const routeExport of exports) {
-        const location = getNodeLocation(sourceFile, routeExport.node);
+        const location = getNodeLocation(routeExport.sourceFile, routeExport.node);
+        const exportFile = toRepoRelativePath(root, routeExport.filePath ?? filePath);
         if (routeExport.wrapperName === 'forwarded') {
           continue;
         }
@@ -302,7 +386,7 @@ export const analyzeRoutePolicies = ({ root = process.cwd() } = {}) => {
               createIssue({
                 severity: 'error',
                 ruleId: 'route-missing-source',
-                file: repoRelativeFile,
+                file: exportFile,
                 line: location.line,
                 column: location.column,
                 message: `Route export ${routeExport.method} is missing a source option. Expected "${expectedSource}".`,
@@ -313,7 +397,7 @@ export const analyzeRoutePolicies = ({ root = process.cwd() } = {}) => {
               createIssue({
                 severity: 'warn',
                 ruleId: 'route-source-mismatch',
-                file: repoRelativeFile,
+                file: exportFile,
                 line: location.line,
                 column: location.column,
                 message: `Route export ${routeExport.method} uses source "${sourceValue}" but expected "${expectedSource}".`,
@@ -327,7 +411,7 @@ export const analyzeRoutePolicies = ({ root = process.cwd() } = {}) => {
             createIssue({
               severity: 'warn',
               ruleId: 'route-dynamic-wrapper-mismatch',
-              file: repoRelativeFile,
+              file: exportFile,
               line: location.line,
               column: location.column,
               message: 'Dynamic route exports must use apiHandlerWithParams.',
@@ -340,7 +424,7 @@ export const analyzeRoutePolicies = ({ root = process.cwd() } = {}) => {
             createIssue({
               severity: 'warn',
               ruleId: 'route-dynamic-params-type-missing',
-              file: repoRelativeFile,
+              file: exportFile,
               line: location.line,
               column: location.column,
               message: 'Dynamic route export is missing explicit params type arguments.',
@@ -353,7 +437,7 @@ export const analyzeRoutePolicies = ({ root = process.cwd() } = {}) => {
             createIssue({
               severity: 'warn',
               ruleId: 'route-static-with-params-wrapper',
-              file: repoRelativeFile,
+              file: exportFile,
               line: location.line,
               column: location.column,
               message: 'Static route export uses apiHandlerWithParams. Prefer apiHandler unless params are required.',
@@ -366,7 +450,7 @@ export const analyzeRoutePolicies = ({ root = process.cwd() } = {}) => {
             createIssue({
               severity: 'error',
               ruleId: 'route-bodyschema-without-parsejson',
-              file: repoRelativeFile,
+              file: exportFile,
               line: location.line,
               column: location.column,
               message: 'bodySchema is configured without parseJsonBody: true.',
@@ -379,7 +463,7 @@ export const analyzeRoutePolicies = ({ root = process.cwd() } = {}) => {
             createIssue({
               severity: 'error',
               ruleId: 'route-parsejson-safe-method',
-              file: repoRelativeFile,
+              file: exportFile,
               line: location.line,
               column: location.column,
               message: `${routeExport.method} should not enable parseJsonBody.`,
@@ -392,7 +476,7 @@ export const analyzeRoutePolicies = ({ root = process.cwd() } = {}) => {
             createIssue({
               severity: 'warn',
               ruleId: 'route-parsejson-without-bodyschema',
-              file: repoRelativeFile,
+              file: exportFile,
               line: location.line,
               column: location.column,
               message: `${routeExport.method} parses JSON without a bodySchema guard.`,
@@ -410,28 +494,28 @@ export const analyzeRoutePolicies = ({ root = process.cwd() } = {}) => {
           });
 
           if (SAFE_METHODS.has(routeExport.method)) {
-            issues.push(
-              createIssue({
-                severity: 'warn',
-                ruleId: 'route-csrf-optout-safe-method',
-                file: repoRelativeFile,
-                line: location.line,
-                column: location.column,
-                message: `${routeExport.method} explicitly disables CSRF even though safe methods already skip CSRF checks.`,
-              })
-            );
-          } else if (!exemption) {
-            issues.push(
-              createIssue({
-                severity: 'error',
-                ruleId: 'route-csrf-optout-unreviewed',
-                file: repoRelativeFile,
-                line: location.line,
-                column: location.column,
-                message: `${routeExport.method} disables CSRF without matching a reviewed exemption policy.`,
-              })
-            );
-          }
+          issues.push(
+            createIssue({
+              severity: 'warn',
+              ruleId: 'route-csrf-optout-safe-method',
+              file: exportFile,
+              line: location.line,
+              column: location.column,
+              message: `${routeExport.method} explicitly disables CSRF even though safe methods already skip CSRF checks.`,
+            })
+          );
+        } else if (!exemption) {
+          issues.push(
+            createIssue({
+              severity: 'error',
+              ruleId: 'route-csrf-optout-unreviewed',
+              file: exportFile,
+              line: location.line,
+              column: location.column,
+              message: `${routeExport.method} disables CSRF without matching a reviewed exemption policy.`,
+            })
+          );
+        }
         }
 
         if (Array.isArray(allowedMethods) && !allowedMethods.includes(routeExport.method)) {
@@ -439,7 +523,7 @@ export const analyzeRoutePolicies = ({ root = process.cwd() } = {}) => {
             createIssue({
               severity: 'error',
               ruleId: 'route-allowedmethods-mismatch',
-              file: repoRelativeFile,
+              file: exportFile,
               line: location.line,
               column: location.column,
               message: `allowedMethods does not include exported method ${routeExport.method}.`,

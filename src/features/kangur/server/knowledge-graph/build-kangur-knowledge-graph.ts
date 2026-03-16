@@ -21,7 +21,7 @@ import {
   extractCmsPageTextContent,
   buildCmsPageSemanticText,
   hasMeaningfulTextContent,
-} from '@/features/cms/utils/cms-text-extractor';
+} from '@/features/cms/server';
 import {
   KANGUR_KNOWLEDGE_GRAPH_KEY,
   type KangurKnowledgeEdgeKind,

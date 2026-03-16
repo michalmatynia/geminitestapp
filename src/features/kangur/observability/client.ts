@@ -6,6 +6,19 @@ import {
 
 type KangurClientErrorContext = Record<string, unknown>;
 type KangurClientEventContext = Record<string, unknown>;
+export type KangurClientErrorReport = {
+  source: string;
+  action: string;
+  description: string;
+  context?: KangurClientErrorContext;
+};
+
+type KangurClientErrorHandlingOptions<T> = {
+  fallback: T | (() => T);
+  onError?: (error: unknown) => void;
+  shouldReport?: (error: unknown) => boolean;
+  shouldRethrow?: (error: unknown) => boolean;
+};
 
 const KANGUR_CLIENT_CONTEXT = Object.freeze({
   feature: 'kangur',
@@ -98,6 +111,64 @@ export const logKangurClientError = (
       ...context,
     },
   });
+};
+
+export const reportKangurClientError = (
+  error: unknown,
+  report: KangurClientErrorReport
+): void => {
+  logKangurClientError(error, {
+    source: report.source,
+    action: report.action,
+    description: report.description,
+    ...(report.context ?? {}),
+  });
+};
+
+export const withKangurClientError = async <T>(
+  report: KangurClientErrorReport | ((error: unknown) => KangurClientErrorReport),
+  task: () => Promise<T>,
+  options: KangurClientErrorHandlingOptions<T>
+): Promise<T> => {
+  try {
+    return await task();
+  } catch (error) {
+    const resolvedReport = typeof report === 'function' ? report(error) : report;
+    const shouldReport = options.shouldReport?.(error) ?? true;
+    if (shouldReport) {
+      reportKangurClientError(error, resolvedReport);
+    }
+    options.onError?.(error);
+    if (options.shouldRethrow?.(error)) {
+      throw error;
+    }
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : options.fallback;
+  }
+};
+
+export const withKangurClientErrorSync = <T>(
+  report: KangurClientErrorReport | ((error: unknown) => KangurClientErrorReport),
+  task: () => T,
+  options: KangurClientErrorHandlingOptions<T>
+): T => {
+  try {
+    return task();
+  } catch (error) {
+    const resolvedReport = typeof report === 'function' ? report(error) : report;
+    const shouldReport = options.shouldReport?.(error) ?? true;
+    if (shouldReport) {
+      reportKangurClientError(error, resolvedReport);
+    }
+    options.onError?.(error);
+    if (options.shouldRethrow?.(error)) {
+      throw error;
+    }
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : options.fallback;
+  }
 };
 
 export const setKangurClientObservabilityContext = (context: {

@@ -66,7 +66,7 @@ export default function DifficultySelector({
       <div
         aria-label={groupAriaLabel}
         aria-labelledby={groupLabelId}
-        className='grid w-full max-w-3xl grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2 xl:grid-cols-3'
+        className='grid w-full max-w-3xl grid-cols-1 kangur-panel-gap sm:grid-cols-2 lg:grid-cols-3'
         role='group'
       >
         {DIFFICULTIES.map((difficulty, index) => {

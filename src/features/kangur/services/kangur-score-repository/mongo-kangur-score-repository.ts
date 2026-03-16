@@ -2,7 +2,11 @@ import 'server-only';
 
 import { ObjectId, type Filter, type SortDirection } from 'mongodb';
 
-import type { KangurScore, KangurScoreRepositoryCreateInput } from '@/features/kangur/shared/contracts/kangur';
+import {
+  resolveKangurScoreSubject,
+  type KangurScore,
+  type KangurScoreRepositoryCreateInput,
+} from '@/features/kangur/shared/contracts/kangur';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import { normalizeSort } from './shared';
@@ -19,6 +23,7 @@ type KangurScoreDocument = {
   player_name: string;
   score: number;
   operation: string;
+  subject?: KangurScore['subject'] | null;
   total_questions: number;
   correct_answers: number;
   time_taken: number;
@@ -35,6 +40,7 @@ const toDto = (doc: KangurScoreDocument): KangurScore => ({
   player_name: doc.player_name,
   score: doc.score,
   operation: doc.operation,
+  subject: resolveKangurScoreSubject({ operation: doc.operation, subject: doc.subject ?? null }),
   total_questions: doc.total_questions,
   correct_answers: doc.correct_answers,
   time_taken: doc.time_taken,
@@ -63,6 +69,17 @@ const toMongoFilters = (input?: KangurScoreListInput): Filter<KangurScoreDocumen
   }
   if (filters.operation) {
     query.operation = filters.operation;
+  }
+  if (filters.subject) {
+    if (filters.subject === 'maths') {
+      query.$or = [
+        { subject: filters.subject },
+        { subject: { $exists: false } },
+        { subject: null },
+      ];
+    } else {
+      query.subject = filters.subject;
+    }
   }
   if (filters.created_by) {
     query.created_by = filters.created_by;
@@ -115,6 +132,7 @@ export const mongoKangurScoreRepository: KangurScoreRepository = {
       player_name: input.player_name,
       score: input.score,
       operation: input.operation,
+      subject: input.subject,
       total_questions: input.total_questions,
       correct_answers: input.correct_answers,
       time_taken: input.time_taken,

@@ -6,9 +6,10 @@ import {
   resolveKangurActor,
 } from '@/features/kangur/server';
 import { publishKangurLearnerActivityUpdate } from '@/features/kangur/services/learner-activity-stream-publisher';
+import { kangurLearnerActivityUpdateInputSchema } from '@/shared/contracts/kangur';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
-import { parseKangurLearnerActivityUpdatePayload } from '@/shared/validations/kangur';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 const ONLINE_WINDOW_MS = 2 * 60 * 1000;
 
@@ -40,14 +41,18 @@ export async function getKangurLearnerActivityHandler(
 
 export async function postKangurLearnerActivityHandler(
   req: NextRequest,
-  ctx: ApiHandlerContext
+  _ctx: ApiHandlerContext
 ): Promise<Response> {
   const actor = await resolveKangurActor(req);
   if (actor.actorType !== 'learner') {
     throw forbiddenError('Only learner sessions can update activity.');
   }
   const activeLearner = requireActiveLearner(actor);
-  const payload = parseKangurLearnerActivityUpdatePayload(ctx.body ?? (await req.json()));
+  const parsed = await parseJsonBody(req, kangurLearnerActivityUpdateInputSchema, {
+    logPrefix: 'kangur.learner-activity.POST',
+  });
+  if (!parsed.ok) return parsed.response;
+  const payload = parsed.data;
   const repository = await getKangurLearnerActivityRepository();
   const snapshot = await repository.saveActivity(activeLearner.id, payload);
   publishKangurLearnerActivityUpdate(activeLearner.id, {

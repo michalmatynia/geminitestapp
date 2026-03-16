@@ -17,7 +17,7 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
-import type { KangurDailyQuestState } from '@/features/kangur/ui/services/daily-quests';
+import type { KangurDailyQuestState } from '@/features/kangur/shared/contracts/kangur-quests';
 import {
   getCurrentLevel,
   getNextLevel,

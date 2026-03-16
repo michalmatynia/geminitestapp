@@ -273,6 +273,114 @@ const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
       'Analogie i relacje między pojęciami. Uczy rozpoznawać podobieństwa typu A:B = C:?.',
     triggerPhrases: ['analogie', 'porównania', 'relacje', 'A do B'],
   },
+  english_basics: {
+    explanation:
+      'Podstawy języka angielskiego: proste słownictwo, zwroty i rozumienie krótkich komunikatów. Pomaga oswoić się z angielskim w codziennych sytuacjach.',
+    triggerPhrases: ['angielski', 'język angielski', 'słownictwo', 'podstawy english'],
+    aliases: ['english basics', 'podstawy angielskiego'],
+  },
+  english_parts_of_speech: {
+    explanation:
+      'Zaimki osobowe i dzierżawcze w kontekście matematyki dla nastolatków. Lekcja pomaga mówić, kto wykonuje zadanie i czyje są rozwiązania, wykresy lub notatki.',
+    triggerPhrases: [
+      'zaimki',
+      'zaimki osobowe',
+      'zaimki dzierżawcze',
+      'pronouns',
+      'possessive',
+      'possessive pronouns',
+      'my your his her',
+      'mine yours',
+      'english pronouns',
+      'części mowy',
+      'czesci mowy angielski',
+    ],
+    aliases: ['english pronouns', 'zaimki angielski', 'pronouns lesson', 'części mowy'],
+  },
+  english_sentence_structure: {
+    explanation:
+      'Szyk zdania po angielsku: Subject-Verb-Object, pytania z do/does, przysłówki oraz łączenie zdań. Lekcja pomaga budować poprawne zdania i unikać typowych błędów.',
+    triggerPhrases: [
+      'szyk zdania',
+      'word order',
+      'sentence structure',
+      'subject verb object',
+      'do does questions',
+      'adverbs of frequency',
+      'łączenie zdań',
+      'and but because',
+      'sentence order',
+    ],
+    aliases: ['sentence structure', 'szyk zdania', 'word order', 'english sentence'],
+  },
+  english_subject_verb_agreement: {
+    explanation:
+      'Zgodność podmiotu i czasownika w Present Simple. Lekcja pokazuje reguły he/she/it + -s, am/is/are oraz typowe pułapki w dłuższych zdaniach.',
+    triggerPhrases: [
+      'subject verb agreement',
+      'subject-verb agreement',
+      'agreement',
+      'zgodność podmiotu i czasownika',
+      'zgodnosc podmiotu i czasownika',
+      'zgodność podmiotu z orzeczeniem',
+      'zgodnosc podmiotu z orzeczeniem',
+      'he she it s',
+      'am is are',
+      'singular plural verbs',
+      'gramatyka angielska',
+    ],
+    aliases: [
+      'subject verb',
+      'subject-verb',
+      'zgodnosc podmiotu',
+      'subject verb rules',
+      'subject verb practice',
+    ],
+  },
+  english_articles: {
+    explanation:
+      'Przedimki a/an/the oraz brak przedimka w kontekście matematyki. Lekcja pomaga mówić o przykładach, konkretnych obiektach i ogólnych zasadach.',
+    triggerPhrases: [
+      'przedimki',
+      'przedimek',
+      'articles',
+      'a an the',
+      'the',
+      'an',
+      'a',
+      'english articles',
+      'przedimki angielski',
+      'zero article',
+      'brak przedimka',
+    ],
+    aliases: ['english articles', 'przedimki angielskie', 'articles lesson'],
+  },
+  english_prepositions_time_place: {
+    explanation:
+      'Przyimki czasu i miejsca (at/on/in) oraz relacje w przestrzeni: between, above, below. Lekcja pomaga poprawnie opisywać czas i położenie w kontekście szkolnym.',
+    triggerPhrases: [
+      'prepositions',
+      'prepositions of time',
+      'prepositions of place',
+      'at on in',
+      'between',
+      'above',
+      'below',
+      'preposition time',
+      'preposition place',
+      'przyimki',
+      'przyimki czasu',
+      'przyimki miejsca',
+      'przyimki angielski',
+    ],
+    aliases: [
+      'english prepositions',
+      'prepositions lesson',
+      'przyimki czas i miejsce',
+      'przyimki czasowe',
+      'przyimki miejsca angielski',
+    ],
+  },
 };
 
 const KANGUR_TEST_QUESTION_FRAGMENTS: KangurPageContentFragment[] = [
@@ -322,7 +430,17 @@ const LESSON_LIBRARY_COMPONENT_ORDER = KANGUR_LESSON_COMPONENT_OPTIONS.map(
 const buildLessonLibraryFragments = (): KangurPageContentFragment[] =>
   LESSON_LIBRARY_COMPONENT_ORDER.map((componentId, index) => {
     const lesson = KANGUR_LESSON_LIBRARY[componentId];
-    const detail = LESSON_LIBRARY_FRAGMENT_DETAILS[componentId];
+    const detail =
+      LESSON_LIBRARY_FRAGMENT_DETAILS[componentId] ??
+      ({
+        explanation: lesson.description,
+        triggerPhrases: [],
+        aliases: [],
+      } satisfies {
+        explanation: string;
+        triggerPhrases: string[];
+        aliases?: string[];
+      });
     const normalizedComponentId = componentId.replace(/_/g, ' ');
 
     return {

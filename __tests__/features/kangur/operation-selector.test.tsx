@@ -52,15 +52,16 @@ describe('OperationSelector', () => {
       'text-center'
     );
     expect(screen.getByRole('heading', { name: 'Wybierz swoje wyzwanie' })).toHaveClass(
-      'text-2xl',
+      'text-xl',
+      'sm:text-2xl',
       '[color:var(--kangur-accent-indigo-start,#a855f7)]'
     );
 
     const divisionCard = screen.getByTestId('operation-card-division');
     const additionCard = screen.getByTestId('operation-card-addition');
 
-    expect(divisionCard).toHaveClass('soft-card', 'border', 'rounded-[30px]');
-    expect(additionCard).toHaveClass('soft-card', 'border', 'rounded-[30px]');
+    expect(divisionCard).toHaveClass('soft-card', 'border', 'rounded-[26px]', 'sm:rounded-[30px]');
+    expect(additionCard).toHaveClass('soft-card', 'border', 'rounded-[26px]', 'sm:rounded-[30px]');
     expect(within(divisionCard).getByTestId('operation-icon-division')).toHaveClass(
       'rounded-full',
       'h-16',

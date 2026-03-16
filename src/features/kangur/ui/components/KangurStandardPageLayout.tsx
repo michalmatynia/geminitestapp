@@ -37,15 +37,33 @@ export function KangurStandardPageLayout({
   containerProps,
   children,
 }: KangurStandardPageLayoutProps): React.JSX.Element {
+  const resolvedContainerId =
+    typeof containerProps?.id === 'string' && containerProps.id.trim().length > 0
+      ? containerProps.id
+      : undefined;
+  const resolvedSkipLinkTargetId = skipLinkTargetId ?? resolvedContainerId;
+  const resolvedContainerProps: Omit<KangurPageContainerProps, 'children'> = {
+    ...containerProps,
+    'data-kangur-route-main':
+      containerProps && 'data-kangur-route-main' in containerProps
+        ? containerProps['data-kangur-route-main']
+        : true,
+  };
+
   return (
-    <KangurPageShell tone={tone} id={id} skipLinkTargetId={skipLinkTargetId} skipLinkLabel={skipLinkLabel}>
+    <KangurPageShell
+      tone={tone}
+      id={id}
+      skipLinkTargetId={resolvedSkipLinkTargetId}
+      skipLinkLabel={skipLinkLabel}
+    >
       {docsRootId ? (
         <KangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId={docsRootId} />
       ) : null}
       {beforeNavigation}
       {navigation}
       {afterNavigation}
-      <KangurPageContainer {...containerProps}>{children}</KangurPageContainer>
+      <KangurPageContainer {...resolvedContainerProps}>{children}</KangurPageContainer>
     </KangurPageShell>
   );
 }

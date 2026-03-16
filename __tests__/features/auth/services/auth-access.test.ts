@@ -13,9 +13,9 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: vi.fn(),
 }));
 
-const mockFindOne = vi.fn();
+const mockFind = vi.fn();
 const mockCollection = vi.fn(() => ({
-  findOne: mockFindOne,
+  find: mockFind,
 }));
 const mockDb = {
   collection: mockCollection,
@@ -29,11 +29,15 @@ const setSettings = (settings: Record<string, string | null>): void => {
     }
   }
 
-  mockFindOne.mockImplementation((query: { $or?: Array<{ _id?: string; key?: string }> }) => {
+  mockFind.mockImplementation((query: { $or?: Array<{ _id?: string; key?: string }> }) => {
     const key = query?.$or?.[0]?._id ?? query?.$or?.[1]?.key;
-    if (!key) return null;
-    const value = map.get(key);
-    return value ? { value } : null;
+    const value = key ? map.get(key) : undefined;
+    const docs = value
+      ? [{ _id: key, key, value, updatedAt: new Date().toISOString() }]
+      : [];
+    return {
+      toArray: async () => docs,
+    };
   });
 };
 

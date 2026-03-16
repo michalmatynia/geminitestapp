@@ -128,7 +128,7 @@ export function PreviewSlideshowSection() {
       {divider}
       {slideCount === 0 ? (
         showEditorChrome ? (
-          <div className='container mx-auto px-4 md:px-6 py-12'>
+          <div className='page-container px-4 md:px-6 py-12'>
             <CompactEmptyState
               title='No slides'
               description='Add blocks to create slideshow slides.'

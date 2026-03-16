@@ -1,13 +1,15 @@
 import type { KangurProgressState } from '@/features/kangur/shared/contracts/kangur';
+import type {
+  KangurAssignmentPlan,
+  KangurAssignmentQuestMetric,
+  KangurDailyQuestClaimResult,
+  KangurDailyQuestProgress,
+  KangurDailyQuestState,
+} from '@/features/kangur/shared/contracts/kangur-quests';
 
-import {
-  buildKangurAssignments,
-  type KangurAssignmentPlan,
-  type KangurAssignmentQuestMetric,
-} from './assignments';
+import { buildKangurAssignments } from './assignments';
 import { loadProgressOwnerKey } from './progress';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
-
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 const KANGUR_DAILY_QUEST_STORAGE_KEY = 'kangur_daily_quest_v1';
 
@@ -21,33 +23,6 @@ type KangurDailyQuestStoredState = {
   baselineGamesPlayed: number;
   baselineLessonsCompleted: number;
   assignment: KangurAssignmentPlan;
-};
-
-export type KangurDailyQuestProgress = {
-  current: number;
-  target: number;
-  percent: number;
-  summary: string;
-  status: 'not_started' | 'in_progress' | 'completed';
-};
-
-export type KangurDailyQuestState = {
-  assignment: KangurAssignmentPlan;
-  createdAt: string;
-  dateKey: string;
-  expiresAt: string;
-  expiresLabel: string;
-  progress: KangurDailyQuestProgress;
-  reward: {
-    xp: number;
-    status: 'locked' | 'ready' | 'claimed';
-    label: string;
-  };
-};
-
-export type KangurDailyQuestClaimResult = {
-  quest: KangurDailyQuestState | null;
-  xpAwarded: number;
 };
 
 type KangurDailyQuestOptions = {
@@ -108,18 +83,23 @@ const loadStoredDailyQuest = (): KangurDailyQuestStoredState | null => {
     return null;
   }
 
-  try {
-    const raw = window.localStorage.getItem(KANGUR_DAILY_QUEST_STORAGE_KEY);
-    if (!raw) {
-      return null;
-    }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.daily-quests',
+      action: 'load-storage',
+      description: 'Loads the daily quest state from local storage.',
+    },
+    () => {
+      const raw = window.localStorage.getItem(KANGUR_DAILY_QUEST_STORAGE_KEY);
+      if (!raw) {
+        return null;
+      }
 
-    const parsed = JSON.parse(raw) as unknown;
-    return isStoredQuestState(parsed) ? parsed : null;
-  } catch (error) {
-    logClientError(error);
-    return null;
-  }
+      const parsed = JSON.parse(raw) as unknown;
+      return isStoredQuestState(parsed) ? parsed : null;
+    },
+    { fallback: null }
+  );
 };
 
 const saveStoredDailyQuest = (quest: KangurDailyQuestStoredState): void => {
@@ -127,13 +107,20 @@ const saveStoredDailyQuest = (quest: KangurDailyQuestStoredState): void => {
     return;
   }
 
-  try {
-    window.localStorage.setItem(KANGUR_DAILY_QUEST_STORAGE_KEY, JSON.stringify(quest));
-  } catch (error) {
-    logClientError(error);
-  
-    // Ignore local storage write failures so the widget stays non-blocking.
-  }
+  withKangurClientErrorSync(
+    {
+      source: 'kangur.daily-quests',
+      action: 'save-storage',
+      description: 'Persists the daily quest state to local storage.',
+    },
+    () => {
+      window.localStorage.setItem(KANGUR_DAILY_QUEST_STORAGE_KEY, JSON.stringify(quest));
+    },
+    {
+      // Ignore local storage write failures so the widget stays non-blocking.
+      fallback: undefined,
+    }
+  );
 };
 
 const hashDailyQuestSeed = (value: string): number =>

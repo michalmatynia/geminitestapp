@@ -18,7 +18,11 @@ import {
 import { createPortal } from 'react-dom';
 
 import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
-import { trackKangurClientEvent } from '@/features/kangur/observability/client';
+import {
+  trackKangurClientEvent,
+  withKangurClientError,
+  withKangurClientErrorSync,
+} from '@/features/kangur/observability/client';
 import {
   clearStoredActiveLearnerId,
   setStoredActiveLearnerId,
@@ -28,6 +32,10 @@ import {
   KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
   parseKangurParentVerificationEmailSettings,
 } from '@/features/kangur/settings';
+import {
+  KANGUR_LEARNER_PASSWORD_MIN_LENGTH,
+  KANGUR_LEARNER_PASSWORD_PATTERN,
+} from '@/shared/contracts/kangur';
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
 import { KangurAppLoader } from '@/features/kangur/ui/components/KangurAppLoader';
 import { KangurConfirmModal } from '@/features/kangur/ui/components/KangurConfirmModal';
@@ -50,8 +58,6 @@ import {
 } from '@/features/kangur/shared/contracts/kangur-auth';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
-
 
 type KangurLoginPageProps = {
   callbackUrl?: string;
@@ -127,8 +133,18 @@ const ensureTurnstileScript = (): Promise<void> => {
   turnstileScriptPromise = new Promise<void>((resolve, reject) => {
     const existing = document.getElementById(TURNSTILE_SCRIPT_ID) as HTMLScriptElement | null;
     if (existing) {
-      existing.addEventListener('load', () => resolve(undefined));
-      existing.addEventListener('error', () => reject(new Error('Turnstile script failed.')));
+      const handleLoad = (): void => {
+        existing.removeEventListener('load', handleLoad);
+        existing.removeEventListener('error', handleError);
+        resolve(undefined);
+      };
+      const handleError = (): void => {
+        existing.removeEventListener('load', handleLoad);
+        existing.removeEventListener('error', handleError);
+        reject(new Error('Turnstile script failed.'));
+      };
+      existing.addEventListener('load', handleLoad);
+      existing.addEventListener('error', handleError);
       return;
     }
 
@@ -168,17 +184,26 @@ export const resolveKangurLoginCallbackNavigation = (
     return { kind: 'router', href: trimmed };
   }
 
-  try {
-    const parsed = new URL(trimmed, currentOrigin);
-    if (parsed.origin === currentOrigin) {
-      return { kind: 'router', href: `${parsed.pathname}${parsed.search}${parsed.hash}` };
-    }
-  } catch (error) {
-    logClientError(error);
-    return { kind: 'location', href: trimmed };
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur-login',
+      action: 'resolve-callback-navigation',
+      description: 'Resolve the login callback navigation target.',
+      context: {
+        callbackUrl,
+        currentOrigin,
+      },
+    },
+    () => {
+      const parsed = new URL(trimmed, currentOrigin);
+      if (parsed.origin === currentOrigin) {
+        return { kind: 'router', href: `${parsed.pathname}${parsed.search}${parsed.hash}` };
+      }
+      return { kind: 'location', href: trimmed };
+    },
+    { fallback: { kind: 'location', href: trimmed } }
+  );
 
-  return { kind: 'location', href: trimmed };
 };
 
 export const resolveKangurLoginKind = (identifier: string): KangurLoginKind => {
@@ -358,13 +383,24 @@ const clearOneTimeAuthParams = (): void => {
   }
 
   const nextUrl = `${url.pathname}${url.search}${url.hash}`;
-  try {
-    window.history.replaceState(window.history.state, '', nextUrl);
-  } catch (error) {
-    logClientError(error);
-  
-    // Ignore history rewrite failures; the tokens are still single-use server-side.
-  }
+  withKangurClientErrorSync(
+    {
+      source: 'kangur-login',
+      action: 'clear-one-time-auth-params',
+      description: 'Clear magic link and verify email parameters from the URL.',
+      context: {
+        nextUrl,
+      },
+    },
+    () => {
+      window.history.replaceState(window.history.state, '', nextUrl);
+    },
+    {
+      fallback: () => {
+        // Ignore history rewrite failures; the tokens are still single-use server-side.
+      },
+    }
+  );
 };
 
 function KangurLoginPageContent(): JSX.Element {
@@ -749,53 +785,69 @@ function KangurLoginPageContent(): JSX.Element {
     setCreatedParentEmail(null);
     setVerificationDebugUrl(null);
 
-    try {
-      await clearLearnerSession();
-
-      const result = await signInParentWithCredentials({
-        callbackUrl,
-        email,
-        password,
-      });
-
-      if (result.error || !result.ok) {
-        trackKangurClientEvent('kangur_parent_signin_failed', {
+    await withKangurClientError(
+      {
+        source: 'kangur-login',
+        action: 'parent-sign-in',
+        description: 'Sign in a parent user using credentials.',
+        context: {
           callbackUrl,
-          statusCode: 401,
-          reason: result.error,
-        });
-        if (result.error === 'PASSWORD_SETUP_REQUIRED') {
-          setParentAuthMode('create-account');
-          setPassword('');
-          setNotice(
-            'To starsze konto rodzica nie ma jeszcze hasła. Ustaw hasło poniżej, a wyślemy e-mail potwierdzający.'
-          );
-          return;
-        }
-        if (result.error === 'EMAIL_UNVERIFIED') {
-          setCreatedParentEmail(email);
-          setNotice('Potwierdź e-mail rodzica, zanim się zalogujesz. Możesz też wysłać nowy e-mail potwierdzający.');
-          return;
-        }
-        setError(getParentSignInErrorMessage(result.error, result.message));
-        return;
-      }
+          email,
+        },
+      },
+      async () => {
+        await clearLearnerSession();
 
-      trackKangurClientEvent('kangur_parent_signin_succeeded', {
-        callbackUrl,
-      });
-      await showLoginSuccessNotice(LOGIN_SUCCESS_NOTICE_PARENT);
-      await finishLogin(result.url ?? callbackUrl);
-    } catch (error) {
-      logClientError(error);
-      trackKangurClientEvent('kangur_parent_signin_failed', {
-        callbackUrl,
-        reason: 'network_error',
-      });
-      setError('Nie udało się zalogować rodzica. Spróbuj ponownie.');
-    } finally {
-      setIsSubmitting(false);
-    }
+        const result = await signInParentWithCredentials({
+          callbackUrl,
+          email,
+          password,
+        });
+
+        if (result.error || !result.ok) {
+          trackKangurClientEvent('kangur_parent_signin_failed', {
+            callbackUrl,
+            statusCode: 401,
+            reason: result.error,
+          });
+          if (result.error === 'PASSWORD_SETUP_REQUIRED') {
+            setParentAuthMode('create-account');
+            setPassword('');
+            setNotice(
+              'To starsze konto rodzica nie ma jeszcze hasła. Ustaw hasło poniżej, a wyślemy e-mail potwierdzający.'
+            );
+            return;
+          }
+          if (result.error === 'EMAIL_UNVERIFIED') {
+            setCreatedParentEmail(email);
+            setNotice(
+              'Potwierdź e-mail rodzica, zanim się zalogujesz. Możesz też wysłać nowy e-mail potwierdzający.'
+            );
+            return;
+          }
+          setError(getParentSignInErrorMessage(result.error, result.message));
+          return;
+        }
+
+        trackKangurClientEvent('kangur_parent_signin_succeeded', {
+          callbackUrl,
+        });
+        await showLoginSuccessNotice(LOGIN_SUCCESS_NOTICE_PARENT);
+        await finishLogin(result.url ?? callbackUrl);
+      },
+      {
+        fallback: undefined,
+        onError: () => {
+          trackKangurClientEvent('kangur_parent_signin_failed', {
+            callbackUrl,
+            reason: 'network_error',
+          });
+          setError('Nie udało się zalogować rodzica. Spróbuj ponownie.');
+        },
+      }
+    );
+
+    setIsSubmitting(false);
   };
 
   const handleParentAccountCreate = async (email: string): Promise<void> => {
@@ -821,113 +873,128 @@ function KangurLoginPageContent(): JSX.Element {
       accountCreateRedirectTimeoutRef.current = null;
     }
 
-    try {
-      const response = await fetch('/api/kangur/auth/parent-account/create', {
-        method: 'POST',
-        headers: withCsrfHeaders({
-          'Content-Type': 'application/json',
-        }),
-        credentials: 'same-origin',
-        body: JSON.stringify({
+    await withKangurClientError(
+      {
+        source: 'kangur-login',
+        action: 'parent-account-create',
+        description: 'Create a parent account from the login flow.',
+        context: {
+          callbackUrl,
           email,
-          password,
-          callbackUrl,
-          captchaToken: captchaToken ?? undefined,
-        }),
-      });
-
-      if (!response.ok) {
-        const { message, retryAfterMs } = await readApiErrorDetails(response);
-        const isCaptchaMessage =
-          typeof message === 'string' && message.toLowerCase().includes('captcha');
-        trackKangurClientEvent('kangur_parent_account_create_failed', {
-          callbackUrl,
-          statusCode: response.status,
+        },
+      },
+      async () => {
+        const response = await fetch('/api/kangur/auth/parent-account/create', {
+          method: 'POST',
+          headers: withCsrfHeaders({
+            'Content-Type': 'application/json',
+          }),
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            email,
+            password,
+            callbackUrl,
+            captchaToken: captchaToken ?? undefined,
+          }),
         });
-        if (isCaptchaMessage) {
-          setCaptchaError(message);
-          keepCaptchaError = true;
-        }
-        if (response.status === 429) {
-          setCreatedParentEmail(email);
-          setPassword('');
-          if (retryAfterMs) {
-            startResendCooldown(retryAfterMs);
+
+        if (!response.ok) {
+          const { message, retryAfterMs } = await readApiErrorDetails(response);
+          const isCaptchaMessage =
+            typeof message === 'string' && message.toLowerCase().includes('captcha');
+          trackKangurClientEvent('kangur_parent_account_create_failed', {
+            callbackUrl,
+            statusCode: response.status,
+          });
+          if (isCaptchaMessage) {
+            setCaptchaError(message);
+            keepCaptchaError = true;
           }
-          setNotice(
-            message ??
-              'E-mail potwierdzający został już wysłany. Sprawdź skrzynkę i spróbuj ponownie za chwilę.'
-          );
+          if (response.status === 429) {
+            setCreatedParentEmail(email);
+            setPassword('');
+            if (retryAfterMs) {
+              startResendCooldown(retryAfterMs);
+            }
+            setNotice(
+              message ??
+                'E-mail potwierdzający został już wysłany. Sprawdź skrzynkę i spróbuj ponownie za chwilę.'
+            );
+            return;
+          }
+          setError(message ?? 'Nie udało się utworzyć konta rodzica. Spróbuj ponownie.');
           return;
         }
-        setError(message ?? 'Nie udało się utworzyć konta rodzica. Spróbuj ponownie.');
-        return;
-      }
 
-      const payload = parseKangurParentAccountActionResponse(
-        await response.json().catch(() => null)
-      );
-      const debugVerificationUrl = payload?.debug?.verificationUrl?.trim();
-      const retryAfterMs = resolveParentVerificationRetryAfterMs(payload?.retryAfterMs);
-      const emailVerified = payload?.emailVerified === true;
-      const createdAccount = payload?.created === true;
-      trackKangurClientEvent('kangur_parent_account_created', {
-        callbackUrl,
-        created: createdAccount,
-        emailVerified,
-        hasPassword: payload?.hasPassword === true,
-      });
-      if (emailVerified) {
-        const signInResult = await signInParentWithCredentials({
+        const payload = parseKangurParentAccountActionResponse(
+          await response.json().catch(() => null)
+        );
+        const debugVerificationUrl = payload?.debug?.verificationUrl?.trim();
+        const retryAfterMs = resolveParentVerificationRetryAfterMs(payload?.retryAfterMs);
+        const emailVerified = payload?.emailVerified === true;
+        const createdAccount = payload?.created === true;
+        trackKangurClientEvent('kangur_parent_account_created', {
           callbackUrl,
-          email,
-          password: passwordSnapshot,
+          created: createdAccount,
+          emailVerified,
+          hasPassword: payload?.hasPassword === true,
         });
+        if (emailVerified) {
+          const signInResult = await signInParentWithCredentials({
+            callbackUrl,
+            email,
+            password: passwordSnapshot,
+          });
 
-        if (signInResult.error || !signInResult.ok) {
-          setParentAuthMode('sign-in');
-          setNotice('Konto jest gotowe. Zaloguj się e-mailem i hasłem.');
-          setError(getParentSignInErrorMessage(signInResult.error, signInResult.message));
+          if (signInResult.error || !signInResult.ok) {
+            setParentAuthMode('sign-in');
+            setNotice('Konto jest gotowe. Zaloguj się e-mailem i hasłem.');
+            setError(getParentSignInErrorMessage(signInResult.error, signInResult.message));
+            return;
+          }
+
+          keepSubmitting = true;
+          setParentAccountCreateStage('success');
+          accountCreateRedirectTimeoutRef.current = window.setTimeout(() => {
+            void finishLogin(signInResult.url ?? callbackUrl);
+          }, ACCOUNT_CREATE_SUCCESS_DELAY_MS);
           return;
         }
 
-        keepSubmitting = true;
-        setParentAccountCreateStage('success');
-        accountCreateRedirectTimeoutRef.current = window.setTimeout(() => {
-          void finishLogin(signInResult.url ?? callbackUrl);
-        }, ACCOUNT_CREATE_SUCCESS_DELAY_MS);
-        return;
+        setPassword('');
+        setCreatedParentEmail(email);
+        if (createdAccount && !isTestEnvironment()) {
+          setIsAccountCreatedModalOpen(true);
+        }
+        startResendCooldown(retryAfterMs);
+        setVerificationDebugUrl(
+          debugVerificationUrl && debugVerificationUrl.length > 0 ? debugVerificationUrl : null
+        );
+        setNotice(
+          payload?.created === true
+            ? null
+            : payload?.message?.trim() ||
+                'To konto czeka na potwierdzenie e-maila. Wysłaliśmy nowy link.'
+        );
+      },
+      {
+        fallback: undefined,
+        onError: () => {
+          trackKangurClientEvent('kangur_parent_account_create_failed', {
+            callbackUrl,
+            reason: 'network_error',
+          });
+          setError('Nie udało się utworzyć konta rodzica. Spróbuj ponownie.');
+        },
       }
+    );
 
-      setPassword('');
-      setCreatedParentEmail(email);
-      if (createdAccount && !isTestEnvironment()) {
-        setIsAccountCreatedModalOpen(true);
-      }
-      startResendCooldown(retryAfterMs);
-      setVerificationDebugUrl(
-        debugVerificationUrl && debugVerificationUrl.length > 0 ? debugVerificationUrl : null
-      );
-      setNotice(
-        payload?.created === true
-          ? null
-          : payload?.message?.trim() || 'To konto czeka na potwierdzenie e-maila. Wysłaliśmy nowy link.'
-      );
-    } catch (error) {
-      logClientError(error);
-      trackKangurClientEvent('kangur_parent_account_create_failed', {
-        callbackUrl,
-        reason: 'network_error',
-      });
-      setError('Nie udało się utworzyć konta rodzica. Spróbuj ponownie.');
-    } finally {
-      if (!keepSubmitting) {
-        setIsSubmitting(false);
-        setParentAccountCreateStage('idle');
-      }
-      if (isCaptchaRequired) {
-        resetCaptcha({ keepError: keepCaptchaError });
-      }
+    if (!keepSubmitting) {
+      setIsSubmitting(false);
+      setParentAccountCreateStage('idle');
+    }
+    if (isCaptchaRequired) {
+      resetCaptcha({ keepError: keepCaptchaError });
     }
   };
 
@@ -939,63 +1006,79 @@ function KangurLoginPageContent(): JSX.Element {
     setIsSubmitting(true);
     setError(null);
 
-    try {
-      const response = await fetch('/api/kangur/auth/parent-account/resend', {
-        method: 'POST',
-        headers: withCsrfHeaders({
-          'Content-Type': 'application/json',
-        }),
-        credentials: 'same-origin',
-        body: JSON.stringify({
+    await withKangurClientError(
+      {
+        source: 'kangur-login',
+        action: 'parent-account-resend',
+        description: 'Resend the parent verification email.',
+        context: {
+          callbackUrl,
           email: createdParentEmail,
-          callbackUrl,
-        }),
-      });
-
-      if (!response.ok) {
-        const { message, retryAfterMs } = await readApiErrorDetails(response);
-        trackKangurClientEvent('kangur_parent_account_resend_failed', {
-          callbackUrl,
-          statusCode: response.status,
+        },
+      },
+      async () => {
+        const response = await fetch('/api/kangur/auth/parent-account/resend', {
+          method: 'POST',
+          headers: withCsrfHeaders({
+            'Content-Type': 'application/json',
+          }),
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            email: createdParentEmail,
+            callbackUrl,
+          }),
         });
-        if (response.status === 429) {
-          if (retryAfterMs) {
-            startResendCooldown(retryAfterMs);
+
+        if (!response.ok) {
+          const { message, retryAfterMs } = await readApiErrorDetails(response);
+          trackKangurClientEvent('kangur_parent_account_resend_failed', {
+            callbackUrl,
+            statusCode: response.status,
+          });
+          if (response.status === 429) {
+            if (retryAfterMs) {
+              startResendCooldown(retryAfterMs);
+            }
+            setNotice(
+              message ??
+                'E-mail potwierdzający został już wysłany. Sprawdź skrzynkę i spróbuj ponownie za chwilę.'
+            );
+            return;
           }
-          setNotice(
-            message ??
-              'E-mail potwierdzający został już wysłany. Sprawdź skrzynkę i spróbuj ponownie za chwilę.'
+          setError(
+            message ?? 'Nie udało się wysłać nowego e-maila potwierdzającego. Spróbuj ponownie.'
           );
           return;
         }
-        setError(message ?? 'Nie udało się wysłać nowego e-maila potwierdzającego. Spróbuj ponownie.');
-        return;
-      }
 
-      const payload = parseKangurParentAccountActionResponse(
-        await response.json().catch(() => null)
-      );
-      const debugVerificationUrl = payload?.debug?.verificationUrl?.trim();
-      const retryAfterMs = resolveParentVerificationRetryAfterMs(payload?.retryAfterMs);
-      trackKangurClientEvent('kangur_parent_account_resend_sent', {
-        callbackUrl,
-        hasPassword: payload?.hasPassword === true,
-      });
-      setVerificationDebugUrl(
-        debugVerificationUrl && debugVerificationUrl.length > 0 ? debugVerificationUrl : null
-      );
-      startResendCooldown(retryAfterMs);
-      setNotice(payload?.message?.trim() || 'Wysłaliśmy nowy link potwierdzający.');
-    } catch (error) {
-      logClientError(error);
-      trackKangurClientEvent('kangur_parent_account_resend_failed', {
-        callbackUrl,
-        reason: 'network_error',
-      });
-      setError('Nie udało się wysłać nowego e-maila potwierdzającego. Spróbuj ponownie.');
-    } finally {
-      setIsSubmitting(false);
-    }
+        const payload = parseKangurParentAccountActionResponse(
+          await response.json().catch(() => null)
+        );
+        const debugVerificationUrl = payload?.debug?.verificationUrl?.trim();
+        const retryAfterMs = resolveParentVerificationRetryAfterMs(payload?.retryAfterMs);
+        trackKangurClientEvent('kangur_parent_account_resend_sent', {
+          callbackUrl,
+          hasPassword: payload?.hasPassword === true,
+        });
+        setVerificationDebugUrl(
+          debugVerificationUrl && debugVerificationUrl.length > 0 ? debugVerificationUrl : null
+        );
+        startResendCooldown(retryAfterMs);
+        setNotice(payload?.message?.trim() || 'Wysłaliśmy nowy link potwierdzający.');
+      },
+      {
+        fallback: undefined,
+        onError: () => {
+          trackKangurClientEvent('kangur_parent_account_resend_failed', {
+            callbackUrl,
+            reason: 'network_error',
+          });
+          setError('Nie udało się wysłać nowego e-maila potwierdzającego. Spróbuj ponownie.');
+        },
+      }
+    );
+
+    setIsSubmitting(false);
   };
 
   const handleEmailVerification = async (token: string): Promise<void> => {
@@ -1009,63 +1092,89 @@ function KangurLoginPageContent(): JSX.Element {
     setCreatedParentEmail(null);
     setVerificationDebugUrl(null);
 
-    try {
-      const response = await fetch('/api/kangur/auth/parent-email/verify', {
-        method: 'POST',
-        headers: withCsrfHeaders({
-          'Content-Type': 'application/json',
-        }),
-        credentials: 'same-origin',
-        body: JSON.stringify({
-          token,
-        }),
-      });
-
-      if (!response.ok) {
-        const { message } = await readApiErrorDetails(response);
-        trackKangurClientEvent('kangur_parent_email_verify_failed', {
+    await withKangurClientError(
+      {
+        source: 'kangur-login',
+        action: 'parent-email-verify',
+        description: 'Verify a parent email token.',
+        context: {
           callbackUrl,
-          statusCode: response.status,
+        },
+      },
+      async () => {
+        const response = await fetch('/api/kangur/auth/parent-email/verify', {
+          method: 'POST',
+          headers: withCsrfHeaders({
+            'Content-Type': 'application/json',
+          }),
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            token,
+          }),
         });
-        setError(message ?? 'Ten link weryfikacyjny jest nieważny albo wygasł.');
-        setNotice(null);
-        return;
-      }
 
-      const payload = parseKangurParentEmailVerifyResponse(await response.json().catch(() => null));
-      trackKangurClientEvent('kangur_parent_email_verified', {
-        callbackUrl,
-      });
-      clearOneTimeAuthParams();
-      if (payload?.email) {
-        setIdentifier(payload.email);
-      }
-      setParentAuthMode('sign-in');
-      setPassword('');
-      setNotice(
-        payload?.message?.trim() || 'E-mail został zweryfikowany. Możesz zalogować się e-mailem i hasłem.'
-      );
-      await auth?.checkAppState?.();
+        if (!response.ok) {
+          const { message } = await readApiErrorDetails(response);
+          trackKangurClientEvent('kangur_parent_email_verify_failed', {
+            callbackUrl,
+            statusCode: response.status,
+          });
+          setError(message ?? 'Ten link weryfikacyjny jest nieważny albo wygasł.');
+          setNotice(null);
+          return;
+        }
 
-      if (auth?.isAuthenticated) {
-        await finishLogin(payload?.callbackUrl?.trim() || callbackUrl);
+        const payload = parseKangurParentEmailVerifyResponse(
+          await response.json().catch(() => null)
+        );
+        trackKangurClientEvent('kangur_parent_email_verified', {
+          callbackUrl,
+        });
+        clearOneTimeAuthParams();
+        if (payload?.email) {
+          setIdentifier(payload.email);
+        }
+        setParentAuthMode('sign-in');
+        setPassword('');
+        setNotice(
+          payload?.message?.trim() ||
+            'E-mail został zweryfikowany. Możesz zalogować się e-mailem i hasłem.'
+        );
+        await auth?.checkAppState?.();
+
+        if (auth?.isAuthenticated) {
+          await finishLogin(payload?.callbackUrl?.trim() || callbackUrl);
+        }
+      },
+      {
+        fallback: undefined,
+        onError: () => {
+          trackKangurClientEvent('kangur_parent_email_verify_failed', {
+            callbackUrl,
+            reason: 'network_error',
+          });
+          setError('Nie udało się zweryfikować e-maila. Spróbuj ponownie.');
+          setNotice(null);
+        },
       }
-    } catch (error) {
-      logClientError(error);
-      trackKangurClientEvent('kangur_parent_email_verify_failed', {
-        callbackUrl,
-        reason: 'network_error',
-      });
-      setError('Nie udało się zweryfikować e-maila. Spróbuj ponownie.');
-      setNotice(null);
-    } finally {
-      setIsSubmitting(false);
-    }
+    );
+
+    setIsSubmitting(false);
   };
 
   const handleStudentSignIn = async (loginName: string): Promise<void> => {
     if (!KANGUR_LEARNER_LOGIN_PATTERN.test(loginName)) {
       setError('Nick ucznia może zawierać tylko litery, cyfry i myślniki.');
+      return;
+    }
+
+    const trimmedPassword = password.trim();
+    if (trimmedPassword.length < KANGUR_LEARNER_PASSWORD_MIN_LENGTH) {
+      setError(`Hasło ucznia musi mieć co najmniej ${KANGUR_LEARNER_PASSWORD_MIN_LENGTH} znaków.`);
+      return;
+    }
+    if (!KANGUR_LEARNER_PASSWORD_PATTERN.test(trimmedPassword)) {
+      setError('Hasło ucznia może zawierać tylko litery i cyfry.');
       return;
     }
 
@@ -1075,57 +1184,71 @@ function KangurLoginPageContent(): JSX.Element {
     setCreatedParentEmail(null);
     setVerificationDebugUrl(null);
 
-    try {
-      await Promise.allSettled([clearParentSession(), clearLearnerSession()]);
-
-      const response = await fetch('/api/kangur/auth/learner-signin', {
-        method: 'POST',
-        headers: withCsrfHeaders({
-          'Content-Type': 'application/json',
-        }),
-        credentials: 'same-origin',
-        body: JSON.stringify({
-          loginName,
-          password,
-        }),
-      });
-
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as
-          | { error?: { message?: string } | string; message?: string }
-          | null;
-        const errorMessage =
-          (typeof payload?.error === 'string' ? payload.error : payload?.error?.message) ??
-          payload?.message;
-        trackKangurClientEvent('kangur_learner_signin_failed', {
+    await withKangurClientError(
+      {
+        source: 'kangur-login',
+        action: 'learner-sign-in',
+        description: 'Sign in a learner account.',
+        context: {
           callbackUrl,
-          statusCode: response.status,
-        });
-        setError(
-          errorMessage?.trim() ||
-            'Nie udało się zalogować ucznia. Sprawdź login i hasło.'
-        );
-        return;
-      }
+          loginName,
+        },
+      },
+      async () => {
+        await Promise.allSettled([clearParentSession(), clearLearnerSession()]);
 
-      const payload = (await response.json()) as { learnerId?: string };
-      setStoredActiveLearnerId(payload.learnerId ?? null);
-      trackKangurClientEvent('kangur_learner_signin_succeeded', {
-        callbackUrl,
-        learnerId: payload.learnerId ?? null,
-      });
-      await showLoginSuccessNotice(LOGIN_SUCCESS_NOTICE_STUDENT);
-      await finishLogin(callbackUrl);
-    } catch (error) {
-      logClientError(error);
-      trackKangurClientEvent('kangur_learner_signin_failed', {
-        callbackUrl,
-        reason: 'network_error',
-      });
-      setError('Nie udało się zalogować ucznia. Spróbuj ponownie.');
-    } finally {
-      setIsSubmitting(false);
-    }
+        const response = await fetch('/api/kangur/auth/learner-signin', {
+          method: 'POST',
+          headers: withCsrfHeaders({
+            'Content-Type': 'application/json',
+          }),
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            loginName,
+            password: trimmedPassword,
+          }),
+        });
+
+        if (!response.ok) {
+          const payload = (await response.json().catch(() => null)) as
+            | { error?: { message?: string } | string; message?: string }
+            | null;
+          const errorMessage =
+            (typeof payload?.error === 'string' ? payload.error : payload?.error?.message) ??
+            payload?.message;
+          trackKangurClientEvent('kangur_learner_signin_failed', {
+            callbackUrl,
+            statusCode: response.status,
+          });
+          setError(
+            errorMessage?.trim() ||
+              'Nie udało się zalogować ucznia. Sprawdź login i hasło.'
+          );
+          return;
+        }
+
+        const payload = (await response.json()) as { learnerId?: string };
+        setStoredActiveLearnerId(payload.learnerId ?? null);
+        trackKangurClientEvent('kangur_learner_signin_succeeded', {
+          callbackUrl,
+          learnerId: payload.learnerId ?? null,
+        });
+        await showLoginSuccessNotice(LOGIN_SUCCESS_NOTICE_STUDENT);
+        await finishLogin(callbackUrl);
+      },
+      {
+        fallback: undefined,
+        onError: () => {
+          trackKangurClientEvent('kangur_learner_signin_failed', {
+            callbackUrl,
+            reason: 'network_error',
+          });
+          setError('Nie udało się zalogować ucznia. Spróbuj ponownie.');
+        },
+      }
+    );
+
+    setIsSubmitting(false);
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
@@ -1319,6 +1442,8 @@ function KangurLoginPageContent(): JSX.Element {
             autoComplete='username'
             aria-describedby={identifierInputDescribedBy || undefined}
             aria-label={identifierFieldAriaLabel}
+            aria-invalid={error ? 'true' : undefined}
+            aria-required='true'
             className={inputClassName}
             data-testid='kangur-login-identifier-input'
             data-tutor-anchor='login_identifier_field'
@@ -1363,6 +1488,8 @@ function KangurLoginPageContent(): JSX.Element {
             }
             aria-describedby={formDescribedBy || undefined}
             aria-label={passwordFieldAriaLabel}
+            aria-invalid={error ? 'true' : undefined}
+            aria-required='true'
             className={inputClassName}
             disabled={!isHydrated || isSubmitting}
             id={passwordInputId}

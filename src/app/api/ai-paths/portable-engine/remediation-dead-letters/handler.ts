@@ -97,11 +97,7 @@ const resolveDeadLetterQueryInput = (
     return ctx.query as Record<string, unknown>;
   }
 
-  return {
-    limit: req.nextUrl.searchParams.get('limit'),
-    channel: req.nextUrl.searchParams.get('channel'),
-    endpoint: req.nextUrl.searchParams.get('endpoint'),
-  };
+  return Object.fromEntries(req.nextUrl.searchParams.entries());
 };
 
 type ReplayRequestBody = {

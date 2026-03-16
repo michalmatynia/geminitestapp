@@ -8,6 +8,12 @@ import GeometryBasicsLessonView from '@/features/kangur/ui/components/GeometryBa
 import GeometryPerimeterLessonView from '@/features/kangur/ui/components/GeometryPerimeterLesson';
 import GeometryShapesLessonView from '@/features/kangur/ui/components/GeometryShapesLesson';
 import GeometrySymmetryLessonView from '@/features/kangur/ui/components/GeometrySymmetryLesson';
+import EnglishArticlesLessonView from '@/features/kangur/ui/components/EnglishArticlesLesson';
+import EnglishLessonView from '@/features/kangur/ui/components/EnglishLesson';
+import EnglishPartsOfSpeechLessonView from '@/features/kangur/ui/components/EnglishPartsOfSpeechLesson';
+import EnglishPrepositionsLessonView from '@/features/kangur/ui/components/EnglishPrepositionsLesson';
+import EnglishSentenceStructureLessonView from '@/features/kangur/ui/components/EnglishSentenceStructureLesson';
+import EnglishSubjectVerbAgreementLessonView from '@/features/kangur/ui/components/EnglishSubjectVerbAgreementLesson';
 import LogicalAnalogiesLessonView from '@/features/kangur/ui/components/LogicalAnalogiesLesson';
 import LogicalClassificationLessonView from '@/features/kangur/ui/components/LogicalClassificationLesson';
 import LogicalPatternLessonView from '@/features/kangur/ui/components/LogicalPatternsLesson';
@@ -42,5 +48,15 @@ export const LogicalClassificationLesson =
   LogicalClassificationLessonView as ComponentType<LessonProps>;
 export const LogicalReasoningLesson = LogicalReasoningLessonView as ComponentType<LessonProps>;
 export const LogicalAnalogiesLesson = LogicalAnalogiesLessonView as ComponentType<LessonProps>;
+export const EnglishArticlesLesson = EnglishArticlesLessonView as ComponentType<LessonProps>;
+export const EnglishLesson = EnglishLessonView as ComponentType<LessonProps>;
+export const EnglishPartsOfSpeechLesson =
+  EnglishPartsOfSpeechLessonView as ComponentType<LessonProps>;
+export const EnglishPrepositionsLesson =
+  EnglishPrepositionsLessonView as ComponentType<LessonProps>;
+export const EnglishSentenceStructureLesson =
+  EnglishSentenceStructureLessonView as ComponentType<LessonProps>;
+export const EnglishSubjectVerbAgreementLesson =
+  EnglishSubjectVerbAgreementLessonView as ComponentType<LessonProps>;
 export const CalendarTrainingGame =
   CalendarTrainingGameView as ComponentType<CalendarTrainingGameProps>;

@@ -3,8 +3,8 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 
 import {
-  logKangurClientError,
   trackKangurClientEvent,
+  withKangurClientError,
 } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurUser } from '@/features/kangur/services/ports';
@@ -15,6 +15,7 @@ import {
   loadProgress,
   loadProgressOwnerKey,
   mergeProgressStates,
+  resetProgressStore,
   saveProgress,
   saveProgressOwnerKey,
   subscribeToProgress,
@@ -24,7 +25,7 @@ import {
   createDefaultKangurProgressState,
   type KangurProgressState,
 } from '@/features/kangur/shared/contracts/kangur';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 
 
 const kangurPlatform = getKangurPlatform();
@@ -55,11 +56,17 @@ export function KangurProgressSyncProvider({
   children: ReactNode;
 }): React.JSX.Element {
   const { isAuthenticated, isLoadingAuth, user } = useKangurAuth();
+  const { subject } = useKangurSubjectFocus();
   const isParentWithoutLearner =
     user?.actorType === 'parent' && !user?.activeLearner?.id;
   const userKey = resolveUserProgressKey(user);
   const lastSyncedProgressRef = useRef<string | null>(null);
   const syncStateRef = useRef<'idle' | 'loading' | 'ready'>('idle');
+
+  useEffect(() => {
+    lastSyncedProgressRef.current = null;
+    syncStateRef.current = 'idle';
+  }, [subject, userKey]);
 
   useEffect(() => {
     setProgressPersistenceEnabled(!isParentWithoutLearner);
@@ -84,68 +91,90 @@ export function KangurProgressSyncProvider({
 
       if (localOwnerKey && localOwnerKey !== userKey) {
         saveProgressOwnerKey(userKey);
-        saveProgress(createDefaultKangurProgressState());
+        resetProgressStore();
       }
 
       try {
-        const remoteProgress = await kangurPlatform.progress.get();
-        if (cancelled) {
-          return;
-        }
+        const result = await withKangurClientError(
+          {
+            source: 'kangur.progress-sync',
+            action: 'hydrate-progress',
+            description: 'Hydrates Kangur progress state from the API.',
+            context: { userKey, subject },
+          },
+          async () => {
+            const remoteProgress = await kangurPlatform.progress.get({ subject });
+            if (cancelled) {
+              return null;
+            }
 
-        const localProgress =
-          localOwnerKey && localOwnerKey !== userKey
-            ? createDefaultKangurProgressState()
-            : loadProgress();
-        const mergedProgress = mergeProgressStates(remoteProgress, localProgress);
-        const shouldUpdateLocal =
-          !areProgressStatesEqual(localProgress, mergedProgress) || localOwnerKey !== userKey;
-        const shouldUpdateRemote = !areProgressStatesEqual(remoteProgress, mergedProgress);
+            const localProgress =
+              localOwnerKey && localOwnerKey !== userKey
+                ? createDefaultKangurProgressState()
+                : loadProgress();
+            const mergedProgress = mergeProgressStates(remoteProgress, localProgress);
+            const shouldUpdateLocal =
+              !areProgressStatesEqual(localProgress, mergedProgress) || localOwnerKey !== userKey;
+            const shouldUpdateRemote = !areProgressStatesEqual(remoteProgress, mergedProgress);
 
-        saveProgressOwnerKey(userKey);
+            saveProgressOwnerKey(userKey);
 
-        if (shouldUpdateLocal) {
-          saveProgress(mergedProgress);
-        }
+            if (shouldUpdateLocal) {
+              saveProgress(mergedProgress);
+            }
 
-        if (shouldUpdateRemote) {
-          await kangurPlatform.progress.update(mergedProgress);
-          if (cancelled) {
-            return;
+            if (shouldUpdateRemote) {
+              await kangurPlatform.progress.update(mergedProgress, { subject });
+              if (cancelled) {
+                return null;
+              }
+            }
+
+            return {
+              mergedProgress,
+              shouldUpdateLocal,
+              shouldUpdateRemote,
+              localOwnerKeyChanged: localOwnerKey !== userKey,
+            };
+          },
+          {
+            fallback: null,
+            shouldReport: () => !cancelled,
+            onError: (error) => {
+              if (cancelled) {
+                return;
+              }
+
+              if (isKangurAuthStatusError(error)) {
+                syncStateRef.current = 'idle';
+                return;
+              }
+
+              trackKangurClientEvent('kangur_progress_hydration_failed', {
+                userKey,
+                errorMessage: error instanceof Error ? error.message : 'Unknown error',
+                subject,
+              });
+            },
           }
+        );
+
+        if (!result || cancelled) {
+          return;
         }
 
         trackKangurClientEvent('kangur_progress_hydrated', {
           userKey,
-          localOwnerKeyChanged: localOwnerKey !== userKey,
-          updatedLocal: shouldUpdateLocal,
-          updatedRemote: shouldUpdateRemote,
-          totalXp: mergedProgress.totalXp,
-          gamesPlayed: mergedProgress.gamesPlayed,
+          localOwnerKeyChanged: result.localOwnerKeyChanged,
+          updatedLocal: result.shouldUpdateLocal,
+          updatedRemote: result.shouldUpdateRemote,
+          totalXp: result.mergedProgress.totalXp,
+          gamesPlayed: result.mergedProgress.gamesPlayed,
+          subject,
         });
-        lastSyncedProgressRef.current = serializeProgress(mergedProgress);
-      } catch (error: unknown) {
-        logClientError(error);
-        if (cancelled) {
-          return;
-        }
-
-        if (isKangurAuthStatusError(error)) {
-          syncStateRef.current = 'idle';
-          return;
-        }
-
-        trackKangurClientEvent('kangur_progress_hydration_failed', {
-          userKey,
-          errorMessage: error instanceof Error ? error.message : 'Unknown error',
-        });
-        logKangurClientError(error, {
-          source: 'KangurProgressSyncProvider',
-          action: 'hydrateProgress',
-          hasUser: true,
-        });
+        lastSyncedProgressRef.current = serializeProgress(result.mergedProgress);
       } finally {
-        if (!cancelled && syncStateRef.current !== 'idle') {
+        if (!cancelled && syncStateRef.current === 'loading') {
           syncStateRef.current = 'ready';
         }
       }
@@ -156,7 +185,7 @@ export function KangurProgressSyncProvider({
     return () => {
       cancelled = true;
     };
-  }, [isAuthenticated, isLoadingAuth, userKey]);
+  }, [isAuthenticated, isLoadingAuth, subject, userKey]);
 
   useEffect(() => {
     if (isLoadingAuth || !isAuthenticated || !userKey) {
@@ -175,37 +204,53 @@ export function KangurProgressSyncProvider({
 
       saveProgressOwnerKey(userKey);
 
-      void kangurPlatform.progress
-        .update(progress)
-        .then((savedProgress) => {
-          const savedSerialized = serializeProgress(savedProgress);
-          lastSyncedProgressRef.current = savedSerialized;
-          if (!areProgressStatesEqual(progress, savedProgress)) {
-            saveProgress(savedProgress);
-          }
-        })
-        .catch((error: unknown) => {
-          if (isKangurAuthStatusError(error)) {
-            syncStateRef.current = 'idle';
-            return;
-          }
+      void (async () => {
+        const savedProgress = await withKangurClientError(
+          {
+            source: 'kangur.progress-sync',
+            action: 'sync-progress',
+            description: 'Syncs Kangur progress updates to the API.',
+            context: {
+              userKey,
+              totalXp: progress.totalXp,
+              gamesPlayed: progress.gamesPlayed,
+              subject,
+            },
+          },
+          async () => await kangurPlatform.progress.update(progress, { subject }),
+          {
+            fallback: null,
+            onError: (error) => {
+              if (isKangurAuthStatusError(error)) {
+                syncStateRef.current = 'idle';
+                return;
+              }
 
-          trackKangurClientEvent('kangur_progress_sync_failed', {
-            userKey,
-            totalXp: progress.totalXp,
-            gamesPlayed: progress.gamesPlayed,
-            errorMessage: error instanceof Error ? error.message : 'Unknown error',
-          });
-          logKangurClientError(error, {
-            source: 'KangurProgressSyncProvider',
-            action: 'syncProgress',
-            hasUser: true,
-          });
-        });
+              trackKangurClientEvent('kangur_progress_sync_failed', {
+                userKey,
+                totalXp: progress.totalXp,
+                gamesPlayed: progress.gamesPlayed,
+                errorMessage: error instanceof Error ? error.message : 'Unknown error',
+                subject,
+              });
+            },
+          }
+        );
+
+        if (!savedProgress) {
+          return;
+        }
+
+        const savedSerialized = serializeProgress(savedProgress);
+        lastSyncedProgressRef.current = savedSerialized;
+        if (!areProgressStatesEqual(progress, savedProgress)) {
+          saveProgress(savedProgress);
+        }
+      })();
     });
 
     return unsubscribe;
-  }, [isAuthenticated, isLoadingAuth, userKey]);
+  }, [isAuthenticated, isLoadingAuth, subject, userKey]);
 
   return <>{children}</>;
 }

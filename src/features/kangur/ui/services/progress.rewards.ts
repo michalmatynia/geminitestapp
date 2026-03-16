@@ -8,6 +8,7 @@ import {
 import {
   KangurLessonPracticeReward,
   KangurRewardInput,
+  type KangurRewardProfile,
   KangurRewardProfileConfig,
   REWARD_PROFILE_CONFIG,
 } from './progress.contracts';
@@ -19,6 +20,30 @@ export const DIFFICULTY_XP_BONUS: Record<string, number> = {
   medium: 4,
   hard: 8,
 };
+
+const ENGLISH_PROFILE_OVERRIDES: Partial<
+  Record<KangurRewardProfile, Partial<KangurRewardProfileConfig>>
+> = {
+  lesson_practice: {
+    baseXp: 14,
+    minimumXp: 14,
+    perfectBonus: 16,
+    improvementBonus: 4,
+  },
+  lesson_completion: {
+    baseXp: 24,
+    minimumXp: 24,
+    perfectBonus: 8,
+  },
+};
+
+const ENGLISH_ACCURACY_BONUSES = [
+  { threshold: 100, xp: 20 },
+  { threshold: 95, xp: 14 },
+  { threshold: 85, xp: 10 },
+  { threshold: 70, xp: 6 },
+  { threshold: 55, xp: 3 },
+];
 
 export const MASTERY_STAGE_BONUSES = [
   { threshold: 100, xp: 4 },
@@ -65,6 +90,23 @@ export const getAccuracyBonus = (scorePercent: number): number => {
   }
   return 0;
 };
+
+const getEnglishAccuracyBonus = (scorePercent: number): number => {
+  for (const tier of ENGLISH_ACCURACY_BONUSES) {
+    if (scorePercent >= tier.threshold) {
+      return tier.xp;
+    }
+  }
+  return 0;
+};
+
+const hasEnglishToken = (value?: string | null): boolean =>
+  Boolean(
+    value &&
+      value
+        .split(':')
+        .some((token) => token.trim().toLowerCase().startsWith('english_'))
+  );
 
 export const getDifficultyBonus = (difficulty?: string | null): number => {
   if (!difficulty) {
@@ -334,7 +376,12 @@ export const createRewardOutcome = (
     playedAt = new Date().toISOString(),
   }: KangurRewardInput
 ): KangurLessonPracticeReward => {
-  const config = REWARD_PROFILE_CONFIG[profile];
+  const baseConfig = REWARD_PROFILE_CONFIG[profile];
+  const isEnglishReward =
+    hasEnglishToken(operation) || hasEnglishToken(lessonKey) || hasEnglishToken(activityKey);
+  const config = isEnglishReward
+    ? { ...baseConfig, ...(ENGLISH_PROFILE_OVERRIDES[profile] ?? {}) }
+    : baseConfig;
   const safeTotalQuestions = Math.max(0, totalQuestions);
   const normalizedCorrectAnswers =
     safeTotalQuestions > 0
@@ -370,7 +417,9 @@ export const createRewardOutcome = (
   const nextLessonMastery = lessonKey
     ? buildLessonMasteryUpdate(progress, lessonKey, scorePercent, playedAt)
     : progress.lessonMastery;
-  const accuracyBonus = getAccuracyBonus(scorePercent);
+  const accuracyBonus = isEnglishReward
+    ? getEnglishAccuracyBonus(scorePercent)
+    : getAccuracyBonus(scorePercent);
   const difficultyBonus = getDifficultyBonus(difficulty);
   const speedBonus = config.allowsSpeedBonus ? getSpeedBonus(durationSeconds, safeTotalQuestions) : 0;
   const streakBonus = config.allowsStreakBonus ? getStreakBonus(nextGlobalWinStreak) : 0;

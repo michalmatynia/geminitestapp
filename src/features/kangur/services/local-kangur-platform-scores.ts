@@ -9,9 +9,8 @@ import {
 import { sortScores } from '@/features/kangur/services/kangur-score-repository/shared';
 import type { KangurScoreCreateInput, KangurScoreRecord } from '@/features/kangur/services/ports';
 import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/services/status-errors';
-import { kangurScoreSchema } from '@/features/kangur/shared/contracts/kangur';
-import { logKangurClientError } from '@/features/kangur/observability/client';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { kangurScoreSchema, type KangurLessonSubject } from '@/features/kangur/shared/contracts/kangur';
+import { reportKangurClientError, withKangurClientError } from '@/features/kangur/observability/client';
 
 import { KANGUR_SCORES_ENDPOINT } from './local-kangur-platform-endpoints';
 import { resolveSessionUser } from './local-kangur-platform-auth';
@@ -36,6 +35,7 @@ const buildScoresUrl = (params: {
   limit?: number;
   player_name?: string;
   operation?: string;
+  subject?: KangurLessonSubject;
   created_by?: string;
   learner_id?: string;
 }): string => {
@@ -45,6 +45,7 @@ const buildScoresUrl = (params: {
   if (typeof params.limit === 'number') search.set('limit', String(params.limit));
   if (params.player_name) search.set('player_name', params.player_name);
   if (params.operation) search.set('operation', params.operation);
+  if (params.subject) search.set('subject', params.subject);
   if (params.created_by) search.set('created_by', params.created_by);
   if (params.learner_id) search.set('learner_id', params.learner_id);
 
@@ -79,14 +80,25 @@ const syncGuestScoresToApiIfAuthenticated = async (): Promise<void> => {
     return;
   }
 
-  try {
-    await resolveSessionUser();
-  } catch (error: unknown) {
-    logClientError(error);
-    if (isKangurAuthStatusError(error)) {
-      return;
+  const user = await withKangurClientError(
+    (error) => ({
+      source: 'kangur.local-platform',
+      action: 'score.syncGuest',
+      description: 'Resolve session before syncing guest scores.',
+      context: {
+        ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
+      },
+    }),
+    () => resolveSessionUser(),
+    {
+      fallback: null,
+      shouldReport: (error) => !isKangurAuthStatusError(error),
+      shouldRethrow: (error) => !isKangurAuthStatusError(error),
     }
-    throw error;
+  );
+
+  if (!user) {
+    return;
   }
 
   const result = await syncGuestKangurScores({
@@ -105,6 +117,7 @@ export const requestMergedScores = async (params: {
   limit?: number;
   player_name?: string;
   operation?: string;
+  subject?: KangurLessonSubject;
   created_by?: string;
   learner_id?: string;
 }): Promise<KangurScoreRecord[]> => {
@@ -113,7 +126,11 @@ export const requestMergedScores = async (params: {
     try {
       await syncGuestScoresToApiIfAuthenticated();
     } catch (error: unknown) {
-      logClientError(error);
+      reportKangurClientError(error, {
+        source: 'kangur.local-platform',
+        action: 'score.syncGuest',
+        description: 'Guest score sync failed before listing scores.',
+      });
       syncError = error;
     }
   }
@@ -124,6 +141,7 @@ export const requestMergedScores = async (params: {
     filters: {
       player_name: params.player_name,
       operation: params.operation,
+      subject: params.subject,
       created_by: params.created_by,
       learner_id: params.learner_id,
     },
@@ -139,7 +157,14 @@ export const requestMergedScores = async (params: {
       limit: params.limit,
     });
   } catch (error: unknown) {
-    logClientError(error);
+    reportKangurClientError(error, {
+      source: 'kangur.local-platform',
+      action: 'score.list',
+      description: 'Failed to load remote scores while merging with guest scores.',
+      context: {
+        endpoint: url,
+      },
+    });
     if (localRows.length > 0) {
       return localRows;
     }
@@ -161,47 +186,57 @@ const requestScoresFromApi = async (url: string): Promise<KangurScoreRecord[]> =
 
   const requestPromise = (async (): Promise<KangurScoreRecord[]> => {
     try {
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: createActorAwareHeaders(),
-        credentials: 'same-origin',
-      });
-      if (!response.ok) {
-        const requestError = new Error(
-          `Kangur score list request failed with ${response.status}`
-        ) as Error & {
-          status: number;
-        };
-        requestError.status = response.status;
-        throw requestError;
-      }
+      return await withKangurClientError(
+        (error) => ({
+          source: 'kangur.local-platform',
+          action: 'score.list',
+          description: 'Fetch score list from the Kangur API.',
+          context: {
+            endpoint: url,
+            method: 'GET',
+            ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
+          },
+        }),
+        async () => {
+          const response = await fetch(url, {
+            method: 'GET',
+            headers: createActorAwareHeaders(),
+            credentials: 'same-origin',
+          });
+          if (!response.ok) {
+            const requestError = new Error(
+              `Kangur score list request failed with ${response.status}`
+            ) as Error & {
+              status: number;
+            };
+            requestError.status = response.status;
+            throw requestError;
+          }
 
-      const payload = (await response.json()) as unknown;
-      const parsed = scoreListSchema.safeParse(payload);
-      if (!parsed.success) {
-        throw new Error('Kangur score list payload validation failed.');
-      }
+          const payload = (await response.json()) as unknown;
+          const parsed = scoreListSchema.safeParse(payload);
+          if (!parsed.success) {
+            throw new Error('Kangur score list payload validation failed.');
+          }
 
-      scoreQueryCache.set(url, {
-        rows: parsed.data,
-        expiresAt: Date.now() + SCORE_CACHE_TTL_MS,
-      });
+          scoreQueryCache.set(url, {
+            rows: parsed.data,
+            expiresAt: Date.now() + SCORE_CACHE_TTL_MS,
+          });
 
-      return [...parsed.data];
-    } catch (error: unknown) {
-      logClientError(error);
-      trackReadFailure('score.list', error, {
-        endpoint: url,
-        method: 'GET',
-      });
-      logKangurClientError(error, {
-        source: 'kangur.local-platform',
-        action: 'score.list',
-        method: 'GET',
-        endpoint: url,
-        ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
-      });
-      throw error;
+          return [...parsed.data];
+        },
+        {
+          fallback: [] as KangurScoreRecord[],
+          shouldRethrow: () => true,
+          onError: (error) => {
+            trackReadFailure('score.list', error, {
+              endpoint: url,
+              method: 'GET',
+            });
+          },
+        }
+      );
     } finally {
       scoreQueryInFlight.delete(url);
     }
@@ -215,57 +250,65 @@ const requestScoresFromApi = async (url: string): Promise<KangurScoreRecord[]> =
 export const createScoreViaApi = async (
   input: KangurScoreCreateInput
 ): Promise<KangurScoreRecord> => {
-  try {
-    const response = await fetch(KANGUR_SCORES_ENDPOINT, {
-      method: 'POST',
-      headers: createActorAwareHeaders({
-        'Content-Type': 'application/json',
-      }),
-      credentials: 'same-origin',
-      body: JSON.stringify(input),
-    });
-
-    if (!response.ok) {
-      const requestError = new Error(
-        `Kangur score create request failed with ${response.status}`
-      ) as Error & {
-        status: number;
-      };
-      requestError.status = response.status;
-      throw requestError;
-    }
-
-    const payload = (await response.json()) as unknown;
-    const parsed = kangurScoreSchema.safeParse(payload);
-    if (!parsed.success) {
-      throw new Error('Kangur score create payload validation failed.');
-    }
-    clearScoreQueryCache();
-    trackWriteSuccess('score.create', {
-      endpoint: KANGUR_SCORES_ENDPOINT,
-      method: 'POST',
-      operation: parsed.data.operation,
-      score: parsed.data.score,
-      totalQuestions: parsed.data.total_questions,
-      correctAnswers: parsed.data.correct_answers,
-      learnerId: parsed.data.learner_id ?? null,
-    });
-    return parsed.data;
-  } catch (error: unknown) {
-    logClientError(error);
-    trackWriteFailure('score.create', error, {
-      endpoint: KANGUR_SCORES_ENDPOINT,
-      method: 'POST',
-      operation: input.operation,
-    });
-    logKangurClientError(error, {
+  return withKangurClientError(
+    (error) => ({
       source: 'kangur.local-platform',
       action: 'score.create',
-      method: 'POST',
-      endpoint: KANGUR_SCORES_ENDPOINT,
-      operation: input.operation,
-      ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
-    });
-    throw error;
-  }
+      description: 'Create a new score entry via the Kangur API.',
+      context: {
+        endpoint: KANGUR_SCORES_ENDPOINT,
+        method: 'POST',
+        operation: input.operation,
+        ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
+      },
+    }),
+    async () => {
+      const response = await fetch(KANGUR_SCORES_ENDPOINT, {
+        method: 'POST',
+        headers: createActorAwareHeaders({
+          'Content-Type': 'application/json',
+        }),
+        credentials: 'same-origin',
+        body: JSON.stringify(input),
+      });
+
+      if (!response.ok) {
+        const requestError = new Error(
+          `Kangur score create request failed with ${response.status}`
+        ) as Error & {
+          status: number;
+        };
+        requestError.status = response.status;
+        throw requestError;
+      }
+
+      const payload = (await response.json()) as unknown;
+      const parsed = kangurScoreSchema.safeParse(payload);
+      if (!parsed.success) {
+        throw new Error('Kangur score create payload validation failed.');
+      }
+      clearScoreQueryCache();
+      trackWriteSuccess('score.create', {
+        endpoint: KANGUR_SCORES_ENDPOINT,
+        method: 'POST',
+        operation: parsed.data.operation,
+        score: parsed.data.score,
+        totalQuestions: parsed.data.total_questions,
+        correctAnswers: parsed.data.correct_answers,
+        learnerId: parsed.data.learner_id ?? null,
+      });
+      return parsed.data;
+    },
+    {
+      fallback: null as unknown as KangurScoreRecord,
+      shouldRethrow: () => true,
+      onError: (error) => {
+        trackWriteFailure('score.create', error, {
+          endpoint: KANGUR_SCORES_ENDPOINT,
+          method: 'POST',
+          operation: input.operation,
+        });
+      },
+    }
+  );
 };

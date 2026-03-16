@@ -14,11 +14,13 @@ const {
   useKangurAuthMock,
   scoreCreateMock,
   logKangurClientErrorMock,
+  reportKangurClientErrorMock,
   trackKangurClientEventMock,
 } = vi.hoisted(() => ({
   useKangurAuthMock: vi.fn(),
   scoreCreateMock: vi.fn(),
   logKangurClientErrorMock: vi.fn(),
+  reportKangurClientErrorMock: vi.fn(),
   trackKangurClientEventMock: vi.fn(),
 }));
 
@@ -34,9 +36,68 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
   }),
 }));
 
+const withKangurClientError = async <T,>(
+  report: unknown,
+  task: () => Promise<T>,
+  options: {
+    fallback: T | (() => T);
+    onError?: (error: unknown) => void;
+    shouldReport?: (error: unknown) => boolean;
+    shouldRethrow?: (error: unknown) => boolean;
+  }
+): Promise<T> => {
+  try {
+    return await task();
+  } catch (error) {
+    const shouldReport = options.shouldReport?.(error) ?? true;
+    if (shouldReport) {
+      reportKangurClientErrorMock(error, report);
+      logKangurClientErrorMock(error);
+    }
+    options.onError?.(error);
+    if (options.shouldRethrow?.(error)) {
+      throw error;
+    }
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : options.fallback;
+  }
+};
+
+const withKangurClientErrorSync = <T,>(
+  report: unknown,
+  task: () => T,
+  options: {
+    fallback: T | (() => T);
+    onError?: (error: unknown) => void;
+    shouldReport?: (error: unknown) => boolean;
+    shouldRethrow?: (error: unknown) => boolean;
+  }
+): T => {
+  try {
+    return task();
+  } catch (error) {
+    const shouldReport = options.shouldReport?.(error) ?? true;
+    if (shouldReport) {
+      reportKangurClientErrorMock(error, report);
+      logKangurClientErrorMock(error);
+    }
+    options.onError?.(error);
+    if (options.shouldRethrow?.(error)) {
+      throw error;
+    }
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : options.fallback;
+  }
+};
+
 vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: logKangurClientErrorMock,
+  reportKangurClientError: reportKangurClientErrorMock,
   trackKangurClientEvent: trackKangurClientEventMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
 }));
 
 import { KangurScoreSyncProvider } from './KangurScoreSyncProvider';
@@ -52,6 +113,7 @@ describe('KangurScoreSyncProvider', () => {
       player_name: 'Gracz',
       score: 8,
       operation: 'addition',
+      subject: 'maths',
       total_questions: 10,
       correct_answers: 8,
       time_taken: 27,
@@ -99,6 +161,7 @@ describe('KangurScoreSyncProvider', () => {
       player_name: 'Gracz',
       score: 5,
       operation: 'division',
+      subject: 'maths',
       total_questions: 10,
       correct_answers: 5,
       time_taken: 41,

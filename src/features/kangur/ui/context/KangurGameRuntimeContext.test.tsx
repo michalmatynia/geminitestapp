@@ -11,14 +11,59 @@ const {
   useKangurRoutingMock,
   useKangurAssignmentsMock,
   useKangurProgressStateMock,
+  useKangurSubjectFocusMock,
   scoreCreateMock,
 } = vi.hoisted(() => ({
   useKangurAuthMock: vi.fn(),
   useKangurRoutingMock: vi.fn(),
   useKangurAssignmentsMock: vi.fn(),
   useKangurProgressStateMock: vi.fn(),
+  useKangurSubjectFocusMock: vi.fn(),
   scoreCreateMock: vi.fn(),
 }));
+
+type KangurClientErrorHandlingOptions<T> = {
+  fallback: T | (() => T);
+  onError?: (error: unknown) => void;
+  shouldReport?: (error: unknown) => boolean;
+  shouldRethrow?: (error: unknown) => boolean;
+};
+
+const withKangurClientError = async <T,>(
+  _report: unknown,
+  task: () => Promise<T>,
+  options: KangurClientErrorHandlingOptions<T>
+): Promise<T> => {
+  try {
+    return await task();
+  } catch (error) {
+    options.onError?.(error);
+    if (options.shouldRethrow?.(error)) {
+      throw error;
+    }
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : options.fallback;
+  }
+};
+
+const withKangurClientErrorSync = <T,>(
+  _report: unknown,
+  task: () => T,
+  options: KangurClientErrorHandlingOptions<T>
+): T => {
+  try {
+    return task();
+  } catch (error) {
+    options.onError?.(error);
+    if (options.shouldRethrow?.(error)) {
+      throw error;
+    }
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : options.fallback;
+  }
+};
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
   getKangurPlatform: () => ({
@@ -36,6 +81,10 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+}));
+
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: useKangurAssignmentsMock,
 }));
@@ -46,6 +95,8 @@ vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
 
 vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: vi.fn(),
+  withKangurClientError,
+  withKangurClientErrorSync,
 }));
 
 import {
@@ -74,6 +125,10 @@ describe('KangurGameRuntimeContext', () => {
     vi.clearAllMocks();
     useKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
+    });
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
     });
     useKangurAuthMock.mockReturnValue({
       user: null,

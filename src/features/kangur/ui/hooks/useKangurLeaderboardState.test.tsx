@@ -7,11 +7,60 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
 
-const { authMeMock, scoreListMock, logKangurClientErrorMock } = vi.hoisted(() => ({
+const {
+  authMeMock,
+  scoreFilterMock,
+  logKangurClientErrorMock,
+  useKangurSubjectFocusMock,
+} = vi.hoisted(() => ({
   authMeMock: vi.fn<() => Promise<KangurUser>>(),
-  scoreListMock: vi.fn<() => Promise<KangurScoreRecord[]>>(),
+  scoreFilterMock: vi.fn<() => Promise<KangurScoreRecord[]>>(),
   logKangurClientErrorMock: vi.fn(),
+  useKangurSubjectFocusMock: vi.fn(),
 }));
+
+type KangurClientErrorHandlingOptions<T> = {
+  fallback: T | (() => T);
+  onError?: (error: unknown) => void;
+  shouldReport?: (error: unknown) => boolean;
+  shouldRethrow?: (error: unknown) => boolean;
+};
+
+const withKangurClientError = async <T,>(
+  _report: unknown,
+  task: () => Promise<T>,
+  options: KangurClientErrorHandlingOptions<T>
+): Promise<T> => {
+  try {
+    return await task();
+  } catch (error) {
+    options.onError?.(error);
+    if (options.shouldRethrow?.(error)) {
+      throw error;
+    }
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : options.fallback;
+  }
+};
+
+const withKangurClientErrorSync = <T,>(
+  _report: unknown,
+  task: () => T,
+  options: KangurClientErrorHandlingOptions<T>
+): T => {
+  try {
+    return task();
+  } catch (error) {
+    options.onError?.(error);
+    if (options.shouldRethrow?.(error)) {
+      throw error;
+    }
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : options.fallback;
+  }
+};
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
   getKangurPlatform: () => ({
@@ -19,13 +68,19 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
       me: authMeMock,
     },
     score: {
-      list: scoreListMock,
+      filter: scoreFilterMock,
     },
   }),
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+}));
+
 vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: logKangurClientErrorMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
 }));
 
 import { useKangurLeaderboardState } from '@/features/kangur/ui/hooks/useKangurLeaderboardState';
@@ -41,6 +96,7 @@ const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord =
   xp_earned: 24,
   created_date: '2026-03-07T12:00:00.000Z',
   created_by: 'ada@example.com',
+  subject: 'maths',
   ...overrides,
 });
 
@@ -52,7 +108,7 @@ describe('useKangurLeaderboardState', () => {
       role: 'student',
       display_name: 'Ada',
     });
-    scoreListMock.mockResolvedValue([
+    scoreFilterMock.mockResolvedValue([
       createScore({
         id: 'score-1',
         player_name: 'Ada',
@@ -76,6 +132,11 @@ describe('useKangurLeaderboardState', () => {
         created_by: null,
       }),
     ]);
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
   });
 
   it('loads scores and exposes filter collections with runtime-ready actions', async () => {

@@ -6,8 +6,10 @@ import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports'
 import {
   buildKangurAssignmentCatalog,
   buildKangurAssignmentHref,
+  filterKangurAssignmentsBySubject,
   mapKangurPracticeAssignmentsByOperation,
   parseKangurMixedTrainingQuickStartParams,
+  resolveKangurAssignmentSubject,
   selectKangurPracticeAssignmentForScreen,
   selectKangurPriorityAssignments,
   selectKangurResultPracticeAssignment,
@@ -105,6 +107,29 @@ describe('delegated assignments helpers', () => {
       'high-newer',
       'high-older',
       'low',
+    ]);
+  });
+
+  it('filters assignments by subject based on lesson and practice targets', () => {
+    const englishAssignment = createAssignment({
+      id: 'english',
+      target: {
+        type: 'lesson',
+        lessonComponentId: 'english_basics',
+        requiredCompletions: 1,
+        baselineCompletions: 0,
+      },
+    });
+    const mathAssignment = createAssignment({ id: 'math' });
+
+    expect(resolveKangurAssignmentSubject(englishAssignment)).toBe('english');
+    expect(resolveKangurAssignmentSubject(mathAssignment)).toBe('maths');
+
+    expect(filterKangurAssignmentsBySubject([englishAssignment, mathAssignment], 'english')).toEqual([
+      englishAssignment,
+    ]);
+    expect(filterKangurAssignmentsBySubject([englishAssignment, mathAssignment], 'maths')).toEqual([
+      mathAssignment,
     ]);
   });
 

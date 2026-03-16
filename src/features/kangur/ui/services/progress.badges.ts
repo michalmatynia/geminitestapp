@@ -29,6 +29,63 @@ export const getMasteredLessonCount = (
     (entry) => entry.masteryPercent >= clampPercent(minimumMasteryPercent)
   ).length;
 
+const ENGLISH_ACTIVITY_KEYS = [
+  'english_pronoun_remix',
+  'english_parts_of_speech_sort',
+  'english_sentence_structure_quiz',
+  'english_subject_verb_agreement_quiz',
+  'english_prepositions_quiz',
+];
+
+const createEmptyActivityStatsEntry = () => ({
+  sessionsPlayed: 0,
+  perfectSessions: 0,
+  totalCorrectAnswers: 0,
+  totalQuestionsAnswered: 0,
+  totalXpEarned: 0,
+  bestScorePercent: 0,
+  lastScorePercent: 0,
+  currentStreak: 0,
+  bestStreak: 0,
+  lastPlayedAt: null,
+});
+
+const getActivityStatsEntry = (progress: KangurProgressState, activityKey: string) =>
+  progress.activityStats?.[activityKey] ?? createEmptyActivityStatsEntry();
+
+const getEnglishActivityTotals = (progress: KangurProgressState) =>
+  ENGLISH_ACTIVITY_KEYS.reduce(
+    (acc, key) => {
+      const stats = getActivityStatsEntry(progress, key);
+      return {
+        sessionsPlayed: acc.sessionsPlayed + stats.sessionsPlayed,
+        perfectSessions: acc.perfectSessions + stats.perfectSessions,
+        totalCorrectAnswers: acc.totalCorrectAnswers + stats.totalCorrectAnswers,
+        totalQuestionsAnswered: acc.totalQuestionsAnswered + stats.totalQuestionsAnswered,
+      };
+    },
+    {
+      sessionsPlayed: 0,
+      perfectSessions: 0,
+      totalCorrectAnswers: 0,
+      totalQuestionsAnswered: 0,
+    }
+  );
+
+const getEnglishActivitiesPlayedCount = (progress: KangurProgressState): number =>
+  ENGLISH_ACTIVITY_KEYS.filter(
+    (key) => getActivityStatsEntry(progress, key).sessionsPlayed > 0
+  ).length;
+
+const getEnglishMasteredLessonCount = (
+  progress: KangurProgressState,
+  minimumMasteryPercent = 75
+): number =>
+  Object.entries(progress.lessonMastery).filter(
+    ([key, entry]) =>
+      key.startsWith('english_') && entry.masteryPercent >= clampPercent(minimumMasteryPercent)
+  ).length;
+
 export const BADGES: KangurBadge[] = [
   {
     id: 'first_game',
@@ -248,6 +305,152 @@ export const BADGES: KangurBadge[] = [
       target: 5,
       summary: `${Math.min(progress.operationsPlayed.length, 5)}/5 typów`,
     }),
+  },
+  {
+    id: 'english_first_game',
+    emoji: '🇬🇧',
+    name: 'Start z angielskim',
+    desc: 'Zagraj pierwszą grę z angielskiego',
+    track: 'english',
+    progress: (progress) => {
+      const sessions = getEnglishActivityTotals(progress).sessionsPlayed;
+      return {
+        current: sessions,
+        target: 1,
+        summary: `${Math.min(sessions, 1)}/1 gra`,
+      };
+    },
+  },
+  {
+    id: 'english_perfect',
+    emoji: '🏅',
+    name: 'Perfekcyjny angielski',
+    desc: 'Zdobądź 100% w grze z angielskiego',
+    track: 'english',
+    progress: (progress) => {
+      const perfect = getEnglishActivityTotals(progress).perfectSessions;
+      return {
+        current: perfect,
+        target: 1,
+        summary: `${Math.min(perfect, 1)}/1 perfect`,
+      };
+    },
+  },
+  {
+    id: 'english_pronoun_pro',
+    emoji: '🧩',
+    name: 'Pronoun Pro',
+    desc: 'Zdobądź 2 perfekcyjne wyniki w Pronoun Remix',
+    track: 'english',
+    progress: (progress) => {
+      const perfect = getActivityStatsEntry(progress, 'english_pronoun_remix').perfectSessions;
+      return {
+        current: perfect,
+        target: 2,
+        summary: `${Math.min(perfect, 2)}/2 perfect`,
+      };
+    },
+  },
+  {
+    id: 'english_sorter_star',
+    emoji: '🔤',
+    name: 'Mistrz części mowy',
+    desc: 'Zdobądź 2 perfekcyjne wyniki w Parts of Speech',
+    track: 'english',
+    progress: (progress) => {
+      const perfect = getActivityStatsEntry(progress, 'english_parts_of_speech_sort').perfectSessions;
+      return {
+        current: perfect,
+        target: 2,
+        summary: `${Math.min(perfect, 2)}/2 perfect`,
+      };
+    },
+  },
+  {
+    id: 'english_sentence_builder',
+    emoji: '🧱',
+    name: 'Architekt zdań',
+    desc: 'Osiągnij 80%+ i rozegraj 3 sesje Sentence Structure',
+    track: 'english',
+    progress: (progress) => {
+      const stats = getActivityStatsEntry(progress, 'english_sentence_structure_quiz');
+      if (stats.bestScorePercent < 80) {
+        return {
+          current: stats.bestScorePercent,
+          target: 80,
+          summary: `${stats.bestScorePercent}% / 80%`,
+        };
+      }
+
+      return {
+        current: stats.sessionsPlayed,
+        target: 3,
+        summary: `${Math.min(stats.sessionsPlayed, 3)}/3 sesje`,
+      };
+    },
+  },
+  {
+    id: 'english_agreement_guardian',
+    emoji: '🤝',
+    name: 'Strażnik zgodności',
+    desc: 'Zdobądź perfekcyjny wynik w Subject-Verb Agreement',
+    track: 'english',
+    progress: (progress) => {
+      const perfect = getActivityStatsEntry(
+        progress,
+        'english_subject_verb_agreement_quiz'
+      ).perfectSessions;
+      return {
+        current: perfect,
+        target: 1,
+        summary: `${Math.min(perfect, 1)}/1 perfect`,
+      };
+    },
+  },
+  {
+    id: 'english_grammar_collection',
+    emoji: '📚',
+    name: 'Kolekcja gramatyki',
+    desc: 'Zagraj we wszystkie gry z angielskiego',
+    track: 'english',
+    progress: (progress) => {
+      const played = getEnglishActivitiesPlayedCount(progress);
+      return {
+        current: played,
+        target: ENGLISH_ACTIVITY_KEYS.length,
+        summary: `${Math.min(played, ENGLISH_ACTIVITY_KEYS.length)}/${ENGLISH_ACTIVITY_KEYS.length} gier`,
+      };
+    },
+  },
+  {
+    id: 'english_articles_reader',
+    emoji: '📰',
+    name: 'Mistrz przedimków',
+    desc: 'Ukończ lekcję English: Articles',
+    track: 'english',
+    progress: (progress) => {
+      const completions = progress.lessonMastery['english_articles']?.completions ?? 0;
+      return {
+        current: completions,
+        target: 1,
+        summary: `${Math.min(completions, 1)}/1 lekcja`,
+      };
+    },
+  },
+  {
+    id: 'english_mastery_builder',
+    emoji: '🏗️',
+    name: 'Budowniczy English',
+    desc: 'Doprowadź 3 lekcje z angielskiego do 75% opanowania',
+    track: 'english',
+    progress: (progress) => {
+      const mastered = getEnglishMasteredLessonCount(progress, 75);
+      return {
+        current: mastered,
+        target: 3,
+        summary: `${Math.min(mastered, 3)}/3 lekcje`,
+      };
+    },
   },
 ];
 

@@ -55,7 +55,7 @@ function AiInsightsContextRegistrySource(): React.JSX.Element {
 
 function AdminAiInsightsPageContent(): React.JSX.Element {
   return (
-    <div className='container mx-auto py-10'>
+    <div className='page-section'>
       <AiInsightsContextRegistrySource />
       <SectionHeader
         title='AI Insights'

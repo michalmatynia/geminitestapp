@@ -30,7 +30,7 @@ const cmsTools = [
 
 export default function CmsPage(): React.ReactNode {
   return (
-    <div className='container mx-auto py-10'>
+    <div className='page-section'>
       <SectionHeader
         title='CMS'
         description='Welcome to the Content Management System.'

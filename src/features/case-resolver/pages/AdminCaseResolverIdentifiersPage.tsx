@@ -304,7 +304,7 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
           Add Case Identifier
         </Button>
       }
-      containerClassName='container mx-auto py-8'
+      containerClassName='page-section-compact'
     >
 
       <FormSection title='Case Identifiers' className='p-4'>

@@ -61,12 +61,13 @@ export function KangurFeaturePageShell(): JSX.Element {
     <div
       className={cn(
         'relative w-full kangur-premium-bg text-slate-800',
-        embedded ? 'min-h-full' : 'min-h-screen',
+        embedded ? 'min-h-full' : 'min-h-screen min-h-[100svh] min-h-[100dvh]',
         shellClassOverride
       )}
       data-appearance-mode={appearanceMode}
       data-kangur-appearance={appearanceMode}
       data-testid='kangur-feature-page-shell'
+      lang='pl'
       style={shellStyle}
     >
       {customCss ? <style data-kangur-custom-css>{customCss}</style> : null}

@@ -1,37 +1,6 @@
 import { buildLessonMasteryInsights } from '@/features/kangur/ui/services/profile';
-import type {
-  KangurAssignmentPriority,
-  KangurProgressState,
-  KangurRouteAction,
-} from '@/features/kangur/shared/contracts/kangur';
-
-export type KangurAssignmentQuestMetric =
-  | {
-      kind: 'games_played';
-      targetDelta: number;
-    }
-  | {
-      kind: 'lessons_completed';
-      targetDelta: number;
-    }
-  | {
-      kind: 'lesson_mastery';
-      lessonComponentId: string;
-      targetPercent: number;
-    };
-
-export type KangurAssignmentPlan = {
-  id: string;
-  title: string;
-  description: string;
-  target: string;
-  priority: KangurAssignmentPriority;
-  action: KangurRouteAction;
-  questLabel?: string;
-  rewardXp?: number;
-  progressLabel?: string;
-  questMetric?: KangurAssignmentQuestMetric;
-};
+import type { KangurProgressState } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurAssignmentPlan } from '@/features/kangur/shared/contracts/kangur-quests';
 
 export const buildKangurAssignments = (
   progress: KangurProgressState,

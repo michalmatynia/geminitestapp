@@ -1,5 +1,7 @@
 import type { Point2d } from '@/shared/contracts/geometry';
 
+import { loosenMax, loosenMin, loosenMinInt } from './drawing-leniency';
+
 export type GeometryShapeId =
   | 'circle'
   | 'triangle'
@@ -43,6 +45,15 @@ type GeometryShapeRule = {
   successMessage: string;
   failureMessage: string;
 };
+
+const MIN_DRAWING_POINTS = loosenMinInt(14);
+const MIN_DRAWING_SIZE = loosenMin(24);
+const CIRCLE_RADIAL_CV_LIMIT = loosenMax(0.35);
+const CIRCLE_ASPECT_TOLERANCE = loosenMax(0.6);
+const DEFAULT_MAX_CLOSURE_RATIO = loosenMax(0.28);
+const DEFAULT_MIN_LENGTH_RATIO = loosenMin(0.6);
+const DEFAULT_MAX_LENGTH_RATIO = loosenMax(2.8);
+const DEFAULT_ASPECT_SCORE_TOLERANCE = loosenMax(0.8);
 
 const SHAPE_RULES: Record<GeometryShapeId, GeometryShapeRule> = {
   circle: {
@@ -246,6 +257,21 @@ const smoothPath = (points: Point2d[], windowSize = 2): Point2d[] => {
   return smoothed;
 };
 
+const applyDrawingLeniency = (rule: GeometryShapeRule): GeometryShapeRule => ({
+  ...rule,
+  minScore: loosenMin(rule.minScore),
+  maxClosureRatio:
+    typeof rule.maxClosureRatio === 'number' ? loosenMax(rule.maxClosureRatio) : undefined,
+  minLengthRatio:
+    typeof rule.minLengthRatio === 'number' ? loosenMin(rule.minLengthRatio) : undefined,
+  maxLengthRatio:
+    typeof rule.maxLengthRatio === 'number' ? loosenMax(rule.maxLengthRatio) : undefined,
+  minAspect: typeof rule.minAspect === 'number' ? loosenMin(rule.minAspect) : undefined,
+  maxAspect: typeof rule.maxAspect === 'number' ? loosenMax(rule.maxAspect) : undefined,
+  aspectTolerance:
+    typeof rule.aspectTolerance === 'number' ? loosenMax(rule.aspectTolerance) : undefined,
+});
+
 const countCorners = (points: Point2d[]): number => {
   if (points.length < 7) return 0;
   const closed = [...points];
@@ -299,25 +325,25 @@ const evaluateCircleScore = (points: Point2d[], box: BoundingBox): number => {
 
   const stdDev = Math.sqrt(variance);
   const radialCv = mean > 0 ? stdDev / mean : 1;
-  const radialScore = clamp01(1 - radialCv / 0.35);
+  const radialScore = clamp01(1 - radialCv / CIRCLE_RADIAL_CV_LIMIT);
   const aspect = Math.max(box.width, box.height) / Math.max(1, Math.min(box.width, box.height));
-  const aspectScore = clamp01(1 - Math.abs(aspect - 1) / 0.6);
+  const aspectScore = clamp01(1 - Math.abs(aspect - 1) / CIRCLE_ASPECT_TOLERANCE);
 
   return radialScore * 0.65 + aspectScore * 0.35;
 };
 
 const evaluateAspectScore = (aspectRatio: number, rule: GeometryShapeRule): number => {
   if (typeof rule.idealAspect === 'number') {
-    const tolerance = rule.aspectTolerance ?? 0.8;
+    const tolerance = rule.aspectTolerance ?? DEFAULT_ASPECT_SCORE_TOLERANCE;
     return clamp01(1 - Math.abs(aspectRatio - rule.idealAspect) / tolerance);
   }
 
   if (typeof rule.minAspect === 'number' && aspectRatio < rule.minAspect) {
-    return clamp01(1 - (rule.minAspect - aspectRatio) / 0.8);
+    return clamp01(1 - (rule.minAspect - aspectRatio) / DEFAULT_ASPECT_SCORE_TOLERANCE);
   }
 
   if (typeof rule.maxAspect === 'number' && aspectRatio > rule.maxAspect) {
-    return clamp01(1 - (aspectRatio - rule.maxAspect) / 0.8);
+    return clamp01(1 - (aspectRatio - rule.maxAspect) / DEFAULT_ASPECT_SCORE_TOLERANCE);
   }
 
   return 0.8;
@@ -394,15 +420,16 @@ export const evaluateGeometryDrawing = (
   rawPoints: Point2d[]
 ): GeometryDrawingEvaluation => {
   const rule = SHAPE_RULES[target];
+  const lenientRule = applyDrawingLeniency(rule);
   const sanitized = sanitizePoints(rawPoints);
 
-  if (sanitized.length < 14) {
+  if (sanitized.length < MIN_DRAWING_POINTS) {
     return toRejected('Narysuj większy kształt jednym ciągiem.');
   }
 
   const sampled = samplePath(sanitized);
   const box = computeBoundingBox(sampled);
-  if (box.width < 24 || box.height < 24) {
+  if (box.width < MIN_DRAWING_SIZE || box.height < MIN_DRAWING_SIZE) {
     return toRejected('Kształt jest zbyt mały. Narysuj go większego.');
   }
 
@@ -413,13 +440,13 @@ export const evaluateGeometryDrawing = (
   }
 
   const closureRatio = distance(first, last) / box.diagonal;
-  const closureLimit = rule.maxClosureRatio ?? 0.28;
+  const closureLimit = lenientRule.maxClosureRatio ?? DEFAULT_MAX_CLOSURE_RATIO;
   const closureScore = clamp01(1 - closureRatio / closureLimit);
   const pathLength = computePathLength(sanitized);
   const perimeter = Math.max(1, 2 * (box.width + box.height));
   const lengthRatio = pathLength / perimeter;
-  const minLengthRatio = rule.minLengthRatio ?? 0.6;
-  const maxLengthRatio = rule.maxLengthRatio ?? 2.8;
+  const minLengthRatio = lenientRule.minLengthRatio ?? DEFAULT_MIN_LENGTH_RATIO;
+  const maxLengthRatio = lenientRule.maxLengthRatio ?? DEFAULT_MAX_LENGTH_RATIO;
   const corners = countCorners(target === 'hexagon' ? sampled : smoothPath(sampled, 1));
   const aspectRatio =
     Math.max(box.width, box.height) / Math.max(1, Math.min(box.width, box.height));
@@ -427,17 +454,17 @@ export const evaluateGeometryDrawing = (
   const shapeScore =
     target === 'circle'
       ? evaluateCircleScore(sampled, box)
-      : evaluatePolygonScore(rule, corners, aspectRatio);
+      : evaluatePolygonScore(lenientRule, corners, aspectRatio);
   const score = shapeScore * 0.78 + closureScore * 0.22;
 
   const accepted =
-    score >= rule.minScore &&
+    score >= lenientRule.minScore &&
     closureRatio <= closureLimit &&
     lengthRatio >= minLengthRatio &&
     lengthRatio <= maxLengthRatio &&
     corners >= rule.minCorners &&
     corners <= rule.maxCorners &&
-    isAspectInRange(aspectRatio, rule);
+    isAspectInRange(aspectRatio, lenientRule);
 
   return {
     accepted,
@@ -450,7 +477,7 @@ export const evaluateGeometryDrawing = (
       ? rule.successMessage
       : resolveFailureMessage(
         target,
-        rule,
+        lenientRule,
         corners,
         closureRatio,
         aspectRatio,

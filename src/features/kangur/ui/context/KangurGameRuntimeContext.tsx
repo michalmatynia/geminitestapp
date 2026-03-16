@@ -16,9 +16,11 @@ import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import {
+  filterKangurAssignmentsBySubject,
   mapKangurPracticeAssignmentsByOperation,
   selectKangurPracticeAssignmentForScreen,
   selectKangurResultPracticeAssignment,
@@ -39,6 +41,7 @@ import type {
   KangurXpToastState,
 } from '@/features/kangur/ui/types';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
+import { resolveKangurScoreSubject } from '@/shared/contracts/kangur';
 
 import {
   buildKangurCompletedGameOutcome,
@@ -67,6 +70,7 @@ export function KangurGameRuntimeProvider({
 }): JSX.Element {
   const { basePath } = useKangurRouting();
   const auth = useKangurAuth();
+  const { subject } = useKangurSubjectFocus();
   const { isAuthenticated, isLoadingAuth, logout, navigateToLogin, user } = auth;
   const canEarnRewards = !(user?.actorType === 'parent' && !user?.activeLearner?.id);
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
@@ -105,6 +109,11 @@ export function KangurGameRuntimeProvider({
       includeArchived: false,
     },
   });
+
+  const subjectAssignments = useMemo(
+    () => filterKangurAssignmentsBySubject(delegatedAssignments, subject),
+    [delegatedAssignments, subject]
+  );
 
   useEffect(
     () => () => {
@@ -259,11 +268,12 @@ export function KangurGameRuntimeProvider({
       });
 
       if (canEarnRewards) {
-        void kangurPlatform.score
+          void kangurPlatform.score
           .create({
             player_name: nextPlayerName,
             score: nextScore,
             operation: selectedOperation,
+            subject: resolveKangurScoreSubject({ operation: selectedOperation, subject }),
             total_questions: totalQuestions,
             correct_answers: nextScore,
             time_taken: taken,
@@ -333,19 +343,19 @@ export function KangurGameRuntimeProvider({
   };
 
   const practiceAssignmentsByOperation = useMemo(
-    () => mapKangurPracticeAssignmentsByOperation(delegatedAssignments),
-    [delegatedAssignments]
+    () => mapKangurPracticeAssignmentsByOperation(subjectAssignments),
+    [subjectAssignments]
   );
   const activePracticeAssignment = useMemo(
-    () => selectKangurPracticeAssignmentForScreen(delegatedAssignments, screen, operation),
-    [delegatedAssignments, operation, screen]
+    () => selectKangurPracticeAssignmentForScreen(subjectAssignments, screen, operation),
+    [operation, screen, subjectAssignments]
   );
   const resultPracticeAssignment = useMemo(
     () =>
       screen === 'result'
-        ? selectKangurResultPracticeAssignment(delegatedAssignments, operation)
+        ? selectKangurResultPracticeAssignment(subjectAssignments, operation)
         : null,
-    [delegatedAssignments, operation, screen]
+    [operation, screen, subjectAssignments]
   );
   const canStartFromHome = true;
 
@@ -486,16 +496,4 @@ export const useOptionalKangurGameRuntime = (): KangurGameRuntimeContextValue | 
   }, [state, actions]);
 };
 
-export const isKangurGameScreen = (value: string | null | undefined): value is KangurGameScreen =>
-  value === 'home' ||
-  value === 'training' ||
-  value === 'kangur_setup' ||
-  value === 'kangur' ||
-  value === 'calendar_quiz' ||
-  value === 'geometry_quiz' ||
-  value === 'subtraction_quiz' ||
-  value === 'multiplication_quiz' ||
-  value === 'division_quiz' ||
-  value === 'operation' ||
-  value === 'playing' ||
-  value === 'result';
+export { isKangurGameScreen } from './KangurGameRuntimeContext.shared';

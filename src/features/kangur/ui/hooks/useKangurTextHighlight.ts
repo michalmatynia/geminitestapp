@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 
 export type KangurTextHighlightResult = {
@@ -74,6 +74,17 @@ const cloneDomRects = (rects: Iterable<DOMRect | DOMRectReadOnly>): DOMRect[] =>
     .map((rect) => cloneDomRect(rect))
     .filter((rect): rect is DOMRect => rect !== null);
 
+const withTextHighlightError = <T,>(action: string, task: () => T, fallback: T): T =>
+  withKangurClientErrorSync(
+    {
+      source: 'kangur.text-highlight',
+      action,
+      description: 'Handles Kangur AI tutor selection highlighting.',
+    },
+    task,
+    { fallback }
+  );
+
 const clearBrowserSelection = (
   clearToken: number,
   latestClearTokenRef: MutableRefObject<number>
@@ -87,43 +98,44 @@ const clearBrowserSelection = (
     return;
   }
 
-  try {
-    selection.removeAllRanges();
-  } catch (error) {
-    logClientError(error);
-  
-    // Some browsers can report a stale selection while tearing it down.
-  }
+  withTextHighlightError(
+    'clear-selection-ranges',
+    () => {
+      selection.removeAllRanges();
+    },
+    undefined
+  );
 
   if (typeof selection.empty === 'function') {
-    try {
-      selection.empty();
-    } catch (error) {
-      logClientError(error);
-    
-      // Safari may expose Selection.empty but reject it for transient selections.
-    }
+    withTextHighlightError(
+      'clear-selection-empty',
+      () => {
+        selection.empty();
+      },
+      undefined
+    );
   }
 
   if (selection.rangeCount > 0) {
-    try {
-      selection.removeAllRanges();
-    } catch (error) {
-      logClientError(error);
-    
-      // Ignore follow-up cleanup failures when the selection is already detached.
-    }
+    withTextHighlightError(
+      'clear-selection-ranges-final',
+      () => {
+        selection.removeAllRanges();
+      },
+      undefined
+    );
   }
 };
 
 const rangeIntersectsTextNode = (range: Range, node: Text): boolean => {
   if (typeof range.intersectsNode === 'function') {
-    try {
-      return range.intersectsNode(node);
-    } catch (error) {
-      logClientError(error);
-    
-      // Fall through to the boundary-point fallback when the browser rejects the node.
+    const intersects = withTextHighlightError(
+      'range-intersects-node',
+      () => range.intersectsNode(node),
+      null
+    );
+    if (typeof intersects === 'boolean') {
+      return intersects;
     }
   }
 
@@ -248,6 +260,8 @@ export function useKangurTextHighlight(): KangurTextHighlightResult {
   const selectionRangeRef = useRef<Range | null>(null);
   const selectionClearTokenRef = useRef(0);
   const selectionEmphasisWrappersRef = useRef<HTMLElement[]>([]);
+  const clearSelectionTimeoutRef = useRef<number | null>(null);
+  const clearSelectionRafRef = useRef<number | null>(null);
 
   const clearSelectionGlow = useCallback((): void => {
     getHighlightRegistry()?.delete(TUTOR_SELECTION_GLOW_NAME);
@@ -336,10 +350,18 @@ export function useKangurTextHighlight(): KangurTextHighlightResult {
     selectionClearTokenRef.current = clearToken;
     clearBrowserSelection(clearToken, selectionClearTokenRef);
     if (typeof window !== 'undefined') {
-      window.setTimeout(() => {
+      if (clearSelectionTimeoutRef.current !== null) {
+        window.clearTimeout(clearSelectionTimeoutRef.current);
+      }
+      clearSelectionTimeoutRef.current = window.setTimeout(() => {
+        clearSelectionTimeoutRef.current = null;
         clearBrowserSelection(clearToken, selectionClearTokenRef);
       }, 0);
-      window.requestAnimationFrame(() => {
+      if (clearSelectionRafRef.current !== null) {
+        window.cancelAnimationFrame(clearSelectionRafRef.current);
+      }
+      clearSelectionRafRef.current = window.requestAnimationFrame(() => {
+        clearSelectionRafRef.current = null;
         clearBrowserSelection(clearToken, selectionClearTokenRef);
       });
     }
@@ -350,8 +372,16 @@ export function useKangurTextHighlight(): KangurTextHighlightResult {
     setSelectionContainerRect(null);
   }, []);
 
-  useEffect(() => () => {
-    clearSelectionGlow();
+  useEffect(() => {
+    return () => {
+      if (clearSelectionTimeoutRef.current !== null) {
+        window.clearTimeout(clearSelectionTimeoutRef.current);
+      }
+      if (clearSelectionRafRef.current !== null) {
+        window.cancelAnimationFrame(clearSelectionRafRef.current);
+      }
+      clearSelectionGlow();
+    };
   }, [clearSelectionGlow]);
 
   return {

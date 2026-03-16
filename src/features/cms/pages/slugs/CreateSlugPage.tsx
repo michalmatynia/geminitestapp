@@ -59,7 +59,7 @@ export default function CreateSlugPage(): React.JSX.Element {
       current='Create'
       parent={{ label: 'Slugs', href: '/admin/cms/slugs' }}
       description='Register a new URL path for your content.'
-      containerClassName='container mx-auto max-w-2xl space-y-6 py-10'
+      containerClassName='page-section max-w-2xl space-y-6'
     >
 
       {error && (

@@ -225,7 +225,7 @@ export function AdminAiContextRegistryPage(): React.JSX.Element {
   );
 
   return (
-    <div className='container mx-auto space-y-6 py-10'>
+    <div className='page-section space-y-6'>
       <PanelHeader
         title='Context Registry'
         description='Centralized workspace for inspecting AI-readable nodes, runtime refs, bundles, and reusable context packs.'

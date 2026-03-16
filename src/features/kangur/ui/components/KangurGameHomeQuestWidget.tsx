@@ -18,7 +18,7 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
-import { type KangurAssignmentPlan } from '@/features/kangur/ui/services/assignments';
+import type { KangurAssignmentPlan } from '@/features/kangur/shared/contracts/kangur-quests';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import {
   getProgressAverageXpPerSession,

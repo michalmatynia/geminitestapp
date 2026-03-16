@@ -47,6 +47,7 @@ const TRACK_PRIORITY: Record<KangurBadgeTrackKey, number> = {
   xp: 5,
   consistency: 6,
   variety: 7,
+  english: 8,
 };
 
 const getPinnedTrackPlaceholder = (trackKey: KangurBadgeTrackKey): KangurBadgeTrackHighlightItem => {

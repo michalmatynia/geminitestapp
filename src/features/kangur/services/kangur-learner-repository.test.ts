@@ -58,6 +58,7 @@ import {
 
 describe('kangur learner repository mongo mode', () => {
   const learnersCollection = {
+    createIndex: vi.fn(),
     find: vi.fn(),
     findOne: vi.fn(),
     updateOne: vi.fn(),
@@ -87,6 +88,7 @@ describe('kangur learner repository mongo mode', () => {
     learnersCollection.find.mockReturnValue({
       toArray: vi.fn().mockResolvedValue([]),
     });
+    learnersCollection.createIndex.mockResolvedValue('kangur_learners_login_name_unique');
     learnersCollection.findOne.mockResolvedValue(null);
     learnersCollection.updateOne.mockResolvedValue({
       acknowledged: true,
@@ -128,6 +130,7 @@ describe('kangur learner repository mongo mode', () => {
         ownerUserId: 'owner-1',
         displayName: 'Ada',
         loginName: 'ada',
+        avatarId: null,
         status: 'active',
         legacyUserKey: 'owner@example.com',
         aiTutor: {

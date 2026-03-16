@@ -6,16 +6,28 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { settingsStoreMock, mutateAsyncMock, useMasterFolderTreeShellMock, toastMock } =
+const { updateLessonsMock, updateLessonDocumentsMock, useMasterFolderTreeShellMock, toastMock } =
   vi.hoisted(() => ({
-    settingsStoreMock: {
-      get: vi.fn(),
-      isLoading: false,
-    },
-    mutateAsyncMock: vi.fn(),
+    updateLessonsMock: vi.fn(),
+    updateLessonDocumentsMock: vi.fn(),
     useMasterFolderTreeShellMock: vi.fn(),
     toastMock: vi.fn(),
   }));
+
+let lessonsData: Array<{
+  id: string;
+  componentId: string;
+  title: string;
+  description: string;
+  emoji: string;
+  color: string;
+  activeBg: string;
+  sortOrder: number;
+  enabled: boolean;
+  contentMode?: string;
+  subject?: string;
+}> = [];
+let lessonDocumentsData: Record<string, unknown> = {};
 
 vi.mock('next/link', () => ({
   default: ({
@@ -46,15 +58,21 @@ vi.mock('@/features/foldertree', async (importOriginal) => {
   };
 });
 
-vi.mock('@/shared/hooks/use-settings', () => ({
-  useUpdateSetting: () => ({
-    mutateAsync: mutateAsyncMock,
+vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: () => ({
+    data: lessonsData,
+  }),
+  useKangurLessonDocuments: () => ({
+    data: lessonDocumentsData,
+  }),
+  useUpdateKangurLessons: () => ({
+    mutateAsync: updateLessonsMock,
     isPending: false,
   }),
-}));
-
-vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
-  useSettingsStore: () => settingsStoreMock,
+  useUpdateKangurLessonDocuments: () => ({
+    mutateAsync: updateLessonDocumentsMock,
+    isPending: false,
+  }),
 }));
 
 vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
@@ -65,36 +83,30 @@ vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
   };
 });
 
-import { KANGUR_LESSON_DOCUMENTS_SETTING_KEY, createDefaultKangurLessonDocument } from '@/features/kangur/lesson-documents';
+import { createDefaultKangurLessonDocument } from '@/features/kangur/lesson-documents';
 import { AdminKangurLessonsManagerPage } from './AdminKangurLessonsManagerPage';
-import { KANGUR_LESSONS_SETTING_KEY } from '../settings';
 
 describe('AdminKangurLessonsManagerPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    settingsStoreMock.get.mockImplementation((key: string) => {
-      if (key === KANGUR_LESSONS_SETTING_KEY) {
-        return JSON.stringify([
-          {
-            id: 'kangur-lesson-clock',
-            componentId: 'clock',
-            title: 'Nauka zegara',
-            description: 'Odczytuj godziny',
-            emoji: '🕐',
-            color: 'kangur-gradient-accent-indigo-reverse',
-            activeBg: 'bg-indigo-500',
-            sortOrder: 1000,
-            enabled: true,
-          },
-        ]);
-      }
-      if (key === KANGUR_LESSON_DOCUMENTS_SETTING_KEY) {
-        return JSON.stringify({
-          'kangur-lesson-clock': createDefaultKangurLessonDocument(),
-        });
-      }
-      return undefined;
-    });
+    lessonsData = [
+      {
+        id: 'kangur-lesson-clock',
+        componentId: 'clock',
+        title: 'Nauka zegara',
+        description: 'Odczytuj godziny',
+        emoji: '🕐',
+        color: 'kangur-gradient-accent-indigo-reverse',
+        activeBg: 'bg-indigo-500',
+        sortOrder: 1000,
+        enabled: true,
+        contentMode: 'component',
+        subject: 'maths',
+      },
+    ];
+    lessonDocumentsData = {
+      'kangur-lesson-clock': createDefaultKangurLessonDocument(),
+    };
     useMasterFolderTreeShellMock.mockReturnValue({
       capabilities: {
         search: {

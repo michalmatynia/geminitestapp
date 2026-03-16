@@ -26,7 +26,7 @@ function ImportsPageContent(): React.JSX.Element {
 
   if (checkingIntegration) {
     return (
-      <div className='w-full py-10 container mx-auto'>
+      <div className='page-section w-full'>
         <LoadingState
           message='Checking Base.com integration status...'
           className='bg-card/40 border border-border/60 rounded-lg h-64'
@@ -36,7 +36,7 @@ function ImportsPageContent(): React.JSX.Element {
   }
   if (!isBaseConnected) {
     return (
-      <div className='w-full py-10 container mx-auto'>
+      <div className='page-section w-full'>
         <Card variant='warning' padding='lg'>
           <h3 className='text-lg font-bold mb-2 text-amber-300'>Base.com integration required</h3>
           <p className='text-sm text-amber-300'>
@@ -49,7 +49,7 @@ function ImportsPageContent(): React.JSX.Element {
   }
 
   return (
-    <div className='container mx-auto py-10 space-y-6'>
+    <div className='page-section space-y-6'>
       <SectionHeader
         title='Product Import/Export'
         subtitle={

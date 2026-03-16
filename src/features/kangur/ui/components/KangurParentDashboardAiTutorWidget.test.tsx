@@ -173,7 +173,7 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     vi.mocked(queryClientMock.invalidateQueries).mockResolvedValue(undefined);
   });
 
-  it('does not render when no learner is active', () => {
+  it('shows the AI Tutor tab helper state when no learner is active', () => {
     runtimeState.value = {
       activeLearner: null,
       activeTab: 'ai-tutor',
@@ -183,8 +183,8 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     render(<KangurParentDashboardAiTutorWidget />);
 
     expect(
-      screen.queryByText('Wybierz ucznia, aby skonfigurować AI Tutora.')
-    ).toBeNull();
+      screen.getByText('Wybierz ucznia, aby skonfigurować AI Tutora.')
+    ).toBeInTheDocument();
     expect(screen.queryByText(/^AI Tutor dla /i)).not.toBeInTheDocument();
   });
 

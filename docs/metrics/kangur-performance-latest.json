@@ -1,37 +1,29 @@
 {
-  "generatedAt": "2026-03-08T15:24:18.717Z",
+  "generatedAt": "2026-03-16T17:56:40.799Z",
   "strictMode": true,
-  "includeE2E": true,
-  "allowInfraE2EFail": true,
-  "runtime": {
-    "source": "broker",
-    "reused": false,
-    "baseUrl": "http://127.0.0.1:49936",
-    "agentId": "perf-final-3",
-    "leaseKey": "web-dev-perf-final-3-ed58ad7e"
-  },
+  "includeE2E": false,
+  "allowInfraE2EFail": false,
+  "runtime": null,
   "unit": {
     "id": "kangur-unit",
     "command": "npx vitest run __tests__/features/kangur/learner-profile.page.test.tsx __tests__/features/kangur/lessons-focus-routing.test.tsx __tests__/features/kangur/kangur-feature-app.shell.test.tsx __tests__/features/kangur/kangur-admin-menu-toggle.test.tsx src/features/kangur/ui/services/profile.test.ts src/features/kangur/settings.test.ts",
-    "status": "pass",
-    "exitCode": 0,
-    "durationMs": 6932,
-    "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\nNot implemented: HTMLMediaElement's pause() method\nNot implemented: HTMLMediaElement's load() method\n ✓ |unit| __tests__/features/kangur/lessons-focus-routing.test.tsx (2 tests) 560ms\n     ✓ auto-opens the focused lesson when focus query maps to operation  528ms\n ✓ |unit| __tests__/features/kangur/learner-profile.page.test.tsx (4 tests) 315ms\n ✓ |unit| __tests__/features/kangur/kangur-admin-menu-toggle.test.tsx (2 tests) 106ms\n ✓ |unit| __tests__/features/kangur/kangur-feature-app.shell.test.tsx (7 tests) 33ms\n ✓ |unit| src/features/kangur/ui/services/profile.test.ts (3 tests) 7ms\n ✓ |unit| src/features/kangur/settings.test.ts (11 tests) 7ms\n\n Test Files  6 passed (6)\n      Tests  29 passed (29)\n   Start at  16:23:18\n   Duration  6.08s (transform 1.34s, setup 566ms, import 2.48s, tests 1.03s, environment 1.51s)"
+    "status": "fail",
+    "exitCode": 1,
+    "durationMs": 21472,
+    "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/kangur/lessons-focus-routing.test.tsx (2 tests) 691ms\n     ✓ auto-opens the focused lesson when focus query maps to operation  550ms\n ❯ |unit| __tests__/features/kangur/learner-profile.page.test.tsx (4 tests | 1 failed) 476ms\n     × loads user scores and renders profile metrics 124ms\n     ✓ keeps profile in local mode when user is not authenticated 222ms\n     ✓ shows scores loading error when score provider fails 63ms\n     ✓ treats score authorization errors as expected local-mode fallback 64ms\n ✓ |unit| __tests__/features/kangur/kangur-admin-menu-toggle.test.tsx (2 tests) 141ms\n ✓ |unit| __tests__/features/kangur/kangur-feature-app.shell.test.tsx (10 tests) 130ms\n ✓ |unit| src/features/kangur/settings.test.ts (16 tests) 17ms\n ✓ |unit| src/features/kangur/ui/services/profile.test.ts (9 tests) 14ms\n\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  |unit| __tests__/features/kangur/learner-profile.page.test.tsx > LearnerProfile page > loads user scores and renders profile metrics\nAssertionError: expected \"vi.fn()\" to be called with arguments: [ …(3) ]\n\nReceived: \n\n  1st vi.fn() call:\n\n  [\n    {\n      \"created_by\": \"jan@example.com\",\n+     \"subject\": \"maths\",\n    },\n    \"-created_date\",\n    120,\n  ]\n\n  2nd vi.fn() call:\n\n  [\n    {\n-     \"created_by\": \"jan@example.com\",\n+     \"player_name\": \"Jan\",\n+     \"subject\": \"maths\",\n    },\n    \"-created_date\",\n    120,\n  ]\n\n\nNumber of calls: 2\n\n ❯ __tests__/features/kangur/learner-profile.page.test.tsx:226:29\n    224| \n    225|     await waitFor(() => expect(scoreFilterMock).toHaveBeenCalledTimes(…\n    226|     expect(scoreFilterMock).toHaveBeenCalledWith({ created_by: 'jan@ex…\n       |                             ^\n    227|     expect(scoreFilterMock).toHaveBeenCalledWith({ player_name: 'Jan' …\n    228| \n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 5 passed (6)\n      Tests  1 failed | 42 passed (43)\n   Start at  18:56:20\n   Duration  20.46s (transform 6.01s, setup 729ms, import 15.70s, tests 1.47s, environment 2.02s)"
   },
-  "e2e": {
-    "id": "kangur-e2e",
-    "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/kangur/kangur-profile.spec.ts e2e/features/kangur/kangur-game-quickstart.spec.ts --workers=1",
-    "status": "pass",
-    "exitCode": 0,
-    "durationMs": 40427,
-    "output": "Running 10 tests using 1 worker\n\n(node:38212) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:38212) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓   1 e2e/features/kangur/kangur-game-quickstart.spec.ts:30:3 › Kangur Game Quick Start › opens training setup from quickStart=training and clears query params (9.3s)\n  ✓   2 e2e/features/kangur/kangur-game-quickstart.spec.ts:47:3 › Kangur Game Quick Start › starts operation run from quickStart=operation and clears query params (2.2s)\n  ✓   3 e2e/features/kangur/kangur-game-quickstart.spec.ts:74:3 › Kangur Game Quick Start › opens operation setup from bare quickStart=operation and clears query params (2.5s)\n  ✓   4 e2e/features/kangur/kangur-profile.spec.ts:79:3 › Kangur Learner Profile › renders learner profile shell and baseline sections (1.4s)\n  ✓   5 e2e/features/kangur/kangur-profile.spec.ts:98:3 › Kangur Learner Profile › supports navigation from game screen to learner profile (3.2s)\n  ✓   6 e2e/features/kangur/kangur-profile.spec.ts:110:3 › Kangur Learner Profile › renders deterministic learner metrics from mocked auth, progress, and scores (3.7s)\n  ✓   7 e2e/features/kangur/kangur-profile.spec.ts:196:3 › Kangur Learner Profile › shows the persisted AI tutor mood on the learner profile (1.4s)\n  ✓   8 e2e/features/kangur/kangur-profile.spec.ts:254:3 › Kangur Learner Profile › opens focused lesson from recommendation deep link (3.5s)\n  ✓   9 e2e/features/kangur/kangur-profile.spec.ts:325:3 › Kangur Learner Profile › quick-start training works from profile in local mode (2.9s)\n  ✓  10 e2e/features/kangur/kangur-profile.spec.ts:362:3 › Kangur Learner Profile › quick-start operation works from operation performance links (2.4s)\n\n  10 passed (38.7s)"
-  },
+  "e2e": null,
   "bundleRisk": {
     "files": [
       {
         "path": "src/features/kangur/ui/pages/Lessons.tsx",
-        "lines": 772,
-        "bytes": 31564
+        "lines": 1239,
+        "bytes": 49966
+      },
+      {
+        "path": "src/features/kangur/ui/pages/Game.tsx",
+        "lines": 967,
+        "bytes": 36204
       },
       {
         "path": "src/features/kangur/ui/services/kangur-questions-data.js",
@@ -39,19 +31,14 @@
         "bytes": 21289
       },
       {
-        "path": "src/features/kangur/ui/components/KangurGame.tsx",
-        "lines": 373,
-        "bytes": 11848
-      },
-      {
-        "path": "src/features/kangur/ui/pages/Game.tsx",
-        "lines": 250,
-        "bytes": 9356
-      },
-      {
         "path": "src/features/kangur/ui/pages/LearnerProfile.tsx",
-        "lines": 70,
-        "bytes": 3509
+        "lines": 423,
+        "bytes": 14808
+      },
+      {
+        "path": "src/features/kangur/ui/components/KangurGame.tsx",
+        "lines": 428,
+        "bytes": 13515
       },
       {
         "path": "src/features/kangur/ui/components/KangurIllustrations.ts",
@@ -59,11 +46,11 @@
         "bytes": 853
       }
     ],
-    "totalBytes": 78419,
-    "totalLines": 1808
+    "totalBytes": 136635,
+    "totalLines": 3400
   },
   "summary": {
-    "failedRuns": 0,
+    "failedRuns": 1,
     "infraFailures": 0
   }
 }

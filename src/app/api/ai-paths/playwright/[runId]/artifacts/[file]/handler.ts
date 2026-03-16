@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { assertPlaywrightRunAccess } from '@/app/api/ai-paths/playwright/access';
 import {
@@ -10,7 +11,7 @@ import {
   readPlaywrightNodeRun,
 } from '@/features/ai/ai-paths/services/playwright-node-runner';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { notFoundError, validationError } from '@/shared/errors/app-error';
 
 
 const guessContentType = (fileName: string): string => {
@@ -29,6 +30,11 @@ const toInlineDisposition = (fileName: string): string => {
   return `inline; filename="${safe}"`;
 };
 
+const paramsSchema = z.object({
+  runId: z.string().trim().min(1, 'Run id is required'),
+  file: z.string().trim().min(1, 'File is required'),
+});
+
 export async function GET_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
@@ -39,11 +45,13 @@ export async function GET_handler(
     await enforceAiPathsActionRateLimit(access, 'playwright-artifact');
   }
 
-  const runId = params.runId?.trim();
-  const file = params.file?.trim();
-  if (!runId || !file) {
-    throw badRequestError('Run id and file are required.');
+  const parsedParams = paramsSchema.safeParse(params);
+  if (!parsedParams.success) {
+    throw validationError('Invalid route parameters', {
+      issues: parsedParams.error.flatten(),
+    });
   }
+  const { runId, file } = parsedParams.data;
 
   const run = await readPlaywrightNodeRun(runId);
   if (!run) {

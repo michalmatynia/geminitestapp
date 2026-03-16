@@ -8,3 +8,4 @@ export * from './services/cms-theme-settings';
 export * from './services/cms-menu-settings';
 export * from './services/cms-activity';
 export * from './validations/api';
+export * from './utils/cms-text-extractor';

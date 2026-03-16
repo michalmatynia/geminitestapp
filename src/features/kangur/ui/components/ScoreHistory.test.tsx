@@ -9,9 +9,16 @@ import { buildKangurEmbeddedBasePath } from '@/features/kangur/config/routing';
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
 import { buildKangurScoreInsights } from '@/features/kangur/ui/services/score-insights';
 
-const { scoreFilterMock, logKangurClientErrorMock } = vi.hoisted(() => ({
+const {
+  scoreFilterMock,
+  logKangurClientErrorMock,
+  reportKangurClientErrorMock,
+  useKangurSubjectFocusMock,
+} = vi.hoisted(() => ({
   scoreFilterMock: vi.fn(),
   logKangurClientErrorMock: vi.fn(),
+  reportKangurClientErrorMock: vi.fn(),
+  useKangurSubjectFocusMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
@@ -22,8 +29,71 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
   }),
 }));
 
+const withKangurClientError = async <T,>(
+  report: unknown,
+  task: () => Promise<T>,
+  options: {
+    fallback: T | (() => T);
+    onError?: (error: unknown) => void;
+    shouldReport?: (error: unknown) => boolean;
+    shouldRethrow?: (error: unknown) => boolean;
+  }
+): Promise<T> => {
+  try {
+    return await task();
+  } catch (error) {
+    const shouldReport = options.shouldReport?.(error) ?? true;
+    if (shouldReport) {
+      reportKangurClientErrorMock(error, report);
+      logKangurClientErrorMock(error);
+    }
+    options.onError?.(error);
+    if (options.shouldRethrow?.(error)) {
+      throw error;
+    }
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : options.fallback;
+  }
+};
+
+const withKangurClientErrorSync = <T,>(
+  report: unknown,
+  task: () => T,
+  options: {
+    fallback: T | (() => T);
+    onError?: (error: unknown) => void;
+    shouldReport?: (error: unknown) => boolean;
+    shouldRethrow?: (error: unknown) => boolean;
+  }
+): T => {
+  try {
+    return task();
+  } catch (error) {
+    const shouldReport = options.shouldReport?.(error) ?? true;
+    if (shouldReport) {
+      reportKangurClientErrorMock(error, report);
+      logKangurClientErrorMock(error);
+    }
+    options.onError?.(error);
+    if (options.shouldRethrow?.(error)) {
+      throw error;
+    }
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : options.fallback;
+  }
+};
+
 vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: logKangurClientErrorMock,
+  reportKangurClientError: reportKangurClientErrorMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
 import ScoreHistory from '@/features/kangur/ui/components/ScoreHistory';
@@ -65,6 +135,7 @@ const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord =
   xp_earned: 24,
   created_date: '2026-03-06T12:00:00.000Z',
   created_by: 'jan@example.com',
+  subject: 'maths',
   ...overrides,
 });
 
@@ -72,6 +143,11 @@ describe('ScoreHistory', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     stubSystemDate(FIXED_NOW);
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
   });
 
   afterEach(() => {
@@ -150,12 +226,16 @@ describe('ScoreHistory', () => {
 
     await waitFor(() => expect(scoreFilterMock).toHaveBeenCalledTimes(2));
     expect(scoreFilterMock).toHaveBeenCalledWith(
-      { created_by: 'jan@example.com' },
+      { created_by: 'jan@example.com', subject: 'maths' },
       '-created_date',
       30
     );
-    expect(scoreFilterMock).toHaveBeenCalledWith({ player_name: 'Jan' }, '-created_date', 30);
-    expect(scoreFilterMock).not.toHaveBeenCalledWith({}, '-created_date', 30);
+    expect(scoreFilterMock).toHaveBeenCalledWith(
+      { player_name: 'Jan', subject: 'maths' },
+      '-created_date',
+      30
+    );
+    expect(scoreFilterMock).not.toHaveBeenCalledWith({ subject: 'maths' }, '-created_date', 30);
 
     expect(screen.getByText('Wyniki wg operacji')).toBeInTheDocument();
     expect(screen.getByText('Obraz ostatnich 7 dni')).toBeInTheDocument();
@@ -218,7 +298,9 @@ describe('ScoreHistory', () => {
 
     render(<ScoreHistory />);
 
-    await waitFor(() => expect(scoreFilterMock).toHaveBeenCalledWith({}, '-created_date', 30));
+    await waitFor(() =>
+      expect(scoreFilterMock).toHaveBeenCalledWith({ subject: 'maths' }, '-created_date', 30)
+    );
     expect(scoreFilterMock).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId('score-history-total-games')).toHaveTextContent('2');
   });

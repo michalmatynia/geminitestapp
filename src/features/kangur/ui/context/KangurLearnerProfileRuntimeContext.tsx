@@ -14,12 +14,13 @@ import {
   appendKangurUrlParams,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
-import { logKangurClientError } from '@/features/kangur/observability/client';
+import { withKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import {
@@ -28,8 +29,8 @@ import {
 } from '@/features/kangur/ui/services/learner-profile-scores';
 import {
   buildKangurLearnerProfileSnapshot,
-  type KangurLearnerProfileSnapshot,
 } from '@/features/kangur/ui/services/profile';
+import type { KangurLearnerProfileSnapshot } from '@/features/kangur/shared/contracts/kangur-profile';
 import type { KangurDifficulty, KangurOperation } from '@/features/kangur/ui/types';
 import type {
   KangurAssignmentPriority,
@@ -38,7 +39,6 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 export const KANGUR_LEARNER_PROFILE_DAILY_GOAL_GAMES = 3;
@@ -171,6 +171,7 @@ export function KangurLearnerProfileRuntimeProvider({
 }): JSX.Element {
   const { basePath } = useKangurRouting();
   const { user, navigateToLogin } = useKangurAuth();
+  const { subject } = useKangurSubjectFocus();
   const progress = useKangurProgressState();
   const hasUser = Boolean(user);
   const [scores, setScores] = useState<KangurScoreRecord[]>([]);
@@ -197,33 +198,44 @@ export function KangurLearnerProfileRuntimeProvider({
       setScoresError(null);
 
       try {
-        const loadedScores = await loadLearnerProfileScores(kangurPlatform.score, {
-          learnerId,
-          userName,
-          userEmail,
-          limit: LEARNER_PROFILE_SCORE_FETCH_LIMIT,
-        });
+        const loadedScores = await withKangurClientError(
+          {
+            source: 'kangur.learner-profile',
+            action: 'load-scores',
+            description: 'Loads learner score history for the profile view.',
+            context: {
+              hasUser,
+              subject,
+            },
+          },
+          async () =>
+            await loadLearnerProfileScores(kangurPlatform.score, {
+              learnerId,
+              userName,
+              userEmail,
+              subject,
+              limit: LEARNER_PROFILE_SCORE_FETCH_LIMIT,
+            }),
+          {
+            fallback: [],
+            onError: (error) => {
+              if (!isActive) {
+                return;
+              }
+
+              if (isKangurAuthStatusError(error)) {
+                setScores([]);
+                setScoresError(null);
+              } else {
+                setScoresError('Nie udało się pobrać historii wyników.');
+              }
+            },
+          }
+        );
         if (!isActive) {
           return;
         }
         setScores(loadedScores);
-      } catch (error: unknown) {
-        logClientError(error);
-        if (!isActive) {
-          return;
-        }
-
-        if (isKangurAuthStatusError(error)) {
-          setScores([]);
-          setScoresError(null);
-        } else {
-          logKangurClientError(error, {
-            source: 'KangurLearnerProfileRuntimeContext',
-            action: 'loadScores',
-            hasUser,
-          });
-          setScoresError('Nie udało się pobrać historii wyników.');
-        }
       } finally {
         if (isActive) {
           setIsLoadingScores(false);
@@ -236,7 +248,7 @@ export function KangurLearnerProfileRuntimeProvider({
     return () => {
       isActive = false;
     };
-  }, [hasUser, user?.activeLearner?.id, user?.email, user?.full_name]);
+  }, [hasUser, subject, user?.activeLearner?.id, user?.email, user?.full_name]);
 
   const snapshot = useMemo(
     () =>

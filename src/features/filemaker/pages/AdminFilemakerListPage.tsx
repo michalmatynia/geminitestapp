@@ -280,7 +280,7 @@ export function AdminFilemakerListPage(): React.JSX.Element {
   );
 
   return (
-    <div className='container mx-auto space-y-6 py-8'>
+    <div className='page-section-compact space-y-6'>
       <PanelHeader
         title='Filemaker List'
         description='Search persons, organizations, and events available for Case Resolver document addressing.'

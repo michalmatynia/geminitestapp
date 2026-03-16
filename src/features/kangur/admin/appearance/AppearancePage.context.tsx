@@ -43,6 +43,7 @@ import {
   ThemeSelectionId,
 } from './AppearancePage.constants';
 import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 
 type AppearancePageContextValue = {
@@ -68,7 +69,26 @@ type AppearancePageContextValue = {
   updateCatalog: (nextRaw: string) => void;
 };
 
+type AppearancePageActionsContextValue = Pick<
+  AppearancePageContextValue,
+  | 'handleAssignToSlot'
+  | 'handleDefaultModeChange'
+  | 'handleResetToFactory'
+  | 'handleSave'
+  | 'handleSelect'
+  | 'handleUnassignFromSlot'
+  | 'setDraft'
+  | 'updateCatalog'
+>;
+
+type AppearancePageStateContextValue = Omit<
+  AppearancePageContextValue,
+  keyof AppearancePageActionsContextValue
+>;
+
 const AppearancePageContext = createContext<AppearancePageContextValue | null>(null);
+const AppearancePageStateContext = createContext<AppearancePageStateContextValue | null>(null);
+const AppearancePageActionsContext = createContext<AppearancePageActionsContextValue | null>(null);
 
 export function AppearancePageProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { toast } = useToast();
@@ -349,7 +369,7 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
     setCatalogOverrideRaw(nextRaw);
   }, []);
 
-  const value = useMemo(
+  const stateValue = useMemo<AppearancePageStateContextValue>(
     () => ({
       catalog,
       catalogOverrideRaw,
@@ -363,14 +383,6 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
       slotAssignments,
       slotLabelsByKey,
       slotThemes,
-      handleAssignToSlot,
-      handleDefaultModeChange,
-      handleResetToFactory,
-      handleSave,
-      handleSelect,
-      handleUnassignFromSlot,
-      setDraft,
-      updateCatalog,
     }),
     [
       catalog,
@@ -385,23 +397,68 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
       slotAssignments,
       slotLabelsByKey,
       slotThemes,
+    ]
+  );
+
+  const actionsValue = useMemo<AppearancePageActionsContextValue>(
+    () => ({
       handleAssignToSlot,
       handleDefaultModeChange,
       handleResetToFactory,
       handleSave,
       handleSelect,
       handleUnassignFromSlot,
+      setDraft,
+      updateCatalog,
+    }),
+    [
+      handleAssignToSlot,
+      handleDefaultModeChange,
+      handleResetToFactory,
+      handleSave,
+      handleSelect,
+      handleUnassignFromSlot,
+      setDraft,
       updateCatalog,
     ]
   );
 
-  return <AppearancePageContext.Provider value={value}>{children}</AppearancePageContext.Provider>;
+  const value = useMemo<AppearancePageContextValue>(
+    () => ({ ...stateValue, ...actionsValue }),
+    [actionsValue, stateValue]
+  );
+
+  return (
+    <AppearancePageActionsContext.Provider value={actionsValue}>
+      <AppearancePageStateContext.Provider value={stateValue}>
+        <AppearancePageContext.Provider value={value}>
+          {children}
+        </AppearancePageContext.Provider>
+      </AppearancePageStateContext.Provider>
+    </AppearancePageActionsContext.Provider>
+  );
 }
 
 export function useAppearancePage(): AppearancePageContextValue {
   const context = useContext(AppearancePageContext);
   if (!context) {
-    throw new Error('useAppearancePage must be used within an AppearancePageProvider');
+    throw internalError('useAppearancePage must be used within an AppearancePageProvider');
+  }
+  return context;
+}
+
+export function useAppearancePageState(): AppearancePageStateContextValue {
+  const context = useContext(AppearancePageStateContext);
+  if (!context) {
+    throw internalError('useAppearancePageState must be used within an AppearancePageProvider');
+  }
+  return context;
+}
+
+export function useAppearancePageActions(): AppearancePageActionsContextValue {
+  const context = useContext(AppearancePageActionsContext);
+  if (!context) {
+    throw internalError('useAppearancePageActions must be used within an AppearancePageProvider');
   }
   return context;
 }

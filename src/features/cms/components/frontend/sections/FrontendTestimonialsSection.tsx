@@ -18,7 +18,7 @@ export function FrontendTestimonialsSection(): React.ReactNode {
   if (blocks.length === 0) {
     return (
       <section style={sectionStyles}>
-        <div className='container mx-auto px-4 md:px-6 py-8'>
+        <div className='page-container px-4 md:px-6 py-8'>
           <CompactEmptyState
             title='No testimonials'
             description='Add blocks to create testimonial cards.'

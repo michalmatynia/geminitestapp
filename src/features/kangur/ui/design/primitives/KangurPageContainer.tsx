@@ -12,6 +12,8 @@ export type KangurPageContainerProps = React.HTMLAttributes<HTMLElement> & {
   'data-kangur-route-main'?: boolean | 'true' | 'false';
 };
 
+export const KANGUR_MAIN_CONTENT_ID = 'kangur-main-content';
+
 const KangurMainRoleContext = React.createContext<boolean>(false);
 
 export const KangurMainRoleProvider = ({
@@ -32,6 +34,7 @@ export const KangurPageContainer = ({
   children,
   tabIndex,
   role,
+  id,
   ...props
 }: KangurPageContainerProps): React.JSX.Element => {
   const routing = useOptionalKangurRouting();
@@ -45,6 +48,8 @@ export const KangurPageContainer = ({
   const shouldSetMainRole = (Comp === 'main' || explicitRouteMain) && !shouldSuppressMain;
   const resolvedRole =
     role ?? (shouldSetMainRole && ResolvedComp !== 'main' ? 'main' : undefined);
+  const normalizedId = typeof id === 'string' && id.trim().length > 0 ? id : undefined;
+  const resolvedId = normalizedId ?? (shouldMarkRouteMain ? KANGUR_MAIN_CONTENT_ID : undefined);
 
   return (
     <ResolvedComp
@@ -52,6 +57,7 @@ export const KangurPageContainer = ({
       data-kangur-route-main={shouldMarkRouteMain ? 'true' : undefined}
       tabIndex={tabIndex ?? -1}
       role={resolvedRole}
+      id={resolvedId}
       {...props}
     >
       {children}

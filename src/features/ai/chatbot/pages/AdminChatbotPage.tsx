@@ -92,7 +92,7 @@ function ChatbotPageInner(): React.JSX.Element | null {
   }
 
   return (
-    <div className='container mx-auto h-[calc(100vh-120px)] py-6'>
+    <div className='page-section-tight h-[calc(100vh-120px)]'>
       <h1 className='sr-only'>Chatbot</h1>
       <div className='grid h-full grid-cols-1 gap-6 lg:grid-cols-5'>
         {/* Session Sidebar */}

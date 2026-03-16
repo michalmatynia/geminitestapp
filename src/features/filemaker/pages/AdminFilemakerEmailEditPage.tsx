@@ -197,7 +197,7 @@ export function AdminFilemakerEmailEditPage(): React.JSX.Element {
 
   if (!email) {
     return (
-      <div className='container mx-auto space-y-6 py-8'>
+      <div className='page-section-compact space-y-6'>
         <SectionHeader
           title='Edit Email'
           description='The requested email record could not be found.'
@@ -222,7 +222,7 @@ export function AdminFilemakerEmailEditPage(): React.JSX.Element {
   }
 
   return (
-    <div className='container mx-auto space-y-6 py-8'>
+    <div className='page-section-compact space-y-6'>
         <SectionHeader
           title='Edit Email'
           description='Update email status and links to persons and organizations.'

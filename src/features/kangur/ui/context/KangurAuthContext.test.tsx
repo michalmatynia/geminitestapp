@@ -28,6 +28,52 @@ const {
   logKangurClientErrorMock: vi.fn(),
 }));
 
+const withKangurClientError = async <T,>(
+  _report: unknown,
+  task: () => Promise<T>,
+  options: {
+    fallback: T | (() => T);
+    onError?: (error: unknown) => void;
+    shouldReport?: (error: unknown) => boolean;
+    shouldRethrow?: (error: unknown) => boolean;
+  }
+): Promise<T> => {
+  try {
+    return await task();
+  } catch (error) {
+    options.onError?.(error);
+    if (options.shouldRethrow?.(error)) {
+      throw error;
+    }
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : options.fallback;
+  }
+};
+
+const withKangurClientErrorSync = <T,>(
+  _report: unknown,
+  task: () => T,
+  options: {
+    fallback: T | (() => T);
+    onError?: (error: unknown) => void;
+    shouldReport?: (error: unknown) => boolean;
+    shouldRethrow?: (error: unknown) => boolean;
+  }
+): T => {
+  try {
+    return task();
+  } catch (error) {
+    options.onError?.(error);
+    if (options.shouldRethrow?.(error)) {
+      throw error;
+    }
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : options.fallback;
+  }
+};
+
 vi.mock('next/navigation', () => ({
   useRouter: useRouterMock,
 }));
@@ -48,6 +94,8 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
 
 vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: logKangurClientErrorMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
 }));
 
 import { getKangurLoginHref } from '@/features/kangur/config/routing';

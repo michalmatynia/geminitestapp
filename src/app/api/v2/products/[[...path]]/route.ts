@@ -3,7 +3,9 @@ export const dynamic = 'force-dynamic';
 
 import type { NextRequest } from 'next/server';
 
-import { apiHandler } from '@/shared/lib/api/api-handler';
+import { methodNotAllowedError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 
 import * as productsIndex from '../route-handler';
 import * as productsCount from '../count/route-handler';
@@ -63,6 +65,7 @@ import * as productStudioAction from '../[id]/studio/[action]/route-handler';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Params = Record<string, string>;
+type RouteParams = { path?: string[] | string };
 type RouteHandler<P extends Params = Params> = (
   request: NextRequest,
   context: { params: P | Promise<P> }
@@ -71,17 +74,27 @@ type RouteModule<P extends Params = Params> = Partial<Record<HttpMethod, RouteHa
 
 const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
-const notFound = (): Response => new Response('Not Found', { status: 404 });
-const methodNotAllowed = (allowed: HttpMethod[]): Response =>
-  new Response('Method Not Allowed', {
-    status: 405,
-    headers: { Allow: allowed.join(', ') },
-  });
+const buildSource = (method: HttpMethod): string => `v2.products.[[...path]].${method}`;
+
+const notFound = async (request: NextRequest, method: HttpMethod): Promise<Response> =>
+  createErrorResponse(notFoundError('Not Found'), { request, source: buildSource(method) });
+const methodNotAllowed = async (
+  request: NextRequest,
+  allowed: HttpMethod[],
+  method: HttpMethod
+): Promise<Response> => {
+  const response = await createErrorResponse(
+    methodNotAllowedError('Method not allowed', { allowedMethods: allowed }),
+    { request, source: buildSource(method) }
+  );
+  response.headers.set('Allow', allowed.join(', '));
+  return response;
+};
 
 const getAllowedMethods = <P extends Params>(module: RouteModule<P>): HttpMethod[] =>
   HTTP_METHODS.filter((method) => typeof module[method] === 'function');
 
-const dispatch = <P extends Params>(
+const dispatch = async <P extends Params>(
   module: RouteModule<P>,
   method: HttpMethod,
   request: NextRequest,
@@ -90,7 +103,9 @@ const dispatch = <P extends Params>(
   const handler = module[method];
   if (!handler) {
     const allowed = getAllowedMethods(module);
-    return Promise.resolve(allowed.length > 0 ? methodNotAllowed(allowed) : notFound());
+    return allowed.length > 0
+      ? methodNotAllowed(request, allowed, method)
+      : notFound(request, method);
   }
   return handler(request, { params: Promise.resolve(params ?? ({} as P)) });
 };
@@ -139,7 +154,7 @@ const routeProducts = (
     if (second && segments.length === 2) {
       return dispatch(productsParametersId, method, request, { id: second });
     }
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
 
   if (first === 'producers') {
@@ -149,7 +164,7 @@ const routeProducts = (
     if (second && segments.length === 2) {
       return dispatch(productsProducersId, method, request, { id: second });
     }
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
 
   if (first === 'tags') {
@@ -162,7 +177,7 @@ const routeProducts = (
     if (second && segments.length === 2) {
       return dispatch(productsTagsId, method, request, { id: second });
     }
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
 
   if (first === 'validation' && segments.length === 1) {
@@ -197,7 +212,7 @@ const routeProducts = (
     if (second && segments.length === 2) {
       return dispatch(productsValidatorPatternsId, method, request, { id: second });
     }
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
 
   if (first === 'validator-runtime' && second === 'evaluate' && segments.length === 2) {
@@ -223,7 +238,7 @@ const routeProducts = (
     if (second && segments.length === 2) {
       return dispatch(productsCategoriesId, method, request, { id: second });
     }
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
 
   if (first === 'entities') {
@@ -236,7 +251,7 @@ const routeProducts = (
     if (second && third && segments.length === 3) {
       return dispatch(productsEntitiesTypeId, method, request, { type: second, id: third });
     }
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
 
   if (first === 'metadata') {
@@ -246,7 +261,7 @@ const routeProducts = (
     if (second && third && segments.length === 3) {
       return dispatch(productsMetadataTypeId, method, request, { type: second, id: third });
     }
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
 
   if (first === 'images') {
@@ -259,7 +274,7 @@ const routeProducts = (
     if (second === 'upload' && segments.length === 2) {
       return dispatch(productsImagesUpload, method, request);
     }
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
 
   if (first === 'import' && second === 'csv' && segments.length === 2) {
@@ -279,7 +294,7 @@ const routeProducts = (
     if (second && segments.length === 2) {
       return dispatch(productsAiJobsJob, method, request, { jobId: second });
     }
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
 
   if (first === 'ai-paths' && second === 'description-context' && segments.length === 2) {
@@ -305,7 +320,7 @@ const routeProducts = (
     if (second === 'relink' && segments.length === 2) {
       return dispatch(productsSyncRelink, method, request);
     }
-    return Promise.resolve(notFound());
+    return notFound(request, method);
   }
 
   if (first && segments.length === 1) {
@@ -337,20 +352,31 @@ const routeProducts = (
     }
   }
 
-  return Promise.resolve(notFound());
+  return notFound(request, method);
 };
 
-const buildRouteHandler = (method: HttpMethod) =>
-  apiHandler(
-    async (request: NextRequest) => routeProducts(method, request, getPathSegments(request)),
-    {
-      source: `v2.products.${method}`,
-      requireAuth: true,
-    }
-  );
-
-export const GET = buildRouteHandler('GET');
-export const POST = buildRouteHandler('POST');
-export const PUT = buildRouteHandler('PUT');
-export const PATCH = buildRouteHandler('PATCH');
-export const DELETE = buildRouteHandler('DELETE');
+export const GET = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, _params) =>
+    routeProducts('GET', request, getPathSegments(request)),
+  { source: 'v2.products.[[...path]].GET', requireAuth: true }
+);
+export const POST = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, _params) =>
+    routeProducts('POST', request, getPathSegments(request)),
+  { source: 'v2.products.[[...path]].POST', requireAuth: true }
+);
+export const PUT = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, _params) =>
+    routeProducts('PUT', request, getPathSegments(request)),
+  { source: 'v2.products.[[...path]].PUT', requireAuth: true }
+);
+export const PATCH = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, _params) =>
+    routeProducts('PATCH', request, getPathSegments(request)),
+  { source: 'v2.products.[[...path]].PATCH', requireAuth: true }
+);
+export const DELETE = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, _params) =>
+    routeProducts('DELETE', request, getPathSegments(request)),
+  { source: 'v2.products.[[...path]].DELETE', requireAuth: true }
+);

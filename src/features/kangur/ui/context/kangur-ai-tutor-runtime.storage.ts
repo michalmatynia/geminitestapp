@@ -16,7 +16,7 @@ import {
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
 import { normalizeMessageArtifacts } from './kangur-ai-tutor-runtime.helpers';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 
 // ---------------------------------------------------------------------------
@@ -152,52 +152,57 @@ export const loadPersistedRuntimeState = (): PersistedKangurAiTutorRuntimeState 
     return createEmptyPersistedRuntimeState();
   }
 
-  try {
-    const raw = window.sessionStorage.getItem(KANGUR_AI_TUTOR_RUNTIME_STORAGE_KEY);
-    if (!raw) {
-      return createEmptyPersistedRuntimeState();
-    }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.ai-tutor',
+      action: 'load-runtime',
+      description: 'Loads the persisted AI tutor runtime state.',
+    },
+    () => {
+      const raw = window.sessionStorage.getItem(KANGUR_AI_TUTOR_RUNTIME_STORAGE_KEY);
+      if (!raw) {
+        return createEmptyPersistedRuntimeState();
+      }
 
-    const parsed = JSON.parse(raw) as Partial<PersistedKangurAiTutorRuntimeState> | null;
-    if (!parsed || typeof parsed !== 'object') {
-      return createEmptyPersistedRuntimeState();
-    }
+      const parsed = JSON.parse(raw) as Partial<PersistedKangurAiTutorRuntimeState> | null;
+      if (!parsed || typeof parsed !== 'object') {
+        return createEmptyPersistedRuntimeState();
+      }
 
-    return {
-      isOpen: parsed.isOpen === true,
-      sessionStates:
-        parsed.sessionStates && typeof parsed.sessionStates === 'object'
-          ? Object.entries(parsed.sessionStates).reduce<
-            Record<string, KangurAiTutorSessionState>
-          >((acc, [sessionKey, sessionState]) => {
-            const normalized = normalizePersistedSessionState(sessionState);
-            if (!normalized) {
+      return {
+        isOpen: parsed.isOpen === true,
+        sessionStates:
+          parsed.sessionStates && typeof parsed.sessionStates === 'object'
+            ? Object.entries(parsed.sessionStates).reduce<
+              Record<string, KangurAiTutorSessionState>
+            >((acc, [sessionKey, sessionState]) => {
+              const normalized = normalizePersistedSessionState(sessionState);
+              if (!normalized) {
+                return acc;
+              }
+
+              acc[sessionKey] = normalized;
               return acc;
-            }
+            }, {})
+            : {},
+        learnerMemories:
+          parsed.learnerMemories && typeof parsed.learnerMemories === 'object'
+            ? Object.entries(parsed.learnerMemories).reduce<
+              Record<string, KangurAiTutorLearnerMemory>
+            >((acc, [memoryKey, learnerMemory]) => {
+              const normalized = normalizePersistedLearnerMemory(learnerMemory);
+              if (!normalized || !memoryKey.trim()) {
+                return acc;
+              }
 
-            acc[sessionKey] = normalized;
-            return acc;
-          }, {})
-          : {},
-      learnerMemories:
-        parsed.learnerMemories && typeof parsed.learnerMemories === 'object'
-          ? Object.entries(parsed.learnerMemories).reduce<
-            Record<string, KangurAiTutorLearnerMemory>
-          >((acc, [memoryKey, learnerMemory]) => {
-            const normalized = normalizePersistedLearnerMemory(learnerMemory);
-            if (!normalized || !memoryKey.trim()) {
+              acc[memoryKey] = normalized;
               return acc;
-            }
-
-            acc[memoryKey] = normalized;
-            return acc;
-          }, {})
-          : {},
-    };
-  } catch (error) {
-    logClientError(error);
-    return createEmptyPersistedRuntimeState();
-  }
+            }, {})
+            : {},
+      };
+    },
+    { fallback: createEmptyPersistedRuntimeState }
+  );
 };
 
 export const persistRuntimeState = (
@@ -210,16 +215,23 @@ export const persistRuntimeState = (
     return;
   }
 
-  try {
-    window.sessionStorage.setItem(
-      KANGUR_AI_TUTOR_RUNTIME_STORAGE_KEY,
-      JSON.stringify(state)
-    );
-  } catch (error) {
-    logClientError(error);
-  
-    // Ignore storage write failures so the tutor still works when storage is unavailable.
-  }
+  withKangurClientErrorSync(
+    {
+      source: 'kangur.ai-tutor',
+      action: 'save-runtime',
+      description: 'Persists the AI tutor runtime state.',
+    },
+    () => {
+      window.sessionStorage.setItem(
+        KANGUR_AI_TUTOR_RUNTIME_STORAGE_KEY,
+        JSON.stringify(state)
+      );
+    },
+    {
+      // Ignore storage write failures so the tutor still works when storage is unavailable.
+      fallback: undefined,
+    }
+  );
 };
 
 export const clearPersistedRuntimeState = (): void => {
@@ -227,11 +239,18 @@ export const clearPersistedRuntimeState = (): void => {
     return;
   }
 
-  try {
-    window.sessionStorage.removeItem(KANGUR_AI_TUTOR_RUNTIME_STORAGE_KEY);
-  } catch (error) {
-    logClientError(error);
-  
-    // Ignore storage cleanup failures so the tutor remains functional.
-  }
+  withKangurClientErrorSync(
+    {
+      source: 'kangur.ai-tutor',
+      action: 'clear-runtime',
+      description: 'Clears the persisted AI tutor runtime state.',
+    },
+    () => {
+      window.sessionStorage.removeItem(KANGUR_AI_TUTOR_RUNTIME_STORAGE_KEY);
+    },
+    {
+      // Ignore storage cleanup failures so the tutor remains functional.
+      fallback: undefined,
+    }
+  );
 };

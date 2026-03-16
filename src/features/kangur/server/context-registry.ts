@@ -3,18 +3,14 @@ import {
   KANGUR_CONTEXT_ROOT_IDS,
   KANGUR_RUNTIME_ENTITY_TYPES,
 } from '@/features/kangur/context-registry/refs';
-import { parseKangurLessonDocumentStore } from '@/features/kangur/lesson-documents';
 import { listKangurLoginActivity } from '@/features/kangur/server/kangur-login-activity';
 import { getKangurAssignmentRepository } from '@/features/kangur/services/kangur-assignment-repository';
 import { evaluateKangurAssignment } from '@/features/kangur/services/kangur-assignments';
 import { getKangurLearnerById } from '@/features/kangur/services/kangur-learner-repository';
+import { getKangurLessonDocumentRepository } from '@/features/kangur/services/kangur-lesson-document-repository';
+import { getKangurLessonRepository } from '@/features/kangur/services/kangur-lesson-repository';
 import { getKangurProgressRepository } from '@/features/kangur/services/kangur-progress-repository';
 import { getKangurScoreRepository } from '@/features/kangur/services/kangur-score-repository';
-import {
-  KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
-  KANGUR_LESSONS_SETTING_KEY,
-  parseKangurLessons,
-} from '@/features/kangur/settings';
 import {
   hasFullyPublishedQuestionSetForSuite,
   getPublishedQuestionsForSuite,
@@ -167,8 +163,8 @@ export const loadKangurRegistryBaseData = async (learnerId: string): Promise<Kan
     progressRepository,
     scoreRepository,
     assignmentRepository,
-    rawLessons,
-    rawLessonDocuments,
+    lessonRepository,
+    lessonDocumentRepository,
     rawTestSuites,
     rawTestQuestions,
   ] = await Promise.all([
@@ -176,12 +172,12 @@ export const loadKangurRegistryBaseData = async (learnerId: string): Promise<Kan
     getKangurProgressRepository(),
     getKangurScoreRepository(),
     getKangurAssignmentRepository(),
-    readStoredSettingValue(KANGUR_LESSONS_SETTING_KEY),
-    readStoredSettingValue(KANGUR_LESSON_DOCUMENTS_SETTING_KEY),
+    getKangurLessonRepository(),
+    getKangurLessonDocumentRepository(),
     readStoredSettingValue(KANGUR_TEST_SUITES_SETTING_KEY),
     readStoredSettingValue(KANGUR_TEST_QUESTIONS_SETTING_KEY),
   ]);
-  const [progress, scores, assignments] = await Promise.all([
+  const [progress, scores, assignments, lessons, lessonDocuments] = await Promise.all([
     progressRepository.getProgress(learnerId),
     scoreRepository.listScores({
       sort: '-created_date',
@@ -194,9 +190,9 @@ export const loadKangurRegistryBaseData = async (learnerId: string): Promise<Kan
       learnerKey: learnerId,
       includeArchived: false,
     }),
+    lessonRepository.listLessons(),
+    lessonDocumentRepository.listLessonDocuments(),
   ]);
-  const lessons = parseKangurLessons(rawLessons);
-  const lessonDocuments = parseKangurLessonDocumentStore(rawLessonDocuments);
   const testSuites = parseKangurTestSuites(rawTestSuites);
   const questionStore = parseKangurTestQuestionStore(rawTestQuestions);
   const snapshot = buildKangurLearnerProfileSnapshot({

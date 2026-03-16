@@ -11,19 +11,24 @@ import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { useLessonContentEditorContext } from '../context/LessonContentEditorContext';
 
 const {
-  mutateAsyncMock,
+  updateLessonsMock,
+  updateLessonDocumentsMock,
   apiPostMock,
   toastMock,
-  settingsStoreMock,
+  lessonsState,
+  lessonDocumentsState,
   useMasterFolderTreeShellMock,
   latestNodesState,
 } = vi.hoisted(() => ({
-  mutateAsyncMock: vi.fn(),
+  updateLessonsMock: vi.fn(),
+  updateLessonDocumentsMock: vi.fn(),
   apiPostMock: vi.fn(),
   toastMock: vi.fn(),
-  settingsStoreMock: {
-    get: vi.fn(),
-    isLoading: false,
+  lessonsState: {
+    value: [] as Array<Record<string, unknown>>,
+  },
+  lessonDocumentsState: {
+    value: {} as Record<string, unknown>,
   },
   useMasterFolderTreeShellMock: vi.fn(),
   latestNodesState: {
@@ -71,21 +76,31 @@ vi.mock('@/features/foldertree', async (importOriginal) => {
   };
 });
 
-vi.mock('@/shared/hooks/use-settings', () => ({
-  useUpdateSetting: () => ({
-    mutateAsync: mutateAsyncMock,
-    isPending: false,
-  }),
-}));
-
 vi.mock('@/shared/lib/api-client', () => ({
   api: {
     post: apiPostMock,
   },
 }));
 
-vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
-  useSettingsStore: () => settingsStoreMock,
+vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: () => ({
+    data: lessonsState.value,
+    isLoading: false,
+    error: null,
+  }),
+  useKangurLessonDocuments: () => ({
+    data: lessonDocumentsState.value,
+    isLoading: false,
+    error: null,
+  }),
+  useUpdateKangurLessons: () => ({
+    mutateAsync: updateLessonsMock,
+    isPending: false,
+  }),
+  useUpdateKangurLessonDocuments: () => ({
+    mutateAsync: updateLessonDocumentsMock,
+    isPending: false,
+  }),
 }));
 
 vi.mock('@/features/kangur/admin/KangurLessonDocumentEditor', () => ({
@@ -255,9 +270,7 @@ vi.mock('@/features/kangur/admin/components/KangurAdminContentShell', () => ({
   KangurAdminContentShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-import { KANGUR_LESSON_DOCUMENTS_SETTING_KEY } from '@/features/kangur/lesson-documents';
 import { AdminKangurLessonsManagerPage } from '@/features/kangur/admin/AdminKangurLessonsManagerPage';
-import { KANGUR_LESSONS_SETTING_KEY } from '@/features/kangur/settings';
 
 const baseLessons = [
   {
@@ -284,12 +297,14 @@ vi.mock('@/features/kangur/settings', async (importOriginal) => {
 
 describe('AdminKangurLessonsManagerPage content mode flow', () => {
   beforeEach(() => {
-    mutateAsyncMock.mockReset();
+    updateLessonsMock.mockReset();
+    updateLessonDocumentsMock.mockReset();
     apiPostMock.mockReset();
     toastMock.mockReset();
-    settingsStoreMock.get.mockReset();
     useMasterFolderTreeShellMock.mockReset();
     latestNodesState.value = [];
+    lessonsState.value = [...baseLessons];
+    lessonDocumentsState.value = {};
 
     useMasterFolderTreeShellMock.mockReturnValue({
       capabilities: {
@@ -320,16 +335,10 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
   });
 
   it('opens the content editor after creating a document-mode lesson and preserves the new lesson on content save', async () => {
-    settingsStoreMock.get.mockImplementation((key: string) => {
-      if (key === KANGUR_LESSONS_SETTING_KEY) {
-        return JSON.stringify(baseLessons);
-      }
-      if (key === KANGUR_LESSON_DOCUMENTS_SETTING_KEY) {
-        return '{}';
-      }
-      return null;
-    });
-    mutateAsyncMock.mockResolvedValue(undefined);
+    lessonsState.value = [...baseLessons];
+    lessonDocumentsState.value = {};
+    updateLessonsMock.mockResolvedValue(undefined);
+    updateLessonDocumentsMock.mockResolvedValue(undefined);
 
     render(<AdminKangurLessonsManagerPage />);
 
@@ -347,12 +356,9 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /create lesson/i }));
 
-    await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(updateLessonsMock).toHaveBeenCalledTimes(1));
 
-    const initialLessonSave = mutateAsyncMock.mock.calls[0]?.[0] as { key: string; value: string };
-    expect(initialLessonSave.key).toBe(KANGUR_LESSONS_SETTING_KEY);
-
-    const createdLessons = JSON.parse(initialLessonSave.value) as Array<{
+    const createdLessons = updateLessonsMock.mock.calls[0]?.[0] as Array<{
       title: string;
       contentMode: string;
       id: string;
@@ -372,59 +378,44 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
     fireEvent.click(screen.getByRole('button', { name: /set sample content/i }));
     fireEvent.click(screen.getByRole('button', { name: /save content/i }));
 
-    await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(updateLessonDocumentsMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(updateLessonsMock).toHaveBeenCalledTimes(2));
 
-    const writes = mutateAsyncMock.mock.calls.map((call) => call[0]) as Array<
-      { key?: string; value?: string } | undefined
-    >;
-    const documentSave = writes.find(
-      (call) => call?.key === KANGUR_LESSON_DOCUMENTS_SETTING_KEY
-    ) as { key: string; value: string } | undefined;
-    expect(documentSave).toBeDefined();
-    const documentStore = JSON.parse(documentSave!.value) as Record<
+    const documentStore = updateLessonDocumentsMock.mock.calls[0]?.[0] as Record<
       string,
       { blocks: Array<{ type: string }> }
     >;
     expect(createdLesson).toBeDefined();
     expect(documentStore[createdLesson!.id]?.blocks[0]?.type).toBe('text');
 
-    const lessonWrites = writes.filter(
-      (call): call is { key: string; value: string } => call?.key === KANGUR_LESSONS_SETTING_KEY
-    );
-    const followupLessonSave = lessonWrites.at(-1);
-    expect(followupLessonSave).toBeDefined();
-    const followupLessons = JSON.parse(followupLessonSave!.value) as Array<{ title: string }>;
+    const followupLessons = updateLessonsMock.mock.calls.at(-1)?.[0] as Array<{
+      title: string;
+    }>;
     expect(followupLessons.some((lesson) => lesson.title === 'SVG Playground Updated')).toBe(true);
   });
 
   it('clears custom content and returns the lesson to component mode', async () => {
-    settingsStoreMock.get.mockImplementation((key: string) => {
-      if (key === KANGUR_LESSONS_SETTING_KEY) {
-        return JSON.stringify([
+    lessonsState.value = [
+      {
+        ...baseLessons[0],
+        contentMode: 'document',
+      },
+    ];
+    lessonDocumentsState.value = {
+      'kangur-lesson-clock': {
+        version: 1,
+        blocks: [
           {
-            ...baseLessons[0],
-            contentMode: 'document',
+            id: 'text-1',
+            type: 'text',
+            html: '<p>Stored custom content</p>',
+            align: 'left',
           },
-        ]);
-      }
-      if (key === KANGUR_LESSON_DOCUMENTS_SETTING_KEY) {
-        return JSON.stringify({
-          'kangur-lesson-clock': {
-            version: 1,
-            blocks: [
-              {
-                id: 'text-1',
-                type: 'text',
-                html: '<p>Stored custom content</p>',
-                align: 'left',
-              },
-            ],
-          },
-        });
-      }
-      return null;
-    });
-    mutateAsyncMock.mockResolvedValue(undefined);
+        ],
+      },
+    };
+    updateLessonsMock.mockResolvedValue(undefined);
+    updateLessonDocumentsMock.mockResolvedValue(undefined);
 
     render(<AdminKangurLessonsManagerPage />);
 
@@ -432,35 +423,28 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
     expect(screen.getByRole('button', { name: /clear content/i })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /clear content/i }));
 
-    await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(updateLessonsMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(updateLessonDocumentsMock).toHaveBeenCalledTimes(1));
 
-    const lessonSave = mutateAsyncMock.mock.calls[0]?.[0] as { key: string; value: string };
-    expect(lessonSave.key).toBe(KANGUR_LESSONS_SETTING_KEY);
-    const persistedLessons = JSON.parse(lessonSave.value) as Array<{ contentMode: string }>;
+    const persistedLessons = updateLessonsMock.mock.calls[0]?.[0] as Array<{
+      contentMode: string;
+    }>;
     expect(persistedLessons[0]?.contentMode).toBe('component');
 
-    const documentSave = mutateAsyncMock.mock.calls[1]?.[0] as { key: string; value: string };
-    expect(documentSave.key).toBe(KANGUR_LESSON_DOCUMENTS_SETTING_KEY);
-    expect(JSON.parse(documentSave.value)).toEqual({});
+    expect(updateLessonDocumentsMock.mock.calls[0]?.[0]).toEqual({});
   });
 
   it('opens geometry document lessons with the mosaic starter layout', async () => {
-    settingsStoreMock.get.mockImplementation((key: string) => {      if (key === KANGUR_LESSONS_SETTING_KEY) {
-        return JSON.stringify([
-          {
-            ...baseLessons[0],
-            id: 'kangur-lesson-geometry-shapes',
-            componentId: 'geometry_shapes',
-            title: 'Figury geometryczne',
-            contentMode: 'document',
-          },
-        ]);
-      }
-      if (key === KANGUR_LESSON_DOCUMENTS_SETTING_KEY) {
-        return '{}';
-      }
-      return null;
-    });
+    lessonsState.value = [
+      {
+        ...baseLessons[0],
+        id: 'kangur-lesson-geometry-shapes',
+        componentId: 'geometry_shapes',
+        title: 'Figury geometryczne',
+        contentMode: 'document',
+      },
+    ];
+    lessonDocumentsState.value = {};
 
     render(<AdminKangurLessonsManagerPage />);
 
@@ -471,18 +455,11 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
     expect(screen.getByTestId('mock-doc-editor-json')).toHaveTextContent('"denseFill":true');
     expect(screen.getByTestId('mock-doc-editor-json')).toHaveTextContent('"columnStart":1');
     expect(screen.getByTestId('mock-doc-editor-json')).toHaveTextContent('"rowStart":1');
-    });
+  });
 
-    it('imports the legacy lesson structure into the document editor draft', async () => {
-    settingsStoreMock.get.mockImplementation((key: string) => {
-      if (key === KANGUR_LESSONS_SETTING_KEY) {
-        return JSON.stringify(baseLessons);
-      }
-      if (key === KANGUR_LESSON_DOCUMENTS_SETTING_KEY) {
-        return '{}';
-      }
-      return null;
-    });
+  it('imports the legacy lesson structure into the document editor draft', async () => {
+    lessonsState.value = [...baseLessons];
+    lessonDocumentsState.value = {};
 
     render(<AdminKangurLessonsManagerPage />);
 
@@ -504,37 +481,28 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
   });
 
   it('bulk-imports current lessons into document drafts and switches them to document mode', async () => {
-    settingsStoreMock.get.mockImplementation((key: string) => {
-      if (key === KANGUR_LESSONS_SETTING_KEY) {
-        return JSON.stringify([
-          ...baseLessons,
-          {
-            ...baseLessons[0],
-            id: 'kangur-lesson-adding',
-            componentId: 'adding',
-            title: 'Dodawanie',
-            description: 'Dodawaj liczby krok po kroku',
-            emoji: '➕',
-            sortOrder: 2000,
-          },
-        ]);
-      }
-      if (key === KANGUR_LESSON_DOCUMENTS_SETTING_KEY) {
-        return '{}';
-      }
-      return null;
-    });
-    mutateAsyncMock.mockResolvedValue(undefined);
+    lessonsState.value = [
+      ...baseLessons,
+      {
+        ...baseLessons[0],
+        id: 'kangur-lesson-adding',
+        componentId: 'adding',
+        title: 'Dodawanie',
+        description: 'Dodawaj liczby krok po kroku',
+        emoji: '➕',
+        sortOrder: 2000,
+      },
+    ];
+    lessonDocumentsState.value = {};
+    updateLessonDocumentsMock.mockResolvedValue(undefined);
 
     render(<AdminKangurLessonsManagerPage />);
 
     fireEvent.click(screen.getByRole('button', { name: /import all to editor/i }));
 
-    await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(updateLessonDocumentsMock).toHaveBeenCalledTimes(1));
 
-    const documentSave = mutateAsyncMock.mock.calls[0]?.[0] as { key: string; value: string };
-    expect(documentSave.key).toBe(KANGUR_LESSON_DOCUMENTS_SETTING_KEY);
-    const documentStore = JSON.parse(documentSave.value) as Record<
+    const documentStore = updateLessonDocumentsMock.mock.calls[0]?.[0] as Record<
       string,
       { pages?: Array<{ title?: string; blocks: Array<{ type: string; activityId?: string }> }> }
     >;
@@ -559,39 +527,32 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
   });
 
   it('filters lessons by editorial state', async () => {
-    settingsStoreMock.get.mockImplementation((key: string) => {
-      if (key === KANGUR_LESSONS_SETTING_KEY) {
-        return JSON.stringify([
-          ...baseLessons,
+    lessonsState.value = [
+      ...baseLessons,
+      {
+        ...baseLessons[0],
+        id: 'kangur-lesson-calendar',
+        componentId: 'calendar',
+        title: 'Kalendarz',
+        description: 'Dni i miesiące',
+        emoji: '📅',
+        sortOrder: 2000,
+        enabled: false,
+      },
+    ];
+    lessonDocumentsState.value = {
+      'kangur-lesson-clock': {
+        version: 1,
+        blocks: [
           {
-            ...baseLessons[0],
-            id: 'kangur-lesson-calendar',
-            componentId: 'calendar',
-            title: 'Kalendarz',
-            description: 'Dni i miesiące',
-            emoji: '📅',
-            sortOrder: 2000,
-            enabled: false,
+            id: 'text-1',
+            type: 'text',
+            html: '<p>Stored custom content</p>',
+            align: 'left',
           },
-        ]);
-      }
-      if (key === KANGUR_LESSON_DOCUMENTS_SETTING_KEY) {
-        return JSON.stringify({
-          'kangur-lesson-clock': {
-            version: 1,
-            blocks: [
-              {
-                id: 'text-1',
-                type: 'text',
-                html: '<p>Stored custom content</p>',
-                align: 'left',
-              },
-            ],
-          },
-        });
-      }
-      return null;
-    });
+        ],
+      },
+    };
 
     render(<AdminKangurLessonsManagerPage />);
 

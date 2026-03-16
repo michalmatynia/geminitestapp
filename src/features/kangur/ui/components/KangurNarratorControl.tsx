@@ -36,6 +36,7 @@ type KangurNarratorControlProps = {
   className?: string;
   displayMode?: 'button' | 'icon';
   diagnosticsVisible?: boolean;
+  loadingLabel?: string;
   pauseLabel?: string;
   readLabel?: string;
   resumeLabel?: string;
@@ -53,6 +54,7 @@ export function KangurNarratorControl({
   className,
   displayMode = 'button',
   diagnosticsVisible = false,
+  loadingLabel,
   pauseLabel = 'Pause',
   readLabel = 'Read',
   resumeLabel = 'Resume',
@@ -383,10 +385,16 @@ export function KangurNarratorControl({
     if (isIconMode) {
       return undefined;
     }
-    return `calc(${Math.max(readLabel.length, pauseLabel.length, resumeLabel.length, 6)}ch + 2.75rem)`;
-  }, [isIconMode, pauseLabel, readLabel, resumeLabel]);
+    return `calc(${Math.max(readLabel.length, pauseLabel.length, resumeLabel.length, loadingLabel?.length ?? 0, 6)}ch + 2.75rem)`;
+  }, [isIconMode, loadingLabel, pauseLabel, readLabel, resumeLabel]);
   const controlLabel =
-    status === 'playing' ? pauseLabel : status === 'paused' ? resumeLabel : readLabel;
+    status === 'loading'
+      ? loadingLabel ?? readLabel
+      : status === 'playing'
+        ? pauseLabel
+        : status === 'paused'
+          ? resumeLabel
+          : readLabel;
   const ControlIcon =
     status === 'loading'
       ? Loader2

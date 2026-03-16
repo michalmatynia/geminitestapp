@@ -8,6 +8,21 @@ import { activityLogSchema } from './system';
 
 const nonEmptyTrimmedString = z.string().trim().min(1);
 
+export const KANGUR_LEARNER_PASSWORD_MIN_LENGTH = 6;
+export const KANGUR_LEARNER_PASSWORD_MAX_LENGTH = 160;
+export const KANGUR_LEARNER_PASSWORD_PATTERN = /^[A-Za-z0-9]+$/;
+
+const kangurLearnerPasswordSchema = z
+  .string()
+  .trim()
+  .min(KANGUR_LEARNER_PASSWORD_MIN_LENGTH, {
+    message: `Password must be at least ${KANGUR_LEARNER_PASSWORD_MIN_LENGTH} characters.`,
+  })
+  .max(KANGUR_LEARNER_PASSWORD_MAX_LENGTH)
+  .regex(KANGUR_LEARNER_PASSWORD_PATTERN, {
+    message: 'Password must contain only letters and numbers.',
+  });
+
 export const KANGUR_LESSONS_SETTING_KEY = 'kangur_lessons_v1';
 export const KANGUR_LESSON_DOCUMENTS_SETTING_KEY = 'kangur_lesson_documents_v1';
 export const KANGUR_THEME_SETTINGS_KEY = 'kangur_cms_theme_v1';
@@ -35,11 +50,25 @@ export const kangurLessonComponentIdSchema = z.enum([
   'logical_classification',
   'logical_reasoning',
   'logical_analogies',
+  'english_basics',
+  'english_parts_of_speech',
+  'english_sentence_structure',
+  'english_subject_verb_agreement',
+  'english_articles',
+  'english_prepositions_time_place',
 ]);
 export type KangurLessonComponentId = z.infer<typeof kangurLessonComponentIdSchema>;
 
 export const kangurLessonContentModeSchema = z.enum(['component', 'document']);
 export type KangurLessonContentMode = z.infer<typeof kangurLessonContentModeSchema>;
+
+export const kangurLessonSubjectSchema = z.enum(['maths', 'english']);
+export type KangurLessonSubject = z.infer<typeof kangurLessonSubjectSchema>;
+
+export const kangurSubjectFocusSchema = z.object({
+  subject: kangurLessonSubjectSchema,
+});
+export type KangurSubjectFocus = z.infer<typeof kangurSubjectFocusSchema>;
 
 export const KANGUR_TTS_DEFAULT_LOCALE = 'pl-PL';
 export const KANGUR_TTS_DEFAULT_VOICE = 'coral';
@@ -90,6 +119,7 @@ export const kangurLessonSchema = z.object({
   id: nonEmptyTrimmedString.max(120),
   componentId: kangurLessonComponentIdSchema,
   contentMode: kangurLessonContentModeSchema.default('component'),
+  subject: kangurLessonSubjectSchema.default('maths'),
   title: nonEmptyTrimmedString.max(120),
   description: nonEmptyTrimmedString.max(240),
   emoji: nonEmptyTrimmedString.max(12),
@@ -635,6 +665,7 @@ export const kangurLearnerProfileSchema = z.object({
   ownerUserId: nonEmptyTrimmedString.max(120),
   displayName: nonEmptyTrimmedString.max(120),
   age: z.number().int().min(3).max(99).nullable().optional(),
+  avatarId: z.string().trim().max(80).nullable().optional(),
   loginName: nonEmptyTrimmedString.max(80),
   status: kangurLearnerStatusSchema,
   legacyUserKey: z.string().trim().max(160).nullable().default(null),
@@ -651,7 +682,7 @@ export const kangurLearnerCreateInputSchema = z.object({
   displayName: nonEmptyTrimmedString.max(120),
   age: z.number().int().min(3).max(99).optional(),
   loginName: nonEmptyTrimmedString.max(80),
-  password: z.string().min(8).max(160),
+  password: kangurLearnerPasswordSchema,
 });
 export type KangurLearnerCreateInput = z.infer<typeof kangurLearnerCreateInputSchema>;
 
@@ -660,15 +691,17 @@ export const kangurLearnerUpdateInputSchema = z
     displayName: nonEmptyTrimmedString.max(120).optional(),
     age: z.number().int().min(3).max(99).optional(),
     loginName: nonEmptyTrimmedString.max(80).optional(),
-    password: z.string().min(8).max(160).optional(),
+    password: kangurLearnerPasswordSchema.optional(),
     status: kangurLearnerStatusSchema.optional(),
+    avatarId: z.string().trim().max(80).nullable().optional(),
   })
   .refine(
     (value) =>
       value.displayName !== undefined ||
       value.loginName !== undefined ||
       value.password !== undefined ||
-      value.status !== undefined,
+      value.status !== undefined ||
+      value.avatarId !== undefined,
     {
       message: 'At least one learner update field is required.',
     }
@@ -677,7 +710,7 @@ export type KangurLearnerUpdateInput = z.infer<typeof kangurLearnerUpdateInputSc
 
 export const kangurLearnerSignInInputSchema = z.object({
   loginName: nonEmptyTrimmedString.max(80),
-  password: z.string().min(1).max(160),
+  password: kangurLearnerPasswordSchema,
 });
 export type KangurLearnerSignInInput = z.infer<typeof kangurLearnerSignInInputSchema>;
 
@@ -816,11 +849,25 @@ export type KangurScoreSort = z.infer<typeof kangurScoreSortSchema>;
 export const kangurScoreLimitSchema = z.number().int().min(1).max(500).default(100);
 export type KangurScoreLimit = z.infer<typeof kangurScoreLimitSchema>;
 
+const isEnglishScoreOperation = (operation: string): boolean =>
+  operation.trim().toLowerCase().startsWith('english_');
+
+export const resolveKangurScoreSubject = (input: {
+  operation: string;
+  subject?: KangurLessonSubject | null;
+}): KangurLessonSubject => {
+  if (isEnglishScoreOperation(input.operation)) {
+    return 'english';
+  }
+  return input.subject ?? 'maths';
+};
+
 export const kangurScoreSchema = z.object({
   id: nonEmptyTrimmedString,
   player_name: nonEmptyTrimmedString.max(80),
   score: z.number().int().min(0).max(10_000),
   operation: nonEmptyTrimmedString.max(64),
+  subject: kangurLessonSubjectSchema.default('maths'),
   total_questions: z.number().int().min(1).max(10_000),
   correct_answers: z.number().int().min(0).max(10_000),
   time_taken: z.number().int().min(0).max(86_400),
@@ -852,6 +899,7 @@ export type KangurScoreRepositoryCreateInput = z.infer<
 export const kangurScoreFiltersSchema = z.object({
   player_name: z.string().trim().min(1).optional(),
   operation: z.string().trim().min(1).optional(),
+  subject: kangurLessonSubjectSchema.optional(),
   created_by: z.string().trim().min(1).optional(),
   learner_id: z.string().trim().min(1).optional(),
 });
@@ -862,6 +910,7 @@ export const kangurScoreListQuerySchema = z.object({
   limit: kangurScoreLimitSchema.optional(),
   player_name: kangurScoreFiltersSchema.shape.player_name,
   operation: kangurScoreFiltersSchema.shape.operation,
+  subject: kangurScoreFiltersSchema.shape.subject,
   created_by: kangurScoreFiltersSchema.shape.created_by,
   learner_id: kangurScoreFiltersSchema.shape.learner_id,
 });

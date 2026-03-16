@@ -20,6 +20,7 @@ const buildLesson = (overrides: Partial<KangurLesson> = {}): KangurLesson => ({
   id: 'lesson-1',
   componentId: 'clock',
   contentMode: 'component',
+  subject: 'maths',
   title: 'Lesson One',
   description: 'Intro lesson',
   emoji: '🕐',

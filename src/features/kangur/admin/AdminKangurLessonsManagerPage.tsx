@@ -11,12 +11,10 @@ import {
 } from '@/features/foldertree';
 import { FolderTreeSearchBar, useMasterFolderTreeSearch } from '@/features/foldertree';
 import type { KangurLesson, KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
-import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
   ContextRegistryPageProvider,
   useRegisterContextRegistryPageSource,
 } from '@/shared/lib/ai-context-registry/page-context';
-import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import {
   Badge,
   Button,
@@ -28,7 +26,12 @@ import {
 import { ConfirmModal } from '@/features/kangur/shared/ui/templates/modals';
 import { cn } from '@/features/kangur/shared/utils';
 import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
-import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
+import {
+  useKangurLessonDocuments,
+  useKangurLessons,
+  useUpdateKangurLessonDocuments,
+  useUpdateKangurLessons,
+} from '@/features/kangur/ui/hooks/useKangurLessons';
 
 import {
   buildKangurLessonCatalogMasterNodes,
@@ -41,22 +44,18 @@ import {
   createKangurLessonSvgBlock,
   createStarterKangurLessonDocument,
   hasKangurLessonDocumentContent,
-  parseKangurLessonDocumentStore,
   removeKangurLessonDocument,
   resolveKangurLessonDocumentPages,
   updateKangurLessonDocumentPages,
   updateKangurLessonDocumentTimestamp,
 } from '../lesson-documents';
 import {
-  KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
   appendMissingGeometryKangurLessons,
   appendMissingLogicalThinkingKangurLessons,
-  KANGUR_LESSONS_SETTING_KEY,
   KANGUR_LESSON_LIBRARY,
   KANGUR_LESSON_SORT_ORDER_GAP,
   canonicalizeKangurLessons,
   createKangurLessonId,
-  parseKangurLessons,
 } from '../settings';
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
 import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
@@ -108,16 +107,17 @@ export function AdminKangurLessonsManagerPage({
 }: {
   standalone?: boolean;
 } = {}): React.JSX.Element {
-  const settingsStore = useSettingsStore();
-  const updateSetting = useUpdateSetting();
+  const lessonsQuery = useKangurLessons();
+  const lessonDocumentsQuery = useKangurLessonDocuments();
+  const updateLessons = useUpdateKangurLessons();
+  const updateLessonDocuments = useUpdateKangurLessonDocuments();
   const { toast } = useToast();
+  const isLoading = lessonsQuery.isLoading || lessonDocumentsQuery.isLoading;
 
-  const rawLessons = settingsStore.get(KANGUR_LESSONS_SETTING_KEY);
-  const rawLessonDocuments = settingsStore.get(KANGUR_LESSON_DOCUMENTS_SETTING_KEY);
-  const lessons = useMemo((): KangurLesson[] => parseKangurLessons(rawLessons), [rawLessons]);
+  const lessons = useMemo((): KangurLesson[] => lessonsQuery.data ?? [], [lessonsQuery.data]);
   const lessonDocuments = useMemo(
-    () => parseKangurLessonDocumentStore(rawLessonDocuments),
-    [rawLessonDocuments]
+    () => lessonDocumentsQuery.data ?? {},
+    [lessonDocumentsQuery.data]
   );
   const lessonById = useMemo(
     () => new Map(lessons.map((lesson): [string, KangurLesson] => [lesson.id, lesson])),
@@ -140,6 +140,7 @@ export function AdminKangurLessonsManagerPage({
   const isCatalogMode = treeMode === 'catalog';
   const activeTreeInstance = isCatalogMode ? CATALOG_TREE_INSTANCE : ORDERED_TREE_INSTANCE;
   const treeSearchQuery = isCatalogMode ? catalogTreeSearchQuery : orderedTreeSearchQuery;
+  const isSaving = updateLessons.isPending || updateLessonDocuments.isPending;
   const registrySource = useMemo(
     () => ({
       label: 'Kangur admin lessons manager workspace',
@@ -148,10 +149,10 @@ export function AdminKangurLessonsManagerPage({
         lesson: editingContentLesson,
         document: showContentModal ? contentDraft : null,
         isEditorOpen: showContentModal,
-        isSaving: updateSetting.isPending,
+        isSaving,
       }),
     }),
-    [contentDraft, editingContentLesson, lessons.length, showContentModal, updateSetting.isPending]
+    [contentDraft, editingContentLesson, isSaving, lessons.length, showContentModal]
   );
   const handleTreeSearchChange = useCallback(
     (nextQuery: string): void => {
@@ -228,13 +229,10 @@ export function AdminKangurLessonsManagerPage({
                 nextLessonOrder.findIndex((l) => l.id === lesson.id) * KANGUR_LESSON_SORT_ORDER_GAP,
             }))
           );
-          await updateSetting.mutateAsync({
-            key: KANGUR_LESSONS_SETTING_KEY,
-            value: serializeSetting(nextLessons),
-          });
+          await updateLessons.mutateAsync(nextLessons);
         },
       }),
-    [isCatalogMode, lessonById, lessons, updateSetting]
+    [isCatalogMode, lessonById, lessons, updateLessons]
   );
 
   const {
@@ -304,18 +302,12 @@ export function AdminKangurLessonsManagerPage({
       const nextDoc = updateKangurLessonDocumentPages(existingDoc, nextPages);
       const nextStore = { ...lessonDocuments, [svgModalLesson.id]: nextDoc };
 
-      await updateSetting.mutateAsync({
-        key: KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
-        value: serializeSetting(nextStore),
-      });
+      await updateLessonDocuments.mutateAsync(nextStore);
 
       if (svgModalLesson.contentMode !== 'document') {
         const nextLessonRecord: KangurLesson = { ...svgModalLesson, contentMode: 'document' };
         const nextLessons = canonicalizeKangurLessons(upsertLesson(lessons, nextLessonRecord));
-        await updateSetting.mutateAsync({
-          key: KANGUR_LESSONS_SETTING_KEY,
-          value: serializeSetting(nextLessons),
-        });
+        await updateLessons.mutateAsync(nextLessons);
       }
 
       toast('SVG image saved.', { variant: 'success' });
@@ -335,6 +327,7 @@ export function AdminKangurLessonsManagerPage({
     setFormData((current) => ({
       ...current,
       componentId,
+      subject: template.subject ?? 'maths',
       title: template.title,
       description: template.description,
       emoji: template.emoji,
@@ -353,10 +346,7 @@ export function AdminKangurLessonsManagerPage({
       };
 
       const nextLessons = canonicalizeKangurLessons(upsertLesson(lessons, nextLesson));
-      await updateSetting.mutateAsync({
-        key: KANGUR_LESSONS_SETTING_KEY,
-        value: serializeSetting(nextLessons),
-      });
+      await updateLessons.mutateAsync(nextLessons);
 
       toast(editingLesson ? 'Lesson updated.' : 'Lesson created.', { variant: 'success' });
       setShowModal(false);
@@ -381,17 +371,11 @@ export function AdminKangurLessonsManagerPage({
       const nextLessons = canonicalizeKangurLessons(
         lessons.filter((lesson) => lesson.id !== lessonToDelete.id)
       );
-      await updateSetting.mutateAsync({
-        key: KANGUR_LESSONS_SETTING_KEY,
-        value: serializeSetting(nextLessons),
-      });
+      await updateLessons.mutateAsync(nextLessons);
 
       const nextLessonDocuments = removeKangurLessonDocument(lessonDocuments, lessonToDelete.id);
       if (nextLessonDocuments !== lessonDocuments) {
-        await updateSetting.mutateAsync({
-          key: KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
-          value: serializeSetting(nextLessonDocuments),
-        });
+        await updateLessonDocuments.mutateAsync(nextLessonDocuments);
       }
       clearLessonContentEditorDraft(lessonToDelete.id);
 
@@ -414,17 +398,11 @@ export function AdminKangurLessonsManagerPage({
         ...lessonDocuments,
         [editingContentLesson.id]: nextDocument,
       };
-      await updateSetting.mutateAsync({
-        key: KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
-        value: serializeSetting(nextStore),
-      });
+      await updateLessonDocuments.mutateAsync(nextStore);
 
       const nextLesson: KangurLesson = { ...editingContentLesson, contentMode: 'document' };
       const nextLessons = canonicalizeKangurLessons(upsertLesson(lessons, nextLesson));
-      await updateSetting.mutateAsync({
-        key: KANGUR_LESSONS_SETTING_KEY,
-        value: serializeSetting(nextLessons),
-      });
+      await updateLessons.mutateAsync(nextLessons);
       clearLessonContentEditorDraft(editingContentLesson.id);
 
       toast('Lesson content saved.', { variant: 'success' });
@@ -444,17 +422,11 @@ export function AdminKangurLessonsManagerPage({
     try {
       const nextLesson: KangurLesson = { ...editingContentLesson, contentMode: 'component' };
       const nextLessons = canonicalizeKangurLessons(upsertLesson(lessons, nextLesson));
-      await updateSetting.mutateAsync({
-        key: KANGUR_LESSONS_SETTING_KEY,
-        value: serializeSetting(nextLessons),
-      });
+      await updateLessons.mutateAsync(nextLessons);
 
       const nextStore = { ...lessonDocuments };
       delete nextStore[editingContentLesson.id];
-      await updateSetting.mutateAsync({
-        key: KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
-        value: serializeSetting(nextStore),
-      });
+      await updateLessonDocuments.mutateAsync(nextStore);
       clearLessonContentEditorDraft(editingContentLesson.id);
 
       toast('Custom content cleared.', { variant: 'success' });
@@ -490,10 +462,7 @@ export function AdminKangurLessonsManagerPage({
     try {
       const result = appendMissingGeometryKangurLessons(lessons);
       const nextLessons = canonicalizeKangurLessons(result.lessons);
-      await updateSetting.mutateAsync({
-        key: KANGUR_LESSONS_SETTING_KEY,
-        value: serializeSetting(nextLessons),
-      });
+      await updateLessons.mutateAsync(nextLessons);
       toast('Geometry lesson pack added.', { variant: 'success' });
     } catch (error) {
       logClientError(error);
@@ -508,10 +477,7 @@ export function AdminKangurLessonsManagerPage({
     try {
       const result = appendMissingLogicalThinkingKangurLessons(lessons);
       const nextLessons = canonicalizeKangurLessons(result.lessons);
-      await updateSetting.mutateAsync({
-        key: KANGUR_LESSONS_SETTING_KEY,
-        value: serializeSetting(nextLessons),
-      });
+      await updateLessons.mutateAsync(nextLessons);
       toast('Logical thinking lesson pack added.', { variant: 'success' });
     } catch (error) {
       logClientError(error);
@@ -541,10 +507,7 @@ export function AdminKangurLessonsManagerPage({
         return;
       }
 
-      await updateSetting.mutateAsync({
-        key: KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
-        value: serializeSetting(nextStore),
-      });
+      await updateLessonDocuments.mutateAsync(nextStore);
       toast(`Imported ${updatedCount} lessons to modular editor.`, { variant: 'success' });
     } catch (error) {
       logClientError(error);
@@ -555,7 +518,7 @@ export function AdminKangurLessonsManagerPage({
     }
   };
 
-  const isSaveDisabled = !formData.title.trim() || updateSetting.isPending;
+  const isSaveDisabled = !formData.title.trim() || isSaving;
   const lessonsNeedingLegacyImport = countLessonsRequiringLegacyImport(lessons, lessonDocuments);
   const activeFilterLabel =
     filterCounts.find((filter) => filter.id === authoringFilter)?.label ?? 'All lessons';
@@ -582,10 +545,10 @@ export function AdminKangurLessonsManagerPage({
         onEditContent={openContentModal}
         onQuickSvg={openSvgModal}
         onDelete={setLessonToDelete}
-        isUpdating={updateSetting.isPending}
+        isUpdating={isSaving}
       />
     ),
-    [lessonById, lessonDocuments, updateSetting.isPending]
+    [lessonById, lessonDocuments, isSaving]
   );
 
   const mainWorkspace = (
@@ -627,7 +590,7 @@ export function AdminKangurLessonsManagerPage({
                       !isCatalogMode ? activeSegmentClassName : inactiveSegmentClassName
                     )}
                     onClick={(): void => setTreeMode('ordered')}
-                    disabled={updateSetting.isPending}
+                    disabled={isSaving}
                   >
                     <ListOrdered className='mr-1 size-3.5' />
                     Ordered
@@ -641,7 +604,7 @@ export function AdminKangurLessonsManagerPage({
                       isCatalogMode ? activeSegmentClassName : inactiveSegmentClassName
                     )}
                     onClick={(): void => setTreeMode('catalog')}
-                    disabled={updateSetting.isPending}
+                    disabled={isSaving}
                   >
                     <Folders className='mr-1 size-3.5' />
                     Catalog
@@ -657,7 +620,7 @@ export function AdminKangurLessonsManagerPage({
                   size='sm'
                   variant='outline'
                   className={toolbarButtonClassName}
-                  disabled={updateSetting.isPending || geometryPackAddedCount === 0}
+                  disabled={isSaving || geometryPackAddedCount === 0}
                 >
                   <Sparkles className='mr-1 size-3.5' />
                   Add geometry pack
@@ -669,7 +632,7 @@ export function AdminKangurLessonsManagerPage({
                   size='sm'
                   variant='outline'
                   className={toolbarButtonClassName}
-                  disabled={updateSetting.isPending || logicPackAddedCount === 0}
+                  disabled={isSaving || logicPackAddedCount === 0}
                 >
                   <Sparkles className='mr-1 size-3.5' />
                   Add logic pack
@@ -681,7 +644,7 @@ export function AdminKangurLessonsManagerPage({
                   size='sm'
                   variant='outline'
                   className={toolbarButtonClassName}
-                  disabled={updateSetting.isPending || lessons.length === 0}
+                  disabled={isSaving || lessons.length === 0}
                 >
                   <Sparkles className='mr-1 size-3.5' />
                   Import all to editor
@@ -692,7 +655,7 @@ export function AdminKangurLessonsManagerPage({
                   size='sm'
                   variant='outline'
                   className={toolbarButtonClassName}
-                  disabled={updateSetting.isPending}
+                  disabled={isSaving}
                 >
                   <Plus className='mr-1 size-3.5' />
                   Add lesson
@@ -715,7 +678,7 @@ export function AdminKangurLessonsManagerPage({
                           : inactiveSegmentClassName
                       )}
                       onClick={(): void => setAuthoringFilter(filter.id)}
-                      disabled={updateSetting.isPending}
+                      disabled={isSaving}
                     >
                       {filter.label}
                       <span className='ml-1 text-[10px] text-current/75'>{filter.count}</span>
@@ -758,7 +721,7 @@ export function AdminKangurLessonsManagerPage({
           </div>
         }
       >
-        {settingsStore.isLoading ? (
+        {isLoading ? (
           <div className='space-y-2 p-3'>
             <Skeleton className='h-10 w-full' />
             <Skeleton className='h-10 w-full' />
@@ -772,7 +735,7 @@ export function AdminKangurLessonsManagerPage({
               searchState={searchState}
               rootDropUi={isCatalogMode ? { ...rootDropUi, enabled: false } : rootDropUi}
               renderNode={renderNode}
-              enableDnd={!isCatalogMode && authoringFilter === 'all' && !updateSetting.isPending}
+              enableDnd={!isCatalogMode && authoringFilter === 'all' && !isSaving}
               emptyLabel={
                 authoringFilter === 'all'
                   ? 'No lessons yet. Add the first lesson to start.'
@@ -791,7 +754,7 @@ export function AdminKangurLessonsManagerPage({
         onSave={(markup: string, viewBox: string): void => {
           void handleSaveLessonSvg(markup, viewBox);
         }}
-        isSaving={updateSetting.isPending}
+        isSaving={isSaving}
       >
         <LessonSvgQuickAddModal />
       </LessonSvgQuickAddRuntimeProvider>
@@ -819,7 +782,7 @@ export function AdminKangurLessonsManagerPage({
         onSave={(): void => {
           void handleSaveLesson();
         }}
-        isSaving={updateSetting.isPending}
+        isSaving={isSaving}
         isSaveDisabled={isSaveDisabled}
         saveText={editingLesson ? 'Save Lesson' : 'Create Lesson'}
       >
@@ -834,7 +797,7 @@ export function AdminKangurLessonsManagerPage({
         lesson={editingContentLesson}
         document={contentDraft}
         isOpen={showContentModal}
-        isSaving={updateSetting.isPending}
+        isSaving={isSaving}
         onClose={(): void => {
           setShowContentModal(false);
           setEditingContentLesson(null);

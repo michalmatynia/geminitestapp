@@ -27,8 +27,62 @@ const {
   trackKangurClientEventMock: vi.fn(),
 }));
 
+const withKangurClientError = async <T,>(
+  _report: unknown,
+  task: () => Promise<T>,
+  options: {
+    fallback: T | (() => T);
+    onError?: (error: unknown) => void;
+    shouldReport?: (error: unknown) => boolean;
+    shouldRethrow?: (error: unknown) => boolean;
+  }
+): Promise<T> => {
+  try {
+    return await task();
+  } catch (error) {
+    options.onError?.(error);
+    if (options.shouldRethrow?.(error)) {
+      throw error;
+    }
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : options.fallback;
+  }
+};
+
+const withKangurClientErrorSync = <T,>(
+  _report: unknown,
+  task: () => T,
+  options: {
+    fallback: T | (() => T);
+    onError?: (error: unknown) => void;
+    shouldReport?: (error: unknown) => boolean;
+    shouldRethrow?: (error: unknown) => boolean;
+  }
+): T => {
+  try {
+    return task();
+  } catch (error) {
+    options.onError?.(error);
+    if (options.shouldRethrow?.(error)) {
+      throw error;
+    }
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : options.fallback;
+  }
+};
+
+const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
+  useKangurSubjectFocusMock: vi.fn(),
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
@@ -43,6 +97,8 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
 vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: logKangurClientErrorMock,
   trackKangurClientEvent: trackKangurClientEventMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
 }));
 
 import { KangurProgressSyncProvider } from './KangurProgressSyncProvider';
@@ -104,6 +160,11 @@ describe('KangurProgressSyncProvider', () => {
     setProgressPersistenceEnabled(true);
 
     useKangurAuthMock.mockReturnValue(buildAuthState());
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
     progressGetMock.mockResolvedValue(createProgress());
     progressUpdateMock.mockImplementation(
       async (progress: ReturnType<typeof createProgress>) => progress
@@ -134,13 +195,15 @@ describe('KangurProgressSyncProvider', () => {
     );
 
     await waitFor(() => expect(progressGetMock).toHaveBeenCalledTimes(1));
+    expect(progressGetMock).toHaveBeenCalledWith({ subject: 'maths' });
     await waitFor(() =>
       expect(progressUpdateMock).toHaveBeenCalledWith(
         createProgress({
           totalXp: 120,
           gamesPlayed: 5,
           badges: ['first_game'],
-        })
+        }),
+        { subject: 'maths' }
       )
     );
     expect(trackKangurClientEventMock).toHaveBeenCalledWith(
@@ -165,6 +228,7 @@ describe('KangurProgressSyncProvider', () => {
     );
 
     await waitFor(() => expect(progressGetMock).toHaveBeenCalledTimes(1));
+    expect(progressGetMock).toHaveBeenCalledWith({ subject: 'maths' });
     await waitFor(() =>
       expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('0')
     );
@@ -185,7 +249,8 @@ describe('KangurProgressSyncProvider', () => {
         createProgress({
           totalXp: 45,
           gamesPlayed: 2,
-        })
+        }),
+        { subject: 'maths' }
       )
     );
     expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('45');

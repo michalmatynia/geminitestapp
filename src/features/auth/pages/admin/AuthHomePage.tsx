@@ -30,7 +30,7 @@ const cards = [
 
 export default function AuthPage(): React.JSX.Element {
   return (
-    <div className='container mx-auto max-w-5xl py-10'>
+    <div className='page-section max-w-5xl'>
       <SectionHeader
         title='Auth'
         description='Start building your authentication system.'

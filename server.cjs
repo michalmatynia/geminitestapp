@@ -1,5 +1,7 @@
 const { createServer } = require('http');
 const { createHash } = require('crypto');
+const { WebSocketServer } = require('ws');
+const { Redis } = require('ioredis');
 const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
@@ -85,6 +87,11 @@ const requestedDevBundler =
   typeof process.env['NEXT_DEV_BUNDLER'] === 'string'
     ? process.env['NEXT_DEV_BUNDLER'].trim().toLowerCase()
     : '';
+
+const DUELS_LOBBY_WS_PATH = '/api/kangur/duels/lobby/ws';
+const DUELS_LOBBY_REDIS_CHANNEL = 'kangur:duels:lobby';
+const DUELS_LOBBY_WS_HEARTBEAT_MS = 15000;
+const DUELS_LOBBY_REDIS_CONNECT_TIMEOUT_MS = 3000;
 
 const next = require('next');
 const nextOptions = {
@@ -311,6 +318,123 @@ app.prepare().then(async () => {
         res.statusCode = 500;
         res.end('Internal Server Error');
       }
+    });
+  });
+
+  const wss = new WebSocketServer({ noServer: true });
+
+  const createLobbySubscriber = () => {
+    const redisUrl = process.env.REDIS_URL;
+    if (!redisUrl) return null;
+    return new Redis(redisUrl, {
+      maxRetriesPerRequest: 1,
+      enableReadyCheck: true,
+      lazyConnect: true,
+      connectTimeout: DUELS_LOBBY_REDIS_CONNECT_TIMEOUT_MS,
+      retryStrategy: () => null,
+      ...(process.env.REDIS_TLS === 'true' ? { tls: {} } : {}),
+    });
+  };
+
+  wss.on('connection', (ws) => {
+    let closed = false;
+    let subscriber = null;
+
+    const safeSend = (payload) => {
+      if (closed || ws.readyState !== ws.OPEN) return;
+      ws.send(JSON.stringify(payload));
+    };
+
+    const cleanup = async () => {
+      if (closed) return;
+      closed = true;
+      if (heartbeatTimer) {
+        clearInterval(heartbeatTimer);
+        heartbeatTimer = null;
+      }
+      if (subscriber) {
+        try {
+          subscriber.removeAllListeners('message');
+          await subscriber.unsubscribe(DUELS_LOBBY_REDIS_CHANNEL);
+        } catch (err) {
+          void ErrorSystem.captureException(err);
+        
+          // best-effort cleanup
+        }
+        try {
+          await subscriber.quit();
+        } catch (err) {
+          void ErrorSystem.captureException(err);
+          subscriber.disconnect();
+        }
+        subscriber = null;
+      }
+      try {
+        ws.close();
+      } catch (err) {
+        void ErrorSystem.captureException(err);
+      }
+    };
+
+    let heartbeatTimer = setInterval(() => {
+      safeSend({ type: 'heartbeat', ts: Date.now() });
+    }, DUELS_LOBBY_WS_HEARTBEAT_MS);
+
+    safeSend({ type: 'ready', data: { stream: 'kangur_duels_lobby' } });
+
+    subscriber = createLobbySubscriber();
+    if (!subscriber) {
+      safeSend({ type: 'fallback', data: { reason: 'redis_unavailable' } });
+      void cleanup();
+      return;
+    }
+
+    const onMessage = (_channel, rawMessage) => {
+      if (closed) return;
+      try {
+        const parsed = JSON.parse(rawMessage);
+        safeSend(parsed);
+      } catch (err) {
+        void ErrorSystem.captureException(err);
+        safeSend({ type: 'message', data: rawMessage });
+      }
+    };
+
+    subscriber.on('message', onMessage);
+
+    subscriber
+      .connect()
+      .then(() => subscriber.subscribe(DUELS_LOBBY_REDIS_CHANNEL))
+      .catch((err) => {
+        void ErrorSystem.captureException(err);
+        safeSend({ type: 'fallback', data: { reason: 'redis_stream_connect_failed' } });
+        void cleanup();
+      });
+
+    ws.on('close', () => {
+      void cleanup();
+    });
+    ws.on('error', (err) => {
+      void ErrorSystem.captureException(err);
+      void cleanup();
+    });
+  });
+
+  server.on('upgrade', (req, socket, head) => {
+    try {
+      const host = req.headers.host || 'localhost';
+      const url = new URL(req.url || '/', `http://${host}`);
+      if (url.pathname !== DUELS_LOBBY_WS_PATH) {
+        socket.destroy();
+        return;
+      }
+    } catch (err) {
+      socket.destroy();
+      return;
+    }
+
+    wss.handleUpgrade(req, socket, head, (client) => {
+      wss.emit('connection', client, req);
     });
   });
 

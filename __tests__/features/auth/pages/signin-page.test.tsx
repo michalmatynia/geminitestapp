@@ -83,7 +83,7 @@ describe('SignInPage', () => {
     renderPage();
     expect(await screen.findByRole('heading', { name: /sign in/i })).toBeInTheDocument();
     const emailInput = screen.getByLabelText(/email/i);
-    const passwordInput = screen.getByLabelText(/password/i);
+    const passwordInput = screen.getByLabelText(/^password$/i, { selector: 'input' });
     expect(emailInput).toBeInTheDocument();
     expect(passwordInput).toBeInTheDocument();
     expect(emailInput).toHaveAttribute('autocomplete', 'email');
@@ -115,7 +115,7 @@ describe('SignInPage', () => {
 
     const emailInput = await screen.findByLabelText(/email/i);
     await user.type(emailInput, 'test@example.com');
-    await user.type(screen.getByLabelText(/password/i), 'password123');
+    await user.type(screen.getByLabelText(/^password$/i, { selector: 'input' }), 'password123');
     await user.click(screen.getByRole('button', { name: /sign in/i }));
 
     await waitFor(() => {
@@ -149,7 +149,7 @@ describe('SignInPage', () => {
     renderPage();
 
     await user.type(await screen.findByLabelText(/email/i), 'test@example.com');
-    await user.type(screen.getByLabelText(/password/i), 'password123');
+    await user.type(screen.getByLabelText(/^password$/i, { selector: 'input' }), 'password123');
     await user.click(screen.getByRole('button', { name: /sign in/i }));
 
     await waitFor(() => {
@@ -169,7 +169,7 @@ describe('SignInPage', () => {
     renderPage();
 
     await user.type(await screen.findByLabelText(/email/i), 'wrong@example.com');
-    await user.type(screen.getByLabelText(/password/i), 'wrong');
+    await user.type(screen.getByLabelText(/^password$/i, { selector: 'input' }), 'wrong');
     await user.click(screen.getByRole('button', { name: /sign in/i }));
 
     expect(await screen.findByText('Invalid email or password.')).toBeInTheDocument();
@@ -182,7 +182,7 @@ describe('SignInPage', () => {
     renderPage();
 
     await user.type(await screen.findByLabelText(/email/i), 'x@example.com');
-    await user.type(screen.getByLabelText(/password/i), 'wrong');
+    await user.type(screen.getByLabelText(/^password$/i, { selector: 'input' }), 'wrong');
     await user.click(screen.getByRole('button', { name: /sign in/i }));
 
     expect(
@@ -205,7 +205,8 @@ describe('SignInPage', () => {
     renderPage();
 
     const emailInput = await screen.findByLabelText(/email/i);
-    const passwordInput = screen.getByLabelText(/password/i);
+    const passwordInput = screen.getByLabelText(/^password$/i, { selector: 'input' });
+    const togglePasswordButton = screen.getByRole('button', { name: /show password/i });
     const submitButton = screen.getByRole('button', { name: /sign in/i });
     const form = submitButton.closest('form');
 
@@ -217,7 +218,12 @@ describe('SignInPage', () => {
         element.tabIndex >= 0
     );
 
-    expect(tabbableControls).toEqual([emailInput, passwordInput, submitButton]);
+    expect(tabbableControls).toEqual([
+      emailInput,
+      passwordInput,
+      togglePasswordButton,
+      submitButton,
+    ]);
   });
 });
 

@@ -7,26 +7,39 @@ const { authMock, logSystemEventMock, getErrorFingerprintMock } = vi.hoisted(() 
   getErrorFingerprintMock: vi.fn(),
 }));
 
-vi.mock('@/features/auth/auth', () => ({
-  auth: authMock,
-}));
-
-vi.mock('@/shared/lib/observability/system-logger', () => ({
-  logSystemEvent: logSystemEventMock,
-  getErrorFingerprint: getErrorFingerprintMock,
-}));
-
-import { PATCH } from './route';
+const loadRoute = async () => {
+  vi.resetModules();
+  vi.unmock('@/shared/lib/api/api-handler');
+  vi.doMock('@/features/auth/auth', () => ({
+    auth: authMock,
+  }));
+  vi.doMock('@/features/auth/server', () => ({
+    auth: authMock,
+  }));
+  vi.doMock('@/shared/lib/observability/system-logger', () => ({
+    logSystemEvent: logSystemEventMock,
+    getErrorFingerprint: getErrorFingerprintMock,
+  }));
+  const { PATCH } = await import('./route');
+  return { PATCH };
+};
 
 describe('auth roles route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    authMock.mockResolvedValue(null);
+    authMock.mockResolvedValue({
+      user: {
+        id: 'user-1',
+        isElevated: true,
+        permissions: ['auth.users.write'],
+      },
+    });
     logSystemEventMock.mockResolvedValue(undefined);
     getErrorFingerprintMock.mockResolvedValue('fingerprint-1');
   });
 
   it('returns validation error when payload schema is invalid', async () => {
+    const { PATCH } = await loadRoute();
     const response = await PATCH(
       new NextRequest('http://localhost/api/auth/roles', {
         method: 'PATCH',
@@ -37,12 +50,13 @@ describe('auth roles route', () => {
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({
-      error: 'Validation failed',
+      error: 'Please review the highlighted fields and try again.',
       code: 'VALIDATION_ERROR',
     });
   });
 
   it('returns bad request for invalid JSON payloads', async () => {
+    const { PATCH } = await loadRoute();
     const response = await PATCH(
       new NextRequest('http://localhost/api/auth/roles', {
         method: 'PATCH',

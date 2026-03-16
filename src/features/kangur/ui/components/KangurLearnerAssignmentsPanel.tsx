@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
 import {
@@ -11,11 +11,14 @@ import {
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import {
   buildKangurAssignmentListItems,
+  filterKangurAssignmentsBySubject,
   selectKangurPriorityAssignments,
+  type KangurAssignmentListItem,
 } from '@/features/kangur/ui/services/delegated-assignments';
 
 type KangurLearnerAssignmentsPanelProps = {
@@ -38,6 +41,7 @@ export function KangurLearnerAssignmentsPanel({
   enabled = false,
 }: KangurLearnerAssignmentsPanelProps): React.JSX.Element {
   const { entry: assignmentsContent } = useKangurPageContentEntry('learner-profile-assignments');
+  const { subject, setSubject } = useKangurSubjectFocus();
   const { assignments, isLoading, error } = useKangurAssignments({
     enabled,
     query: {
@@ -45,13 +49,17 @@ export function KangurLearnerAssignmentsPanel({
     },
   });
 
+  const subjectAssignments = useMemo(
+    () => filterKangurAssignmentsBySubject(assignments, subject),
+    [assignments, subject]
+  );
   const activeAssignments = useMemo(
-    () => selectKangurPriorityAssignments(assignments, assignments.length),
-    [assignments]
+    () => selectKangurPriorityAssignments(subjectAssignments, subjectAssignments.length),
+    [subjectAssignments]
   );
   const completedAssignments = useMemo(
     () =>
-      assignments
+      subjectAssignments
         .filter((assignment) => !assignment.archived && assignment.progress.status === 'completed')
         .sort((left, right) => {
           const leftTime = getLatestAssignmentTimestamp(left.progress.completedAt, left.updatedAt);
@@ -61,7 +69,7 @@ export function KangurLearnerAssignmentsPanel({
           );
           return rightTime - leftTime;
         }),
-    [assignments]
+    [subjectAssignments]
   );
   const activeAssignmentItems = useMemo(
     () => buildKangurAssignmentListItems(basePath, activeAssignments),
@@ -71,8 +79,18 @@ export function KangurLearnerAssignmentsPanel({
     () => buildKangurAssignmentListItems(basePath, completedAssignments),
     [basePath, completedAssignments]
   );
+  const handleAssignmentOpen = useCallback(
+    (item: KangurAssignmentListItem) => {
+      if (item.subject !== subject) {
+        setSubject(item.subject);
+      }
+    },
+    [setSubject, subject]
+  );
 
-  const totalVisibleAssignments = assignments.filter((assignment) => !assignment.archived).length;
+  const totalVisibleAssignments = subjectAssignments.filter(
+    (assignment) => !assignment.archived
+  ).length;
   const completionRate =
     totalVisibleAssignments === 0
       ? 0
@@ -188,6 +206,7 @@ export function KangurLearnerAssignmentsPanel({
         emptyLabel='Brak aktualnych sugestii od rodzica.'
         compact
         showTimeCountdown
+        onItemActionClick={handleAssignmentOpen}
       />
 
       <KangurAssignmentsList
@@ -195,6 +214,7 @@ export function KangurLearnerAssignmentsPanel({
         title='Historia wykonanych sugestii'
         emptyLabel='Nie masz jeszcze wykonanych sugestii od rodzica.'
         compact
+        onItemActionClick={handleAssignmentOpen}
       />
     </div>
   );

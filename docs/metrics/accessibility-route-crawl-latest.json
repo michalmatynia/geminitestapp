@@ -1,21 +1,21 @@
 {
-  "generatedAt": "2026-03-15T20:21:25.356Z",
+  "generatedAt": "2026-03-16T19:21:43.563Z",
   "status": "failed",
   "runtime": {
     "source": "broker",
     "reused": false,
-    "baseUrl": "http://127.0.0.1:64186",
-    "agentId": "019cf259-a755-7f90-b793-077cb4d50ddf-route-crawl",
-    "leaseKey": "web-dev-019cf259-a755-7f90-b793-077cb4d50ddf-route-crawl-ed58ad7e"
+    "baseUrl": "http://127.0.0.1:63940",
+    "agentId": "019cf7c7-96e6-7c60-8268-9ad505dd0c53-route-crawl",
+    "leaseKey": "web-dev-019cf7c7-96e6-7c60-8268-9ad505dd0c53-route-crawl-ed58ad7e"
   },
   "summary": {
     "total": 28,
-    "passed": 8,
-    "failed": 20,
-    "durationMs": 47740.350999999995,
+    "passed": 9,
+    "failed": 19,
+    "durationMs": 124084.764,
     "unexpected": 1,
     "flaky": 0,
-    "skipped": 19,
+    "skipped": 18,
     "errorCount": 1
   },
   "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/accessibility-route-crawl.spec.ts --reporter=json",
@@ -30,7 +30,7 @@
       "contextSelector": null,
       "title": "[public-home] / passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 15778,
+      "durationMs": 23746,
       "errors": []
     },
     {
@@ -42,7 +42,7 @@
       "contextSelector": null,
       "title": "[auth-signin] /auth/signin passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 1272,
+      "durationMs": 1925,
       "errors": []
     },
     {
@@ -54,7 +54,7 @@
       "contextSelector": null,
       "title": "[auth-register] /auth/register passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 1839,
+      "durationMs": 2474,
       "errors": []
     },
     {
@@ -66,7 +66,7 @@
       "contextSelector": null,
       "title": "[kangur-login] /kangur/login passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 4957,
+      "durationMs": 6297,
       "errors": []
     },
     {
@@ -78,7 +78,7 @@
       "contextSelector": null,
       "title": "[kangur-home] /kangur passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 5339,
+      "durationMs": 9956,
       "errors": []
     },
     {
@@ -90,7 +90,7 @@
       "contextSelector": null,
       "title": "[kangur-game] /kangur/game passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 3252,
+      "durationMs": 5675,
       "errors": []
     },
     {
@@ -102,7 +102,7 @@
       "contextSelector": null,
       "title": "[kangur-lessons] /kangur/lessons passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 3073,
+      "durationMs": 5010,
       "errors": []
     },
     {
@@ -114,7 +114,7 @@
       "contextSelector": null,
       "title": "[kangur-profile] /kangur/profile passes the route-crawl accessibility scan",
       "status": "pass",
-      "durationMs": 3073,
+      "durationMs": 3076,
       "errors": []
     },
     {
@@ -125,11 +125,9 @@
       "readySelector": null,
       "contextSelector": null,
       "title": "[kangur-parent-dashboard] /kangur/parent-dashboard passes the route-crawl accessibility scan",
-      "status": "fail",
-      "durationMs": 7646,
-      "errors": [
-        "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeFocused\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('#app-content')\nExpected: focused\nReceived: inactive\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeFocused\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('#app-content')\u001b[22m\n\u001b[2m    8 × locator resolved to <main tabindex=\"-1\" id=\"app-content\" data-kangur-appearance-mode=\"default\" data-kangur-prev-surface-background=\"\" data-kangur-prev-surface-appearance-mode=\"\" data-kangur-prev-surface-scrollbar-gutter=\"\" class=\"min-h-screen bg-background focus:outline-none kangur-surface-active\" data-kangur-prev-surface-vars=\"{\"--kangur-font-heading\":\"\",\"--kangur-font-body\":\"\",\"--kangur-font-base-size\":\"\",\"--kangur-font-line-height\":\"\",\"--kangur-font-heading-line-height\":\"\",\"--kangur-page-max-width\":\"\",\"--kangur-page…>…</main>\u001b[22m\n\u001b[2m      - unexpected value \"inactive\"\u001b[22m\n\n\n  42 |     await page.keyboard.press('Enter');\n  43 |     await expect(page).toHaveURL(/#app-content$/);\n> 44 |     await expect(main).toBeFocused();\n     |                        ^\n  45 |\n  46 |     if (routeEntry.readySelector) {\n  47 |       await expect(page.locator(routeEntry.readySelector)).toBeVisible();\n    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/accessibility-route-crawl.spec.ts:44:24"
-      ]
+      "status": "pass",
+      "durationMs": 2964,
+      "errors": []
     },
     {
       "id": "admin-dashboard",
@@ -140,8 +138,10 @@
       "contextSelector": null,
       "title": "[admin-dashboard] /admin passes the route-crawl accessibility scan",
       "status": "fail",
-      "durationMs": 0,
-      "errors": []
+      "durationMs": 61111,
+      "errors": [
+        "TimeoutError: page.waitForURL: Timeout 60000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n  navigated to \"http://127.0.0.1:63940/auth/signin?error=AccessDenied\"\n  navigated to \"http://127.0.0.1:63940/auth/signin?error=AccessDenied\"\n  navigated to \"http://127.0.0.1:63940/auth/signin?error=AccessDenied\"\n============================================================\n\n   at support/admin-auth.ts:100\n\n   98 |\n   99 |     if (!matchesDestination(getCurrentUrl())) {\n> 100 |       await page.waitForURL(\n      |                  ^\n  101 |         (url) =>\n  102 |           url.pathname === destinationUrl.pathname &&\n  103 |           (destinationUrl.search ? url.search === destinationUrl.search : true),\n    at navigateToDestination (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:100:18)\n    at ensureAdminSession (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:168:7)\n    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/accessibility-route-crawl.spec.ts:20:7"
+      ]
     },
     {
       "id": "admin-products",
@@ -361,6 +361,6 @@
     }
   ],
   "stderr": "",
-  "durationMs": 59663,
+  "durationMs": 141961,
   "exitCode": 1
 }

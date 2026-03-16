@@ -75,12 +75,14 @@ import { buildKangurLessonDocumentNarrationSignature } from '@/features/kangur/t
 
 const lesson: KangurLesson = {
   id: 'lesson-1',
-  slug: 'lesson-one',
+  componentId: 'geometry_basics',
+  contentMode: 'document',
+  subject: 'maths',
   title: 'Lesson One',
   description: 'Intro lesson',
   emoji: '*',
   color: '#ffffff',
-  category: 'geometry',
+  activeBg: 'bg-sky-500',
   sortOrder: 1,
   enabled: true,
 };

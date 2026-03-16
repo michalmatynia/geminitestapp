@@ -8,6 +8,7 @@ import {
   VALID_MODES,
 } from './CmsStorefrontAppearance.contracts';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { internalError } from '@/shared/errors/app-error';
 
 
 const CmsStorefrontAppearanceContext =
@@ -87,7 +88,7 @@ export function CmsStorefrontAppearanceProvider({
 export function useCmsStorefrontAppearance(): CmsStorefrontAppearanceContextValue {
   const context = useContext(CmsStorefrontAppearanceContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useCmsStorefrontAppearance must be used within a CmsStorefrontAppearanceProvider'
     );
   }

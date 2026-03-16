@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
-import { logKangurClientError } from '@/features/kangur/observability/client';
+import {
+  withKangurClientError,
+  withKangurClientErrorSync,
+} from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type {
   KangurLearnerActivityStatus,
@@ -12,7 +15,6 @@ import type {
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { recordKangurOpenedTask } from '@/features/kangur/ui/services/progress';
 import { kangurLearnerActivityStatusSchema } from '@/features/kangur/shared/contracts/kangur';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const kangurPlatform = getKangurPlatform();
@@ -65,19 +67,28 @@ export const useKangurLearnerActivityStatus = (
     setError(null);
 
     try {
-      const nextStatus = await kangurPlatform.learnerActivity.get();
-      setStatus(nextStatus);
-    } catch (loadError: unknown) {
-      logClientError(loadError);
-      if (isKangurAuthStatusError(loadError)) {
-        setStatus(null);
-        setError(null);
-      } else {
-        logKangurClientError(loadError, {
-          source: 'useKangurLearnerActivityStatus',
+      const nextStatus = await withKangurClientError(
+        () => ({
+          source: 'kangur.hooks.useKangurLearnerActivityStatus',
           action: 'refresh',
-        });
-        setError('Nie udało się sprawdzić aktywności ucznia.');
+          description: 'Loads learner activity status from the Kangur API.',
+          context: { learnerId },
+        }),
+        async () => await kangurPlatform.learnerActivity.get(),
+        {
+          fallback: null,
+          onError: (error) => {
+            if (isKangurAuthStatusError(error)) {
+              setStatus(null);
+              setError(null);
+              return;
+            }
+            setError('Nie udało się sprawdzić aktywności ucznia.');
+          },
+        }
+      );
+      if (nextStatus) {
+        setStatus(nextStatus);
       }
     } finally {
       setIsLoading(false);
@@ -141,11 +152,17 @@ export const useKangurLearnerActivityStatus = (
       learnerId
     )}`;
 
-    let source: EventSource;
-    try {
-      source = new EventSource(streamUrl);
-    } catch (error) {
-      logClientError(error);
+    const source = withKangurClientErrorSync(
+      {
+        source: 'kangur.hooks.useKangurLearnerActivityStatus',
+        action: 'open-stream',
+        description: 'Opens the learner activity SSE stream.',
+        context: { streamUrl },
+      },
+      () => new EventSource(streamUrl),
+      { fallback: null }
+    );
+    if (!source) {
       return;
     }
     const closeStream = (): void => {
@@ -153,29 +170,32 @@ export const useKangurLearnerActivityStatus = (
     };
 
     source.onmessage = (event: MessageEvent<string>): void => {
-      try {
-        const payload = JSON.parse(event.data) as { type?: string; data?: unknown };
-        if (payload?.type === 'heartbeat' || payload?.type === 'ready') {
-          return;
-        }
-        if (payload?.type === 'fallback') {
-          closeStream();
-          return;
-        }
-        if (payload?.type === 'snapshot') {
-          const parsed = kangurLearnerActivityStatusSchema.safeParse(payload.data);
-          if (parsed.success) {
-            setStatus(parsed.data);
-            setError(null);
-            setIsLoading(false);
-          }
-        }
-      } catch (streamError: unknown) {
-        logClientError(streamError);
-        logKangurClientError(streamError, {
-          source: 'useKangurLearnerActivityStatus',
+      const payload = withKangurClientErrorSync(
+        {
+          source: 'kangur.hooks.useKangurLearnerActivityStatus',
           action: 'parse-stream',
-        });
+          description: 'Parses learner activity SSE payloads.',
+        },
+        () => JSON.parse(event.data) as { type?: string; data?: unknown },
+        { fallback: null }
+      );
+      if (!payload) {
+        return;
+      }
+      if (payload.type === 'heartbeat' || payload.type === 'ready') {
+        return;
+      }
+      if (payload.type === 'fallback') {
+        closeStream();
+        return;
+      }
+      if (payload.type === 'snapshot') {
+        const parsed = kangurLearnerActivityStatusSchema.safeParse(payload.data);
+        if (parsed.success) {
+          setStatus(parsed.data);
+          setError(null);
+          setIsLoading(false);
+        }
       }
     };
 
@@ -272,19 +292,18 @@ export const useKangurLearnerActivityPing = ({
       return;
     }
 
-    try {
-      await kangurPlatform.learnerActivity.update(payload);
-    } catch (error: unknown) {
-      logClientError(error);
-      if (isKangurAuthStatusError(error)) {
-        return;
-      }
-      logKangurClientError(error, {
-        source: 'useKangurLearnerActivityPing',
+    await withKangurClientError(
+      () => ({
+        source: 'kangur.hooks.useKangurLearnerActivityPing',
         action: 'update',
-        kind: payload.kind,
-      });
-    }
+        description: 'Sends learner activity heartbeat updates to the Kangur API.',
+        context: { kind: payload.kind },
+      }),
+      async () => await kangurPlatform.learnerActivity.update(payload),
+      {
+        fallback: undefined,
+      }
+    );
   }, [enabled]);
 
   useEffect(() => {

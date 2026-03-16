@@ -12,6 +12,7 @@ import type {
   KangurLearnerCreateInput,
   KangurLearnerProfile,
   KangurLearnerUpdateInput,
+  KangurLessonSubject,
   KangurProgressState,
   KangurScore,
   KangurScoreCreateInput,
@@ -21,12 +22,23 @@ import type {
   KangurDuelCreateInput as KangurDuelCreateInputContract,
   KangurDuelHeartbeatInput as KangurDuelHeartbeatInputContract,
   KangurDuelJoinInput as KangurDuelJoinInputContract,
+  KangurDuelLeaderboardResponse as KangurDuelLeaderboardResponseContract,
   KangurDuelLobbyResponse as KangurDuelLobbyResponseContract,
+  KangurDuelLobbyPresenceResponse as KangurDuelLobbyPresenceResponseContract,
   KangurDuelOpponentsResponse as KangurDuelOpponentsResponseContract,
+  KangurDuelReactionInput as KangurDuelReactionInputContract,
+  KangurDuelReactionResponse as KangurDuelReactionResponseContract,
   KangurDuelSearchResponse as KangurDuelSearchResponseContract,
+  KangurDuelSpectatorStateResponse as KangurDuelSpectatorStateResponseContract,
   KangurDuelLeaveInput as KangurDuelLeaveInputContract,
   KangurDuelStateResponse as KangurDuelStateResponseContract,
 } from '@/features/kangur/shared/contracts/kangur-duels';
+import type {
+  KangurDuelLobbyChatCreateInput as KangurDuelLobbyChatCreateInputContract,
+  KangurDuelLobbyChatListResponse as KangurDuelLobbyChatListResponseContract,
+  KangurDuelLobbyChatSendResponse as KangurDuelLobbyChatSendResponseContract,
+  KangurDuelLobbyChatMessage as KangurDuelLobbyChatMessageContract,
+} from '@/features/kangur/shared/contracts/kangur-duels-chat';
 
 export type KangurRole = 'admin' | 'user';
 
@@ -57,8 +69,17 @@ export type KangurDuelHeartbeatInput = KangurDuelHeartbeatInputContract;
 export type KangurDuelLeaveInput = KangurDuelLeaveInputContract;
 export type KangurDuelStateResponse = KangurDuelStateResponseContract;
 export type KangurDuelLobbyResponse = KangurDuelLobbyResponseContract;
+export type KangurDuelLobbyPresenceResponse = KangurDuelLobbyPresenceResponseContract;
 export type KangurDuelOpponentsResponse = KangurDuelOpponentsResponseContract;
 export type KangurDuelSearchResponse = KangurDuelSearchResponseContract;
+export type KangurDuelLeaderboardResponse = KangurDuelLeaderboardResponseContract;
+export type KangurDuelReactionInput = KangurDuelReactionInputContract;
+export type KangurDuelReactionResponse = KangurDuelReactionResponseContract;
+export type KangurDuelSpectatorStateResponse = KangurDuelSpectatorStateResponseContract;
+export type KangurDuelLobbyChatCreateInput = KangurDuelLobbyChatCreateInputContract;
+export type KangurDuelLobbyChatListResponse = KangurDuelLobbyChatListResponseContract;
+export type KangurDuelLobbyChatSendResponse = KangurDuelLobbyChatSendResponseContract;
+export type KangurDuelLobbyChatMessage = KangurDuelLobbyChatMessageContract;
 
 export interface KangurAuthPort {
   me: () => Promise<KangurUser>;
@@ -89,11 +110,15 @@ export type KangurProgressUpdateContext = {
   cta?: string;
 };
 
+export type KangurProgressRequestOptions = {
+  subject?: KangurLessonSubject;
+};
+
 export interface KangurProgressPort {
-  get: () => Promise<KangurProgressState>;
+  get: (options?: KangurProgressRequestOptions) => Promise<KangurProgressState>;
   update: (
     input: KangurProgressState,
-    context?: KangurProgressUpdateContext
+    context?: KangurProgressUpdateContext & KangurProgressRequestOptions
   ) => Promise<KangurProgressState>;
 }
 
@@ -135,6 +160,12 @@ export interface KangurDuelsPort {
     options?: { signal?: AbortSignal }
   ) => Promise<KangurDuelStateResponse>;
   lobby: (options?: { limit?: number; signal?: AbortSignal }) => Promise<KangurDuelLobbyResponse>;
+  lobbyPresence: (
+    options?: { limit?: number; signal?: AbortSignal }
+  ) => Promise<KangurDuelLobbyPresenceResponse>;
+  lobbyPresencePing: (
+    options?: { limit?: number; signal?: AbortSignal }
+  ) => Promise<KangurDuelLobbyPresenceResponse>;
   recentOpponents: (
     options?: { limit?: number; signal?: AbortSignal }
   ) => Promise<KangurDuelOpponentsResponse>;
@@ -142,8 +173,25 @@ export interface KangurDuelsPort {
     query: string,
     options?: { limit?: number; signal?: AbortSignal }
   ) => Promise<KangurDuelSearchResponse>;
+  leaderboard: (
+    options?: { limit?: number; lookbackDays?: number; signal?: AbortSignal }
+  ) => Promise<KangurDuelLeaderboardResponse>;
   answer: (input: KangurDuelAnswerInput) => Promise<KangurDuelStateResponse>;
   leave: (input: KangurDuelLeaveInput) => Promise<KangurDuelStateResponse>;
+  reaction: (input: KangurDuelReactionInput) => Promise<KangurDuelReactionResponse>;
+  spectate: (
+    sessionId: string,
+    options?: { spectatorId?: string; signal?: AbortSignal }
+  ) => Promise<KangurDuelSpectatorStateResponse>;
+}
+
+export interface KangurLobbyChatPort {
+  list: (
+    options?: { limit?: number; before?: string | null; signal?: AbortSignal }
+  ) => Promise<KangurDuelLobbyChatListResponse>;
+  send: (
+    input: KangurDuelLobbyChatCreateInput
+  ) => Promise<KangurDuelLobbyChatSendResponse>;
 }
 
 export interface KangurPlatform {
@@ -156,4 +204,5 @@ export interface KangurPlatform {
   learnerSessions: KangurLearnerSessionsPort;
   learnerInteractions: KangurLearnerInteractionsPort;
   duels: KangurDuelsPort;
+  lobbyChat: KangurLobbyChatPort;
 }

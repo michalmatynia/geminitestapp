@@ -54,6 +54,8 @@ type KangurParentAccountCreateResult = {
 };
 
 const DEFAULT_PUBLIC_APP_URL = 'http://localhost:3000';
+const PARENT_EMAIL_CONFLICT_MESSAGE =
+  'Konto z tym emailem już istnieje. Zaloguj się emailem i hasłem.';
 type ActiveEmailVerificationChallenge = Awaited<
   ReturnType<typeof findActiveEmailVerificationChallengeByEmail>
 >;
@@ -165,16 +167,48 @@ const assertUserLoginAllowed = async (userId: string): Promise<void> => {
   }
 };
 
+const mapParentPasswordIssue = (issue: string): string => {
+  const trimmed = issue.trim();
+  const lengthMatch = trimmed.match(/^Password must be at least (\d+) characters\.$/);
+  if (lengthMatch) {
+    return `Hasło musi mieć co najmniej ${lengthMatch[1]} znaków.`;
+  }
+  if (trimmed.includes('uppercase')) {
+    return 'Hasło musi zawierać co najmniej jedną wielką literę.';
+  }
+  if (trimmed.includes('lowercase')) {
+    return 'Hasło musi zawierać co najmniej jedną małą literę.';
+  }
+  if (trimmed.includes('number')) {
+    return 'Hasło musi zawierać co najmniej jedną cyfrę.';
+  }
+  if (trimmed.includes('symbol')) {
+    return 'Hasło musi zawierać co najmniej jeden znak specjalny.';
+  }
+  return trimmed;
+};
+
+const resolveParentPasswordIssues = (issues: string[]): string[] => {
+  const normalized = issues.map(mapParentPasswordIssue).filter(Boolean);
+  return Array.from(new Set(normalized));
+};
+
+const buildParentPasswordErrorMessage = (issues: string[]): string => {
+  if (issues.length === 0) {
+    return 'Hasło nie spełnia wymagań bezpieczeństwa.';
+  }
+  if (issues.length === 1) {
+    return issues[0] ?? 'Hasło nie spełnia wymagań bezpieczeństwa.';
+  }
+  return issues.join(' ');
+};
+
 const assertValidParentPassword = async (password: string): Promise<void> => {
   const policy = await getAuthSecurityPolicy();
   const passwordCheck = validatePasswordStrength(password, policy);
   if (!passwordCheck.ok) {
-    throw validationError(
-      passwordCheck.errors[0] ?? 'Hasło nie spełnia wymagań bezpieczeństwa.',
-      {
-        issues: passwordCheck.errors,
-      }
-    );
+    const issues = resolveParentPasswordIssues(passwordCheck.errors);
+    throw validationError(buildParentPasswordErrorMessage(issues), { issues });
   }
 };
 
@@ -198,7 +232,7 @@ const finalizeParentAccountWithoutVerification = async (input: {
   if (existingUser) {
     await assertUserLoginAllowed(existingUser.id);
     if (existingUser.emailVerified) {
-      throw conflictError('Konto z tym emailem już istnieje. Zaloguj się emailem i hasłem.');
+      throw conflictError(PARENT_EMAIL_CONFLICT_MESSAGE);
     }
     let user = existingUser;
     let hasPassword = Boolean(user.passwordHash);
@@ -233,6 +267,7 @@ const finalizeParentAccountWithoutVerification = async (input: {
     name: buildParentDisplayName(input.email),
     passwordHash,
     emailVerified: new Date(),
+    duplicateErrorMessage: PARENT_EMAIL_CONFLICT_MESSAGE,
   });
   if (!user?.email) {
     throw internalError('Nie udało się utworzyć konta rodzica.');
@@ -366,7 +401,7 @@ export const createKangurParentAccount = async (input: {
   } else {
     await assertUserLoginAllowed(existingUser.id);
     if (existingUser.emailVerified) {
-      throw conflictError('Konto z tym emailem już istnieje. Zaloguj się emailem i hasłem.');
+      throw conflictError(PARENT_EMAIL_CONFLICT_MESSAGE);
     }
     const activeVerification = await findActiveEmailVerificationChallengeByEmail(email);
     assertKangurParentVerificationSendAllowed(activeVerification, resendCooldownMs);
@@ -439,7 +474,7 @@ export const resendKangurParentVerificationEmail = async (input: {
   if (existingUser) {
     await assertUserLoginAllowed(existingUser.id);
     if (existingUser.emailVerified) {
-      throw conflictError('Konto z tym emailem już istnieje. Zaloguj się emailem i hasłem.');
+      throw conflictError(PARENT_EMAIL_CONFLICT_MESSAGE);
     }
     const activeVerification = await findActiveEmailVerificationChallengeByEmail(email);
     assertKangurParentVerificationSendAllowed(activeVerification, resendCooldownMs);
@@ -519,6 +554,7 @@ export const verifyKangurParentEmail = async (tokenId: string): Promise<{
       name: pendingRegistration.name ?? buildParentDisplayName(token.email),
       passwordHash: pendingRegistration.passwordHash,
       emailVerified: new Date(),
+      duplicateErrorMessage: PARENT_EMAIL_CONFLICT_MESSAGE,
     });
   } else if (user && !user.emailVerified) {
     user = await markAuthUserEmailVerified(user.id);
@@ -561,16 +597,7 @@ export const setKangurParentPassword = async (input: {
     );
   }
 
-  const policy = await getAuthSecurityPolicy();
-  const passwordCheck = validatePasswordStrength(input.password, policy);
-  if (!passwordCheck.ok) {
-    throw validationError(
-      passwordCheck.errors[0] ?? 'Hasło nie spełnia wymagań bezpieczeństwa.',
-      {
-        issues: passwordCheck.errors,
-      }
-    );
-  }
+  await assertValidParentPassword(input.password);
 
   const updatedUser = await setAuthUserPassword(user.id, input.password);
   if (!updatedUser?.email) {

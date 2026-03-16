@@ -9,8 +9,8 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur-tests';
 import type {
   KangurLearnerProfileSnapshot,
-  buildLessonMasteryInsights,
-} from '@/features/kangur/ui/services/profile';
+  KangurLessonMasteryInsights,
+} from '@/features/kangur/shared/contracts/kangur-profile';
 import type { getKangurProgressRepository } from '@/features/kangur/services/kangur-progress-repository';
 import type { getKangurScoreRepository } from '@/features/kangur/services/kangur-score-repository';
 
@@ -57,7 +57,7 @@ export type KangurRegistryBaseData = {
   questionStore: KangurTestQuestionStore;
   evaluatedAssignments: KangurAssignmentSnapshot[];
   activeAssignments: KangurAssignmentSnapshot[];
-  masteryInsights: ReturnType<typeof buildLessonMasteryInsights>;
+  masteryInsights: KangurLessonMasteryInsights;
 };
 
 export const ASSIGNMENT_PRIORITY_ORDER = {

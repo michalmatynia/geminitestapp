@@ -6,7 +6,7 @@ import {
 } from '@/features/kangur/config/routing';
 import { useMemo, useState } from 'react';
 
-import { KANGUR_LESSONS_SETTING_KEY, parseKangurLessons } from '@/features/kangur/settings';
+import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
 import KangurAssignmentManager from '@/features/kangur/ui/components/KangurAssignmentManager';
 import KangurDailyQuestHighlightCardContent from '@/features/kangur/ui/components/KangurDailyQuestHighlightCardContent';
 import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
@@ -32,7 +32,6 @@ import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurP
 import { buildKangurAssignmentListItems } from '@/features/kangur/ui/services/delegated-assignments';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import type { KangurRouteAction } from '@/features/kangur/shared/contracts/kangur';
-import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
@@ -90,12 +89,8 @@ export function KangurParentDashboardProgressWidget({
   const { activeLearner, activeTab, basePath, canAccessDashboard, progress } =
     useKangurParentDashboardRuntime();
   const { entry: progressContent } = useKangurPageContentEntry('parent-dashboard-progress');
-  const settingsStore = useSettingsStore();
-  const rawLessons = settingsStore.get(KANGUR_LESSONS_SETTING_KEY);
-  const lessons = useMemo(
-    () => parseKangurLessons(rawLessons).filter((lesson) => lesson.enabled),
-    [rawLessons]
-  );
+  const lessonsQuery = useKangurLessons({ enabledOnly: true });
+  const lessons = useMemo(() => lessonsQuery.data ?? [], [lessonsQuery.data]);
   const activeLearnerId = activeLearner?.id ?? null;
   const [archiveError, setArchiveError] = useState<string | null>(null);
   const {

@@ -352,7 +352,7 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
   );
 
   return (
-    <div id='prompt-exploder-projects-docs-root' className='container mx-auto space-y-6 py-10'>
+    <div id='prompt-exploder-projects-docs-root' className='page-section space-y-6'>
       <PanelHeader
         title='Prompt Exploder Projects'
         description='Create, edit, delete, and open Prompt Exploder projects.'

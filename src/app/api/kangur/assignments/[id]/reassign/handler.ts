@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import {
@@ -7,7 +8,7 @@ import {
 } from '@/features/kangur/server';
 import { evaluateKangurAssignment } from '@/features/kangur/services/kangur-assignments';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { conflictError, notFoundError } from '@/shared/errors/app-error';
+import { conflictError, notFoundError, validationError } from '@/shared/errors/app-error';
 
 import {
   createAssignmentSnapshotForLearner,
@@ -20,6 +21,10 @@ import type {
 } from '@/shared/contracts/kangur';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+
+const paramsSchema = z.object({
+  id: z.string().trim().min(1, 'Assignment id is required'),
+});
 
 const resolveReassignCreateTarget = (
   target: KangurAssignmentTarget
@@ -45,13 +50,20 @@ export async function postKangurAssignmentReassignHandler(
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
+  const parsedParams = paramsSchema.safeParse(params);
+  if (!parsedParams.success) {
+    throw validationError('Invalid route parameters', {
+      issues: parsedParams.error.flatten(),
+    });
+  }
+  const { id } = parsedParams.data;
   const actor = await resolveAssignmentActor(req);
   const assignmentRepository = await getKangurAssignmentRepository();
   const progressRepository = await getKangurProgressRepository();
 
-  const primaryAssignment = await assignmentRepository.getAssignment(actor.learnerKey, params.id);
+  const primaryAssignment = await assignmentRepository.getAssignment(actor.learnerKey, id);
   const legacyAssignment = !primaryAssignment && actor.legacyLearnerKey
-    ? await assignmentRepository.getAssignment(actor.legacyLearnerKey, params.id)
+    ? await assignmentRepository.getAssignment(actor.legacyLearnerKey, id)
     : null;
   const assignment = primaryAssignment ?? legacyAssignment;
   const assignmentLearnerKey = primaryAssignment
@@ -62,7 +74,7 @@ export async function postKangurAssignmentReassignHandler(
 
   if (!assignment || !assignmentLearnerKey) {
     throw notFoundError('Assignment not found.', {
-      assignmentId: params.id,
+      assignmentId: id,
       learnerId: actor.learnerKey,
     });
   }
@@ -82,7 +94,7 @@ export async function postKangurAssignmentReassignHandler(
 
   if (snapshot.progress.status !== 'completed') {
     throw conflictError('Only completed assignments can be reassigned.', {
-      assignmentId: params.id,
+      assignmentId: id,
       status: snapshot.progress.status,
     });
   }

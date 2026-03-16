@@ -1,10 +1,9 @@
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import { CmsBuilderLeftPanel } from '@/features/cms/public';
+import { CmsBuilderLeftPanel, type LeftPanelMode } from '@/features/cms/public';
 import {
   KangurThemeSettingsPanel,
   type KangurThemeMode,
 } from '@/features/kangur/admin/components/KangurThemeSettingsPanel';
-import type { LeftPanelMode } from '@/features/cms/components/page-builder/CmsBuilderLeftPanel';
 
 export type KangurCmsBuilderLeftPanelProps = {
   onModeChange?: (mode: LeftPanelMode) => void;

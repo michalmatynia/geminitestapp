@@ -32,7 +32,7 @@ export function AdminFrontManagePage(): React.ReactNode {
 
   if (settingsQuery.isPending || !settingsQuery.data) {
     return (
-      <div className='container mx-auto py-10'>
+      <div className='page-section'>
         <LoadingState message='Loading front page settings...' />
       </div>
     );
@@ -70,7 +70,7 @@ function AdminFrontManageContent({
   };
 
   return (
-    <div className='container mx-auto max-w-4xl py-10'>
+    <div className='page-section max-w-4xl'>
       <SectionHeader
         title='Front Manage'
         description='Pick which app should own the public home route.'

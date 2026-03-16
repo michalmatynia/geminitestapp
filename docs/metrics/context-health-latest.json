@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-11T04:30:39.065Z",
+  "generatedAt": "2026-03-16T19:02:46.928Z",
   "status": "passed",
   "summary": {
-    "total": 3,
+    "total": 5,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 3,
+    "infoCount": 5,
     "status": "passed",
-    "contextFileCount": 244
+    "contextFileCount": 250
   },
   "scope": {
     "sourceDirs": [
@@ -18,6 +18,16 @@
     "oversizedLocThreshold": 500
   },
   "issues": [
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/cms/components/frontend/CmsStorefrontAppearance.context.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
     {
       "severity": "info",
       "ruleId": "context-missing-split",
@@ -47,6 +57,16 @@
       "column": null,
       "snippet": null,
       "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/kangur/ui/context/KangurSubjectFocusContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
     }
   ],
   "rules": [
@@ -54,8 +74,8 @@
       "ruleId": "context-missing-split",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 3
+      "infoCount": 5
     }
   ],
-  "durationMs": 224
+  "durationMs": 304
 }

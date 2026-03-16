@@ -79,7 +79,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
       title='Note Settings'
       current='Settings'
       description='Configure default view preferences for the Notes app.'
-      containerClassName='container mx-auto py-10'
+      containerClassName='page-section'
     >
       <div className='max-xl space-y-6'>
         {/* Sorting Settings */}

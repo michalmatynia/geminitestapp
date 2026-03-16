@@ -606,7 +606,7 @@ function AdminMenuSettingsInner(): React.JSX.Element {
   const { isDirty, isDefaultState, isSaving, handleSave, handleReset } = useAdminMenuSettings();
 
   return (
-    <div className='container mx-auto py-10'>
+    <div className='page-section'>
       <PanelHeader
         title='Admin Menu'
         description='Pin favorites, color sections, and build a custom menu layout.'

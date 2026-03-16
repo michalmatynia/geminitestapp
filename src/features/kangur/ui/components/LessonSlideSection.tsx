@@ -18,6 +18,7 @@ import {
   KangurGlassPanel,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurLessonPanelCtaSync } from '@/features/kangur/ui/hooks/useKangurLessonPanelCtaSync';
+import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { KANGUR_PANEL_GAP_CLASSNAME, KANGUR_STEP_PILL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { cn } from '@/features/kangur/shared/utils';
@@ -79,6 +80,7 @@ export default function LessonSlideSection({
   const slideKeyboardHintId = `lesson-slide-keyboard-${slideInstanceId}`;
   const shouldRenderNavigationPills = totalSlides > 1 || Boolean(secretLessonPill?.isUnlocked);
   const shouldRenderArrowNavigation = totalSlides > 1;
+  const isMobile = useKangurMobileBreakpoint();
   const syncLessonPanelCta = useKangurLessonPanelCtaSync();
   const handlePanelNavigationCta = (ctaId: string, action: () => void): void => {
     panelTimeFlushRef.current?.();
@@ -343,6 +345,68 @@ export default function LessonSlideSection({
 
   const isPrevDisabled = isFirst;
   const isNextDisabled = isLast;
+  const renderBackButton = (className?: string): React.JSX.Element => (
+    <KangurButton
+      onClick={handleBackCta}
+      size='sm'
+      variant='surface'
+      className={cn(
+        'w-full justify-center sm:w-auto sm:justify-start sm:justify-self-start',
+        className
+      )}
+    >
+      <ChevronLeft className='w-4 h-4' aria-hidden='true' />
+      Wróć do tematów
+    </KangurButton>
+  );
+  const renderArrowNavigation = (className?: string): React.JSX.Element | null => {
+    if (!shouldRenderArrowNavigation) {
+      return null;
+    }
+
+    return (
+      <div
+        className={cn(
+          'flex w-full items-center justify-center gap-2 sm:w-auto sm:justify-self-center',
+          className
+        )}
+        role='group'
+        aria-label='Nawigacja paneli'
+      >
+        <KangurButton
+          onClick={handlePreviousSlideCta}
+          disabled={isPrevDisabled}
+          aria-label='Poprzedni panel'
+          aria-keyshortcuts='ArrowLeft PageUp'
+          aria-controls={slidePanelId}
+          className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-20'
+          data-testid='lesson-slide-prev-button'
+          size='sm'
+          type='button'
+          title='Poprzedni panel'
+          variant='surface'
+        >
+          <ChevronLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
+        </KangurButton>
+
+        <KangurButton
+          onClick={handleNextSlideCta}
+          disabled={isNextDisabled}
+          aria-label='Następny panel'
+          aria-keyshortcuts='ArrowRight PageDown'
+          aria-controls={slidePanelId}
+          className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-20'
+          data-testid='lesson-slide-next-button'
+          size='sm'
+          type='button'
+          title='Następny panel'
+          variant='surface'
+        >
+          <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
+        </KangurButton>
+      </div>
+    );
+  };
 
   return (
     <div
@@ -354,57 +418,9 @@ export default function LessonSlideSection({
       onKeyDownCapture={handleKeyDownCapture}
     >
       <div className='flex w-full flex-col kangur-panel-gap sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center'>
-        <KangurButton
-          onClick={handleBackCta}
-          size='sm'
-          variant='surface'
-          className='w-full justify-center sm:w-auto sm:justify-start sm:justify-self-start'
-        >
-          <ChevronLeft className='w-4 h-4' aria-hidden='true' />
-          Wróć do tematów
-        </KangurButton>
+        {renderBackButton()}
 
-        {shouldRenderArrowNavigation ? (
-          <div
-            className='flex w-full items-center justify-center gap-2 sm:w-auto sm:justify-self-center'
-            role='group'
-            aria-label='Nawigacja paneli'
-          >
-            <KangurButton
-              onClick={handlePreviousSlideCta}
-              disabled={isPrevDisabled}
-              aria-label='Poprzedni panel'
-              aria-keyshortcuts='ArrowLeft PageUp'
-              aria-controls={slidePanelId}
-              className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-20'
-              data-testid='lesson-slide-prev-button'
-              size='sm'
-              type='button'
-              title='Poprzedni panel'
-              variant='surface'
-            >
-              <ChevronLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
-            </KangurButton>
-
-            <KangurButton
-              onClick={handleNextSlideCta}
-              disabled={isNextDisabled}
-              aria-label='Następny panel'
-              aria-keyshortcuts='ArrowRight PageDown'
-              aria-controls={slidePanelId}
-              className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-20'
-              data-testid='lesson-slide-next-button'
-              size='sm'
-              type='button'
-              title='Następny panel'
-              variant='surface'
-            >
-              <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
-            </KangurButton>
-          </div>
-        ) : (
-          <div className='hidden sm:block' />
-        )}
+        {shouldRenderArrowNavigation ? renderArrowNavigation() : <div className='hidden sm:block' />}
 
         {shouldRenderNavigationPills ? (
           <nav
@@ -510,6 +526,12 @@ export default function LessonSlideSection({
         </motion.div>
       </AnimatePresence>
 
+      {isMobile ? (
+        <div className='flex w-full flex-col items-center gap-2'>
+          {renderBackButton()}
+          {shouldRenderArrowNavigation ? renderArrowNavigation() : null}
+        </div>
+      ) : null}
     </div>
   );
 }

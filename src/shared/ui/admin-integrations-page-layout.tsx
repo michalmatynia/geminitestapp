@@ -3,5 +3,5 @@ import { createAdminPageLayout } from './create-admin-page-layout';
 
 export const AdminIntegrationsPageLayout = createAdminPageLayout({
   Breadcrumbs: AdminIntegrationsBreadcrumbs,
-  containerClassName: 'container mx-auto max-w-5xl py-10',
+  containerClassName: 'page-section max-w-5xl',
 });

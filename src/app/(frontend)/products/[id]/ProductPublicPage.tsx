@@ -102,7 +102,7 @@ export async function ProductPublicPage({
             aria-hidden='true'
           />
         </div>
-        <div className='container mx-auto px-4 py-12 md:px-6 lg:py-16'>
+        <div className='page-container px-4 py-12 md:px-6 lg:py-16'>
           <div className='flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--cms-appearance-muted-text)]'>
             <Link href='/' prefetch={false} className='inline-flex items-center gap-1 hover:underline'>
               <ChevronLeft className='size-3' aria-hidden='true' />

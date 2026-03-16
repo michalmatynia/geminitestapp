@@ -1,7 +1,7 @@
 'use client';
 
 import { Clock } from 'lucide-react';
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, type MouseEvent } from 'react';
 
 import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
@@ -35,6 +35,7 @@ type KangurAssignmentsListProps = {
   emptyLabel?: string;
   compact?: boolean;
   showTimeCountdown?: boolean;
+  onItemActionClick?: (item: KangurAssignmentListItem) => void;
   onArchive?: (assignmentId: string) => void;
   onTimeLimitClick?: (assignmentId: string) => void;
   onReassign?: (assignmentId: string) => void;
@@ -60,6 +61,8 @@ type KangurAssignmentsListRuntimeContextValue = {
 const KangurAssignmentsListItemContext = createContext<KangurAssignmentsListItemContextValue | null>(
   null
 );
+const KangurAssignmentsListActionContext =
+  createContext<{ onItemActionClick?: (item: KangurAssignmentListItem) => void } | null>(null);
 const KangurAssignmentsListArchiveContext =
   createContext<KangurAssignmentsListArchiveContextValue | null>(null);
 const KangurAssignmentsListRuntimeContext =
@@ -77,6 +80,12 @@ const useKangurAssignmentsListItem = (): KangurAssignmentListItem => {
 
 const useKangurAssignmentsListArchive = (): KangurAssignmentsListArchiveContextValue => {
   return useContext(KangurAssignmentsListArchiveContext) ?? {};
+};
+
+const useKangurAssignmentsListActions = (): {
+  onItemActionClick?: (item: KangurAssignmentListItem) => void;
+} => {
+  return useContext(KangurAssignmentsListActionContext) ?? {};
 };
 
 const useKangurAssignmentsListRuntime = (): KangurAssignmentsListRuntimeContextValue => {
@@ -107,8 +116,19 @@ const resolveCountdownLabel = (
       })
     : null;
 
+const shouldHandleAssignmentClick = (event: MouseEvent<HTMLAnchorElement>): boolean => {
+  if (event.defaultPrevented) {
+    return false;
+  }
+  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+    return false;
+  }
+  return true;
+};
+
 function KangurAssignmentsListCompactCard(): React.JSX.Element {
   const item = useKangurAssignmentsListItem();
+  const { onItemActionClick } = useKangurAssignmentsListActions();
   const { now, showTimeCountdown } = useKangurAssignmentsListRuntime();
   const countdownLabel = resolveCountdownLabel(item, now, showTimeCountdown);
 
@@ -119,6 +139,9 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
       padding='lg'
     >
       <div className='mb-4 flex flex-wrap items-center gap-2 sm:absolute sm:right-5 sm:top-5 sm:mb-0 sm:justify-end'>
+        <KangurStatusChip accent={item.subjectAccent} labelStyle='compact'>
+          {item.subjectLabel}
+        </KangurStatusChip>
         <KangurAssignmentPriorityChip labelStyle='compact' priority={item.priority} />
         <KangurStatusChip
           accent={item.statusAccent}
@@ -163,6 +186,11 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
           <KangurButton asChild size='sm' variant={item.actionVariant}>
             <Link
               href={item.actionHref}
+              onClick={(event) => {
+                if (onItemActionClick && shouldHandleAssignmentClick(event)) {
+                  onItemActionClick(item);
+                }
+              }}
               transitionAcknowledgeMs={ASSIGNMENTS_LIST_ROUTE_ACKNOWLEDGE_MS}
               transitionSourceId={`assignments-list:compact:${item.id}`}
             >
@@ -192,6 +220,7 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
 
 function KangurAssignmentsListStandardCard(): React.JSX.Element {
   const item = useKangurAssignmentsListItem();
+  const { onItemActionClick } = useKangurAssignmentsListActions();
   const { onArchive, onTimeLimitClick, onReassign, reassigningId } =
     useKangurAssignmentsListArchive();
   const { now, showTimeCountdown } = useKangurAssignmentsListRuntime();
@@ -215,6 +244,9 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
           </KangurCardDescription>
         </div>
         <div className='flex flex-wrap items-center gap-2'>
+          <KangurStatusChip accent={item.subjectAccent} labelStyle='compact' size='sm'>
+            {item.subjectLabel}
+          </KangurStatusChip>
           <KangurAssignmentPriorityChip labelStyle='compact' priority={item.priority} />
           <KangurStatusChip
             accent={item.statusAccent}
@@ -267,6 +299,11 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
         <KangurButton asChild className='w-full sm:w-auto' size='sm' variant='surface'>
           <Link
             href={item.actionHref}
+            onClick={(event) => {
+              if (onItemActionClick && shouldHandleAssignmentClick(event)) {
+                onItemActionClick(item);
+              }
+            }}
             transitionAcknowledgeMs={ASSIGNMENTS_LIST_ROUTE_ACKNOWLEDGE_MS}
             transitionSourceId={`assignments-list:standard:${item.id}`}
           >
@@ -321,6 +358,7 @@ export function KangurAssignmentsList({
   emptyLabel = 'Brak zadań do pokazania.',
   compact = false,
   showTimeCountdown = false,
+  onItemActionClick,
   onArchive,
   onTimeLimitClick,
   onReassign,
@@ -341,6 +379,10 @@ export function KangurAssignmentsList({
     }),
     [now, showTimeCountdown]
   );
+  const actionContextValue = useMemo(
+    () => ({ onItemActionClick }),
+    [onItemActionClick]
+  );
 
   useEffect(() => {
     if (!shouldTick) {
@@ -357,84 +399,88 @@ export function KangurAssignmentsList({
   if (compact) {
     return (
       <KangurAssignmentsListRuntimeContext.Provider value={runtimeContextValue}>
-        <KangurGlassPanel
-          data-testid='kangur-assignments-list-shell'
-          padding='lg'
-          surface='mist'
-          variant='soft'
-        >
-          <div className='mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
-            <KangurPanelIntro
-              description={panelSummary}
-              eyebrow='Szybki podgląd'
-              title={panelTitle}
-              titleAs='div'
-              titleClassName='text-lg font-extrabold tracking-tight sm:text-xl'
-            />
-            <KangurSectionEyebrow className='tracking-[0.18em]'>
-              {formatAssignmentCountLabel(items.length)}
-            </KangurSectionEyebrow>
-          </div>
-          {items.length === 0 ? (
-            <KangurEmptyState
-              accent='slate'
-              className='text-sm'
-              description={emptyStateDescription}
-              padding='lg'
-            />
-          ) : (
-            <div className='grid grid-cols-1 kangur-panel-gap'>
-              {items.map((item) => (
-                <KangurAssignmentsListItemContext.Provider key={item.id} value={{ item }}>
-                  <KangurAssignmentsListCompactCard />
-                </KangurAssignmentsListItemContext.Provider>
-              ))}
+        <KangurAssignmentsListActionContext.Provider value={actionContextValue}>
+          <KangurGlassPanel
+            data-testid='kangur-assignments-list-shell'
+            padding='lg'
+            surface='mist'
+            variant='soft'
+          >
+            <div className='mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
+              <KangurPanelIntro
+                description={panelSummary}
+                eyebrow='Szybki podgląd'
+                title={panelTitle}
+                titleAs='div'
+                titleClassName='text-lg font-extrabold tracking-tight sm:text-xl'
+              />
+              <KangurSectionEyebrow className='tracking-[0.18em]'>
+                {formatAssignmentCountLabel(items.length)}
+              </KangurSectionEyebrow>
             </div>
-          )}
-        </KangurGlassPanel>
+            {items.length === 0 ? (
+              <KangurEmptyState
+                accent='slate'
+                className='text-sm'
+                description={emptyStateDescription}
+                padding='lg'
+              />
+            ) : (
+              <div className='grid grid-cols-1 kangur-panel-gap'>
+                {items.map((item) => (
+                  <KangurAssignmentsListItemContext.Provider key={item.id} value={{ item }}>
+                    <KangurAssignmentsListCompactCard />
+                  </KangurAssignmentsListItemContext.Provider>
+                ))}
+              </div>
+            )}
+          </KangurGlassPanel>
+        </KangurAssignmentsListActionContext.Provider>
       </KangurAssignmentsListRuntimeContext.Provider>
     );
   }
 
   return (
     <KangurAssignmentsListRuntimeContext.Provider value={runtimeContextValue}>
-      <KangurAssignmentsListArchiveContext.Provider value={archiveContextValue}>
-        <KangurGlassPanel
-          data-testid='kangur-assignments-list-shell'
-          padding='lg'
-          surface='mistStrong'
-          variant='soft'
-        >
-          <div className='mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
-            <KangurPanelIntro
-              description={panelSummary}
-              eyebrow='Przydzielone zadania'
-              title={panelTitle}
-              titleAs='div'
-              titleClassName='text-lg font-extrabold tracking-tight sm:text-xl'
-            />
-            <KangurStatusChip accent='slate' labelStyle='caps'>
-              {items.length} zadań
-            </KangurStatusChip>
-          </div>
-          {items.length === 0 ? (
-            <KangurEmptyState
-              accent='slate'
-              className='text-sm'
-              description={emptyStateDescription}
-              padding='lg'
-            />
-          ) : (
-            <div className='grid grid-cols-1 kangur-panel-gap xl:grid-cols-2'>
-              {items.map((item) => (
-                <KangurAssignmentsListItemContext.Provider key={item.id} value={{ item }}>
-                  <KangurAssignmentsListStandardCard />
-                </KangurAssignmentsListItemContext.Provider>
-              ))}
+      <KangurAssignmentsListActionContext.Provider value={actionContextValue}>
+        <KangurAssignmentsListArchiveContext.Provider value={archiveContextValue}>
+          <KangurGlassPanel
+            data-testid='kangur-assignments-list-shell'
+            padding='lg'
+            surface='mistStrong'
+            variant='soft'
+          >
+            <div className='mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
+              <KangurPanelIntro
+                description={panelSummary}
+                eyebrow='Przydzielone zadania'
+                title={panelTitle}
+                titleAs='div'
+                titleClassName='text-lg font-extrabold tracking-tight sm:text-xl'
+              />
+              <KangurStatusChip accent='slate' labelStyle='caps'>
+                {items.length} zadań
+              </KangurStatusChip>
             </div>
-          )}
-        </KangurGlassPanel>
-      </KangurAssignmentsListArchiveContext.Provider>
+            {items.length === 0 ? (
+              <KangurEmptyState
+                accent='slate'
+                className='text-sm'
+                description={emptyStateDescription}
+                padding='lg'
+              />
+            ) : (
+              <div className='grid grid-cols-1 kangur-panel-gap xl:grid-cols-2'>
+                {items.map((item) => (
+                  <KangurAssignmentsListItemContext.Provider key={item.id} value={{ item }}>
+                    <KangurAssignmentsListStandardCard />
+                  </KangurAssignmentsListItemContext.Provider>
+                ))}
+              </div>
+            )}
+          </KangurGlassPanel>
+        </KangurAssignmentsListArchiveContext.Provider>
+      </KangurAssignmentsListActionContext.Provider>
     </KangurAssignmentsListRuntimeContext.Provider>
   );
 }

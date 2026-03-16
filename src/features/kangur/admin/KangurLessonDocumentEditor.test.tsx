@@ -57,6 +57,7 @@ const arithmeticLesson: KangurLesson = {
   id: 'lesson-adding',
   componentId: 'adding',
   contentMode: 'document',
+  subject: 'maths',
   title: 'Dodawanie',
   description: 'Ćwicz dodawanie krok po kroku.',
   emoji: '➕',

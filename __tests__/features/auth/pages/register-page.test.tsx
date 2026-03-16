@@ -10,7 +10,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { render } from '@/__tests__/test-utils';
 import { AuthProvider } from '@/features/auth/context/AuthContext';
-import { useRegisterUser } from '@/features/auth/hooks/useAuthQueries';
+import { useAuthRoleSettings, useRegisterUser } from '@/features/auth/hooks/useAuthQueries';
 import RegisterPage from '@/features/auth/pages/public/RegisterPage';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 
@@ -22,6 +22,7 @@ vi.mock('next-auth/react', () => ({
 
 vi.mock('@/features/auth/hooks/useAuthQueries', () => ({
   useRegisterUser: vi.fn(),
+  useAuthRoleSettings: vi.fn(),
 }));
 
 vi.mock('@/shared/hooks/use-settings', () => ({
@@ -52,6 +53,12 @@ describe('RegisterPage', () => {
     vi.mocked(useRegisterUser).mockReturnValue({
       mutateAsync: vi.fn(),
     } as unknown as ReturnType<typeof useRegisterUser>);
+    vi.mocked(useAuthRoleSettings).mockReturnValue({
+      data: null,
+      isPending: false,
+      isSuccess: false,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useAuthRoleSettings>);
   });
 
   const renderPage = () =>
@@ -70,7 +77,7 @@ describe('RegisterPage', () => {
     expect(screen.getByRole('heading', { name: /create account/i })).toBeInTheDocument();
     const nameInput = screen.getByLabelText(/full name/i);
     const emailInput = screen.getByLabelText(/email/i);
-    const passwordInput = screen.getByLabelText(/password/i);
+    const passwordInput = screen.getByLabelText(/^password$/i, { selector: 'input' });
     expect(nameInput).toBeInTheDocument();
     expect(emailInput).toBeInTheDocument();
     expect(passwordInput).toBeInTheDocument();
@@ -97,7 +104,7 @@ describe('RegisterPage', () => {
     renderPage();
 
     await user.type(screen.getByLabelText(/email/i), 'new@example.com');
-    await user.type(screen.getByLabelText(/password/i), 'password123');
+    await user.type(screen.getByLabelText(/^password$/i, { selector: 'input' }), 'password123');
     await user.click(screen.getByRole('button', { name: /create account/i }));
 
     await waitFor(() => {
@@ -141,7 +148,7 @@ describe('RegisterPage', () => {
     renderPage();
 
     await user.type(screen.getByLabelText(/email/i), 'taken@example.com');
-    await user.type(screen.getByLabelText(/password/i), 'password123');
+    await user.type(screen.getByLabelText(/^password$/i, { selector: 'input' }), 'password123');
     await user.click(screen.getByRole('button', { name: /create account/i }));
 
     expect(await screen.findByText(/email already taken/i)).toBeInTheDocument();

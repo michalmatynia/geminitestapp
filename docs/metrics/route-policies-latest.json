@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-11T04:30:41.087Z",
+  "generatedAt": "2026-03-16T18:55:00.117Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,15 +7,15 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "routeCount": 355,
-    "methodCount": 507,
+    "routeCount": 289,
+    "methodCount": 433,
     "csrfExemptionCount": 47,
     "csrfExemptionsByPolicy": {
       "webhook-ingest": 1,
       "telemetry-ingest": 3,
-      "auth-bootstrap": 10,
+      "auth-bootstrap": 11,
       "deprecated-public-auth": 2,
-      "external-integrations": 31
+      "external-integrations": 30
     }
   },
   "routeRoots": [
@@ -70,6 +70,12 @@
     {
       "routePath": "auth/register",
       "method": "POST",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "auth/roles",
+      "method": "PATCH",
       "policy": "auth-bootstrap",
       "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
     },
@@ -300,13 +306,7 @@
       "method": "POST",
       "policy": "external-integrations",
       "reason": "Integration routes accept external callbacks, requests, and connection flows."
-    },
-    {
-      "routePath": "v2/integrations",
-      "method": "POST",
-      "policy": "external-integrations",
-      "reason": "Integration routes accept external callbacks, requests, and connection flows."
     }
   ],
-  "durationMs": 77
+  "durationMs": 155
 }

@@ -18,7 +18,7 @@ import {
   KangurGlassPanel,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurLessonPanelCtaSync } from '@/features/kangur/ui/hooks/useKangurLessonPanelCtaSync';
-import { KANGUR_STEP_PILL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { KANGUR_PANEL_GAP_CLASSNAME, KANGUR_STEP_PILL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -346,10 +346,14 @@ export default function LessonSlideSection({
 
   return (
     <div
-      className={cn('flex w-full max-w-md flex-col items-center gap-4', activeSlide.containerClassName)}
+      className={cn(
+        'flex w-full max-w-md flex-col items-center',
+        KANGUR_PANEL_GAP_CLASSNAME,
+        activeSlide.containerClassName
+      )}
       onKeyDownCapture={handleKeyDownCapture}
     >
-      <div className='flex w-full flex-col gap-3 sm:grid sm:grid-cols-[auto_1fr_auto] sm:items-center'>
+      <div className='flex w-full flex-col kangur-panel-gap sm:grid sm:grid-cols-[auto_1fr_auto] sm:items-center'>
         <KangurButton
           onClick={handleBackCta}
           size='sm'
@@ -475,7 +479,11 @@ export default function LessonSlideSection({
             aria-roledescription='slajd'
             aria-labelledby={slideTitleId}
             aria-describedby={slideStatusId}
-            className={cn('flex min-h-[260px] flex-col gap-4', activeSlide.panelClassName)}
+            className={cn(
+              'flex min-h-[260px] flex-col',
+              KANGUR_PANEL_GAP_CLASSNAME,
+              activeSlide.panelClassName
+            )}
             data-testid='lesson-slide-shell'
             padding='xl'
             surface='solid'

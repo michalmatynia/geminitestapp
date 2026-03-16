@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   KANGUR_TTS_DEFAULT_LOCALE,
   KANGUR_TTS_DEFAULT_VOICE,
@@ -16,10 +17,7 @@ export { KANGUR_TTS_DEFAULT_LOCALE, KANGUR_TTS_DEFAULT_VOICE };
 export const kangurLessonTtsVoiceSchema = kangurLessonNarrationVoiceSchema;
 export type KangurLessonTtsVoice = KangurLessonNarrationVoice;
 
-export const KANGUR_TTS_VOICE_OPTIONS: ReadonlyArray<{
-  value: KangurLessonTtsVoice;
-  label: string;
-}> = [
+export const KANGUR_TTS_VOICE_OPTIONS = [
   { value: 'alloy', label: 'Alloy' },
   { value: 'ash', label: 'Ash' },
   { value: 'ballad', label: 'Ballad' },
@@ -30,7 +28,7 @@ export const KANGUR_TTS_VOICE_OPTIONS: ReadonlyArray<{
   { value: 'sage', label: 'Sage' },
   { value: 'shimmer', label: 'Shimmer' },
   { value: 'verse', label: 'Verse' },
-] as const;
+] as const satisfies ReadonlyArray<LabeledOptionDto<KangurLessonTtsVoice>>;
 
 export const kangurLessonNarrationSegmentSchema = z.object({
   id: nonEmptyTrimmedString.max(120),

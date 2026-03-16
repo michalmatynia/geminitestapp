@@ -11,7 +11,7 @@ import {
   getKangurPageHref as createPageUrl,
   readKangurUrlParam,
 } from '@/features/kangur/config/routing';
-import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
+import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import {
   hasKangurLessonDocumentContent,
   KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
@@ -24,6 +24,7 @@ import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/Ka
 import { KangurLessonNavigationWidget } from '@/features/kangur/ui/components/KangurLessonNavigationWidget';
 import { KangurLessonsWordmark } from '@/features/kangur/ui/components/KangurLessonsWordmark';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
+import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import { KangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
@@ -35,11 +36,10 @@ import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingCont
 import {
   KangurEmptyState,
   KangurGlassPanel,
-  KangurPageContainer,
-  KangurPageShell,
   KangurStatusChip,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
@@ -82,7 +82,7 @@ const LessonLoadingFallbackCard = (): React.JSX.Element => {
       data-testid='lessons-loading-fallback'
     >
       <KangurGlassPanel
-        className='flex min-h-[280px] w-full flex-col items-center justify-center gap-3 text-center'
+        className='flex min-h-[280px] w-full flex-col items-center justify-center kangur-panel-gap text-center'
         padding='xl'
         surface='solid'
         variant='soft'
@@ -540,20 +540,36 @@ export default function Lessons() {
     let remainingFrames = ACTIVE_LESSON_HEADER_SCROLL_MAX_FRAMES;
 
     const scrollHeaderIntoView = (): void => {
-      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-
+      const navigation = activeLessonNavigationRef.current;
       const header = activeLessonHeaderRef.current;
-      if (header) {
-        header.scrollIntoView({
-          behavior: 'auto',
-          block: 'start',
-        });
+      const target = navigation ?? header;
+      if (!target) {
+        frameId = null;
+        return;
+      }
 
-        if (window.scrollY <= 8 || Math.abs(header.getBoundingClientRect().top) <= 8) {
-          frameId = null;
-          return;
+      const styles = window.getComputedStyle(document.documentElement);
+      let topBarHeight =
+        Number.parseFloat(styles.getPropertyValue('--kangur-top-bar-height')) || 0;
+      if (!topBarHeight) {
+        const topBar = document.querySelector('[data-testid="kangur-page-top-bar"]');
+        if (topBar instanceof HTMLElement) {
+          topBarHeight = topBar.getBoundingClientRect().height;
         }
       }
+      const pagePaddingTop =
+        Number.parseFloat(styles.getPropertyValue('--kangur-page-padding-top')) || 0;
+      const extraOffset = pagePaddingTop > 0 ? Math.min(24, pagePaddingTop) : 16;
+      const desiredOffset = topBarHeight + extraOffset;
+      const delta = target.getBoundingClientRect().top - desiredOffset;
+
+      if (Math.abs(delta) <= 8) {
+        frameId = null;
+        return;
+      }
+
+      const nextTop = Math.max(0, window.scrollY + delta);
+      window.scrollTo({ top: nextTop, left: 0, behavior: 'auto' });
 
       remainingFrames -= 1;
       if (remainingFrames <= 0) {
@@ -743,22 +759,26 @@ export default function Lessons() {
   return (
     <>
       <KangurAiTutorSessionSync learnerId={learnerId} sessionContext={lessonTutorContext} />
-      <KangurPageShell tone='learn' id='kangur-lessons-page' skipLinkTargetId='kangur-lessons-main'>
-        <KangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId='kangur-lessons-page' />
-        <KangurTopNavigationController navigation={navigation} />
-
-        <KangurPageContainer
-          as='section'
-          data-kangur-route-main='true'
-          id='kangur-lessons-main'
-          className='flex flex-col items-center'
-        >
+      <KangurStandardPageLayout
+        tone='learn'
+        id='kangur-lessons-page'
+        skipLinkTargetId='kangur-lessons-main'
+        docsRootId='kangur-lessons-page'
+        docsTooltipsEnabled={docsTooltipsEnabled}
+        navigation={<KangurTopNavigationController navigation={navigation} />}
+        containerProps={{
+          as: 'section',
+          'data-kangur-route-main': true,
+          id: 'kangur-lessons-main',
+          className: 'flex flex-col items-center',
+        }}
+      >
           <AnimatePresence mode='wait'>
             {!activeLesson ? (
               <motion.div
                 key='list-shell'
                 {...lessonPageMotionProps}
-                className='flex w-full max-w-lg flex-col items-center gap-4'
+                className={`flex w-full max-w-lg flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
                 data-testid={isDeferredContentReady ? 'lessons-list-transition' : 'lessons-shell-transition'}
               >
                 <div ref={lessonListIntroRef} className='w-full'>
@@ -783,7 +803,7 @@ export default function Lessons() {
                     ref={orderedLessons.length === 0 ? undefined : lessonLibraryRef}
                     key='list-content'
                     {...lessonContentReadyMotionProps}
-                    className='flex w-full flex-col gap-4'
+                    className='flex w-full flex-col kangur-panel-gap'
                     role='list'
                     aria-label='Lista lekcji'
                   >
@@ -824,7 +844,7 @@ export default function Lessons() {
                                 ariaCurrent={
                                 activeLessonId === lesson.id ? 'page' : undefined
                               }
-                              buttonClassName='kangur-lessons-panel flex flex-col items-start gap-4 rounded-[28px] p-4 max-sm:pr-4 max-sm:pb-4 sm:rounded-[30px] sm:p-5'
+                              buttonClassName='kangur-lessons-panel flex flex-col items-start kangur-panel-gap rounded-[28px] p-4 max-sm:pr-4 max-sm:pb-4 sm:rounded-[30px] sm:p-5'
                               completedLessonAssignment={completedLessonAssignment}
                               dataDocId='lessons_library_entry'
                               emphasis='neutral'
@@ -846,7 +866,7 @@ export default function Lessons() {
               <motion.div
                 key={activeLesson.id}
                 {...lessonActiveMotionProps}
-                className='w-full flex flex-col items-center gap-4'
+                className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
                 data-testid='lessons-active-transition'
               >
                 <KangurLessonNavigationProvider
@@ -893,12 +913,12 @@ export default function Lessons() {
                   </div>
                   <div
                     ref={activeLessonContentRef}
-                    className='w-full flex flex-col items-center gap-4'
+                    className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
                   >
                     {isSecretLessonHostActive ? (
                       <div ref={activeLessonSecretPanelRef} className='w-full flex justify-center'>
                         <KangurGlassPanel
-                          className='flex w-full max-w-3xl flex-col items-center gap-4 text-center'
+                          className='flex w-full max-w-3xl flex-col items-center kangur-panel-gap text-center'
                           data-testid='lessons-secret-panel'
                           padding='xl'
                           surface='solid'
@@ -984,8 +1004,7 @@ export default function Lessons() {
               </motion.div>
             )}
           </AnimatePresence>
-        </KangurPageContainer>
-      </KangurPageShell>
+      </KangurStandardPageLayout>
     </>
   );
 }

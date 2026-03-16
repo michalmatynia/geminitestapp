@@ -22,6 +22,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
+  KANGUR_PANEL_GAP_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
@@ -221,7 +222,7 @@ export default function MultiplicationArrayGame({
           className='w-full'
         >
           <KangurGlassPanel
-            className='flex flex-col items-center gap-5'
+            className={cn('flex flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
             data-testid='multiplication-array-round-shell'
             padding='lg'
             surface='solid'
@@ -286,7 +287,7 @@ export default function MultiplicationArrayGame({
                     accent={accent}
                     aria-pressed={isCollected}
                     buttonClassName={cn(
-                      'flex items-center gap-3 px-4 py-3 duration-300',
+                      'flex items-center kangur-panel-gap px-4 py-3 duration-300',
                       isCollected
                         ? KANGUR_ACCENT_STYLES.violet.activeText
                         : '[color:var(--kangur-page-text)]',

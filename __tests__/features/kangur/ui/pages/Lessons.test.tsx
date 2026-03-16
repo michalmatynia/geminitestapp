@@ -565,12 +565,13 @@ describe('Lessons', () => {
   });
 
   it('scrolls the active lesson header into view when opening a lesson from the library', async () => {
-    const originalScrollIntoView = Element.prototype.scrollIntoView;
-    const originalHtmlScrollIntoView = HTMLElement.prototype.scrollIntoView;
-    const scrollIntoViewMock = vi.fn();
+    const originalScrollTo = window.scrollTo;
+    const scrollToMock = vi.fn();
 
-    Element.prototype.scrollIntoView = scrollIntoViewMock;
-    HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
+    Object.defineProperty(window, 'scrollTo', {
+      value: scrollToMock,
+      writable: true,
+    });
 
     try {
       setSettingsStore({
@@ -591,16 +592,13 @@ describe('Lessons', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /dodawanie/i }));
 
-      await waitFor(() =>
-        expect(scrollIntoViewMock).toHaveBeenCalledWith({
-          behavior: 'auto',
-          block: 'start',
-        })
-      );
+      await waitFor(() => expect(scrollToMock).toHaveBeenCalled());
       expect(screen.getByTestId('active-lesson-header')).toBeInTheDocument();
     } finally {
-      Element.prototype.scrollIntoView = originalScrollIntoView;
-      HTMLElement.prototype.scrollIntoView = originalHtmlScrollIntoView;
+      Object.defineProperty(window, 'scrollTo', {
+        value: originalScrollTo,
+        writable: true,
+      });
     }
   });
 

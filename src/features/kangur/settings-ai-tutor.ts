@@ -3,6 +3,7 @@ import {
   type KangurAiTutorConversationContext,
   type KangurAiTutorMotionPresetKind,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 
 export const KANGUR_AI_TUTOR_SETTINGS_KEY = 'kangur_ai_tutor_settings';
@@ -15,11 +16,9 @@ export type KangurAiTutorProactiveNudges = 'off' | 'gentle' | 'coach';
 export type KangurAiTutorGuestIntroMode = 'first_visit' | 'every_visit';
 export type KangurAiTutorHomeOnboardingMode = 'off' | 'first_visit' | 'every_visit';
 
-export const KANGUR_AI_TUTOR_MOTION_PRESET_OPTIONS: Array<{
-  id: Exclude<KangurAiTutorMotionPresetKind, 'default'>;
-  label: string;
-  description: string;
-}> = [
+export const KANGUR_AI_TUTOR_MOTION_PRESET_OPTIONS: Array<
+  IdLabelOptionDto<Exclude<KangurAiTutorMotionPresetKind, 'default'>> & { description: string }
+> = [
   {
     id: 'desktop',
     label: 'Desktop',
@@ -77,7 +76,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS: Readonly<KangurAiTutorAppSett
 
 export const DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS: Readonly<KangurAiTutorLearnerGuardrails> =
   Object.freeze({
-    enabled: true,
+    enabled: false,
     uiMode: 'anchored',
     allowCrossPagePersistence: true,
     rememberTutorContext: true,

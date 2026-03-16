@@ -13,6 +13,7 @@ import {
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 
 const LEARNER_PROFILE_PERFORMANCE_ROUTE_ACKNOWLEDGE_MS = 110;
@@ -26,13 +27,13 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
     'Zobacz rytm ostatnich siedmiu dni i skuteczność dla poszczególnych operacji.';
 
   return (
-    <section className='flex flex-col gap-4'>
+    <section className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <KangurPanelIntro
         data-testid='learner-profile-performance-intro'
         description={sectionSummary}
         eyebrow={sectionTitle}
       />
-      <div className='grid grid-cols-1 gap-4 xl:grid-cols-5'>
+      <div className={`grid grid-cols-1 ${KANGUR_PANEL_GAP_CLASSNAME} xl:grid-cols-5`}>
       <KangurGlassPanel
         className='xl:col-span-3'
         padding='lg'
@@ -83,7 +84,7 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
 
       <KangurGlassPanel className='xl:col-span-2' padding='lg' surface='solid' variant='subtle'>
         <KangurPanelSectionHeading>Wyniki wg operacji</KangurPanelSectionHeading>
-        <div className='flex flex-col gap-3'>
+        <div className='flex flex-col kangur-panel-gap'>
           {snapshot.operationPerformance.length === 0 ? (
             <KangurEmptyState
               accent='slate'

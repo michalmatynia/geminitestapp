@@ -41,10 +41,7 @@ export const querySchema = productFilterSchema.extend({
   fresh: freshQuerySchema,
 });
 
-/**
- * GET /api/v2/products
- * Fetches a list of products with caching and performance monitoring.
- */
+/** GET /api/v2/products: list products with caching + performance monitoring. */
 const shouldLogTiming = () => env.DEBUG_API_TIMING;
 
 const isLikelyPayloadTooLarge = (error: unknown): boolean => {
@@ -133,10 +130,7 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   }
 }
 
-/**
- * POST /api/v2/products
- * Creates a new product with validation and cache invalidation.
- */
+/** POST /api/v2/products: create product with validation + cache invalidation. */
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   let formData: FormData;
   try {

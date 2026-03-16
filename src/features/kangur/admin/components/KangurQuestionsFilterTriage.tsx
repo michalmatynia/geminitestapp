@@ -1,5 +1,6 @@
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Button, Input } from '@/features/kangur/shared/ui';
 
 import type { QuestionListFilter, QuestionListSort } from '../question-manager-view';
@@ -11,8 +12,8 @@ interface KangurQuestionsFilterTriageProps {
   onSortChange: (value: QuestionListSort) => void;
   listFilter: QuestionListFilter;
   onFilterChange: (value: QuestionListFilter) => void;
-  filterOptions: Array<{ value: QuestionListFilter; label: string }>;
-  sortOptions: Array<{ value: QuestionListSort; label: string }>;
+  filterOptions: Array<LabeledOptionDto<QuestionListFilter>>;
+  sortOptions: Array<LabeledOptionDto<QuestionListSort>>;
 }
 
 export function KangurQuestionsFilterTriage(

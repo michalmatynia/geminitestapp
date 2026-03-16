@@ -17,6 +17,7 @@ import {
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { type KangurAssignmentPlan } from '@/features/kangur/ui/services/assignments';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import {
@@ -88,7 +89,7 @@ export function KangurGameHomeQuestWidget({
       surface='mistStrong'
       variant='soft'
     >
-      <div className='flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between'>
+      <div className={`flex flex-col lg:flex-row lg:items-start lg:justify-between ${KANGUR_PANEL_GAP_CLASSNAME}`}>
         <div className='min-w-0 flex-1'>
           <div className='flex flex-wrap items-center gap-2'>
             <KangurStatusChip

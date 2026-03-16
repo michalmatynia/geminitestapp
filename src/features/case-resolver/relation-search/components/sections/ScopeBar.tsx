@@ -3,6 +3,7 @@
 import { AlignJustify, List, ListPlus, SlidersHorizontal } from 'lucide-react';
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { getCaseResolverDocTooltip } from '@/features/case-resolver/relation-search/utils/docs';
 import {
   type DocumentRelationFileTypeFilter,
@@ -16,14 +17,14 @@ import {
 } from '../../context/DocumentRelationSearchContext';
 import { useDocumentRelationSearchUiContext } from '../DocumentRelationSearchUiContext';
 
-const SORT_OPTIONS: { value: DocumentRelationSortMode; label: string }[] = [
+const SORT_OPTIONS: Array<LabeledOptionDto<DocumentRelationSortMode>> = [
   { value: 'name_asc', label: 'Name A→Z' },
   { value: 'date_desc', label: 'Date (newest)' },
   { value: 'date_asc', label: 'Date (oldest)' },
   { value: 'folder_asc', label: 'Folder A→Z' },
 ];
 
-const FILE_TYPE_OPTIONS: { value: DocumentRelationFileTypeFilter; label: string }[] = [
+const FILE_TYPE_OPTIONS: Array<LabeledOptionDto<DocumentRelationFileTypeFilter>> = [
   { value: 'all', label: 'All' },
   { value: 'document', label: 'Documents' },
   { value: 'scanfile', label: 'Scans' },

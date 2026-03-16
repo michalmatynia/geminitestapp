@@ -166,7 +166,7 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem(
         <div className='min-w-0 flex flex-1 items-center gap-2'>
           <Button
             variant='link'
-            className='h-auto min-w-0 justify-start p-0 truncate text-left text-sm text-gray-200 hover:text-white hover:no-underline focus:outline-none'
+            className='h-auto min-w-0 justify-start p-0 truncate text-left text-sm text-gray-200 hover:text-white hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
             onClick={(event): void => {
               event.preventDefault();
               event.stopPropagation();
@@ -211,7 +211,7 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem(
         <div className='min-w-0 flex flex-1 items-center gap-2'>
           <Button
             variant='link'
-            className='h-auto min-w-0 justify-start p-0 truncate text-left font-medium text-gray-100 hover:text-white hover:no-underline focus:outline-none'
+            className='h-auto min-w-0 justify-start p-0 truncate text-left font-medium text-gray-100 hover:text-white hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
             onMouseEnter={(): void => {
               if (!fileId) return;
               handlePrefetchFile(fileId);
@@ -302,7 +302,7 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem(
               {caseFile ? (
                 <Button
                   variant='link'
-                  className='h-auto min-w-0 justify-start p-0 truncate text-left font-medium text-inherit hover:text-white hover:no-underline focus:outline-none'
+                  className='h-auto min-w-0 justify-start p-0 truncate text-left font-medium text-inherit hover:text-white hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
                   onMouseEnter={(): void => {
                     handlePrefetchCase(caseFile.id);
                   }}

@@ -114,7 +114,6 @@ vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
 });
 
 import { AdminKangurSettingsPage } from '@/features/kangur/admin/AdminKangurSettingsPage';
-import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import { DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 import {
   KANGUR_HELP_SETTINGS_KEY,
@@ -157,9 +156,6 @@ describe('AdminKangurSettingsPage', () => {
       isError: false,
     });
     apiGetMock.mockImplementation(async (path: string) => {
-      if (path === '/api/kangur/ai-tutor/content') {
-        return DEFAULT_KANGUR_AI_TUTOR_CONTENT;
-      }
       if (path === '/api/kangur/ai-tutor/page-content?locale=pl') {
         return DEFAULT_KANGUR_PAGE_CONTENT_STORE;
       }
@@ -345,104 +341,16 @@ describe('AdminKangurSettingsPage', () => {
     60_000
   );
 
-  it('loads Mongo-backed AI Tutor content and saves edited content JSON', async () => {
+  it('links to the dedicated AI Tutor content editor', async () => {
     render(<AdminKangurSettingsPage />);
     await expectInitialNarratorProbe();
 
-    await waitFor(() =>
-      expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/ai-tutor/content', {
-        params: { locale: 'pl' },
-        logError: false,
-      })
+    const aiTutorContentLink = screen.getByRole('link', { name: /open ai tutor content/i });
+    expect(aiTutorContentLink).toHaveAttribute(
+      'href',
+      '/admin/kangur/settings/ai-tutor-content'
     );
-
-    const contentEditor = await screen.findByLabelText(/tutor content json/i);
-    expect((contentEditor as HTMLTextAreaElement).value).toContain('"locale": "pl"');
-
-    const nextContent = {
-      ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
-      navigation: {
-        ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.navigation,
-        restoreTutorLabel: 'Przywróć AI Tutora',
-      },
-    };
-    apiPostMock.mockResolvedValueOnce(nextContent);
-
-    fireEvent.change(contentEditor, {
-      target: {
-        value: `${JSON.stringify(nextContent, null, 2)}\n`,
-      },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /save mongo content/i }));
-
-    await waitFor(() =>
-      expect(apiPostMock).toHaveBeenCalledWith(
-        '/api/kangur/ai-tutor/content',
-        nextContent,
-        { logError: false }
-      )
-    );
-
-    expect(toastMock).toHaveBeenCalledWith('Kangur AI Tutor content saved.', {
-      variant: 'success',
-    });
-  });
-
-  it('edits onboarding copy through the structured AI Tutor content editor', async () => {
-    render(<AdminKangurSettingsPage />);
-    await expectInitialNarratorProbe();
-
-    const headlineInput = await screen.findByLabelText(/ai tutor initial guest intro headline/i);
-    const saveButton = screen.getByRole('button', { name: /save mongo content/i });
-
-    expect(headlineInput).toHaveValue(DEFAULT_KANGUR_AI_TUTOR_CONTENT.guestIntro.initial.headline);
-
-    const nextContent = {
-      ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
-      guestIntro: {
-        ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.guestIntro,
-        initial: {
-          ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.guestIntro.initial,
-          headline: 'Witaj w StudiQ',
-        },
-      },
-    };
-    apiPostMock.mockResolvedValueOnce(nextContent);
-
-    fireEvent.change(headlineInput, {
-      target: { value: 'Witaj w StudiQ' },
-    });
-    fireEvent.click(saveButton);
-
-    await waitFor(() =>
-      expect(apiPostMock).toHaveBeenCalledWith(
-        '/api/kangur/ai-tutor/content',
-        nextContent,
-        { logError: false }
-      )
-    );
-  });
-
-  it('blocks saving AI Tutor content when structured onboarding validation finds placeholder copy', async () => {
-    render(<AdminKangurSettingsPage />);
-    await expectInitialNarratorProbe();
-
-    const headlineInput = await screen.findByLabelText(/ai tutor initial guest intro headline/i);
-    const saveButton = screen.getByRole('button', { name: /save mongo content/i });
-
-    fireEvent.change(headlineInput, {
-      target: { value: 'TODO uzupełnić nagłówek' },
-    });
-
-    expect(
-      await screen.findAllByText(/remove placeholder or unfinished onboarding copy/i)
-    ).toHaveLength(2);
-    expect(saveButton).toBeDisabled();
-    expect(apiPostMock).not.toHaveBeenCalledWith(
-      '/api/kangur/ai-tutor/content',
-      expect.anything(),
-      { logError: false }
-    );
+    expect(screen.queryByLabelText(/tutor content json/i)).not.toBeInTheDocument();
   });
 
   it('loads and saves parent verification email settings from the admin page', async () => {
@@ -465,6 +373,8 @@ describe('AdminKangurSettingsPage', () => {
           resendCooldownSeconds: 120,
           notificationsEnabled: true,
           notificationsDisabledUntil: null,
+          requireEmailVerification: true,
+          requireCaptcha: true,
         }),
       })
     );

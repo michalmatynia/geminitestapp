@@ -33,7 +33,7 @@ export function KangurActivitySummaryCard({
 
   return (
     <KangurInfoCard
-      className='flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between'
+      className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:items-center sm:justify-between'
       data-testid={summaryTestId}
       padding='md'
     >

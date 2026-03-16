@@ -3,6 +3,7 @@ import {
   APP_EMBED_SETTING_KEY as SETTING_KEY,
   DEFAULT_KANGUR_APP_EMBED_ENTRY_PAGE,
 } from '@/shared/contracts/app-embeds';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 export type { AppEmbedId };
 
@@ -29,7 +30,7 @@ export const KANGUR_APP_EMBED_ENTRY_PAGE_OPTIONS = [
   { label: 'Tests', value: 'Tests' },
   { label: 'Learner Profile', value: 'LearnerProfile' },
   { label: 'Parent Dashboard', value: 'ParentDashboard' },
-] as const;
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export const APP_EMBED_OPTIONS: AppEmbedOption[] = [
   {

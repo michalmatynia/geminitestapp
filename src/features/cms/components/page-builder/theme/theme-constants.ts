@@ -1,3 +1,4 @@
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ColorSchemeColors } from '@/shared/contracts/cms-theme';
 
 export const THEME_SECTIONS = [
@@ -46,7 +47,7 @@ export const FONT_OPTIONS = [
   { label: 'Trebuchet MS', value: '\'Trebuchet MS\', sans-serif' },
   { label: 'Palatino', value: '\'Palatino Linotype\', serif' },
   { label: 'System UI', value: 'system-ui, sans-serif' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export const WEIGHT_OPTIONS = [
   { label: '100 – Thin', value: '100' },
@@ -58,7 +59,7 @@ export const WEIGHT_OPTIONS = [
   { label: '700 – Bold', value: '700' },
   { label: '800 – Extra Bold', value: '800' },
   { label: '900 – Black', value: '900' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export const DEFAULT_SCHEME_COLORS: ColorSchemeColors = {
   background: '#0b1220',

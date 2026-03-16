@@ -135,7 +135,7 @@ export function KangurTestQuestionRenderer({
       presentation.layout === 'split-illustration-right') ? (
         <div
           className={cn(
-            'grid gap-4 rounded-[24px] border p-4 lg:grid-cols-2 [border-color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,var(--kangur-page-background))]',
+            'grid kangur-panel-gap rounded-[24px] border p-4 lg:grid-cols-2 [border-color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,var(--kangur-page-background))]',
             presentation.layout === 'split-illustration-left' && 'lg:[&>*:first-child]:order-2'
           )}
         >
@@ -176,7 +176,7 @@ export function KangurTestQuestionRenderer({
       ) : null}
       {/* Header */}
       {questionIndex !== undefined && resolvedTotalQuestions !== undefined ? (
-        <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+        <div className='flex flex-col kangur-panel-gap sm:flex-row sm:items-start sm:justify-between'>
           <KangurSectionEyebrow as='span' className='pt-2 text-xs tracking-wide'>
             Question {questionIndex + 1} / {resolvedTotalQuestions}
           </KangurSectionEyebrow>
@@ -200,7 +200,7 @@ export function KangurTestQuestionRenderer({
       {promptContent}
 
       {/* Choices */}
-      <div className={cn(choiceGrid ? 'grid gap-3 sm:grid-cols-2' : 'space-y-2')}>
+      <div className={cn(choiceGrid ? 'grid kangur-panel-gap sm:grid-cols-2' : 'space-y-2')}>
         {question.choices.map((choice, index) => {
           const isSelected = selectedLabel === choice.label;
           const isChoiceCorrect = choice.label === question.correctChoiceLabel;
@@ -245,7 +245,7 @@ export function KangurTestQuestionRenderer({
                 accent={accent}
                 aria-label={accessibleChoiceLabel}
                 buttonClassName={cn(
-                  'flex items-start gap-3 px-4 py-3 text-left text-sm font-semibold',
+                  'flex items-start kangur-panel-gap px-4 py-3 text-left text-sm font-semibold',
                   cardClassName,
                   choiceGrid && 'h-full min-h-[112px]'
                 )}

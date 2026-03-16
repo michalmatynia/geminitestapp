@@ -20,7 +20,10 @@ import {
   KangurSectionHeading,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PANEL_GAP_CLASSNAME,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import type { KangurDailyQuestState } from '@/features/kangur/ui/services/daily-quests';
 import { getRecommendedTrainingSetup } from '@/features/kangur/ui/services/game-setup-recommendations';
@@ -530,7 +533,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
   };
 
   return (
-    <div className='w-full flex flex-col items-center gap-4'>
+    <div className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <KangurPageIntroCard
         className='max-w-md'
         description='Wybierz rodzaj gry i przejdź od razu do matematycznej zabawy.'
@@ -563,7 +566,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
           padding='md'
           tone='accent'
         >
-          <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
+          <div className='flex flex-col kangur-panel-gap sm:flex-row sm:items-start sm:justify-between'>
             <div className='min-w-0'>
               <KangurStatusChip
                 accent={recommendation.accent}
@@ -618,7 +621,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
           title='Szybkie ćwiczenia'
           titleId='kangur-game-quick-practice-heading'
         />
-        <div className='flex w-full flex-col gap-3'>
+        <div className='flex w-full flex-col kangur-panel-gap'>
           {QUICK_PRACTICE_OPTIONS.map((option) => {
             const isRecommended = recommendation?.recommendedScreen === option.onSelectScreen;
 

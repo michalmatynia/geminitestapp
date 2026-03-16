@@ -6,6 +6,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
+
 import { useLessonContentEditorContext } from '../context/LessonContentEditorContext';
 
 const {
@@ -211,7 +213,7 @@ vi.mock('@/features/kangur/shared/ui', () => ({
   }: {
     value?: string;
     onValueChange?: (value: string) => void;
-    options: Array<{ value: string; label: string }>;
+    options: Array<LabeledOptionDto<string>>;
     id?: string;
   }) => (
     <select id={id} value={value} onChange={(event): void => onValueChange?.(event.target.value)}>

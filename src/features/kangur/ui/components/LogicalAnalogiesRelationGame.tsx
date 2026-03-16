@@ -412,7 +412,7 @@ export default function LogicalAnalogiesRelationGame({
         setHoveredRelationId(null);
       }}
     >
-      <KangurPracticeGameStage className='gap-4 mx-auto max-w-2xl'>
+      <KangurPracticeGameStage className='mx-auto max-w-2xl'>
         <KangurPracticeGameProgress
           accent='rose'
           currentRound={roundIndex}
@@ -537,8 +537,8 @@ export default function LogicalAnalogiesRelationGame({
           </div>
         </KangurInfoCard>
 
-        <div className='grid w-full gap-4 lg:grid-cols-[1fr,1.35fr]'>
-          <div className='flex flex-col gap-3'>
+        <div className='grid w-full kangur-panel-gap lg:grid-cols-[1fr,1.35fr]'>
+          <div className='flex flex-col kangur-panel-gap'>
             <div className='flex items-center justify-between'>
               <p className='text-xs font-semibold uppercase tracking-[0.16em] text-rose-700'>
                 Relacje
@@ -638,7 +638,7 @@ export default function LogicalAnalogiesRelationGame({
             </div>
           </div>
 
-          <div className='flex flex-col gap-3'>
+          <div className='flex flex-col kangur-panel-gap'>
             <div className='flex items-center justify-between'>
               <p className='text-xs font-semibold uppercase tracking-[0.16em] text-rose-700'>
                 Pary do dopasowania
@@ -647,7 +647,7 @@ export default function LogicalAnalogiesRelationGame({
                 {round.title}
               </span>
             </div>
-            <div className='grid gap-3'>
+            <div className='grid kangur-panel-gap'>
               {roundTargets.map((target) => {
                 const assigned = roundState.slots[target.id]?.[0] ?? null;
                 const isCorrect = assigned?.id === target.relationId;
@@ -760,7 +760,7 @@ export default function LogicalAnalogiesRelationGame({
           </div>
         </div>
 
-        <div className='flex w-full flex-wrap items-center justify-between gap-3'>
+        <div className='flex w-full flex-wrap items-center justify-between kangur-panel-gap'>
           <p className='text-xs [color:var(--kangur-page-muted-text)]'>
             Każda relacja pasuje tylko do jednej pary.
           </p>

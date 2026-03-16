@@ -1,3 +1,5 @@
+import type { LabeledOptionDto } from '@/shared/contracts/base';
+
 import {
   FolderTreePlaceholderPreset,
   FolderTreePlaceholderStyle,
@@ -16,10 +18,9 @@ export const folderTreePlaceholderPresetValues: FolderTreePlaceholderPreset[] = 
   'vivid',
 ];
 
-export const folderTreePlaceholderPresetOptions: Array<{
-  value: FolderTreePlaceholderPreset;
-  label: string;
-}> = [
+export const folderTreePlaceholderPresetOptions: Array<
+  LabeledOptionDto<FolderTreePlaceholderPreset>
+> = [
   { value: 'sublime', label: 'Sublime' },
   { value: 'classic', label: 'Classic' },
   { value: 'vivid', label: 'Vivid' },

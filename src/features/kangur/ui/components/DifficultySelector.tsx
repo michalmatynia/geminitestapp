@@ -11,6 +11,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
+  KANGUR_PANEL_GAP_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import { DIFFICULTY_CONFIG } from '@/features/kangur/ui/services/math-questions';
@@ -49,7 +50,7 @@ export default function DifficultySelector({
     <section
       aria-describedby={showHeading ? descriptionId : undefined}
       aria-labelledby={showHeading ? headingId : undefined}
-      className='flex w-full flex-col items-center gap-4'
+      className={cn('flex w-full flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
     >
       {showHeading ? (
         <KangurSectionHeading
@@ -65,7 +66,7 @@ export default function DifficultySelector({
       <div
         aria-label={groupAriaLabel}
         aria-labelledby={groupLabelId}
-        className='grid w-full max-w-3xl grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3'
+        className='grid w-full max-w-3xl grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2 xl:grid-cols-3'
         role='group'
       >
         {DIFFICULTIES.map((difficulty, index) => {
@@ -79,7 +80,7 @@ export default function DifficultySelector({
               animate={{ opacity: 1, y: 0 }}
               aria-label={`${config.label}. Limit ${config.timeLimit} sekund. Zakres od 1 do ${config.range}.`}
               aria-pressed={isSelected}
-              buttonClassName='flex w-full flex-col items-center gap-3 kangur-card-padding-lg text-center'
+              buttonClassName='flex w-full flex-col items-center kangur-panel-gap kangur-card-padding-lg text-center'
               data-testid={`difficulty-option-${difficulty.id}`}
               emphasis={isSelected ? 'accent' : 'neutral'}
               initial={{ opacity: 0, y: 10 }}

@@ -410,7 +410,7 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
               </div>
               <div className='flex flex-1 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/10'>
                 <textarea
-                  className='min-h-[400px] flex-1 resize-none bg-transparent p-4 text-sm font-mono text-gray-300 focus:outline-none'
+                  className='min-h-[400px] flex-1 resize-none bg-transparent p-4 text-sm font-mono text-gray-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
                   placeholder='OCR results will appear here after running OCR, or type/paste markdown content...'
                   aria-label='OCR results and markdown content'
                   value={draft.documentContent ?? ''}

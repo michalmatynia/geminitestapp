@@ -44,7 +44,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
             <KangurEquationDisplay accent='sky' size='md'>
               6 ÷ 2 = 3
             </KangurEquationDisplay>
-            <div className='flex gap-4'>
+            <div className='flex kangur-panel-gap'>
               <KangurDisplayEmoji size='xs'>🧒🍪🍪🍪</KangurDisplayEmoji>
               <KangurDisplayEmoji size='xs'>🧒🍪🍪🍪</KangurDisplayEmoji>
             </div>
@@ -85,7 +85,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               <p className='[color:var(--kangur-page-text)]'>
                 4 × 3 = <b>12</b>
               </p>
-              <div className='flex flex-wrap justify-center gap-3'>
+              <div className='flex flex-wrap justify-center kangur-panel-gap'>
                 <KangurEquationDisplay accent='sky' size='sm'>
                   12 ÷ 4 = 3
                 </KangurEquationDisplay>

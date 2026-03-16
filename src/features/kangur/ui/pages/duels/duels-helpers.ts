@@ -113,3 +113,20 @@ export const formatRelativeAge = (isoString: string | null, nowMs: number): stri
   const days = Math.floor(hours / 24);
   return `${days} dni temu`;
 };
+
+export const formatDurationLabel = (seconds: number): string => {
+  if (!Number.isFinite(seconds)) {
+    return '—';
+  }
+  const safeSeconds = Math.max(0, Math.round(seconds));
+  if (safeSeconds < 60) {
+    return `${safeSeconds}s`;
+  }
+  const minutes = Math.ceil(safeSeconds / 60);
+  if (minutes < 60) {
+    return `${minutes} min`;
+  }
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  return remainder > 0 ? `${hours}h ${remainder}m` : `${hours}h`;
+};

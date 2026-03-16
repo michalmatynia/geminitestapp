@@ -1,23 +1,24 @@
 import type { PathMeta } from '@/shared/contracts/ai-paths';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { StatusVariant } from '@/shared/ui';
 
 export const EXECUTION_OPTIONS = [
   { value: 'server', label: 'Run on Server' },
   { value: 'local', label: 'Run Locally' },
-] as const;
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export const FLOW_OPTIONS = [
   { value: 'off', label: 'Flow: Off' },
   { value: 'low', label: 'Flow: Low' },
   { value: 'medium', label: 'Flow: Medium' },
   { value: 'high', label: 'Flow: High' },
-] as const;
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export const RUN_MODE_OPTIONS = [
   { value: 'manual', label: 'Run: Manual' },
   { value: 'automatic', label: 'Run: Automatic' },
   { value: 'step', label: 'Run: Step' },
-] as const;
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 const isTemplatePathName = (name: string): boolean =>
   /^new path\b/i.test(name) || /^e2e test path\b/i.test(name);
@@ -86,7 +87,7 @@ export const sortPathMetas = (paths: PathMeta[]): PathMeta[] =>
 
 export const buildSwitchPathOptions = (
   sortedPaths: PathMeta[]
-): Array<{ value: string; label: string }> => {
+): Array<LabeledOptionDto<string>> => {
   const nameCounts = sortedPaths.reduce<Map<string, number>>((acc, path: PathMeta) => {
     acc.set(path.name, (acc.get(path.name) ?? 0) + 1);
     return acc;
@@ -105,7 +106,7 @@ export const buildSwitchPathOptions = (
 export const buildHistoryRetentionOptions = (
   historyRetentionPasses: number,
   historyRetentionOptionsMax: number
-): Array<{ value: string; label: string }> => {
+): Array<LabeledOptionDto<string>> => {
   const optionCount = Math.max(historyRetentionPasses, historyRetentionOptionsMax);
   return Array.from({ length: optionCount }, (_value, index) => {
     const passes = index + 1;

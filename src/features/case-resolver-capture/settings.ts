@@ -4,6 +4,7 @@ import type {
   CaseResolverCaptureRoleMapping,
   CaseResolverCaptureSettings,
 } from '@/shared/contracts/case-resolver';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export const CASE_RESOLVER_CAPTURE_SETTINGS_KEY = 'case_resolver_capture_settings_v1';
@@ -15,20 +16,18 @@ export type {
   CaseResolverCaptureSettings,
 };
 
-export const CASE_RESOLVER_CAPTURE_ACTION_OPTIONS: Array<{
-  value: CaseResolverCaptureAction;
-  label: string;
-}> = [
+export const CASE_RESOLVER_CAPTURE_ACTION_OPTIONS: Array<
+  LabeledOptionDto<CaseResolverCaptureAction>
+> = [
   { value: 'useMatched', label: 'Use Matched Filemaker' },
   { value: 'createInFilemaker', label: 'Create in Filemaker' },
   { value: 'keepText', label: 'Keep as Text' },
   { value: 'ignore', label: 'Ignore' },
 ];
 
-export const CASE_RESOLVER_CAPTURE_TARGET_ROLE_OPTIONS: Array<{
-  value: CaseResolverCaptureRole;
-  label: string;
-}> = [
+export const CASE_RESOLVER_CAPTURE_TARGET_ROLE_OPTIONS: Array<
+  LabeledOptionDto<CaseResolverCaptureRole>
+> = [
   { value: 'addresser', label: 'Addresser' },
   { value: 'addressee', label: 'Addressee' },
 ];

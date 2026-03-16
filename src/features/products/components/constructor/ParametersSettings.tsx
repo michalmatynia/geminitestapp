@@ -3,6 +3,7 @@
 import { Plus } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   useSaveParameterMutation,
   useDeleteParameterMutation,
@@ -45,7 +46,7 @@ type ParameterFormData = {
   optionLabelsInput: string;
 };
 
-const SELECTOR_TYPE_OPTIONS: Array<{ value: ParameterSelectorType; label: string }> = [
+const SELECTOR_TYPE_OPTIONS: Array<LabeledOptionDto<ParameterSelectorType>> = [
   { value: 'text', label: 'Text Field' },
   { value: 'textarea', label: 'Textarea' },
   { value: 'radio', label: 'Radio Buttons' },

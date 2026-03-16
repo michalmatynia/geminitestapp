@@ -24,6 +24,7 @@ import {
   KangurHeadline,
   KangurInfoCard,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import {
   addXp,
@@ -602,7 +603,7 @@ export default function DivisionGroupsGame({
         : 'Przeciągnij lub kliknij elementy, aby podzielić je na grupy.';
 
   return (
-    <KangurPracticeGameStage className='w-full max-w-none gap-6'>
+    <KangurPracticeGameStage className='w-full max-w-none'>
       <KangurPracticeGameProgress
         accent='teal'
         currentRound={roundIndex}
@@ -618,8 +619,8 @@ export default function DivisionGroupsGame({
       >
         <div className='relative overflow-hidden rounded-[32px] bg-[linear-gradient(160deg,#ecfeff_0%,#dbeafe_50%,#f0fdf4_100%)] p-5 sm:p-6 lg:p-8'>
           <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(59,130,246,0.16),transparent_40%),radial-gradient(circle_at_80%_0%,rgba(45,212,191,0.16),transparent_36%),radial-gradient(circle_at_50%_100%,rgba(16,185,129,0.12),transparent_40%)]' />
-          <div className='relative z-10 flex flex-col gap-5 lg:gap-6'>
-            <div className='flex flex-col items-center gap-3 text-center'>
+          <div className={cn('relative z-10 flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}>
+            <div className='flex flex-col items-center kangur-panel-gap text-center'>
               <KangurEquationDisplay accent='teal' size='lg'>
                 {round.dividend} ÷ {round.divisor} ={' '}
                 <span className='[color:var(--kangur-page-muted-text)]'>?</span>
@@ -656,7 +657,11 @@ export default function DivisionGroupsGame({
             </div>
             <DragDropContext onDragEnd={handleDragEnd}>
               <AnimatePresence mode='wait'>
-                <motion.div key={roundIndex} {...roundMotionProps} className='grid gap-5 lg:gap-6'>
+                <motion.div
+                  key={roundIndex}
+                  {...roundMotionProps}
+                  className={cn('grid', KANGUR_PANEL_GAP_CLASSNAME)}
+                >
                   <KangurInfoCard
                     accent='sky'
                     className='relative overflow-hidden rounded-[26px]'
@@ -672,7 +677,7 @@ export default function DivisionGroupsGame({
                           ref={provided.innerRef}
                           {...provided.droppableProps}
                           className={cn(
-                            'mt-3 flex min-h-[96px] flex-wrap items-center justify-center gap-3 rounded-[20px] border-2 border-dashed px-3 py-4 transition sm:min-h-[112px]',
+                            'mt-3 flex min-h-[96px] flex-wrap items-center justify-center kangur-panel-gap rounded-[20px] border-2 border-dashed px-3 py-4 transition sm:min-h-[112px]',
                             snapshot.isDraggingOver
                               ? 'border-amber-300 bg-amber-50/70'
                               : 'border-white/60 bg-white/70'
@@ -704,7 +709,7 @@ export default function DivisionGroupsGame({
                     </Droppable>
                   </KangurInfoCard>
 
-                  <div className={cn('grid gap-4 sm:grid-cols-2', round.divisor > 2 ? 'lg:grid-cols-3' : null)}>
+                  <div className={cn('grid kangur-panel-gap sm:grid-cols-2', round.divisor > 2 ? 'lg:grid-cols-3' : null)}>
                     {groups.map((group, groupIndex) => (
                       <KangurInfoCard
                         key={groupIndex}
@@ -727,7 +732,7 @@ export default function DivisionGroupsGame({
                               ref={provided.innerRef}
                               {...provided.droppableProps}
                               className={cn(
-                                'mt-3 flex min-h-[88px] flex-wrap items-center justify-center gap-3 rounded-[20px] border-2 border-dashed px-3 py-4 transition sm:min-h-[104px]',
+                                'mt-3 flex min-h-[88px] flex-wrap items-center justify-center kangur-panel-gap rounded-[20px] border-2 border-dashed px-3 py-4 transition sm:min-h-[104px]',
                                 snapshot.isDraggingOver
                                   ? 'border-teal-300 bg-teal-50/80'
                                   : 'border-white/60 bg-white/70'
@@ -781,7 +786,7 @@ export default function DivisionGroupsGame({
                           ref={provided.innerRef}
                           {...provided.droppableProps}
                           className={cn(
-                            'mt-3 flex min-h-[80px] flex-wrap items-center justify-center gap-3 rounded-[20px] border-2 border-dashed px-3 py-4 transition sm:min-h-[96px]',
+                            'mt-3 flex min-h-[80px] flex-wrap items-center justify-center kangur-panel-gap rounded-[20px] border-2 border-dashed px-3 py-4 transition sm:min-h-[96px]',
                             snapshot.isDraggingOver
                               ? 'border-amber-300 bg-amber-50/80'
                               : 'border-white/60 bg-white/70'
@@ -863,7 +868,7 @@ export default function DivisionGroupsGame({
                       </div>
                     </div>
                   </KangurInfoCard>
-                  <div className='flex flex-col items-center gap-3 sm:flex-row sm:justify-between'>
+                  <div className='flex flex-col items-center kangur-panel-gap sm:flex-row sm:justify-between'>
                     <KangurButton
                       className='min-w-[160px] sm:min-w-[180px]'
                       onClick={handleCheck}

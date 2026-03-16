@@ -3,6 +3,7 @@
 import { CopyIcon } from 'lucide-react';
 import { useMemo, useId, type JSX } from 'react';
 
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button, Label, Textarea, Checkbox, Badge, SelectSimple } from '@/shared/ui';
 
@@ -18,7 +19,7 @@ interface PromptGenerationSectionProps {
   modelLabel: string;
   modelValue: string;
   onModelChange: (value: string) => void;
-  modelOptions: Array<{ value: string; label: string; description: string }>;
+  modelOptions: Array<LabeledOptionWithDescriptionDto<string>>;
   outputEnabled: boolean;
   onOutputEnabledChange: (enabled: boolean) => void;
   outputPromptLabel: string;

@@ -1,5 +1,6 @@
 'use client';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { DB_COLLECTION_OPTIONS } from '@/shared/lib/ai-paths';
 import { Card, Input, SelectSimple, FormField } from '@/shared/ui';
 
@@ -7,7 +8,7 @@ import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigCon
 
 type FetcherSourceMode = 'live_context' | 'simulation_id' | 'live_then_simulation';
 
-const FETCHER_SOURCE_OPTIONS: Array<{ value: FetcherSourceMode; label: string }> = [
+const FETCHER_SOURCE_OPTIONS: Array<LabeledOptionDto<FetcherSourceMode>> = [
   {
     value: 'live_context',
     label: 'Live trigger context',
@@ -43,8 +44,8 @@ export function FetcherNodeConfigSection(): React.JSX.Element | null {
     sourceMode === 'simulation_id' || sourceMode === 'live_then_simulation';
 
   const collectionOptions = DB_COLLECTION_OPTIONS.filter(
-    (opt: { value: string }): boolean => opt.value !== 'custom'
-  ).map((opt: { value: string; label: string }) => ({
+    (opt: LabeledOptionDto<string>): boolean => opt.value !== 'custom'
+  ).map((opt: LabeledOptionDto<string>) => ({
     value: opt.value,
     label: opt.label,
   }));

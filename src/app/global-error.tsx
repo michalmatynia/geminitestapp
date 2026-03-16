@@ -26,7 +26,7 @@ export default function RootGlobalError({
         <main
           id='app-content'
           tabIndex={-1}
-          className='mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center gap-4 p-6 text-center focus:outline-none'
+          className='mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center gap-4 p-6 text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
         >
           <div role='alert' aria-live='assertive' aria-atomic='true'>
             <h1 className='text-2xl font-semibold'>Something went wrong</h1>

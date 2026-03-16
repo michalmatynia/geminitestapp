@@ -72,6 +72,9 @@ export function KangurAiTutorChromeBadge({
 
 type ChromeTextButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children: ReactNode;
+  'data-testid'?: string;
+  'data-doc-id'?: string;
+  'data-doc-alias'?: string;
 };
 
 export function KangurAiTutorChromeTextButton({
@@ -79,6 +82,9 @@ export function KangurAiTutorChromeTextButton({
   className,
   type = 'button',
   title,
+  'data-testid': dataTestId,
+  'data-doc-id': dataDocId,
+  'data-doc-alias': dataDocAlias,
   'aria-label': ariaLabelProp,
   'aria-labelledby': ariaLabelledByProp,
   ...props
@@ -88,6 +94,10 @@ export function KangurAiTutorChromeTextButton({
     ariaLabel: ariaLabelProp,
     ariaLabelledBy: ariaLabelledByProp,
     title,
+    fallbackLabel:
+      (typeof dataDocAlias === 'string' ? dataDocAlias : undefined) ||
+      (typeof dataDocId === 'string' ? dataDocId : undefined) ||
+      (typeof dataTestId === 'string' ? dataTestId : undefined),
   });
   if (!hasAccessibleLabel && !hasText) {
     warnMissingAccessibleLabel({ componentName: 'KangurAiTutorChromeTextButton', hasAccessibleLabel });
@@ -99,6 +109,9 @@ export function KangurAiTutorChromeTextButton({
       aria-label={resolvedAriaLabel}
       aria-labelledby={ariaLabelledByProp}
       title={title}
+      data-testid={dataTestId}
+      data-doc-id={dataDocId}
+      data-doc-alias={dataDocAlias}
       {...props}
     >
       {children}

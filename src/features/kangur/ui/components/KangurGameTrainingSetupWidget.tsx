@@ -8,6 +8,7 @@ import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/Kang
 import { KangurTreningWordmark } from '@/features/kangur/ui/components/KangurTreningWordmark';
 import TrainingSetup from '@/features/kangur/ui/components/TrainingSetup';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { getRecommendedTrainingSetup } from '@/features/kangur/ui/services/game-setup-recommendations';
 import type { KangurTrainingSelection } from '@/features/kangur/ui/types';
 
@@ -39,7 +40,7 @@ export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
   }
 
   return (
-    <div className='w-full flex flex-col items-center gap-4'>
+    <div className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <KangurPageIntroCard
         className='max-w-md'
         description='Dobierz poziom, kategorie i liczbę pytań do jednej sesji.'

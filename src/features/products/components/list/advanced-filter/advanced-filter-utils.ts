@@ -7,6 +7,7 @@ import {
   type ProductAdvancedFilterOperator,
   type ProductAdvancedFilterPreset,
 } from '@/shared/contracts/products';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -124,7 +125,7 @@ export const ADVANCED_OPERATOR_LABELS: Record<ProductAdvancedFilterOperator, str
 export const ADVANCED_BOOLEAN_OPTIONS = [
   { value: 'true', label: 'True' },
   { value: 'false', label: 'False' },
-] as const;
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 const DEFAULT_FIELD: ProductAdvancedFilterField = 'name';
 

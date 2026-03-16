@@ -44,7 +44,7 @@ export function KangurBadgeTrackCardHeader({
   const headerStatusChipClassName = statusChipClassName;
 
   return (
-    <div className={cn('flex w-full items-start justify-between gap-3', className)}>
+    <div className={cn('flex w-full items-start justify-between kangur-panel-gap', className)}>
       <KangurSectionEyebrow
         as='p'
         className={cn('min-w-0 flex-1 pt-1 tracking-[0.18em]', headerLabelClassName)}

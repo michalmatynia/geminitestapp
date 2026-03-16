@@ -91,7 +91,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
               Rozmiar to prosta cecha — duże i małe elementy tworzą różne zbiory.
             </KangurLessonCaption>
           </KangurLessonInset>
-          <div className='grid w-full grid-cols-1 gap-3 min-[360px]:grid-cols-2'>
+          <div className='grid w-full grid-cols-1 kangur-panel-gap min-[360px]:grid-cols-2'>
             <KangurLessonCallout accent='emerald' className='text-center' padding='sm'>
               <p className='font-bold text-green-700 text-xs mb-1'>Zwierzęta latające</p>
               <p className='text-2xl'>🦅 🦆 🐝 🦋</p>
@@ -137,7 +137,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
               Koła i kwadraty trafiają do różnych pojemników.
             </KangurLessonCaption>
           </KangurLessonInset>
-          <div className='grid w-full grid-cols-1 gap-3 min-[360px]:grid-cols-2'>
+          <div className='grid w-full grid-cols-1 kangur-panel-gap min-[360px]:grid-cols-2'>
             <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
               <p className='font-bold text-violet-700 text-xs mb-1'>Koła</p>
               <p className='text-2xl'>⚪ ⚪ ⚪</p>
@@ -313,7 +313,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
               Intruz łamie regułę — dlatego wyróżnia się na tle grupy.
             </KangurLessonCaption>
           </KangurLessonInset>
-          <div className='flex flex-col gap-3 w-full'>
+          <div className='flex flex-col kangur-panel-gap w-full'>
             {[
               { items: '🍎 🍌 🥕 🍇 🍓', answer: '🥕 — to warzywo, reszta to owoce' },
               { items: '2, 4, 7, 8, 10', answer: '7 — tylko ona jest nieparzysta' },
@@ -341,7 +341,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
               Najpierw znajdź regułę, a potem element, który jej nie spełnia.
             </KangurLessonCaption>
           </KangurLessonInset>
-          <div className='flex flex-col gap-3 w-full'>
+          <div className='flex flex-col kangur-panel-gap w-full'>
             {[
               { items: '3, 6, 9, 12, 16', answer: '16 — nie jest wielokrotnością 3' },
               {
@@ -375,7 +375,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
               Wzór się powtarza, ale jeden element go psuje.
             </KangurLessonCaption>
           </KangurLessonInset>
-          <div className='flex flex-col gap-3 w-full'>
+          <div className='flex flex-col kangur-panel-gap w-full'>
             {[
               { items: '⚪ ⬜ ⚪ 🔺 ⚪ ⬜', answer: '🔺 — inny kształt niż reszta' },
               { items: '🔴 🔵 🔴 🔵 🟢 🔴', answer: '🟢 — inny kolor w środku wzoru' },

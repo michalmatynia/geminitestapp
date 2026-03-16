@@ -13,6 +13,7 @@ import {
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import { BADGES, getNextLockedBadge } from '@/features/kangur/ui/services/progress';
 
@@ -38,7 +39,7 @@ function KangurResultSectionCard({
       padding='md'
       tone='accent'
     >
-      <div className='flex flex-col gap-3'>{children}</div>
+      <div className='flex flex-col kangur-panel-gap'>{children}</div>
     </KangurInfoCard>
   );
 }
@@ -75,7 +76,7 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
     .filter((badge): badge is (typeof BADGES)[number] => Boolean(badge));
 
   return (
-    <div className='flex w-full flex-col items-center gap-6'>
+    <div className={`flex w-full flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       {resultPracticeAssignment ? (
         <div className='flex w-full justify-center px-4'>
           <KangurPracticeAssignmentBanner
@@ -153,9 +154,9 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
       {activeSessionRecommendation ? (
         <KangurRecommendationCard
           accent='violet'
-          bodyClassName='gap-3'
+          bodyClassName='kangur-panel-gap'
           className='w-full max-w-2xl rounded-[28px]'
-          contentClassName='gap-3'
+          contentClassName='kangur-panel-gap'
           dataTestId='kangur-result-recommendation-card'
           description={activeSessionRecommendation.description}
           descriptionRelaxed
@@ -201,7 +202,7 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
             </KangurStatusChip>
           </KangurResultSectionChips>
 
-          <div className='grid grid-cols-1 gap-3 min-[420px]:grid-cols-2'>
+          <div className='grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2'>
             {unlockedBadgeDetails.map((badge) => (
               <div
                 className='soft-card rounded-[22px] border border-amber-200/80 px-4 py-3 text-left'

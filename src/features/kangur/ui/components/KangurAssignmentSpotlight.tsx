@@ -106,7 +106,7 @@ export function KangurAssignmentSpotlight({
             priority={assignment.priority}
             size='sm'
           />
-          <div className='mt-4 flex items-start gap-3'>
+          <div className='mt-4 flex items-start kangur-panel-gap'>
             <span className='mt-1 text-xl' aria-hidden='true'>
               {assignment.target.type === 'lesson' ? '📚' : '🎯'}
             </span>
@@ -123,7 +123,7 @@ export function KangurAssignmentSpotlight({
 
         {countdownLabel ? (
           <div className='mt-6 flex justify-center'>
-            <div className='flex flex-wrap items-center justify-center gap-3 rounded-[28px] border border-amber-200/80 bg-amber-50/90 px-6 py-4 text-center text-2xl font-black tracking-tight text-amber-900 shadow-[0_24px_50px_-34px_rgba(251,191,36,0.7)] sm:text-3xl'>
+            <div className='flex flex-wrap items-center justify-center kangur-panel-gap rounded-[28px] border border-amber-200/80 bg-amber-50/90 px-6 py-4 text-center text-2xl font-black tracking-tight text-amber-900 shadow-[0_24px_50px_-34px_rgba(251,191,36,0.7)] sm:text-3xl'>
               <Clock className='h-6 w-6 text-amber-500 sm:h-7 sm:w-7' aria-hidden='true' />
               <span>{countdownLabel}</span>
             </div>

@@ -11,7 +11,10 @@ import {
   KangurSectionHeading,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_ACCENT_STYLES,
+  KANGUR_PANEL_GAP_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurOperationSelectorState } from '@/features/kangur/ui/hooks/useKangurOperationSelectorState';
 import type { KangurDifficulty, KangurOperation } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
@@ -44,7 +47,7 @@ export default function OperationSelector({
     <section
       aria-describedby={descriptionId}
       aria-labelledby={headingId}
-      className='flex w-full max-w-3xl flex-col items-center gap-6'
+      className={cn('flex w-full max-w-3xl flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
     >
       <DifficultySelector selected={difficulty} onSelect={setDifficulty} showHeading={false} />
       <KangurSectionHeading
@@ -59,7 +62,7 @@ export default function OperationSelector({
       />
       <div
         aria-labelledby={headingId}
-        className='grid w-full grid-cols-1 gap-4 min-[420px]:grid-cols-2 xl:grid-cols-3'
+        className='grid w-full grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2 xl:grid-cols-3'
         role='list'
       >
         {operations.map((operation, index) => {
@@ -86,7 +89,7 @@ export default function OperationSelector({
                   .filter(Boolean)
                   .join(' ')
               }
-              buttonClassName='flex min-h-[180px] flex-col gap-4 rounded-[30px] p-5'
+              buttonClassName='flex min-h-[180px] flex-col kangur-panel-gap rounded-[30px] p-5'
               data-testid={`operation-card-${operation.id}`}
               emphasis={operation.hasPriorityAssignment || operation.isRecommended ? 'accent' : 'neutral'}
               initial={{ opacity: 0, y: 20 }}
@@ -105,7 +108,7 @@ export default function OperationSelector({
                   size='sm'
                 />
               ) : null}
-              <div className='flex flex-col gap-3 min-[420px]:flex-row min-[420px]:items-start min-[420px]:justify-between'>
+              <div className='flex flex-col kangur-panel-gap min-[420px]:flex-row min-[420px]:items-start min-[420px]:justify-between'>
                 <KangurIconBadge
                   accent={operation.accent}
                   data-testid={`operation-icon-${operation.id}`}

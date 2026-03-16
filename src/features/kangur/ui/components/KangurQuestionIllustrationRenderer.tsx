@@ -37,10 +37,10 @@ export function renderKangurQuestionIllustration(
 
   const containerClass =
     layout === 'grid-2x2'
-      ? 'grid grid-cols-1 gap-3 min-[360px]:grid-cols-2'
+      ? 'grid grid-cols-1 kangur-panel-gap min-[360px]:grid-cols-2'
       : layout === 'grid-3x2'
-        ? 'grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 sm:grid-cols-3'
-        : 'flex flex-wrap justify-center gap-3';
+        ? 'grid grid-cols-1 kangur-panel-gap min-[360px]:grid-cols-2 sm:grid-cols-3'
+        : 'flex flex-wrap justify-center kangur-panel-gap';
 
   return (
     <div className={cn(containerClass, className)}>

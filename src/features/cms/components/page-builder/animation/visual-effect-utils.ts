@@ -1,3 +1,5 @@
+import type { LabeledOptionDto } from '@/shared/contracts/base';
+
 export type VisualFilterType =
   | 'none'
   | 'blur'
@@ -27,7 +29,7 @@ export interface VisualShadowValues {
   opacity: number;
 }
 
-export const FILTER_OPTIONS: Array<{ label: string; value: VisualFilterType }> = [
+export const FILTER_OPTIONS: Array<LabeledOptionDto<VisualFilterType>> = [
   { label: 'None', value: 'none' },
   { label: 'Blur', value: 'blur' },
   { label: 'Brightness', value: 'brightness' },
@@ -56,7 +58,7 @@ export const FILTER_META: Record<
   opacity: { unit: '%', min: 0, max: 100, step: 5, defaultFrom: 0, defaultTo: 100 },
 };
 
-export const CLIP_OPTIONS: Array<{ label: string; value: VisualClipType }> = [
+export const CLIP_OPTIONS: Array<LabeledOptionDto<VisualClipType>> = [
   { label: 'None', value: 'none' },
   { label: 'Wipe Top', value: 'wipe-top' },
   { label: 'Wipe Right', value: 'wipe-right' },

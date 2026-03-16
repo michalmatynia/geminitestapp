@@ -187,8 +187,8 @@ export default function RichTextEditorImpl({
       attributes: {
         class:
           variant === 'full'
-            ? 'prose prose-invert max-w-none min-h-[250px] px-4 py-3 focus:outline-none'
-            : 'prose prose-invert max-w-none min-h-[220px] px-4 py-3 focus:outline-none',
+            ? 'prose prose-invert max-w-none min-h-[250px] px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
+            : 'prose prose-invert max-w-none min-h-[220px] px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
       },
     },
     onUpdate: ({ editor: instance }: { editor: Editor }): void => {

@@ -3,6 +3,12 @@ import React from 'react';
 
 import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
 
+type DataAttributes = {
+  'data-testid'?: string;
+  'data-doc-id'?: string;
+  'data-doc-alias'?: string;
+};
+
 export type TreeActionSlotShow = 'hover' | 'always';
 export type TreeActionSlotAlign = 'end' | 'inline';
 
@@ -53,7 +59,9 @@ const SIZE_CLASSES: Record<TreeActionSize, string> = {
   md: 'p-1.5',
 };
 
-export interface TreeActionButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface TreeActionButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    DataAttributes {
   asChild?: boolean;
   tone?: TreeActionTone;
   size?: TreeActionSize;
@@ -66,6 +74,9 @@ export function TreeActionButton({
   className,
   children,
   title,
+  'data-testid': dataTestId,
+  'data-doc-id': dataDocId,
+  'data-doc-alias': dataDocAlias,
   'aria-label': ariaLabelProp,
   'aria-labelledby': ariaLabelledByProp,
   ...props
@@ -76,6 +87,10 @@ export function TreeActionButton({
     ariaLabel: ariaLabelProp,
     ariaLabelledBy: ariaLabelledByProp,
     title,
+    fallbackLabel:
+      (typeof dataDocAlias === 'string' ? dataDocAlias : undefined) ||
+      (typeof dataDocId === 'string' ? dataDocId : undefined) ||
+      (typeof dataTestId === 'string' ? dataTestId : undefined),
   });
   if (!hasAccessibleLabel && !hasText) {
     warnMissingAccessibleLabel({ componentName: 'TreeActionButton', hasAccessibleLabel });
@@ -87,6 +102,9 @@ export function TreeActionButton({
       aria-label={resolvedAriaLabel}
       aria-labelledby={ariaLabelledByProp}
       title={title}
+      data-testid={dataTestId}
+      data-doc-id={dataDocId}
+      data-doc-alias={dataDocAlias}
       {...props}
     >
       {children}

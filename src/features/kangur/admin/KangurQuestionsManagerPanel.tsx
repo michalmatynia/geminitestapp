@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { Button, FormModal } from '@/features/kangur/shared/ui';
@@ -39,10 +40,7 @@ import { getKangurTestSuiteHealth } from './test-suite-health';
 import type { QuestionListFilter, QuestionListSort } from './question-manager-view';
 
 
-const QUESTION_LIST_FILTER_OPTIONS: Array<{
-  value: QuestionListFilter;
-  label: string;
-}> = [
+const QUESTION_LIST_FILTER_OPTIONS: Array<LabeledOptionDto<QuestionListFilter>> = [
   { value: 'all', label: 'All' },
   { value: 'needs-review', label: 'Needs review' },
   { value: 'needs-fix', label: 'Needs fix' },
@@ -53,10 +51,7 @@ const QUESTION_LIST_FILTER_OPTIONS: Array<{
   { value: 'illustrated', label: 'SVG' },
 ];
 
-const QUESTION_LIST_SORT_OPTIONS: Array<{
-  value: QuestionListSort;
-  label: string;
-}> = [
+const QUESTION_LIST_SORT_OPTIONS: Array<LabeledOptionDto<QuestionListSort>> = [
   { value: 'manual', label: 'Manual order' },
   { value: 'review-queue', label: 'Review queue' },
 ];

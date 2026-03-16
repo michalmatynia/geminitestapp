@@ -490,7 +490,7 @@ export default function NumberBalanceRushGame(
 
   if (phase === 'waiting' && match && player) {
     return (
-      <KangurPracticeGameStage className='w-full max-w-xl gap-4'>
+      <KangurPracticeGameStage className='w-full max-w-xl'>
         <KangurGlassPanel className='w-full rounded-[28px] p-6 text-center' surface='playField'>
           <div className='text-sm font-semibold text-amber-900'>
             Czekamy na drugiego gracza…
@@ -513,7 +513,7 @@ export default function NumberBalanceRushGame(
 
   if (phase === 'loading' || !match || !player || !puzzle) {
     return (
-      <KangurPracticeGameStage className='w-full max-w-xl gap-4'>
+      <KangurPracticeGameStage className='w-full max-w-xl'>
         <KangurGlassPanel className='w-full rounded-[28px] p-6 text-center' surface='playField'>
           <div className='text-sm font-semibold text-amber-900'>Ładowanie meczu…</div>
           {error ? (
@@ -590,8 +590,8 @@ export default function NumberBalanceRushGame(
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <KangurPracticeGameStage className='w-full max-w-2xl gap-6'>
-        <div className='flex w-full flex-wrap items-center justify-between gap-4'>
+      <KangurPracticeGameStage className='w-full max-w-2xl'>
+        <div className='flex w-full flex-wrap items-center justify-between kangur-panel-gap'>
           <div className='flex flex-wrap items-center gap-2'>
             <KangurStatusChip className='px-4 py-2 text-sm font-bold' accent='amber'>
               Ty: {score}
@@ -630,7 +630,7 @@ export default function NumberBalanceRushGame(
         >
           <div className='flex w-full flex-col gap-6'>
             <div className='flex items-end justify-center gap-6'>
-              <div className='flex w-full max-w-xs flex-col items-center gap-3'>
+              <div className='flex w-full max-w-xs flex-col items-center kangur-panel-gap'>
                 <div className='text-sm font-semibold text-amber-900'>
                   Cel: {puzzle.targets.left}
                 </div>
@@ -672,7 +672,7 @@ export default function NumberBalanceRushGame(
 
               <div className='hidden h-1 w-12 rounded-full bg-amber-200/80 md:block' aria-hidden='true' />
 
-              <div className='flex w-full max-w-xs flex-col items-center gap-3'>
+              <div className='flex w-full max-w-xs flex-col items-center kangur-panel-gap'>
                 <div className='text-sm font-semibold text-amber-900'>
                   Cel: {puzzle.targets.right}
                 </div>
@@ -713,7 +713,7 @@ export default function NumberBalanceRushGame(
               </div>
             </div>
 
-            <div className='flex flex-col gap-3'>
+            <div className='flex flex-col kangur-panel-gap'>
               <div className='text-xs font-semibold text-amber-900/80'>
                 Przeciągnij liczby do obu stron, aby zgadzały się z celami.
               </div>
@@ -723,7 +723,7 @@ export default function NumberBalanceRushGame(
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                     className={cn(
-                      'flex min-h-[88px] flex-wrap items-center justify-center gap-3 rounded-[28px] border-2 border-dashed p-3 transition',
+                      'flex min-h-[88px] flex-wrap items-center justify-center kangur-panel-gap rounded-[28px] border-2 border-dashed p-3 transition',
                       snapshot.isDraggingOver ? 'border-amber-300 bg-amber-50/70' : 'border-amber-200'
                     )}
                   >

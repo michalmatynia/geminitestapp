@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-11'
+last_reviewed: '2026-03-16'
 status: 'active'
 doc_type: 'agent-guide'
 scope: 'repo'
@@ -113,4 +113,4 @@ prefer `fetchQueryV2`, `prefetchQueryV2`, and `ensureQueryDataV2` over raw
 
 ## Last Updated
 
-Aligned to the scanned repo structure on `2026-03-11`.
+Aligned to the scanned repo structure on `2026-03-16`.

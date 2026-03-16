@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import type { LabeledOptionDto } from './base';
+
 import { vectorShapeSchema } from './vector';
 
 /**
@@ -278,7 +280,7 @@ export type GsapAnimationConfig = GsapAnimationConfigDto;
  * GSAP UI Constants
  */
 
-export const ANIMATION_PRESETS: { label: string; value: AnimationPreset }[] = [
+export const ANIMATION_PRESETS: Array<LabeledOptionDto<AnimationPreset>> = [
   { label: 'None', value: 'none' },
   { label: 'Fade In', value: 'fade' },
   { label: 'Slide Up', value: 'slide-up' },
@@ -300,7 +302,7 @@ export const ANIMATION_PRESETS: { label: string; value: AnimationPreset }[] = [
   { label: 'Wobble', value: 'wobble' },
 ];
 
-export const ANIMATION_EASINGS = [
+export const ANIMATION_EASINGS: Array<LabeledOptionDto<string>> = [
   'power1.in',
   'power1.out',
   'power1.inOut',
@@ -335,7 +337,7 @@ export const ANIMATION_EASINGS = [
   'linear',
 ].map((easing) => ({ label: easing, value: easing }));
 
-export const PARALLAX_PRESETS: { label: string; value: ParallaxPreset }[] = [
+export const PARALLAX_PRESETS: Array<LabeledOptionDto<ParallaxPreset>> = [
   { label: 'None', value: 'none' },
   { label: 'Slow Scroll', value: 'slow-scroll' },
   { label: 'Fast Scroll', value: 'fast-scroll' },
@@ -349,7 +351,7 @@ export const PARALLAX_PRESETS: { label: string; value: ParallaxPreset }[] = [
   { label: 'Custom', value: 'custom' },
 ];
 
-export const PARALLAX_PATTERNS: { label: string; value: ParallaxPattern }[] = [
+export const PARALLAX_PATTERNS: Array<LabeledOptionDto<ParallaxPattern>> = [
   { label: 'Uniform', value: 'uniform' },
   { label: 'Random', value: 'random' },
   { label: 'Stepped', value: 'stepped' },
@@ -357,7 +359,7 @@ export const PARALLAX_PATTERNS: { label: string; value: ParallaxPattern }[] = [
   { label: 'Layers', value: 'layers' },
 ];
 
-export const TIMELINE_MODES: { label: string; value: TimelineMode }[] = [
+export const TIMELINE_MODES: Array<LabeledOptionDto<TimelineMode>> = [
   { label: 'None', value: 'none' },
   { label: 'Sequence', value: 'sequence' },
   { label: 'Parallel', value: 'parallel' },
@@ -365,7 +367,7 @@ export const TIMELINE_MODES: { label: string; value: TimelineMode }[] = [
   { label: 'Wave', value: 'wave' },
 ];
 
-export const SCROLL_MODES: { label: string; value: ScrollMode }[] = [
+export const SCROLL_MODES: Array<LabeledOptionDto<ScrollMode>> = [
   { label: 'None', value: 'none' },
   { label: 'Scrub', value: 'scrub' },
   { label: 'Pin', value: 'pin' },
@@ -374,7 +376,7 @@ export const SCROLL_MODES: { label: string; value: ScrollMode }[] = [
   { label: 'Story', value: 'story' },
 ];
 
-export const REVEAL_STYLES: { label: string; value: RevealStyle }[] = [
+export const REVEAL_STYLES: Array<LabeledOptionDto<RevealStyle>> = [
   { label: 'None', value: 'none' },
   { label: 'Curtain', value: 'curtain' },
   { label: 'Mask', value: 'mask' },
@@ -382,7 +384,7 @@ export const REVEAL_STYLES: { label: string; value: RevealStyle }[] = [
   { label: 'Grayscale', value: 'grayscale' },
 ];
 
-export const TEXT_EFFECTS: { label: string; value: TextEffect }[] = [
+export const TEXT_EFFECTS: Array<LabeledOptionDto<TextEffect>> = [
   { label: 'None', value: 'none' },
   { label: 'Chars Fade', value: 'chars-fade' },
   { label: 'Chars Slide Up', value: 'chars-slide-up' },
@@ -393,20 +395,20 @@ export const TEXT_EFFECTS: { label: string; value: TextEffect }[] = [
   { label: 'Counting', value: 'counting' },
 ];
 
-export const DRAG_AXES: { label: string; value: DragAxis }[] = [
+export const DRAG_AXES: Array<LabeledOptionDto<DragAxis>> = [
   { label: 'X & Y', value: 'x,y' },
   { label: 'X Axis Only', value: 'x' },
   { label: 'Y Axis Only', value: 'y' },
 ];
 
-export const OBSERVER_TYPES: { label: string; value: string }[] = [
+export const OBSERVER_TYPES: Array<LabeledOptionDto<string>> = [
   { label: 'Wheel & Touch', value: 'wheel,touch' },
   { label: 'Wheel Only', value: 'wheel' },
   { label: 'Touch Only', value: 'touch' },
   { label: 'Scroll Only', value: 'scroll' },
 ];
 
-export const VELOCITY_EFFECTS: { label: string; value: VelocityEffect }[] = [
+export const VELOCITY_EFFECTS: Array<LabeledOptionDto<VelocityEffect>> = [
   { label: 'None', value: 'none' },
   { label: 'Skew', value: 'skew' },
   { label: 'Scale', value: 'scale' },

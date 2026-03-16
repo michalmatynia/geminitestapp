@@ -62,6 +62,8 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
     'Manage Kangur lessons list, order, and visibility using the Master Folder Tree runtime.',
   '/admin/kangur/settings':
     'Configure Kangur narrator voice, narration mode, and documentation tooltip behavior.',
+  '/admin/kangur/settings/ai-tutor-content':
+    'Edit the Mongo-backed AI Tutor content pack used by onboarding, helper prompts, and tutor explanations.',
   '/admin/filemaker':
     'Manage persons, organizations, events, and emails used as addresser/addressee data in Case Resolver documents.',
   '/admin/filemaker/persons': 'Search and review Filemaker persons.',

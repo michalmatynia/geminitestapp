@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   Button,
   Input,
@@ -100,7 +101,7 @@ export function GenericApiConsole(props: GenericApiConsoleProps): React.JSX.Elem
 
   const { method, path, bodyOrParams, loading, error, response } = state;
 
-  const methodOptions = [
+  const methodOptions: Array<LabeledOptionDto<string>> = [
     { value: 'GET', label: 'GET' },
     { value: 'POST', label: 'POST' },
     { value: 'PUT', label: 'PUT' },

@@ -49,7 +49,7 @@ export function KnowledgeGraphPreviewSelect({
       value={value}
       onChange={(event) => onChange(event.target.value)}
       aria-label={id ? undefined : placeholder}
-      className='h-10 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm text-foreground/90 focus:border-foreground/30 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
+      className='h-10 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm text-foreground/90 focus:border-foreground/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
     >
       <option value=''>{placeholder}</option>
       {Array.from(groupedOptions.entries()).map(([groupKey, groupOptions]) =>

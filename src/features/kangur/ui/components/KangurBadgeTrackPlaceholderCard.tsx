@@ -33,7 +33,7 @@ export function KangurBadgeTrackPlaceholderCard({
 }: KangurBadgeTrackPlaceholderCardProps): React.JSX.Element {
   const infoCardClassName = cn('rounded-[24px] text-left', cardClassName);
   const headerClassNameValue = cn(
-    'flex flex-col items-start gap-4 md:flex-row md:items-start md:justify-between',
+    'flex flex-col items-start kangur-panel-gap md:flex-row md:items-start md:justify-between',
     headerClassName
   );
   const trackLabelClassNameValue = cn('tracking-[0.16em]', trackLabelClassName);

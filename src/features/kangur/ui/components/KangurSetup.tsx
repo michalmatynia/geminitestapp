@@ -13,6 +13,7 @@ import {
   KangurStatusChip,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import type { KangurMode } from '@/features/kangur/ui/types';
 
 type KangurSet = {
@@ -49,7 +50,10 @@ function KangurSetupSection({
   headingId,
 }: KangurSetupSectionProps): React.JSX.Element {
   return (
-    <section aria-labelledby={headingId} className='flex w-full max-w-md flex-col gap-4'>
+    <section
+      aria-labelledby={headingId}
+      className={`flex w-full max-w-md flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
+    >
       {children}
     </section>
   );
@@ -64,7 +68,7 @@ function KangurSetupShell({ children, testId }: KangurSetupShellProps): React.JS
   const dataTestId = testId;
   return (
     <KangurGlassPanel
-      className='flex flex-col items-center gap-5 text-center'
+      className={`flex flex-col items-center text-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
       data-testid={dataTestId}
       padding='xl'
       surface='solid'
@@ -154,13 +158,13 @@ export default function KangurSetup({
             titleId={editionsHeadingId}
           />
 
-          <div aria-labelledby={editionsHeadingId} className='flex w-full flex-col gap-3' role='list'>
+          <div aria-labelledby={editionsHeadingId} className='flex w-full flex-col kangur-panel-gap' role='list'>
             {EDITIONS.map((edition) => (
               <KangurAnswerChoiceCard
                 accent='amber'
                 aria-describedby={`kangur-setup-edition-status-${edition.year}`}
                 aria-label={`${edition.label}. ${edition.available ? 'Dostępna.' : 'Niedostępna, wkrótce dostępna.'}`}
-                buttonClassName='flex w-full flex-col items-start gap-3 rounded-[28px] px-5 py-4 text-left sm:flex-row sm:items-center sm:gap-4'
+                buttonClassName='flex w-full flex-col items-start kangur-panel-gap rounded-[28px] px-5 py-4 text-left sm:flex-row sm:items-center'
                 data-testid={`kangur-setup-edition-${edition.year}`}
                 disabled={!edition.available}
                 emphasis={edition.available ? 'accent' : 'neutral'}
@@ -267,7 +271,7 @@ export default function KangurSetup({
           />
         ) : null}
 
-        <div aria-labelledby={setsHeadingId} className='flex w-full flex-col gap-3' role='list'>
+        <div aria-labelledby={setsHeadingId} className='flex w-full flex-col kangur-panel-gap' role='list'>
           {selectedEdition.sets.map((setItem) => {
             const isRecommendedSet = setItem.id === recommendedMode;
             const setCardEmphasis = setItem.available || isRecommendedSet ? 'accent' : 'neutral';

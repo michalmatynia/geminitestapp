@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-03-14T15:03:50.298Z",
-  "strictMode": true,
+  "generatedAt": "2026-03-16T09:59:16.558Z",
+  "strictMode": false,
   "summary": {
     "total": 10,
     "passed": 10,
@@ -23,14 +23,14 @@
       "name": "Authentication + Session Bootstrap (UI)",
       "maxLines": 220,
       "maxBranchPoints": null,
-      "totalLines": 184,
+      "totalLines": 186,
       "totalBranchPoints": 8,
       "status": "pass",
       "files": [
         {
           "path": "src/features/auth/pages/public/SignInPage.tsx",
           "exists": true,
-          "lines": 184,
+          "lines": 186,
           "branchPoints": 8
         }
       ]
@@ -59,14 +59,14 @@
       "name": "Image Studio Generate + Preview (UI)",
       "maxLines": 360,
       "maxBranchPoints": null,
-      "totalLines": 325,
+      "totalLines": 336,
       "totalBranchPoints": 15,
       "status": "pass",
       "files": [
         {
           "path": "src/features/ai/image-studio/pages/AdminImageStudioPage.tsx",
           "exists": true,
-          "lines": 325,
+          "lines": 336,
           "branchPoints": 15
         }
       ]
@@ -77,14 +77,14 @@
       "name": "AI Paths Run Execution (UI)",
       "maxLines": 120,
       "maxBranchPoints": null,
-      "totalLines": 119,
+      "totalLines": 120,
       "totalBranchPoints": 0,
       "status": "pass",
       "files": [
         {
           "path": "src/features/ai/ai-paths/pages/AdminAiPathsPage.tsx",
           "exists": true,
-          "lines": 119,
+          "lines": 120,
           "branchPoints": 0
         }
       ]
@@ -131,14 +131,14 @@
       "name": "Products CRUD + Listing Refresh (API)",
       "maxLines": 180,
       "maxBranchPoints": 14,
-      "totalLines": 180,
+      "totalLines": 178,
       "totalBranchPoints": 14,
       "status": "pass",
       "files": [
         {
           "path": "src/app/api/v2/products/handler.ts",
           "exists": true,
-          "lines": 180,
+          "lines": 178,
           "branchPoints": 14
         }
       ]
@@ -149,14 +149,14 @@
       "name": "Image Studio Generate + Preview (API)",
       "maxLines": 760,
       "maxBranchPoints": 95,
-      "totalLines": 673,
+      "totalLines": 679,
       "totalBranchPoints": 79,
       "status": "pass",
       "files": [
         {
           "path": "src/app/api/image-studio/projects/[projectId]/handler.ts",
           "exists": true,
-          "lines": 673,
+          "lines": 679,
           "branchPoints": 79
         }
       ]
@@ -185,14 +185,14 @@
       "name": "Case Resolver OCR + Capture Mapping (API)",
       "maxLines": 120,
       "maxBranchPoints": 15,
-      "totalLines": 90,
+      "totalLines": 94,
       "totalBranchPoints": 11,
       "status": "pass",
       "files": [
         {
           "path": "src/app/api/case-resolver/ocr/jobs/handler.ts",
           "exists": true,
-          "lines": 90,
+          "lines": 94,
           "branchPoints": 11
         }
       ]
@@ -205,14 +205,14 @@
       "name": "Authentication + Session Bootstrap (UI)",
       "maxLines": 220,
       "maxBranchPoints": null,
-      "totalLines": 184,
+      "totalLines": 186,
       "totalBranchPoints": 8,
       "status": "pass",
       "files": [
         {
           "path": "src/features/auth/pages/public/SignInPage.tsx",
           "exists": true,
-          "lines": 184,
+          "lines": 186,
           "branchPoints": 8
         }
       ]
@@ -241,14 +241,14 @@
       "name": "Image Studio Generate + Preview (UI)",
       "maxLines": 360,
       "maxBranchPoints": null,
-      "totalLines": 325,
+      "totalLines": 336,
       "totalBranchPoints": 15,
       "status": "pass",
       "files": [
         {
           "path": "src/features/ai/image-studio/pages/AdminImageStudioPage.tsx",
           "exists": true,
-          "lines": 325,
+          "lines": 336,
           "branchPoints": 15
         }
       ]
@@ -259,14 +259,14 @@
       "name": "AI Paths Run Execution (UI)",
       "maxLines": 120,
       "maxBranchPoints": null,
-      "totalLines": 119,
+      "totalLines": 120,
       "totalBranchPoints": 0,
       "status": "pass",
       "files": [
         {
           "path": "src/features/ai/ai-paths/pages/AdminAiPathsPage.tsx",
           "exists": true,
-          "lines": 119,
+          "lines": 120,
           "branchPoints": 0
         }
       ]
@@ -315,14 +315,14 @@
       "name": "Products CRUD + Listing Refresh (API)",
       "maxLines": 180,
       "maxBranchPoints": 14,
-      "totalLines": 180,
+      "totalLines": 178,
       "totalBranchPoints": 14,
       "status": "pass",
       "files": [
         {
           "path": "src/app/api/v2/products/handler.ts",
           "exists": true,
-          "lines": 180,
+          "lines": 178,
           "branchPoints": 14
         }
       ]
@@ -333,14 +333,14 @@
       "name": "Image Studio Generate + Preview (API)",
       "maxLines": 760,
       "maxBranchPoints": 95,
-      "totalLines": 673,
+      "totalLines": 679,
       "totalBranchPoints": 79,
       "status": "pass",
       "files": [
         {
           "path": "src/app/api/image-studio/projects/[projectId]/handler.ts",
           "exists": true,
-          "lines": 673,
+          "lines": 679,
           "branchPoints": 79
         }
       ]
@@ -369,102 +369,70 @@
       "name": "Case Resolver OCR + Capture Mapping (API)",
       "maxLines": 120,
       "maxBranchPoints": 15,
-      "totalLines": 90,
+      "totalLines": 94,
       "totalBranchPoints": 11,
       "status": "pass",
       "files": [
         {
           "path": "src/app/api/case-resolver/ocr/jobs/handler.ts",
           "exists": true,
-          "lines": 90,
+          "lines": 94,
           "branchPoints": 11
         }
       ]
     }
   ],
   "metrics": {
-    "generatedAt": "2026-03-14T15:03:50.289Z",
+    "generatedAt": "2026-03-16T09:59:16.524Z",
     "hotspots": {
       "topFilesByLines": [
         {
-          "path": "src/features/kangur/server/knowledge-graph/retrieval.ts",
-          "lines": 1649
-        },
-        {
-          "path": "src/features/kangur/admin/AdminKangurTestSuitesManagerPage.tsx",
-          "lines": 1572
-        },
-        {
-          "path": "src/features/kangur/ui/components/ClockTrainingGame.tsx",
-          "lines": 1466
-        },
-        {
-          "path": "src/features/kangur/admin/KangurLessonDocumentEditor.tsx",
-          "lines": 1442
-        },
-        {
-          "path": "src/features/kangur/server/context-registry.ts",
-          "lines": 1433
-        },
-        {
-          "path": "src/features/kangur/cms-builder/project-defaults.ts",
-          "lines": 1422
-        },
-        {
-          "path": "src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts",
-          "lines": 1415
-        },
-        {
-          "path": "src/shared/contracts/kangur-ai-tutor-native-guide-entries.ts",
-          "lines": 1414
-        },
-        {
-          "path": "src/features/kangur/observability/summary.ts",
-          "lines": 1401
-        },
-        {
-          "path": "src/features/kangur/ui/components/LessonAnimations.tsx",
-          "lines": 1374
-        },
-        {
-          "path": "src/features/kangur/admin/KangurQuestionsManagerPanel.tsx",
-          "lines": 1370
-        },
-        {
-          "path": "src/features/kangur/server/knowledge-graph/retrieval.test.ts",
-          "lines": 1340
-        },
-        {
-          "path": "src/features/kangur/ui/pages/Lessons.test.tsx",
-          "lines": 1322
-        },
-        {
-          "path": "src/features/kangur/admin/components/KangurPageContentSettingsPanel.tsx",
-          "lines": 1308
-        },
-        {
-          "path": "src/features/kangur/server/ai-tutor-adaptive.ts",
-          "lines": 1223
-        },
-        {
-          "path": "src/features/kangur/ui/KangurLoginPage.test.tsx",
-          "lines": 1222
+          "path": "src/features/kangur/ui/pages/Duels.tsx",
+          "lines": 1626
         },
         {
           "path": "src/features/kangur/ui/KangurLoginPage.tsx",
-          "lines": 1219
+          "lines": 1558
+        },
+        {
+          "path": "src/features/kangur/observability/summary.ts",
+          "lines": 1539
+        },
+        {
+          "path": "src/shared/contracts/kangur-ai-tutor-native-guide-entries.ts",
+          "lines": 1459
+        },
+        {
+          "path": "src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts",
+          "lines": 1414
+        },
+        {
+          "path": "src/features/kangur/server/ai-tutor-adaptive.ts",
+          "lines": 1224
+        },
+        {
+          "path": "src/features/kangur/ui/components/AddingBallGame.tsx",
+          "lines": 1191
         },
         {
           "path": "src/shared/contracts/kangur-ai-tutor-content.ts",
-          "lines": 1181
+          "lines": 1189
+        },
+        {
+          "path": "src/features/kangur/cms-builder/defaults/game-defaults.ts",
+          "lines": 1188
+        },
+        {
+          "path": "src/features/kangur/admin/AdminKangurSettingsPage.tsx",
+          "lines": 1179
+        },
+        {
+          "path": "src/features/kangur/ui/components/ClockLesson.tsx",
+          "lines": 1169
         },
         {
           "path": "src/shared/contracts/image-studio.ts",
           "lines": 1162
-        },
-        {
-          "path": "src/features/kangur/ui/components/ClockLesson.tsx",
-          "lines": 1159
         },
         {
           "path": "src/features/cms/components/page-builder/registry/block-definitions-content.ts",
@@ -472,7 +440,19 @@
         },
         {
           "path": "src/features/kangur/ui/context/KangurAiTutorRuntime.shared.ts",
-          "lines": 1057
+          "lines": 1086
+        },
+        {
+          "path": "src/features/kangur/admin/AdminKangurObservabilityPage.test.tsx",
+          "lines": 1077
+        },
+        {
+          "path": "src/features/kangur/ui/pages/Lessons.tsx",
+          "lines": 1077
+        },
+        {
+          "path": "src/features/kangur/ui/components/GeometrySymmetryGame.tsx",
+          "lines": 1063
         },
         {
           "path": "src/features/ai/ai-paths/components/__tests__/canvas-connection-preview.test.tsx",
@@ -483,40 +463,88 @@
           "lines": 1054
         },
         {
+          "path": "src/features/kangur/ui/components/animations/AddingAnimations.tsx",
+          "lines": 1041
+        },
+        {
           "path": "src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts",
           "lines": 1035
         },
         {
-          "path": "src/features/kangur/ui/pages/Lessons.tsx",
-          "lines": 1028
+          "path": "src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts",
+          "lines": 1024
+        },
+        {
+          "path": "src/shared/contracts/kangur.ts",
+          "lines": 1016
+        },
+        {
+          "path": "src/features/kangur/ui/components/KangurAssignmentManager.tsx",
+          "lines": 1009
+        },
+        {
+          "path": "src/app/api/kangur/ai-tutor/chat/handler.ts",
+          "lines": 1000
         },
         {
           "path": "src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts",
           "lines": 999
         },
         {
-          "path": "src/features/ai/ai-paths/components/run-history-panel.tsx",
-          "lines": 997
+          "path": "src/shared/lib/products/services/product-ai-graph-model-payload.test.ts",
+          "lines": 991
         },
         {
-          "path": "src/features/kangur/admin/AdminKangurObservabilityPage.test.tsx",
-          "lines": 997
+          "path": "src/features/kangur/ui/components/SubtractingLesson.tsx",
+          "lines": 987
         },
         {
-          "path": "src/features/kangur/admin/AdminKangurSettingsPage.tsx",
-          "lines": 994
+          "path": "src/shared/contracts/cms.ts",
+          "lines": 973
+        },
+        {
+          "path": "src/shared/lib/ai-paths/core/starter-workflows/__tests__/registry.test.ts",
+          "lines": 973
         }
       ]
     },
     "api": {
       "topRouteHotspots": [
         {
-          "path": "src/app/api/agent/leases/route.ts",
-          "lines": 119
+          "path": "src/app/api/kangur/[[...path]]/route.ts",
+          "lines": 864
         },
         {
-          "path": "src/app/api/chatbot/agent/[runId]/[action]/route.ts",
-          "lines": 83
+          "path": "src/app/api/v2/products/[[...path]]/route.ts",
+          "lines": 357
+        },
+        {
+          "path": "src/app/api/v2/integrations/[[...path]]/route.ts",
+          "lines": 275
+        },
+        {
+          "path": "src/app/api/image-studio/[[...path]]/route.ts",
+          "lines": 254
+        },
+        {
+          "path": "src/app/api/ai-paths/[[...path]]/route.ts",
+          "lines": 232
+        },
+        {
+          "path": "src/app/api/databases/[[...path]]/route.ts",
+          "lines": 189
+        },
+        {
+          "path": "src/app/api/agentcreator/[[...path]]/route.ts",
+          "lines": 187
+        },
+        {
+          "path": "src/app/api/chatbot/[[...path]]/route.ts",
+          "lines": 148
+        },
+        {
+          "path": "src/app/api/agent/leases/route.ts",
+          "lines": 122
         },
         {
           "path": "src/app/api/agent/resources/route.ts",
@@ -527,68 +555,40 @@
           "lines": 50
         },
         {
-          "path": "src/app/api/v2/products/[id]/route.ts",
-          "lines": 42
-        },
-        {
-          "path": "src/app/api/v2/products/[id]/studio/[action]/route.ts",
-          "lines": 40
-        },
-        {
           "path": "src/app/api/marketplace/[resource]/route.ts",
           "lines": 38
         },
         {
-          "path": "src/app/api/v2/products/metadata/[type]/[id]/route.ts",
-          "lines": 35
-        },
-        {
-          "path": "src/app/api/v2/products/metadata/[type]/route.ts",
-          "lines": 32
-        },
-        {
-          "path": "src/app/api/v2/products/sync/profiles/[id]/route.ts",
-          "lines": 30
-        },
-        {
-          "path": "src/app/api/kangur/ai-tutor/content/route.ts",
-          "lines": 29
-        },
-        {
-          "path": "src/app/api/kangur/ai-tutor/native-guide/route.ts",
-          "lines": 29
-        },
-        {
-          "path": "src/app/api/kangur/auth/parent-magic-link/exchange/route.ts",
-          "lines": 28
-        },
-        {
-          "path": "src/app/api/kangur/auth/parent-magic-link/request/route.ts",
-          "lines": 28
-        },
-        {
-          "path": "src/app/api/v2/products/categories/[id]/route.ts",
-          "lines": 28
-        },
-        {
-          "path": "src/app/api/v2/products/entities/[type]/[id]/route.ts",
-          "lines": 28
-        },
-        {
-          "path": "src/app/api/chatbot/sessions/route.ts",
-          "lines": 27
-        },
-        {
-          "path": "src/app/api/v2/products/categories/route.ts",
-          "lines": 26
-        },
-        {
-          "path": "src/app/api/v2/products/parameters/route.ts",
-          "lines": 26
-        },
-        {
           "path": "src/app/api/v2/metadata/[type]/[id]/route.ts",
           "lines": 25
+        },
+        {
+          "path": "src/app/api/auth/users/[id]/route.ts",
+          "lines": 23
+        },
+        {
+          "path": "src/app/api/drafts/[id]/route.ts",
+          "lines": 23
+        },
+        {
+          "path": "src/app/api/ai/schema/[entity]/route.ts",
+          "lines": 22
+        },
+        {
+          "path": "src/app/api/assets3d/[id]/route.ts",
+          "lines": 22
+        },
+        {
+          "path": "src/app/api/cms/pages/[id]/route.ts",
+          "lines": 22
+        },
+        {
+          "path": "src/app/api/system/logs/route.ts",
+          "lines": 22
+        },
+        {
+          "path": "src/app/api/cms/slugs/[id]/route.ts",
+          "lines": 21
         }
       ]
     }

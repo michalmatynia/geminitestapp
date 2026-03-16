@@ -10,6 +10,7 @@ import {
   KangurPanelIntro,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import {
@@ -132,11 +133,11 @@ export function KangurLearnerAssignmentsPanel({
   }
 
   return (
-    <div className='flex flex-col gap-4'>
+    <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <KangurGlassPanel padding='lg' surface='mistStrong' variant='soft'>
         <KangurPanelIntro description={sectionSummary} eyebrow={sectionTitle} />
 
-        <div className='mt-4 grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 xl:grid-cols-4'>
+        <div className='mt-4 grid grid-cols-1 kangur-panel-gap min-[360px]:grid-cols-2 xl:grid-cols-4'>
           <KangurMetricCard
             accent='slate'
             data-testid='learner-assignments-active'

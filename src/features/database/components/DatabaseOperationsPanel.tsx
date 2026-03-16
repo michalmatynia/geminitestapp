@@ -2,6 +2,7 @@
 
 import { AlertTriangleIcon, DatabaseIcon, Table2Icon, TerminalSquareIcon } from 'lucide-react';
 
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import type { DatabaseType } from '@/shared/contracts/database';
 import {
   AdminDatabaseBreadcrumbs,
@@ -23,11 +24,7 @@ import { CrudPanel } from './CrudPanel';
 import { SqlQueryConsole } from './SqlQueryConsole';
 import { DatabaseProvider, useDatabaseConfig, useDatabaseData } from '../context/DatabaseContext';
 
-const DATABASE_OPTIONS: Array<{
-  value: DatabaseType;
-  label: string;
-  description: string;
-}> = [
+const DATABASE_OPTIONS: Array<LabeledOptionWithDescriptionDto<DatabaseType>> = [
   {
     value: 'mongodb',
     label: 'MongoDB',

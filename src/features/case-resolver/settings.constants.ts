@@ -2,6 +2,7 @@ import type {
   CaseResolverDefaultDocumentFormat,
   CaseResolverSettings,
 } from '@/shared/contracts/case-resolver';
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 
 export const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v2';
 export const CASE_RESOLVER_TAGS_KEY = 'case_resolver_tags_v1';
@@ -26,11 +27,9 @@ export const DEFAULT_CASE_RESOLVER_SETTINGS: CaseResolverSettings = {
   defaultAddresseePartyKind: 'organization',
 };
 
-export const CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_OPTIONS: Array<{
-  value: CaseResolverDefaultDocumentFormat;
-  label: string;
-  description: string;
-}> = [
+export const CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_OPTIONS: Array<
+  LabeledOptionWithDescriptionDto<CaseResolverDefaultDocumentFormat>
+> = [
   {
     value: 'wysiwyg',
     label: 'WYSIWYG',
@@ -38,11 +37,9 @@ export const CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_OPTIONS: Array<{
   },
 ];
 
-export const CASE_RESOLVER_CONFIRM_DELETE_OPTIONS: Array<{
-  value: 'on' | 'off';
-  label: string;
-  description: string;
-}> = [
+export const CASE_RESOLVER_CONFIRM_DELETE_OPTIONS: Array<
+  LabeledOptionWithDescriptionDto<'on' | 'off'>
+> = [
   {
     value: 'on',
     label: 'On',
@@ -55,11 +52,9 @@ export const CASE_RESOLVER_CONFIRM_DELETE_OPTIONS: Array<{
   },
 ];
 
-export const CASE_RESOLVER_PARTY_SEARCH_KIND_OPTIONS: Array<{
-  value: CaseResolverPartySearchKind;
-  label: string;
-  description: string;
-}> = [
+export const CASE_RESOLVER_PARTY_SEARCH_KIND_OPTIONS: Array<
+  LabeledOptionWithDescriptionDto<CaseResolverPartySearchKind>
+> = [
   {
     value: 'person',
     label: 'Persons',

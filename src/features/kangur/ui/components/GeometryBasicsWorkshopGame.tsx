@@ -459,7 +459,7 @@ export default function GeometryBasicsWorkshopGame({
       onDragEnd={onDragEnd}
       onDragStart={() => setSelectedTileId(null)}
     >
-      <KangurPracticeGameStage className='gap-4 mx-auto max-w-3xl'>
+      <KangurPracticeGameStage className='mx-auto max-w-3xl'>
         <KangurPracticeGameProgress
           accent='sky'
           currentRound={roundIndex}
@@ -482,7 +482,7 @@ export default function GeometryBasicsWorkshopGame({
           </p>
         </KangurInfoCard>
 
-        <div className='flex w-full flex-col gap-3'>
+        <div className='flex w-full flex-col kangur-panel-gap'>
           <div className='flex items-center justify-between'>
             <p className='text-xs font-semibold uppercase tracking-[0.16em] text-sky-700'>Plansza</p>
             <KangurStatusChip accent='slate' size='sm'>
@@ -564,7 +564,7 @@ export default function GeometryBasicsWorkshopGame({
           ) : null}
         </div>
 
-        <div className='flex w-full flex-col gap-3'>
+        <div className='flex w-full flex-col kangur-panel-gap'>
           <div className='flex items-center justify-between'>
             <p className='text-xs font-semibold uppercase tracking-[0.16em] text-sky-700'>Etykiety</p>
             <KangurStatusChip accent='slate' size='sm'>
@@ -603,7 +603,7 @@ export default function GeometryBasicsWorkshopGame({
           </Droppable>
         </div>
 
-        <div className='flex w-full flex-wrap items-center justify-between gap-3'>
+        <div className='flex w-full flex-wrap items-center justify-between kangur-panel-gap'>
           <KangurButton size='sm' type='button' variant='surface' onClick={resetRound} disabled={checked}>
             Wyczyść
           </KangurButton>

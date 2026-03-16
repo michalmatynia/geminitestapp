@@ -1,6 +1,7 @@
 import React, { type ReactNode } from 'react';
 import KangurBadgeTrackGrid from '@/features/kangur/ui/components/KangurBadgeTrackGrid';
 import { KangurSectionEyebrow } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -61,7 +62,7 @@ export function KangurBadgeTrackSection({
   };
 
   return (
-    <div className={cn('flex flex-col gap-4', className)}>
+    <div className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME, className)}>
       <KangurBadgeTrackSectionHeader {...headerProps} />
       <KangurBadgeTrackGrid {...gridProps} />
     </div>

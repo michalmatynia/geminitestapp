@@ -116,7 +116,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
         <div
           className='w-full kangur-chat-inset border kangur-chat-padding-sm kangur-chat-surface-warm text-[11px] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
         >
-          <div className='flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3'>
+          <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between kangur-panel-gap'>
             <span className='font-semibold'>
               {formatKangurAiTutorTemplate(tutorContent.auxiliaryControls.dailyLimitTemplate, {
                 count: usageSummary.messageCount,

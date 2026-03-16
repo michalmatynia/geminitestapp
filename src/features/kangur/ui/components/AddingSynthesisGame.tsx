@@ -16,7 +16,10 @@ import {
   KangurStatusChip,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
-import { type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PANEL_GAP_CLASSNAME,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
 import {
   ADDING_SYNTHESIS_FEEDBACK_PAUSE_MS,
   ADDING_SYNTHESIS_HIT_LINE_RATIO,
@@ -365,7 +368,7 @@ export default function AddingSynthesisGame({
 
   if (phase === 'intro') {
     return (
-      <div className='flex w-full flex-col gap-4'>
+      <div className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
         <KangurGlassPanel
           className='overflow-hidden'
           data-testid='adding-synthesis-intro-shell'
@@ -373,13 +376,13 @@ export default function AddingSynthesisGame({
           surface='warmGlow'
           variant='elevated'
         >
-          <div className='flex flex-col gap-5'>
+          <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
             <div className='flex flex-wrap items-center gap-2'>
               <KangurStatusChip accent='amber'>Nowa gra</KangurStatusChip>
               <KangurStatusChip accent='violet'>Synthesia-style</KangurStatusChip>
             </div>
 
-            <div className='flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between'>
+            <div className='flex flex-col kangur-panel-gap lg:flex-row lg:items-end lg:justify-between'>
               <div className='max-w-2xl'>
                 <h2 className='text-3xl font-extrabold tracking-[-0.03em] [color:var(--kangur-page-text)] sm:text-4xl'>
                   Synteza dodawania
@@ -391,7 +394,7 @@ export default function AddingSynthesisGame({
                 </p>
               </div>
               <KangurInfoCard accent='violet' className='rounded-[28px]' padding='md' tone='accent'>
-                <div className='flex items-center gap-3'>
+                <div className='flex items-center kangur-panel-gap'>
                   <KangurIconBadge
                     accent='violet'
                     data-testid='adding-synthesis-intro-badge'
@@ -415,7 +418,7 @@ export default function AddingSynthesisGame({
               </KangurInfoCard>
             </div>
 
-            <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-3'>
+            <div className='grid kangur-panel-gap md:grid-cols-2 xl:grid-cols-3'>
               {ADDING_SYNTHESIS_STAGES.map((stage) => (
                 <KangurInfoCard
                   key={stage.id}
@@ -424,7 +427,7 @@ export default function AddingSynthesisGame({
                   padding='lg'
                   tone='accent'
                 >
-                  <div className='flex items-start gap-3'>
+                  <div className='flex items-start kangur-panel-gap'>
                     <div className='text-3xl leading-none'>{stage.icon}</div>
                     <div>
                       <p className='text-sm font-extrabold [color:var(--kangur-page-text)]'>
@@ -444,20 +447,20 @@ export default function AddingSynthesisGame({
               label='Jak grać'
               padding='lg'
             >
-              <div className='grid gap-3 min-[360px]:grid-cols-2 lg:grid-cols-3'>
-                <div className='flex items-center gap-3'>
+              <div className='grid kangur-panel-gap min-[360px]:grid-cols-2 lg:grid-cols-3'>
+                <div className='flex items-center kangur-panel-gap'>
                   <Target className='h-5 w-5 text-amber-500' />
                   <p className='text-sm [color:var(--kangur-page-muted-text)]'>
                     Klikaj odpowiedni tor lub naciskaj 1, 2, 3, 4.
                   </p>
                 </div>
-                <div className='flex items-center gap-3'>
+                <div className='flex items-center kangur-panel-gap'>
                   <Gauge className='h-5 w-5 text-sky-500' />
                   <p className='text-sm [color:var(--kangur-page-muted-text)]'>
                     Im bliżej linii trafisz, tym lepszy rytm.
                   </p>
                 </div>
-                <div className='flex items-center gap-3'>
+                <div className='flex items-center kangur-panel-gap'>
                   <Zap className='h-5 w-5 text-violet-500' />
                   <p className='text-sm [color:var(--kangur-page-muted-text)]'>
                     Po każdym błędzie dostajesz szybką podpowiedź.
@@ -466,7 +469,7 @@ export default function AddingSynthesisGame({
               </div>
             </KangurSummaryPanel>
 
-            <div className='flex flex-col gap-3 sm:flex-row'>
+            <div className='flex flex-col kangur-panel-gap sm:flex-row'>
               <KangurButton
                 type='button'
                 size='lg'
@@ -496,14 +499,14 @@ export default function AddingSynthesisGame({
     const showRewards = summary.xpEarned > 0 || summary.breakdown.length > 0;
 
     return (
-      <div className='flex w-full flex-col gap-4'>
+      <div className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
         <KangurGlassPanel
           data-testid='adding-synthesis-summary'
           padding='xl'
           surface='successGlow'
           variant='elevated'
         >
-          <div className='flex flex-col gap-5'>
+          <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
             <div className='flex flex-wrap items-center gap-2'>
               <KangurStatusChip accent='emerald'>Sesja zakończona</KangurStatusChip>
               {showRewards ? (
@@ -532,7 +535,7 @@ export default function AddingSynthesisGame({
               </p>
             </div>
 
-            <div className='grid gap-3 min-[360px]:grid-cols-2 xl:grid-cols-4'>
+            <div className='grid kangur-panel-gap min-[360px]:grid-cols-2 xl:grid-cols-4'>
               <KangurMetricCard accent='emerald' label='Skuteczność' value={`${summary.accuracy}%`} />
               <KangurMetricCard
                 accent='violet'
@@ -543,7 +546,7 @@ export default function AddingSynthesisGame({
               <KangurMetricCard accent='sky' label='Runda' value={summary.totalNotes} />
             </div>
 
-            <div className='flex flex-col gap-3 sm:flex-row'>
+            <div className='flex flex-col kangur-panel-gap sm:flex-row'>
               <KangurButton type='button' size='lg' variant='primary' onClick={startSession}>
                 <RefreshCw className='h-4 w-4' />
                 Zagraj jeszcze raz
@@ -564,14 +567,14 @@ export default function AddingSynthesisGame({
   }
 
   return (
-    <div className='flex w-full flex-col gap-4'>
+    <div className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <KangurGlassPanel
         data-testid='adding-synthesis-hud'
         padding='lg'
         surface='frost'
         variant='soft'
       >
-        <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
+        <div className='flex flex-col kangur-panel-gap lg:flex-row lg:items-center lg:justify-between'>
           <div className='flex flex-wrap items-center gap-2'>
             <KangurStatusChip accent={currentStage.accent}>{currentStage.title}</KangurStatusChip>
             <KangurStatusChip accent='slate'>
@@ -587,7 +590,7 @@ export default function AddingSynthesisGame({
         </div>
       </KangurGlassPanel>
 
-      <div className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_300px]'>
+      <div className='grid kangur-panel-gap lg:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_300px]'>
         <KangurGlassPanel
           className='min-w-0'
           data-testid='adding-synthesis-board-shell'
@@ -623,7 +626,7 @@ export default function AddingSynthesisGame({
             </div>
 
             <div className='relative h-[420px] overflow-hidden min-w-0'>
-              <div className='absolute inset-y-0 left-0 right-0 grid grid-cols-4 gap-1.5 sm:gap-3'>
+              <div className='absolute inset-y-0 left-0 right-0 grid grid-cols-4 kangur-panel-gap'>
                 {LANE_STYLES.map((laneStyle, laneIndex) => (
                   <div
                     key={`lane-rail-${laneIndex}`}
@@ -697,7 +700,7 @@ export default function AddingSynthesisGame({
                 </div>
               ) : null}
 
-              <div className='absolute inset-x-0 bottom-0 grid grid-cols-4 gap-1.5 sm:gap-3'>
+              <div className='absolute inset-x-0 bottom-0 grid grid-cols-4 kangur-panel-gap'>
                 {currentNote?.choices.map((choice, laneIndex) => {
                   const laneStyle = LANE_STYLES[laneIndex] ?? LANE_STYLES[0];
                   const isCorrectLane = feedback?.correctLaneIndex === laneIndex;
@@ -755,7 +758,7 @@ export default function AddingSynthesisGame({
           </KangurGlassPanel>
         </KangurGlassPanel>
 
-        <div className='flex flex-col gap-4'>
+        <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
           <KangurSummaryPanel accent={currentStage.accent} padding='lg' title={currentStage.title}>
             <div className='flex flex-wrap items-center gap-2'>
               <KangurStatusChip accent='slate'>Dokładność {accuracy}%</KangurStatusChip>

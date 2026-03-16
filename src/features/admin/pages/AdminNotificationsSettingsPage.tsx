@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 
+import type { LabeledOptionDto, LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import {
   AdminSettingsPageLayout,
   Button,
@@ -95,7 +96,7 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                   value={position}
                   onValueChange={(val: string) => setPosition(val as PositionType)}
                   options={positionOptions.map(
-                    (opt: { value: string; label: string; description: string }) => ({
+                    (opt: LabeledOptionWithDescriptionDto<string>) => ({
                       value: opt.value,
                       label: opt.label,
                       description: opt.description,
@@ -115,7 +116,7 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                   value={accent}
                   onValueChange={(val: string) => setAccent(val as AccentType)}
                   options={accentOptions.map(
-                    (opt: { value: string; label: string; color: string }) => ({
+                    (opt: LabeledOptionDto<string> & { color: string }) => ({
                       value: opt.value,
                       label: opt.label,
                       description: opt.value === accent ? 'Currently selected' : undefined,
@@ -128,7 +129,7 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
               {/* Color Palette Preview */}
               <FormField label='Available Colors'>
                 <div className='grid grid-cols-5 gap-2'>
-                  {accentOptions.map((option: { value: string; label: string; color: string }) => (
+                  {accentOptions.map((option: LabeledOptionDto<string> & { color: string }) => (
                     <Tooltip key={option.value} content={option.label}>
                       <Button
                         onClick={() => setAccent(option.value as AccentType)}

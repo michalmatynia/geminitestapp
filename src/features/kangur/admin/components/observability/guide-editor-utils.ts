@@ -1,7 +1,8 @@
-export const SURFACE_OPTIONS: Array<{
-  value: '' | 'lesson' | 'test' | 'game' | 'profile' | 'parent_dashboard' | 'auth';
-  label: string;
-}> = [
+import type { LabeledOptionDto } from '@/shared/contracts/base';
+
+export const SURFACE_OPTIONS: Array<
+  LabeledOptionDto<'' | 'lesson' | 'test' | 'game' | 'profile' | 'parent_dashboard' | 'auth'>
+> = [
   { value: '', label: 'All surfaces' },
   { value: 'lesson', label: 'Lesson' },
   { value: 'test', label: 'Test' },
@@ -34,7 +35,7 @@ export const FOCUS_KIND_OPTIONS = [
   { value: 'create_account_action', label: 'Create account action' },
   { value: 'login_identifier_field', label: 'Login identifier field' },
   { value: 'login_form', label: 'Login form' },
-] as const;
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export const stringifyLineList = (items: string[]): string => items.join('\n');
 

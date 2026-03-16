@@ -23,7 +23,7 @@ function FieldInput(props: {
         aria-label={label}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className='h-6 flex-1 rounded border border-border/60 bg-background/50 px-2 text-xs text-gray-200 placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-ring'
+        className='h-6 flex-1 rounded border border-border/60 bg-background/50 px-2 text-xs text-gray-200 placeholder:text-gray-600 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring'
        title={placeholder}/>
     </div>
   );

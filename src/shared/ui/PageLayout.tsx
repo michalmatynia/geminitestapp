@@ -2,6 +2,7 @@
 
 import { useMemo, type JSX, type ReactNode } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 
@@ -27,7 +28,7 @@ interface PageLayoutProps {
   tabs?: {
     activeTab: string;
     onTabChange: (value: string) => void;
-    tabsList: { value: string; label: string }[];
+    tabsList: Array<LabeledOptionDto<string>>;
   };
 
   // Content wrapping (optional)
@@ -60,7 +61,7 @@ type PageLayoutRuntimeValue = {
     | {
         activeTab: string;
         onTabChange: (value: string) => void;
-        tabsList: { value: string; label: string }[];
+        tabsList: Array<LabeledOptionDto<string>>;
       }
     | undefined;
   wrapInPanel: boolean;

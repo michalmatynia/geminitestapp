@@ -12,7 +12,7 @@ import {
   KangurSectionHeading,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { KANGUR_PANEL_GAP_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import {
   formatKangurAiTutorTemplate,
@@ -73,13 +73,13 @@ export function KangurLearnerProfileAiTutorMoodWidget(): React.JSX.Element {
 
   return (
     <KangurGlassPanel
-      className='flex flex-col gap-5'
+      className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
       data-testid='learner-profile-ai-tutor-mood'
       padding='lg'
       surface='mistStrong'
       variant='soft'
     >
-      <div className='flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between'>
+      <div className={`flex flex-col xl:flex-row xl:items-start xl:justify-between ${KANGUR_PANEL_GAP_CLASSNAME}`}>
         <div className='max-w-2xl space-y-4'>
           <KangurSectionHeading
             accent='teal'
@@ -91,7 +91,7 @@ export function KangurLearnerProfileAiTutorMoodWidget(): React.JSX.Element {
             title={sectionTitle}
           />
 
-          <div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
+          <div className='flex flex-col kangur-panel-gap sm:flex-row sm:items-center'>
             <KangurStatusChip
               accent={currentAccent}
               className='w-fit'
@@ -111,7 +111,7 @@ export function KangurLearnerProfileAiTutorMoodWidget(): React.JSX.Element {
           </div>
         </div>
 
-        <div className='grid w-full gap-3 min-[360px]:grid-cols-2 xl:max-w-3xl xl:grid-cols-3'>
+        <div className='grid w-full kangur-panel-gap min-[360px]:grid-cols-2 xl:max-w-3xl xl:grid-cols-3'>
           <KangurLabeledValueSummary
             className='soft-card rounded-[24px] border [border-color:var(--kangur-soft-card-border)] px-4 py-4 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.22)]'
             description={tutorContent.profileMoodWidget.baselineDescription}

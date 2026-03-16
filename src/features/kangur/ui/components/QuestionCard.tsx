@@ -8,7 +8,11 @@ import {
   KangurGlassPanel,
   KangurProgressBar,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_ACCENT_STYLES,
+  KANGUR_PANEL_GAP_CLASSNAME,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
 import type { KangurQuestionChoice } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -208,7 +212,7 @@ export default function QuestionCard({
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
-      className='flex flex-col items-center gap-6 w-full max-w-md'
+      className={cn('flex flex-col items-center w-full max-w-md', KANGUR_PANEL_GAP_CLASSNAME)}
     >
       <div
         aria-live='polite'
@@ -275,7 +279,7 @@ export default function QuestionCard({
       <div
         aria-describedby={choicesDescriptionId}
         aria-labelledby={questionHeadingId}
-        className='grid w-full grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4'
+        className='grid w-full grid-cols-1 kangur-panel-gap sm:grid-cols-2'
         id={choicesGroupId}
         role='group'
         aria-label='Odpowiedzi'

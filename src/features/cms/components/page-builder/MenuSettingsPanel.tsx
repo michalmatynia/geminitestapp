@@ -4,6 +4,7 @@ import { ChevronDown, Plus, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { CmsDomain } from '@/shared/contracts/cms';
 import {
   CMS_MENU_SETTINGS_KEY,
@@ -43,7 +44,9 @@ const MENU_SECTIONS = [
   'Animations',
 ];
 
-const COLOR_SCHEME_FALLBACK = [{ label: 'Custom colors', value: 'custom' }];
+const COLOR_SCHEME_FALLBACK = [
+  { label: 'Custom colors', value: 'custom' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 const FONT_FAMILY_OPTIONS = [
   { label: 'Inter', value: 'Inter, sans-serif' },
@@ -62,7 +65,7 @@ const FONT_FAMILY_OPTIONS = [
   { label: 'Trebuchet MS', value: '\'Trebuchet MS\', sans-serif' },
   { label: 'Palatino', value: '\'Palatino Linotype\', serif' },
   { label: 'System UI', value: 'system-ui, sans-serif' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 const FONT_WEIGHT_OPTIONS = [
   { label: '100 – Thin', value: '100' },
@@ -74,7 +77,7 @@ const FONT_WEIGHT_OPTIONS = [
   { label: '700 – Bold', value: '700' },
   { label: '800 – Extra Bold', value: '800' },
   { label: '900 – Black', value: '900' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 // ---------------------------------------------------------------------------
 // Panel
@@ -121,7 +124,7 @@ export function MenuSettingsPanel({
   const [userSettings, setUserSettings] = useState<MenuSettings | null>(null);
   const settings = userSettings ?? initialSettings;
 
-  const colorSchemeOptions = useMemo((): { label: string; value: string }[] => {
+  const colorSchemeOptions = useMemo((): Array<LabeledOptionDto<string>> => {
     const options = [...COLOR_SCHEME_FALLBACK];
     const schemes: ColorScheme[] = theme?.colorSchemes ?? [];
     schemes.forEach((scheme: ColorScheme) => {

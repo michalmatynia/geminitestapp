@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   type UseAiPathsObjectAnalysisReturn,
   type AiPathsObjectAnalysisStatus,
@@ -74,7 +75,7 @@ const isActive = (status: AiPathsObjectAnalysisStatus): boolean =>
 // Auto-apply target options
 // ---------------------------------------------------------------------------
 
-const AUTO_APPLY_OPTIONS: Array<{ value: AiPathsObjectAnalysisAutoApplyTarget; label: string }> = [
+const AUTO_APPLY_OPTIONS: Array<LabeledOptionDto<AiPathsObjectAnalysisAutoApplyTarget>> = [
   { value: 'both', label: 'Object Layout + Auto Scaler' },
   { value: 'object_layout', label: 'Object Layout only' },
   { value: 'auto_scaler', label: 'Auto Scaler only' },
@@ -108,7 +109,7 @@ function FieldMappingRow({
         className={cn(
           'h-6 flex-1 rounded border border-border/60 bg-background/50 px-2',
           'text-xs text-gray-200 placeholder:text-gray-600',
-          'focus:outline-none focus:ring-1 focus:ring-ring'
+          'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring'
         )}
       />
     </div>

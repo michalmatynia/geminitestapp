@@ -2,6 +2,7 @@
 
 import { useMemo, type ReactNode } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 
@@ -51,7 +52,7 @@ export interface SettingsPanelField<T extends object> {
   disabled?: boolean;
 
   /** For select fields, list of options */
-  options?: Array<{ label: string; value: string | number }>;
+  options?: Array<LabeledOptionDto<string | number>>;
 
   /** For number and range fields */
   min?: number;

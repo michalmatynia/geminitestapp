@@ -11,6 +11,7 @@ import {
   KangurGlassPanel,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 import type { JSX } from 'react';
 
@@ -43,7 +44,7 @@ export function KangurActiveLessonPanelWidget(): JSX.Element {
 
   return (
     <KangurLessonNavigationProvider onBack={clearActiveLesson}>
-      <div className='flex w-full flex-col items-center gap-4'>
+      <div className={`flex w-full flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
         <KangurActiveLessonHeader
           lesson={activeLesson}
           lessonDocument={activeLessonDocument}
@@ -58,7 +59,10 @@ export function KangurActiveLessonPanelWidget(): JSX.Element {
           onBack={clearActiveLesson}
         />
 
-        <div ref={activeLessonContentRef} className='flex w-full flex-col items-center gap-4'>
+        <div
+          ref={activeLessonContentRef}
+          className={`flex w-full flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
+        >
           {shouldRenderLessonDocument && activeLessonDocument ? (
             <div className='w-full space-y-4'>
               <KangurGlassPanel surface='solid' variant='soft'>

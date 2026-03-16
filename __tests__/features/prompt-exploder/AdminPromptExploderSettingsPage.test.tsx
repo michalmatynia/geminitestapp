@@ -103,13 +103,20 @@ vi.mock('@/shared/ui', async (importOriginal) => {
       value,
       onValueChange,
       options,
+      ariaLabel,
       ...props
     }: {
       value: string;
       onValueChange: (value: string) => void;
       options: Array<{ value: string; label: string }>;
+      ariaLabel?: string;
     } & React.SelectHTMLAttributes<HTMLSelectElement>) => (
-      <select {...props} value={value} onChange={(event) => onValueChange(event.target.value)}>
+      <select
+        {...props}
+        aria-label={ariaLabel}
+        value={value}
+        onChange={(event) => onValueChange(event.target.value)}
+      >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}

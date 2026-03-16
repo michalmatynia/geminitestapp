@@ -56,7 +56,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
     {
       title: 'Obwód kwadratu',
       content: (
-        <KangurLessonStack className='gap-3 text-center' gap='sm'>
+        <KangurLessonStack className='kangur-panel-gap text-center' gap='sm'>
           <KangurLessonCallout accent='slate' className='border-amber-200/85 text-center'>
             <div className='mx-auto h-20 w-32'>
               <GeometryPerimeterTraceAnimation />
@@ -86,7 +86,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
     {
       title: 'Obwód prostokąta',
       content: (
-        <KangurLessonStack className='gap-3 text-center' gap='sm'>
+        <KangurLessonStack className='kangur-panel-gap text-center' gap='sm'>
           <KangurLessonCallout accent='slate' className='border-amber-200/85 text-center'>
             <div className='mx-auto h-20 w-32'>
               <GeometryPerimeterTraceAnimation />
@@ -155,7 +155,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
     {
       title: 'Podsumowanie w ruchu',
       content: (
-        <div className='flex flex-col gap-3 text-center'>
+        <div className='flex flex-col kangur-panel-gap text-center'>
           <KangurLessonCallout accent='amber' padding='sm'>
             <div className='mx-auto h-24 w-36'>
               <GeometryPerimeterTraceAnimation />
@@ -170,7 +170,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
     {
       title: 'Podsumowanie: pary boków',
       content: (
-        <div className='flex flex-col gap-3 text-center'>
+        <div className='flex flex-col kangur-panel-gap text-center'>
           <KangurLessonCallout accent='amber' padding='sm'>
             <div className='mx-auto h-24 w-36'>
               <GeometryPerimeterSidesAnimation />

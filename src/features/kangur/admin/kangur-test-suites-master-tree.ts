@@ -1,5 +1,6 @@
 import type { KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
 import type { MasterTreeNode } from '@/features/kangur/shared/utils/master-folder-tree-contract';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 import { KANGUR_TEST_SUITE_SORT_ORDER_GAP } from '../test-suites';
 
@@ -52,7 +53,7 @@ export const buildKangurTestSuiteMasterNodes = (suites: KangurTestSuite[]): Mast
       },
     }));
 
-const SUITE_VISIBILITY_GROUPS: Array<{ value: SuiteVisibilityGroup; label: string }> = [
+const SUITE_VISIBILITY_GROUPS: Array<LabeledOptionDto<SuiteVisibilityGroup>> = [
   { value: 'enabled', label: 'Active suites' },
   { value: 'disabled', label: 'Disabled suites' },
 ];

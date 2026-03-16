@@ -1,6 +1,17 @@
 'use client';
 
-import { BookOpen, BrainCircuit, LayoutGrid, LogIn, LogOut, Trophy, UserPlus } from 'lucide-react';
+import {
+  BookOpen,
+  BrainCircuit,
+  ClipboardList,
+  LayoutGrid,
+  LogIn,
+  LogOut,
+  Menu,
+  Trophy,
+  UserPlus,
+  X,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import {
@@ -36,6 +47,7 @@ import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurSto
 type KangurPrimaryNavigationPage =
   | 'Game'
   | 'Lessons'
+  | 'Tests'
   | 'LearnerProfile'
   | 'ParentDashboard'
   | 'Duels';
@@ -132,6 +144,7 @@ const renderNavAction = (config: KangurNavActionConfig): React.JSX.Element => {
         data-doc-id={docId}
         data-nav-state={transitionActive ? 'transitioning' : 'idle'}
         data-testid={testId}
+        onClick={onClick}
         size='md'
         title={title}
         variant={variant}
@@ -227,6 +240,8 @@ export function KangurPrimaryNavigation({
   const createAccountActionRef = useRef<HTMLButtonElement | null>(null);
   const loginActionRef = useRef<HTMLButtonElement | null>(null);
   const [isTutorHidden, setIsTutorHidden] = useState(() => loadPersistedTutorVisibilityHidden());
+  const [isMobile, setIsMobile] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const enableTutorLabel =
     tutorContent.common.enableTutorLabel ?? tutorContent.navigation.restoreTutorLabel;
   const disableTutorLabel = tutorContent.common.disableTutorAria ?? 'Wyłącz AI Tutora';
@@ -240,6 +255,7 @@ export function KangurPrimaryNavigation({
   const hasGuestPlayerName = (guestPlayerName?.trim() ?? '').length > 0;
   const homeHref = getKangurHomeHref(basePath);
   const lessonsHref = createPageUrl('Lessons', basePath);
+  const testsHref = createPageUrl('Tests', basePath);
   const duelsHref = createPageUrl('Duels', basePath);
   const parentDashboardHref = createPageUrl('ParentDashboard', basePath);
   const profileHref = createPageUrl('LearnerProfile', basePath);
@@ -247,11 +263,72 @@ export function KangurPrimaryNavigation({
   const activeTransitionSourceId = routeTransitionState?.activeTransitionSourceId ?? null;
   const homeTransitionSourceId = 'kangur-primary-nav:home';
   const lessonsTransitionSourceId = 'kangur-primary-nav:lessons';
+  const testsTransitionSourceId = 'kangur-primary-nav:tests';
   const duelsTransitionSourceId = 'kangur-primary-nav:duels';
   const profileTransitionSourceId = 'kangur-primary-nav:profile';
   const parentDashboardTransitionSourceId = 'kangur-primary-nav:parent-dashboard';
+  const closeMobileMenu = (): void => setIsMobileMenuOpen(false);
+  const toggleMobileMenu = (): void => setIsMobileMenuOpen((prev) => !prev);
 
   useEffect(() => subscribeToTutorVisibilityChanges(setIsTutorHidden), []);
+
+  useEffect((): (() => void) | void => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return undefined;
+    }
+
+    const media = window.matchMedia('(max-width: 639px)');
+    const applyBreakpoint = (matches: boolean): void => {
+      const width = typeof window !== 'undefined' ? window.innerWidth : 0;
+      setIsMobile(matches && width <= 639);
+    };
+
+    applyBreakpoint(media.matches);
+
+    const handler = (event: MediaQueryListEvent): void => {
+      applyBreakpoint(event.matches);
+    };
+
+    if (typeof media.addEventListener === 'function') {
+      media.addEventListener('change', handler);
+      return (): void => {
+        media.removeEventListener('change', handler);
+      };
+    }
+
+    media.addListener(handler);
+    return (): void => {
+      media.removeListener(handler);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isMobile) {
+      setIsMobileMenuOpen(false);
+    }
+  }, [isMobile]);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen || typeof document === 'undefined') return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return (): void => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen || typeof window === 'undefined') return;
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') {
+        setIsMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return (): void => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMobileMenuOpen]);
 
   useEffect(() => {
     if (!showGuestPlayerNameInput) {
@@ -317,84 +394,122 @@ export function KangurPrimaryNavigation({
     onClick: onLogout,
     testId: 'kangur-primary-nav-logout',
   };
-  const authAction = effectiveIsAuthenticated ? (
-    renderNavAction(logoutAction)
-  ) : onLogin || onCreateAccount ? (
-    <>
-      {showGuestPlayerNameInput ? (
-        isEditingGuestPlayerName || !hasGuestPlayerName ? (
-          <div className='w-full sm:w-[220px]'>
-            <label className='sr-only' htmlFor='kangur-primary-nav-guest-player-name'>
-              Imię gracza
-            </label>
-            <KangurTextField
-              accent='indigo'
-              className='h-11 min-w-0 text-sm'
-              data-doc-id='profile_guest_player_name'
-              id='kangur-primary-nav-guest-player-name'
-              maxLength={20}
-              onBlur={commitGuestPlayerName}
-              onChange={(event) => handleGuestPlayerNameChange(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                  commitGuestPlayerName();
-                }
-              }}
-              placeholder={guestPlayerPlaceholderText}
+  const buildActionWithClose = (
+    action: KangurNavActionConfig,
+    onActionClick?: () => void
+  ): KangurNavActionConfig => {
+    if (!onActionClick) return action;
+    const existingClick = action.onClick;
+    return {
+      ...action,
+      onClick: () => {
+        onActionClick();
+        existingClick?.();
+      },
+    };
+  };
+
+  const renderAuthActions = (onActionClick?: () => void): React.ReactNode => {
+    if (effectiveIsAuthenticated) {
+      return renderNavAction(buildActionWithClose(logoutAction, onActionClick));
+    }
+
+    if (!onLogin && !onCreateAccount) {
+      return null;
+    }
+
+    return (
+      <>
+        {showGuestPlayerNameInput ? (
+          isEditingGuestPlayerName || !hasGuestPlayerName ? (
+            <div className='w-full sm:w-[220px]'>
+              <label className='sr-only' htmlFor='kangur-primary-nav-guest-player-name'>
+                Imię gracza
+              </label>
+              <KangurTextField
+                accent='indigo'
+                className='h-11 min-w-0 text-sm'
+                data-doc-id='profile_guest_player_name'
+                id='kangur-primary-nav-guest-player-name'
+                maxLength={20}
+                onBlur={commitGuestPlayerName}
+                onChange={(event) => handleGuestPlayerNameChange(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+                    commitGuestPlayerName();
+                  }
+                }}
+                placeholder={guestPlayerPlaceholderText}
+                size='md'
+                type='text'
+                value={guestPlayerNameValue}
+              />
+            </div>
+          ) : (
+            <KangurButton
+              className='w-full justify-start px-3 text-left sm:w-auto sm:min-w-[180px]'
+              data-doc-id='profile_guest_player_name_display'
+              onClick={() => setIsEditingGuestPlayerName(true)}
               size='md'
-              type='text'
-              value={guestPlayerNameValue}
-            />
-          </div>
-        ) : (
-          <KangurButton
-            className='w-full justify-start px-3 text-left sm:w-auto sm:min-w-[180px]'
-            data-doc-id='profile_guest_player_name_display'
-            onClick={() => setIsEditingGuestPlayerName(true)}
-            size='md'
-            type='button'
-            variant='navigation'
-          >
-            <span className='truncate'>{guestPlayerName.trim()}</span>
-          </KangurButton>
-        )
-      ) : null}
-      {onCreateAccount ? (
-        renderNavAction({
-          className: mobileAuthActionClassName,
-          content: (
-            <>
-              <UserPlus className={ICON_CLASSNAME} strokeWidth={2.15} />
-              <span className='truncate'>{createAccountActionContent?.title ?? 'Utwórz konto'}</span>
-            </>
-          ),
-          docId: 'profile_create_account',
-          elementRef: createAccountActionRef,
-          onClick: onCreateAccount,
-          testId: 'kangur-primary-nav-create-account',
-          title: createAccountActionContent?.summary ?? undefined,
-        })
-      ) : null}
-      {onLogin ? (
-        renderNavAction({
-          className: mobileAuthActionClassName,
-          content: (
-            <>
-              <LogIn className={ICON_CLASSNAME} strokeWidth={2.15} />
-              <span className='truncate'>{loginActionContent?.title ?? 'Zaloguj się'}</span>
-            </>
-          ),
-          docId: 'profile_login',
-          elementRef: loginActionRef,
-          onClick: onLogin,
-          testId: 'kangur-primary-nav-login',
-          title: loginActionContent?.summary ?? undefined,
-        })
-      ) : null}
-    </>
-  ) : null;
-  const tutorToggleAction = renderNavAction({
+              type='button'
+              variant='navigation'
+            >
+              <span className='truncate'>{guestPlayerName.trim()}</span>
+            </KangurButton>
+          )
+        ) : null}
+        {onCreateAccount ? (
+          renderNavAction(
+            buildActionWithClose(
+              {
+                className: mobileAuthActionClassName,
+                content: (
+                  <>
+                    <UserPlus className={ICON_CLASSNAME} strokeWidth={2.15} />
+                    <span className='truncate'>
+                      {createAccountActionContent?.title ?? 'Utwórz konto'}
+                    </span>
+                  </>
+                ),
+                docId: 'profile_create_account',
+                elementRef: createAccountActionRef,
+                onClick: onCreateAccount,
+                testId: 'kangur-primary-nav-create-account',
+                title: createAccountActionContent?.summary ?? undefined,
+              },
+              onActionClick
+            )
+          )
+        ) : null}
+        {onLogin ? (
+          renderNavAction(
+            buildActionWithClose(
+              {
+                className: mobileAuthActionClassName,
+                content: (
+                  <>
+                    <LogIn className={ICON_CLASSNAME} strokeWidth={2.15} />
+                    <span className='truncate'>
+                      {loginActionContent?.title ?? 'Zaloguj się'}
+                    </span>
+                  </>
+                ),
+                docId: 'profile_login',
+                elementRef: loginActionRef,
+                onClick: onLogin,
+                testId: 'kangur-primary-nav-login',
+                title: loginActionContent?.summary ?? undefined,
+              },
+              onActionClick
+            )
+          )
+        ) : null}
+      </>
+    );
+  };
+
+  const tutorToggleActionConfig: KangurNavActionConfig = {
     ariaLabel: isTutorHidden ? enableTutorLabel : disableTutorLabel,
     className: isTutorHidden
       ? `border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] px-4 text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800 ${mobileWideNavItemClassName}`
@@ -415,7 +530,7 @@ export function KangurPrimaryNavigation({
     },
     testId: 'kangur-ai-tutor-toggle',
     title: isTutorHidden ? enableTutorLabel : disableTutorLabel,
-  });
+  };
   const homeAction: KangurNavActionConfig = {
     active: homeActive,
     className: `px-3 sm:px-4 ${mobileNavItemClassName}`,
@@ -463,6 +578,27 @@ export function KangurPrimaryNavigation({
     }),
     transitionAcknowledgeMs: NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
     transitionSourceId: lessonsTransitionSourceId,
+  };
+  const testsAction: KangurNavActionConfig = {
+    active: currentPage === 'Tests',
+    className: mobileNavItemClassName,
+    content: (
+      <>
+        <ClipboardList className={ICON_CLASSNAME} strokeWidth={2.15} />
+        <span className='truncate'>Testy</span>
+      </>
+    ),
+    docId: 'top_nav_tests',
+    href: testsHref,
+    targetPageKey: 'Tests',
+    testId: 'kangur-primary-nav-tests',
+    transitionActive: isTransitionSourceActive({
+      activeTransitionSourceId,
+      transitionPhase,
+      transitionSourceId: testsTransitionSourceId,
+    }),
+    transitionAcknowledgeMs: NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
+    transitionSourceId: testsTransitionSourceId,
   };
   const duelsAction: KangurNavActionConfig = {
     active: currentPage === 'Duels',
@@ -525,30 +661,95 @@ export function KangurPrimaryNavigation({
       modeLabels={kangurAppearanceLabels}
     />
   ) : null;
-  const primaryActions = (
-    <div
-      className='grid w-full min-w-0 grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-nowrap sm:items-center'
-      data-testid='kangur-primary-nav-primary-actions'
-    >
-      {renderNavAction(homeAction)}
-      {renderNavAction(lessonsAction)}
-      {renderNavAction(duelsAction)}
-      {tutorToggleAction}
-    </div>
-  );
-  const utilityActions =
-    appearanceControls ||
-    rightAccessory ||
-    parentDashboardAction ||
-    shouldRenderProfileMenu ||
-    authAction ? (
+  const appearanceControlsInline = storefrontAppearance ? (
+    <CmsStorefrontAppearanceButtons
+      tone={kangurAppearance.tone}
+      className='justify-start'
+      label='Kangur appearance'
+      testId='kangur-primary-nav-appearance-controls-inline'
+      modes={[...kangurAppearanceModes]}
+      modeLabels={kangurAppearanceLabels}
+    />
+  ) : null;
+  const renderPrimaryActions = (options?: {
+    onActionClick?: () => void;
+    wrapperClassName?: string;
+    inlineAppearanceWithTutor?: boolean;
+  }): React.ReactNode => {
+    const { onActionClick, wrapperClassName, inlineAppearanceWithTutor } = options ?? {};
+    const tutorInlineClassName = [tutorToggleActionConfig.className, 'max-sm:!w-auto']
+      .filter(Boolean)
+      .join(' ');
+    const tutorInlineAction = renderNavAction(
+      buildActionWithClose(
+        {
+          ...tutorToggleActionConfig,
+          className: tutorInlineClassName,
+        },
+        onActionClick
+      )
+    );
+    const tutorDefaultAction = renderNavAction(
+      buildActionWithClose(tutorToggleActionConfig, onActionClick)
+    );
+    const tutorRow =
+      inlineAppearanceWithTutor && appearanceControlsInline ? (
+        <div className='flex w-full items-center justify-center gap-2'>
+          {tutorInlineAction}
+          <div className='flex shrink-0 items-center'>{appearanceControlsInline}</div>
+        </div>
+      ) : (
+        tutorDefaultAction
+      );
+    return (
       <div
-        className='ml-auto flex w-full flex-col items-stretch justify-end gap-2 max-sm:ml-0 max-sm:justify-start sm:w-auto sm:flex-row sm:flex-wrap sm:items-center'
+        className={
+          wrapperClassName ??
+          'grid w-full min-w-0 grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-nowrap sm:items-center'
+        }
+        data-testid='kangur-primary-nav-primary-actions'
+      >
+        {renderNavAction(buildActionWithClose(homeAction, onActionClick))}
+        {renderNavAction(buildActionWithClose(lessonsAction, onActionClick))}
+        {renderNavAction(buildActionWithClose(testsAction, onActionClick))}
+        {renderNavAction(buildActionWithClose(duelsAction, onActionClick))}
+        {tutorRow}
+      </div>
+    );
+  };
+
+  const renderUtilityActions = (options?: {
+    onActionClick?: () => void;
+    wrapperClassName?: string;
+    hideAppearanceControls?: boolean;
+  }): React.ReactNode => {
+    const { onActionClick, wrapperClassName, hideAppearanceControls } = options ?? {};
+    const authActions = renderAuthActions(onActionClick);
+    const resolvedAppearanceControls = hideAppearanceControls ? null : appearanceControls;
+
+    if (
+      !resolvedAppearanceControls &&
+      !rightAccessory &&
+      !parentDashboardAction &&
+      !shouldRenderProfileMenu &&
+      !authActions
+    ) {
+      return null;
+    }
+
+    return (
+      <div
+        className={
+          wrapperClassName ??
+          'ml-auto flex w-full flex-col items-stretch justify-end gap-2 max-sm:ml-0 max-sm:justify-start sm:w-auto sm:flex-row sm:flex-wrap sm:items-center'
+        }
         data-testid='kangur-primary-nav-utility-actions'
       >
-        {appearanceControls}
+        {resolvedAppearanceControls}
         {rightAccessory}
-        {parentDashboardAction ? renderNavAction(parentDashboardAction) : null}
+        {parentDashboardAction
+          ? renderNavAction(buildActionWithClose(parentDashboardAction, onActionClick))
+          : null}
         {shouldRenderProfileMenu ? (
           <KangurProfileMenu
             isTransitionActive={isTransitionSourceActive({
@@ -563,21 +764,100 @@ export function KangurPrimaryNavigation({
             triggerClassName={mobileNavItemClassName}
           />
         ) : null}
-        {authAction}
+        {authActions}
       </div>
-    ) : null;
-  const leftContent = (
+    );
+  };
+
+  const mobileMenuLabel = isMobileMenuOpen ? 'Zamknij menu' : 'Otwórz menu';
+  const mobileMenuId = 'kangur-mobile-menu';
+  const mobileNav = (
     <KangurTopNavGroup label={navigationLabel}>
-      {primaryActions}
-      {utilityActions}
+      <div className='flex w-full items-center justify-center'>
+        <KangurButton
+          aria-label={mobileMenuLabel}
+          aria-controls={mobileMenuId}
+          aria-expanded={isMobileMenuOpen}
+          data-testid='kangur-primary-nav-mobile-toggle'
+          onClick={toggleMobileMenu}
+          size='md'
+          type='button'
+          variant='navigation'
+        >
+          {isMobileMenuOpen ? <X className={ICON_CLASSNAME} /> : <Menu className={ICON_CLASSNAME} />}
+          <span className='sr-only'>{mobileMenuLabel}</span>
+        </KangurButton>
+      </div>
     </KangurTopNavGroup>
   );
+  const desktopNav = (
+    <KangurTopNavGroup label={navigationLabel}>
+      {renderPrimaryActions()}
+      {renderUtilityActions()}
+    </KangurTopNavGroup>
+  );
+  const leftContent = isMobile ? mobileNav : desktopNav;
+  const mobileMenuOverlay = isMobile ? (
+    <div
+      className={`fixed inset-0 z-50 transition-opacity duration-200 ${
+        isMobileMenuOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+      }`}
+      aria-hidden={!isMobileMenuOpen}
+    >
+      <div
+        className='absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(15,23,42,0.4)_0%,rgba(15,23,42,0.72)_100%)]'
+        onClick={closeMobileMenu}
+      />
+      <div
+        role='dialog'
+        aria-modal='true'
+        aria-label='Menu'
+        id={mobileMenuId}
+        className={`relative flex h-full w-full flex-col kangur-panel-gap overflow-y-auto px-5 pb-8 pt-[calc(env(safe-area-inset-top)+20px)] transition-transform duration-200 ${
+          isMobileMenuOpen ? 'translate-y-0' : 'translate-y-4'
+        }`}
+        style={{ backgroundColor: kangurAppearance.tone.background, color: kangurAppearance.tone.text }}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className='flex items-center justify-between'>
+          <div className='text-[11px] font-semibold uppercase tracking-[0.32em] [color:var(--kangur-page-muted-text)]'>
+            Menu
+          </div>
+          <KangurButton
+            aria-label='Zamknij menu'
+            onClick={closeMobileMenu}
+            size='md'
+            type='button'
+            variant='navigation'
+          >
+            <X className={ICON_CLASSNAME} />
+            <span className='sr-only'>Zamknij menu</span>
+          </KangurButton>
+        </div>
+        <KangurTopNavGroup label={navigationLabel} className='w-full flex-col'>
+          {renderPrimaryActions({
+            onActionClick: closeMobileMenu,
+            wrapperClassName: 'flex w-full flex-col gap-2',
+            inlineAppearanceWithTutor: true,
+          })}
+          {renderUtilityActions({
+            onActionClick: closeMobileMenu,
+            wrapperClassName: 'flex w-full flex-col gap-2',
+            hideAppearanceControls: true,
+          })}
+        </KangurTopNavGroup>
+      </div>
+    </div>
+  ) : null;
 
   return (
-    <KangurPageTopBar
-      className={topBarClassName}
-      contentClassName={topBarContentClassName}
-      left={leftContent}
-    />
+    <>
+      <KangurPageTopBar
+        className={topBarClassName}
+        contentClassName={topBarContentClassName}
+        left={leftContent}
+      />
+      {mobileMenuOverlay}
+    </>
   );
 }

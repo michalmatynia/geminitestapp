@@ -49,7 +49,7 @@ export default function XpToast({
               data-testid='xp-toast-xp-shell'
               padding='md'
             >
-              <div className='flex items-center gap-3'>
+              <div className='flex items-center kangur-panel-gap'>
                 <KangurStatusChip accent='indigo' className='text-sm font-bold'>
                   +{xpGained} XP
                 </KangurStatusChip>
@@ -101,7 +101,7 @@ export default function XpToast({
               padding='md'
             >
               <div className='flex flex-col gap-2'>
-                <div className='flex items-center gap-3'>
+                <div className='flex items-center kangur-panel-gap'>
                   <KangurStatusChip accent='amber' className='text-sm font-bold'>
                     {badge.emoji} Nowa odznaka
                   </KangurStatusChip>

@@ -2675,7 +2675,7 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.getByRole('button', { name: 'Podpowiedź' })).toBeDisabled();
     expect(screen.getByRole('textbox', { name: 'Wpisz pytanie' })).toHaveClass(
       'focus:border-amber-300',
-      'focus:ring-amber-200/70'
+      'focus-visible:ring-amber-200/70'
     );
     expect(screen.getByRole('textbox', { name: 'Wpisz pytanie' })).toBeDisabled();
   });

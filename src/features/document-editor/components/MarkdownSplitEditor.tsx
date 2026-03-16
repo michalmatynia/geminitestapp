@@ -168,7 +168,9 @@ export function MarkdownSplitEditor(props: MarkdownSplitEditorProps): React.JSX.
             background: contentBackground,
             color: contentTextColor,
           }}
-         aria-label={placeholder} title={placeholder}/>
+          aria-label={placeholder ?? 'Markdown content'}
+          title={placeholder}
+        />
         {isPasting && (
           <div className='absolute inset-0 z-10 flex items-center justify-center bg-black/20 backdrop-blur-[1px]'>
             <LoadingState message='Uploading image…' size='sm' />

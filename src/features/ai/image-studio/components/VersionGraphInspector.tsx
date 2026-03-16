@@ -256,7 +256,7 @@ export function VersionGraphInspector(): React.JSX.Element {
           placeholder='Add note...'
           aria-label='Add note'
           rows={2}
-          className='w-full resize-none rounded border border-border/40 bg-transparent px-2 py-1 text-[10px] text-gray-300 placeholder:text-gray-600 focus:border-gray-500 focus:outline-none'
+          className='w-full resize-none rounded border border-border/40 bg-transparent px-2 py-1 text-[10px] text-gray-300 placeholder:text-gray-600 focus:border-gray-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
         />
       </div>
     </div>

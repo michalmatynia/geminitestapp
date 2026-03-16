@@ -3,6 +3,7 @@
 import { Camera } from 'lucide-react';
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { useSlotsState, useSlotsActions } from '@/features/ai/image-studio/context/SlotsContext';
 import { Button } from '@/shared/ui';
 
@@ -13,7 +14,7 @@ import { useCenterPreviewHeaderContext } from './CenterPreviewHeaderContext';
 const PREVIEW_MODE_OPTIONS = [
   { value: 'image', label: 'Image' },
   { value: '3d', label: '3D' },
-] as const;
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export function CenterPreviewHeader(): React.JSX.Element {
   const { workingSlot, previewMode } = useSlotsState();

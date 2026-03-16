@@ -6,6 +6,8 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
+
 const { startRouteTransitionMock } = vi.hoisted(() => ({
   startRouteTransitionMock: vi.fn(),
 }));
@@ -134,7 +136,7 @@ vi.mock('@/features/kangur/shared/ui/select-simple', () => ({
     ariaLabel?: string;
     disabled?: boolean;
     onValueChange: (value: string) => void;
-    options: Array<{ value: string; label: string }>;
+    options: Array<LabeledOptionDto<string>>;
     value?: string;
   }) => (
     <select

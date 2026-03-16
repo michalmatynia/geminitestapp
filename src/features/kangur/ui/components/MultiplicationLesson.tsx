@@ -227,11 +227,11 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array'>, LessonSlide[]> = {
     {
       title: 'Triki do zapamiętania',
       content: (
-        <KangurLessonStack align='start' className='gap-3'>
+        <KangurLessonStack align='start' className='kangur-panel-gap'>
           <KangurLessonLead align='left'>
             Zapamiętaj kilka skrótów, które przyspieszają liczenie.
           </KangurLessonLead>
-          <div className='grid grid-cols-1 gap-3 min-[420px]:grid-cols-[1.2fr_1fr]'>
+          <div className='grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-[1.2fr_1fr]'>
             <KangurLessonCallout accent='amber' className='w-full'>
               <ul className='space-y-2 text-sm [color:var(--kangur-page-text)]'>
                 <li>

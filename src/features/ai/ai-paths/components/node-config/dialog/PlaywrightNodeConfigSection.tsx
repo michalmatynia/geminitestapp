@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { playwrightSettingsSchema } from '@/shared/contracts/playwright';
 import { usePlaywrightPersonas } from '@/shared/hooks/usePlaywrightPersonas';
 import type { PlaywrightConfig } from '@/shared/lib/ai-paths';
@@ -28,7 +29,7 @@ const BROWSER_ENGINE_OPTIONS = [
   { value: 'chromium', label: 'Chromium' },
   { value: 'firefox', label: 'Firefox' },
   { value: 'webkit', label: 'WebKit' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 type CaptureToggleKey = keyof NonNullable<PlaywrightConfig['capture']>;
 

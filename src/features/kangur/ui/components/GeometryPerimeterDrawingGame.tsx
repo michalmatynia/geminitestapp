@@ -26,6 +26,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
+  KANGUR_PANEL_GAP_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import {
@@ -703,7 +704,7 @@ export default function GeometryPerimeterDrawingGame({
       />
 
       <KangurGlassPanel
-        className='flex flex-col items-center gap-4'
+        className={cn('flex flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
         data-testid='geometry-perimeter-round-shell'
         padding='lg'
         surface='solid'
@@ -832,7 +833,7 @@ export default function GeometryPerimeterDrawingGame({
           </div>
         ) : null}
 
-        <div className='flex w-full flex-col gap-3 sm:flex-row'>
+        <div className='flex w-full flex-col kangur-panel-gap sm:flex-row'>
           <KangurButton
             className='w-full sm:flex-1'
             disabled={feedback !== null || points.length === 0}

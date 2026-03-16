@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import type { LabeledOptionWithDisabledDto } from '@/shared/contracts/base';
 import {
   AiPathAnalysisTriggerProvider,
   AiPathAnalysisTriggerSection,
@@ -29,7 +30,7 @@ vi.mock('@/shared/ui', () => ({
   }: {
     value?: string;
     onValueChange: (value: string) => void;
-    options: Array<{ value: string; label: string; disabled?: boolean }>;
+    options: Array<LabeledOptionWithDisabledDto<string>>;
     ariaLabel?: string;
     disabled?: boolean;
   }): React.JSX.Element => (

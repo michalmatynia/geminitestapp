@@ -3,6 +3,7 @@
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { useAgentPersonaMemory } from '@/features/ai/agentcreator/hooks/useAgentPersonaMemory';
 import { useAgentPersonas } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
 import { AGENT_PERSONA_MOOD_PRESETS } from '@/features/ai/agentcreator/utils/personas';
@@ -22,7 +23,7 @@ import {
 
 import type { ColumnDef } from '@tanstack/react-table';
 
-const SOURCE_OPTIONS: { value: PersonaMemorySourceType | 'all'; label: string }[] = [
+const SOURCE_OPTIONS: Array<LabeledOptionDto<PersonaMemorySourceType | 'all'>> = [
   { value: 'all', label: 'All sources' },
   { value: 'chat_message', label: 'Chat messages' },
   { value: 'chat_session', label: 'Chat sessions' },
@@ -31,7 +32,7 @@ const SOURCE_OPTIONS: { value: PersonaMemorySourceType | 'all'; label: string }[
   { value: 'system', label: 'System' },
 ];
 
-const MOOD_OPTIONS: { value: AgentPersonaMoodId | 'all'; label: string }[] = [
+const MOOD_OPTIONS: Array<LabeledOptionDto<AgentPersonaMoodId | 'all'>> = [
   { value: 'all', label: 'All moods' },
   ...AGENT_PERSONA_MOOD_PRESETS.map((preset) => ({
     value: preset.id,

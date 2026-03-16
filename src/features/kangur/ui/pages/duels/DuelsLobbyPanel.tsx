@@ -83,7 +83,7 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
   } = props;
   return (
     <KangurGlassPanel
-      className='flex flex-col gap-4'
+      className='flex flex-col kangur-panel-gap'
       padding='lg'
       surface='solid'
       role='region'
@@ -91,7 +91,7 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
       aria-describedby={lobbyDescriptionId}
       aria-busy={isLobbyLoading}
     >
-      <div className='flex flex-wrap items-center justify-between gap-4'>
+      <div className='flex flex-wrap items-center justify-between kangur-panel-gap'>
         <div className='space-y-1'>
           <div className='flex flex-wrap items-center gap-2' aria-live='polite' aria-atomic='true'>
             <h3 id={lobbyHeadingId} className='text-xl font-semibold text-slate-900'>
@@ -130,7 +130,7 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
         </div>
       </div>
 
-      <div className='flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200/70 bg-white/70 p-3'>
+      <div className='flex flex-wrap items-end kangur-panel-gap rounded-2xl border border-slate-200/70 bg-white/70 p-3'>
         <div className='min-w-[180px] space-y-1'>
           <div className='text-xs font-semibold uppercase tracking-[0.08em] text-slate-500'>
             Tryb
@@ -192,15 +192,15 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
       ) : null}
 
       {isLobbyLoading && !hasAnyPublicLobbyEntries ? (
-        <div className='grid gap-3 sm:grid-cols-2' role='status' aria-live='polite'>
+        <div className='grid kangur-panel-gap sm:grid-cols-2' role='status' aria-live='polite'>
           <span className='sr-only'>Ładowanie lobby pojedynków…</span>
           {Array.from({ length: 4 }, (_, index) => (
             <div
               key={`lobby-skeleton-${index}`}
-              className='flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/70 p-4 animate-pulse'
+              className='flex flex-col kangur-panel-gap rounded-2xl border border-slate-200 bg-white/70 p-4 animate-pulse'
               aria-hidden='true'
             >
-              <div className='flex items-center gap-3'>
+              <div className='flex items-center kangur-panel-gap'>
                 <div className='h-12 w-12 rounded-2xl bg-slate-200/70' />
                 <div className='space-y-2'>
                   <div className='h-4 w-28 rounded-full bg-slate-200/70' />
@@ -217,7 +217,7 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
         </div>
       ) : !hasAnyPublicLobbyEntries ? (
         <KangurInfoCard accent='slate' padding='md' tone='accent' role='status' aria-live='polite'>
-          <div className='flex flex-col gap-3'>
+          <div className='flex flex-col kangur-panel-gap'>
             <div className='text-sm text-slate-700'>Brak uczniów oczekujących na pojedynek.</div>
             <KangurButton onClick={onCreateChallenge} variant='secondary' disabled={isBusy}>
               Stwórz własne wyzwanie
@@ -226,7 +226,7 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
         </KangurInfoCard>
       ) : !hasVisiblePublicLobbyEntries ? (
         <KangurInfoCard accent='slate' padding='md' tone='accent' role='status' aria-live='polite'>
-          <div className='flex flex-col gap-3'>
+          <div className='flex flex-col kangur-panel-gap'>
             <div className='text-sm text-slate-700'>
               Brak wyzwań dla wybranego filtra.
             </div>
@@ -237,7 +237,7 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
         </KangurInfoCard>
       ) : (
         <ul
-          className='grid gap-3 sm:grid-cols-2'
+          className='grid kangur-panel-gap sm:grid-cols-2'
           role='list'
           aria-label='Publiczne pojedynki'
           id={lobbyListId}
@@ -254,12 +254,12 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
                   accent='slate'
                   padding='md'
                   tone='neutral'
-                  className={cn('flex flex-col gap-3', isFresh && 'ring-2 ring-emerald-200/70')}
+                  className={cn('flex flex-col kangur-panel-gap', isFresh && 'ring-2 ring-emerald-200/70')}
                   role='group'
                   aria-label={`Publiczne wyzwanie od ${entry.host.displayName}. ${entry.questionCount} pytań, ${entry.timePerQuestionSec} sekund na pytanie.`}
                 >
-                  <div className='flex flex-wrap items-start justify-between gap-3'>
-                    <div className='flex items-center gap-3'>
+                  <div className='flex flex-wrap items-start justify-between kangur-panel-gap'>
+                    <div className='flex items-center kangur-panel-gap'>
                       <div
                         className='flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100 text-lg font-extrabold text-indigo-700'
                         aria-hidden='true'

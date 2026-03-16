@@ -147,7 +147,7 @@ export function KangurDailyQuestHighlightCardContent(
   } = props;
 
   return (
-    <div className={cn('flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between', className)}>
+    <div className={cn('flex flex-col kangur-panel-gap sm:flex-row sm:items-start sm:justify-between', className)}>
       <div className='min-w-0'>
         <KangurDailyQuestHighlightChips
           chipLabelStyle={chipLabelStyle}

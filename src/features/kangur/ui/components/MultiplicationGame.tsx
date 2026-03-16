@@ -23,6 +23,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
+  KANGUR_PANEL_GAP_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import {
@@ -237,7 +238,7 @@ export default function MultiplicationGame({
       />
       <div className='w-full'>
         <KangurGlassPanel
-          className='flex flex-col items-center gap-4'
+          className={cn('flex flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
           data-testid='multiplication-game-round-shell'
           padding='xl'
           surface='solid'

@@ -4,6 +4,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Clock } from 'lucide-react';
 import { useEffect, useMemo, useState, type ComponentProps, type ReactNode } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import {
   KANGUR_LESSONS_SETTING_KEY,
@@ -25,7 +26,10 @@ import {
   KangurSummaryPanel,
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import {
@@ -36,6 +40,7 @@ import {
 } from '@/features/kangur/ui/services/delegated-assignments';
 import { buildKangurAssignmentDedupeKey } from '@/features/kangur/services/kangur-assignments';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
+import { cn } from '@/features/kangur/shared/utils';
 import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
@@ -88,7 +93,7 @@ function KangurAssignmentManagerCardHeader({
   children: ReactNode;
 }): React.JSX.Element {
   return (
-    <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
+    <div className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:justify-between'>
       {children}
     </div>
   );
@@ -99,7 +104,7 @@ function KangurAssignmentManagerCardFooter({
 }: {
   children: ReactNode;
 }): React.JSX.Element {
-  return <div className='mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>{children}</div>;
+  return <div className='mt-3 flex flex-col kangur-panel-gap sm:flex-row sm:items-center sm:justify-between'>{children}</div>;
 }
 
 const FILTER_OPTIONS = [
@@ -109,7 +114,7 @@ const FILTER_OPTIONS = [
   { value: 'geometry', label: 'Geometria' },
   { value: 'logic', label: 'Logika' },
   { value: 'practice', label: 'Trening' },
-] as const;
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 const TIME_LIMIT_MINUTES_MIN = 1;
 const TIME_LIMIT_MINUTES_MAX = 240;
@@ -509,7 +514,7 @@ export function KangurAssignmentManager({
   const showCompletedAssignmentsList = !shouldShowListTabs || activeListTab === 'completed';
 
   return (
-    <div className='flex flex-col gap-5'>
+    <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <DialogPrimitive.Root open={isTimeLimitModalOpen} onOpenChange={(open) => {
         if (!open) {
           handleCloseTimeLimitModal();
@@ -550,7 +555,12 @@ export function KangurAssignmentManager({
               </button>
             </DialogPrimitive.Close>
 
-            <KangurGlassPanel className='flex flex-col gap-4' padding='lg' surface='mistSoft' variant='soft'>
+            <KangurGlassPanel
+              className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
+              padding='lg'
+              surface='mistSoft'
+              variant='soft'
+            >
               <div>
                 <KangurStatusChip accent='indigo' labelStyle='eyebrow'>
                   Czas na wykonanie
@@ -631,7 +641,7 @@ export function KangurAssignmentManager({
           surface='neutral'
           variant='soft'
         >
-          <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+          <div className='flex flex-col kangur-panel-gap lg:flex-row lg:items-start lg:justify-between'>
             <div className='max-w-2xl'>
               <KangurStatusChip accent='indigo' labelStyle='eyebrow'>
                 Przydziel nowe zadanie
@@ -649,7 +659,7 @@ export function KangurAssignmentManager({
               description='StudiQ podpowiada te zadania na podstawie aktualnych słabszych obszarów i rytmu pracy ucznia.'
               label='Sugestie od StudiQ'
             >
-              <div className='mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2'>
+              <div className='mt-3 grid grid-cols-1 kangur-panel-gap xl:grid-cols-2'>
                 {recommendedCatalog.map((item) => {
                   const isAssigned = assignedTargetKeys.has(
                     buildKangurAssignmentDedupeKey(item.createInput.target)
@@ -780,7 +790,7 @@ export function KangurAssignmentManager({
             </KangurSummaryPanel>
           ) : null}
 
-          <div className='mt-5 grid grid-cols-1 gap-3 xl:grid-cols-2'>
+          <div className='mt-5 grid grid-cols-1 kangur-panel-gap xl:grid-cols-2'>
             {filteredCatalog.map((item) => {
               const isAssigned = assignedTargetKeys.has(
                 buildKangurAssignmentDedupeKey(item.createInput.target)
@@ -892,7 +902,7 @@ export function KangurAssignmentManager({
             </KangurCardDescription>
           </div>
 
-          <div className='mt-5 grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 xl:grid-cols-4'>
+          <div className='mt-5 grid grid-cols-1 kangur-panel-gap min-[360px]:grid-cols-2 xl:grid-cols-4'>
             <KangurMetricCard
               accent='slate'
               description='zadania wymagające dalszej pracy'
@@ -932,7 +942,7 @@ export function KangurAssignmentManager({
       {shouldShowLists ? (
         <>
           {shouldShowListTabs ? (
-            <div className='flex flex-col gap-3'>
+            <div className='flex flex-col kangur-panel-gap'>
               <KangurStatusChip accent='slate' labelStyle='eyebrow'>
                 Lista zadań
               </KangurStatusChip>

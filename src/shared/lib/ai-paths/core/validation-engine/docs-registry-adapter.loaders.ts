@@ -1,6 +1,6 @@
+import 'server-only';
+
 import { readFile } from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { z } from 'zod';
 
@@ -43,58 +43,7 @@ import { AI_PATHS_NODE_DOCS } from '../docs/node-docs';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-const resolveDocsFilePath = (repoRelativePath: string): string => {
-  try {
-    const moduleUrl = new URL(import.meta.url);
-    if (moduleUrl.protocol === 'file:') {
-      const moduleDir = path.dirname(fileURLToPath(moduleUrl));
-      return path.resolve(moduleDir, '../../../../../../', repoRelativePath);
-    }
-  } catch {
-    // Fall back to cwd below.
-  }
-
-  return path.resolve(process.cwd(), repoRelativePath);
-};
-
-const DOCS_MANIFEST_FILE = resolveDocsFilePath(DOCS_MANIFEST_PATH);
-const DOCS_CORE_PATTERNS_FILE = resolveDocsFilePath(
-  'docs/ai-paths/node-validator-core-patterns.md'
-);
-const DOCS_SIMULATION_PATTERNS_FILE = resolveDocsFilePath(
-  'docs/ai-paths/node-validator-simulation-patterns.md'
-);
-const DOCS_DATABASE_PATTERNS_FILE = resolveDocsFilePath(
-  'docs/ai-paths/node-validator-database-patterns.md'
-);
-const DOCS_RUNTIME_PATTERNS_FILE = resolveDocsFilePath(
-  'docs/ai-paths/node-validator-runtime-patterns.md'
-);
-const DOCS_WIRING_PATTERNS_FILE = resolveDocsFilePath(
-  'docs/ai-paths/node-validator-wiring-patterns.md'
-);
-const DOCS_ADVANCED_PATTERNS_FILE = resolveDocsFilePath(
-  'docs/ai-paths/node-validator-advanced-patterns.md'
-);
-const DOCS_SEMANTIC_GRAMMAR_PATTERNS_FILE = resolveDocsFilePath(
-  'docs/ai-paths/node-validator-semantic-grammar-patterns.md'
-);
-const DOCS_NODE_CODE_PARSER_PATTERNS_FILE = resolveDocsFilePath(
-  'docs/ai-paths/node-validator-node-code-parser-patterns.md'
-);
-const DOCS_NODE_PATH_CODE_PARSER_PATTERNS_FILE = resolveDocsFilePath(
-  'docs/ai-paths/node-validator-node-path-code-parser-patterns.md'
-);
-const DOCS_CENTRAL_PATTERNS_FILE = resolveDocsFilePath(
-  'docs/ai-paths/node-validator-central-patterns.md'
-);
-const DOCS_SEMANTIC_NODES_FILE = resolveDocsFilePath(
-  'docs/ai-paths/semantic-grammar/nodes/index.json'
-);
-const DOCS_TOOLTIP_CATALOG_FILE = resolveDocsFilePath('docs/ai-paths/tooltip-catalog.json');
-const DOCS_COVERAGE_MATRIX_FILE = resolveDocsFilePath(
-  'docs/ai-paths/node-validator-coverage-matrix.csv'
-);
+const REPO_ROOT_URL = new URL('../../../../../../', import.meta.url);
 
 const normalizeRepoRelativePath = (candidate: string): string =>
   candidate
@@ -102,59 +51,76 @@ const normalizeRepoRelativePath = (candidate: string): string =>
     .replace(/\\/g, '/')
     .replace(/^\.\/+/, '');
 
+const DOCS_SOURCE_URLS = new Map<string, URL>([
+  [
+    normalizeRepoRelativePath(DOCS_MANIFEST_PATH),
+    new URL('docs/ai-paths/node-validator-central-manifest.json', REPO_ROOT_URL),
+  ],
+  [
+    normalizeRepoRelativePath('docs/ai-paths/node-validator-core-patterns.md'),
+    new URL('docs/ai-paths/node-validator-core-patterns.md', REPO_ROOT_URL),
+  ],
+  [
+    normalizeRepoRelativePath('docs/ai-paths/node-validator-simulation-patterns.md'),
+    new URL('docs/ai-paths/node-validator-simulation-patterns.md', REPO_ROOT_URL),
+  ],
+  [
+    normalizeRepoRelativePath('docs/ai-paths/node-validator-database-patterns.md'),
+    new URL('docs/ai-paths/node-validator-database-patterns.md', REPO_ROOT_URL),
+  ],
+  [
+    normalizeRepoRelativePath('docs/ai-paths/node-validator-runtime-patterns.md'),
+    new URL('docs/ai-paths/node-validator-runtime-patterns.md', REPO_ROOT_URL),
+  ],
+  [
+    normalizeRepoRelativePath('docs/ai-paths/node-validator-wiring-patterns.md'),
+    new URL('docs/ai-paths/node-validator-wiring-patterns.md', REPO_ROOT_URL),
+  ],
+  [
+    normalizeRepoRelativePath('docs/ai-paths/node-validator-advanced-patterns.md'),
+    new URL('docs/ai-paths/node-validator-advanced-patterns.md', REPO_ROOT_URL),
+  ],
+  [
+    normalizeRepoRelativePath('docs/ai-paths/node-validator-semantic-grammar-patterns.md'),
+    new URL('docs/ai-paths/node-validator-semantic-grammar-patterns.md', REPO_ROOT_URL),
+  ],
+  [
+    normalizeRepoRelativePath('docs/ai-paths/node-validator-node-code-parser-patterns.md'),
+    new URL('docs/ai-paths/node-validator-node-code-parser-patterns.md', REPO_ROOT_URL),
+  ],
+  [
+    normalizeRepoRelativePath('docs/ai-paths/node-validator-node-path-code-parser-patterns.md'),
+    new URL('docs/ai-paths/node-validator-node-path-code-parser-patterns.md', REPO_ROOT_URL),
+  ],
+  [
+    normalizeRepoRelativePath('docs/ai-paths/node-validator-central-patterns.md'),
+    new URL('docs/ai-paths/node-validator-central-patterns.md', REPO_ROOT_URL),
+  ],
+  [
+    normalizeRepoRelativePath('docs/ai-paths/semantic-grammar/nodes/index.json'),
+    new URL('docs/ai-paths/semantic-grammar/nodes/index.json', REPO_ROOT_URL),
+  ],
+  [
+    normalizeRepoRelativePath('docs/ai-paths/tooltip-catalog.json'),
+    new URL('docs/ai-paths/tooltip-catalog.json', REPO_ROOT_URL),
+  ],
+  [
+    normalizeRepoRelativePath('docs/ai-paths/node-validator-coverage-matrix.csv'),
+    new URL('docs/ai-paths/node-validator-coverage-matrix.csv', REPO_ROOT_URL),
+  ],
+]);
+
 const DOCS_CONTENT_CACHE = new Map<string, string>();
 
 const readDocsSourceText = async (candidate: string): Promise<string> => {
   const normalized = normalizeRepoRelativePath(candidate);
   const cached = DOCS_CONTENT_CACHE.get(normalized);
   if (cached) return cached;
-  let content: string;
-  switch (normalized) {
-    case 'docs/ai-paths/node-validator-central-manifest.json':
-      content = await readFile(DOCS_MANIFEST_FILE, 'utf8');
-      break;
-    case 'docs/ai-paths/node-validator-core-patterns.md':
-      content = await readFile(DOCS_CORE_PATTERNS_FILE, 'utf8');
-      break;
-    case 'docs/ai-paths/node-validator-simulation-patterns.md':
-      content = await readFile(DOCS_SIMULATION_PATTERNS_FILE, 'utf8');
-      break;
-    case 'docs/ai-paths/node-validator-database-patterns.md':
-      content = await readFile(DOCS_DATABASE_PATTERNS_FILE, 'utf8');
-      break;
-    case 'docs/ai-paths/node-validator-runtime-patterns.md':
-      content = await readFile(DOCS_RUNTIME_PATTERNS_FILE, 'utf8');
-      break;
-    case 'docs/ai-paths/node-validator-wiring-patterns.md':
-      content = await readFile(DOCS_WIRING_PATTERNS_FILE, 'utf8');
-      break;
-    case 'docs/ai-paths/node-validator-advanced-patterns.md':
-      content = await readFile(DOCS_ADVANCED_PATTERNS_FILE, 'utf8');
-      break;
-    case 'docs/ai-paths/node-validator-semantic-grammar-patterns.md':
-      content = await readFile(DOCS_SEMANTIC_GRAMMAR_PATTERNS_FILE, 'utf8');
-      break;
-    case 'docs/ai-paths/node-validator-node-code-parser-patterns.md':
-      content = await readFile(DOCS_NODE_CODE_PARSER_PATTERNS_FILE, 'utf8');
-      break;
-    case 'docs/ai-paths/node-validator-node-path-code-parser-patterns.md':
-      content = await readFile(DOCS_NODE_PATH_CODE_PARSER_PATTERNS_FILE, 'utf8');
-      break;
-    case 'docs/ai-paths/node-validator-central-patterns.md':
-      content = await readFile(DOCS_CENTRAL_PATTERNS_FILE, 'utf8');
-      break;
-    case 'docs/ai-paths/semantic-grammar/nodes/index.json':
-      content = await readFile(DOCS_SEMANTIC_NODES_FILE, 'utf8');
-      break;
-    case 'docs/ai-paths/tooltip-catalog.json':
-      content = await readFile(DOCS_TOOLTIP_CATALOG_FILE, 'utf8');
-      break;
-    case 'docs/ai-paths/node-validator-coverage-matrix.csv':
-      content = await readFile(DOCS_COVERAGE_MATRIX_FILE, 'utf8');
-      break;
-    default:
-      throw new Error(`Path "${candidate}" is not in the static docs allowlist.`);
+  const sourceUrl = DOCS_SOURCE_URLS.get(normalized);
+  if (!sourceUrl) {
+    throw new Error(`Path "${candidate}" is not in the static docs allowlist.`);
   }
+  const content = await readFile(sourceUrl, 'utf8');
   DOCS_CONTENT_CACHE.set(normalized, content);
   return content;
 };

@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import {
   Button,
@@ -14,7 +15,7 @@ import {
 import type { PreviewCanvasSize } from '../context/UiContext';
 import { ToggleButtonGroup } from './ToggleButtonGroup';
 
-const PREVIEW_CANVAS_SIZE_OPTIONS: Array<{ value: PreviewCanvasSize; label: string }> = [
+const PREVIEW_CANVAS_SIZE_OPTIONS: Array<LabeledOptionDto<PreviewCanvasSize>> = [
   { value: 'regular', label: 'Regular' },
   { value: 'large', label: 'Large' },
   { value: 'xlarge', label: 'XLarge' },

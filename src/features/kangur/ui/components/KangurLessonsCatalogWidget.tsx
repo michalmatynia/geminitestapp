@@ -7,6 +7,7 @@ import {
 import { getLessonMasteryPresentation } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext.shared';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { KangurEmptyState } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 import type { JSX } from 'react';
 
@@ -39,7 +40,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
   }
 
   return (
-    <div className='flex flex-col gap-4' role='list' aria-label='Lista lekcji'>
+    <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`} role='list' aria-label='Lista lekcji'>
       {orderedLessons.map((lesson) => {
         const masteryPresentation = getLessonMasteryPresentation(lesson, progress);
         const lessonAssignment = lessonAssignmentsByComponent.get(lesson.componentId) ?? null;
@@ -52,7 +53,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
           <div key={lesson.id} role='listitem' className='w-full'>
             <KangurLessonLibraryCard
               ariaCurrent={isActive ? 'page' : undefined}
-              buttonClassName='kangur-lessons-panel flex flex-col items-start gap-4 rounded-[30px] p-5 max-sm:pr-5 max-sm:pb-5 sm:flex-row'
+              buttonClassName='kangur-lessons-panel flex flex-col items-start kangur-panel-gap rounded-[30px] p-5 max-sm:pr-5 max-sm:pb-5 sm:flex-row'
               completedLessonAssignment={completedLessonAssignment}
               contentClassName='w-full'
               emphasis={isActive ? 'accent' : 'neutral'}

@@ -1271,11 +1271,13 @@ describe('KangurLoginPage', () => {
 
     render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
-    await user.type(screen.getByTestId('kangur-login-identifier-input'), 'janek-123');
+    await user.type(screen.getByTestId('kangur-login-identifier-input'), 'janek#123');
     await user.type(screen.getByLabelText('Hasło'), 'tajnehaslo');
     await user.click(screen.getByRole('button', { name: 'Zaloguj' }));
 
-    expect(await screen.findByText('Nick ucznia może zawierać tylko litery i cyfry.')).toBeVisible();
+    expect(
+      await screen.findByText('Nick ucznia może zawierać tylko litery, cyfry i myślniki.')
+    ).toBeVisible();
     expect(signOutMock).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalledWith(
       '/api/kangur/auth/learner-signin',

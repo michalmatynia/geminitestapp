@@ -1,11 +1,10 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-import { kangurLearnerSignInInputSchema } from '@/shared/contracts/kangur';
 import { apiHandler } from '@/shared/lib/api/api-handler';
+import { kangurLearnerSignInInputSchema } from '@/shared/contracts/kangur';
 
 import { postKangurLearnerSignInHandler } from './handler';
-import { KANGUR_MOBILE_WEB_CORS_ORIGINS } from '../../shared/cors';
 
 export const POST = apiHandler(postKangurLearnerSignInHandler, {
   source: 'kangur.auth.learner-signin.POST',

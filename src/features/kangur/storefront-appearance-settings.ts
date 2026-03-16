@@ -1,4 +1,5 @@
 import { KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY } from '@/features/kangur/shared/contracts/kangur';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 export { KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY };
 
@@ -23,10 +24,7 @@ export const KANGUR_STOREFRONT_THEME_OPTIONS = [
     value: 'dark',
     label: 'Motyw nocny',
   },
-] as const satisfies ReadonlyArray<{
-  value: KangurStorefrontAppearanceMode;
-  label: string;
-}>;
+] as const satisfies ReadonlyArray<LabeledOptionDto<KangurStorefrontAppearanceMode>>;
 
 export const parseKangurStorefrontAppearanceMode = (
   raw: string | null | undefined

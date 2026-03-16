@@ -12,9 +12,10 @@ export const KANGUR_PAGE_TONE_CLASSNAMES: Record<KangurPageTone, string> = {
 export const KANGUR_TOP_BAR_CLASSNAME =
   'kangur-top-bar sticky inset-x-0 top-0 z-40 w-full';
 export const KANGUR_TOP_BAR_INNER_CLASSNAME =
-  'flex w-full flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 lg:flex-nowrap';
+  'flex w-full flex-col items-stretch kangur-panel-gap sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap';
 export const KANGUR_PAGE_CONTAINER_CLASSNAME =
   'kangur-page-container w-full';
+export const KANGUR_PANEL_GAP_CLASSNAME = 'kangur-panel-gap';
 
 export const KANGUR_PANEL_CLASSNAMES = {
   elevated: 'glass-panel kangur-panel-elevated',

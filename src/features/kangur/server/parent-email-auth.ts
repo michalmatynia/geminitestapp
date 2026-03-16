@@ -178,6 +178,73 @@ const assertValidParentPassword = async (password: string): Promise<void> => {
   }
 };
 
+const ensureParentRoleAssigned = async (userId: string): Promise<void> => {
+  await assignAuthUserRole({
+    userId,
+    roleId: 'studiq_parent',
+    source: 'studiq.parent_registration',
+  });
+};
+
+const finalizeParentAccountWithoutVerification = async (input: {
+  email: string;
+  password: string;
+}): Promise<{
+  email: string;
+  created: boolean;
+  hasPassword: boolean;
+}> => {
+  const existingUser = await findAuthUserByEmail(input.email);
+  if (existingUser) {
+    await assertUserLoginAllowed(existingUser.id);
+    if (existingUser.emailVerified) {
+      throw conflictError('Konto z tym emailem już istnieje. Zaloguj się emailem i hasłem.');
+    }
+    let user = existingUser;
+    let hasPassword = Boolean(user.passwordHash);
+    if (!hasPassword) {
+      await assertValidParentPassword(input.password);
+      const updatedUser = await setAuthUserPassword(user.id, input.password);
+      if (!updatedUser?.email) {
+        throw internalError('Nie udało się zapisać hasła rodzica.');
+      }
+      user = updatedUser;
+      hasPassword = true;
+    }
+    if (!user.emailVerified) {
+      const verifiedUser = await markAuthUserEmailVerified(user.id);
+      if (!verifiedUser) {
+        throw internalError('Nie udało się zweryfikować konta rodzica.');
+      }
+      user = verifiedUser;
+    }
+    await ensureParentRoleAssigned(user.id);
+    return {
+      email: user.email ?? input.email,
+      created: false,
+      hasPassword,
+    };
+  }
+
+  await assertValidParentPassword(input.password);
+  const passwordHash = await hash(input.password, 12);
+  const user = await createAuthUserWithEmail({
+    email: input.email,
+    name: buildParentDisplayName(input.email),
+    passwordHash,
+    emailVerified: new Date(),
+  });
+  if (!user?.email) {
+    throw internalError('Nie udało się utworzyć konta rodzica.');
+  }
+  await ensureParentRoleAssigned(user.id);
+  return {
+    email: user.email,
+    created: true,
+    hasPassword: true,
+  };
+};
+
 const buildVerificationEmailContent = async (input: {
   email: string;
   verificationUrl: string;
@@ -255,6 +322,26 @@ export const createKangurParentAccount = async (input: {
   const resendCooldownMs = parentVerificationSettings.resendCooldownSeconds * 1000;
   const notificationSuppressed =
     isKangurParentVerificationNotificationsSuppressed(parentVerificationSettings);
+  if (!parentVerificationSettings.requireEmailVerification) {
+    const result = await finalizeParentAccountWithoutVerification({
+      email,
+      password: input.password,
+    });
+    const origin = resolveAppOrigin(input.request);
+    const verificationUrl = buildAbsoluteKangurLoginUrl({
+      origin,
+      callbackUrl,
+    });
+    return {
+      email: result.email,
+      created: result.created,
+      emailVerified: true,
+      hasPassword: result.hasPassword,
+      retryAfterMs: resendCooldownMs,
+      verificationUrl,
+      notificationSuppressed,
+    };
+  }
   const existingUser = await findAuthUserByEmail(email);
   let created = false;
   let hasPassword = false;
@@ -340,6 +427,9 @@ export const resendKangurParentVerificationEmail = async (input: {
   const resendCooldownMs = parentVerificationSettings.resendCooldownSeconds * 1000;
   const notificationSuppressed =
     isKangurParentVerificationNotificationsSuppressed(parentVerificationSettings);
+  if (!parentVerificationSettings.requireEmailVerification) {
+    throw conflictError('Weryfikacja e-maila jest wyłączona dla tego projektu.');
+  }
   const existingUser = await findAuthUserByEmail(email);
   let hasPassword = false;
   let verificationToken: Awaited<ReturnType<typeof createEmailVerificationChallenge>>;
@@ -496,7 +586,7 @@ export const buildKangurParentAccountCreateDebugPayload = (
 ): {
   verificationUrl: string;
 } | null =>
-  shouldExposeAuthEmailDebug()
+  shouldExposeAuthEmailDebug() && !result.emailVerified
     ? {
       verificationUrl: result.verificationUrl,
     }

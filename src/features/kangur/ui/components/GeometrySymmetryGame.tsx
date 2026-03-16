@@ -22,7 +22,10 @@ import {
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_ACCENT_STYLES,
+  KANGUR_PANEL_GAP_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import {
   evaluateAxisDrawing,
   evaluateMirrorDrawing,
@@ -871,7 +874,7 @@ export default function GeometrySymmetryGame({
   return (
     <section
       aria-labelledby='geometry-symmetry-heading'
-      className='flex flex-col items-center gap-4 w-full max-w-sm mx-auto'
+      className={`flex flex-col items-center w-full max-w-sm mx-auto ${KANGUR_PANEL_GAP_CLASSNAME}`}
     >
       <div aria-live='polite' aria-atomic='true' className='sr-only'>
         Runda {roundIndex + 1} z {totalRounds}. {currentRound?.prompt}
@@ -885,7 +888,7 @@ export default function GeometrySymmetryGame({
         {keyboardStatus}
       </div>
 
-      <div className='w-full flex items-center gap-3'>
+      <div className='w-full flex items-center kangur-panel-gap'>
         <KangurProgressBar
           accent='emerald'
           aria-label='Postęp gry o symetrii'
@@ -907,7 +910,7 @@ export default function GeometrySymmetryGame({
 
       <div className='w-full'>
         <KangurGlassPanel
-          className='flex flex-col items-center gap-3'
+          className='flex flex-col items-center kangur-panel-gap'
           data-testid='geometry-symmetry-round-shell'
           padding='lg'
           surface='solid'
@@ -915,7 +918,7 @@ export default function GeometrySymmetryGame({
         >
           <KangurInfoCard
             accent='emerald'
-            className='flex w-full flex-col items-center gap-3 rounded-[24px] text-center'
+            className='flex w-full flex-col items-center kangur-panel-gap rounded-[24px] text-center'
             data-testid='geometry-symmetry-prompt-card'
             padding='md'
             tone='accent'
@@ -1020,7 +1023,7 @@ export default function GeometrySymmetryGame({
             </p>
           )}
 
-          <div className='flex w-full flex-col gap-3 sm:flex-row'>
+          <div className='flex w-full flex-col kangur-panel-gap sm:flex-row'>
             <KangurButton
               className='w-full sm:flex-1'
               disabled={feedback !== null || points.length === 0}

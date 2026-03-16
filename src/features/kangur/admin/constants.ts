@@ -2,41 +2,39 @@ import type {
   KangurLessonDocumentTemplateId,
   KangurLessonGridTemplateId,
 } from '@/features/kangur/lesson-documents';
+import type { IdLabelOptionDto, LabeledOptionDto } from '@/shared/contracts/base';
 
 export const ALIGNMENT_OPTIONS = [
   { value: 'left', label: 'Left' },
   { value: 'center', label: 'Center' },
   { value: 'right', label: 'Right' },
-] as const;
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export const MEDIA_FIT_OPTIONS = [
   { value: 'contain', label: 'Contain' },
   { value: 'cover', label: 'Cover' },
   { value: 'none', label: 'Natural' },
-] as const;
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export const INLINE_BLOCK_TYPE_OPTIONS = [
   { value: 'text', label: 'Text' },
   { value: 'svg', label: 'SVG' },
   { value: 'image', label: 'SVG Image' },
-] as const;
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export const ROOT_BLOCK_TYPE_OPTIONS = [
   { value: 'text', label: 'Text' },
   { value: 'svg', label: 'SVG' },
   { value: 'image', label: 'SVG Image' },
   { value: 'activity', label: 'Activity' },
-] as const;
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export const LESSON_CONTENT_MODE_OPTIONS = [
   { value: 'component', label: 'Legacy component' },
   { value: 'document', label: 'Custom document' },
-] as const;
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
-export const GRID_TEMPLATE_OPTIONS: Array<{
-  id: KangurLessonGridTemplateId;
-  label: string;
-}> = [
+export const GRID_TEMPLATE_OPTIONS: Array<IdLabelOptionDto<KangurLessonGridTemplateId>> = [
   { id: 'two-column', label: '2 columns' },
   { id: 'three-column', label: '3 columns' },
   { id: 'hero-left', label: 'Hero left' },
@@ -49,10 +47,9 @@ export const GRID_TEMPLATE_OPTIONS: Array<{
   { id: 'svg-mosaic', label: 'SVG mosaic' },
 ] as const;
 
-export const DOCUMENT_TEMPLATE_OPTIONS: Array<{
-  id: KangurLessonDocumentTemplateId;
-  label: string;
-}> = [
+export const DOCUMENT_TEMPLATE_OPTIONS: Array<
+  IdLabelOptionDto<KangurLessonDocumentTemplateId>
+> = [
   { id: 'article', label: 'Article starter' },
   { id: 'text-with-figure', label: 'Text + figure' },
   { id: 'image-gallery-page', label: 'SVG Image Gallery Page' },

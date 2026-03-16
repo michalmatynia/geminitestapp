@@ -1,3 +1,4 @@
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 
 export const defaultPlaywrightSettings: PlaywrightSettings = {
@@ -29,4 +30,4 @@ export const playwrightDeviceOptions = [
   { value: 'iPhone 14 Pro', label: 'iPhone 14 Pro' },
   { value: 'Pixel 7', label: 'Pixel 7' },
   { value: 'iPad (gen 7)', label: 'iPad (gen 7)' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;

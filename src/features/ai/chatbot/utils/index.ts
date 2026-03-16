@@ -7,6 +7,7 @@ import {
   ChatbotTimelineEntryDto as TimelineEntry,
   ExtendedModelProfile,
 } from '@/shared/contracts/chatbot';
+import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -372,29 +373,17 @@ export const formatAdaptiveReason = (reason?: string | null): string => {
   return trimmed.replace(/-/g, ' ');
 };
 
-export const getLatestAdaptiveTrigger = (
-  audits: AgentAuditLog[]
-): {
-  id: string;
+type AdaptiveTrigger = IdLabelOptionDto & {
   createdAt: string;
   reason: string | null;
-  label: string;
-} | null => {
-  const candidates: Array<{
-    id: string;
-    createdAt: string;
-    reason: string | null;
-    label: string;
-  }> = audits
+};
+
+export const getLatestAdaptiveTrigger = (
+  audits: AgentAuditLog[]
+): AdaptiveTrigger | null => {
+  const candidates: Array<AdaptiveTrigger> = audits
     .map(
-      (
-        audit: AgentAuditLog
-      ): {
-        id: string;
-        createdAt: string;
-        reason: string | null;
-        label: string;
-      } | null => {
+      (audit: AgentAuditLog): AdaptiveTrigger | null => {
         const metadata: {
           type?: string;
           reason?: string | null;
@@ -420,42 +409,13 @@ export const getLatestAdaptiveTrigger = (
         };
       }
     )
-    .filter(
-      (
-        item: {
-          id: string;
-          createdAt: string;
-          reason: string | null;
-          label: string;
-        } | null
-      ): item is {
-        id: string;
-        createdAt: string;
-        reason: string | null;
-        label: string;
-      } => !!item
-    );
+    .filter((item: AdaptiveTrigger | null): item is AdaptiveTrigger => !!item);
   if (candidates.length === 0) return null;
   return candidates.reduce(
     (
-      latest: {
-        id: string;
-        createdAt: string;
-        reason: string | null;
-        label: string;
-      },
-      current: {
-        id: string;
-        createdAt: string;
-        reason: string | null;
-        label: string;
-      }
-    ): {
-      id: string;
-      createdAt: string;
-      reason: string | null;
-      label: string;
-    } => {
+      latest: AdaptiveTrigger,
+      current: AdaptiveTrigger
+    ): AdaptiveTrigger => {
       const latestTime: number = Date.parse(latest.createdAt);
       const currentTime: number = Date.parse(current.createdAt);
       return currentTime > latestTime ? current : latest;

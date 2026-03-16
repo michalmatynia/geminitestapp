@@ -2,6 +2,7 @@ import { type QueryClient, type UseQueryResult } from '@tanstack/react-query';
 import React from 'react';
 import { type ZodIssue } from 'zod';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { type ImageStudioAnalysisSummaryChipData } from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
 import { type ImageStudioAnalysisSharedLayout } from '@/features/ai/image-studio/utils/analysis-bridge';
 import { type ObjectLayoutCustomPreset } from '@/features/ai/image-studio/utils/object-layout-presets';
@@ -119,7 +120,7 @@ export interface GenerationToolbarState extends GenerationToolbarContextValue {
   analysisPlanIsStale: boolean;
   centerAnalysisConfigMismatchMessage: string | null;
   autoScaleAnalysisConfigMismatchMessage: string | null;
-  centerLayoutPresetOptions: Array<{ value: string; label: string }>;
+  centerLayoutPresetOptions: Array<LabeledOptionDto<string>>;
   applyAnalysisLayoutToCenter: (
     layout: ImageStudioAnalysisSharedLayout,
     mode: 'auto' | 'manual'

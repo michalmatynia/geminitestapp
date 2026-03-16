@@ -2,10 +2,11 @@
 
 import React from 'react';
 
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type CaseResolverPartyFieldRuntimeValue = {
-  options: Array<{ value: string; label: string; description?: string | undefined }>;
+  options: Array<LabeledOptionWithDescriptionDto<string>>;
   disabled: boolean;
 };
 

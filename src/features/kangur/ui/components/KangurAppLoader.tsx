@@ -48,7 +48,7 @@ export function KangurAppLoader({ visible }: KangurAppLoaderProps): React.JSX.El
             }}
           />
           <motion.div
-            className='relative flex flex-col items-center justify-center gap-4 rounded-[40px] border px-12 py-11 backdrop-blur-xl'
+            className='relative flex flex-col items-center justify-center kangur-panel-gap rounded-[40px] border px-12 py-11 backdrop-blur-xl'
             data-loader-layout='expanded-card'
             data-testid='kangur-app-loader-panel'
             initial={

@@ -465,7 +465,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
           <KangurLessonLead>
             Odejmowanie to zabieranie części z grupy. Pytamy: ile zostało?
           </KangurLessonLead>
-          <div className='flex items-center gap-4'>
+          <div className='flex items-center kangur-panel-gap'>
             <KangurDisplayEmoji size='md'>🍎🍎🍎🍎🍎</KangurDisplayEmoji>
             <KangurEquationDisplay
               accent='slate'
@@ -579,7 +579,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               13 − <b>3</b> = 10, 10 − <b>2</b> = <b>8</b> ✓
             </KangurLessonCaption>
           </KangurLessonCallout>
-          <div className='grid w-full gap-3 sm:grid-cols-3'>
+          <div className='grid w-full kangur-panel-gap sm:grid-cols-3'>
             <KangurLessonCallout accent='slate' className='text-sm' padding='sm'>
               <p className='text-xs font-semibold uppercase tracking-wide text-slate-600'>
                 Krok 1
@@ -704,7 +704,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
             <KangurLessonChip accent='emerald'>Sprawdź dodawaniem: 5 + 3 = 8</KangurLessonChip>
             <KangurLessonChip accent='amber'>Rozbij na kroki: 13 − 5 = 10 − 2</KangurLessonChip>
           </div>
-          <div className='grid w-full gap-3 sm:grid-cols-2'>
+          <div className='grid w-full kangur-panel-gap sm:grid-cols-2'>
             <KangurLessonCallout accent='rose' className='text-sm' padding='sm'>
               <p className='text-xs font-semibold uppercase tracking-wide text-rose-700'>
                 Cofaj się krokami
@@ -736,7 +736,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               </p>
             </KangurLessonCallout>
           </div>
-          <div className='grid w-full items-center gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]'>
+          <div className='grid w-full items-center kangur-panel-gap lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]'>
             <KangurLessonInset accent='rose' className='text-center'>
               <div className='flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide text-rose-700'>
                 <KangurIconBadge accent='rose' size='sm'>

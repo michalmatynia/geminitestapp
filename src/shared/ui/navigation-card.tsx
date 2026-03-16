@@ -13,6 +13,7 @@ export type NavigationCardProps = {
   leading?: React.ReactNode;
   linkClassName?: string;
   title: React.ReactNode;
+  ariaLabel?: string;
   titleAs?: NavigationCardHeadingTag;
   titleClassName?: string;
   descriptionClassName?: string;
@@ -30,6 +31,7 @@ export function NavigationCard(props: NavigationCardProps): React.JSX.Element {
     leading,
     linkClassName,
     title,
+    ariaLabel,
     titleAs = 'h2',
     titleClassName,
     descriptionClassName,
@@ -42,7 +44,8 @@ export function NavigationCard(props: NavigationCardProps): React.JSX.Element {
   const TitleTag = titleAs;
   const titleText = getTextContent(title).trim();
   const descriptionText = getTextContent(description).trim();
-  const accessibleLabel = titleText || descriptionText;
+  const accessibleLabel = ariaLabel || titleText || descriptionText;
+  const resolvedAriaLabel = ariaLabel || (!titleText && accessibleLabel ? accessibleLabel : undefined);
 
   warnMissingAccessibleLabel({
     componentName: 'NavigationCard',
@@ -56,7 +59,7 @@ export function NavigationCard(props: NavigationCardProps): React.JSX.Element {
         'block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
         linkClassName
       )}
-      {...(!titleText && accessibleLabel ? { 'aria-label': accessibleLabel } : {})}
+      {...(resolvedAriaLabel ? { 'aria-label': resolvedAriaLabel } : {})}
       {...(accessibleLabel ? { title: accessibleLabel } : {})}
     >
       <Card variant={variant} padding={padding} className={cn('h-full transition-colors', className)}>

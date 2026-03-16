@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Button, Card, SelectSimple, FormActions } from '@/shared/ui';
 
 import { type AnalysisMode, type ShadowPolicy, type DetectionMode } from '../analysis-types';
@@ -80,16 +81,16 @@ export function AnalysisSettingsSection({
     sanitizeThresholdInput,
   } = resolvedConfig;
 
-  const modeOptions = [
+  const modeOptions: Array<LabeledOptionDto<AnalysisMode>> = [
     { value: 'server_analysis', label: 'Analysis Server: Sharp' },
     { value: 'client_analysis', label: 'Analysis Client: Canvas' },
   ];
-  const shadowPolicyOptions = [
+  const shadowPolicyOptions: Array<LabeledOptionDto<ShadowPolicy>> = [
     { value: 'auto', label: 'Shadow: Auto' },
     { value: 'include_shadow', label: 'Shadow: Include' },
     { value: 'exclude_shadow', label: 'Shadow: Exclude' },
   ];
-  const detectionOptions = [
+  const detectionOptions: Array<LabeledOptionDto<DetectionMode>> = [
     { value: 'auto', label: 'Detection: Auto' },
     { value: 'white_bg_first_colored_pixel', label: 'Detection: White FG' },
     { value: 'alpha_bbox', label: 'Detection: Alpha BBox' },

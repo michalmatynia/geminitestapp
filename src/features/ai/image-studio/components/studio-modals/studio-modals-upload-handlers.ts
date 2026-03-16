@@ -1,16 +1,12 @@
 import { setImageStudioSlotImageLocked } from '@/features/ai/image-studio/utils/slot-image-lock';
+import type { Toast } from '@/shared/contracts/ui';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import type { IdDataDto } from '@/shared/contracts/base';
 
 
 import type { EnvironmentReferenceDraftViewModel } from './slot-inline-edit-tab-types';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
-
-type Toast = (
-  message: string,
-  options?: { variant?: 'success' | 'error' | 'warning' | 'info' | 'default' }
-) => void;
 
 type UploadAssetRecord = {
   id: string;
@@ -73,7 +69,7 @@ type CreateUploadHandlersDeps = {
   temporaryObjectUpload: TemporaryObjectUploadDraft | null;
   toast: Toast;
   toSlotName: (filename: string, index: number) => string;
-  updateSlotMutation: AsyncMutation<{ id: string; data: Partial<ImageStudioSlotRecord> }, unknown>;
+  updateSlotMutation: AsyncMutation<IdDataDto<Partial<ImageStudioSlotRecord>>, unknown>;
   uploadMutation: AsyncMutation<{ files: File[]; folder: string }, UploadMutationResult>;
 };
 

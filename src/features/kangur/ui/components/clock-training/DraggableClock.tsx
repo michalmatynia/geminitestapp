@@ -8,6 +8,7 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
+  KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
@@ -186,7 +187,7 @@ export function DraggableClock({
         : 'Sprawdź! ✅';
 
   return (
-    <div className='flex flex-col items-center gap-4'>
+    <div className={`flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       {showTimeDisplay ? (
         <KangurStatusChip
           accent='indigo'

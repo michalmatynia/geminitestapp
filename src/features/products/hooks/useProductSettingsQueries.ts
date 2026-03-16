@@ -35,6 +35,7 @@ import {
   type ProductValidatorImportRequest as ImportValidationPatternsPayload,
   type ProductValidatorImportResult as ImportValidationPatternsResult,
 } from '@/shared/contracts/validator-import';
+import type { IdDataDto } from '@/shared/contracts/base';
 import {
   createListQueryV2,
   createSingleQueryV2,
@@ -480,11 +481,11 @@ export function useCreateValidationPatternMutation(): CreateMutation<
 
 export function useUpdateValidationPatternMutation(): UpdateMutation<
   ProductValidationPattern,
-  { id: string; data: UpdateValidationPatternPayload }
+  IdDataDto<UpdateValidationPatternPayload>
   > {
   const mutationKey = productSettingsKeys.validatorPatterns();
   return createUpdateMutationV2({
-    mutationFn: ({ id, data }: { id: string; data: UpdateValidationPatternPayload }) =>
+    mutationFn: ({ id, data }: IdDataDto<UpdateValidationPatternPayload>) =>
       api.updateValidationPattern(id, data),
     mutationKey,
     meta: {

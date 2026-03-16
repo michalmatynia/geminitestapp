@@ -33,6 +33,7 @@ import {
   KangurStatusChip,
   KangurSurfacePanel,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import type { KangurAiTutorUsageResponse } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
@@ -113,7 +114,7 @@ function TutorToggleField({
     <label
       htmlFor={controlId}
       aria-label={label}
-      className={`flex items-start gap-3 rounded-2xl border px-3 py-3 transition-colors ${
+      className={`flex items-start kangur-panel-gap rounded-2xl border px-3 py-3 transition-colors ${
         disabled
           ? 'cursor-not-allowed [border-color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_72%,#cbd5e1)] opacity-70'
           : checked
@@ -340,9 +341,9 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
     <KangurSurfacePanel
       accent='amber'
       padding='lg'
-      className='w-full flex flex-col gap-5'
+      className={`w-full flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
     >
-      <div className='flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3'>
+      <div className='flex flex-col items-start sm:flex-row sm:items-center kangur-panel-gap'>
         <BrainCircuit className='h-5 w-5 text-orange-500' />
         <KangurPanelIntro
           className='min-w-0'
@@ -359,7 +360,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
         className='rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3'
         data-testid='parent-dashboard-ai-tutor-mood'
       >
-        <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+        <div className='flex flex-col kangur-panel-gap sm:flex-row sm:items-start sm:justify-between'>
           <div className='min-w-0'>
             <KangurSectionEyebrow className='text-xs tracking-wide text-emerald-700'>
               {tutorContent.parentDashboard.moodTitle}
@@ -383,7 +384,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
           </KangurStatusChip>
         </div>
 
-        <div className='mt-3 grid gap-3 text-xs [color:var(--kangur-page-muted-text)] min-[360px]:grid-cols-2 lg:grid-cols-3'>
+        <div className='mt-3 grid kangur-panel-gap text-xs [color:var(--kangur-page-muted-text)] min-[360px]:grid-cols-2 lg:grid-cols-3'>
           <KangurLabeledValueSummary
             label={tutorContent.parentDashboard.baselineLabel}
             labelClassName='text-xs tracking-wide'
@@ -410,7 +411,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
 
       {isUsageEnabled ? (
         <div className='rounded-2xl border border-amber-100 bg-amber-50/75 px-4 py-3'>
-          <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
+          <div className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:justify-between'>
             <div className='min-w-0'>
               <KangurSectionEyebrow className='text-xs tracking-wide text-amber-700'>
                 {tutorContent.parentDashboard.usageTitle}
@@ -515,7 +516,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
             {tutorContent.parentDashboard.selects.testAccessModeDescription}
           </p>
         </div>
-        <div className='grid gap-3 min-[420px]:grid-cols-2'>
+        <div className='grid kangur-panel-gap min-[420px]:grid-cols-2'>
           <div className='flex flex-col gap-1'>
             <label
               htmlFor={hintDepthFieldId}

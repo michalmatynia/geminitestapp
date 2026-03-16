@@ -1,5 +1,6 @@
 import React from 'react';
 
+import type { IdLabeledOptionDto, LabeledOptionDto } from '@/shared/contracts/base';
 import { Button, Label } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
@@ -8,20 +9,15 @@ import {
 } from './DatabaseConstructorContext';
 import { useAiPathOrchestrator } from '../../AiPathConfigContext';
 
-type TemplateSnippet = { label: string; value: string };
-type ReadQuerySnippet = {
-  label: string;
-  value: string;
-  disabled?: boolean;
-  note?: string;
-};
+type TemplateSnippet = LabeledOptionDto<string>;
+type ReadQuerySnippet = LabeledOptionDto<string> & { disabled?: boolean; note?: string };
 type OperatorGroup = {
   label: string;
-  items: Array<{ label: string; value: string }>;
+  items: Array<LabeledOptionDto<string>>;
 };
-type StageSnippet = { label: string; value: string };
-type SortPreset = { id: string; label: string; value: string };
-type ProjectionPreset = { id: string; label: string; value: string };
+type StageSnippet = LabeledOptionDto<string>;
+type SortPreset = IdLabeledOptionDto;
+type ProjectionPreset = IdLabeledOptionDto;
 
 type DatabaseTemplateSnippetsDialogProps = {
   open: boolean;
@@ -132,7 +128,7 @@ export function DatabaseTemplateSnippetsDialog(
                   <div className='text-[10px] text-gray-500'>{group.label}</div>
                   <div className='flex flex-wrap gap-2'>
                     {group.items.map(
-                      (item: { label: string; value: string }): React.JSX.Element => (
+                      (item: LabeledOptionDto<string>): React.JSX.Element => (
                         <Button
                           key={item.label}
                           type='button'
@@ -162,7 +158,7 @@ export function DatabaseTemplateSnippetsDialog(
                   <div className='text-[10px] text-gray-500'>{group.label}</div>
                   <div className='flex flex-wrap gap-2'>
                     {group.items.map(
-                      (item: { label: string; value: string }): React.JSX.Element => (
+                      (item: LabeledOptionDto<string>): React.JSX.Element => (
                         <Button
                           key={item.label}
                           type='button'

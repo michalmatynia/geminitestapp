@@ -284,7 +284,7 @@ function FileSubRow(props: { matched: CaseListSearchMatchedFile }): React.JSX.El
       {resolveFileIcon(file.fileType)}
       <Button
         variant='link'
-        className='h-auto min-w-0 flex-1 justify-start p-0 truncate text-left text-gray-300 hover:text-white hover:no-underline focus:outline-none'
+        className='h-auto min-w-0 flex-1 justify-start p-0 truncate text-left text-gray-300 hover:text-white hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
         onMouseEnter={(): void => {
           onPrefetchFile(file);
         }}
@@ -352,7 +352,7 @@ function CaseAccordionRow(props: {
 
         <Button
           variant='link'
-          className='h-auto min-w-0 flex-1 justify-start p-0 truncate text-left font-medium text-gray-200 hover:text-white hover:no-underline focus:outline-none'
+          className='h-auto min-w-0 flex-1 justify-start p-0 truncate text-left font-medium text-gray-200 hover:text-white hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
           onMouseEnter={(): void => {
             onPrefetchCase(caseFile.id);
           }}

@@ -94,7 +94,7 @@ export function ButtonBlock(): React.ReactNode {
   }, [runtimeDisabledValue, settings]);
 
   const baseClasses =
-    'cms-hover-button inline-block rounded-md px-6 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55';
+    'cms-hover-button inline-block rounded-md px-6 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55';
 
   const customStyles: React.CSSProperties = {};
   const fontFamily = settings['fontFamily'] as string | undefined;
@@ -122,7 +122,7 @@ export function ButtonBlock(): React.ReactNode {
           type='button'
           onClick={() => runtimeAction?.(...runtimeActionArgs)}
           disabled={isDisabled}
-          className={`${baseClasses} cms-appearance-button-outline border-2 hover:text-current focus:ring-white`}
+          className={`${baseClasses} cms-appearance-button-outline border-2 hover:text-current focus-visible:ring-white`}
           style={customStyles}
           aria-label={label || 'Button'}
           title={label || 'Button'}
@@ -135,7 +135,7 @@ export function ButtonBlock(): React.ReactNode {
     return (
       <a
         href={link}
-        className={`${baseClasses} cms-appearance-button-outline border-2 hover:text-current focus:ring-white`}
+        className={`${baseClasses} cms-appearance-button-outline border-2 hover:text-current focus-visible:ring-white`}
         style={customStyles}
         aria-label={label || 'Link'}
         title={label || 'Link'}
@@ -151,7 +151,7 @@ export function ButtonBlock(): React.ReactNode {
         type='button'
         onClick={() => runtimeAction?.(...runtimeActionArgs)}
         disabled={isDisabled}
-        className={`${baseClasses} cms-appearance-button-primary border focus:ring-white`}
+        className={`${baseClasses} cms-appearance-button-primary border focus-visible:ring-white`}
         style={customStyles}
         aria-label={label || 'Button'}
         title={label || 'Button'}
@@ -164,7 +164,7 @@ export function ButtonBlock(): React.ReactNode {
   return (
     <a
       href={link}
-      className={`${baseClasses} cms-appearance-button-primary border focus:ring-white`}
+      className={`${baseClasses} cms-appearance-button-primary border focus-visible:ring-white`}
       style={customStyles}
       aria-label={label || 'Link'}
       title={label || 'Link'}

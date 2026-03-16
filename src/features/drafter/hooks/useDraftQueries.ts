@@ -5,6 +5,7 @@ import type {
   CreateProductDraftInput,
   UpdateProductDraftInput,
 } from '@/shared/contracts/products';
+import type { IdDataDto } from '@/shared/contracts/base';
 import type { ListQuery, SingleQuery, MutationResult } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
@@ -73,9 +74,9 @@ export function useCreateDraftMutation(): MutationResult<ProductDraft, CreatePro
 
 export function useUpdateDraftMutation(): MutationResult<
   ProductDraft,
-  { id: string; data: UpdateProductDraftInput }
+  IdDataDto<UpdateProductDraftInput>
   > {
-  return createUpdateMutationV2<ProductDraft, { id: string; data: UpdateProductDraftInput }>({
+  return createUpdateMutationV2<ProductDraft, IdDataDto<UpdateProductDraftInput>>({
     mutationFn: ({ id, data }) => api.put<ProductDraft>(`/api/drafts/${id}`, data),
     meta: {
       source: 'drafter.hooks.useUpdateDraftMutation',

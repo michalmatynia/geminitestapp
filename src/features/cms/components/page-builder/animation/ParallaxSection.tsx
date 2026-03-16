@@ -2,6 +2,7 @@
 
 import React, { useCallback } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
   GsapAnimationConfig,
   ParallaxPreset,
@@ -68,7 +69,7 @@ export function ParallaxSection(): React.ReactNode {
     config.parallaxBlurFrom ?? DEFAULT_ANIMATION_CONFIG.parallaxBlurFrom ?? 0;
   const parallaxBlurToValue = config.parallaxBlurTo ?? DEFAULT_ANIMATION_CONFIG.parallaxBlurTo ?? 0;
 
-  const parallaxAxisOptions: { label: string; value: ParallaxAxis }[] = [
+  const parallaxAxisOptions: Array<LabeledOptionDto<ParallaxAxis>> = [
     { label: 'Vertical (Y)', value: 'y' },
     { label: 'Horizontal (X)', value: 'x' },
   ];

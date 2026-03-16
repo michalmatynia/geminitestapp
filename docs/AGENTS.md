@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-11'
+last_reviewed: '2026-03-16'
 status: 'active'
 doc_type: 'agent-guide'
 scope: 'repo'
@@ -205,13 +205,19 @@ Top-level features live under `src/features/`, including:
 - `filemaker`
 - `files`
 - `foldertree`
+- `gsap`
 - `integrations`
+- `internationalization`
+- `jobs`
+- `kangur`
 - `notesapp`
 - `observability`
+- `playwright`
 - `product-sync`
 - `products`
 - `prompt-engine`
 - `prompt-exploder`
+- `tooltip-engine`
 - `viewer3d`
 
 AI subsystems are primarily under `src/features/ai/`.
@@ -389,4 +395,4 @@ bun run check:bun:compat
 
 ## Last Updated
 
-Aligned to the scanned repo structure and documentation taxonomy on `2026-03-10`.
+Aligned to the scanned repo structure and documentation taxonomy on `2026-03-16`.

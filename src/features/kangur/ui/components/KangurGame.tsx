@@ -41,7 +41,11 @@ import {
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_ACCENT_STYLES,
+  KANGUR_PANEL_GAP_CLASSNAME,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { getKangurQuestions, isExamMode } from '@/features/kangur/ui/services/kangur-questions';
 import {
@@ -116,7 +120,7 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
   };
 
   return (
-    <div className='flex flex-col gap-4 w-full'>
+    <div className={`flex flex-col w-full ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <div className='flex items-center gap-2'>
         <KangurProgressBar
           accent='amber'
@@ -131,7 +135,7 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
       </div>
 
       <KangurGlassPanel
-        className='flex flex-col gap-3'
+        className='flex flex-col kangur-panel-gap'
         data-testid='kangur-game-question-shell'
         padding='lg'
         surface='solid'
@@ -204,7 +208,7 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
             <KangurAnswerChoiceCard
               accent={accent}
               buttonClassName={cn(
-                'flex items-center gap-3 px-4 py-3 font-semibold',
+                'flex items-center kangur-panel-gap px-4 py-3 font-semibold',
                 style,
                 confirmed ? 'cursor-default' : 'cursor-pointer'
               )}

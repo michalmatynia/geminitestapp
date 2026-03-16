@@ -119,7 +119,7 @@ export default function Leaderboard(): React.JSX.Element {
             return (
               <KangurInfoCard
                 accent={item.isCurrentUser ? 'indigo' : 'slate'}
-                className='flex flex-col items-start gap-3 p-3 sm:flex-row sm:items-center sm:gap-3'
+                className='flex flex-col items-start kangur-panel-gap p-3 sm:flex-row sm:items-center'
                 data-testid={`leaderboard-row-${item.id}`}
                 key={item.id}
                 padding='sm'

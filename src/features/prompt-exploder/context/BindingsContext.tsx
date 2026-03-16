@@ -2,6 +2,7 @@
 
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { useToast } from '@/shared/ui';
 
 import {
@@ -24,8 +25,8 @@ export type BindingDraft = PromptExploderManualBindingDraft;
 
 export interface BindingsState {
   bindingDraft: BindingDraft;
-  fromSubsectionOptions: Array<{ value: string; label: string }>;
-  toSubsectionOptions: Array<{ value: string; label: string }>;
+  fromSubsectionOptions: Array<LabeledOptionDto<string>>;
+  toSubsectionOptions: Array<LabeledOptionDto<string>>;
 }
 
 export interface BindingsActions {

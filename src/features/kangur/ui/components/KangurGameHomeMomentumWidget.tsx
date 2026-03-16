@@ -291,7 +291,7 @@ export default function KangurGameHomeMomentumWidget({
       accent={recommendation.accent}
       bodyClassName='min-w-0'
       className='rounded-[28px]'
-      contentClassName='gap-3 sm:flex-row sm:items-start sm:justify-between'
+      contentClassName='kangur-panel-gap sm:flex-row sm:items-start sm:justify-between'
       dataTestId='kangur-home-momentum-widget'
       description={recommendation.description}
       descriptionClassName='mt-1 opacity-85'

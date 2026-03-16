@@ -23,8 +23,15 @@ import {
   KangurStatusChip,
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import type { KangurQuestionChoice } from '@/features/kangur/ui/types';
+import {
+  KANGUR_DUELS_DEFAULT_LOBBY_LIMIT,
+  KANGUR_DUELS_DEFAULT_OPPONENTS_LIMIT,
+  KANGUR_DUELS_DEFAULT_SEARCH_LIMIT,
+  KANGUR_DUELS_SEARCH_MIN_CHARS,
+} from '@/features/kangur/shared/duels-config';
 import type {
   KangurDuelMode,
   KangurDuelLobbyEntry,
@@ -36,9 +43,12 @@ import { cn } from '@/features/kangur/shared/utils';
 import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 import { isAbortLikeError } from '@/features/kangur/shared/utils/observability/is-abort-like-error';
 import {
+  LOBBY_MODE_LABELS,
   PLAYER_STATUS_LABELS,
   SESSION_STATUS_LABELS,
   buildWinnerSummary,
+  formatDurationLabel,
+  formatRelativeAge,
   resolvePlayerAccent,
   resolveSessionAccent,
   toQuestionCardQuestion,
@@ -46,12 +56,15 @@ import {
 
 const kangurPlatform = getKangurPlatform();
 const DUEL_POLL_INTERVAL_MS = 2500;
+const DUEL_POLL_MAX_INTERVAL_MS = 20_000;
 const LOBBY_POLL_INTERVAL_MS = 5000;
+const LOBBY_POLL_MAX_INTERVAL_MS = 30_000;
 const LOBBY_FRESH_WINDOW_MS = 15_000;
 const LOBBY_RELATIVE_TIME_TICK_MS = 10_000;
 const DUEL_TIMEOUT_CHOICE = '__timeout__';
-const DUEL_SEARCH_MIN_CHARS = 2;
 const DUEL_SEARCH_DEBOUNCE_MS = 300;
+const MOTION_PANEL_CLASSNAME =
+  'motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 motion-safe:ease-out';
 
 
 function DuelsContent(): React.JSX.Element {
@@ -72,6 +85,8 @@ function DuelsContent(): React.JSX.Element {
   const [lobbyEntries, setLobbyEntries] = useState<KangurDuelLobbyEntry[]>([]);
   const [lobbyError, setLobbyError] = useState<string | null>(null);
   const [isLobbyLoading, setIsLobbyLoading] = useState(false);
+  const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
+  const [lobbyFailureCount, setLobbyFailureCount] = useState(0);
   const [recentOpponents, setRecentOpponents] = useState<KangurDuelOpponentEntry[]>([]);
   const [opponentsError, setOpponentsError] = useState<string | null>(null);
   const [isOpponentsLoading, setIsOpponentsLoading] = useState(false);
@@ -80,6 +95,10 @@ function DuelsContent(): React.JSX.Element {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [isPageActive, setIsPageActive] = useState(true);
+  const [isOnline, setIsOnline] = useState<boolean>(
+    () => (typeof navigator === 'undefined' ? true : navigator.onLine)
+  );
+  const [duelRelativeNow, setDuelRelativeNow] = useState(() => Date.now());
   const [lobbyModeFilter, setLobbyModeFilter] = useState<'all' | KangurDuelMode>('all');
   const [lobbySort, setLobbySort] = useState<
     'recent' | 'time_fast' | 'time_slow' | 'questions_low' | 'questions_high'
@@ -98,6 +117,8 @@ function DuelsContent(): React.JSX.Element {
   const lobbySeenRef = useRef<Map<string, string>>(new Map());
   const lobbyFreshRef = useRef<Map<string, number>>(new Map());
   const lobbyViewTrackedRef = useRef(false);
+  const lobbyPollPrimedRef = useRef(false);
+  const [duelFailureCount, setDuelFailureCount] = useState(0);
 
   useKangurRoutePageReady({
     pageKey: 'Duels',
@@ -123,6 +144,42 @@ function DuelsContent(): React.JSX.Element {
   const duelHeadingId = useId();
   const duelSummaryId = useId();
   const duelScoreboardId = useId();
+
+  const resolveActionErrorMessage = useCallback(
+    (nextAction: typeof action, err: unknown): string => {
+      const status =
+        typeof err === 'object' &&
+        err !== null &&
+        'status' in err &&
+        typeof (err as { status?: unknown }).status === 'number'
+          ? (err as { status: number }).status
+          : null;
+
+      if (nextAction === 'join') {
+        switch (status) {
+          case 400:
+            return 'To wyzwanie nie jest już dostępne.';
+          case 403:
+            return 'Nie masz dostępu do tego prywatnego pojedynku.';
+          case 404:
+            return 'To wyzwanie już nie istnieje.';
+          case 409:
+            return 'To wyzwanie ma już komplet graczy.';
+          default:
+            break;
+        }
+      }
+
+      if (nextAction === 'answer') {
+        if (status === 400 || status === 409) {
+          return 'Pojedynek został zakończony. Odśwież widok.';
+        }
+      }
+
+      return 'Nie udało się połączyć z pojedynkiem. Spróbuj ponownie.';
+    },
+    []
+  );
 
   const navigation = useMemo(
     () => ({
@@ -154,16 +211,46 @@ function DuelsContent(): React.JSX.Element {
   const activeQuestion =
     session?.questions[session.currentQuestionIndex] ?? null;
   const questionCard = useMemo(() => toQuestionCardQuestion(activeQuestion), [activeQuestion]);
+  const isGuest = !isAuthenticated;
   const canPlay = Boolean(isAuthenticated && user?.activeLearner?.id);
   const canPlayTools = canPlay && !session;
   const canBrowseLobby = !session && (canPlay || !isAuthenticated);
   const isBusy = action !== null;
   const canLeaveSession = sessionStatus === 'ready' || sessionStatus === 'in_progress';
+  const duelPollIntervalMs = useMemo(() => {
+    if (duelFailureCount <= 0) {
+      return DUEL_POLL_INTERVAL_MS;
+    }
+    const backoff = DUEL_POLL_INTERVAL_MS * Math.pow(2, Math.min(duelFailureCount, 4));
+    return Math.min(backoff, DUEL_POLL_MAX_INTERVAL_MS);
+  }, [duelFailureCount]);
+  const isDuelReconnecting = useMemo(
+    () => duelFailureCount > 0 && isPageActive && isOnline,
+    [duelFailureCount, isOnline, isPageActive]
+  );
   const SearchField = KangurTextField;
   const waitingSession = sessionStatus === 'waiting' && session ? session : null;
   const activeSession =
     sessionStatus && sessionStatus !== 'waiting' && session ? session : null;
-  const lobbyRefreshSeconds = Math.max(1, Math.round(LOBBY_POLL_INTERVAL_MS / 1000));
+  const lobbyPollIntervalMs = useMemo(() => {
+    if (lobbyFailureCount <= 0) {
+      return LOBBY_POLL_INTERVAL_MS;
+    }
+    const backoff = LOBBY_POLL_INTERVAL_MS * Math.pow(2, Math.min(lobbyFailureCount, 4));
+    return Math.min(backoff, LOBBY_POLL_MAX_INTERVAL_MS);
+  }, [lobbyFailureCount]);
+  const lobbyRefreshSeconds = Math.max(1, Math.round(lobbyPollIntervalMs / 1000));
+  const lobbyLastUpdatedAtMs = useMemo(
+    () => (lobbyLastUpdatedAt ? Date.parse(lobbyLastUpdatedAt) : null),
+    [lobbyLastUpdatedAt]
+  );
+  const lobbyStaleThresholdMs = useMemo(() => lobbyPollIntervalMs * 3, [lobbyPollIntervalMs]);
+  const isLobbyStale = useMemo(() => {
+    if (!lobbyLastUpdatedAtMs || !Number.isFinite(lobbyLastUpdatedAtMs)) {
+      return false;
+    }
+    return relativeNow - lobbyLastUpdatedAtMs > lobbyStaleThresholdMs;
+  }, [lobbyLastUpdatedAtMs, lobbyStaleThresholdMs, relativeNow]);
   const publicLobbyEntries = useMemo(
     () => lobbyEntries.filter((entry) => entry.visibility !== 'private'),
     [lobbyEntries]
@@ -205,7 +292,7 @@ function DuelsContent(): React.JSX.Element {
     return withTimestamps.map(({ entry }) => entry);
   }, [lobbyModeFilter, lobbySort, publicLobbyEntries]);
   const trimmedSearchQuery = searchQuery.trim();
-  const canShowSearchResults = trimmedSearchQuery.length >= DUEL_SEARCH_MIN_CHARS;
+  const canShowSearchResults = trimmedSearchQuery.length >= KANGUR_DUELS_SEARCH_MIN_CHARS;
   const searchStateSignature = useMemo(
     () =>
       [
@@ -233,6 +320,44 @@ function DuelsContent(): React.JSX.Element {
     pendingQuestionId === activeQuestion?.id &&
     (session?.status === 'ready' || session?.status === 'in_progress');
   const searchDescribedBy = searchError ? `${searchHintId} ${searchErrorId}` : searchHintId;
+  const duelEstimatedDurationSec = session
+    ? session.questionCount * session.timePerQuestionSec
+    : null;
+  const duelStartedAtMs = useMemo(() => {
+    if (!session?.startedAt) {
+      return null;
+    }
+    const parsed = Date.parse(session.startedAt);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, [session?.startedAt]);
+  const duelElapsedSec = useMemo(() => {
+    if (!duelStartedAtMs) {
+      return null;
+    }
+    const diffMs = Math.max(0, duelRelativeNow - duelStartedAtMs);
+    return Math.floor(diffMs / 1000);
+  }, [duelRelativeNow, duelStartedAtMs]);
+  const duelRemainingSec = useMemo(() => {
+    if (!Number.isFinite(duelEstimatedDurationSec ?? NaN) || duelElapsedSec === null) {
+      return null;
+    }
+    return Math.max(0, Math.round((duelEstimatedDurationSec ?? 0) - duelElapsedSec));
+  }, [duelEstimatedDurationSec, duelElapsedSec]);
+  const duelProgressPct = useMemo(() => {
+    if (!activeSession?.questionCount) {
+      return null;
+    }
+    const progress =
+      ((activeSession.currentQuestionIndex + 1) / activeSession.questionCount) * 100;
+    return Math.min(100, Math.max(0, Math.round(progress)));
+  }, [activeSession?.currentQuestionIndex, activeSession?.questionCount]);
+  const duelTopScore = useMemo(() => {
+    if (!activeSession?.players?.length) {
+      return null;
+    }
+    const topScore = Math.max(...activeSession.players.map((entry) => entry.score));
+    return Number.isFinite(topScore) ? topScore : null;
+  }, [activeSession?.players]);
 
   useEffect(() => {
     setAnswerResult(null);
@@ -268,39 +393,82 @@ function DuelsContent(): React.JSX.Element {
   }, [activeQuestion, answerResult]);
 
   const runAction = useCallback(
-    async (nextAction: typeof action, task: () => Promise<KangurDuelStateResponse>) => {
+    async (
+      nextAction: typeof action,
+      task: () => Promise<KangurDuelStateResponse>
+    ): Promise<{ response: KangurDuelStateResponse | null; errorStatus: number | null }> => {
+      const startedAt = Date.now();
       setAction(nextAction);
       setError(null);
+      trackKangurClientEvent('kangur_duels_action_started', {
+        action: nextAction,
+        isGuest,
+      });
+      if (!isOnline) {
+        setError('Brak połączenia z internetem.');
+        setAction(null);
+        trackKangurClientEvent('kangur_duels_action_failed', {
+          action: nextAction,
+          reason: 'offline',
+          durationMs: Date.now() - startedAt,
+          isGuest,
+        });
+        return { response: null, errorStatus: null };
+      }
       try {
         const response = await task();
         setDuelState(response);
-        return response;
+        trackKangurClientEvent('kangur_duels_action_succeeded', {
+          action: nextAction,
+          durationMs: Date.now() - startedAt,
+          isGuest,
+          mode: response.session.mode,
+          visibility: response.session.visibility,
+          status: response.session.status,
+        });
+        return { response, errorStatus: null };
       } catch (err: unknown) {
         logClientError(err);
-        setError('Nie udało się połączyć z pojedynkiem. Spróbuj ponownie.');
-        return null;
+        setError(resolveActionErrorMessage(nextAction, err));
+        const status =
+          typeof err === 'object' &&
+          err !== null &&
+          'status' in err &&
+          typeof (err as { status?: unknown }).status === 'number'
+            ? (err as { status: number }).status
+            : null;
+        trackKangurClientEvent('kangur_duels_action_failed', {
+          action: nextAction,
+          durationMs: Date.now() - startedAt,
+          isGuest,
+          status,
+        });
+        return { response: null, errorStatus: status };
       } finally {
         setAction(null);
       }
     },
-    []
+    [isGuest, isOnline, resolveActionErrorMessage]
   );
 
   const handleQuickMatch = useCallback(async () => {
+    trackKangurClientEvent('kangur_duels_quick_match_clicked', { isGuest });
     await runAction('quick_match', () =>
       kangurPlatform.duels.join({ mode: 'quick_match' })
     );
-  }, [runAction]);
+  }, [isGuest, runAction]);
 
   const handleCreateChallenge = useCallback(async () => {
+    trackKangurClientEvent('kangur_duels_challenge_create_clicked', { isGuest });
     await runAction('challenge', () =>
       kangurPlatform.duels.create({ mode: 'challenge', visibility: 'public' })
     );
-  }, [runAction]);
+  }, [isGuest, runAction]);
 
   const handleInviteByLearnerId = useCallback(
     async (learnerId: string) => {
-      const response = await runAction('private', () =>
+      trackKangurClientEvent('kangur_duels_private_invite_clicked', { isGuest });
+      const { response } = await runAction('private', () =>
         kangurPlatform.duels.create({
           mode: 'challenge',
           visibility: 'private',
@@ -314,7 +482,7 @@ function DuelsContent(): React.JSX.Element {
         setSearchError(null);
       }
     },
-    [runAction]
+    [isGuest, runAction]
   );
 
   const handleInviteOpponent = useCallback(
@@ -325,6 +493,7 @@ function DuelsContent(): React.JSX.Element {
 
   const loadLobby = useCallback(
     async ({ showLoading = false }: { showLoading?: boolean } = {}) => {
+      const startedAt = Date.now();
       if (!canBrowseLobby) {
         lobbyAbortRef.current?.abort();
         lobbyAbortRef.current = null;
@@ -336,7 +505,27 @@ function DuelsContent(): React.JSX.Element {
         setLobbyError(null);
         setIsLobbyLoading(false);
         setLobbyLastUpdatedAt(null);
+        setLobbyFailureCount(0);
         setRelativeNow(Date.now());
+        trackKangurClientEvent('kangur_duels_lobby_fetch_skipped', {
+          reason: 'disabled',
+          durationMs: Date.now() - startedAt,
+          isGuest,
+        });
+        return;
+      }
+
+      if (!isOnline) {
+        lobbyAbortRef.current?.abort();
+        lobbyAbortRef.current = null;
+        lobbyPollingRef.current = false;
+        setIsLobbyLoading(false);
+        setLobbyError('Brak połączenia z internetem.');
+        trackKangurClientEvent('kangur_duels_lobby_fetch_failed', {
+          reason: 'offline',
+          durationMs: Date.now() - startedAt,
+          isGuest,
+        });
         return;
       }
 
@@ -356,7 +545,7 @@ function DuelsContent(): React.JSX.Element {
       setLobbyError(null);
       try {
         const response = await kangurPlatform.duels.lobby({
-          limit: 12,
+          limit: KANGUR_DUELS_DEFAULT_LOBBY_LIMIT,
           signal: controller.signal,
         });
         const nextEntries = response.entries;
@@ -385,12 +574,37 @@ function DuelsContent(): React.JSX.Element {
           lastLobbyHashRef.current = nextHash;
           setLobbyEntries(nextEntries);
         }
+        setLobbyFailureCount(0);
+        trackKangurClientEvent('kangur_duels_lobby_fetch_succeeded', {
+          durationMs: Date.now() - startedAt,
+          isGuest,
+          entryCount: nextEntries.length,
+          inviteCount: nextEntries.filter((entry) => entry.visibility === 'private').length,
+        });
       } catch (err: unknown) {
         if (isAbortLikeError(err, controller.signal)) {
+          trackKangurClientEvent('kangur_duels_lobby_fetch_skipped', {
+            reason: 'aborted',
+            durationMs: Date.now() - startedAt,
+            isGuest,
+          });
           return;
         }
         logClientError(err);
         setLobbyError('Nie udało się pobrać lobby. Spróbuj ponownie.');
+        setLobbyFailureCount((current) => Math.min(current + 1, 4));
+        const status =
+          typeof err === 'object' &&
+          err !== null &&
+          'status' in err &&
+          typeof (err as { status?: unknown }).status === 'number'
+            ? (err as { status: number }).status
+            : null;
+        trackKangurClientEvent('kangur_duels_lobby_fetch_failed', {
+          durationMs: Date.now() - startedAt,
+          isGuest,
+          status,
+        });
       } finally {
         if (lobbyAbortRef.current === controller) {
           lobbyAbortRef.current = null;
@@ -401,7 +615,7 @@ function DuelsContent(): React.JSX.Element {
         }
       }
     },
-    [canBrowseLobby]
+    [canBrowseLobby, isGuest, isOnline]
   );
 
   const loadOpponents = useCallback(
@@ -411,6 +625,14 @@ function DuelsContent(): React.JSX.Element {
         opponentsAbortRef.current = null;
         setRecentOpponents([]);
         setOpponentsError(null);
+        setIsOpponentsLoading(false);
+        return;
+      }
+
+      if (!isOnline) {
+        opponentsAbortRef.current?.abort();
+        opponentsAbortRef.current = null;
+        setOpponentsError('Brak połączenia z internetem.');
         setIsOpponentsLoading(false);
         return;
       }
@@ -430,7 +652,7 @@ function DuelsContent(): React.JSX.Element {
       setOpponentsError(null);
       try {
         const response = await kangurPlatform.duels.recentOpponents({
-          limit: 8,
+          limit: KANGUR_DUELS_DEFAULT_OPPONENTS_LIMIT,
           signal: controller.signal,
         });
         setRecentOpponents(response.entries);
@@ -449,7 +671,7 @@ function DuelsContent(): React.JSX.Element {
         }
       }
     },
-    [canPlayTools]
+    [canPlayTools, isOnline]
   );
 
   const handleLeave = useCallback(async () => {
@@ -461,9 +683,19 @@ function DuelsContent(): React.JSX.Element {
 
   const handleJoinLobbySession = useCallback(
     async (sessionId: string) => {
-      await runAction('join', () => kangurPlatform.duels.join({ sessionId }));
+      setJoiningSessionId(sessionId);
+      try {
+        const { response, errorStatus } = await runAction('join', () =>
+          kangurPlatform.duels.join({ sessionId })
+        );
+        if (!response && errorStatus && [400, 403, 404, 409].includes(errorStatus)) {
+          void loadLobby({ showLoading: true });
+        }
+      } finally {
+        setJoiningSessionId((current) => (current === sessionId ? null : current));
+      }
     },
-    [runAction]
+    [loadLobby, runAction]
   );
 
   const handleReset = useCallback(() => {
@@ -485,7 +717,7 @@ function DuelsContent(): React.JSX.Element {
       lastAnswerMetaRef.current = { questionId: activeQuestion.id, timedOut };
       setAnswerResult(null);
       setPendingQuestionId(activeQuestion.id);
-      const response = await runAction('answer', () =>
+      const { response } = await runAction('answer', () =>
         kangurPlatform.duels.answer({
           sessionId: session.id,
           questionId: activeQuestion.id,
@@ -564,8 +796,39 @@ function DuelsContent(): React.JSX.Element {
   }, []);
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const handleOnline = (): void => {
+      setIsOnline(true);
+    };
+    const handleOffline = (): void => {
+      setIsOnline(false);
+    };
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isOnline || !isPageActive) {
+      return;
+    }
+    if (lobbyError) {
+      void loadLobby({ showLoading: true });
+    }
+  }, [isOnline, isPageActive, lobbyError, loadLobby]);
+
+  useEffect(() => {
     lastSessionUpdatedAtRef.current = session?.updatedAt ?? null;
   }, [session?.updatedAt]);
+
+  useEffect(() => {
+    setDuelFailureCount(0);
+  }, [sessionId]);
 
   useEffect(() => {
     if (!canBrowseLobby || !isPageActive) {
@@ -580,8 +843,21 @@ function DuelsContent(): React.JSX.Element {
   }, [canBrowseLobby, isPageActive]);
 
   useEffect(() => {
-    if (!canBrowseLobby) {
+    if (!session || !isPageActive) {
+      return;
+    }
+    const intervalId = window.setInterval(() => {
+      setDuelRelativeNow(Date.now());
+    }, 5000);
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [isPageActive, session?.id]);
+
+  useEffect(() => {
+    if (!canBrowseLobby || !isOnline) {
       void loadLobby();
+      lobbyPollPrimedRef.current = false;
       return;
     }
 
@@ -590,13 +866,17 @@ function DuelsContent(): React.JSX.Element {
       lobbyAbortRef.current = null;
       lobbyPollingRef.current = false;
       setIsLobbyLoading(false);
+      lobbyPollPrimedRef.current = false;
       return;
     }
 
-    void loadLobby({ showLoading: true });
+    if (!lobbyPollPrimedRef.current) {
+      lobbyPollPrimedRef.current = true;
+      void loadLobby({ showLoading: true });
+    }
     const intervalId = window.setInterval(() => {
       void loadLobby();
-    }, LOBBY_POLL_INTERVAL_MS);
+    }, lobbyPollIntervalMs);
 
     return () => {
       window.clearInterval(intervalId);
@@ -604,10 +884,10 @@ function DuelsContent(): React.JSX.Element {
       lobbyAbortRef.current = null;
       lobbyPollingRef.current = false;
     };
-  }, [canBrowseLobby, isPageActive, loadLobby]);
+  }, [canBrowseLobby, isOnline, isPageActive, loadLobby, lobbyPollIntervalMs]);
 
   useEffect(() => {
-    if (!canPlayTools) {
+    if (!canPlayTools || !isOnline) {
       void loadOpponents();
       return () => {
         opponentsAbortRef.current?.abort();
@@ -630,7 +910,7 @@ function DuelsContent(): React.JSX.Element {
       opponentsAbortRef.current?.abort();
       opponentsAbortRef.current = null;
     };
-  }, [canPlayTools, isPageActive, loadOpponents]);
+  }, [canPlayTools, isOnline, isPageActive, loadOpponents]);
 
   useEffect(() => {
     if (!canPlayTools) {
@@ -647,7 +927,7 @@ function DuelsContent(): React.JSX.Element {
     }
 
     const trimmed = searchQuery.trim();
-    if (trimmed.length < DUEL_SEARCH_MIN_CHARS) {
+    if (trimmed.length < KANGUR_DUELS_SEARCH_MIN_CHARS) {
       searchAbortRef.current?.abort();
       searchAbortRef.current = null;
       if (searchDebounceRef.current) {
@@ -656,6 +936,19 @@ function DuelsContent(): React.JSX.Element {
       }
       setSearchResults([]);
       setSearchError(null);
+      setIsSearching(false);
+      return;
+    }
+
+    if (!isOnline) {
+      searchAbortRef.current?.abort();
+      searchAbortRef.current = null;
+      if (searchDebounceRef.current) {
+        window.clearTimeout(searchDebounceRef.current);
+        searchDebounceRef.current = null;
+      }
+      setSearchResults([]);
+      setSearchError('Brak połączenia z internetem.');
       setIsSearching(false);
       return;
     }
@@ -674,7 +967,7 @@ function DuelsContent(): React.JSX.Element {
       void (async () => {
         try {
           const response = await kangurPlatform.duels.search(trimmed, {
-            limit: 8,
+            limit: KANGUR_DUELS_DEFAULT_SEARCH_LIMIT,
             signal: controller.signal,
           });
           setSearchResults(response.entries);
@@ -701,22 +994,24 @@ function DuelsContent(): React.JSX.Element {
       searchAbortRef.current?.abort();
       searchAbortRef.current = null;
     };
-  }, [canPlayTools, searchQuery]);
+  }, [canPlayTools, isOnline, searchQuery]);
 
   useEffect(() => {
     if (!sessionId) {
       duelAbortRef.current?.abort();
       duelAbortRef.current = null;
       duelPollingRef.current = false;
+      setDuelFailureCount(0);
       return;
     }
     if (!['waiting', 'ready', 'in_progress'].includes(sessionStatus ?? '')) {
       duelAbortRef.current?.abort();
       duelAbortRef.current = null;
       duelPollingRef.current = false;
+      setDuelFailureCount(0);
       return;
     }
-    if (!isPageActive) {
+    if (!isPageActive || !isOnline) {
       duelAbortRef.current?.abort();
       duelAbortRef.current = null;
       duelPollingRef.current = false;
@@ -742,11 +1037,13 @@ function DuelsContent(): React.JSX.Element {
         }
         lastSessionUpdatedAtRef.current = nextUpdatedAt;
         setDuelState(nextState);
+        setDuelFailureCount(0);
       } catch (err: unknown) {
         if (isAbortLikeError(err, controller.signal)) {
           return;
         }
         logClientError(err);
+        setDuelFailureCount((current) => Math.min(current + 1, 4));
       } finally {
         if (duelAbortRef.current === controller) {
           duelAbortRef.current = null;
@@ -757,7 +1054,7 @@ function DuelsContent(): React.JSX.Element {
 
     const intervalId = window.setInterval(() => {
       void pollDuelState();
-    }, DUEL_POLL_INTERVAL_MS);
+    }, duelPollIntervalMs);
 
     return () => {
       window.clearInterval(intervalId);
@@ -765,13 +1062,13 @@ function DuelsContent(): React.JSX.Element {
       duelAbortRef.current = null;
       duelPollingRef.current = false;
     };
-  }, [isPageActive, sessionId, sessionStatus]);
+  }, [duelPollIntervalMs, isOnline, isPageActive, sessionId, sessionStatus]);
 
   return (
     <KangurPageShell id='kangur-duels-page' skipLinkTargetId='kangur-duels-main'>
       <KangurTopNavigationController navigation={navigation} />
       <KangurPageContainer as='section' data-kangur-route-main='true' id='kangur-duels-main'>
-        <div className='flex flex-col gap-6'>
+        <div className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}>
           {error ? (
             <KangurInfoCard
               accent='rose'
@@ -803,14 +1100,20 @@ function DuelsContent(): React.JSX.Element {
               title='Pojedynki matematyczne'
               description='Możesz przeglądać lobby jako gość, ale dołączenie do pojedynków wymaga logowania.'
             >
-              <div className='flex flex-wrap justify-center gap-3'>
-                <KangurButton onClick={() => openLoginModal(null)} size='lg' variant='primary'>
+              <div className='flex flex-col sm:flex-row sm:flex-wrap justify-center kangur-panel-gap'>
+                <KangurButton
+                  onClick={() => openLoginModal(null)}
+                  size='lg'
+                  variant='primary'
+                  className='w-full sm:w-auto'
+                >
                   Zaloguj się
                 </KangurButton>
                 <KangurButton
                   onClick={() => openLoginModal(null, { authMode: 'create-account' })}
                   size='lg'
                   variant='secondary'
+                  className='w-full sm:w-auto'
                 >
                   Utwórz konto
                 </KangurButton>
@@ -821,7 +1124,7 @@ function DuelsContent(): React.JSX.Element {
           {canPlayTools ? (
             <>
               <KangurGlassPanel
-                className='flex flex-col gap-6'
+                className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
                 padding='lg'
                 surface='solid'
                 role='region'
@@ -839,7 +1142,7 @@ function DuelsContent(): React.JSX.Element {
                     Wybierz szybki pojedynek, utwórz publiczne wyzwanie albo zaproś rywala.
                   </p>
                 </div>
-                <div className='flex flex-wrap gap-3'>
+                <div className='flex flex-col sm:flex-row sm:flex-wrap kangur-panel-gap'>
                   <KangurButton
                     onClick={() => {
                       void handleQuickMatch();
@@ -849,6 +1152,7 @@ function DuelsContent(): React.JSX.Element {
                     disabled={isBusy}
                     aria-busy={action === 'quick_match'}
                     aria-live='polite'
+                    className='w-full sm:w-auto'
                   >
                     {action === 'quick_match' ? 'Szukamy przeciwnika…' : 'Szybki pojedynek'}
                   </KangurButton>
@@ -861,35 +1165,37 @@ function DuelsContent(): React.JSX.Element {
                     disabled={isBusy}
                     aria-busy={action === 'challenge'}
                     aria-live='polite'
+                    className='w-full sm:w-auto'
                   >
                     {action === 'challenge' ? 'Tworzymy wyzwanie…' : 'Publiczne wyzwanie'}
                   </KangurButton>
                 </div>
                 <div
-                  className='flex flex-col gap-3 rounded-2xl border border-slate-200/70 bg-white/70 p-4'
+                  className='flex flex-col kangur-panel-gap rounded-2xl border border-slate-200/70 bg-white/70 p-4'
                   role='region'
                   aria-labelledby={opponentsHeadingId}
                   aria-busy={isOpponentsLoading}
                 >
-                  <div className='flex flex-wrap items-center justify-between gap-3'>
+                  <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between kangur-panel-gap'>
                     <div
                       id={opponentsHeadingId}
                       className='text-sm font-semibold text-slate-800'
                     >
                       Zaproś ostatniego rywala
                     </div>
-                      <KangurButton
-                        onClick={() => {
-                          void loadOpponents({ showLoading: true });
-                        }}
-                        variant='ghost'
-                        disabled={isOpponentsLoading}
-                        aria-label='Odśwież listę ostatnich rywali'
-                        aria-busy={isOpponentsLoading}
-                        aria-live='polite'
-                      >
-                        {isOpponentsLoading ? 'Odświeżamy…' : 'Odśwież'}
-                      </KangurButton>
+                    <KangurButton
+                      onClick={() => {
+                        void loadOpponents({ showLoading: true });
+                      }}
+                      variant='ghost'
+                      disabled={isOpponentsLoading}
+                      aria-label='Odśwież listę ostatnich rywali'
+                      aria-busy={isOpponentsLoading}
+                      aria-live='polite'
+                      className='w-full sm:w-auto'
+                    >
+                      {isOpponentsLoading ? 'Odświeżamy…' : 'Odśwież'}
+                    </KangurButton>
                   </div>
 
                   {opponentsError ? (
@@ -934,6 +1240,7 @@ function DuelsContent(): React.JSX.Element {
                             }}
                             variant='secondary'
                             disabled={isBusy}
+                            className='w-full sm:w-auto'
                           >
                             Zaproś {opponent.displayName}
                           </KangurButton>
@@ -944,18 +1251,18 @@ function DuelsContent(): React.JSX.Element {
                 </div>
 
                 <div
-                  className='flex flex-col gap-3 rounded-2xl border border-slate-200/70 bg-white/70 p-4'
+                  className='flex flex-col kangur-panel-gap rounded-2xl border border-slate-200/70 bg-white/70 p-4'
                   role='region'
                   aria-labelledby={searchHeadingId}
                   aria-busy={isSearching}
                   data-search-state={searchStateSignature}
                 >
-                  <div className='flex flex-wrap items-center justify-between gap-3'>
+                  <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between kangur-panel-gap'>
                     <div id={searchHeadingId} className='text-sm font-semibold text-slate-800'>
                       Znajdź ucznia
                     </div>
                     <KangurStatusChip accent='slate' size='sm'>
-                      Min {DUEL_SEARCH_MIN_CHARS} znaki
+                      Min {KANGUR_DUELS_SEARCH_MIN_CHARS} znaki
                     </KangurStatusChip>
                   </div>
                   <SearchField
@@ -968,7 +1275,7 @@ function DuelsContent(): React.JSX.Element {
                     autoComplete='off'
                   />
                   <div id={searchHintId} className='text-xs text-slate-500'>
-                    Wpisz co najmniej {DUEL_SEARCH_MIN_CHARS} znaki, aby zobaczyć wyniki.
+                    Wpisz co najmniej {KANGUR_DUELS_SEARCH_MIN_CHARS} znaki, aby zobaczyć wyniki.
                   </div>
 
                   {searchError ? (
@@ -1008,7 +1315,7 @@ function DuelsContent(): React.JSX.Element {
                               accent='slate'
                               padding='md'
                               tone='neutral'
-                              className='flex items-center justify-between gap-3'
+                              className='flex flex-col sm:flex-row sm:items-center sm:justify-between kangur-panel-gap'
                               role='group'
                               aria-label={`Zaproś ucznia ${entry.displayName} (${entry.loginName})`}
                             >
@@ -1025,6 +1332,7 @@ function DuelsContent(): React.JSX.Element {
                                 variant='secondary'
                                 disabled={isBusy}
                                 aria-label={`Zaproś ucznia ${entry.displayName}`}
+                                className='w-full sm:w-auto'
                               >
                                 Zaproś
                               </KangurButton>
@@ -1068,6 +1376,10 @@ function DuelsContent(): React.JSX.Element {
               hasVisiblePublicLobbyEntries={hasVisiblePublicLobbyEntries}
               lobbyError={lobbyError}
               isBusy={isBusy}
+              joiningSessionId={joiningSessionId}
+              isPageActive={isPageActive}
+              isOnline={isOnline}
+              isLobbyStale={isLobbyStale}
               canJoinLobby={canPlay}
               onRequireLogin={() => openLoginModal(null)}
               handleJoinLobbySession={handleJoinLobbySession}
@@ -1079,13 +1391,13 @@ function DuelsContent(): React.JSX.Element {
 
           {canPlay && waitingSession ? (
             <KangurGlassPanel
-              className='flex flex-col gap-4'
+              className={cn('flex flex-col kangur-panel-gap', MOTION_PANEL_CLASSNAME)}
               padding='lg'
               surface='solid'
               role='region'
               aria-labelledby={waitingHeadingId}
             >
-              <div className='flex flex-wrap items-center justify-between gap-3'>
+              <div className='flex flex-wrap items-center justify-between kangur-panel-gap'>
                 <div className='space-y-1'>
                   <h3
                     id={waitingHeadingId}
@@ -1103,17 +1415,53 @@ function DuelsContent(): React.JSX.Element {
                       : 'Twój pojedynek jest widoczny w lobby.'}
                   </p>
                 </div>
-                <KangurStatusChip accent={resolveSessionAccent(waitingSession.status)} size='sm'>
-                  {SESSION_STATUS_LABELS[waitingSession.status]}
-                </KangurStatusChip>
+                <div className='flex flex-wrap items-center gap-2'>
+                  {!isOnline ? (
+                    <KangurStatusChip accent='rose' size='sm'>
+                      Offline
+                    </KangurStatusChip>
+                  ) : isDuelReconnecting ? (
+                    <KangurStatusChip accent='amber' size='sm'>
+                      Wznawiamy połączenie
+                    </KangurStatusChip>
+                  ) : null}
+                  <KangurStatusChip accent={resolveSessionAccent(waitingSession.status)} size='sm'>
+                    {SESSION_STATUS_LABELS[waitingSession.status]}
+                  </KangurStatusChip>
+                </div>
               </div>
-              <div className='flex flex-wrap gap-3'>
+              <div className='flex flex-wrap items-center gap-2'>
+                <KangurStatusChip accent='slate' size='sm'>
+                  Tryb: {LOBBY_MODE_LABELS[waitingSession.mode]}
+                </KangurStatusChip>
+                <KangurStatusChip accent='slate' size='sm'>
+                  Pytania: {waitingSession.questionCount}
+                </KangurStatusChip>
+                <KangurStatusChip accent='slate' size='sm'>
+                  ⏱ {waitingSession.timePerQuestionSec}s / pytanie
+                </KangurStatusChip>
+                {Number.isFinite(duelEstimatedDurationSec ?? NaN) ? (
+                  <KangurStatusChip accent='slate' size='sm'>
+                    ≈ {formatDurationLabel(duelEstimatedDurationSec ?? 0)}
+                  </KangurStatusChip>
+                ) : null}
+              </div>
+              <div className='flex flex-wrap gap-x-2 gap-y-1 text-xs text-slate-500'>
+                <span>
+                  Utworzono {formatRelativeAge(waitingSession.createdAt, duelRelativeNow)}
+                </span>
+                <span>
+                  Aktualizacja {formatRelativeAge(waitingSession.updatedAt, duelRelativeNow)}
+                </span>
+              </div>
+              <div className='flex flex-col sm:flex-row sm:flex-wrap kangur-panel-gap'>
                 <KangurButton
                   onClick={() => {
                     void handleLeave();
                   }}
                   variant='ghost'
                   disabled={isBusy}
+                  className='w-full sm:w-auto'
                 >
                   Anuluj pojedynek
                 </KangurButton>
@@ -1123,7 +1471,7 @@ function DuelsContent(): React.JSX.Element {
 
           {canPlay && activeSession ? (
             <KangurGlassPanel
-              className='flex flex-col gap-4'
+              className={cn('flex flex-col kangur-panel-gap', MOTION_PANEL_CLASSNAME)}
               padding='lg'
               surface='solid'
               role='region'
@@ -1131,7 +1479,7 @@ function DuelsContent(): React.JSX.Element {
               aria-describedby={duelSummaryId}
               aria-busy={awaitingOpponent}
             >
-              <div className='flex flex-wrap items-center justify-between gap-3'>
+              <div className='flex flex-wrap items-center justify-between kangur-panel-gap'>
                 <div>
                   <h3 id={duelHeadingId} className='text-xl font-semibold text-slate-900'>
                     Pojedynek
@@ -1140,45 +1488,142 @@ function DuelsContent(): React.JSX.Element {
                     Pytanie {activeSession.currentQuestionIndex + 1} z {activeSession.questionCount}
                   </p>
                 </div>
-                <div className='flex items-center gap-2'>
+                <div className='flex flex-wrap items-center gap-2'>
+                  {!isOnline ? (
+                    <KangurStatusChip accent='rose' size='sm'>
+                      Offline
+                    </KangurStatusChip>
+                  ) : isDuelReconnecting ? (
+                    <KangurStatusChip accent='amber' size='sm'>
+                      Wznawiamy połączenie
+                    </KangurStatusChip>
+                  ) : null}
                   <KangurStatusChip accent={resolveSessionAccent(activeSession.status)} size='sm'>
                     {SESSION_STATUS_LABELS[activeSession.status]}
                   </KangurStatusChip>
-                  <KangurStatusChip accent='slate' size='sm'>
-                    ⏱ {activeSession.timePerQuestionSec}s
-                  </KangurStatusChip>
                 </div>
+              </div>
+              <div className='flex flex-wrap items-center gap-2'>
+                <KangurStatusChip accent='slate' size='sm'>
+                  Tryb: {LOBBY_MODE_LABELS[activeSession.mode]}
+                </KangurStatusChip>
+                <KangurStatusChip accent='slate' size='sm'>
+                  ⏱ {activeSession.timePerQuestionSec}s / pytanie
+                </KangurStatusChip>
+                {Number.isFinite(duelEstimatedDurationSec ?? NaN) ? (
+                  <KangurStatusChip accent='slate' size='sm'>
+                    ≈ {formatDurationLabel(duelEstimatedDurationSec ?? 0)}
+                  </KangurStatusChip>
+                ) : null}
+              </div>
+              <div className='rounded-2xl border border-slate-200/70 bg-white/60 px-4 py-3 text-xs text-slate-600'>
+                <div className='flex flex-wrap items-center gap-3'>
+                  {activeSession.startedAt ? (
+                    <span>
+                      Rozpoczęto {formatRelativeAge(activeSession.startedAt, duelRelativeNow)}
+                    </span>
+                  ) : (
+                    <span>Rozpoczęcie wkrótce</span>
+                  )}
+                  <span>
+                    Ostatnia aktywność{' '}
+                    {formatRelativeAge(activeSession.updatedAt ?? null, duelRelativeNow)}
+                  </span>
+                  {Number.isFinite(duelRemainingSec ?? NaN) ? (
+                    <span>Pozostało ≈ {formatDurationLabel(duelRemainingSec ?? 0)}</span>
+                  ) : null}
+                </div>
+                {duelProgressPct !== null ? (
+                  <div className='mt-2 h-2 rounded-full bg-slate-200/80'>
+                    <div
+                      className='h-2 rounded-full bg-indigo-400 motion-safe:transition-all motion-safe:duration-500 motion-safe:ease-out motion-reduce:transition-none'
+                      style={{ width: `${duelProgressPct}%` }}
+                    />
+                  </div>
+                ) : null}
               </div>
 
               <div
-                className='grid gap-3 sm:grid-cols-2'
+                className='grid kangur-panel-gap sm:grid-cols-2'
                 role='list'
                 aria-label='Wyniki graczy'
                 id={duelScoreboardId}
               >
-                {activeSession.players.map((entry) => (
-                  <div
-                    key={entry.learnerId}
-                    className={cn(
-                      'rounded-2xl border border-slate-200 bg-white/70 p-4',
-                      entry.learnerId === player?.learnerId && 'ring-2 ring-indigo-200'
-                    )}
-                    role='listitem'
-                    aria-label={`${entry.displayName}, wynik ${entry.score}, status ${PLAYER_STATUS_LABELS[entry.status]}`}
-                  >
-                    <div className='flex items-center justify-between gap-3'>
-                      <div>
-                        <div className='text-sm font-semibold text-slate-800'>
-                          {entry.displayName}
+                {activeSession.players.map((entry, index) => {
+                  const lastAnswerAt = entry.lastAnswerAt ?? null;
+                  const lastAnswerAge = formatRelativeAge(lastAnswerAt, duelRelativeNow);
+                  const lastAnswerStatus =
+                    entry.lastAnswerCorrect === true
+                      ? 'poprawna'
+                      : entry.lastAnswerCorrect === false
+                        ? 'błędna'
+                        : 'udzielona';
+                  const lastAnswerLabel =
+                    lastAnswerAt && lastAnswerAge !== 'brak danych'
+                      ? `${lastAnswerStatus} • ${lastAnswerAge}`
+                      : lastAnswerAt
+                      ? lastAnswerAge
+                      : 'brak odpowiedzi';
+                  const opponent = activeSession.players.find(
+                    (other) => other.learnerId !== entry.learnerId
+                  );
+                  const scoreDelta = opponent ? entry.score - opponent.score : null;
+                  const scoreDeltaLabel =
+                    scoreDelta === null
+                      ? null
+                      : scoreDelta === 0
+                        ? 'Remis'
+                        : scoreDelta > 0
+                          ? `Przewaga: +${scoreDelta}`
+                          : `Strata: ${Math.abs(scoreDelta)}`;
+                  const connectionStatusLabel =
+                    entry.isConnected === true
+                      ? 'Online'
+                      : entry.isConnected === false
+                        ? 'Offline'
+                        : 'Brak danych';
+                  const joinedLabel = formatRelativeAge(entry.joinedAt, duelRelativeNow);
+                  const isLeader = duelTopScore !== null && entry.score === duelTopScore;
+
+                  return (
+                    <div
+                      key={entry.learnerId}
+                      className={cn(
+                        'rounded-2xl border border-slate-200 bg-white/70 p-4 transition-transform duration-200 ease-out hover:-translate-y-1 hover:shadow-md focus-within:-translate-y-1 focus-within:shadow-md motion-reduce:transform-none motion-reduce:transition-none',
+                        MOTION_ENTRY_CLASSNAME,
+                        entry.learnerId === player?.learnerId && 'ring-2 ring-indigo-200'
+                      )}
+                      style={{ animationDelay: `${index * 80}ms` }}
+                      role='listitem'
+                      aria-label={`${entry.displayName}, wynik ${entry.score}, status ${PLAYER_STATUS_LABELS[entry.status]}`}
+                    >
+                      <div className='flex items-center justify-between kangur-panel-gap'>
+                        <div className='space-y-1'>
+                          <div className='text-sm font-semibold text-slate-800'>
+                            {entry.displayName}
+                          </div>
+                          <div className='flex flex-wrap gap-x-2 gap-y-1 text-xs text-slate-500'>
+                            <span>Wynik: {entry.score}</span>
+                            {scoreDeltaLabel ? <span>{scoreDeltaLabel}</span> : null}
+                            <span>Ostatnia: {lastAnswerLabel}</span>
+                            <span>Połączenie: {connectionStatusLabel}</span>
+                            <span>Dołączył {joinedLabel}</span>
+                          </div>
                         </div>
-                        <div className='text-xs text-slate-500'>Wynik: {entry.score}</div>
+                        <div className='flex items-center gap-2'>
+                          {isLeader ? (
+                            <KangurStatusChip accent='emerald' size='sm'>
+                              Prowadzi
+                            </KangurStatusChip>
+                          ) : null}
+                          <KangurStatusChip accent={resolvePlayerAccent(entry.status)} size='sm'>
+                            {PLAYER_STATUS_LABELS[entry.status]}
+                          </KangurStatusChip>
+                        </div>
                       </div>
-                      <KangurStatusChip accent={resolvePlayerAccent(entry.status)} size='sm'>
-                        {PLAYER_STATUS_LABELS[entry.status]}
-                      </KangurStatusChip>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {activeSession.status === 'completed' || activeSession.status === 'aborted' ? (
@@ -1186,6 +1631,7 @@ function DuelsContent(): React.JSX.Element {
                   accent='indigo'
                   padding='md'
                   tone='accent'
+                  className={MOTION_PANEL_CLASSNAME}
                   role='status'
                   aria-live='polite'
                   aria-atomic='true'
@@ -1199,11 +1645,11 @@ function DuelsContent(): React.JSX.Element {
                         ? 'Pojedynek został przerwany.'
                         : 'Brawo! Zakończyliście pojedynek.'}
                     </div>
-                    <div className='flex flex-wrap gap-3'>
-                      <KangurButton onClick={handleReset} variant='primary'>
+                    <div className='flex flex-col sm:flex-row sm:flex-wrap kangur-panel-gap'>
+                      <KangurButton onClick={handleReset} variant='primary' className='w-full sm:w-auto'>
                         Nowy pojedynek
                       </KangurButton>
-                      <KangurButton onClick={handleReset} variant='ghost'>
+                      <KangurButton onClick={handleReset} variant='ghost' className='w-full sm:w-auto'>
                         Zakończ
                       </KangurButton>
                     </div>
@@ -1212,7 +1658,12 @@ function DuelsContent(): React.JSX.Element {
               ) : (
                 <div className='relative flex w-full justify-center'>
                   {questionCard ? (
-                    <div className={cn('transition-opacity', awaitingOpponent && 'opacity-60')}>
+                    <div
+                      className={cn(
+                        'transition-opacity motion-safe:duration-300 motion-safe:ease-out',
+                        awaitingOpponent && 'opacity-60'
+                      )}
+                    >
                       <QuestionCard
                         question={questionCard}
                         questionNumber={activeSession.currentQuestionIndex + 1}
@@ -1227,14 +1678,20 @@ function DuelsContent(): React.JSX.Element {
                       />
                     </div>
                   ) : (
-                    <KangurInfoCard accent='rose' padding='md' tone='accent' role='alert'>
+                    <KangurInfoCard
+                      accent='rose'
+                      padding='md'
+                      tone='accent'
+                      className={MOTION_PANEL_CLASSNAME}
+                      role='alert'
+                    >
                       Nie udało się załadować pytania pojedynku.
                     </KangurInfoCard>
                   )}
                   {awaitingOpponent ? (
                     <div className='absolute inset-0 flex items-center justify-center'>
                       <div
-                        className='rounded-2xl bg-white/90 px-6 py-4 text-sm font-semibold text-slate-700 shadow-lg'
+                        className='rounded-2xl bg-white/90 px-6 py-4 text-sm font-semibold text-slate-700 shadow-lg motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-200'
                         role='status'
                         aria-live='polite'
                         aria-atomic='true'
@@ -1246,7 +1703,7 @@ function DuelsContent(): React.JSX.Element {
                 </div>
               )}
 
-              <div className='flex flex-wrap justify-between gap-3'>
+              <div className='flex flex-wrap justify-between kangur-panel-gap'>
                 {canLeaveSession ? (
                   <KangurButton
                     onClick={() => {

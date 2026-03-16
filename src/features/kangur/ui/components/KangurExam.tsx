@@ -37,7 +37,11 @@ import {
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_ACCENT_STYLES,
+  KANGUR_PANEL_GAP_CLASSNAME,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { getKangurQuestions } from '@/features/kangur/ui/services/kangur-questions';
 import type { KangurExamQuestion, KangurQuestionChoice } from '@/features/kangur/ui/types';
@@ -142,7 +146,10 @@ function ExamQuestion({
   };
 
   return (
-    <section aria-labelledby={headingId} className='flex flex-col gap-4 w-full'>
+    <section
+      aria-labelledby={headingId}
+      className={`flex flex-col w-full ${KANGUR_PANEL_GAP_CLASSNAME}`}
+    >
       <div aria-hidden='true' className='sr-only' ref={narrationSourceRef}>
         {narrationText}
       </div>
@@ -162,12 +169,12 @@ function ExamQuestion({
       </div>
 
       <KangurInfoCard
-        className='flex flex-col gap-3 rounded-[24px]'
+        className='flex flex-col kangur-panel-gap rounded-[24px]'
         data-testid='kangur-exam-question-shell'
         padding='lg'
         tone='neutral'
       >
-        <div className='mb-1 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+        <div className='mb-1 flex flex-col kangur-panel-gap sm:flex-row sm:items-start sm:justify-between'>
           <p
             id={headingId}
             className='break-words text-sm font-bold uppercase tracking-wide text-orange-500'
@@ -231,7 +238,7 @@ function ExamQuestion({
               aria-label={`Odpowiedź ${String.fromCharCode(65 + index)}. ${String(choice)}`}
               aria-pressed={isSelected}
               buttonClassName={cn(
-                'flex items-center gap-3 px-4 py-3 font-semibold',
+                'flex items-center kangur-panel-gap px-4 py-3 font-semibold',
                 isSelected
                   ? KANGUR_ACCENT_STYLES.amber.activeText
                   : '[color:var(--kangur-page-text)]'
@@ -295,7 +302,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
     };
 
     return (
-      <div className='w-full flex flex-col gap-4'>
+      <div className={`w-full flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
         <div className='flex items-center justify-between'>
           <KangurButton
             onClick={handleExitReview}
@@ -335,7 +342,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
         </div>
 
         <KangurInfoCard
-          className='flex flex-col gap-3 rounded-[24px]'
+          className='flex flex-col kangur-panel-gap rounded-[24px]'
           data-testid='kangur-exam-review-shell'
           padding='lg'
           tone='neutral'
@@ -395,7 +402,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
                 accent={accent}
                 aria-disabled='true'
                 buttonClassName={cn(
-                  'flex items-center gap-3 px-4 py-3 font-semibold',
+                  'flex items-center kangur-panel-gap px-4 py-3 font-semibold',
                   style
                 )}
                 data-testid={`kangur-exam-review-choice-${index}`}
@@ -452,7 +459,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className='w-full flex flex-col gap-4'
+      className={`w-full flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
     >
       <KangurPracticeGameSummary dataTestId='kangur-exam-summary-shell'>
         <KangurPracticeGameSummaryEmoji emoji={emoji} dataTestId='kangur-exam-summary-emoji' />
@@ -595,7 +602,7 @@ export default function KangurExam(): React.JSX.Element {
       <motion.div
         key={current}
         {...questionMotionProps}
-        className='w-full flex flex-col gap-4'
+        className={`w-full flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
       >
         <ExamQuestion
           q={activeQuestion}
@@ -604,7 +611,7 @@ export default function KangurExam(): React.JSX.Element {
           selected={selected}
           onSelect={handleSelect}
         />
-        <div className='flex flex-col gap-3 sm:flex-row'>
+        <div className='flex flex-col kangur-panel-gap sm:flex-row'>
           <KangurButton
             onClick={handlePrev}
             className='w-full sm:flex-1'

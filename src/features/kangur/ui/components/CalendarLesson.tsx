@@ -203,7 +203,7 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
             <KangurLessonCallout
               key={dayLabel}
               accent='indigo'
-              className='flex w-full items-center gap-3'
+              className='flex w-full items-center kangur-panel-gap'
               padding='sm'
             >
               <span className='w-5 font-bold text-indigo-500'>{index + 1}.</span>
@@ -215,7 +215,7 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
             <KangurLessonCallout
               key={dayLabel}
               accent='rose'
-              className='flex w-full items-center gap-3'
+              className='flex w-full items-center kangur-panel-gap'
               padding='sm'
             >
               <span className='w-5 font-bold text-pink-500'>{index + 6}.</span>
@@ -265,7 +265,7 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
       tts: 'Rok ma 12 miesięcy podzielonych na cztery pory roku.',
       content: (
         <KangurLessonStack className='w-full max-w-sm text-center' gap='sm'>
-          <div className='grid w-full grid-cols-1 gap-3 min-[360px]:grid-cols-2'>
+          <div className='grid w-full grid-cols-1 kangur-panel-gap min-[360px]:grid-cols-2'>
             {[
               {
                 season: '🌸 Wiosna',

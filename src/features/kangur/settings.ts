@@ -3,6 +3,7 @@ import {
   KANGUR_TTS_VOICE_OPTIONS,
   type KangurLessonTtsVoice,
 } from '@/features/kangur/tts/contracts';
+import type { LabeledOptionDto, LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import {
   KANGUR_LESSONS_SETTING_KEY,
   KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
@@ -24,12 +25,16 @@ export const KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS = 60;
 export const KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS =
   KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS * 1000;
 export const KANGUR_PARENT_VERIFICATION_DEFAULT_NOTIFICATIONS_ENABLED = true;
+export const KANGUR_PARENT_VERIFICATION_DEFAULT_REQUIRE_EMAIL_VERIFICATION = true;
+export const KANGUR_PARENT_VERIFICATION_DEFAULT_REQUIRE_CAPTCHA = true;
 
 export type KangurNarratorEngine = 'server' | 'client';
 export type KangurParentVerificationEmailSettings = {
   resendCooldownSeconds: number;
   notificationsEnabled: boolean;
   notificationsDisabledUntil: string | null;
+  requireEmailVerification: boolean;
+  requireCaptcha: boolean;
 };
 
 export type KangurNarratorSettings = {
@@ -37,11 +42,7 @@ export type KangurNarratorSettings = {
   voice: KangurLessonTtsVoice;
 };
 
-export const KANGUR_NARRATOR_ENGINE_OPTIONS: ReadonlyArray<{
-  value: KangurNarratorEngine;
-  label: string;
-  description: string;
-}> = [
+export const KANGUR_NARRATOR_ENGINE_OPTIONS = [
   {
     value: 'server',
     label: 'Server narrator',
@@ -52,7 +53,7 @@ export const KANGUR_NARRATOR_ENGINE_OPTIONS: ReadonlyArray<{
     label: 'Client narrator',
     description: 'Use the browser speech engine on each learner device.',
   },
-] as const;
+] as const satisfies ReadonlyArray<LabeledOptionWithDescriptionDto<KangurNarratorEngine>>;
 
 const KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MIN = 1;
 const KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MAX = 3600;
@@ -250,10 +251,9 @@ export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLesson
   },
 };
 
-export const KANGUR_LESSON_COMPONENT_OPTIONS: Array<{
-  value: KangurLessonComponentId;
-  label: string;
-}> = KANGUR_LESSON_COMPONENT_ORDER.map((componentId) => ({
+export const KANGUR_LESSON_COMPONENT_OPTIONS: Array<
+  LabeledOptionDto<KangurLessonComponentId>
+> = KANGUR_LESSON_COMPONENT_ORDER.map((componentId) => ({
   value: componentId,
   label: KANGUR_LESSON_LIBRARY[componentId].label,
 }));
@@ -304,6 +304,16 @@ const resolveKangurParentVerificationResendCooldownSeconds = (
 };
 
 const resolveKangurParentVerificationNotificationsEnabled = (
+  value: unknown,
+  fallback: boolean
+): boolean => (typeof value === 'boolean' ? value : fallback);
+
+const resolveKangurParentVerificationRequireEmailVerification = (
+  value: unknown,
+  fallback: boolean
+): boolean => (typeof value === 'boolean' ? value : fallback);
+
+const resolveKangurParentVerificationRequireCaptcha = (
   value: unknown,
   fallback: boolean
 ): boolean => (typeof value === 'boolean' ? value : fallback);
@@ -462,6 +472,8 @@ export const createDefaultKangurParentVerificationEmailSettings = (): KangurPare
   resendCooldownSeconds: KANGUR_PARENT_VERIFICATION_COOLDOWN_FALLBACK_SECONDS,
   notificationsEnabled: KANGUR_PARENT_VERIFICATION_DEFAULT_NOTIFICATIONS_ENABLED,
   notificationsDisabledUntil: null,
+  requireEmailVerification: KANGUR_PARENT_VERIFICATION_DEFAULT_REQUIRE_EMAIL_VERIFICATION,
+  requireCaptcha: KANGUR_PARENT_VERIFICATION_DEFAULT_REQUIRE_CAPTCHA,
 });
 
 export const normalizeKangurParentVerificationEmailSettings = (
@@ -471,17 +483,27 @@ export const normalizeKangurParentVerificationEmailSettings = (
     return createDefaultKangurParentVerificationEmailSettings();
   }
 
+  const notificationsEnabled = resolveKangurParentVerificationNotificationsEnabled(
+    value['notificationsEnabled'],
+    KANGUR_PARENT_VERIFICATION_DEFAULT_NOTIFICATIONS_ENABLED
+  );
+
   return {
     resendCooldownSeconds: resolveKangurParentVerificationResendCooldownSeconds(
       value['resendCooldownSeconds'],
       KANGUR_PARENT_VERIFICATION_COOLDOWN_FALLBACK_SECONDS
     ),
-    notificationsEnabled: resolveKangurParentVerificationNotificationsEnabled(
-      value['notificationsEnabled'],
-      KANGUR_PARENT_VERIFICATION_DEFAULT_NOTIFICATIONS_ENABLED
-    ),
+    notificationsEnabled,
     notificationsDisabledUntil: resolveKangurParentVerificationNotificationsDisabledUntil(
       value['notificationsDisabledUntil']
+    ),
+    requireEmailVerification: resolveKangurParentVerificationRequireEmailVerification(
+      value['requireEmailVerification'],
+      notificationsEnabled
+    ),
+    requireCaptcha: resolveKangurParentVerificationRequireCaptcha(
+      value['requireCaptcha'],
+      KANGUR_PARENT_VERIFICATION_DEFAULT_REQUIRE_CAPTCHA
     ),
   };
 };

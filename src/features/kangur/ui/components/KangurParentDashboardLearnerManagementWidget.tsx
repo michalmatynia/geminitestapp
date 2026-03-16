@@ -21,6 +21,7 @@ import {
   KangurSummaryPanel,
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { cn } from '@/features/kangur/shared/utils';
 import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
@@ -243,8 +244,13 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
   }
 
   return (
-    <div className='flex flex-col gap-5'>
-      <KangurGlassPanel className='flex flex-col gap-5' padding='lg' surface='mistStrong' variant='soft'>
+    <div className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}>
+      <KangurGlassPanel
+        className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
+        padding='lg'
+        surface='mistStrong'
+        variant='soft'
+      >
         <KangurPanelIntro
           className='gap-1.5'
           eyebrow='Profile uczniów'
@@ -260,7 +266,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
           descriptionClassName='max-w-2xl'
         />
 
-        <div className='grid gap-3 min-[420px]:grid-cols-2'>
+        <div className='grid kangur-panel-gap min-[420px]:grid-cols-2'>
           {learners.map((learner) => {
             const isActiveLearner = learner.id === activeLearner?.id;
             const initial = learner.displayName.trim().charAt(0).toUpperCase() || '?';
@@ -326,7 +332,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
           })}
         </div>
 
-        <div className='flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center'>
+        <div className='flex flex-col kangur-panel-gap sm:flex-row sm:flex-wrap sm:items-center'>
           <KangurButton
             className='w-full sm:w-auto'
             disabled={isSubmitting || !activeLearner}
@@ -399,7 +405,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
               </DialogPrimitive.Close>
 
               <KangurGlassPanel
-                className='flex flex-col gap-4'
+                className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
                 padding='lg'
                 surface='mistStrong'
                 variant='soft'
@@ -409,7 +415,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                   description='Dodaj dziecko i od razu ustaw jego login oraz hasło do gry.'
                 />
 
-                <div className='grid gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3'>
+                <div className='grid kangur-panel-gap min-[420px]:grid-cols-2 xl:grid-cols-3'>
                   <KangurTextField
                     accent='indigo'
                     maxLength={120}
@@ -490,7 +496,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                   </div>
                 </div>
 
-                <div className='flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center'>
+                <div className='flex flex-col kangur-panel-gap sm:flex-row sm:flex-wrap sm:items-center'>
                   <KangurButton
                     className='w-full sm:w-auto'
                     disabled={isSubmitting}
@@ -574,7 +580,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
 
             {activeLearner ? (
               <KangurGlassPanel
-                className='flex flex-col gap-4'
+                className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
                 padding='lg'
                 surface='mistSoft'
                 variant='soft'
@@ -584,7 +590,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                   description='Szybkie dane o aktywnym profilu ucznia, w tym ostatnia aktywność.'
                   label='Szczegóły profilu'
                 >
-                  <div className='mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2'>
+                  <div className='mt-3 grid grid-cols-1 kangur-panel-gap sm:grid-cols-2'>
                     <div className='rounded-[22px] border border-indigo-200/70 bg-white/80 px-4 py-3'>
                       <KangurMetaText caps size='xs'>
                         Login ucznia
@@ -687,7 +693,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                                 <span>{`Sesja ${index + 1}`}</span>
                                 <span>{session.endedAt ? 'Zakończona' : 'Aktywna'}</span>
                               </div>
-                              <div className='mt-2 grid gap-3 sm:grid-cols-3'>
+                              <div className='mt-2 grid kangur-panel-gap sm:grid-cols-3'>
                                 <div>
                                   <KangurMetaText caps size='xs'>
                                     Start
@@ -799,7 +805,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
 
             {activeLearner ? (
               <KangurGlassPanel
-                className='flex flex-col gap-4'
+                className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
                 padding='lg'
                 surface='mistSoft'
                 variant='soft'
@@ -816,7 +822,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                     </>
                   }
                 />
-                <div className='grid gap-3 min-[420px]:grid-cols-2'>
+                <div className='grid kangur-panel-gap min-[420px]:grid-cols-2'>
                   <KangurTextField
                     accent='indigo'
                     maxLength={120}
@@ -862,7 +868,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                     <option value='disabled'>Wyłączony</option>
                   </KangurSelectField>
                 </div>
-                <div className='flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center'>
+                <div className='flex flex-col kangur-panel-gap sm:flex-row sm:flex-wrap sm:items-center'>
                   <KangurButton
                     className='w-full sm:w-auto'
                     disabled={isSubmitting}

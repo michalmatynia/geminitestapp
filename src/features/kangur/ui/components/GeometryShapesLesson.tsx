@@ -25,6 +25,7 @@ import {
   KangurButton,
   KangurGlassPanel,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
   addXp,
@@ -272,7 +273,7 @@ export default function GeometryShapesLesson(): React.JSX.Element {
 
   if (activeSection === 'game') {
     return (
-      <div className='flex w-full max-w-lg flex-col items-center gap-4'>
+      <div className={`flex w-full max-w-lg flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
         <KangurButton
           onClick={() => setActiveSection(null)}
           className='self-start'
@@ -287,7 +288,7 @@ export default function GeometryShapesLesson(): React.JSX.Element {
         />
         <KangurGlassPanel
           data-testid='geometry-shapes-game-shell'
-          className='flex w-full flex-col items-center gap-5'
+          className={`flex w-full flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
           padding='xl'
           surface='solid'
         >

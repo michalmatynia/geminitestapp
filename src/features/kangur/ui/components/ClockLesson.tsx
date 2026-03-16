@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import { KangurConfirmModal } from '@/features/kangur/ui/components/KangurConfirmModal';
 import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
@@ -869,12 +870,12 @@ export default function ClockLesson(): React.JSX.Element {
     };
 
     // Single-panel games use the middle practice set.
-    const trainingPanels: Array<{
-      activeClassName: string;
-      completedClassName: string;
-      id: ClockTrainingPanelId;
-      label: string;
-    }> = [
+    const trainingPanels: Array<
+      IdLabelOptionDto<ClockTrainingPanelId> & {
+        activeClassName: string;
+        completedClassName: string;
+      }
+    > = [
       {
         activeClassName: 'bg-indigo-500',
         completedClassName: 'bg-indigo-300',
@@ -930,7 +931,7 @@ export default function ClockLesson(): React.JSX.Element {
 
     const trainingFooterNavigation =
       trainingPanels.length > 1 ? (
-        <div className='flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+        <div className='flex w-full flex-col kangur-panel-gap sm:flex-row sm:items-center sm:justify-between'>
           {currentTrainingPanelIndex > 0 ? (
             <KangurButton
               onClick={() =>

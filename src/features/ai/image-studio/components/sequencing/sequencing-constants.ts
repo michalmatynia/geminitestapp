@@ -1,6 +1,13 @@
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ImageStudioSequenceOperation } from '@/features/ai/image-studio/utils/studio-settings';
 
-export const UPSCALE_SCALE_OPTIONS = ['1.25', '1.5', '2', '3', '4'].map((value) => ({
+export const UPSCALE_SCALE_OPTIONS: Array<LabeledOptionDto<string>> = [
+  '1.25',
+  '1.5',
+  '2',
+  '3',
+  '4',
+].map((value) => ({
   value,
   label: `${value}x`,
 }));
@@ -8,23 +15,23 @@ export const UPSCALE_SCALE_OPTIONS = ['1.25', '1.5', '2', '3', '4'].map((value) 
 export const UPSCALE_STRATEGY_OPTIONS = [
   { value: 'scale', label: 'By Multiplier' },
   { value: 'target_resolution', label: 'By Resolution' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export const STEP_ON_FAILURE_OPTIONS = [
   { value: 'stop', label: 'Stop Sequence' },
   { value: 'continue', label: 'Continue (Mark Failed)' },
   { value: 'skip', label: 'Skip Step' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export const STEP_RUNTIME_OPTIONS = [
   { value: 'server', label: 'Server' },
   { value: 'client', label: 'Client' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export const STEP_INPUT_SOURCE_OPTIONS = [
   { value: 'previous', label: 'Prev Output' },
   { value: 'source', label: 'Source Image' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export const PRESET_NAME_MAX_LENGTH = 72;
 

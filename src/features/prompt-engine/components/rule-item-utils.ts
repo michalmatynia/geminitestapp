@@ -10,6 +10,7 @@ import {
   type PromptValidationSeverity,
   type PromptValidationLaunchOperator,
 } from '@/shared/lib/prompt-engine/settings';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -44,10 +45,7 @@ export const formatAutofixOperation = (op: PromptAutofixOperation): string => {
   return `Replace ${op.pattern}${flags} → ${op.replacement}`;
 };
 
-export const LAUNCH_OPERATORS: Array<{
-  value: PromptValidationLaunchOperator;
-  label: string;
-}> = [
+export const LAUNCH_OPERATORS: Array<LabeledOptionDto<PromptValidationLaunchOperator>> = [
   { value: 'equals', label: 'Equals' },
   { value: 'not_equals', label: 'Not Equals' },
   { value: 'contains', label: 'Contains' },
@@ -62,15 +60,15 @@ export const LAUNCH_OPERATORS: Array<{
   { value: 'is_not_empty', label: 'Is Not Empty' },
 ];
 
-export const SCOPE_OPTIONS = PROMPT_VALIDATION_SCOPE_VALUES.map((scope) => ({
+export const SCOPE_OPTIONS: Array<LabeledOptionDto<PromptValidationScope>> =
+  PROMPT_VALIDATION_SCOPE_VALUES.map((scope) => ({
   value: scope,
   label: PROMPT_VALIDATION_SCOPE_LABELS[scope],
-}));
+  }));
 
-export const PROMPT_EXPLODER_SEGMENT_OPTIONS: Array<{
-  value: PromptExploderRuleSegmentType;
-  label: string;
-}> = PROMPT_EXPLODER_RULE_SEGMENT_TYPE_VALUES.map((type) => ({
+export const PROMPT_EXPLODER_SEGMENT_OPTIONS: Array<
+  LabeledOptionDto<PromptExploderRuleSegmentType>
+> = PROMPT_EXPLODER_RULE_SEGMENT_TYPE_VALUES.map((type) => ({
   value: type,
   label: type.replaceAll('_', ' '),
 }));

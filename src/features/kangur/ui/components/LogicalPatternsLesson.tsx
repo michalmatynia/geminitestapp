@@ -64,7 +64,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Wzorce mogą używać kolorów, kształtów lub obu naraz. Patrz na powtarzającą się grupę —
             to jest jednostka wzorca.
           </KangurLessonLead>
-          <div className='flex flex-col gap-3 w-full'>
+          <div className='flex flex-col kangur-panel-gap w-full'>
             {[
               { label: 'Wzorzec AB', seq: '🔴 🔵 🔴 🔵 🔴 ❓', answer: '🔵' },
               { label: 'Wzorzec AAB', seq: '⭐ ⭐ 🌙 ⭐ ⭐ ❓', answer: '🌙' },
@@ -149,7 +149,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             W ciągu liczbowym każda liczba powstaje z poprzedniej według tej samej zasady.
             Najczęściej dodajemy tę samą wartość.
           </KangurLessonLead>
-          <div className='flex flex-col gap-3 w-full'>
+          <div className='flex flex-col kangur-panel-gap w-full'>
             {[
               { hint: '+2 co krok', seq: '2, 4, 6, 8, 10, ❓', answer: '12' },
               { hint: '+5 co krok', seq: '5, 10, 15, 20, ❓', answer: '25' },
@@ -217,7 +217,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Gdy każda liczba jest wielokrotnością poprzedniej, ciąg rośnie bardzo szybko! To ciąg
             geometryczny.
           </KangurLessonLead>
-          <div className='flex flex-col gap-3 w-full'>
+          <div className='flex flex-col kangur-panel-gap w-full'>
             {[
               { hint: '×2 co krok', seq: '1, 2, 4, 8, 16, ❓', answer: '32' },
               { hint: '×3 co krok', seq: '2, 6, 18, 54, ❓', answer: '162' },

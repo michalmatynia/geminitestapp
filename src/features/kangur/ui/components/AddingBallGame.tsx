@@ -24,6 +24,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
+  KANGUR_PANEL_GAP_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
@@ -392,11 +393,11 @@ function CompleteEquation({
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <div className='flex flex-col items-center gap-4 w-full'>
+      <div className={`flex flex-col items-center w-full ${KANGUR_PANEL_GAP_CLASSNAME}`}>
         <p className='text-lg font-bold [color:var(--kangur-page-text)]'>
           Przeciągnij piłki tak, żeby uzupełnić równanie:
         </p>
-        <div className='flex items-center gap-3 flex-wrap justify-center'>
+        <div className='flex items-center kangur-panel-gap flex-wrap justify-center'>
           <SlotZone
             id='slotA'
             items={state.slotA}
@@ -672,13 +673,13 @@ function GroupSum({
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <div className='flex flex-col items-center gap-4 w-full'>
+      <div className={`flex flex-col items-center w-full ${KANGUR_PANEL_GAP_CLASSNAME}`}>
         <p className='text-lg font-bold [color:var(--kangur-page-text)]'>
           Podziel {total} piłek na dwie grupy sumujące się do{' '}
           <span className='text-orange-500'>{round.target}</span>
         </p>
 
-        <div className='flex gap-4 flex-wrap justify-center'>
+        <div className='flex kangur-panel-gap flex-wrap justify-center'>
           {(
             [
               { id: 'group1', label: 'Grupa 1' },
@@ -870,7 +871,7 @@ function PickAnswer({
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <div className='flex flex-col items-center gap-6 w-full'>
+      <div className={`flex flex-col items-center w-full ${KANGUR_PANEL_GAP_CLASSNAME}`}>
         <p className='text-2xl font-extrabold [color:var(--kangur-page-text)]'>
           {round.a} + {round.b} = <span className='text-orange-400'>?</span>
         </p>
@@ -948,7 +949,7 @@ function PickAnswer({
             <KangurInfoCard
               ref={provided.innerRef}
               accent='slate'
-              className={cn(BALL_POOL_CLASSNAME, 'gap-3')}
+              className={cn(BALL_POOL_CLASSNAME, 'kangur-panel-gap')}
               data-testid='adding-ball-balls-pool'
               padding='sm'
               tone='neutral'

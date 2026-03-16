@@ -26,6 +26,7 @@ import {
   KangurProgressBar,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { buildKangurAssignmentListItems } from '@/features/kangur/ui/services/delegated-assignments';
@@ -221,7 +222,7 @@ export function KangurParentDashboardProgressWidget({
   };
 
   return (
-    <div className='flex flex-col gap-5'>
+    <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <KangurPanelIntro
         description={
           progressContent?.summary ??
@@ -239,7 +240,7 @@ export function KangurParentDashboardProgressWidget({
           description='To aktualna misja dnia ucznia, zsynchronizowana z widokiem gry i profilu.'
           label='Misja dnia ucznia'
         >
-          <div className='mt-3 flex flex-col gap-3 rounded-[28px] border border-violet-200/80 bg-white/82 px-4 py-4'>
+          <div className='mt-3 flex flex-col kangur-panel-gap rounded-[28px] border border-violet-200/80 bg-white/82 px-4 py-4'>
             <KangurDailyQuestHighlightCardContent
               action={
                 dailyQuestHref ? (
@@ -283,14 +284,14 @@ export function KangurParentDashboardProgressWidget({
         label='Otwarte zadania'
       >
         {openedTasks.length > 0 ? (
-          <ul className='mt-3 flex flex-col gap-3' aria-label='Otwarte zadania ucznia'>
+          <ul className='mt-3 flex flex-col kangur-panel-gap' aria-label='Otwarte zadania ucznia'>
             {openedTasks.map((task) => {
               const kindLabel = TASK_KIND_LABELS[task.kind] ?? 'Aktywność';
               const isLocalHref = task.href.startsWith('/');
               return (
                 <li
                   key={`${task.kind}-${task.href}-${task.openedAt}`}
-                  className='flex flex-col gap-3 rounded-[24px] border border-indigo-200/70 bg-white/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between'
+                  className='flex flex-col kangur-panel-gap rounded-[24px] border border-indigo-200/70 bg-white/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between'
                 >
                   <div className='min-w-0'>
                     <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
@@ -395,11 +396,11 @@ export function KangurParentDashboardProgressWidget({
         label='Postęp lekcji'
       >
         {lessonPanelCards.length > 0 ? (
-          <ul className='mt-3 flex flex-col gap-3' aria-label='Postęp lekcji ucznia'>
+          <ul className='mt-3 flex flex-col kangur-panel-gap' aria-label='Postęp lekcji ucznia'>
             {lessonPanelCards.map((entry) => (
               <li key={entry.lesson.componentId}>
                 <KangurInfoCard className='rounded-[26px]' padding='lg'>
-                  <div className='flex flex-col gap-3'>
+                  <div className='flex flex-col kangur-panel-gap'>
                     <div className='flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between'>
                       <div>
                         <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>

@@ -11,7 +11,10 @@ import {
   KangurGlassPanel,
   KangurSectionHeading,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurTrainingSetupState } from '@/features/kangur/ui/hooks/useKangurTrainingSetupState';
 import type { KangurTrainingSelection } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
@@ -57,10 +60,13 @@ export default function TrainingSetup({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className='flex w-full max-w-3xl flex-col items-center gap-6'
+      className={cn('flex w-full max-w-3xl flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
     >
       <KangurGlassPanel
-        className='w-full flex flex-col gap-5 shadow-[0_18px_40px_-30px_rgba(168,175,216,0.2)]'
+        className={cn(
+          'w-full flex flex-col shadow-[0_18px_40px_-30px_rgba(168,175,216,0.2)]',
+          KANGUR_PANEL_GAP_CLASSNAME
+        )}
         data-testid='training-setup-shell'
         padding='xl'
         surface='solid'

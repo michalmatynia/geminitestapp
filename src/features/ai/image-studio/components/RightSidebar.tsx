@@ -405,9 +405,7 @@ export function RightSidebar(): React.JSX.Element {
       setSidebarTab,
       slots,
       studioSettings,
-      toast: (msg: string, opt?: { variant?: 'success' | 'error' | 'info' | 'warning' }) => {
-        toast(msg, opt);
-      },
+      toast,
       workingSlot,
       workingSlotImageWidth,
       workingSlotImageHeight,

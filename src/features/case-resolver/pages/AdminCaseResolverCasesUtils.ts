@@ -6,6 +6,7 @@ import type {
   CaseSortKey as SharedCaseSortKey,
   CaseSortOrder as SharedCaseSortOrder,
 } from '@/shared/contracts/case-resolver';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 export type { CaseSearchScope };
 
 export type CaseTreeNode = {
@@ -82,8 +83,8 @@ export const buildCaseTree = (
 export const flattenCaseTreeOptions = (
   nodes: CaseTreeNode[],
   depth: number = 0
-): Array<{ value: string; label: string }> => {
-  const options: Array<{ value: string; label: string }> = [];
+): Array<LabeledOptionDto<string>> => {
+  const options: Array<LabeledOptionDto<string>> = [];
   nodes.forEach((node) => {
     options.push({
       value: node.file.id,

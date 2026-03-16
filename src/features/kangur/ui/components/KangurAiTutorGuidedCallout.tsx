@@ -345,7 +345,7 @@ export function KangurAiTutorGuidedCallout({
             )}
           >
             <div className={selectionKeepoutClassName}>
-              <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
+              <div className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:justify-between'>
                 <KangurAiTutorChromeKicker>
                   {headerLabel}
                 </KangurAiTutorChromeKicker>

@@ -5,6 +5,12 @@ import * as React from 'react';
 
 import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
 
+type DataAttributes = {
+  'data-testid'?: string;
+  'data-doc-id'?: string;
+  'data-doc-alias'?: string;
+};
+
 const buttonVariants = cva(
   'inline-flex items-center justify-center whitespace-nowrap rounded-lg border border-transparent text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 ring-offset-background cursor-pointer',
   {
@@ -41,7 +47,10 @@ const buttonVariants = cva(
 );
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
+  extends
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants>,
+    DataAttributes {
   asChild?: boolean;
   loading?: boolean;
   loadingText?: string;
@@ -62,6 +71,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       disabled,
       title,
       type,
+      'data-testid': dataTestId,
+      'data-doc-id': dataDocId,
+      'data-doc-alias': dataDocAlias,
       'aria-label': ariaLabelProp,
       'aria-busy': ariaBusyProp,
       'aria-labelledby': ariaLabelledByProp,
@@ -88,7 +100,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       ariaLabel: ariaLabelProp,
       ariaLabelledBy: ariaLabelledByProp,
       title,
-      fallbackLabel: loadingText,
+      fallbackLabel:
+        loadingText ||
+        (typeof dataDocAlias === 'string' ? dataDocAlias : undefined) ||
+        (typeof dataDocId === 'string' ? dataDocId : undefined) ||
+        (typeof dataTestId === 'string' ? dataTestId : undefined),
     });
     const resolvedType = asChild ? undefined : type;
 
@@ -119,6 +135,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         aria-live={loading ? 'polite' : undefined}
         aria-atomic={loading ? 'true' : undefined}
         title={title}
+        data-testid={dataTestId}
+        data-doc-id={dataDocId}
+        data-doc-alias={dataDocAlias}
         type={resolvedType}
         ref={ref}
       >

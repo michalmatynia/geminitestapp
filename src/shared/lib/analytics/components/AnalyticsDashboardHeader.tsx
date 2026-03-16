@@ -1,18 +1,19 @@
 'use client';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AnalyticsScope } from '@/shared/contracts';
 import { Button, SectionHeader, SelectSimple } from '@/shared/ui';
 
 import { type AnalyticsRange } from '../api';
 import { useAnalyticsFilters, useAnalyticsSummaryData } from '../context/AnalyticsContext';
 
-const ranges: Array<{ value: AnalyticsRange; label: string }> = [
+const ranges: Array<LabeledOptionDto<AnalyticsRange>> = [
   { value: '24h', label: 'Last 24h' },
   { value: '7d', label: 'Last 7 days' },
   { value: '30d', label: 'Last 30 days' },
 ];
 
-const scopes: Array<{ value: AnalyticsScope | 'all'; label: string }> = [
+const scopes: Array<LabeledOptionDto<AnalyticsScope | 'all'>> = [
   { value: 'all', label: 'All' },
   { value: 'public', label: 'Public' },
   { value: 'admin', label: 'Admin' },

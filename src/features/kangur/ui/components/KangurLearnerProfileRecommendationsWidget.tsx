@@ -37,7 +37,7 @@ export function KangurLearnerProfileRecommendationsWidget(): React.JSX.Element {
       {snapshot.recommendations.length === 0 ? (
         <KangurEmptyState description='Brak rekomendacji do wyświetlenia.' padding='md' />
       ) : (
-        <div className='grid grid-cols-1 gap-3 lg:grid-cols-3'>
+        <div className='grid grid-cols-1 kangur-panel-gap lg:grid-cols-3'>
           {snapshot.recommendations.map((recommendation) => {
             const accent = KANGUR_PROFILE_RECOMMENDATION_ACCENTS[recommendation.priority];
 
@@ -65,7 +65,7 @@ export function KangurLearnerProfileRecommendationsWidget(): React.JSX.Element {
                 }
                 accent={accent}
                 className='rounded-[26px]'
-                contentClassName='gap-3'
+                contentClassName='kangur-panel-gap'
                 dataTestId={`learner-profile-recommendation-${recommendation.id}`}
                 description={recommendation.description}
                 descriptionClassName='opacity-80'

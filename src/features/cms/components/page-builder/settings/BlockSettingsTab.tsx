@@ -3,6 +3,7 @@
 import { Trash2 } from 'lucide-react';
 import React, { useMemo, useCallback } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   usePageBuilderSelection,
   usePageBuilderDispatch,
@@ -64,7 +65,7 @@ export function BlockSettingsTab(): React.JSX.Element | null {
       : null;
   const selectedAppOption = getAppEmbedOption(selectedAppId);
 
-  const appEmbedOptions = useMemo((): { label: string; value: string }[] => {
+  const appEmbedOptions = useMemo((): Array<LabeledOptionDto<string>> => {
     const enabled = parseJsonSetting<AppEmbedId[]>(settingsStore.get(APP_EMBED_SETTING_KEY), []);
     const options = APP_EMBED_OPTIONS.filter(
       (option) => enabled.includes(option.id) || option.id === selectedAppId

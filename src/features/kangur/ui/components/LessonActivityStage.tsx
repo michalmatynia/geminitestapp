@@ -15,6 +15,7 @@ import {
   KangurHeadline,
   KangurIconBadge,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
 
 type LessonActivityStageProps = {
@@ -62,7 +63,7 @@ function LessonActivityStageTopBar(): React.JSX.Element {
   const { backButtonLabel, navigationPills, onBack, secretLessonPill } = useLessonActivityStageContext();
 
   return (
-    <nav className='flex w-full flex-wrap items-center justify-between gap-3' aria-label='Nawigacja lekcji'>
+    <nav className='flex w-full flex-wrap items-center justify-between kangur-panel-gap' aria-label='Nawigacja lekcji'>
       <KangurButton onClick={onBack} size='sm' type='button' variant='surface'>
         <ArrowLeft className='w-4 h-4' aria-hidden='true' /> {backButtonLabel}
       </KangurButton>
@@ -93,7 +94,7 @@ function LessonActivityStageHeader(): React.JSX.Element {
 
   return (
     <div
-      className='flex w-full flex-wrap items-start gap-3 sm:items-center'
+      className='flex w-full flex-wrap items-start kangur-panel-gap sm:items-center'
       data-testid={headerTestId}
     >
       <div className='min-w-0 flex-1'>
@@ -138,7 +139,11 @@ export default function LessonActivityStage({
   const secretLessonPill = useKangurLessonSecretPill();
   const titleId = useId();
   const descriptionId = useId();
-  const shellPanelClassName = cn('flex w-full flex-col gap-5', shellClassName);
+  const shellPanelClassName = cn(
+    'flex w-full flex-col',
+    KANGUR_PANEL_GAP_CLASSNAME,
+    shellClassName
+  );
   const shellPanelTestId = shellTestId;
   const shouldRenderStageHeader = sectionHeader === null;
   const panelLabelledBy = shouldRenderStageHeader ? titleId : undefined;
@@ -166,7 +171,13 @@ export default function LessonActivityStage({
 
   return (
     <LessonActivityStageContext.Provider value={contextValue}>
-      <div className={cn('flex w-full flex-col items-center gap-4', maxWidthClassName)}>
+      <div
+        className={cn(
+          'flex w-full flex-col items-center',
+          KANGUR_PANEL_GAP_CLASSNAME,
+          maxWidthClassName
+        )}
+      >
         <LessonActivityStageTopBar />
         <KangurGlassPanel
           className={shellPanelClassName}

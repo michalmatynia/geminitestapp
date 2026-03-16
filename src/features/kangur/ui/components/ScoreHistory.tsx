@@ -19,7 +19,7 @@ import {
   KangurMetricCard,
   KangurProgressBar,
 } from '@/features/kangur/ui/design/primitives';
-import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { KANGUR_PANEL_GAP_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { loadScopedKangurScores } from '@/features/kangur/ui/services/learner-profile-scores';
 import {
   SCORE_INSIGHT_WINDOW_DAYS,
@@ -245,8 +245,8 @@ export default function ScoreHistory({
   }
 
   return (
-    <div className='flex flex-col gap-5'>
-      <div className='grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 md:grid-cols-3'>
+    <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
+      <div className='grid grid-cols-1 kangur-panel-gap min-[360px]:grid-cols-2 md:grid-cols-3'>
         <KangurMetricCard
           accent='sky'
           align='center'
@@ -274,7 +274,7 @@ export default function ScoreHistory({
         <KangurPanelSectionHeading tone='slate'>
           Obraz ostatnich {SCORE_INSIGHT_WINDOW_DAYS} dni
         </KangurPanelSectionHeading>
-        <div className='grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-4'>
+        <div className='grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2 xl:grid-cols-4'>
           <KangurMetricCard accent='sky' label='Sesje tygodnia' value={insights.recentGames}>
             <p className='text-xs text-sky-800/80'>
               Średnia {insights.recentAverageAccuracy}% · idealne {insights.recentPerfectGames}
@@ -361,7 +361,7 @@ export default function ScoreHistory({
             const info = OP_LABELS[operation] ?? { label: operation, emoji: '❓' };
             const progressAccent = percent >= 80 ? 'emerald' : percent >= 50 ? 'amber' : 'rose';
             return (
-              <div key={operation} className='flex items-start gap-3 sm:items-center'>
+              <div key={operation} className='flex items-start kangur-panel-gap sm:items-center'>
                 <span className='text-lg w-6 text-center'>{info.emoji}</span>
                 <div className='flex-1'>
                   <div className='mb-0.5 flex flex-col gap-1 text-xs text-slate-600 min-[420px]:flex-row min-[420px]:justify-between'>

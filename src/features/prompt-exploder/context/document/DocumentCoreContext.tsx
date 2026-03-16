@@ -2,6 +2,7 @@
 
 import { createContext, useContext } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { internalError } from '@/shared/errors/app-error';
 
 import type {
@@ -14,7 +15,7 @@ export interface DocumentCoreState {
   documentState: PromptExploderDocument | null;
   manualBindings: PromptExploderBinding[];
   segmentById: Map<string, PromptExploderSegment>;
-  segmentOptions: Array<{ value: string; label: string }>;
+  segmentOptions: Array<LabeledOptionDto<string>>;
 }
 
 export const DocumentCoreContext = createContext<DocumentCoreState | null>(null);

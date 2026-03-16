@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import { DIFFICULTY_CONFIG } from '@/features/kangur/ui/services/math-questions';
 import type {
   KangurDifficulty,
@@ -33,7 +34,7 @@ type UseKangurTrainingSetupStateOptions = {
   suggestedSelection?: KangurTrainingSelection | null;
 };
 
-const ALL_CATEGORIES: Array<{ id: KangurOperation; label: string; emoji: string }> = [
+const ALL_CATEGORIES: Array<IdLabelOptionDto<KangurOperation> & { emoji: string }> = [
   { id: 'addition', label: 'Dodawanie', emoji: '➕' },
   { id: 'subtraction', label: 'Odejmowanie', emoji: '➖' },
   { id: 'multiplication', label: 'Mnożenie', emoji: '✖️' },

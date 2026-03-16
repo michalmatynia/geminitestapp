@@ -22,6 +22,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
+  KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_STEP_PILL_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
@@ -214,7 +215,6 @@ export default function CalendarTrainingGame({
     return (
       <KangurPracticeGameSummary
         dataTestId='calendar-training-summary-shell'
-        panelClassName='gap-5'
         wrapperClassName='py-4'
       >
         <KangurPracticeGameSummaryEmoji
@@ -258,13 +258,13 @@ export default function CalendarTrainingGame({
   return (
     <section
       aria-labelledby='calendar-training-question-title'
-      className='flex flex-col items-center gap-5 w-full'
+      className={cn('flex flex-col items-center w-full', KANGUR_PANEL_GAP_CLASSNAME)}
     >
       <div aria-live='polite' aria-atomic='true' className='sr-only'>
         Pytanie {current + 1} z {TOTAL}. {question.question}
       </div>
       <div className='w-full space-y-3'>
-        <div className='flex w-full items-center gap-3'>
+        <div className='flex w-full items-center kangur-panel-gap'>
           <KangurProgressBar
             accent='emerald'
             aria-label='Postęp ćwiczeń z kalendarzem'
@@ -304,7 +304,7 @@ export default function CalendarTrainingGame({
         surface='solid'
         variant='soft'
       >
-        <KangurInfoCard accent='emerald' className='flex flex-col items-center gap-3 text-center' data-testid='calendar-training-prompt-card' padding='md' tone='accent'>
+        <KangurInfoCard accent='emerald' className='flex flex-col items-center kangur-panel-gap text-center' data-testid='calendar-training-prompt-card' padding='md' tone='accent'>
           <KangurStatusChip accent='emerald' size='sm'>
             Kalendarz
           </KangurStatusChip>
@@ -316,7 +316,7 @@ export default function CalendarTrainingGame({
 
       <div
         aria-labelledby='calendar-training-question-title'
-        className='grid w-full grid-cols-1 gap-3 sm:grid-cols-2'
+        className='grid w-full grid-cols-1 kangur-panel-gap sm:grid-cols-2'
         role='group'
       >
         {question.choices.map((choice, index) => {

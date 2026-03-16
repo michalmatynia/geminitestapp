@@ -78,6 +78,12 @@ export const buildAdminNav = (handlers: {
             label: 'Settings',
             href: '/admin/kangur/settings',
           },
+          {
+            id: 'workspace/kangur/settings/ai-tutor-content',
+            label: 'AI Tutor Content',
+            href: '/admin/kangur/settings/ai-tutor-content',
+            required: true,
+          },
         ],
       },
       { id: 'workspace/import', label: 'Import', href: '/admin/import' },

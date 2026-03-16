@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { DocumentWysiwygEditor } from '@/features/document-editor';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
   KangurLessonCalloutBlock,
   KangurLessonCalloutVariant,
@@ -8,7 +9,9 @@ import type {
 import { FormField, Input, Textarea } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/shared/utils';
 
-const VARIANT_OPTIONS: { value: KangurLessonCalloutVariant; label: string; icon: string; className: string }[] = [
+const VARIANT_OPTIONS: Array<
+  LabeledOptionDto<KangurLessonCalloutVariant> & { icon: string; className: string }
+> = [
   { value: 'info', label: 'Info', icon: 'ℹ️', className: 'border-indigo-300 bg-indigo-50 text-indigo-700' },
   { value: 'tip', label: 'Wskazówka', icon: '💡', className: 'border-emerald-300 bg-emerald-50 text-emerald-700' },
   { value: 'warning', label: 'Uwaga', icon: '⚠️', className: 'border-amber-300 bg-amber-50 text-amber-700' },

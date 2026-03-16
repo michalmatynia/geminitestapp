@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { SettingsFieldsRenderer } from '@/features/kangur/shared/ui/templates/SettingsPanelBuilder';
 import {
   Badge,
+  Breadcrumbs,
   Button,
   Card,
   FormSection,
@@ -41,6 +43,12 @@ import { ThemeImportExport } from './appearance/ThemeImportExport';
 import { ThemePreviewPanel } from './appearance/ThemePreviewPanel';
 
 function AdminKangurAppearancePageContent(): React.JSX.Element {
+  const breadcrumbs = [
+    { label: 'Admin', href: '/admin' },
+    { label: 'Kangur', href: '/admin/kangur' },
+    { label: 'Settings', href: '/admin/kangur/settings' },
+    { label: 'Appearance' },
+  ];
   const {
     catalog,
     draft,
@@ -77,7 +85,7 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
   ].includes(selectedId);
 
   const selectorOptions = useMemo(() => {
-    const opts: Array<{ value: string; label: string }> = [
+    const opts: Array<LabeledOptionDto<string>> = [
       { value: FACTORY_DAILY_ID, label: 'Motyw dzienny (fabryczny)' },
       { value: FACTORY_DAWN_ID, label: 'Motyw świtowy (fabryczny)' },
       { value: FACTORY_SUNSET_ID, label: 'Motyw zachodu (fabryczny)' },
@@ -104,17 +112,21 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
   return (
     <KangurAdminContentShell
       title='Kangur Appearance'
-      description='Theme editor and catalog for daily, dawn, sunset, and nightly defaults.'
+      description={
+        <div className='flex flex-wrap items-center gap-3'>
+          <Breadcrumbs items={breadcrumbs} className='mt-0' />
+          <span className='hidden h-4 w-px bg-white/12 md:block' />
+          <span className='text-xs text-slate-300/80'>
+            Focused editing shell for lessons, tests, and content operations.
+          </span>
+        </div>
+      }
       headerLayout='stacked'
       className='mx-0 max-w-none px-0 py-0'
       panelVariant='flat'
       panelClassName='rounded-none'
-      breadcrumbs={[
-        { label: 'Admin', href: '/admin' },
-        { label: 'Kangur', href: '/admin/kangur' },
-        { label: 'Settings', href: '/admin/kangur/settings' },
-        { label: 'Appearance' },
-      ]}
+      breadcrumbs={breadcrumbs}
+      showBreadcrumbs={false}
       headerActions={
         <>
           <Button asChild variant='outline' size='sm'>

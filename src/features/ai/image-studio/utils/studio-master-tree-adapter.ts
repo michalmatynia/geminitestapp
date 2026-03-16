@@ -1,5 +1,6 @@
 import { createMasterFolderTreeAdapterV3 } from '@/features/foldertree';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import type { IdDataDto } from '@/shared/contracts/base';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { canMoveTreePath, normalizeTreePath } from '@/shared/utils/tree-operations';
 
@@ -13,7 +14,7 @@ export type ImageStudioMasterTreeAdapterOptions = {
   moveSlot: (input: { slot: ImageStudioSlotRecord; targetFolder: string }) => Promise<void>;
   moveFolder: (folderPath: string, targetFolderPath: string) => Promise<void>;
   renameFolder: (folderPath: string, nextPath: string) => Promise<void>;
-  renameSlot: (input: { id: string; data: { name: string } }) => Promise<void>;
+  renameSlot: (input: IdDataDto<{ name: string }>) => Promise<void>;
 };
 
 export const createImageStudioMasterTreeAdapter = ({

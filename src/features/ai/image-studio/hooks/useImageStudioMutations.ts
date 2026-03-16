@@ -4,6 +4,7 @@ import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useRef } from 'react';
 
 import type { ImageFileRecord, ImageFileSelection } from '@/shared/contracts/files';
+import type { IdDataDto } from '@/shared/contracts/base';
 import {
   studioSlotsResponseSchema,
   imageStudioSlotDeleteResponseSchema,
@@ -269,21 +270,18 @@ export function useCreateStudioSlots(
 
 export function useUpdateStudioSlot(
   projectId: string
-): UpdateMutation<ImageStudioSlotRecord, { id: string; data: Partial<ImageStudioSlotRecord> }> {
+): UpdateMutation<ImageStudioSlotRecord, IdDataDto<Partial<ImageStudioSlotRecord>>> {
   const queryClient = useQueryClient();
 
   return createUpdateMutationV2<
     ImageStudioSlotRecord,
-    { id: string; data: Partial<ImageStudioSlotRecord> },
+    IdDataDto<Partial<ImageStudioSlotRecord>>,
     { previous?: StudioSlotsResponse | undefined }
   >({
     mutationFn: async ({
       id,
       data,
-    }: {
-      id: string;
-      data: Partial<ImageStudioSlotRecord>;
-    }): Promise<ImageStudioSlotRecord> => {
+    }: IdDataDto<Partial<ImageStudioSlotRecord>>): Promise<ImageStudioSlotRecord> => {
       const slotId = normalizeStudioSlotId(id);
       const response = imageStudioSlotResponseSchema.parse(
         await api.patch<unknown>(`/api/image-studio/slots/${encodeURIComponent(slotId)}`, data)

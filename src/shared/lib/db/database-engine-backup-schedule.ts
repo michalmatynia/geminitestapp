@@ -5,6 +5,7 @@ import {
   type DatabaseEngineBackupStatus,
   type DatabaseEngineBackupTargetSchedule,
 } from './database-engine-constants';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -109,7 +110,7 @@ export const normalizeDatabaseEngineBackupSchedule = (
   };
 };
 
-export const DATABASE_ENGINE_BACKUP_WEEKDAYS: Array<{ value: number; label: string }> = [
+export const DATABASE_ENGINE_BACKUP_WEEKDAYS: Array<LabeledOptionDto<number>> = [
   { value: 0, label: 'Sunday' },
   { value: 1, label: 'Monday' },
   { value: 2, label: 'Tuesday' },

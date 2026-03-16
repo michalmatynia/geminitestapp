@@ -4,6 +4,7 @@ import { MousePointer2, Plus, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   aiTriggerButtonCreateSchema,
   type AiTriggerButtonCreatePayload,
@@ -64,7 +65,7 @@ type TriggerButtonFixtureCleanupResult = {
   removedPathConfigs: number;
 };
 
-const LOCATION_OPTIONS: Array<{ value: AiTriggerButtonLocation; label: string }> = [
+const LOCATION_OPTIONS: Array<LabeledOptionDto<AiTriggerButtonLocation>> = [
   { value: 'product_modal', label: 'Products: Product Modal' },
   { value: 'product_list', label: 'Products: Product List (Footer)' },
   { value: 'product_row', label: 'Products: Product Row' },
@@ -79,7 +80,7 @@ const LOCATION_OPTIONS: Array<{ value: AiTriggerButtonLocation; label: string }>
   { value: 'admin_dashboard', label: 'Admin: Dashboard' },
 ];
 
-const MODE_OPTIONS: Array<{ value: string; label: string }> = [
+const MODE_OPTIONS: Array<LabeledOptionDto<string>> = [
   { value: 'click', label: 'On click' },
   { value: 'toggle', label: 'Toggle (On/Off)' },
   { value: 'execute_path', label: 'Execute AI Path' },
@@ -88,7 +89,7 @@ const MODE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'copy_text', label: 'Copy Text' },
 ];
 
-const DISPLAY_OPTIONS: Array<{ value: string; label: string }> = [
+const DISPLAY_OPTIONS: Array<LabeledOptionDto<string>> = [
   { value: 'icon_label', label: 'Icon + label' },
   { value: 'icon', label: 'Icon only (name in tooltip)' },
 ];

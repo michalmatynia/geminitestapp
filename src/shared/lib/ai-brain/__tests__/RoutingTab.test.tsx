@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { useBrainRoutingActionsContext } from '@/shared/lib/ai-brain/components/BrainRoutingContext';
 import { RoutingTab } from '@/shared/lib/ai-brain/components/RoutingTab';
 import { useBrain } from '@/shared/lib/ai-brain/context/BrainContext';
@@ -88,7 +89,7 @@ vi.mock('@/shared/ui', () => ({
   }: {
     value: string;
     onValueChange: (value: string) => void;
-    options: Array<{ value: string; label: string }>;
+    options: Array<LabeledOptionDto<string>>;
     disabled?: boolean;
   }) => (
     <select

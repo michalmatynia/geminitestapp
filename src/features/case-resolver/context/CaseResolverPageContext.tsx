@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import type {
   CaseResolverAssetFile,
   CaseResolverAssetKind,
@@ -111,12 +112,12 @@ export type CaseResolverPageContextValue = {
   onUpdateActiveCaseDraft: (patch: Partial<CaseMetadataDraft>) => void;
   onSaveActiveCase: () => void;
   onDiscardActiveCaseChanges: () => void;
-  caseTagOptions: Array<{ value: string; label: string; description?: string }>;
-  caseIdentifierOptions: Array<{ value: string; label: string; description?: string }>;
-  caseCategoryOptions: Array<{ value: string; label: string; description?: string }>;
-  caseReferenceOptions: Array<{ value: string; label: string; description?: string }>;
-  parentCaseOptions: Array<{ value: string; label: string; description?: string }>;
-  partyOptions: Array<{ value: string; label: string; description?: string }>;
+  caseTagOptions: Array<LabeledOptionWithDescriptionDto<string>>;
+  caseIdentifierOptions: Array<LabeledOptionWithDescriptionDto<string>>;
+  caseCategoryOptions: Array<LabeledOptionWithDescriptionDto<string>>;
+  caseReferenceOptions: Array<LabeledOptionWithDescriptionDto<string>>;
+  parentCaseOptions: Array<LabeledOptionWithDescriptionDto<string>>;
+  partyOptions: Array<LabeledOptionWithDescriptionDto<string>>;
 };
 
 type CaseResolverPageActionKey =

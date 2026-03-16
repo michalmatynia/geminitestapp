@@ -120,8 +120,12 @@ export function NavTree({ items }: { items: NavItem[] }): React.ReactNode {
             paddingLeft: 10 + depth * 14,
           };
 
+        const focusRingClassName =
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
+
         const rowClassName = cn(
           'group flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm transition cursor-pointer border-l-2 h-auto font-normal',
+          focusRingClassName,
           sectionStyle ? sectionStyle.border : 'border-transparent',
           active ? 'bg-gray-700/60 text-white' : 'text-gray-200 hover:bg-gray-700/40'
         );
@@ -139,6 +143,7 @@ export function NavTree({ items }: { items: NavItem[] }): React.ReactNode {
                         {...(item.onClick ? { onClick: item.onClick } : {})}
                         className={cn(
                           'flex items-center justify-center rounded-md px-2 py-2 transition border-l-2 cursor-pointer',
+                          focusRingClassName,
                           sectionStyle ? sectionStyle.border : 'border-transparent',
                           active
                             ? 'bg-gray-700/60 text-white'
@@ -169,6 +174,7 @@ export function NavTree({ items }: { items: NavItem[] }): React.ReactNode {
                         }}
                         className={cn(
                           'flex w-full items-center justify-center rounded-md px-2 py-2 transition border-l-2 cursor-pointer h-auto',
+                          focusRingClassName,
                           sectionStyle ? sectionStyle.border : 'border-transparent',
                           active
                             ? 'bg-gray-700/60 text-white'

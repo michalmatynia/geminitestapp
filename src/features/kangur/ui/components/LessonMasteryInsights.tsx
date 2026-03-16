@@ -66,7 +66,7 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
           padding='md'
         />
       ) : (
-        <div className='mt-3 flex flex-col gap-3'>
+        <div className='mt-3 flex flex-col kangur-panel-gap'>
           {items.map((item) => (
             <KangurInfoCard
               key={item.componentId}
@@ -74,7 +74,7 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
               className='rounded-[22px]'
               padding='md'
             >
-              <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
+              <div className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:justify-between'>
                 <div className='min-w-0'>
                   <KangurCardTitle as='div'>
                     {item.emoji} {item.title}
@@ -133,7 +133,7 @@ export default function LessonMasteryInsights({
           padding='lg'
         />
       ) : (
-        <div className='mt-4 grid grid-cols-1 xl:grid-cols-2 gap-4'>
+        <div className='mt-4 grid grid-cols-1 xl:grid-cols-2 kangur-panel-gap'>
           <InsightList
             title='Do powtórki'
             items={insights.weakest}

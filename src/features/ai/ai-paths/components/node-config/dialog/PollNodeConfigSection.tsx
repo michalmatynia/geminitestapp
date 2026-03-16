@@ -2,6 +2,7 @@
 
 import type { DbQueryConfig, Edge, PollConfig } from '@/shared/lib/ai-paths';
 import { DB_COLLECTION_OPTIONS, renderTemplate, toNumber } from '@/shared/lib/ai-paths';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Button, Input, Textarea, SelectSimple, FormField } from '@/shared/ui';
 
 import {
@@ -51,7 +52,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
     provider: resolvedPollConfig.dbQuery?.provider === 'mongodb' ? 'mongodb' : 'auto',
   };
   const collectionOption = DB_COLLECTION_OPTIONS.some(
-    (option: { label: string; value: string }) => option.value === queryConfig.collection
+    (option: LabeledOptionDto<string>) => option.value === queryConfig.collection
   )
     ? queryConfig.collection
     : 'custom';
@@ -192,7 +193,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                   })
                 }
                 options={[
-                  ...DB_COLLECTION_OPTIONS.map((option: { label: string; value: string }) => ({
+                  ...DB_COLLECTION_OPTIONS.map((option: LabeledOptionDto<string>) => ({
                     value: option.value,
                     label: option.label,
                   })),

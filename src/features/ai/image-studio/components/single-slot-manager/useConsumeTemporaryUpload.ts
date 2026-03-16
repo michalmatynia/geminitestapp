@@ -12,6 +12,7 @@ import {
   type StudioSlotsResponse,
   type UpdateImageStudioSlotDto,
 } from '@/shared/contracts/image-studio';
+import type { IdDataDto } from '@/shared/contracts/base';
 import type {
   ImageStudioSlotDto as ImageStudioSlot,
   ImageStudioAssetDto as ImageStudioUploadedAsset,
@@ -38,7 +39,7 @@ interface ConsumeTemporaryUploadProps {
   updateSlotMutation: UseMutationResult<
     ImageStudioSlot,
     Error,
-    { id: string; data: UpdateImageStudioSlotDto }
+    IdDataDto<UpdateImageStudioSlotDto>
   >;
   setTemporaryObjectUpload: (asset: ImageStudioUploadedAsset | null) => void;
   setSelectedSlotId: (id: string | null) => void;

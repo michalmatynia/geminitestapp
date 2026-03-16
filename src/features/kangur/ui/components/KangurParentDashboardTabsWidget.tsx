@@ -3,6 +3,7 @@
 import { BarChart2, BookOpen, BrainCircuit, ClipboardList, ListChecks } from 'lucide-react';
 import { useCallback, useRef } from 'react';
 
+import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import {
   type KangurParentDashboardTabId,
   useKangurParentDashboardRuntime,
@@ -12,13 +13,13 @@ import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { cn } from '@/features/kangur/shared/utils';
 
-const TABS: Array<{
-  id: KangurParentDashboardTabId;
-  label: string;
-  mobileLabel: string;
-  icon: typeof BarChart2;
-  docId: string;
-}> = [
+const TABS: Array<
+  IdLabelOptionDto<KangurParentDashboardTabId> & {
+    mobileLabel: string;
+    icon: typeof BarChart2;
+    docId: string;
+  }
+> = [
   {
     id: 'scores',
     label: 'Wyniki',
@@ -133,7 +134,7 @@ export function KangurParentDashboardTabsWidget({
   }
 
   return (
-    <div className='flex flex-col gap-3'>
+    <div className='flex flex-col kangur-panel-gap'>
       <KangurPanelIntro
         description={
           tabsContent?.summary ??

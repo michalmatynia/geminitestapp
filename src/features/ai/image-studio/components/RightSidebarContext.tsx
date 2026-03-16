@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import type { RequestPreviewImage } from '@/features/ai/image-studio/utils/run-request-preview';
 import type { ParamLeaf } from '@/shared/contracts/prompt-engine';
 import { internalError } from '@/shared/errors/app-error';
@@ -19,7 +20,7 @@ export interface ActionHistoryItem {
 
 export type RightSidebarContextValue = {
   switchToControls: () => void;
-  canvasSizePresetOptions: Array<{ value: string; label: string; description?: string }>;
+  canvasSizePresetOptions: Array<LabeledOptionWithDescriptionDto<string>>;
   canvasSizePresetValue: string;
   setCanvasSizePresetValue: (value: string) => void;
   canvasSizeLabel: string;

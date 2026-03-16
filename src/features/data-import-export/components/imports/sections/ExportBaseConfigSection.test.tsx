@@ -7,6 +7,8 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
+
 const {
   applyTemplateMock,
   setExportActiveTemplateIdMock,
@@ -45,7 +47,7 @@ vi.mock('@/shared/ui', () => ({
   }: {
     value: string;
     onValueChange: (value: string) => void;
-    options: Array<{ value: string; label: string }>;
+    options: Array<LabeledOptionDto<string>>;
     disabled?: boolean;
   }) => (
     <select value={value} disabled={disabled} onChange={(event) => onValueChange(event.target.value)}>

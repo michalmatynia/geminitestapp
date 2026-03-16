@@ -1,5 +1,6 @@
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
   CaseResolverCaptureDocumentDateAction,
   CaseResolverCaptureProposalState,
@@ -51,7 +52,7 @@ export function PromptExploderCaptureMappingModal(
 
   const resolveActionOptions = (
     proposal: NonNullable<CaseResolverCaptureProposalState['addresser']>
-  ): Array<{ value: CaseResolverCaptureAction; label: string }> => {
+  ): Array<LabeledOptionDto<CaseResolverCaptureAction>> => {
     if (proposal.matchKind === 'party' || proposal.matchKind === 'party_and_address') {
       return [
         { value: 'useMatched', label: 'Use matched Filemaker record' },
@@ -75,10 +76,7 @@ export function PromptExploderCaptureMappingModal(
     return proposal.hasAddressCandidate ? 'Address found, not matched' : 'No match';
   };
 
-  const dateActionOptions: Array<{
-    value: CaseResolverCaptureDocumentDateAction;
-    label: string;
-  }> = [
+  const dateActionOptions: Array<LabeledOptionDto<CaseResolverCaptureDocumentDateAction>> = [
     {
       value: 'useDetectedDate',
       label: 'Use detected date and remove it from text',

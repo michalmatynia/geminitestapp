@@ -3,6 +3,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
@@ -40,11 +41,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const EMAIL_STATUS_OPTIONS: Array<{
-  value: FilemakerEmailStatus;
-  label: string;
-  description: string;
-}> = [
+const EMAIL_STATUS_OPTIONS: Array<LabeledOptionWithDescriptionDto<FilemakerEmailStatus>> = [
   { value: 'active', label: 'Active', description: 'Deliverable and in use.' },
   { value: 'inactive', label: 'Inactive', description: 'Known email, not currently used.' },
   { value: 'bounced', label: 'Bounced', description: 'Delivery is failing.' },

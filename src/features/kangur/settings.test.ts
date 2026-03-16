@@ -148,16 +148,22 @@ describe('kangur lesson settings', () => {
       resendCooldownSeconds: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS,
       notificationsEnabled: true,
       notificationsDisabledUntil: null,
+      requireEmailVerification: true,
+      requireCaptcha: true,
     });
     expect(parseKangurParentVerificationEmailSettings('null')).toEqual({
       resendCooldownSeconds: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS,
       notificationsEnabled: true,
       notificationsDisabledUntil: null,
+      requireEmailVerification: true,
+      requireCaptcha: true,
     });
     expect(parseKangurParentVerificationEmailSettings(JSON.stringify({}))).toEqual({
       resendCooldownSeconds: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS,
       notificationsEnabled: true,
       notificationsDisabledUntil: null,
+      requireEmailVerification: true,
+      requireCaptcha: true,
     });
   });
 
@@ -168,6 +174,8 @@ describe('kangur lesson settings', () => {
       resendCooldownSeconds: 15,
       notificationsEnabled: true,
       notificationsDisabledUntil: null,
+      requireEmailVerification: true,
+      requireCaptcha: true,
     });
     expect(
       parseKangurParentVerificationEmailSettings(JSON.stringify({ resendCooldownSeconds: -5 }))
@@ -175,6 +183,8 @@ describe('kangur lesson settings', () => {
       resendCooldownSeconds: 1,
       notificationsEnabled: true,
       notificationsDisabledUntil: null,
+      requireEmailVerification: true,
+      requireCaptcha: true,
     });
     expect(
       parseKangurParentVerificationEmailSettings(JSON.stringify({ resendCooldownSeconds: 5000 }))
@@ -182,6 +192,8 @@ describe('kangur lesson settings', () => {
       resendCooldownSeconds: 3600,
       notificationsEnabled: true,
       notificationsDisabledUntil: null,
+      requireEmailVerification: true,
+      requireCaptcha: true,
     });
   });
 
@@ -194,6 +206,8 @@ describe('kangur lesson settings', () => {
       resendCooldownSeconds: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS,
       notificationsEnabled: false,
       notificationsDisabledUntil: null,
+      requireEmailVerification: false,
+      requireCaptcha: true,
     });
     expect(
       parseKangurParentVerificationEmailSettings(
@@ -203,6 +217,8 @@ describe('kangur lesson settings', () => {
       resendCooldownSeconds: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS,
       notificationsEnabled: true,
       notificationsDisabledUntil: '2026-03-20T10:00:00.000Z',
+      requireEmailVerification: true,
+      requireCaptcha: true,
     });
   });
 

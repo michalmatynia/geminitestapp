@@ -38,6 +38,7 @@ import type {
   CmsThemeCreateRequestDto,
   CmsThemeUpdateRequestDto,
 } from '@/shared/contracts/cms';
+import type { IdInputDto } from '@/shared/contracts/base';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { ListQuery, SingleQuery, CreateMutation, UpdateMutation } from '@/shared/contracts/ui';
 import {
@@ -118,10 +119,10 @@ export function useCreatePage(): CreateMutation<Page, CmsPageCreateRequestDto> {
 
 export function useUpdatePage(): UpdateMutation<
   Page,
-  { id: string; input: CmsPageUpdateRequestDto }
+  IdInputDto<CmsPageUpdateRequestDto>
   > {
   return createUpdateMutationV2({
-    mutationFn: ({ id, input }: { id: string; input: CmsPageUpdateRequestDto }) =>
+    mutationFn: ({ id, input }: IdInputDto<CmsPageUpdateRequestDto>) =>
       updatePage(id, input).then(({ ok, payload }) => {
         if (!ok) {
           const message = (payload as { error?: string }).error ?? 'Failed to update page';
@@ -260,18 +261,14 @@ export function useCreateSlug(): CreateMutation<Slug, { slug: string; domainId?:
 
 export function useUpdateSlug(): UpdateMutation<
   Slug,
-  { id: string; input: Partial<Slug>; domainId?: string | null }
+  IdInputDto<Partial<Slug>> & { domainId?: string | null }
   > {
   return createUpdateMutationV2({
     mutationFn: ({
       id,
       input,
       domainId,
-    }: {
-      id: string;
-      input: Partial<Slug>;
-      domainId?: string | null;
-    }) =>
+    }: IdInputDto<Partial<Slug>> & { domainId?: string | null }) =>
       updateSlug(id, input, domainId).then(({ ok, payload }) => {
         if (!ok) throw new Error('Failed to update slug');
         return payload;
@@ -403,10 +400,10 @@ export function useDeleteCmsDomain(): UpdateMutation<string, string> {
 
 export function useUpdateCmsDomain(): UpdateMutation<
   CmsDomain,
-  { id: string; input: CmsDomainUpdateRequestDto }
+  IdInputDto<CmsDomainUpdateRequestDto>
   > {
   return createUpdateMutationV2({
-    mutationFn: ({ id, input }: { id: string; input: CmsDomainUpdateRequestDto }) =>
+    mutationFn: ({ id, input }: IdInputDto<CmsDomainUpdateRequestDto>) =>
       updateDomain(id, input).then(({ ok, payload }) => {
         if (!ok) throw new Error('Failed to update domain');
         return payload;
@@ -488,10 +485,10 @@ export function useCreateTheme(): CreateMutation<CmsTheme, CmsThemeCreateRequest
 
 export function useUpdateTheme(): UpdateMutation<
   CmsTheme,
-  { id: string; input: CmsThemeUpdateRequestDto }
+  IdInputDto<CmsThemeUpdateRequestDto>
   > {
   return createUpdateMutationV2({
-    mutationFn: ({ id, input }: { id: string; input: CmsThemeUpdateRequestDto }) =>
+    mutationFn: ({ id, input }: IdInputDto<CmsThemeUpdateRequestDto>) =>
       updateTheme(id, input).then((result) => {
         if (!result.ok) throw new Error(result.error || 'Failed to update theme');
         return result.payload;

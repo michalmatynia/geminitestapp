@@ -287,7 +287,7 @@ export function KangurAiTutorPanelChrome({
   const isHeaderSectionDragEnabled = !isAskModalMode && !isPanelDraggable;
   const isPanelBodySectionDragEnabled = isHeaderSectionDragEnabled;
   const panelHeaderClassName = cn(
-    'relative flex flex-col items-start gap-3 border-b kangur-chat-header-surface sm:flex-row sm:justify-between',
+    'relative flex flex-col items-start kangur-panel-gap border-b kangur-chat-header-surface sm:flex-row sm:justify-between',
     shouldUseMinimalPanelShell ? 'kangur-chat-header-padding-lg' : 'kangur-chat-header-padding-md',
     isAskModalMode ? 'pt-5' : null,
     isCompactDockedTutorPanel ? 'kangur-chat-header-padding-sm' : null,

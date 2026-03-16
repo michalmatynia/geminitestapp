@@ -5,6 +5,7 @@ import {
   cmsPageComponentInputSchema,
   type PageComponentInput,
 } from '@/shared/contracts/cms';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 export const KANGUR_CMS_PROJECT_SETTING_KEY = 'kangur_cms_project_v1';
 export const KANGUR_CMS_THEME_SETTINGS_KEY = KANGUR_THEME_SETTINGS_KEY;
@@ -67,7 +68,7 @@ export const KANGUR_WIDGET_IDS = [
 
 export type KangurWidgetId = (typeof KANGUR_WIDGET_IDS)[number];
 
-export const KANGUR_WIDGET_OPTIONS: ReadonlyArray<{ label: string; value: KangurWidgetId }> = [
+export const KANGUR_WIDGET_OPTIONS: ReadonlyArray<LabeledOptionDto<KangurWidgetId>> = [
   { label: 'Game Screen', value: 'game-screen' },
   { label: 'Game Navigation', value: 'game-navigation' },
   { label: 'Game XP Toast', value: 'game-xp-toast' },

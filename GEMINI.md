@@ -1,4 +1,4 @@
-# GEMINI.md - Project Reference (Scanned 2026-03-02)
+# GEMINI.md - Project Reference (Scanned 2026-03-16)
 
 This file is a code-backed reference for this repository. It is based on the
 current `package.json`, `src/`, `docs/`, and runtime/bootstrap files.
@@ -21,12 +21,12 @@ This is a large Next.js App Router application with:
 
 Verified from the repository scan:
 
-- `27` top-level feature domains in `src/features`
-- `319` `route.ts` API route files in `src/app/api`
-- `136` `page.tsx` files in `src/app`
-- `362` test files under top-level `__tests__`
-- `21` Playwright specs in `e2e/features`
-- `62` files in `scripts`
+- `28` top-level feature domains in `src/features`
+- `277` `route.ts` API route files in `src/app/api`
+- `152` `page.tsx` files in `src/app`
+- `422` test files under top-level `__tests__`
+- `49` Playwright specs in `e2e/features`
+- `325` files in `scripts`
 
 ## Stack
 
@@ -40,7 +40,7 @@ From `package.json` and config files:
 - BullMQ + ioredis
 - TanStack Query v5 + TanStack Table
 - Tailwind CSS v4 + Radix + local shared UI templates
-- OpenAI SDK `^6.15.0`
+- OpenAI SDK `^6.27.0`
 - GSAP, Three.js, TipTap, Zod
 
 ## Runtime Boot Path
@@ -90,7 +90,7 @@ all bootstrapped at the root.
 
 Authenticated admin routes live under `src/app/(admin)/admin`. Verified pages:
 
-- dashboard
+- root (`/admin`)
 - `3d-assets`
 - `agentcreator`
 - `ai-insights`
@@ -102,6 +102,7 @@ Authenticated admin routes live under `src/app/(admin)/admin`. Verified pages:
 - `case-resolver`
 - `chatbot`
 - `cms`
+- `context-registry`
 - `databases`
 - `drafts`
 - `filemaker`
@@ -110,12 +111,14 @@ Authenticated admin routes live under `src/app/(admin)/admin`. Verified pages:
 - `image-studio`
 - `import`
 - `integrations`
+- `kangur`
 - `notes`
 - `products`
 - `prompt-engine`
 - `prompt-exploder`
 - `routes`
 - `settings`
+- `system`
 - `validator`
 
 `src/app/(admin)/layout.tsx` requires a session, redirects to `/auth/signin`
@@ -142,12 +145,12 @@ chatbot or notes when front-page settings are configured that way.
 
 The API is very broad. Major verified groups include:
 
-- `ai`, `ai-insights`, `ai-paths`, `agentcreator`, `brain`
-- `analytics`, `auth`, `case-resolver`, `chatbot`
-- `cms`, `databases`, `drafts`, `files`, `health`
-- `image-studio`, `import`, `integrations`
-- `languages`, `marketplace`, `notes`, `products`
-- `prompt-runtime`, `public`, `settings`, `system`, `user`, `v2`
+- `agent`, `agentcreator`, `ai`, `ai-insights`, `ai-paths`
+- `analytics`, `assets3d`, `auth`, `brain`
+- `case-resolver`, `chatbot`, `client-errors`, `cms`
+- `databases`, `drafts`, `files`, `health`, `image-studio`
+- `kangur`, `marketplace`, `notes`, `prompt-runtime`, `public`
+- `query-telemetry`, `search`, `settings`, `system`, `user`, `v2`
 
 There is no small single-domain backend here; this is a multi-subsystem platform.
 
@@ -173,6 +176,7 @@ Top-level feature domains under `src/features`:
 - `integrations`
 - `internationalization`
 - `jobs`
+- `kangur`
 - `notesapp`
 - `observability`
 - `playwright`
@@ -431,6 +435,7 @@ Notable verified concentrated areas:
 
 Playwright specs exist for:
 
+- accessibility
 - admin
 - agentcreator
 - ai-paths
@@ -443,6 +448,7 @@ Playwright specs exist for:
 - files
 - foldertree
 - integrations
+- kangur
 - notesapp
 - observability
 - products
@@ -617,4 +623,4 @@ If you need to change any of these files, stop and ask the user for permission f
 
 ## Last Reviewed
 
-Scanned against the repository on `2026-03-02`.
+Scanned against the repository on `2026-03-16`.

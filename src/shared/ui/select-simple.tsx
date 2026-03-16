@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
 
@@ -15,9 +16,7 @@ import {
   SelectValue,
 } from './select';
 
-export interface SelectSimpleOption {
-  value: string;
-  label: string;
+export interface SelectSimpleOption extends LabeledOptionDto<string> {
   description?: string | undefined;
   disabled?: boolean | undefined;
   group?: string | undefined;
@@ -84,7 +83,11 @@ function SelectSimpleControl(): React.JSX.Element {
     ariaLabel: runtime.ariaLabel,
     ariaLabelledBy: undefined,
     title: allowFallbackLabel ? runtime.title : undefined,
-    fallbackLabel: allowFallbackLabel ? runtime.placeholder : undefined,
+    fallbackLabel: allowFallbackLabel
+      ? runtime.placeholder ??
+        runtime.dataDocAlias ??
+        runtime.dataDocId
+      : undefined,
   });
   const hasLabel = hasAccessibleLabel || Boolean(runtime.id);
   if (!hasLabel) {

@@ -2,6 +2,7 @@
 
 import React, { useCallback } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { TimelineMode, ScrollMode, RevealStyle } from '@/features/gsap';
 import {
   DEFAULT_ANIMATION_CONFIG,
@@ -44,9 +45,9 @@ export function TimelineSection(): React.ReactNode {
   const scrollEndValue = config.scrollEnd ?? DEFAULT_ANIMATION_CONFIG.scrollEnd ?? 'bottom top';
   const revealStyleValue = config.revealStyle ?? DEFAULT_ANIMATION_CONFIG.revealStyle ?? 'none';
 
-  const timelineModeOptions: { label: string; value: TimelineMode }[] = TIMELINE_MODES;
-  const scrollModeOptions: { label: string; value: ScrollMode }[] = SCROLL_MODES;
-  const revealStyleOptions: { label: string; value: RevealStyle }[] = REVEAL_STYLES;
+  const timelineModeOptions: Array<LabeledOptionDto<TimelineMode>> = TIMELINE_MODES;
+  const scrollModeOptions: Array<LabeledOptionDto<ScrollMode>> = SCROLL_MODES;
+  const revealStyleOptions: Array<LabeledOptionDto<RevealStyle>> = REVEAL_STYLES;
 
   const handleTimelineModeChange = useCallback(
     (value: string) => {

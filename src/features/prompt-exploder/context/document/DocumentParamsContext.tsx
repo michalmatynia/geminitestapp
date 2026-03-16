@@ -2,6 +2,7 @@
 
 import { createContext, useContext } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
   PromptExploderParamEntry,
   PromptExploderParamEntriesState,
@@ -10,7 +11,7 @@ import { internalError } from '@/shared/errors/app-error';
 
 export interface DocumentParamsState {
   selectedParamEntriesState: PromptExploderParamEntriesState | null;
-  listParamOptions: Array<{ value: string; label: string }>;
+  listParamOptions: Array<LabeledOptionDto<string>>;
   listParamEntryByPath: Map<string, PromptExploderParamEntry>;
 }
 

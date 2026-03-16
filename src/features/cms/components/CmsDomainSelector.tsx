@@ -3,6 +3,7 @@
 import React, { useMemo } from 'react';
 
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import type { CmsDomain } from '@/shared/contracts/cms';
 import { SelectSimple } from '@/shared/ui';
 
@@ -13,7 +14,7 @@ type CmsDomainSelectorProps = {
 };
 
 type CmsDomainSelectorRuntimeValue = {
-  options: Array<{ value: string; label: string; description: string }>;
+  options: Array<LabeledOptionWithDescriptionDto<string>>;
   value?: string;
   handleChange: (domainId: string) => void;
   disabled: boolean;

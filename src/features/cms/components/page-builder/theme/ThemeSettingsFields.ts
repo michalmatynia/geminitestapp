@@ -1,13 +1,14 @@
 import React from 'react';
 
 import type { ThemeSettings, ColorScheme } from '@/shared/contracts/cms-theme';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { SelectSimple } from '@/shared/ui';
 import type { SettingsPanelField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 export const getFieldsForSection = (
   section: string,
   theme: ThemeSettings,
-  themePresetOptions: Array<{ label: string; value: string }>
+  themePresetOptions: Array<LabeledOptionDto<string>>
 ): SettingsPanelField<ThemeSettings>[] => {
   switch (section) {
     case 'Global Settings':

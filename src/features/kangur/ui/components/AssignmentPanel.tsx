@@ -67,7 +67,7 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
       surface='neutral'
       variant='soft'
     >
-      <header className='flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between'>
+      <header className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:items-center sm:justify-between'>
         <KangurSectionEyebrow className='text-sm tracking-[0.18em]'>
           Zadania
         </KangurSectionEyebrow>
@@ -83,7 +83,7 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
           padding='lg'
         />
       ) : (
-        <div className='mt-4 flex flex-col gap-3'>
+        <div className='mt-4 flex flex-col kangur-panel-gap'>
           {assignments.map((assignment) => {
             const completed = completedIds.includes(assignment.id);
             const assignmentHref = buildAssignmentHref(basePath, assignment.action);

@@ -12,6 +12,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_PENDING_STEP_PILL_CLASSNAME,
+  KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
   KANGUR_STEP_PILL_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
@@ -372,7 +373,7 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
   const taskSummaryTitle = showTaskTitle ? `${task.hours}:${pad(task.minutes)}` : undefined;
 
   return (
-    <div className='flex flex-col items-center gap-4 w-full'>
+    <div className={`flex flex-col items-center w-full ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       {!hideModeSwitch ? (
         <div
           data-testid='clock-mode-switch'

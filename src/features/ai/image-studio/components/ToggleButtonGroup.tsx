@@ -2,13 +2,14 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 interface ToggleButtonGroupProps<T extends string> {
   value: T;
   onChange: (value: T) => void;
-  options: ReadonlyArray<{ value: T; label: string }>;
+  options: ReadonlyArray<LabeledOptionDto<T>>;
   className?: string | undefined;
   size?: 'xs' | 'sm' | 'default' | undefined;
 }

@@ -61,7 +61,7 @@ function NoteFormInner(): React.JSX.Element {
               placeholder='Enter note title'
               value={title}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setTitle(e.target.value)}
-              className='w-full rounded-lg border bg-card/40 px-4 py-2 text-white text-lg font-semibold placeholder:text-gray-500 focus:border-blue-500 focus:outline-none h-12'
+              className='w-full rounded-lg border bg-card/40 px-4 py-2 text-white text-lg font-semibold placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background h-12'
               required
              aria-label='Enter note title' title='Enter note title'/>
           </FormField>

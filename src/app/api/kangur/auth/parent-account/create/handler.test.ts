@@ -9,11 +9,13 @@ const {
   createKangurParentAccountMock,
   getKangurAiTutorContentMock,
   verifyKangurParentCaptchaMock,
+  readStoredSettingValueMock,
 } = vi.hoisted(() => ({
   buildKangurParentAccountCreateDebugPayloadMock: vi.fn(),
   createKangurParentAccountMock: vi.fn(),
   getKangurAiTutorContentMock: vi.fn(),
   verifyKangurParentCaptchaMock: vi.fn(),
+  readStoredSettingValueMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/server/parent-email-auth', () => ({
@@ -27,6 +29,10 @@ vi.mock('@/features/kangur/server/ai-tutor-content-repository', () => ({
 
 vi.mock('@/features/kangur/server/parent-account-captcha', () => ({
   verifyKangurParentCaptcha: verifyKangurParentCaptchaMock,
+}));
+
+vi.mock('@/shared/lib/ai-brain/server', () => ({
+  readStoredSettingValue: readStoredSettingValueMock,
 }));
 
 import { postKangurParentAccountCreateHandler } from './handler';
@@ -45,6 +51,7 @@ describe('kangur parent account create handler', () => {
     vi.clearAllMocks();
     getKangurAiTutorContentMock.mockResolvedValue(DEFAULT_KANGUR_AI_TUTOR_CONTENT);
     verifyKangurParentCaptchaMock.mockResolvedValue({ ok: true, required: false });
+    readStoredSettingValueMock.mockResolvedValue(null);
   });
 
   it('stages parent account creation and returns the verification response', async () => {
@@ -79,6 +86,7 @@ describe('kangur parent account create handler', () => {
     expect(verifyKangurParentCaptchaMock).toHaveBeenCalledWith({
       token: undefined,
       request: expect.any(NextRequest),
+      requireCaptcha: true,
     });
     expect(createKangurParentAccountMock).toHaveBeenCalledWith({
       email: 'parent@example.com',

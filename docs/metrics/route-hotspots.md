@@ -8,7 +8,7 @@ canonical: true
 ---
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-03-16T06:17:40.710Z
+Generated at: 2026-03-16T09:59:11.469Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -17,7 +17,7 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 | Route | LOC |
 | --- | ---: |
 | `src/app/api/kangur/[[...path]]/route.ts` | 864 |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 370 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 357 |
 | `src/app/api/v2/integrations/[[...path]]/route.ts` | 275 |
 | `src/app/api/image-studio/[[...path]]/route.ts` | 254 |
 | `src/app/api/ai-paths/[[...path]]/route.ts` | 232 |

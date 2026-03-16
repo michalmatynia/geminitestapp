@@ -7,10 +7,10 @@ import { KangurPanelCloseButton } from '@/features/kangur/ui/components/KangurPa
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { cn } from '@/features/kangur/shared/utils';
 
-import { useCallback } from 'react';
+import { memo, useCallback } from 'react';
 import type { JSX } from 'react';
 
-export function KangurLoginModal(): JSX.Element {
+export const KangurLoginModal = memo(function KangurLoginModal(): JSX.Element {
   const { authMode, callbackUrl, closeLoginModal, dismissLoginModal, isOpen, isRouteDriven } =
     useKangurLoginModal();
   const handleOpenChange = useCallback(
@@ -84,4 +84,4 @@ export function KangurLoginModal(): JSX.Element {
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
   );
-}
+});

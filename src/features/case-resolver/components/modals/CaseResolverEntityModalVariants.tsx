@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { type SettingsPanelField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
@@ -97,7 +98,7 @@ function CaseResolverConfiguredEntityModal<TItem, TForm extends object>({
 interface CaseResolverCategoryModalProps extends EntityModalProps<CaseResolverCategory> {
   formData: CategoryFormData;
   setFormData: React.Dispatch<React.SetStateAction<CategoryFormData>>;
-  parentOptions: { value: string; label: string }[];
+  parentOptions: Array<LabeledOptionDto<string>>;
   isSaving: boolean;
   onSave: () => void;
 }
@@ -159,7 +160,7 @@ export function CaseResolverCategoryModal(
 interface CaseResolverIdentifierModalProps extends EntityModalProps<CaseResolverIdentifier> {
   formData: CaseIdentifierFormData;
   setFormData: React.Dispatch<React.SetStateAction<CaseIdentifierFormData>>;
-  parentIdentifierOptions: { value: string; label: string }[];
+  parentIdentifierOptions: Array<LabeledOptionDto<string>>;
   isSaving: boolean;
   onSave: () => void;
 }
@@ -227,7 +228,7 @@ export function CaseResolverIdentifierModal(
 interface CaseResolverTagModalProps extends EntityModalProps<CaseResolverTag> {
   formData: TagFormData;
   setFormData: React.Dispatch<React.SetStateAction<TagFormData>>;
-  parentTagOptions: { value: string; label: string }[];
+  parentTagOptions: Array<LabeledOptionDto<string>>;
   isSaving: boolean;
   onSave: () => void;
 }

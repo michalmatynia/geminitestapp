@@ -143,7 +143,7 @@ export function ChatInterface(): React.JSX.Element {
       <div className='border-t border-border p-4'>
         <form onSubmit={defaultOnSend} className='flex gap-2'>
           <Input
-            className='flex-1 border-border bg-card/40 text-white focus:border-primary focus:outline-none'
+            className='flex-1 border-border bg-card/40 text-white focus:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
             value={input}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setInput(e.target.value)}
             placeholder='Type your message...'

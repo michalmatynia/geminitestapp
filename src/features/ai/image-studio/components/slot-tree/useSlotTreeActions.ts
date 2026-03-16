@@ -17,6 +17,7 @@ import {
   canMoveTreePath,
   getTreePathLeaf,
 } from '@/shared/utils';
+import type { IdDataDto } from '@/shared/contracts/base';
 
 import { useSlotsActions } from '../../context/SlotsContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -44,7 +45,7 @@ export function useSlotTreeActions({
   } = useSlotsActions();
 
   const updateSlot = useCallback(
-    async (input: { id: string; data: { name: string } }): Promise<void> => {
+    async (input: IdDataDto<{ name: string }>): Promise<void> => {
       await updateSlotMutation.mutateAsync(input);
     },
     [updateSlotMutation]

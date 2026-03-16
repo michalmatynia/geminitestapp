@@ -6,6 +6,7 @@ import {
   KANGUR_BADGE_TRACK_ACCENTS,
 } from '@/features/kangur/ui/components/KangurBadgeTrackSummaryCard';
 import { KangurCardDescription } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { getProgressBadgeTrackSummaries } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
@@ -36,7 +37,7 @@ export default function KangurBadgeTrackGrid({
   }
 
   return (
-    <div className={cn('grid gap-4 md:grid-cols-2', className)}>
+    <div className={cn('grid md:grid-cols-2', KANGUR_PANEL_GAP_CLASSNAME, className)}>
       {tracks.map((track) => {
         const accent = KANGUR_BADGE_TRACK_ACCENTS[track.key] ?? 'indigo';
         
@@ -45,7 +46,7 @@ export default function KangurBadgeTrackGrid({
             dataTestId={`${trackTestIdPrefix}-${track.key}`}
             key={track.key}
           >
-            <div className='flex flex-col gap-3'>
+            <div className='flex flex-col kangur-panel-gap'>
               <KangurBadgeTrackCardHeader
                 accent={accent}
                 track={track}

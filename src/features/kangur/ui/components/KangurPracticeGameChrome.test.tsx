@@ -37,7 +37,7 @@ describe('KangurPracticeGameChrome', () => {
       'max-w-sm',
       'flex-col',
       'items-center',
-      'gap-4'
+      'kangur-panel-gap'
     );
     expect(screen.getByTestId('practice-progress')).toHaveAttribute('aria-valuenow', '33');
     expect(screen.getByText('3/6')).toHaveClass('text-xs', 'font-bold');

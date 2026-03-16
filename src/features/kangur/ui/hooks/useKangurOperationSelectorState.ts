@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { DIFFICULTY_CONFIG } from '@/features/kangur/ui/services/math-questions';
@@ -39,12 +40,9 @@ type UseKangurOperationSelectorStateOptions = {
   recommendedOperation?: KangurOperation | null;
 };
 
-const OPERATIONS: Array<{
-  accent: KangurAccent;
-  id: KangurOperation;
-  label: string;
-  emoji: string;
-}> = [
+const OPERATIONS: Array<
+  IdLabelOptionDto<KangurOperation> & { accent: KangurAccent; emoji: string }
+> = [
   { accent: 'emerald', id: 'addition', label: 'Dodawanie', emoji: '➕' },
   { accent: 'sky', id: 'subtraction', label: 'Odejmowanie', emoji: '➖' },
   { accent: 'violet', id: 'multiplication', label: 'Mnożenie', emoji: '✖️' },

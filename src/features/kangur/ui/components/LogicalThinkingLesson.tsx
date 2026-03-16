@@ -167,7 +167,7 @@ const CLASSIFICATION_SLIDES: LessonSlide[] = [
             Ta sama cecha prowadzi do tej samej grupy.
           </KangurLessonCaption>
         </KangurLessonCallout>
-        <div className='grid w-full grid-cols-1 gap-3 min-[360px]:grid-cols-2'>
+        <div className='grid w-full grid-cols-1 kangur-panel-gap min-[360px]:grid-cols-2'>
           <KangurLessonCallout accent='emerald' className='text-center' padding='sm'>
             <p className='mb-1 text-sm font-bold text-green-700'>Owoce</p>
             <p className='text-2xl'>🍎 🍌 🍇 🍓</p>
@@ -252,7 +252,7 @@ const REASONING_SLIDES: LessonSlide[] = [
             Jeśli spełniony jest warunek, to pojawia się wniosek.
           </KangurLessonCaption>
         </KangurLessonCallout>
-        <div className='flex w-full flex-col gap-3'>
+        <div className='flex w-full flex-col kangur-panel-gap'>
           <KangurLessonCallout accent='indigo' padding='sm'>
             <p className='text-sm text-indigo-800'>
               <b>Jeśli</b> pada deszcz, <b>to</b> wezmę parasol. ☔
@@ -310,7 +310,7 @@ const ANALOGIES_SLIDES: LessonSlide[] = [
             Szukamy tej samej relacji w dwóch parach.
           </KangurLessonCaption>
         </KangurLessonCallout>
-        <div className='flex w-full flex-col gap-3'>
+        <div className='flex w-full flex-col kangur-panel-gap'>
           <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
             <p className='text-sm [color:var(--kangur-page-text)]'>
               Ptak lata, ryba... <span className='font-bold text-purple-700'>pływa 🐟</span>

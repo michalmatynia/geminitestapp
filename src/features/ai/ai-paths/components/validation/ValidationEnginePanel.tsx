@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Button, Card, Input, Label, SelectSimple } from '@/shared/ui';
 
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
@@ -10,12 +11,12 @@ const VALIDATION_POLICY_OPTIONS = [
   { value: 'block_below_threshold', label: 'Block Below Threshold' },
   { value: 'warn_below_threshold', label: 'Warn Below Threshold' },
   { value: 'report_only', label: 'Report Only' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 const ENABLE_OPTIONS = [
   { value: 'enabled', label: 'Enabled' },
   { value: 'disabled', label: 'Disabled' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export function ValidationEnginePanel(): React.JSX.Element {
   const {

@@ -63,7 +63,7 @@ export function KangurErrorFallback({
           Kangur encountered an error
         </h2>
         <p className='mt-3 text-sm [color:var(--kangur-page-muted-text)]'>{errorMessage}</p>
-        <div className='mt-6 flex items-center justify-center gap-3'>
+        <div className='mt-6 flex items-center justify-center kangur-panel-gap'>
           <button
             type='button'
             onClick={reset}

@@ -18,6 +18,7 @@ import {
   KangurProgressBar,
   KangurSectionEyebrow,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   getCurrentLevel,
   getNextLevel,
@@ -63,7 +64,7 @@ export default function PlayerProgressCard({
       className='w-full max-w-sm'
     >
       <KangurGlassPanel
-        className='flex flex-col gap-4 shadow-[0_18px_40px_-30px_rgba(168,175,216,0.2)]'
+        className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME} shadow-[0_18px_40px_-30px_rgba(168,175,216,0.2)]`}
         data-testid='player-progress-shell'
         padding='lg'
         surface='solid'
@@ -78,7 +79,7 @@ export default function PlayerProgressCard({
           </KangurCardDescription>
         </div>
 
-        <div className='flex items-start gap-3 sm:items-center'>
+        <div className='flex items-start kangur-panel-gap sm:items-center'>
           <KangurDisplayEmoji size='sm'>🎖️</KangurDisplayEmoji>
           <div className='min-w-0 flex-1'>
             <KangurCardTitle as='p' className={currentLevel.color} size='lg'>
@@ -114,7 +115,7 @@ export default function PlayerProgressCard({
           />
         </div>
 
-        <div className='grid grid-cols-1 gap-3 min-[360px]:grid-cols-2'>
+        <div className='grid grid-cols-1 kangur-panel-gap min-[360px]:grid-cols-2'>
           <KangurMetricCard accent='indigo' align='center' label='Gier' value={gamesPlayed} />
           <KangurMetricCard
             accent='violet'
@@ -161,7 +162,7 @@ export default function PlayerProgressCard({
             }}
           >
             <KangurProgressHighlightCardContent>
-              <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
+              <div className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:justify-between'>
                 <KangurProgressHighlightHeader
                   description={nextBadge.desc}
                   eyebrow='Następna odznaka'
@@ -193,7 +194,7 @@ export default function PlayerProgressCard({
             }}
           >
             <KangurProgressHighlightCardContent>
-              <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
+              <div className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:justify-between'>
                 <KangurProgressHighlightHeader
                   description={
                     guidedMomentum.nextBadgeName

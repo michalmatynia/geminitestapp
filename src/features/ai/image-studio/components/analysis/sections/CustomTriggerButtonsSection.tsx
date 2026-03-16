@@ -3,7 +3,7 @@
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-
+import type { LabeledOptionWithDisabledDto } from '@/shared/contracts/base';
 import {
   loadCustomTriggerButtons,
   saveCustomTriggerButtons,
@@ -229,7 +229,7 @@ export function CustomTriggerButtonsSection(
 interface EditRowProps {
   label: string;
   pathId: string;
-  pathOptions: Array<{ value: string; label: string; disabled?: boolean | undefined }>;
+  pathOptions: Array<LabeledOptionWithDisabledDto<string>>;
   onLabelChange: (v: string) => void;
   onPathChange: (v: string) => void;
   onSave: () => void;
@@ -259,7 +259,7 @@ function EditRow(props: EditRowProps): React.JSX.Element {
         className={cn(
           'h-6 w-full rounded border border-border/60 bg-background/50 px-2',
           'text-xs text-gray-200 placeholder:text-gray-600',
-          'focus:outline-none focus:ring-1 focus:ring-ring'
+          'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring'
         )}
       />
       <SelectSimple

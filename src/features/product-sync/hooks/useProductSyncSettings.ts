@@ -11,6 +11,7 @@ import type {
   ProductSyncRunRecord,
   ProductSyncRunsResponse,
 } from '@/shared/contracts/product-sync';
+import type { IdDataDto } from '@/shared/contracts/base';
 import type {
   CreateMutation,
   DeleteMutation,
@@ -107,11 +108,11 @@ export function useCreateProductSyncProfileMutation(): CreateMutation<
 
 export function useUpdateProductSyncProfileMutation(): UpdateMutation<
   ProductSyncProfile,
-  { id: string; data: ProductSyncProfileUpdatePayload }
+  IdDataDto<ProductSyncProfileUpdatePayload>
   > {
   const mutationKey = productSettingsKeys.syncProfiles();
   return createUpdateMutationV2({
-    mutationFn: ({ id, data }: { id: string; data: ProductSyncProfileUpdatePayload }) =>
+    mutationFn: ({ id, data }: IdDataDto<ProductSyncProfileUpdatePayload>) =>
       api.put<ProductSyncProfile>(`/api/v2/products/sync/profiles/${encodeURIComponent(id)}`, data),
     mutationKey,
     meta: {

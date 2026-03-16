@@ -2,12 +2,13 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { AiPathsValidationRule, AiPathsValidationStage } from '@/shared/lib/ai-paths';
 import { Badge, Button, Card, Checkbox, Input, Label, StatusBadge, Textarea } from '@/shared/ui';
 
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 
-const VALIDATION_STAGE_OPTIONS: Array<{ value: AiPathsValidationStage; label: string }> = [
+const VALIDATION_STAGE_OPTIONS: Array<LabeledOptionDto<AiPathsValidationStage>> = [
   { value: 'graph_parse', label: 'Parse' },
   { value: 'graph_bind', label: 'Bind' },
   { value: 'node_pre_execute', label: 'Node Pre' },

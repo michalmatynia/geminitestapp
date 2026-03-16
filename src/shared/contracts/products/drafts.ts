@@ -2,6 +2,7 @@ import * as React from 'react';
 import { z } from 'zod';
 
 import { namedDtoSchema } from '../base';
+import type { LabeledOptionDto } from '../base';
 import { productParameterValueSchema } from './product';
 
 import type { ImageFileRecord } from '../files';
@@ -312,14 +313,14 @@ export interface ValidatorSettingsController {
   handleAddPattern: (target?: string) => void;
   handleDragStart: (e: unknown, patternId: string) => void;
   handleDrop: (pattern: ProductValidationPattern, e: unknown) => void;
-  replacementFieldOptions: Array<{ value: string; label: string }>;
-  sourceFieldOptions: Array<{ value: string; label: string }>;
+  replacementFieldOptions: Array<LabeledOptionDto<string>>;
+  sourceFieldOptions: Array<LabeledOptionDto<string>>;
   createPatternPending: boolean;
   updatePatternPending: boolean;
   isLocaleTarget: (target: string) => boolean;
   normalizeReplacementFields: (fields: unknown, target?: string) => string[];
-  getReplacementFieldsForTarget: (target: string) => Array<{ value: string; label: string }>;
-  getSourceFieldOptionsForTarget: (target: string) => Array<{ value: string; label: string }>;
+  getReplacementFieldsForTarget: (target: string) => Array<LabeledOptionDto<string>>;
+  getSourceFieldOptionsForTarget: (target: string) => Array<LabeledOptionDto<string>>;
   formatReplacementFields: (fields: unknown) => string;
   draggedPatternId: string | null;
   setDraggedPatternId: (id: string | null) => void;

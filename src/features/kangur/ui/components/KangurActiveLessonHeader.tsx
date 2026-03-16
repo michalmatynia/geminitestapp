@@ -79,7 +79,7 @@ function KangurActiveLessonHeaderActions(): React.JSX.Element {
 
   return (
     <div
-      className='flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center'
+      className='flex w-full flex-col kangur-panel-gap sm:flex-row sm:flex-wrap sm:items-center'
       data-testid={headerActionsTestId}
     >
       {onBack ? (

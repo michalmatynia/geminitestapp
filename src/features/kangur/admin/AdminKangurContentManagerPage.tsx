@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
+import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import {
   KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
   parseKangurLessonDocumentStore,
@@ -51,7 +52,7 @@ const readPersistedTab = (): ContentTab => {
   }
 };
 
-const TABS: Array<{ id: ContentTab; label: string; Icon: LucideIcon }> = [
+const TABS: Array<IdLabelOptionDto<ContentTab> & { Icon: LucideIcon }> = [
   { id: 'lessons', label: 'Lessons', Icon: BookOpen },
   { id: 'tests', label: 'Tests', Icon: Trophy },
 ];

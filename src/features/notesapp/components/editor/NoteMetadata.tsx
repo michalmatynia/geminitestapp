@@ -163,7 +163,7 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
                   }
                 }
               }}
-              className='flex-1 rounded-none border-x-0 border-t border-b border bg-transparent px-0 py-2 text-white text-sm focus:outline-none focus:border-gray-500 placeholder:text-gray-500'
+              className='flex-1 rounded-none border-x-0 border-t border-b border bg-transparent px-0 py-2 text-white text-sm focus:outline-none focus:border-gray-500 focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background placeholder:text-gray-500'
              aria-label={selectedTagIds.length === 0 ? 'Search or create tags...' : 'Add tag...'} title={selectedTagIds.length === 0 ? 'Search or create tags...' : 'Add tag...'}/>
           </FormField>
 
@@ -268,7 +268,7 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
                 setIsRelatedDropdownOpen(true);
               }}
               onFocus={(): void => setIsRelatedDropdownOpen(true)}
-              className='flex-1 rounded-none border-x-0 border-t border-b border bg-transparent px-0 py-2 text-white text-sm focus:outline-none focus:border-gray-500 placeholder:text-gray-500'
+              className='flex-1 rounded-none border-x-0 border-t border-b border bg-transparent px-0 py-2 text-white text-sm focus:outline-none focus:border-gray-500 focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background placeholder:text-gray-500'
              aria-label='Search notes to relate...' title='Search notes to relate...'/>
 
             {isRelatedDropdownOpen && relatedNoteQuery && (

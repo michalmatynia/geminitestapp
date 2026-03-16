@@ -8,6 +8,7 @@ import {
   KangurHeadline,
   KangurProgressBar,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import type { KangurOperation } from '@/features/kangur/ui/types';
 
 const OPERATION_LABELS: Partial<Record<KangurOperation, string>> = {
@@ -65,7 +66,7 @@ export default function ResultScreen({
       aria-labelledby='kangur-result-heading'
       initial={{ opacity: 0, scale: 0.85 }}
       animate={{ opacity: 1, scale: 1 }}
-      className='flex w-full flex-col items-center gap-6 text-center'
+      className={`flex w-full flex-col items-center text-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
     >
       <KangurDisplayEmoji aria-hidden='true' data-testid='result-screen-emoji' size='lg'>
         {'⭐'.repeat(stars)}
@@ -89,28 +90,28 @@ export default function ResultScreen({
       </p>
 
       <KangurGlassPanel
-        className='w-full max-w-sm flex flex-col gap-3 shadow-[0_18px_40px_-30px_rgba(168,175,216,0.2)]'
+        className='w-full max-w-sm flex flex-col kangur-panel-gap shadow-[0_18px_40px_-30px_rgba(168,175,216,0.2)]'
         data-testid='result-screen-shell'
         padding='xl'
         surface='solid'
         variant='soft'
       >
         <dl className='space-y-3 text-lg'>
-          <div className='flex flex-col gap-1 text-left sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
+          <div className='flex flex-col text-left sm:flex-row sm:items-center sm:justify-between kangur-panel-gap'>
             <dt className='[color:var(--kangur-page-muted-text)]'>Wynik</dt>
             <dd className='font-bold text-indigo-600'>
               {score} / {total}
             </dd>
           </div>
-          <div className='flex flex-col gap-1 text-left sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
+          <div className='flex flex-col text-left sm:flex-row sm:items-center sm:justify-between kangur-panel-gap'>
             <dt className='[color:var(--kangur-page-muted-text)]'>Dokładność</dt>
             <dd className='font-bold text-green-500'>{percent}%</dd>
           </div>
-          <div className='flex flex-col gap-1 text-left sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
+          <div className='flex flex-col text-left sm:flex-row sm:items-center sm:justify-between kangur-panel-gap'>
             <dt className='[color:var(--kangur-page-muted-text)]'>Czas</dt>
             <dd className='font-bold text-amber-500'>{timeTaken}s</dd>
           </div>
-          <div className='flex flex-col gap-1 text-left sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
+          <div className='flex flex-col text-left sm:flex-row sm:items-center sm:justify-between kangur-panel-gap'>
             <dt className='[color:var(--kangur-page-muted-text)]'>Temat</dt>
             <dd className='font-bold text-purple-500'>{operationLabel}</dd>
           </div>
@@ -127,7 +128,7 @@ export default function ResultScreen({
         />
       </KangurGlassPanel>
 
-      <div className='flex w-full flex-col gap-3 sm:flex-row sm:justify-center sm:gap-4'>
+      <div className='flex w-full flex-col kangur-panel-gap sm:flex-row sm:justify-center'>
         <KangurButton className='w-full sm:w-auto' onClick={handleRestartGame} size='lg' variant='primary'>
           <RotateCcw className='w-5 h-5' /> Zagraj ponownie
         </KangurButton>

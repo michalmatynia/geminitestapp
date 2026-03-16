@@ -51,7 +51,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
           <KangurLessonLead>
             Dodawanie to łączenie dwóch grup razem, żeby policzyć, ile ich jest łącznie.
           </KangurLessonLead>
-          <div className='flex items-center gap-4'>
+          <div className='flex items-center kangur-panel-gap'>
             <KangurDisplayEmoji size='md'>🍎🍎</KangurDisplayEmoji>
             <KangurEquationDisplay
               accent='slate'
@@ -76,7 +76,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
             2 + 3 = 5
           </KangurEquationDisplay>
           <KangurLessonCallout accent='slate' className='max-w-md text-center'>
-            <div className='grid grid-cols-[1fr_auto_1fr] items-center gap-3'>
+            <div className='grid grid-cols-[1fr_auto_1fr] items-center kangur-panel-gap'>
               <div className='rounded-xl border border-amber-200/60 bg-amber-50/80 px-3 py-2'>
                 <p className='text-[11px] font-semibold uppercase tracking-wide text-amber-700'>
                   Część
@@ -104,7 +104,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               Część + część daje całość.
             </KangurLessonCaption>
           </KangurLessonCallout>
-          <div className='grid w-full max-w-md grid-cols-1 gap-3 min-[360px]:grid-cols-3'>
+          <div className='grid w-full max-w-md grid-cols-1 kangur-panel-gap min-[360px]:grid-cols-3'>
             <div className='rounded-2xl border border-amber-200/70 bg-amber-50/80 px-3 py-2 text-center text-xs font-semibold text-amber-700'>
               <div className='text-xl'>🍎🍎</div>
               <p className='mt-1'>Start</p>
@@ -204,7 +204,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
             <KangurLessonCaption className='mt-1'>
               Kropki łączą się w jedną grupę i tworzą sumę.
             </KangurLessonCaption>
-            <div className='mt-3 flex flex-wrap items-center justify-center gap-3 text-xs font-semibold'>
+            <div className='mt-3 flex flex-wrap items-center justify-center kangur-panel-gap text-xs font-semibold'>
               <div className='flex items-center gap-2'>
                 <span className='h-2.5 w-2.5 rounded-full bg-amber-400' />
                 <span>Grupa A</span>
@@ -240,7 +240,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               7 + <b>3</b> = 10, zostaje jeszcze <b>2</b>, więc 10 + 2 = <b>12</b> ✓
             </KangurLessonCaption>
           </KangurLessonCallout>
-          <div className='grid w-full gap-3 sm:grid-cols-2'>
+          <div className='grid w-full kangur-panel-gap sm:grid-cols-2'>
             <KangurLessonCallout accent='sky' className='text-left text-sm' padding='sm'>
               <p className='text-xs font-semibold uppercase tracking-wide text-sky-700'>
                 Krok 1
@@ -429,7 +429,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               Najpierw 20 + 10, potem 4 + 3. Suma składa się z obu części.
             </KangurLessonCaption>
           </KangurLessonCallout>
-          <div className='flex flex-wrap items-center justify-center gap-3 text-xs font-semibold'>
+          <div className='flex flex-wrap items-center justify-center kangur-panel-gap text-xs font-semibold'>
             <div className='flex items-center gap-2'>
               <span className='h-2.5 w-2.5 rounded-sm bg-emerald-400' />
               <span>Dziesiątki</span>
@@ -525,7 +525,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
             <KangurLessonChip accent='emerald'>Startuj od większej liczby</KangurLessonChip>
             <KangurLessonChip accent='slate'>Grupuj do 10</KangurLessonChip>
           </div>
-          <div className='grid w-full gap-3 sm:grid-cols-2'>
+          <div className='grid w-full kangur-panel-gap sm:grid-cols-2'>
             <KangurLessonCallout accent='amber' className='text-sm' padding='sm'>
               <p className='text-xs font-semibold uppercase tracking-wide text-amber-700'>
                 Pary do 10

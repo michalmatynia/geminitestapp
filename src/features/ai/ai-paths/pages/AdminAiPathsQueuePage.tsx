@@ -4,6 +4,7 @@ import { ActivityIcon, ExternalLinkIcon, ImageIcon, UploadCloudIcon } from 'luci
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import ProductListingJobsPanel from '@/shared/lib/jobs/components/ProductListingJobsPanel';
 import { AdminAiPathsBreadcrumbs, Badge, Button, ListPanel, Hint } from '@/shared/ui';
 import { FileUploadEventsPanel } from '@/shared/ui/files';
@@ -14,11 +15,9 @@ import { JobQueuePanel } from '../components/job-queue-panel';
 
 type QueueTab = 'paths-all' | 'paths' | 'paths-external' | 'file-uploads' | 'image-studio';
 
-const QUEUE_TABS: Array<{
-  id: QueueTab;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-}> = [
+const QUEUE_TABS: Array<
+  IdLabelOptionDto<QueueTab> & { icon: React.ComponentType<{ className?: string }> }
+> = [
   { id: 'paths-all', label: 'All Runs', icon: ActivityIcon },
   { id: 'paths', label: 'Node Runs', icon: ActivityIcon },
   { id: 'paths-external', label: 'External Runs', icon: ExternalLinkIcon },

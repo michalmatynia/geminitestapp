@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
+import type { LabeledOptionDto } from './base';
 import { dtoBaseSchema, namedDtoSchema } from './base';
 import { chatMessageSchema } from './chatbot';
 
@@ -857,7 +858,7 @@ export const settingsFieldOptionSchema = z.object({
   value: z.string(),
 });
 
-export type SettingsFieldOptionDto = z.infer<typeof settingsFieldOptionSchema>;
+export type SettingsFieldOptionDto = LabeledOptionDto;
 export type SettingsFieldOption = SettingsFieldOptionDto;
 
 export const settingsFieldTypeSchema = z.enum([

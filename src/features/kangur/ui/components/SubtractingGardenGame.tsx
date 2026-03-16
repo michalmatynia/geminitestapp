@@ -23,6 +23,7 @@ import {
   KangurGlassPanel,
   KangurInfoCard,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import {
   addXp,
@@ -409,7 +410,7 @@ export default function SubtractingGardenGame({
         : 'Przeciągnij lub kliknij obiekty, aby odejmować.';
 
   return (
-    <KangurPracticeGameStage className='w-full max-w-none gap-6'>
+    <KangurPracticeGameStage className='w-full max-w-none'>
       <KangurPracticeGameProgress
         accent='rose'
         currentRound={roundIndex}
@@ -425,7 +426,7 @@ export default function SubtractingGardenGame({
       >
         <div className='relative overflow-hidden rounded-[32px] bg-[linear-gradient(160deg,#fff7ed_0%,#ffe4e6_50%,#eff6ff_100%)] p-5 sm:p-6 lg:p-8'>
           <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(251,191,36,0.16),transparent_36%),radial-gradient(circle_at_80%_0%,rgba(248,113,113,0.16),transparent_34%),radial-gradient(circle_at_50%_100%,rgba(56,189,248,0.12),transparent_40%)]' />
-          <div className='relative z-10 flex flex-col gap-5 lg:gap-6'>
+          <div className={cn('relative z-10 flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}>
             <div className='flex flex-col items-center gap-2 text-center'>
               <KangurEquationDisplay accent='rose' size='lg'>
                 {round.a} − {round.b} ={' '}
@@ -437,8 +438,17 @@ export default function SubtractingGardenGame({
             </div>
             <DragDropContext onDragEnd={handleDragEnd}>
               <AnimatePresence mode='wait'>
-                <motion.div key={roundIndex} {...roundMotionProps} className='grid gap-5 lg:gap-6'>
-                  <div className='grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,220px)_minmax(0,1fr)] lg:items-stretch'>
+                <motion.div
+                  key={roundIndex}
+                  {...roundMotionProps}
+                  className={cn('grid', KANGUR_PANEL_GAP_CLASSNAME)}
+                >
+                  <div
+                    className={cn(
+                      'grid lg:grid-cols-[minmax(0,1fr)_minmax(0,220px)_minmax(0,1fr)] lg:items-stretch',
+                      KANGUR_PANEL_GAP_CLASSNAME
+                    )}
+                  >
                     <KangurInfoCard
                       accent='sky'
                       className='relative overflow-hidden rounded-[26px]'
@@ -454,7 +464,7 @@ export default function SubtractingGardenGame({
                             ref={provided.innerRef}
                             {...provided.droppableProps}
                             className={cn(
-                              'mt-3 flex min-h-[96px] flex-wrap items-center justify-center gap-3 rounded-[20px] border-2 border-dashed px-3 py-4 transition sm:min-h-[112px] lg:min-h-[140px]',
+                              'mt-3 flex min-h-[96px] flex-wrap items-center justify-center kangur-panel-gap rounded-[20px] border-2 border-dashed px-3 py-4 transition sm:min-h-[112px] lg:min-h-[140px]',
                               snapshot.isDraggingOver
                                 ? 'border-amber-300 bg-amber-50/70'
                                 : 'border-white/60 bg-white/70'
@@ -485,7 +495,7 @@ export default function SubtractingGardenGame({
                         )}
                       </Droppable>
                     </KangurInfoCard>
-                    <div className='flex flex-col items-center gap-3 text-center'>
+                    <div className='flex flex-col items-center kangur-panel-gap text-center'>
                       <KangurInfoCard
                         accent='violet'
                         className='rounded-[20px] px-4 py-3 text-sm font-semibold'
@@ -526,7 +536,7 @@ export default function SubtractingGardenGame({
                             ref={provided.innerRef}
                             {...provided.droppableProps}
                             className={cn(
-                              'mt-3 flex min-h-[96px] flex-wrap items-center justify-center gap-3 rounded-[20px] border-2 border-dashed px-3 py-4 transition sm:min-h-[112px] lg:min-h-[140px]',
+                              'mt-3 flex min-h-[96px] flex-wrap items-center justify-center kangur-panel-gap rounded-[20px] border-2 border-dashed px-3 py-4 transition sm:min-h-[112px] lg:min-h-[140px]',
                               snapshot.isDraggingOver
                                 ? 'border-rose-300 bg-rose-50/80'
                                 : 'border-white/60 bg-white/70'
@@ -597,7 +607,7 @@ export default function SubtractingGardenGame({
                       </div>
                     </KangurInfoCard>
                   </div>
-                  <div className='flex flex-col items-center gap-3 sm:flex-row sm:justify-between'>
+                  <div className='flex flex-col items-center kangur-panel-gap sm:flex-row sm:justify-between'>
                     <KangurButton
                       className='min-w-[160px] sm:min-w-[180px]'
                       onClick={handleCheck}

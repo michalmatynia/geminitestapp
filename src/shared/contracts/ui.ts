@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { ReactNode } from 'react';
 
-import type { ListResponse } from './base';
+import type { IdDataDto, OptionalIdDataDto, ListResponse, LabelValueOptionDto } from './base';
 import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query';
 import type { ZodSchema } from 'zod';
 
@@ -67,20 +67,20 @@ export interface MultiSectionModalProps extends ModalStateProps {
   error?: string | null;
 }
 
-export type LabeledOptionDto<TValue = string> = {
-  label: string;
-  value: TValue;
-};
-export type LabeledOption<TValue = string> = LabeledOptionDto<TValue>;
-
-export type IdLabelOptionDto<TId extends string = string> = {
-  id: TId;
-  label: string;
-};
-export type IdLabelOption<TId extends string = string> = IdLabelOptionDto<TId>;
-
-export type LabelValueOptionDto = LabeledOptionDto<string>;
-export type { LabelValueOptionDto as LabelValueOption };
+export type {
+  LabeledOptionDto,
+  LabeledOption,
+  IdLabelOptionDto,
+  IdLabelOption,
+  LabelValueOptionDto,
+  LabelValueOption,
+  IdLabeledOptionDto,
+  IdLabeledOption,
+  LabeledOptionWithDescriptionDto,
+  LabeledOptionWithDescription,
+  LabeledOptionWithDisabledDto,
+  LabeledOptionWithDisabled,
+} from './base';
 
 export type PanelRuntimeSlotsDto = {
   header?: ReactNode;
@@ -125,7 +125,7 @@ export type CreateMutation<
 > = SemanticMutationResult<T, TInput, 'create', TError>;
 export type UpdateMutation<
   T,
-  TInput = { id: string; data: Partial<T> },
+  TInput = IdDataDto<Partial<T>>,
   TError = Error,
 > = SemanticMutationResult<T, TInput, 'update', TError>;
 export type DeleteMutation<TResponse = void, TInput = string, TError = Error> = MutationResult<
@@ -135,7 +135,7 @@ export type DeleteMutation<TResponse = void, TInput = string, TError = Error> = 
 >;
 export type SaveMutation<
   T,
-  TInput = { id?: string; data: Partial<T> },
+  TInput = OptionalIdDataDto<Partial<T>>,
   TError = Error,
 > = SemanticMutationResult<T, TInput, 'save', TError>;
 export type VoidMutation<TInput, TError = Error> = MutationResult<void, TInput, TError>;

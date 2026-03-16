@@ -11,7 +11,11 @@ import {
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_ACCENT_STYLES,
+  KANGUR_PANEL_GAP_CLASSNAME,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -23,7 +27,11 @@ export function KangurPracticeGameStage({
 }: KangurPracticeGameStageProps): React.JSX.Element {
   return (
     <div
-      className={cn('flex w-full max-w-sm flex-col items-center gap-4', className)}
+      className={cn(
+        'flex w-full max-w-sm flex-col items-center',
+        KANGUR_PANEL_GAP_CLASSNAME,
+        className
+      )}
       {...props}
     />
   );
@@ -212,7 +220,7 @@ export function KangurPracticeGameSummaryActions({
   const wrapperClassName = className;
 
   return (
-    <div className={cn('flex w-full flex-col gap-3 sm:flex-row', wrapperClassName)}>
+    <div className={cn('flex w-full flex-col kangur-panel-gap sm:flex-row', wrapperClassName)}>
       <KangurButton
         className={cn('w-full sm:flex-1', restartClassName)}
         onClick={handleRestart}
@@ -278,7 +286,11 @@ export function KangurPracticeGameSummary({
       initial={{ opacity: 0, scale: 0.9 }}
     >
       <KangurGlassPanel
-        className={cn('flex flex-col items-center gap-4 text-center', summaryPanelClassName)}
+        className={cn(
+          'flex flex-col items-center text-center',
+          KANGUR_PANEL_GAP_CLASSNAME,
+          summaryPanelClassName
+        )}
         data-testid={summaryTestId}
         padding='xl'
         surface='solid'

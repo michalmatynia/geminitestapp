@@ -16,7 +16,7 @@ import {
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { KANGUR_PANEL_GAP_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import type { KangurDailyQuestState } from '@/features/kangur/ui/services/daily-quests';
 import {
   getCurrentLevel,
@@ -85,9 +85,9 @@ export default function ProgressOverview({
   ];
 
   return (
-    <div className='flex flex-col gap-5'>
+    <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <KangurGlassPanel
-        className='flex flex-col gap-4 sm:flex-row sm:items-center'
+        className='flex flex-col kangur-panel-gap sm:flex-row sm:items-center'
         padding='lg'
         surface='mistStrong'
         variant='soft'
@@ -117,7 +117,7 @@ export default function ProgressOverview({
         </div>
       </KangurGlassPanel>
 
-      <div className='grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 sm:grid-cols-3'>
+      <div className='grid grid-cols-1 kangur-panel-gap min-[360px]:grid-cols-2 sm:grid-cols-3'>
         {stats.map((stat) => (
           <KangurMetricCard
             key={stat.label}
@@ -137,7 +137,7 @@ export default function ProgressOverview({
           variant='subtle'
         >
           <KangurProgressHighlightCardContent>
-            <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
+            <div className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:justify-between'>
               <KangurProgressHighlightHeader
                 description={dailyQuestHeaderDescription}
                 descriptionClassName='text-xs leading-5'
@@ -167,7 +167,7 @@ export default function ProgressOverview({
           variant='subtle'
         >
           <KangurProgressHighlightCardContent>
-            <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
+            <div className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:justify-between'>
               <KangurProgressHighlightHeader
                 description={
                   guidedMomentum.nextBadgeName
@@ -216,7 +216,7 @@ export default function ProgressOverview({
       {topActivities.length > 0 && (
         <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
           <KangurPanelSectionHeading>Najczęściej ćwiczone aktywności</KangurPanelSectionHeading>
-          <div className='flex flex-col gap-3'>
+          <div className='flex flex-col kangur-panel-gap'>
             {topActivities.map((activity) => (
               <KangurActivitySummaryCard
                 activity={activity}

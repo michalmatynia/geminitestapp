@@ -7,10 +7,11 @@ import { useCmsSlugs, useUpdateSlug } from '@/features/cms/hooks/useCmsQueries';
 import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
 import type { PageStatus, Slug } from '@/features/cms/types';
 import { normalizePageSlugValues } from '@/features/cms/utils/slug-utils';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
 import { Button, Input, Label, Checkbox, Badge, ToggleRow, SegmentedControl } from '@/shared/ui';
 
-const STATUS_OPTIONS: { label: string; value: PageStatus }[] = [
+const STATUS_OPTIONS: Array<LabeledOptionDto<PageStatus>> = [
   { label: 'Draft', value: 'draft' },
   { label: 'Published', value: 'published' },
 ];

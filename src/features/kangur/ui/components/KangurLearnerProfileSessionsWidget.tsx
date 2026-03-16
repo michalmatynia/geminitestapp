@@ -12,7 +12,7 @@ import {
   KangurPanelIntro,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
-import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { KANGUR_PANEL_GAP_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 
 const SESSION_ACCENTS: Record<string, KangurAccent> = {
   addition: 'amber',
@@ -47,13 +47,13 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
     'Sprawdź ostatnie podejścia oraz ścieżki odznak budowane przez regularną grę.';
 
   return (
-    <section className='flex flex-col gap-4'>
+    <section className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <KangurPanelIntro
         data-testid='learner-profile-sessions-intro'
         description={sectionSummary}
         eyebrow={sectionTitle}
       />
-      <div className='grid grid-cols-1 gap-4 xl:grid-cols-5'>
+      <div className={`grid grid-cols-1 ${KANGUR_PANEL_GAP_CLASSNAME} xl:grid-cols-5`}>
         <KangurGlassPanel
           className='xl:col-span-3'
           padding='lg'

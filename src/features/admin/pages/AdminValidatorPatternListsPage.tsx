@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, Save } from 'lucide-react';
 import Link from 'next/link';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ValidatorPatternList, ValidatorScope } from '@/shared/contracts/admin';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -37,7 +38,7 @@ import {
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
-const scopeOptions: Array<{ value: ValidatorScope; label: string }> = [
+const scopeOptions: Array<LabeledOptionDto<ValidatorScope>> = [
   { value: 'products', label: VALIDATOR_SCOPE_LABELS['products'] },
   { value: 'image-studio', label: VALIDATOR_SCOPE_LABELS['image-studio'] },
   { value: 'prompt-exploder', label: VALIDATOR_SCOPE_LABELS['prompt-exploder'] },

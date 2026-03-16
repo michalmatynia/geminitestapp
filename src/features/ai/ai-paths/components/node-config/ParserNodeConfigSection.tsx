@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AiNode, ParserConfig, ParserSampleState } from '@/shared/lib/ai-paths';
 import {
   PARSER_PATH_OPTIONS,
@@ -178,10 +179,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
     () =>
       Array.from(
         new Map(
-          suggestedPathOptions.map((option: { value: string; label: string }) => [
-            option.value,
-            option,
-          ])
+          suggestedPathOptions.map((option: LabeledOptionDto<string>) => [option.value, option])
         ).values()
       ),
     [suggestedPathOptions]

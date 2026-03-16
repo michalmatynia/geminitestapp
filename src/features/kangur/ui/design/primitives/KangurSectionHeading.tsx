@@ -48,7 +48,7 @@ export function KangurSectionHeading({
   return (
     <div
       className={cn(
-        'flex gap-3',
+        'flex kangur-panel-gap',
         isInline ? 'flex-row' : 'flex-col',
         alignmentClassName,
         className

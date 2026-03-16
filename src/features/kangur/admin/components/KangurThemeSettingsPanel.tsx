@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   FONT_OPTIONS,
   ThemeSettingsFieldsSection,
@@ -36,7 +37,7 @@ const FONT_WEIGHT_OPTIONS = [
   { value: '600', label: 'Semibold (600)' },
   { value: '700', label: 'Bold (700)' },
   { value: '800', label: 'Extrabold (800)' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 const HOME_ACTION_FIELD_GROUPS = [
   { prefix: 'homeActionLessons', label: 'Lessons' },

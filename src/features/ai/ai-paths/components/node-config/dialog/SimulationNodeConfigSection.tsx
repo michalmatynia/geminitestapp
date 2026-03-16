@@ -1,5 +1,6 @@
 'use client';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { DB_COLLECTION_OPTIONS } from '@/shared/lib/ai-paths';
 import { Button, Input, SelectSimple, Card, FormField } from '@/shared/ui';
 
@@ -31,8 +32,8 @@ export function SimulationNodeConfigSection(): React.JSX.Element | null {
   const showIdHint = Boolean(trimmedEntityId) && (looksLikeUuid ? idLength !== 36 : false);
 
   const collectionOptions = DB_COLLECTION_OPTIONS.filter(
-    (opt: { value: string }): boolean => opt.value !== 'custom'
-  ).map((opt: { value: string; label: string }) => ({
+    (opt: LabeledOptionDto<string>): boolean => opt.value !== 'custom'
+  ).map((opt: LabeledOptionDto<string>) => ({
     value: opt.value,
     label: opt.label,
   }));

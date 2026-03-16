@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
 import { Badge, Button, SelectSimple, Textarea } from '@/features/kangur/shared/ui';
 
@@ -36,24 +37,24 @@ const POINT_VALUE_OPTIONS = [
   { value: '3', label: '3 pts' },
   { value: '4', label: '4 pts' },
   { value: '5', label: '5 pts' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 const PRESENTATION_LAYOUT_OPTIONS = [
   { value: 'classic', label: 'Classic stack' },
   { value: 'split-illustration-left', label: 'Illustration left' },
   { value: 'split-illustration-right', label: 'Illustration right' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 const CHOICE_STYLE_OPTIONS = [
   { value: 'list', label: 'Choice list' },
   { value: 'grid', label: 'Choice grid' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 const QUESTION_WORKFLOW_OPTIONS = [
   { value: 'draft', label: 'Draft' },
   { value: 'ready', label: 'Ready to publish' },
   { value: 'published', label: 'Published' },
-] as const;
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 type Props = {
   formData: QuestionFormData;

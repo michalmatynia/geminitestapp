@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import type { LabeledOptionDto } from './base';
+
 export const cssAnimationEffectSchema = z.enum([
   'none',
   'fade',
@@ -89,7 +91,7 @@ export const DEFAULT_CSS_ANIMATION_CONFIG: CssAnimationConfig = {
   replayOnExit: false,
 };
 
-export const CSS_ANIMATION_EFFECTS: { label: string; value: CssAnimationEffect }[] = [
+export const CSS_ANIMATION_EFFECTS: Array<LabeledOptionDto<CssAnimationEffect>> = [
   { label: 'None', value: 'none' },
   { label: 'Fade', value: 'fade' },
   { label: 'Fade Up', value: 'fade-up' },
@@ -116,7 +118,7 @@ export const CSS_ANIMATION_EFFECTS: { label: string; value: CssAnimationEffect }
   { label: 'Reveal', value: 'reveal' },
 ];
 
-export const CSS_ANIMATION_TRIGGERS: { label: string; value: CssAnimationTrigger }[] = [
+export const CSS_ANIMATION_TRIGGERS: Array<LabeledOptionDto<CssAnimationTrigger>> = [
   { label: 'None', value: 'none' },
   { label: 'On load', value: 'load' },
   { label: 'On hover', value: 'hover' },
@@ -126,21 +128,21 @@ export const CSS_ANIMATION_TRIGGERS: { label: string; value: CssAnimationTrigger
   { label: 'In viewport', value: 'viewport' },
 ];
 
-export const CSS_ANIMATION_DIRECTIONS: { label: string; value: CssAnimationDirection }[] = [
+export const CSS_ANIMATION_DIRECTIONS: Array<LabeledOptionDto<CssAnimationDirection>> = [
   { label: 'Normal', value: 'normal' },
   { label: 'Reverse', value: 'reverse' },
   { label: 'Alternate', value: 'alternate' },
   { label: 'Alternate reverse', value: 'alternate-reverse' },
 ];
 
-export const CSS_ANIMATION_FILL_MODES: { label: string; value: CssAnimationFillMode }[] = [
+export const CSS_ANIMATION_FILL_MODES: Array<LabeledOptionDto<CssAnimationFillMode>> = [
   { label: 'None', value: 'none' },
   { label: 'Forwards', value: 'forwards' },
   { label: 'Backwards', value: 'backwards' },
   { label: 'Both', value: 'both' },
 ];
 
-export const CSS_EASINGS: { label: string; value: string }[] = [
+export const CSS_EASINGS: Array<LabeledOptionDto<string>> = [
   { label: 'Ease', value: 'ease' },
   { label: 'Ease in', value: 'ease-in' },
   { label: 'Ease out', value: 'ease-out' },

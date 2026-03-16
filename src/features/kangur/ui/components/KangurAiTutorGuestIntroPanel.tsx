@@ -78,9 +78,9 @@ export function KangurAiTutorGuestIntroPanel({
         <KangurAiTutorWarmOverlayPanel
           tone='modal'
           padding='lg'
-          className='flex max-h-[calc(100vh-6rem)] flex-col gap-4 overflow-y-auto'
+          className='flex max-h-[calc(100vh-6rem)] flex-col kangur-panel-gap overflow-y-auto'
         >
-          <div className='flex items-center justify-between gap-3'>
+          <div className='flex items-center justify-between kangur-panel-gap'>
             <KangurAiTutorChromeKicker>
               {guestTutorLabel}
             </KangurAiTutorChromeKicker>
@@ -99,7 +99,7 @@ export function KangurAiTutorGuestIntroPanel({
                 <br />
                 Jak chcesz, mogę pokazać Ci, jak odnaleźć się na Stronie.
               </p>
-              <div className='flex items-center gap-4 text-[12px] font-semibold'>
+              <div className='flex items-center kangur-panel-gap text-[12px] font-semibold'>
                 <button
                   type='button'
                   data-testid='kangur-ai-tutor-onboarding-accept'

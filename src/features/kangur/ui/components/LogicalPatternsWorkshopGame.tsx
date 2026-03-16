@@ -468,7 +468,7 @@ export default function LogicalPatternsWorkshopGame({
       onDragEnd={onDragEnd}
       onDragStart={() => setSelectedTokenId(null)}
     >
-      <KangurPracticeGameStage className='gap-4 mx-auto max-w-3xl'>
+      <KangurPracticeGameStage className='mx-auto max-w-3xl'>
         <KangurPracticeGameProgress
           accent='violet'
           currentRound={roundIndex}
@@ -508,7 +508,7 @@ export default function LogicalPatternsWorkshopGame({
           </div>
         </KangurInfoCard>
 
-        <div className='flex w-full flex-col gap-3'>
+        <div className='flex w-full flex-col kangur-panel-gap'>
           <div className='flex items-center justify-between'>
             <p className='text-xs font-semibold uppercase tracking-[0.16em] text-violet-700'>
               Sekwencja
@@ -720,7 +720,7 @@ export default function LogicalPatternsWorkshopGame({
           ) : null}
         </div>
 
-        <div className='flex w-full flex-col gap-3'>
+        <div className='flex w-full flex-col kangur-panel-gap'>
           <div className='flex items-center justify-between'>
             <p className='text-xs font-semibold uppercase tracking-[0.16em] text-violet-700'>
               Kafelki
@@ -801,7 +801,7 @@ export default function LogicalPatternsWorkshopGame({
           </Droppable>
         </div>
 
-        <div className='flex w-full flex-wrap items-center justify-between gap-3'>
+        <div className='flex w-full flex-wrap items-center justify-between kangur-panel-gap'>
           <div className='flex flex-wrap gap-2'>
             <KangurButton
               size='sm'

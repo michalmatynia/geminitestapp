@@ -4,6 +4,7 @@ import { ArrowLeft, RefreshCcw, Settings2 } from 'lucide-react';
 import Link from 'next/link';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import type {
   CaseResolverOcrModelsResponse,
   CaseResolverSettings,
@@ -105,7 +106,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
   }, [hydrationSignature, loadedFrom, parsedSettings]);
 
   const modelOptions = useMemo(() => {
-    const options: Array<{ value: string; label: string; description: string; group: string }> = [];
+    const options: Array<LabeledOptionWithDescriptionDto<string> & { group: string }> = [];
     const seen = new Set<string>();
     const resolveModelGroup = (modelId: string): string =>
       detectCaseResolverOcrProvider(modelId) === 'ollama' ? 'Ollama models' : 'Other models';

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn, getTextContent, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
 
 export interface SegmentedControlOption<T extends string> {
   value: T;
@@ -50,6 +50,21 @@ export function SegmentedControl<T extends string>({
     optionRefs.current[index]?.focus();
   };
 
+  const allowFallbackLabel = !ariaLabel && !ariaLabelledBy;
+  const { ariaLabel: resolvedGroupLabel, hasAccessibleLabel: hasGroupLabel } =
+    resolveAccessibleLabel({
+    children: null,
+    ariaLabel,
+    ariaLabelledBy,
+    fallbackLabel: allowFallbackLabel ? 'Selection options' : undefined,
+  });
+  if (!hasGroupLabel) {
+    warnMissingAccessibleLabel({
+      componentName: 'SegmentedControl',
+      hasAccessibleLabel: hasGroupLabel,
+    });
+  }
+
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (options.length === 0) return;
 
@@ -78,7 +93,7 @@ export function SegmentedControl<T extends string>({
   return (
     <div
       role='radiogroup'
-      aria-label={ariaLabel}
+      aria-label={resolvedGroupLabel}
       aria-labelledby={ariaLabelledBy}
       onKeyDown={handleKeyDown}
       className={cn(
@@ -89,9 +104,9 @@ export function SegmentedControl<T extends string>({
       {options.map((option, index) => {
         const isActive = value === option.value;
         const Icon = option.icon;
-        const derivedLabel =
-          typeof option.label === 'string' ? option.label.trim() : undefined;
-        const resolvedOptionLabel = option.ariaLabel ?? (derivedLabel || undefined);
+        const derivedLabel = getTextContent(option.label).trim();
+        const resolvedOptionLabel =
+          option.ariaLabel ?? (derivedLabel || undefined) ?? option.value;
 
         return (
           <button

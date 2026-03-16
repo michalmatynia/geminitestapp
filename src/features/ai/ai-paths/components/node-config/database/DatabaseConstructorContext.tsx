@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AiQuery, DatabasePresetOption, SchemaData } from '@/shared/contracts/database';
 import { internalError } from '@/shared/errors/app-error';
 import type {
@@ -46,7 +47,7 @@ export type DatabaseConstructorContextValue = {
   removeMapping: (index: number) => void;
   addMapping: () => void;
   availablePorts: string[];
-  uniqueTargetPathOptions: Array<{ label: string; value: string }>;
+  uniqueTargetPathOptions: Array<LabeledOptionDto<string>>;
   codeSnippets: string[];
   selectedSnippetIndex: number;
   setSelectedSnippetIndex: React.Dispatch<React.SetStateAction<number>>;

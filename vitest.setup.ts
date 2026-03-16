@@ -9,6 +9,7 @@ process.env['APP_DB_PROVIDER'] = 'mongodb';
 process.env['MONGODB_URI'] = 'mongodb://localhost:27017/test';
 process.env['MONGODB_DB'] = 'test';
 delete process.env['DATABASE_URL'];
+const baseEnv = { ...process.env };
 
 const THREE_DUPLICATE_IMPORT_WARNING = 'THREE.WARNING: Multiple instances of Three.js being imported.';
 const QUIET_TEST_LOG_PATTERNS = [
@@ -36,6 +37,22 @@ const originalConsoleError = console.error.bind(console);
 const originalWindow = typeof window !== 'undefined' ? window : undefined;
 const originalLocalStorage = originalWindow?.localStorage;
 const originalSessionStorage = originalWindow?.sessionStorage;
+const originalMatchMedia = originalWindow?.matchMedia;
+
+if (typeof HTMLMediaElement !== 'undefined') {
+  Object.defineProperty(HTMLMediaElement.prototype, 'pause', {
+    configurable: true,
+    value: vi.fn(),
+  });
+  Object.defineProperty(HTMLMediaElement.prototype, 'load', {
+    configurable: true,
+    value: vi.fn(),
+  });
+  Object.defineProperty(HTMLMediaElement.prototype, 'play', {
+    configurable: true,
+    value: vi.fn().mockResolvedValue(undefined),
+  });
+}
 
 if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon !== 'function') {
   Object.defineProperty(navigator, 'sendBeacon', {
@@ -723,6 +740,7 @@ if (typeof window !== 'undefined') {
     })),
   });
 }
+const fallbackMatchMedia = typeof window !== 'undefined' ? window.matchMedia : undefined;
 
 // Mock SystemLogsProvider to always provide static test data
 vi.mock('@/features/observability/context/SystemLogsContext', () => {
@@ -917,6 +935,23 @@ afterEach(async () => {
         value: originalSessionStorage,
       });
     }
+    if (originalMatchMedia) {
+      if (originalWindow.matchMedia !== originalMatchMedia) {
+        Object.defineProperty(originalWindow, 'matchMedia', {
+          configurable: true,
+          writable: true,
+          value: originalMatchMedia,
+        });
+      }
+    } else if (fallbackMatchMedia) {
+      if (originalWindow.matchMedia !== fallbackMatchMedia) {
+        Object.defineProperty(originalWindow, 'matchMedia', {
+          configurable: true,
+          writable: true,
+          value: fallbackMatchMedia,
+        });
+      }
+    }
     try {
       originalLocalStorage?.clear();
     } catch {
@@ -943,6 +978,15 @@ afterEach(async () => {
   }
   if (typeof window !== 'undefined' && window.fetch !== global.fetch) {
     window.fetch = global.fetch;
+  }
+
+  for (const key of Object.keys(process.env)) {
+    if (!(key in baseEnv)) {
+      delete process.env[key];
+    }
+  }
+  for (const [key, value] of Object.entries(baseEnv)) {
+    process.env[key] = value as string;
   }
 
   // Avoid leaking fake timers between tests.

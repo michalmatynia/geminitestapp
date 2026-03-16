@@ -15,6 +15,7 @@ import {
   KangurButton,
   KangurSectionEyebrow,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import type { KangurRouteAction } from '@/features/kangur/shared/contracts/kangur';
 
@@ -42,7 +43,7 @@ export function KangurLearnerProfileQuestSummaryWidget(): React.JSX.Element {
           : 'slate';
 
   return (
-    <section className='flex flex-col gap-4'>
+    <section className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       {dailyQuest ? (
         <div
           className='soft-card rounded-[28px] border border-indigo-200/80 px-4 py-4 text-left shadow-[0_18px_40px_-32px_rgba(79,99,216,0.35)]'

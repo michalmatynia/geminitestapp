@@ -4,6 +4,7 @@ export type NavItem = Omit<AdminNavItem, 'children'> & {
   icon?: React.ReactNode;
   onClick?: React.MouseEventHandler<HTMLAnchorElement>;
   action?: () => void;
+  required?: boolean;
   children?: NavItem[];
   sectionColor?: string;
 };
@@ -191,6 +192,96 @@ export const mapCustomNavToAdminNav = (
   return result;
 };
 
+type RequiredNavEntry = {
+  item: NavItem;
+  parentIds: string[];
+  baseSiblings: NavItem[];
+};
+
+const collectRequiredNavEntries = (
+  items: NavItem[],
+  parentIds: string[] = []
+): RequiredNavEntry[] => {
+  const entries: RequiredNavEntry[] = [];
+  items.forEach((item: NavItem) => {
+    if (item.required) {
+      entries.push({ item, parentIds, baseSiblings: items });
+    }
+    if (item.children && item.children.length > 0) {
+      entries.push(...collectRequiredNavEntries(item.children, [...parentIds, item.id]));
+    }
+  });
+  return entries;
+};
+
+const hasNavItem = (items: NavItem[], id: string): boolean => {
+  for (const item of items) {
+    if (item.id === id) return true;
+    if (item.children && item.children.length > 0) {
+      if (hasNavItem(item.children, id)) return true;
+    }
+  }
+  return false;
+};
+
+const insertByBaseOrder = (
+  children: NavItem[],
+  baseSiblings: NavItem[],
+  item: NavItem
+): NavItem[] => {
+  if (children.some((child: NavItem) => child.id === item.id)) return children;
+  const baseIds = baseSiblings.map((sibling: NavItem) => sibling.id);
+  const targetIndex = baseIds.indexOf(item.id);
+  if (targetIndex === -1) {
+    return [...children, item];
+  }
+  let insertAt = children.length;
+  for (let index = targetIndex + 1; index < baseIds.length; index += 1) {
+    const nextId = baseIds[index];
+    const existingIndex = children.findIndex((child: NavItem) => child.id === nextId);
+    if (existingIndex !== -1) {
+      insertAt = existingIndex;
+      break;
+    }
+  }
+  return [...children.slice(0, insertAt), item, ...children.slice(insertAt)];
+};
+
+const insertNavItemByParentPath = (
+  items: NavItem[],
+  parentIds: string[],
+  item: NavItem,
+  baseSiblings: NavItem[]
+): NavItem[] => {
+  if (parentIds.length === 0) {
+    return insertByBaseOrder(items, baseSiblings, item);
+  }
+  const [parentId, ...rest] = parentIds;
+  let updated = false;
+  const nextItems = items.map((node: NavItem) => {
+    if (node.id !== parentId) return node;
+    const children = node.children ?? [];
+    const nextChildren = insertNavItemByParentPath(children, rest, item, baseSiblings);
+    if (nextChildren === children) return node;
+    updated = true;
+    return {
+      ...node,
+      children: nextChildren,
+    };
+  });
+  return updated ? nextItems : items;
+};
+
+const ensureRequiredAdminMenuItems = (nav: NavItem[], baseNav: NavItem[]): NavItem[] => {
+  const requiredEntries = collectRequiredNavEntries(baseNav);
+  if (requiredEntries.length === 0) return nav;
+
+  return requiredEntries.reduce((current: NavItem[], entry: RequiredNavEntry) => {
+    if (hasNavItem(current, entry.item.id)) return current;
+    return insertNavItemByParentPath(current, entry.parentIds, entry.item, entry.baseSiblings);
+  }, nav);
+};
+
 export const buildAdminMenuFromCustomNav = (
   customNav: AdminMenuCustomNode[],
   baseNav: NavItem[]
@@ -198,7 +289,8 @@ export const buildAdminMenuFromCustomNav = (
   if (!customNav || customNav.length === 0) return baseNav;
   const baseMap = indexAdminNav(baseNav);
   const mapped = mapCustomNavToAdminNav(customNav, baseMap);
-  return mapped.length > 0 ? mapped : baseNav;
+  const merged = mapped.length > 0 ? mapped : baseNav;
+  return ensureRequiredAdminMenuItems(merged, baseNav);
 };
 
 export const applySectionColors = (

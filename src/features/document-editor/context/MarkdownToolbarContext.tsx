@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { internalError } from '@/shared/errors/app-error';
 
 import type { DocumentEditorMode } from '../types';
@@ -32,7 +33,7 @@ export type MarkdownToolbarContextValue = MarkdownToolbarActionHandlers & {
   onTextColorChange: (next: string) => void;
   fontFamily: string;
   onFontFamilyChange: (next: string) => void;
-  fileReferenceOptions?: Array<{ value: string; label: string }>;
+  fileReferenceOptions?: Array<LabeledOptionDto<string>>;
   onInsertFileReference?: (value: string) => void;
 };
 

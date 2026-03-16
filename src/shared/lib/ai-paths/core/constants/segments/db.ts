@@ -1,3 +1,5 @@
+import type { LabeledOptionDto } from '@/shared/contracts/base';
+
 export const DB_COLLECTION_OPTIONS = [
   { value: 'products', label: 'Products' },
   { value: 'product_drafts', label: 'Product Drafts' },
@@ -26,7 +28,7 @@ export const DB_COLLECTION_OPTIONS = [
   { value: 'auth_security_profiles', label: 'Auth Security Profiles' },
   { value: 'auth_login_challenges', label: 'Auth Login Challenges' },
   { value: 'custom', label: 'Custom (allowlisted only)' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export const CONTEXT_PRESET_FIELDS: Record<
   string,

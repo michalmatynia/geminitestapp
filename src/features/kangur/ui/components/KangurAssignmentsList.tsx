@@ -156,7 +156,7 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
           data-testid={`kangur-assignments-list-divider-${item.id}`}
           size='sm'
         />
-        <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+        <div className='flex flex-col kangur-panel-gap sm:flex-row sm:items-center sm:justify-between'>
           <KangurCardDescription as='div' size='sm'>
             {item.progressSummary}
           </KangurCardDescription>
@@ -205,7 +205,7 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
       className='h-full'
       padding='lg'
     >
-      <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+      <div className='flex flex-col kangur-panel-gap sm:flex-row sm:items-start sm:justify-between'>
         <div className='min-w-0'>
           <KangurCardTitle className='break-words text-lg' size='lg'>
             {item.title}
@@ -383,7 +383,7 @@ export function KangurAssignmentsList({
               padding='lg'
             />
           ) : (
-            <div className='grid grid-cols-1 gap-3'>
+            <div className='grid grid-cols-1 kangur-panel-gap'>
               {items.map((item) => (
                 <KangurAssignmentsListItemContext.Provider key={item.id} value={{ item }}>
                   <KangurAssignmentsListCompactCard />
@@ -425,7 +425,7 @@ export function KangurAssignmentsList({
               padding='lg'
             />
           ) : (
-            <div className='grid grid-cols-1 gap-3 xl:grid-cols-2'>
+            <div className='grid grid-cols-1 kangur-panel-gap xl:grid-cols-2'>
               {items.map((item) => (
                 <KangurAssignmentsListItemContext.Provider key={item.id} value={{ item }}>
                   <KangurAssignmentsListStandardCard />

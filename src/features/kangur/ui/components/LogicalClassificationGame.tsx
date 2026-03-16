@@ -549,7 +549,7 @@ export default function LogicalClassificationGame({
   }
 
   const stageContent = (
-    <KangurPracticeGameStage className='gap-4 mx-auto max-w-2xl'>
+    <KangurPracticeGameStage className='mx-auto max-w-2xl'>
         <KangurPracticeGameProgress
           accent='teal'
           currentRound={roundIndex}
@@ -616,7 +616,7 @@ export default function LogicalClassificationGame({
               </Droppable>
             </KangurInfoCard>
 
-            <div className='grid w-full grid-cols-1 gap-3 sm:grid-cols-2'>
+            <div className='grid w-full grid-cols-1 kangur-panel-gap sm:grid-cols-2'>
               {round.bins.map((bin) => {
                 const items = roundState.bins[bin.id] ?? [];
                 const expectedIds = expectedByBin[bin.id] ?? new Set<string>();
@@ -741,7 +741,7 @@ export default function LogicalClassificationGame({
           </KangurInfoCard>
         )}
 
-        <div className='flex w-full flex-wrap items-center justify-between gap-3'>
+        <div className='flex w-full flex-wrap items-center justify-between kangur-panel-gap'>
           <div className='flex flex-wrap gap-2'>
             {round.type === 'sort' ? (
               <KangurButton size='sm' type='button' variant='surface' onClick={resetRound} disabled={checked}>

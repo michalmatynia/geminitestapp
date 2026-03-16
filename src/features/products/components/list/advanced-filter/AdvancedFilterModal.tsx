@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useId } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   productAdvancedFilterGroupSchema,
   type ProductAdvancedFilterField,
@@ -26,7 +27,7 @@ interface AdvancedFilterModalProps {
   onClear: () => void;
   onSavePreset?: (name: string, filter: ProductAdvancedFilterGroup) => Promise<void> | void;
   fieldValueOptions?:
-    | Partial<Record<ProductAdvancedFilterField, Array<{ value: string; label: string }>>>
+    | Partial<Record<ProductAdvancedFilterField, Array<LabeledOptionDto<string>>>>
     | undefined;
 }
 

@@ -1,10 +1,11 @@
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { CmsSettingsField } from '@/features/cms/types/page-builder';
 
 // ---------------------------------------------------------------------------
 // Shared field helpers
 // ---------------------------------------------------------------------------
 
-export const COLOR_SCHEME_OPTIONS = [
+export const COLOR_SCHEME_OPTIONS: LabeledOptionDto<string>[] = [
   { label: 'Scheme 1', value: 'scheme-1' },
   { label: 'Scheme 2', value: 'scheme-2' },
   { label: 'Scheme 3', value: 'scheme-3' },
@@ -12,7 +13,7 @@ export const COLOR_SCHEME_OPTIONS = [
   { label: 'Scheme 5', value: 'scheme-5' },
 ];
 
-export const OVERFLOW_OPTIONS = [
+export const OVERFLOW_OPTIONS: LabeledOptionDto<string>[] = [
   { label: 'Visible', value: 'visible' },
   { label: 'Hidden', value: 'hidden' },
   { label: 'Auto', value: 'auto' },
@@ -20,7 +21,7 @@ export const OVERFLOW_OPTIONS = [
   { label: 'Clip', value: 'clip' },
 ];
 
-export const JUSTIFY_OPTIONS = [
+export const JUSTIFY_OPTIONS: LabeledOptionDto<string>[] = [
   { label: 'Start', value: 'start' },
   { label: 'Center', value: 'center' },
   { label: 'End', value: 'end' },
@@ -29,14 +30,14 @@ export const JUSTIFY_OPTIONS = [
   { label: 'Space evenly', value: 'space-evenly' },
 ];
 
-export const ALIGN_OPTIONS = [
+export const ALIGN_OPTIONS: LabeledOptionDto<string>[] = [
   { label: 'Start', value: 'start' },
   { label: 'Center', value: 'center' },
   { label: 'End', value: 'end' },
   { label: 'Stretch', value: 'stretch' },
 ];
 
-export const WRAP_OPTIONS = [
+export const WRAP_OPTIONS: LabeledOptionDto<string>[] = [
   { label: 'Wrap', value: 'wrap' },
   { label: 'No wrap', value: 'nowrap' },
 ];

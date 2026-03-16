@@ -27,6 +27,7 @@ import {
   KangurPageContainer,
   KangurPageShell,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 
@@ -391,7 +392,7 @@ function ParentDashboardContent(): React.JSX.Element {
         as='section'
         data-kangur-route-main='true'
         id='kangur-parent-dashboard-main'
-        className='max-w-2xl flex flex-col gap-6'
+        className={`max-w-2xl flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
       >
         <motion.div ref={heroAnchorRef} initial={false} animate={{ opacity: 1, y: 0 }}>
           <KangurParentDashboardHeroWidget

@@ -3,6 +3,7 @@
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   base64ToFile,
   dataUrlToFile,
@@ -49,7 +50,7 @@ const IMPORT_MIME_OPTIONS = [
   { value: 'image/webp', label: 'WebP' },
   { value: 'image/gif', label: 'GIF' },
   { value: 'image/svg+xml', label: 'SVG' },
-] as const;
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 const MOOD_ORDER = new Map<AgentPersonaMoodId, number>(
   AGENT_PERSONA_MOOD_PRESETS.map((preset, index) => [preset.id, index])
@@ -448,7 +449,7 @@ export function AgentPersonaMoodEditor({
                           }
                           aria-label='Base64 MIME'
                           title='Base64 MIME'
-                          className='h-10 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm text-foreground/90 focus:border-foreground/30 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:ring-offset-2'
+                          className='h-10 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm text-foreground/90 focus:border-foreground/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2'
                         >
                           {IMPORT_MIME_OPTIONS.map((option) => (
                             <option key={option.value} value={option.value}>
@@ -502,7 +503,7 @@ export function AgentPersonaMoodEditor({
                     onChange={(event) => setNextMoodId(event.target.value)}
                     aria-label='Add mood'
                     title='Add mood'
-                    className='h-10 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm text-foreground/90 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:ring-offset-2 focus:border-foreground/30 disabled:cursor-not-allowed disabled:opacity-50'
+                    className='h-10 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm text-foreground/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus:border-foreground/30 disabled:cursor-not-allowed disabled:opacity-50'
                   >
                     {missingMoodPresets.map((preset) => (
                       <option key={preset.id} value={preset.id}>

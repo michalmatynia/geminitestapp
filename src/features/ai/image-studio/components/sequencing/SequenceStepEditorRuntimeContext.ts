@@ -1,12 +1,13 @@
 'use client';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ImageStudioSequenceStep } from '@/features/ai/image-studio/utils/studio-settings';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 
 export type SequenceStepEditorRuntimeValue = {
   activeGenerationModel: string;
-  cropShapeOptions: Array<{ value: string; label: string }>;
+  cropShapeOptions: Array<LabeledOptionDto<string>>;
   cropShapeGeometryById: Record<
     string,
     {

@@ -20,6 +20,7 @@ import {
   productAdvancedFilterGroupSchema,
   type ProductWithImages,
 } from '@/shared/contracts/products';
+import type { IdDataDto } from '@/shared/contracts/base';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api } from '@/shared/lib/api-client';
@@ -139,7 +140,7 @@ export function useCreateProductMutation(): UseMutationResult<unknown, Error, Fo
 export function useUpdateProductMutation(): UseMutationResult<
   ProductWithImages | null,
   Error,
-  { id: string; data: Partial<ProductWithImages> | FormData; originalSku?: string | null },
+  IdDataDto<Partial<ProductWithImages> | FormData> & { originalSku?: string | null },
   unknown
   > {
   const parseUpdateError = async (response: Response): Promise<string> => {
@@ -187,9 +188,7 @@ export function useUpdateProductMutation(): UseMutationResult<
       id,
       data,
       originalSku,
-    }: {
-      id: string;
-      data: Partial<ProductWithImages> | FormData;
+    }: IdDataDto<Partial<ProductWithImages> | FormData> & {
       originalSku?: string | null;
     }): Promise<ProductWithImages> => {
       if (data instanceof FormData) {

@@ -23,9 +23,9 @@ describe('kangur routing config', () => {
     expect(resolveKangurPageKeyFromSlug('PROFILE')).toBe('LearnerProfile');
   });
 
-  it('does not resolve the removed tests slug as a Kangur shell page', () => {
-    expect(resolveKangurPageKeyFromSlug('tests')).toBeNull();
-    expect(resolveKangurPageKeyFromSlug('TESTS')).toBeNull();
+  it('resolves the tests slug as a Kangur shell page', () => {
+    expect(resolveKangurPageKeyFromSlug('tests')).toBe('Tests');
+    expect(resolveKangurPageKeyFromSlug('TESTS')).toBe('Tests');
   });
 
   it('uses the main Kangur page behind the compatibility login slug', () => {

@@ -4,6 +4,12 @@ import * as React from 'react';
 
 import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/features/kangur/shared/utils';
 
+type DataAttributes = {
+  'data-testid'?: string;
+  'data-doc-id'?: string;
+  'data-doc-alias'?: string;
+};
+
 import {
   KANGUR_SEGMENTED_CONTROL_ITEM_ACTIVE_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_ITEM_CLASSNAME,
@@ -64,7 +70,8 @@ export const kangurButtonVariants = cva(
 );
 
 export type KangurButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
-  VariantProps<typeof kangurButtonVariants> & {
+  VariantProps<typeof kangurButtonVariants> &
+  DataAttributes & {
     asChild?: boolean;
   };
 
@@ -81,6 +88,9 @@ export const KangurButton = React.forwardRef<HTMLButtonElement, KangurButtonProp
       disabled,
       children,
       title,
+      'data-testid': dataTestId,
+      'data-doc-id': dataDocId,
+      'data-doc-alias': dataDocAlias,
       'aria-label': ariaLabelProp,
       'aria-labelledby': ariaLabelledByProp,
       ...props
@@ -104,6 +114,10 @@ export const KangurButton = React.forwardRef<HTMLButtonElement, KangurButtonProp
       ariaLabel: ariaLabelProp,
       ariaLabelledBy: ariaLabelledByProp,
       title,
+      fallbackLabel:
+        (typeof dataDocAlias === 'string' ? dataDocAlias : undefined) ||
+        (typeof dataDocId === 'string' ? dataDocId : undefined) ||
+        (typeof dataTestId === 'string' ? dataTestId : undefined),
     });
     if (!hasAccessibleLabel && !hasText) {
       warnMissingAccessibleLabel({ componentName: 'KangurButton', hasAccessibleLabel });
@@ -119,6 +133,9 @@ export const KangurButton = React.forwardRef<HTMLButtonElement, KangurButtonProp
         aria-label={resolvedAriaLabel}
         aria-labelledby={ariaLabelledByProp}
         title={title}
+        data-testid={dataTestId}
+        data-doc-id={dataDocId}
+        data-doc-alias={dataDocAlias}
         ref={ref}
       >
         {children}

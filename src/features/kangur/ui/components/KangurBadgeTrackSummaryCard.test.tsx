@@ -47,7 +47,7 @@ describe('KangurBadgeTrackSummaryCard', () => {
 
     render(
       <KangurBadgeTrackSummaryCard dataTestId='badge-track-card'>
-        <div className='flex flex-col gap-3'>
+        <div className='flex flex-col kangur-panel-gap'>
           <KangurBadgeTrackCardHeader accent={accent} track={track} />
           <KangurBadgeTrackCardBody track={track} />
         </div>
@@ -83,7 +83,7 @@ describe('KangurBadgeTrackSummaryCard', () => {
       'w-full',
       'items-start',
       'justify-between',
-      'gap-3',
+      'kangur-panel-gap',
     );
     expect(screen.getByText('2/4 odznak').parentElement).toHaveClass('space-y-1');
   });
@@ -93,7 +93,7 @@ describe('KangurBadgeTrackSummaryCard', () => {
 
     render(
       <KangurBadgeTrackSummaryCard cardClassName='rounded-[24px] text-left' dataTestId='badge-track-card'>
-        <div className='flex flex-col gap-3'>
+        <div className='flex flex-col kangur-panel-gap'>
           <KangurBadgeTrackCardHeader
             accent={accent}
             track={track}

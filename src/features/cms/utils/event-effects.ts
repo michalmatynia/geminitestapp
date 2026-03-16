@@ -5,10 +5,11 @@ import type {
   CmsHoverEffect,
   CmsScrollBehavior,
 } from '@/shared/contracts/cms';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 import type React from 'react';
 
-export const EVENT_HOVER_EFFECT_OPTIONS: Array<{ label: string; value: CmsHoverEffect }> = [
+export const EVENT_HOVER_EFFECT_OPTIONS: Array<LabeledOptionDto<CmsHoverEffect>> = [
   { label: 'None', value: 'none' },
   { label: 'Lift', value: 'lift' },
   { label: 'Lift 3D', value: 'lift-3d' },
@@ -16,18 +17,18 @@ export const EVENT_HOVER_EFFECT_OPTIONS: Array<{ label: string; value: CmsHoverE
   { label: 'Glow', value: 'glow' },
 ];
 
-export const EVENT_CLICK_ACTION_OPTIONS: Array<{ label: string; value: CmsClickAction }> = [
+export const EVENT_CLICK_ACTION_OPTIONS: Array<LabeledOptionDto<CmsClickAction>> = [
   { label: 'None', value: 'none' },
   { label: 'Open URL', value: 'navigate' },
   { label: 'Scroll To', value: 'scroll' },
 ];
 
-export const EVENT_CLICK_TARGET_OPTIONS: Array<{ label: string; value: CmsClickTarget }> = [
+export const EVENT_CLICK_TARGET_OPTIONS: Array<LabeledOptionDto<CmsClickTarget>> = [
   { label: 'Same tab', value: '_self' },
   { label: 'New tab', value: '_blank' },
 ];
 
-export const EVENT_SCROLL_BEHAVIOR_OPTIONS: Array<{ label: string; value: CmsScrollBehavior }> = [
+export const EVENT_SCROLL_BEHAVIOR_OPTIONS: Array<LabeledOptionDto<CmsScrollBehavior>> = [
   { label: 'Smooth', value: 'smooth' },
   { label: 'Instant', value: 'auto' },
 ];

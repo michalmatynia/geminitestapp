@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurLearnerInteractionHistory } from '@/features/kangur/services/ports';
 import { KANGUR_LESSONS_SETTING_KEY, parseKangurLessons } from '@/features/kangur/settings';
@@ -19,7 +20,10 @@ import {
   KangurSummaryPanel,
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { ActivityTypes } from '@/shared/constants/observability';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
@@ -34,7 +38,7 @@ const INTERACTION_FILTER_OPTIONS = [
   { value: 'opened_task', label: 'Zadania' },
   { value: 'lesson_panel', label: 'Panele lekcji' },
   { value: 'session', label: 'Sesje' },
-] as const;
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -454,7 +458,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
   }
 
   return (
-    <div className='flex flex-col gap-5'>
+    <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <KangurPanelIntro
         description={
           monitoringContent?.summary ??
@@ -471,14 +475,14 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
         label='Czas w panelach lekcji'
       >
         {lessonPanelTimeCards.length > 0 ? (
-          <div className='mt-3 flex flex-col gap-3'>
+          <div className='mt-3 flex flex-col kangur-panel-gap'>
             {lessonPanelTimeCards.map((entry) => (
               <KangurInfoCard
                 key={entry.lesson.componentId}
                 className='rounded-[26px]'
                 padding='lg'
               >
-                <div className='flex flex-col gap-3'>
+                <div className='flex flex-col kangur-panel-gap'>
                   <div className='flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between'>
                     <div>
                       <div className='break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
@@ -540,7 +544,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
         label='Historia interakcji'
       >
         <div className='mt-3 rounded-[18px] border border-indigo-100/80 bg-white/70 p-4'>
-          <div className='flex flex-col gap-3'>
+          <div className='flex flex-col kangur-panel-gap'>
             <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
               <KangurMetaText tone='slate'>Filtry</KangurMetaText>
               <div
@@ -565,7 +569,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
                 ))}
               </div>
             </div>
-            <div className='grid gap-3 sm:grid-cols-3'>
+            <div className='grid kangur-panel-gap sm:grid-cols-3'>
               <div className='flex flex-col gap-2'>
                 <KangurMetaText tone='slate'>Data od</KangurMetaText>
                 <KangurTextField
@@ -634,7 +638,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
             title={filtersActive ? 'Brak wyników.' : 'Brak aktywności.'}
           />
         ) : (
-          <div className='mt-3 flex flex-col gap-3'>
+          <div className='mt-3 flex flex-col kangur-panel-gap'>
             {filteredInteractions.map((entry) => (
               <div
                 key={entry.id}

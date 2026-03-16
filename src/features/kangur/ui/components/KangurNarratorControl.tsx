@@ -419,7 +419,7 @@ export function KangurNarratorControl({
           srcLang={script.locale}
         />
       </audio>
-      <div className={cn('flex items-center', isIconMode ? 'gap-0' : 'flex-wrap gap-3')}>
+      <div className={cn('flex items-center', isIconMode ? 'gap-0' : 'flex-wrap kangur-panel-gap')}>
         <KangurButton
           type='button'
           onClick={handlePrimaryAction}

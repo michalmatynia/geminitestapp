@@ -304,6 +304,13 @@ describe('parent email auth service', () => {
       JSON.stringify({ notificationsEnabled: false })
     );
     findAuthUserByEmailMock.mockResolvedValue(null);
+    createAuthUserWithEmailMock.mockResolvedValue({
+      id: 'parent-suppressed-1',
+      email: 'suppressed-parent@example.com',
+      name: 'suppressed-parent',
+      passwordHash: 'hash',
+      emailVerified: new Date('2026-03-15T21:00:00.000Z'),
+    });
     createEmailVerificationChallengeMock.mockResolvedValue({
       id: 'verify-link-suppressed',
       expiresAt: new Date('2026-03-15T21:00:00.000Z'),
@@ -316,6 +323,7 @@ describe('parent email auth service', () => {
     });
 
     expect(sendAuthEmailMock).not.toHaveBeenCalled();
+    expect(createAuthUserWithEmailMock).toHaveBeenCalled();
     expect(result.notificationSuppressed).toBe(true);
   });
 

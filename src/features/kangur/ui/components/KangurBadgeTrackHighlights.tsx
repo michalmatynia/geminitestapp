@@ -159,7 +159,7 @@ export default function KangurBadgeTrackHighlights({
 
   return (
     <div
-      className={cn('grid gap-3 min-[360px]:grid-cols-2 lg:grid-cols-3', className)}
+      className={cn('grid kangur-panel-gap min-[360px]:grid-cols-2 lg:grid-cols-3', className)}
       data-testid={`${trackTestIdPrefix}-grid`}
     >
       {items.map((item, index) => {
@@ -173,7 +173,7 @@ export default function KangurBadgeTrackHighlights({
               dataTestId={`${trackTestIdPrefix}-${track.key}`}
               key={track.key}
             >
-              <div className={cn('flex flex-col gap-3', 'gap-2')}>
+              <div className={cn('flex flex-col kangur-panel-gap')}>
                 <KangurBadgeTrackCardHeader
                   accent={accent}
                   labelClassName='tracking-[0.16em]'

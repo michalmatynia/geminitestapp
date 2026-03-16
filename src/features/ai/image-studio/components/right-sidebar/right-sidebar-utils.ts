@@ -4,6 +4,7 @@ import type {
   ImageStudioSequenceCropStep,
   ImageStudioSequenceStep,
 } from '@/features/ai/image-studio/utils/studio-settings';
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { VectorShape, VectorTool } from '@/shared/lib/vector-drawing';
 
@@ -44,9 +45,7 @@ export const formatCanvasSizeLabel = (width: number | null, height: number | nul
   return `${Math.floor(width)} x ${Math.floor(height)}`;
 };
 
-export type CanvasSizePresetOption = {
-  value: string;
-  label: string;
+export type CanvasSizePresetOption = LabeledOptionWithDescriptionDto<string> & {
   description: string;
 };
 
@@ -94,12 +93,12 @@ export const parseCanvasSizePresetValue = (
   return { width, height };
 };
 
-export const CANVAS_RESIZE_DIRECTION_OPTIONS: Array<{
-  value: CanvasResizeDirection;
-  arrow: string;
-  label: string;
-  description: string;
-}> = [
+export const CANVAS_RESIZE_DIRECTION_OPTIONS: Array<
+  LabeledOptionWithDescriptionDto<CanvasResizeDirection> & {
+    description: string;
+    arrow: string;
+  }
+> = [
   {
     value: 'up-left',
     arrow: '^<',

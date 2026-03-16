@@ -137,7 +137,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
     pathname === '/admin/kangur' ||
     (pathname.startsWith('/admin/kangur/') &&
       !pathname.startsWith('/admin/kangur/lessons-manager'));
-  const mainPaddingClassName = isEmbeddedKangurRoute ? 'pt-16' : 'p-4 pt-16';
+  const mainPaddingClassName = isEmbeddedKangurRoute ? 'pt-6' : 'p-4 pt-16';
   const mainClassName = `min-h-0 flex-1 min-w-0 max-w-full overflow-x-hidden overflow-y-auto ${mainPaddingClassName}`;
 
   return (
@@ -189,7 +189,11 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
             </div>
           </div>
         </header>
-        <main id='app-content' tabIndex={-1} className={`${mainClassName} focus:outline-none`}>
+        <main
+          id='app-content'
+          tabIndex={-1}
+          className={`${mainClassName} focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background`}
+        >
           <QueryErrorBoundary>
             <div className='min-w-0 max-w-full'>{children}</div>
           </QueryErrorBoundary>

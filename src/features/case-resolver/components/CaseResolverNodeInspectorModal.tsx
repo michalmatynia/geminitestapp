@@ -1,6 +1,7 @@
 import { Split } from 'lucide-react';
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   CASE_RESOLVER_JOIN_MODE_OPTIONS,
   CASE_RESOLVER_NODE_ROLE_OPTIONS,
@@ -86,9 +87,9 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
 
   const edgeFromPort = selectedEdge?.sourceHandle;
   const edgeToPort = selectedEdge?.targetHandle;
-  const outputPreviewRows = React.useMemo((): Array<{ label: string; value: string }> => {
+  const outputPreviewRows = React.useMemo((): Array<LabeledOptionDto<string>> => {
     if (!selectedPromptOutputPreview) return [];
-    const rows: Array<{ label: string; value: string }> = [
+    const rows: Array<LabeledOptionDto<string>> = [
       { label: 'wysiwygText', value: selectedPromptOutputPreview.wysiwygText || '' },
       { label: 'plaintextContent', value: selectedPromptOutputPreview.plaintextContent || '' },
       { label: 'plainText', value: selectedPromptOutputPreview.plainText || '' },

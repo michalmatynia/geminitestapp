@@ -1,5 +1,6 @@
 import { promptExploderSafeJsonStringify } from './formatting';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
   PromptExploderLogicalComparator,
   PromptExploderLogicalCondition,
@@ -24,10 +25,9 @@ export const createLogicalCondition = (
 
 // ── Option constants ────────────────────────────────────────────────────────
 
-export const PROMPT_EXPLODER_LOGICAL_OPERATOR_OPTIONS: Array<{
-  value: PromptExploderLogicalOperator | 'none';
-  label: string;
-}> = [
+export const PROMPT_EXPLODER_LOGICAL_OPERATOR_OPTIONS: Array<
+  LabeledOptionDto<PromptExploderLogicalOperator | 'none'>
+> = [
   { value: 'none', label: 'No condition' },
   { value: 'if', label: 'If' },
   { value: 'only_if', label: 'Only if' },
@@ -35,10 +35,9 @@ export const PROMPT_EXPLODER_LOGICAL_OPERATOR_OPTIONS: Array<{
   { value: 'when', label: 'When' },
 ];
 
-export const PROMPT_EXPLODER_LOGICAL_COMPARATOR_OPTIONS: Array<{
-  value: PromptExploderLogicalComparator;
-  label: string;
-}> = [
+export const PROMPT_EXPLODER_LOGICAL_COMPARATOR_OPTIONS: Array<
+  LabeledOptionDto<PromptExploderLogicalComparator>
+> = [
   { value: 'truthy', label: 'is true' },
   { value: 'falsy', label: 'is false' },
   { value: 'equals', label: '=' },
@@ -50,10 +49,9 @@ export const PROMPT_EXPLODER_LOGICAL_COMPARATOR_OPTIONS: Array<{
   { value: 'contains', label: 'contains' },
 ];
 
-export const PROMPT_EXPLODER_LOGICAL_JOIN_OPTIONS: Array<{
-  value: PromptExploderLogicalJoin;
-  label: string;
-}> = [
+export const PROMPT_EXPLODER_LOGICAL_JOIN_OPTIONS: Array<
+  LabeledOptionDto<PromptExploderLogicalJoin>
+> = [
   { value: 'and', label: 'AND' },
   { value: 'or', label: 'OR' },
 ];

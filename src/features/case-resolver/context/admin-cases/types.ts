@@ -16,6 +16,7 @@ import type {
   CaseReferencesFilter,
   CaseListViewDefaults,
 } from '@/shared/contracts/case-resolver';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 export type {
   CaseResolverCategory,
@@ -142,12 +143,12 @@ export type AdminCaseResolverCasesContextValue = {
   caseResolverTags: CaseResolverTag[];
   caseResolverIdentifiers: CaseResolverIdentifier[];
   caseResolverCategories: CaseResolverCategory[];
-  caseResolverTagOptions: Array<{ value: string; label: string }>;
-  caseResolverCategoryOptions: Array<{ value: string; label: string }>;
-  parentCaseOptions: Array<{ value: string; label: string }>;
-  caseReferenceOptions: Array<{ value: string; label: string }>;
-  caseIdentifierOptions: Array<{ value: string; label: string }>;
-  folderOptions: Array<{ value: string; label: string }>;
+  caseResolverTagOptions: Array<LabeledOptionDto<string>>;
+  caseResolverCategoryOptions: Array<LabeledOptionDto<string>>;
+  parentCaseOptions: Array<LabeledOptionDto<string>>;
+  caseReferenceOptions: Array<LabeledOptionDto<string>>;
+  caseIdentifierOptions: Array<LabeledOptionDto<string>>;
+  folderOptions: Array<LabeledOptionDto<string>>;
   isLoading: boolean;
   casesLoadState: CaseResolverCasesLoadState;
   casesLoadMessage: string | null;

@@ -5,6 +5,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Viewer3D } from '@/features/viewer3d';
 import { Asset3DPreviewModal } from '@/features/viewer3d';
 import { useAsset3DById } from '@/features/viewer3d';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ManagedImageSlot } from '@/shared/contracts/image-slots';
 import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
@@ -399,7 +400,7 @@ export function RangeField(
 
 export function SelectField(
   props: FieldProps<string> & {
-    options: { label: string; value: string }[];
+    options: Array<LabeledOptionDto<string>>;
     placeholder?: string;
   }
 ): React.JSX.Element {

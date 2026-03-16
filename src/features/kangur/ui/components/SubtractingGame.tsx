@@ -23,6 +23,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
+  KANGUR_PANEL_GAP_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import {
@@ -212,7 +213,7 @@ export default function SubtractingGame({
       />
       <div className='w-full'>
         <KangurGlassPanel
-          className='flex w-full flex-col items-center gap-4'
+          className={cn('flex w-full flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
           data-testid='subtracting-game-round-shell'
           padding='lg'
           surface='solid'

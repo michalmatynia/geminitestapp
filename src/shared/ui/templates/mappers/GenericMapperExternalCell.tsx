@@ -1,11 +1,12 @@
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { SelectSimple } from '../../select-simple';
 
 export type GenericMapperExternalCellProps = {
   value: string | null;
   onChange: (value: string | null) => void;
-  options: Array<{ value: string; label: string }>;
+  options: Array<LabeledOptionDto<string>>;
   disabled: boolean;
 };
 

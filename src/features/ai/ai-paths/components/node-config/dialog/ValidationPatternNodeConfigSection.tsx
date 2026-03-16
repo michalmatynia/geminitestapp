@@ -3,6 +3,7 @@
 import React from 'react';
 import { z } from 'zod';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { PromptValidationRule, PromptValidationScope } from '@/shared/contracts/prompt-engine';
 import { promptValidationRuleSchema } from '@/shared/contracts/prompt-engine';
 import {
@@ -42,17 +43,17 @@ type ValidationPatternConfigDraft = {
 const SOURCE_OPTIONS = [
   { value: 'global_stack', label: 'Global Validation Stack' },
   { value: 'path_local', label: 'Path-Local Validation List' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 const RUNTIME_MODE_OPTIONS = [
   { value: 'validate_only', label: 'Validate Only' },
   { value: 'validate_and_autofix', label: 'Validate + Autofix' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 const FAIL_POLICY_OPTIONS = [
   { value: 'block_on_error', label: 'Block On Errors' },
   { value: 'report_only', label: 'Report Only' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 const INPUT_PORT_OPTIONS = [
   { value: 'auto', label: 'Auto (value/prompt/result/context)' },
@@ -60,14 +61,14 @@ const INPUT_PORT_OPTIONS = [
   { value: 'prompt', label: 'prompt' },
   { value: 'result', label: 'result' },
   { value: 'context', label: 'context' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 const OUTPUT_PORT_OPTIONS = [
   { value: 'value', label: 'value' },
   { value: 'result', label: 'result' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
-const SCOPE_OPTIONS: Array<{ value: PromptValidationScope; label: string }> = [
+const SCOPE_OPTIONS: Array<LabeledOptionDto<PromptValidationScope>> = [
   { value: 'global', label: 'Global' },
   { value: 'image_studio_prompt', label: 'Image Studio Prompt' },
   { value: 'image_studio_extraction', label: 'Image Studio Extraction' },

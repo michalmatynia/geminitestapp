@@ -37,12 +37,14 @@ export type KangurCaptchaVerificationResult = {
 export const verifyKangurParentCaptcha = async ({
   token,
   request,
+  requireCaptcha,
 }: {
   token: string | undefined;
   request: NextRequest;
+  requireCaptcha?: boolean;
 }): Promise<KangurCaptchaVerificationResult> => {
   const { siteKey, secretKey } = resolveKangurCaptchaConfig();
-  const required = Boolean(siteKey && secretKey);
+  const required = Boolean(siteKey && secretKey) && (requireCaptcha ?? true);
 
   if (!required) {
     return { ok: true, required: false };

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
   CaseResolverCategory,
   CaseResolverIdentifier,
@@ -91,7 +92,7 @@ export function useAdminCaseResolverCasesRuntime(): AdminCaseResolverCasesRuntim
     [rawCaseResolverCategories]
   );
 
-  const caseResolverTagOptions = useMemo<Array<{ value: string; label: string }>>(
+  const caseResolverTagOptions = useMemo<Array<LabeledOptionDto<string>>>(
     () =>
       caseResolverTags.map((tag: CaseResolverTag) => ({
         value: tag.id,
@@ -100,7 +101,7 @@ export function useAdminCaseResolverCasesRuntime(): AdminCaseResolverCasesRuntim
     [caseResolverTags]
   );
 
-  const caseResolverCategoryOptions = useMemo<Array<{ value: string; label: string }>>(() => {
+  const caseResolverCategoryOptions = useMemo<Array<LabeledOptionDto<string>>>(() => {
     const byId = new Map<string, CaseResolverCategory>(
       caseResolverCategories.map(
         (category: CaseResolverCategory): [string, CaseResolverCategory] => [category.id, category]
@@ -439,7 +440,7 @@ export function useAdminCaseResolverCasesRuntime(): AdminCaseResolverCasesRuntim
     setDidHydrateCaseListViewDefaults,
   ]);
 
-  const caseIdentifierOptions = useMemo<Array<{ value: string; label: string }>>(
+  const caseIdentifierOptions = useMemo<Array<LabeledOptionDto<string>>>(
     () =>
       caseResolverIdentifiers.map((identifierRecord: CaseResolverIdentifier) => {
         const id = identifierRecord.id;
@@ -458,7 +459,7 @@ export function useAdminCaseResolverCasesRuntime(): AdminCaseResolverCasesRuntim
     [caseResolverIdentifiers]
   );
 
-  const caseReferenceOptions = useMemo<Array<{ value: string; label: string }>>(
+  const caseReferenceOptions = useMemo<Array<LabeledOptionDto<string>>>(
     () =>
       workspace.files
         .filter((file) => file.fileType === 'case')
@@ -470,7 +471,7 @@ export function useAdminCaseResolverCasesRuntime(): AdminCaseResolverCasesRuntim
     [workspace.files]
   );
 
-  const parentCaseOptions = useMemo<Array<{ value: string; label: string }>>(
+  const parentCaseOptions = useMemo<Array<LabeledOptionDto<string>>>(
     () => [{ value: '__none__', label: 'No parent (root case)' }, ...caseReferenceOptions],
     [caseReferenceOptions]
   );

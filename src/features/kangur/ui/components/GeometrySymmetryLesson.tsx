@@ -31,7 +31,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
     {
       title: 'Co to jest symetria?',
       content: (
-        <div className='flex flex-col gap-4 text-center'>
+        <div className='flex flex-col kangur-panel-gap text-center'>
           <p className='[color:var(--kangur-page-text)]'>
             Figura jest <strong>symetryczna</strong>, gdy po złożeniu na pół obie strony pasuja do
             siebie.
@@ -49,7 +49,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
     {
       title: 'Symetria lustrzana',
       content: (
-        <div className='flex flex-col gap-4 text-center'>
+        <div className='flex flex-col kangur-panel-gap text-center'>
           <p className='[color:var(--kangur-page-text)]'>
             Oś działa jak lustro: prawa strona odbija lewą.
           </p>
@@ -69,7 +69,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
     {
       title: 'Oś symetrii',
       content: (
-        <div className='flex flex-col gap-4 text-center'>
+        <div className='flex flex-col kangur-panel-gap text-center'>
           <p className='[color:var(--kangur-page-text)]'>
             <strong>Oś symetrii</strong> to linia, po której dzielimy figurę na dwie pasujące
             części.
@@ -91,7 +91,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
     {
       title: 'Oś w praktyce',
       content: (
-        <div className='flex flex-col gap-4 text-center'>
+        <div className='flex flex-col kangur-panel-gap text-center'>
           <p className='[color:var(--kangur-page-text)]'>
             Linia osi pokazuje, gdzie figura się „zgina”.
           </p>
@@ -111,7 +111,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
     {
       title: 'Które figury są symetryczne?',
       content: (
-        <div className='flex flex-col gap-3'>
+        <div className='flex flex-col kangur-panel-gap'>
           <div className='grid grid-cols-1 gap-2 text-sm min-[360px]:grid-cols-2'>
             {[
               ['✅', 'Kwadrat', 'emerald'],
@@ -140,7 +140,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
     {
       title: 'Symetryczne czy nie?',
       content: (
-        <div className='flex flex-col gap-3 text-center'>
+        <div className='flex flex-col kangur-panel-gap text-center'>
           <KangurLessonCallout accent='emerald'>
             <div className='mx-auto h-28 w-48'>
               <GeometrySymmetryCheckAnimation />
@@ -155,7 +155,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
     {
       title: 'Symetria obrotowa',
       content: (
-        <div className='flex flex-col gap-3 text-center'>
+        <div className='flex flex-col kangur-panel-gap text-center'>
           <KangurLessonCallout accent='emerald'>
             <div className='mx-auto h-28 w-28'>
               <GeometrySymmetryRotationAnimation />
@@ -194,7 +194,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
     {
       title: 'Podsumowanie: oś symetrii',
       content: (
-        <div className='flex flex-col gap-3 text-center'>
+        <div className='flex flex-col kangur-panel-gap text-center'>
           <KangurLessonCallout accent='emerald' padding='sm'>
             <div className='mx-auto h-28 w-40'>
               <GeometrySymmetryFoldAnimation />
@@ -209,7 +209,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
     {
       title: 'Podsumowanie: wiele osi',
       content: (
-        <div className='flex flex-col gap-3 text-center'>
+        <div className='flex flex-col kangur-panel-gap text-center'>
           <KangurLessonCallout accent='emerald' padding='sm'>
             <div className='mx-auto h-28 w-40'>
               <GeometrySymmetryAxesAnimation />
@@ -224,7 +224,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
     {
       title: 'Podsumowanie: odbicie lustrzane',
       content: (
-        <div className='flex flex-col gap-3 text-center'>
+        <div className='flex flex-col kangur-panel-gap text-center'>
           <KangurLessonCallout accent='emerald' padding='sm'>
             <div className='mx-auto h-28 w-40'>
               <GeometrySymmetryMirrorAnimation />
@@ -239,7 +239,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
     {
       title: 'Podsumowanie: symetria obrotowa',
       content: (
-        <div className='flex flex-col gap-3 text-center'>
+        <div className='flex flex-col kangur-panel-gap text-center'>
           <KangurLessonCallout accent='emerald' padding='sm'>
             <div className='mx-auto h-28 w-28'>
               <GeometrySymmetryRotationAnimation />

@@ -326,7 +326,7 @@ export const GenericPickerDropdown = memo(function GenericPickerDropdown<
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleSearchInputKeyDown}
-                  className='w-full rounded px-2 py-1 text-xs bg-background/80 border border-border/40 placeholder-gray-500 text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500'
+                  className='w-full rounded px-2 py-1 text-xs bg-background/80 border border-border/40 placeholder-gray-500 text-gray-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500'
                 />
               </div>
             )}

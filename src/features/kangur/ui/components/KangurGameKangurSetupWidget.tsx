@@ -7,6 +7,7 @@ import { KangurKangurWordmark } from '@/features/kangur/ui/components/KangurKang
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import KangurSetup from '@/features/kangur/ui/components/KangurSetup';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { getRecommendedKangurMode } from '@/features/kangur/ui/services/game-setup-recommendations';
 
 export function KangurGameKangurSetupWidget(): React.JSX.Element | null {
@@ -18,7 +19,7 @@ export function KangurGameKangurSetupWidget(): React.JSX.Element | null {
   }
 
   return (
-    <div className='w-full flex flex-col items-center gap-4'>
+    <div className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <KangurPageIntroCard
         className='max-w-md'
         description='Wybierz edycję konkursu i zestaw zadań do rozwiązania.'

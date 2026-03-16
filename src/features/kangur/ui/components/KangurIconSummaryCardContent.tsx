@@ -38,10 +38,10 @@ export function KangurIconSummaryCardContent({
   titleWrapperClassName,
 }: KangurIconSummaryCardContentProps): React.JSX.Element {
   return (
-    <div className={cn('flex items-start gap-4', className)}>
+    <div className={cn('flex items-start kangur-panel-gap', className)}>
       {icon}
       <div className={cn('min-w-0 flex-1', contentClassName)}>
-        <div className={cn('flex items-start justify-between gap-3', headerClassName)}>
+        <div className={cn('flex items-start justify-between kangur-panel-gap', headerClassName)}>
           <div className={cn('min-w-0 flex-1', titleWrapperClassName)}>
             <TitleTag
               id={titleId}

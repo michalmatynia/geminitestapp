@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AiPathMeta } from '@/features/ai/image-studio/utils/ai-paths-object-analysis';
 import type { ImageStudioAnalysisPlanSnapshot } from '@/features/ai/image-studio/utils/analysis-bridge';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
@@ -37,7 +38,7 @@ export interface AnalysisSettingsSectionConfig {
   layoutShadowPolicy: ShadowPolicy;
   setLayoutShadowPolicy: (mode: ShadowPolicy) => void;
   layoutPresetOptionValue: string;
-  layoutPresetOptions: Array<{ value: string; label: string }>;
+  layoutPresetOptions: Array<LabeledOptionDto<string>>;
   layoutPresetDraftName: string;
   setLayoutPresetDraftName: (v: string) => void;
   onCenterLayoutPresetChange: (value: string) => void;

@@ -22,7 +22,10 @@ import {
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_ACCENT_STYLES,
+  KANGUR_PANEL_GAP_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import {
   evaluateGeometryDrawing,
   type GeometryShapeId,
@@ -511,7 +514,7 @@ export default function GeometryDrawingGame({
   return (
     <section
       aria-labelledby='geometry-drawing-heading'
-      className='flex flex-col items-center gap-4 w-full max-w-sm'
+      className={`flex flex-col items-center w-full max-w-sm ${KANGUR_PANEL_GAP_CLASSNAME}`}
     >
       {done ? (
         <KangurPracticeGameSummary dataTestId='geometry-drawing-summary-shell'>
@@ -607,7 +610,7 @@ export default function GeometryDrawingGame({
             </div>
           </KangurGlassPanel>
 
-          <div className='w-full flex items-center gap-3'>
+          <div className='w-full flex items-center kangur-panel-gap'>
             <KangurProgressBar
               accent='emerald'
               aria-label='Postęp treningu figur'
@@ -629,7 +632,7 @@ export default function GeometryDrawingGame({
 
           <div className='w-full'>
             <KangurGlassPanel
-              className='flex flex-col items-center gap-3'
+              className='flex flex-col items-center kangur-panel-gap'
               data-testid='geometry-drawing-round-shell'
               padding='lg'
               surface='solid'
@@ -637,7 +640,7 @@ export default function GeometryDrawingGame({
             >
               <KangurInfoCard
                 accent='teal'
-                className='flex w-full flex-col items-center gap-3 rounded-[24px] text-center'
+                className='flex w-full flex-col items-center kangur-panel-gap rounded-[24px] text-center'
                 data-testid='geometry-drawing-prompt-card'
                 padding='md'
                 tone='accent'
@@ -709,7 +712,7 @@ export default function GeometryDrawingGame({
                 kończy kreskę, strzałki przesuwają kursor, Escape czyści planszę.
               </p>
 
-              <div className='flex w-full flex-col gap-3 sm:flex-row'>
+              <div className='flex w-full flex-col kangur-panel-gap sm:flex-row'>
                 <KangurButton
                   className='w-full sm:flex-1'
                   disabled={feedback !== null || points.length === 0}

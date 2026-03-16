@@ -364,7 +364,7 @@ export function KangurTestSuitePlayer({
       <KangurTestSuiteRuntimeProvider totalQuestions={totalQuestions}>
         <div className='space-y-4'>
           {/* Progress bar */}
-          <div className='flex items-center gap-3'>
+          <div className='flex items-center kangur-panel-gap'>
             <KangurProgressBar
               accent='indigo'
               className='flex-1'
@@ -400,7 +400,7 @@ export function KangurTestSuitePlayer({
           </AnimatePresence>
 
           {/* Navigation */}
-          <div className='flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between'>
+          <div className='flex flex-col kangur-panel-gap pt-2 sm:flex-row sm:items-center sm:justify-between'>
             <KangurButton
               type='button'
               onClick={handlePrev}

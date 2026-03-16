@@ -47,7 +47,7 @@ describe('KangurBadgeTrackSection', () => {
     expect(screen.getByText('Ścieżki odznak').parentElement).toHaveClass(
       'flex',
       'flex-col',
-      'gap-4'
+      'kangur-panel-gap'
     );
     expect(screen.getByTestId('badge-track-section-grid')).toHaveTextContent('badge-track-grid');
     expect(screen.getByTestId('badge-track-section-grid')).toHaveAttribute(

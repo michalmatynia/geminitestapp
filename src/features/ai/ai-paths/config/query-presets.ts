@@ -1,9 +1,10 @@
+import type { IdLabeledOptionDto, LabeledOptionDto } from '@/shared/contracts/base';
 import type { DbQueryConfig } from '@/shared/lib/ai-paths';
 
-type LabeledPreset = { id: string; label: string; value: string };
+type LabeledPreset = IdLabeledOptionDto;
 
-type TemplateSnippet = { label: string; value: string };
-type SnippetItem = { label: string; value: string; disabled?: boolean; note?: string };
+type TemplateSnippet = LabeledOptionDto<string>;
+type SnippetItem = LabeledOptionDto<string> & { disabled?: boolean; note?: string };
 type SnippetGroup = { label: string; items: SnippetItem[] };
 
 const PLACEHOLDER_CHIPS = [

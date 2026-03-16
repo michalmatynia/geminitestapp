@@ -53,6 +53,65 @@ export interface IdNameDto {
 }
 export type IdName = IdNameDto;
 
+export type LabeledOptionDto<TValue = string> = {
+  label: string;
+  value: TValue;
+};
+export type LabeledOption<TValue = string> = LabeledOptionDto<TValue>;
+
+export type IdLabelOptionDto<TId extends string | number = string> = {
+  id: TId;
+  label: string;
+};
+export type IdLabelOption<TId extends string | number = string> = IdLabelOptionDto<TId>;
+
+export type LabelValueOptionDto = LabeledOptionDto<string>;
+export type LabelValueOption = LabelValueOptionDto;
+
+export type IdLabeledOptionDto<TId extends string | number = string, TValue = string> = {
+  id: TId;
+  label: string;
+  value: TValue;
+};
+export type IdLabeledOption<TId extends string | number = string, TValue = string> = IdLabeledOptionDto<
+  TId,
+  TValue
+>;
+
+export type LabeledOptionWithDescriptionDto<TValue = string> = LabeledOptionDto<TValue> & {
+  description?: string;
+};
+export type LabeledOptionWithDescription<TValue = string> =
+  LabeledOptionWithDescriptionDto<TValue>;
+
+export type LabeledOptionWithDisabledDto<TValue = string> = LabeledOptionDto<TValue> & {
+  disabled?: boolean;
+};
+export type LabeledOptionWithDisabled<TValue = string> = LabeledOptionWithDisabledDto<TValue>;
+
+export type IdDto = {
+  id: string;
+};
+export type Id = IdDto;
+
+export type IdDataDto<TData = unknown> = {
+  id: string;
+  data: TData;
+};
+export type IdData<TData = unknown> = IdDataDto<TData>;
+
+export type IdInputDto<TInput = unknown> = {
+  id: string;
+  input: TInput;
+};
+export type IdInput<TInput = unknown> = IdInputDto<TInput>;
+
+export type OptionalIdDataDto<TData = unknown> = {
+  id?: string;
+  data: TData;
+};
+export type OptionalIdData<TData = unknown> = OptionalIdDataDto<TData>;
+
 /**
  * Standard API error structure
  */

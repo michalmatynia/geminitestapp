@@ -3,6 +3,7 @@
 import { Sun, Moon, Sparkles, Eye } from 'lucide-react';
 import React, { useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   Button,
   SelectSimple,
@@ -27,9 +28,9 @@ import {
 
 import type { LightingPreset, EnvironmentPreset } from './Viewer3D';
 
-type EnvironmentPresetOption = { value: EnvironmentPreset; label: string };
-type LightingPresetOption = { value: LightingPreset; label: string; icon: React.ReactNode };
-type LuminanceOption = { value: number; label: string };
+type EnvironmentPresetOption = LabeledOptionDto<EnvironmentPreset>;
+type LightingPresetOption = LabeledOptionDto<LightingPreset> & { icon: React.ReactNode };
+type LuminanceOption = LabeledOptionDto<number>;
 
 const environmentPresets: EnvironmentPresetOption[] = [
   { value: 'studio', label: 'Studio' },

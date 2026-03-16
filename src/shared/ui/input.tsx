@@ -3,6 +3,12 @@ import * as React from 'react';
 
 import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
 
+type DataAttributes = {
+  'data-testid'?: string;
+  'data-doc-id'?: string;
+  'data-doc-alias'?: string;
+};
+
 const inputVariants = cva(
   'flex w-full rounded-md border border-foreground/10 px-3 py-2 text-sm transition-colors ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:border-foreground/30 hover:border-foreground/20 disabled:cursor-not-allowed disabled:opacity-50',
   {
@@ -27,7 +33,8 @@ const inputVariants = cva(
 export interface InputProps
   extends
     Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'>,
-    VariantProps<typeof inputVariants> {}
+    VariantProps<typeof inputVariants>,
+    DataAttributes {}
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   (
@@ -37,8 +44,12 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       size,
       type,
       id,
+      name,
       placeholder,
       title,
+      'data-testid': dataTestId,
+      'data-doc-id': dataDocId,
+      'data-doc-alias': dataDocAlias,
       'aria-label': ariaLabelProp,
       'aria-labelledby': ariaLabelledByProp,
       ...props
@@ -51,7 +62,13 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       ariaLabel: ariaLabelProp,
       ariaLabelledBy: ariaLabelledByProp,
       title: allowFallbackLabel ? title : undefined,
-      fallbackLabel: allowFallbackLabel ? placeholder : undefined,
+      fallbackLabel: allowFallbackLabel
+        ? placeholder ??
+          name ??
+          (typeof dataDocAlias === 'string' ? dataDocAlias : undefined) ??
+          (typeof dataDocId === 'string' ? dataDocId : undefined) ??
+          (typeof dataTestId === 'string' ? dataTestId : undefined)
+        : undefined,
     });
     const hasLabel = hasAccessibleLabel || Boolean(id);
     if (!hasLabel) {
@@ -63,10 +80,14 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         className={cn(inputVariants({ variant, size, className }))}
         ref={ref}
         id={id}
+        name={name}
         placeholder={placeholder}
         aria-label={resolvedAriaLabel}
         aria-labelledby={ariaLabelledByProp}
         title={title}
+        data-testid={dataTestId}
+        data-doc-id={dataDocId}
+        data-doc-alias={dataDocAlias}
         {...props}
       />
     );

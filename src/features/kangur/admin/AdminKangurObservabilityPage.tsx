@@ -51,9 +51,10 @@ import { SummaryContent } from './components/observability/SummaryContent';
 import { formatDateTime, formatNumber } from './components/observability/utils';
 import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
 import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 
-const RANGE_OPTIONS: Array<{ value: KangurObservabilityRange; label: string }> = [
+const RANGE_OPTIONS: Array<LabeledOptionDto<KangurObservabilityRange>> = [
   { value: '24h', label: '24h' },
   { value: '7d', label: '7d' },
   { value: '30d', label: '30d' },

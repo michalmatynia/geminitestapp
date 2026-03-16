@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { VectorShape, VectorShapeRole } from '@/shared/contracts/vector';
 import { Button, Input, SelectSimple } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -22,7 +23,7 @@ import { useMaskingState, useMaskingActions } from '../context/MaskingContext';
 
 import type { GenerationHistoryPanelProps as ShapeListPanelProps } from './GenerationHistoryPanel';
 
-const ROLE_OPTIONS: Array<{ value: VectorShapeRole; label: string }> = [
+const ROLE_OPTIONS: Array<LabeledOptionDto<VectorShapeRole>> = [
   { value: 'product', label: 'Product' },
   { value: 'shadow', label: 'Shadow' },
   { value: 'background', label: 'Background' },

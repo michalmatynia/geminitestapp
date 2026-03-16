@@ -3,6 +3,12 @@ import * as React from 'react';
 
 import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/features/kangur/shared/utils';
 
+type DataAttributes = {
+  'data-testid'?: string;
+  'data-doc-id'?: string;
+  'data-doc-alias'?: string;
+};
+
 import { KANGUR_ACCENT_STYLES, KANGUR_OPTION_CARD_CLASSNAME, type KangurAccent } from '../tokens';
 
 export const kangurOptionCardButtonVariants = cva(
@@ -28,7 +34,8 @@ export const kangurOptionCardButtonVariants = cva(
 );
 
 export type KangurOptionCardButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
-  VariantProps<typeof kangurOptionCardButtonVariants> & {
+  VariantProps<typeof kangurOptionCardButtonVariants> &
+  DataAttributes & {
     accent?: KangurAccent;
   };
 
@@ -46,6 +53,9 @@ export const KangurOptionCardButton = React.forwardRef<
       type,
       children,
       title,
+      'data-testid': dataTestId,
+      'data-doc-id': dataDocId,
+      'data-doc-alias': dataDocAlias,
       'aria-label': ariaLabelProp,
       'aria-labelledby': ariaLabelledByProp,
       ...props
@@ -63,6 +73,10 @@ export const KangurOptionCardButton = React.forwardRef<
     ariaLabel: ariaLabelProp,
     ariaLabelledBy: ariaLabelledByProp,
     title,
+    fallbackLabel:
+      (typeof dataDocAlias === 'string' ? dataDocAlias : undefined) ||
+      (typeof dataDocId === 'string' ? dataDocId : undefined) ||
+      (typeof dataTestId === 'string' ? dataTestId : undefined),
   });
   if (!hasAccessibleLabel && !hasText) {
     warnMissingAccessibleLabel({ componentName: 'KangurOptionCardButton', hasAccessibleLabel });
@@ -88,6 +102,9 @@ export const KangurOptionCardButton = React.forwardRef<
       aria-label={resolvedAriaLabel}
       aria-labelledby={ariaLabelledByProp}
       title={title}
+      data-testid={dataTestId}
+      data-doc-id={dataDocId}
+      data-doc-alias={dataDocAlias}
       {...props}
     >
       {children}

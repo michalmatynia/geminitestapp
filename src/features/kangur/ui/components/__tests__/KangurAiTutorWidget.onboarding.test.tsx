@@ -24,12 +24,26 @@ vi.mock('framer-motion', () => ({
   useReducedMotion: mocks.useReducedMotionMock,
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   motion: {
-    div: ({ children, animate: _a, exit: _e, initial: _i, transition: _t, ...props }: any) => (
-      <div {...props}>{children}</div>
-    ),
-    button: ({ children, animate: _a, exit: _e, initial: _i, transition: _t, ...props }: any) => (
-      <button {...props}>{children}</button>
-    ),
+    div: ({
+      children,
+      animate: _a,
+      exit: _e,
+      initial: _i,
+      transition: _t,
+      whileHover: _wh,
+      whileTap: _wt,
+      ...props
+    }: any) => <div {...props}>{children}</div>,
+    button: ({
+      children,
+      animate: _a,
+      exit: _e,
+      initial: _i,
+      transition: _t,
+      whileHover: _wh,
+      whileTap: _wt,
+      ...props
+    }: any) => <button {...props}>{children}</button>,
   },
 }));
 

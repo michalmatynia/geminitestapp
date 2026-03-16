@@ -13,6 +13,7 @@ import {
   useUpdateSlugDomains,
 } from '@/features/cms/hooks/useCmsQueries';
 import { cmsSlugDomainsUpdateSchema, cmsSlugUpdateSchema } from '@/features/cms/validations/api';
+import type { IdInputDto } from '@/shared/contracts/base';
 import type { Slug } from '@/shared/contracts/cms';
 import { AdminCmsPageLayout, Alert, LoadingState, useToast } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
@@ -93,7 +94,7 @@ function EditSlugForm({
       }
     }
 
-    const updateData: { id: string; input: Partial<Slug>; domainId?: string | null } = {
+    const updateData: IdInputDto<Partial<Slug>> & { domainId?: string | null } = {
       id,
       input: slugValidation.data as Partial<Slug>,
     };

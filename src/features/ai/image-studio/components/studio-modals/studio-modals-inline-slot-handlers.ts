@@ -1,4 +1,6 @@
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import type { IdDataDto, UnknownRecordDto } from '@/shared/contracts/base';
+import type { Toast } from '@/shared/contracts/ui';
 
 import { asRecord } from './slot-inline-edit-utils';
 
@@ -9,14 +11,8 @@ import type {
 import type { Dispatch, SetStateAction } from 'react';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
-type Toast = (
-  message: string,
-  options?: { variant?: 'success' | 'error' | 'warning' | 'info' | 'default' }
-) => void;
-
 type UpdateSlotMutationLike = {
-  mutateAsync: (args: { id: string; data: Record<string, unknown> }) => Promise<unknown>;
+  mutateAsync: (args: IdDataDto<UnknownRecordDto>) => Promise<unknown>;
 };
 
 type InlineSlotHandlersDeps = {

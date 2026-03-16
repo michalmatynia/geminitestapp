@@ -168,7 +168,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Analogie kształtów zmieniają rozmiar, orientację, kolor lub liczbę elementów według tej
             samej reguły.
           </KangurLessonLead>
-          <div className='flex flex-col gap-3 w-full'>
+          <div className='flex flex-col kangur-panel-gap w-full'>
             {[
               { rule: 'Reguła: obrót o 90° w prawo', seq: '➡️ : ⬇️ = ⬆️ : ➡️' },
               { rule: 'Reguła: dodaj jeden element', seq: '⭐ : ⭐⭐ = 🔵 : 🔵🔵' },

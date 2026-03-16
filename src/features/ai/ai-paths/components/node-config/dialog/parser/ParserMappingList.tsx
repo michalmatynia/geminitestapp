@@ -2,13 +2,14 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Button, Input, SelectSimple } from '@/shared/ui';
 
 export interface ParserMappingListProps {
   entries: Array<[string, string]>;
   updateMappingKey: (index: number, value: string) => void;
   updateMappingPath: (index: number, value: string) => void;
-  uniqueSuggestedPathOptions: Array<{ label: string; value: string }>;
+  uniqueSuggestedPathOptions: Array<LabeledOptionDto<string>>;
   removeMapping: (index: number) => void;
 }
 

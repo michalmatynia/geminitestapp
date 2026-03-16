@@ -5,9 +5,10 @@ import { Check, ChevronDown } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import * as React from 'react';
 
+import type { LabeledOptionWithDisabledDto } from '@/shared/contracts/base';
 import { cn } from '@/shared/utils';
 
-type NativeOption = { value: string; label: string; disabled?: boolean | undefined };
+type NativeOption = LabeledOptionWithDisabledDto<string>;
 
 type NativeSelectContextValue = {
   value: string;
@@ -204,7 +205,7 @@ const SelectTrigger = React.forwardRef<
       <SelectPrimitive.Trigger
         suppressHydrationWarning
         className={cn(
-          'flex h-10 w-full items-center justify-between rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm transition-colors ring-offset-background placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:ring-offset-2 focus:border-foreground/30 hover:border-foreground/20 disabled:cursor-not-allowed disabled:opacity-50',
+          'flex h-10 w-full items-center justify-between rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm transition-colors ring-offset-background placeholder:text-muted-foreground/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus:border-foreground/30 hover:border-foreground/20 disabled:cursor-not-allowed disabled:opacity-50',
           className
         )}
         {...props}
@@ -223,7 +224,7 @@ const SelectTrigger = React.forwardRef<
       <select
         {...nativeTriggerProps}
         className={cn(
-          'h-10 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm text-foreground/90 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:ring-offset-2 focus:border-foreground/30 disabled:cursor-not-allowed disabled:opacity-50',
+          'h-10 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm text-foreground/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus:border-foreground/30 disabled:cursor-not-allowed disabled:opacity-50',
           className
         )}
         disabled={props.disabled ?? true}
@@ -239,7 +240,7 @@ const SelectTrigger = React.forwardRef<
     <select
       {...nativeTriggerProps}
       className={cn(
-        'h-10 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm text-foreground/90 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:ring-offset-2 focus:border-foreground/30 disabled:cursor-not-allowed disabled:opacity-50',
+        'h-10 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm text-foreground/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus:border-foreground/30 disabled:cursor-not-allowed disabled:opacity-50',
         className
       )}
       value={value}

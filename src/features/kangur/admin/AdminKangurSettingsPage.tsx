@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { type ReactElement, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import {
   KANGUR_NARRATOR_ENGINE_OPTIONS,
   KANGUR_NARRATOR_SETTINGS_KEY,
@@ -52,7 +53,6 @@ import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
 import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
-import { KangurAiTutorContentSettingsPanel } from './components/KangurAiTutorContentSettingsPanel';
 import { KangurAiTutorNativeGuideSettingsPanel } from './components/KangurAiTutorNativeGuideSettingsPanel';
 import { KangurClassOverridesSettingsPanel } from './components/KangurClassOverridesSettingsPanel';
 import { KangurPageContentSettingsPanel } from './components/KangurPageContentSettingsPanel';
@@ -65,11 +65,9 @@ const TEST_NARRATOR_PROBE_TEXT = 'To jest krótki test narratora Kangur.';
 
 const DEFAULT_AGENT_PERSONA_OPTION = '__default_agent_persona__';
 const DEFAULT_MOTION_PRESET_OPTION = '__default_motion_preset__';
-const AI_TUTOR_GUEST_INTRO_MODE_OPTIONS: Array<{
-  value: KangurAiTutorGuestIntroMode;
-  label: string;
-  description: string;
-}> = [
+const AI_TUTOR_GUEST_INTRO_MODE_OPTIONS: Array<
+  LabeledOptionWithDescriptionDto<KangurAiTutorGuestIntroMode>
+> = [
   {
     value: 'first_visit',
     label: 'Pierwsza wizyta',
@@ -81,11 +79,9 @@ const AI_TUTOR_GUEST_INTRO_MODE_OPTIONS: Array<{
     description: 'Show the anonymous AI Tutor intro on every page entry.',
   },
 ];
-const AI_TUTOR_HOME_ONBOARDING_MODE_OPTIONS: Array<{
-  value: KangurAiTutorHomeOnboardingMode;
-  label: string;
-  description: string;
-}> = [
+const AI_TUTOR_HOME_ONBOARDING_MODE_OPTIONS: Array<
+  LabeledOptionWithDescriptionDto<KangurAiTutorHomeOnboardingMode>
+> = [
   {
     value: 'first_visit',
     label: 'Pierwsza wizyta',
@@ -265,6 +261,13 @@ export function AdminKangurSettingsPage(): ReactElement {
   const [parentVerificationNotificationsEnabled, setParentVerificationNotificationsEnabled] =
     useState(persistedParentVerificationEmailSettings.notificationsEnabled);
   const [
+    parentVerificationRequireEmailVerification,
+    setParentVerificationRequireEmailVerification,
+  ] = useState(persistedParentVerificationEmailSettings.requireEmailVerification);
+  const [parentVerificationRequireCaptcha, setParentVerificationRequireCaptcha] = useState(
+    persistedParentVerificationEmailSettings.requireCaptcha
+  );
+  const [
     parentVerificationNotificationsDisabledUntilInput,
     setParentVerificationNotificationsDisabledUntilInput,
   ] = useState(
@@ -313,6 +316,10 @@ export function AdminKangurSettingsPage(): ReactElement {
     setParentVerificationNotificationsEnabled(
       persistedParentVerificationEmailSettings.notificationsEnabled
     );
+    setParentVerificationRequireEmailVerification(
+      persistedParentVerificationEmailSettings.requireEmailVerification
+    );
+    setParentVerificationRequireCaptcha(persistedParentVerificationEmailSettings.requireCaptcha);
     setParentVerificationNotificationsDisabledUntilInput(
       formatParentVerificationDisabledUntilInput(
         persistedParentVerificationEmailSettings.notificationsDisabledUntil
@@ -472,11 +479,15 @@ export function AdminKangurSettingsPage(): ReactElement {
           parsedDisabledUntil === undefined
             ? persistedParentVerificationEmailSettings.notificationsDisabledUntil
             : parsedDisabledUntil,
+        requireEmailVerification: parentVerificationRequireEmailVerification,
+        requireCaptcha: parentVerificationRequireCaptcha,
       };
     },
     [
       parentVerificationNotificationsDisabledUntilInput,
       parentVerificationNotificationsEnabled,
+      parentVerificationRequireCaptcha,
+      parentVerificationRequireEmailVerification,
       parentVerificationResendCooldownInput,
       persistedParentVerificationEmailSettings,
     ]
@@ -487,7 +498,11 @@ export function AdminKangurSettingsPage(): ReactElement {
     parentVerificationEmailDraft.notificationsEnabled !==
     persistedParentVerificationEmailSettings.notificationsEnabled ||
     parentVerificationEmailDraft.notificationsDisabledUntil !==
-    persistedParentVerificationEmailSettings.notificationsDisabledUntil;
+    persistedParentVerificationEmailSettings.notificationsDisabledUntil ||
+    parentVerificationEmailDraft.requireEmailVerification !==
+    persistedParentVerificationEmailSettings.requireEmailVerification ||
+    parentVerificationEmailDraft.requireCaptcha !==
+    persistedParentVerificationEmailSettings.requireCaptcha;
   const parentVerificationNotificationsPausedUntil = useMemo(() => {
     const value = parentVerificationEmailDraft.notificationsDisabledUntil;
     if (!value) return null;
@@ -939,6 +954,42 @@ export function AdminKangurSettingsPage(): ReactElement {
           <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
             <div className='space-y-4'>
               <FormField
+                label='Wymagaj potwierdzenia e-maila rodzica'
+                description='Disable to activate parent accounts immediately without email verification.'
+              >
+                <ToggleRow
+                  label={parentVerificationRequireEmailVerification ? 'Włączone' : 'Wyłączone'}
+                  description={
+                    parentVerificationRequireEmailVerification
+                      ? 'Parents must confirm their email before signing in.'
+                      : 'New parent accounts are activated immediately.'
+                  }
+                  checked={parentVerificationRequireEmailVerification}
+                  onCheckedChange={setParentVerificationRequireEmailVerification}
+                  variant='switch'
+                  className='border-none bg-muted/20 px-3 py-2 hover:bg-muted/30'
+                />
+              </FormField>
+
+              <FormField
+                label='Wymagaj Captcha przy zakładaniu konta'
+                description='Disable to skip the Turnstile check during parent signup.'
+              >
+                <ToggleRow
+                  label={parentVerificationRequireCaptcha ? 'Włączona' : 'Wyłączona'}
+                  description={
+                    parentVerificationRequireCaptcha
+                      ? 'Captcha runs when Turnstile keys are configured.'
+                      : 'Parent signup skips the Captcha check.'
+                  }
+                  checked={parentVerificationRequireCaptcha}
+                  onCheckedChange={setParentVerificationRequireCaptcha}
+                  variant='switch'
+                  className='border-none bg-muted/20 px-3 py-2 hover:bg-muted/30'
+                />
+              </FormField>
+
+              <FormField
                 label='Wysyłka e-maili potwierdzających'
                 description='Disable to pause delivery of parent email confirmations.'
               >
@@ -1027,7 +1078,20 @@ export function AdminKangurSettingsPage(): ReactElement {
               Refine onboarding copy, page content, and native guide instructions used across Kangur.
             </p>
           </div>
-          <KangurAiTutorContentSettingsPanel />
+          <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+            <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
+              <div className='space-y-1'>
+                <div className='text-sm font-semibold text-foreground'>AI Tutor content</div>
+                <p className='text-sm text-muted-foreground'>
+                  Edit the Mongo-backed tutor copy pack in the dedicated AI Tutor content workspace.
+                </p>
+              </div>
+              <Badge variant='outline'>Dedicated page</Badge>
+            </div>
+            <Button asChild variant='outline' size='sm' className='mt-4'>
+              <Link href='/admin/kangur/settings/ai-tutor-content'>Open AI Tutor content</Link>
+            </Button>
+          </Card>
           <KangurPageContentSettingsPanel />
           <KangurAiTutorNativeGuideSettingsPanel />
         </div>

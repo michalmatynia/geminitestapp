@@ -24,6 +24,7 @@ import {
   useMasterFolderTreeShell,
 } from '@/features/foldertree';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import type { IdDataDto } from '@/shared/contracts/base';
 import { MasterTreeSettingsButton } from '@/shared/ui';
 import {
   getFolderTreeInstanceSettingsHref,
@@ -95,7 +96,7 @@ export function SlotTree({
   );
 
   const renameSlot = useCallback(
-    async (input: { id: string; data: { name: string } }): Promise<void> => {
+    async (input: IdDataDto<{ name: string }>): Promise<void> => {
       await updateSlotMutation.mutateAsync(input);
     },
     [updateSlotMutation]

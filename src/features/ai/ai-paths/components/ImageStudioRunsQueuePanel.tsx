@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Button, StandardDataTablePanel, SelectSimple, PanelStats, StatusBadge } from '@/shared/ui';
 
 import {
@@ -12,7 +13,7 @@ import {
 
 import type { ColumnDef } from '@tanstack/react-table';
 
-const STATUS_OPTIONS: Array<{ value: 'all' | ImageStudioRunStatus; label: string }> = [
+const STATUS_OPTIONS: Array<LabeledOptionDto<'all' | ImageStudioRunStatus>> = [
   { value: 'all', label: 'All' },
   { value: 'queued', label: 'Queued' },
   { value: 'running', label: 'Running' },

@@ -466,7 +466,7 @@ export default function CalendarInteractiveGame({
   }
 
   return (
-    <KangurPracticeGameStage className='gap-3 mx-auto max-w-lg'>
+    <KangurPracticeGameStage className='mx-auto max-w-lg'>
       {section !== 'mixed' ? (
         <KangurInfoCard
           accent={trainingSectionContent.accent}
@@ -749,7 +749,7 @@ export default function CalendarInteractiveGame({
       )}
 
       {task.type === 'drag_season' && (
-        <div className='flex flex-col items-center gap-3 w-full'>
+        <div className='flex flex-col items-center kangur-panel-gap w-full'>
           <div
             draggable
             className='bg-green-400 text-white font-extrabold px-6 py-3 rounded-2xl shadow-lg cursor-grab active:cursor-grabbing select-none text-lg'

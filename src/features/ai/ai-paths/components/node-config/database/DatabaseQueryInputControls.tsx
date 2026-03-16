@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { DatabaseAction, DatabaseActionCategory } from '@/shared/lib/ai-paths';
 import { Button, Textarea, SelectSimple } from '@/shared/ui';
 
@@ -72,7 +73,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
               onActionCategoryChange(value as DatabaseActionCategory)
             }
             options={actionCategoryOptions.map(
-              (option: { value: DatabaseActionCategory; label: string }) => ({
+              (option: LabeledOptionDto<DatabaseActionCategory>) => ({
                 value: option.value,
                 label: option.label,
               })
@@ -84,7 +85,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
             size='xs'
             value={action}
             onValueChange={(value: string): void => onActionChange(value as DatabaseAction)}
-            options={actionOptions.map((option: { value: DatabaseAction; label: string }) => ({
+            options={actionOptions.map((option: LabeledOptionDto<DatabaseAction>) => ({
               value: option.value,
               label: option.label,
             }))}

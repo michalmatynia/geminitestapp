@@ -55,7 +55,7 @@ export default function KangurHeroMilestoneSummary({
 
   return (
     <div
-      className={cn('grid gap-3 text-left', className)}
+      className={cn('grid kangur-panel-gap text-left', className)}
       data-testid={`${summaryTestIdPrefix}-shell`}
     >
       {nextBadge ? (
@@ -69,7 +69,7 @@ export default function KangurHeroMilestoneSummary({
           }}
         >
           <KangurProgressHighlightCardContent>
-            <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
+            <div className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:justify-between'>
               <KangurProgressHighlightHeader
                 description={nextBadge.desc}
                 descriptionStyle={{

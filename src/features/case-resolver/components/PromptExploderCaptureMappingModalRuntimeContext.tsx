@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import type {
   CaseResolverCaptureDocumentDateAction,
   CaseResolverCaptureProposalState,
@@ -28,7 +29,7 @@ export type PromptExploderCaptureMappingModalRuntimeValue = {
   draft: CaseResolverCaptureProposalState | null;
   applying: boolean;
   targetFileName: string | null;
-  partyOptions: Array<{ value: string; label: string; description?: string }>;
+  partyOptions: Array<LabeledOptionWithDescriptionDto<string>>;
   onClose: () => void;
   onApply: () => void;
   onUpdateAction: (role: 'addresser' | 'addressee', action: CaseResolverCaptureAction) => void;

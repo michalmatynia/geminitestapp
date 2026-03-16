@@ -3,6 +3,7 @@
 import { Trash2, Plus } from 'lucide-react';
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   PRODUCT_FIELDS,
   EXPORT_PARAMETER_KEYS,
@@ -89,11 +90,11 @@ export function TemplatesTabContent(): React.JSX.Element {
 
   const customParameterTargetsQuery = useProductParameters(catalogId || null);
   const simpleParameterTargetsQuery = useProductSimpleParameters(catalogId || null);
-  const customParameterTargetFields = React.useMemo((): Array<{ value: string; label: string }> => {
+  const customParameterTargetFields = React.useMemo((): Array<LabeledOptionDto<string>> => {
     const parameters = customParameterTargetsQuery.data ?? [];
     const seen = new Set<string>();
     return parameters
-      .map((parameter): { value: string; label: string } | null => {
+      .map((parameter): LabeledOptionDto<string> | null => {
         const parameterId = parameter.id.trim();
         if (!parameterId || seen.has(parameterId)) return null;
         seen.add(parameterId);
@@ -102,13 +103,13 @@ export function TemplatesTabContent(): React.JSX.Element {
           label: `Parameter: ${getParameterDisplayName(parameter)}`,
         };
       })
-      .filter((entry): entry is { value: string; label: string } => entry !== null);
+      .filter((entry): entry is LabeledOptionDto<string> => entry !== null);
   }, [customParameterTargetsQuery.data]);
-  const simpleParameterTargetFields = React.useMemo((): Array<{ value: string; label: string }> => {
+  const simpleParameterTargetFields = React.useMemo((): Array<LabeledOptionDto<string>> => {
     const parameters = simpleParameterTargetsQuery.data ?? [];
     const seen = new Set<string>();
     return parameters
-      .map((parameter): { value: string; label: string } | null => {
+      .map((parameter): LabeledOptionDto<string> | null => {
         const parameterId = parameter.id.trim();
         if (!parameterId || seen.has(parameterId)) return null;
         seen.add(parameterId);
@@ -117,9 +118,9 @@ export function TemplatesTabContent(): React.JSX.Element {
           label: `Simple parameter: ${getParameterDisplayName(parameter)}`,
         };
       })
-      .filter((entry): entry is { value: string; label: string } => entry !== null);
+      .filter((entry): entry is LabeledOptionDto<string> => entry !== null);
   }, [simpleParameterTargetsQuery.data]);
-  const templateTargetFieldOptions = React.useMemo((): Array<{ value: string; label: string }> => {
+  const templateTargetFieldOptions = React.useMemo((): Array<LabeledOptionDto<string>> => {
     const seen = new Set<string>();
     return [
       ...PRODUCT_FIELDS,
@@ -149,7 +150,7 @@ export function TemplatesTabContent(): React.JSX.Element {
   );
   const parameterSourceLabelByValue = React.useMemo((): Map<string, string> => {
     const map = new Map<string, string>();
-    templateTargetFieldOptions.forEach((field: { value: string; label: string }) => {
+    templateTargetFieldOptions.forEach((field: LabeledOptionDto<string>) => {
       const normalizedValue = field.value.trim().toLowerCase();
       if (!normalizedValue.startsWith(PRODUCT_PARAMETER_TARGET_PREFIX)) {
         return;
@@ -180,7 +181,7 @@ export function TemplatesTabContent(): React.JSX.Element {
     },
     [parameterSourceLabelByValue]
   );
-  const exportSourceFieldOptions = React.useMemo((): Array<{ value: string; label: string }> => {
+  const exportSourceFieldOptions = React.useMemo((): Array<LabeledOptionDto<string>> => {
     const allKeys = new Set<string>(EXPORT_PARAMETER_KEYS);
     importSourceFieldOptions.forEach((key: string) => {
       allKeys.add(key);
@@ -197,10 +198,10 @@ export function TemplatesTabContent(): React.JSX.Element {
     (): Set<string> =>
       new Set(
         templateTargetFieldOptions
-          .filter((entry: { value: string; label: string }) =>
+          .filter((entry: LabeledOptionDto<string>) =>
             entry.value.trim().toLowerCase().startsWith(PRODUCT_PARAMETER_TARGET_PREFIX)
           )
-          .map((entry: { value: string; label: string }) => entry.value.trim().toLowerCase())
+          .map((entry: LabeledOptionDto<string>) => entry.value.trim().toLowerCase())
       ),
     [templateTargetFieldOptions]
   );

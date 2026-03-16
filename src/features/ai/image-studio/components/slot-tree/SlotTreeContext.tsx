@@ -7,6 +7,7 @@ import type {
   MasterFolderTreeController,
   FolderTreeProfileV2,
 } from '@/shared/contracts/master-folder-tree';
+import type { IdDataDto } from '@/shared/contracts/base';
 import { internalError } from '@/shared/errors/app-error';
 import type { MasterTreeId } from '@/shared/utils';
 import type { FolderTreePlaceholderClassSet } from '@/shared/utils/folder-tree-profiles-v2';
@@ -20,7 +21,7 @@ export interface SlotTreeContextValue {
   onRenameFolder: (source: string, target: string) => Promise<void>;
   onDeleteSlot: (slot: ImageStudioSlotRecord) => void;
   onMoveSlot: (slot: ImageStudioSlotRecord, targetFolder: string) => void;
-  updateSlot: (input: { id: string; data: { name: string } }) => Promise<void>;
+  updateSlot: (input: IdDataDto<{ name: string }>) => Promise<void>;
   setSelectedSlotId: (id: string | null) => void;
   selectedSlotId: string | null;
   clearSelection: () => void;

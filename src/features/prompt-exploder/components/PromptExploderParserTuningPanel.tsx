@@ -2,15 +2,13 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { PromptExploderRuleSegmentType } from '@/shared/contracts/prompt-engine';
 import { Button, Input, Label, StatusToggle, Textarea, SelectSimple } from '@/shared/ui';
 
 import { usePromptExploderParserTuningContext } from './PromptExploderParserTuningContext';
 
-const SEGMENT_TYPE_OPTIONS: Array<{
-  value: PromptExploderRuleSegmentType | 'none';
-  label: string;
-}> = [
+const SEGMENT_TYPE_OPTIONS: Array<LabeledOptionDto<PromptExploderRuleSegmentType | 'none'>> = [
   { value: 'none', label: 'No type hint' },
   { value: 'metadata', label: 'Metadata' },
   { value: 'assigned_text', label: 'Assigned Text' },

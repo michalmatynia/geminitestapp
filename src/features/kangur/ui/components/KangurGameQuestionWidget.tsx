@@ -6,6 +6,7 @@ import { QuestionCard } from '@/features/kangur/ui/components/game';
 import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { KangurStatusChip } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import { DIFFICULTY_CONFIG } from '@/features/kangur/ui/services/math-questions';
@@ -80,9 +81,9 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
   }
 
   return (
-    <div className='flex w-full flex-col items-center'>
+    <div className={`flex w-full flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       {activePracticeAssignment ? (
-        <div ref={assignmentBannerRef} className='mb-4 flex w-full justify-center px-4'>
+        <div ref={assignmentBannerRef} className='flex w-full justify-center px-4'>
           <KangurPracticeAssignmentBanner
             assignment={activePracticeAssignment}
             basePath={basePath}
@@ -90,7 +91,7 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
           />
         </div>
       ) : null}
-      <div className='mb-4 flex w-full max-w-md flex-wrap items-center justify-between gap-2 px-2'>
+      <div className='flex w-full max-w-md flex-wrap items-center justify-between gap-2 px-2'>
         <span className='break-words font-semibold [color:var(--kangur-page-muted-text)]'>
           ⭐ Wynik: <span className='font-bold text-indigo-600'>{score}</span>
         </span>
@@ -99,7 +100,7 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
         </span>
       </div>
       <div
-        className='mb-4 flex w-full max-w-md flex-wrap gap-2 px-2'
+        className='flex w-full max-w-md flex-wrap gap-2 px-2'
         data-testid='kangur-game-question-momentum'
       >
         {roundAccuracy !== null ? (

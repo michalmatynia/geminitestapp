@@ -1,4 +1,5 @@
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import type { Toast } from '@/shared/contracts/ui';
 import { api, type ApiError } from '@/shared/lib/api-client';
 import {
   invalidateImageStudioSlots,
@@ -31,12 +32,6 @@ import {
 
 import type { QueryClient } from '@tanstack/react-query';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
-
-type Toast = (
-  message: string,
-  options?: { variant?: 'success' | 'error' | 'warning' | 'info' }
-) => void;
 
 type UpscaleMode = 'client_canvas' | 'server_sharp';
 type UpscaleStatus = 'idle' | 'resolving' | 'preparing' | 'uploading' | 'processing' | 'persisting';

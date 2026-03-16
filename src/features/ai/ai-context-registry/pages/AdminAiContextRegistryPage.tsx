@@ -14,6 +14,7 @@ import type {
   ContextSchemaResponse,
   ContextSearchResponse,
 } from '@/shared/contracts/ai-context-registry';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   Alert,
@@ -41,7 +42,7 @@ import {
 import { contextPacks } from '../registry/context-packs';
 import { buildContextRegistryTools } from '../tools/ai-tools';
 
-const NODE_KIND_FILTERS: Array<{ label: string; value: ContextNodeKind | 'all' }> = [
+const NODE_KIND_FILTERS: Array<LabeledOptionDto<ContextNodeKind | 'all'>> = [
   { label: 'All', value: 'all' },
   { label: 'Pages', value: 'page' },
   { label: 'Components', value: 'component' },

@@ -17,7 +17,7 @@ describe('KangurProgressHighlightCardContent', () => {
     render(
       <div data-testid='wrapper'>
         <KangurProgressHighlightCardContent>
-          <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
+          <div className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:justify-between'>
             <KangurProgressHighlightHeader
               description='Jeszcze chwila do kolejnego progu.'
               eyebrow='Następna odznaka'
@@ -44,7 +44,7 @@ describe('KangurProgressHighlightCardContent', () => {
   it('supports styling overrides used by hero milestone surfaces', () => {
     render(
       <KangurProgressHighlightCardContent>
-        <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
+        <div className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:justify-between'>
           <KangurProgressHighlightHeader
             description='Do odznaki Trzymam kierunek: 2/3 rundy'
             descriptionStyle={{ color: 'rgb(1 2 3)' }}

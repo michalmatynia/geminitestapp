@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Language } from '@/shared/contracts/internationalization';
 import type { ProductParameter, ProductWithImages } from '@/shared/contracts/products';
 import {
@@ -93,7 +94,7 @@ vi.mock('@/shared/ui', async () => {
     }: {
       value: string;
       onValueChange?: (value: string) => void;
-      options: Array<{ value: string; label: string }>;
+      options: Array<LabeledOptionDto<string>>;
       placeholder?: string;
       disabled?: boolean;
     }) => (

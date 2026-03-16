@@ -62,7 +62,7 @@ export const KangurPageTopBar = ({
         <div className='flex min-w-0 flex-1 items-center'>{left}</div>
         {right ? (
           <div
-            className='ml-auto flex w-full items-center justify-end gap-3 sm:w-auto'
+            className='ml-auto flex w-full items-center justify-end kangur-panel-gap sm:w-auto'
             data-testid='kangur-page-top-bar-right'
           >
             {right}

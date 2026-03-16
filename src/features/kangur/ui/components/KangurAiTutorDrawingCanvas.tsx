@@ -308,7 +308,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         </button>
       </div>
 
-      <div className='flex justify-end gap-3 border-t kangur-chat-divider kangur-chat-padding-sm text-xs'>
+      <div className='flex justify-end kangur-panel-gap border-t kangur-chat-divider kangur-chat-padding-sm text-xs'>
         <button
           type='button'
           onClick={onCancel}

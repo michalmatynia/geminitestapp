@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import { resolvePromptPlaceholders } from '@/features/ai/image-studio/utils/run-request-preview';
 import type { ImageStudioSequenceStep } from '@/features/ai/image-studio/utils/studio-settings';
+import type { Toast } from '@/shared/contracts/ui';
 import type {
   ImageStudioSlotRecord,
   ImageStudioSequenceRunStartResponse,
@@ -16,12 +17,6 @@ import {
   resolveSequenceStepsForRun,
   type SequenceRequestPreview,
 } from './right-sidebar-utils';
-
-
-type Toast = (
-  message: string,
-  options?: { variant?: 'success' | 'error' | 'warning' | 'info' }
-) => void;
 
 type UseRightSidebarSequenceArgs = {
   compositeAssetIds: string[];

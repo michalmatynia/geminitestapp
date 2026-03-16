@@ -132,7 +132,7 @@ function KangurPracticeAssignmentBannerBody(): React.JSX.Element {
         surface='solid'
         variant='soft'
       >
-        <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+        <div className='flex flex-col kangur-panel-gap sm:flex-row sm:items-start sm:justify-between'>
           <div className='min-w-0'>
             <KangurAssignmentPriorityChip
               accent='amber'

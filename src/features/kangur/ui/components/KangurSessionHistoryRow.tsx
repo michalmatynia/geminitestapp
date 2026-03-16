@@ -114,7 +114,7 @@ export function KangurSessionHistoryRow(props: KangurSessionHistoryRowProps): Re
   return (
     <KangurInfoCard
       accent={accent}
-      className='flex flex-col gap-3 sm:flex-row sm:items-center'
+      className='flex flex-col kangur-panel-gap sm:flex-row sm:items-center'
       data-testid={dataTestId}
       padding='sm'
       tone='accent'

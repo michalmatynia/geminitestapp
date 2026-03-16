@@ -124,7 +124,7 @@ export default function KangurGameSetupMomentumCard({
     <KangurRecommendationCard
       accent={focus.accent}
       className='w-full max-w-3xl rounded-[28px]'
-      contentClassName='gap-3'
+      contentClassName='kangur-panel-gap'
       dataTestId={`kangur-game-setup-momentum-${modeKey}`}
       description={focus.description}
       descriptionClassName='mt-1'

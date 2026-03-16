@@ -1,4 +1,5 @@
 import { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { type StatusVariant } from '@/shared/ui';
 
 import {
@@ -90,7 +91,7 @@ export const readContextDocument = (value: unknown): ContextDocumentDisplay | nu
           const val = toDisplayValue(rawValue);
           return val ? { label: key, value: val } : null;
         })
-        .filter((entry): entry is { label: string; value: string } => Boolean(entry))
+        .filter((entry): entry is LabeledOptionDto<string> => Boolean(entry))
       : [],
     sections: sections
       .map((section): ContextDocumentSectionDisplay | null => {

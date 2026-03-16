@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react';
 
+import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurLearnerProfileAiTutorMoodWidget } from '@/features/kangur/ui/components/KangurLearnerProfileAiTutorMoodWidget';
 import { KangurLearnerProfileAssignmentsWidget } from '@/features/kangur/ui/components/KangurLearnerProfileAssignmentsWidget';
@@ -29,19 +30,19 @@ import {
   KangurPageContainer,
   KangurPageShell,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { cn } from '@/features/kangur/shared/utils';
 
 type LearnerProfileTabId = 'overview' | 'ai-mood';
 
-const PROFILE_TABS: Array<{
-  id: LearnerProfileTabId;
-  label: string;
-  mobileLabel: string;
-  docId: string;
-}> = [
+const PROFILE_TABS: Array<
+  IdLabelOptionDto<LearnerProfileTabId> & { mobileLabel: string; docId: string }
+> = [
   {
     id: 'overview',
     label: 'Profil ucznia',
@@ -309,7 +310,7 @@ function LearnerProfileContent(): React.JSX.Element {
         as='section'
         data-kangur-route-main='true'
         id='kangur-learner-profile-main'
-        className='flex flex-col gap-6'
+        className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
         style={containerStyle}
       >
         <h2 className='sr-only'>Statystyki ucznia</h2>
@@ -367,7 +368,7 @@ function LearnerProfileContent(): React.JSX.Element {
             id={getLearnerProfileTabIds('overview').panelId}
             role='tabpanel'
             aria-labelledby={getLearnerProfileTabIds('overview').tabId}
-            className='flex flex-col gap-6'
+            className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
           >
             <div ref={questSummaryAnchorRef}>
               <KangurLearnerProfileQuestSummaryWidget />
@@ -400,7 +401,7 @@ function LearnerProfileContent(): React.JSX.Element {
             id={getLearnerProfileTabIds('ai-mood').panelId}
             role='tabpanel'
             aria-labelledby={getLearnerProfileTabIds('ai-mood').tabId}
-            className='flex flex-col gap-6'
+            className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
           >
             <div ref={moodAnchorRef}>
               <KangurLearnerProfileAiTutorMoodWidget />

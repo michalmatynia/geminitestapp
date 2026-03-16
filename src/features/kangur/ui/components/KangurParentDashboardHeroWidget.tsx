@@ -117,7 +117,7 @@ export function KangurParentDashboardHeroWidget({
         testId='kangur-parent-dashboard-hero'
         title={guestHeroContent?.title ?? 'Panel Rodzica / Nauczyciela'}
       >
-        <div className='grid w-full gap-3 sm:flex sm:w-auto sm:flex-row'>
+        <div className='grid w-full kangur-panel-gap sm:flex sm:w-auto sm:flex-row'>
           <KangurButton
             className='w-full sm:w-auto'
             onClick={() => {

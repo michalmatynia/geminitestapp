@@ -9,6 +9,7 @@ import type {
   PromptExploderOperationMode,
   PromptExploderSettings,
 } from '@/shared/contracts/prompt-exploder';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   parseValidatorPatternLists,
   VALIDATOR_PATTERN_LISTS_KEY,
@@ -50,10 +51,7 @@ const clampNumber = (value: number, min: number, max: number): number =>
 const toIntInRange = (value: number, min: number, max: number): number =>
   clampNumber(Math.floor(value), min, max);
 
-const OPERATION_MODE_OPTIONS: Array<{
-  value: PromptExploderOperationMode;
-  label: string;
-}> = [
+const OPERATION_MODE_OPTIONS: Array<LabeledOptionDto<PromptExploderOperationMode>> = [
   { value: 'rules_only', label: 'Rules Only' },
   { value: 'hybrid', label: 'Hybrid (Rules + AI)' },
   { value: 'ai_assisted', label: 'AI Assisted' },

@@ -15,7 +15,7 @@ import {
 import Link from 'next/link';
 import React from 'react';
 
-
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import type {
   BrainOperationsDomainKey,
   BrainOperationsMetric,
@@ -42,7 +42,7 @@ const DOMAIN_ICONS: Record<BrainOperationsDomainKey, ComponentType<{ className?:
   image_studio: ImageIcon,
 };
 
-const RANGE_OPTIONS: Array<{ value: BrainOperationsRange; label: string; description: string }> = [
+const RANGE_OPTIONS: Array<LabeledOptionWithDescriptionDto<BrainOperationsRange>> = [
   { value: '15m', label: 'Last 15m', description: 'Short incident window' },
   { value: '1h', label: 'Last 1h', description: 'Fast operational drift' },
   { value: '6h', label: 'Last 6h', description: 'Shift-level trend' },

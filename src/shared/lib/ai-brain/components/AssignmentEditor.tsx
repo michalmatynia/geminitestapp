@@ -2,13 +2,14 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Checkbox, Input, Label, SelectSimple, Textarea } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useBrain } from '../context/BrainContext';
 import { type AiBrainAssignment, type AiBrainProvider } from '../settings';
 
-const providerOptions: Array<{ value: AiBrainProvider; label: string }> = [
+const providerOptions: Array<LabeledOptionDto<AiBrainProvider>> = [
   { value: 'model', label: 'Model' },
   { value: 'agent', label: 'Agent' },
 ];

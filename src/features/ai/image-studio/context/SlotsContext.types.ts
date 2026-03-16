@@ -6,6 +6,7 @@ import type {
   ImageStudioSlotRecord,
   StudioSlotsResponse,
 } from '@/shared/contracts/image-studio';
+import type { IdDataDto, LabeledOptionDto } from '@/shared/contracts/base';
 import type { CreateMutation, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui';
 
 import type { StudioUploadMode } from '../components/studio-modals/StudioImportContext';
@@ -17,7 +18,7 @@ export type StudioPreviewMode = 'image' | '3d';
 export type StudioFolderMutation = CreateMutation<string, string>;
 export type StudioUpdateSlotMutation = UpdateMutation<
   ImageStudioSlotRecord,
-  { id: string; data: Partial<ImageStudioSlotRecord> }
+  IdDataDto<Partial<ImageStudioSlotRecord>>
 >;
 export type StudioDeleteSlotMutation = DeleteMutation<void, string>;
 export type StudioUploadMutation = CreateMutation<
@@ -54,7 +55,7 @@ export type SlotsContextType = {
   compositeSlot: ImageStudioSlotRecord | null;
   compositeAssets: ImageStudioSlotRecord[];
   compositeAssetIds: string[];
-  compositeAssetOptions: Array<{ value: string; label: string }>;
+  compositeAssetOptions: Array<LabeledOptionDto<string>>;
   virtualFolders: string[];
   selectedFolder: string;
   setSelectedSlotId: (id: string | null) => void;

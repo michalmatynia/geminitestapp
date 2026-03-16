@@ -1,4 +1,5 @@
 import { sanitizeStudioProjectId } from '@/features/ai/image-studio/utils/project-session';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
   ImageStudioCenterDetectionMode,
   ImageStudioCenterShadowPolicy,
@@ -161,10 +162,9 @@ export const OBJECT_LAYOUT_ADVANCED_PRESETS: ObjectLayoutPresetDefinition[] = [
   },
 ];
 
-export const OBJECT_LAYOUT_ADVANCED_PRESET_OPTIONS: Array<{
-  value: ObjectLayoutPresetOptionValue;
-  label: string;
-}> = [
+export const OBJECT_LAYOUT_ADVANCED_PRESET_OPTIONS: Array<
+  LabeledOptionDto<ObjectLayoutPresetOptionValue>
+> = [
   ...OBJECT_LAYOUT_ADVANCED_PRESETS.map((preset) => ({
     value: preset.id,
     label: preset.label,
@@ -174,7 +174,7 @@ export const OBJECT_LAYOUT_ADVANCED_PRESET_OPTIONS: Array<{
 
 export const buildObjectLayoutPresetOptions = (
   customPresets: ObjectLayoutCustomPreset[]
-): Array<{ value: ObjectLayoutPresetOptionValue; label: string }> => {
+): Array<LabeledOptionDto<ObjectLayoutPresetOptionValue>> => {
   const customOptions = customPresets.map((preset) => ({
     value: buildCustomPresetOptionValue(preset.id),
     label: `Preset: ${preset.name}`,

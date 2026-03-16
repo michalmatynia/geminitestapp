@@ -7,6 +7,7 @@ import {
   useNoteSettingsState,
 } from '@/features/notesapp/hooks/NoteSettingsContext';
 import type { NoteSettings } from '@/shared/contracts/notes';
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import {
   AdminNotesPageLayout,
   Button,
@@ -197,7 +198,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
               className='space-y-2'
             >
               {editorModeOptions.map(
-                (option: { value: string; label: string; description: string }) => {
+                (option: LabeledOptionWithDescriptionDto<string>) => {
                   const id = `editor-mode-${option.value}`;
                   const isSelected = settings.editorMode === option.value;
                   return (

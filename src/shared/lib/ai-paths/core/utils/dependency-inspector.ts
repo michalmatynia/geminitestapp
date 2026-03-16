@@ -7,6 +7,7 @@ import type {
   DependencyInspectorScopeMode,
   DependencyInspectorOptions,
 } from '@/shared/contracts/ai-paths';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 export type {
   DependencyRiskSeverity,
@@ -95,7 +96,7 @@ const collectDatabaseWriteTemplateRoots = (
     return { roots: [], templateLabels: [] };
   }
 
-  const templateSources: Array<{ label: string; value: string }> = [
+  const templateSources: Array<LabeledOptionDto<string>> = [
     {
       label: 'database.query.queryTemplate',
       value: normalizeNonEmptyString(dbConfig.query?.queryTemplate) ?? '',
@@ -104,19 +105,17 @@ const collectDatabaseWriteTemplateRoots = (
       label: 'database.updateTemplate',
       value: normalizeNonEmptyString(dbConfig.updateTemplate) ?? '',
     },
-  ].filter((entry: { label: string; value: string }): boolean => entry.value.length > 0);
+  ].filter((entry: LabeledOptionDto<string>): boolean => entry.value.length > 0);
 
   const roots = new Set<string>();
-  templateSources.forEach((entry: { label: string; value: string }): void => {
+  templateSources.forEach((entry: LabeledOptionDto<string>): void => {
     extractTemplateRoots(entry.value).forEach((root: string): void => {
       roots.add(root);
     });
   });
   return {
     roots: Array.from(roots),
-    templateLabels: templateSources.map(
-      (entry: { label: string; value: string }): string => entry.label
-    ),
+    templateLabels: templateSources.map((entry: LabeledOptionDto<string>): string => entry.label),
   };
 };
 

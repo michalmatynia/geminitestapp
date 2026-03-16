@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { internalError } from '@/shared/errors/app-error';
 import type { DatabaseAction, DatabaseActionCategory, DbQueryConfig } from '@/shared/lib/ai-paths';
 
@@ -12,8 +13,8 @@ export type DatabaseQueryInputControlsContextValue = {
   requestedProvider: DbQueryConfig['provider'];
   actionCategory: DatabaseActionCategory;
   action: DatabaseAction;
-  actionCategoryOptions: Array<{ value: DatabaseActionCategory; label: string }>;
-  actionOptions: Array<{ value: DatabaseAction; label: string }>;
+  actionCategoryOptions: Array<LabeledOptionDto<DatabaseActionCategory>>;
+  actionOptions: Array<LabeledOptionDto<DatabaseAction>>;
   queryTemplateValue: string;
   queryPlaceholder: string;
   showFilterInput?: boolean;

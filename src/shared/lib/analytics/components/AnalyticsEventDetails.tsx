@@ -3,6 +3,7 @@
 import React from 'react';
 
 import type { AnalyticsSummary } from '@/shared/contracts';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 type AnalyticsEvent = NonNullable<AnalyticsSummary['recent']>[number];
 
@@ -22,7 +23,7 @@ export function AnalyticsEventDetails({ event }: AnalyticsEventDetailsProps): Re
     ? `${event.connection.effectiveType ?? 'n/a'} • ${event.connection.downlink ?? '?'} Mbps • ${event.connection.rtt ?? '?'} ms`
     : '—';
   const ipDisplay = event.ip ?? event.ipMasked ?? event.ipHash ?? '—';
-  const detailItems: Array<{ label: string; value: string }> = [
+  const detailItems: Array<LabeledOptionDto<string>> = [
     { label: 'IP Address', value: ipDisplay },
     { label: 'User Agent', value: event.userAgent ?? '—' },
     { label: 'Visitor ID', value: event.visitorId },
@@ -48,7 +49,7 @@ export function AnalyticsEventDetails({ event }: AnalyticsEventDetailsProps): Re
   );
 }
 
-function DetailItem(props: { label: string; value: string }): React.JSX.Element {
+function DetailItem(props: LabeledOptionDto<string>): React.JSX.Element {
   return (
     <div className='flex flex-col gap-1 p-2 rounded bg-white/5 border border-white/5'>
       <span className='text-[10px] uppercase tracking-wide text-gray-500 font-semibold'>

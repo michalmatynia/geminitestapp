@@ -2,6 +2,7 @@
 
 import { DatabaseIcon, ServerIcon, UploadIcon, EyeIcon, PlusIcon } from 'lucide-react';
 
+import type { IdLabeledOptionDto } from '@/shared/contracts/base';
 import type { DatabaseType } from '@/shared/contracts/database';
 import {
   AdminDatabaseBreadcrumbs,
@@ -29,10 +30,7 @@ import {
   useDatabaseBackupsStateContext,
 } from '../context/DatabaseBackupsContext';
 
-type BackupDatabaseOption = {
-  id: string;
-  value: DatabaseType;
-  label: string;
+type BackupDatabaseOption = IdLabeledOptionDto<DatabaseType, DatabaseType> & {
   description: string;
   extension: string;
 };

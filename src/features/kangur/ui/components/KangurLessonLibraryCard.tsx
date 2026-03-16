@@ -186,7 +186,7 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
             masteryPresentation={masteryPresentation}
           />
         }
-        headerClassName='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'
+        headerClassName='flex flex-col kangur-panel-gap sm:flex-row sm:items-start sm:justify-between'
         icon={
           <KangurGradientIconTile
             data-testid={iconTestId}

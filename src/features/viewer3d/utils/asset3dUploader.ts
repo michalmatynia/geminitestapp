@@ -40,7 +40,7 @@ export async function uploadAsset3D(
   const publicDir = '/uploads/assets3d';
   const publicPath = `${publicDir}/${filename}`;
   const nodeFs = getFsPromises();
-  const localDiskPath = path.join(diskDir, filename);
+  const localDiskPath = `${diskDir}/${filename}`;
   let storedFilepath: string;
 
   try {

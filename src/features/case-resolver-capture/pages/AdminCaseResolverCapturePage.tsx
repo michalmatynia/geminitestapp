@@ -4,6 +4,7 @@ import { ArrowLeft, RefreshCcw, Settings2 } from 'lucide-react';
 import Link from 'next/link';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
   AdminAiEyebrow,
@@ -33,7 +34,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 const BOOLEAN_OPTIONS = [
   { value: 'true', label: 'Enabled' },
   { value: 'false', label: 'Disabled' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 const toBooleanOptionValue = (value: boolean): string => (value ? 'true' : 'false');
 const fromBooleanOptionValue = (value: string): boolean => value === 'true';

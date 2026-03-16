@@ -3,6 +3,7 @@ import type {
   ProductValidationPatternFormData as PatternFormData,
   SequenceGroupView,
 } from '@/shared/contracts/products';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/shared/lib/products/constants';
 import {
   encodeDynamicReplacementRecipe,
@@ -91,10 +92,11 @@ export const REPLACEMENT_FIELD_LABELS: Record<string, string> = {
   description_de: 'Description (DE)',
 };
 
-export const REPLACEMENT_FIELD_OPTIONS = PRODUCT_VALIDATION_REPLACEMENT_FIELDS.map((field) => ({
-  value: field,
-  label: REPLACEMENT_FIELD_LABELS[field] ?? field,
-}));
+export const REPLACEMENT_FIELD_OPTIONS: Array<LabeledOptionDto<string>> =
+  PRODUCT_VALIDATION_REPLACEMENT_FIELDS.map((field) => ({
+    value: field,
+    label: REPLACEMENT_FIELD_LABELS[field] ?? field,
+  }));
 
 const SOURCE_FIELD_OPTIONS = [
   ...REPLACEMENT_FIELD_OPTIONS,
@@ -105,7 +107,7 @@ const SOURCE_FIELD_OPTIONS = [
     value: 'nameEnSegment4RegexEscaped',
     label: 'Name EN Segment #4 (Regex Escaped)',
   },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 const ALLOWED_REPLACEMENT_FIELDS = new Set<string>(PRODUCT_VALIDATION_REPLACEMENT_FIELDS);
 
@@ -137,7 +139,7 @@ export const formatReplacementFields = (fields: unknown): string => {
  */
 export const getReplacementFieldsForTarget = (
   target: string
-): Array<{ value: string; label: string }> => {
+): Array<LabeledOptionDto<string>> => {
   let fields: string[];
   if (target === 'name') {
     fields = PRODUCT_VALIDATION_REPLACEMENT_FIELDS.filter((field) => field.startsWith('name_'));
@@ -216,7 +218,7 @@ export const isNameSecondSegmentDimensionPattern = (
  */
 export const getSourceFieldOptionsForTarget = (
   _target: string
-): Array<{ value: string; label: string }> => {
+): Array<LabeledOptionDto<string>> => {
   return SOURCE_FIELD_OPTIONS;
 };
 

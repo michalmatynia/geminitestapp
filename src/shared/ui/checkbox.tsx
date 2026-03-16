@@ -4,17 +4,27 @@ import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
 import { Check } from 'lucide-react';
 import * as React from 'react';
 
-import { cn, resolveAccessibleLabel } from '@/shared/utils';
+import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
+
+type DataAttributes = {
+  'data-testid'?: string;
+  'data-doc-id'?: string;
+  'data-doc-alias'?: string;
+};
 
 const Checkbox = React.forwardRef<
   React.ElementRef<typeof CheckboxPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
+  React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root> & DataAttributes
 >(
   (
     {
       className,
       id,
+      name,
       title,
+      'data-testid': dataTestId,
+      'data-doc-id': dataDocId,
+      'data-doc-alias': dataDocAlias,
       'aria-label': ariaLabelProp,
       'aria-labelledby': ariaLabelledByProp,
       ...props
@@ -27,8 +37,17 @@ const Checkbox = React.forwardRef<
       ariaLabel: ariaLabelProp,
       ariaLabelledBy: ariaLabelledByProp,
       title: allowFallbackLabel ? title : undefined,
+      fallbackLabel: allowFallbackLabel
+        ? name ??
+          (typeof dataDocAlias === 'string' ? dataDocAlias : undefined) ??
+          (typeof dataDocId === 'string' ? dataDocId : undefined) ??
+          (typeof dataTestId === 'string' ? dataTestId : undefined)
+        : undefined,
     });
     const hasLabel = hasAccessibleLabel || Boolean(id);
+    if (!hasLabel) {
+      warnMissingAccessibleLabel({ componentName: 'Checkbox', hasAccessibleLabel: hasLabel });
+    }
 
     return (
       <CheckboxPrimitive.Root
@@ -38,9 +57,13 @@ const Checkbox = React.forwardRef<
           className
         )}
         id={id}
+        name={name}
         aria-label={hasLabel ? resolvedAriaLabel : undefined}
         aria-labelledby={ariaLabelledByProp}
         title={title}
+        data-testid={dataTestId}
+        data-doc-id={dataDocId}
+        data-doc-alias={dataDocAlias}
         {...props}
       >
         <CheckboxPrimitive.Indicator

@@ -14,8 +14,9 @@ import {
   useState,
   useContext,
   type FormEvent,
+  type FocusEvent,
   type JSX,
-  type MutableRefObject,
+  type RefObject,
 } from 'react';
 
 import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
@@ -24,7 +25,11 @@ import {
   clearStoredActiveLearnerId,
   setStoredActiveLearnerId,
 } from '@/features/kangur/services/kangur-active-learner';
-import { KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS } from '@/features/kangur/settings';
+import {
+  KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS,
+  KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
+  parseKangurParentVerificationEmailSettings,
+} from '@/features/kangur/settings';
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
 import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
@@ -35,6 +40,7 @@ import {
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
+import { clearSessionUserCache } from '@/features/kangur/services/local-kangur-platform-auth';
 import type { VerifyCredentialsResponse } from '@/shared/contracts/auth';
 import {
   type KangurAuthMode,
@@ -43,6 +49,7 @@ import {
   parseKangurParentEmailVerifyResponse,
 } from '@/features/kangur/shared/contracts/kangur-auth';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
@@ -69,7 +76,7 @@ type KangurApiErrorPayload = {
 
 type KangurLoginKind = 'parent' | 'student' | 'unknown';
 
-const KANGUR_LEARNER_LOGIN_PATTERN = /^[a-zA-Z0-9]+$/;
+const KANGUR_LEARNER_LOGIN_PATTERN = /^[a-zA-Z0-9-]+$/;
 const KANGUR_PARENT_AUTH_MODE_PARAM = 'authMode';
 const KangurLoginPagePropsContext = createContext<KangurLoginPageProps | null>(null);
 const KANGUR_PARENT_CAPTCHA_SITE_KEY =
@@ -77,6 +84,7 @@ const KANGUR_PARENT_CAPTCHA_SITE_KEY =
 const TURNSTILE_SCRIPT_ID = 'kangur-turnstile-script';
 const TURNSTILE_SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 let turnstileScriptPromise: Promise<void> | null = null;
+const INPUT_FOCUS_RETENTION_DELAY_MS = 140;
 
 type TurnstileRenderOptions = {
   sitekey: string;
@@ -362,15 +370,25 @@ function KangurLoginPageContent(): JSX.Element {
   const routeNavigator = useKangurRouteNavigator();
   const searchParams = useSearchParams();
   const auth = useOptionalKangurAuth();
+  const settingsStore = useSettingsStore();
   const { entry: loginFormContent } = useKangurPageContentEntry('login-page-form');
   const { entry: identifierFieldContent } = useKangurPageContentEntry(
     'login-page-identifier-field'
   );
+  const rawParentVerificationSettings = settingsStore.get(
+    KANGUR_PARENT_VERIFICATION_SETTINGS_KEY
+  );
+  const parentVerificationSettings = useMemo(
+    () => parseKangurParentVerificationEmailSettings(rawParentVerificationSettings),
+    [rawParentVerificationSettings]
+  );
   const loginFormRef = useRef<HTMLFormElement | null>(null);
   const identifierInputRef = useRef<HTMLInputElement | null>(null);
   const passwordInputRef = useRef<HTMLInputElement | null>(null);
-  const restoreIdentifierFocusRef = useRef(false);
-  const restorePasswordFocusRef = useRef(false);
+  const activelyEditingInputRef = useRef<HTMLInputElement | null>(null);
+  const allowBlurWithinFormRef = useRef(false);
+  const allowBlurOutsideFormRef = useRef(false);
+  const focusRetentionTimeoutRef = useRef<number | null>(null);
   const titleId = useId();
   const identifierInputId = useId();
   const identifierHelpId = useId();
@@ -418,16 +436,20 @@ function KangurLoginPageContent(): JSX.Element {
   const captchaWidgetIdRef = useRef<string | null>(null);
   const loginKind = resolveKangurLoginKind(identifier);
   const isParentFlowVisible = true;
+  const isParentVerificationRequired = parentVerificationSettings.requireEmailVerification;
   const introDescription =
     parentAuthMode === 'create-account'
-      ? 'Zakładasz konto rodzica emailem i hasłem. Po potwierdzeniu adresu zalogujesz się tak samo za każdym razem.'
+      ? isParentVerificationRequired
+        ? 'Zakładasz konto rodzica emailem i hasłem. Po potwierdzeniu adresu zalogujesz się tak samo za każdym razem.'
+        : 'Zakładasz konto rodzica emailem i hasłem. Konto będzie aktywne od razu po utworzeniu.'
       : loginKind === 'student'
         ? 'Uczeń loguje się nickiem i hasłem. Rodzic może wejść emailem i hasłem.'
         : loginFormContent?.summary ??
           'Rodzic loguje się emailem i hasłem. Uczeń loguje się nickiem i hasłem.';
   const isCreateAccountMode = isParentFlowVisible && parentAuthMode === 'create-account';
   const isCaptchaConfigured = KANGUR_PARENT_CAPTCHA_SITE_KEY.length > 0;
-  const isCaptchaRequired = isCreateAccountMode && isCaptchaConfigured;
+  const isCaptchaRequired =
+    isCreateAccountMode && isCaptchaConfigured && parentVerificationSettings.requireCaptcha;
   const showIdentifierLabel = false;
   const showIdentifierHelp = false;
   const identifierFieldLabel = isCreateAccountMode
@@ -445,7 +467,10 @@ function KangurLoginPageContent(): JSX.Element {
   const passwordFieldAriaLabel = passwordFieldLabel;
   const visibleNotice = createdParentEmail ? null : notice;
   const createAccountConfirmationDetail =
-    notice?.trim() || 'Kliknij link potwierdzający w e-mailu. Potem zalogujesz się tym samym e-mailem i hasłem.';
+    notice?.trim() ||
+    (isParentVerificationRequired
+      ? 'Kliknij link potwierdzający w e-mailu. Potem zalogujesz się tym samym e-mailem i hasłem.'
+      : 'Konto jest gotowe. Zaloguj się e-mailem i hasłem.');
   const resendRetryAfterMs =
     typeof resendAvailableAtMs === 'number'
       ? Math.max(0, resendAvailableAtMs - resendCountdownNowMs)
@@ -460,7 +485,7 @@ function KangurLoginPageContent(): JSX.Element {
   const isParentSubmitDisabled =
     !isHydrated || isSubmitting || (isCaptchaRequired && !captchaToken);
   const inputClassName =
-    'kangur-text-field rounded-[24px] px-4 py-3 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.76)] outline-none transition focus:border-amber-200 focus:ring-2 focus:ring-amber-200/70 disabled:cursor-not-allowed disabled:opacity-60';
+    'kangur-text-field rounded-[24px] px-4 py-3 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.76)] outline-none transition focus:border-amber-200 focus-visible:ring-2 focus-visible:ring-amber-200/70 disabled:cursor-not-allowed disabled:opacity-60';
   const formDescribedBy = [visibleNotice ? noticeId : null, error ? errorId : null]
     .filter(Boolean)
     .join(' ');
@@ -502,38 +527,69 @@ function KangurLoginPageContent(): JSX.Element {
     }
   }, []);
 
-  const markRestoreFocus = (target: HTMLInputElement | null, ref: MutableRefObject<boolean>): void => {
-    if (typeof document === 'undefined') {
-      return;
-    }
-
-    if (document.activeElement === target) {
-      ref.current = true;
-    }
-  };
-
-  const restoreFocusIfNeeded = (
-    target: HTMLInputElement | null,
-    ref: MutableRefObject<boolean>
+  const handleInputBlur = (
+    event: FocusEvent<HTMLInputElement>,
+    targetRef: React.RefObject<HTMLInputElement | null>
   ): void => {
-    if (!ref.current) {
+    if (activelyEditingInputRef.current !== targetRef.current) {
       return;
     }
 
-    ref.current = false;
-    if (typeof document === 'undefined') {
+    const relatedTarget = event.relatedTarget as HTMLElement | null;
+    const isWithinForm = Boolean(relatedTarget && loginFormRef.current?.contains(relatedTarget));
+    if (isWithinForm && allowBlurWithinFormRef.current) {
+      allowBlurWithinFormRef.current = false;
+      activelyEditingInputRef.current = null;
+      return;
+    }
+    if (!isWithinForm && allowBlurOutsideFormRef.current) {
+      allowBlurOutsideFormRef.current = false;
+      activelyEditingInputRef.current = null;
       return;
     }
 
-    const activeElement = document.activeElement as HTMLElement | null;
-    if (activeElement && activeElement !== target && loginFormRef.current?.contains(activeElement)) {
+    if (typeof window === 'undefined') {
       return;
     }
 
-    if (target && activeElement !== target) {
-      target.focus({ preventScroll: true });
-    }
+    window.requestAnimationFrame(() => {
+      const target = targetRef.current;
+      if (!target || activelyEditingInputRef.current !== target) {
+        return;
+      }
+      if (document.activeElement !== target) {
+        target.focus({ preventScroll: true });
+      }
+    });
   };
+
+  const scheduleFocusRetention = useCallback(
+    (targetRef: RefObject<HTMLInputElement | null>): void => {
+      if (typeof window === 'undefined') {
+        return;
+      }
+
+      const target = targetRef.current;
+      if (!target || document.activeElement !== target) {
+        return;
+      }
+
+      if (focusRetentionTimeoutRef.current !== null) {
+        window.clearTimeout(focusRetentionTimeoutRef.current);
+      }
+
+      focusRetentionTimeoutRef.current = window.setTimeout(() => {
+        focusRetentionTimeoutRef.current = null;
+        const activeElement = document.activeElement as HTMLElement | null;
+        const form = loginFormRef.current;
+        if (form && activeElement && form.contains(activeElement)) {
+          return;
+        }
+        targetRef.current?.focus({ preventScroll: true });
+      }, INPUT_FOCUS_RETENTION_DELAY_MS);
+    },
+    []
+  );
 
   useEffect(() => {
     if (!isCaptchaRequired) {
@@ -641,13 +697,59 @@ function KangurLoginPageContent(): JSX.Element {
     setIsHydrated(true);
   }, []);
 
-  useLayoutEffect(() => {
-    restoreFocusIfNeeded(identifierInputRef.current, restoreIdentifierFocusRef);
-  }, [identifier]);
+  useEffect(() => {
+    return () => {
+      if (focusRetentionTimeoutRef.current !== null) {
+        window.clearTimeout(focusRetentionTimeoutRef.current);
+        focusRetentionTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent): void => {
+      const target = event.target as Node | null;
+      if (!loginFormRef.current || !target) {
+        allowBlurWithinFormRef.current = false;
+        allowBlurOutsideFormRef.current = false;
+        return;
+      }
+      if (loginFormRef.current.contains(target)) {
+        allowBlurWithinFormRef.current = true;
+        allowBlurOutsideFormRef.current = false;
+        return;
+      }
+      allowBlurWithinFormRef.current = false;
+      allowBlurOutsideFormRef.current = true;
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown, true);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown, true);
+    };
+  }, []);
 
   useLayoutEffect(() => {
-    restoreFocusIfNeeded(passwordInputRef.current, restorePasswordFocusRef);
-  }, [password]);
+    const target = activelyEditingInputRef.current;
+    if (!target) {
+      return;
+    }
+    if (document.activeElement !== target) {
+      target.focus({ preventScroll: true });
+    }
+    // Radix FocusScope uses a MutationObserver (microtask) that can steal focus
+    // AFTER this layout effect runs. Schedule an async check to reclaim it.
+    const frameId = requestAnimationFrame(() => {
+      if (activelyEditingInputRef.current === target && document.activeElement !== target) {
+        target.focus({ preventScroll: true });
+      }
+    });
+    return () => cancelAnimationFrame(frameId);
+  });
 
   useEffect(() => {
     setParentAuthMode(requestedParentAuthMode);
@@ -698,6 +800,7 @@ function KangurLoginPageContent(): JSX.Element {
   };
 
   const finishLogin = async (targetUrl: string): Promise<void> => {
+    clearSessionUserCache();
     const navigationTarget = resolveKangurLoginCallbackNavigation(targetUrl, window.location.origin);
     if (!navigationTarget) {
       router.refresh();
@@ -784,6 +887,7 @@ function KangurLoginPageContent(): JSX.Element {
 
   const handleParentAccountCreate = async (email: string): Promise<void> => {
     let keepCaptchaError = false;
+    const passwordSnapshot = password;
     if (isCaptchaRequired && !captchaToken) {
       const message = 'Potwierdź, że nie jesteś botem.';
       setError(message);
@@ -846,12 +950,31 @@ function KangurLoginPageContent(): JSX.Element {
       );
       const debugVerificationUrl = payload?.debug?.verificationUrl?.trim();
       const retryAfterMs = resolveParentVerificationRetryAfterMs(payload?.retryAfterMs);
+      const emailVerified = payload?.emailVerified === true;
       trackKangurClientEvent('kangur_parent_account_created', {
         callbackUrl,
         created: payload?.created === true,
-        emailVerified: payload?.emailVerified === true,
+        emailVerified,
         hasPassword: payload?.hasPassword === true,
       });
+      if (emailVerified) {
+        const signInResult = await signInParentWithCredentials({
+          callbackUrl,
+          email,
+          password: passwordSnapshot,
+        });
+
+        if (signInResult.error || !signInResult.ok) {
+          setParentAuthMode('sign-in');
+          setNotice('Konto jest gotowe. Zaloguj się e-mailem i hasłem.');
+          setError(getParentSignInErrorMessage(signInResult.error, signInResult.message));
+          return;
+        }
+
+        await finishLogin(signInResult.url ?? callbackUrl);
+        return;
+      }
+
       setPassword('');
       setCreatedParentEmail(email);
       startResendCooldown(retryAfterMs);
@@ -1012,7 +1135,7 @@ function KangurLoginPageContent(): JSX.Element {
 
   const handleStudentSignIn = async (loginName: string): Promise<void> => {
     if (!KANGUR_LEARNER_LOGIN_PATTERN.test(loginName)) {
-      setError('Nick ucznia może zawierać tylko litery i cyfry.');
+      setError('Nick ucznia może zawierać tylko litery, cyfry i myślniki.');
       return;
     }
 
@@ -1038,14 +1161,20 @@ function KangurLoginPageContent(): JSX.Element {
       });
 
       if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as {
-          error?: { message?: string };
-        } | null;
+        const payload = (await response.json().catch(() => null)) as
+          | { error?: { message?: string } | string; message?: string }
+          | null;
+        const errorMessage =
+          (typeof payload?.error === 'string' ? payload.error : payload?.error?.message) ??
+          payload?.message;
         trackKangurClientEvent('kangur_learner_signin_failed', {
           callbackUrl,
           statusCode: response.status,
         });
-        setError(payload?.error?.message || 'Nie udało się zalogować ucznia. Sprawdź login i hasło.');
+        setError(
+          errorMessage?.trim() ||
+            'Nie udało się zalogować ucznia. Sprawdź login i hasło.'
+        );
         return;
       }
 
@@ -1164,7 +1293,7 @@ function KangurLoginPageContent(): JSX.Element {
       <form
         aria-busy={isSubmitting ? 'true' : 'false'}
         aria-describedby={formDescribedBy || undefined}
-        className='flex flex-col gap-3 sm:gap-4'
+        className='flex flex-col kangur-panel-gap'
         data-hydrated={isHydrated ? 'true' : 'false'}
         data-login-kind={loginKind}
         data-tutor-anchor='login_form'
@@ -1227,9 +1356,20 @@ function KangurLoginPageContent(): JSX.Element {
             disabled={!isHydrated || isSubmitting}
             id={identifierInputId}
             name='identifier'
+            onBlur={(event) =>
+              handleInputBlur(event, identifierInputRef)
+            }
+            onKeyDown={(event) => {
+              if (event.key === 'Tab') {
+                activelyEditingInputRef.current = null;
+              }
+            }}
             onChange={(event) => {
-              markRestoreFocus(identifierInputRef.current, restoreIdentifierFocusRef);
+              allowBlurWithinFormRef.current = false;
+              allowBlurOutsideFormRef.current = false;
+              activelyEditingInputRef.current = identifierInputRef.current;
               setIdentifier(event.target.value);
+              scheduleFocusRetention(identifierInputRef);
             }}
             placeholder={
               isParentFlowVisible && parentAuthMode === 'create-account'
@@ -1265,9 +1405,20 @@ function KangurLoginPageContent(): JSX.Element {
             disabled={!isHydrated || isSubmitting}
             id={passwordInputId}
             name='password'
+            onBlur={(event) =>
+              handleInputBlur(event, passwordInputRef)
+            }
+            onKeyDown={(event) => {
+              if (event.key === 'Tab') {
+                activelyEditingInputRef.current = null;
+              }
+            }}
             onChange={(event) => {
-              markRestoreFocus(passwordInputRef.current, restorePasswordFocusRef);
+              allowBlurWithinFormRef.current = false;
+              allowBlurOutsideFormRef.current = false;
+              activelyEditingInputRef.current = passwordInputRef.current;
               setPassword(event.target.value);
+              scheduleFocusRetention(passwordInputRef);
             }}
             placeholder={
               isParentFlowVisible && parentAuthMode === 'create-account'
@@ -1405,7 +1556,12 @@ function KangurLoginPageContent(): JSX.Element {
 }
 
 export function KangurLoginPage(props: KangurLoginPageProps): JSX.Element {
-  const loginPageProps = props;
+  const { callbackUrl, defaultCallbackUrl, onClose, parentAuthMode, showParentAuthModeTabs } = props;
+
+  const loginPageProps = useMemo<KangurLoginPageProps>(
+    () => ({ callbackUrl, defaultCallbackUrl, onClose, parentAuthMode, showParentAuthModeTabs }),
+    [callbackUrl, defaultCallbackUrl, onClose, parentAuthMode, showParentAuthModeTabs]
+  );
 
   return (
     <Suspense fallback={<div className='sr-only'>Ladowanie logowania StudiQ...</div>}>

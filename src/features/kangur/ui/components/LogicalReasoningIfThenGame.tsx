@@ -5,7 +5,10 @@ import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { KangurButton, KangurInfoCard, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
-import { type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PANEL_GAP_CLASSNAME,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
 
 import type { DropResult } from '@hello-pangea/dnd';
@@ -331,9 +334,9 @@ export default function LogicalReasoningIfThenGame({
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <div className='flex w-full flex-col gap-4'>
+      <div className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
         <KangurInfoCard accent='indigo' tone='muted' padding='sm' className='w-full'>
-          <div className='flex flex-wrap items-start justify-between gap-3'>
+          <div className='flex flex-wrap items-start justify-between kangur-panel-gap'>
             <div>
               <p className='text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-500'>
                 Gra logiczna
@@ -351,7 +354,7 @@ export default function LogicalReasoningIfThenGame({
           </div>
         </KangurInfoCard>
 
-        <div className='grid w-full gap-3 sm:grid-cols-2'>
+        <div className='grid w-full kangur-panel-gap sm:grid-cols-2'>
           {(['valid', 'invalid'] as const).map((zoneId) => (
             <Droppable key={zoneId} droppableId={zoneId}>
               {(provided, snapshot) => {
@@ -535,7 +538,7 @@ export default function LogicalReasoningIfThenGame({
           </KangurButton>
         </div>
 
-        <div className='flex flex-wrap items-center gap-3'>
+        <div className='flex flex-wrap items-center kangur-panel-gap'>
           <KangurButton
             disabled={!allPlaced || checked}
             onClick={evaluate}

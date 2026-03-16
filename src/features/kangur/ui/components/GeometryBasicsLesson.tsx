@@ -155,7 +155,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
     {
       title: 'Podsumowanie',
       content: (
-        <div className='flex flex-col gap-3'>
+        <div className='flex flex-col kangur-panel-gap'>
           {[
             ['●', 'Punkt', 'pojedyncze miejsce'],
             ['—', 'Odcinek', 'łączy dwa punkty'],
@@ -165,7 +165,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
             <KangurLessonCallout
               key={term}
               accent='sky'
-              className='flex gap-3 items-start text-sm [color:var(--kangur-page-text)]'
+              className='flex kangur-panel-gap items-start text-sm [color:var(--kangur-page-text)]'
               padding='sm'
             >
               <span className='font-bold text-cyan-600 w-5'>{icon}</span>

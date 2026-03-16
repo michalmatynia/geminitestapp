@@ -73,7 +73,7 @@ function KangurAiTutorPanelContextCard({
       tone='panel'
       className='mt-2 kangur-chat-padding-md'
     >
-      <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+      <div className='flex flex-col kangur-panel-gap sm:flex-row sm:items-start sm:justify-between'>
         <div className='min-w-0 flex-1'>
           <div className='text-[10px] font-bold uppercase tracking-[0.16em] [color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'>
             {title}

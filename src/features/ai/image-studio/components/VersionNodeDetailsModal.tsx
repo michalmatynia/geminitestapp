@@ -3,6 +3,7 @@
 import React, { useMemo } from 'react';
 
 import { readMeta } from '@/features/ai/image-studio/utils/metadata';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { Hint } from '@/shared/ui';
@@ -154,9 +155,7 @@ const resolveOperationSummary = (slot: ImageStudioSlotRecord): OperationSummary 
   };
 };
 
-const DetailsGrid = (props: {
-  rows: Array<{ label: string; value: string }>;
-}): React.JSX.Element => {
+const DetailsGrid = (props: { rows: Array<LabeledOptionDto<string>> }): React.JSX.Element => {
   const { rows } = props;
 
   return (

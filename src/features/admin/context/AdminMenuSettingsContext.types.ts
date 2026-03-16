@@ -5,6 +5,7 @@ import type {
   AdminNavLeaf,
   AdminNavNodeEntry,
 } from '@/shared/contracts/admin';
+import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 export type { AdminMenuLayoutNodeState };
@@ -16,7 +17,7 @@ export interface AdminMenuSettingsStateContextValue {
   customNav: AdminMenuCustomNode[];
   query: string;
   libraryQuery: string;
-  sections: Array<{ id: string; label: string }>;
+  sections: Array<IdLabelOptionDto>;
   flattened: AdminNavLeaf[];
   favoritesSet: Set<string>;
   favoritesList: (AdminNavLeaf | undefined)[];

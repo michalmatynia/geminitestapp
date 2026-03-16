@@ -1,5 +1,6 @@
 import React from 'react';
 
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import type {
   KangurAiTutorFocusKind,
   KangurAiTutorSurface,
@@ -36,17 +37,16 @@ interface KangurPageContentEntryEditorProps {
   insetCardClassName?: string;
 }
 
-const PAGE_KEY_OPTIONS = kangurPageContentPageKeySchema.options.map((value) => ({
+const PAGE_KEY_OPTIONS: Array<LabeledOptionWithDescriptionDto<KangurPageContentPageKey>> =
+  kangurPageContentPageKeySchema.options.map((value) => ({
   value,
   label: value,
   description: `Canonical Kangur page key: ${value}.`,
-}));
+  }));
 
-const SURFACE_OPTIONS: Array<{
-  value: string;
-  label: string;
-  description: string;
-}> = [
+const SURFACE_OPTIONS: Array<
+  LabeledOptionWithDescriptionDto<KangurAiTutorSurface | '__none__'>
+> = [
   { value: '__none__', label: 'None', description: 'No tutor surface override.' },
   { value: 'lesson', label: 'Lesson', description: 'Lesson surface context.' },
   { value: 'test', label: 'Test', description: 'Test surface context.' },
@@ -60,11 +60,9 @@ const SURFACE_OPTIONS: Array<{
   { value: 'auth', label: 'Auth', description: 'Authentication surface context.' },
 ];
 
-const FOCUS_KIND_OPTIONS: Array<{
-  value: string;
-  label: string;
-  description: string;
-}> = [
+const FOCUS_KIND_OPTIONS: Array<
+  LabeledOptionWithDescriptionDto<KangurAiTutorFocusKind | '__none__'>
+> = [
   { value: '__none__', label: 'None', description: 'No explicit tutor focus kind.' },
   { value: 'selection', label: 'Selection', description: 'Selected-text focus.' },
   { value: 'hero', label: 'Hero', description: 'Hero block or top-level intro.' },

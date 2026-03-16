@@ -32,7 +32,7 @@ const DEFAULT_SEVERITY_WEIGHT: Record<'error' | 'warning' | 'info', number> = {
   info: 5,
 };
 
-const COLLECTION_ALLOWLIST = new Set(DB_COLLECTION_OPTIONS.map((option) => option.value));
+const COLLECTION_ALLOWLIST = new Set<string>(DB_COLLECTION_OPTIONS.map((option) => option.value));
 const KNOWN_NODE_TYPES = new Set(AI_PATHS_NODE_DOCS.map((doc) => doc.type));
 
 const clampScore = (value: number): number => Math.max(0, Math.min(100, Math.trunc(value)));

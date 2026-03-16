@@ -2,6 +2,7 @@ import { Hand, Layers, MousePointer2, RotateCw } from 'lucide-react';
 import React, { useCallback } from 'react';
 
 import type { DragAxis } from '@/features/gsap';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { DEFAULT_ANIMATION_CONFIG, DRAG_AXES, OBSERVER_TYPES } from '@/features/gsap';
 import {
   Button,
@@ -137,7 +138,7 @@ export function AdvancedObserverMagnetSection(): React.JSX.Element {
                   className='h-9'
                  aria-label='wheel,touch,pointer' title='wheel,touch,pointer'/>
                 <div className='flex flex-wrap gap-1.5'>
-                  {OBSERVER_TYPES.map((option: { label: string; value: string }) => (
+                  {OBSERVER_TYPES.map((option: LabeledOptionDto<string>) => (
                     <Tooltip key={option.label} content={option.label}>
                       <Button
                         type='button'

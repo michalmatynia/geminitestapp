@@ -5,7 +5,7 @@ import * as React from 'react';
 import { cn, getTextContent } from '@/shared/utils';
 
 const badgeVariants = cva(
-  'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+  'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
   {
     variants: {
       variant: {
@@ -80,7 +80,7 @@ function Badge({
             e.stopPropagation();
             onRemove();
           }}
-          className='ml-1.5 -mr-1 rounded-full p-0.5 hover:bg-black/10 focus:outline-none transition-colors'
+          className='ml-1.5 -mr-1 rounded-full p-0.5 hover:bg-black/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-colors'
           aria-label={removeLabel || 'Remove'}
           title={removeLabel || 'Remove'}>
           <X className='size-3' />
@@ -109,7 +109,7 @@ function Badge({
       <div className={cn(sharedClassName, 'gap-0 px-0 py-0')} {...props}>
         <button
           type='button'
-          className='inline-flex items-center rounded-full rounded-r-none px-2.5 py-0.5 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2'
+          className='inline-flex items-center rounded-full rounded-r-none px-2.5 py-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
           onClick={handleButtonClick}
           onKeyDown={handleButtonKeyDown}
           aria-label={accessibleLabel || undefined}
@@ -123,7 +123,7 @@ function Badge({
             e.stopPropagation();
             onRemove();
           }}
-          className='mr-1 rounded-full p-0.5 hover:bg-black/10 focus:outline-none transition-colors'
+          className='mr-1 rounded-full p-0.5 hover:bg-black/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-colors'
           aria-label={removeLabel || 'Remove'}
           title={removeLabel || 'Remove'}>
           <X className='size-3' />

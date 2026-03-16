@@ -1,3 +1,5 @@
+import type { LabeledOptionDto } from '@/shared/contracts/base';
+
 export const PARSER_PRESETS = [
   {
     id: 'product_core',
@@ -85,4 +87,4 @@ export const PARSER_PATH_OPTIONS = [
   { label: 'Note: notebookId', value: '$.notebookId' },
   { label: 'Chat: role', value: '$.role' },
   { label: 'Chat: messages[0].content', value: '$.messages[0].content' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;

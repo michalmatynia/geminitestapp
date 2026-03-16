@@ -9,6 +9,7 @@ import {
   KangurPanelIntro,
   KangurProgressBar,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import {
   getCurrentKangurDailyQuest,
@@ -36,7 +37,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
           : 'slate';
 
   return (
-    <section className='flex flex-col gap-4'>
+    <section className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <KangurPanelIntro
         data-testid='learner-profile-overview-intro'
         description={
@@ -45,7 +46,9 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         }
         eyebrow={overviewContent?.title ?? 'Przegląd wyników'}
       />
-      <div className='grid grid-cols-1 gap-4 min-[360px]:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6'>
+      <div
+        className={`grid grid-cols-1 ${KANGUR_PANEL_GAP_CLASSNAME} min-[360px]:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6`}
+      >
       <KangurMetricCard
         accent='indigo'
         data-testid='learner-profile-overview-average-accuracy'

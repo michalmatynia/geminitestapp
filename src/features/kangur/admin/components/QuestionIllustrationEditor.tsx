@@ -3,6 +3,7 @@
 import { Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { KangurQuestionIllustration } from '@/features/kangur/shared/contracts/kangur-tests';
 import { Button, FormField, Input, SelectSimple } from '@/features/kangur/shared/ui';
 import { cn, sanitizeSvg } from '@/features/kangur/shared/utils';
@@ -19,15 +20,15 @@ const SVG_TYPE_OPTIONS = [
   { value: 'none', label: 'No illustration' },
   { value: 'single', label: 'Single SVG' },
   { value: 'panels', label: 'Panels (A/B/C/D/E)' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 const LAYOUT_OPTIONS = [
   { value: 'row', label: 'Row' },
   { value: 'grid-2x2', label: '2×2 grid' },
   { value: 'grid-3x2', label: '3×2 grid' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
-const PANEL_COUNT_OPTIONS = [2, 3, 4, 5, 6].map((n) => ({
+const PANEL_COUNT_OPTIONS: Array<LabeledOptionDto<string>> = [2, 3, 4, 5, 6].map((n) => ({
   value: String(n),
   label: String(n),
 }));

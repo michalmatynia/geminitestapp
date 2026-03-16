@@ -3,6 +3,7 @@
 import { useCallback, useEffect } from 'react';
 
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { DatabaseConfig } from '@/shared/lib/ai-paths';
 import { DB_COLLECTION_OPTIONS } from '@/shared/lib/ai-paths';
 import { Button, Input, Label, SelectSimple, FormField } from '@/shared/ui';
@@ -209,8 +210,8 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                 })
               }
               options={DB_COLLECTION_OPTIONS.filter(
-                (opt: { value: string; label: string }): boolean => opt.value !== 'custom'
-              ).map((option: { value: string; label: string }) => ({
+                (opt: LabeledOptionDto<string>): boolean => opt.value !== 'custom'
+              ).map((option: LabeledOptionDto<string>) => ({
                 value: option.value,
                 label: option.label,
               }))}
@@ -295,8 +296,8 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
               })
             }
             options={DB_COLLECTION_OPTIONS.filter(
-              (opt: { value: string; label: string }): boolean => opt.value !== 'custom'
-            ).map((option: { value: string; label: string }) => ({
+              (opt: LabeledOptionDto<string>): boolean => opt.value !== 'custom'
+            ).map((option: LabeledOptionDto<string>) => ({
               value: option.value,
               label: option.label,
             }))}

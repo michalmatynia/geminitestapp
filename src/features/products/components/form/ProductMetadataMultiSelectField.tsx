@@ -3,6 +3,7 @@
 import { useContext, useMemo } from 'react';
 
 import { ProductFormMetadataContext } from '@/features/products/context/ProductFormMetadataContext';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { MultiSelect } from '@/features/products/ui';
@@ -51,7 +52,7 @@ const compareCategoryItems = (a: MetadataItem, b: MetadataItem): number => {
 
 const buildCategoryTreeOptions = (
   rawItems: MetadataItem[]
-): Array<{ value: string; label: string }> => {
+): Array<LabeledOptionDto<string>> => {
   const normalizedItems: MetadataItem[] = [];
   const byId = new Map<string, MetadataItem>();
 
@@ -91,7 +92,7 @@ const buildCategoryTreeOptions = (
     items.sort(compareCategoryItems);
   });
 
-  const options: Array<{ value: string; label: string }> = [];
+  const options: Array<LabeledOptionDto<string>> = [];
   const visited = new Set<string>();
 
   const visit = (item: MetadataItem, level: number): void => {
@@ -156,7 +157,7 @@ export interface ProductMetadataMultiSelectFieldProps {
 
 type ProductMetadataMultiSelectRuntimeValue = {
   label: string;
-  options: Array<{ value: string; label: string }>;
+  options: Array<LabeledOptionDto<string>>;
   selectedIds: string[];
   onChange: (nextIds: string[]) => void;
   loading: boolean;

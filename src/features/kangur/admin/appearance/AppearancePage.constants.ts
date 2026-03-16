@@ -10,6 +10,7 @@ import {
   KANGUR_DAILY_CRYSTAL_THEME,
   KANGUR_NIGHTLY_CRYSTAL_THEME,
 } from '@/features/kangur/theme-settings';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import type { SettingsPanelField } from '@/features/kangur/shared/ui/templates/SettingsPanelBuilder';
 import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
@@ -147,14 +148,14 @@ export const FONT_WEIGHT_OPTIONS = [
   { value: '600', label: 'Semibold (600)' },
   { value: '700', label: 'Bold (700)' },
   { value: '800', label: 'Extrabold (800)' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export const SHADOW_SIZE_OPTIONS = [
   { value: 'none', label: 'None' },
   { value: 'small', label: 'Small' },
   { value: 'medium', label: 'Medium' },
   { value: 'large', label: 'Large' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export const HOVER_EFFECT_OPTIONS = [
   { value: 'none', label: 'None' },
@@ -162,7 +163,7 @@ export const HOVER_EFFECT_OPTIONS = [
   { value: 'scale', label: 'Scale up' },
   { value: 'glow', label: 'Glow' },
   { value: 'border', label: 'Border highlight' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export const ANIMATION_EASING_OPTIONS = [
   { value: 'ease', label: 'Ease' },
@@ -170,12 +171,12 @@ export const ANIMATION_EASING_OPTIONS = [
   { value: 'ease-out', label: 'Ease Out' },
   { value: 'ease-in-out', label: 'Ease In Out' },
   { value: 'linear', label: 'Linear' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export const DRAWER_POSITION_OPTIONS = [
   { value: 'left', label: 'Left' },
   { value: 'right', label: 'Right' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export const HOME_ACTION_FIELD_GROUPS = [
   { prefix: 'homeActionLessons', label: 'Lessons' },

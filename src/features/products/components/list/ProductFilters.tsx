@@ -12,6 +12,7 @@ import {
   useTags,
 } from '@/features/products/hooks/useProductMetadataQueries';
 import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
   ProductAdvancedFilterField,
   ProductAdvancedFilterGroup,
@@ -112,7 +113,7 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
   }, [multiTagQueries, selectedCatalogId, tags]);
 
   const advancedFieldValueOptions = useMemo<
-    Partial<Record<ProductAdvancedFilterField, Array<{ value: string; label: string }>>>
+    Partial<Record<ProductAdvancedFilterField, Array<LabeledOptionDto<string>>>>
   >(
     () => ({
       catalogId: catalogs.map((catalog) => ({

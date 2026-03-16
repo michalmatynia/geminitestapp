@@ -47,7 +47,7 @@ export default function LessonHub({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className='flex w-full flex-col gap-3'
+        className='flex w-full flex-col kangur-panel-gap'
         role='list'
       >
         {sections.map((section, i) => {

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ImageStudioSequenceStep } from '@/features/ai/image-studio/utils/studio-settings';
 import { internalError } from '@/shared/errors/app-error';
 
@@ -34,7 +35,7 @@ export interface SequencingPanelContextValue {
   enabledRuntimeSteps: ImageStudioSequenceStep[];
   activeGenerationModel: string;
   sequencerFieldTooltipsEnabled: boolean;
-  cropShapeOptions: Array<{ value: string; label: string }>;
+  cropShapeOptions: Array<LabeledOptionDto<string>>;
   cropShapeGeometryById: Record<
     string,
     {

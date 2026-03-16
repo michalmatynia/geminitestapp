@@ -130,8 +130,7 @@ describe('KangurGameHomeActionsWidget', () => {
     expect(screen.getByTestId('kangur-home-actions-list')).toHaveClass(
       'grid',
       'grid-cols-1',
-      'gap-3',
-      'sm:gap-4'
+      'kangur-panel-gap'
     );
   });
 

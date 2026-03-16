@@ -4,23 +4,29 @@ import { randomUUID } from 'crypto';
 
 import type { KangurLearnerProfile } from '@/features/kangur/shared/contracts/kangur';
 import {
-  type KangurDuelAnswerInput,
-  type KangurDuelChoice,
-  type KangurDuelCreateInput,
-  type KangurDuelJoinInput,
-  type KangurDuelLobbyEntry,
-  type KangurDuelLobbyResponse,
-  type KangurDuelLeaveInput,
-  type KangurDuelOpponentEntry,
-  type KangurDuelOpponentsResponse,
-  type KangurDuelSearchEntry,
-  type KangurDuelSearchResponse,
-  type KangurDuelPlayer,
-  type KangurDuelQuestion,
-  type KangurDuelSession,
-  type KangurDuelStateResponse,
-  type KangurDuelStatus,
-  type KangurDuelVisibility,
+  KANGUR_DUELS_DEFAULT_LOBBY_LIMIT,
+  KANGUR_DUELS_DEFAULT_OPPONENTS_LIMIT,
+  KANGUR_DUELS_DEFAULT_SEARCH_LIMIT,
+  KANGUR_DUELS_SEARCH_MIN_CHARS,
+} from '@/features/kangur/shared/duels-config';
+import type {
+  KangurDuelAnswerInput,
+  KangurDuelChoice,
+  KangurDuelCreateInput,
+  KangurDuelJoinInput,
+  KangurDuelLobbyEntry,
+  KangurDuelLobbyResponse,
+  KangurDuelLeaveInput,
+  KangurDuelOpponentEntry,
+  KangurDuelOpponentsResponse,
+  KangurDuelSearchEntry,
+  KangurDuelSearchResponse,
+  KangurDuelPlayer,
+  KangurDuelQuestion,
+  KangurDuelSession,
+  KangurDuelStateResponse,
+  KangurDuelStatus,
+  KangurDuelVisibility,
 } from '@/features/kangur/shared/contracts/kangur-duels';
 import { generateQuestions } from '@/features/kangur/shared/math-questions';
 import type { KangurDifficulty, KangurOperation } from '@/features/kangur/shared/math-types';
@@ -77,6 +83,7 @@ type MongoDuelSessionDocument = Omit<
   _id: string;
   createdAt: Date;
   updatedAt: Date;
+  expiresAt: Date;
   startedAt?: Date | null;
   endedAt?: Date | null;
   questions: InternalDuelQuestion[];
@@ -91,10 +98,13 @@ type MongoDuelSessionDocument = Omit<
 const DUELS_COLLECTION = 'kangur_duels';
 const QUICK_MATCH_QUEUE_KEY = 'kangur:duels:quick-match:v1';
 const QUICK_MATCH_SCAN_LIMIT = 8;
-const LOBBY_LIST_LIMIT = 16;
-const OPPONENTS_LIST_LIMIT = 6;
-const SEARCH_LIST_LIMIT = 8;
-const SEARCH_MIN_CHARS = 2;
+const LOBBY_LIST_LIMIT = KANGUR_DUELS_DEFAULT_LOBBY_LIMIT;
+const OPPONENTS_LIST_LIMIT = KANGUR_DUELS_DEFAULT_OPPONENTS_LIMIT;
+const SEARCH_LIST_LIMIT = KANGUR_DUELS_DEFAULT_SEARCH_LIMIT;
+const SEARCH_MIN_CHARS = KANGUR_DUELS_SEARCH_MIN_CHARS;
+const DUEL_WAITING_TTL_MS = 30 * 60_000;
+const DUEL_ACTIVE_TTL_MS = 2 * 60 * 60_000;
+const DUEL_FINISHED_TTL_MS = 30 * 60_000;
 
 const DEFAULT_QUESTION_COUNT = 8;
 const DEFAULT_TIME_PER_QUESTION_SEC = 20;
@@ -103,6 +113,23 @@ const DEFAULT_DUEL_DIFFICULTY: KangurDifficulty = 'easy';
 
 const now = (): Date => new Date();
 const nowIso = (): string => new Date().toISOString();
+
+let indexesEnsured: Promise<void> | null = null;
+
+const ensureDuelIndexes = async (): Promise<void> => {
+  if (indexesEnsured) {
+    return indexesEnsured;
+  }
+
+  indexesEnsured = (async (): Promise<void> => {
+    const db = await getMongoDb();
+    const collection = db.collection<MongoDuelSessionDocument>(DUELS_COLLECTION);
+    await collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+    await collection.createIndex({ updatedAt: -1 });
+  })();
+
+  return indexesEnsured;
+};
 
 const toIsoString = (value: Date | string | null | undefined): string | null => {
   if (!value) {
@@ -227,8 +254,51 @@ const toSearchEntry = (profile: KangurLearnerProfile): KangurDuelSearchEntry => 
 });
 
 const getDuelCollection = async (): Promise<Collection<MongoDuelSessionDocument>> => {
+  await ensureDuelIndexes();
   const db = await getMongoDb();
   return db.collection<MongoDuelSessionDocument>(DUELS_COLLECTION);
+};
+
+const resolveStatusTtlMs = (status: KangurDuelStatus): number => {
+  switch (status) {
+    case 'waiting':
+    case 'created':
+      return DUEL_WAITING_TTL_MS;
+    case 'ready':
+    case 'in_progress':
+      return DUEL_ACTIVE_TTL_MS;
+    case 'completed':
+    case 'aborted':
+    default:
+      return DUEL_FINISHED_TTL_MS;
+  }
+};
+
+const computeExpiresAt = (baseTime: Date, status: KangurDuelStatus): Date =>
+  new Date(baseTime.getTime() + resolveStatusTtlMs(status));
+
+const ensureSessionExpiry = async (
+  collection: Collection<MongoDuelSessionDocument>,
+  session: MongoDuelSessionDocument
+): Promise<MongoDuelSessionDocument> => {
+  if (session.expiresAt instanceof Date) {
+    return session;
+  }
+  const baseTime = session.updatedAt ?? session.createdAt ?? now();
+  const expiresAt = computeExpiresAt(baseTime, session.status);
+  const updated = await collection.findOneAndUpdate(
+    { _id: session._id, expiresAt: { $exists: false } },
+    { $set: { expiresAt } },
+    { returnDocument: 'after', includeResultMetadata: false }
+  );
+  return updated ?? { ...session, expiresAt };
+};
+
+const isSessionExpired = (session: MongoDuelSessionDocument, nowMs: number): boolean => {
+  if (!(session.expiresAt instanceof Date)) {
+    return false;
+  }
+  return session.expiresAt.getTime() <= nowMs;
 };
 
 const enqueueQuickMatchSession = async (sessionId: string): Promise<void> => {
@@ -275,7 +345,7 @@ const ensureSession = async (sessionId: string): Promise<MongoDuelSessionDocumen
   if (!session) {
     throw notFoundError('Duel session not found.');
   }
-  return session;
+  return ensureSessionExpiry(collection, session);
 };
 
 const resolvePlayer = (
@@ -321,6 +391,7 @@ const updateSessionStatusForReady = async (
         status: 'ready',
         startedAt: nowTime,
         updatedAt: nowTime,
+        expiresAt: computeExpiresAt(nowTime, 'ready'),
       },
     }
   );
@@ -333,9 +404,14 @@ const attachPlayerToSession = async (
   const collection = await getDuelCollection();
   const existing = await collection.findOne({ _id: sessionId, 'players.learnerId': learner.id });
   if (existing) {
-    return existing;
+    return ensureSessionExpiry(collection, existing);
   }
   const session = await ensureSession(sessionId);
+  const nowMs = Date.now();
+  if (isSessionExpired(session, nowMs)) {
+    await removeQuickMatchSession(sessionId);
+    throw notFoundError('Duel session expired.');
+  }
   if (resolveVisibility(session) === 'private') {
     if (!session.invitedLearnerId || session.invitedLearnerId !== learner.id) {
       throw forbiddenError('This duel is private.');
@@ -349,6 +425,7 @@ const attachPlayerToSession = async (
   }
 
   const joinedAt = now();
+  const expiresAt = computeExpiresAt(joinedAt, 'ready');
   const updateResult = await collection.updateOne(
     {
       _id: sessionId,
@@ -359,7 +436,7 @@ const attachPlayerToSession = async (
     {
       $push: { players: buildPlayer(learner, joinedAt) },
       $inc: { playerCount: 1 },
-      $set: { updatedAt: joinedAt },
+      $set: { updatedAt: joinedAt, expiresAt },
     }
   );
 
@@ -446,6 +523,7 @@ const advanceSessionIfReady = async (
           endedAt: answeredAt,
           updatedAt: answeredAt,
           players: completedPlayers,
+          expiresAt: computeExpiresAt(answeredAt, 'completed'),
         },
       }
     );
@@ -456,6 +534,7 @@ const advanceSessionIfReady = async (
         $set: {
           currentQuestionIndex: questionIndex + 1,
           updatedAt: answeredAt,
+          expiresAt: computeExpiresAt(answeredAt, 'in_progress'),
         },
       }
     );
@@ -487,6 +566,7 @@ export const createKangurDuelSession = async (
     status: 'waiting',
     createdAt,
     updatedAt: createdAt,
+    expiresAt: computeExpiresAt(createdAt, 'waiting'),
     startedAt: null,
     endedAt: null,
     invitedLearnerId: invitedLearner?.id ?? null,
@@ -592,6 +672,7 @@ export const submitKangurDuelAnswer = async (
         'players.$[target].status': 'playing',
         updatedAt: answeredAt,
         status: nextStatus,
+        expiresAt: computeExpiresAt(answeredAt, nextStatus),
       },
       ...(correct ? { $inc: { 'players.$[target].score': 1 } } : {}),
     },
@@ -796,6 +877,7 @@ export const leaveKangurDuelSession = async (
         status: 'aborted',
         endedAt,
         updatedAt: endedAt,
+        expiresAt: computeExpiresAt(endedAt, 'aborted'),
       },
     }
   );

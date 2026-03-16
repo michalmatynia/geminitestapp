@@ -4,6 +4,7 @@ import type {
   ProductDraft,
   ProductWithImages,
 } from '@/shared/contracts/products';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 import type { ColumnDef, OnChangeFn, Row, RowSelectionState } from '@tanstack/react-table';
 import type { ReactNode, ProfilerOnRenderCallback } from 'react';
@@ -21,7 +22,7 @@ export interface ProductListContextType {
   setPageSize: (size: number) => void;
   nameLocale: 'name_en' | 'name_pl' | 'name_de';
   setNameLocale: (locale: 'name_en' | 'name_pl' | 'name_de') => void;
-  languageOptions: Array<{ value: 'name_en' | 'name_pl' | 'name_de'; label: string }>;
+  languageOptions: Array<LabeledOptionDto<'name_en' | 'name_pl' | 'name_de'>>;
   currencyCode: string;
   setCurrencyCode: (code: string) => void;
   currencyOptions: string[];
@@ -138,7 +139,7 @@ export interface ProductListFiltersContextType {
   setPageSize: (size: number) => void;
   nameLocale: 'name_en' | 'name_pl' | 'name_de';
   setNameLocale: (locale: 'name_en' | 'name_pl' | 'name_de') => void;
-  languageOptions: Array<{ value: 'name_en' | 'name_pl' | 'name_de'; label: string }>;
+  languageOptions: Array<LabeledOptionDto<'name_en' | 'name_pl' | 'name_de'>>;
   currencyCode: string;
   setCurrencyCode: (code: string) => void;
   currencyOptions: string[];

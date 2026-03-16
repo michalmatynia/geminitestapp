@@ -101,7 +101,7 @@ function KangurPageIntroHeading(): React.JSX.Element | null {
   }
 
   return (
-    <div className='flex flex-col gap-3 text-left sm:flex-row sm:items-center sm:justify-between'>
+    <div className='flex flex-col kangur-panel-gap text-left sm:flex-row sm:items-center sm:justify-between'>
       <div className='min-w-0'>{headline}</div>
       <div className='flex w-full justify-start sm:w-auto sm:justify-end'>{headingAction}</div>
     </div>

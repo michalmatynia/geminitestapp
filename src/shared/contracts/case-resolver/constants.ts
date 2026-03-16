@@ -5,31 +5,23 @@ import {
   type CaseResolverDocumentNodePort,
   type CaseResolverPdfExtractionPresetId,
 } from './base';
+import type { LabeledOptionDto, LabeledOptionWithDescriptionDto } from '../base';
 import { type CaseResolverNodeMeta, type CaseResolverEdgeMeta } from './graph';
 import { type CaseResolverRelationNodeMeta, type CaseResolverRelationEdgeMeta } from './relations';
 
-export const CASE_RESOLVER_NODE_ROLE_OPTIONS: Array<{
-  value: CaseResolverNodeRole;
-  label: string;
-}> = [
+export const CASE_RESOLVER_NODE_ROLE_OPTIONS: Array<LabeledOptionDto<CaseResolverNodeRole>> = [
   { value: 'text_note', label: 'Text Fragment' },
   { value: 'explanatory', label: 'Explanatory Fragment' },
   { value: 'ai_prompt', label: 'AI Prompt (Runtime)' },
 ];
 
-export const CASE_RESOLVER_QUOTE_MODE_OPTIONS: Array<{
-  value: CaseResolverQuoteMode;
-  label: string;
-}> = [
+export const CASE_RESOLVER_QUOTE_MODE_OPTIONS: Array<LabeledOptionDto<CaseResolverQuoteMode>> = [
   { value: 'none', label: 'No Quotes' },
   { value: 'double', label: 'Double Quotes' },
   { value: 'single', label: 'Single Quotes' },
 ];
 
-export const CASE_RESOLVER_JOIN_MODE_OPTIONS: Array<{
-  value: CaseResolverJoinMode;
-  label: string;
-}> = [
+export const CASE_RESOLVER_JOIN_MODE_OPTIONS: Array<LabeledOptionDto<CaseResolverJoinMode>> = [
   { value: 'newline', label: 'New Line' },
   { value: 'tab', label: 'Tab' },
   { value: 'space', label: 'Space' },
@@ -63,12 +55,12 @@ export const CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS: CaseResolverDocumentNo
   CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT,
 ];
 
-export interface CaseResolverPdfExtractionPreset {
-  value: CaseResolverPdfExtractionPresetId;
-  label: string;
+export type CaseResolverPdfExtractionPreset = LabeledOptionWithDescriptionDto<
+  CaseResolverPdfExtractionPresetId
+> & {
   description: string;
   template: string;
-}
+};
 
 export const CASE_RESOLVER_PDF_EXTRACTION_PRESETS: CaseResolverPdfExtractionPreset[] = [
   {
@@ -103,10 +95,9 @@ export const CASE_RESOLVER_PDF_EXTRACTION_PRESETS: CaseResolverPdfExtractionPres
 export const DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID: CaseResolverPdfExtractionPresetId =
   'plain_text';
 
-export const CASE_RESOLVER_PDF_EXTRACTION_PRESET_OPTIONS: Array<{
-  value: CaseResolverPdfExtractionPresetId;
-  label: string;
-}> = CASE_RESOLVER_PDF_EXTRACTION_PRESETS.map((preset: CaseResolverPdfExtractionPreset) => ({
+export const CASE_RESOLVER_PDF_EXTRACTION_PRESET_OPTIONS: Array<
+  LabeledOptionDto<CaseResolverPdfExtractionPresetId>
+> = CASE_RESOLVER_PDF_EXTRACTION_PRESETS.map((preset: CaseResolverPdfExtractionPreset) => ({
   value: preset.value,
   label: preset.label,
 }));

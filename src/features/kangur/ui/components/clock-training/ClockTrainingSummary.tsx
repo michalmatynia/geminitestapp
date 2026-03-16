@@ -70,7 +70,6 @@ export function ClockTrainingSummary({
   return (
     <KangurPracticeGameSummary
       dataTestId='clock-training-summary-shell'
-      panelClassName='gap-5'
       wrapperClassName='py-4'
     >
       <KangurPracticeGameSummaryEmoji

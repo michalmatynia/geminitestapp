@@ -2,6 +2,7 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import type { LabeledOptionDto, LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import { CaseResolverPartySelectField } from '@/features/case-resolver/components/page/CaseResolverPartySelectField';
 import { CaseResolverPartyFieldRuntimeProvider } from '@/features/case-resolver/components/page/CaseResolverPartyFieldRuntimeContext';
 
@@ -15,7 +16,7 @@ vi.mock('@/shared/ui', () => ({
   }: {
     value?: string;
     onValueChange: (value: string) => void;
-    options: Array<{ value: string; label: string; description?: string }>;
+    options: Array<LabeledOptionWithDescriptionDto<string>>;
     placeholder?: string;
     disabled?: boolean;
   }): React.JSX.Element => (
@@ -40,7 +41,7 @@ vi.mock('@/shared/ui', () => ({
   }: {
     value: string;
     onChange: (value: string) => void;
-    options: Array<{ value: string; label: string }>;
+    options: Array<LabeledOptionDto<string>>;
   }): React.JSX.Element => (
     <div>
       {options.map((option) => (

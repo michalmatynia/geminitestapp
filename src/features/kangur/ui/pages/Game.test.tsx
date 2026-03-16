@@ -108,6 +108,9 @@ vi.mock('@/features/kangur/ui/components/KangurTransitionLink', () => ({
   KangurTransitionLink: ({
     children,
     href,
+    targetPageKey: _targetPageKey,
+    transitionAcknowledgeMs: _transitionAcknowledgeMs,
+    transitionSourceId: _transitionSourceId,
     ...rest
   }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
     <a href={href} {...rest}>
@@ -206,6 +209,7 @@ describe('Game page', () => {
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildRuntime('home'),
       canAccessParentAssignments: true,
+      progress: { totalXp: 1 },
     });
 
     render(<Game />);

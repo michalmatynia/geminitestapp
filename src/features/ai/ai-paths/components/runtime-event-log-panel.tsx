@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AiPathRuntimeEvent, AiPathRunEventLevel } from '@/shared/lib/ai-paths';
 import { Button, StatusBadge, SelectSimple, Card } from '@/shared/ui';
 
@@ -15,7 +16,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 type RuntimeEventLevelFilter = NonNullable<AiPathRunEventLevel> | 'all';
 
-const LEVEL_OPTIONS: { value: RuntimeEventLevelFilter; label: string }[] = [
+const LEVEL_OPTIONS: Array<LabeledOptionDto<RuntimeEventLevelFilter>> = [
   { value: 'all', label: 'All' },
   { value: 'info', label: 'Info' },
   { value: 'warn', label: 'Warning' },

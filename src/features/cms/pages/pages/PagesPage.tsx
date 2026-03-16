@@ -12,6 +12,7 @@ import {
   normalizePageSlugLinks,
   type NormalizedPageSlugLink,
 } from '@/features/cms/utils/slug-utils';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { PageStatus, PageSummary, Slug } from '@/shared/contracts/cms';
 import {
   AdminCmsPageLayout,
@@ -33,7 +34,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 
 
 type StatusFilter = PageStatus | 'all';
-type StatusFilterOption = { label: string; value: StatusFilter };
+type StatusFilterOption = LabeledOptionDto<StatusFilter>;
 
 const STATUS_FILTERS: StatusFilterOption[] = [
   { label: 'All', value: 'all' },

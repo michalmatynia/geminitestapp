@@ -3,7 +3,7 @@
 import { type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn, getTextContent } from '@/shared/utils';
 
 import { Badge, badgeVariants } from './badge';
 
@@ -50,7 +50,8 @@ export function Chip(props: ChipProps): React.JSX.Element {
         : variant
     : 'outline';
 
-  const finalAriaLabel = ariaLabel || (typeof label === 'string' ? label : undefined);
+  const derivedLabel = getTextContent(label).trim();
+  const finalAriaLabel = ariaLabel || derivedLabel || undefined;
 
   return (
     <button

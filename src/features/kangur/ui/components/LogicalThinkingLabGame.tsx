@@ -4,6 +4,7 @@ import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { useEffect, useMemo, useState } from 'react';
 
 import { KangurButton, KangurInfoCard, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
 
 import type { DropResult } from '@hello-pangea/dnd';
@@ -390,7 +391,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
   }
 
   return (
-    <div className='flex w-full flex-col gap-4'>
+    <div className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <KangurStatusChip accent='violet' className='px-3 py-1 text-[11px] font-extrabold' size='sm'>
           Etap {stageIndex + 1} / {STAGES.length}
@@ -401,7 +402,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
       </div>
 
       {stage === 'pattern' ? (
-        <div className='flex flex-col gap-3'>
+        <div className='flex flex-col kangur-panel-gap'>
           <p className='text-sm font-semibold [color:var(--kangur-page-text)]'>
             Uzupełnij wzorzec: znajdź dwie następne figury.
           </p>
@@ -590,12 +591,12 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
       ) : null}
 
       {stage === 'classify' ? (
-        <div className='flex flex-col gap-3'>
+        <div className='flex flex-col kangur-panel-gap'>
           <p className='text-sm font-semibold [color:var(--kangur-page-text)]'>
             Posegreguj obrazki według cechy: <b>ma skrzydła</b>.
           </p>
           <DragDropContext onDragEnd={handleClassifyDragEnd}>
-            <div className='grid gap-3 sm:grid-cols-2'>
+            <div className='grid kangur-panel-gap sm:grid-cols-2'>
               {(['classify-yes', 'classify-no'] as ClassifyZoneId[]).map((zoneId) => (
                 <Droppable key={zoneId} droppableId={zoneId} direction='horizontal'>
                   {(provided, snapshot) => (
@@ -764,7 +765,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
       ) : null}
 
       {stage === 'analogy' ? (
-        <div className='flex flex-col gap-3'>
+        <div className='flex flex-col kangur-panel-gap'>
           <p className='text-sm font-semibold [color:var(--kangur-page-text)]'>
             Uzupełnij analogię.
           </p>

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { internalError } from '@/shared/errors/app-error';
 import type { AiPathsValidationConfig, DataContractPreflightReport } from '@/shared/lib/ai-paths';
 import type { StatusVariant } from '@/shared/ui';
@@ -49,7 +50,7 @@ export type AiPathsSettingsPageContextValue = UseAiPathsSettingsStateReturn & {
   commitPathNameEdit: () => void;
   cancelPathNameEdit: () => void;
   startPathNameEdit: () => void;
-  pathSwitchOptions: Array<{ label: string; value: string }>;
+  pathSwitchOptions: Array<LabeledOptionDto<string>>;
   hasHistory: boolean;
   handleInspectTraceNode: (nodeId: string, focus: 'all' | 'failed') => Promise<void>;
 };

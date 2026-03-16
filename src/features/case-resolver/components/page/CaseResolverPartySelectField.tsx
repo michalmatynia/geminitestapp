@@ -3,6 +3,7 @@
 import { Building2, User, X } from 'lucide-react';
 import React from 'react';
 
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import { SelectSimple, SegmentedControl, Button } from '@/shared/ui';
 
 import { useOptionalCaseResolverPartyFieldRuntime } from './CaseResolverPartyFieldRuntimeContext';
@@ -13,7 +14,7 @@ interface CaseResolverPartySelectFieldProps {
   label: string;
   value: string;
   onValueChange: (value: string) => void;
-  options?: Array<{ value: string; label: string; description?: string | undefined }>;
+  options?: Array<LabeledOptionWithDescriptionDto<string>>;
   disabled?: boolean | undefined;
   placeholder?: string | undefined;
 }

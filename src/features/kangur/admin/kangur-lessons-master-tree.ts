@@ -1,3 +1,4 @@
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { KangurLesson, KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 import type { MasterTreeNode } from '@/features/kangur/shared/utils/master-folder-tree-contract';
 
@@ -63,10 +64,7 @@ export const buildKangurLessonMasterNodes = (lessons: KangurLesson[]): MasterTre
       },
     }));
 
-const LESSON_VISIBILITY_GROUPS: Array<{
-  value: KangurLessonVisibilityGroup;
-  label: string;
-}> = [
+const LESSON_VISIBILITY_GROUPS: Array<LabeledOptionDto<KangurLessonVisibilityGroup>> = [
   { value: 'enabled', label: 'Visible lessons' },
   { value: 'hidden', label: 'Hidden lessons' },
 ];

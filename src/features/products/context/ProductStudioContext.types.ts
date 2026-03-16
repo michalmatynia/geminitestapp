@@ -1,4 +1,5 @@
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
   ProductStudioAuditEntry,
   ProductStudioRunStatus,
@@ -13,7 +14,7 @@ export type ProductImageSlotPreview = {
 
 export interface ProductStudioStateContextValue {
   studioProjectId: string | null;
-  studioProjectOptions: Array<{ value: string; label: string }>;
+  studioProjectOptions: Array<LabeledOptionDto<string>>;
   isStudioLoading: boolean;
   imageSlotPreviews: ProductImageSlotPreview[];
   selectedImageIndex: number | null;

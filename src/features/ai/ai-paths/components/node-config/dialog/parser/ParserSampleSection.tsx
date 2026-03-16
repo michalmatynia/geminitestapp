@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import type { ParserSampleState } from '@/shared/lib/ai-paths';
 import { Button, FormField, Input, SelectSimple, Textarea } from '@/shared/ui';
 
@@ -9,7 +10,7 @@ export interface ParserSampleSectionProps {
   selectedNodeId: string;
   sampleState: ParserSampleState;
   setParserSamples: React.Dispatch<React.SetStateAction<Record<string, ParserSampleState>>>;
-  simulationOptions: Array<{ id: string; label: string; entityId: string; entityType: string }>;
+  simulationOptions: Array<IdLabelOptionDto & { entityId: string; entityType: string }>;
   parserSampleLoading: boolean;
   handleFetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
   parsedSampleError: string | null;

@@ -1,5 +1,7 @@
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
+
 export function MockButton({
   children,
   disabled,
@@ -111,7 +113,7 @@ export function MockSelectSimple({
 }: {
   ariaLabel?: string;
   onValueChange?: (value: string) => void;
-  options: Array<{ value: string; label: string }>;
+  options: Array<LabeledOptionDto<string>>;
   value: string;
 }): React.JSX.Element {
   const label = ariaLabel ?? 'Preview Mode';

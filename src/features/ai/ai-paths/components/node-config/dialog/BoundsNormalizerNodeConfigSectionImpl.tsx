@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { BoundsNormalizerConfig } from '@/shared/contracts/ai-paths-core';
 import { Input, Label, SelectSimple } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -15,7 +16,7 @@ const FORMAT_OPTIONS = [
   { value: 'relative_xywh', label: '[cx,cy,w,h] 0-1 — YOLO centre format' },
   { value: 'percentage_tlwh', label: '{left,top,width,height} % — percentage' },
   { value: 'auto', label: 'Auto-detect (inspect input shape)' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 const NEEDS_IMAGE_DIMS = new Set([
   'gemini_millirelative',
@@ -40,7 +41,7 @@ function FieldInput(props: {
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-label={label}
-        className='h-6 flex-1 rounded border border-border/60 bg-background/50 px-2 text-xs text-gray-200 placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-ring'
+        className='h-6 flex-1 rounded border border-border/60 bg-background/50 px-2 text-xs text-gray-200 placeholder:text-gray-600 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring'
        title={placeholder}/>
     </div>
   );

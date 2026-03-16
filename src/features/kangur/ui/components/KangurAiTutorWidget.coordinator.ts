@@ -259,6 +259,9 @@ export function useKangurAiTutorWidgetCoordinator({
   });
 
 
+  const suppressFocus =
+    loginModal.isOpen || sessionContext?.surface === 'auth';
+
   useKangurAiTutorLifecycleEffects({
     allowCrossPagePersistence,
     allowSelectedTextSupport,
@@ -276,7 +279,7 @@ export function useKangurAiTutorWidgetCoordinator({
     routingPageKey: routing?.pageKey,
     selectedText: activeSelectedText,
     sessionContext,
-    suppressFocus: loginModal.isOpen,
+    suppressFocus,
     setHighlightedText,
     tutorContent,
     tutorSessionKey,

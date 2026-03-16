@@ -48,7 +48,11 @@ export interface KangurPanelProps extends React.HTMLAttributes<HTMLDivElement>, 
 
 export const KangurPanel = React.forwardRef<HTMLDivElement, KangurPanelProps>(
   ({ className, variant, padding, ...props }, ref) => (
-    <div ref={ref} className={cn(kangurPanelVariants({ variant, padding }), className)} {...props} />
+    <div
+      ref={ref}
+      className={cn(kangurPanelVariants({ variant, padding }), 'kangur-panel-shell', className)}
+      {...props}
+    />
   )
 );
 KangurPanel.displayName = 'KangurPanel';
@@ -65,6 +69,7 @@ export const KangurGlassPanel = React.forwardRef<HTMLDivElement, KangurGlassPane
       className={cn(
         kangurPanelVariants({ padding, variant }),
         KANGUR_GLASS_PANEL_SURFACE_CLASSNAMES[surface],
+        'kangur-panel-shell',
         className
       )}
       {...props}

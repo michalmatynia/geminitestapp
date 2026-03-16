@@ -3,10 +3,12 @@
 import { SaveIcon, SlidersHorizontalIcon, ArchiveIcon, ClipboardListIcon } from 'lucide-react';
 import React, { useMemo, Suspense } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
   DatabaseEngineOperationJob,
   DatabaseEngineWorkspaceView,
 } from '@/shared/contracts/database';
+import type { DatabaseEngineProvider as DatabaseEngineProviderValue } from '@/shared/lib/db/database-engine-constants';
 import {
   AdminDatabasePageLayout,
   Button,
@@ -35,6 +37,12 @@ import {
 import { type DatabaseCollectionRow } from '../hooks/useDatabaseEngineState';
 
 import type { ColumnDef } from '@tanstack/react-table';
+
+const COLLECTION_PROVIDER_OPTIONS = [
+  { value: 'auto', label: 'Auto' },
+  { value: 'mongodb', label: 'MongoDB' },
+  { value: 'redis', label: 'Redis' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'auto' | DatabaseEngineProviderValue>>;
 
 function DatabaseEngineSettingsTab(): React.JSX.Element {
   const {
@@ -78,11 +86,7 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
             onValueChange={(val) => {
               updateCollectionRoute(row.original.name, val);
             }}
-            options={[
-              { value: 'auto', label: 'Auto' },
-              { value: 'mongodb', label: 'MongoDB' },
-              { value: 'redis', label: 'Redis' },
-            ]}
+            options={[...COLLECTION_PROVIDER_OPTIONS]}
             className='h-7 w-28 text-[10px]'
            ariaLabel='Select option' title='Select option'/>
         ),

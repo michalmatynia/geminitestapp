@@ -2,6 +2,7 @@
 
 import React, { useCallback, useMemo } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   getObjectLayoutPresetValuesFromOption,
   saveObjectLayoutCustomPreset,
@@ -178,11 +179,11 @@ export function GenerationToolbarInner(): React.JSX.Element {
     }
   }, [analysisBusy, analysisStatus]);
 
-  const imageCountOptions = useMemo(
+  const imageCountOptions = useMemo<Array<LabeledOptionDto<string>>>(
     () => ['1', '2', '4'].map((value: string) => ({ value, label: value })),
     []
   );
-  const maskModeOptions = useMemo(
+  const maskModeOptions = useMemo<Array<LabeledOptionDto<string>>>(
     () => [
       { value: 'ai-polygon', label: 'AI Polygon' },
       { value: 'ai-bbox', label: 'AI Bounding Box' },
@@ -191,35 +192,35 @@ export function GenerationToolbarInner(): React.JSX.Element {
     ],
     []
   );
-  const maskAttachModeOptions = useMemo(
+  const maskAttachModeOptions = useMemo<Array<LabeledOptionDto<string>>>(
     () => [
       { value: 'client_canvas_polygon', label: 'Option A: Canvas Polygon' },
       { value: 'server_polygon', label: 'Option C: Server Polygon' },
     ],
     []
   );
-  const upscaleModeOptions = useMemo(
+  const upscaleModeOptions = useMemo<Array<LabeledOptionDto<string>>>(
     () => [
       { value: 'client_canvas', label: 'Upscale A: Canvas' },
       { value: 'server_sharp', label: 'Upscale Server: Sharp' },
     ],
     []
   );
-  const upscaleStrategyOptions = useMemo(
+  const upscaleStrategyOptions = useMemo<Array<LabeledOptionDto<string>>>(
     () => [
       { value: 'scale', label: 'By Multiplier' },
       { value: 'target_resolution', label: 'By Resolution' },
     ],
     []
   );
-  const cropModeOptions = useMemo(
+  const cropModeOptions = useMemo<Array<LabeledOptionDto<string>>>(
     () => [
       { value: 'client_bbox', label: 'Crop Client: Canvas' },
       { value: 'server_bbox', label: 'Crop Server: Sharp' },
     ],
     []
   );
-  const centerModeOptions = useMemo(
+  const centerModeOptions = useMemo<Array<LabeledOptionDto<string>>>(
     () => [
       { value: 'client_alpha_bbox', label: 'Center Client: Canvas' },
       { value: 'server_alpha_bbox', label: 'Center Server: Sharp' },
@@ -229,14 +230,14 @@ export function GenerationToolbarInner(): React.JSX.Element {
     ],
     []
   );
-  const autoScaleModeOptions = useMemo(
+  const autoScaleModeOptions = useMemo<Array<LabeledOptionDto<string>>>(
     () => [
       { value: 'client_auto_scaler', label: 'Auto Scaler Client: Canvas' },
       { value: 'server_auto_scaler', label: 'Auto Scaler Server: Sharp' },
     ],
     []
   );
-  const shadowPolicyOptions = useMemo(
+  const shadowPolicyOptions = useMemo<Array<LabeledOptionDto<string>>>(
     () => [
       { value: 'auto', label: 'Shadow: Auto' },
       { value: 'include_shadow', label: 'Shadow: Include' },
@@ -244,7 +245,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
     ],
     []
   );
-  const detectionModeOptions = useMemo(
+  const detectionModeOptions = useMemo<Array<LabeledOptionDto<string>>>(
     () => [
       { value: 'auto', label: 'Detection: Auto' },
       { value: 'white_bg_first_colored_pixel', label: 'Detection: White FG' },
@@ -252,11 +253,11 @@ export function GenerationToolbarInner(): React.JSX.Element {
     ],
     []
   );
-  const upscaleScaleOptions = useMemo(
+  const upscaleScaleOptions = useMemo<Array<LabeledOptionDto<string>>>(
     () => ['1.5', '2', '3', '4'].map((value: string) => ({ value, label: `${value}x` })),
     []
   );
-  const upscaleSmoothingOptions = useMemo(
+  const upscaleSmoothingOptions = useMemo<Array<LabeledOptionDto<string>>>(
     () => [
       { value: 'high', label: 'Smoothing High' },
       { value: 'medium', label: 'Smoothing Medium' },

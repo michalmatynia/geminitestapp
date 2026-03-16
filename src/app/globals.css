@@ -3301,9 +3301,19 @@
     gap: 2rem;
   }
 
+  .kangur-panel-shell.kangur-panel-gap,
+  .kangur-panel-shell .kangur-panel-gap {
+    gap: 1rem;
+  }
+
   @media (min-width: 640px) {
     .kangur-panel-gap {
       gap: 2.5rem;
+    }
+
+    .kangur-panel-shell.kangur-panel-gap,
+    .kangur-panel-shell .kangur-panel-gap {
+      gap: 1.25rem;
     }
   }
 

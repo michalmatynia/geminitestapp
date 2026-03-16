@@ -7,6 +7,7 @@ import {
   useImportExportData,
   useImportExportState,
 } from '@/features/data-import-export/context/ImportExportContext';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { InventoryOption, CatalogOption, Template } from '@/shared/contracts/integrations';
 import {
   Button,
@@ -18,6 +19,43 @@ import {
   ToggleRow,
   Card,
 } from '@/shared/ui';
+
+const BASE_CONNECTION_PLACEHOLDER_OPTION: LabeledOptionDto<string> = {
+  value: '__none__',
+  label: 'Select a connection...',
+};
+
+const NO_CATALOG_OPTION: LabeledOptionDto<string> = {
+  value: '__none__',
+  label: '— No catalog —',
+};
+
+const NO_TEMPLATE_OPTION: LabeledOptionDto<string> = {
+  value: '__none__',
+  label: 'No template',
+};
+
+const LIMIT_OPTIONS = [
+  { value: '1', label: '1' },
+  { value: '5', label: '5' },
+  { value: '10', label: '10' },
+  { value: '50', label: '50' },
+  { value: '100', label: '100' },
+  { value: 'all', label: 'All' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'1' | '5' | '10' | '50' | '100' | 'all'>>;
+
+const IMAGE_MODE_OPTIONS = [
+  { value: 'links', label: 'Import image links' },
+  { value: 'download', label: 'Download product images' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'links' | 'download'>>;
+
+const IMPORT_MODE_OPTIONS = [
+  { value: 'upsert_on_base_id', label: 'Upsert by Base ID' },
+  { value: 'upsert_on_sku', label: 'Upsert by SKU' },
+  { value: 'create_only', label: 'Create only' },
+] as const satisfies ReadonlyArray<
+  LabeledOptionDto<'create_only' | 'upsert_on_base_id' | 'upsert_on_sku'>
+>;
 
 export function ImportBaseConnectionSection(): React.JSX.Element {
   const {
@@ -58,6 +96,44 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
     importing,
     handleImport,
   } = useImportExportActions();
+  const baseConnectionOptions = React.useMemo(
+    (): Array<LabeledOptionDto<string>> => [
+      BASE_CONNECTION_PLACEHOLDER_OPTION,
+      ...baseConnections.map((connection) => ({
+        value: connection.id,
+        label: connection.name,
+      })),
+    ],
+    [baseConnections]
+  );
+  const inventoryOptions = React.useMemo(
+    (): Array<LabeledOptionDto<string>> =>
+      inventories.map((inv: InventoryOption) => ({
+        value: inv.id,
+        label: inv.name,
+      })),
+    [inventories]
+  );
+  const catalogOptions = React.useMemo(
+    (): Array<LabeledOptionDto<string>> => [
+      NO_CATALOG_OPTION,
+      ...catalogs.map((cat: CatalogOption) => ({
+        value: cat.id,
+        label: `${cat.name}${cat.isDefault ? ' (Default)' : ''}`,
+      })),
+    ],
+    [catalogs]
+  );
+  const templateOptions = React.useMemo(
+    (): Array<LabeledOptionDto<string>> => [
+      NO_TEMPLATE_OPTION,
+      ...importTemplates.map((template: Template) => ({
+        value: template.id,
+        label: template.name,
+      })),
+    ],
+    [importTemplates]
+  );
 
   return (
     <FormSection
@@ -86,13 +162,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
                   setSelectedBaseConnectionId(v === '__none__' ? '' : v)
                 }
                 disabled={baseConnections.length === 0}
-                options={[
-                  { value: '__none__', label: 'Select a connection...' },
-                  ...baseConnections.map((connection) => ({
-                    value: connection.id,
-                    label: connection.name,
-                  })),
-                ]}
+                options={baseConnectionOptions}
                 placeholder={
                   baseConnections.length === 0 ? 'No connections loaded' : 'Select a connection...'
                 }
@@ -125,10 +195,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
                   value={inventoryId}
                   onValueChange={setInventoryId}
                   disabled={inventories.length === 0}
-                  options={inventories.map((inv: InventoryOption) => ({
-                    value: inv.id,
-                    label: inv.name,
-                  }))}
+                  options={inventoryOptions}
                   placeholder={
                     inventories.length === 0 ? 'Load inventories first' : 'Select inventory'
                   }
@@ -138,14 +205,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
                   size='sm'
                   value={limit}
                   onValueChange={setLimit}
-                  options={[
-                    { value: '1', label: '1' },
-                    { value: '5', label: '5' },
-                    { value: '10', label: '10' },
-                    { value: '50', label: '50' },
-                    { value: '100', label: '100' },
-                    { value: 'all', label: 'All' },
-                  ]}
+                  options={[...LIMIT_OPTIONS]}
                   className='w-20'
                  ariaLabel='Inventory & Limits' title='Inventory & Limits'/>
               </div>
@@ -187,13 +247,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
               value={catalogId || '__none__'}
               onValueChange={(v: string): void => setCatalogId(v === '__none__' ? '' : v)}
               disabled={loadingCatalogs || catalogs.length === 0}
-              options={[
-                { value: '__none__', label: '— No catalog —' },
-                ...catalogs.map((cat: CatalogOption) => ({
-                  value: cat.id,
-                  label: `${cat.name}${cat.isDefault ? ' (Default)' : ''}`,
-                })),
-              ]}
+              options={catalogOptions}
               placeholder={loadingCatalogs ? 'Loading catalogs...' : 'No catalogs'}
              ariaLabel={loadingCatalogs ? 'Loading catalogs...' : 'No catalogs'} title={loadingCatalogs ? 'Loading catalogs...' : 'No catalogs'}/>
           </FormField>
@@ -203,13 +257,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
               value={importTemplateId || '__none__'}
               onValueChange={(v: string): void => setImportTemplateId(v === '__none__' ? '' : v)}
               disabled={loadingImportTemplates || importTemplates.length === 0}
-              options={[
-                { value: '__none__', label: 'No template' },
-                ...importTemplates.map((template: Template) => ({
-                  value: template.id,
-                  label: template.name,
-                })),
-              ]}
+              options={templateOptions}
               placeholder='No template'
              ariaLabel='No template' title='No template'/>
           </FormField>
@@ -222,10 +270,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
               size='sm'
               value={imageMode}
               onValueChange={(v: string): void => setImageMode(v as 'links' | 'download')}
-              options={[
-                { value: 'links', label: 'Import image links' },
-                { value: 'download', label: 'Download product images' },
-              ]}
+              options={[...IMAGE_MODE_OPTIONS]}
              ariaLabel='Image Handling' title='Image Handling'/>
             <Hint className='mt-2'>Download stores images locally in your uploads folder.</Hint>
           </FormField>
@@ -237,11 +282,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
               onValueChange={(value: string): void =>
                 setImportMode(value as 'create_only' | 'upsert_on_base_id' | 'upsert_on_sku')
               }
-              options={[
-                { value: 'upsert_on_base_id', label: 'Upsert by Base ID' },
-                { value: 'upsert_on_sku', label: 'Upsert by SKU' },
-                { value: 'create_only', label: 'Create only' },
-              ]}
+              options={[...IMPORT_MODE_OPTIONS]}
              ariaLabel='Import Strategy' title='Import Strategy'/>
             <div className='mt-3'>
               <ToggleRow

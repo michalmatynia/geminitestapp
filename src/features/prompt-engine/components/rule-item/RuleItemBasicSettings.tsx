@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
   PromptValidationRule,
   PromptValidationScope,
@@ -16,6 +17,17 @@ import {
   normalizeRuleKind,
   normalizeRuleScopes,
 } from '../rule-item-utils';
+
+const RULE_KIND_OPTIONS: Array<LabeledOptionDto<PromptValidationRule['kind']>> = [
+  { value: 'regex', label: 'Regex' },
+  { value: 'params_object', label: 'Params Object' },
+];
+
+const RULE_SEVERITY_OPTIONS: Array<LabeledOptionDto<PromptValidationRule['severity']>> = [
+  { value: 'error', label: 'Error' },
+  { value: 'warning', label: 'Warning' },
+  { value: 'info', label: 'Info' },
+];
 
 export function RuleItemBasicSettings(): React.JSX.Element | null {
   const { draft, rule, patchRule } = useRuleItemContext();
@@ -54,10 +66,7 @@ export function RuleItemBasicSettings(): React.JSX.Element | null {
             const nextRule = nextRuleRecord as PromptValidationRule;
             handleRuleTextChange(draft.uid, JSON.stringify(nextRule, null, 2));
           }}
-          options={[
-            { value: 'regex', label: 'Regex' },
-            { value: 'params_object', label: 'Params Object' },
-          ]}
+          options={RULE_KIND_OPTIONS}
          ariaLabel='Kind' title='Kind'/>
       </FormField>
       <FormField label='Severity'>
@@ -68,11 +77,7 @@ export function RuleItemBasicSettings(): React.JSX.Element | null {
             if (value !== 'error' && value !== 'warning' && value !== 'info') return;
             patchRule({ severity: value });
           }}
-          options={[
-            { value: 'error', label: 'Error' },
-            { value: 'warning', label: 'Warning' },
-            { value: 'info', label: 'Info' },
-          ]}
+          options={RULE_SEVERITY_OPTIONS}
          ariaLabel='Severity' title='Severity'/>
       </FormField>
       <FormField label='Rule ID' className='md:col-span-2'>

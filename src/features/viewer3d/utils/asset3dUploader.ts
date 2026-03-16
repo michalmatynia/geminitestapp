@@ -1,9 +1,11 @@
+import 'server-only';
+
+import fs from 'fs/promises';
 import path from 'path';
 
 import { getAsset3DRepository } from '@/features/viewer3d/services/asset3d-repository';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { badRequestError } from '@/shared/errors/app-error';
-import { getFsPromises } from '@/shared/lib/files/runtime-fs';
 import { assets3dRoot } from '@/shared/lib/files/server-constants';
 import {
   deleteFileFromStorage,
@@ -39,7 +41,6 @@ export async function uploadAsset3D(
   const diskDir = assets3dRoot;
   const publicDir = '/uploads/assets3d';
   const publicPath = `${publicDir}/${filename}`;
-  const nodeFs = getFsPromises();
   const localDiskPath = `${diskDir}/${filename}`;
   let storedFilepath: string;
 
@@ -53,8 +54,8 @@ export async function uploadAsset3D(
       projectId: null,
       folder: null,
       writeLocalCopy: async (): Promise<void> => {
-        await nodeFs.mkdir(diskDir, { recursive: true });
-        await nodeFs.writeFile(localDiskPath, fileBuffer);
+        await fs.mkdir(diskDir, { recursive: true });
+        await fs.writeFile(localDiskPath, fileBuffer);
       },
     });
     storedFilepath = storageResult.filepath;

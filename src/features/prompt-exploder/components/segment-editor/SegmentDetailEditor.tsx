@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Card, Button, FormField, SelectSimple, StatusToggle, Textarea } from '@/shared/ui';
 
 import { ListItemsEditor } from './ListItemsEditor';
@@ -15,6 +16,18 @@ import { SegmentEditorListItemLogicalEditor } from '../SegmentEditorListItemLogi
 import { PromptExploderSubsectionsTreeEditor } from '../tree/PromptExploderSubsectionsTreeEditor';
 
 import type { PromptExploderSegment, PromptExploderSegmentType } from '../../types';
+
+const SEGMENT_TYPE_OPTIONS = [
+  { value: 'metadata', label: 'Metadata' },
+  { value: 'assigned_text', label: 'Assigned Text' },
+  { value: 'list', label: 'List' },
+  { value: 'parameter_block', label: 'Parameter Block' },
+  { value: 'referential_list', label: 'Referential List' },
+  { value: 'sequence', label: 'Sequence' },
+  { value: 'hierarchical_list', label: 'Hierarchical List' },
+  { value: 'conditional_list', label: 'Conditional List' },
+  { value: 'qa_matrix', label: 'QA Matrix' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<PromptExploderSegmentType>>;
 
 const promptExploderSupportsSegmentTextSplit = (segment: PromptExploderSegment | null): boolean =>
   Boolean(
@@ -107,17 +120,7 @@ export function SegmentDetailEditor(): React.JSX.Element {
                 type: val as PromptExploderSegmentType,
               }));
             }}
-            options={[
-              { value: 'metadata', label: 'Metadata' },
-              { value: 'assigned_text', label: 'Assigned Text' },
-              { value: 'list', label: 'List' },
-              { value: 'parameter_block', label: 'Parameter Block' },
-              { value: 'referential_list', label: 'Referential List' },
-              { value: 'sequence', label: 'Sequence' },
-              { value: 'hierarchical_list', label: 'Hierarchical List' },
-              { value: 'conditional_list', label: 'Conditional List' },
-              { value: 'qa_matrix', label: 'QA Matrix' },
-            ]}
+            options={[...SEGMENT_TYPE_OPTIONS]}
            ariaLabel='Type' title='Type'/>
         </FormField>
         <FormField label='Include In Output'>

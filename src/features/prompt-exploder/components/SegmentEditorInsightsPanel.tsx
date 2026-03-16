@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Button, Input, Label, SelectSimple, StatusToggle, Textarea, Card } from '@/shared/ui';
 
 import { useDocumentState } from '../context/hooks/useDocument';
@@ -12,6 +13,29 @@ import { promptExploderCreateApprovalDraftFromSegment } from '../helpers/segment
 
 import type { TemplateMergeMode } from '../template-learning';
 import type { PromptExploderSegment } from '../types';
+
+const TEMPLATE_MERGE_MODE_OPTIONS = [
+  { value: 'auto', label: 'Auto (exact/similar)' },
+  { value: 'new', label: 'Force New Template' },
+  { value: 'target', label: 'Merge Into Selected Template' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<TemplateMergeMode>>;
+
+const SEGMENT_TYPE_OPTIONS = [
+  { value: 'metadata', label: 'Metadata' },
+  { value: 'assigned_text', label: 'Assigned Text' },
+  { value: 'list', label: 'List' },
+  { value: 'parameter_block', label: 'Parameter Block' },
+  { value: 'referential_list', label: 'Referential List' },
+  { value: 'sequence', label: 'Sequence' },
+  { value: 'hierarchical_list', label: 'Hierarchical List' },
+  { value: 'conditional_list', label: 'Conditional List' },
+  { value: 'qa_matrix', label: 'QA Matrix' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<PromptExploderSegment['type']>>;
+
+const EMPTY_TEMPLATE_TARGET_OPTION: LabeledOptionDto<string> = {
+  value: '',
+  label: 'No templates for this type',
+};
 
 export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
   const { selectedSegment } = useDocumentState();
@@ -84,11 +108,7 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
                       : '',
                 }));
               }}
-              options={[
-                { value: 'auto', label: 'Auto (exact/similar)' },
-                { value: 'new', label: 'Force New Template' },
-                { value: 'target', label: 'Merge Into Selected Template' },
-              ]}
+              options={[...TEMPLATE_MERGE_MODE_OPTIONS]}
              ariaLabel='Select option' title='Select option'/>
           </div>
           {approvalDraft.templateMergeMode === 'target' ? (
@@ -106,7 +126,7 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
                 options={
                   templateTargetOptions.length > 0
                     ? templateTargetOptions
-                    : [{ value: '', label: 'No templates for this type' }]
+                    : [EMPTY_TEMPLATE_TARGET_OPTION]
                 }
                ariaLabel='Select option' title='Select option'/>
             </div>
@@ -235,17 +255,7 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
                       : previous.templateMergeMode,
                 }));
               }}
-              options={[
-                { value: 'metadata', label: 'Metadata' },
-                { value: 'assigned_text', label: 'Assigned Text' },
-                { value: 'list', label: 'List' },
-                { value: 'parameter_block', label: 'Parameter Block' },
-                { value: 'referential_list', label: 'Referential List' },
-                { value: 'sequence', label: 'Sequence' },
-                { value: 'hierarchical_list', label: 'Hierarchical List' },
-                { value: 'conditional_list', label: 'Conditional List' },
-                { value: 'qa_matrix', label: 'QA Matrix' },
-              ]}
+              options={[...SEGMENT_TYPE_OPTIONS]}
              ariaLabel='Select option' title='Select option'/>
           </div>
           <div className='space-y-1'>

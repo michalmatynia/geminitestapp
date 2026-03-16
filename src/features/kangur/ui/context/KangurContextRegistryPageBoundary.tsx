@@ -22,12 +22,6 @@ const KANGUR_PAGE_CONTEXT_ROOTS: Record<string, string[]> = {
     ...KANGUR_CONTEXT_ROOT_IDS.lessonContext,
     ...KANGUR_CONTEXT_ROOT_IDS.learnerSnapshot,
   ],
-  Tests: [
-    'page:kangur-tests',
-    'action:kangur-ai-tutor-chat',
-    ...KANGUR_CONTEXT_ROOT_IDS.testContext,
-    ...KANGUR_CONTEXT_ROOT_IDS.learnerSnapshot,
-  ],
   LearnerProfile: [
     'page:kangur-learner-profile',
     'action:kangur-ai-tutor-chat',
@@ -46,7 +40,6 @@ const KANGUR_PAGE_CONTEXT_ROOTS: Record<string, string[]> = {
 const KANGUR_PAGE_TITLES: Record<string, string> = {
   Game: 'Kangur Game',
   Lessons: 'Kangur Lessons',
-  Tests: 'Kangur Tests',
   LearnerProfile: 'Kangur Learner Profile',
   ParentDashboard: 'Kangur Parent Dashboard',
 };
@@ -56,7 +49,6 @@ type KangurContextPageKey = keyof typeof KANGUR_PAGE_CONTEXT_ROOTS;
 const KANGUR_PAGE_KEY_LOOKUP: Record<KangurContextPageKey, true> = {
   Game: true,
   Lessons: true,
-  Tests: true,
   LearnerProfile: true,
   ParentDashboard: true,
 };

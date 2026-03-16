@@ -22,6 +22,7 @@ import {
 import {
   kangurDuelAnswerInputSchema,
   kangurDuelCreateInputSchema,
+  kangurDuelHeartbeatInputSchema,
   kangurDuelJoinInputSchema,
   kangurDuelLeaveInputSchema,
 } from '@/shared/contracts/kangur-duels';
@@ -79,6 +80,7 @@ import {
 } from '../auth/parent-password/handler';
 import { postKangurDuelAnswerHandler } from '../duels/answer/handler';
 import { postKangurDuelCreateHandler } from '../duels/create/handler';
+import { postKangurDuelHeartbeatHandler } from '../duels/heartbeat/handler';
 import { postKangurDuelJoinHandler } from '../duels/join/handler';
 import { postKangurDuelLeaveHandler } from '../duels/leave/handler';
 import { getKangurDuelLobbyHandler } from '../duels/lobby/handler';
@@ -121,10 +123,11 @@ import {
   kangurLessonTtsRequestSchema,
   kangurLessonTtsStatusRequestSchema,
 } from '@/features/kangur/tts/contracts';
+import { resolveKangurApiPathSegments } from '../route-utils';
 
 type RouteContext = {
   params: {
-    path?: string[];
+    path?: string[] | string;
   };
 };
 
@@ -334,6 +337,13 @@ const duelsPostHandlers: Record<string, SimpleRouteHandler> = {
     successLogging: 'all',
     parseJsonBody: true,
     bodySchema: kangurDuelLeaveInputSchema,
+  }),
+  heartbeat: apiHandler(postKangurDuelHeartbeatHandler, {
+    source: 'kangur.duels.heartbeat.POST',
+    service: 'kangur.api',
+    successLogging: 'off',
+    parseJsonBody: true,
+    bodySchema: kangurDuelHeartbeatInputSchema,
   }),
 };
 
@@ -851,13 +861,13 @@ const routeKangur = (
 };
 
 export const GET = (request: NextRequest, context: RouteContext): Promise<Response> =>
-  routeKangur('GET', request, context.params.path ?? []);
+  routeKangur('GET', request, resolveKangurApiPathSegments(request, context));
 
 export const POST = (request: NextRequest, context: RouteContext): Promise<Response> =>
-  routeKangur('POST', request, context.params.path ?? []);
+  routeKangur('POST', request, resolveKangurApiPathSegments(request, context));
 
 export const PATCH = (request: NextRequest, context: RouteContext): Promise<Response> =>
-  routeKangur('PATCH', request, context.params.path ?? []);
+  routeKangur('PATCH', request, resolveKangurApiPathSegments(request, context));
 
 export const DELETE = (request: NextRequest, context: RouteContext): Promise<Response> =>
-  routeKangur('DELETE', request, context.params.path ?? []);
+  routeKangur('DELETE', request, resolveKangurApiPathSegments(request, context));

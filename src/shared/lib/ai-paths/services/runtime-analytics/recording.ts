@@ -12,13 +12,16 @@ import {
   resolveRuntimeAnalyticsNodeStatusKey,
 } from './utils';
 
+const isRedisReady = (redis: ReturnType<typeof getRedisConnection>): boolean =>
+  redis?.status === 'ready';
+
 export const recordRuntimeRunQueued = async (input: {
   runId: string;
   timestamp?: Date | string | number | null;
 }): Promise<void> => {
   try {
     const redis = getRedisConnection();
-    if (!redis || !input.runId) return;
+    if (!isRedisReady(redis) || !input.runId) return;
     const timestampMs = toTimestampMs(input.timestamp);
     const pruneTo = pruneBefore(timestampMs);
     const multi = redis.multi();
@@ -53,7 +56,7 @@ export const recordRuntimeRunStarted = async (input: {
 }): Promise<void> => {
   try {
     const redis = getRedisConnection();
-    if (!redis || !input.runId) return;
+    if (!isRedisReady(redis) || !input.runId) return;
     const timestampMs = toTimestampMs(input.timestamp);
     const pruneTo = pruneBefore(timestampMs);
     const multi = redis.multi();
@@ -82,7 +85,7 @@ const recordRuntimeRunStatusMetric = async (input: {
 }): Promise<void> => {
   try {
     const redis = getRedisConnection();
-    if (!redis || !input.runId) return;
+    if (!isRedisReady(redis) || !input.runId) return;
     const timestampMs = toTimestampMs(input.timestamp);
     const pruneTo = pruneBefore(timestampMs);
     const runStatusKey = keyRuns(input.status);
@@ -132,7 +135,7 @@ export const recordRuntimeRunFinished = async (input: {
 }): Promise<void> => {
   try {
     const redis = getRedisConnection();
-    if (!redis || !input.runId) return;
+    if (!isRedisReady(redis) || !input.runId) return;
     const timestampMs = toTimestampMs(input.timestamp);
     const pruneTo = pruneBefore(timestampMs);
     const runStatusKey = keyRuns(input.status);
@@ -178,7 +181,7 @@ export const recordRuntimeNodeStatus = async (input: {
 }): Promise<void> => {
   try {
     const redis = getRedisConnection();
-    if (!redis || !input.runId || !input.nodeId) return;
+    if (!isRedisReady(redis) || !input.runId || !input.nodeId) return;
     const statusKey = resolveRuntimeAnalyticsNodeStatusKey(input.status);
     if (!statusKey) return;
 

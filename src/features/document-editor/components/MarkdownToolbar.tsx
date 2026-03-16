@@ -3,6 +3,7 @@
 import { Redo, Undo } from 'lucide-react';
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Button, Input, Label, SelectSimple, Card, Badge } from '@/shared/ui';
 
 import {
@@ -14,6 +15,13 @@ import {
 export type { MarkdownToolbarActionHandlers };
 
 export interface MarkdownToolbarProps extends Partial<MarkdownToolbarContextValue> {}
+
+const FONT_FAMILY_OPTIONS = [
+  { value: 'inherit', label: 'Default' },
+  { value: 'Georgia, serif', label: 'Serif' },
+  { value: 'Trebuchet MS, sans-serif', label: 'Sans' },
+  { value: 'Courier New, monospace', label: 'Mono' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export function MarkdownToolbar(props: MarkdownToolbarProps): React.JSX.Element {
   const context = useOptionalMarkdownToolbarContext();
@@ -303,12 +311,7 @@ export function MarkdownToolbar(props: MarkdownToolbarProps): React.JSX.Element 
               size='sm'
               value={fontFamily}
               onValueChange={onFontFamilyChange}
-              options={[
-                { value: 'inherit', label: 'Default' },
-                { value: 'Georgia, serif', label: 'Serif' },
-                { value: 'Trebuchet MS, sans-serif', label: 'Sans' },
-                { value: 'Courier New, monospace', label: 'Mono' },
-              ]}
+              options={[...FONT_FAMILY_OPTIONS]}
               triggerClassName='h-7 rounded border bg-card/40 px-2 text-xs text-gray-200'
               contentClassName='border-border bg-card text-white'
              ariaLabel='Select option' title='Select option'/>

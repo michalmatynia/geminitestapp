@@ -57,6 +57,14 @@ export interface GenericApiConsoleProps {
   onRequest: () => void;
 }
 
+const METHOD_OPTIONS = [
+  { value: 'GET', label: 'GET' },
+  { value: 'POST', label: 'POST' },
+  { value: 'PUT', label: 'PUT' },
+  { value: 'PATCH', label: 'PATCH' },
+  { value: 'DELETE', label: 'DELETE' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
 /**
  * Generic API console component for testing API endpoints.
  * Consolidates BaseApiConsole and AllegroApiConsole patterns.
@@ -100,14 +108,6 @@ export function GenericApiConsole(props: GenericApiConsoleProps): React.JSX.Elem
   } = config;
 
   const { method, path, bodyOrParams, loading, error, response } = state;
-
-  const methodOptions: Array<LabeledOptionDto<string>> = [
-    { value: 'GET', label: 'GET' },
-    { value: 'POST', label: 'POST' },
-    { value: 'PUT', label: 'PUT' },
-    { value: 'PATCH', label: 'PATCH' },
-    { value: 'DELETE', label: 'DELETE' },
-  ];
 
   const handlePresetClick = (preset: ApiPreset) => {
     onSetMethod(preset.method);
@@ -154,7 +154,7 @@ export function GenericApiConsole(props: GenericApiConsoleProps): React.JSX.Elem
         <FormField label='Method'>
           {methodType === 'select' ? (
             <SelectSimple
-              options={methodOptions}
+              options={[...METHOD_OPTIONS]}
               value={method}
               onValueChange={onSetMethod}
               placeholder='Method'

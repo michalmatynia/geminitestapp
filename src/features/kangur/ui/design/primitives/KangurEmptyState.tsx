@@ -36,6 +36,7 @@ export function KangurEmptyState({
     <div
       className={cn(
         kangurInfoCardVariants({ dashed: true, padding: emptyStatePadding, tone: 'muted' }),
+        'kangur-panel-shell',
         'space-y-3',
         centered && 'text-center',
         emptyStateClassName

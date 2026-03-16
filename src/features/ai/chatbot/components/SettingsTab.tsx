@@ -8,6 +8,7 @@ import {
   useAgentPersonas,
 } from '@/features/ai/agentcreator';
 import { AgentCreatorSettingsSection } from '@/features/ai/agentcreator/components/AgentCreatorSettingsSection';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AgentPersona } from '@/shared/contracts/agents';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import { fetchPlaywrightPersonas } from '@/shared/lib/playwright/personas';
@@ -23,6 +24,22 @@ import {
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { useChatbotSettings } from '../context/ChatbotContext';
+
+const SEARCH_PROVIDER_OPTIONS = [
+  { value: 'serpapi', label: 'SerpApi' },
+  { value: 'google', label: 'Google' },
+  { value: 'bing', label: 'Bing' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'serpapi' | 'google' | 'bing'>>;
+
+const AGENT_PERSONA_NONE_OPTION: LabeledOptionDto<string> = {
+  value: 'none',
+  label: 'None',
+};
+
+const PLAYWRIGHT_PERSONA_CUSTOM_OPTION: LabeledOptionDto<string> = {
+  value: 'custom',
+  label: 'Custom',
+};
 
 export function SettingsTab(): React.JSX.Element {
   const {
@@ -79,6 +96,26 @@ export function SettingsTab(): React.JSX.Element {
 
   const selectedAgentPersona =
     agentPersonas.find((item: AgentPersona): boolean => item.id === personaId) ?? null;
+  const agentPersonaOptions = React.useMemo(
+    (): Array<LabeledOptionDto<string>> => [
+      AGENT_PERSONA_NONE_OPTION,
+      ...agentPersonas.map((persona: AgentPersona) => ({
+        value: persona.id,
+        label: persona.name,
+      })),
+    ],
+    [agentPersonas]
+  );
+  const playwrightPersonaOptions = React.useMemo(
+    (): Array<LabeledOptionDto<string>> => [
+      PLAYWRIGHT_PERSONA_CUSTOM_OPTION,
+      ...playwrightPersonas.map((persona: PlaywrightPersona) => ({
+        value: persona.id,
+        label: persona.name,
+      })),
+    ],
+    [playwrightPersonas]
+  );
 
   const handlePersonaChange = (value: string): void => {
     const nextId = value === 'custom' ? null : value;
@@ -115,11 +152,7 @@ export function SettingsTab(): React.JSX.Element {
               size='sm'
               value={searchProvider}
               onValueChange={(value: string): void => setSearchProvider(value)}
-              options={[
-                { value: 'serpapi', label: 'SerpApi' },
-                { value: 'google', label: 'Google' },
-                { value: 'bing', label: 'Bing' },
-              ]}
+              options={[...SEARCH_PROVIDER_OPTIONS]}
              ariaLabel='Search Provider' title='Search Provider'/>
           </FormField>
         </div>
@@ -172,13 +205,7 @@ export function SettingsTab(): React.JSX.Element {
                 size='sm'
                 value={personaId ?? 'none'}
                 onValueChange={(value: string): void => setPersonaId(value === 'none' ? null : value)}
-                options={[
-                  { value: 'none', label: 'None' },
-                  ...agentPersonas.map((persona: AgentPersona) => ({
-                    value: persona.id,
-                    label: persona.name,
-                  })),
-                ]}
+                options={agentPersonaOptions}
                 placeholder='Select persona'
                ariaLabel='Select persona' title='Select persona'/>
             </FormField>
@@ -229,17 +256,11 @@ export function SettingsTab(): React.JSX.Element {
               >
                 <SelectSimple
                   size='sm'
-                  value={playwrightPersonaId ?? 'custom'}
-                  onValueChange={handlePersonaChange}
-                  options={[
-                    { value: 'custom', label: 'Custom' },
-                    ...playwrightPersonas.map((persona: PlaywrightPersona) => ({
-                      value: persona.id,
-                      label: persona.name,
-                    })),
-                  ]}
-                  placeholder='Select persona'
-                 ariaLabel='Select persona' title='Select persona'/>
+                value={playwrightPersonaId ?? 'custom'}
+                onValueChange={handlePersonaChange}
+                options={playwrightPersonaOptions}
+                placeholder='Select persona'
+               ariaLabel='Select persona' title='Select persona'/>
               </FormField>
               <FormSection variant='subtle' className='p-3 text-xs text-gray-400'>
                 {selectedPersona ? (

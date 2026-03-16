@@ -7,9 +7,25 @@ import {
   useImportExportData,
   useImportExportState,
 } from '@/features/data-import-export/context/ImportExportContext';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { IntegrationConnectionBasic } from '@/shared/contracts/integrations';
 import type { InventoryOption, Template } from '@/shared/contracts/integrations';
 import { Label, SelectSimple } from '@/shared/ui';
+
+const BASE_CONNECTION_PLACEHOLDER_OPTION: LabeledOptionDto<string> = {
+  value: '__none__',
+  label: 'Select a connection...',
+};
+
+const DEFAULT_INVENTORY_PLACEHOLDER_OPTION: LabeledOptionDto<string> = {
+  value: '__none__',
+  label: 'Select default inventory...',
+};
+
+const EXPORT_TEMPLATE_PLACEHOLDER_OPTION: LabeledOptionDto<string> = {
+  value: '__none__',
+  label: 'No template (use defaults)',
+};
 
 export function ExportBaseConfigSection(): React.JSX.Element {
   const { baseConnections, inventories, exportTemplates, loadingExportTemplates } =
@@ -25,6 +41,30 @@ export function ExportBaseConfigSection(): React.JSX.Element {
     setExportActiveTemplateId,
   } = useImportExportState();
   const { applyTemplate } = useImportExportActions();
+  const baseConnectionOptions = React.useMemo(
+    (): Array<LabeledOptionDto<string>> => [
+      BASE_CONNECTION_PLACEHOLDER_OPTION,
+      ...baseConnections.map((connection: IntegrationConnectionBasic) => ({
+        value: connection.id,
+        label: connection.name,
+      })),
+    ],
+    [baseConnections]
+  );
+  const inventoryOptions = React.useMemo(
+    (): Array<LabeledOptionDto<string>> => [
+      DEFAULT_INVENTORY_PLACEHOLDER_OPTION,
+      ...inventories.map((inv: InventoryOption) => ({ value: inv.id, label: inv.name })),
+    ],
+    [inventories]
+  );
+  const exportTemplateOptions = React.useMemo(
+    (): Array<LabeledOptionDto<string>> => [
+      EXPORT_TEMPLATE_PLACEHOLDER_OPTION,
+      ...exportTemplates.map((tpl: Template) => ({ value: tpl.id, label: tpl.name })),
+    ],
+    [exportTemplates]
+  );
 
   return (
     <div className='grid grid-cols-2 gap-4'>
@@ -46,13 +86,7 @@ export function ExportBaseConfigSection(): React.JSX.Element {
               setSelectedBaseConnectionId(nextConnectionId);
             }}
             disabled={baseConnections.length === 0}
-            options={[
-              { value: '__none__', label: 'Select a connection...' },
-              ...baseConnections.map((connection: IntegrationConnectionBasic) => ({
-                value: connection.id,
-                label: connection.name,
-              })),
-            ]}
+            options={baseConnectionOptions}
             placeholder={
               baseConnections.length === 0 ? 'No connections loaded' : 'Select a connection...'
             }
@@ -71,10 +105,7 @@ export function ExportBaseConfigSection(): React.JSX.Element {
             value={exportInventoryId || '__none__'}
             onValueChange={(v: string): void => setExportInventoryId(v === '__none__' ? '' : v)}
             disabled={inventories.length === 0 && !exportInventoryId}
-            options={[
-              { value: '__none__', label: 'Select default inventory...' },
-              ...inventories.map((inv: InventoryOption) => ({ value: inv.id, label: inv.name })),
-            ]}
+            options={inventoryOptions}
             placeholder={
               inventories.length === 0
                 ? exportInventoryId
@@ -112,10 +143,7 @@ export function ExportBaseConfigSection(): React.JSX.Element {
               }
             }}
             disabled={loadingExportTemplates || exportTemplates.length === 0}
-            options={[
-              { value: '__none__', label: 'No template (use defaults)' },
-              ...exportTemplates.map((tpl: Template) => ({ value: tpl.id, label: tpl.name })),
-            ]}
+            options={exportTemplateOptions}
             placeholder='No template (use defaults)'
             triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
            ariaLabel='No template (use defaults)' title='No template (use defaults)'/>

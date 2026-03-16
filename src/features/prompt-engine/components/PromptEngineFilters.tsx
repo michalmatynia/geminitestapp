@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   PROMPT_VALIDATION_SCOPE_LABELS,
   PROMPT_VALIDATION_SCOPE_VALUES,
@@ -18,6 +19,32 @@ import {
   type SeverityFilter,
   usePromptEngineFilters,
 } from '../context/prompt-engine/PromptEngineFiltersContext';
+
+const SEVERITY_OPTIONS: Array<LabeledOptionDto<SeverityFilter>> = [
+  { value: 'all', label: 'All' },
+  { value: 'error', label: 'Error' },
+  { value: 'warning', label: 'Warning' },
+  { value: 'info', label: 'Info' },
+];
+
+const SCOPE_OPTIONS: Array<LabeledOptionDto<ScopeFilter>> = [
+  { value: 'all', label: 'All scopes' },
+  ...PROMPT_VALIDATION_SCOPE_VALUES.map((value) => ({
+    value,
+    label: PROMPT_VALIDATION_SCOPE_LABELS[value],
+  })),
+];
+
+const PATTERN_TAB_OPTIONS: Array<LabeledOptionDto<string>> = [
+  { value: 'core', label: 'Core Patterns' },
+  { value: 'prompt_exploder', label: 'Exploder' },
+];
+
+const EXPLODER_SUBTAB_OPTIONS: Array<LabeledOptionDto<string>> = [
+  { value: 'prompt_exploder_rules', label: 'Prompt Exploder' },
+  { value: 'image_studio_rules', label: 'Image Studio' },
+  { value: 'case_resolver_rules', label: 'Case Resolver' },
+];
 
 /**
  * REFACTORED: PromptEngineFilters using FilterPanel template
@@ -57,12 +84,7 @@ export function PromptEngineFilters(): React.JSX.Element {
       key: 'severity',
       label: 'Severity',
       type: 'select',
-      options: [
-        { value: 'all', label: 'All' },
-        { value: 'error', label: 'Error' },
-        { value: 'warning', label: 'Warning' },
-        { value: 'info', label: 'Info' },
-      ],
+      options: SEVERITY_OPTIONS,
     },
     ...(scopeLocked
       ? []
@@ -71,13 +93,7 @@ export function PromptEngineFilters(): React.JSX.Element {
             key: 'scope',
             label: 'Scope',
             type: 'select',
-            options: [
-              { value: 'all', label: 'All scopes' },
-              ...PROMPT_VALIDATION_SCOPE_VALUES.map((value) => ({
-                value,
-                label: PROMPT_VALIDATION_SCOPE_LABELS[value],
-              })),
-            ],
+            options: SCOPE_OPTIONS,
           } satisfies FilterField,
       ]),
     {
@@ -98,10 +114,7 @@ export function PromptEngineFilters(): React.JSX.Element {
           onChange={(value) => {
             setPatternTab(value);
           }}
-          options={[
-            { value: 'core', label: 'Core Patterns' },
-            { value: 'prompt_exploder', label: 'Exploder' },
-          ]}
+          options={PATTERN_TAB_OPTIONS}
         />
       ) : null}
       {showExploderSubTabSwitch ? (
@@ -113,11 +126,7 @@ export function PromptEngineFilters(): React.JSX.Element {
           onChange={(value) => {
             setExploderSubTab(value);
           }}
-          options={[
-            { value: 'prompt_exploder_rules', label: 'Prompt Exploder' },
-            { value: 'image_studio_rules', label: 'Image Studio' },
-            { value: 'case_resolver_rules', label: 'Case Resolver' },
-          ]}
+          options={EXPLODER_SUBTAB_OPTIONS}
         />
       ) : null}
 

@@ -22,7 +22,7 @@ const positionOptions = [
   { value: 'top-left', label: 'Top Left', description: 'Corner top left' },
   { value: 'bottom-right', label: 'Bottom Right', description: 'Corner bottom right' },
   { value: 'bottom-left', label: 'Bottom Left', description: 'Corner bottom left' },
-] as const;
+] as const satisfies ReadonlyArray<LabeledOptionWithDescriptionDto<string>>;
 
 const accentOptions = [
   { value: 'emerald', label: 'Emerald', color: 'bg-emerald-500' },
@@ -30,7 +30,7 @@ const accentOptions = [
   { value: 'amber', label: 'Amber', color: 'bg-amber-500' },
   { value: 'rose', label: 'Rose', color: 'bg-rose-500' },
   { value: 'slate', label: 'Slate', color: 'bg-slate-500' },
-] as const;
+] as const satisfies ReadonlyArray<LabeledOptionDto<string> & { color: string }>;
 
 type PositionType = (typeof positionOptions)[number]['value'];
 type AccentType = (typeof accentOptions)[number]['value'];

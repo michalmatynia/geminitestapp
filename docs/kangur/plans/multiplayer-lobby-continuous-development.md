@@ -77,3 +77,6 @@ rollouts.
 - 2026-03-16: Added shared duels defaults and search min constants.
 - 2026-03-16: Updated Duels client and server to use shared defaults.
 - 2026-03-16: Added duels action and lobby fetch events to observability important events.
+- 2026-03-16: Added duel session expiry handling with TTL indexes and lobby filtering.
+- 2026-03-16: Added duel heartbeat endpoint and client heartbeat loop to extend expiry.
+- 2026-03-16: Added server-side tests for duel heartbeat and lobby expiry filtering.

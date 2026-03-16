@@ -111,6 +111,17 @@ export const useKangurGameQuickStart = ({
       window.history.replaceState({}, '', nextHref);
     };
 
+    if (quickStart === 'kangur' || quickStart === 'kangur_setup') {
+      quickStartConsumedRef.current = true;
+      if (!user && playerName.trim().length === 0) {
+        setPlayerName('Gracz');
+      }
+
+      clearQuickStartParams();
+      setScreen('kangur_setup');
+      return;
+    }
+
     if (quickStart === 'training') {
       quickStartConsumedRef.current = true;
       if (!user && playerName.trim().length === 0) {

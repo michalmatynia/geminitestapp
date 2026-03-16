@@ -44,6 +44,7 @@ export const KangurInfoCard = React.forwardRef<HTMLDivElement, KangurInfoCardPro
         kangurInfoCardVariants({ tone, padding, dashed }),
         tone === 'accent' &&
           cn(KANGUR_ACCENT_STYLES[accent].activeCard, KANGUR_ACCENT_STYLES[accent].activeText),
+        'kangur-panel-shell',
         className
       )}
       {...props}

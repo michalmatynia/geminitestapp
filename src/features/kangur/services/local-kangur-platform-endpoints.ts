@@ -15,6 +15,7 @@ export const KANGUR_DUELS_OPPONENTS_ENDPOINT = '/api/kangur/duels/opponents';
 export const KANGUR_DUELS_SEARCH_ENDPOINT = '/api/kangur/duels/search';
 export const KANGUR_DUELS_ANSWER_ENDPOINT = '/api/kangur/duels/answer';
 export const KANGUR_DUELS_LEAVE_ENDPOINT = '/api/kangur/duels/leave';
+export const KANGUR_DUELS_HEARTBEAT_ENDPOINT = '/api/kangur/duels/heartbeat';
 export const KANGUR_ACTIVE_LEARNER_HEADER = 'x-kangur-learner-id';
 export const KANGUR_PROGRESS_SOURCE_HEADER = 'x-kangur-progress-source';
 export const KANGUR_PROGRESS_CTA_HEADER = 'x-kangur-progress-cta';

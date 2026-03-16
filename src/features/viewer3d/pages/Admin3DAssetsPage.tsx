@@ -3,6 +3,7 @@
 import { Box, Upload, Grid, List, Filter, X } from 'lucide-react';
 import React, { useMemo } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import {
   Button,
@@ -28,6 +29,11 @@ import { Asset3DUploader } from '../components/Asset3DUploader';
 import { Admin3DAssetsProvider, useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';
 
 import type { ColumnDef } from '@tanstack/react-table';
+
+const ALL_CATEGORIES_OPTION: LabeledOptionDto<string> = {
+  value: '__all__',
+  label: 'All categories',
+};
 
 const formatFileSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`;
@@ -210,6 +216,14 @@ function Admin3DAssetsContent(): React.JSX.Element {
       </div>
     ) : null;
 
+  const categoryOptions = useMemo(
+    (): Array<LabeledOptionDto<string>> => [
+      ALL_CATEGORIES_OPTION,
+      ...categories.map((cat) => ({ value: cat, label: cat })),
+    ],
+    [categories]
+  );
+
   return (
     <StandardDataTablePanel
       header={
@@ -304,10 +318,7 @@ function Admin3DAssetsContent(): React.JSX.Element {
                 size='sm'
                 value={selectedCategory ?? '__all__'}
                 onValueChange={(v) => setSelectedCategory(v === '__all__' ? null : v)}
-                options={[
-                  { value: '__all__', label: 'All categories' },
-                  ...categories.map((cat) => ({ value: cat, label: cat })),
-                ]}
+                options={categoryOptions}
                 placeholder='All categories'
                ariaLabel='All categories' title='All categories'/>
             </FormField>

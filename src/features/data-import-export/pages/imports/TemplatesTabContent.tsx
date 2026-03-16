@@ -20,7 +20,7 @@ import {
   useProductParameters,
   useProductSimpleParameters,
 } from '@/features/data-import-export/hooks/useImportQueries';
-import type { TemplateMapping } from '@/shared/contracts/integrations';
+import type { ImportTemplateParameterImport, TemplateMapping } from '@/shared/contracts/integrations';
 import { PRODUCT_SIMPLE_PARAMETER_ID_PREFIX } from '@/shared/contracts/products';
 import {
   Button,
@@ -41,6 +41,41 @@ import {
   toParameterTargetValue,
   getParameterDisplayName,
 } from './imports-page-utils';
+
+type ParameterImportLanguageScope = NonNullable<ImportTemplateParameterImport['languageScope']>;
+type ParameterImportMatchBy = NonNullable<ImportTemplateParameterImport['matchBy']>;
+
+const PARAMETER_IMPORT_LANGUAGE_SCOPE_OPTIONS = [
+  {
+    value: 'catalog_languages',
+    label: 'All catalog languages',
+  },
+  {
+    value: 'default_only',
+    label: 'Default catalog language',
+  },
+] as const satisfies ReadonlyArray<LabeledOptionDto<ParameterImportLanguageScope>>;
+
+const PARAMETER_IMPORT_MATCH_BY_OPTIONS = [
+  {
+    value: 'base_id_then_name',
+    label: 'Base ID, then name',
+  },
+  {
+    value: 'name_only',
+    label: 'Name only',
+  },
+] as const satisfies ReadonlyArray<LabeledOptionDto<ParameterImportMatchBy>>;
+
+const SOURCE_FIELD_PLACEHOLDER_OPTION: LabeledOptionDto<string> = {
+  value: '__none__',
+  label: 'Source Field',
+};
+
+const TARGET_FIELD_PLACEHOLDER_OPTION: LabeledOptionDto<string> = {
+  value: '__none__',
+  label: 'Target Field',
+};
 
 export function TemplatesTabContent(): React.JSX.Element {
   const {
@@ -147,6 +182,46 @@ export function TemplatesTabContent(): React.JSX.Element {
     (): string[] =>
       [...importSourceFields].sort((a: string, b: string): number => a.localeCompare(b)),
     [importSourceFields]
+  );
+  const buildImportSourceFieldOptions = React.useCallback(
+    (mapping: TemplateMapping): Array<LabeledOptionDto<string>> => {
+      const customOption: Array<LabeledOptionDto<string>> =
+        mapping.sourceKey && !importSourceFieldOptions.includes(mapping.sourceKey)
+          ? [
+              {
+                value: mapping.sourceKey,
+                label: `${mapping.sourceKey} (custom)`,
+              },
+            ]
+          : [];
+
+      const mappedOptions = importSourceFieldOptions.map((field: string) => ({
+        value: field,
+        label: importSourceFieldValues[field]
+          ? `${field} (${importSourceFieldValues[field].slice(0, 60)})`
+          : field,
+      }));
+
+      return [SOURCE_FIELD_PLACEHOLDER_OPTION, ...customOption, ...mappedOptions];
+    },
+    [importSourceFieldOptions, importSourceFieldValues]
+  );
+  const buildTemplateTargetFieldOptions = React.useCallback(
+    (mapping: TemplateMapping): Array<LabeledOptionDto<string>> => {
+      const customOption: Array<LabeledOptionDto<string>> =
+        mapping.targetField &&
+        !templateTargetFieldOptions.some((option) => option.value === mapping.targetField)
+          ? [
+              {
+                value: mapping.targetField,
+                label: `${mapping.targetField} (custom)`,
+              },
+            ]
+          : [];
+
+      return [TARGET_FIELD_PLACEHOLDER_OPTION, ...customOption, ...templateTargetFieldOptions];
+    },
+    [templateTargetFieldOptions]
   );
   const parameterSourceLabelByValue = React.useMemo((): Map<string, string> => {
     const map = new Map<string, string>();
@@ -430,16 +505,7 @@ export function TemplatesTabContent(): React.JSX.Element {
                           value === 'default_only' ? 'default_only' : 'catalog_languages',
                       }))
                     }
-                    options={[
-                      {
-                        value: 'catalog_languages',
-                        label: 'All catalog languages',
-                      },
-                      {
-                        value: 'default_only',
-                        label: 'Default catalog language',
-                      },
-                    ]}
+                    options={PARAMETER_IMPORT_LANGUAGE_SCOPE_OPTIONS}
                     triggerClassName='w-full h-8 bg-gray-900 border-border text-xs'
                    ariaLabel='Select option' title='Select option'/>
                 </div>
@@ -454,16 +520,7 @@ export function TemplatesTabContent(): React.JSX.Element {
                         matchBy: value === 'name_only' ? 'name_only' : 'base_id_then_name',
                       }))
                     }
-                    options={[
-                      {
-                        value: 'base_id_then_name',
-                        label: 'Base ID, then name',
-                      },
-                      {
-                        value: 'name_only',
-                        label: 'Name only',
-                      },
-                    ]}
+                    options={PARAMETER_IMPORT_MATCH_BY_OPTIONS}
                     triggerClassName='w-full h-8 bg-gray-900 border-border text-xs'
                    ariaLabel='Select option' title='Select option'/>
                 </div>
@@ -538,23 +595,7 @@ export function TemplatesTabContent(): React.JSX.Element {
                               sourceKey: value === '__none__' ? '' : value,
                             })
                           }
-                          options={[
-                            { value: '__none__', label: 'Source Field' },
-                            ...(m.sourceKey && !importSourceFieldOptions.includes(m.sourceKey)
-                              ? [
-                                {
-                                  value: m.sourceKey,
-                                  label: `${m.sourceKey} (custom)`,
-                                },
-                              ]
-                              : []),
-                            ...importSourceFieldOptions.map((field: string) => ({
-                              value: field,
-                              label: importSourceFieldValues[field]
-                                ? `${field} (${importSourceFieldValues[field].slice(0, 60)})`
-                                : field,
-                            })),
-                          ]}
+                          options={buildImportSourceFieldOptions(m)}
                           triggerClassName='w-full h-9 bg-card/40'
                           placeholder='Select source field'
                          ariaLabel='Select source field' title='Select source field'/>
@@ -569,21 +610,7 @@ export function TemplatesTabContent(): React.JSX.Element {
                             targetField: v === '__none__' ? '' : v,
                           })
                         }
-                        options={[
-                          { value: '__none__', label: 'Target Field' },
-                          ...(m.targetField &&
-                          !templateTargetFieldOptions.some(
-                            (option) => option.value === m.targetField
-                          )
-                            ? [
-                              {
-                                value: m.targetField,
-                                label: `${m.targetField} (custom)`,
-                              },
-                            ]
-                            : []),
-                          ...templateTargetFieldOptions,
-                        ]}
+                        options={buildTemplateTargetFieldOptions(m)}
                         triggerClassName='w-full h-9 bg-card/40'
                         placeholder='Target Field'
                        ariaLabel='Target Field' title='Target Field'/>

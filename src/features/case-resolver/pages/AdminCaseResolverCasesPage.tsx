@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import { ConfirmModal, Input, MultiSelect } from '@/shared/ui';
 import {
@@ -15,6 +16,16 @@ import {
   useAdminCaseResolverCasesActionsContext,
   useAdminCaseResolverCasesStateContext,
 } from '../context/AdminCaseResolverCasesContext';
+
+const EMPTY_PARENT_CASE_OPTION: LabeledOptionDto<string> = { value: '', label: '(No parent)' };
+const EMPTY_FOLDER_OPTION: LabeledOptionDto<string> = { value: '', label: '(Root)' };
+const CASE_STATUS_OPTIONS: Array<LabeledOptionDto<string>> = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'completed', label: 'Completed' },
+];
+const EMPTY_SIGNATURE_OPTION: LabeledOptionDto<string> = { value: '', label: '(No signature)' };
+const EMPTY_TAG_OPTION: LabeledOptionDto<string> = { value: '', label: '(No tag)' };
+const EMPTY_CATEGORY_OPTION: LabeledOptionDto<string> = { value: '', label: '(No category)' };
 
 function AdminCaseResolverCasesInner(): React.JSX.Element {
   const {
@@ -52,64 +63,37 @@ function AdminCaseResolverCasesInner(): React.JSX.Element {
         key: 'parentCaseId',
         label: 'Parent Case',
         type: 'select',
-        options: [
-          { value: '', label: '(No parent)' },
-          ...parentCaseOptions.map((option) => ({ value: option.value, label: option.label })),
-        ],
+        options: [EMPTY_PARENT_CASE_OPTION, ...parentCaseOptions],
       },
       {
         key: 'folder',
         label: 'Folder',
         type: 'select',
-        options: [
-          { value: '', label: '(Root)' },
-          ...folderOptions.map((option) => ({ value: option.value, label: option.label })),
-        ],
+        options: [EMPTY_FOLDER_OPTION, ...folderOptions],
       },
       {
         key: 'caseStatus',
         label: 'Case Status',
         type: 'select',
-        options: [
-          { value: 'pending', label: 'Pending' },
-          { value: 'completed', label: 'Completed' },
-        ],
+        options: CASE_STATUS_OPTIONS,
       },
       {
         key: 'caseIdentifierId',
         label: 'Signature ID',
         type: 'select',
-        options: [
-          { value: '', label: '(No signature)' },
-          ...caseIdentifierOptions.map((option) => ({
-            value: option.value,
-            label: option.label,
-          })),
-        ],
+        options: [EMPTY_SIGNATURE_OPTION, ...caseIdentifierOptions],
       },
       {
         key: 'tagId',
         label: 'Tag',
         type: 'select',
-        options: [
-          { value: '', label: '(No tag)' },
-          ...caseResolverTagOptions.map((option) => ({
-            value: option.value,
-            label: option.label,
-          })),
-        ],
+        options: [EMPTY_TAG_OPTION, ...caseResolverTagOptions],
       },
       {
         key: 'categoryId',
         label: 'Category',
         type: 'select',
-        options: [
-          { value: '', label: '(No category)' },
-          ...caseResolverCategoryOptions.map((option) => ({
-            value: option.value,
-            label: option.label,
-          })),
-        ],
+        options: [EMPTY_CATEGORY_OPTION, ...caseResolverCategoryOptions],
       },
       {
         key: 'referenceCaseIds',

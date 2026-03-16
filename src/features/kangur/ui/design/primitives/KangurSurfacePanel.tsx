@@ -39,7 +39,11 @@ export const KangurSurfacePanel = React.forwardRef<HTMLDivElement, KangurSurface
   ({ accent, className, fillHeight, padding, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn(kangurSurfacePanelVariants({ accent, fillHeight, padding }), className)}
+      className={cn(
+        kangurSurfacePanelVariants({ accent, fillHeight, padding }),
+        'kangur-panel-shell',
+        className
+      )}
       {...props}
     />
   )

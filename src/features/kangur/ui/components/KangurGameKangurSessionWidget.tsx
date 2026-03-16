@@ -3,6 +3,7 @@ import KangurRecommendationCard from '@/features/kangur/ui/components/KangurReco
 import { KangurGameProvider } from '@/features/kangur/ui/context/KangurGameContext';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { KangurStatusChip } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 export function KangurGameKangurSessionWidget(): React.JSX.Element | null {
   const { activeSessionRecommendation, kangurMode, screen, setScreen } = useKangurGameRuntime();
@@ -12,12 +13,12 @@ export function KangurGameKangurSessionWidget(): React.JSX.Element | null {
   }
 
   return (
-    <div className='w-full max-w-lg flex flex-col items-center'>
+    <div className={`w-full max-w-5xl flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       {activeSessionRecommendation ? (
         <KangurRecommendationCard
           accent='violet'
           bodyClassName='gap-2'
-          className='mb-4 w-full rounded-[28px]'
+          className='w-full rounded-[28px]'
           contentClassName='gap-2'
           dataTestId='kangur-kangur-session-recommendation-card'
           description={activeSessionRecommendation.description}

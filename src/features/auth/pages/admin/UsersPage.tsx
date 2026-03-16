@@ -4,6 +4,7 @@ import { UserPlusIcon, ShieldAlertIcon, ShieldCheck, Key, Users } from 'lucide-r
 import React, { useMemo } from 'react';
 
 import type { AuthRole } from '@/features/auth/utils/auth-management';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AuthUser as AuthUserSummary } from '@/shared/contracts/auth';
 import {
   Button,
@@ -32,6 +33,11 @@ import {
 
 import type { ColumnDef } from '@tanstack/react-table';
 
+const ROLE_PLACEHOLDER_OPTION: LabeledOptionDto<string> = {
+  value: 'none',
+  label: 'Unassigned',
+};
+
 export default function AuthUsersPage(): React.JSX.Element {
   return (
     <UsersProvider>
@@ -47,6 +53,13 @@ function AuthUsersPageContent(): React.JSX.Element {
   const { localUserRoles, handleRoleChange, dirtyRoles, saveRoles } = useUsersRoles();
   const { setEditingUser, userToDelete, setUserToDelete, deleteUser, setCreateOpen, setMockOpen } =
     useUsersDialogs();
+  const roleOptions = useMemo(
+    (): Array<LabeledOptionDto<string>> => [
+      ROLE_PLACEHOLDER_OPTION,
+      ...roles.map((role: AuthRole) => ({ value: role.id, label: role.name })),
+    ],
+    [roles]
+  );
 
   const columns = useMemo<ColumnDef<AuthUserSummary>[]>(
     () => [
@@ -88,10 +101,7 @@ function AuthUsersPageContent(): React.JSX.Element {
               size='xs'
               value={currentRoleId ?? 'none'}
               onValueChange={(val) => handleRoleChange(row.original.id, val)}
-              options={[
-                { value: 'none', label: 'Unassigned' },
-                ...roles.map((r: AuthRole) => ({ value: r.id, label: r.name })),
-              ]}
+              options={roleOptions}
               className='h-7 w-32 text-[10px]'
              ariaLabel='Select option' title='Select option'/>
           );
@@ -126,7 +136,7 @@ function AuthUsersPageContent(): React.JSX.Element {
         ),
       },
     ],
-    [roles, localUserRoles, handleRoleChange, setEditingUser, setUserToDelete]
+    [localUserRoles, handleRoleChange, roleOptions, setEditingUser, setUserToDelete]
   );
 
   if (!canReadUsers) {

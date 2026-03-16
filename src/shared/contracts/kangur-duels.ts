@@ -88,6 +88,12 @@ export const kangurDuelJoinInputSchema = z.object({
 });
 export type KangurDuelJoinInput = z.infer<typeof kangurDuelJoinInputSchema>;
 
+export const kangurDuelHeartbeatInputSchema = z.object({
+  sessionId: nonEmptyTrimmedString.max(120),
+  clientTimestamp: z.string().datetime({ offset: true }).optional(),
+});
+export type KangurDuelHeartbeatInput = z.infer<typeof kangurDuelHeartbeatInputSchema>;
+
 export const kangurDuelAnswerInputSchema = z.object({
   sessionId: nonEmptyTrimmedString.max(120),
   questionId: nonEmptyTrimmedString.max(120),

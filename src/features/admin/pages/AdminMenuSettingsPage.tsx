@@ -18,6 +18,7 @@ import {
   ADMIN_MENU_COLORS,
   type NavItem,
 } from '@/features/admin/components/Menu';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   createMasterFolderTreeTransactionAdapter,
   FolderTreeViewportV2,
@@ -49,6 +50,17 @@ import {
 const TREE_INSTANCE = 'admin_menu_layout';
 
 type ColorOption = (typeof ADMIN_MENU_COLORS)[number];
+const SECTION_COLOR_OPTIONS: Array<LabeledOptionDto<string>> = [
+  { value: 'none', label: 'None' },
+  ...ADMIN_MENU_COLORS.map((option: ColorOption) => ({
+    value: option.value,
+    label: option.label,
+  })),
+];
+const NODE_TYPE_OPTIONS: Array<LabeledOptionDto<'group' | 'link'>> = [
+  { value: 'group', label: 'Group' },
+  { value: 'link', label: 'Link' },
+];
 
 function FavoritesSection(): React.JSX.Element {
   const {
@@ -204,13 +216,7 @@ function SectionColorsSection(): React.JSX.Element {
                 size='sm'
                 value={current}
                 onValueChange={(value: string) => updateSectionColor(sectionId, value)}
-                options={[
-                  { value: 'none', label: 'None' },
-                  ...ADMIN_MENU_COLORS.map((option: ColorOption) => ({
-                    value: option.value,
-                    label: option.label,
-                  })),
-                ]}
+                options={SECTION_COLOR_OPTIONS}
                 className='w-[160px]'
                 triggerClassName='h-8 text-xs'
                ariaLabel='Select option' title='Select option'/>
@@ -503,10 +509,7 @@ function MenuBuilderSection(): React.JSX.Element {
                   <SelectSimple
                     size='sm'
                     value={selectedNodeSemantic}
-                    options={[
-                      { value: 'group', label: 'Group' },
-                      { value: 'link', label: 'Link' },
-                    ]}
+                    options={NODE_TYPE_OPTIONS}
                     onValueChange={(value: string) =>
                       updateCustomNodeSemanticById(
                         selectedNodeId,

@@ -13,8 +13,7 @@ export type KangurRouteTransitionSkeletonVariant =
   | 'lessons-library'
   | 'lessons-focus'
   | 'learner-profile'
-  | 'parent-dashboard'
-  | 'tests';
+  | 'parent-dashboard';
 
 type ResolveKangurRouteTransitionSkeletonInput = {
   basePath?: string | null;
@@ -112,8 +111,6 @@ export const resolveKangurRouteTransitionSkeletonVariant = ({
       return 'learner-profile';
     case 'ParentDashboard':
       return 'parent-dashboard';
-    case 'Tests':
-      return 'tests';
     case 'Game':
     default: {
       const quickStartToken = searchParams

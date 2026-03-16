@@ -55,6 +55,8 @@ export function KangurParentDashboardHeroWidget({
   } = useKangurParentDashboardRuntime();
   const activeLearnerId = activeLearner?.id ?? null;
   const hasActiveLearner = Boolean(activeLearnerId);
+  const activeLearnerLabel =
+    activeLearner?.displayName?.trim() || activeLearner?.loginName?.trim() || 'ucznia';
   const { status: learnerActivityStatus, isLoading: isActivityLoading } =
     useKangurLearnerActivityStatus({
       enabled: canManageLearners && hasActiveLearner,
@@ -259,6 +261,22 @@ export function KangurParentDashboardHeroWidget({
             </KangurButton>
           ) : null}
         </KangurSummaryPanel>
+      ) : null}
+
+      {hasActiveLearner ? (
+        <div className='mt-3 flex flex-wrap items-center gap-2'>
+          <KangurButton asChild size='sm' variant='surface'>
+            <Link
+              href={createPageUrl('LearnerProfile', basePath)}
+              targetPageKey='LearnerProfile'
+              transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
+              transitionSourceId='parent-dashboard-hero:profile'
+              data-doc-id='top_nav_profile'
+            >
+              <UserRound className='h-4 w-4' /> Profil {activeLearnerLabel}
+            </Link>
+          </KangurButton>
+        </div>
       ) : null}
 
       {showActions ? (

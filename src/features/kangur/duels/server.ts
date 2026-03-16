@@ -13,6 +13,7 @@ import type {
   KangurDuelAnswerInput,
   KangurDuelChoice,
   KangurDuelCreateInput,
+  KangurDuelHeartbeatInput,
   KangurDuelJoinInput,
   KangurDuelLobbyEntry,
   KangurDuelLobbyResponse,
@@ -700,6 +701,51 @@ export const getKangurDuelState = async (
   return buildStateResponse(session, learner.id);
 };
 
+export const heartbeatKangurDuelSession = async (
+  learner: KangurLearnerProfile,
+  input: KangurDuelHeartbeatInput
+): Promise<KangurDuelStateResponse> => {
+  const collection = await getDuelCollection();
+  const session = await ensureSession(input.sessionId);
+  resolvePlayer(session, learner.id);
+
+  const nowTime = now();
+  const nowMs = nowTime.getTime();
+  if (isSessionExpired(session, nowMs)) {
+    await removeQuickMatchSession(session._id);
+    throw notFoundError('Duel session expired.');
+  }
+
+  if (session.status === 'completed' || session.status === 'aborted') {
+    return buildStateResponse(session, learner.id);
+  }
+
+  const expiresAt = computeExpiresAt(nowTime, session.status);
+  const updateResult = await collection.updateOne(
+    {
+      _id: session._id,
+      status: { $nin: ['completed', 'aborted'] },
+    },
+    {
+      $set: {
+        expiresAt,
+        'players.$[target].isConnected': true,
+      },
+    },
+    {
+      arrayFilters: [{ 'target.learnerId': learner.id }],
+    }
+  );
+
+  if (updateResult.matchedCount === 0) {
+    const refreshed = await ensureSession(session._id);
+    return buildStateResponse(refreshed, learner.id);
+  }
+
+  const refreshed = await ensureSession(session._id);
+  return buildStateResponse(refreshed, learner.id);
+};
+
 export const listKangurDuelLobby = async (
   learner: KangurLearnerProfile,
   options?: { limit?: number }
@@ -709,6 +755,10 @@ export const listKangurDuelLobby = async (
       ? Math.max(1, Math.min(50, Math.floor(options.limit)))
       : LOBBY_LIST_LIMIT;
   const collection = await getDuelCollection();
+  const nowTime = now();
+  const activeFilter = {
+    $or: [{ expiresAt: { $gt: nowTime } }, { expiresAt: { $exists: false } }],
+  };
   const privateInvites = await collection
     .find({
       status: 'waiting',
@@ -716,6 +766,7 @@ export const listKangurDuelLobby = async (
       visibility: 'private',
       invitedLearnerId: learner.id,
       'players.learnerId': { $ne: learner.id },
+      ...activeFilter,
     })
     .sort({ createdAt: -1 })
     .toArray();
@@ -729,6 +780,7 @@ export const listKangurDuelLobby = async (
             playerCount: 1,
             visibility: { $ne: 'private' },
             'players.learnerId': { $ne: learner.id },
+            ...activeFilter,
           })
           .sort({ createdAt: -1 })
           .limit(publicLimit)
@@ -736,8 +788,13 @@ export const listKangurDuelLobby = async (
       : [];
 
   const sessions = [...privateInvites, ...publicSessions];
+  const hydratedSessions = await Promise.all(
+    sessions.map((session) => ensureSessionExpiry(collection, session))
+  );
+  const nowMs = nowTime.getTime();
+  const freshSessions = hydratedSessions.filter((session) => !isSessionExpired(session, nowMs));
 
-  const entries = sessions
+  const entries = freshSessions
     .map((session) => toLobbyEntry(session))
     .filter((entry): entry is KangurDuelLobbyEntry => Boolean(entry));
 
@@ -755,17 +812,27 @@ export const listKangurPublicDuelLobby = async (
       ? Math.max(1, Math.min(50, Math.floor(options.limit)))
       : LOBBY_LIST_LIMIT;
   const collection = await getDuelCollection();
+  const nowTime = now();
+  const activeFilter = {
+    $or: [{ expiresAt: { $gt: nowTime } }, { expiresAt: { $exists: false } }],
+  };
   const sessions = await collection
     .find({
       status: 'waiting',
       playerCount: 1,
       visibility: { $ne: 'private' },
+      ...activeFilter,
     })
     .sort({ createdAt: -1 })
     .limit(limit)
     .toArray();
 
-  const entries = sessions
+  const hydratedSessions = await Promise.all(
+    sessions.map((session) => ensureSessionExpiry(collection, session))
+  );
+  const nowMs = nowTime.getTime();
+  const entries = hydratedSessions
+    .filter((session) => !isSessionExpired(session, nowMs))
     .map((session) => toLobbyEntry(session))
     .filter((entry): entry is KangurDuelLobbyEntry => Boolean(entry));
 

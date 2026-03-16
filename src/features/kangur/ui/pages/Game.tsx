@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useMemo, useRef, type RefObject } from 'react';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
-import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
+import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurGameCalendarTrainingWidget } from '@/features/kangur/ui/components/KangurGameCalendarTrainingWidget';
 import { KangurGameDivisionQuizWidget } from '@/features/kangur/ui/components/KangurGameDivisionQuizWidget';
 import { KangurGameGeometryTrainingWidget } from '@/features/kangur/ui/components/KangurGameGeometryTrainingWidget';
@@ -22,7 +22,6 @@ import { KangurGameSubtractionQuizWidget } from '@/features/kangur/ui/components
 import { KangurAssignmentSpotlight } from '@/features/kangur/ui/components/KangurAssignmentSpotlight';
 import { KangurPriorityAssignments } from '@/features/kangur/ui/components/KangurPriorityAssignments';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
-import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import Leaderboard from '@/features/kangur/ui/components/Leaderboard';
 import { PlayerProgressCard, XpToast } from '@/features/kangur/ui/components/progress';
 import { KangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
@@ -34,6 +33,8 @@ import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/cont
 import {
   KangurButton,
   KangurEmptyState,
+  KangurPageContainer,
+  KangurPageShell,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
@@ -497,37 +498,28 @@ function GameContent(): React.JSX.Element {
   return (
     <>
       <KangurAiTutorSessionSync learnerId={learnerId} sessionContext={tutorSessionContext} />
-      <KangurStandardPageLayout
-        tone='play'
-        id='kangur-game-page'
-        skipLinkTargetId={GAME_MAIN_ID}
-        docsRootId='kangur-game-page'
-        docsTooltipsEnabled={docsTooltipsEnabled}
-        beforeNavigation={(
-          <XpToast
-            xpGained={xpToast.xpGained}
-            newBadges={xpToast.newBadges}
-            breakdown={xpToast.breakdown}
-            dailyQuest={xpToast.dailyQuest}
-            nextBadge={xpToast.nextBadge}
-            recommendation={xpToast.recommendation}
-            visible={xpToast.visible}
-          />
-        )}
-        navigation={<KangurGameNavigationWidget />}
-        afterNavigation={(
-          <div role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
-            Widok: {currentScreenLabel}
-          </div>
-        )}
-        containerProps={{
-          as: 'section',
-          'data-kangur-route-main': true,
-          id: GAME_MAIN_ID,
-          'aria-labelledby': `${GAME_TITLE_ID} ${GAME_SCREEN_TITLE_ID}`,
-          className: `flex flex-col items-center pt-8 sm:pt-10 ${KANGUR_PANEL_GAP_CLASSNAME}`,
-        }}
-      >
+      <KangurPageShell tone='play' id='kangur-game-page' skipLinkTargetId={GAME_MAIN_ID}>
+        <KangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId='kangur-game-page' />
+        <XpToast
+          xpGained={xpToast.xpGained}
+          newBadges={xpToast.newBadges}
+          breakdown={xpToast.breakdown}
+          dailyQuest={xpToast.dailyQuest}
+          nextBadge={xpToast.nextBadge}
+          recommendation={xpToast.recommendation}
+          visible={xpToast.visible}
+        />
+        <KangurGameNavigationWidget />
+        <div role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
+          Widok: {currentScreenLabel}
+        </div>
+        <KangurPageContainer
+          as='section'
+          data-kangur-route-main
+          id={GAME_MAIN_ID}
+          aria-labelledby={`${GAME_TITLE_ID} ${GAME_SCREEN_TITLE_ID}`}
+          className={`flex flex-col items-center pt-8 sm:pt-10 ${KANGUR_PANEL_GAP_CLASSNAME}`}
+        >
           <h1 id={GAME_TITLE_ID} className='sr-only'>
             {GAME_BRAND_NAME}
           </h1>
@@ -753,7 +745,8 @@ function GameContent(): React.JSX.Element {
               )
             ) : null}
           </AnimatePresence>
-      </KangurStandardPageLayout>
+        </KangurPageContainer>
+      </KangurPageShell>
     </>
   );
 }

@@ -489,8 +489,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
             value={config.inputPort}
             onValueChange={(value: string): void =>
               updateConfig({
-                inputPort: (INPUT_PORT_OPTIONS.find((option) => option.value === value)?.value ??
-                  'auto') as ValidationPatternConfigDraft['inputPort'],
+                inputPort: INPUT_PORT_OPTIONS.find((option) => option.value === value)?.value ?? 'auto',
               })
             }
             options={INPUT_PORT_OPTIONS}
@@ -503,8 +502,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
             value={config.outputPort}
             onValueChange={(value: string): void =>
               updateConfig({
-                outputPort: (OUTPUT_PORT_OPTIONS.find((option) => option.value === value)?.value ??
-                  'value') as ValidationPatternConfigDraft['outputPort'],
+                outputPort: OUTPUT_PORT_OPTIONS.find((option) => option.value === value)?.value ?? 'value',
               })
             }
             options={OUTPUT_PORT_OPTIONS}

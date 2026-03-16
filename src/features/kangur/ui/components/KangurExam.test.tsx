@@ -66,13 +66,13 @@ describe('KangurExam', () => {
       'soft-card',
       'border'
     );
-    expect(screen.getByRole('button', { name: /poprzednie/i })).toHaveClass(
+    expect(screen.getByRole('button', { name: /brak poprzedniego pytania/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );
     expect(screen.getByRole('button', { name: /zakończ test/i })).toHaveClass(
       'kangur-cta-pill',
-      'primary-cta'
+      'surface-cta'
     );
 
     await userEvent.click(screen.getByRole('button', { name: /odpowiedź b\. 4/i }));

@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { UserPreferences } from '@/shared/contracts/auth';
 import {
   useUpdateUserPreferences,
@@ -33,6 +34,7 @@ type CaseResolverCaseListSortBy =
   | 'sent';
 type CaseResolverCaseListSortOrder = 'asc' | 'desc';
 type CaseResolverCaseListSearchScope = 'all' | 'name' | 'folder' | 'content';
+type CaseResolverCaseListFiltersVisibility = 'hidden' | 'shown';
 
 type CaseResolverCaseListPreferences = {
   caseResolverCaseListViewMode: CaseResolverCaseListViewMode;
@@ -42,6 +44,48 @@ type CaseResolverCaseListPreferences = {
   caseResolverCaseListFiltersCollapsedByDefault: boolean;
   caseResolverCaseListShowNestedContent: boolean;
 };
+
+const CASE_LIST_VIEW_MODE_OPTIONS: Array<LabeledOptionDto<CaseResolverCaseListViewMode>> = [
+  { value: 'hierarchy', label: 'Hierarchy' },
+  { value: 'list', label: 'List' },
+];
+
+const CASE_LIST_SORT_BY_OPTIONS: Array<LabeledOptionDto<CaseResolverCaseListSortBy>> = [
+  { value: 'updated', label: 'Date modified' },
+  { value: 'created', label: 'Date created' },
+  { value: 'happeningDate', label: 'Happening date' },
+  { value: 'name', label: 'Name' },
+  { value: 'status', label: 'Status' },
+  { value: 'signature', label: 'Signature' },
+  { value: 'locked', label: 'Lock state' },
+  { value: 'sent', label: 'Sent state' },
+];
+
+const CASE_LIST_SORT_ORDER_OPTIONS: Array<LabeledOptionDto<CaseResolverCaseListSortOrder>> = [
+  { value: 'desc', label: 'Descending' },
+  { value: 'asc', label: 'Ascending' },
+];
+
+const CASE_LIST_SEARCH_SCOPE_OPTIONS: Array<LabeledOptionDto<CaseResolverCaseListSearchScope>> = [
+  { value: 'all', label: 'Name + Folder + Content' },
+  { value: 'name', label: 'Name only' },
+  { value: 'folder', label: 'Folder only' },
+  { value: 'content', label: 'Content only' },
+];
+
+const CASE_LIST_FILTERS_VISIBILITY_OPTIONS: Array<
+  LabeledOptionDto<CaseResolverCaseListFiltersVisibility>
+> = [
+  { value: 'hidden', label: 'Hide Filters' },
+  { value: 'shown', label: 'Show Filters' },
+];
+
+const CASE_LIST_NESTED_CONTENT_OPTIONS: Array<
+  LabeledOptionDto<CaseResolverCaseListFiltersVisibility>
+> = [
+  { value: 'shown', label: 'Show nested content' },
+  { value: 'hidden', label: 'Hide nested content' },
+];
 
 const DEFAULT_CASE_RESOLVER_CASE_LIST_PREFERENCES: CaseResolverCaseListPreferences = {
   caseResolverCaseListViewMode: 'hierarchy',
@@ -198,10 +242,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
                   caseResolverCaseListViewMode: value === 'list' ? 'list' : 'hierarchy',
                 }));
               }}
-              options={[
-                { value: 'hierarchy', label: 'Hierarchy' },
-                { value: 'list', label: 'List' },
-              ]}
+              options={CASE_LIST_VIEW_MODE_OPTIONS}
              ariaLabel='Default View' title='Default View'/>
           </FormField>
 
@@ -224,16 +265,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
                       : 'updated',
                 }));
               }}
-              options={[
-                { value: 'updated', label: 'Date modified' },
-                { value: 'created', label: 'Date created' },
-                { value: 'happeningDate', label: 'Happening date' },
-                { value: 'name', label: 'Name' },
-                { value: 'status', label: 'Status' },
-                { value: 'signature', label: 'Signature' },
-                { value: 'locked', label: 'Lock state' },
-                { value: 'sent', label: 'Sent state' },
-              ]}
+              options={CASE_LIST_SORT_BY_OPTIONS}
              ariaLabel='Default Sort By' title='Default Sort By'/>
           </FormField>
 
@@ -250,10 +282,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
                   caseResolverCaseListSortOrder: value === 'asc' ? 'asc' : 'desc',
                 }));
               }}
-              options={[
-                { value: 'desc', label: 'Descending' },
-                { value: 'asc', label: 'Ascending' },
-              ]}
+              options={CASE_LIST_SORT_ORDER_OPTIONS}
              ariaLabel='Default Sort Order' title='Default Sort Order'/>
           </FormField>
 
@@ -271,12 +300,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
                     value === 'name' || value === 'folder' || value === 'content' ? value : 'all',
                 }));
               }}
-              options={[
-                { value: 'all', label: 'Name + Folder + Content' },
-                { value: 'name', label: 'Name only' },
-                { value: 'folder', label: 'Folder only' },
-                { value: 'content', label: 'Content only' },
-              ]}
+              options={CASE_LIST_SEARCH_SCOPE_OPTIONS}
              ariaLabel='Default Search Scope' title='Default Search Scope'/>
           </FormField>
 
@@ -293,10 +317,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
                   caseResolverCaseListFiltersCollapsedByDefault: value === 'hidden',
                 }));
               }}
-              options={[
-                { value: 'hidden', label: 'Hide Filters' },
-                { value: 'shown', label: 'Show Filters' },
-              ]}
+              options={CASE_LIST_FILTERS_VISIBILITY_OPTIONS}
              ariaLabel='Filters Button Default' title='Filters Button Default'/>
           </FormField>
 
@@ -313,10 +334,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
                   caseResolverCaseListShowNestedContent: value !== 'hidden',
                 }));
               }}
-              options={[
-                { value: 'shown', label: 'Show nested content' },
-                { value: 'hidden', label: 'Hide nested content' },
-              ]}
+              options={CASE_LIST_NESTED_CONTENT_OPTIONS}
              ariaLabel='Default Nested Content' title='Default Nested Content'/>
           </FormField>
         </div>

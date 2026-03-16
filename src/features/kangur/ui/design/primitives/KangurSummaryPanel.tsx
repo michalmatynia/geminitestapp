@@ -37,6 +37,7 @@ export function KangurSummaryPanel({
         kangurInfoCardVariants({ tone, padding }),
         tone === 'accent' &&
           cn(KANGUR_ACCENT_STYLES[accent].activeCard, KANGUR_ACCENT_STYLES[accent].activeText),
+        'kangur-panel-shell',
         'space-y-2',
         centered && 'text-center',
         className

@@ -353,12 +353,12 @@ export default function LessonSlideSection({
       )}
       onKeyDownCapture={handleKeyDownCapture}
     >
-      <div className='flex w-full flex-col kangur-panel-gap sm:grid sm:grid-cols-[auto_1fr_auto] sm:items-center'>
+      <div className='flex w-full flex-col kangur-panel-gap sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center'>
         <KangurButton
           onClick={handleBackCta}
           size='sm'
           variant='surface'
-          className='w-full justify-center sm:w-auto sm:justify-start'
+          className='w-full justify-center sm:w-auto sm:justify-start sm:justify-self-start'
         >
           <ChevronLeft className='w-4 h-4' aria-hidden='true' />
           Wróć do tematów
@@ -366,7 +366,7 @@ export default function LessonSlideSection({
 
         {shouldRenderArrowNavigation ? (
           <div
-            className='flex w-full items-center justify-center gap-2 sm:justify-center'
+            className='flex w-full items-center justify-center gap-2 sm:w-auto sm:justify-self-center'
             role='group'
             aria-label='Nawigacja paneli'
           >
@@ -408,7 +408,7 @@ export default function LessonSlideSection({
 
         {shouldRenderNavigationPills ? (
           <nav
-            className='flex w-full flex-wrap items-center justify-center gap-2 sm:justify-end'
+            className='flex w-full flex-wrap items-center justify-center gap-2'
             aria-label='Nawigacja slajdów'
             aria-describedby={slideKeyboardHintId}
           >

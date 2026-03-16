@@ -408,7 +408,7 @@ export const loadPersistedTutorVisibilityHidden = (): boolean => {
     return state.hidden;
   }
 
-  return false;
+  return true;
 };
 
 export const persistTutorVisibilityHidden = (hidden: boolean): boolean => {

@@ -104,9 +104,17 @@ export function useNotesAppEntityHandlers({
     void fetchNotes();
     void fetchFolderTree();
     if (selectedNote) {
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.detail(selectedNote.id) });
       void handleSelectNoteFromTree(selectedNote.id);
     }
-  }, [fetchFolderTree, fetchNotes, handleSelectNoteFromTree, selectedNote, setIsEditing]);
+  }, [
+    fetchFolderTree,
+    fetchNotes,
+    handleSelectNoteFromTree,
+    queryClient,
+    selectedNote,
+    setIsEditing,
+  ]);
 
   const handleToggleFavorite = useCallback(
     async (note: NoteWithRelations): Promise<void> => {

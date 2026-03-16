@@ -21,11 +21,11 @@ import * as settings from '../settings/route-handler';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Params = Record<string, string>;
-type RouteHandler = (
+type RouteHandler<P extends Params = Params> = (
   request: NextRequest,
-  context: { params: Params | Promise<Params> }
+  context: { params: P | Promise<P> }
 ) => Promise<Response>;
-type RouteModule = Partial<Record<HttpMethod, RouteHandler>>;
+type RouteModule<P extends Params = Params> = Partial<Record<HttpMethod, RouteHandler<P>>>;
 
 const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
@@ -36,21 +36,21 @@ const methodNotAllowed = (allowed: HttpMethod[]): Response =>
     headers: { Allow: allowed.join(', ') },
   });
 
-const getAllowedMethods = (module: RouteModule): HttpMethod[] =>
+const getAllowedMethods = <P extends Params>(module: RouteModule<P>): HttpMethod[] =>
   HTTP_METHODS.filter((method) => typeof module[method] === 'function');
 
-const dispatch = (
-  module: RouteModule,
+const dispatch = <P extends Params>(
+  module: RouteModule<P>,
   method: HttpMethod,
   request: NextRequest,
-  params?: Params
+  params?: P
 ): Promise<Response> => {
   const handler = module[method];
   if (!handler) {
     const allowed = getAllowedMethods(module);
     return Promise.resolve(allowed.length > 0 ? methodNotAllowed(allowed) : notFound());
   }
-  return handler(request, { params: Promise.resolve(params ?? {}) });
+  return handler(request, { params: Promise.resolve(params ?? ({} as P)) });
 };
 
 const getPathSegments = (request: NextRequest): string[] => {

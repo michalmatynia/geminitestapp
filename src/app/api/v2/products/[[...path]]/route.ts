@@ -340,14 +340,17 @@ const routeProducts = (
   return Promise.resolve(notFound());
 };
 
-const handler = (method: HttpMethod, request: NextRequest): Promise<Response> =>
-  apiHandler(() => routeProducts(method, request, getPathSegments(request)), {
-    source: `v2.products.${method}`,
-    requireAuth: true,
-  })();
+const buildRouteHandler = (method: HttpMethod) =>
+  apiHandler(
+    async (request: NextRequest) => routeProducts(method, request, getPathSegments(request)),
+    {
+      source: `v2.products.${method}`,
+      requireAuth: true,
+    }
+  );
 
-export const GET = (request: NextRequest): Promise<Response> => handler('GET', request);
-export const POST = (request: NextRequest): Promise<Response> => handler('POST', request);
-export const PUT = (request: NextRequest): Promise<Response> => handler('PUT', request);
-export const PATCH = (request: NextRequest): Promise<Response> => handler('PATCH', request);
-export const DELETE = (request: NextRequest): Promise<Response> => handler('DELETE', request);
+export const GET = buildRouteHandler('GET');
+export const POST = buildRouteHandler('POST');
+export const PUT = buildRouteHandler('PUT');
+export const PATCH = buildRouteHandler('PATCH');
+export const DELETE = buildRouteHandler('DELETE');

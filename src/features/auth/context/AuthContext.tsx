@@ -3,6 +3,7 @@
 import { useSession } from 'next-auth/react';
 import React, { createContext, useContext, useMemo } from 'react';
 
+import { useAuthRoleSettings } from '@/features/auth/hooks/useAuthQueries';
 import {
   AUTH_SETTINGS_KEYS,
   DEFAULT_AUTH_PERMISSIONS,
@@ -26,6 +27,7 @@ import { useLiteSettingsMap, useSettingsMap, useUpdateSetting } from '@/shared/h
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import type { Session } from 'next-auth';
+import type { AuthRoleSettings } from '@/shared/contracts/auth';
 
 interface AuthContextValue {
   session: Session | null;
@@ -54,18 +56,27 @@ type AuthSettingsQueryState = {
   refetch: () => Promise<unknown>;
 };
 
+type AuthRoleSettingsQueryState = {
+  data: AuthRoleSettings | undefined;
+  isPending: boolean;
+  isSuccess: boolean;
+  refetch: () => Promise<unknown>;
+};
+
 const useAuthContextValue = ({
   session,
   status,
   settingsQuery,
   updateSetting,
   isPublicMode,
+  roleSettingsQuery,
 }: {
   session: Session | null;
   status: 'loading' | 'authenticated' | 'unauthenticated';
   settingsQuery: AuthSettingsQueryState;
   updateSetting: ReturnType<typeof useUpdateSetting>;
   isPublicMode: boolean;
+  roleSettingsQuery?: AuthRoleSettingsQueryState | null;
 }): AuthContextValue => {
   const permissions = useMemo(() => session?.user?.permissions ?? [], [session]);
   const isElevated = useMemo(() => Boolean(session?.user?.isElevated), [session]);
@@ -81,6 +92,9 @@ const useAuthContextValue = ({
   );
 
   const roles = useMemo(() => {
+    if (roleSettingsQuery?.isSuccess && roleSettingsQuery.data?.roles?.length) {
+      return roleSettingsQuery.data.roles;
+    }
     if (!settingsQuery.data) return DEFAULT_AUTH_ROLES;
     return mergeDefaultRoles(
       parseJsonSetting<AuthRole[]>(
@@ -88,31 +102,43 @@ const useAuthContextValue = ({
         DEFAULT_AUTH_ROLES
       )
     );
-  }, [settingsQuery.data]);
+  }, [roleSettingsQuery?.data, roleSettingsQuery?.isSuccess, settingsQuery.data]);
 
   const permissionsLibrary = useMemo(() => {
+    if (roleSettingsQuery?.isSuccess && roleSettingsQuery.data?.permissions?.length) {
+      return roleSettingsQuery.data.permissions;
+    }
     if (!settingsQuery.data) return DEFAULT_AUTH_PERMISSIONS;
     return parseJsonSetting<AuthPermission[]>(
       settingsQuery.data.get(AUTH_SETTINGS_KEYS.permissions),
       DEFAULT_AUTH_PERMISSIONS
     );
-  }, [settingsQuery.data]);
+  }, [roleSettingsQuery?.data, roleSettingsQuery?.isSuccess, settingsQuery.data]);
 
   const userRoles = useMemo(() => {
+    if (roleSettingsQuery?.isSuccess) {
+      return roleSettingsQuery.data?.userRoles ?? {};
+    }
     if (!settingsQuery.data) return {};
     return parseJsonSetting<AuthUserRoleMap>(
       settingsQuery.data.get(AUTH_SETTINGS_KEYS.userRoles),
       {}
     );
-  }, [settingsQuery.data]);
+  }, [roleSettingsQuery?.data, roleSettingsQuery?.isSuccess, settingsQuery.data]);
 
   const defaultRole = useMemo(() => {
+    if (roleSettingsQuery?.isSuccess) {
+      const storedDefault = roleSettingsQuery.data?.defaultRoleId ?? null;
+      return storedDefault && roles.some((role) => role.id === storedDefault)
+        ? storedDefault
+        : (roles.find((role) => role.id === 'viewer')?.id ?? roles[0]?.id ?? 'viewer');
+    }
     if (!settingsQuery.data) return 'viewer';
     const storedDefault = settingsQuery.data.get(AUTH_SETTINGS_KEYS.defaultRole);
     return storedDefault && roles.some((role) => role.id === storedDefault)
       ? storedDefault
       : (roles.find((role) => role.id === 'viewer')?.id ?? roles[0]?.id ?? 'viewer');
-  }, [settingsQuery.data, roles]);
+  }, [roleSettingsQuery?.data, roleSettingsQuery?.isSuccess, roles, settingsQuery.data]);
 
   const securityPolicy = useMemo(() => {
     if (!settingsQuery.data) return DEFAULT_AUTH_SECURITY_POLICY;
@@ -136,9 +162,10 @@ const useAuthContextValue = ({
     );
   }, [settingsQuery.data]);
 
+  const roleSettingsLoading = Boolean(roleSettingsQuery?.isPending);
   const isLoading = isPublicMode
     ? settingsQuery.isPending
-    : status === 'loading' || settingsQuery.isPending;
+    : status === 'loading' || settingsQuery.isPending || roleSettingsLoading;
 
   const value = useMemo(
     () => ({
@@ -156,7 +183,10 @@ const useAuthContextValue = ({
       userPageSettings,
       isLoading,
       updateSetting,
-      refetchSettings: settingsQuery.refetch,
+      refetchSettings: () => {
+        void roleSettingsQuery?.refetch();
+        return settingsQuery.refetch();
+      },
     }),
     [
       session,
@@ -173,6 +203,7 @@ const useAuthContextValue = ({
       userPageSettings,
       isLoading,
       updateSetting,
+      roleSettingsQuery,
       settingsQuery.refetch,
     ]
   );
@@ -184,12 +215,20 @@ const FullAuthProvider = ({ children }: { children: React.ReactNode }): React.JS
   const { data: session, status } = useSession();
   const settingsQuery = useSettingsMap({ scope: 'light' });
   const updateSetting = useUpdateSetting();
+  const hasRoleSettingsAccess = Boolean(
+    session?.user &&
+      (session.user.isElevated ||
+        session.user.permissions?.includes('auth.users.read') ||
+        session.user.permissions?.includes('auth.users.write'))
+  );
+  const roleSettingsQuery = useAuthRoleSettings(hasRoleSettingsAccess);
   const value = useAuthContextValue({
     session,
     status,
     settingsQuery,
     updateSetting,
     isPublicMode: false,
+    roleSettingsQuery,
   });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -204,6 +243,7 @@ const PublicAuthProvider = ({ children }: { children: React.ReactNode }): React.
     settingsQuery,
     updateSetting,
     isPublicMode: true,
+    roleSettingsQuery: null,
   });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

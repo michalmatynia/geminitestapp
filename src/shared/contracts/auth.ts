@@ -74,11 +74,21 @@ export type AuthRole = z.infer<typeof authRoleSchema>;
 export const authUserRoleMapSchema = z.record(z.string(), z.string());
 export type AuthUserRoleMap = z.infer<typeof authUserRoleMapSchema>;
 
+export const authRoleSettingsSchema = z.object({
+  roles: z.array(authRoleSchema),
+  permissions: z.array(authPermissionSchema),
+  userRoles: authUserRoleMapSchema,
+  defaultRoleId: z.string().nullable(),
+});
+
+export type AuthRoleSettings = z.infer<typeof authRoleSettingsSchema>;
+
 export const authUserAccessDetailSchema = z.object({
   roleId: z.string(),
   permissions: z.array(z.string()),
   level: z.number(),
   isElevated: z.boolean(),
+  roleAssigned: z.boolean(),
   role: authRoleSchema.optional(),
 });
 

@@ -1,7 +1,8 @@
 'use client';
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { CSSProperties } from 'react';
 
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
 
@@ -22,6 +23,7 @@ export function KangurAppLoader({
 }: KangurAppLoaderProps): React.JSX.Element {
   const prefersReducedMotion = useReducedMotion();
   const [hasMounted, setHasMounted] = useState(false);
+  const [colorPhase, setColorPhase] = useState<'mono' | 'paint' | 'color'>('mono');
   const copyTitle = title?.trim() || 'StudiQ';
   const copyStatus = status?.trim() || 'Loading';
   const copyDetail = detail?.trim() || null;
@@ -31,7 +33,160 @@ export function KangurAppLoader({
     setHasMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (!visible) {
+      setColorPhase('mono');
+      return;
+    }
+
+    if (prefersReducedMotion) {
+      setColorPhase('color');
+      return;
+    }
+
+    let cancelled = false;
+    let frameId: number | null = null;
+    let paintTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    const startTime =
+      typeof performance !== 'undefined' && typeof performance.now === 'function'
+        ? performance.now()
+        : Date.now();
+    const maxWaitMs = 1200;
+    const probeVars = [
+      '--kangur-logo-accent-start',
+      '--kangur-nav-item-active-text',
+      '--kangur-page-background',
+    ];
+
+    const resolveTargets = (): HTMLElement[] => {
+      if (typeof document === 'undefined') {
+        return [];
+      }
+      const targets: HTMLElement[] = [];
+      if (document.documentElement) targets.push(document.documentElement);
+      if (document.body) targets.push(document.body);
+      const appContent = document.getElementById('app-content');
+      if (appContent instanceof HTMLElement) targets.push(appContent);
+      return targets;
+    };
+
+    const hasThemeVars = (target: HTMLElement): boolean => {
+      if (typeof window === 'undefined') {
+        return false;
+      }
+      const styles = window.getComputedStyle(target);
+      return probeVars.some((variable) => styles.getPropertyValue(variable).trim().length > 0);
+    };
+
+    const isThemeReady = (): boolean => {
+      if (typeof document === 'undefined' || typeof window === 'undefined') {
+        return true;
+      }
+      return resolveTargets().some((target) => {
+        if (target.classList.contains('kangur-surface-active')) {
+          return true;
+        }
+        return hasThemeVars(target);
+      });
+    };
+
+    const scheduleFrame = (callback: FrameRequestCallback): number => {
+      if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+        return window.requestAnimationFrame(callback);
+      }
+      return globalThis.setTimeout(() => callback(0), 16) as unknown as number;
+    };
+
+    const cancelFrame = (id: number): void => {
+      if (typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
+        window.cancelAnimationFrame(id);
+        return;
+      }
+      globalThis.clearTimeout(id as unknown as ReturnType<typeof setTimeout>);
+    };
+
+    const check = (): void => {
+      if (cancelled) {
+        return;
+      }
+      const now =
+        typeof performance !== 'undefined' && typeof performance.now === 'function'
+          ? performance.now()
+          : Date.now();
+      if (isThemeReady() || now - startTime >= maxWaitMs) {
+        setColorPhase((prev) => (prev === 'color' ? prev : 'paint'));
+        if (paintTimeoutId !== null) {
+          globalThis.clearTimeout(paintTimeoutId);
+        }
+        paintTimeoutId = globalThis.setTimeout(() => {
+          if (!cancelled) {
+            setColorPhase('color');
+          }
+        }, 900);
+        return;
+      }
+      frameId = scheduleFrame(() => check());
+    };
+
+    frameId = scheduleFrame(() => check());
+
+    return () => {
+      cancelled = true;
+      if (frameId !== null) {
+        cancelFrame(frameId);
+      }
+      if (paintTimeoutId !== null) {
+        globalThis.clearTimeout(paintTimeoutId);
+      }
+    };
+  }, [prefersReducedMotion, visible]);
+
   const allowIntroAnimation = hasMounted && !prefersReducedMotion;
+  const loaderFilter = colorPhase === 'mono'
+    ? 'grayscale(1) saturate(0.08) brightness(0.98) contrast(1.05)'
+    : 'grayscale(0) saturate(1) brightness(1) contrast(1)';
+  const loaderTransition = prefersReducedMotion
+    ? undefined
+    : 'filter 1200ms cubic-bezier(0.22, 1, 0.36, 1)';
+  const filterLayerStyle = useMemo(
+    () => ({
+      background:
+        'var(--kangur-page-background, radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%))',
+      filter: loaderFilter,
+      transition: loaderTransition,
+      ...(prefersReducedMotion ? {} : { willChange: 'filter' }),
+    }),
+    [loaderFilter, loaderTransition, prefersReducedMotion]
+  );
+  const paintOverlayStyle = useMemo(() => {
+    if (prefersReducedMotion) {
+      return { opacity: 0 };
+    }
+
+    const isPainting = colorPhase === 'paint';
+    const translateX = isPainting ? 'translateX(0%)' : colorPhase === 'mono' ? 'translateX(-8%)' : 'translateX(8%)';
+
+    return {
+      background: [
+        'linear-gradient(100deg, transparent 0%,',
+        'color-mix(in srgb, var(--kangur-logo-accent-start, #FFD560) 55%, transparent) 28%,',
+        'color-mix(in srgb, var(--kangur-accent-violet-start, #7c3aed) 40%, transparent) 46%,',
+        'color-mix(in srgb, var(--kangur-accent-sky-start, #38bdf8) 35%, transparent) 58%,',
+        'transparent 74%)',
+        ', radial-gradient(120% 120% at 12% 24%,',
+        'color-mix(in srgb, var(--kangur-logo-accent-end, #FF9A35) 42%, transparent) 0%,',
+        'transparent 58%)',
+        ', radial-gradient(120% 120% at 88% 18%,',
+        'color-mix(in srgb, var(--kangur-accent-emerald-start, #10b981) 32%, transparent) 0%,',
+        'transparent 62%)',
+      ].join(' '),
+      mixBlendMode: 'color',
+      opacity: isPainting ? 0.45 : 0,
+      transform: translateX,
+      transition:
+        'opacity 700ms ease, transform 1200ms cubic-bezier(0.22, 1, 0.36, 1)',
+    } as CSSProperties;
+  }, [colorPhase, prefersReducedMotion]);
 
   return (
     <AnimatePresence>
@@ -42,17 +197,20 @@ export function KangurAppLoader({
           aria-live='polite'
           aria-atomic='true'
           role='status'
-          className='fixed inset-0 z-[90] flex items-center justify-center overflow-hidden px-4'
+          className='fixed inset-0 z-[90] overflow-hidden px-4'
           data-testid='kangur-app-loader'
           initial={allowIntroAnimation ? { opacity: 0 } : { opacity: 1 }}
           animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1 }}
           exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
           transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: 'easeOut' }}
-          style={{
-            background:
-              'var(--kangur-page-background, radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%))',
-          }}
+          style={{ isolation: 'isolate' }}
         >
+          <div
+            aria-hidden='true'
+            className='pointer-events-none absolute inset-0 z-20'
+            style={paintOverlayStyle}
+          />
+          <div className='absolute inset-0 z-10 flex items-center justify-center relative' style={filterLayerStyle}>
           <div
             aria-hidden='true'
             className='absolute left-1/2 top-1/2 h-[360px] w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl'
@@ -141,6 +299,7 @@ export function KangurAppLoader({
               ) : null}
             </div>
           </motion.div>
+          </div>
           <span className='sr-only'>{screenReaderLabel}</span>
         </motion.div>
       ) : null}

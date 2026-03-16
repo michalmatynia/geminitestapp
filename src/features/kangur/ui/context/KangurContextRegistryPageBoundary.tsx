@@ -10,6 +10,12 @@ import { ContextRegistryPageProvider } from '@/shared/lib/ai-context-registry/pa
 import { useKangurRouting } from './KangurRoutingContext';
 
 const KANGUR_PAGE_CONTEXT_ROOTS: Record<string, string[]> = {
+  Competition: [
+    'page:kangur-game',
+    'action:kangur-ai-tutor-chat',
+    ...KANGUR_CONTEXT_ROOT_IDS.learnerSnapshot,
+    ...KANGUR_CONTEXT_ROOT_IDS.assignmentContext,
+  ],
   Game: [
     'page:kangur-game',
     'action:kangur-ai-tutor-chat',
@@ -20,6 +26,10 @@ const KANGUR_PAGE_CONTEXT_ROOTS: Record<string, string[]> = {
     'page:kangur-lessons',
     'action:kangur-ai-tutor-chat',
     ...KANGUR_CONTEXT_ROOT_IDS.lessonContext,
+    ...KANGUR_CONTEXT_ROOT_IDS.learnerSnapshot,
+  ],
+  Tests: [
+    ...KANGUR_CONTEXT_ROOT_IDS.testContext,
     ...KANGUR_CONTEXT_ROOT_IDS.learnerSnapshot,
   ],
   LearnerProfile: [
@@ -38,8 +48,10 @@ const KANGUR_PAGE_CONTEXT_ROOTS: Record<string, string[]> = {
 };
 
 const KANGUR_PAGE_TITLES: Record<string, string> = {
+  Competition: 'Kangur Competition',
   Game: 'Kangur Game',
   Lessons: 'Kangur Lessons',
+  Tests: 'Kangur Tests',
   LearnerProfile: 'Kangur Learner Profile',
   ParentDashboard: 'Kangur Parent Dashboard',
 };
@@ -47,8 +59,10 @@ const KANGUR_PAGE_TITLES: Record<string, string> = {
 type KangurContextPageKey = keyof typeof KANGUR_PAGE_CONTEXT_ROOTS;
 
 const KANGUR_PAGE_KEY_LOOKUP: Record<KangurContextPageKey, true> = {
+  Competition: true,
   Game: true,
   Lessons: true,
+  Tests: true,
   LearnerProfile: true,
   ParentDashboard: true,
 };

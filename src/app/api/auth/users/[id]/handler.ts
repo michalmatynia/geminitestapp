@@ -194,9 +194,24 @@ export async function deleteAuthUserHandler(
 
   const { id: userId } = params;
   if (!userId) {
+    await logAuthEvent({
+      req,
+      action: 'auth.users.delete',
+      stage: 'failure',
+      userId: session?.user?.id ?? null,
+      outcome: 'missing_user_id',
+    });
     throw badRequestError('Missing user id.');
   }
   if (session?.user?.id === userId) {
+    await logAuthEvent({
+      req,
+      action: 'auth.users.delete',
+      stage: 'failure',
+      userId: session?.user?.id ?? null,
+      outcome: 'self_delete_blocked',
+      body: { targetUserId: userId },
+    });
     throw forbiddenError('You cannot delete your own account while signed in.');
   }
 

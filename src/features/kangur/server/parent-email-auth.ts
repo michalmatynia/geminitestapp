@@ -381,6 +381,8 @@ export const createKangurParentAccount = async (input: {
       user = updatedUser;
     }
 
+    await ensureParentRoleAssigned(user.id);
+
     verificationToken = await createEmailVerificationChallenge({
       userId: user.id,
       email,
@@ -574,6 +576,8 @@ export const setKangurParentPassword = async (input: {
   if (!updatedUser?.email) {
     throw internalError('Nie udało się zapisać hasła rodzica.');
   }
+
+  await ensureParentRoleAssigned(user.id);
 
   return {
     email: updatedUser.email,

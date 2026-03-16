@@ -386,6 +386,33 @@ describe('parent email auth service', () => {
     expect(setAuthUserPasswordMock).not.toHaveBeenCalled();
   });
 
+  it('assigns the StudiQ parent role when an existing unverified parent starts verification', async () => {
+    findAuthUserByEmailMock.mockResolvedValue({
+      id: 'parent-role-1',
+      email: 'role-parent@example.com',
+      name: 'Role Parent',
+      passwordHash: 'existing-password-hash',
+      emailVerified: null,
+    });
+    createEmailVerificationChallengeMock.mockResolvedValue({
+      id: 'verify-link-role',
+      expiresAt: new Date('2026-03-15T21:00:00.000Z'),
+    });
+
+    await createKangurParentAccount({
+      email: 'role-parent@example.com',
+      password: 'Strong123!',
+      callbackUrl: '/tests',
+      request: new Request('https://example.com/api/kangur/auth/parent-account/create'),
+    });
+
+    expect(assignAuthUserRoleMock).toHaveBeenCalledWith({
+      userId: 'parent-role-1',
+      roleId: 'studiq_parent',
+      source: 'studiq.parent_registration',
+    });
+  });
+
   it('creates the parent account from the verification token payload', async () => {
     consumeEmailVerificationChallengeMock.mockResolvedValue({
       userId: 'pending:kangur_parent:parent%40example.com',

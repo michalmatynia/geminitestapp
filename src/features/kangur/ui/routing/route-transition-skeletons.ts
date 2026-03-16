@@ -101,12 +101,16 @@ export const resolveKangurRouteTransitionSkeletonVariant = ({
   }
 
   switch (resolvedPageKey) {
+    case 'Tests':
+      return 'lessons-library';
     case 'Lessons': {
       const focusToken = searchParams
         ? readKangurUrlParam(searchParams, 'focus', normalizedBasePath)?.trim() || null
         : null;
       return focusToken ? 'lessons-focus' : 'lessons-library';
     }
+    case 'Competition':
+      return 'game-session';
     case 'LearnerProfile':
       return 'learner-profile';
     case 'ParentDashboard':

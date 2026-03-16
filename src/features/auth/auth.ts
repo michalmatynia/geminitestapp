@@ -294,7 +294,9 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
           const lastRefresh =
             typeof tokenMeta.authRefreshedAt === 'number' ? tokenMeta.authRefreshedAt : 0;
           const hasRole = typeof tokenMeta.role === 'string' && tokenMeta.role.length > 0;
-          const shouldRefresh = Boolean(user) || !hasRole || now - lastRefresh > refreshTtlMs;
+          const hasRoleAssigned = typeof tokenMeta.roleAssigned === 'boolean';
+          const shouldRefresh =
+            Boolean(user) || !hasRole || !hasRoleAssigned || now - lastRefresh > refreshTtlMs;
 
           if (!shouldRefresh) return token;
 
@@ -304,6 +306,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
             token.permissions = access.permissions;
             token.roleLevel = access.level;
             token.isElevated = access.isElevated;
+            token.roleAssigned = access.roleAssigned;
             const security = await getAuthSecurityProfile(userId);
             token.accountDisabled = Boolean(security.disabledAt);
             token.accountBanned = Boolean(security.bannedAt);
@@ -327,6 +330,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
             session.user.permissions = (token.permissions as string[]) ?? [];
             session.user.roleLevel = (token.roleLevel as number) ?? null;
             session.user.isElevated = (token.isElevated as boolean) ?? false;
+            session.user.roleAssigned = (token.roleAssigned as boolean) ?? false;
             session.user.accountDisabled = (token.accountDisabled as boolean) ?? false;
             session.user.accountBanned = (token.accountBanned as boolean) ?? false;
           }

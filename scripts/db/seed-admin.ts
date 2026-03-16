@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoClient, getMongoDb } from '@/shared/lib/db/mongo-client';
 
 async function main() {
   try {
@@ -34,6 +34,13 @@ async function main() {
   } catch (error) {
     console.error('Error seeding admin:', error);
     process.exitCode = 1;
+  } finally {
+    try {
+      const client = await getMongoClient();
+      await client.close();
+    } catch {
+      // best-effort shutdown
+    }
   }
 }
 

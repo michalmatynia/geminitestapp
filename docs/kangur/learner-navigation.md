@@ -1,6 +1,6 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-16'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:kangur'
@@ -15,6 +15,9 @@ The Kangur shell exposes a small persistent navigation model:
 
 - `Strona glowna`: returns to the game and practice hub.
 - `Lekcje`: opens the lesson library.
+- `Testy`: opens custom test suites created with the test engine.
+- `Kangur`: opens the Kangur competition exam flow.
+- `Pojedynki`: opens the duels lobby.
 - `Profil`: opens learner status and account actions.
 - `Rodzic`: opens the parent dashboard when the active account can manage learners.
 
@@ -28,6 +31,7 @@ The `Game` route acts as the Kangur home screen. It supports:
 - authenticated play with assignment-aware prioritization
 - quick access to lessons
 - access to Kangur exam mode
+- separate navigation to custom tests and Kangur competition sessions
 - entry into additional practice flows such as calendar and geometry training
 
 ## Documentation and tooltips

@@ -629,6 +629,7 @@ export default function Lessons() {
       const header = activeLessonHeaderRef.current;
       const target = navigation ?? header;
       if (!target) {
+        window.scrollTo({ top: window.scrollY, left: 0, behavior: 'auto' });
         return false;
       }
 
@@ -1020,7 +1021,6 @@ export default function Lessons() {
                     className='w-full max-w-5xl kangur-lesson-nav-offset'
                   >
                     <KangurLessonNavigationWidget
-                      align='start'
                       nextLesson={next}
                       onSelectLesson={handleSelectLesson}
                       prevLesson={prev}

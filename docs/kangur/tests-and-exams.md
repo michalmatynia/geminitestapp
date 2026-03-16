@@ -1,6 +1,6 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-16'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:kangur'
@@ -9,9 +9,16 @@ canonical: true
 
 # Kangur Tests And Exams
 
+## Routes
+
+- Custom test suites live under the `Tests` route (`/tests` or `/kangur/tests`).
+- Kangur competition sessions live under the `Competition` route (`/competition` or `/kangur/competition`).
+
 ## Test suites
 
-The `Tests` route lists enabled Kangur test suites. Each suite is metadata-driven and assembled from the shared question store.
+The `Tests` route lists enabled Kangur test suites created with the test engine. Each suite is metadata-driven and assembled from the shared question store.
+
+The `Competition` route launches the Kangur exam flow using the pre-built competition question sets and session setup flow.
 
 ## Question model
 

@@ -32,6 +32,9 @@ export default async function Layout({
     if (session.user.accountDisabled || session.user.accountBanned) {
       redirect('/auth/signin?error=AccountDisabled');
     }
+    if (!session.user.roleAssigned) {
+      redirect('/auth/signin?error=AccessDenied');
+    }
     canReadAdminSettings =
       session.user.isElevated || session.user.permissions?.includes('settings.manage') === true;
     try {

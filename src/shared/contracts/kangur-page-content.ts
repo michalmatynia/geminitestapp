@@ -10,6 +10,7 @@ const nonEmptyTrimmedString = z.string().trim().min(1);
 export const KANGUR_PAGE_CONTENT_COLLECTION = 'kangur_page_content';
 
 export const kangurPageContentPageKeySchema = z.enum([
+  'Competition',
   'Game',
   'Lessons',
   'Tests',

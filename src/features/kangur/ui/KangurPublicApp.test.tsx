@@ -7,7 +7,6 @@ const {
   logKangurClientErrorMock,
   kangurFeaturePageState,
   KangurFeaturePageMock,
-  resolveKangurFeaturePageRouteMock,
 } = vi.hoisted(() => {
   const kangurFeaturePageMock = vi.fn();
   const logKangurClientErrorMock = vi.fn();
@@ -15,31 +14,6 @@ const {
     slug: [] as string[],
     basePath: '/',
     embedded: false,
-  };
-
-  const resolveKangurFeaturePageRouteMock = (
-    slug: string[] = [],
-    basePath = '/'
-  ): {
-    normalizedBasePath: string;
-    pageKey: string | null;
-    requestedPath: string;
-  } => {
-    kangurFeaturePageState.slug = slug;
-    kangurFeaturePageState.basePath = basePath;
-    kangurFeaturePageState.embedded = false;
-
-    const activeSlug = slug[0] ?? null;
-    const requestedPath = [basePath, ...(activeSlug ? [activeSlug] : [])]
-      .filter(Boolean)
-      .join('/')
-      .replace(/\/+/, '/');
-
-    return {
-      normalizedBasePath: basePath,
-      pageKey: null,
-      requestedPath: requestedPath || basePath,
-    };
   };
 
   const KangurFeaturePageMock = (props: {
@@ -59,7 +33,6 @@ const {
     logKangurClientErrorMock,
     kangurFeaturePageState,
     KangurFeaturePageMock,
-    resolveKangurFeaturePageRouteMock,
   };
 });
 
@@ -83,7 +56,12 @@ vi.mock('@/features/kangur/config/routing', async () => {
 
   return {
     ...actual,
-    resolveKangurFeaturePageRoute: resolveKangurFeaturePageRouteMock,
+    resolveKangurFeaturePageRoute: (slug: string[] = [], basePath = '/') => {
+      kangurFeaturePageState.slug = slug;
+      kangurFeaturePageState.basePath = basePath;
+      kangurFeaturePageState.embedded = false;
+      return actual.resolveKangurFeaturePageRoute(slug, basePath);
+    },
   };
 });
 

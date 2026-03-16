@@ -1,6 +1,7 @@
 'use client';
 
 import { registerUser, type RegisterResponse } from '@/features/auth/api/register';
+import { fetchAuthRoleSettings, updateAuthUserRoles } from '@/features/auth/api/roles';
 import {
   fetchAuthUsers,
   fetchAuthUserSecurity,
@@ -11,7 +12,11 @@ import {
   type AuthUsersResponse,
   type AuthUserSecurityProfile,
 } from '@/features/auth/api/users';
-import type { AuthUser as AuthUserSummary } from '@/shared/contracts/auth';
+import type {
+  AuthRoleSettings,
+  AuthUser as AuthUserSummary,
+  AuthUserRoleMap,
+} from '@/shared/contracts/auth';
 import type {
   SingleQuery,
   UpdateMutation,
@@ -32,6 +37,8 @@ export type { AuthUsersResponse, AuthUserSecurityProfile };
 
 const AUTH_USERS_STALE_MS = 10_000;
 const AUTH_SECURITY_STALE_MS = 10_000;
+const AUTH_ROLE_SETTINGS_STALE_MS = 10_000;
+const AUTH_ROLE_SETTINGS_QUERY_KEY = [...authKeys.all, 'role-settings'] as const;
 
 export function useAuthUsers(enabled: boolean = true): SingleQuery<AuthUsersResponse> {
   const queryKey = authKeys.users.all;
@@ -49,6 +56,25 @@ export function useAuthUsers(enabled: boolean = true): SingleQuery<AuthUsersResp
       queryKey,
       tags: ['auth', 'users'],
       description: 'Loads auth users.'},
+  });
+}
+
+export function useAuthRoleSettings(enabled: boolean = true): SingleQuery<AuthRoleSettings> {
+  return createSingleQueryV2<AuthRoleSettings>({
+    id: 'auth-role-settings',
+    queryKey: AUTH_ROLE_SETTINGS_QUERY_KEY,
+    queryFn: fetchAuthRoleSettings,
+    enabled,
+    staleTime: AUTH_ROLE_SETTINGS_STALE_MS,
+    meta: {
+      source: 'auth.hooks.useAuthRoleSettings',
+      operation: 'detail',
+      resource: 'auth.role-settings',
+      domain: 'auth',
+      queryKey: AUTH_ROLE_SETTINGS_QUERY_KEY,
+      tags: ['auth', 'roles'],
+      description: 'Loads auth role settings (roles, permissions, user roles).',
+    },
   });
 }
 
@@ -104,6 +130,35 @@ export function useUpdateAuthUser(): UpdateMutation<
       tags: ['auth', 'users', 'update'],
       description: 'Updates auth users.'},
     invalidate: (queryClient) => invalidateUsers(queryClient),
+  });
+}
+
+export function useUpdateAuthUserRoles(): UpdateMutation<
+  AuthRoleSettings,
+  { userRoles: AuthUserRoleMap }
+> {
+  return createUpdateMutationV2({
+    mutationFn: async ({
+      userRoles,
+    }: {
+      userRoles: AuthUserRoleMap;
+    }): Promise<AuthRoleSettings> => {
+      const result = await updateAuthUserRoles({ userRoles });
+      if (!result.ok) throw new ApiError('Failed to update user roles', 400);
+      return result.payload;
+    },
+    mutationKey: authKeys.mutation('roles-update'),
+    meta: {
+      source: 'auth.hooks.useUpdateAuthUserRoles',
+      operation: 'update',
+      resource: 'auth.role-settings',
+      domain: 'auth',
+      mutationKey: authKeys.mutation('roles-update'),
+      tags: ['auth', 'roles', 'update'],
+      description: 'Updates auth user role assignments.',
+    },
+    invalidate: (queryClient) =>
+      queryClient.invalidateQueries({ queryKey: AUTH_ROLE_SETTINGS_QUERY_KEY }),
   });
 }
 

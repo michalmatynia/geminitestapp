@@ -16,12 +16,53 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
+type MongoSettingDoc = Partial<MongoSettingRecord> & {
+  updatedAt?: Date | string | null;
+};
+
+const getUpdatedAtMs = (value: Date | string | null | undefined): number | null => {
+  if (!value) return null;
+  const parsed = value instanceof Date ? value.getTime() : Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const pickPreferredSettingDoc = (docs: MongoSettingDoc[]): MongoSettingDoc | null => {
+  let selected: MongoSettingDoc | null = null;
+  for (const doc of docs) {
+    if (!doc || typeof doc.value !== 'string') continue;
+    if (!selected) {
+      selected = doc;
+      continue;
+    }
+    const docHasKey = typeof doc.key === 'string' && doc.key.trim().length > 0;
+    const selectedHasKey = typeof selected.key === 'string' && selected.key.trim().length > 0;
+    if (docHasKey && !selectedHasKey) {
+      selected = doc;
+      continue;
+    }
+    if (selectedHasKey && !docHasKey) {
+      continue;
+    }
+    const docUpdated = getUpdatedAtMs(doc.updatedAt);
+    const selectedUpdated = getUpdatedAtMs(selected.updatedAt);
+    if (docUpdated !== null && (selectedUpdated === null || docUpdated > selectedUpdated)) {
+      selected = doc;
+    }
+  }
+  return selected;
+};
+
 const readMongoSetting = async (key: string): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
-  const doc = await mongo
-    .collection<MongoSettingRecord>('settings')
-    .findOne({ $or: [{ _id: key }, { key }] });
+  const docs = await mongo
+    .collection<MongoSettingDoc>('settings')
+    .find(
+      { $or: [{ _id: key }, { key }] },
+      { projection: { _id: 1, key: 1, value: 1, updatedAt: 1 } }
+    )
+    .toArray();
+  const doc = pickPreferredSettingDoc(docs);
   return typeof doc?.value === 'string' ? doc.value : null;
 };
 
@@ -100,6 +141,7 @@ export const getAuthAccessForUser = async (userId: string): Promise<AuthUserAcce
     const isAssignedValid = assignedRoleId
       ? roleList.some((role: AuthRole) => role.id === assignedRoleId)
       : false;
+    const roleAssigned = isAssignedValid;
     const effectiveRoleId = isAssignedValid
       ? (assignedRoleId as string)
       : (validDefaultRoleId ?? fallbackRoleId);
@@ -120,6 +162,7 @@ export const getAuthAccessForUser = async (userId: string): Promise<AuthUserAcce
       permissions,
       level: roleLevel,
       isElevated: roleLevel >= ROLE_ELEVATION_THRESHOLD,
+      roleAssigned,
       role,
     };
   })();
@@ -148,14 +191,33 @@ export const assignAuthUserRole = async (input: {
 
   const mongo = await getMongoDb();
   const now = new Date();
-  await mongo.collection<MongoSettingRecord>('settings').updateOne(
-    { key: AUTH_SETTINGS_KEYS.userRoles },
+  const settingsCollection = mongo.collection<MongoSettingRecord>('settings');
+  const updateResult = await settingsCollection.findOneAndUpdate(
+    { $or: [{ _id: AUTH_SETTINGS_KEYS.userRoles }, { key: AUTH_SETTINGS_KEYS.userRoles }] },
     {
-      $set: { value: JSON.stringify(currentMap), updatedAt: now },
+      $set: {
+        key: AUTH_SETTINGS_KEYS.userRoles,
+        value: JSON.stringify(currentMap),
+        updatedAt: now,
+      },
       $setOnInsert: { createdAt: now },
     },
-    { upsert: true }
+    { upsert: true, returnDocument: 'after' }
   );
+  const updatedRecord =
+    updateResult && typeof updateResult === 'object' && 'ok' in updateResult
+      ? updateResult.value
+      : updateResult;
+  const keepId =
+    updatedRecord && typeof updatedRecord === 'object' && '_id' in updatedRecord
+      ? updatedRecord._id
+      : null;
+  if (keepId) {
+    await settingsCollection.deleteMany({
+      $or: [{ _id: AUTH_SETTINGS_KEYS.userRoles }, { key: AUTH_SETTINGS_KEYS.userRoles }],
+      _id: { $ne: keepId },
+    });
+  }
 
   invalidateAuthAccessCache(input.userId);
 

@@ -3,7 +3,7 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
 import type { KangurMode } from '@/features/kangur/ui/types';
-import { internalError } from '@/shared/errors/app-error';
+import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 type KangurGameContextValue = {
   mode: KangurMode | null;

@@ -11,7 +11,7 @@ import {
   parseKangurPageContentStore,
   type KangurPageContentEntry,
   type KangurPageContentStore,
-} from '@/shared/contracts/kangur-page-content';
+} from '@/features/kangur/shared/contracts/kangur-page-content';
 import { api } from '@/shared/lib/api-client';
 
 const KANGUR_PAGE_CONTENT_STALE_TIME_MS = 60_000;

@@ -12,7 +12,7 @@ import {
   kangurObservabilitySummaryResponseSchema,
 } from '@/shared/contracts';
 import type { SingleQuery } from '@/shared/contracts/ui';
-import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/shared/contracts/kangur-knowledge-graph';
+import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/features/kangur/shared/contracts/kangur-knowledge-graph';
 import { api } from '@/shared/lib/api-client';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { kangurKeys } from '@/shared/lib/query-key-exports';

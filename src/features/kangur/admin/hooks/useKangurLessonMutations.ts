@@ -15,7 +15,7 @@ import type {
   KangurLessonRootBlock,
   KangurLessonPage,
   KangurLessonGridBlock,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 
 import { insertAfterIndex, moveItem, resolvePageSectionOptions } from '../utils';
 

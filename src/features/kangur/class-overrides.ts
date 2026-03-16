@@ -1,4 +1,4 @@
-import { KANGUR_CLASS_OVERRIDES_SETTING_KEY } from '@/shared/contracts/kangur';
+import { KANGUR_CLASS_OVERRIDES_SETTING_KEY } from '@/features/kangur/shared/contracts/kangur';
 import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 
 export { KANGUR_CLASS_OVERRIDES_SETTING_KEY };

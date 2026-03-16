@@ -2,7 +2,7 @@ import type {
   KangurAssignmentSnapshot,
   KangurLesson,
   KangurLessonComponentId,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 import type {
   KangurLearnerRecommendation,
   KangurLessonMasteryInsight,

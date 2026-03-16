@@ -2,8 +2,8 @@
 
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react';
 
-import type { KangurQuestionIllustration, KangurTestChoice } from '@/shared/contracts/kangur-tests';
-import { internalError } from '@/shared/errors/app-error';
+import type { KangurQuestionIllustration, KangurTestChoice } from '@/features/kangur/shared/contracts/kangur-tests';
+import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 import type { QuestionFormData } from '../../test-questions';
 

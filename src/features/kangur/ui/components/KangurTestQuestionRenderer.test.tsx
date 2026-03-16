@@ -19,7 +19,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
 }));
 
 import { KangurTestQuestionRenderer } from '@/features/kangur/ui/components/KangurTestQuestionRenderer';
-import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
+import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
 
 const question: KangurTestQuestion = {
   id: 'question-1',

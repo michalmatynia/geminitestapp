@@ -13,12 +13,11 @@ export function AdminChatbotBreadcrumbs({
   parent,
   className,
 }: AdminChatbotBreadcrumbsProps): React.JSX.Element {
+  const breadcrumbProps = { current, parent, className };
   return (
     <AdminSectionBreadcrumbs
       section={{ label: 'Chatbot', href: '/admin/chatbot' }}
-      parent={parent}
-      current={current}
-      className={className}
+      {...breadcrumbProps}
     />
   );
 }

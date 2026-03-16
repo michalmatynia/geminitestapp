@@ -25,7 +25,7 @@ import {
   upsertKangurTestQuestion,
   usesRichQuestionPresentation,
 } from '@/features/kangur/test-questions';
-import type { KangurTestQuestion, KangurTestQuestionStore } from '@/shared/contracts/kangur-tests';
+import type { KangurTestQuestion, KangurTestQuestionStore } from '@/features/kangur/shared/contracts/kangur-tests';
 
 const makeQuestion = (overrides: Partial<KangurTestQuestion> = {}): KangurTestQuestion => ({
   id: 'q1',

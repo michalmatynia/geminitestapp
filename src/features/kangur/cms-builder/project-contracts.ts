@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { KANGUR_THEME_SETTINGS_KEY } from '@/shared/contracts/kangur';
+import { KANGUR_THEME_SETTINGS_KEY } from '@/features/kangur/shared/contracts/kangur';
 import {
   cmsPageComponentInputSchema,
   type PageComponentInput,

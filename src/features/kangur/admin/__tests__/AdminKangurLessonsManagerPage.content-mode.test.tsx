@@ -82,7 +82,7 @@ vi.mock('@/shared/lib/api-client', () => ({
   },
 }));
 
-vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
+vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => settingsStoreMock,
 }));
 
@@ -121,7 +121,7 @@ vi.mock('@/features/kangur/admin/KangurLessonNarrationPanel', () => ({
   KangurLessonNarrationPanel: () => <div data-testid='mock-narration-panel' />,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/features/kangur/shared/ui', () => ({
   Badge: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
   Breadcrumbs: () => <div data-testid='breadcrumbs' />,
   Button: ({
@@ -241,11 +241,11 @@ vi.mock('@/shared/ui', () => ({
   useToast: () => ({ toast: toastMock }),
 }));
 
-vi.mock('@/shared/ui/templates/modals', () => ({
+vi.mock('@/features/kangur/shared/ui/templates/modals', () => ({
   ConfirmModal: () => null,
 }));
 
-vi.mock('@/shared/utils/observability/client-error-logger', () => ({
+vi.mock('@/features/kangur/shared/utils/observability/client-error-logger', () => ({
   logClientError: vi.fn(),
 }));
 

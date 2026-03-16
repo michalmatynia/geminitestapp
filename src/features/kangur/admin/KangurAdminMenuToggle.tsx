@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useAdminLayoutActions, useAdminLayoutState } from '@/shared/providers/AdminLayoutProvider';
-import { Button } from '@/shared/ui';
+import { Button } from '@/features/kangur/shared/ui';
 
 export function KangurAdminMenuToggle(): React.JSX.Element | null {
   const { isMenuHidden } = useAdminLayoutState();

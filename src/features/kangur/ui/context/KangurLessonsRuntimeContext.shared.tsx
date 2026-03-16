@@ -8,7 +8,7 @@ import type {
   KangurLessonComponentId,
   KangurLessonDocument,
   KangurLessonDocumentStore,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 
 import type { ComponentType, JSX, RefObject } from 'react';
 

@@ -8,7 +8,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { BADGES } from '@/features/kangur/ui/services/progress';
 import type { KangurXpToastState } from '@/features/kangur/ui/types';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 type XpToastProps = KangurXpToastState;
 

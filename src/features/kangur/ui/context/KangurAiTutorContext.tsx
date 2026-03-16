@@ -7,8 +7,8 @@ import {
   type ReactNode,
 } from 'react';
 
-import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
-import { internalError } from '@/shared/errors/app-error';
+import type { KangurAiTutorConversationContext } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 import {
   KangurAiTutorSessionRegistryContext,

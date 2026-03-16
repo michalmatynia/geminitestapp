@@ -4,7 +4,7 @@ import {
   readKangurUrlParam,
   resolveKangurPageKeyFromSlug,
 } from '@/features/kangur/config/routing';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 export type KangurRouteTransitionSkeletonVariant =

@@ -9,7 +9,7 @@ import {
   parseKangurPageContentStore,
   type KangurPageContentEntry,
   type KangurPageContentStore,
-} from '@/shared/contracts/kangur-page-content';
+} from '@/features/kangur/shared/contracts/kangur-page-content';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 

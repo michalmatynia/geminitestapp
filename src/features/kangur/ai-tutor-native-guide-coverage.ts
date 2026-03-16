@@ -1,7 +1,7 @@
 import {
   DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE,
   type KangurAiTutorNativeGuideEntry,
-} from '@/shared/contracts/kangur-ai-tutor-native-guide';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 
 export type KangurAiTutorNativeGuideCoverageRequirement = {
   entryId: string;

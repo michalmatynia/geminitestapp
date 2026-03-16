@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 export const kangurGradientHeadingVariants = cva(
   'bg-gradient-to-r bg-clip-text font-extrabold text-transparent',

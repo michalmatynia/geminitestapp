@@ -40,7 +40,7 @@ vi.mock('./AdminKangurTestSuitesManagerPage', () => ({
   },
 }));
 
-vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
+vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => settingsStoreMock,
 }));
 

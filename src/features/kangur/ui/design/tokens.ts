@@ -1,4 +1,4 @@
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 export type KangurPageTone = 'play' | 'learn' | 'profile' | 'dashboard';
 

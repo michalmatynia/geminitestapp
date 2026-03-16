@@ -1,5 +1,5 @@
-import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kangur';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import type { KangurLesson, KangurLessonDocument } from '@/features/kangur/shared/contracts/kangur';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const LESSON_CONTENT_EDITOR_DRAFT_STORAGE_PREFIX = 'kangur-lesson-editor-draft:v1:';

@@ -13,12 +13,11 @@ export function AdminDatabaseBreadcrumbs({
   parent,
   className,
 }: AdminDatabaseBreadcrumbsProps): React.JSX.Element {
+  const breadcrumbProps = { current, parent, className };
   return (
     <AdminSectionBreadcrumbs
       section={{ label: 'Databases', href: '/admin/databases/engine' }}
-      parent={parent}
-      current={current}
-      className={className}
+      {...breadcrumbProps}
     />
   );
 }

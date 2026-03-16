@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 import { KANGUR_PAGE_TONE_CLASSNAMES, type KangurPageTone } from '../tokens';
 

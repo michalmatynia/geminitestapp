@@ -4,16 +4,16 @@ import { getKangurProgressRepository } from '@/features/kangur/services/kangur-p
 import { getKangurScoreRepository } from '@/features/kangur/services/kangur-score-repository';
 import { buildKangurLearnerProfileSnapshot } from '@/features/kangur/ui/services/profile';
 import type { AgentPersonaMoodId } from '@/shared/contracts/agents';
-import type { KangurProgressState } from '@/shared/contracts/kangur';
+import type { KangurProgressState } from '@/features/kangur/shared/contracts/kangur';
 import type {
   KangurAiTutorChatMessage,
   KangurAiTutorConversationContext,
-} from '@/shared/contracts/kangur-ai-tutor';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import {
   createDefaultKangurAiTutorLearnerMood,
   type KangurAiTutorLearnerMood,
   type KangurTutorMoodId,
-} from '@/shared/contracts/kangur-ai-tutor-mood';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor-mood';
 
 const RECENT_SCORE_LIMIT = 24;
 const DAILY_GOAL_GAMES = 3;

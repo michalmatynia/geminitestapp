@@ -7,12 +7,12 @@ import {
 } from 'react';
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
-import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
+import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 import type {
   KangurAiTutorGuestIntroStatus,
   KangurAiTutorHomeOnboardingStatus,
   KangurAiTutorOnboardingRecord,
-} from '@/shared/contracts/kangur-ai-tutor';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
 import { isAuthGuidedTutorTarget } from './KangurAiTutorWidget.helpers';
 import {

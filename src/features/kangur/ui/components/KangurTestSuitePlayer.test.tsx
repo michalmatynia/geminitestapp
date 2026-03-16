@@ -33,7 +33,7 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
 
 import { render, screen } from '@/__tests__/test-utils';
 import { KangurTestSuitePlayer } from '@/features/kangur/ui/components/KangurTestSuitePlayer';
-import type { KangurTestQuestion, KangurTestSuite } from '@/shared/contracts/kangur-tests';
+import type { KangurTestQuestion, KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
 
 const suite: KangurTestSuite = {
   id: 'suite-2024',

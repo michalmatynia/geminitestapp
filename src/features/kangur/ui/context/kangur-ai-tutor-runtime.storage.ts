@@ -13,10 +13,10 @@ import {
   type KangurAiTutorLearnerMemory,
   type KangurAiTutorRuntimeMessage as ChatMessage,
   type KangurAiTutorUsageSummary,
-} from '@/shared/contracts/kangur-ai-tutor';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
 import { normalizeMessageArtifacts } from './kangur-ai-tutor-runtime.helpers';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 // ---------------------------------------------------------------------------

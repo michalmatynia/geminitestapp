@@ -188,6 +188,7 @@ describe('Game delegated quick starts', () => {
 
     renderGamePage();
 
+    expect(await screen.findByTestId('kangur-game-operation-top-section')).toBeInTheDocument();
     expect(await screen.findByTestId('kangur-game-training-top-section')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Konfiguracja treningu' })).toBeInTheDocument();
 
@@ -197,7 +198,7 @@ describe('Game delegated quick starts', () => {
     });
 
     fireEvent.click(
-      within(screen.getByTestId('kangur-game-training-top-section')).getByRole('button', {
+      within(screen.getByTestId('kangur-game-operation-top-section')).getByRole('button', {
         name: 'Wróć do poprzedniej strony',
       })
     );

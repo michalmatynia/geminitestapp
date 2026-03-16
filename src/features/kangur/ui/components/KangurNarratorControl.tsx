@@ -14,8 +14,8 @@ import { hasKangurLessonNarrationContent } from '@/features/kangur/tts/script';
 import { KangurButton, KangurSummaryPanel } from '@/features/kangur/ui/design/primitives';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import { api } from '@/shared/lib/api-client';
-import { cn } from '@/shared/utils';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { cn } from '@/features/kangur/shared/utils';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 type PlaybackStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'error';

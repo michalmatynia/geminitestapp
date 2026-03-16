@@ -26,10 +26,10 @@ import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
-import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
-import { KANGUR_LESSON_DOCUMENTS_SETTING_KEY } from '@/shared/contracts/kangur';
-import { internalError } from '@/shared/errors/app-error';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import type { KangurLesson, KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
+import { KANGUR_LESSON_DOCUMENTS_SETTING_KEY } from '@/features/kangur/shared/contracts/kangur';
+import { internalError } from '@/features/kangur/shared/errors/app-error';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 
 import {
   getLessonAssignmentTimestamp,

@@ -9,13 +9,13 @@ import {
 import {
   DEFAULT_KANGUR_AI_TUTOR_CONTENT,
   type KangurAiTutorContent,
-} from '@/shared/contracts/kangur-ai-tutor-content';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import {
   DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE,
   type KangurAiTutorNativeGuideStore,
-} from '@/shared/contracts/kangur-ai-tutor-native-guide';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 import { buildDefaultKangurPageContentStore } from '@/features/kangur/page-content-catalog';
-import type { KangurPageContentStore } from '@/shared/contracts/kangur-page-content';
+import type { KangurPageContentStore } from '@/features/kangur/shared/contracts/kangur-page-content';
 import type { Page } from '@/shared/contracts/cms';
 import {
   extractCmsPageTextContent,
@@ -30,7 +30,7 @@ import {
   type KangurKnowledgeGraphSnapshot,
   type KangurKnowledgeNodeKind,
   type KangurKnowledgeNodeSource,
-} from '@/shared/contracts/kangur-knowledge-graph';
+} from '@/features/kangur/shared/contracts/kangur-knowledge-graph';
 
 import { buildKangurKnowledgeNodeSemanticText } from './semantic';
 

@@ -193,12 +193,7 @@ describe('Game branding', () => {
       'border-white/78',
       'bg-white/58'
     );
-    const actionLabels = [
-      'Lekcje',
-      'Grajmy!',
-      'Trening mieszany',
-      'Kangur Matematyczny',
-    ];
+    const actionLabels = ['Lekcje', 'Grajmy!', 'Pojedynki', 'Kangur Matematyczny'];
 
     expect(screen.queryByText('Trening figur')).not.toBeInTheDocument();
 
@@ -220,13 +215,7 @@ describe('Game branding', () => {
     fireEvent.click(getFeaturedHomeAction('Grajmy!'));
     expect(await screen.findByRole('heading', { name: 'Wybór rodzaju gry' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
-    expect(await screen.findByTestId('kangur-home-actions-shell')).toBeInTheDocument();
-
-    fireEvent.click(getFeaturedHomeAction('Trening mieszany'));
-    expect(await screen.findByRole('heading', { name: 'Konfiguracja treningu' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-game-training-top-section')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
     expect(await screen.findByTestId('kangur-home-actions-shell')).toBeInTheDocument();

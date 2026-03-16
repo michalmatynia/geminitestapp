@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { KangurButton, KangurInfoCard, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 type SlotId = 'fact' | 'rule' | 'conclusion';
 

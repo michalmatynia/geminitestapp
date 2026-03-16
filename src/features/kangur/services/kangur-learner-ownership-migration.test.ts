@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import type { KangurAssignment, KangurLearnerProfile } from '@/shared/contracts/kangur';
-import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
-import { createDefaultKangurAiTutorLearnerMood } from '@/shared/contracts/kangur-ai-tutor-mood';
+import type { KangurAssignment, KangurLearnerProfile } from '@/features/kangur/shared/contracts/kangur';
+import { createDefaultKangurProgressState } from '@/features/kangur/shared/contracts/kangur';
+import { createDefaultKangurAiTutorLearnerMood } from '@/features/kangur/shared/contracts/kangur-ai-tutor-mood';
 
 import {
   buildDefaultKangurLearnerSeed,

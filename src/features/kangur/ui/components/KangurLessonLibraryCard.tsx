@@ -9,7 +9,7 @@ import {
   KangurGradientIconTile,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import type { KangurLesson } from '@/shared/contracts/kangur';
+import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import { cn } from '@/features/kangur/utils/cn';
 
 // ── Lesson Library Card Sub-components ───────────────────────────────────────
@@ -199,7 +199,7 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
           </KangurGradientIconTile>
         }
         title={lesson.title}
-        titleAs='h3'
+        titleAs='h2'
         titleClassName='text-lg sm:text-xl'
       />
     </KangurIconSummaryOptionCard>

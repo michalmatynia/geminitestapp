@@ -14,7 +14,7 @@ import {
   createDocsTooltipEnhancer,
   getDocumentationTooltip,
 } from '@/shared/lib/documentation';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 
 export const getKangurDocTooltip = (docId: string): string | null =>
   getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.kangur, docId);

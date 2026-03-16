@@ -18,9 +18,9 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
-import type { KangurLesson } from '@/shared/contracts/kangur';
-import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
-import { cn } from '@/shared/utils';
+import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
+import { cn } from '@/features/kangur/shared/utils';
 
 import { KangurLessonDocumentRenderer } from './KangurLessonDocumentRenderer';
 import { KangurLessonNarrator } from './KangurLessonNarrator';

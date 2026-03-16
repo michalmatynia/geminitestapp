@@ -11,7 +11,7 @@ import {
   type KangurTestQuestionStore,
   type KangurTestSuite,
   type KangurTestSuites,
-} from '@/shared/contracts/kangur-tests';
+} from '@/features/kangur/shared/contracts/kangur-tests';
 import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 
 import { hasFullyPublishedQuestionSetForSuite } from './test-questions';

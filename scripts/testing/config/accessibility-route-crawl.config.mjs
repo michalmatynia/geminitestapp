@@ -24,6 +24,36 @@ export const accessibilityRouteCrawlRoutes = [
     audience: 'public',
   },
   {
+    id: 'kangur-home',
+    name: 'Kangur Home',
+    route: '/kangur',
+    audience: 'public',
+  },
+  {
+    id: 'kangur-game',
+    name: 'Kangur Game',
+    route: '/kangur/game',
+    audience: 'public',
+  },
+  {
+    id: 'kangur-lessons',
+    name: 'Kangur Lessons',
+    route: '/kangur/lessons',
+    audience: 'public',
+  },
+  {
+    id: 'kangur-profile',
+    name: 'Kangur Profile',
+    route: '/kangur/profile',
+    audience: 'public',
+  },
+  {
+    id: 'kangur-parent-dashboard',
+    name: 'Kangur Parent Dashboard',
+    route: '/kangur/parent-dashboard',
+    audience: 'public',
+  },
+  {
     id: 'admin-dashboard',
     name: 'Admin Dashboard',
     route: '/admin',
@@ -93,6 +123,36 @@ export const accessibilityRouteCrawlRoutes = [
     id: 'admin-kangur',
     name: 'Admin Kangur',
     route: '/admin/kangur',
+    audience: 'admin',
+  },
+  {
+    id: 'admin-kangur-builder',
+    name: 'Admin Kangur Builder',
+    route: '/admin/kangur/builder',
+    audience: 'admin',
+  },
+  {
+    id: 'admin-kangur-lessons',
+    name: 'Admin Kangur Lessons Manager',
+    route: '/admin/kangur/lessons-manager',
+    audience: 'admin',
+  },
+  {
+    id: 'admin-kangur-observability',
+    name: 'Admin Kangur Observability',
+    route: '/admin/kangur/observability',
+    audience: 'admin',
+  },
+  {
+    id: 'admin-kangur-appearance',
+    name: 'Admin Kangur Appearance',
+    route: '/admin/kangur/appearance',
+    audience: 'admin',
+  },
+  {
+    id: 'admin-kangur-settings',
+    name: 'Admin Kangur Settings',
+    route: '/admin/kangur/settings',
     audience: 'admin',
   },
   {

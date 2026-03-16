@@ -5,9 +5,9 @@ import React from 'react';
 
 import { hasKangurLessonDocumentContent } from '@/features/kangur/lesson-documents';
 import { KANGUR_LESSON_COMPONENT_OPTIONS } from '@/features/kangur/settings';
-import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kangur';
-import { Badge, Button, Dialog, DialogContent, DialogDescription, DialogTitle } from '@/shared/ui';
-import { ConfirmModal } from '@/shared/ui/templates/modals';
+import type { KangurLesson, KangurLessonDocument } from '@/features/kangur/shared/contracts/kangur';
+import { Badge, Button, Dialog, DialogContent, DialogDescription, DialogTitle } from '@/features/kangur/shared/ui';
+import { ConfirmModal } from '@/features/kangur/shared/ui/templates/modals';
 
 import { validateKangurLessonDocumentDraft } from '../content-creator-insights';
 import {
@@ -26,7 +26,7 @@ import {
   writeLessonContentEditorDraft,
 } from '../lesson-content-editor-drafts';
 import { KangurAdminWorkspaceSectionCard } from './KangurAdminWorkspaceSectionCard';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 type Props = {

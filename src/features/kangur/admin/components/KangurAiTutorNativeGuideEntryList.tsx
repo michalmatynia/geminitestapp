@@ -1,5 +1,5 @@
-import type { KangurAiTutorNativeGuideEntry } from '@/shared/contracts/kangur-ai-tutor-native-guide';
-import { Badge, Card } from '@/shared/ui';
+import type { KangurAiTutorNativeGuideEntry } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
+import { Badge, Card } from '@/features/kangur/shared/ui';
 
 type Props = {
   entries: KangurAiTutorNativeGuideEntry[];

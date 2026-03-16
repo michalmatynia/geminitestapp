@@ -1,5 +1,5 @@
-import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
-import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
+import type { KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
+import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 import type { KangurQuestionsManagerInitialView } from '../question-manager-view';
 import type { TreeMode } from '../types';
 

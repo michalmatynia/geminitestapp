@@ -1,7 +1,7 @@
 import {
   type KangurLessonComponentId,
   type KangurLessonContentMode,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 
 export type LessonTreeMode = 'ordered' | 'catalog';
 export type TreeMode = LessonTreeMode;

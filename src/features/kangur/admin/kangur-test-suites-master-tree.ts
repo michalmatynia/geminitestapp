@@ -1,5 +1,5 @@
-import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
-import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+import type { KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
+import type { MasterTreeNode } from '@/features/kangur/shared/utils/master-folder-tree-contract';
 
 import { KANGUR_TEST_SUITE_SORT_ORDER_GAP } from '../test-suites';
 

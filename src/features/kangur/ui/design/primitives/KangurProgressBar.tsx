@@ -2,7 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { motion } from 'framer-motion';
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 import { type KangurAccent } from '../tokens';
 

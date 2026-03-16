@@ -1,5 +1,5 @@
 import type { KangurTutorAnchorKind } from '@/features/kangur/ui/context/kangur-tutor-types';
-import type { KangurAiTutorSurface } from '@/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorSurface } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
 export type KangurAiTutorCoveragePageKey =
   | 'Game'

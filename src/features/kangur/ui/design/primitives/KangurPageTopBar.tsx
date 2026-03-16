@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useEffect, useRef } from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 import { KANGUR_TOP_BAR_CLASSNAME, KANGUR_TOP_BAR_INNER_CLASSNAME } from '../tokens';
 

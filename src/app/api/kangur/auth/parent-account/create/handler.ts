@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/features/auth/server';
 import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
+import { verifyKangurParentCaptcha } from '@/features/kangur/server/parent-account-captcha';
 import {
   buildKangurParentAccountCreateDebugPayload,
   createKangurParentAccount,
@@ -9,6 +10,9 @@ import {
 import type { KangurParentAccountCreate } from '@/shared/contracts/kangur-auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+
+const PARENT_VERIFICATION_NOTIFICATIONS_DISABLED_MESSAGE =
+  'Wysyłka e-maili potwierdzających jest obecnie wyłączona. Skontaktuj się z administratorem.';
 
 export async function postKangurParentAccountCreateHandler(
   req: NextRequest,
@@ -20,6 +24,18 @@ export async function postKangurParentAccountCreateHandler(
     throw badRequestError('Invalid payload.');
   }
 
+  const captchaResult = await verifyKangurParentCaptcha({
+    token: body.captchaToken,
+    request: req,
+  });
+  if (captchaResult.required && !captchaResult.ok) {
+    throw badRequestError(
+      captchaResult.reason === 'missing-token'
+        ? 'Potwierdź, że nie jesteś botem.'
+        : 'Nie udało się zweryfikować Captcha. Spróbuj ponownie.'
+    );
+  }
+
   const result = await createKangurParentAccount({
     email: body.email,
     password: body.password,
@@ -27,6 +43,7 @@ export async function postKangurParentAccountCreateHandler(
     request: req,
   });
   const tutorContent = await getKangurAiTutorContent('pl');
+  const notificationSuppressed = result.notificationSuppressed === true;
 
   return NextResponse.json({
     ok: true,
@@ -35,9 +52,11 @@ export async function postKangurParentAccountCreateHandler(
     emailVerified: result.emailVerified,
     hasPassword: result.hasPassword,
     retryAfterMs: result.retryAfterMs,
-    message: result.created
-      ? tutorContent.parentVerification.createSuccessMessage
-      : tutorContent.parentVerification.createResentMessage,
+    message: notificationSuppressed
+      ? PARENT_VERIFICATION_NOTIFICATIONS_DISABLED_MESSAGE
+      : result.created
+        ? tutorContent.parentVerification.createSuccessMessage
+        : tutorContent.parentVerification.createResentMessage,
     debug: buildKangurParentAccountCreateDebugPayload(result),
   });
 }

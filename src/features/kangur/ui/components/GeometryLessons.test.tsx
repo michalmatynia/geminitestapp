@@ -13,7 +13,7 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   }),
 }));
 
-import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
+import { createDefaultKangurProgressState } from '@/features/kangur/shared/contracts/kangur';
 
 vi.mock('@/features/kangur/ui/components/GeometryDrawingGame', () => ({
   default: ({ onFinish }: { onFinish: () => void }): React.JSX.Element => (

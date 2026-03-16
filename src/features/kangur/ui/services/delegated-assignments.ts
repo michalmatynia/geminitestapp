@@ -18,7 +18,7 @@ import type {
   KangurLessonComponentId,
   KangurPracticeAssignmentOperation,
   KangurProgressState,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 
 type KangurAssignmentCatalogGroup = 'time' | 'arithmetic' | 'geometry' | 'logic' | 'practice';
 

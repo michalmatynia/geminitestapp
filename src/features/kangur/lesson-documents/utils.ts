@@ -3,7 +3,7 @@ import {
   KANGUR_TTS_DEFAULT_VOICE,
   type KangurLessonDocumentNarration,
   type KangurLessonRootBlock,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 
 export const DEFAULT_SVG_VIEWBOX = '0 0 100 100';
 export const DEFAULT_IMAGE_SRC = '';

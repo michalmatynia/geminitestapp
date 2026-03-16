@@ -13,12 +13,11 @@ export function AdminFilemakerBreadcrumbs({
   parent,
   className,
 }: AdminFilemakerBreadcrumbsProps): React.JSX.Element {
+  const breadcrumbProps = { current, parent, className };
   return (
     <AdminSectionBreadcrumbs
       section={{ label: 'Filemaker', href: '/admin/filemaker' }}
-      parent={parent}
-      current={current}
-      className={className}
+      {...breadcrumbProps}
     />
   );
 }

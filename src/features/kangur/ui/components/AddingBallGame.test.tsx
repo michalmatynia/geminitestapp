@@ -5,7 +5,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
+import { createDefaultKangurProgressState } from '@/features/kangur/shared/contracts/kangur';
 
 const { addXpMock, createLessonPracticeRewardMock } = vi.hoisted(() => ({
   addXpMock: vi.fn(),

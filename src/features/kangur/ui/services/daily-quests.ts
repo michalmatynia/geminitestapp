@@ -1,4 +1,4 @@
-import type { KangurProgressState } from '@/shared/contracts/kangur';
+import type { KangurProgressState } from '@/features/kangur/shared/contracts/kangur';
 
 import {
   buildKangurAssignments,
@@ -6,7 +6,7 @@ import {
   type KangurAssignmentQuestMetric,
 } from './assignments';
 import { loadProgressOwnerKey } from './progress';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const KANGUR_DAILY_QUEST_STORAGE_KEY = 'kangur_daily_quest_v1';

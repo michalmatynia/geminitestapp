@@ -23,12 +23,12 @@ import {
 } from '@/shared/lib/ai-context-registry/page-context';
 import { buildContextRegistryConsumerEnvelope } from '@/shared/lib/ai-context-registry/page-context-shared';
 import { api } from '@/shared/lib/api-client';
-import { Badge } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Badge } from '@/features/kangur/shared/ui';
+import { cn } from '@/features/kangur/shared/utils';
 
 import { validateKangurLessonPageDraft } from './content-creator-insights';
 import { useLessonContentEditorContext } from './context/LessonContentEditorContext';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 type RequestStatus = 'idle' | 'loading' | 'ready' | 'error';
 

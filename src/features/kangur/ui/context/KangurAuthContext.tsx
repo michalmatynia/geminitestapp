@@ -18,9 +18,9 @@ import type { KangurUser } from '@/features/kangur/services/ports';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { getKangurLoginHref, KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
-import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
-import { internalError } from '@/shared/errors/app-error';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
+import { internalError } from '@/features/kangur/shared/errors/app-error';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 type KangurAuthError = {

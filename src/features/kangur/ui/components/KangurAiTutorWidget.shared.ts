@@ -4,7 +4,7 @@ import type {
   KangurAiTutorKnowledgeReference,
   KangurAiTutorMotionPresetKind,
   KangurAiTutorPromptMode,
-} from '@/shared/contracts/kangur-ai-tutor';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type { Point2d, Size2d } from '@/shared/contracts/geometry';
 import type { TutorSurface } from './KangurAiTutorWidget.types';
 

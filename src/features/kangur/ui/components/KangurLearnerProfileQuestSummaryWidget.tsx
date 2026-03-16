@@ -14,15 +14,13 @@ import {
   KangurSectionEyebrow,
 } from '@/features/kangur/ui/design/primitives';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
+import type { KangurRouteAction } from '@/features/kangur/shared/contracts/kangur';
 
 const PROFILE_ROUTE_ACKNOWLEDGE_MS = 110;
 
 const buildAssignmentHref = (
   basePath: string,
-  action: {
-    page: 'Game' | 'Lessons' | 'ParentDashboard' | 'LearnerProfile';
-    query?: Record<string, string>;
-  }
+  action: KangurRouteAction
 ): string => {
   const href = createPageUrl(action.page, basePath);
   return action.query ? appendKangurUrlParams(href, action.query, basePath) : href;

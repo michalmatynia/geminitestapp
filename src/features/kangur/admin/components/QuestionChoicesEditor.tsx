@@ -1,8 +1,8 @@
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 
-import { Button, FormField, Input, Textarea } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, FormField, Input, Textarea } from '@/features/kangur/shared/ui';
+import { cn } from '@/features/kangur/shared/utils';
 
 import { nextChoiceLabel } from '../../test-questions';
 import { useKangurTestQuestionEditorContext } from '../context/KangurTestQuestionEditorContext';

@@ -1,6 +1,6 @@
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PAGE_CONTENT_COLLECTION } from '@/shared/contracts/kangur-page-content';
+import { KANGUR_PAGE_CONTENT_COLLECTION } from '@/features/kangur/shared/contracts/kangur-page-content';
 
 import { KangurAiTutorWarmInsetCard } from './KangurAiTutorChrome';
 import { useKangurAiTutorPanelBodyContext } from './KangurAiTutorPanelBody.context';

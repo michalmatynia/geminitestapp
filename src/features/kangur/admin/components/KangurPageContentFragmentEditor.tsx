@@ -1,10 +1,10 @@
 import React from 'react';
 
-import type { KangurPageContentFragment } from '@/shared/contracts/kangur-page-content';
-import { Badge, Button, Card, FormField, Input, Switch, Textarea } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import type { KangurPageContentFragment } from '@/features/kangur/shared/contracts/kangur-page-content';
+import { Badge, Button, Card, FormField, Input, Switch, Textarea } from '@/features/kangur/shared/ui';
+import { cn } from '@/features/kangur/shared/utils';
 
-interface KangurPageContentFragmentEditorProps {
+interface KangurPageContentFragmentEditorContextValue {
   fragments: KangurPageContentFragment[];
   selectedFragmentId: string | null;
   onSelectFragment: (id: string) => void;
@@ -14,8 +14,34 @@ interface KangurPageContentFragmentEditorProps {
   onDeleteFragment: () => void;
   onMoveFragment: (direction: -1 | 1) => void;
   isSaving: boolean;
-  className?: string;
+  insetCardClassName?: string;
 }
+
+const KangurPageContentFragmentEditorContext =
+  React.createContext<KangurPageContentFragmentEditorContextValue | null>(null);
+
+export const KangurPageContentFragmentEditorProvider = ({
+  value,
+  children,
+}: {
+  value: KangurPageContentFragmentEditorContextValue;
+  children: React.ReactNode;
+}): React.JSX.Element => (
+  <KangurPageContentFragmentEditorContext.Provider value={value}>
+    {children}
+  </KangurPageContentFragmentEditorContext.Provider>
+);
+
+const useKangurPageContentFragmentEditorContext =
+  (): KangurPageContentFragmentEditorContextValue => {
+    const context = React.useContext(KangurPageContentFragmentEditorContext);
+    if (!context) {
+      throw new Error(
+        'KangurPageContentFragmentEditor must be used within a KangurPageContentFragmentEditorProvider.'
+      );
+    }
+    return context;
+  };
 
 const sanitizeRequiredInput = (value: string, fallback: string): string => {
   const trimmed = value.trim();
@@ -40,22 +66,23 @@ const parseList = (value: string): string[] => {
   return normalized;
 };
 
-export function KangurPageContentFragmentEditor({
-  fragments,
-  selectedFragmentId,
-  onSelectFragment,
-  onUpdateFragment,
-  onAddFragment,
-  onDuplicateFragment,
-  onDeleteFragment,
-  onMoveFragment,
-  isSaving,
-  className,
-}: KangurPageContentFragmentEditorProps): React.JSX.Element {
+export function KangurPageContentFragmentEditor(): React.JSX.Element {
+  const {
+    fragments,
+    selectedFragmentId,
+    onSelectFragment,
+    onUpdateFragment,
+    onAddFragment,
+    onDuplicateFragment,
+    onDeleteFragment,
+    onMoveFragment,
+    isSaving,
+    insetCardClassName,
+  } = useKangurPageContentFragmentEditorContext();
   const selectedFragment = fragments.find((f) => f.id === selectedFragmentId) ?? null;
 
   return (
-    <Card variant='subtle' padding='md' className={className}>
+    <Card variant='subtle' padding='md' className={insetCardClassName}>
       <div className='flex flex-wrap items-start justify-between gap-3'>
         <div>
           <div className='flex flex-wrap items-center gap-2'>

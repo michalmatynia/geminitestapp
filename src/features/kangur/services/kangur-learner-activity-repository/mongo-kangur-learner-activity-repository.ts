@@ -4,13 +4,13 @@ import {
   kangurLearnerActivitySnapshotSchema,
   type KangurLearnerActivitySnapshot,
   type KangurLearnerActivityUpdateInput,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
 
 import type { KangurLearnerActivityRepository } from './types';
 import type { Filter } from 'mongodb';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 
 const SETTINGS_COLLECTION = 'settings';

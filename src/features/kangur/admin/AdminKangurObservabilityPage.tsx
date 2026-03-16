@@ -22,7 +22,7 @@ import {
   kangurKnowledgeGraphSyncResponseSchema,
   kangurObservabilityRangeSchema,
 } from '@/shared/contracts';
-import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/shared/contracts/kangur-knowledge-graph';
+import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/features/kangur/shared/contracts/kangur-knowledge-graph';
 import { api } from '@/shared/lib/api-client';
 import {
   Alert,
@@ -32,7 +32,7 @@ import {
   LoadingState,
   SegmentedControl,
   StatusBadge,
-} from '@/shared/ui';
+} from '@/features/kangur/shared/ui';
 
 import {
   KnowledgeGraphObservabilityProvider,
@@ -50,7 +50,7 @@ import {
 import { SummaryContent } from './components/observability/SummaryContent';
 import { formatDateTime, formatNumber } from './components/observability/utils';
 import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const RANGE_OPTIONS: Array<{ value: KangurObservabilityRange; label: string }> = [

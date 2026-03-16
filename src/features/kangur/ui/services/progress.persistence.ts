@@ -1,14 +1,14 @@
 import {
   createDefaultKangurProgressState,
   normalizeKangurProgressState,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import {
   KANGUR_PROGRESS_STORAGE_KEY,
   KANGUR_PROGRESS_OWNER_STORAGE_KEY,
   KANGUR_PROGRESS_EVENT_NAME,
 } from './progress.contracts';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const DEFAULT_PROGRESS: KangurProgressState = createDefaultKangurProgressState();

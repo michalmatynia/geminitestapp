@@ -1,9 +1,9 @@
 
-import { Badge } from '@/shared/ui';
+import { Badge } from '@/features/kangur/shared/ui';
 import { KangurAdminStatusCard } from '../components/KangurAdminStatusCard';
 import { useTestSuitesManager } from './test-suites-manager.context';
 import { useTestSuitesManagerLogic } from './test-suites-manager.logic';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 
 export function LibraryStatusSidebar() {
   const settingsStore = useSettingsStore();

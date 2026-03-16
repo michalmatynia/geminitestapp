@@ -14,9 +14,9 @@ import {
   DEFAULT_KANGUR_AI_TUTOR_CONTENT,
   parseKangurAiTutorContent,
   type KangurAiTutorContent,
-} from '@/shared/contracts/kangur-ai-tutor-content';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import { api } from '@/shared/lib/api-client';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 type KangurAiTutorContentContextValue = {

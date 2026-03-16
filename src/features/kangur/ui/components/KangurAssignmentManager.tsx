@@ -33,8 +33,8 @@ import {
   filterKangurAssignmentCatalog,
 } from '@/features/kangur/ui/services/delegated-assignments';
 import { buildKangurAssignmentDedupeKey } from '@/features/kangur/services/kangur-assignments';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 type KangurAssignmentManagerView =

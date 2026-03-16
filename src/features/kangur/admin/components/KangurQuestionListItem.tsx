@@ -1,8 +1,8 @@
 import { ArrowDown, ArrowUp, Copy, Trash2 } from 'lucide-react';
 import React from 'react';
 
-import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
-import { Badge, Button } from '@/shared/ui';
+import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
+import { Badge, Button } from '@/features/kangur/shared/ui';
 
 import {
   hasIllustration,
@@ -26,20 +26,23 @@ interface KangurQuestionListItemProps {
   onDelete: () => void;
 }
 
-export function KangurQuestionListItem({
-  question,
-  index,
-  absoluteIndex,
-  canReorder,
-  isSaving,
-  questionSummary,
-  queuePosition,
-  onMoveUp,
-  onMoveDown,
-  onEdit,
-  onDuplicate,
-  onDelete,
-}: KangurQuestionListItemProps): React.JSX.Element {
+export function KangurQuestionListItem(
+  props: KangurQuestionListItemProps
+): React.JSX.Element {
+  const {
+    question,
+    index,
+    absoluteIndex,
+    canReorder,
+    isSaving,
+    questionSummary,
+    queuePosition,
+    onMoveUp,
+    onMoveDown,
+    onEdit,
+    onDuplicate,
+    onDelete,
+  } = props;
   const workflowLabel = getQuestionWorkflowLabel(question.editorial.workflowStatus);
 
   return (

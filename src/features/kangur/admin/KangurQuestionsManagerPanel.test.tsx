@@ -21,12 +21,12 @@ vi.mock('@/shared/hooks/use-settings', () => ({
   }),
 }));
 
-vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
+vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => settingsStoreMock,
 }));
 
-vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/shared/ui')>();
+vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/shared/ui')>();
   return {
     ...actual,
     useToast: () => ({ toast: toastMock }),

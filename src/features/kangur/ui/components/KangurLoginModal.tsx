@@ -1,8 +1,9 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 
 import { KangurLoginPage } from '@/features/kangur/ui/KangurLoginPage';
+import { KangurPanelCloseButton } from '@/features/kangur/ui/components/KangurPanelCloseButton';
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 import { useCallback } from 'react';
 import type { JSX } from 'react';
@@ -62,30 +63,20 @@ export function KangurLoginModal(): JSX.Element {
             Zaloguj rodzica emailem albo ucznia nickiem bez opuszczania strony.
           </DialogPrimitive.Description>
 
-          <button
+          <KangurPanelCloseButton
             aria-label='Zamknij logowanie'
-            className={cn(
-              'absolute right-3 top-3 z-10 cursor-pointer rounded-full border border-amber-200/80 sm:right-4 sm:top-4',
-              'px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] sm:px-3 sm:py-1.5 sm:text-xs sm:tracking-[0.18em]',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
-              'shadow-[0_16px_34px_-26px_rgba(249,115,22,0.5)] transition'
-            )}
+            className='absolute right-3 top-3 z-10 sm:right-4 sm:top-4'
             data-testid='kangur-login-modal-close'
+            iconClassName='h-4 w-4'
             onClick={closeLoginModal}
-            style={{
-              background:
-                'linear-gradient(180deg, color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 88%, rgba(254,243,199,0.95)) 0%, color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 82%, rgba(255,237,213,0.9)) 100%)',
-              color: '#9a5418',
-            }}
-            type='button'
-          >
-            Zamknij
-          </button>
+            variant='login'
+          />
 
           <KangurLoginPage
             defaultCallbackUrl={callbackUrl}
             onClose={dismissLoginModal}
             parentAuthMode={authMode}
+            showParentAuthModeTabs={false}
           />
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>

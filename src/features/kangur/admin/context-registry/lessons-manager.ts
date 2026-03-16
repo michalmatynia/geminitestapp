@@ -4,7 +4,7 @@ import type {
   ContextRegistryRef,
   ContextRuntimeDocument,
 } from '@/shared/contracts/ai-context-registry';
-import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kangur';
+import type { KangurLesson, KangurLessonDocument } from '@/features/kangur/shared/contracts/kangur';
 import { PAGE_CONTEXT_ENGINE_VERSION } from '@/shared/lib/ai-context-registry/page-context-shared';
 
 export const KANGUR_ADMIN_LESSONS_MANAGER_CONTEXT_ROOT_IDS = [

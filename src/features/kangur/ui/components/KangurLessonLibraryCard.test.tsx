@@ -8,7 +8,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { KangurLessonLibraryCard } from '@/features/kangur/ui/components/KangurLessonLibraryCard';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import type { LessonMasteryPresentation } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext.shared';
-import type { KangurLesson } from '@/shared/contracts/kangur';
+import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 
 const lesson = {
   id: 'clock-doc',

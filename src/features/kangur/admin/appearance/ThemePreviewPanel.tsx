@@ -438,7 +438,7 @@ export function ThemePreviewPanel({
 
             {/* Page heading + subtext */}
             <div style={{ padding: '2px 0' }}>
-              <h3
+              <div
                 style={{
                   fontFamily: 'var(--kangur-font-heading, sans-serif)',
                   fontWeight: 700,
@@ -449,7 +449,7 @@ export function ThemePreviewPanel({
                 }}
               >
                 Matematyka — klasa 4
-              </h3>
+              </div>
               <p style={{ color: 'var(--kangur-page-muted-text)', fontSize: 10, margin: 0, lineHeight: 1.4 }}>
                 Ułamki, procenty i działania na liczbach.
               </p>

@@ -8,18 +8,18 @@ import type {
   KangurAiTutorPromptMode,
   KangurAiTutorSurface,
   KangurAiTutorWebsiteHelpTarget,
-} from '@/shared/contracts/kangur-ai-tutor';
-import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 
 import { getAssistantMessageFeedbackKey } from './KangurAiTutorWidget.helpers';
 import { scrollToAndSpotlightAnchor } from './KangurAiTutorWidget.navigation-spotlight';
 import { persistPendingNavigationTarget, persistPendingTutorFollowUp } from './KangurAiTutorWidget.storage';
 
-import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type { ActiveTutorFocus, TutorQuickAction } from './KangurAiTutorWidget.shared';
 import type { KangurAiTutorWidgetState } from './KangurAiTutorWidget.state';
 import type { SectionExplainContext, TutorMessageFeedback } from './KangurAiTutorWidget.types';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 type TelemetryContext = {

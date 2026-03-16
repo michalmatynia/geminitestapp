@@ -4,8 +4,8 @@ import { useMemo } from 'react';
 
 import { flattenByZonePreorder, usePageBuilderState } from '@/features/cms/public';
 import { KangurAdminStatusCard } from '@/features/kangur/admin/components/KangurAdminStatusCard';
-import { Badge, StatusBadge } from '@/shared/ui';
-import { serializeSetting } from '@/shared/utils/settings-json';
+import { Badge, StatusBadge } from '@/features/kangur/shared/ui';
+import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 
 import { useKangurCmsBuilderRuntimeState } from './KangurCmsBuilderRuntimeContext';
 import { serializeKangurCmsSections } from './project';

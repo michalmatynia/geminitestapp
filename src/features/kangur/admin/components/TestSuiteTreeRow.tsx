@@ -16,9 +16,9 @@ import {
 import React from 'react';
 
 import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree';
-import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
-import { Badge, TreeRow } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import type { KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
+import { Badge, TreeRow } from '@/features/kangur/shared/ui';
+import { cn } from '@/features/kangur/shared/utils';
 
 import { fromKangurTestSuiteNodeId } from '../kangur-test-suites-master-tree';
 

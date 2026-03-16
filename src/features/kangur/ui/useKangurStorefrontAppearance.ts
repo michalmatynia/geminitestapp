@@ -13,7 +13,7 @@ import {
   parseKangurThemeSettings,
   resolveKangurDefaultThemeForMode,
 } from '@/features/kangur/theme-settings';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 
 export const useKangurStorefrontAppearance = () => {
   const settingsStore = useSettingsStore();

@@ -33,7 +33,7 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useAgentPersonas } from '@/shared/hooks/useAgentPersonas';
 import { resolveAgentPersonaMood } from '@/shared/lib/agent-personas';
 import { api } from '@/shared/lib/api-client';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import {
   AgentPersonaMoodAvatar,
   Alert,
@@ -44,10 +44,11 @@ import {
   FormSection,
   Input,
   SelectSimple,
+  ToggleRow,
   useToast,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
-import { serializeSetting } from '@/shared/utils/settings-json';
+} from '@/features/kangur/shared/ui';
+import { cn } from '@/features/kangur/shared/utils';
+import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
 import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
@@ -55,7 +56,7 @@ import { KangurAiTutorContentSettingsPanel } from './components/KangurAiTutorCon
 import { KangurAiTutorNativeGuideSettingsPanel } from './components/KangurAiTutorNativeGuideSettingsPanel';
 import { KangurClassOverridesSettingsPanel } from './components/KangurClassOverridesSettingsPanel';
 import { KangurPageContentSettingsPanel } from './components/KangurPageContentSettingsPanel';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const TEST_NARRATOR_TEMPLATE_TEXT =
@@ -138,7 +139,7 @@ const parseParentVerificationCooldownInput = (value: string): number | null => {
   );
 };
 
-const formatProbeTimestamp = (value: string): string => {
+const formatShortTimestamp = (value: string): string => {
   try {
     return new Intl.DateTimeFormat('pl-PL', {
       dateStyle: 'medium',
@@ -148,6 +149,24 @@ const formatProbeTimestamp = (value: string): string => {
     logClientError(error);
     return value;
   }
+};
+
+const formatParentVerificationDisabledUntilInput = (value: string | null): string => {
+  if (!value) return '';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '';
+  const offsetMs = parsed.getTimezoneOffset() * 60_000;
+  return new Date(parsed.getTime() - offsetMs).toISOString().slice(0, 16);
+};
+
+const parseParentVerificationDisabledUntilInput = (
+  value: string
+): string | null | undefined => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parsed = new Date(trimmed);
+  if (Number.isNaN(parsed.getTime())) return undefined;
+  return parsed.toISOString();
 };
 
 type SettingsChoiceCardProps = {
@@ -243,6 +262,16 @@ export function AdminKangurSettingsPage(): ReactElement {
     useState(
       String(persistedParentVerificationEmailSettings.resendCooldownSeconds)
     );
+  const [parentVerificationNotificationsEnabled, setParentVerificationNotificationsEnabled] =
+    useState(persistedParentVerificationEmailSettings.notificationsEnabled);
+  const [
+    parentVerificationNotificationsDisabledUntilInput,
+    setParentVerificationNotificationsDisabledUntilInput,
+  ] = useState(
+    formatParentVerificationDisabledUntilInput(
+      persistedParentVerificationEmailSettings.notificationsDisabledUntil
+    )
+  );
   const [guestIntroMode, setGuestIntroMode] = useState<KangurAiTutorGuestIntroMode>(
     persistedAiTutorSettings.guestIntroMode
   );
@@ -280,6 +309,14 @@ export function AdminKangurSettingsPage(): ReactElement {
   useEffect(() => {
     setParentVerificationResendCooldownInput(
       String(persistedParentVerificationEmailSettings.resendCooldownSeconds)
+    );
+    setParentVerificationNotificationsEnabled(
+      persistedParentVerificationEmailSettings.notificationsEnabled
+    );
+    setParentVerificationNotificationsDisabledUntilInput(
+      formatParentVerificationDisabledUntilInput(
+        persistedParentVerificationEmailSettings.notificationsDisabledUntil
+      )
     );
   }, [persistedParentVerificationEmailSettings]);
 
@@ -421,16 +458,45 @@ export function AdminKangurSettingsPage(): ReactElement {
     persistedAiTutorSettings
   );
   const parentVerificationEmailDraft = useMemo<KangurParentVerificationEmailSettings>(
-    () => ({
-      resendCooldownSeconds:
-        parseParentVerificationCooldownInput(parentVerificationResendCooldownInput) ??
-        persistedParentVerificationEmailSettings.resendCooldownSeconds,
-    }),
-    [parentVerificationResendCooldownInput, persistedParentVerificationEmailSettings]
+    () => {
+      const parsedDisabledUntil = parseParentVerificationDisabledUntilInput(
+        parentVerificationNotificationsDisabledUntilInput
+      );
+
+      return {
+        resendCooldownSeconds:
+          parseParentVerificationCooldownInput(parentVerificationResendCooldownInput) ??
+          persistedParentVerificationEmailSettings.resendCooldownSeconds,
+        notificationsEnabled: parentVerificationNotificationsEnabled,
+        notificationsDisabledUntil:
+          parsedDisabledUntil === undefined
+            ? persistedParentVerificationEmailSettings.notificationsDisabledUntil
+            : parsedDisabledUntil,
+      };
+    },
+    [
+      parentVerificationNotificationsDisabledUntilInput,
+      parentVerificationNotificationsEnabled,
+      parentVerificationResendCooldownInput,
+      persistedParentVerificationEmailSettings,
+    ]
   );
   const parentVerificationEmailSettingsDirty =
     parentVerificationEmailDraft.resendCooldownSeconds !==
-    persistedParentVerificationEmailSettings.resendCooldownSeconds;
+    persistedParentVerificationEmailSettings.resendCooldownSeconds ||
+    parentVerificationEmailDraft.notificationsEnabled !==
+    persistedParentVerificationEmailSettings.notificationsEnabled ||
+    parentVerificationEmailDraft.notificationsDisabledUntil !==
+    persistedParentVerificationEmailSettings.notificationsDisabledUntil;
+  const parentVerificationNotificationsPausedUntil = useMemo(() => {
+    const value = parentVerificationEmailDraft.notificationsDisabledUntil;
+    if (!value) return null;
+    const untilMs = Date.parse(value);
+    if (!Number.isFinite(untilMs) || untilMs <= Date.now()) {
+      return null;
+    }
+    return value;
+  }, [parentVerificationEmailDraft.notificationsDisabledUntil]);
   const isDirty =
     narratorDirty || aiTutorSettingsDirty || parentVerificationEmailSettingsDirty;
 
@@ -683,7 +749,7 @@ export function AdminKangurSettingsPage(): ReactElement {
                     <p>{narratorProbe.message}</p>
                     <div className='mt-2 text-xs opacity-80'>
                       Voice: {narratorProbe.voice} · Model: {narratorProbe.model} · Checked:{' '}
-                      {formatProbeTimestamp(narratorProbe.checkedAt)}
+                      {formatShortTimestamp(narratorProbe.checkedAt)}
                     </div>
                     {!narratorProbe.ok && narratorProbe.errorStatus ? (
                       <div className='mt-2 text-xs opacity-80'>
@@ -871,25 +937,74 @@ export function AdminKangurSettingsPage(): ReactElement {
           gridClassName='gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]'
         >
           <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
-            <FormField
-              label='Czas oczekiwania na ponowne wysłanie e-maila (sekundy)'
-              description='Controls how long to wait before another verification email can be sent to the same address.'
-            >
-              <Input
-                type='number'
-                min={KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MIN}
-                max={KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MAX}
-                step={1}
-                value={parentVerificationResendCooldownInput}
-                onChange={(event) => setParentVerificationResendCooldownInput(event.target.value)}
-                aria-label='Czas oczekiwania na ponowne wysłanie e-maila (sekundy)'
-                inputMode='numeric'
-               title='Czas oczekiwania na ponowne wysłanie e-maila (sekundy)'/>
-            </FormField>
-            <p className='mt-3 text-xs text-muted-foreground'>
-              Akceptowany zakres: {KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MIN}–
-              {KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MAX} s.
-            </p>
+            <div className='space-y-4'>
+              <FormField
+                label='Wysyłka e-maili potwierdzających'
+                description='Disable to pause delivery of parent email confirmations.'
+              >
+                <ToggleRow
+                  label={parentVerificationNotificationsEnabled ? 'Włączona' : 'Wyłączona'}
+                  description={
+                    parentVerificationNotificationsEnabled
+                      ? 'Notifications are active for new parent verifications.'
+                      : 'Parent confirmation emails will not be sent.'
+                  }
+                  checked={parentVerificationNotificationsEnabled}
+                  onCheckedChange={setParentVerificationNotificationsEnabled}
+                  variant='switch'
+                  className='border-none bg-muted/20 px-3 py-2 hover:bg-muted/30'
+                />
+              </FormField>
+
+              <FormField
+                label='Wstrzymaj wysyłkę do'
+                description='Temporarily pause confirmation emails until the chosen time (local). Leave blank to send normally.'
+              >
+                <Input
+                  type='datetime-local'
+                  value={parentVerificationNotificationsDisabledUntilInput}
+                  onChange={(event) =>
+                    setParentVerificationNotificationsDisabledUntilInput(event.target.value)
+                  }
+                  aria-label='Wstrzymaj wysyłkę do'
+                 title='Wstrzymaj wysyłkę do'/>
+                <div className='mt-2 flex flex-wrap items-center gap-2'>
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    onClick={() => setParentVerificationNotificationsDisabledUntilInput('')}
+                  >
+                    Clear pause
+                  </Button>
+                  {parentVerificationNotificationsPausedUntil ? (
+                    <Badge variant='outline'>
+                      Wstrzymane do {formatShortTimestamp(parentVerificationNotificationsPausedUntil)}
+                    </Badge>
+                  ) : null}
+                </div>
+              </FormField>
+
+              <FormField
+                label='Czas oczekiwania na ponowne wysłanie e-maila (sekundy)'
+                description='Controls how long to wait before another verification email can be sent to the same address.'
+              >
+                <Input
+                  type='number'
+                  min={KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MIN}
+                  max={KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MAX}
+                  step={1}
+                  value={parentVerificationResendCooldownInput}
+                  onChange={(event) => setParentVerificationResendCooldownInput(event.target.value)}
+                  aria-label='Czas oczekiwania na ponowne wysłanie e-maila (sekundy)'
+                  inputMode='numeric'
+                 title='Czas oczekiwania na ponowne wysłanie e-maila (sekundy)'/>
+              </FormField>
+              <p className='text-xs text-muted-foreground'>
+                Akceptowany zakres: {KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MIN}–
+                {KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MAX} s.
+              </p>
+            </div>
           </Card>
           <div className='space-y-3'>
             <Alert variant='default' title='Scope'>

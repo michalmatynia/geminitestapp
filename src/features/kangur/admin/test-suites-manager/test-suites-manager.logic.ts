@@ -1,8 +1,8 @@
 import { useMemo, useCallback } from 'react';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/features/kangur/shared/ui';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { serializeSetting } from '@/shared/utils/settings-json';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 import {
   KANGUR_TEST_SUITES_SETTING_KEY,
   KANGUR_TEST_QUESTIONS_SETTING_KEY,
@@ -36,8 +36,8 @@ import {
 import { buildKangurTestSuiteHealthMap, getKangurTestLibraryHealthSummary } from '../test-suite-health';
 import { getQuestionAuthoringSummary } from '../question-authoring-insights';
 import { useTestSuitesManager } from './test-suites-manager.context';
-import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
-import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
+import type { KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
+import type { SettingsStoreValue } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import type { KangurQuestionsManagerInitialView } from '../question-manager-view';
 
 export function useTestSuitesManagerLogic(settingsStore: SettingsStoreValue) {

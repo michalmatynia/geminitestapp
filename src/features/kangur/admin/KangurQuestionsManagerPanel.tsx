@@ -2,11 +2,11 @@
 
 import React, { useMemo, useState } from 'react';
 
-import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, FormModal } from '@/shared/ui';
-import { ConfirmModal } from '@/shared/ui/templates/modals';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
+import { Button, FormModal } from '@/features/kangur/shared/ui';
+import { ConfirmModal } from '@/features/kangur/shared/ui/templates/modals';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 import {
   KANGUR_TEST_QUESTIONS_SETTING_KEY,

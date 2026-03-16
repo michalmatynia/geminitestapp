@@ -39,8 +39,8 @@ import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/de
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { getKangurQuestions } from '@/features/kangur/ui/services/kangur-questions';
 import type { KangurExamQuestion, KangurQuestionChoice } from '@/features/kangur/ui/types';
-import type { KangurLesson } from '@/shared/contracts/kangur';
-import { cn } from '@/shared/utils';
+import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
+import { cn } from '@/features/kangur/shared/utils';
 
 type IllustrationComponent = () => React.JSX.Element;
 

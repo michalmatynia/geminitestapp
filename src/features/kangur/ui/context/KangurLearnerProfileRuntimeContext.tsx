@@ -35,10 +35,10 @@ import type {
   KangurAssignmentPriority,
   KangurProgressState,
   KangurRouteAction,
-} from '@/shared/contracts/kangur';
-import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
-import { internalError } from '@/shared/errors/app-error';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+} from '@/features/kangur/shared/contracts/kangur';
+import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
+import { internalError } from '@/features/kangur/shared/errors/app-error';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 export const KANGUR_LEARNER_PROFILE_DAILY_GOAL_GAMES = 3;

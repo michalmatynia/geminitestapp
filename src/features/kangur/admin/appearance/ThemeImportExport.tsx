@@ -5,12 +5,12 @@ import {
   Button,
   FormSection,
   useToast,
-} from '@/shared/ui';
+} from '@/features/kangur/shared/ui';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
+import { parseJsonSetting } from '@/features/kangur/shared/utils/settings-json';
 import { KANGUR_DEFAULT_DAILY_THEME, normalizeKangurThemeSettings } from '@/features/kangur/theme-settings';
 import { useAppearancePage } from './AppearancePage.context';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 export function ThemeImportExport(): React.JSX.Element {

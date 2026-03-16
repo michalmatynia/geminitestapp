@@ -9,11 +9,11 @@ import {
   type KangurAiTutorMessageArtifact,
   type KangurAiTutorRecoverySignal,
   type KangurAiTutorRuntimeMessage as ChatMessage,
-} from '@/shared/contracts/kangur-ai-tutor';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import {
   createDefaultKangurAiTutorLearnerMood,
   type KangurAiTutorLearnerMood,
-} from '@/shared/contracts/kangur-ai-tutor-mood';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor-mood';
 
 // ---------------------------------------------------------------------------
 // Re-exported types (moved here so storage + Runtime.shared.ts can import)

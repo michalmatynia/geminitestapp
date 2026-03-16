@@ -7,8 +7,8 @@ import type {
   KangurQuestionIllustration,
   KangurQuestionIllustrationLayout,
   KangurTestChoice,
-} from '@/shared/contracts/kangur-tests';
-import { internalError } from '@/shared/errors/app-error';
+} from '@/features/kangur/shared/contracts/kangur-tests';
+import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 import { useKangurTestQuestionEditorContext } from './KangurTestQuestionEditorContext';
 import { createPanelIllustration } from '../../test-questions';

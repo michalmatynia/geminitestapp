@@ -17,7 +17,7 @@ vi.mock('./mongo-kangur-score-repository', () => ({
   },
 }));
 
-vi.mock('@/shared/utils/observability/error-system', () => ({
+vi.mock('@/features/kangur/shared/utils/observability/error-system', () => ({
   ErrorSystem: {
     captureException: captureExceptionMock,
   },

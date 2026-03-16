@@ -1,5 +1,3 @@
-'use client';
-
 import * as React from 'react';
 
 import {
@@ -9,7 +7,7 @@ import {
   FormSection,
   MetadataItem,
   StatusBadge,
-} from '@/shared/ui';
+} from '@/features/kangur/shared/ui';
 
 import { useKnowledgeGraphObservability } from './KnowledgeGraphObservabilityContext';
 import {

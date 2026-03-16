@@ -5,10 +5,10 @@ import type { ContextRuntimeDocument } from '@/shared/contracts/ai-context-regis
 import type {
   KangurAiTutorConversationContext,
   KangurAiTutorWebsiteHelpTarget,
-} from '@/shared/contracts/kangur-ai-tutor';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import {
   KANGUR_KNOWLEDGE_GRAPH_KEY,
-} from '@/shared/contracts/kangur-knowledge-graph';
+} from '@/features/kangur/shared/contracts/kangur-knowledge-graph';
 import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
 import { getKangurAiTutorNativeGuideStore } from '@/features/kangur/server/ai-tutor-native-guide-repository';
 import { getKangurPageContentStore } from '@/features/kangur/server/page-content-repository';
@@ -60,7 +60,7 @@ import {
   resolveGraphQueryMode,
 } from './retrieval/retrieval.logic';
 import { GRAPH_QUERY, VECTOR_GRAPH_QUERY } from './retrieval/retrieval.queries';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 
 export type {

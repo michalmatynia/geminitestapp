@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
+import type { KangurAiTutorContent } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 
 import { getEstimatedBubbleHeight } from './KangurAiTutorGuidedLayout';
 import { getTutorBubblePlacement } from './KangurAiTutorWidget.focus-layout';

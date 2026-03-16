@@ -38,7 +38,7 @@ import type {
   KangurTrainingSelection,
   KangurXpToastState,
 } from '@/features/kangur/ui/types';
-import { internalError } from '@/shared/errors/app-error';
+import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 import {
   buildKangurCompletedGameOutcome,

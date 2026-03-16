@@ -1,5 +1,5 @@
 import { DEFAULT_KANGUR_APP_EMBED_ENTRY_PAGE } from '@/shared/contracts/app-embeds';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 export const KANGUR_BASE_PATH = '/kangur';
@@ -25,6 +25,7 @@ export const KANGUR_PAGE_TO_SLUG: Record<string, string> = Object.freeze({
   LearnerProfile: 'profile',
   Lessons: 'lessons',
   ParentDashboard: 'parent-dashboard',
+  Duels: 'duels',
 });
 
 export const KANGUR_SLUG_TO_PAGE: Record<string, string> = Object.freeze(

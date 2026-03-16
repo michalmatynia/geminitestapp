@@ -70,7 +70,7 @@ vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => queryClientMock,
 }));
 
-vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
+vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => settingsStoreMock,
 }));
 

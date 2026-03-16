@@ -17,10 +17,10 @@ import {
   type AgentPersona,
   type AgentPersonaMoodId,
 } from '@/shared/contracts/agents';
-import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorConversationContext } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import { useAgentPersonaVisuals } from '@/shared/hooks/useAgentPersonaVisuals';
 import { resolveAgentPersonaMood } from '@/shared/lib/agent-personas';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 
 import { buildLearnerMemoryKey } from './kangur-ai-tutor-runtime.helpers';
 

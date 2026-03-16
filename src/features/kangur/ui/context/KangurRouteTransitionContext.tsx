@@ -11,14 +11,14 @@ import {
   useState,
 } from 'react';
 
-import { internalError } from '@/shared/errors/app-error';
+import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 import { useKangurRouting } from './KangurRoutingContext';
 import {
   resolveKangurRouteTransitionSkeletonVariant,
   type KangurRouteTransitionSkeletonVariant,
 } from '../routing/route-transition-skeletons';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 type KangurRouteTransitionPhase =

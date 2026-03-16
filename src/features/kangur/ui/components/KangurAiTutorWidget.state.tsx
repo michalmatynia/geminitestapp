@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 
-import { internalError } from '@/shared/errors/app-error';
+import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 import {
   loadPersistedGuestIntroRecord,
@@ -23,7 +23,7 @@ import type {
   KangurAiTutorGuestIntroStatus,
   KangurAiTutorHomeOnboardingStatus,
   KangurAiTutorOnboardingRecord,
-} from '@/shared/contracts/kangur-ai-tutor';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type {
   GuidedTutorTarget,
   PendingSelectionResponse,

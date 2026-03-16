@@ -8,7 +8,7 @@ import type {
   KangurLessonInlineBlock,
   KangurLessonPage,
   KangurLessonRootBlock,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 
 import { KANGUR_TTS_DEFAULT_LOCALE, KANGUR_TTS_DEFAULT_VOICE } from './contracts';
 

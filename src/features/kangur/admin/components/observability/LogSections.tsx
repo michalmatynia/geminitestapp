@@ -1,8 +1,6 @@
-'use client';
-
 import { type JSX } from 'react';
 
-import { Button, Card, CompactEmptyState, FormSection, MetadataItem, StatusBadge } from '@/shared/ui';
+import { Button, Card, CompactEmptyState, FormSection, MetadataItem, StatusBadge } from '@/features/kangur/shared/ui';
 
 import { useObservabilitySummaryContext } from '../../AdminKangurObservabilityPage';
 import { useKnowledgeGraphObservability } from './KnowledgeGraphObservabilityContext';

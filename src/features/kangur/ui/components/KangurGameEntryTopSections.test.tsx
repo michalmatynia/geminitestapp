@@ -80,7 +80,6 @@ vi.mock('@/features/kangur/ui/components/KangurPracticeAssignmentBanner', () => 
 
 import { KangurGameKangurSetupWidget } from '@/features/kangur/ui/components/KangurGameKangurSetupWidget';
 import { KangurGameOperationSelectorWidget } from '@/features/kangur/ui/components/KangurGameOperationSelectorWidget';
-import { KangurGameTrainingSetupWidget } from '@/features/kangur/ui/components/KangurGameTrainingSetupWidget';
 
 describe('Kangur game entry top sections', () => {
   beforeEach(() => {
@@ -134,6 +133,8 @@ describe('Kangur game entry top sections', () => {
     expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
     expect(screen.getByTestId('mock-operation-selector')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Szybkie ćwiczenia' })).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-game-training-top-section')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-training-setup')).toBeInTheDocument();
     expect(screen.queryByText(/Cześć,/i)).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
@@ -141,31 +142,24 @@ describe('Kangur game entry top sections', () => {
     expect(handleHome).toHaveBeenCalledTimes(1);
   });
 
-  it('renders the shared top section for the Trening flow', () => {
-    const handleHome = vi.fn();
+  it('surfaces the training setup inside Grajmy and forwards the recommended selection', () => {
+    const handleStartTraining = vi.fn();
 
     useKangurGameRuntimeMock.mockReturnValue({
       activePracticeAssignment: null,
       basePath: '/kangur',
-      handleHome,
-      handleStartTraining: vi.fn(),
+      handleHome: vi.fn(),
+      handleSelectOperation: vi.fn(),
+      handleStartTraining,
+      practiceAssignmentsByOperation: {},
       progress: {},
       screen: 'training',
+      setScreen: vi.fn(),
     });
 
-    render(<KangurGameTrainingSetupWidget />);
+    render(<KangurGameOperationSelectorWidget />);
 
-    expect(screen.getByTestId('kangur-game-training-top-section')).toHaveClass(
-      'glass-panel',
-      'border-white/78',
-      'bg-white/68',
-      'text-center'
-    );
-    expect(screen.getByRole('heading', { name: 'Trening' })).toHaveClass('text-3xl');
-    expect(screen.getByTestId('kangur-training-heading-art')).toBeInTheDocument();
-    expect(
-      screen.getByText('Dobierz poziom, kategorie i liczbę pytań do jednej sesji.')
-    ).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-game-training-top-section')).toBeInTheDocument();
     expect(screen.getByTestId('mock-game-setup-momentum-training')).toBeInTheDocument();
     expect(screen.getByTestId('mock-training-setup')).toBeInTheDocument();
     expect(trainingSetupPropsMock).toHaveBeenCalledWith(
@@ -182,7 +176,7 @@ describe('Kangur game entry top sections', () => {
 
     fireEvent.click(screen.getByTestId('mock-training-setup'));
 
-    expect(useKangurGameRuntimeMock.mock.results.at(-1)?.value.handleStartTraining).toHaveBeenCalledWith(
+    expect(handleStartTraining).toHaveBeenCalledWith(
       {
         categories: ['addition', 'subtraction'],
         count: 5,
@@ -198,10 +192,6 @@ describe('Kangur game entry top sections', () => {
         },
       }
     );
-
-    fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
-
-    expect(handleHome).toHaveBeenCalledTimes(1);
   });
 
   it('renders the shared top section for the Kangur flow', () => {

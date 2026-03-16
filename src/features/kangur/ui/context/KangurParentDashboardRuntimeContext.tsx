@@ -13,12 +13,12 @@ import {
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurLearnerProfile, KangurUser } from '@/features/kangur/services/ports';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
-import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
+import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
-import { internalError } from '@/shared/errors/app-error';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { internalError } from '@/features/kangur/shared/errors/app-error';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 export type KangurParentDashboardTabId =

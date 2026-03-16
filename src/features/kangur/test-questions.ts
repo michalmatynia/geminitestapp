@@ -1,4 +1,4 @@
-import type { KangurLessonDocument, KangurLessonRootBlock } from '@/shared/contracts/kangur';
+import type { KangurLessonDocument, KangurLessonRootBlock } from '@/features/kangur/shared/contracts/kangur';
 import {
   KANGUR_TEST_QUESTIONS_SETTING_KEY,
   type KangurTestQuestionEditorial,
@@ -11,8 +11,8 @@ import {
   type KangurQuestionIllustration,
   type KangurTestQuestion,
   type KangurTestQuestionStore,
-} from '@/shared/contracts/kangur-tests';
-import { sanitizeSvg } from '@/shared/utils';
+} from '@/features/kangur/shared/contracts/kangur-tests';
+import { sanitizeSvg } from '@/features/kangur/shared/utils';
 import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 
 import {

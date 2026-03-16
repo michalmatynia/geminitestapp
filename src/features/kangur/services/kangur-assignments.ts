@@ -7,7 +7,7 @@ import type {
   KangurProgressState,
   KangurScore,
   KangurAssignmentTarget,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 
 type BuildStoredAssignmentTargetInput = {
   target: KangurAssignmentCreateTarget;

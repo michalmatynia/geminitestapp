@@ -3,7 +3,7 @@ import 'server-only';
 import { createHmac, timingSafeEqual } from 'crypto';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 
 type KangurLearnerSessionPayload = {

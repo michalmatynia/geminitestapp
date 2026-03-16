@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 export const kangurCardTitleVariants = cva(
   'break-words [color:var(--kangur-page-text)] [font-family:var(--kangur-font-heading,var(--app-font-heading))]',

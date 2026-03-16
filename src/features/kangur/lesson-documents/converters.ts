@@ -7,7 +7,7 @@ import {
   type KangurLessonPage,
   type KangurLessonQuizBlock,
   type KangurLessonRootBlock,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 
 import {
   createKangurLessonActivityBlock,

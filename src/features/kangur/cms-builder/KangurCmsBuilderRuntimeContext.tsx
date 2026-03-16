@@ -3,7 +3,7 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
 import type { SectionInstance } from '@/shared/contracts/cms';
-import { internalError } from '@/shared/errors/app-error';
+import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 import type { KangurCmsProject, KangurCmsScreenKey } from './project';
 

@@ -8,14 +8,14 @@ import type {
   KangurAssignment,
   KangurAssignmentRepositoryCreateInput,
   KangurAssignmentUpdateInput,
-} from '@/shared/contracts/kangur';
-import { kangurAssignmentSchema } from '@/shared/contracts/kangur';
-import { notFoundError } from '@/shared/errors/app-error';
+} from '@/features/kangur/shared/contracts/kangur';
+import { kangurAssignmentSchema } from '@/features/kangur/shared/contracts/kangur';
+import { notFoundError } from '@/features/kangur/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
 
 import type { KangurAssignmentListInput, KangurAssignmentRepository } from './types';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 
 const SETTINGS_COLLECTION = 'settings';

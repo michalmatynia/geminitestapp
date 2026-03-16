@@ -9,6 +9,9 @@ import type { KangurParentAccountResend } from '@/shared/contracts/kangur-auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
+const PARENT_VERIFICATION_NOTIFICATIONS_DISABLED_MESSAGE =
+  'Wysyłka e-maili potwierdzających jest obecnie wyłączona. Skontaktuj się z administratorem.';
+
 export async function postKangurParentAccountResendHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
@@ -24,6 +27,7 @@ export async function postKangurParentAccountResendHandler(
     callbackUrl: body.callbackUrl,
     request: req,
   });
+  const notificationSuppressed = result.notificationSuppressed === true;
 
   return NextResponse.json({
     ok: true,
@@ -32,8 +36,9 @@ export async function postKangurParentAccountResendHandler(
     emailVerified: result.emailVerified,
     hasPassword: result.hasPassword,
     retryAfterMs: result.retryAfterMs,
-    message:
-      'Wysłaliśmy nowy email potwierdzający. Konto rodzica uaktywni się po weryfikacji adresu.',
+    message: notificationSuppressed
+      ? PARENT_VERIFICATION_NOTIFICATIONS_DISABLED_MESSAGE
+      : 'Wysłaliśmy nowy email potwierdzający. Konto rodzica uaktywni się po weryfikacji adresu.',
     debug: buildKangurParentAccountCreateDebugPayload(result),
   });
 }

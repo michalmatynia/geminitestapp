@@ -14,9 +14,9 @@ import type { SectionInstance } from '@/shared/contracts/cms';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useAdminLayoutActions } from '@/shared/providers/AdminLayoutProvider';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, useToast } from '@/shared/ui';
-import { serializeSetting } from '@/shared/utils/settings-json';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
+import { Button, useToast } from '@/features/kangur/shared/ui';
+import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 
 import {
   KANGUR_DEFAULT_DAILY_THEME,
@@ -40,7 +40,7 @@ import {
 } from './project';
 import type { LeftPanelMode } from '@/features/cms/components/page-builder/CmsBuilderLeftPanel';
 import type { KangurThemeMode } from '@/features/kangur/admin/components/KangurThemeSettingsPanel';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 

@@ -5,10 +5,10 @@ import {
   mergeKangurAiTutorNativeGuideStore,
   parseKangurAiTutorNativeGuideStore,
   type KangurAiTutorNativeGuideStore,
-} from '@/shared/contracts/kangur-ai-tutor-native-guide';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 
 type KangurAiTutorNativeGuideDoc = {

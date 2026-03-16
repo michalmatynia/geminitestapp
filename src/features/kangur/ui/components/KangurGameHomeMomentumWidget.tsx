@@ -13,7 +13,7 @@ import {
   getRecommendedSessionMomentum,
 } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
-import type { KangurLessonComponentId, KangurRouteAction } from '@/shared/contracts/kangur';
+import type { KangurLessonComponentId, KangurRouteAction } from '@/features/kangur/shared/contracts/kangur';
 
 type KangurGameHomeMomentumWidgetProps = {
   basePath: string;

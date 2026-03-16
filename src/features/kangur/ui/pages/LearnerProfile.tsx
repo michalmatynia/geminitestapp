@@ -32,7 +32,7 @@ import {
 import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 type LearnerProfileTabId = 'overview' | 'ai-mood';
 
@@ -321,7 +321,7 @@ function LearnerProfileContent(): React.JSX.Element {
         <div
           className={cn(
             KANGUR_SEGMENTED_CONTROL_CLASSNAME,
-            'grid grid-cols-2 sm:w-auto sm:grid-cols-none sm:flex'
+            'grid grid-cols-2 max-[360px]:grid-cols-1 sm:w-auto sm:grid-cols-none sm:flex'
           )}
           role='tablist'
           aria-orientation='horizontal'

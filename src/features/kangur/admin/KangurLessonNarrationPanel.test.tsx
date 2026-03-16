@@ -20,7 +20,7 @@ vi.mock('@/shared/lib/api-client', () => ({
 
 import { KangurLessonNarrationPanel } from '@/features/kangur/admin/KangurLessonNarrationPanel';
 import { LessonContentEditorProvider } from '@/features/kangur/admin/context/LessonContentEditorContext';
-import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kangur';
+import type { KangurLesson, KangurLessonDocument } from '@/features/kangur/shared/contracts/kangur';
 import { buildKangurLessonDocumentNarrationSignature } from '@/features/kangur/tts/script';
 
 function StatefulNarrationPanelHarness({

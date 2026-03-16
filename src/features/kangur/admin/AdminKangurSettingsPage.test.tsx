@@ -68,7 +68,7 @@ vi.mock('next/link', () => ({
   ),
 }));
 
-vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
+vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => settingsStoreMock,
 }));
 
@@ -102,8 +102,8 @@ vi.mock('@/features/cms/hooks/useCmsQueries', () => ({
   useCmsThemes: () => useCmsThemesMock(),
 }));
 
-vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/shared/ui')>();
+vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/shared/ui')>();
   return {
     ...actual,
     AgentPersonaMoodAvatar: () => null,
@@ -114,8 +114,8 @@ vi.mock('@/shared/ui', async (importOriginal) => {
 });
 
 import { AdminKangurSettingsPage } from '@/features/kangur/admin/AdminKangurSettingsPage';
-import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
-import { DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE } from '@/shared/contracts/kangur-ai-tutor-native-guide';
+import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import { DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 import {
   KANGUR_HELP_SETTINGS_KEY,
   KANGUR_NARRATOR_SETTINGS_KEY,
@@ -461,7 +461,11 @@ describe('AdminKangurSettingsPage', () => {
     await waitFor(() =>
       expect(mutateAsyncMock).toHaveBeenCalledWith({
         key: KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
-        value: JSON.stringify({ resendCooldownSeconds: 120 }),
+        value: JSON.stringify({
+          resendCooldownSeconds: 120,
+          notificationsEnabled: true,
+          notificationsDisabledUntil: null,
+        }),
       })
     );
 

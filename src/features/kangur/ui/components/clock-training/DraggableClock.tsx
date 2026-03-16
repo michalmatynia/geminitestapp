@@ -8,7 +8,7 @@ import {
 import {
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 import type { ClockTrainingTaskPoolId } from './types';
 import {
   CHALLENGE_TIME_LIMIT_SECONDS,

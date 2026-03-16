@@ -23,7 +23,7 @@ import {
   SCORE_INSIGHT_WINDOW_DAYS,
   buildKangurScoreInsights,
 } from '@/features/kangur/ui/services/score-insights';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 type OperationLabel = {

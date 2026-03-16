@@ -569,7 +569,7 @@ export const KANGUR_NATIVE_GUIDE_ENTRIES: KangurAiTutorNativeGuideEntry[] = [
     title: 'Szybkie akcje',
     shortDescription: 'To skróty do najważniejszych aktywności w Kangur.',
     fullDescription:
-      'Szybkie akcje to skróty do startu: lekcje, szybka gra, trening mieszany lub Kangur Matematyczny. Dzięki temu uczeń albo rodzic może od razu wejść w najważniejszy krok bez szukania po całym ekranie. Najlepiej wybrać akcję zgodną z celem: zrozumieć temat w lekcji albo utrwalić go w grze.',
+      'Szybkie akcje to skróty do startu: lekcje, Grajmy (z treningiem mieszanym i szybkimi quizami), Pojedynki oraz Kangur Matematyczny. Dzięki temu uczeń albo rodzic może od razu wejść w najważniejszy krok bez szukania po całym ekranie. Najlepiej wybrać akcję zgodną z celem: zrozumieć temat w lekcji, utrwalić go w grze albo sprawdzić się w lobby pojedynków.',
     hints: [
       'Użyj tej sekcji, gdy nie wiesz, od czego zacząć.',
       'Gdy potrzebujesz wyjaśnienia, wybierz lekcję. Gdy potrzebujesz praktyki, wybierz grę.',

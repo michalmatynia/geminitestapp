@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type {
@@ -10,8 +11,8 @@ import type {
 } from '@/features/kangur/services/ports';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { recordKangurOpenedTask } from '@/features/kangur/ui/services/progress';
-import { kangurLearnerActivityStatusSchema } from '@/shared/contracts/kangur';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { kangurLearnerActivityStatusSchema } from '@/features/kangur/shared/contracts/kangur';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const kangurPlatform = getKangurPlatform();
@@ -95,19 +96,14 @@ export const useKangurLearnerActivityStatus = (
     }
   }, [enabled, learnerId]);
 
-  useEffect(() => {
-    if (!enabled || !learnerId || typeof window === 'undefined' || refreshIntervalMs <= 0) {
-      return;
-    }
-
-    const intervalId = window.setInterval(() => {
+  useInterval(
+    () => {
       void refresh();
-    }, refreshIntervalMs);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, [enabled, refresh, refreshIntervalMs]);
+    },
+    enabled && learnerId && typeof window !== 'undefined' && refreshIntervalMs > 0
+      ? refreshIntervalMs
+      : null
+  );
 
   useEffect(() => {
     if (!enabled || !learnerId || typeof window === 'undefined') {
@@ -295,19 +291,12 @@ export const useKangurLearnerActivityPing = ({
     void ping();
   }, [ping]);
 
-  useEffect(() => {
-    if (!enabled || typeof window === 'undefined' || intervalMs <= 0) {
-      return;
-    }
-
-    const intervalId = window.setInterval(() => {
+  useInterval(
+    () => {
       void ping();
-    }, intervalMs);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, [enabled, intervalMs, ping]);
+    },
+    enabled && typeof window !== 'undefined' && intervalMs > 0 ? intervalMs : null
+  );
 
   useEffect(() => {
     if (!enabled || typeof window === 'undefined') {

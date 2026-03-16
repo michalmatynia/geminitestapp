@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { Card } from '@/shared/ui';
+import { Card } from '@/features/kangur/shared/ui';
 
 type KangurAdminStatusCardItem = {
   label: string;

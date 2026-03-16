@@ -610,6 +610,7 @@ export const kangurRoutePageSchema = z.enum([
   'Lessons',
   'ParentDashboard',
   'LearnerProfile',
+  'Duels',
 ]);
 export type KangurRoutePage = z.infer<typeof kangurRoutePageSchema>;
 

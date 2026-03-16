@@ -4,8 +4,8 @@ import type {
   KangurLessonActivityId,
   KangurLessonComponentId,
   KangurLessonDocument,
-} from '@/shared/contracts/kangur';
-import { sanitizeHtml } from '@/shared/utils';
+} from '@/features/kangur/shared/contracts/kangur';
+import { sanitizeHtml } from '@/features/kangur/shared/utils';
 
 import { getKangurLessonActivityDefinition } from './lesson-activities';
 import {

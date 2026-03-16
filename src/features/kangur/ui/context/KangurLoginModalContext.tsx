@@ -13,9 +13,9 @@ import {
 import { getKangurHomeHref, getKangurLoginHref } from '@/features/kangur/config/routing';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
-import { type KangurAuthMode, parseKangurAuthMode } from '@/shared/contracts/kangur-auth';
-import { internalError } from '@/shared/errors/app-error';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { type KangurAuthMode, parseKangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
+import { internalError } from '@/features/kangur/shared/errors/app-error';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 type KangurLoginModalOpenOptions = {

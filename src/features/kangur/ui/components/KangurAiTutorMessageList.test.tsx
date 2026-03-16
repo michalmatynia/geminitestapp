@@ -12,7 +12,7 @@ import {
 } from './KangurAiTutorWidget.state';
 import { getAssistantMessageFeedbackKey } from './KangurAiTutorWidget.helpers';
 
-import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
 const EMPTY_FEEDBACK: Record<string, 'helpful' | 'not_helpful'> = {};
 

@@ -109,7 +109,10 @@ describe('KangurGameHomeActionsWidget', () => {
     render(<KangurGameHomeActionsWidget />);
 
     expect(screen.getByRole('button', { name: /grajmy!/i })).toBeEnabled();
-    expect(screen.getByRole('button', { name: /trening mieszany/i })).toBeEnabled();
+    expect(screen.getByRole('link', { name: /pojedynki/i })).toHaveAttribute(
+      'href',
+      '/kangur/duels'
+    );
     expect(screen.getByRole('button', { name: /kangur matematyczny/i })).toBeEnabled();
   });
 

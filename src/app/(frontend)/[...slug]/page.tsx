@@ -6,7 +6,7 @@ import {
   CmsRuntimePageRenderer as CmsPageRenderer,
   ThemeProvider,
 } from '@/features/cms/public';
-import { KangurPublicApp } from '@/features/kangur/ui/KangurPublicApp';
+import { KangurPublicApp } from '@/features/kangur/public';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../home-helpers';

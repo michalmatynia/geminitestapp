@@ -12,7 +12,7 @@ import {
 import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
 import { useKangurOperationSelectorState } from '@/features/kangur/ui/hooks/useKangurOperationSelectorState';
 import type { KangurDifficulty, KangurOperation } from '@/features/kangur/ui/types';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 export type OperationSelectorProps = {
   onSelect: (operation: KangurOperation, difficulty: KangurDifficulty) => void;

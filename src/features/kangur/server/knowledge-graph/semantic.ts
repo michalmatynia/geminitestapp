@@ -2,7 +2,7 @@ import 'server-only';
 
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import { generateBrainEmbedding } from '@/shared/lib/ai-brain/server-embeddings-client';
-import type { KangurKnowledgeGraphNode, KangurKnowledgeGraphSnapshot } from '@/shared/contracts/kangur-knowledge-graph';
+import type { KangurKnowledgeGraphNode, KangurKnowledgeGraphSnapshot } from '@/features/kangur/shared/contracts/kangur-knowledge-graph';
 
 const dedupeSemanticParts = (values: Array<string | null | undefined>): string[] => {
   const seen = new Set<string>();

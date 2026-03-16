@@ -8,7 +8,7 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurProgressActivitySummary } from '@/features/kangur/ui/services/progress';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 type KangurActivitySummaryCardProps = {
   activity: KangurProgressActivitySummary;

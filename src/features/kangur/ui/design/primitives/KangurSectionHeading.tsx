@@ -1,7 +1,7 @@
 import { type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 import { KANGUR_ACCENT_STYLES, type KangurAccent } from '../tokens';
 import {

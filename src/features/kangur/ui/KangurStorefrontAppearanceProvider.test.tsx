@@ -10,8 +10,8 @@ const { settingsStoreGetMock } = vi.hoisted(() => ({
   settingsStoreGetMock: vi.fn<(key: string) => string | undefined>(),
 }));
 
-vi.mock('@/shared/providers/SettingsStoreProvider', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/shared/providers/SettingsStoreProvider')>();
+vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/shared/providers/SettingsStoreProvider')>();
   return {
     ...actual,
     useSettingsStore: () => ({

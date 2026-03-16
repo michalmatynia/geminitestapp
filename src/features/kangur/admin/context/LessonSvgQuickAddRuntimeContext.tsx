@@ -2,8 +2,8 @@
 
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
-import type { KangurLesson } from '@/shared/contracts/kangur';
-import { internalError } from '@/shared/errors/app-error';
+import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
+import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 type LessonSvgQuickAddRuntimeContextValue = {
   lesson: KangurLesson | null;

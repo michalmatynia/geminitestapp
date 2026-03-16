@@ -1,9 +1,9 @@
 import 'server-only';
 
-import type { KangurAiTutorUsageSummary } from '@/shared/contracts/kangur-ai-tutor';
-import { quotaExceededError } from '@/shared/errors/app-error';
+import type { KangurAiTutorUsageSummary } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import { quotaExceededError } from '@/features/kangur/shared/errors/app-error';
 import { readStoredSettingValue, upsertStoredSettingValue } from '@/shared/lib/ai-brain/server';
-import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
+import { parseJsonSetting, serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 
 export const KANGUR_AI_TUTOR_USAGE_SETTINGS_KEY = 'kangur_ai_tutor_usage_v1';
 

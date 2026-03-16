@@ -20,7 +20,7 @@ import {
 import { KangurFeatureApp } from '@/features/kangur/ui/KangurFeatureApp';
 import { useKangurClassOverrides } from '@/features/kangur/ui/useKangurClassOverrides';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 import type { CSSProperties, JSX } from 'react';
 

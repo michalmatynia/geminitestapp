@@ -1,7 +1,7 @@
 import { appendKangurUrlParams, getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import type { KangurLearnerActivityStatus } from '@/features/kangur/services/ports';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
-import type { KangurLesson } from '@/shared/contracts/kangur';
+import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 
 const ONLINE_THRESHOLD_MS = 2 * 60 * 1000;
 const RECENT_THRESHOLD_MS = 15 * 60 * 1000;

@@ -22,8 +22,8 @@ import type {
   KangurLessonQuizBlock,
   KangurLessonSvgBlock,
   KangurLessonTextBlock,
-} from '@/shared/contracts/kangur';
-import { cn, sanitizeHtml, sanitizeSvg } from '@/shared/utils';
+} from '@/features/kangur/shared/contracts/kangur';
+import { cn, sanitizeHtml, sanitizeSvg } from '@/features/kangur/shared/utils';
 
 import { KangurLessonActivityBlock as KangurLessonActivityBlockView } from './KangurLessonActivityBlock';
 
@@ -384,7 +384,11 @@ function renderCalloutBlock(block: KangurLessonCalloutBlock, key: string): React
 
 type QuizState = { selectedId: string | null; revealed: boolean };
 
-function KangurLessonQuizBlockView({ block }: { block: KangurLessonQuizBlock }): React.JSX.Element {
+function KangurLessonQuizBlockView({
+  block: block,
+}: {
+  block: KangurLessonQuizBlock;
+}): React.JSX.Element {
   const [state, setState] = React.useState<QuizState>({ selectedId: null, revealed: false });
 
   const handleSelect = (choiceId: string): void => {

@@ -5,7 +5,7 @@ import {
   getKangurTestLibraryHealthSummary,
   getKangurTestSuiteHealth,
 } from '@/features/kangur/admin/test-suite-health';
-import type { KangurTestQuestion, KangurTestSuite } from '@/shared/contracts/kangur-tests';
+import type { KangurTestQuestion, KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
 
 const suites: KangurTestSuite[] = [
   {

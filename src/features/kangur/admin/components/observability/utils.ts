@@ -3,7 +3,7 @@ import type {
   KangurAiTutorInteractionIntent,
   KangurAiTutorPromptMode,
   KangurAiTutorSurface,
-} from '@/shared/contracts/kangur-ai-tutor';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type {
   KangurKnowledgeGraphPreviewRequest,
   KangurKnowledgeGraphPreviewResponse,

@@ -20,8 +20,8 @@ import {
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
-import { cn } from '@/shared/utils';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { cn } from '@/features/kangur/shared/utils';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const kangurPlatform = getKangurPlatform();

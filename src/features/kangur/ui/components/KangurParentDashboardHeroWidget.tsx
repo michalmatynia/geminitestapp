@@ -25,7 +25,7 @@ import { useKangurLearnerActivityStatus } from '@/features/kangur/ui/hooks/useKa
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { buildKangurLearnerLiveState } from '@/features/kangur/ui/services/learner-live-state';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 
 const PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS = 110;
 const LEARNER_ACTIVITY_REFRESH_MS = 10_000;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { getQuestionAuthoringSummary } from '@/features/kangur/admin/question-authoring-insights';
-import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
+import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
 
 const makeQuestion = (overrides: Partial<KangurTestQuestion> = {}): KangurTestQuestion => ({
   id: 'q1',

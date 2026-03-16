@@ -14,7 +14,7 @@ import {
   KangurPrimaryNavigation,
   type KangurPrimaryNavigationProps,
 } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
-import { internalError } from '@/shared/errors/app-error';
+import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 type KangurTopNavigationRegistration = {
   ownerId: string;

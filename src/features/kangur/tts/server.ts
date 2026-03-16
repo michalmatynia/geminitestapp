@@ -13,7 +13,7 @@ import { uploadsRoot } from '@/shared/lib/files/server-constants';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/services/image-file-service';
 import { uploadToConfiguredStorage } from '@/shared/lib/files/services/storage/file-storage-service';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { parseJsonSetting, serializeSetting } from '@/shared/utils';
+import { parseJsonSetting, serializeSetting } from '@/features/kangur/shared/utils';
 
 import {
   buildKangurLessonTtsContextInstructions,
@@ -35,7 +35,7 @@ import type {
   KangurLessonTtsStatusResponse,
   KangurLessonTtsVoice,
 } from './contracts';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 
 const resolveLocaleInstruction = (locale: string): string => {

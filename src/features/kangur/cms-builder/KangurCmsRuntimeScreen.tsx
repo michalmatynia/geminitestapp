@@ -17,7 +17,7 @@ import { KangurLessonsRuntimeBoundary } from '@/features/kangur/ui/context/Kangu
 import { KangurParentDashboardRuntimeBoundary } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 
 import { KangurCmsRuntimeDataProvider } from './KangurCmsRuntimeDataProvider';
 import {

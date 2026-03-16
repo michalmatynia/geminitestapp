@@ -1,9 +1,7 @@
-'use client';
-
 import * as React from 'react';
-import { Badge, Button, FormField, Input, Textarea } from '@/shared/ui';
+import { Badge, Button, FormField, Input, Textarea } from '@/features/kangur/shared/ui';
 import type { KangurAiTutorOnboardingValidationField, KangurAiTutorOnboardingValidationIssue } from '@/features/kangur/ai-tutor-onboarding-validation';
-import type { KangurAiTutorNativeGuideEntry } from '@/shared/contracts/kangur-ai-tutor-native-guide';
+import type { KangurAiTutorNativeGuideEntry } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 
 import { useKangurAiTutorNativeGuideEntryEditor } from './KangurAiTutorNativeGuideEntryEditorContext';
 import { SURFACE_OPTIONS, FOCUS_KIND_OPTIONS, stringifyLineList, parseLineList } from './guide-editor-utils';

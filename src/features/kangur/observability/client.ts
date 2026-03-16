@@ -2,7 +2,7 @@ import { readClientCookie, setClientCookie } from '@/shared/lib/browser/client-c
 import {
   logClientError,
   setClientErrorBaseContext,
-} from '@/shared/utils/observability/client-error-logger';
+} from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 type KangurClientErrorContext = Record<string, unknown>;
 type KangurClientEventContext = Record<string, unknown>;

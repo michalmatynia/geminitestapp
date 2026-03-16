@@ -12,8 +12,8 @@ import {
   type KangurLessonRootBlock,
   type KangurLessonSvgBlock,
   type KangurLessonTextBlock,
-} from '@/shared/contracts/kangur';
-import { sanitizeHtml, sanitizeSvg } from '@/shared/utils';
+} from '@/features/kangur/shared/contracts/kangur';
+import { sanitizeHtml, sanitizeSvg } from '@/features/kangur/shared/utils';
 
 import { applyKangurLessonActivityDefaults } from '../lesson-activities';
 import {

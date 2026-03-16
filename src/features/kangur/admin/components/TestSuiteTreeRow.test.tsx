@@ -6,7 +6,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/features/kangur/shared/ui', () => ({
   Badge: ({
     children,
     className,
@@ -19,7 +19,7 @@ vi.mock('@/shared/ui', () => ({
 
 import { TestSuiteTreeRow } from './TestSuiteTreeRow';
 import { toKangurTestSuiteNodeId } from '../kangur-test-suites-master-tree';
-import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
+import type { KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
 
 const suite: KangurTestSuite = {
   id: 'suite-1',

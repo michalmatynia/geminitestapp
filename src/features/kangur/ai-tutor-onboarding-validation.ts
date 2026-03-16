@@ -1,6 +1,6 @@
 import { REQUIRED_KANGUR_AI_TUTOR_NATIVE_GUIDE_COVERAGE } from '@/features/kangur/ai-tutor-native-guide-coverage';
-import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
-import type { KangurAiTutorNativeGuideStore } from '@/shared/contracts/kangur-ai-tutor-native-guide';
+import type { KangurAiTutorContent } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import type { KangurAiTutorNativeGuideStore } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 import type {
   PromptEngineSettings,
   PromptValidationIssue,

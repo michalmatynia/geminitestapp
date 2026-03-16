@@ -13,12 +13,11 @@ export function AdminIntegrationsBreadcrumbs({
   parent,
   className,
 }: AdminIntegrationsBreadcrumbsProps): React.JSX.Element {
+  const breadcrumbProps = { current, parent, className };
   return (
     <AdminSectionBreadcrumbs
       section={{ label: 'Integrations', href: '/admin/integrations' }}
-      parent={parent}
-      current={current}
-      className={className}
+      {...breadcrumbProps}
     />
   );
 }

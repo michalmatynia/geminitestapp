@@ -6,7 +6,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
+import { createDefaultKangurProgressState } from '@/features/kangur/shared/contracts/kangur';
 const { useKangurGameRuntimeMock } = vi.hoisted(() => ({
   useKangurGameRuntimeMock: vi.fn(),
 }));
@@ -121,7 +121,7 @@ import Game from '@/features/kangur/ui/pages/Game';
 type EntryScreenCase = {
   artTestId: string;
   heading: string;
-  screen: 'operation' | 'training' | 'kangur_setup';
+  screen: 'operation' | 'kangur_setup';
   topSectionTestId: string;
   widgetTestId: string;
 };
@@ -135,13 +135,6 @@ const ENTRY_SCREEN_CASES: EntryScreenCase[] = [
     widgetTestId: 'mock-operation-selector',
   },
   {
-    artTestId: 'kangur-training-heading-art',
-    heading: 'Trening',
-    screen: 'training',
-    topSectionTestId: 'kangur-game-training-top-section',
-    widgetTestId: 'mock-training-setup',
-  },
-  {
     artTestId: 'kangur-kangur-heading-art',
     heading: 'Kangur',
     screen: 'kangur_setup',
@@ -150,9 +143,7 @@ const ENTRY_SCREEN_CASES: EntryScreenCase[] = [
   },
 ];
 
-const buildRuntime = (
-  screenKey: EntryScreenCase['screen']
-): Record<string, unknown> => ({
+const buildRuntime = (screenKey: 'operation' | 'training' | 'kangur_setup'): Record<string, unknown> => ({
   activePracticeAssignment: null,
   basePath: '/kangur',
   canAccessParentAssignments: false,
@@ -200,4 +191,15 @@ describe('Game page entry shells', () => {
       expect(screen.getByTestId(widgetTestId)).toBeInTheDocument();
     }
   );
+
+  it('reuses the Grajmy shell when the training screen is requested', () => {
+    useKangurGameRuntimeMock.mockReturnValue(buildRuntime('training'));
+
+    render(<Game />);
+
+    expect(screen.getByTestId('kangur-game-operation-top-section')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-game-training-top-section')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-operation-selector')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-training-setup')).toBeInTheDocument();
+  });
 });

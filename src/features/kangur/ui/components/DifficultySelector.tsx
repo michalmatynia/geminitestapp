@@ -13,7 +13,7 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import { DIFFICULTY_CONFIG } from '@/features/kangur/ui/services/math-questions';
 import type { KangurDifficulty } from '@/features/kangur/ui/types';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 type DifficultySelectorProps = {
   selected: KangurDifficulty;

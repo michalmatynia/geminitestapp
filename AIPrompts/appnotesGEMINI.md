@@ -128,6 +128,9 @@ STATE MANAGEMENT
 -Scan for deeply nested props (prop drilling) and introduce React Context (with useContext) to supply common data/state
 -If multiple components need access to user data, create a UserContext that provides this data to all children without prop drilling.
 
+UI: LAYOUT
+- make mobile responsive
+
 UI CONSOLIDATION
 -Identify UI components for consolidation and props-drilling refactor opportunities.
 -Consolidate UI elements. Search for similar components with a potential to apply a unifying pattern and UI cosolidation

@@ -5,7 +5,7 @@ import {
   KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
   parseKangurStorefrontAppearanceMode,
 } from '@/features/kangur/storefront-appearance-settings';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 

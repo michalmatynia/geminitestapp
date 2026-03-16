@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
+import { createDefaultKangurProgressState } from '@/features/kangur/shared/contracts/kangur';
 
 let buildLessonMasteryUpdate: typeof import('./progress').buildLessonMasteryUpdate;
 let createGameSessionReward: typeof import('./progress').createGameSessionReward;

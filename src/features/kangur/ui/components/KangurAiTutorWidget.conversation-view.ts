@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 
-import type { KangurAiTutorLearnerMemory } from '@/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorLearnerMemory } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import {
   formatKangurAiTutorTemplate,
   type KangurAiTutorContent,
-} from '@/shared/contracts/kangur-ai-tutor-content';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 
-import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import { areTutorSelectionTextsEquivalent } from './KangurAiTutorWidget.helpers';
 import type { ActiveTutorFocus, TutorQuickAction } from './KangurAiTutorWidget.shared';
 import type { TutorSurface } from './KangurAiTutorWidget.types';

@@ -1,8 +1,8 @@
 import React from 'react';
 
-import type { KangurPageContentEntry } from '@/shared/contracts/kangur-page-content';
-import { Badge, Card } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import type { KangurPageContentEntry } from '@/features/kangur/shared/contracts/kangur-page-content';
+import { Badge, Card } from '@/features/kangur/shared/ui';
+import { cn } from '@/features/kangur/shared/utils';
 
 interface KangurPageContentEntryListProps {
   entries: KangurPageContentEntry[];
@@ -11,12 +11,10 @@ interface KangurPageContentEntryListProps {
   className?: string;
 }
 
-export function KangurPageContentEntryList({
-  entries,
-  selectedEntryId,
-  onSelect,
-  className,
-}: KangurPageContentEntryListProps): React.JSX.Element {
+export function KangurPageContentEntryList(
+  props: KangurPageContentEntryListProps
+): React.JSX.Element {
+  const { entries, selectedEntryId, onSelect, className } = props;
   return (
     <Card variant='subtle' padding='md' className={className}>
       <div className='flex items-center justify-between gap-2'>

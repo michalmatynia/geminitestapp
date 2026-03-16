@@ -20,7 +20,8 @@ import {
 import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
 import { buildKangurAssignments } from '@/features/kangur/ui/services/assignments';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
-import { cn } from '@/shared/utils';
+import type { KangurRouteAction } from '@/features/kangur/shared/contracts/kangur';
+import { cn } from '@/features/kangur/shared/utils';
 
 type AssignmentPanelProps = {
   basePath: string;
@@ -29,10 +30,7 @@ type AssignmentPanelProps = {
 
 const buildAssignmentHref = (
   basePath: string,
-  action: {
-    page: 'Game' | 'Lessons' | 'ParentDashboard' | 'LearnerProfile';
-    query?: Record<string, string>;
-  }
+  action: KangurRouteAction
 ): string => {
   const href = createPageUrl(action.page, basePath);
   return action.query ? appendKangurUrlParams(href, action.query, basePath) : href;

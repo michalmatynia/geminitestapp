@@ -4,9 +4,9 @@ import { DocumentWysiwygEditor } from '@/features/document-editor';
 import type {
   KangurLessonCalloutBlock,
   KangurLessonCalloutVariant,
-} from '@/shared/contracts/kangur';
-import { FormField, Input, Textarea } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+} from '@/features/kangur/shared/contracts/kangur';
+import { FormField, Input, Textarea } from '@/features/kangur/shared/ui';
+import { cn } from '@/features/kangur/shared/utils';
 
 const VARIANT_OPTIONS: { value: KangurLessonCalloutVariant; label: string; icon: string; className: string }[] = [
   { value: 'info', label: 'Info', icon: 'ℹ️', className: 'border-indigo-300 bg-indigo-50 text-indigo-700' },

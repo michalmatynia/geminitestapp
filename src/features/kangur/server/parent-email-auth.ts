@@ -10,7 +10,9 @@ import {
 import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
 import {
   KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
+  isKangurParentVerificationNotificationsSuppressed,
   parseKangurParentVerificationEmailSettings,
+  type KangurParentVerificationEmailSettings,
 } from '@/features/kangur/settings';
 import {
   assignAuthUserRole,
@@ -29,16 +31,16 @@ import {
   shouldExposeAuthEmailDebug,
   validatePasswordStrength,
 } from '@/server/auth';
-import { formatKangurAiTutorTemplate } from '@/shared/contracts/kangur-ai-tutor-content';
+import { formatKangurAiTutorTemplate } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import {
   conflictError,
   forbiddenError,
   internalError,
   rateLimitedError,
   validationError,
-} from '@/shared/errors/app-error';
+} from '@/features/kangur/shared/errors/app-error';
 import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 
 type KangurParentAccountCreateResult = {
@@ -48,6 +50,7 @@ type KangurParentAccountCreateResult = {
   hasPassword: boolean;
   verificationUrl: string;
   retryAfterMs: number;
+  notificationSuppressed: boolean;
 };
 
 const DEFAULT_PUBLIC_APP_URL = 'http://localhost:3000';
@@ -79,12 +82,9 @@ const formatRetryAfterLabel = (retryAfterMs: number): string => {
   return `${minutes} min`;
 };
 
-const readParentVerificationResendCooldownMs = async (): Promise<number> => {
+const readParentVerificationEmailSettings = async (): Promise<KangurParentVerificationEmailSettings> => {
   const raw = await readStoredSettingValue(KANGUR_PARENT_VERIFICATION_SETTINGS_KEY);
-  return (
-    parseKangurParentVerificationEmailSettings(raw).resendCooldownSeconds *
-    1000
-  );
+  return parseKangurParentVerificationEmailSettings(raw);
 };
 
 const getKangurParentVerificationRetryAfterMs = (
@@ -251,7 +251,10 @@ export const createKangurParentAccount = async (input: {
 }): Promise<KangurParentAccountCreateResult> => {
   const email = normalizeAuthEmail(input.email);
   const callbackUrl = normalizeOptionalString(input.callbackUrl);
-  const resendCooldownMs = await readParentVerificationResendCooldownMs();
+  const parentVerificationSettings = await readParentVerificationEmailSettings();
+  const resendCooldownMs = parentVerificationSettings.resendCooldownSeconds * 1000;
+  const notificationSuppressed =
+    isKangurParentVerificationNotificationsSuppressed(parentVerificationSettings);
   const existingUser = await findAuthUserByEmail(email);
   let created = false;
   let hasPassword = false;
@@ -305,13 +308,15 @@ export const createKangurParentAccount = async (input: {
     callbackUrl,
     verifyEmailToken: verificationToken.id,
   });
-  await sendKangurParentVerificationEmail({
-    email,
-    callbackUrl,
-    created,
-    hasPassword,
-    verificationUrl,
-  });
+  if (!notificationSuppressed) {
+    await sendKangurParentVerificationEmail({
+      email,
+      callbackUrl,
+      created,
+      hasPassword,
+      verificationUrl,
+    });
+  }
 
   return {
     email,
@@ -320,6 +325,7 @@ export const createKangurParentAccount = async (input: {
     hasPassword,
     retryAfterMs: resendCooldownMs,
     verificationUrl,
+    notificationSuppressed,
   };
 };
 
@@ -330,7 +336,10 @@ export const resendKangurParentVerificationEmail = async (input: {
 }): Promise<KangurParentAccountCreateResult> => {
   const email = normalizeAuthEmail(input.email);
   const callbackUrl = normalizeOptionalString(input.callbackUrl);
-  const resendCooldownMs = await readParentVerificationResendCooldownMs();
+  const parentVerificationSettings = await readParentVerificationEmailSettings();
+  const resendCooldownMs = parentVerificationSettings.resendCooldownSeconds * 1000;
+  const notificationSuppressed =
+    isKangurParentVerificationNotificationsSuppressed(parentVerificationSettings);
   const existingUser = await findAuthUserByEmail(email);
   let hasPassword = false;
   let verificationToken: Awaited<ReturnType<typeof createEmailVerificationChallenge>>;
@@ -373,13 +382,15 @@ export const resendKangurParentVerificationEmail = async (input: {
     verifyEmailToken: verificationToken.id,
   });
 
-  await sendKangurParentVerificationEmail({
-    email,
-    callbackUrl,
-    created: false,
-    hasPassword,
-    verificationUrl,
-  });
+  if (!notificationSuppressed) {
+    await sendKangurParentVerificationEmail({
+      email,
+      callbackUrl,
+      created: false,
+      hasPassword,
+      verificationUrl,
+    });
+  }
 
   return {
     email,
@@ -388,6 +399,7 @@ export const resendKangurParentVerificationEmail = async (input: {
     hasPassword,
     retryAfterMs: resendCooldownMs,
     verificationUrl,
+    notificationSuppressed,
   };
 };
 

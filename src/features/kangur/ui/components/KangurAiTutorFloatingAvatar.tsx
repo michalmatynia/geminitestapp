@@ -1,7 +1,7 @@
 import { motion, type TargetAndTransition, type Transition } from 'framer-motion';
 
 import { useKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 import { KangurAiTutorMoodAvatar } from './KangurAiTutorMoodAvatar';
 import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';

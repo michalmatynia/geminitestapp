@@ -33,7 +33,7 @@ import {
   createLessonCompletionReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 import ClockTrainingGame from './ClockTrainingGame';
 import type { ClockTrainingSectionId } from './clock-training-utils';

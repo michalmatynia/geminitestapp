@@ -9,7 +9,7 @@ const { logClientErrorMock, setClientErrorBaseContextMock } = vi.hoisted(() => (
   setClientErrorBaseContextMock: vi.fn(),
 }));
 
-vi.mock('@/shared/utils/observability/client-error-logger', () => ({
+vi.mock('@/features/kangur/shared/utils/observability/client-error-logger', () => ({
   logClientError: logClientErrorMock,
   setClientErrorBaseContext: setClientErrorBaseContextMock,
 }));

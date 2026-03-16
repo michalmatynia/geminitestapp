@@ -3,8 +3,8 @@ import type {
   KangurTestQuestionAuditFlag,
   KangurTestQuestionPresentation,
   KangurTestQuestionReviewStatus,
-} from '@/shared/contracts/kangur-tests';
-import type { KangurExamQuestion } from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur-tests';
+import type { KangurExamQuestion } from '@/features/kangur/shared/contracts/kangur';
 
 export type LegacyKangurQuestionAudit = {
   flags: KangurTestQuestionAuditFlag[];

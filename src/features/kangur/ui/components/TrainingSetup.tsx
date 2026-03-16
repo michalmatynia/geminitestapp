@@ -12,7 +12,7 @@ import {
 import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurTrainingSetupState } from '@/features/kangur/ui/hooks/useKangurTrainingSetupState';
 import type { KangurTrainingSelection } from '@/features/kangur/ui/types';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 type TrainingSetupProps = {
   onStart: (selection: KangurTrainingSelection) => void;

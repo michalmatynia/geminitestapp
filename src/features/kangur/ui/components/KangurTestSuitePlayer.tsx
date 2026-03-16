@@ -23,7 +23,7 @@ import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKang
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
-import type { KangurTestQuestion, KangurTestSuite } from '@/shared/contracts/kangur-tests';
+import type { KangurTestQuestion, KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
 
 import { KangurTestQuestionRenderer } from './KangurTestQuestionRenderer';
 

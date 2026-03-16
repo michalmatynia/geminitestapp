@@ -11,9 +11,9 @@ import type {
   KangurAiTutorGuestIntroStatus,
   KangurAiTutorHomeOnboardingStatus,
   KangurAiTutorOnboardingRecord,
-} from '@/shared/contracts/kangur-ai-tutor';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type { TutorPanelPositionMode, TutorPanelSnapState } from './KangurAiTutorWidget.shared';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 type KangurAiTutorGuestIntroRecord = KangurAiTutorOnboardingRecord<KangurAiTutorGuestIntroStatus>;
@@ -139,7 +139,7 @@ const persistTutorWidgetState = (state: KangurAiTutorWidgetStorageState): void =
       : {}),
     ...(state.avatarPosition ? { avatarPosition: state.avatarPosition } : {}),
     ...(state.panelPosition ? { panelPosition: state.panelPosition } : {}),
-    ...(state.hidden === true ? { hidden: true } : {}),
+    ...(typeof state.hidden === 'boolean' ? { hidden: state.hidden } : {}),
   };
 
   try {
@@ -398,8 +398,14 @@ const dispatchTutorVisibilityChange = (hidden: boolean): void => {
   );
 };
 
-export const loadPersistedTutorVisibilityHidden = (): boolean =>
-  loadPersistedTutorWidgetState()?.hidden === true;
+export const loadPersistedTutorVisibilityHidden = (): boolean => {
+  const state = loadPersistedTutorWidgetState();
+  if (!state || typeof state.hidden !== 'boolean') {
+    return true;
+  }
+
+  return state.hidden;
+};
 
 export const persistTutorVisibilityHidden = (hidden: boolean): boolean => {
   const currentState = loadPersistedTutorWidgetState();

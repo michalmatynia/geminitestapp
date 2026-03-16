@@ -9,7 +9,7 @@ import {
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
   KANGUR_THEME_SETTINGS_KEY,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 
 import { KANGUR_DEFAULT_DAILY_THEME } from './themes/daily';
@@ -17,7 +17,7 @@ import { KANGUR_DEFAULT_DAWN_THEME } from './themes/dawn';
 import { KANGUR_DEFAULT_SUNSET_THEME } from './themes/sunset';
 import { KANGUR_NIGHTLY_THEME } from './themes/nightly';
 import { KANGUR_DAILY_CRYSTAL_THEME, KANGUR_NIGHTLY_CRYSTAL_THEME } from './themes/others';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 export const KANGUR_DEFAULT_THEME = KANGUR_NIGHTLY_THEME;

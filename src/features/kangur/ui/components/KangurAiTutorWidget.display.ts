@@ -7,8 +7,8 @@ import { selectBestTutorAnchor } from '@/features/kangur/ui/context/KangurTutorA
 import {
   formatKangurAiTutorTemplate,
   type KangurAiTutorContent,
-} from '@/shared/contracts/kangur-ai-tutor-content';
-import { getMotionSafeScrollBehavior } from '@/shared/utils';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import { getMotionSafeScrollBehavior } from '@/features/kangur/shared/utils';
 
 import {
   getBoundingRectFromRects,
@@ -29,7 +29,7 @@ import type {
   TutorHomeOnboardingStep,
   TutorSurface,
 } from './KangurAiTutorWidget.types';
-import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
+import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 
 const SECTION_DROP_TARGET_PADDING_X = 12;
 const SECTION_DROP_TARGET_PADDING_Y = 12;

@@ -3,7 +3,7 @@ import 'server-only';
 import { createHash } from 'crypto';
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 
 type KangurGuestAiTutorIntroDoc = {

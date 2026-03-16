@@ -111,7 +111,7 @@ describe('KangurLoginPage', () => {
       'aria-pressed',
       'true'
     );
-    expect(screen.getByRole('button', { name: 'Tworzę konto rodzica' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Utwórz konto' })).toHaveAttribute(
       'aria-pressed',
       'false'
     );
@@ -128,13 +128,13 @@ describe('KangurLoginPage', () => {
 
     render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
-    await user.type(screen.getByLabelText('Email rodzica albo nick ucznia'), 'adachild');
+    await user.type(screen.getByTestId('kangur-login-identifier-input'), 'adachild');
     const passwordInput = screen
       .getByTestId('kangur-login-form')
       .querySelector<HTMLInputElement>('input[name="password"]');
     expect(passwordInput).not.toBeNull();
     await user.type(passwordInput!, 'secret');
-    await user.click(screen.getByRole('button', { name: 'Zaloguj się' }));
+    await user.click(screen.getByRole('button', { name: 'Zaloguj' }));
 
     await waitFor(() => {
       expect(setStoredActiveLearnerIdMock).toHaveBeenCalledWith('learner-1');
@@ -154,13 +154,13 @@ describe('KangurLoginPage', () => {
 
     render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
-    await user.type(screen.getByLabelText('Email rodzica albo nick ucznia'), 'adachild');
+    await user.type(screen.getByTestId('kangur-login-identifier-input'), 'adachild');
     const passwordInput = screen
       .getByTestId('kangur-login-form')
       .querySelector<HTMLInputElement>('input[name="password"]');
     expect(passwordInput).not.toBeNull();
     await user.type(passwordInput!, 'secret');
-    await user.click(screen.getByRole('button', { name: 'Zaloguj się' }));
+    await user.click(screen.getByRole('button', { name: 'Zaloguj' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(

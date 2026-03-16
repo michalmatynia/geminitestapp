@@ -1,7 +1,7 @@
 import { BrainCircuit } from 'lucide-react';
 import NextImage from 'next/image';
 
-import { cn, sanitizeSvg } from '@/shared/utils';
+import { cn, sanitizeSvg } from '@/features/kangur/shared/utils';
 
 import type { TutorMoodAvatarProps } from './KangurAiTutorWidget.shared';
 import type { JSX } from 'react';

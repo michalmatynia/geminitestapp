@@ -11,7 +11,7 @@ import type {
   KangurTrainingSelection,
   KangurXpToastState,
 } from '@/features/kangur/ui/types';
-import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
+import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 
 export type KangurPracticeAssignment = KangurAssignmentSnapshot & { target: { type: 'practice' } };
 

@@ -3,9 +3,9 @@
 import { Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 
-import type { KangurQuestionIllustration } from '@/shared/contracts/kangur-tests';
-import { Button, FormField, Input, SelectSimple } from '@/shared/ui';
-import { cn, sanitizeSvg } from '@/shared/utils';
+import type { KangurQuestionIllustration } from '@/features/kangur/shared/contracts/kangur-tests';
+import { Button, FormField, Input, SelectSimple } from '@/features/kangur/shared/ui';
+import { cn, sanitizeSvg } from '@/features/kangur/shared/utils';
 
 import { SvgCodeEditor } from './SvgCodeEditor';
 import {

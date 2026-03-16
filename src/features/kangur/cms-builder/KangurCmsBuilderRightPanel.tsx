@@ -3,7 +3,7 @@
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import type { KangurThemeMode } from '@/features/kangur/admin/components/KangurThemeSettingsPanel';
 import { ComponentSettingsPanel, usePageBuilder } from '@/features/cms/public';
-import { SidePanel } from '@/shared/ui';
+import { SidePanel } from '@/features/kangur/shared/ui';
 
 import { KangurThemePreviewPanel } from './KangurThemePreviewPanel';
 

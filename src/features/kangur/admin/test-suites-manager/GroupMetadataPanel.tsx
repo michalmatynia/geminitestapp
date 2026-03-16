@@ -1,10 +1,10 @@
 
-import { Button, Input } from '@/shared/ui';
+import { Button, Input } from '@/features/kangur/shared/ui';
 import { useTestSuitesManager } from './test-suites-manager.context';
 import { useTestSuitesManagerLogic } from './test-suites-manager.logic';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { normalizeKangurTestGroupTitle, resolveKangurTestSuiteGroupTitle } from '../../test-suites';
-import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
+import type { KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
 
 export function GroupMetadataPanel() {
   const settingsStore = useSettingsStore();

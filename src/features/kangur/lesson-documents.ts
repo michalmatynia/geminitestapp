@@ -3,8 +3,8 @@ import {
   type KangurLessonDocument,
   type KangurLessonDocumentStore,
   type KangurLessonPage,
-} from '@/shared/contracts/kangur';
-import { parseJsonSetting } from '@/shared/utils';
+} from '@/features/kangur/shared/contracts/kangur';
+import { parseJsonSetting } from '@/features/kangur/shared/utils';
 
 import { flattenKangurLessonDocumentPages } from './lesson-documents/creators';
 import { normalizeKangurLessonDocument } from './lesson-documents/normalization';

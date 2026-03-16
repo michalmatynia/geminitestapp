@@ -13,7 +13,7 @@ import {
   validateKangurLessonDocumentDraft,
   validateKangurLessonPageDraft,
 } from './content-creator-insights';
-import type { KangurLesson, KangurLessonDocumentStore } from '@/shared/contracts/kangur';
+import type { KangurLesson, KangurLessonDocumentStore } from '@/features/kangur/shared/contracts/kangur';
 import { buildKangurLessonDocumentNarrationSignature } from '../tts/script';
 
 const buildLesson = (overrides: Partial<KangurLesson> = {}): KangurLesson => ({

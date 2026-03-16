@@ -13,7 +13,7 @@ import type {
   KangurLesson,
   KangurLessonPage,
   KangurLessonRootBlock,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 
 import { getLessonRecipeFamily } from '../utils';
 

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { FormField, Input, Switch, Textarea } from '@/shared/ui';
+import { FormField, Input, Switch, Textarea } from '@/features/kangur/shared/ui';
 
 import type { TestSuiteFormData } from '../../test-suites';
 

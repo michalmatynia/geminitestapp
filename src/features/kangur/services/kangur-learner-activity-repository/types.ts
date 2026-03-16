@@ -1,7 +1,7 @@
 import type {
   KangurLearnerActivitySnapshot,
   KangurLearnerActivityUpdateInput,
-} from '@/shared/contracts/kangur';
+} from '@/features/kangur/shared/contracts/kangur';
 
 export type KangurLearnerActivityRepository = {
   getActivity: (learnerId: string) => Promise<KangurLearnerActivitySnapshot | null>;

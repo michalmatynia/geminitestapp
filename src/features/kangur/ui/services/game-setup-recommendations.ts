@@ -11,7 +11,7 @@ import type {
   KangurProgressState,
   KangurTrainingSelection,
 } from '@/features/kangur/ui/types';
-import type { KangurLessonComponentId } from '@/shared/contracts/kangur';
+import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 
 type KangurTrainingSetupRecommendation = {
   description: string;

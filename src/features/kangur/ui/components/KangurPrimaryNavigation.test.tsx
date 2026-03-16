@@ -106,8 +106,8 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
-vi.mock('@/shared/providers/SettingsStoreProvider', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/shared/providers/SettingsStoreProvider')>();
+vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/shared/providers/SettingsStoreProvider')>();
   return {
     ...actual,
     useSettingsStore: () => ({
@@ -123,7 +123,7 @@ vi.mock('@/shared/hooks/use-settings', () => ({
   }),
 }));
 
-vi.mock('@/shared/ui/select-simple', () => ({
+vi.mock('@/features/kangur/shared/ui/select-simple', () => ({
   SelectSimple: ({
     ariaLabel,
     disabled,
@@ -605,7 +605,7 @@ describe('KangurPrimaryNavigation', () => {
     );
   });
 
-  it('shows a visible restore action when the tutor was hidden locally and reopens it on click', () => {
+  it('shows a visible toggle action when the tutor is hidden locally and reopens it on click', () => {
     const openChatMock = vi.fn();
     optionalTutorMock.mockReturnValue({
       enabled: true,
@@ -622,19 +622,19 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
-    const restoreButton = screen.getByTestId('kangur-ai-tutor-restore');
+    const toggleButton = screen.getByTestId('kangur-ai-tutor-toggle');
 
-    expect(restoreButton).toBeVisible();
-    expect(restoreButton).toHaveTextContent('Włącz AI Tutora');
-    expect(restoreButton.className).toContain('bg-[linear-gradient');
+    expect(toggleButton).toBeVisible();
+    expect(toggleButton).toHaveTextContent('Włącz AI Tutora');
+    expect(toggleButton.className).toContain('bg-[linear-gradient');
 
-    fireEvent.click(restoreButton);
+    fireEvent.click(toggleButton);
 
     expect(openChatMock).toHaveBeenCalledTimes(1);
     expect(loadPersistedTutorVisibilityHidden()).toBe(false);
   });
 
-  it('still shows the restore action when the current tutor surface is unavailable but tutoring is not globally disabled', () => {
+  it('still shows the toggle action when the current tutor surface is unavailable but tutoring is not globally disabled', () => {
     optionalTutorMock.mockReturnValue({
       enabled: false,
       openChat: vi.fn(),
@@ -654,10 +654,10 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
-    expect(screen.getByTestId('kangur-ai-tutor-restore')).toBeVisible();
+    expect(screen.getByTestId('kangur-ai-tutor-toggle')).toBeVisible();
   });
 
-  it('renders the restore action inside the main nav group when the tutor is hidden locally', () => {
+  it('renders the toggle action inside the main nav group when the tutor is hidden locally', () => {
     optionalTutorMock.mockReturnValue({
       enabled: true,
       openChat: vi.fn(),
@@ -678,7 +678,7 @@ describe('KangurPrimaryNavigation', () => {
     );
 
     expect(screen.getByRole('navigation', { name: /główna nawigacja kangur/i })).toContainElement(
-      screen.getByTestId('kangur-ai-tutor-restore')
+      screen.getByTestId('kangur-ai-tutor-toggle')
     );
   });
 
@@ -752,6 +752,6 @@ describe('KangurPrimaryNavigation', () => {
     );
 
     expect(screen.queryByTestId('kangur-primary-nav-parent-dashboard')).toBeNull();
-    expect(screen.getByRole('link', { name: /profil/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Profil Ola' })).toBeInTheDocument();
   });
 });

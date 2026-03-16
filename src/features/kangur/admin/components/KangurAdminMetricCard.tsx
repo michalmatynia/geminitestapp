@@ -1,5 +1,5 @@
 import { cn } from '@/features/kangur/utils/cn';
-import { Card } from '@/shared/ui';
+import { Card } from '@/features/kangur/shared/ui';
 
 import type { LucideIcon } from 'lucide-react';
 

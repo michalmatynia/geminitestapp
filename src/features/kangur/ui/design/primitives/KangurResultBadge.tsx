@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 export const kangurResultBadgeVariants = cva(
   'inline-flex items-center justify-center gap-2 rounded-2xl border font-bold shadow-[0_18px_42px_-30px_rgba(15,23,42,0.18)]',

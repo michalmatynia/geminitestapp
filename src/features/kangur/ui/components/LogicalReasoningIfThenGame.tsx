@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 
 import { KangurButton, KangurInfoCard, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
 import { type KangurAccent } from '@/features/kangur/ui/design/tokens';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 import type { DropResult } from '@hello-pangea/dnd';
 

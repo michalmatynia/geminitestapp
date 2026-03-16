@@ -4,7 +4,7 @@ import {
   KangurCardDescription,
   KangurSectionEyebrow,
 } from '@/features/kangur/ui/design/primitives';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 type KangurLabeledValueSummaryProps = {
   className?: string;

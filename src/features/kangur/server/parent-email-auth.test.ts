@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
+import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import {
   KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS,
   KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
@@ -75,7 +75,7 @@ import {
   setKangurParentPassword,
   verifyKangurParentEmail,
 } from './parent-email-auth';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 
 describe('parent email auth service', () => {
@@ -136,6 +136,7 @@ describe('parent email auth service', () => {
       hasPassword: true,
       retryAfterMs: 90_000,
       verificationUrl: `${expectedOrigin}/login?callbackUrl=%2Ftests&verifyEmailToken=verify-link-custom`,
+      notificationSuppressed: false,
     });
   });
 
@@ -191,6 +192,7 @@ describe('parent email auth service', () => {
       retryAfterMs: 75_000,
       verificationUrl:
         'http://localhost:3000/login?callbackUrl=%2Ftests&verifyEmailToken=verify-link-resend-configured',
+      notificationSuppressed: false,
     });
   });
 
@@ -290,10 +292,56 @@ describe('parent email auth service', () => {
       hasPassword: true,
       retryAfterMs: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS,
       verificationUrl: `${expectedOrigin}/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-1`,
+      notificationSuppressed: false,
     });
     expect(buildKangurParentAccountCreateDebugPayload(result)).toEqual({
       verificationUrl: `${expectedOrigin}/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-1`,
     });
+  });
+
+  it('skips sending verification email when notifications are disabled', async () => {
+    readStoredSettingValueMock.mockResolvedValue(
+      JSON.stringify({ notificationsEnabled: false })
+    );
+    findAuthUserByEmailMock.mockResolvedValue(null);
+    createEmailVerificationChallengeMock.mockResolvedValue({
+      id: 'verify-link-suppressed',
+      expiresAt: new Date('2026-03-15T21:00:00.000Z'),
+    });
+
+    const result = await createKangurParentAccount({
+      email: 'suppressed-parent@example.com',
+      password: 'Strong123!',
+      callbackUrl: '/tests',
+    });
+
+    expect(sendAuthEmailMock).not.toHaveBeenCalled();
+    expect(result.notificationSuppressed).toBe(true);
+  });
+
+  it('skips sending verification email when notifications are temporarily paused', async () => {
+    readStoredSettingValueMock.mockResolvedValue(
+      JSON.stringify({ notificationsDisabledUntil: '2099-01-01T00:00:00.000Z' })
+    );
+    findAuthUserByEmailMock.mockResolvedValue({
+      id: 'parent-1',
+      email: 'parent@example.com',
+      name: 'Parent',
+      passwordHash: 'stored-password-hash',
+      emailVerified: null,
+    });
+    createEmailVerificationChallengeMock.mockResolvedValue({
+      id: 'verify-link-paused',
+      expiresAt: new Date('2026-03-15T21:00:00.000Z'),
+    });
+
+    const result = await resendKangurParentVerificationEmail({
+      email: 'parent@example.com',
+      callbackUrl: '/tests',
+    });
+
+    expect(sendAuthEmailMock).not.toHaveBeenCalled();
+    expect(result.notificationSuppressed).toBe(true);
   });
 
   it('resends verification email for an existing unverified parent account', async () => {
@@ -324,6 +372,7 @@ describe('parent email auth service', () => {
       retryAfterMs: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS,
       verificationUrl:
         'http://localhost:3000/kangur/login?callbackUrl=%2Fkangur%2Fgame&verifyEmailToken=verify-link-2',
+      notificationSuppressed: false,
     });
     expect(createAuthUserWithEmailMock).not.toHaveBeenCalled();
     expect(setAuthUserPasswordMock).not.toHaveBeenCalled();
@@ -419,6 +468,7 @@ describe('parent email auth service', () => {
       retryAfterMs: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS,
       verificationUrl:
         'http://localhost:3000/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-resend-1',
+      notificationSuppressed: false,
     });
 
     expect(createEmailVerificationChallengeMock).toHaveBeenCalledWith({
@@ -458,6 +508,7 @@ describe('parent email auth service', () => {
       retryAfterMs: KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS,
       verificationUrl:
         'http://localhost:3000/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-resend-2',
+      notificationSuppressed: false,
     });
 
     expect(createEmailVerificationChallengeMock).toHaveBeenCalledWith({

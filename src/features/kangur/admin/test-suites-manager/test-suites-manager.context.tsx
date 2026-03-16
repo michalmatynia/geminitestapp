@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useMemo } from 'react';
-import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
+import type { KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
 import type { TestSuiteFormData } from '../../test-suites';
 import { createInitialTestSuiteFormData } from '../../test-suites';
 import type { KangurQuestionsManagerInitialView } from '../question-manager-view';
 import type { TreeMode } from './test-suites-manager.contracts';
 import { TREE_MODE_STORAGE_KEY } from './test-suites-manager.contracts';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const readPersistedTreeMode = (): TreeMode => {

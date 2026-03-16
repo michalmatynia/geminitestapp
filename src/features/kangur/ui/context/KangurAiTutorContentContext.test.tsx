@@ -24,7 +24,7 @@ vi.mock('@/shared/lib/api-client', async (importOriginal) => {
 import {
   DEFAULT_KANGUR_AI_TUTOR_CONTENT,
   formatKangurAiTutorTemplate,
-} from '@/shared/contracts/kangur-ai-tutor-content';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import {
   KangurAiTutorContentProvider,
   useKangurAiTutorContent,

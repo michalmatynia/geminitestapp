@@ -1,7 +1,7 @@
 import type {
   KangurAiTutorFocusKind,
   KangurAiTutorKnowledgeReference,
-} from '@/shared/contracts/kangur-ai-tutor';
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
 import {
   KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO,

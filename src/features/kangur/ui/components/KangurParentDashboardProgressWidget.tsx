@@ -28,8 +28,9 @@ import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssign
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { buildKangurAssignmentListItems } from '@/features/kangur/ui/services/delegated-assignments';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import type { KangurRouteAction } from '@/features/kangur/shared/contracts/kangur';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const ACTIVE_ASSIGNMENTS_TITLE = 'Aktywne zadania';
@@ -44,10 +45,7 @@ const RECENT_ACTIVE_ASSIGNMENTS_EMPTY_LABEL = 'Brak aktywnych zadań dla ucznia.
 
 const buildAssignmentHref = (
   basePath: string,
-  action: {
-    page: 'Game' | 'Lessons' | 'ParentDashboard' | 'LearnerProfile';
-    query?: Record<string, string>;
-  }
+  action: KangurRouteAction
 ): string => {
   const href = createPageUrl(action.page, basePath);
   return action.query ? appendKangurUrlParams(href, action.query, basePath) : href;

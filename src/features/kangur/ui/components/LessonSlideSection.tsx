@@ -2,6 +2,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type KeyboardEventHandler } from 'react';
 
+import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
 import {
   useKangurLessonBackAction,
   useKangurLessonSecretPill,
@@ -17,7 +18,7 @@ import {
 import { useKangurLessonPanelCtaSync } from '@/features/kangur/ui/hooks/useKangurLessonPanelCtaSync';
 import { KANGUR_STEP_PILL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
-import { cn } from '@/shared/utils';
+import { cn } from '@/features/kangur/shared/utils';
 
 export type LessonSlide = {
   title: string;
@@ -291,15 +292,6 @@ export default function LessonSlideSection({
     window.addEventListener('focus', handleVisibilityChange);
     window.addEventListener('blur', handleVisibilityChange);
     window.addEventListener('pagehide', handlePageHide);
-    const intervalId = window.setInterval(() => {
-      const state = panelTimingRef.current;
-      if (state.lastTick === null) {
-        return;
-      }
-      const now = Date.now();
-      flushActivePanel(now);
-      commitPanelTime(state.activeIndex);
-    }, 15000);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -307,10 +299,13 @@ export default function LessonSlideSection({
       window.removeEventListener('blur', handleVisibilityChange);
       window.removeEventListener('pagehide', handlePageHide);
       panelTimeFlushRef.current = null;
-      window.clearInterval(intervalId);
       pauseTracking();
     };
   }, []);
+
+  useInterval(() => {
+    panelTimeFlushRef.current?.();
+  }, 15000);
 
   useEffect(() => {
     const update = panelTimeUpdateRef.current;

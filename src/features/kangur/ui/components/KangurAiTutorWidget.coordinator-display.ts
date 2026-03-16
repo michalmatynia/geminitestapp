@@ -1,9 +1,9 @@
 import { useMemo, type CSSProperties } from 'react';
 
 import type { KangurAiTutorContextValue } from '@/features/kangur/ui/context/KangurAiTutorRuntime.shared';
-import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
-import { KANGUR_PAGE_CONTENT_COLLECTION } from '@/shared/contracts/kangur-page-content';
-import { cn } from '@/shared/utils';
+import type { KangurAiTutorContent } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import { KANGUR_PAGE_CONTENT_COLLECTION } from '@/features/kangur/shared/contracts/kangur-page-content';
+import { cn } from '@/features/kangur/shared/utils';
 
 import { useKangurAiTutorConversationViewState } from './KangurAiTutorWidget.conversation-view';
 import {

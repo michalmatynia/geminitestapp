@@ -11,8 +11,8 @@ import {
   areKangurDocsTooltipsEnabled,
   parseKangurHelpSettings,
 } from '@/features/kangur/help-settings';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Badge, Button, Card, SkipToContentLink } from '@/shared/ui';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
+import { Badge, Button, Card, SkipToContentLink } from '@/features/kangur/shared/ui';
 
 const DOCUMENTATION_CONTENT_ID = 'kangur-documentation-content';
 const DOCUMENTATION_WORKSPACE_TITLE_ID = 'kangur-documentation-workspace-title';

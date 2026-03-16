@@ -6,7 +6,7 @@ import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
 import type { CmsStorefrontAppearanceMode } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import { useKangurClassOverrides } from '@/features/kangur/ui/useKangurClassOverrides';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const KANGUR_ACTIVE_SURFACE_CLASSNAME = 'kangur-surface-active';

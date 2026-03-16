@@ -7,7 +7,7 @@ import {
   parseKangurClassOverrides,
   type KangurClassOverrides,
 } from '@/features/kangur/class-overrides';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 
 export const useKangurClassOverrides = (): KangurClassOverrides => {
   const settingsStore = useSettingsStore();

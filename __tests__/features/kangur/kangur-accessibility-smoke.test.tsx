@@ -357,13 +357,6 @@ describe('Kangur accessibility smoke', () => {
     await user.click(getEntryScreenBackButton('kangur-game-operation-top-section'));
     expect(await screen.findByRole('heading', { name: 'Wybierz aktywność' })).toBeInTheDocument();
 
-    await user.click(getFeaturedHomeAction('Trening mieszany'));
-    expect(await screen.findByRole('heading', { name: 'Konfiguracja treningu' })).toBeInTheDocument();
-    expect(getEntryScreenBackButton('kangur-game-training-top-section')).toBeInTheDocument();
-
-    await user.click(getEntryScreenBackButton('kangur-game-training-top-section'));
-    expect(await screen.findByRole('heading', { name: 'Wybierz aktywność' })).toBeInTheDocument();
-
     await user.click(getFeaturedHomeAction('Kangur Matematyczny'));
     expect(
       await screen.findByRole('heading', { name: 'Konfiguracja sesji Kangura Matematycznego' })

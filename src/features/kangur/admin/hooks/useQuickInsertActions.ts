@@ -17,7 +17,7 @@ import {
   createKangurLessonSvgBlock,
   createKangurLessonTextBlock,
 } from '@/features/kangur/lesson-documents';
-import type { KangurLessonPage, KangurLessonRootBlock } from '@/shared/contracts/kangur';
+import type { KangurLessonPage, KangurLessonRootBlock } from '@/features/kangur/shared/contracts/kangur';
 
 export function useQuickInsertActions(
   activePage: KangurLessonPage | null,

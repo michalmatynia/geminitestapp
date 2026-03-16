@@ -11,14 +11,17 @@ interface RunHistoryFilterControlsProps {
   onRefresh: () => void;
 }
 
-export function RunHistoryFilterControls({
-  runFilter,
-  onSetRunFilter,
-  compareMode,
-  onToggleCompareMode,
-  isRefreshing,
-  onRefresh,
-}: RunHistoryFilterControlsProps): React.JSX.Element {
+export function RunHistoryFilterControls(
+  props: RunHistoryFilterControlsProps
+): React.JSX.Element {
+  const {
+    runFilter,
+    onSetRunFilter,
+    compareMode,
+    onToggleCompareMode,
+    isRefreshing,
+    onRefresh,
+  } = props;
   return (
     <>
       <div className='mb-3 flex flex-wrap items-center justify-between gap-2'>

@@ -1,10 +1,11 @@
 import { Plus } from 'lucide-react';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 
 import {
   useSaveTagMutation,
   useDeleteTagMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Catalog, ProductTag } from '@/shared/contracts/products';
 import {
   useToast,
@@ -136,6 +137,14 @@ export function TagsSettings(): React.JSX.Element {
   };
 
   const selectedCatalog = catalogs.find((catalog: Catalog) => catalog.id === selectedCatalogId);
+  const catalogOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () =>
+      catalogs.map((catalog: Catalog) => ({
+        value: catalog.id,
+        label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`,
+      })),
+    [catalogs]
+  );
 
   return (
     <div className='space-y-5'>
@@ -149,10 +158,7 @@ export function TagsSettings(): React.JSX.Element {
             size='sm'
             value={selectedCatalogId || ''}
             onValueChange={onCatalogChange}
-            options={catalogs.map((catalog: Catalog) => ({
-              value: catalog.id,
-              label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`,
-            }))}
+            options={catalogOptions}
             placeholder='Select a catalog...'
             ariaLabel='Catalog'
            title='Select a catalog...'/>
@@ -236,10 +242,7 @@ export function TagsSettings(): React.JSX.Element {
                     catalogId: value,
                   }))
                 }
-                options={catalogs.map((catalog: Catalog) => ({
-                  value: catalog.id,
-                  label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`,
-                }))}
+                options={catalogOptions}
                 placeholder='Select catalog'
                ariaLabel='Select catalog' title='Select catalog'/>
             </FormField>

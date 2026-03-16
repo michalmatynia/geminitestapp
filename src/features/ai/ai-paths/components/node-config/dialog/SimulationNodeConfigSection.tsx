@@ -10,6 +10,19 @@ import {
   useAiPathSelection,
 } from '../../AiPathConfigContext';
 
+const SIMULATION_RUN_BEHAVIOR_OPTIONS = [
+  {
+    value: 'before_connected_trigger',
+    label: 'Auto-run before connected Trigger',
+  },
+  {
+    value: 'manual_only',
+    label: 'Manual only',
+  },
+] as const satisfies ReadonlyArray<
+  LabeledOptionDto<'before_connected_trigger' | 'manual_only'>
+>;
+
 export function SimulationNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode } = useAiPathSelection();
   const { handleRunSimulation } = useAiPathRuntime();
@@ -33,10 +46,7 @@ export function SimulationNodeConfigSection(): React.JSX.Element | null {
 
   const collectionOptions = DB_COLLECTION_OPTIONS.filter(
     (opt: LabeledOptionDto<string>): boolean => opt.value !== 'custom'
-  ).map((opt: LabeledOptionDto<string>) => ({
-    value: opt.value,
-    label: opt.label,
-  }));
+  );
 
   return (
     <div className='space-y-4'>
@@ -93,16 +103,7 @@ export function SimulationNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-          options={[
-            {
-              value: 'before_connected_trigger',
-              label: 'Auto-run before connected Trigger',
-            },
-            {
-              value: 'manual_only',
-              label: 'Manual only',
-            },
-          ]}
+          options={SIMULATION_RUN_BEHAVIOR_OPTIONS}
           placeholder='Select run behavior'
          ariaLabel='Select run behavior' title='Select run behavior'/>
       </FormField>

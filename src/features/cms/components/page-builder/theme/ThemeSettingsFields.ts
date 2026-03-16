@@ -5,6 +5,76 @@ import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { SelectSimple } from '@/shared/ui';
 import type { SettingsPanelField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
+const THEME_ANIMATION_EASING_OPTIONS = [
+  { label: 'Ease out', value: 'ease-out' },
+  { label: 'Ease in-out', value: 'ease-in-out' },
+  { label: 'Ease in', value: 'ease-in' },
+  { label: 'Linear', value: 'linear' },
+  { label: 'Spring', value: 'cubic-bezier(.68,-0.55,.27,1.55)' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
+const THEME_HOVER_EFFECT_OPTIONS = [
+  { label: 'Vertical lift', value: 'vertical-lift' },
+  { label: '3D lift', value: 'lift-3d' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
+const THEME_SHADOW_PRESET_OPTIONS = [
+  { label: 'None', value: 'none' },
+  { label: 'Small', value: 'small' },
+  { label: 'Medium', value: 'medium' },
+  { label: 'Large', value: 'large' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
+const THEME_VIDEO_RATIO_OPTIONS = [
+  { label: '16:9', value: '16:9' },
+  { label: '4:3', value: '4:3' },
+  { label: '1:1', value: '1:1' },
+  { label: '9:16 Vertical', value: '9:16' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
+const THEME_DRAWER_POSITION_OPTIONS = [
+  { label: 'Right', value: 'right' },
+  { label: 'Left', value: 'left' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
+const THEME_BADGE_POSITION_OPTIONS = [
+  { label: 'Top left', value: 'top-left' },
+  { label: 'Top right', value: 'top-right' },
+  { label: 'Bottom left', value: 'bottom-left' },
+  { label: 'Bottom right', value: 'bottom-right' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
+const THEME_CURRENCY_OPTIONS = [
+  { label: 'USD ($)', value: 'USD' },
+  { label: 'EUR (€)', value: 'EUR' },
+  { label: 'GBP (£)', value: 'GBP' },
+  { label: 'CAD (C$)', value: 'CAD' },
+  { label: 'AUD (A$)', value: 'AUD' },
+  { label: 'JPY (¥)', value: 'JPY' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
+const THEME_CURRENCY_POSITION_OPTIONS = [
+  { label: 'Before ($10)', value: 'before' },
+  { label: 'After (10$)', value: 'after' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
+const THEME_CART_STYLE_OPTIONS = [
+  { label: 'Drawer', value: 'drawer' },
+  { label: 'Page', value: 'page' },
+  { label: 'Popup notification', value: 'dropdown' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
+const THEME_CART_ICON_STYLE_OPTIONS = [
+  { label: 'Bag', value: 'bag' },
+  { label: 'Cart', value: 'cart' },
+  { label: 'Basket', value: 'basket' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
+const THEME_STOREFRONT_APPEARANCE_OPTIONS = [
+  { label: 'Default', value: 'default' },
+  { label: 'Dark', value: 'dark' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
 export const getFieldsForSection = (
   section: string,
   theme: ThemeSettings,
@@ -36,23 +106,14 @@ export const getFieldsForSection = (
               key: 'animationEasing',
               label: 'Easing',
               type: 'select',
-              options: [
-                { label: 'Ease out', value: 'ease-out' },
-                { label: 'Ease in-out', value: 'ease-in-out' },
-                { label: 'Ease in', value: 'ease-in' },
-                { label: 'Linear', value: 'linear' },
-                { label: 'Spring', value: 'cubic-bezier(.68,-0.55,.27,1.55)' },
-              ],
+              options: THEME_ANIMATION_EASING_OPTIONS,
             },
             { key: 'scrollReveal', label: 'Reveal sections on scroll', type: 'checkbox' },
             {
               key: 'hoverEffect',
               label: 'Hover effect',
               type: 'select',
-              options: [
-                { label: 'Vertical lift', value: 'vertical-lift' },
-                { label: '3D lift', value: 'lift-3d' },
-              ],
+              options: THEME_HOVER_EFFECT_OPTIONS,
             },
             {
               key: 'hoverScale',
@@ -254,12 +315,7 @@ export const getFieldsForSection = (
           key: 'containerShadow',
           label: 'Shadow',
           type: 'select',
-          options: [
-            { label: 'None', value: 'none' },
-            { label: 'Small', value: 'small' },
-            { label: 'Medium', value: 'medium' },
-            { label: 'Large', value: 'large' },
-          ],
+          options: THEME_SHADOW_PRESET_OPTIONS,
         },
         {
           key: 'containerBorderWidth',
@@ -326,12 +382,7 @@ export const getFieldsForSection = (
           key: 'videoRatio',
           label: 'Video ratio',
           type: 'select',
-          options: [
-            { label: '16:9', value: '16:9' },
-            { label: '4:3', value: '4:3' },
-            { label: '1:1', value: '1:1' },
-            { label: '9:16 Vertical', value: '9:16' },
-          ],
+          options: THEME_VIDEO_RATIO_OPTIONS,
         },
         { key: 'imageBorderColor', label: 'Border color', type: 'color' },
         {
@@ -433,12 +484,7 @@ export const getFieldsForSection = (
           key: 'dropdownShadow',
           label: 'Shadow Preset',
           type: 'select',
-          options: [
-            { label: 'None', value: 'none' },
-            { label: 'Small', value: 'small' },
-            { label: 'Medium', value: 'medium' },
-            { label: 'Large', value: 'large' },
-          ],
+          options: THEME_SHADOW_PRESET_OPTIONS,
         },
         {
           key: 'dropdownShadowOpacity',
@@ -483,10 +529,7 @@ export const getFieldsForSection = (
           key: 'drawerPosition',
           label: 'Position',
           type: 'select',
-          options: [
-            { label: 'Right', value: 'right' },
-            { label: 'Left', value: 'left' },
-          ],
+          options: THEME_DRAWER_POSITION_OPTIONS,
         },
         { key: 'drawerBorderColor', label: 'Border color', type: 'color' },
         {
@@ -553,12 +596,7 @@ export const getFieldsForSection = (
           key: 'badgePosition',
           label: 'Position on cards',
           type: 'select',
-          options: [
-            { label: 'Top left', value: 'top-left' },
-            { label: 'Top right', value: 'top-right' },
-            { label: 'Bottom left', value: 'bottom-left' },
-            { label: 'Bottom right', value: 'bottom-right' },
-          ],
+          options: THEME_BADGE_POSITION_OPTIONS,
         },
         {
           key: 'badgeRadius',
@@ -636,24 +674,14 @@ export const getFieldsForSection = (
           key: 'currencyCode',
           label: 'Currency',
           type: 'select',
-          options: [
-            { label: 'USD ($)', value: 'USD' },
-            { label: 'EUR (\u20ac)', value: 'EUR' },
-            { label: 'GBP (\u00a3)', value: 'GBP' },
-            { label: 'CAD (C$)', value: 'CAD' },
-            { label: 'AUD (A$)', value: 'AUD' },
-            { label: 'JPY (\u00a5)', value: 'JPY' },
-          ],
+          options: THEME_CURRENCY_OPTIONS,
         },
         { key: 'currencySymbol', label: 'Symbol', type: 'text' },
         {
           key: 'currencyPosition',
           label: 'Symbol position',
           type: 'select',
-          options: [
-            { label: 'Before ($10)', value: 'before' },
-            { label: 'After (10$)', value: 'after' },
-          ],
+          options: THEME_CURRENCY_POSITION_OPTIONS,
         },
         { key: 'currencyShowCode', label: 'Show currency codes', type: 'checkbox' },
         { key: 'thousandsSeparator', label: 'Thousands separator', type: 'text' },
@@ -667,21 +695,13 @@ export const getFieldsForSection = (
           key: 'cartStyle',
           label: 'Cart type',
           type: 'select',
-          options: [
-            { label: 'Drawer', value: 'drawer' },
-            { label: 'Page', value: 'page' },
-            { label: 'Popup notification', value: 'dropdown' },
-          ],
+          options: THEME_CART_STYLE_OPTIONS,
         },
         {
           key: 'cartIconStyle',
           label: 'Icon style',
           type: 'select',
-          options: [
-            { label: 'Bag', value: 'bag' },
-            { label: 'Cart', value: 'cart' },
-            { label: 'Basket', value: 'basket' },
-          ],
+          options: THEME_CART_ICON_STYLE_OPTIONS,
         },
         { key: 'showCartCount', label: 'Show item count', type: 'checkbox' },
         { key: 'cartShowVendor', label: 'Show vendor', type: 'checkbox' },
@@ -721,10 +741,7 @@ export const getFieldsForSection = (
               value: value === true ? 'dark' : 'default',
               onValueChange: (nextValue: string) => onChange(nextValue === 'dark'),
               disabled,
-              options: [
-                { label: 'Default', value: 'default' },
-                { label: 'Dark', value: 'dark' },
-              ],
+              options: THEME_STOREFRONT_APPEARANCE_OPTIONS,
               placeholder: 'Choose storefront appearance',
               ariaLabel: 'Storefront appearance',
               variant: 'subtle',

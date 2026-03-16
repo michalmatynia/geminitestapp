@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Button, Label, SelectSimple, Badge } from '@/shared/ui';
 
 import { useCatalogModalContext } from './context/CatalogModalContext';
@@ -13,6 +14,16 @@ export function CatalogPriceGroupsSection(): React.JSX.Element {
     priceGroups,
     loadingGroups,
   } = useCatalogModalContext();
+  const catalogPriceGroupOptions = useMemo<Array<LabeledOptionDto<string>>>(() => {
+    const byId = new Map<string, string>();
+    priceGroups.forEach((group) => {
+      byId.set(group.id, group.name);
+    });
+    return catalogPriceGroupIds.map((id) => ({
+      value: id,
+      label: byId.get(id) ?? id,
+    }));
+  }, [catalogPriceGroupIds, priceGroups]);
 
   return (
     <div className='rounded-md border border-border bg-card/70 p-4 space-y-4'>
@@ -62,13 +73,7 @@ export function CatalogPriceGroupsSection(): React.JSX.Element {
               disabled={catalogPriceGroupIds.length === 0}
               placeholder='Select default price group'
               ariaLabel='Default price group'
-              options={catalogPriceGroupIds.map((id) => {
-                const group = priceGroups.find((g) => g.id === id);
-                return {
-                  value: id,
-                  label: group?.name ?? id,
-                };
-              })}
+              options={catalogPriceGroupOptions}
               triggerClassName='w-full bg-gray-900 border-border text-xs text-white h-9'
              title='Select default price group'/>
           </div>

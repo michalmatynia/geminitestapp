@@ -1,6 +1,7 @@
 import { PlusIcon } from 'lucide-react';
-import React from 'react';
+import React, { useMemo } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Button, SearchableSelect } from '@/shared/ui';
 
 import {
@@ -12,6 +13,14 @@ export function DatabaseTableSelector(): React.JSX.Element {
   const { selectedTable, tableDetails, isFetching } = useCrudPanelStateContext();
   const { setSelectedTable, onRefresh, onAddRow, setPage, setMutationError, setSuccessMessage } =
     useCrudPanelActionsContext();
+  const tableOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () =>
+      tableDetails.map((table) => ({
+        value: table.name,
+        label: `${table.name} (~${table.rowEstimate} rows)`,
+      })),
+    [tableDetails]
+  );
   return (
     <div className='flex flex-wrap items-center gap-3'>
       <SearchableSelect
@@ -22,10 +31,7 @@ export function DatabaseTableSelector(): React.JSX.Element {
           setMutationError(null);
           setSuccessMessage(null);
         }}
-        options={tableDetails.map((t) => ({
-          value: t.name,
-          label: `${t.name} (~${t.rowEstimate} rows)`,
-        }))}
+        options={tableOptions}
         placeholder='Select a table to manage...'
         className='min-w-[280px]'
       />

@@ -154,7 +154,7 @@ export function GenericApiConsole(props: GenericApiConsoleProps): React.JSX.Elem
         <FormField label='Method'>
           {methodType === 'select' ? (
             <SelectSimple
-              options={[...METHOD_OPTIONS]}
+              options={METHOD_OPTIONS}
               value={method}
               onValueChange={onSetMethod}
               placeholder='Method'

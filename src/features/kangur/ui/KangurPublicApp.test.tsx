@@ -125,22 +125,22 @@ describe('KangurPublicApp', () => {
   });
 
   it('renders the Kangur feature page for public app routes', () => {
-    render(<KangurPublicApp slug={['tests']} basePath='/' />);
+    render(<KangurPublicApp slug={['lessons']} basePath='/' />);
 
     expect(screen.getByTestId('kangur-feature-page')).toBeInTheDocument();
     expect(kangurFeaturePageMock).toHaveBeenCalledWith({
-      slug: ['tests'],
+      slug: ['lessons'],
       basePath: '/',
       embedded: false,
     });
   });
 
   it('forwards the embedded flag to the Kangur feature page', () => {
-    render(<KangurPublicApp slug={['tests']} basePath='/' embedded />);
+    render(<KangurPublicApp slug={['lessons']} basePath='/' embedded />);
 
     expect(screen.getByTestId('kangur-feature-page')).toBeInTheDocument();
     expect(kangurFeaturePageMock).toHaveBeenCalledWith({
-      slug: ['tests'],
+      slug: ['lessons'],
       basePath: '/',
       embedded: false,
     });

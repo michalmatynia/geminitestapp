@@ -13,6 +13,9 @@ export const COLOR_SCHEME_OPTIONS: LabeledOptionDto<string>[] = [
   { label: 'Scheme 5', value: 'scheme-5' },
 ];
 
+export const NONE_OPTION: LabeledOptionDto<string> = { label: 'None', value: 'none' };
+export const NONE_OPTIONS: LabeledOptionDto<string>[] = [NONE_OPTION];
+
 export const OVERFLOW_OPTIONS: LabeledOptionDto<string>[] = [
   { label: 'Visible', value: 'visible' },
   { label: 'Hidden', value: 'hidden' },
@@ -59,7 +62,7 @@ export function colorSchemeFieldWithNone(
     key,
     label,
     type: 'color-scheme',
-    options: [{ label: 'None', value: 'none' }],
+    options: NONE_OPTIONS,
     defaultValue,
   };
 }

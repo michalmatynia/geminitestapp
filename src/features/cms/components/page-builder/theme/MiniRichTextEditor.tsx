@@ -6,8 +6,16 @@ import StarterKit from '@tiptap/starter-kit';
 import { Bold, Italic, Link2, List, ListOrdered } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { usePrompt } from '@/shared/hooks/ui/usePrompt';
 import { Button, SelectSimple, Card, Hint } from '@/shared/ui';
+
+const FORMAT_OPTIONS: Array<LabeledOptionDto<string>> = [
+  { value: 'paragraph', label: 'Paragraph' },
+  { value: 'heading-1', label: 'Heading 1' },
+  { value: 'heading-2', label: 'Heading 2' },
+  { value: 'heading-3', label: 'Heading 3' },
+];
 
 function RichTextToolbarButton(props: {
   title: string;
@@ -132,12 +140,7 @@ export function MiniRichTextEditor(props: {
               size='xs'
               value={formatValue}
               onValueChange={applyFormat}
-              options={[
-                { value: 'paragraph', label: 'Paragraph' },
-                { value: 'heading-1', label: 'Heading 1' },
-                { value: 'heading-2', label: 'Heading 2' },
-                { value: 'heading-3', label: 'Heading 3' },
-              ]}
+              options={FORMAT_OPTIONS}
               ariaLabel='Format'
               triggerClassName='h-7 w-32 bg-card/40 text-xs'
              title='Select option'/>

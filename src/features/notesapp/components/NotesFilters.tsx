@@ -4,6 +4,10 @@ import { ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
+import {
+  NOTE_SEARCH_SCOPE_OPTIONS,
+  NOTE_SORT_BY_OPTIONS,
+} from '@/features/notesapp/constants/note-settings-options';
 import type { TagRecord } from '@/shared/contracts/notes';
 import { Button } from '@/shared/ui';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
@@ -58,21 +62,13 @@ export function NotesFilters(): React.JSX.Element {
         key: 'sortBy',
         label: 'Sort By',
         type: 'select',
-        options: [
-          { value: 'created', label: 'Date Created' },
-          { value: 'updated', label: 'Date Modified' },
-          { value: 'name', label: 'Name' },
-        ],
+        options: NOTE_SORT_BY_OPTIONS,
       },
       {
         key: 'searchScope',
         label: 'Search Scope',
         type: 'select',
-        options: [
-          { value: 'both', label: 'Title + Content' },
-          { value: 'title', label: 'Title Only' },
-          { value: 'content', label: 'Content Only' },
-        ],
+        options: NOTE_SEARCH_SCOPE_OPTIONS,
       },
     ];
   }, [tags]);

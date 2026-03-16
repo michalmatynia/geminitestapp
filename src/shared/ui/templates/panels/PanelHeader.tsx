@@ -6,6 +6,7 @@ import { PanelAction } from '@/shared/contracts/ui';
 import { Button } from '@/shared/ui/button';
 import { RefreshButton } from '@/shared/ui/RefreshButton';
 import { cn } from '@/shared/utils';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -75,7 +76,12 @@ function PanelHeaderRefreshAction(): React.JSX.Element | null {
       await onRefresh();
     } catch (error) {
       logClientError(error);
-      console.error('Refresh failed:', error);
+      void logSystemEvent({
+        level: 'error',
+        source: 'PanelHeader',
+        message: 'Refresh action failed',
+        error,
+      });
     }
   };
 

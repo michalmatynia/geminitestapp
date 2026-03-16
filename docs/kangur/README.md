@@ -1,6 +1,6 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-16'
 status: 'active'
 doc_type: 'index'
 scope: 'feature:kangur'
@@ -41,8 +41,10 @@ Kangur documentation is centralized under `docs/kangur/*`. Tooltip copy must be 
 - `docs/kangur/tests-and-exams.md`
 - `docs/kangur/profile-and-parent-dashboard.md`
 - `docs/kangur/admin-content-authoring.md`
+- `docs/kangur/duels-mobile-checklist.md`
 - `docs/kangur/settings-and-narration.md`
 - `docs/kangur/svg-and-media-rules.md`
 - `docs/kangur/number-balance-rush-ui.md`
 - `docs/kangur/observability-and-operations.md`
 - `docs/kangur/neo4j-semantic-bridge.md`
+- `docs/kangur/plans/README.md`

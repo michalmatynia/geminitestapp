@@ -11,6 +11,11 @@ import {
   useDatabaseQueryInputControlsStateContext,
 } from './DatabaseQueryInputControlsContext';
 
+const DB_PROVIDER_OPTIONS = [
+  { value: 'auto', label: 'Auto' },
+  { value: 'mongodb', label: 'MongoDB' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'auto' | 'mongodb'>>;
+
 export function DatabaseQueryInputControls(): React.JSX.Element {
   const {
     requestedProvider,
@@ -59,10 +64,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
             onValueChange={(value: string): void =>
               onProviderChange(value as 'auto' | 'mongodb')
             }
-            options={[
-              { value: 'auto', label: 'Auto' },
-              { value: 'mongodb', label: 'MongoDB' },
-            ]}
+            options={DB_PROVIDER_OPTIONS}
             ariaLabel='Database provider'
             triggerClassName='h-7 w-[130px] border-border bg-card/70 text-xs text-white'
            title='Select option'/>
@@ -72,12 +74,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
             onValueChange={(value: string): void =>
               onActionCategoryChange(value as DatabaseActionCategory)
             }
-            options={actionCategoryOptions.map(
-              (option: LabeledOptionDto<DatabaseActionCategory>) => ({
-                value: option.value,
-                label: option.label,
-              })
-            )}
+            options={actionCategoryOptions}
             ariaLabel='Database action category'
             triggerClassName='h-7 w-[140px] border-border bg-card/70 text-xs text-white'
            title='Select option'/>
@@ -85,10 +82,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
             size='xs'
             value={action}
             onValueChange={(value: string): void => onActionChange(value as DatabaseAction)}
-            options={actionOptions.map((option: LabeledOptionDto<DatabaseAction>) => ({
-              value: option.value,
-              label: option.label,
-            }))}
+            options={actionOptions}
             ariaLabel='Database action'
             triggerClassName='h-7 w-[170px] border-border bg-card/70 text-xs text-white'
            title='Select option'/>

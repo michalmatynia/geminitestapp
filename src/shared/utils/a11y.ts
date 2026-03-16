@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
 
 export const getTextContent = (node: React.ReactNode): string => {
   if (node === null || node === undefined || typeof node === 'boolean') return '';
@@ -52,7 +53,10 @@ export const warnMissingAccessibleLabel = ({
 }): void => {
   if (process.env['NODE_ENV'] === 'production') return;
   if (hasAccessibleLabel) return;
-  console.warn(
-    `[${componentName}] Missing accessible label. Provide visible text, aria-label, or aria-labelledby.`
-  );
+  void logSystemEvent({
+    level: 'warn',
+    source: 'a11y',
+    message: `[${componentName}] Missing accessible label. Provide visible text, aria-label, or aria-labelledby.`,
+    context: { componentName },
+  });
 };

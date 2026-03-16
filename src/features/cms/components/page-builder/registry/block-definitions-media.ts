@@ -14,6 +14,182 @@ const resolvedKangurWidgetOptions = Array.isArray(KANGUR_WIDGET_OPTIONS)
   ? KANGUR_WIDGET_OPTIONS
   : [];
 
+const EMPTY_SETTINGS_OPTIONS: Array<{ label: string; value: string }> = [];
+
+const IMAGE_ASPECT_RATIO_OPTIONS = [
+  { label: 'Auto', value: 'auto' },
+  { label: '1 / 1', value: '1 / 1' },
+  { label: '4 / 3', value: '4 / 3' },
+  { label: '3 / 4', value: '3 / 4' },
+  { label: '16 / 9', value: '16 / 9' },
+  { label: '9 / 16', value: '9 / 16' },
+];
+
+const IMAGE_OBJECT_FIT_OPTIONS = [
+  { label: 'Cover (crop)', value: 'cover' },
+  { label: 'Contain (fit)', value: 'contain' },
+  { label: 'Fill', value: 'fill' },
+  { label: 'None', value: 'none' },
+  { label: 'Scale down', value: 'scale-down' },
+];
+
+const IMAGE_OBJECT_POSITION_OPTIONS = [
+  { label: 'Center', value: 'center' },
+  { label: 'Top', value: 'top' },
+  { label: 'Bottom', value: 'bottom' },
+  { label: 'Left', value: 'left' },
+  { label: 'Right', value: 'right' },
+  { label: 'Top left', value: 'top-left' },
+  { label: 'Top right', value: 'top-right' },
+  { label: 'Bottom left', value: 'bottom-left' },
+  { label: 'Bottom right', value: 'bottom-right' },
+];
+
+const IMAGE_SHAPE_OPTIONS = [
+  { label: 'None', value: 'none' },
+  { label: 'Rounded', value: 'rounded' },
+  { label: 'Circle', value: 'circle' },
+];
+
+const CLIP_OVERFLOW_OPTIONS = [
+  { label: 'Allow overflow', value: 'false' },
+  { label: 'Clip to block', value: 'true' },
+];
+
+const BORDER_STYLE_OPTIONS = [
+  { label: 'Solid', value: 'solid' },
+  { label: 'Dashed', value: 'dashed' },
+  { label: 'Dotted', value: 'dotted' },
+  { label: 'None', value: 'none' },
+];
+
+const OVERLAY_TYPE_OPTIONS = [
+  { label: 'None', value: 'none' },
+  { label: 'Solid', value: 'solid' },
+  { label: 'Gradient', value: 'gradient' },
+];
+
+const OVERLAY_GRADIENT_DIRECTION_OPTIONS = [
+  { label: 'Top', value: 'to-top' },
+  { label: 'Bottom', value: 'to-bottom' },
+  { label: 'Left', value: 'to-left' },
+  { label: 'Right', value: 'to-right' },
+  { label: 'Top left', value: 'to-top-left' },
+  { label: 'Top right', value: 'to-top-right' },
+  { label: 'Bottom left', value: 'to-bottom-left' },
+  { label: 'Bottom right', value: 'to-bottom-right' },
+];
+
+const TRANSPARENCY_MODE_OPTIONS = [
+  { label: 'None', value: 'none' },
+  { label: 'Gradient', value: 'gradient' },
+];
+
+const TRANSPARENCY_DIRECTION_OPTIONS = [
+  { label: 'Top', value: 'top' },
+  { label: 'Bottom', value: 'bottom' },
+  { label: 'Left', value: 'left' },
+  { label: 'Right', value: 'right' },
+  { label: 'Top left', value: 'top-left' },
+  { label: 'Top right', value: 'top-right' },
+  { label: 'Bottom left', value: 'bottom-left' },
+  { label: 'Bottom right', value: 'bottom-right' },
+];
+
+const TOGGLE_ON_OFF_OPTIONS = [
+  { label: 'On', value: 'true' },
+  { label: 'Off', value: 'false' },
+];
+
+const SHOW_HIDE_OPTIONS = [
+  { label: 'Show', value: 'true' },
+  { label: 'Hide', value: 'false' },
+];
+
+const MODEL_ENVIRONMENT_OPTIONS = [
+  { label: 'Studio', value: 'studio' },
+  { label: 'Sunset', value: 'sunset' },
+  { label: 'Dawn', value: 'dawn' },
+  { label: 'Night', value: 'night' },
+  { label: 'Warehouse', value: 'warehouse' },
+  { label: 'Forest', value: 'forest' },
+  { label: 'Apartment', value: 'apartment' },
+  { label: 'City', value: 'city' },
+  { label: 'Park', value: 'park' },
+  { label: 'Lobby', value: 'lobby' },
+];
+
+const MODEL_LIGHTING_OPTIONS = [
+  { label: 'Studio', value: 'studio' },
+  { label: 'Outdoor', value: 'outdoor' },
+  { label: 'Dramatic', value: 'dramatic' },
+  { label: 'Soft', value: 'soft' },
+];
+
+const YES_NO_OPTIONS = [
+  { label: 'Yes', value: 'yes' },
+  { label: 'No', value: 'no' },
+];
+
+const VIDEO_ASPECT_RATIO_OPTIONS = [
+  { label: '16:9', value: '16:9' },
+  { label: '4:3', value: '4:3' },
+  { label: '1:1', value: '1:1' },
+];
+
+const DIVIDER_STYLE_OPTIONS = [
+  { label: 'Solid', value: 'solid' },
+  { label: 'Dashed', value: 'dashed' },
+  { label: 'Dotted', value: 'dotted' },
+];
+
+const KANGUR_WIDGET_DISPLAY_OPTIONS = [
+  { label: 'Always render', value: 'always' },
+  { label: 'Only active dashboard tab', value: 'active-tab' },
+];
+
+const KANGUR_WIDGET_GAME_SCREEN_OPTIONS = [
+  { label: 'Always render', value: 'always' },
+  { label: 'Home', value: 'home' },
+  { label: 'Training setup', value: 'training' },
+  { label: 'Kangur setup', value: 'kangur_setup' },
+  { label: 'Kangur session', value: 'kangur' },
+  { label: 'Calendar training', value: 'calendar_quiz' },
+  { label: 'Geometry training', value: 'geometry_quiz' },
+  { label: 'Operation selection', value: 'operation' },
+  { label: 'Question session', value: 'playing' },
+  { label: 'Result', value: 'result' },
+];
+
+const SLIDESHOW_TRANSITION_OPTIONS = [
+  { label: 'Fade', value: 'fade' },
+  { label: 'Slide', value: 'slide' },
+];
+
+const SLIDESHOW_HEIGHT_MODE_OPTIONS = [
+  { label: 'Auto (fit content)', value: 'auto' },
+  { label: 'Fixed', value: 'fixed' },
+];
+
+const SLIDESHOW_ELEMENT_ANIMATION_OPTIONS = [
+  { label: 'None', value: 'none' },
+  { label: 'Fade in', value: 'fade-in' },
+  { label: 'Slide up', value: 'slide-up' },
+  { label: 'Slide down', value: 'slide-down' },
+  { label: 'Slide left', value: 'slide-left' },
+  { label: 'Slide right', value: 'slide-right' },
+  { label: 'Zoom in', value: 'zoom-in' },
+  { label: 'Zoom out', value: 'zoom-out' },
+];
+
+const SLIDESHOW_ELEMENT_EASING_OPTIONS = [
+  { label: 'Linear', value: 'linear' },
+  { label: 'Ease', value: 'ease' },
+  { label: 'Ease in', value: 'ease-in' },
+  { label: 'Ease out', value: 'ease-out' },
+  { label: 'Ease in-out', value: 'ease-in-out' },
+];
+
 export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
   ImageElement: {
     type: 'ImageElement',
@@ -67,44 +243,21 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'aspectRatio',
         label: 'Aspect ratio',
         type: 'select',
-        options: [
-          { label: 'Auto', value: 'auto' },
-          { label: '1 / 1', value: '1 / 1' },
-          { label: '4 / 3', value: '4 / 3' },
-          { label: '3 / 4', value: '3 / 4' },
-          { label: '16 / 9', value: '16 / 9' },
-          { label: '9 / 16', value: '9 / 16' },
-        ],
+        options: IMAGE_ASPECT_RATIO_OPTIONS,
         defaultValue: 'auto',
       },
       {
         key: 'objectFit',
         label: 'Crop mode',
         type: 'select',
-        options: [
-          { label: 'Cover (crop)', value: 'cover' },
-          { label: 'Contain (fit)', value: 'contain' },
-          { label: 'Fill', value: 'fill' },
-          { label: 'None', value: 'none' },
-          { label: 'Scale down', value: 'scale-down' },
-        ],
+        options: IMAGE_OBJECT_FIT_OPTIONS,
         defaultValue: 'cover',
       },
       {
         key: 'objectPosition',
         label: 'Position',
         type: 'select',
-        options: [
-          { label: 'Center', value: 'center' },
-          { label: 'Top', value: 'top' },
-          { label: 'Bottom', value: 'bottom' },
-          { label: 'Left', value: 'left' },
-          { label: 'Right', value: 'right' },
-          { label: 'Top left', value: 'top-left' },
-          { label: 'Top right', value: 'top-right' },
-          { label: 'Bottom left', value: 'bottom-left' },
-          { label: 'Bottom right', value: 'bottom-right' },
-        ],
+        options: IMAGE_OBJECT_POSITION_OPTIONS,
         defaultValue: 'center',
       },
       { key: 'opacity', label: 'Opacity', type: 'range', defaultValue: 100, min: 0, max: 100 },
@@ -139,21 +292,14 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'shape',
         label: 'Shape',
         type: 'select',
-        options: [
-          { label: 'None', value: 'none' },
-          { label: 'Rounded', value: 'rounded' },
-          { label: 'Circle', value: 'circle' },
-        ],
+        options: IMAGE_SHAPE_OPTIONS,
         defaultValue: 'none',
       },
       {
         key: 'clipOverflow',
         label: 'Contain image',
         type: 'select',
-        options: [
-          { label: 'Allow overflow', value: 'false' },
-          { label: 'Clip to block', value: 'true' },
-        ],
+        options: CLIP_OVERFLOW_OPTIONS,
         defaultValue: 'false',
       },
       {
@@ -176,12 +322,7 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'borderStyle',
         label: 'Border style',
         type: 'select',
-        options: [
-          { label: 'Solid', value: 'solid' },
-          { label: 'Dashed', value: 'dashed' },
-          { label: 'Dotted', value: 'dotted' },
-          { label: 'None', value: 'none' },
-        ],
+        options: BORDER_STYLE_OPTIONS,
         defaultValue: 'solid',
       },
       { key: 'borderColor', label: 'Border color', type: 'color', defaultValue: '#ffffff' },
@@ -195,11 +336,7 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'overlayType',
         label: 'Overlay',
         type: 'select',
-        options: [
-          { label: 'None', value: 'none' },
-          { label: 'Solid', value: 'solid' },
-          { label: 'Gradient', value: 'gradient' },
-        ],
+        options: OVERLAY_TYPE_OPTIONS,
         defaultValue: 'none',
       },
       { key: 'overlayColor', label: 'Overlay color', type: 'color', defaultValue: '#000000' },
@@ -222,42 +359,21 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'overlayGradientDirection',
         label: 'Gradient direction',
         type: 'select',
-        options: [
-          { label: 'Top', value: 'to-top' },
-          { label: 'Bottom', value: 'to-bottom' },
-          { label: 'Left', value: 'to-left' },
-          { label: 'Right', value: 'to-right' },
-          { label: 'Top left', value: 'to-top-left' },
-          { label: 'Top right', value: 'to-top-right' },
-          { label: 'Bottom left', value: 'to-bottom-left' },
-          { label: 'Bottom right', value: 'to-bottom-right' },
-        ],
+        options: OVERLAY_GRADIENT_DIRECTION_OPTIONS,
         defaultValue: 'to-bottom',
       },
       {
         key: 'transparencyMode',
         label: 'Transparency',
         type: 'select',
-        options: [
-          { label: 'None', value: 'none' },
-          { label: 'Gradient', value: 'gradient' },
-        ],
+        options: TRANSPARENCY_MODE_OPTIONS,
         defaultValue: 'none',
       },
       {
         key: 'transparencyDirection',
         label: 'Transparency direction',
         type: 'select',
-        options: [
-          { label: 'Top', value: 'top' },
-          { label: 'Bottom', value: 'bottom' },
-          { label: 'Left', value: 'left' },
-          { label: 'Right', value: 'right' },
-          { label: 'Top left', value: 'top-left' },
-          { label: 'Top right', value: 'top-right' },
-          { label: 'Bottom left', value: 'bottom-left' },
-          { label: 'Bottom right', value: 'bottom-right' },
-        ],
+        options: TRANSPARENCY_DIRECTION_OPTIONS,
         defaultValue: 'bottom',
       },
       {
@@ -284,10 +400,7 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'clipOverflow',
         label: 'Contain image',
         type: 'select',
-        options: [
-          { label: 'Allow overflow', value: 'false' },
-          { label: 'Clip to block', value: 'true' },
-        ],
+        options: CLIP_OVERFLOW_OPTIONS,
         defaultValue: 'false',
       },
     ],
@@ -330,10 +443,7 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'autoRotate',
         label: 'Auto-rotate',
         type: 'select',
-        options: [
-          { label: 'On', value: 'true' },
-          { label: 'Off', value: 'false' },
-        ],
+        options: TOGGLE_ON_OFF_OPTIONS,
         defaultValue: 'true',
       },
       { key: 'autoRotateSpeed', label: 'Rotate speed', type: 'number', defaultValue: 2 },
@@ -341,30 +451,14 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'environment',
         label: 'Environment',
         type: 'select',
-        options: [
-          { label: 'Studio', value: 'studio' },
-          { label: 'Sunset', value: 'sunset' },
-          { label: 'Dawn', value: 'dawn' },
-          { label: 'Night', value: 'night' },
-          { label: 'Warehouse', value: 'warehouse' },
-          { label: 'Forest', value: 'forest' },
-          { label: 'Apartment', value: 'apartment' },
-          { label: 'City', value: 'city' },
-          { label: 'Park', value: 'park' },
-          { label: 'Lobby', value: 'lobby' },
-        ],
+        options: MODEL_ENVIRONMENT_OPTIONS,
         defaultValue: 'studio',
       },
       {
         key: 'lighting',
         label: 'Lighting',
         type: 'select',
-        options: [
-          { label: 'Studio', value: 'studio' },
-          { label: 'Outdoor', value: 'outdoor' },
-          { label: 'Dramatic', value: 'dramatic' },
-          { label: 'Soft', value: 'soft' },
-        ],
+        options: MODEL_LIGHTING_OPTIONS,
         defaultValue: 'studio',
       },
       { key: 'lightIntensity', label: 'Light intensity', type: 'number', defaultValue: 1 },
@@ -372,20 +466,14 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'enableShadows',
         label: 'Shadows',
         type: 'select',
-        options: [
-          { label: 'On', value: 'true' },
-          { label: 'Off', value: 'false' },
-        ],
+        options: TOGGLE_ON_OFF_OPTIONS,
         defaultValue: 'true',
       },
       {
         key: 'enableBloom',
         label: 'Bloom',
         type: 'select',
-        options: [
-          { label: 'On', value: 'true' },
-          { label: 'Off', value: 'false' },
-        ],
+        options: TOGGLE_ON_OFF_OPTIONS,
         defaultValue: 'false',
       },
       { key: 'bloomIntensity', label: 'Bloom intensity', type: 'number', defaultValue: 0.5 },
@@ -394,50 +482,35 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'showGround',
         label: 'Ground plane',
         type: 'select',
-        options: [
-          { label: 'Show', value: 'true' },
-          { label: 'Hide', value: 'false' },
-        ],
+        options: SHOW_HIDE_OPTIONS,
         defaultValue: 'false',
       },
       {
         key: 'enableContactShadows',
         label: 'Contact shadows',
         type: 'select',
-        options: [
-          { label: 'On', value: 'true' },
-          { label: 'Off', value: 'false' },
-        ],
+        options: TOGGLE_ON_OFF_OPTIONS,
         defaultValue: 'true',
       },
       {
         key: 'enableVignette',
         label: 'Vignette',
         type: 'select',
-        options: [
-          { label: 'On', value: 'true' },
-          { label: 'Off', value: 'false' },
-        ],
+        options: TOGGLE_ON_OFF_OPTIONS,
         defaultValue: 'false',
       },
       {
         key: 'autoFit',
         label: 'Auto-fit camera',
         type: 'select',
-        options: [
-          { label: 'On', value: 'true' },
-          { label: 'Off', value: 'false' },
-        ],
+        options: TOGGLE_ON_OFF_OPTIONS,
         defaultValue: 'true',
       },
       {
         key: 'presentationMode',
         label: 'Presentation mode',
         type: 'select',
-        options: [
-          { label: 'On', value: 'true' },
-          { label: 'Off', value: 'false' },
-        ],
+        options: TOGGLE_ON_OFF_OPTIONS,
         defaultValue: 'false',
       },
       { key: 'positionX', label: 'Position X', type: 'number', defaultValue: 0 },
@@ -487,10 +560,7 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'autoRotate',
         label: 'Auto-rotate',
         type: 'select',
-        options: [
-          { label: 'On', value: 'true' },
-          { label: 'Off', value: 'false' },
-        ],
+        options: TOGGLE_ON_OFF_OPTIONS,
         defaultValue: 'true',
       },
       { key: 'autoRotateSpeed', label: 'Rotate speed', type: 'number', defaultValue: 2 },
@@ -498,30 +568,14 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'environment',
         label: 'Environment',
         type: 'select',
-        options: [
-          { label: 'Studio', value: 'studio' },
-          { label: 'Sunset', value: 'sunset' },
-          { label: 'Dawn', value: 'dawn' },
-          { label: 'Night', value: 'night' },
-          { label: 'Warehouse', value: 'warehouse' },
-          { label: 'Forest', value: 'forest' },
-          { label: 'Apartment', value: 'apartment' },
-          { label: 'City', value: 'city' },
-          { label: 'Park', value: 'park' },
-          { label: 'Lobby', value: 'lobby' },
-        ],
+        options: MODEL_ENVIRONMENT_OPTIONS,
         defaultValue: 'studio',
       },
       {
         key: 'lighting',
         label: 'Lighting',
         type: 'select',
-        options: [
-          { label: 'Studio', value: 'studio' },
-          { label: 'Outdoor', value: 'outdoor' },
-          { label: 'Dramatic', value: 'dramatic' },
-          { label: 'Soft', value: 'soft' },
-        ],
+        options: MODEL_LIGHTING_OPTIONS,
         defaultValue: 'studio',
       },
       { key: 'lightIntensity', label: 'Light intensity', type: 'number', defaultValue: 1 },
@@ -529,20 +583,14 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'enableShadows',
         label: 'Shadows',
         type: 'select',
-        options: [
-          { label: 'On', value: 'true' },
-          { label: 'Off', value: 'false' },
-        ],
+        options: TOGGLE_ON_OFF_OPTIONS,
         defaultValue: 'true',
       },
       {
         key: 'enableBloom',
         label: 'Bloom',
         type: 'select',
-        options: [
-          { label: 'On', value: 'true' },
-          { label: 'Off', value: 'false' },
-        ],
+        options: TOGGLE_ON_OFF_OPTIONS,
         defaultValue: 'false',
       },
       { key: 'bloomIntensity', label: 'Bloom intensity', type: 'number', defaultValue: 0.5 },
@@ -551,50 +599,35 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'showGround',
         label: 'Ground plane',
         type: 'select',
-        options: [
-          { label: 'Show', value: 'true' },
-          { label: 'Hide', value: 'false' },
-        ],
+        options: SHOW_HIDE_OPTIONS,
         defaultValue: 'false',
       },
       {
         key: 'enableContactShadows',
         label: 'Contact shadows',
         type: 'select',
-        options: [
-          { label: 'On', value: 'true' },
-          { label: 'Off', value: 'false' },
-        ],
+        options: TOGGLE_ON_OFF_OPTIONS,
         defaultValue: 'true',
       },
       {
         key: 'enableVignette',
         label: 'Vignette',
         type: 'select',
-        options: [
-          { label: 'On', value: 'true' },
-          { label: 'Off', value: 'false' },
-        ],
+        options: TOGGLE_ON_OFF_OPTIONS,
         defaultValue: 'false',
       },
       {
         key: 'autoFit',
         label: 'Auto-fit camera',
         type: 'select',
-        options: [
-          { label: 'On', value: 'true' },
-          { label: 'Off', value: 'false' },
-        ],
+        options: TOGGLE_ON_OFF_OPTIONS,
         defaultValue: 'true',
       },
       {
         key: 'presentationMode',
         label: 'Presentation mode',
         type: 'select',
-        options: [
-          { label: 'On', value: 'true' },
-          { label: 'Off', value: 'false' },
-        ],
+        options: TOGGLE_ON_OFF_OPTIONS,
         defaultValue: 'false',
       },
       { key: 'positionX', label: 'Position X', type: 'number', defaultValue: 0 },
@@ -617,21 +650,14 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'aspectRatio',
         label: 'Aspect ratio',
         type: 'select',
-        options: [
-          { label: '16:9', value: '16:9' },
-          { label: '4:3', value: '4:3' },
-          { label: '1:1', value: '1:1' },
-        ],
+        options: VIDEO_ASPECT_RATIO_OPTIONS,
         defaultValue: '16:9',
       },
       {
         key: 'autoplay',
         label: 'Autoplay',
         type: 'select',
-        options: [
-          { label: 'No', value: 'no' },
-          { label: 'Yes', value: 'yes' },
-        ],
+        options: YES_NO_OPTIONS,
         defaultValue: 'no',
       },
     ],
@@ -646,11 +672,7 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'dividerStyle',
         label: 'Style',
         type: 'select',
-        options: [
-          { label: 'Solid', value: 'solid' },
-          { label: 'Dashed', value: 'dashed' },
-          { label: 'Dotted', value: 'dotted' },
-        ],
+        options: DIVIDER_STYLE_OPTIONS,
         defaultValue: 'solid',
       },
       { key: 'thickness', label: 'Thickness (px)', type: 'number', defaultValue: 1 },
@@ -699,7 +721,7 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'appId',
         label: 'App',
         type: 'select',
-        options: [],
+        options: EMPTY_SETTINGS_OPTIONS,
         defaultValue: DEFAULT_APP_EMBED_ID,
       },
       { key: 'title', label: 'Title', type: 'text', defaultValue: '' },
@@ -707,7 +729,7 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'entryPage',
         label: 'Entry page',
         type: 'select',
-        options: [...KANGUR_APP_EMBED_ENTRY_PAGE_OPTIONS],
+        options: KANGUR_APP_EMBED_ENTRY_PAGE_OPTIONS,
         defaultValue: DEFAULT_APP_EMBED_ENTRY_PAGE,
       },
       {
@@ -757,28 +779,14 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'displayMode',
         label: 'Dashboard panel display',
         type: 'select',
-        options: [
-          { label: 'Always render', value: 'always' },
-          { label: 'Only active dashboard tab', value: 'active-tab' },
-        ],
+        options: KANGUR_WIDGET_DISPLAY_OPTIONS,
         defaultValue: 'always',
       },
       {
         key: 'gameScreen',
         label: 'Game screen visibility',
         type: 'select',
-        options: [
-          { label: 'Always render', value: 'always' },
-          { label: 'Home', value: 'home' },
-          { label: 'Training setup', value: 'training' },
-          { label: 'Kangur setup', value: 'kangur_setup' },
-          { label: 'Kangur session', value: 'kangur' },
-          { label: 'Calendar training', value: 'calendar_quiz' },
-          { label: 'Geometry training', value: 'geometry_quiz' },
-          { label: 'Operation selection', value: 'operation' },
-          { label: 'Question session', value: 'playing' },
-          { label: 'Result', value: 'result' },
-        ],
+        options: KANGUR_WIDGET_GAME_SCREEN_OPTIONS,
         defaultValue: 'always',
       },
     ],
@@ -825,10 +833,7 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'transition',
         label: 'Transition',
         type: 'select',
-        options: [
-          { label: 'Fade', value: 'fade' },
-          { label: 'Slide', value: 'slide' },
-        ],
+        options: SLIDESHOW_TRANSITION_OPTIONS,
         defaultValue: 'fade',
       },
       {
@@ -841,10 +846,7 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'autoplay',
         label: 'Autoplay',
         type: 'select',
-        options: [
-          { label: 'Yes', value: 'yes' },
-          { label: 'No', value: 'no' },
-        ],
+        options: YES_NO_OPTIONS,
         defaultValue: 'yes',
       },
       { key: 'autoplaySpeed', label: 'Autoplay speed (ms)', type: 'number', defaultValue: 5000 },
@@ -852,50 +854,35 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'pauseOnHover',
         label: 'Pause on hover',
         type: 'select',
-        options: [
-          { label: 'Yes', value: 'yes' },
-          { label: 'No', value: 'no' },
-        ],
+        options: YES_NO_OPTIONS,
         defaultValue: 'yes',
       },
       {
         key: 'loop',
         label: 'Loop',
         type: 'select',
-        options: [
-          { label: 'Yes', value: 'yes' },
-          { label: 'No', value: 'no' },
-        ],
+        options: YES_NO_OPTIONS,
         defaultValue: 'yes',
       },
       {
         key: 'showArrows',
         label: 'Show arrows',
         type: 'select',
-        options: [
-          { label: 'Yes', value: 'yes' },
-          { label: 'No', value: 'no' },
-        ],
+        options: YES_NO_OPTIONS,
         defaultValue: 'yes',
       },
       {
         key: 'showDots',
         label: 'Show dots',
         type: 'select',
-        options: [
-          { label: 'Yes', value: 'yes' },
-          { label: 'No', value: 'no' },
-        ],
+        options: YES_NO_OPTIONS,
         defaultValue: 'yes',
       },
       {
         key: 'heightMode',
         label: 'Height mode',
         type: 'select',
-        options: [
-          { label: 'Auto (fit content)', value: 'auto' },
-          { label: 'Fixed', value: 'fixed' },
-        ],
+        options: SLIDESHOW_HEIGHT_MODE_OPTIONS,
         defaultValue: 'auto',
       },
       { key: 'height', label: 'Fixed height (px)', type: 'number', defaultValue: 360 },
@@ -905,16 +892,7 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'elementAnimationType',
         label: 'Element animation',
         type: 'select',
-        options: [
-          { label: 'None', value: 'none' },
-          { label: 'Fade in', value: 'fade-in' },
-          { label: 'Slide up', value: 'slide-up' },
-          { label: 'Slide down', value: 'slide-down' },
-          { label: 'Slide left', value: 'slide-left' },
-          { label: 'Slide right', value: 'slide-right' },
-          { label: 'Zoom in', value: 'zoom-in' },
-          { label: 'Zoom out', value: 'zoom-out' },
-        ],
+        options: SLIDESHOW_ELEMENT_ANIMATION_OPTIONS,
         defaultValue: 'fade-in',
       },
       {
@@ -937,13 +915,7 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'elementAnimationEasing',
         label: 'Element easing',
         type: 'select',
-        options: [
-          { label: 'Linear', value: 'linear' },
-          { label: 'Ease', value: 'ease' },
-          { label: 'Ease in', value: 'ease-in' },
-          { label: 'Ease out', value: 'ease-out' },
-          { label: 'Ease in-out', value: 'ease-in-out' },
-        ],
+        options: SLIDESHOW_ELEMENT_EASING_OPTIONS,
         defaultValue: 'ease-out',
       },
       {

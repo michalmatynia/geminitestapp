@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-03-16T10:48:47.121Z",
+  "generatedAt": "2026-03-16T11:23:53.756Z",
   "source": {
-    "totalFiles": 6309,
-    "totalLines": 1017552,
+    "totalFiles": 6311,
+    "totalLines": 1017605,
     "useClientFiles": 1595,
     "filesOver800": 115,
     "filesOver1000": 25,
@@ -13,15 +13,15 @@
     }
   },
   "api": {
-    "totalRoutes": 277,
-    "routesWithApiHandler": 122,
+    "totalRoutes": 279,
+    "routesWithApiHandler": 124,
     "delegatedServerRoutes": 0,
     "routesWithoutApiHandler": 155,
-    "forceDynamicRoutes": 35,
+    "forceDynamicRoutes": 37,
     "revalidateRoutes": 12,
     "routesWithCacheHeader": 1,
     "routesWithCacheOption": 8,
-    "routesWithExplicitCachePolicy": 122,
+    "routesWithExplicitCachePolicy": 124,
     "routesWithoutExplicitCachePolicy": 155,
     "topRouteHotspots": [
       {
@@ -73,6 +73,14 @@
         "lines": 38
       },
       {
+        "path": "src/app/api/kangur/auth/parent-magic-link/exchange/route.ts",
+        "lines": 29
+      },
+      {
+        "path": "src/app/api/kangur/auth/parent-magic-link/request/route.ts",
+        "lines": 29
+      },
+      {
         "path": "src/app/api/v2/metadata/[type]/[id]/route.ts",
         "lines": 25
       },
@@ -95,21 +103,13 @@
       {
         "path": "src/app/api/cms/pages/[id]/route.ts",
         "lines": 22
-      },
-      {
-        "path": "src/app/api/system/logs/route.ts",
-        "lines": 22
-      },
-      {
-        "path": "src/app/api/cms/slugs/[id]/route.ts",
-        "lines": 21
       }
     ]
   },
   "imports": {
     "appFeatureBarrelImports": 3,
     "appFeatureDeepImports": 151,
-    "featureToSharedTotalImports": 5992,
+    "featureToSharedTotalImports": 6009,
     "featureToAppApiTotalImports": 0,
     "sharedToFeaturesStaticImports": 23,
     "sharedToFeaturesDynamicImports": 7,
@@ -223,17 +223,17 @@
       {
         "feature": "kangur",
         "files": 907,
-        "lines": 213251
+        "lines": 213029
       },
       {
         "feature": "ai",
         "files": 1028,
-        "lines": 207741
+        "lines": 207825
       },
       {
         "feature": "case-resolver",
         "files": 288,
-        "lines": 62902
+        "lines": 62913
       },
       {
         "feature": "cms",
@@ -243,7 +243,7 @@
       {
         "feature": "products",
         "files": 224,
-        "lines": 44291
+        "lines": 44296
       },
       {
         "feature": "integrations",
@@ -293,7 +293,7 @@
       {
         "feature": "viewer3d",
         "files": 30,
-        "lines": 5062
+        "lines": 5071
       },
       {
         "feature": "prompt-engine",
@@ -313,7 +313,7 @@
       {
         "feature": "product-sync",
         "files": 10,
-        "lines": 2840
+        "lines": 2860
       },
       {
         "feature": "drafter",
@@ -559,12 +559,12 @@
         "lines": 1795
       },
       {
-        "path": "src/features/kangur/ui/KangurLoginPage.tsx",
-        "lines": 1623
-      },
-      {
         "path": "src/features/kangur/observability/summary.ts",
         "lines": 1548
+      },
+      {
+        "path": "src/features/kangur/ui/KangurLoginPage.tsx",
+        "lines": 1514
       },
       {
         "path": "src/shared/contracts/kangur-ai-tutor-native-guide-entries.ts",
@@ -640,7 +640,7 @@
       },
       {
         "path": "src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts",
-        "lines": 1024
+        "lines": 1033
       },
       {
         "path": "src/shared/contracts/kangur.ts",
@@ -759,7 +759,7 @@
     ]
   },
   "propDrilling": {
-    "candidateChains": 10,
+    "candidateChains": 11,
     "depthGte4Chains": 0,
     "forwardingComponents": 3
   }

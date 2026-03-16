@@ -4,6 +4,7 @@ import { Undo2, Redo2, Eye, EyeOff } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CmsDomainSelector } from '@/features/cms/components/CmsDomainSelector';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Slug } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import { useUserPreferences } from '@/shared/hooks/useUserPreferences';
@@ -99,6 +100,10 @@ export function PagePreviewPanel(): React.ReactNode {
     const values = normalizePageSlugValues(page.slugs);
     return values.filter((value: string) => domainSlugSet.has(value));
   }, [state.currentPage, slugsQuery.data, domainSlugSet]);
+  const zoneSlugOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () => zoneSlugValues.map((slug: string) => ({ value: slug, label: `/${slug}` })),
+    [zoneSlugValues]
+  );
 
   const initialPreviewSlug = useMemo((): string | null => {
     if (!state.currentPage || zoneSlugValues.length === 0) return null;
@@ -558,10 +563,7 @@ export function PagePreviewPanel(): React.ReactNode {
                   onValueChange={(value: string): void =>
                     setUserPreviewSlug((prev: string | null) => (prev === value ? prev : value))
                   }
-                  options={zoneSlugValues.map((slug: string) => ({
-                    value: slug,
-                    label: `/${slug}`,
-                  }))}
+                  options={zoneSlugOptions}
                   placeholder='Preview slug'
                   ariaLabel='Preview slug'
                   triggerClassName='h-8 w-[200px] text-xs'

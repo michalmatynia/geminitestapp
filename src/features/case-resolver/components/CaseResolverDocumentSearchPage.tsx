@@ -3,6 +3,7 @@
 import { ArrowDown, ArrowUp, FileImage, FileText, FolderOpen, Plus } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
   CaseResolverFile,
   CaseResolverTag,
@@ -28,6 +29,18 @@ import {
 type SortKey = 'updated' | 'created' | 'name';
 type SortOrder = 'asc' | 'desc';
 type FileTypeFilter = 'all' | 'document' | 'scanfile';
+
+const FILE_TYPE_OPTIONS: Array<LabeledOptionDto<FileTypeFilter>> = [
+  { value: 'all', label: 'All file types' },
+  { value: 'document', label: 'Document' },
+  { value: 'scanfile', label: 'Scan File' },
+];
+
+const SORT_OPTIONS: Array<LabeledOptionDto<SortKey>> = [
+  { value: 'updated', label: 'Sort: Modified' },
+  { value: 'created', label: 'Sort: Created' },
+  { value: 'name', label: 'Sort: Name' },
+];
 
 type FileSearchRow = {
   file: CaseResolverFile;
@@ -319,11 +332,7 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
               onValueChange={(value: string): void => {
                 setSelectedFileType(value === 'document' || value === 'scanfile' ? value : 'all');
               }}
-              options={[
-                { value: 'all', label: 'All file types' },
-                { value: 'document', label: 'Document' },
-                { value: 'scanfile', label: 'Scan File' },
-              ]}
+              options={FILE_TYPE_OPTIONS}
               triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
              ariaLabel='Select option' title='Select option'/>
             <SelectSimple
@@ -353,11 +362,7 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
               onValueChange={(value: string): void => {
                 setSortBy(value === 'created' || value === 'name' ? value : 'updated');
               }}
-              options={[
-                { value: 'updated', label: 'Sort: Modified' },
-                { value: 'created', label: 'Sort: Created' },
-                { value: 'name', label: 'Sort: Name' },
-              ]}
+              options={SORT_OPTIONS}
               triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
              ariaLabel='Select option' title='Select option'/>
             <Button

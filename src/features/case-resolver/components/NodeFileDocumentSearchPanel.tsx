@@ -4,6 +4,7 @@ import { Sparkles } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 
 import { FolderTreeSearchBar } from '@/features/foldertree';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS,
   CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
@@ -23,6 +24,20 @@ import { RelationTreeBrowser } from '../relation-search/components/RelationTreeB
 import { RelationTreeBrowserRuntimeContext } from '../relation-search/components/RelationTreeBrowserRuntimeContext';
 
 import type { RelationTreeLookup } from '../relation-search/types';
+
+const DOCUMENT_SEARCH_SCOPE_OPTIONS = [
+  { value: 'case_scope', label: 'Current Case' },
+  { value: 'all_cases', label: 'All Cases' },
+] as const;
+
+const NEW_NODE_TYPE_OPTIONS = [
+  { value: 'prompt', label: 'Prompt Node' },
+  { value: 'model', label: 'Model Node' },
+  { value: 'database', label: 'Database Node' },
+  { value: 'viewer', label: 'Result Viewer Node' },
+] as const satisfies ReadonlyArray<
+  LabeledOptionDto<'prompt' | 'model' | 'database' | 'viewer'>
+>;
 
 export function NodeFileDocumentSearchPanel(): React.JSX.Element {
   const {
@@ -147,10 +162,7 @@ export function NodeFileDocumentSearchPanel(): React.JSX.Element {
           onChange={(value) => {
             setDocumentSearchScope(value);
           }}
-          options={[
-            { value: 'case_scope', label: 'Current Case' },
-            { value: 'all_cases', label: 'All Cases' },
-          ]}
+          options={DOCUMENT_SEARCH_SCOPE_OPTIONS}
           className='bg-card/40'
         />
 
@@ -165,12 +177,7 @@ export function NodeFileDocumentSearchPanel(): React.JSX.Element {
           size='sm'
           value={newNodeType}
           onValueChange={(val) => setNewNodeType(val as 'prompt' | 'model' | 'database' | 'viewer')}
-          options={[
-            { value: 'prompt', label: 'Prompt Node' },
-            { value: 'model', label: 'Model Node' },
-            { value: 'database', label: 'Database Node' },
-            { value: 'viewer', label: 'Result Viewer Node' },
-          ]}
+          options={NEW_NODE_TYPE_OPTIONS}
           className='w-[160px]'
           triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
          ariaLabel='Select option' title='Select option'/>

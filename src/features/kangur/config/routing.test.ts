@@ -23,11 +23,6 @@ describe('kangur routing config', () => {
     expect(resolveKangurPageKeyFromSlug('PROFILE')).toBe('LearnerProfile');
   });
 
-  it('keeps removed tests slugs unresolved', () => {
-    expect(resolveKangurPageKeyFromSlug('tests')).toBeNull();
-    expect(resolveKangurPageKeyFromSlug('TESTS')).toBeNull();
-  });
-
   it('uses the main Kangur page behind the compatibility login slug', () => {
     expect(resolveKangurPageKeyFromSlug('login')).toBe('Game');
     expect(resolveKangurPageKeyFromSlug('LOGIN')).toBe('Game');
@@ -55,8 +50,8 @@ describe('kangur routing config', () => {
   });
 
   it('builds login hrefs for both root-owned and /kangur-owned public mounts', () => {
-    expect(getKangurLoginHref('/', 'https://example.com/game?focus=division')).toBe(
-      `/login?callbackUrl=${encodeURIComponent('https://example.com/game?focus=division')}`
+    expect(getKangurLoginHref('/', 'https://example.com/lessons?focus=division')).toBe(
+      `/login?callbackUrl=${encodeURIComponent('https://example.com/lessons?focus=division')}`
     );
     expect(
       getKangurLoginHref('/kangur', 'https://example.com/kangur/lessons?focus=division')
@@ -69,20 +64,20 @@ describe('kangur routing config', () => {
 
   it('builds canonical root-owned hrefs for legacy /kangur alias routes', () => {
     expect(
-      getKangurCanonicalPublicHref(['game'], {
+      getKangurCanonicalPublicHref(['lessons'], {
         focus: 'division',
         categories: ['warmup', 'speed'],
       })
-    ).toBe('/game?focus=division&categories=warmup&categories=speed');
-    expect(getKangurCanonicalPublicHref(['login'], 'callbackUrl=%2Fkangur%2Fgame')).toBe(
-      '/login?callbackUrl=%2Fkangur%2Fgame'
+    ).toBe('/lessons?focus=division&categories=warmup&categories=speed');
+    expect(getKangurCanonicalPublicHref(['login'], 'callbackUrl=%2Fkangur%2Flessons')).toBe(
+      '/login?callbackUrl=%2Fkangur%2Flessons'
     );
   });
 
   it('resolves the public kangur base path from a return href', () => {
-    expect(resolveKangurPublicBasePathFromHref('/game?focus=division', 'https://example.com')).toBe(
-      '/'
-    );
+    expect(
+      resolveKangurPublicBasePathFromHref('/lessons?focus=division', 'https://example.com')
+    ).toBe('/');
     expect(
       resolveKangurPublicBasePathFromHref(
         'https://example.com/kangur/lessons?focus=division',

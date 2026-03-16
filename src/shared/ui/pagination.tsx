@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import React, { createContext, useContext, useMemo } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { cn } from '@/shared/utils';
 
 import { Button } from './button';
@@ -91,6 +92,15 @@ function PaginationPageSize(): React.JSX.Element | null {
 
   if (!(showPageSize || isPanel) || !onPageSizeChange || pageSize === undefined) return null;
 
+  const pageSizeSelectOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () =>
+      pageSizeOptions.map((size) => ({
+        value: String(size),
+        label: String(size),
+      })),
+    [pageSizeOptions]
+  );
+
   return (
     <div className='flex items-center gap-2'>
       <Label className='text-xs font-medium text-gray-400 whitespace-nowrap'>
@@ -103,10 +113,7 @@ function PaginationPageSize(): React.JSX.Element | null {
           onPageSizeChange(Number(value));
           onPageChange(1);
         }}
-        options={pageSizeOptions.map((size) => ({
-          value: String(size),
-          label: String(size),
-        }))}
+        options={pageSizeSelectOptions}
         triggerClassName='h-8 w-20 text-xs'
        ariaLabel='Select option' title='Select option'/>
     </div>

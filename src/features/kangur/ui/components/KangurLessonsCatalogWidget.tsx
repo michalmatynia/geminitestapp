@@ -7,7 +7,7 @@ import {
 import { getLessonMasteryPresentation } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext.shared';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { KangurEmptyState } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { KANGUR_LESSON_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 import type { JSX } from 'react';
 
@@ -40,7 +40,11 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
   }
 
   return (
-    <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`} role='list' aria-label='Lista lekcji'>
+    <div
+      className={`flex flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}
+      role='list'
+      aria-label='Lista lekcji'
+    >
       {orderedLessons.map((lesson) => {
         const masteryPresentation = getLessonMasteryPresentation(lesson, progress);
         const lessonAssignment = lessonAssignmentsByComponent.get(lesson.componentId) ?? null;

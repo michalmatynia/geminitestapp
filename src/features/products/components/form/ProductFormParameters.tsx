@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
 import { useProductFormParameters } from '@/features/products/context/ProductFormParameterContext';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Language } from '@/shared/contracts/internationalization';
 import type { ProductParameter, ProductParameterValue } from '@/shared/contracts/products';
 import {
@@ -34,6 +35,18 @@ const getParameterLabel = (
   if (preferred === 'de' && parameter.name_de) return parameter.name_de;
   return parameter.name_en || parameter.name_pl || parameter.name_de || 'Unnamed parameter';
 };
+
+const buildParameterOptions = (
+  parameters: ProductParameter[],
+  preferredLocale?: string
+): Array<LabeledOptionDto<string>> =>
+  parameters.map((parameter) => ({
+    value: parameter.id,
+    label: getParameterLabel(parameter, preferredLocale),
+  }));
+
+const buildLabelOptions = (labels: string[]): Array<LabeledOptionDto<string>> =>
+  labels.map((label) => ({ value: label, label }));
 
 const SELECTOR_TYPES_REQUIRING_OPTIONS = new Set<ProductParameter['selectorType']>([
   'radio',
@@ -233,6 +246,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                 (param: ProductParameter) =>
                   !selectedIds.includes(param.id) || param.id === entry.parameterId
               );
+              const parameterOptions = buildParameterOptions(availableOptions, preferredLocale);
               const selectedParameter = entry.parameterId
                 ? (parameterById.get(entry.parameterId) ?? null)
                 : null;
@@ -284,6 +298,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                   checklistOptions.push(value);
                 }
               });
+              const selectLabelOptions = buildLabelOptions(normalizedOptionLabels);
 
               return (
                 <div
@@ -296,10 +311,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                         size='sm'
                         value={entry.parameterId}
                         onValueChange={(value: string) => updateParameterId(index, value)}
-                        options={availableOptions.map((param: ProductParameter) => ({
-                          value: param.id,
-                          label: getParameterLabel(param, preferredLocale),
-                        }))}
+                        options={parameterOptions}
                         placeholder='Select parameter'
                         ariaLabel='Parameter'
                         triggerClassName='h-9 bg-gray-900 border-border/50'
@@ -418,10 +430,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                             onValueChange={(value: string): void =>
                               handleLanguageValueChange(activeParameterLanguage.code, value)
                             }
-                            options={normalizedOptionLabels.map((label: string) => ({
-                              value: label,
-                              label,
-                            }))}
+                            options={selectLabelOptions}
                             ariaLabel={`Value (${activeParameterLanguage.label})`}
                             placeholder={`Select value (${activeParameterLanguage.label})`}
                             triggerClassName='h-9 bg-gray-900 border-border/50'

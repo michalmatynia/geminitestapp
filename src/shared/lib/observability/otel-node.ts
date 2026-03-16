@@ -1,3 +1,4 @@
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 type NodeSdkConstructor = typeof import('@opentelemetry/sdk-node').NodeSDK;
 type NodeSdkInstance = InstanceType<NodeSdkConstructor>;
@@ -187,7 +188,13 @@ const registerShutdownHooks = (globalScope: OTelGlobal, sdk: NodeSdkInstance): v
       await sdk.shutdown();
     } catch (error) {
       logClientError(error);
-      console.error(`[otel] Failed to shutdown SDK on ${signal}`, error);
+      void logSystemEvent({
+        level: 'error',
+        source: 'otel',
+        message: `Failed to shutdown OpenTelemetry SDK on ${signal}`,
+        error,
+        context: { signal },
+      });
     }
   };
 
@@ -248,6 +255,11 @@ export const initializeNodeOtel = async (): Promise<void> => {
   } catch (error) {
     logClientError(error);
     globalScope.__otelNodeInitialized = false;
-    console.warn('[otel] Failed to initialize OpenTelemetry SDK', error);
+    void logSystemEvent({
+      level: 'warn',
+      source: 'otel',
+      message: 'Failed to initialize OpenTelemetry SDK',
+      error,
+    });
   }
 };

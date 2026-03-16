@@ -24,6 +24,10 @@ import { useValidatorSettingsContext } from '../ValidatorSettingsContext';
 
 export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null {
   const { formData, setFormData, sourceFieldOptions } = useValidatorSettingsContext();
+  const sourceFieldSelectOptions = React.useMemo(
+    () => [SOURCE_FIELD_PLACEHOLDER_OPTION, ...sourceFieldOptions],
+    [sourceFieldOptions]
+  );
 
   if (formData.replacementMode !== 'dynamic') return null;
 
@@ -46,7 +50,7 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
                   sourceField: value === '__none__' ? '' : value,
                 }))
               }
-              options={[SOURCE_FIELD_PLACEHOLDER_OPTION, ...sourceFieldOptions]}
+              options={sourceFieldSelectOptions}
              ariaLabel='Source Field' title='Source Field'/>
           </FormField>
         )}

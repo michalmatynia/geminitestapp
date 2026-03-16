@@ -1,4 +1,5 @@
 import type { SystemLogLevelDto as SystemLogLevel } from '@/shared/contracts/observability';
+import { logger } from '@/shared/utils/logger';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type SystemLogInput = {
@@ -19,23 +20,35 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
   const source = input.source || 'system';
   const context = input.context ?? undefined;
   const consoleMessage = `[${source}] ${input.message}`;
+  const logContext = {
+    ...(context ?? {}),
+    source,
+    service: input.service,
+    statusCode: input.statusCode,
+  };
 
   if (level === 'error' || input.critical) {
-    console.error(consoleMessage, context);
+    logger.error(consoleMessage, input.error, {
+      ...logContext,
+      service: input.service,
+    });
   } else if (level === 'warn') {
-    console.warn(consoleMessage, context);
+    logger.warn(consoleMessage, {
+      ...logContext,
+      service: input.service,
+    });
   } else {
-    console.log(consoleMessage, context);
+    logger.info(consoleMessage, {
+      ...logContext,
+      service: input.service,
+    });
   }
 
   if (input.error || level === 'error' || input.critical) {
     const err = input.error instanceof Error ? input.error : new Error(input.message);
     logClientError(err, {
       context: {
-        ...(context ?? {}),
-        source,
-        service: input.service,
-        statusCode: input.statusCode,
+        ...(logContext ?? {}),
       },
     });
   }

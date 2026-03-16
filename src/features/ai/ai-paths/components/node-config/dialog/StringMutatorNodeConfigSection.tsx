@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { StringMutatorOperation } from '@/shared/lib/ai-paths';
 import { Button, Input, SelectSimple, ToggleRow, FormField, CompactEmptyState } from '@/shared/ui';
 
@@ -15,6 +16,34 @@ const OPERATION_LABELS: Record<StringMutatorOperation['type'], string> = {
   append: 'Append',
   slice: 'Slice',
 };
+
+const OPERATION_OPTIONS: Array<LabeledOptionDto<StringMutatorOperation['type']>> = Object.entries(
+  OPERATION_LABELS
+).map(([value, label]) => ({
+  value: value as StringMutatorOperation['type'],
+  label,
+}));
+
+const TRIM_MODE_OPTIONS: Array<LabeledOptionDto<'both' | 'left' | 'right'>> = [
+  { value: 'both', label: 'Both' },
+  { value: 'left', label: 'Start (Left)' },
+  { value: 'right', label: 'End (Right)' },
+];
+
+const MATCH_MODE_OPTIONS: Array<LabeledOptionDto<'first' | 'all'>> = [
+  { value: 'first', label: 'First Match' },
+  { value: 'all', label: 'All Matches' },
+];
+
+const CASE_MODE_OPTIONS: Array<LabeledOptionDto<'lower' | 'upper'>> = [
+  { value: 'lower', label: 'Lowercase' },
+  { value: 'upper', label: 'Uppercase' },
+];
+
+const APPEND_POSITION_OPTIONS: Array<LabeledOptionDto<'prefix' | 'suffix'>> = [
+  { value: 'prefix', label: 'Prefix' },
+  { value: 'suffix', label: 'Suffix' },
+];
 
 const createOperation = (type: StringMutatorOperation['type']): StringMutatorOperation => {
   switch (type) {
@@ -130,10 +159,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                         onValueChange={(value: string): void =>
                           replaceOperation(index, value as StringMutatorOperation['type'])
                         }
-                        options={Object.entries(OPERATION_LABELS).map(([value, label]) => ({
-                          value,
-                          label,
-                        }))}
+                        options={OPERATION_OPTIONS}
                         triggerClassName='w-[160px]'
                        ariaLabel={`Operation ${index + 1}`} title={`Operation ${index + 1}`}/>
                     </FormField>
@@ -159,11 +185,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                         onValueChange={(value: string): void =>
                           updateOperation(index, { mode: value as 'both' | 'left' | 'right' })
                         }
-                        options={[
-                          { value: 'both', label: 'Both' },
-                          { value: 'left', label: 'Start (Left)' },
-                          { value: 'right', label: 'End (Right)' },
-                        ]}
+                        options={TRIM_MODE_OPTIONS}
                         triggerClassName='w-[200px]'
                        ariaLabel='Trim Mode' title='Trim Mode'/>
                     </FormField>
@@ -204,10 +226,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                         onValueChange={(value: string): void =>
                           updateOperation(index, { matchMode: value as 'first' | 'all' })
                         }
-                        options={[
-                          { value: 'first', label: 'First Match' },
-                          { value: 'all', label: 'All Matches' },
-                        ]}
+                        options={MATCH_MODE_OPTIONS}
                         triggerClassName='w-full'
                        ariaLabel='Match Mode' title='Match Mode'/>
                     </FormField>
@@ -249,10 +268,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                         onValueChange={(value: string): void =>
                           updateOperation(index, { mode: value as 'upper' | 'lower' })
                         }
-                        options={[
-                          { value: 'lower', label: 'Lowercase' },
-                          { value: 'upper', label: 'Uppercase' },
-                        ]}
+                        options={CASE_MODE_OPTIONS}
                         triggerClassName='w-[200px]'
                        ariaLabel='Case Mode' title='Case Mode'/>
                     </FormField>
@@ -280,10 +296,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                         onValueChange={(value: string): void =>
                           updateOperation(index, { position: value as 'prefix' | 'suffix' })
                         }
-                        options={[
-                          { value: 'prefix', label: 'Prefix' },
-                          { value: 'suffix', label: 'Suffix' },
-                        ]}
+                        options={APPEND_POSITION_OPTIONS}
                         triggerClassName='w-full'
                        ariaLabel='Position' title='Position'/>
                     </FormField>
@@ -331,10 +344,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
             onValueChange={(value: string): void =>
               setNewType(value as StringMutatorOperation['type'])
             }
-            options={Object.entries(OPERATION_LABELS).map(([value, label]) => ({
-              value,
-              label,
-            }))}
+            options={OPERATION_OPTIONS}
             ariaLabel='New operation type'
             triggerClassName='w-[180px]'
            title='Select option'/>

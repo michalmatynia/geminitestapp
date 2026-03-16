@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   DEFAULT_CONTEXT_ROLE,
   applyContextPreset,
@@ -29,6 +30,32 @@ import {
 } from '../AiPathConfigContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+const CONTEXT_ENTITY_TYPE_OPTIONS = [
+  { value: 'auto', label: 'Auto (use trigger)' },
+  { value: 'product', label: 'Product' },
+  { value: 'note', label: 'Note' },
+  { value: 'chat', label: 'Chat' },
+  { value: 'log', label: 'Log Entry' },
+] as const satisfies ReadonlyArray<
+  LabeledOptionDto<'auto' | 'product' | 'note' | 'chat' | 'log'>
+>;
+
+const CONTEXT_SCOPE_TARGET_OPTIONS = [
+  { value: 'entity', label: 'Entity only' },
+  { value: 'context', label: 'Full context' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'entity' | 'context'>>;
+
+const CONTEXT_ENTITY_ID_SOURCE_OPTIONS = [
+  { value: 'simulation', label: 'Simulation node' },
+  { value: 'context', label: 'Context payload' },
+  { value: 'manual', label: 'Manual ID' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'simulation' | 'manual' | 'context'>>;
+
+const CONTEXT_SCOPE_MODE_OPTIONS = [
+  { value: 'full', label: 'Full entity payload' },
+  { value: 'include', label: 'Include only listed paths' },
+  { value: 'exclude', label: 'Exclude listed paths' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'full' | 'include' | 'exclude'>>;
 
 function pruneLargeFields(value: unknown, seen: Set<object> = new Set<object>()): unknown {
   if (!value || typeof value !== 'object') return value;
@@ -386,13 +413,7 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
                 context: { ...contextConfig, entityType: value },
               })
             }
-            options={[
-              { value: 'auto', label: 'Auto (use trigger)' },
-              { value: 'product', label: 'Product' },
-              { value: 'note', label: 'Note' },
-              { value: 'chat', label: 'Chat' },
-              { value: 'log', label: 'Log Entry' },
-            ]}
+            options={CONTEXT_ENTITY_TYPE_OPTIONS}
             variant='subtle'
            ariaLabel='Collection Type' title='Collection Type'/>
         </FormField>
@@ -412,10 +433,7 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
                 },
               })
             }
-            options={[
-              { value: 'entity', label: 'Entity only' },
-              { value: 'context', label: 'Full context' },
-            ]}
+            options={CONTEXT_SCOPE_TARGET_OPTIONS}
             variant='subtle'
            ariaLabel='Scope Target' title='Scope Target'/>
         </FormField>
@@ -432,11 +450,7 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
                 },
               })
             }
-            options={[
-              { value: 'simulation', label: 'Simulation node' },
-              { value: 'context', label: 'Context payload' },
-              { value: 'manual', label: 'Manual ID' },
-            ]}
+            options={CONTEXT_ENTITY_ID_SOURCE_OPTIONS}
             variant='subtle'
            ariaLabel='Entity ID Source' title='Entity ID Source'/>
         </FormField>
@@ -516,11 +530,7 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-          options={[
-            { value: 'full', label: 'Full entity payload' },
-            { value: 'include', label: 'Include only listed paths' },
-            { value: 'exclude', label: 'Exclude listed paths' },
-          ]}
+          options={CONTEXT_SCOPE_MODE_OPTIONS}
           variant='subtle'
          ariaLabel='Data Scope' title='Data Scope'/>
       </FormField>

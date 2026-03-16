@@ -191,7 +191,7 @@ export function BlockSettingsTab(): React.JSX.Element | null {
               if (f.key === 'entryPage') {
                 return {
                   ...f,
-                  options: [...KANGUR_APP_EMBED_ENTRY_PAGE_OPTIONS],
+                  options: KANGUR_APP_EMBED_ENTRY_PAGE_OPTIONS,
                   disabled: selectedAppOption?.id !== 'kangur',
                 };
               }

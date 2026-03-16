@@ -205,7 +205,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
                   size='sm'
                   value={limit}
                   onValueChange={setLimit}
-                  options={[...LIMIT_OPTIONS]}
+                  options={LIMIT_OPTIONS}
                   className='w-20'
                  ariaLabel='Inventory & Limits' title='Inventory & Limits'/>
               </div>
@@ -270,7 +270,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
               size='sm'
               value={imageMode}
               onValueChange={(v: string): void => setImageMode(v as 'links' | 'download')}
-              options={[...IMAGE_MODE_OPTIONS]}
+              options={IMAGE_MODE_OPTIONS}
              ariaLabel='Image Handling' title='Image Handling'/>
             <Hint className='mt-2'>Download stores images locally in your uploads folder.</Hint>
           </FormField>
@@ -282,7 +282,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
               onValueChange={(value: string): void =>
                 setImportMode(value as 'create_only' | 'upsert_on_base_id' | 'upsert_on_sku')
               }
-              options={[...IMPORT_MODE_OPTIONS]}
+              options={IMPORT_MODE_OPTIONS}
              ariaLabel='Import Strategy' title='Import Strategy'/>
             <div className='mt-3'>
               <ToggleRow

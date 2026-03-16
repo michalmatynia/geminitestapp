@@ -8,6 +8,7 @@ import {
 } from '@/shared/contracts/ai-paths';
 import { settingRecordSchema, type SettingRecord as AiPathsSettingRecord } from '@/shared/contracts/settings';
 import { ApiError, api } from '@/shared/lib/api-client';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export type { AiPathsSettingRecord };
@@ -226,10 +227,15 @@ export const fetchAiPathsSettingsCached = async (options?: {
           (sum, item) => sum + item.key.length + item.value.length,
           0
         );
-        console.info('[ai-paths-settings-client] fetched full settings', {
-          durationMs,
-          recordCount: records.length,
-          payloadBytes,
+        void logSystemEvent({
+          level: 'info',
+          source: 'ai-paths-settings-client',
+          message: 'Fetched full settings payload',
+          context: {
+            durationMs,
+            recordCount: records.length,
+            payloadBytes,
+          },
         });
       }
       return records;
@@ -309,11 +315,16 @@ export const fetchAiPathsSettingsByKeysCached = async (
           (sum, item) => sum + item.key.length + item.value.length,
           0
         );
-        console.info('[ai-paths-settings-client] fetched selective settings', {
-          durationMs,
-          requestedKeys: normalizedKeys.length,
-          recordCount: orderedRecords.length,
-          payloadBytes,
+        void logSystemEvent({
+          level: 'info',
+          source: 'ai-paths-settings-client',
+          message: 'Fetched selective settings payload',
+          context: {
+            durationMs,
+            requestedKeys: normalizedKeys.length,
+            recordCount: orderedRecords.length,
+            payloadBytes,
+          },
         });
       }
       return orderedRecords;

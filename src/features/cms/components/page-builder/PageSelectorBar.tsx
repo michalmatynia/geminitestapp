@@ -4,6 +4,7 @@ import { Layers } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { PageSummary } from '@/shared/contracts/cms';
 import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
 import { SelectSimple } from '@/shared/ui';
@@ -102,6 +103,14 @@ export function PageSelectorBar({ variant = 'bar' }: PageSelectorBarProps): Reac
     hasUserSelectedPageRef.current = true;
     setUserPageId((prev: string | null) => (prev === value ? prev : value));
   }, []);
+  const pageOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () =>
+      (pagesQuery.data ?? []).map((page: PageSummary) => ({
+        value: page.id,
+        label: page.name,
+      })),
+    [pagesQuery.data]
+  );
 
   return (
     <div
@@ -119,10 +128,7 @@ export function PageSelectorBar({ variant = 'bar' }: PageSelectorBarProps): Reac
         size='sm'
         value={selectedPageId}
         onValueChange={handlePageChange}
-        options={(pagesQuery.data ?? []).map((page: PageSummary) => ({
-          value: page.id,
-          label: page.name,
-        }))}
+        options={pageOptions}
         placeholder='Select a page...'
         ariaLabel='Select a page...'
         className={isToolbar ? 'w-56' : 'w-64'}

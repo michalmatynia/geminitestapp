@@ -23,6 +23,7 @@ import {
   PriceGroupWithDetails,
   ProductCategory,
 } from '@/shared/contracts/products';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   Button,
   SelectSimple,
@@ -184,6 +185,14 @@ export default function ProductFormOther(): React.JSX.Element {
       sourceGroupName: sourceGroup.name,
     };
   });
+  const priceGroupOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () =>
+      filteredPriceGroups.map((group: PriceGroupWithDetails) => ({
+        value: group.id,
+        label: `${group.name}${group.isDefault ? ' (Default)' : ''} (${group.currency?.code ?? group.currencyCode})`,
+      })),
+    [filteredPriceGroups]
+  );
 
   return (
     <div className='space-y-6'>
@@ -219,10 +228,7 @@ export default function ProductFormOther(): React.JSX.Element {
               value={selectedDefaultPriceGroupId || ''}
               disabled={isPriceGroupAutoAssigned}
               ariaLabel='Default price group'
-              options={filteredPriceGroups.map((group: PriceGroupWithDetails) => ({
-                value: group.id,
-                label: `${group.name}${group.isDefault ? ' (Default)' : ''} (${group.currency?.code ?? group.currencyCode})`,
-              }))}
+              options={priceGroupOptions}
               placeholder='Select default price group'
               triggerClassName={isPriceGroupAutoAssigned ? 'cursor-not-allowed opacity-60' : ''}
              title='Select default price group'/>

@@ -1,11 +1,12 @@
 'use client';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ConstantConfig } from '@/shared/lib/ai-paths';
 import { Input, Label, SelectSimple, Textarea } from '@/shared/ui';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
-const valueTypeOptions = [
+const valueTypeOptions: Array<LabeledOptionDto<NonNullable<ConstantConfig['valueType']>>> = [
   { value: 'string', label: 'String' },
   { value: 'number', label: 'Number' },
   { value: 'boolean', label: 'Boolean' },

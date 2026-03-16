@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { useListingSelection } from '@/features/integrations/context/ListingSettingsContext';
 import type {
   IntegrationConnectionBasic,
   IntegrationWithConnections,
 } from '@/shared/contracts/integrations';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { FormField, FormSection, SelectSimple, Alert, LoadingState } from '@/shared/ui';
 
 import { BaseListingSettings } from '../BaseListingSettings';
@@ -25,6 +26,24 @@ export function IntegrationSettingsSection(): React.JSX.Element {
   const integrationsWithConnections = integrations.filter(
     (i: IntegrationWithConnections) => i.connections.length > 0
   );
+  const integrationOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () =>
+      integrationsWithConnections.map((integration) => ({
+        value: integration.id,
+        label: integration.name,
+      })),
+    [integrationsWithConnections]
+  );
+  const connectionOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () =>
+      (selectedIntegration?.connections ?? []).map(
+        (connection: IntegrationConnectionBasic) => ({
+          value: connection.id,
+          label: connection.name,
+        })
+      ),
+    [selectedIntegration]
+  );
 
   return (
     <div className='space-y-4'>
@@ -37,7 +56,7 @@ export function IntegrationSettingsSection(): React.JSX.Element {
               <SelectSimple
                 value={selectedIntegrationId ?? undefined}
                 onValueChange={setSelectedIntegrationId}
-                options={integrationsWithConnections.map((i) => ({ value: i.id, label: i.name }))}
+                options={integrationOptions}
                 placeholder='Select marketplace...'
                ariaLabel='Select marketplace...' title='Select marketplace...'/>
             </FormField>
@@ -47,10 +66,7 @@ export function IntegrationSettingsSection(): React.JSX.Element {
                 <SelectSimple
                   value={selectedConnectionId ?? undefined}
                   onValueChange={setSelectedConnectionId}
-                  options={selectedIntegration.connections.map((c: IntegrationConnectionBasic) => ({
-                    value: c.id,
-                    label: c.name,
-                  }))}
+                  options={connectionOptions}
                   placeholder='Select account...'
                  ariaLabel='Select account...' title='Select account...'/>
               </FormField>

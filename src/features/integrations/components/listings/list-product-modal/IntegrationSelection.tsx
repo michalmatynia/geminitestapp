@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { useListingSelection } from '@/features/integrations/context/ListingSettingsContext';
 import type {
   IntegrationWithConnections,
   IntegrationConnectionBasic,
 } from '@/shared/contracts/integrations';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { FormField, FormSection } from '@/shared/ui';
 import { SelectSimple } from '@/shared/ui';
 
@@ -20,6 +21,26 @@ export function IntegrationSelection(): React.JSX.Element {
   } = useListingSelection();
   const integrationsWithConnections = integrations.filter(
     (i: IntegrationWithConnections) => i.connections.length > 0
+  );
+  const integrationOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () =>
+      integrationsWithConnections
+        .filter((integration: IntegrationWithConnections): boolean => Boolean(integration.id))
+        .map((integration: IntegrationWithConnections) => ({
+          value: integration.id,
+          label: integration.name,
+        })),
+    [integrationsWithConnections]
+  );
+  const connectionOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () =>
+      (selectedIntegration?.connections ?? [])
+        .filter((connection: IntegrationConnectionBasic): boolean => Boolean(connection.id))
+        .map((connection: IntegrationConnectionBasic) => ({
+          value: connection.id,
+          label: connection.name,
+        })),
+    [selectedIntegration]
   );
 
   if (loading) {
@@ -46,12 +67,7 @@ export function IntegrationSelection(): React.JSX.Element {
         <SelectSimple
           value={selectedIntegrationId || undefined}
           onValueChange={setSelectedIntegrationId}
-          options={integrationsWithConnections
-            .filter((integration: IntegrationWithConnections): boolean => !!integration.id)
-            .map((integration: IntegrationWithConnections) => ({
-              value: integration.id,
-              label: integration.name,
-            }))}
+          options={integrationOptions}
           placeholder='Select a marketplace...'
          ariaLabel='Select a marketplace...' title='Select a marketplace...'/>
       </FormField>
@@ -64,12 +80,7 @@ export function IntegrationSelection(): React.JSX.Element {
           <SelectSimple
             value={selectedConnectionId || undefined}
             onValueChange={setSelectedConnectionId}
-            options={selectedIntegration.connections
-              .filter((connection: IntegrationConnectionBasic): boolean => !!connection.id)
-              .map((connection: IntegrationConnectionBasic) => ({
-                value: connection.id,
-                label: connection.name,
-              }))}
+            options={connectionOptions}
             placeholder='Select an account...'
            ariaLabel='Select an account...' title='Select an account...'/>
         </FormField>

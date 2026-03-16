@@ -26,6 +26,10 @@ import { useValidatorSettingsContext } from '../ValidatorSettingsContext';
 
 export function ValidatorPatternModalLaunchSection(): React.JSX.Element {
   const { formData, setFormData, sourceFieldOptions } = useValidatorSettingsContext();
+  const sourceFieldSelectOptions = React.useMemo(
+    () => [SOURCE_FIELD_PLACEHOLDER_OPTION, ...sourceFieldOptions],
+    [sourceFieldOptions]
+  );
 
   return (
     <FormSection
@@ -143,7 +147,7 @@ export function ValidatorPatternModalLaunchSection(): React.JSX.Element {
                     launchSourceField: value === '__none__' ? '' : value,
                   }))
                 }
-                options={[SOURCE_FIELD_PLACEHOLDER_OPTION, ...sourceFieldOptions]}
+                options={sourceFieldSelectOptions}
                ariaLabel='Launch Source Field' title='Launch Source Field'/>
             </FormField>
           )}

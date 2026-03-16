@@ -19,6 +19,10 @@ import {
   type SeverityFilter,
   usePromptEngineFilters,
 } from '../context/prompt-engine/PromptEngineFiltersContext';
+import type {
+  ExploderPatternSubTab,
+  PatternCollectionTab,
+} from '../context/prompt-engine/PromptEngineConfigContext';
 
 const SEVERITY_OPTIONS: Array<LabeledOptionDto<SeverityFilter>> = [
   { value: 'all', label: 'All' },
@@ -35,12 +39,12 @@ const SCOPE_OPTIONS: Array<LabeledOptionDto<ScopeFilter>> = [
   })),
 ];
 
-const PATTERN_TAB_OPTIONS: Array<LabeledOptionDto<string>> = [
+const PATTERN_TAB_OPTIONS: Array<LabeledOptionDto<PatternCollectionTab>> = [
   { value: 'core', label: 'Core Patterns' },
   { value: 'prompt_exploder', label: 'Exploder' },
 ];
 
-const EXPLODER_SUBTAB_OPTIONS: Array<LabeledOptionDto<string>> = [
+const EXPLODER_SUBTAB_OPTIONS: Array<LabeledOptionDto<ExploderPatternSubTab>> = [
   { value: 'prompt_exploder_rules', label: 'Prompt Exploder' },
   { value: 'image_studio_rules', label: 'Image Studio' },
   { value: 'case_resolver_rules', label: 'Case Resolver' },

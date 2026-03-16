@@ -22,6 +22,7 @@ import {
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+const toControlOptions = <T,>(control: T): T[] => [control];
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
@@ -110,7 +111,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       path: s.path,
       valuePreview: '',
       control: s.control,
-      options: [s.control],
+      options: toControlOptions(s.control),
       confidence: s.confidence ?? 0.6,
       reason: s.reason ?? null,
       source: 'ai',

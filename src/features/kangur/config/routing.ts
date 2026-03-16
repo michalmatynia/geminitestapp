@@ -26,7 +26,6 @@ export const KANGUR_PAGE_TO_SLUG: Record<string, string> = Object.freeze({
   Lessons: 'lessons',
   ParentDashboard: 'parent-dashboard',
   Duels: 'duels',
-  Tests: 'tests',
 });
 
 export const KANGUR_SLUG_TO_PAGE: Record<string, string> = Object.freeze(

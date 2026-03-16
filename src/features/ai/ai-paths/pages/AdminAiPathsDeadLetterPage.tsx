@@ -29,6 +29,11 @@ import { useDeadLetterRuns } from '../hooks/useDeadLetterRuns';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
+const REQUEUE_MODE_OPTIONS = [
+  { value: 'resume', label: 'Resume (Continue)' },
+  { value: 'replay', label: 'Replay (From start)' },
+];
+
 export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
   const {
     runs,
@@ -226,10 +231,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                 key: 'requeueMode',
                 label: 'Requeue Mode',
                 type: 'select',
-                options: [
-                  { value: 'resume', label: 'Resume (Continue)' },
-                  { value: 'replay', label: 'Replay (From start)' },
-                ],
+                options: REQUEUE_MODE_OPTIONS,
               },
             ]}
             headerAction={

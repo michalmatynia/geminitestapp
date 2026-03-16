@@ -27,7 +27,7 @@ const levelOptions: Array<LabeledOptionDto<SystemLogLevel | 'all'>> = [
 ];
 
 export const systemLogFilterFields: FilterField[] = [
-  { key: 'level', label: 'Level', type: 'select', options: [...levelOptions] },
+  { key: 'level', label: 'Level', type: 'select', options: levelOptions },
   { key: 'query', label: 'Search', type: 'text', placeholder: 'Message or source' },
   { key: 'source', label: 'Source', type: 'text', placeholder: 'api/products, auth, etc.' },
   { key: 'service', label: 'Service', type: 'text', placeholder: 'domain.feature' },

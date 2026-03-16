@@ -344,6 +344,27 @@ npm run test:coverage
 npm run test:e2e
 ```
 
+## Deep Application Scan
+
+Use this for a full application-level scan or when a task asks for a "deep
+scan". The full runbook lives at `docs/runbooks/application-performance-operations.md`.
+
+Default scan command:
+
+```bash
+npm run perf:ops:baseline
+```
+
+Notes:
+
+- The baseline run includes `observability:check` plus critical-path budgets,
+  critical-flow tests, route hotspots, and unit-domain timings.
+- Generated artifacts land under `docs/metrics/*-latest.*`,
+  `docs/metrics/route-hotspots.md`, and `logs/observability-check*.log`.
+- Do not hand-edit generated metrics/log outputs; re-run the scan instead.
+- For scan-only JSON snapshots without writing `docs/metrics`, follow the
+  runbook’s `--summary-json --no-write --no-history` commands.
+
 ## Sensitive and Non-Authoritative Areas
 
 - Avoid scanning `AIPrompts/` unless the task explicitly requires it.

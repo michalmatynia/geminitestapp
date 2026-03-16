@@ -197,10 +197,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
               logicalOperator: nextOperator,
             });
           }}
-          options={PROMPT_EXPLODER_LOGICAL_OPERATOR_OPTIONS.map((option) => ({
-            value: option.value,
-            label: option.label,
-          }))}
+          options={PROMPT_EXPLODER_LOGICAL_OPERATOR_OPTIONS}
          title='Select option'/>
       </div>
 
@@ -217,6 +214,11 @@ export function SegmentEditorListItemLogicalEditor(args: {
               selectedParamPath.length > 0 &&
               comparatorValue !== 'truthy' &&
               comparatorValue !== 'falsy';
+            const enumSelectOptions =
+              selectedParamEntry?.spec?.kind === 'enum' && selectedParamEntry.spec.enumOptions
+                ? selectedParamEntry.spec.enumOptions.map((value) => ({ value, label: value }))
+                : null;
+            const enumFallbackValue = enumSelectOptions?.[0]?.value ?? '';
             const paramOptions =
               selectedParamPath &&
               !listParamOptions.some((option) => option.value === selectedParamPath)
@@ -249,10 +251,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
                           joinWithPrevious: next,
                         });
                       }}
-                      options={PROMPT_EXPLODER_LOGICAL_JOIN_OPTIONS.map((option) => ({
-                        value: option.value,
-                        label: option.label,
-                      }))}
+                      options={PROMPT_EXPLODER_LOGICAL_JOIN_OPTIONS}
                      title='Select option'/>
                   )}
                 </div>
@@ -307,14 +306,14 @@ export function SegmentEditorListItemLogicalEditor(args: {
                             value: next === 'true',
                           });
                         }}
-                        options={[...BOOLEAN_OPTIONS]}
+                        options={BOOLEAN_OPTIONS}
                        title='Select option'/>
                     ) : selectedParamEntry?.spec?.kind === 'enum' &&
-                      selectedParamEntry.spec.enumOptions ? (
+                      enumSelectOptions ? (
                         <SelectSimple
                           size='sm'
                           value={String(
-                            condition.value ?? selectedParamEntry.spec.enumOptions[0] ?? ''
+                            condition.value ?? enumFallbackValue
                           )}
                           ariaLabel='Condition value'
                           onValueChange={(next: string) => {
@@ -322,10 +321,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
                               value: next,
                             });
                           }}
-                          options={selectedParamEntry.spec.enumOptions.map((value) => ({
-                            value,
-                            label: value,
-                          }))}
+                          options={enumSelectOptions}
                          title='Select option'/>
                       ) : selectedParamEntry?.spec?.kind === 'number' ? (
                         <Input

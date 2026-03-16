@@ -32,6 +32,16 @@ type TagFormData = {
   parentId: string | null;
 };
 
+const ROOT_CATEGORY_OPTION: LabeledOptionDto<string> = { value: '__root__', label: 'Root' };
+const ROOT_IDENTIFIER_OPTION: LabeledOptionDto<string> = {
+  value: '__none__',
+  label: 'No parent (root identifier)',
+};
+const ROOT_TAG_OPTION: LabeledOptionDto<string> = {
+  value: '__none__',
+  label: 'No parent (root tag)',
+};
+
 interface BaseCaseResolverEntityModalProps<
   TItem,
   TForm extends object,
@@ -108,6 +118,11 @@ export function CaseResolverCategoryModal(
 ): React.JSX.Element {
   const { parentOptions, isOpen, onClose, item, formData, setFormData, isSaving, onSave } = props;
 
+  const parentCategoryOptions = useMemo(
+    () => [ROOT_CATEGORY_OPTION, ...parentOptions],
+    [parentOptions]
+  );
+
   const fields: SettingsPanelField<CategoryFormData>[] = useMemo(
     () => [
       {
@@ -121,7 +136,7 @@ export function CaseResolverCategoryModal(
         key: 'parentId',
         label: 'Parent Category',
         type: 'select',
-        options: [{ value: '__root__', label: 'Root' }, ...parentOptions],
+        options: parentCategoryOptions,
         placeholder: 'Root',
       },
       {
@@ -137,7 +152,7 @@ export function CaseResolverCategoryModal(
         required: true,
       },
     ],
-    [parentOptions]
+    [parentCategoryOptions]
   );
 
   return (
@@ -179,6 +194,11 @@ export function CaseResolverIdentifierModal(
     onSave,
   } = props;
 
+  const identifierOptions = useMemo(
+    () => [ROOT_IDENTIFIER_OPTION, ...parentIdentifierOptions],
+    [parentIdentifierOptions]
+  );
+
   const fields: SettingsPanelField<CaseIdentifierFormData>[] = useMemo(
     () => [
       {
@@ -198,14 +218,11 @@ export function CaseResolverIdentifierModal(
         key: 'parentId',
         label: 'Parent Case Identifier',
         type: 'select',
-        options: [
-          { value: '__none__', label: 'No parent (root identifier)' },
-          ...parentIdentifierOptions,
-        ],
+        options: identifierOptions,
         placeholder: 'Select parent case identifier',
       },
     ],
-    [parentIdentifierOptions]
+    [identifierOptions]
   );
 
   return (
@@ -237,6 +254,8 @@ export function CaseResolverTagModal(props: CaseResolverTagModalProps): React.JS
   const { parentTagOptions, isOpen, onClose, item, formData, setFormData, isSaving, onSave } =
     props;
 
+  const tagOptions = useMemo(() => [ROOT_TAG_OPTION, ...parentTagOptions], [parentTagOptions]);
+
   const fields: SettingsPanelField<TagFormData>[] = useMemo(
     () => [
       {
@@ -256,11 +275,11 @@ export function CaseResolverTagModal(props: CaseResolverTagModalProps): React.JS
         key: 'parentId',
         label: 'Parent Tag',
         type: 'select',
-        options: [{ value: '__none__', label: 'No parent (root tag)' }, ...parentTagOptions],
+        options: tagOptions,
         placeholder: 'Select parent tag',
       },
     ],
-    [parentTagOptions]
+    [tagOptions]
   );
 
   return (

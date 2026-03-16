@@ -13,6 +13,138 @@ import {
   sectionStyleFields,
 } from './shared-field-helpers';
 
+const ROW_COLUMN_OPTIONS = [
+  { label: 'Row', value: 'row' },
+  { label: 'Column', value: 'column' },
+];
+
+const COLUMN_ROW_OPTIONS = [
+  { label: 'Column', value: 'column' },
+  { label: 'Row', value: 'row' },
+];
+
+const LEFT_CENTER_RIGHT_OPTIONS = [
+  { label: 'Left', value: 'left' },
+  { label: 'Center', value: 'center' },
+  { label: 'Right', value: 'right' },
+];
+
+const LINK_TARGET_OPTIONS = [
+  { label: 'Same tab', value: '_self' },
+  { label: 'New tab', value: '_blank' },
+];
+
+const INHERIT_JUSTIFY_OPTIONS = [{ label: 'Inherit alignment', value: 'inherit' }, ...JUSTIFY_OPTIONS];
+
+const TRUE_FALSE_OPTIONS = [
+  { label: 'Yes', value: 'true' },
+  { label: 'No', value: 'false' },
+];
+
+const FALSE_TRUE_OPTIONS = [
+  { label: 'No', value: 'false' },
+  { label: 'Yes', value: 'true' },
+];
+
+const YES_NO_OPTIONS = [
+  { label: 'No', value: 'no' },
+  { label: 'Yes', value: 'yes' },
+];
+
+const CAROUSEL_TRANSITION_OPTIONS = [
+  { label: 'Slide', value: 'slide' },
+  { label: 'Fade', value: 'fade' },
+  { label: 'None', value: 'none' },
+];
+
+const HEIGHT_MODE_OPTIONS = [
+  { label: 'Auto (fit content)', value: 'auto' },
+  { label: 'Fixed', value: 'fixed' },
+];
+
+const VERTICAL_ALIGNMENT_OPTIONS = [
+  { label: 'Top', value: 'top' },
+  { label: 'Center', value: 'center' },
+  { label: 'Bottom', value: 'bottom' },
+];
+
+const FRAME_ANIMATION_OPTIONS = [
+  { label: 'None', value: 'none' },
+  { label: 'Fade in', value: 'fade-in' },
+  { label: 'Slide up', value: 'slide-up' },
+  { label: 'Slide down', value: 'slide-down' },
+  { label: 'Slide left', value: 'slide-left' },
+  { label: 'Slide right', value: 'slide-right' },
+  { label: 'Zoom in', value: 'zoom-in' },
+  { label: 'Zoom out', value: 'zoom-out' },
+];
+
+const FRAME_ANIMATION_WITH_INHERIT_OPTIONS = [
+  { label: 'Inherit from Slideshow', value: 'inherit' },
+  ...FRAME_ANIMATION_OPTIONS,
+];
+
+const ANIMATION_EASING_OPTIONS = [
+  { label: 'Linear', value: 'linear' },
+  { label: 'Ease', value: 'ease' },
+  { label: 'Ease in', value: 'ease-in' },
+  { label: 'Ease out', value: 'ease-out' },
+  { label: 'Ease in-out', value: 'ease-in-out' },
+];
+
+const HEADING_SIZE_OPTIONS = [
+  { label: 'Small', value: 'small' },
+  { label: 'Medium', value: 'medium' },
+  { label: 'Large', value: 'large' },
+];
+
+const TEXT_DECORATION_OPTIONS = [
+  { label: 'None', value: 'none' },
+  { label: 'Underline', value: 'underline' },
+  { label: 'Line-through', value: 'line-through' },
+];
+
+const TEXT_TRANSFORM_OPTIONS = [
+  { label: 'None', value: 'none' },
+  { label: 'Uppercase', value: 'uppercase' },
+  { label: 'Lowercase', value: 'lowercase' },
+  { label: 'Capitalize', value: 'capitalize' },
+];
+
+const FONT_STYLE_OPTIONS = [
+  { label: 'Normal', value: 'normal' },
+  { label: 'Italic', value: 'italic' },
+];
+
+const INPUT_TYPE_OPTIONS = [
+  { label: 'Text', value: 'text' },
+  { label: 'Email', value: 'email' },
+  { label: 'Password', value: 'password' },
+  { label: 'Number', value: 'number' },
+];
+
+const BUTTON_STYLE_OPTIONS = [
+  { label: 'Solid', value: 'solid' },
+  { label: 'Outline', value: 'outline' },
+];
+
+const DISABLE_WHEN_OPTIONS = [
+  { label: 'Value is truthy', value: 'truthy' },
+  { label: 'Value is falsy', value: 'falsy' },
+];
+
+const IMAGE_HEIGHT_OPTIONS = [
+  { label: 'Small', value: 'small' },
+  { label: 'Medium', value: 'medium' },
+  { label: 'Large', value: 'large' },
+  { label: 'Adapt to image', value: 'adapt' },
+];
+
+const IMAGE_PLACEMENT_OPTIONS = [
+  { label: 'Image first', value: 'image-first' },
+  { label: 'Image second', value: 'image-second' },
+];
+
 
 // Content blocks that can be placed inside a CarouselFrame
 export const CAROUSEL_FRAME_ALLOWED_BLOCK_TYPES = [
@@ -87,10 +219,7 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'layoutDirection',
         label: 'Layout direction',
         type: 'select',
-        options: [
-          { label: 'Row', value: 'row' },
-          { label: 'Column', value: 'column' },
-        ],
+        options: ROW_COLUMN_OPTIONS,
         defaultValue: 'row',
       },
       {
@@ -104,11 +233,7 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'contentAlignment',
         label: 'Content alignment',
         type: 'select',
-        options: [
-          { label: 'Left', value: 'left' },
-          { label: 'Center', value: 'center' },
-          { label: 'Right', value: 'right' },
-        ],
+        options: LEFT_CENTER_RIGHT_OPTIONS,
         defaultValue: 'left',
       },
       { key: 'linkUrl', label: 'Block link', type: 'link', defaultValue: '' },
@@ -116,17 +241,14 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'linkTarget',
         label: 'Link target',
         type: 'select',
-        options: [
-          { label: 'Same tab', value: '_self' },
-          { label: 'New tab', value: '_blank' },
-        ],
+        options: LINK_TARGET_OPTIONS,
         defaultValue: '_self',
       },
       {
         key: 'justifyContent',
         label: 'Justify content',
         type: 'select',
-        options: [{ label: 'Inherit alignment', value: 'inherit' }, ...JUSTIFY_OPTIONS],
+        options: INHERIT_JUSTIFY_OPTIONS,
         defaultValue: 'inherit',
       },
       {
@@ -173,10 +295,7 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'autoPlay',
         label: 'Auto play',
         type: 'select',
-        options: [
-          { label: 'Yes', value: 'true' },
-          { label: 'No', value: 'false' },
-        ],
+        options: TRUE_FALSE_OPTIONS,
         defaultValue: 'true',
       },
       {
@@ -191,41 +310,28 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'loop',
         label: 'Loop',
         type: 'select',
-        options: [
-          { label: 'Yes', value: 'true' },
-          { label: 'No', value: 'false' },
-        ],
+        options: TRUE_FALSE_OPTIONS,
         defaultValue: 'true',
       },
       {
         key: 'showNavigation',
         label: 'Show arrows',
         type: 'select',
-        options: [
-          { label: 'Yes', value: 'true' },
-          { label: 'No', value: 'false' },
-        ],
+        options: TRUE_FALSE_OPTIONS,
         defaultValue: 'true',
       },
       {
         key: 'showIndicators',
         label: 'Show indicators',
         type: 'select',
-        options: [
-          { label: 'Yes', value: 'true' },
-          { label: 'No', value: 'false' },
-        ],
+        options: TRUE_FALSE_OPTIONS,
         defaultValue: 'true',
       },
       {
         key: 'transitionType',
         label: 'Transition type',
         type: 'select',
-        options: [
-          { label: 'Slide', value: 'slide' },
-          { label: 'Fade', value: 'fade' },
-          { label: 'None', value: 'none' },
-        ],
+        options: CAROUSEL_TRANSITION_OPTIONS,
         defaultValue: 'slide',
       },
       {
@@ -240,20 +346,14 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'pauseOnHover',
         label: 'Pause on hover',
         type: 'select',
-        options: [
-          { label: 'Yes', value: 'true' },
-          { label: 'No', value: 'false' },
-        ],
+        options: TRUE_FALSE_OPTIONS,
         defaultValue: 'true',
       },
       {
         key: 'heightMode',
         label: 'Height mode',
         type: 'select',
-        options: [
-          { label: 'Auto (fit content)', value: 'auto' },
-          { label: 'Fixed', value: 'fixed' },
-        ],
+        options: HEIGHT_MODE_OPTIONS,
         defaultValue: 'auto',
       },
       {
@@ -291,22 +391,14 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'contentAlignment',
         label: 'Content alignment',
         type: 'select',
-        options: [
-          { label: 'Left', value: 'left' },
-          { label: 'Center', value: 'center' },
-          { label: 'Right', value: 'right' },
-        ],
+        options: LEFT_CENTER_RIGHT_OPTIONS,
         defaultValue: 'center',
       },
       {
         key: 'verticalAlignment',
         label: 'Vertical alignment',
         type: 'select',
-        options: [
-          { label: 'Top', value: 'top' },
-          { label: 'Center', value: 'center' },
-          { label: 'Bottom', value: 'bottom' },
-        ],
+        options: VERTICAL_ALIGNMENT_OPTIONS,
         defaultValue: 'center',
       },
       ...paddingFields(),
@@ -314,16 +406,7 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'animationType',
         label: 'Content animation',
         type: 'select',
-        options: [
-          { label: 'None', value: 'none' },
-          { label: 'Fade in', value: 'fade-in' },
-          { label: 'Slide up', value: 'slide-up' },
-          { label: 'Slide down', value: 'slide-down' },
-          { label: 'Slide left', value: 'slide-left' },
-          { label: 'Slide right', value: 'slide-right' },
-          { label: 'Zoom in', value: 'zoom-in' },
-          { label: 'Zoom out', value: 'zoom-out' },
-        ],
+        options: FRAME_ANIMATION_OPTIONS,
         defaultValue: 'fade-in',
       },
       {
@@ -346,13 +429,7 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'animationEasing',
         label: 'Animation easing',
         type: 'select',
-        options: [
-          { label: 'Linear', value: 'linear' },
-          { label: 'Ease', value: 'ease' },
-          { label: 'Ease in', value: 'ease-in' },
-          { label: 'Ease out', value: 'ease-out' },
-          { label: 'Ease in-out', value: 'ease-in-out' },
-        ],
+        options: ANIMATION_EASING_OPTIONS,
         defaultValue: 'ease-out',
       },
     ],
@@ -383,32 +460,21 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'contentAlignment',
         label: 'Content alignment',
         type: 'select',
-        options: [
-          { label: 'Left', value: 'left' },
-          { label: 'Center', value: 'center' },
-          { label: 'Right', value: 'right' },
-        ],
+        options: LEFT_CENTER_RIGHT_OPTIONS,
         defaultValue: 'center',
       },
       {
         key: 'verticalAlignment',
         label: 'Vertical alignment',
         type: 'select',
-        options: [
-          { label: 'Top', value: 'top' },
-          { label: 'Center', value: 'center' },
-          { label: 'Bottom', value: 'bottom' },
-        ],
+        options: VERTICAL_ALIGNMENT_OPTIONS,
         defaultValue: 'center',
       },
       {
         key: 'fillContent',
         label: 'Fill frame with image',
         type: 'select',
-        options: [
-          { label: 'No', value: 'no' },
-          { label: 'Yes', value: 'yes' },
-        ],
+        options: YES_NO_OPTIONS,
         defaultValue: 'no',
       },
       { key: 'paddingTop', label: 'Top padding', type: 'number', defaultValue: 0 },
@@ -419,17 +485,7 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'animationType',
         label: 'Content animation',
         type: 'select',
-        options: [
-          { label: 'Inherit from Slideshow', value: 'inherit' },
-          { label: 'None', value: 'none' },
-          { label: 'Fade in', value: 'fade-in' },
-          { label: 'Slide up', value: 'slide-up' },
-          { label: 'Slide down', value: 'slide-down' },
-          { label: 'Slide left', value: 'slide-left' },
-          { label: 'Slide right', value: 'slide-right' },
-          { label: 'Zoom in', value: 'zoom-in' },
-          { label: 'Zoom out', value: 'zoom-out' },
-        ],
+        options: FRAME_ANIMATION_WITH_INHERIT_OPTIONS,
         defaultValue: 'inherit',
       },
       {
@@ -452,13 +508,7 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'animationEasing',
         label: 'Animation easing',
         type: 'select',
-        options: [
-          { label: 'Linear', value: 'linear' },
-          { label: 'Ease', value: 'ease' },
-          { label: 'Ease in', value: 'ease-in' },
-          { label: 'Ease out', value: 'ease-out' },
-          { label: 'Ease in-out', value: 'ease-in-out' },
-        ],
+        options: ANIMATION_EASING_OPTIONS,
         defaultValue: 'ease-out',
       },
     ],
@@ -484,11 +534,7 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'headingSize',
         label: 'Heading size',
         type: 'select',
-        options: [
-          { label: 'Small', value: 'small' },
-          { label: 'Medium', value: 'medium' },
-          { label: 'Large', value: 'large' },
-        ],
+        options: HEADING_SIZE_OPTIONS,
         defaultValue: 'medium',
       },
       { key: 'fontFamily', label: 'Font family', type: 'font-family', defaultValue: '' },
@@ -501,23 +547,14 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'textDecoration',
         label: 'Text decoration',
         type: 'select',
-        options: [
-          { label: 'None', value: 'none' },
-          { label: 'Underline', value: 'underline' },
-          { label: 'Line-through', value: 'line-through' },
-        ],
+        options: TEXT_DECORATION_OPTIONS,
         defaultValue: 'none',
       },
       {
         key: 'textTransform',
         label: 'Text transform',
         type: 'select',
-        options: [
-          { label: 'None', value: 'none' },
-          { label: 'Uppercase', value: 'uppercase' },
-          { label: 'Lowercase', value: 'lowercase' },
-          { label: 'Capitalize', value: 'capitalize' },
-        ],
+        options: TEXT_TRANSFORM_OPTIONS,
         defaultValue: 'none',
       },
       { key: 'textAlign', label: 'Text align', type: 'alignment', defaultValue: 'left' },
@@ -557,23 +594,14 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'textDecoration',
         label: 'Text decoration',
         type: 'select',
-        options: [
-          { label: 'None', value: 'none' },
-          { label: 'Underline', value: 'underline' },
-          { label: 'Line-through', value: 'line-through' },
-        ],
+        options: TEXT_DECORATION_OPTIONS,
         defaultValue: 'none',
       },
       {
         key: 'textTransform',
         label: 'Text transform',
         type: 'select',
-        options: [
-          { label: 'None', value: 'none' },
-          { label: 'Uppercase', value: 'uppercase' },
-          { label: 'Lowercase', value: 'lowercase' },
-          { label: 'Capitalize', value: 'capitalize' },
-        ],
+        options: TEXT_TRANSFORM_OPTIONS,
         defaultValue: 'none',
       },
       { key: 'textAlign', label: 'Text align', type: 'alignment', defaultValue: 'left' },
@@ -625,10 +653,7 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'fontStyle',
         label: 'Font style',
         type: 'select',
-        options: [
-          { label: 'Normal', value: 'normal' },
-          { label: 'Italic', value: 'italic' },
-        ],
+        options: FONT_STYLE_OPTIONS,
         defaultValue: 'normal',
       },
       { key: 'lineHeight', label: 'Line height', type: 'number', defaultValue: 0 },
@@ -638,23 +663,14 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'textDecoration',
         label: 'Text decoration',
         type: 'select',
-        options: [
-          { label: 'None', value: 'none' },
-          { label: 'Underline', value: 'underline' },
-          { label: 'Line-through', value: 'line-through' },
-        ],
+        options: TEXT_DECORATION_OPTIONS,
         defaultValue: 'none',
       },
       {
         key: 'textTransform',
         label: 'Text transform',
         type: 'select',
-        options: [
-          { label: 'None', value: 'none' },
-          { label: 'Uppercase', value: 'uppercase' },
-          { label: 'Lowercase', value: 'lowercase' },
-          { label: 'Capitalize', value: 'capitalize' },
-        ],
+        options: TEXT_TRANSFORM_OPTIONS,
         defaultValue: 'none',
       },
       { key: 'textAlign', label: 'Text align', type: 'alignment', defaultValue: 'left' },
@@ -695,10 +711,7 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'wrap',
         label: 'Wrap',
         type: 'select',
-        options: [
-          { label: 'Wrap', value: 'wrap' },
-          { label: 'No wrap', value: 'nowrap' },
-        ],
+        options: WRAP_OPTIONS,
         defaultValue: 'wrap',
       },
     ],
@@ -730,10 +743,7 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'fontStyle',
         label: 'Font style',
         type: 'select',
-        options: [
-          { label: 'Normal', value: 'normal' },
-          { label: 'Italic', value: 'italic' },
-        ],
+        options: FONT_STYLE_OPTIONS,
         defaultValue: 'normal',
       },
       { key: 'lineHeight', label: 'Line height', type: 'number', defaultValue: 0 },
@@ -782,20 +792,14 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'buttonStyle',
         label: 'Button style',
         type: 'select',
-        options: [
-          { label: 'Solid', value: 'solid' },
-          { label: 'Outline', value: 'outline' },
-        ],
+        options: BUTTON_STYLE_OPTIONS,
         defaultValue: 'solid',
       },
       {
         key: 'buttonDisabled',
         label: 'Disabled',
         type: 'select',
-        options: [
-          { label: 'No', value: 'false' },
-          { label: 'Yes', value: 'true' },
-        ],
+        options: FALSE_TRUE_OPTIONS,
         defaultValue: 'false',
       },
       {
@@ -814,10 +818,7 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'buttonDisabledWhen',
         label: 'Disable when',
         type: 'select',
-        options: [
-          { label: 'Value is truthy', value: 'truthy' },
-          { label: 'Value is falsy', value: 'falsy' },
-        ],
+        options: DISABLE_WHEN_OPTIONS,
         defaultValue: 'truthy',
       },
       { key: 'fontFamily', label: 'Font family', type: 'font-family', defaultValue: '' },
@@ -863,12 +864,7 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'inputType',
         label: 'Input type',
         type: 'select',
-        options: [
-          { label: 'Text', value: 'text' },
-          { label: 'Email', value: 'email' },
-          { label: 'Password', value: 'password' },
-          { label: 'Number', value: 'number' },
-        ],
+        options: INPUT_TYPE_OPTIONS,
         defaultValue: 'text',
       },
       { key: 'inputValue', label: 'Default value', type: 'text', defaultValue: '' },
@@ -878,10 +874,7 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'inputDisabled',
         label: 'Disabled',
         type: 'select',
-        options: [
-          { label: 'No', value: 'false' },
-          { label: 'Yes', value: 'true' },
-        ],
+        options: FALSE_TRUE_OPTIONS,
         defaultValue: 'false',
       },
       {
@@ -948,10 +941,7 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'showPercentage',
         label: 'Show percentage',
         type: 'select',
-        options: [
-          { label: 'No', value: 'false' },
-          { label: 'Yes', value: 'true' },
-        ],
+        options: FALSE_TRUE_OPTIONS,
         defaultValue: 'false',
       },
     ],
@@ -992,10 +982,7 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'listLayoutDirection',
         label: 'List layout',
         type: 'select',
-        options: [
-          { label: 'Column', value: 'column' },
-          { label: 'Row', value: 'row' },
-        ],
+        options: COLUMN_ROW_OPTIONS,
         defaultValue: 'column',
       },
       {
@@ -1024,10 +1011,7 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'itemLayoutDirection',
         label: 'Item layout',
         type: 'select',
-        options: [
-          { label: 'Column', value: 'column' },
-          { label: 'Row', value: 'row' },
-        ],
+        options: COLUMN_ROW_OPTIONS,
         defaultValue: 'column',
       },
       {
@@ -1076,22 +1060,14 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'imageHeight',
         label: 'Image height',
         type: 'select',
-        options: [
-          { label: 'Small', value: 'small' },
-          { label: 'Medium', value: 'medium' },
-          { label: 'Large', value: 'large' },
-          { label: 'Adapt to image', value: 'adapt' },
-        ],
+        options: IMAGE_HEIGHT_OPTIONS,
         defaultValue: 'medium',
       },
       {
         key: 'desktopImagePlacement',
         label: 'Desktop image placement',
         type: 'radio',
-        options: [
-          { label: 'Image first', value: 'image-first' },
-          { label: 'Image second', value: 'image-second' },
-        ],
+        options: IMAGE_PLACEMENT_OPTIONS,
         defaultValue: 'image-first',
       },
       colorSchemeField('colorScheme', 'Color scheme', 'scheme-3'),
@@ -1125,12 +1101,7 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'imageHeight',
         label: 'Image height',
         type: 'select',
-        options: [
-          { label: 'Small', value: 'small' },
-          { label: 'Medium', value: 'medium' },
-          { label: 'Large', value: 'large' },
-          { label: 'Adapt to image', value: 'adapt' },
-        ],
+        options: IMAGE_HEIGHT_OPTIONS,
         defaultValue: 'large',
       },
       colorSchemeField('colorScheme', 'Color scheme'),

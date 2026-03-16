@@ -28,10 +28,10 @@ describe('KangurAiTutorWidget helpers', () => {
   it('does not duplicate the base path for already-prefixed targets', () => {
     expect(
       toWebsiteHelpTargetHref('/kangur', {
-        nodeId: 'page:kangur:tests',
-        label: 'Testy',
-        route: '/kangur/tests',
+        nodeId: 'page:kangur:lessons',
+        label: 'Lekcje',
+        route: '/kangur/lessons',
       })
-    ).toBe('/kangur/tests');
+    ).toBe('/kangur/lessons');
   });
 });

@@ -18,6 +18,28 @@ import type {
   ProductAdvancedFilterGroup,
   ProductCategory,
 } from '@/shared/contracts/products';
+
+const ID_MATCH_MODE_OPTIONS: Array<LabeledOptionDto<'exact' | 'partial'>> = [
+  { value: 'exact', label: 'Exact' },
+  { value: 'partial', label: 'Partial' },
+];
+
+const BASE_EXPORTED_OPTIONS: Array<LabeledOptionDto<'__all__' | 'true' | 'false'>> = [
+  { value: '__all__', label: 'All export statuses' },
+  { value: 'true', label: 'Exported to Base.com' },
+  { value: 'false', label: 'Not exported to Base.com' },
+];
+
+const STOCK_OPERATOR_OPTIONS: Array<
+  LabeledOptionDto<'__all__' | 'gt' | 'gte' | 'lt' | 'lte' | 'eq'>
+> = [
+  { value: '__all__', label: 'Any' },
+  { value: 'gt', label: 'More than (>)' },
+  { value: 'gte', label: 'More than or equal (>=)' },
+  { value: 'lt', label: 'Less than (<)' },
+  { value: 'lte', label: 'Less than or equal (<=)' },
+  { value: 'eq', label: 'Equal (=)' },
+];
 import { Button } from '@/shared/ui';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/ui/templates/panels';
@@ -147,10 +169,7 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
         label: 'ID Match',
         type: 'select',
         placeholder: 'Choose match mode',
-        options: [
-          { value: 'exact', label: 'Exact' },
-          { value: 'partial', label: 'Partial' },
-        ],
+        options: ID_MATCH_MODE_OPTIONS,
         width: '10rem',
       },
       { key: 'sku', label: 'SKU', type: 'text', placeholder: 'Search by SKU...', width: '14rem' },
@@ -174,11 +193,7 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
         label: 'Base.com Export',
         type: 'select',
         placeholder: 'All export statuses',
-        options: [
-          { value: '__all__', label: 'All export statuses' },
-          { value: 'true', label: 'Exported to Base.com' },
-          { value: 'false', label: 'Not exported to Base.com' },
-        ],
+        options: BASE_EXPORTED_OPTIONS,
         width: '16rem',
       },
       {
@@ -200,14 +215,7 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
         label: 'Stock Operator',
         type: 'select',
         placeholder: 'Choose operator',
-        options: [
-          { value: '__all__', label: 'Any' },
-          { value: 'gt', label: 'More than (>)' },
-          { value: 'gte', label: 'More than or equal (>=)' },
-          { value: 'lt', label: 'Less than (<)' },
-          { value: 'lte', label: 'Less than or equal (<=)' },
-          { value: 'eq', label: 'Equal (=)' },
-        ],
+        options: STOCK_OPERATOR_OPTIONS,
         width: '13rem',
       },
       {

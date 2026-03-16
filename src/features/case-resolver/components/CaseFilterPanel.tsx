@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 
 import { FilterPanel } from '@/shared/ui';
 import type { FilterField } from '@/shared/ui/templates/panels';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 import {
   type CaseHierarchyFilter,
@@ -17,6 +18,42 @@ import {
   type CaseStatusFilter,
 } from '../context/AdminCaseResolverCasesContext';
 import { useAdminCaseResolverCasesState } from '../hooks/useAdminCaseResolverCasesState';
+
+const CASE_FILE_TYPE_FILTER_OPTIONS: Array<LabeledOptionDto<CaseFileTypeFilter>> = [
+  { value: 'all', label: 'All case types' },
+  { value: 'case', label: 'Case' },
+];
+const CASE_STATUS_FILTER_OPTIONS: Array<LabeledOptionDto<CaseStatusFilter>> = [
+  { value: 'all', label: 'All statuses' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'completed', label: 'Completed' },
+];
+const CASE_LOCKED_FILTER_OPTIONS: Array<LabeledOptionDto<CaseLockedFilter>> = [
+  { value: 'all', label: 'All lock states' },
+  { value: 'unlocked', label: 'Unlocked' },
+  { value: 'locked', label: 'Locked' },
+];
+const CASE_SENT_FILTER_OPTIONS: Array<LabeledOptionDto<CaseSentFilter>> = [
+  { value: 'all', label: 'All sent states' },
+  { value: 'not_sent', label: 'Not sent' },
+  { value: 'sent', label: 'Sent' },
+];
+const CASE_HIERARCHY_FILTER_OPTIONS: Array<LabeledOptionDto<CaseHierarchyFilter>> = [
+  { value: 'all', label: 'All cases' },
+  { value: 'root', label: 'Root cases' },
+  { value: 'child', label: 'Child cases' },
+];
+const CASE_REFERENCES_FILTER_OPTIONS: Array<LabeledOptionDto<CaseReferencesFilter>> = [
+  { value: 'all', label: 'All cases' },
+  { value: 'with_references', label: 'With references' },
+  { value: 'without_references', label: 'Without references' },
+];
+const CASE_SEARCH_SCOPE_OPTIONS: Array<LabeledOptionDto<CaseSearchScope>> = [
+  { value: 'all', label: 'All fields + Descendant content' },
+  { value: 'name', label: 'Name only' },
+  { value: 'folder', label: 'Folder only' },
+  { value: 'content', label: 'Content only' },
+];
 
 export function CaseFilterPanel(): React.JSX.Element {
   const {
@@ -63,10 +100,7 @@ export function CaseFilterPanel(): React.JSX.Element {
         key: 'fileType',
         label: 'File Type',
         type: 'select',
-        options: [
-          { value: 'all', label: 'All case types' },
-          { value: 'case', label: 'Case' },
-        ],
+        options: CASE_FILE_TYPE_FILTER_OPTIONS,
         width: '180px',
       },
       {
@@ -80,55 +114,35 @@ export function CaseFilterPanel(): React.JSX.Element {
         key: 'status',
         label: 'Status',
         type: 'select',
-        options: [
-          { value: 'all', label: 'All statuses' },
-          { value: 'pending', label: 'Pending' },
-          { value: 'completed', label: 'Completed' },
-        ],
+        options: CASE_STATUS_FILTER_OPTIONS,
         width: '180px',
       },
       {
         key: 'locked',
         label: 'Lock State',
         type: 'select',
-        options: [
-          { value: 'all', label: 'All lock states' },
-          { value: 'unlocked', label: 'Unlocked' },
-          { value: 'locked', label: 'Locked' },
-        ],
+        options: CASE_LOCKED_FILTER_OPTIONS,
         width: '180px',
       },
       {
         key: 'sent',
         label: 'Sent State',
         type: 'select',
-        options: [
-          { value: 'all', label: 'All sent states' },
-          { value: 'not_sent', label: 'Not sent' },
-          { value: 'sent', label: 'Sent' },
-        ],
+        options: CASE_SENT_FILTER_OPTIONS,
         width: '180px',
       },
       {
         key: 'hierarchy',
         label: 'Hierarchy',
         type: 'select',
-        options: [
-          { value: 'all', label: 'All cases' },
-          { value: 'root', label: 'Root cases' },
-          { value: 'child', label: 'Child cases' },
-        ],
+        options: CASE_HIERARCHY_FILTER_OPTIONS,
         width: '180px',
       },
       {
         key: 'references',
         label: 'References',
         type: 'select',
-        options: [
-          { value: 'all', label: 'All cases' },
-          { value: 'with_references', label: 'With references' },
-          { value: 'without_references', label: 'Without references' },
-        ],
+        options: CASE_REFERENCES_FILTER_OPTIONS,
         width: '200px',
       },
       {
@@ -159,12 +173,7 @@ export function CaseFilterPanel(): React.JSX.Element {
         key: 'searchScope',
         label: 'Search Scope',
         type: 'select',
-        options: [
-          { value: 'all', label: 'All fields + Descendant content' },
-          { value: 'name', label: 'Name only' },
-          { value: 'folder', label: 'Folder only' },
-          { value: 'content', label: 'Content only' },
-        ],
+        options: CASE_SEARCH_SCOPE_OPTIONS,
         width: '220px',
       },
     ],

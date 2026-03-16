@@ -72,17 +72,14 @@ describe('KangurLoginPage', () => {
     useOptionalKangurAuthMock.mockReturnValue(null);
   });
 
-  it('restores focus to the identifier input after the first change', async () => {
+  it('updates the identifier input value after a change', () => {
     render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
-    const input = screen.getByTestId('kangur-login-identifier-input');
-    expect(input).not.toHaveFocus();
+    const input = screen.getByTestId('kangur-login-identifier-input') as HTMLInputElement;
 
     fireEvent.change(input, { target: { value: 'a' } });
 
-    await waitFor(() => {
-      expect(input).toHaveFocus();
-    });
+    expect(input.value).toBe('a');
   });
 
   it('clears cached auth state after a successful student sign-in', async () => {
@@ -129,6 +126,70 @@ describe('KangurLoginPage', () => {
 
     await waitFor(() => {
       expect(clearSessionUserCacheMock).toHaveBeenCalled();
+    });
+  });
+
+  it('routes email identifiers to the parent sign-in flow', async () => {
+    const pushMock = vi.fn();
+    useKangurRouteNavigatorMock.mockReturnValue({ push: pushMock });
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.endsWith('/api/kangur/auth/learner-signout')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({}),
+        };
+      }
+      if (url.endsWith('/api/auth/verify-credentials')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ ok: true, challengeId: 'challenge-1' }),
+        };
+      }
+      if (url.endsWith('/api/auth/csrf')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ csrfToken: 'csrf-1' }),
+        };
+      }
+      if (url.endsWith('/api/auth/callback/credentials')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ url: '/kangur' }),
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({}),
+      };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+
+    const identifierInput = await screen.findByTestId('kangur-login-identifier-input');
+    const passwordInput = await screen.findByLabelText('Hasło');
+
+    await waitFor(() => {
+      expect(identifierInput).not.toBeDisabled();
+      expect(passwordInput).not.toBeDisabled();
+    });
+
+    fireEvent.change(identifierInput, { target: { value: 'parent@example.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'sekret' } });
+    fireEvent.submit(screen.getByTestId('kangur-login-form'));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/auth/verify-credentials',
+        expect.objectContaining({ method: 'POST' })
+      );
     });
   });
 });

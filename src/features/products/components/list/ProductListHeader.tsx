@@ -2,13 +2,14 @@
 
 import { Eye, EyeOff, PlusIcon, Package } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { memo, useEffect, type ComponentProps, type ReactNode } from 'react';
+import { memo, useEffect, useMemo, type ComponentProps, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 import {
   useProductListFiltersContext,
   useProductListHeaderActionsContext,
 } from '@/features/products/context/ProductListContext';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Catalog } from '@/shared/contracts/products';
 import type { ProductDraft } from '@/shared/contracts/products';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
@@ -39,6 +40,16 @@ interface ProductListHeaderProps {
 }
 
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+
+const ALL_CATALOGS_OPTION: LabeledOptionDto<string> = {
+  value: 'all',
+  label: 'All catalogs',
+};
+
+const UNASSIGNED_CATALOG_OPTION: LabeledOptionDto<string> = {
+  value: 'unassigned',
+  label: 'Unassigned',
+};
 
 const resolveDraftIconColor = (draft: ProductDraft): string | undefined => {
   if (draft.iconColorMode !== 'custom') return undefined;
@@ -77,6 +88,19 @@ export const ProductListHeader = memo(function ProductListHeader({
     setCatalogFilter,
     catalogs,
   } = useProductListFiltersContext();
+  const catalogFilterOptions = useMemo(
+    (): Array<LabeledOptionDto<string>> => [
+      ALL_CATALOGS_OPTION,
+      UNASSIGNED_CATALOG_OPTION,
+      ...catalogs.map((catalog: Catalog) => ({ value: catalog.id, label: catalog.name })),
+    ],
+    [catalogs]
+  );
+  const currencySelectOptions = useMemo(
+    (): Array<LabeledOptionDto<string>> =>
+      currencyOptions.map((code: string) => ({ value: code, label: code })),
+    [currencyOptions]
+  );
 
   useEffect(() => {
     return (): void => {
@@ -163,7 +187,7 @@ export const ProductListHeader = memo(function ProductListHeader({
         size='sm'
         value={currencyCode}
         onValueChange={setCurrencyCode}
-        options={currencyOptions.map((code: string) => ({ value: code, label: code }))}
+        options={currencySelectOptions}
         placeholder='Currency'
         className='w-28 shrink-0'
         triggerClassName='h-8 text-xs'
@@ -174,11 +198,7 @@ export const ProductListHeader = memo(function ProductListHeader({
         size='sm'
         value={catalogFilter}
         onValueChange={setCatalogFilter}
-        options={[
-          { value: 'all', label: 'All catalogs' },
-          { value: 'unassigned', label: 'Unassigned' },
-          ...catalogs.map((catalog: Catalog) => ({ value: catalog.id, label: catalog.name })),
-        ]}
+        options={catalogFilterOptions}
         placeholder='Catalog'
         className='w-48 shrink-0'
         triggerClassName='h-8 text-xs'

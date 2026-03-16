@@ -1,5 +1,7 @@
 import 'server-only';
 
+import type { Redis } from 'ioredis';
+
 import { getRedisConnection } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -12,8 +14,8 @@ import {
   resolveRuntimeAnalyticsNodeStatusKey,
 } from './utils';
 
-const isRedisReady = (redis: ReturnType<typeof getRedisConnection>): boolean =>
-  redis?.status === 'ready';
+const isRedisReady = (redis: ReturnType<typeof getRedisConnection>): redis is Redis =>
+  Boolean(redis && redis.status === 'ready');
 
 export const recordRuntimeRunQueued = async (input: {
   runId: string;

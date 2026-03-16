@@ -107,6 +107,10 @@
       "mode": "complete_direct_files"
     },
     {
+      "path": "docs/kangur/plans",
+      "mode": "complete_direct_files"
+    },
+    {
       "path": "docs/case-resolver",
       "mode": "complete_direct_files"
     },
@@ -402,6 +406,8 @@
     "docs/kangur/lessons-and-activities.md",
     "docs/kangur/neo4j-semantic-bridge.md",
     "docs/kangur/observability-and-operations.md",
+    "docs/kangur/plans/README.md",
+    "docs/kangur/plans/multiplayer-lobby-continuous-development.md",
     "docs/kangur/profile-and-parent-dashboard.md",
     "docs/kangur/settings-and-narration.md",
     "docs/kangur/svg-and-media-rules.md",

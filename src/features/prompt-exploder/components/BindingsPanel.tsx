@@ -65,7 +65,7 @@ export function BindingsPanel(): React.JSX.Element {
                       type: value as PromptExploderBindingType,
                     }));
                   }}
-                  options={[...BINDING_TYPE_OPTIONS]}
+                  options={BINDING_TYPE_OPTIONS}
                  ariaLabel='Select option' title='Select option'/>
                 <SelectSimple
                   size='sm'

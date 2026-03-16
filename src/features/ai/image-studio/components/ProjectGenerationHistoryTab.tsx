@@ -6,6 +6,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import type { ImageStudioRunRecord, ImageStudioRunsResponse } from '@/shared/contracts/image-studio';
 import type { FilterField } from '@/shared/contracts/ui';
+import { IMAGE_STUDIO_RUN_STATUS_OPTIONS } from '@/features/ai/image-studio/utils/run-status-options';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import {
@@ -307,13 +308,7 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
       key: 'status',
       label: 'Status',
       type: 'select',
-      options: [
-        { value: 'all', label: 'All' },
-        { value: 'queued', label: 'Queued' },
-        { value: 'running', label: 'Running' },
-        { value: 'completed', label: 'Completed' },
-        { value: 'failed', label: 'Failed' },
-      ],
+      options: IMAGE_STUDIO_RUN_STATUS_OPTIONS,
     },
   ];
 

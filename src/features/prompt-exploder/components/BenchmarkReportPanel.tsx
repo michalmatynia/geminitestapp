@@ -97,7 +97,7 @@ export function BenchmarkReportPanel(): React.JSX.Element {
               onValueChange={(value: string) => {
                 setBenchmarkSuiteDraft(value as 'default' | 'extended' | 'custom');
               }}
-              options={[...BENCHMARK_SUITE_OPTIONS]}
+              options={BENCHMARK_SUITE_OPTIONS}
              ariaLabel='Benchmark Suite' title='Benchmark Suite'/>
           </FormField>
           <FormField label='Low-Confidence Threshold' id='low-confidence-threshold'>

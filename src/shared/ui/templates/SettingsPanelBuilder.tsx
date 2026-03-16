@@ -15,6 +15,11 @@ import { SelectSimple } from '../select-simple';
 import { Switch } from '../switch';
 import { Textarea } from '../textarea';
 
+const normalizeSelectOptions = (
+  options?: ReadonlyArray<LabeledOptionDto<string | number>>
+): Array<LabeledOptionDto<string>> =>
+  (options ?? []).map((option) => ({ label: option.label, value: String(option.value) }));
+
 export type FieldType =
   | 'text'
   | 'email'
@@ -52,7 +57,7 @@ export interface SettingsPanelField<T extends object> {
   disabled?: boolean;
 
   /** For select fields, list of options */
-  options?: Array<LabeledOptionDto<string | number>>;
+  options?: ReadonlyArray<LabeledOptionDto<string | number>>;
 
   /** For number and range fields */
   min?: number;
@@ -283,10 +288,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                   value={String(values[field.key] || '')}
                   onValueChange={(val) => handleFieldChange(field.key, val)}
                   disabled={field.disabled || disabled}
-                  options={
-                    field.options?.map((opt) => ({ label: opt.label, value: String(opt.value) })) ||
-                    []
-                  }
+                  options={normalizeSelectOptions(field.options)}
                   placeholder={field.placeholder || 'Select an option'}
                   ariaLabel={field.label}
                   id={fieldId}

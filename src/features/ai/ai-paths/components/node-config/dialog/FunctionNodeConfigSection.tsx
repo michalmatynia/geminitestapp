@@ -2,12 +2,22 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { FunctionConfig } from '@/shared/lib/ai-paths';
 import { Textarea, Label, Input, SelectSimple } from '@/shared/ui';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 type FunctionExpectedType = NonNullable<FunctionConfig['expectedType']>;
+
+const FUNCTION_EXPECTED_TYPE_OPTIONS = [
+  { value: '', label: 'Any type' },
+  { value: 'string', label: 'string' },
+  { value: 'number', label: 'number' },
+  { value: 'boolean', label: 'boolean' },
+  { value: 'object', label: 'object' },
+  { value: 'array', label: 'array' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<FunctionExpectedType | ''>>;
 
 const normalizeFunctionExpectedType = (value: string): FunctionExpectedType | undefined => {
   switch (value) {
@@ -169,14 +179,7 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
           size='sm'
           value={functionConfig.expectedType ?? ''}
           onValueChange={handleExpectedTypeChange}
-          options={[
-            { value: '', label: 'Any type' },
-            { value: 'string', label: 'string' },
-            { value: 'number', label: 'number' },
-            { value: 'boolean', label: 'boolean' },
-            { value: 'object', label: 'object' },
-            { value: 'array', label: 'array' },
-          ]}
+          options={FUNCTION_EXPECTED_TYPE_OPTIONS}
           ariaLabel='Expected output type'
           placeholder='Any type'
           variant='subtle'

@@ -14,6 +14,16 @@ import { buildBreadcrumbPath } from '../utils';
 
 type BreadcrumbItem = { id: string | null; name: string; isNote?: boolean };
 
+const DEFAULT_THEME_OPTION: PickerOption = { key: '', label: 'Default' };
+
+const buildThemeOptions = (themes: ThemeRecord[]): PickerOption[] => [
+  DEFAULT_THEME_OPTION,
+  ...themes.map((theme: ThemeRecord) => ({
+    key: theme.id,
+    label: theme.name,
+  })),
+];
+
 export function NoteListView(): React.JSX.Element {
   const {
     settings,
@@ -55,21 +65,16 @@ export function NoteListView(): React.JSX.Element {
     setSelectedNote(null);
   };
 
+  const themeOptions = useMemo(() => buildThemeOptions(themes), [themes]);
   const themeGroups = useMemo<PickerGroup[]>(
     () => [
       {
         label: 'Available Themes',
         icon: <Palette className='h-3 w-3' />,
-        options: [
-          { key: '', label: 'Default' },
-          ...themes.map((theme: ThemeRecord) => ({
-            key: theme.id,
-            label: theme.name,
-          })),
-        ],
+        options: themeOptions,
       },
     ],
-    [themes]
+    [themeOptions]
   );
 
   return (

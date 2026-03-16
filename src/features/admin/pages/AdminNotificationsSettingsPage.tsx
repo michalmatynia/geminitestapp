@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import type { LabeledOptionDto, LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import {
@@ -74,6 +74,15 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
   const accentColor =
     accentOptions.find((option: { value: string; color: string }) => option.value === accent)
       ?.color ?? 'bg-emerald-500';
+  const accentSelectOptions = useMemo(
+    () =>
+      accentOptions.map((option) => ({
+        value: option.value,
+        label: option.label,
+        description: option.value === accent ? 'Currently selected' : undefined,
+      })),
+    [accent]
+  );
 
   return (
     <AdminSettingsPageLayout
@@ -95,13 +104,7 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                   size='sm'
                   value={position}
                   onValueChange={(val: string) => setPosition(val as PositionType)}
-                  options={positionOptions.map(
-                    (opt: LabeledOptionWithDescriptionDto<string>) => ({
-                      value: opt.value,
-                      label: opt.label,
-                      description: opt.description,
-                    })
-                  )}
+                  options={positionOptions}
                   placeholder='Select position'
                  ariaLabel='Select position' title='Select position'/>
               </FormField>
@@ -115,13 +118,7 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                   size='sm'
                   value={accent}
                   onValueChange={(val: string) => setAccent(val as AccentType)}
-                  options={accentOptions.map(
-                    (opt: LabeledOptionDto<string> & { color: string }) => ({
-                      value: opt.value,
-                      label: opt.label,
-                      description: opt.value === accent ? 'Currently selected' : undefined,
-                    })
-                  )}
+                  options={accentSelectOptions}
                   placeholder='Select accent color'
                  ariaLabel='Select accent color' title='Select accent color'/>
               </FormField>

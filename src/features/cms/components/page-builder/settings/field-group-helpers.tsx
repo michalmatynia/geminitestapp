@@ -14,19 +14,20 @@ const MANAGEMENT_FIELDS: CmsSettingsField[] = [
   { key: 'label', label: 'Label', type: 'text', defaultValue: '' },
   { key: 'notes', label: 'Internal notes', type: 'text', defaultValue: '' },
 ];
+const RUNTIME_VISIBILITY_MODE_OPTIONS = [
+  { label: 'Always render', value: 'always' },
+  { label: 'Value equals', value: 'equals' },
+  { label: 'Value does not equal', value: 'not-equals' },
+  { label: 'Value is truthy', value: 'truthy' },
+  { label: 'Value is falsy', value: 'falsy' },
+];
 const RUNTIME_VISIBILITY_FIELDS: CmsSettingsField[] = [
   {
     key: 'runtimeVisibilityMode',
     label: 'Runtime visibility',
     type: 'select',
     defaultValue: 'always',
-    options: [
-      { label: 'Always render', value: 'always' },
-      { label: 'Value equals', value: 'equals' },
-      { label: 'Value does not equal', value: 'not-equals' },
-      { label: 'Value is truthy', value: 'truthy' },
-      { label: 'Value is falsy', value: 'falsy' },
-    ],
+    options: RUNTIME_VISIBILITY_MODE_OPTIONS,
   },
   {
     key: 'runtimeVisibilitySource',

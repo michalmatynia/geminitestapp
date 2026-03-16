@@ -311,7 +311,7 @@ export function MarkdownToolbar(props: MarkdownToolbarProps): React.JSX.Element 
               size='sm'
               value={fontFamily}
               onValueChange={onFontFamilyChange}
-              options={[...FONT_FAMILY_OPTIONS]}
+              options={FONT_FAMILY_OPTIONS}
               triggerClassName='h-7 rounded border bg-card/40 px-2 text-xs text-gray-200'
               contentClassName='border-border bg-card text-white'
              ariaLabel='Select option' title='Select option'/>

@@ -26,17 +26,17 @@ import { cn } from '@/shared/utils';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
-const IMPORT_LIST_MODE_OPTIONS = [
+const IMPORT_LIST_MODE_OPTIONS: Array<LabeledOptionDto<'all' | 'unique'>> = [
   { value: 'all', label: 'All products' },
   { value: 'unique', label: 'Unique only' },
-] as const satisfies ReadonlyArray<LabeledOptionDto<'all' | 'unique'>>;
+];
 
-const IMPORT_LIST_PAGE_SIZE_OPTIONS = [
+const IMPORT_LIST_PAGE_SIZE_OPTIONS: Array<LabeledOptionDto<string>> = [
   { value: '10', label: '10 / page' },
   { value: '25', label: '25 / page' },
   { value: '50', label: '50 / page' },
   { value: '100', label: '100 / page' },
-] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+];
 
 export function ImportListPreviewSection(): React.JSX.Element {
   const { loadingImportList, importListStats, importList } = useImportExportData();
@@ -226,13 +226,13 @@ export function ImportListPreviewSection(): React.JSX.Element {
       key: 'mode',
       label: 'Mode',
       type: 'select',
-      options: [...IMPORT_LIST_MODE_OPTIONS],
+      options: IMPORT_LIST_MODE_OPTIONS,
     },
     {
       key: 'pageSize',
       label: 'Page Size',
       type: 'select',
-      options: [...IMPORT_LIST_PAGE_SIZE_OPTIONS],
+      options: IMPORT_LIST_PAGE_SIZE_OPTIONS,
     },
   ];
 

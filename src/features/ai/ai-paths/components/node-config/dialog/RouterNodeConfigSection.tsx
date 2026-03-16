@@ -1,9 +1,22 @@
 'use client';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { RouterConfig } from '@/shared/lib/ai-paths';
 import { Input, Label, SelectSimple } from '@/shared/ui';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
+
+const ROUTER_MATCH_SOURCE_OPTIONS = [
+  { value: 'valid', label: 'Validator valid' },
+  { value: 'value', label: 'Value input' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<RouterConfig['mode']>>;
+
+const ROUTER_MATCH_MODE_OPTIONS = [
+  { value: 'truthy', label: 'Truthy' },
+  { value: 'falsy', label: 'Falsy' },
+  { value: 'equals', label: 'Equals' },
+  { value: 'contains', label: 'Contains' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<RouterConfig['matchMode']>>;
 
 export function RouterNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode } = useAiPathSelection();
@@ -32,10 +45,7 @@ export function RouterNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-          options={[
-            { value: 'valid', label: 'Validator valid' },
-            { value: 'value', label: 'Value input' },
-          ]}
+          options={ROUTER_MATCH_SOURCE_OPTIONS}
           placeholder='Select mode'
           triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
          ariaLabel='Select mode' title='Select mode'/>
@@ -53,12 +63,7 @@ export function RouterNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-          options={[
-            { value: 'truthy', label: 'Truthy' },
-            { value: 'falsy', label: 'Falsy' },
-            { value: 'equals', label: 'Equals' },
-            { value: 'contains', label: 'Contains' },
-          ]}
+          options={ROUTER_MATCH_MODE_OPTIONS}
           placeholder='Select match mode'
           triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
          ariaLabel='Select match mode' title='Select match mode'/>

@@ -164,7 +164,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                     nameLocale: value as 'name_en' | 'name_pl' | 'name_de',
                   }))
                 }
-                options={[...NAME_LOCALE_OPTIONS]}
+                options={NAME_LOCALE_OPTIONS}
                ariaLabel='Product Name Language' title='Product Name Language'/>
             </FormField>
 
@@ -218,7 +218,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                     thumbnailSource: value as 'file' | 'link' | 'base64',
                   }))
                 }
-                options={[...THUMBNAIL_SOURCE_OPTIONS]}
+                options={THUMBNAIL_SOURCE_OPTIONS}
                ariaLabel='Thumbnail Source' title='Thumbnail Source'/>
             </FormField>
 
@@ -236,7 +236,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                     pageSize: parseInt(value, 10),
                   }))
                 }
-                options={[...PAGE_SIZE_OPTIONS]}
+                options={PAGE_SIZE_OPTIONS}
                ariaLabel='Products Per Page' title='Products Per Page'/>
             </FormField>
 
@@ -254,7 +254,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                     filtersCollapsedByDefault: value === 'hidden',
                   }))
                 }
-                options={[...FILTER_VISIBILITY_OPTIONS]}
+                options={FILTER_VISIBILITY_OPTIONS}
                ariaLabel='Filters Button Default' title='Filters Button Default'/>
             </FormField>
 
@@ -271,7 +271,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                     showTriggerRunFeedback: value === 'shown',
                   }))
                 }
-                options={[...TRIGGER_RUN_FEEDBACK_OPTIONS]}
+                options={TRIGGER_RUN_FEEDBACK_OPTIONS}
                ariaLabel='Trigger Run Feedback Pills' title='Trigger Run Feedback Pills'/>
             </FormField>
           </div>

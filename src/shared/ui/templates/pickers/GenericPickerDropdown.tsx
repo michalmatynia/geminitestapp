@@ -29,7 +29,9 @@ import { cn } from '@/shared/utils';
  *
  * <GenericPickerDropdown
  *   groups={groups}
- *   onSelect={(option) => console.log(option)}
+ *   onSelect={(option) => {
+ *     // handle selection
+ *   }}
  *   ariaLabel="Select a section type"
  * />
  */

@@ -1,11 +1,17 @@
 'use client';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ProductValidationInstanceScope } from '@/shared/contracts/products';
 import { FormSection, SelectSimple } from '@/shared/ui';
 
 import { INSTANCE_SCOPE_LABELS } from './constants';
 import { ValidatorDocTooltip } from './ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
+
+const INSTANCE_DENY_BEHAVIOR_OPTIONS: Array<LabeledOptionDto<'mute_session' | 'ask_again'>> = [
+  { value: 'mute_session', label: 'Stop For This Session' },
+  { value: 'ask_again', label: 'Ask Again Next Validation' },
+];
 
 /**
  * Validator docs: see docs/validator/function-reference.md#ui.validatorinstancebehaviorpanel
@@ -37,10 +43,7 @@ export function ValidatorInstanceBehaviorPanel(): React.JSX.Element {
                         value === 'ask_again' ? 'ask_again' : 'mute_session'
                       );
                     }}
-                    options={[
-                      { value: 'mute_session', label: 'Stop For This Session' },
-                      { value: 'ask_again', label: 'Ask Again Next Validation' },
-                    ]}
+                    options={INSTANCE_DENY_BEHAVIOR_OPTIONS}
                     ariaLabel={`${INSTANCE_SCOPE_LABELS[scope]} deny behavior`}
                     disabled={settingsBusy}
                    title='Select option'/>

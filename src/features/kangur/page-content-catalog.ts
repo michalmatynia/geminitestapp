@@ -80,11 +80,12 @@ const PAGE_CONTENT_COPY_OVERRIDES: Partial<
   },
   'login-page-form': {
     title: 'Zaloguj się',
-    summary: 'Rodzic loguje się emailem i hasłem. Uczeń loguje się nickiem i hasłem.',
+    summary:
+      'Zaloguj się e-mailem rodzica albo nickiem ucznia. Typ konta wybierzemy po kliknięciu Zaloguj.',
   },
   'login-page-identifier-field': {
     title: 'Email rodzica albo nick ucznia',
-    summary: 'Wpisz email rodzica lub login ucznia, aby przejść do właściwego trybu logowania.',
+    summary: 'Wpisz email rodzica albo nick ucznia. Typ konta wybierzemy po kliknięciu Zaloguj.',
   },
   'shared-nav-create-account-action': {
     title: 'Utwórz konto',

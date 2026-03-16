@@ -1,8 +1,7 @@
 import 'server-only';
 
 import { readFile } from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { z } from 'zod';
 
@@ -45,13 +44,22 @@ import { AI_PATHS_NODE_DOCS } from '../docs/node-docs';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-const REPO_ROOT_URL = new URL('../../../../../../', import.meta.url);
+const resolveRepoRootUrl = (): URL => {
+  const candidate = new URL('../../../../../../', import.meta.url);
+  if (candidate.protocol === 'file:') {
+    return candidate;
+  }
+
+  return pathToFileURL(`${process.cwd()}/`);
+};
+
+const REPO_ROOT_URL = resolveRepoRootUrl();
 
 const resolveDocsFilePath = (repoRelativePath: string): string => {
-  if (REPO_ROOT_URL.protocol === 'file:') {
-    return fileURLToPath(new URL(repoRelativePath, REPO_ROOT_URL));
+  if (REPO_ROOT_URL.protocol !== 'file:') {
+    throw new Error(`Unsupported docs registry base URL: ${REPO_ROOT_URL.protocol}`);
   }
-  return path.resolve(process.cwd(), repoRelativePath);
+  return fileURLToPath(new URL(repoRelativePath, REPO_ROOT_URL));
 };
 
 const normalizeRepoRelativePath = (candidate: string): string =>

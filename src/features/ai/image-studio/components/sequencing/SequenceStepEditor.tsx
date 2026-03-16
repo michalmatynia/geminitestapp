@@ -1,6 +1,6 @@
 import React from 'react';
 
-
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
 import type {
   ImageStudioSequenceCropStep,
@@ -23,6 +23,51 @@ import {
   UPSCALE_SCALE_OPTIONS,
   UPSCALE_STRATEGY_OPTIONS,
 } from './sequencing-constants';
+
+const CROP_KIND_OPTIONS = [
+  { value: 'center_square', label: 'Center Square' },
+  { value: 'center_fit', label: 'Center Fit Ratio' },
+  { value: 'bbox', label: 'BBox' },
+  { value: 'polygon', label: 'Polygon Bounds' },
+  { value: 'alpha_object_bbox', label: 'Alpha Object Bounds' },
+  { value: 'selected_shape', label: 'Selected Shape' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<ImageStudioSequenceCropStep['config']['kind']>>;
+
+const MASK_SOURCE_OPTIONS = [
+  { value: 'current_shapes', label: 'Current Shapes' },
+  { value: 'preset_polygons', label: 'Preset Polygons' },
+] as const satisfies ReadonlyArray<
+  LabeledOptionDto<ImageStudioSequenceMaskStep['config']['source']>
+>;
+
+const MASK_VARIANT_OPTIONS = [
+  { value: 'white', label: 'White Mask' },
+  { value: 'black', label: 'Black Mask' },
+] as const satisfies ReadonlyArray<
+  LabeledOptionDto<ImageStudioSequenceMaskStep['config']['variant']>
+>;
+
+const PROMPT_MODE_OPTIONS = [
+  { value: 'inherit', label: 'Prompt Inherit' },
+  { value: 'override', label: 'Prompt Override' },
+] as const satisfies ReadonlyArray<
+  LabeledOptionDto<ImageStudioSequenceGenerateStep['config']['promptMode']>
+>;
+
+const REFERENCE_POLICY_OPTIONS = [
+  { value: 'inherit', label: 'Use References' },
+  { value: 'none', label: 'No References' },
+] as const satisfies ReadonlyArray<
+  LabeledOptionDto<ImageStudioSequenceGenerateStep['config']['referencePolicy']>
+>;
+
+const SMOOTHING_QUALITY_OPTIONS = [
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+] as const satisfies ReadonlyArray<
+  LabeledOptionDto<ImageStudioSequenceUpscaleStep['config']['smoothingQuality']>
+>;
 
 type SequenceStepEditorProps = {
   stepId: string;
@@ -204,14 +249,7 @@ export function SequenceStepEditor(props: SequenceStepEditorProps): React.JSX.El
                 };
               });
             }}
-            options={[
-              { value: 'center_square', label: 'Center Square' },
-              { value: 'center_fit', label: 'Center Fit Ratio' },
-              { value: 'bbox', label: 'BBox' },
-              { value: 'polygon', label: 'Polygon Bounds' },
-              { value: 'alpha_object_bbox', label: 'Alpha Object Bounds' },
-              { value: 'selected_shape', label: 'Selected Shape' },
-            ]}
+            options={CROP_KIND_OPTIONS}
             triggerClassName='h-7 text-[11px]'
             ariaLabel='Crop kind'
            title='Select option'/>
@@ -318,10 +356,7 @@ export function SequenceStepEditor(props: SequenceStepEditorProps): React.JSX.El
                 };
               });
             }}
-            options={[
-              { value: 'current_shapes', label: 'Current Shapes' },
-              { value: 'preset_polygons', label: 'Preset Polygons' },
-            ]}
+            options={MASK_SOURCE_OPTIONS}
             triggerClassName='h-7 text-[11px]'
             ariaLabel='Mask source'
            title='Select option'/>
@@ -341,10 +376,7 @@ export function SequenceStepEditor(props: SequenceStepEditorProps): React.JSX.El
                 };
               });
             }}
-            options={[
-              { value: 'white', label: 'White Mask' },
-              { value: 'black', label: 'Black Mask' },
-            ]}
+            options={MASK_VARIANT_OPTIONS}
             triggerClassName='h-7 text-[11px]'
             ariaLabel='Mask variant'
            title='Select option'/>
@@ -427,10 +459,7 @@ export function SequenceStepEditor(props: SequenceStepEditorProps): React.JSX.El
                 };
               });
             }}
-            options={[
-              { value: 'inherit', label: 'Prompt Inherit' },
-              { value: 'override', label: 'Prompt Override' },
-            ]}
+            options={PROMPT_MODE_OPTIONS}
             triggerClassName='h-7 text-[11px]'
             ariaLabel='Prompt mode'
            title='Select option'/>
@@ -517,10 +546,7 @@ export function SequenceStepEditor(props: SequenceStepEditorProps): React.JSX.El
                 };
               });
             }}
-            options={[
-              { value: 'inherit', label: 'Use References' },
-              { value: 'none', label: 'No References' },
-            ]}
+            options={REFERENCE_POLICY_OPTIONS}
             triggerClassName='h-7 text-[11px]'
             ariaLabel='Reference policy'
            title='Select option'/>
@@ -684,11 +710,7 @@ export function SequenceStepEditor(props: SequenceStepEditorProps): React.JSX.El
                 };
               });
             }}
-            options={[
-              { value: 'low', label: 'Low' },
-              { value: 'medium', label: 'Medium' },
-              { value: 'high', label: 'High' },
-            ]}
+            options={SMOOTHING_QUALITY_OPTIONS}
             triggerClassName='h-7 text-[11px]'
             ariaLabel='Smoothing quality'
            title='Select option'/>

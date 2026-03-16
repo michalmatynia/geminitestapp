@@ -3,11 +3,18 @@
 import { Trash2 } from 'lucide-react';
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Button, Hint, Label, SelectSimple } from '@/shared/ui';
 
 import { JOB_QUEUE_AUTO_REFRESH_INTERVAL_OPTIONS } from './job-queue-auto-refresh';
 import { useJobQueueActions, useJobQueueState } from './JobQueueContext';
 
+const AUTO_REFRESH_INTERVAL_OPTIONS = JOB_QUEUE_AUTO_REFRESH_INTERVAL_OPTIONS.map(
+  (value: number) => ({
+    value: String(value),
+    label: `${value / 1000}s`,
+  })
+) as ReadonlyArray<LabeledOptionDto<string>>;
 
 export function JobQueueControls(): React.JSX.Element {
   const {
@@ -88,10 +95,7 @@ export function JobQueueControls(): React.JSX.Element {
             value={String(autoRefreshInterval)}
             onValueChange={(value: string) => setAutoRefreshInterval(Number.parseInt(value, 10))}
             disabled={!autoRefreshEnabled}
-            options={JOB_QUEUE_AUTO_REFRESH_INTERVAL_OPTIONS.map((value: number) => ({
-              value: String(value),
-              label: `${value / 1000}s`,
-            }))}
+            options={AUTO_REFRESH_INTERVAL_OPTIONS}
             ariaLabel='Base interval'
             triggerClassName='h-7 w-[110px] border-border bg-card/70 text-[11px] text-white'
            title='Select option'/>

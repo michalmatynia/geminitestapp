@@ -23,6 +23,10 @@ const CASE_STATUS_OPTIONS: Array<LabeledOptionDto<string>> = [
   { value: 'pending', label: 'Pending' },
   { value: 'completed', label: 'Completed' },
 ];
+const CASE_DOCUMENT_VERSION_OPTIONS: Array<LabeledOptionDto<string>> = [
+  { value: 'original', label: 'Original' },
+  { value: 'exploded', label: 'Exploded' },
+];
 const EMPTY_SIGNATURE_OPTION: LabeledOptionDto<string> = { value: '', label: '(No signature)' };
 const EMPTY_TAG_OPTION: LabeledOptionDto<string> = { value: '', label: '(No tag)' };
 const EMPTY_CATEGORY_OPTION: LabeledOptionDto<string> = { value: '', label: '(No category)' };
@@ -50,6 +54,27 @@ function AdminCaseResolverCasesInner(): React.JSX.Element {
     setConfirmation,
   } = useAdminCaseResolverCasesActionsContext();
 
+  const parentCaseSelectOptions = useMemo(
+    () => [EMPTY_PARENT_CASE_OPTION, ...parentCaseOptions],
+    [parentCaseOptions]
+  );
+  const folderSelectOptions = useMemo(
+    () => [EMPTY_FOLDER_OPTION, ...folderOptions],
+    [folderOptions]
+  );
+  const caseIdentifierSelectOptions = useMemo(
+    () => [EMPTY_SIGNATURE_OPTION, ...caseIdentifierOptions],
+    [caseIdentifierOptions]
+  );
+  const tagSelectOptions = useMemo(
+    () => [EMPTY_TAG_OPTION, ...caseResolverTagOptions],
+    [caseResolverTagOptions]
+  );
+  const categorySelectOptions = useMemo(
+    () => [EMPTY_CATEGORY_OPTION, ...caseResolverCategoryOptions],
+    [caseResolverCategoryOptions]
+  );
+
   const createCaseFields = useMemo(
     (): SettingsPanelField<Partial<CaseResolverFile>>[] => [
       {
@@ -63,13 +88,13 @@ function AdminCaseResolverCasesInner(): React.JSX.Element {
         key: 'parentCaseId',
         label: 'Parent Case',
         type: 'select',
-        options: [EMPTY_PARENT_CASE_OPTION, ...parentCaseOptions],
+        options: parentCaseSelectOptions,
       },
       {
         key: 'folder',
         label: 'Folder',
         type: 'select',
-        options: [EMPTY_FOLDER_OPTION, ...folderOptions],
+        options: folderSelectOptions,
       },
       {
         key: 'caseStatus',
@@ -81,19 +106,19 @@ function AdminCaseResolverCasesInner(): React.JSX.Element {
         key: 'caseIdentifierId',
         label: 'Signature ID',
         type: 'select',
-        options: [EMPTY_SIGNATURE_OPTION, ...caseIdentifierOptions],
+        options: caseIdentifierSelectOptions,
       },
       {
         key: 'tagId',
         label: 'Tag',
         type: 'select',
-        options: [EMPTY_TAG_OPTION, ...caseResolverTagOptions],
+        options: tagSelectOptions,
       },
       {
         key: 'categoryId',
         label: 'Category',
         type: 'select',
-        options: [EMPTY_CATEGORY_OPTION, ...caseResolverCategoryOptions],
+        options: categorySelectOptions,
       },
       {
         key: 'referenceCaseIds',
@@ -185,19 +210,16 @@ function AdminCaseResolverCasesInner(): React.JSX.Element {
         key: 'activeDocumentVersion',
         label: 'Document Version',
         type: 'select',
-        options: [
-          { value: 'original', label: 'Original' },
-          { value: 'exploded', label: 'Exploded' },
-        ],
+        options: CASE_DOCUMENT_VERSION_OPTIONS,
       },
     ],
     [
-      caseIdentifierOptions,
+      caseIdentifierSelectOptions,
       caseReferenceOptions,
-      caseResolverCategoryOptions,
-      caseResolverTagOptions,
-      folderOptions,
-      parentCaseOptions,
+      categorySelectOptions,
+      tagSelectOptions,
+      folderSelectOptions,
+      parentCaseSelectOptions,
     ]
   );
 

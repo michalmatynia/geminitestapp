@@ -17,6 +17,7 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { cn } from '@/shared/utils';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -156,7 +157,12 @@ export function ConfirmModal({
       onClose();
     } catch (error) {
       logClientError(error);
-      console.error('Confirmation error:', error);
+      void logSystemEvent({
+        level: 'error',
+        source: 'ConfirmModal',
+        message: 'Confirmation handler failed',
+        error,
+      });
     }
   };
 

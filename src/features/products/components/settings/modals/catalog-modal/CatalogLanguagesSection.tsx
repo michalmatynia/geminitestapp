@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Label, SelectSimple, Badge, Button, SearchInput } from '@/shared/ui';
 
 import { useCatalogModalContext } from './context/CatalogModalContext';
@@ -18,6 +19,17 @@ export function CatalogLanguagesSection(): React.JSX.Element {
     languagesLoading,
     languagesError,
   } = useCatalogModalContext();
+  const defaultLanguageOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () =>
+      selectedLanguageIds.map((id) => {
+        const lang = getLanguage(id);
+        return {
+          value: id,
+          label: lang ? `${lang.name} (${lang.code})` : id,
+        };
+      }),
+    [getLanguage, selectedLanguageIds]
+  );
 
   return (
     <div className='rounded-md border border-border bg-card/70 p-4 space-y-4'>
@@ -117,13 +129,7 @@ export function CatalogLanguagesSection(): React.JSX.Element {
               disabled={selectedLanguageIds.length === 0}
               placeholder='Select default language'
               ariaLabel='Default language'
-              options={selectedLanguageIds.map((id) => {
-                const lang = getLanguage(id);
-                return {
-                  value: id,
-                  label: lang ? `${lang.name} (${lang.code})` : id,
-                };
-              })}
+              options={defaultLanguageOptions}
               triggerClassName='w-full bg-gray-900 border-border text-xs text-white h-9'
              title='Select default language'/>
           </div>

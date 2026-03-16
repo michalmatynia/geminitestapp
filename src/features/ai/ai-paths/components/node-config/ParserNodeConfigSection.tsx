@@ -24,6 +24,32 @@ import {
   useAiPathSelection,
 } from '../AiPathConfigContext';
 
+const PARSER_SAMPLE_ENTITY_TYPE_OPTIONS = [
+  { value: 'product', label: 'Product' },
+  { value: 'note', label: 'Note' },
+  { value: 'custom', label: 'Custom' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'product' | 'note' | 'custom'>>;
+
+const PARSER_SAMPLE_MAPPING_MODE_OPTIONS = [
+  { value: 'top', label: 'Top-level fields' },
+  { value: 'flatten', label: 'Flatten nested' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'top' | 'flatten'>>;
+
+const PARSER_SAMPLE_DEPTH_OPTIONS = [1, 2, 3, 4].map((depth) => ({
+  value: String(depth),
+  label: `Depth ${depth}`,
+})) as ReadonlyArray<LabeledOptionDto<string>>;
+
+const PARSER_SAMPLE_KEY_STYLE_OPTIONS = [
+  { value: 'path', label: 'Path keys' },
+  { value: 'leaf', label: 'Leaf keys' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'path' | 'leaf'>>;
+
+const PARSER_OUTPUT_MODE_OPTIONS = [
+  { value: 'individual', label: 'Individual outputs' },
+  { value: 'bundle', label: 'Single bundle output' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'individual' | 'bundle'>>;
+
 export function ParserNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode } = useAiPathSelection();
   const { nodes } = useAiPathGraph();
@@ -70,15 +96,27 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
   const draftMappings = parserDraftNodeId === selectedNode.id ? parserDraftMappings : mappings;
   const outputMode = parserConfig.outputMode ?? 'individual';
   const presetId = parserConfig.presetId ?? PARSER_PRESETS[0]?.id ?? 'custom';
-  const presetOptions = [
-    ...PARSER_PRESETS,
-    {
-      id: 'custom',
-      label: 'Custom',
-      description: 'Use manual mappings.',
-      mappings: {},
-    },
-  ];
+  const presetOptions = React.useMemo(
+    () => [
+      ...PARSER_PRESETS,
+      {
+        id: 'custom',
+        label: 'Custom',
+        description: 'Use manual mappings.',
+        mappings: {},
+      },
+    ],
+    []
+  );
+  const presetSelectOptions = React.useMemo(
+    () =>
+      presetOptions.map((preset: { id: string; label: string; description?: string }) => ({
+        value: preset.id,
+        label: preset.label,
+        description: preset.description,
+      })),
+    [presetOptions]
+  );
   const activePreset =
     presetOptions.find((preset: { id: string }) => preset.id === presetId) ?? null;
   const sampleState = parserSamples[selectedNode.id] ?? {
@@ -110,6 +148,10 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
     [nodes]
   );
   const parsedSample = React.useMemo(() => safeParseJson(sampleState.json), [sampleState.json]);
+  const simulationSelectOptions = React.useMemo(
+    () => simulationOptions.map((opt: { id: string; label: string }) => ({ value: opt.id, label: opt.label })),
+    [simulationOptions]
+  );
   const sampleValue = parsedSample.value;
   const sampleMappings = React.useMemo(() => {
     if (!sampleValue) return {};
@@ -379,11 +421,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
           onValueChange={(value: string) =>
             commitMappingsImmediate(draftMappings, outputMode, value)
           }
-          options={presetOptions.map((p: { id: string; label: string; description?: string }) => ({
-            value: p.id,
-            label: p.label,
-            description: (p as { description?: string }).description,
-          }))}
+          options={presetSelectOptions}
           placeholder='Select preset'
           ariaLabel='Preset'
           variant='subtle'
@@ -422,11 +460,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
                 },
               }))
             }
-            options={[
-              { value: 'product', label: 'Product' },
-              { value: 'note', label: 'Note' },
-              { value: 'custom', label: 'Custom' },
-            ]}
+            options={PARSER_SAMPLE_ENTITY_TYPE_OPTIONS}
             placeholder='Entity type'
             ariaLabel='Sample entity type'
             variant='subtle'
@@ -468,10 +502,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
                     },
                   }));
                 }}
-                options={simulationOptions.map((opt: { id: string; label: string }) => ({
-                  value: opt.id,
-                  label: opt.label,
-                }))}
+                options={simulationSelectOptions}
                 placeholder='Use simulation ID'
                 ariaLabel='Simulation id'
                 variant='subtle'
@@ -526,10 +557,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
                 },
               }))
             }
-            options={[
-              { value: 'top', label: 'Top-level fields' },
-              { value: 'flatten', label: 'Flatten nested' },
-            ]}
+            options={PARSER_SAMPLE_MAPPING_MODE_OPTIONS}
             ariaLabel='Sample mapping mode'
             className='w-[180px]'
            title='Sample JSON'/>
@@ -545,7 +573,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
                 },
               }))
             }
-            options={[1, 2, 3, 4].map((d: number) => ({ value: String(d), label: `Depth ${d}` }))}
+            options={PARSER_SAMPLE_DEPTH_OPTIONS}
             ariaLabel='Sample depth'
             className='w-[160px]'
            title='Sample JSON'/>
@@ -581,10 +609,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
                   },
                 }))
               }
-              options={[
-                { value: 'path', label: 'Path keys' },
-                { value: 'leaf', label: 'Leaf keys' },
-              ]}
+              options={PARSER_SAMPLE_KEY_STYLE_OPTIONS}
               ariaLabel='Sample key style'
               className='w-[170px]'
              title='Sample JSON'/>
@@ -632,10 +657,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
           onValueChange={(value: string) =>
             commitMappingsImmediate(draftMappings, value as 'individual' | 'bundle')
           }
-          options={[
-            { value: 'individual', label: 'Individual outputs' },
-            { value: 'bundle', label: 'Single bundle output' },
-          ]}
+          options={PARSER_OUTPUT_MODE_OPTIONS}
           ariaLabel='Output mode'
           variant='subtle'
          title='Output Mode'/>

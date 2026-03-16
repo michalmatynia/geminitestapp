@@ -42,6 +42,7 @@ export const promptExploderBindingTypeSchema = z.enum([
   'list',
   'depends_on',
   'references',
+  'uses_param',
 ]);
 export type PromptExploderBindingType = z.infer<typeof promptExploderBindingTypeSchema>;
 

@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUp, Lock, Save, Unlock } from 'lucide-react';
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { CaseSortKey } from '@/features/case-resolver/context/admin-cases/types';
 import { Button, SelectSimple, Switch } from '@/shared/ui';
 
@@ -9,6 +10,17 @@ import { useCaseListPanelControlsContext } from '../CaseListPanelControlsContext
 interface CaseListSortingProps {
   className?: string;
 }
+
+const CASE_SORT_OPTIONS: Array<LabeledOptionDto<CaseSortKey>> = [
+  { value: 'updated', label: 'Date modified' },
+  { value: 'created', label: 'Date created' },
+  { value: 'happeningDate', label: 'Happening date' },
+  { value: 'name', label: 'Name' },
+  { value: 'status', label: 'Status' },
+  { value: 'signature', label: 'Signature' },
+  { value: 'locked', label: 'Lock state' },
+  { value: 'sent', label: 'Sent state' },
+];
 
 export function CaseListSorting({ className = '' }: CaseListSortingProps): React.JSX.Element {
   const {
@@ -35,16 +47,7 @@ export function CaseListSorting({ className = '' }: CaseListSortingProps): React
           onValueChange={(value): void => {
             setCaseSortBy(value as CaseSortKey);
           }}
-          options={[
-            { value: 'updated', label: 'Date modified' },
-            { value: 'created', label: 'Date created' },
-            { value: 'happeningDate', label: 'Happening date' },
-            { value: 'name', label: 'Name' },
-            { value: 'status', label: 'Status' },
-            { value: 'signature', label: 'Signature' },
-            { value: 'locked', label: 'Lock state' },
-            { value: 'sent', label: 'Sent state' },
-          ]}
+          options={CASE_SORT_OPTIONS}
           className='w-40 shrink-0'
           triggerClassName='h-8 text-xs'
           ariaLabel='Sort cases by'

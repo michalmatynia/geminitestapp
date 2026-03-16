@@ -3,6 +3,7 @@
 import { Box, Grid, List } from 'lucide-react';
 import React, { useMemo } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import {
   Button,
@@ -20,6 +21,8 @@ import { Asset3DPreviewModal } from '../components/Asset3DPreviewModalImpl';
 import { useAsset3DListState } from '../hooks/useAsset3DListState';
 
 import type { ColumnDef } from '@tanstack/react-table';
+
+const ALL_CATEGORIES_OPTION: LabeledOptionDto<string> = { value: '__all__', label: 'All categories' };
 
 const formatFileSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`;
@@ -166,6 +169,26 @@ export function Asset3DListPage(): React.JSX.Element {
     [searchQuery, setSearchQuery]
   );
 
+  const categoryOptions = useMemo(
+    () => [ALL_CATEGORIES_OPTION, ...categories.map((cat: string) => ({ value: cat, label: cat }))],
+    [categories]
+  );
+  const categoryFilters = useMemo(
+    () =>
+      categories.length > 0
+        ? [
+            {
+              key: 'category',
+              label: 'Category',
+              type: 'select' as const,
+              options: categoryOptions,
+              width: '180px',
+            },
+          ]
+        : [],
+    [categories.length, categoryOptions]
+  );
+
   return (
     <StandardDataTablePanel
       header={
@@ -193,22 +216,7 @@ export function Asset3DListPage(): React.JSX.Element {
                 setSelectedCategory(val === '__all__' ? null : (val as string));
               }
             }}
-            filters={[
-              ...(categories.length > 0
-                ? [
-                  {
-                    key: 'category',
-                    label: 'Category',
-                    type: 'select' as const,
-                    options: [
-                      { value: '__all__', label: 'All categories' },
-                      ...categories.map((cat: string) => ({ value: cat, label: cat })),
-                    ],
-                    width: '180px',
-                  },
-                ]
-                : []),
-            ]}
+            filters={categoryFilters}
             headerAction={
               <div className='flex items-center overflow-hidden rounded-md border border-border bg-muted/20'>
                 {' '}

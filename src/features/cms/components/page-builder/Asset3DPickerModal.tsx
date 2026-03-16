@@ -19,6 +19,8 @@ import { useAsset3DPickerModalRuntime } from './Asset3DPickerModalRuntimeContext
 
 type Asset3DPickerModalProps = EntityModalProps<Asset3DRecord, Asset3DRecord>;
 
+const ALL_ASSET_CATEGORIES_OPTION = { value: '__all__', label: 'All categories' };
+
 export function Asset3DPickerModal(props: Asset3DPickerModalProps): React.JSX.Element | null {
   const { isOpen, onClose } = props;
 
@@ -37,23 +39,29 @@ export function Asset3DPickerModal(props: Asset3DPickerModalProps): React.JSX.El
   const categories = categoriesQuery.data ?? [];
   const tags = tagsQuery.data ?? [];
 
+  const categoryOptions = useMemo(
+    () => [ALL_ASSET_CATEGORIES_OPTION, ...categories.map((cat: string) => ({ value: cat, label: cat }))],
+    [categories]
+  );
+  const tagOptions = useMemo(
+    () => tags.map((tag: string) => ({ value: tag, label: tag })),
+    [tags]
+  );
+
   const filterConfig = useMemo<FilterField[]>(
     () => [
       {
         key: 'category',
         label: 'Category',
         type: 'select',
-        options: [
-          { value: '__all__', label: 'All categories' },
-          ...categories.map((cat: string) => ({ value: cat, label: cat })),
-        ],
+        options: categoryOptions,
       },
       {
         key: 'tags',
         label: 'Tags',
         type: 'select',
         multi: true,
-        options: tags.map((tag: string) => ({ value: tag, label: tag })),
+        options: tagOptions,
       },
       {
         key: 'isPublicOnly',
@@ -61,7 +69,7 @@ export function Asset3DPickerModal(props: Asset3DPickerModalProps): React.JSX.El
         type: 'checkbox',
       },
     ],
-    [categories, tags]
+    [categoryOptions, tagOptions]
   );
 
   const apiFilters: Asset3DListFilters = {

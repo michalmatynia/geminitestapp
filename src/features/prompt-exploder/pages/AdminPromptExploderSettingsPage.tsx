@@ -57,6 +57,27 @@ const OPERATION_MODE_OPTIONS: Array<LabeledOptionDto<PromptExploderOperationMode
   { value: 'ai_assisted', label: 'AI Assisted' },
 ];
 
+const CASE_RESOLVER_EXTRACTION_MODE_OPTIONS: Array<
+  LabeledOptionDto<'rules_only' | 'rules_with_heuristics'>
+> = [
+  { value: 'rules_only', label: 'Rules Only (UI capture rules)' },
+  { value: 'rules_with_heuristics', label: 'Rules + Heuristics' },
+];
+
+const RUNTIME_RULE_PROFILE_OPTIONS: Array<
+  LabeledOptionDto<'all' | 'pattern_pack' | 'learned_only'>
+> = [
+  { value: 'all', label: 'All Rules' },
+  { value: 'pattern_pack', label: 'Pattern Pack Only' },
+  { value: 'learned_only', label: 'Learned Only' },
+];
+
+const BENCHMARK_SUITE_OPTIONS: Array<LabeledOptionDto<'default' | 'extended' | 'custom'>> = [
+  { value: 'default', label: 'Default' },
+  { value: 'extended', label: 'Extended' },
+  { value: 'custom', label: 'Custom' },
+];
+
 type SettingsDraft = Pick<PromptExploderSettings, 'runtime' | 'learning' | 'ai'>;
 
 const toSettingsDraft = (settings: PromptExploderSettings): SettingsDraft => ({
@@ -173,39 +194,25 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
         key: 'validationRuleStack',
         label: 'Validation Stack',
         type: 'select',
-        options: validationPatternStackOptions.map((opt) => ({
-          label: opt.label,
-          value: opt.value,
-        })),
+        options: validationPatternStackOptions,
       },
       {
         key: 'caseResolverExtractionMode',
         label: 'Case Resolver Extraction Mode',
         type: 'select',
-        options: [
-          { value: 'rules_only', label: 'Rules Only (UI capture rules)' },
-          { value: 'rules_with_heuristics', label: 'Rules + Heuristics' },
-        ],
+        options: CASE_RESOLVER_EXTRACTION_MODE_OPTIONS,
       },
       {
         key: 'ruleProfile',
         label: 'Runtime Rule Profile',
         type: 'select',
-        options: [
-          { value: 'all', label: 'All Rules' },
-          { value: 'pattern_pack', label: 'Pattern Pack Only' },
-          { value: 'learned_only', label: 'Learned Only' },
-        ],
+        options: RUNTIME_RULE_PROFILE_OPTIONS,
       },
       {
         key: 'benchmarkSuite',
         label: 'Benchmark Suite',
         type: 'select',
-        options: [
-          { value: 'default', label: 'Default' },
-          { value: 'extended', label: 'Extended' },
-          { value: 'custom', label: 'Custom' },
-        ],
+        options: BENCHMARK_SUITE_OPTIONS,
       },
       {
         key: 'benchmarkLowConfidenceThreshold',

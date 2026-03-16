@@ -313,14 +313,14 @@ export interface ValidatorSettingsController {
   handleAddPattern: (target?: string) => void;
   handleDragStart: (e: unknown, patternId: string) => void;
   handleDrop: (pattern: ProductValidationPattern, e: unknown) => void;
-  replacementFieldOptions: Array<LabeledOptionDto<string>>;
-  sourceFieldOptions: Array<LabeledOptionDto<string>>;
+  replacementFieldOptions: ReadonlyArray<LabeledOptionDto<string>>;
+  sourceFieldOptions: ReadonlyArray<LabeledOptionDto<string>>;
   createPatternPending: boolean;
   updatePatternPending: boolean;
   isLocaleTarget: (target: string) => boolean;
   normalizeReplacementFields: (fields: unknown, target?: string) => string[];
-  getReplacementFieldsForTarget: (target: string) => Array<LabeledOptionDto<string>>;
-  getSourceFieldOptionsForTarget: (target: string) => Array<LabeledOptionDto<string>>;
+  getReplacementFieldsForTarget: (target: string) => ReadonlyArray<LabeledOptionDto<string>>;
+  getSourceFieldOptionsForTarget: (target: string) => ReadonlyArray<LabeledOptionDto<string>>;
   formatReplacementFields: (fields: unknown) => string;
   draggedPatternId: string | null;
   setDraggedPatternId: (id: string | null) => void;

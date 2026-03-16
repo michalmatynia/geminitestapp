@@ -152,7 +152,7 @@ export function SettingsTab(): React.JSX.Element {
               size='sm'
               value={searchProvider}
               onValueChange={(value: string): void => setSearchProvider(value)}
-              options={[...SEARCH_PROVIDER_OPTIONS]}
+              options={SEARCH_PROVIDER_OPTIONS}
              ariaLabel='Search Provider' title='Search Provider'/>
           </FormField>
         </div>

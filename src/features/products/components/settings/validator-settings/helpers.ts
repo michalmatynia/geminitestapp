@@ -218,7 +218,7 @@ export const isNameSecondSegmentDimensionPattern = (
  */
 export const getSourceFieldOptionsForTarget = (
   _target: string
-): Array<LabeledOptionDto<string>> => {
+): ReadonlyArray<LabeledOptionDto<string>> => {
   return SOURCE_FIELD_OPTIONS;
 };
 

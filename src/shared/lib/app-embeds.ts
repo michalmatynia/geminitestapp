@@ -24,12 +24,13 @@ export const DEFAULT_APP_EMBED_ID: AppEmbedId = 'chatbot';
 export const DEFAULT_APP_EMBED_BASE_PATH = '';
 export const DEFAULT_APP_EMBED_ENTRY_PAGE = DEFAULT_KANGUR_APP_EMBED_ENTRY_PAGE;
 
-export const KANGUR_APP_EMBED_ENTRY_PAGE_OPTIONS = [
+export const KANGUR_APP_EMBED_ENTRY_PAGE_OPTIONS: Array<LabeledOptionDto<string>> = [
   { label: 'Home / Game', value: 'Game' },
   { label: 'Lessons', value: 'Lessons' },
+  { label: 'Tests', value: 'Tests' },
   { label: 'Learner Profile', value: 'LearnerProfile' },
   { label: 'Parent Dashboard', value: 'ParentDashboard' },
-] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+];
 
 export const APP_EMBED_OPTIONS: AppEmbedOption[] = [
   {

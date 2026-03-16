@@ -1,12 +1,13 @@
 'use client';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { MathConfig } from '@/shared/lib/ai-paths';
 import { toNumber } from '@/shared/lib/ai-paths';
 import { Input, SelectSimple, FormField } from '@/shared/ui';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
-const operationOptions = [
+const operationOptions: Array<LabeledOptionDto<NonNullable<MathConfig['operation']>>> = [
   { value: 'add', label: 'Add' },
   { value: 'subtract', label: 'Subtract' },
   { value: 'multiply', label: 'Multiply' },

@@ -27,6 +27,14 @@ const PARAM_UI_CONTROLS: ParamUiControl[] = [
   'tuple2',
 ];
 
+const PARAM_UI_RGB_OPTIONS: ParamUiControl[] = ['auto', 'rgb', 'json'];
+const PARAM_UI_TUPLE2_OPTIONS: ParamUiControl[] = ['auto', 'tuple2', 'json'];
+const PARAM_UI_BOOLEAN_OPTIONS: ParamUiControl[] = ['auto', 'checkbox', 'buttons', 'json'];
+const PARAM_UI_ENUM_OPTIONS: ParamUiControl[] = ['auto', 'select', 'buttons', 'text', 'json'];
+const PARAM_UI_NUMBER_OPTIONS: ParamUiControl[] = ['auto', 'number', 'slider', 'json'];
+const PARAM_UI_STRING_OPTIONS: ParamUiControl[] = ['auto', 'text', 'textarea', 'json'];
+const PARAM_UI_FALLBACK_OPTIONS: ParamUiControl[] = ['auto', 'json'];
+
 export const isParamUiControl = (value: unknown): value is ParamUiControl =>
   typeof value === 'string' && PARAM_UI_CONTROLS.includes(value as ParamUiControl);
 
@@ -91,7 +99,7 @@ export function recommendParamUiControl(value: unknown, spec?: ParamSpec): Param
     return {
       baseKind,
       recommended: 'rgb',
-      options: ['auto', 'rgb', 'json'],
+      options: PARAM_UI_RGB_OPTIONS,
       confidence: 0.95,
       reason: null,
       canSlider: false,
@@ -102,7 +110,7 @@ export function recommendParamUiControl(value: unknown, spec?: ParamSpec): Param
     return {
       baseKind,
       recommended: 'tuple2',
-      options: ['auto', 'tuple2', 'json'],
+      options: PARAM_UI_TUPLE2_OPTIONS,
       confidence: 0.9,
       reason: null,
       canSlider: false,
@@ -113,7 +121,7 @@ export function recommendParamUiControl(value: unknown, spec?: ParamSpec): Param
     return {
       baseKind,
       recommended: 'checkbox',
-      options: ['auto', 'checkbox', 'buttons', 'json'],
+      options: PARAM_UI_BOOLEAN_OPTIONS,
       confidence: 1,
       reason: null,
       canSlider: false,
@@ -126,7 +134,7 @@ export function recommendParamUiControl(value: unknown, spec?: ParamSpec): Param
     return {
       baseKind,
       recommended,
-      options: ['auto', 'select', 'buttons', 'text', 'json'],
+      options: PARAM_UI_ENUM_OPTIONS,
       confidence: count > 0 ? 0.9 : 0.45,
       reason: count > 0 ? null : 'No enum options detected in the hint comments.',
       canSlider: false,
@@ -137,7 +145,7 @@ export function recommendParamUiControl(value: unknown, spec?: ParamSpec): Param
     return {
       baseKind,
       recommended: sliderOk ? 'slider' : 'number',
-      options: ['auto', 'number', 'slider', 'json'],
+      options: PARAM_UI_NUMBER_OPTIONS,
       confidence: spec?.min !== undefined && spec?.max !== undefined ? 0.85 : 0.65,
       reason: sliderOk
         ? null
@@ -151,7 +159,7 @@ export function recommendParamUiControl(value: unknown, spec?: ParamSpec): Param
     return {
       baseKind,
       recommended: multiline ? 'textarea' : 'text',
-      options: ['auto', 'text', 'textarea', 'json'],
+      options: PARAM_UI_STRING_OPTIONS,
       confidence: 0.6,
       reason: null,
       canSlider: false,
@@ -161,7 +169,7 @@ export function recommendParamUiControl(value: unknown, spec?: ParamSpec): Param
   return {
     baseKind,
     recommended: 'json',
-    options: ['auto', 'json'],
+    options: PARAM_UI_FALLBACK_OPTIONS,
     confidence: 0.35,
     reason: 'Unrecognized structure; edit as JSON.',
     canSlider: false,

@@ -4,6 +4,7 @@ import { useKangurLessonSubsectionNavigationActive } from '@/features/kangur/ui/
 import { useOptionalKangurLessonsRuntime } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { KangurButton, KangurPanelIntro } from '@/features/kangur/ui/design/primitives';
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
+import { cn } from '@/features/kangur/shared/utils';
 
 import type { JSX } from 'react';
 
@@ -13,6 +14,7 @@ type KangurLessonNavigationWidgetProps = {
   onSelectLesson?: (lessonId: string) => void;
   sectionSummary?: string;
   sectionTitle?: string;
+  align?: 'center' | 'start';
 };
 
 export function KangurLessonNavigationWidget({
@@ -21,6 +23,7 @@ export function KangurLessonNavigationWidget({
   onSelectLesson,
   sectionSummary,
   sectionTitle,
+  align = 'center',
 }: KangurLessonNavigationWidgetProps = {}): JSX.Element | null {
   const runtime = useOptionalKangurLessonsRuntime();
   const isSubsectionNavigationActive = useKangurLessonSubsectionNavigationActive();
@@ -33,6 +36,11 @@ export function KangurLessonNavigationWidget({
   if (isSubsectionNavigationActive || !handleSelectLesson) {
     return null;
   }
+
+  const buttonGroupClassName = cn(
+    'flex w-full items-center gap-2',
+    align === 'start' ? 'justify-start pl-4 sm:pl-5' : 'justify-center'
+  );
 
   return (
     <nav
@@ -48,7 +56,7 @@ export function KangurLessonNavigationWidget({
         />
       ) : null}
       <div
-        className='flex w-full items-center justify-center gap-2'
+        className={buttonGroupClassName}
         role='group'
         aria-label='Nawigacja między lekcjami'
       >

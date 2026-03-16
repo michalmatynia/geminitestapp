@@ -1,3 +1,5 @@
+'use client';
+
 import { motion } from 'framer-motion';
 import { Dumbbell } from 'lucide-react';
 import { useId } from 'react';

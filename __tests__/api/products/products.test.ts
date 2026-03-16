@@ -68,9 +68,9 @@ vi.mock('@/features/products/validations/middleware', () => ({
   validateProductUpdateMiddleware: vi.fn().mockResolvedValue({ success: true }),
 }));
 
-import { POST as POST_DUPLICATE } from '@/app/api/v2/products/[id]/duplicate/route';
-import { DELETE, PUT } from '@/app/api/v2/products/[id]/route';
-import { GET as GET_LIST, POST } from '@/app/api/v2/products/route';
+import { POST as POST_DUPLICATE } from '@/app/api/v2/products/[id]/duplicate/route-handler';
+import { DELETE, PUT } from '@/app/api/v2/products/[id]/route-handler';
+import { GET as GET_LIST, POST } from '@/app/api/v2/products/route-handler';
 import { GET as GET_PUBLIC } from '@/app/api/public/products/[id]/route';
 
 describe('Products API', () => {

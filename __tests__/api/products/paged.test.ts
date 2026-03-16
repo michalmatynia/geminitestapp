@@ -23,7 +23,7 @@ vi.mock('@/features/products/performance', () => ({
   },
 }));
 
-import { GET } from '@/app/api/v2/products/paged/route';
+import { GET } from '@/app/api/v2/products/paged/route-handler';
 
 describe('GET /api/v2/products/paged', () => {
   beforeEach(() => {

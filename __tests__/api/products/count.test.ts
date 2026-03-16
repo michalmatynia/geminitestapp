@@ -11,7 +11,7 @@ vi.mock('@/features/products/performance', () => ({
   },
 }));
 
-import { GET } from '@/app/api/v2/products/count/route';
+import { GET } from '@/app/api/v2/products/count/route-handler';
 
 describe('Products Count API', () => {
   beforeEach(() => {

@@ -72,6 +72,40 @@ export type KangurAiTutorAnalyticsSnapshot = z.infer<
   typeof kangurAiTutorAnalyticsSnapshotSchema
 >;
 
+const kangurDuelLobbyCountsSchema = z.object({
+  viewed: z.number(),
+  refreshClicked: z.number(),
+  filterChanged: z.number(),
+  sortChanged: z.number(),
+  joinClicked: z.number(),
+  createClicked: z.number(),
+  loginClicked: z.number(),
+});
+
+export const kangurDuelLobbyAnalyticsSnapshotSchema = z.object({
+  totals: kangurDuelLobbyCountsSchema,
+  byUser: z.object({
+    guest: kangurDuelLobbyCountsSchema,
+    authenticated: kangurDuelLobbyCountsSchema,
+  }),
+  byFilterMode: z.object({
+    all: z.number(),
+    challenge: z.number(),
+    quick_match: z.number(),
+  }),
+  bySort: z.object({
+    recent: z.number(),
+    time_fast: z.number(),
+    time_slow: z.number(),
+    questions_low: z.number(),
+    questions_high: z.number(),
+  }),
+  loginBySource: z.record(z.string(), z.number()),
+});
+export type KangurDuelLobbyAnalyticsSnapshot = z.infer<
+  typeof kangurDuelLobbyAnalyticsSnapshotSchema
+>;
+
 export const kangurKnowledgeGraphSemanticReadinessSchema = z.enum([
   'no_graph',
   'no_semantic_text',
@@ -334,6 +368,7 @@ export const kangurAnalyticsSnapshotSchema = z.object({
   topEventNames: z.array(kangurAnalyticsCountSchema),
   importantEvents: z.array(kangurAnalyticsCountSchema),
   aiTutor: kangurAiTutorAnalyticsSnapshotSchema,
+  duelsLobby: kangurDuelLobbyAnalyticsSnapshotSchema,
   recent: z.array(kangurRecentAnalyticsEventSchema),
 });
 export type KangurAnalyticsSnapshot = z.infer<typeof kangurAnalyticsSnapshotSchema>;

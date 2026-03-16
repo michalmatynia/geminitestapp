@@ -1,3 +1,5 @@
+'use client';
+
 import { Eraser, PencilRuler } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { DELETE, GET, PATCH, POST } from './route';
+import { DELETE, GET, PATCH, POST } from './route-handler';
 
 describe('chatbot sessions route module', () => {
   it('exports the supported route handlers', () => {

@@ -1,17 +1,1 @@
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-
-import { apiHandler } from '@/shared/lib/api/api-handler';
-
-import { DELETE_handler, GET_handler } from './handler';
-import { deleteQuerySchema, listQuerySchema } from './query-schemas';
-
-export const GET = apiHandler(GET_handler, {
-  source: 'ai-paths.runs.GET',
-  querySchema: listQuerySchema,
-});
-
-export const DELETE = apiHandler(DELETE_handler, {
-  source: 'ai-paths.runs.DELETE',
-  querySchema: deleteQuerySchema,
-});
+export * from './route-handler';

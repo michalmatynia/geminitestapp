@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback, useEffect, type MouseEvent as ReactMouseEvent } from 'react';
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';

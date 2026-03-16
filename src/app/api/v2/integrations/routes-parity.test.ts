@@ -10,35 +10,35 @@ const v2Root = path.join(projectRoot, 'src/app/api/v2/integrations');
 const featuresRoot = path.join(projectRoot, 'src/features');
 const sharedRoot = path.join(projectRoot, 'src/shared');
 
-const migratedRoutePaths = [
-  'route.ts',
-  'with-connections/route.ts',
-  'jobs/route.ts',
-  'queues/tradera/route.ts',
-  'product-listings/route.ts',
-  'images/sync-base/all/route.ts',
-  '[id]/connections/route.ts',
-  'connections/[id]/route.ts',
-  'connections/[id]/session/route.ts',
-  '[id]/connections/[connectionId]/test/route.ts',
-  '[id]/connections/[connectionId]/base/test/route.ts',
-  '[id]/connections/[connectionId]/allegro/test/route.ts',
-  '[id]/connections/[connectionId]/base/request/route.ts',
-  '[id]/connections/[connectionId]/allegro/request/route.ts',
-  '[id]/connections/[connectionId]/allegro/disconnect/route.ts',
-  '[id]/connections/[connectionId]/allegro/authorize/route.ts',
-  '[id]/connections/[connectionId]/allegro/callback/route.ts',
-  '[id]/connections/[connectionId]/base/inventories/route.ts',
-  '[id]/connections/[connectionId]/base/products/route.ts',
-  'products/[id]/base/sku-check/route.ts',
-  'products/[id]/base/link-existing/route.ts',
-  'products/[id]/export-to-base/route.ts',
-  'products/[id]/listings/route.ts',
-  'products/[id]/listings/[listingId]/route.ts',
-  'products/[id]/listings/[listingId]/delete-from-base/route.ts',
-  'products/[id]/listings/[listingId]/purge/route.ts',
-  'products/[id]/listings/[listingId]/relist/route.ts',
-  'products/[id]/listings/[listingId]/sync-base-images/route.ts',
+const migratedRouteHandlerPaths = [
+  'route-handler.ts',
+  'with-connections/route-handler.ts',
+  'jobs/route-handler.ts',
+  'queues/tradera/route-handler.ts',
+  'product-listings/route-handler.ts',
+  'images/sync-base/all/route-handler.ts',
+  '[id]/connections/route-handler.ts',
+  'connections/[id]/route-handler.ts',
+  'connections/[id]/session/route-handler.ts',
+  '[id]/connections/[connectionId]/test/route-handler.ts',
+  '[id]/connections/[connectionId]/base/test/route-handler.ts',
+  '[id]/connections/[connectionId]/allegro/test/route-handler.ts',
+  '[id]/connections/[connectionId]/base/request/route-handler.ts',
+  '[id]/connections/[connectionId]/allegro/request/route-handler.ts',
+  '[id]/connections/[connectionId]/allegro/disconnect/route-handler.ts',
+  '[id]/connections/[connectionId]/allegro/authorize/route-handler.ts',
+  '[id]/connections/[connectionId]/allegro/callback/route-handler.ts',
+  '[id]/connections/[connectionId]/base/inventories/route-handler.ts',
+  '[id]/connections/[connectionId]/base/products/route-handler.ts',
+  'products/[id]/base/sku-check/route-handler.ts',
+  'products/[id]/base/link-existing/route-handler.ts',
+  'products/[id]/export-to-base/route-handler.ts',
+  'products/[id]/listings/route-handler.ts',
+  'products/[id]/listings/[listingId]/route-handler.ts',
+  'products/[id]/listings/[listingId]/delete-from-base/route-handler.ts',
+  'products/[id]/listings/[listingId]/purge/route-handler.ts',
+  'products/[id]/listings/[listingId]/relist/route-handler.ts',
+  'products/[id]/listings/[listingId]/sync-base-images/route-handler.ts',
 ] as const;
 
 const removedLegacyAliasRoutes = [
@@ -128,15 +128,19 @@ const collectHandlerFiles = (baseDir: string): string[] => {
 };
 
 describe('v2 integrations selected route migration', () => {
-  it('keeps selected v2 route.ts files present', () => {
-    const missing = migratedRoutePaths.filter(
+  it('keeps the v2 integrations catch-all route.ts file present', () => {
+    expect(existsSync(path.join(v2Root, '[[...path]]/route.ts'))).toBe(true);
+  });
+
+  it('keeps selected v2 route-handler.ts files present', () => {
+    const missing = migratedRouteHandlerPaths.filter(
       (relativeRoute) => !existsSync(path.join(v2Root, relativeRoute))
     );
     expect(missing).toEqual([]);
   });
 
-  it('keeps selected v2 route.ts files independent from direct legacy api imports', () => {
-    const offenders = migratedRoutePaths.filter((relativeRoute) => {
+  it('keeps selected v2 route-handler.ts files independent from direct legacy api imports', () => {
+    const offenders = migratedRouteHandlerPaths.filter((relativeRoute) => {
       const source = readFileSync(path.join(v2Root, relativeRoute), 'utf8');
       return source.includes('@/app/api/integrations/');
     });

@@ -1,4 +1,6 @@
 // @ts-nocheck
+'use client';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
@@ -367,7 +369,7 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
     );
   }
 
-  const taskSummaryTitle = showTaskTitle ? `${task.hours}:${pad(task.minutes)}` : null;
+  const taskSummaryTitle = showTaskTitle ? `${task.hours}:${pad(task.minutes)}` : undefined;
 
   return (
     <div className='flex flex-col items-center gap-4 w-full'>

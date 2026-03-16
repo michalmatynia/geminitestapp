@@ -1,3 +1,5 @@
+"use client";
+
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useEffect, type ReactNode } from 'react';
 

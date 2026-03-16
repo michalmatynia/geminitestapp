@@ -1,3 +1,5 @@
+'use client';
+
 import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -26,6 +28,7 @@ import {
 } from '@/features/kangur/games/number-balance/number-balance-generator';
 import type {
   NumberBalanceMatchState,
+  NumberBalanceMatchStatus,
   NumberBalanceMatchPlayerState,
   NumberBalanceMatchStateResponse,
   NumberBalanceMatchStateSnapshotResponse,
@@ -48,6 +51,10 @@ type NumberBalanceRushGameProps = {
 type ZoneId = 'tray' | 'left' | 'right';
 
 type Phase = 'loading' | 'waiting' | 'countdown' | 'running' | 'finished';
+type MatchStatus = NumberBalanceMatchStatus | 'completed';
+
+const isTerminalMatchStatus = (status: MatchStatus | null): boolean =>
+  status !== null && status !== 'waiting' && status !== 'in_progress';
 
 const TILE_STYLES = [
   'bg-gradient-to-br from-amber-200 via-orange-200 to-rose-200 text-amber-900',
@@ -144,13 +151,16 @@ function NumberTile({
   );
 }
 
-export default function NumberBalanceRushGame({
-  durationMs = 15_000,
-  tier = 'tier1',
-  matchId,
-  balancedProbability,
-  onFinish,
-}: NumberBalanceRushGameProps): React.JSX.Element {
+export default function NumberBalanceRushGame(
+  props: NumberBalanceRushGameProps
+): React.JSX.Element {
+  const {
+    durationMs = 15_000,
+    tier = 'tier1',
+    matchId,
+    balancedProbability,
+    onFinish,
+  } = props;
   const requestedMatchId = matchId;
   const [match, setMatch] = useState<NumberBalanceMatchState | null>(null);
   const [player, setPlayer] = useState<NumberBalanceMatchPlayerState | null>(null);
@@ -174,7 +184,7 @@ export default function NumberBalanceRushGame({
   const puzzleStartedAtRef = useRef<number>(Date.now());
   const lastServerTimeRef = useRef<number>(0);
   const activeMatchIdRef = useRef<string | null>(null);
-  const activeMatchStatusRef = useRef<NumberBalanceMatchState['status'] | null>(null);
+  const activeMatchStatusRef = useRef<MatchStatus | null>(null);
 
   const initMatch = useCallback(
     async (requestedMatchId?: string) => {
@@ -275,7 +285,7 @@ export default function NumberBalanceRushGame({
 
   const pollState = useCallback(async (): Promise<void> => {
     const matchId = activeMatchIdRef.current;
-    if (!matchId || activeMatchStatusRef.current === 'completed') {
+    if (!matchId || isTerminalMatchStatus(activeMatchStatusRef.current)) {
       return;
     }
 
@@ -287,7 +297,7 @@ export default function NumberBalanceRushGame({
       if (activeMatchIdRef.current !== matchId) {
         return;
       }
-      if (activeMatchStatusRef.current === 'completed') {
+      if (isTerminalMatchStatus(activeMatchStatusRef.current)) {
         return;
       }
       syncMatchState(response);
@@ -297,10 +307,10 @@ export default function NumberBalanceRushGame({
   }, [syncMatchState]);
 
   const activeMatchId = match?.matchId ?? null;
-  const activeMatchStatus = match?.status ?? null;
+  const activeMatchStatus: MatchStatus | null = match?.status ?? null;
   const activePlayerId = player?.playerId ?? null;
   const shouldPoll =
-    Boolean(activeMatchId && activePlayerId) && activeMatchStatus !== 'completed';
+    Boolean(activeMatchId && activePlayerId) && !isTerminalMatchStatus(activeMatchStatus);
 
   useEffect(() => {
     activeMatchIdRef.current = activeMatchId;

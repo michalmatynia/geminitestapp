@@ -1,3 +1,5 @@
+'use client';
+
 import { CheckCircle, XCircle } from 'lucide-react';
 import React from 'react';
 

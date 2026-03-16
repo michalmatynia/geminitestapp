@@ -1,3 +1,5 @@
+'use client';
+
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { createPortal } from 'react-dom';
 import { useMemo, useRef, useState } from 'react';

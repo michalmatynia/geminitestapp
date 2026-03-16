@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { DELETE, GET, PUT } from './route';
+import { DELETE, GET, PUT } from './route-handler';
 
 describe('product metadata by-type and id route module', () => {
   it('exports the supported route handlers', () => {

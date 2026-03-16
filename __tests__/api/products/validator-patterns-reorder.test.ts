@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { POST } from '@/app/api/v2/products/validator-patterns/reorder/route';
+import { POST } from '@/app/api/v2/products/validator-patterns/reorder/route-handler';
 import type { ProductValidationPattern } from '@/shared/contracts/products';
 
 const repositoryMock = vi.hoisted(() => ({

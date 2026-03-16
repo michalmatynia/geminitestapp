@@ -1,3 +1,5 @@
+'use client';
+
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { CheckCircle, ChevronLeft, ChevronRight, XCircle } from 'lucide-react';
 import { useId, useMemo, useRef, useState } from 'react';

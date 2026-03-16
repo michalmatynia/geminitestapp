@@ -1,3 +1,5 @@
+'use client';
+
 import { createContext, useContext, type JSX, type KeyboardEvent, type ReactNode } from 'react';
 
 import type { KangurNarratorSettings } from '@/features/kangur/settings';

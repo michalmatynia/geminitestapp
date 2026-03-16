@@ -1,6 +1,3 @@
-import fs from 'fs/promises';
-import path from 'path';
-
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -10,15 +7,15 @@ import {
   deleteImageStudioSlotCascade,
   listImageStudioSlots,
 } from '@/features/ai/server';
-import { getImageFileRepository } from '@/features/files/server';
+import { getDiskPathFromPublicPath, getImageFileRepository } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { getFsPromises } from '@/shared/lib/files/runtime-fs';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
-
 const sanitizeProjectId = (value: string): string => value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
+const nodeFs = getFsPromises();
 
 const isProjectScopedStudioPath = (filepath: string, projectId: string): boolean => {
   const scopes = [
@@ -120,10 +117,12 @@ function normalizePublicPath(filepath: string | null | undefined): string | null
 function resolveDiskPathFromPublicUploadPath(filepath: string): string | null {
   const normalized = normalizePublicPath(filepath);
   if (!normalized?.startsWith('/uploads/')) return null;
-  const resolved = path.resolve(process.cwd(), 'public', normalized.replace(/^\/+/, ''));
-  const uploadsResolved = path.resolve(uploadsRoot);
-  if (!resolved.startsWith(`${uploadsResolved}${path.sep}`)) return null;
-  return resolved;
+  try {
+    return getDiskPathFromPublicPath(normalized);
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+    return null;
+  }
 }
 
 const deleteSchema = z.object({
@@ -261,7 +260,7 @@ export async function POST_handler(
     }
     const diskPath = resolveDiskPathFromPublicUploadPath(normalized);
     if (diskPath) {
-      await fs.unlink(diskPath).catch((error: unknown) => {
+      await nodeFs.unlink(diskPath).catch((error: unknown) => {
         if (error instanceof Error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
           throw error;
         }
@@ -297,7 +296,7 @@ export async function POST_handler(
   if (!diskPath) {
     throw notFoundError('Asset not found');
   }
-  await fs.unlink(diskPath).catch((error: unknown) => {
+  await nodeFs.unlink(diskPath).catch((error: unknown) => {
     if (error instanceof Error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
       throw error;
     }

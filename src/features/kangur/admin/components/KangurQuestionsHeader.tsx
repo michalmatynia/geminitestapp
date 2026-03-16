@@ -3,7 +3,7 @@ import React from 'react';
 
 import type { KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
 import { Badge, Button } from '@/features/kangur/shared/ui';
-import type { KangurTestSuiteHealth } from '../test-currentSuite-health';
+import type { KangurTestSuiteHealth } from '../test-suite-health';
 
 interface KangurQuestionsHeaderProps {
   currentSuite: KangurTestSuite;
@@ -212,7 +212,7 @@ export function KangurQuestionsHeader(
             onClick={onTakeOffline}
             disabled={isSaving || !currentSuiteHealth.isLive}
           >
-            Take currentSuite offline
+            Take suite offline
           </Button>
           <Button
             type='button'

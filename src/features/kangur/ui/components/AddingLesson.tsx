@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 
 import AddingBallGame from '@/features/kangur/ui/components/AddingBallGame';

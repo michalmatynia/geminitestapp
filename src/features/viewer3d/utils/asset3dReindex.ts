@@ -4,10 +4,11 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import { getAsset3DRepository } from '@/features/viewer3d/services/asset3d-repository';
+import { assets3dRoot } from '@/shared/lib/files/server-constants';
 
 import { SUPPORTED_3D_FORMATS, type Supported3DExtension } from './validateAsset3d';
 
-const assets3dDiskDir = path.join(process.cwd(), 'public', 'uploads', 'assets3d');
+const assets3dDiskDir = assets3dRoot;
 const assets3dPublicDir = '/uploads/assets3d';
 
 const isSupported3DFile = (filename: string): filename is string => {

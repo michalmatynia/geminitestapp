@@ -8,10 +8,11 @@ import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { uploadFile } from '@/shared/lib/files/file-uploader';
+import { studioRoot } from '@/shared/lib/files/server-constants';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
+const projectsRoot = studioRoot;
 
 const sanitizeProjectId = (value: string): string => value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 

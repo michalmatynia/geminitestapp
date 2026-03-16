@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useLayoutEffect } from 'react';
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
@@ -93,6 +95,7 @@ type UseKangurAiTutorLifecycleEffectsInput = {
   routingPageKey?: string | null;
   selectedText: string | null;
   sessionContext: KangurAiTutorConversationContext | null | undefined;
+  suppressFocus?: boolean;
   setHighlightedText: (value: string | null) => void;
   tutorContent: KangurAiTutorContent;
   tutorSessionKey: string | null;
@@ -121,6 +124,7 @@ export function useKangurAiTutorLifecycleEffects({
   routingPageKey,
   selectedText,
   sessionContext,
+  suppressFocus = false,
   setHighlightedText,
   tutorContent,
   tutorSessionKey,
@@ -563,7 +567,7 @@ export function useKangurAiTutorLifecycleEffects({
   ]);
 
   useEffect(() => {
-    if (!isOpen) {
+    if (!isOpen || suppressFocus) {
       return;
     }
 
@@ -575,7 +579,7 @@ export function useKangurAiTutorLifecycleEffects({
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [inputRef, isOpen, setHasNewMessage]);
+  }, [inputRef, isOpen, setHasNewMessage, suppressFocus]);
 
   useEffect(() => {
     if (!isOpen && askModalVisible) {
@@ -598,7 +602,7 @@ export function useKangurAiTutorLifecycleEffects({
   );
 
   useEffect(() => {
-    if (!askModalVisible || !isOpen) {
+    if (!askModalVisible || !isOpen || suppressFocus) {
       return;
     }
 
@@ -609,7 +613,7 @@ export function useKangurAiTutorLifecycleEffects({
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [askModalVisible, inputRef, isOpen]);
+  }, [askModalVisible, inputRef, isOpen, suppressFocus]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({

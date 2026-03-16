@@ -19,7 +19,7 @@ vi.mock('@/features/products/server', async (importOriginal) => {
   };
 });
 
-import { GET as GET_TREE } from '@/app/api/v2/products/categories/tree/route';
+import { GET as GET_TREE } from '@/app/api/v2/products/categories/tree/route-handler';
 
 describe('Product Categories API', () => {
   beforeEach(() => {

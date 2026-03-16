@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { POST } from './route';
+import { POST } from './route-handler';
 
 describe('databases engine operation cancel route module', () => {
   it('exports the supported route handlers', () => {

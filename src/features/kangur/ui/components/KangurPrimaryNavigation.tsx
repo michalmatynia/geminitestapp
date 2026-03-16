@@ -1,3 +1,5 @@
+'use client';
+
 import { BookOpen, BrainCircuit, LayoutGrid, LogIn, LogOut, Trophy, UserPlus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 

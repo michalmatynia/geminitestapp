@@ -1,3 +1,5 @@
+'use client';
+
 import React, { createContext, useContext, useState, useMemo } from 'react';
 import type { KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
 import type { TestSuiteFormData } from '../../test-suites';

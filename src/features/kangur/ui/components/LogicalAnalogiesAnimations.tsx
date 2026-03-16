@@ -1,3 +1,5 @@
+'use client';
+
 export function AnalogyBridgeAnimation(): React.JSX.Element {
   return (
     <svg

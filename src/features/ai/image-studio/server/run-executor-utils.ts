@@ -10,12 +10,12 @@ import sharp from 'sharp';
 import { parsePersistedImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
 import { imageStudioRunRequestSchema, type ImageFileRecord } from '@/shared/contracts/image-studio';
 import { badRequestError } from '@/shared/errors/app-error';
+import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
+import { studioRoot } from '@/shared/lib/files/server-constants';
 import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-
-export const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
-export const publicRoot = path.join(process.cwd(), 'public');
+export const projectsRoot = studioRoot;
 
 export const DALLE_PROMPT_MAX_CHARS = 1000;
 export const UNKNOWN_PARAMETER_REGEX = /Unknown parameter:\s*['"]([^'"]+)['"]/i;
@@ -63,8 +63,11 @@ export const normalizePublicAssetPath = (filepath: string): string => {
 };
 
 export const resolveAssetPath = (filepath: string): string => {
-  const normalized = filepath.replace(/^\/+/, '');
-  return path.resolve(publicRoot, normalized);
+  const normalized = normalizePublicAssetPath(filepath);
+  if (!normalized) {
+    throw badRequestError('Invalid asset path.');
+  }
+  return getDiskPathFromPublicPath(normalized);
 };
 
 const getProjectScopedPublicPrefixes = (projectId: string): string[] => [

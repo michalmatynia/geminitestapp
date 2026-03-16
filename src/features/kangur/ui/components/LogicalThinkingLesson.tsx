@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 
 import LessonHub from '@/features/kangur/ui/components/LessonHub';

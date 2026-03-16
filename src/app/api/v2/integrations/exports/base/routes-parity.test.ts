@@ -29,9 +29,9 @@ const starterWorkflowsRoot = path.join(
 const legacyEndpointToken = '/api/integrations/exports/base';
 const legacyApiImportToken = '@/app/api/integrations/exports/base/';
 const legacyPasswordTokenFallbackPattern = /connection\.password|source:\s*['"]password['"]/;
-const expectedV2RoutePaths = ['[setting]/route.ts'] as const;
+const expectedV2RoutePaths = ['[setting]/route-handler.ts'] as const;
 
-const collectRouteFiles = (baseDir: string): string[] => {
+const collectRouteFiles = (baseDir: string, fileName = 'route.ts'): string[] => {
   if (!existsSync(baseDir)) return [];
 
   const walk = (dir: string): string[] => {
@@ -44,7 +44,7 @@ const collectRouteFiles = (baseDir: string): string[] => {
         files.push(...walk(absolute));
         return;
       }
-      if (entry.isFile() && entry.name === 'route.ts') {
+      if (entry.isFile() && entry.name === fileName) {
         files.push(path.relative(baseDir, absolute));
       }
     });
@@ -82,8 +82,8 @@ const collectSourceFiles = (baseDir: string): string[] => {
 };
 
 describe('v2 integrations exports/base route migration', () => {
-  it('keeps expected /api/v2/integrations/exports/base route.ts files present', () => {
-    const v2Routes = new Set(collectRouteFiles(v2Root));
+  it('keeps expected /api/v2/integrations/exports/base route-handler files present', () => {
+    const v2Routes = new Set(collectRouteFiles(v2Root, 'route-handler.ts'));
     const missing = expectedV2RoutePaths.filter((relativeRoute) => !v2Routes.has(relativeRoute));
     expect(missing).toEqual([]);
   });
@@ -93,8 +93,8 @@ describe('v2 integrations exports/base route migration', () => {
     expect(legacyRoutes).toEqual([]);
   });
 
-  it('keeps v2 route.ts files independent from legacy api namespace imports', () => {
-    const v2Routes = collectRouteFiles(v2Root);
+  it('keeps v2 route-handler files independent from legacy api namespace imports', () => {
+    const v2Routes = collectRouteFiles(v2Root, 'route-handler.ts');
     const offenders = v2Routes.filter((relativeRoute) =>
       readFileSync(path.join(v2Root, relativeRoute), 'utf8').includes(legacyApiImportToken)
     );

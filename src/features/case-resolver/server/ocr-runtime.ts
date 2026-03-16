@@ -4,17 +4,13 @@ import path from 'path';
 
 import type { CaseResolverOcrFileKind } from '@/shared/contracts/case-resolver';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
+import { caseResolverRoot } from '@/shared/lib/files/server-constants';
 
 
 const CASE_RESOLVER_UPLOAD_PREFIX = '/uploads/case-resolver/';
 const CASE_RESOLVER_IMAGE_EXTENSION_PATTERN = /\.(jpg|jpeg|png|gif|webp|bmp|tiff)$/i;
 const CASE_RESOLVER_PDF_EXTENSION_PATTERN = /\.pdf$/i;
-const CASE_RESOLVER_UPLOAD_DISK_PREFIX = path.join(
-  process.cwd(),
-  'public',
-  'uploads',
-  'case-resolver'
-);
+const CASE_RESOLVER_UPLOAD_DISK_PREFIX = path.resolve(caseResolverRoot);
 
 export const normalizeCaseResolverPublicFilepath = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;

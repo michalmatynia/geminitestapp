@@ -43,5 +43,6 @@ Kangur documentation is centralized under `docs/kangur/*`. Tooltip copy must be 
 - `docs/kangur/admin-content-authoring.md`
 - `docs/kangur/settings-and-narration.md`
 - `docs/kangur/svg-and-media-rules.md`
+- `docs/kangur/number-balance-rush-ui.md`
 - `docs/kangur/observability-and-operations.md`
 - `docs/kangur/neo4j-semantic-bridge.md`

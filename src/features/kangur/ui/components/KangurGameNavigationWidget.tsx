@@ -1,3 +1,5 @@
+'use client';
+
 import { useMemo } from 'react';
 
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';

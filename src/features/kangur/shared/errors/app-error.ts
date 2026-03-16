@@ -1,1 +1,1 @@
-export * from '@/features/kangur/shared/errors/app-error';
+export * from '@/shared/errors/app-error';

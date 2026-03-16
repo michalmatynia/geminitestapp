@@ -13,12 +13,13 @@ import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { studioRoot } from '@/shared/lib/files/server-constants';
 import { clearSettingsCache } from '@/shared/lib/settings-cache';
 import { serializeSetting } from '@/shared/utils/settings-json';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
+const projectsRoot = studioRoot;
 const PROJECT_METADATA_FILENAME = '.image-studio-project.json';
 const SETTINGS_COLLECTION = 'settings';
 

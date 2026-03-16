@@ -514,7 +514,7 @@ const getLatestProgressActivityDate = (progress: KangurProgressState): string | 
 };
 
 const resolveLessonMasteryEntries = (progress: KangurProgressState): KangurLessonMasteryInsight[] =>
-  Object.entries(progress.lessonMastery)
+  Object.entries(progress.lessonMastery ?? {})
     .map(([componentId, mastery]) => {
       const lesson = KANGUR_LESSON_LIBRARY[componentId as keyof typeof KANGUR_LESSON_LIBRARY];
       if (!lesson) {

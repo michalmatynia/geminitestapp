@@ -37,6 +37,7 @@ import { createImageStudioSlots, getImageStudioSlotById } from '@/features/ai/se
 import { getImageFileRepository } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
+import { studioRoot } from '@/shared/lib/files/server-constants';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 import {
@@ -49,7 +50,7 @@ import {
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'center');
+const uploadsRoot = path.join(studioRoot, 'center');
 const CENTER_PIPELINE_VERSION = process.env['IMAGE_STUDIO_CENTER_PIPELINE_VERSION']?.trim() || 'v2';
 const STRICT_SERVER_CENTER_ENABLED =
   process.env['IMAGE_STUDIO_CENTER_SERVER_AUTHORITATIVE'] !== 'false';

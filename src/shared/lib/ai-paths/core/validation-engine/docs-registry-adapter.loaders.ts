@@ -1,5 +1,4 @@
 import { readFile } from 'node:fs/promises';
-import path from 'node:path';
 
 import { z } from 'zod';
 
@@ -42,11 +41,62 @@ import { AI_PATHS_NODE_DOCS } from '../docs/node-docs';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-const PROJECT_ROOT = process.cwd();
-const DOCS_AI_PATHS_ROOT = path.join(PROJECT_ROOT, 'docs', 'ai-paths');
-const AI_PATHS_SHARED_ROOT = path.join(PROJECT_ROOT, 'src', 'shared', 'lib', 'ai-paths');
-const DOCS_AI_PATHS_PREFIX = 'docs/ai-paths/';
-const AI_PATHS_SHARED_PREFIX = 'src/shared/lib/ai-paths/';
+const DOCS_MANIFEST_URL = new URL(
+  '../../../../../../docs/ai-paths/node-validator-central-manifest.json',
+  import.meta.url
+);
+const DOCS_CORE_PATTERNS_URL = new URL(
+  '../../../../../../docs/ai-paths/node-validator-core-patterns.md',
+  import.meta.url
+);
+const DOCS_SIMULATION_PATTERNS_URL = new URL(
+  '../../../../../../docs/ai-paths/node-validator-simulation-patterns.md',
+  import.meta.url
+);
+const DOCS_DATABASE_PATTERNS_URL = new URL(
+  '../../../../../../docs/ai-paths/node-validator-database-patterns.md',
+  import.meta.url
+);
+const DOCS_RUNTIME_PATTERNS_URL = new URL(
+  '../../../../../../docs/ai-paths/node-validator-runtime-patterns.md',
+  import.meta.url
+);
+const DOCS_WIRING_PATTERNS_URL = new URL(
+  '../../../../../../docs/ai-paths/node-validator-wiring-patterns.md',
+  import.meta.url
+);
+const DOCS_ADVANCED_PATTERNS_URL = new URL(
+  '../../../../../../docs/ai-paths/node-validator-advanced-patterns.md',
+  import.meta.url
+);
+const DOCS_SEMANTIC_GRAMMAR_PATTERNS_URL = new URL(
+  '../../../../../../docs/ai-paths/node-validator-semantic-grammar-patterns.md',
+  import.meta.url
+);
+const DOCS_NODE_CODE_PARSER_PATTERNS_URL = new URL(
+  '../../../../../../docs/ai-paths/node-validator-node-code-parser-patterns.md',
+  import.meta.url
+);
+const DOCS_NODE_PATH_CODE_PARSER_PATTERNS_URL = new URL(
+  '../../../../../../docs/ai-paths/node-validator-node-path-code-parser-patterns.md',
+  import.meta.url
+);
+const DOCS_CENTRAL_PATTERNS_URL = new URL(
+  '../../../../../../docs/ai-paths/node-validator-central-patterns.md',
+  import.meta.url
+);
+const DOCS_SEMANTIC_NODES_URL = new URL(
+  '../../../../../../docs/ai-paths/semantic-grammar/nodes/index.json',
+  import.meta.url
+);
+const DOCS_TOOLTIP_CATALOG_URL = new URL(
+  '../../../../../../docs/ai-paths/tooltip-catalog.json',
+  import.meta.url
+);
+const DOCS_COVERAGE_MATRIX_URL = new URL(
+  '../../../../../../docs/ai-paths/node-validator-coverage-matrix.csv',
+  import.meta.url
+);
 
 const normalizeRepoRelativePath = (candidate: string): string =>
   candidate
@@ -54,46 +104,61 @@ const normalizeRepoRelativePath = (candidate: string): string =>
     .replace(/\\/g, '/')
     .replace(/^\.\/+/, '');
 
-const hasPathTraversal = (segments: string[]): boolean =>
-  segments.some((segment) => segment === '..');
+const DOCS_CONTENT_CACHE = new Map<string, string>();
 
-const resolveAiPathsDocsAbsolutePath = (candidate: string): string => {
-  if (path.isAbsolute(candidate)) {
-    const absoluteCandidate = path.normalize(candidate);
-    const allowedAbsoluteRoots = [DOCS_AI_PATHS_ROOT, AI_PATHS_SHARED_ROOT];
-    const isUnderAllowedRoot = allowedAbsoluteRoots.some(
-      (root) => absoluteCandidate === root || absoluteCandidate.startsWith(`${root}${path.sep}`)
-    );
-    if (isUnderAllowedRoot) {
-      return absoluteCandidate;
-    }
-    throw new Error(
-      `Path "${candidate}" is outside allowed docs roots: "${DOCS_AI_PATHS_ROOT}" or "${AI_PATHS_SHARED_ROOT}".`
-    );
-  }
-
+const readDocsSourceText = async (candidate: string): Promise<string> => {
   const normalized = normalizeRepoRelativePath(candidate);
-  if (normalized.startsWith(DOCS_AI_PATHS_PREFIX)) {
-    const tail = normalized.slice(DOCS_AI_PATHS_PREFIX.length);
-    const segments = tail.split('/').filter((segment) => segment.length > 0);
-    if (hasPathTraversal(segments)) {
-      throw new Error(`Path "${candidate}" includes forbidden parent traversal.`);
-    }
-    return path.join(DOCS_AI_PATHS_ROOT, ...segments);
+  const cached = DOCS_CONTENT_CACHE.get(normalized);
+  if (cached) return cached;
+  let content: string;
+  switch (normalized) {
+    case 'docs/ai-paths/node-validator-central-manifest.json':
+      content = await readFile(DOCS_MANIFEST_URL, 'utf8');
+      break;
+    case 'docs/ai-paths/node-validator-core-patterns.md':
+      content = await readFile(DOCS_CORE_PATTERNS_URL, 'utf8');
+      break;
+    case 'docs/ai-paths/node-validator-simulation-patterns.md':
+      content = await readFile(DOCS_SIMULATION_PATTERNS_URL, 'utf8');
+      break;
+    case 'docs/ai-paths/node-validator-database-patterns.md':
+      content = await readFile(DOCS_DATABASE_PATTERNS_URL, 'utf8');
+      break;
+    case 'docs/ai-paths/node-validator-runtime-patterns.md':
+      content = await readFile(DOCS_RUNTIME_PATTERNS_URL, 'utf8');
+      break;
+    case 'docs/ai-paths/node-validator-wiring-patterns.md':
+      content = await readFile(DOCS_WIRING_PATTERNS_URL, 'utf8');
+      break;
+    case 'docs/ai-paths/node-validator-advanced-patterns.md':
+      content = await readFile(DOCS_ADVANCED_PATTERNS_URL, 'utf8');
+      break;
+    case 'docs/ai-paths/node-validator-semantic-grammar-patterns.md':
+      content = await readFile(DOCS_SEMANTIC_GRAMMAR_PATTERNS_URL, 'utf8');
+      break;
+    case 'docs/ai-paths/node-validator-node-code-parser-patterns.md':
+      content = await readFile(DOCS_NODE_CODE_PARSER_PATTERNS_URL, 'utf8');
+      break;
+    case 'docs/ai-paths/node-validator-node-path-code-parser-patterns.md':
+      content = await readFile(DOCS_NODE_PATH_CODE_PARSER_PATTERNS_URL, 'utf8');
+      break;
+    case 'docs/ai-paths/node-validator-central-patterns.md':
+      content = await readFile(DOCS_CENTRAL_PATTERNS_URL, 'utf8');
+      break;
+    case 'docs/ai-paths/semantic-grammar/nodes/index.json':
+      content = await readFile(DOCS_SEMANTIC_NODES_URL, 'utf8');
+      break;
+    case 'docs/ai-paths/tooltip-catalog.json':
+      content = await readFile(DOCS_TOOLTIP_CATALOG_URL, 'utf8');
+      break;
+    case 'docs/ai-paths/node-validator-coverage-matrix.csv':
+      content = await readFile(DOCS_COVERAGE_MATRIX_URL, 'utf8');
+      break;
+    default:
+      throw new Error(`Path "${candidate}" is not in the static docs allowlist.`);
   }
-
-  if (normalized.startsWith(AI_PATHS_SHARED_PREFIX)) {
-    const tail = normalized.slice(AI_PATHS_SHARED_PREFIX.length);
-    const segments = tail.split('/').filter((segment) => segment.length > 0);
-    if (hasPathTraversal(segments)) {
-      throw new Error(`Path "${candidate}" includes forbidden parent traversal.`);
-    }
-    return path.join(AI_PATHS_SHARED_ROOT, ...segments);
-  }
-
-  throw new Error(
-    `Path "${candidate}" must start with "${DOCS_AI_PATHS_PREFIX}" or "${AI_PATHS_SHARED_PREFIX}".`
-  );
+  DOCS_CONTENT_CACHE.set(normalized, content);
+  return content;
 };
 
 export const parseSnippetWiringAssertions = (
@@ -384,9 +449,8 @@ export const normalizeManifest = (
 };
 
 export const readAiPathsDocsManifest = async (warnings: string[]): Promise<AiPathsDocsManifest> => {
-  const absolutePath = resolveAiPathsDocsAbsolutePath(DOCS_MANIFEST_PATH);
   try {
-    const manifestText = await readFile(absolutePath, 'utf8');
+    const manifestText = await readDocsSourceText(DOCS_MANIFEST_PATH);
     let parsed: unknown = null;
     try {
       parsed = JSON.parse(manifestText);
@@ -424,9 +488,8 @@ export const buildMarkdownSourcePayload = async (args: {
   warnings: string[];
 }): Promise<{ hash: string; assertions: AiPathsDocAssertion[] }> => {
   const { source, warnings } = args;
-  const absolutePath = resolveAiPathsDocsAbsolutePath(source.path);
   try {
-    const content = await readFile(absolutePath, 'utf8');
+    const content = await readDocsSourceText(source.path);
     const hash = hashText(content);
     const extracted = extractAiPathsAssertionsFromMarkdown(content, source.path, hash);
     extracted.warnings.forEach((warning) => warnings.push(warning));
@@ -505,9 +568,8 @@ export const buildSemanticNodesCatalogSourcePayload = async (args: {
   warnings: string[];
 }): Promise<{ hash: string; assertions: AiPathsDocAssertion[] }> => {
   const { source, warnings } = args;
-  const absolutePath = resolveAiPathsDocsAbsolutePath(source.path);
   try {
-    const content = await readFile(absolutePath, 'utf8');
+    const content = await readDocsSourceText(source.path);
     const parsed = JSON.parse(content) as unknown;
     const result = z.array(semanticNodeIndexRowSchema).safeParse(parsed);
     if (!result.success) {
@@ -647,9 +709,8 @@ export const buildTooltipDocsCatalogSourcePayload = async (args: {
   warnings: string[];
 }): Promise<{ hash: string; assertions: AiPathsDocAssertion[] }> => {
   const { source, warnings } = args;
-  const absolutePath = resolveAiPathsDocsAbsolutePath(source.path);
   try {
-    const content = await readFile(absolutePath, 'utf8');
+    const content = await readDocsSourceText(source.path);
     const parsed = JSON.parse(content) as unknown;
     const result = z.array(tooltipCatalogEntrySchema).safeParse(parsed);
     if (!result.success) {
@@ -724,9 +785,8 @@ export const buildCoverageMatrixSourcePayload = async (args: {
   warnings: string[];
 }): Promise<{ hash: string; assertions: AiPathsDocAssertion[] }> => {
   const { source, warnings } = args;
-  const absolutePath = resolveAiPathsDocsAbsolutePath(source.path);
   try {
-    const content = await readFile(absolutePath, 'utf8');
+    const content = await readDocsSourceText(source.path);
     const parsedRows = parseCsvRecords(content);
     const rows = parsedRows
       .map((row: Record<string, string>, index: number): CoverageMatrixRow | null => {

@@ -17,6 +17,7 @@ import {
 import { getDiskPathFromPublicPath, getImageFileRepository } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { studioRoot } from '@/shared/lib/files/server-constants';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
@@ -38,7 +39,7 @@ const payloadSchema = z.object({
   masks: z.array(maskEntrySchema).min(1).max(8),
 });
 
-const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'masks');
+const uploadsRoot = path.join(studioRoot, 'masks');
 type SourceSlotRecord = NonNullable<Awaited<ReturnType<typeof getImageStudioSlotById>>>;
 
 function parseDataUrl(dataUrl: string): { buffer: Buffer; mime: string } | null {

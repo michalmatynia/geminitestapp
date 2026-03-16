@@ -1,8 +1,8 @@
 import 'server-only';
 
 import { randomUUID } from 'crypto';
-import { promises as fs } from 'fs';
 import { createRequire } from 'module';
+import os from 'os';
 import path from 'path';
 import vm from 'vm';
 
@@ -18,6 +18,7 @@ import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import { buildAiPathsContextRegistrySystemPrompt } from '@/shared/lib/ai-paths/context-registry/system-prompt';
 import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
 import { evaluateOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
+import { getFsPromises, joinRuntimePath } from '@/shared/lib/files/runtime-fs';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
@@ -32,8 +33,9 @@ import type {
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-const RUN_ROOT_DIR = path.join(process.cwd(), 'tmp', 'ai-paths-playwright-runs');
+const RUN_ROOT_DIR = path.join(os.tmpdir(), 'ai-paths-playwright-runs');
 const RUN_TTL_MS = 24 * 60 * 60 * 1000;
+const nodeFs = getFsPromises();
 
 const getPlaywright = (): typeof import('playwright') => {
   const requireFn = createRequire(import.meta.url);
@@ -56,7 +58,7 @@ const resolveRunStatePath = (runId: string): string => path.join(RUN_ROOT_DIR, `
 const resolveRunArtifactsDir = (runId: string): string => path.join(RUN_ROOT_DIR, runId);
 
 const ensureRunRoot = async (): Promise<void> => {
-  await fs.mkdir(RUN_ROOT_DIR, { recursive: true });
+  await nodeFs.mkdir(RUN_ROOT_DIR, { recursive: true });
 };
 
 const withTimeout = async <T>(
@@ -83,14 +85,14 @@ const cleanupOldRuns = async (): Promise<void> => {
   try {
     await ensureRunRoot();
     const now = Date.now();
-    const entries = await fs.readdir(RUN_ROOT_DIR, { withFileTypes: true });
+    const entries = await nodeFs.readdir(RUN_ROOT_DIR, { withFileTypes: true });
     await Promise.all(
       entries.map(async (entry) => {
         const targetPath = path.join(RUN_ROOT_DIR, entry.name);
-        const stat = await fs.stat(targetPath).catch(() => null);
+        const stat = await nodeFs.stat(targetPath).catch(() => null);
         if (!stat) return;
         if (now - stat.mtimeMs < RUN_TTL_MS) return;
-        await fs.rm(targetPath, { recursive: true, force: true }).catch(() => undefined);
+        await nodeFs.rm(targetPath, { recursive: true, force: true }).catch(() => undefined);
       })
     );
   } catch (error) {
@@ -151,8 +153,8 @@ const writeRunState = async (run: PlaywrightNodeRunRecord): Promise<void> => {
   await ensureRunRoot();
   const targetPath = resolveRunStatePath(run.runId);
   const tempPath = `${targetPath}.tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  await fs.writeFile(tempPath, `${JSON.stringify(run, null, 2)}\n`, 'utf8');
-  await fs.rename(tempPath, targetPath);
+  await nodeFs.writeFile(tempPath, `${JSON.stringify(run, null, 2)}\n`, 'utf8');
+  await nodeFs.rename(tempPath, targetPath);
 };
 
 const nowIso = (): string => new Date().toISOString();
@@ -383,8 +385,8 @@ const saveFileArtifact = async (
 ): Promise<PlaywrightNodeRunArtifact> => {
   const safeName = name.trim().replace(/[^a-zA-Z0-9-_]+/g, '_') || kind;
   const fileName = `${safeName}-${Date.now()}.${extension}`;
-  const filePath = path.join(runArtifactsDir, fileName);
-  await fs.writeFile(filePath, content);
+  const filePath = joinRuntimePath(runArtifactsDir, fileName);
+  await nodeFs.writeFile(filePath, content);
   return {
     name,
     path: resolveRelativeArtifactPath(filePath),
@@ -401,7 +403,7 @@ const executePlaywrightNodeRun = async (
   const logs: string[] = [];
   const artifacts: PlaywrightNodeRunArtifact[] = [];
   const runArtifactsDir = resolveRunArtifactsDir(runId);
-  await fs.mkdir(runArtifactsDir, { recursive: true });
+  await nodeFs.mkdir(runArtifactsDir, { recursive: true });
   await updateRunState(runId, {
     status: 'running',
     startedAt,
@@ -642,7 +644,7 @@ const executePlaywrightNodeRun = async (
         if (video) {
           const videoPath = await video.path();
           const targetVideoPath = path.join(runArtifactsDir, `video-${Date.now()}.webm`);
-          await fs.copyFile(videoPath, targetVideoPath);
+          await nodeFs.copyFile(videoPath, targetVideoPath);
           artifacts.push({
             name: 'video',
             path: resolveRelativeArtifactPath(targetVideoPath),
@@ -704,7 +706,7 @@ export const readPlaywrightNodeRun = async (
 ): Promise<PlaywrightNodeRunRecord | null> => {
   const statePath = resolveRunStatePath(runId);
   try {
-    const raw = await fs.readFile(statePath, 'utf8');
+    const raw = await nodeFs.readFile(statePath, 'utf8');
     const parsed = JSON.parse(raw) as unknown;
     if (!isObjectRecord(parsed)) return null;
     if (parsed['runId'] !== runId) return null;
@@ -752,9 +754,9 @@ export const readPlaywrightNodeArtifact = async (input: {
   }
 
   try {
-    const stat = await fs.stat(absoluteArtifactPath);
+    const stat = await nodeFs.stat(absoluteArtifactPath);
     if (!stat.isFile()) return null;
-    const content = await fs.readFile(absoluteArtifactPath);
+    const content = await nodeFs.readFile(absoluteArtifactPath);
     return {
       artifact,
       content,

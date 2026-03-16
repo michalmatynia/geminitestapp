@@ -1,3 +1,5 @@
+'use client';
+
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { CheckCircle, XCircle } from 'lucide-react';
 import { useState } from 'react';

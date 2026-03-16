@@ -27,13 +27,14 @@ import { runChatbotModel } from '@/shared/lib/ai/chatbot/server-model-runtime';
 import { resolveBrainModelExecutionConfig } from '@/shared/lib/ai-brain/server';
 import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { uploadsRoot } from '@/shared/lib/files/server-constants';
 import { logSystemError, logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
-const chatbotTempRoot = path.join(process.cwd(), 'public', 'uploads', 'chatbot', 'temp');
+const chatbotTempRoot = path.join(uploadsRoot, 'chatbot', 'temp');
 
 const TEMP_CLEANUP_TTL_MS = 1000 * 60 * 60 * 24;
 const TEMP_CLEANUP_INTERVAL_MS = 1000 * 60 * 10;

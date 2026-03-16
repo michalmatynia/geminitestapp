@@ -9,6 +9,7 @@ import {
   resolveCaseResolverOcrDiskPath,
   resolveCaseResolverImageDiskPath,
 } from '@/features/case-resolver/server/ocr-runtime';
+import { caseResolverRoot } from '@/shared/lib/files/server-constants';
 
 describe('case resolver OCR runtime path helpers', () => {
   it('normalizes public file paths from full URLs', () => {
@@ -34,13 +35,13 @@ describe('case resolver OCR runtime path helpers', () => {
   it('resolves valid OCR file paths to disk and rejects invalid paths', () => {
     const diskPath = resolveCaseResolverImageDiskPath('/uploads/case-resolver/images/scan.png');
     expect(diskPath).toBe(
-      path.resolve(process.cwd(), 'public', 'uploads', 'case-resolver', 'images', 'scan.png')
+      path.resolve(caseResolverRoot, 'images', 'scan.png')
     );
 
     const pdfPath = resolveCaseResolverOcrDiskPath('/uploads/case-resolver/pdfs/scan.pdf');
     expect(pdfPath.kind).toBe('pdf');
     expect(pdfPath.diskPath).toBe(
-      path.resolve(process.cwd(), 'public', 'uploads', 'case-resolver', 'pdfs', 'scan.pdf')
+      path.resolve(caseResolverRoot, 'pdfs', 'scan.pdf')
     );
     expect(() => resolveCaseResolverImageDiskPath('/uploads/notes/scan.png')).toThrow(
       'Only Case Resolver uploaded files are supported.'

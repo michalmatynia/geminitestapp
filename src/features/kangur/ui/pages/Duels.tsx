@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import QuestionCard, {
-  type QuestionCardQuestion,
   type QuestionCardServerResult,
 } from '@/features/kangur/ui/components/QuestionCard';
+import { DuelsLobbyPanels } from '@/features/kangur/ui/components/DuelsLobbyPanels';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
+import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
@@ -20,25 +21,28 @@ import {
   KangurPageContainer,
   KangurPageShell,
   KangurStatusChip,
-  KangurSelectField,
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import type { KangurQuestionChoice } from '@/features/kangur/ui/types';
 import type {
   KangurDuelMode,
-  KangurDuelPlayer,
-  KangurDuelPlayerStatus,
-  KangurDuelQuestion,
   KangurDuelLobbyEntry,
   KangurDuelOpponentEntry,
   KangurDuelSearchEntry,
   KangurDuelStateResponse,
-  KangurDuelStatus,
 } from '@/features/kangur/shared/contracts/kangur-duels';
 import { cn } from '@/features/kangur/shared/utils';
 import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 import { isAbortLikeError } from '@/features/kangur/shared/utils/observability/is-abort-like-error';
+import {
+  PLAYER_STATUS_LABELS,
+  SESSION_STATUS_LABELS,
+  buildWinnerSummary,
+  resolvePlayerAccent,
+  resolveSessionAccent,
+  toQuestionCardQuestion,
+} from '@/features/kangur/ui/pages/duels/duels-helpers';
 
 const kangurPlatform = getKangurPlatform();
 const DUEL_POLL_INTERVAL_MS = 2500;
@@ -49,110 +53,6 @@ const DUEL_TIMEOUT_CHOICE = '__timeout__';
 const DUEL_SEARCH_MIN_CHARS = 2;
 const DUEL_SEARCH_DEBOUNCE_MS = 300;
 
-const SESSION_STATUS_LABELS: Record<KangurDuelStatus, string> = {
-  created: 'Utworzony',
-  waiting: 'Czeka na gracza',
-  ready: 'Gotowy do startu',
-  in_progress: 'W trakcie',
-  completed: 'Zakończony',
-  aborted: 'Przerwany',
-};
-
-const PLAYER_STATUS_LABELS: Record<KangurDuelPlayerStatus, string> = {
-  invited: 'Zaproszony',
-  ready: 'Gotowy',
-  playing: 'Gra',
-  completed: 'Zakończono',
-  left: 'Opuścił',
-};
-
-const LOBBY_MODE_LABELS: Record<KangurDuelMode, string> = {
-  challenge: 'Wyzwanie',
-  quick_match: 'Szybki pojedynek',
-};
-
-const LOBBY_MODE_ACCENTS: Record<KangurDuelMode, 'indigo' | 'sky'> = {
-  challenge: 'indigo',
-  quick_match: 'sky',
-};
-
-const resolveSessionAccent = (status: KangurDuelStatus): 'emerald' | 'amber' | 'rose' | 'slate' => {
-  if (status === 'completed') return 'emerald';
-  if (status === 'aborted') return 'rose';
-  if (status === 'in_progress') return 'amber';
-  if (status === 'ready') return 'amber';
-  return 'slate';
-};
-
-const resolvePlayerAccent = (
-  status: KangurDuelPlayerStatus
-): 'emerald' | 'amber' | 'rose' | 'slate' => {
-  if (status === 'completed') return 'emerald';
-  if (status === 'left') return 'rose';
-  if (status === 'playing') return 'amber';
-  if (status === 'ready') return 'amber';
-  return 'slate';
-};
-
-const toQuestionCardQuestion = (
-  question: KangurDuelQuestion | null
-): QuestionCardQuestion | null => {
-  if (!question) return null;
-  return {
-    id: question.id,
-    question: question.prompt,
-    choices: question.choices,
-  };
-};
-
-const buildWinnerSummary = (players: KangurDuelPlayer[]): string => {
-  if (players.length === 0) return 'Pojedynek zakończony.';
-  if (players.length === 1) {
-    const onlyPlayer = players[0];
-    return onlyPlayer ? `Wynik: ${onlyPlayer.displayName}` : 'Pojedynek zakończony.';
-  }
-  const sorted = [...players].sort((a, b) => b.score - a.score);
-  const first = sorted[0];
-  const second = sorted[1];
-  if (!first || !second) {
-    return 'Pojedynek zakończony.';
-  }
-  if (first.score === second.score) {
-    return 'Remis!';
-  }
-  return `Wygrywa ${first.displayName}!`;
-};
-
-const resolveLobbyHostInitial = (name: string): string =>
-  name.trim().charAt(0).toUpperCase() || '?';
-
-const formatRelativeAge = (isoString: string | null, nowMs: number): string => {
-  if (!isoString) {
-    return 'brak danych';
-  }
-  const fromMs = Date.parse(isoString);
-  if (!Number.isFinite(fromMs)) {
-    return 'brak danych';
-  }
-  const diffMs = Math.max(0, nowMs - fromMs);
-  const seconds = Math.floor(diffMs / 1000);
-  if (seconds < 5) {
-    return 'przed chwilą';
-  }
-  if (seconds < 60) {
-    return `${seconds}s temu`;
-  }
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) {
-    return `${minutes} min temu`;
-  }
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) {
-    return `${hours} godz. temu`;
-  }
-  const days = Math.floor(hours / 24);
-  return `${days} dni temu`;
-};
 
 function DuelsContent(): React.JSX.Element {
   const { basePath } = useKangurRouting();
@@ -197,6 +97,7 @@ function DuelsContent(): React.JSX.Element {
   const lastLobbyHashRef = useRef('');
   const lobbySeenRef = useRef<Map<string, string>>(new Map());
   const lobbyFreshRef = useRef<Map<string, number>>(new Map());
+  const lobbyViewTrackedRef = useRef(false);
 
   useKangurRoutePageReady({
     pageKey: 'Duels',
@@ -254,7 +155,8 @@ function DuelsContent(): React.JSX.Element {
     session?.questions[session.currentQuestionIndex] ?? null;
   const questionCard = useMemo(() => toQuestionCardQuestion(activeQuestion), [activeQuestion]);
   const canPlay = Boolean(isAuthenticated && user?.activeLearner?.id);
-  const canBrowseLobby = canPlay && !session;
+  const canPlayTools = canPlay && !session;
+  const canBrowseLobby = !session && (canPlay || !isAuthenticated);
   const isBusy = action !== null;
   const canLeaveSession = sessionStatus === 'ready' || sessionStatus === 'in_progress';
   const SearchField = KangurTextField;
@@ -336,6 +238,29 @@ function DuelsContent(): React.JSX.Element {
     setAnswerResult(null);
     lastAnswerMetaRef.current = null;
   }, [sessionId]);
+
+  useEffect(() => {
+    if (!canBrowseLobby || lobbyViewTrackedRef.current) {
+      return;
+    }
+    if (!lobbyLastUpdatedAt) {
+      return;
+    }
+    lobbyViewTrackedRef.current = true;
+    trackKangurClientEvent('kangur_duels_lobby_viewed', {
+      isGuest: !isAuthenticated,
+      entryCount: lobbyEntries.length,
+      publicCount: publicLobbyEntries.length,
+      inviteCount: inviteLobbyEntries.length,
+    });
+  }, [
+    canBrowseLobby,
+    lobbyLastUpdatedAt,
+    lobbyEntries.length,
+    publicLobbyEntries.length,
+    inviteLobbyEntries.length,
+    isAuthenticated,
+  ]);
   const activeServerResult = useMemo<QuestionCardServerResult | null>(() => {
     if (!activeQuestion || !answerResult) return null;
     if (answerResult.questionId !== activeQuestion.id) return null;
@@ -481,7 +406,7 @@ function DuelsContent(): React.JSX.Element {
 
   const loadOpponents = useCallback(
     async ({ showLoading = false }: { showLoading?: boolean } = {}) => {
-      if (!canBrowseLobby) {
+      if (!canPlayTools) {
         opponentsAbortRef.current?.abort();
         opponentsAbortRef.current = null;
         setRecentOpponents([]);
@@ -524,7 +449,7 @@ function DuelsContent(): React.JSX.Element {
         }
       }
     },
-    [canBrowseLobby]
+    [canPlayTools]
   );
 
   const handleLeave = useCallback(async () => {
@@ -682,7 +607,7 @@ function DuelsContent(): React.JSX.Element {
   }, [canBrowseLobby, isPageActive, loadLobby]);
 
   useEffect(() => {
-    if (!canBrowseLobby) {
+    if (!canPlayTools) {
       void loadOpponents();
       return () => {
         opponentsAbortRef.current?.abort();
@@ -705,10 +630,10 @@ function DuelsContent(): React.JSX.Element {
       opponentsAbortRef.current?.abort();
       opponentsAbortRef.current = null;
     };
-  }, [canBrowseLobby, isPageActive, loadOpponents]);
+  }, [canPlayTools, isPageActive, loadOpponents]);
 
   useEffect(() => {
-    if (!canBrowseLobby) {
+    if (!canPlayTools) {
       searchAbortRef.current?.abort();
       searchAbortRef.current = null;
       if (searchDebounceRef.current) {
@@ -745,25 +670,27 @@ function DuelsContent(): React.JSX.Element {
     setIsSearching(true);
     setSearchError(null);
 
-    searchDebounceRef.current = window.setTimeout(async () => {
-      try {
-        const response = await kangurPlatform.duels.search(trimmed, {
-          limit: 8,
-          signal: controller.signal,
-        });
-        setSearchResults(response.entries);
-      } catch (err: unknown) {
-        if (isAbortLikeError(err, controller.signal)) {
-          return;
+    searchDebounceRef.current = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const response = await kangurPlatform.duels.search(trimmed, {
+            limit: 8,
+            signal: controller.signal,
+          });
+          setSearchResults(response.entries);
+        } catch (err: unknown) {
+          if (isAbortLikeError(err, controller.signal)) {
+            return;
+          }
+          logClientError(err);
+          setSearchError('Nie udało się wyszukać uczniów. Spróbuj ponownie.');
+        } finally {
+          if (searchAbortRef.current === controller) {
+            searchAbortRef.current = null;
+            setIsSearching(false);
+          }
         }
-        logClientError(err);
-        setSearchError('Nie udało się wyszukać uczniów. Spróbuj ponownie.');
-      } finally {
-        if (searchAbortRef.current === controller) {
-          searchAbortRef.current = null;
-          setIsSearching(false);
-        }
-      }
+      })();
     }, DUEL_SEARCH_DEBOUNCE_MS);
 
     return () => {
@@ -774,7 +701,7 @@ function DuelsContent(): React.JSX.Element {
       searchAbortRef.current?.abort();
       searchAbortRef.current = null;
     };
-  }, [canBrowseLobby, searchQuery]);
+  }, [canPlayTools, searchQuery]);
 
   useEffect(() => {
     if (!sessionId) {
@@ -874,7 +801,7 @@ function DuelsContent(): React.JSX.Element {
           {!canPlay ? (
             <KangurEmptyState
               title='Pojedynki matematyczne'
-              description='Zaloguj się jako uczeń, aby dołączyć do pojedynków.'
+              description='Możesz przeglądać lobby jako gość, ale dołączenie do pojedynków wymaga logowania.'
             >
               <div className='flex flex-wrap justify-center gap-3'>
                 <KangurButton onClick={() => openLoginModal(null)} size='lg' variant='primary'>
@@ -891,7 +818,7 @@ function DuelsContent(): React.JSX.Element {
             </KangurEmptyState>
           ) : null}
 
-          {canPlay && !session ? (
+          {canPlayTools ? (
             <>
               <KangurGlassPanel
                 className='flex flex-col gap-6'
@@ -1091,16 +1018,16 @@ function DuelsContent(): React.JSX.Element {
                                 </div>
                                 <div className='text-xs text-slate-500'>{entry.loginName}</div>
                               </div>
-                      <KangurButton
-                        onClick={() => {
-                          void handleInviteByLearnerId(entry.learnerId);
-                        }}
-                        variant='secondary'
-                        disabled={isBusy}
-                        aria-label={`Zaproś ucznia ${entry.displayName}`}
-                      >
-                        Zaproś
-                      </KangurButton>
+                              <KangurButton
+                                onClick={() => {
+                                  void handleInviteByLearnerId(entry.learnerId);
+                                }}
+                                variant='secondary'
+                                disabled={isBusy}
+                                aria-label={`Zaproś ucznia ${entry.displayName}`}
+                              >
+                                Zaproś
+                              </KangurButton>
                             </KangurInfoCard>
                           </li>
                         ))}
@@ -1113,402 +1040,41 @@ function DuelsContent(): React.JSX.Element {
                   </div>
                 </div>
               </KangurGlassPanel>
-
-              {inviteLobbyEntries.length > 0 ? (
-                <KangurGlassPanel
-                  className='flex flex-col gap-4'
-                  padding='lg'
-                  surface='solid'
-                  role='region'
-                  aria-labelledby={inviteHeadingId}
-                >
-                  <div className='flex flex-wrap items-center justify-between gap-4'>
-                    <div className='space-y-1'>
-                      <div className='flex flex-wrap items-center gap-2'>
-                        <h3
-                          id={inviteHeadingId}
-                          className='text-xl font-semibold text-slate-900'
-                        >
-                          Zaproszenia
-                        </h3>
-                        <KangurStatusChip accent='indigo' size='sm'>
-                          {inviteLobbyEntries.length}
-                        </KangurStatusChip>
-                      </div>
-                      <p className='text-sm text-slate-600'>
-                        Prywatne pojedynki, do których zostałeś zaproszony.
-                      </p>
-                    </div>
-                  </div>
-
-                  <ul
-                    className='grid gap-3 sm:grid-cols-2'
-                    role='list'
-                    aria-label='Zaproszenia prywatne'
-                    id={inviteListId}
-                  >
-                    {inviteLobbyEntries.map((entry) => {
-                      const hostInitial = resolveLobbyHostInitial(entry.host.displayName);
-                      const freshAt = lobbyFreshRef.current.get(entry.sessionId);
-                      const isFresh =
-                        typeof freshAt === 'number' &&
-                        relativeNow - freshAt < LOBBY_FRESH_WINDOW_MS;
-                      const updatedLabel = formatRelativeAge(entry.updatedAt, relativeNow);
-                      return (
-                        <li key={entry.sessionId}>
-                          <KangurInfoCard
-                            accent='indigo'
-                            padding='md'
-                            tone='accent'
-                            className={cn(
-                              'flex flex-col gap-3',
-                              isFresh && 'ring-2 ring-emerald-200/70'
-                            )}
-                            role='group'
-                            aria-label={`Prywatne zaproszenie od ${entry.host.displayName}. ${entry.questionCount} pytań, ${entry.timePerQuestionSec} sekund na pytanie.`}
-                          >
-                            <div className='flex flex-wrap items-start justify-between gap-3'>
-                              <div className='flex items-center gap-3'>
-                                <div
-                                  className='flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100 text-lg font-extrabold text-indigo-700'
-                                  aria-hidden='true'
-                                >
-                                  {hostInitial}
-                                </div>
-                                <div>
-                                  <div className='text-sm font-semibold text-slate-800'>
-                                    {entry.host.displayName}
-                                  </div>
-                                  <div className='text-xs text-slate-500'>
-                                    Zaproszenie prywatne • {updatedLabel}
-                                  </div>
-                                </div>
-                              </div>
-                              <KangurButton
-                                onClick={() => {
-                                  void handleJoinLobbySession(entry.sessionId);
-                                }}
-                                variant='primary'
-                                disabled={isBusy}
-                                aria-label={`Dołącz do prywatnego pojedynku z ${entry.host.displayName}`}
-                              >
-                                Dołącz
-                              </KangurButton>
-                            </div>
-                            <div className='flex flex-wrap gap-2'>
-                              <KangurStatusChip
-                                accent={resolveSessionAccent(entry.status)}
-                                size='sm'
-                              >
-                                {SESSION_STATUS_LABELS[entry.status]}
-                              </KangurStatusChip>
-                              {isFresh ? (
-                                <KangurStatusChip accent='emerald' size='sm'>
-                                  Nowe
-                                </KangurStatusChip>
-                              ) : null}
-                              <KangurStatusChip accent='indigo' size='sm'>
-                                Prywatny
-                              </KangurStatusChip>
-                              <KangurStatusChip accent='slate' size='sm'>
-                                {entry.questionCount} pytań
-                              </KangurStatusChip>
-                              <KangurStatusChip accent='slate' size='sm'>
-                                {entry.timePerQuestionSec}s
-                              </KangurStatusChip>
-                            </div>
-                          </KangurInfoCard>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </KangurGlassPanel>
-              ) : null}
-
-              <KangurGlassPanel
-                className='flex flex-col gap-4'
-                padding='lg'
-                surface='solid'
-                role='region'
-                aria-labelledby={lobbyHeadingId}
-                aria-describedby={lobbyDescriptionId}
-                aria-busy={isLobbyLoading}
-              >
-                <div className='flex flex-wrap items-center justify-between gap-4'>
-                  <div className='space-y-1'>
-                    <div
-                      className='flex flex-wrap items-center gap-2'
-                      aria-live='polite'
-                      aria-atomic='true'
-                    >
-                      <h3
-                        id={lobbyHeadingId}
-                        className='text-xl font-semibold text-slate-900'
-                      >
-                        Lobby pojedynków
-                      </h3>
-                      <KangurStatusChip
-                        accent={lobbyEntries.length > 0 ? 'emerald' : 'slate'}
-                        size='sm'
-                      >
-                        {lobbyCountLabel}
-                      </KangurStatusChip>
-                    </div>
-                    <p id={lobbyDescriptionId} className='text-sm text-slate-600'>
-                      Wybierz ucznia, który czeka na pojedynek albo dodaj własne wyzwanie.
-                    </p>
-                  </div>
-                  <div className='flex flex-wrap items-center gap-2'>
-                    {lobbyLastUpdatedAt ? (
-                      <KangurStatusChip accent='slate' size='sm'>
-                        Aktualizacja {formatRelativeAge(lobbyLastUpdatedAt, relativeNow)}
-                      </KangurStatusChip>
-                    ) : null}
-                    <KangurStatusChip accent='slate' size='sm'>
-                      Auto co {lobbyRefreshSeconds}s
-                    </KangurStatusChip>
-                    <KangurButton
-                      onClick={() => {
-                        void loadLobby({ showLoading: true });
-                      }}
-                      variant='ghost'
-                      disabled={isLobbyLoading}
-                      aria-label='Odśwież lobby pojedynków'
-                      aria-busy={isLobbyLoading}
-                      aria-live='polite'
-                    >
-                      {isLobbyLoading ? 'Odświeżamy…' : 'Odśwież'}
-                    </KangurButton>
-                  </div>
-                </div>
-
-                <div className='flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200/70 bg-white/70 p-3'>
-                  <div className='min-w-[180px] space-y-1'>
-                    <div className='text-xs font-semibold uppercase tracking-[0.08em] text-slate-500'>
-                      Tryb
-                    </div>
-                    <KangurSelectField
-                      value={lobbyModeFilter}
-                      onChange={(event) =>
-                        setLobbyModeFilter(event.target.value as 'all' | KangurDuelMode)
-                      }
-                      aria-label='Filtruj lobby po trybie pojedynku'
-                      size='sm'
-                      accent='slate'
-                    >
-                      <option value='all'>Wszystkie tryby</option>
-                      <option value='challenge'>Wyzwania</option>
-                      <option value='quick_match'>Szybkie pojedynki</option>
-                    </KangurSelectField>
-                  </div>
-                  <div className='min-w-[200px] space-y-1'>
-                    <div className='text-xs font-semibold uppercase tracking-[0.08em] text-slate-500'>
-                      Sortowanie
-                    </div>
-                    <KangurSelectField
-                      value={lobbySort}
-                      onChange={(event) =>
-                        setLobbySort(
-                          event.target.value as
-                            | 'recent'
-                            | 'time_fast'
-                            | 'time_slow'
-                            | 'questions_low'
-                            | 'questions_high'
-                        )
-                      }
-                      aria-label='Sortuj publiczne pojedynki'
-                      size='sm'
-                      accent='slate'
-                    >
-                      <option value='recent'>Najświeższe</option>
-                      <option value='time_fast'>Najkrótszy czas</option>
-                      <option value='time_slow'>Najdłuższy czas</option>
-                      <option value='questions_low'>Najmniej pytań</option>
-                      <option value='questions_high'>Najwięcej pytań</option>
-                    </KangurSelectField>
-                  </div>
-                  {publicLobbyEntries.length > 0 ? (
-                    <div className='text-xs text-slate-500'>
-                      Widocznych: {filteredPublicLobbyEntries.length}
-                    </div>
-                  ) : null}
-                </div>
-
-                {lobbyError ? (
-                  <KangurInfoCard
-                    accent='rose'
-                    padding='md'
-                    tone='accent'
-                    role='alert'
-                    aria-live='assertive'
-                  >
-                    {lobbyError}
-                  </KangurInfoCard>
-                ) : null}
-
-                {isLobbyLoading && !hasAnyPublicLobbyEntries ? (
-                  <div className='grid gap-3 sm:grid-cols-2' role='status' aria-live='polite'>
-                    <span className='sr-only'>Ładowanie lobby pojedynków…</span>
-                    {Array.from({ length: 4 }, (_, index) => (
-                      <div
-                        key={`lobby-skeleton-${index}`}
-                        className='flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/70 p-4 animate-pulse'
-                        aria-hidden='true'
-                      >
-                        <div className='flex items-center gap-3'>
-                          <div className='h-12 w-12 rounded-2xl bg-slate-200/70' />
-                          <div className='space-y-2'>
-                            <div className='h-4 w-28 rounded-full bg-slate-200/70' />
-                            <div className='h-3 w-36 rounded-full bg-slate-200/60' />
-                          </div>
-                        </div>
-                        <div className='flex flex-wrap gap-2'>
-                          <div className='h-6 w-20 rounded-full bg-slate-200/60' />
-                          <div className='h-6 w-24 rounded-full bg-slate-200/60' />
-                          <div className='h-6 w-16 rounded-full bg-slate-200/60' />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : !hasAnyPublicLobbyEntries ? (
-                  <KangurInfoCard
-                    accent='slate'
-                    padding='md'
-                    tone='accent'
-                    role='status'
-                    aria-live='polite'
-                  >
-                    <div className='flex flex-col gap-3'>
-                      <div className='text-sm text-slate-700'>
-                        Brak uczniów oczekujących na pojedynek.
-                      </div>
-                      <KangurButton
-                        onClick={() => {
-                          void handleCreateChallenge();
-                        }}
-                        variant='secondary'
-                        disabled={isBusy}
-                      >
-                        Stwórz własne wyzwanie
-                      </KangurButton>
-                    </div>
-                  </KangurInfoCard>
-                ) : !hasVisiblePublicLobbyEntries ? (
-                  <KangurInfoCard
-                    accent='slate'
-                    padding='md'
-                    tone='accent'
-                    role='status'
-                    aria-live='polite'
-                  >
-                    <div className='flex flex-col gap-3'>
-                      <div className='text-sm text-slate-700'>
-                        Brak wyzwań dla wybranego filtra.
-                      </div>
-                      <KangurButton
-                        onClick={() => {
-                          setLobbyModeFilter('all');
-                          setLobbySort('recent');
-                        }}
-                        variant='ghost'
-                        disabled={isBusy}
-                      >
-                        Pokaż wszystkie
-                      </KangurButton>
-                    </div>
-                  </KangurInfoCard>
-                ) : (
-                  <ul
-                    className='grid gap-3 sm:grid-cols-2'
-                    role='list'
-                    aria-label='Publiczne pojedynki'
-                    id={lobbyListId}
-                  >
-                    {filteredPublicLobbyEntries.map((entry) => {
-                      const hostInitial = resolveLobbyHostInitial(entry.host.displayName);
-                      const freshAt = lobbyFreshRef.current.get(entry.sessionId);
-                      const isFresh =
-                        typeof freshAt === 'number' &&
-                        relativeNow - freshAt < LOBBY_FRESH_WINDOW_MS;
-                      const updatedLabel = formatRelativeAge(entry.updatedAt, relativeNow);
-                      return (
-                        <li key={entry.sessionId}>
-                          <KangurInfoCard
-                            accent='slate'
-                            padding='md'
-                            tone='neutral'
-                            className={cn(
-                              'flex flex-col gap-3',
-                              isFresh && 'ring-2 ring-emerald-200/70'
-                            )}
-                            role='group'
-                            aria-label={`Publiczne wyzwanie od ${entry.host.displayName}. ${entry.questionCount} pytań, ${entry.timePerQuestionSec} sekund na pytanie.`}
-                          >
-                            <div className='flex flex-wrap items-start justify-between gap-3'>
-                              <div className='flex items-center gap-3'>
-                                <div
-                                  className='flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100 text-lg font-extrabold text-indigo-700'
-                                  aria-hidden='true'
-                                >
-                                  {hostInitial}
-                                </div>
-                                <div>
-                                  <div className='text-sm font-semibold text-slate-800'>
-                                    {entry.host.displayName}
-                                  </div>
-                                  <div className='text-xs text-slate-500'>
-                                    Czeka na przeciwnika • {updatedLabel}
-                                  </div>
-                                </div>
-                              </div>
-                              <KangurButton
-                                onClick={() => {
-                                  void handleJoinLobbySession(entry.sessionId);
-                                }}
-                                variant='secondary'
-                                disabled={isBusy}
-                                aria-label={`Dołącz do pojedynku z ${entry.host.displayName}`}
-                              >
-                                Dołącz
-                              </KangurButton>
-                            </div>
-                            <div className='flex flex-wrap gap-2'>
-                              <KangurStatusChip
-                                accent={resolveSessionAccent(entry.status)}
-                                size='sm'
-                              >
-                                {SESSION_STATUS_LABELS[entry.status]}
-                              </KangurStatusChip>
-                              {isFresh ? (
-                                <KangurStatusChip accent='emerald' size='sm'>
-                                  Nowe
-                                </KangurStatusChip>
-                              ) : null}
-                              <KangurStatusChip
-                                accent={LOBBY_MODE_ACCENTS[entry.mode]}
-                                size='sm'
-                              >
-                                {LOBBY_MODE_LABELS[entry.mode]}
-                              </KangurStatusChip>
-                              <KangurStatusChip accent='slate' size='sm'>
-                                Publiczny
-                              </KangurStatusChip>
-                              <KangurStatusChip accent='slate' size='sm'>
-                                {entry.questionCount} pytań
-                              </KangurStatusChip>
-                              <KangurStatusChip accent='slate' size='sm'>
-                                {entry.timePerQuestionSec}s
-                              </KangurStatusChip>
-                            </div>
-                          </KangurInfoCard>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </KangurGlassPanel>
             </>
+          ) : null}
+
+          {canBrowseLobby ? (
+            <DuelsLobbyPanels
+              inviteLobbyEntries={inviteLobbyEntries}
+              inviteHeadingId={inviteHeadingId}
+              inviteListId={inviteListId}
+              lobbyHeadingId={lobbyHeadingId}
+              lobbyDescriptionId={lobbyDescriptionId}
+              lobbyListId={lobbyListId}
+              lobbyEntries={lobbyEntries}
+              lobbyCountLabel={lobbyCountLabel}
+              lobbyLastUpdatedAt={lobbyLastUpdatedAt}
+              relativeNow={relativeNow}
+              lobbyRefreshSeconds={lobbyRefreshSeconds}
+              loadLobby={loadLobby}
+              isLobbyLoading={isLobbyLoading}
+              lobbyModeFilter={lobbyModeFilter}
+              setLobbyModeFilter={setLobbyModeFilter}
+              lobbySort={lobbySort}
+              setLobbySort={setLobbySort}
+              publicLobbyEntries={publicLobbyEntries}
+              filteredPublicLobbyEntries={filteredPublicLobbyEntries}
+              hasAnyPublicLobbyEntries={hasAnyPublicLobbyEntries}
+              hasVisiblePublicLobbyEntries={hasVisiblePublicLobbyEntries}
+              lobbyError={lobbyError}
+              isBusy={isBusy}
+              canJoinLobby={canPlay}
+              onRequireLogin={() => openLoginModal(null)}
+              handleJoinLobbySession={handleJoinLobbySession}
+              handleCreateChallenge={handleCreateChallenge}
+              lobbyFreshRef={lobbyFreshRef}
+              lobbyFreshWindowMs={LOBBY_FRESH_WINDOW_MS}
+            />
           ) : null}
 
           {canPlay && waitingSession ? (

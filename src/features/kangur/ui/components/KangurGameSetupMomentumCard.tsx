@@ -34,9 +34,10 @@ const getSetupFocus = (
 
   if (
     quest &&
-    quest.reward.status !== 'claimed' &&
+    quest.reward?.status !== 'claimed' &&
     quest.assignment.questMetric?.kind === 'games_played'
   ) {
+    const rewardLabel = quest.reward?.label;
     const title =
       quest.progress.status === 'completed'
         ? 'Misja dnia czeka na odbiór'
@@ -46,7 +47,13 @@ const getSetupFocus = (
 
     return {
       accent: 'emerald',
-      description: `${quest.assignment.title}. ${quest.progress.summary}. ${quest.reward.label}.`,
+      description: [
+        quest.assignment.title,
+        quest.progress.summary,
+        rewardLabel ? `${rewardLabel}` : null,
+      ]
+        .filter(Boolean)
+        .join('. ') + '.',
       label: 'Misja dnia',
       title,
     };

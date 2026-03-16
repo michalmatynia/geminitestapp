@@ -42,7 +42,10 @@ import {
   type KangurAiTutorUsageResponse,
   type KangurAiTutorUsageSummary,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
-import { getKangurAiTutorMoodCopy } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import {
+  DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+  getKangurAiTutorMoodCopy,
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import {
   createDefaultKangurAiTutorLearnerMood,
   type KangurAiTutorLearnerMood,
@@ -199,7 +202,7 @@ export const useKangurAiTutorSessionSync = ({
   learnerId,
   sessionContext,
 }: KangurAiTutorSessionSyncProps): void => {
-  const tutorContent = useKangurAiTutorContent();
+  const tutorContent = useKangurAiTutorContent() ?? DEFAULT_KANGUR_AI_TUTOR_CONTENT;
   const registry = useContext(KangurAiTutorSessionRegistryContext);
   const tokenRef = useRef(Symbol('kangur-ai-tutor-session'));
   const setRegistration = registry?.setRegistration;
@@ -314,7 +317,7 @@ export function KangurAiTutorSessionSyncInner({
 // ---------------------------------------------------------------------------
 
 export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
-  const tutorContent = useKangurAiTutorContent();
+  const tutorContent = useKangurAiTutorContent() ?? DEFAULT_KANGUR_AI_TUTOR_CONTENT;
   const settingsStore = useSettingsStore();
   const initialRuntimeStateRef = useRef<ReturnType<typeof loadPersistedRuntimeState> | null>(null);
   if (initialRuntimeStateRef.current === null) {

@@ -666,6 +666,34 @@ export const listKangurDuelLobby = async (
   };
 };
 
+export const listKangurPublicDuelLobby = async (
+  options?: { limit?: number }
+): Promise<KangurDuelLobbyResponse> => {
+  const limit =
+    typeof options?.limit === 'number' && Number.isFinite(options.limit)
+      ? Math.max(1, Math.min(50, Math.floor(options.limit)))
+      : LOBBY_LIST_LIMIT;
+  const collection = await getDuelCollection();
+  const sessions = await collection
+    .find({
+      status: 'waiting',
+      playerCount: 1,
+      visibility: { $ne: 'private' },
+    })
+    .sort({ createdAt: -1 })
+    .limit(limit)
+    .toArray();
+
+  const entries = sessions
+    .map((session) => toLobbyEntry(session))
+    .filter((entry): entry is KangurDuelLobbyEntry => Boolean(entry));
+
+  return {
+    entries,
+    serverTime: nowIso(),
+  };
+};
+
 export const listKangurDuelOpponents = async (
   learner: KangurLearnerProfile,
   options?: { limit?: number }

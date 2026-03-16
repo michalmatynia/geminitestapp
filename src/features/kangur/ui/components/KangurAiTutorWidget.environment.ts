@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback, useMemo } from 'react';
 
 import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
